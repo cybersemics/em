@@ -86,6 +86,10 @@ jobs:
       # box (and under repo Environments) rather than as a bot comment. Superseded
       # deployments are automatically marked inactive, so stale preview URLs on older
       # commits are visibly greyed out.
+      #
+      # Kept inline rather than extracted to scripts/ci/ like the other github-script bodies: this
+      # workflow is pull_request_target and checks out the PR head, so a workspace file would be
+      # fork-controlled code running against the base repo's write token.
       - name: Create deployment
         id: deployment
         uses: actions/github-script@v7

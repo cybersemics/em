@@ -44,10 +44,12 @@ So the key is the concatenation of every context-view boundary's `id` plus the t
 
 Important behaviors:
 
+- **Sibling order comes from `rank`.** Children are read with [`getChildrenRanked`](../src/selectors/getChildren.ts), never re-sorted during the walk. A context's `=sort` preference is materialized into its children's ranks when the preference is set — see [data-model.md → Visibility and sorting](data-model.md#visibility-and-sorting).
 - **Visibility gating.** A subtree is skipped entirely unless `state.expanded[hashPath(path)]` is set, so collapsed branches don't appear in `treeThoughts` at all. (The expansion model itself lives in [`expandThoughts`](../src/selectors/expandThoughts.ts).)
 - **Context-view pivot.** When a thought has its context view active, the recursion pivots from "render this thought's children" to "render the *contexts* in which this thought appears" via [`getContextsSortedAndRanked`](../src/selectors/getContextsSortedAndRanked.ts). The `contextChain` accumulator is updated, which feeds `crossContextualKey`. A special early-return: if the context view has only one context, the `NoOtherContexts` placeholder is rendered instead.
 - **`belowCursor` propagation.** Once the cursor's `Path` is encountered during the walk, every subsequent `TreeThought` gets `belowCursor: true`. `LayoutTree` later uses this flag to exclude hidden-below-cursor thoughts from `totalHeight` so the document doesn't have a giant trailing dead zone.
 - **Style inheritance.** `=children/=style` and `=grandchildren/=style` are merged into `styleAccum` (current level) and `styleFromGrandparent` (skips one level). Specific positioning properties (`marginLeft`, `paddingLeft`) accumulate down the tree so descendants stay aligned with their ancestors.
+- **`=let` environment accumulation.** A context's `=let` bindings ([`parseLet`](../src/util/parseLet.ts)) are merged into the `env` that is passed down the recursion and carried on every `TreeThought`, so a descendant can name a binding defined by any ancestor and a nearer `=let` shadows an outer one. A level that defines no bindings passes the inherited `env` through by reference, so trees without `=let` never allocate one and `TreeNode`'s memoization is unaffected. See [metaprogramming.md → `=let`](metaprogramming.md#linking--cross-references).
 - **Table cell flags.** Each thought is tagged with `isTableCol1` / `isTableCol2` / `isTableCol2Child` based on `=view/Table` on its parent / grandparent / great-grandparent, plus `visibleChildrenKeys` is populated on table parents so col1 width can later be computed from the children's measured widths.
 
 The result is a flat array, in document order, with one entry per visible thought.
@@ -124,15 +126,16 @@ The indent is applied as `transform: translateX(${1.5 - indent}em)` on the inner
 
 ## Virtualization
 
-`LayoutTree` virtualizes the bottom of the list. The virtualization boundary is:
+`LayoutTree` computes `viewportBottomOffset = spaceAbove + singleLineHeight * 5` and passes it with `innerHeight`. Each `TreeNode` combines those stable values with the current `scrollTop` to get the bottom virtualization boundary:
 
 ```ts
-viewportBottom = viewportBottomState (= scrollTop + innerHeight)
+viewportBottom = max(scrollTop, 0)
+               + innerHeight
                + spaceAbove
-               + (singleLineHeight * 5)   // overshoot, so a small scroll doesn't reveal blanks
+               + (singleLineHeight * 5) // overshoot, so a small scroll doesn't reveal blanks
 ```
 
-Thoughts whose `y > viewportBottom` are still in `treeThoughtsPositioned` but rendered with `height: 0` if both `belowCursor` and `!isVisible`. (Above the cursor, the autocrop already takes care of the blank.)
+Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
 
 ## `useSizeTracking` and the `sizes` map
 

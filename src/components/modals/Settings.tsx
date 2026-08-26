@@ -9,6 +9,7 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
+import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 import debugLog from '../../util/debugLog'
 import fastClick from '../../util/fastClick'
 import haptics from '../../util/haptics'
@@ -149,6 +150,30 @@ const DebugLog = () => {
   )
 }
 
+/** Lets a user manage their AI data acknowledgement on this device. */
+const AiAcknowledgement = () => {
+  const [acknowledged, setAcknowledged] = useState(hasAcknowledgedAiDisclosure)
+  const dispatch = useDispatch()
+
+  return (
+    <Checkbox
+      checked={acknowledged}
+      title='AI Data Acknowledgment'
+      onChange={() => {
+        if (acknowledged) {
+          clearAiDisclosureAcknowledgement()
+          setAcknowledged(false)
+        } else {
+          dispatch(showModal({ id: 'aiDisclosure' }))
+        }
+      }}
+    >
+      Allows AI features without asking each time on this device. Relevant thought content may be sent to an AI service
+      when an AI feature is used.
+    </Checkbox>
+  )
+}
+
 /** User settings modal. */
 const ModalSettings = () => {
   const dispatch = useDispatch()
@@ -195,6 +220,8 @@ const ModalSettings = () => {
         <Setting settingsKey={Settings.leftHanded} title='Left Handed'>
           Moves the scroll zone to the left side of the screen and the gesture zone to the right.
         </Setting>
+
+        <AiAcknowledgement />
 
         <Setting settingsKey={Settings.debugCrashLog} title='Debug Logging'>
           Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes).

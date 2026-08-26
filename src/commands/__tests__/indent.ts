@@ -128,9 +128,9 @@ describe('multicursor', () => {
             - d
           `,
       }),
-      setCursor(['b']),
-      addMulticursor(['b']),
-      addMulticursor(['c']),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['a', 'c']),
     ])
 
     executeCommandWithMulticursor(moveCursorForward, { store })

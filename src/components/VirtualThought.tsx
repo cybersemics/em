@@ -9,6 +9,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { getAutoscrollPadding } from '../device/preventAutoscroll'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
+import useFreshCallback from '../hooks/useFreshCallback'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
@@ -68,7 +69,6 @@ const VirtualThought = ({
   singleLineHeight,
   style,
   crossContextualKey,
-  zoomCursor,
   cliff,
   prevCliff,
   isLastVisible,
@@ -94,7 +94,6 @@ const VirtualThought = ({
   style?: React.CSSProperties
   /** A key that uniquely identifies the thought across context views. */
   crossContextualKey: string
-  zoomCursor?: boolean
   cliff?: number
   prevCliff?: number
   isLastVisible?: boolean
@@ -123,7 +122,7 @@ const VirtualThought = ({
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
   // Wait until the fade out animation has completed before removing.
   // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
-  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
+  const isVisible = autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: durations.get('layoutSlowShift'),
     selector: autofocusNew => autofocus === 'hide' && autofocusNew === 'hide' && !!height,
@@ -137,7 +136,6 @@ const VirtualThought = ({
   //   index,
   //   isHeader,
   //   isMultiColumnTable,
-  //   zoomCursor,
   //   path,
   //   prevChildId,
   //   shimHiddenThought
@@ -220,15 +218,15 @@ const VirtualThought = ({
   }, [updateSize, value])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
-  useEffect(
-    () => {
-      return () => {
-        onResize?.({ height: null, width: null, id: id, isVisible: true, key: crossContextualKey })
-      }
-    },
-    // these should be memoized and not change for the life of the component, so this is effectively componentWillUnmount
+  // onResize is not stable for the life of the component: TreeNode memoizes it on cliff, which changes whenever the
+  // thought's position in the tree changes. Listing it as a dependency would run the cleanup on every such change,
+  // momentarily dropping the thought's tracked size while it is still mounted. useFreshCallback keeps the reference
+  // stable so the cleanup is only run on unmount, while still calling the latest onResize.
+  const releaseSize = useFreshCallback(
+    () => onResize?.({ height: null, width: null, id: id, isVisible: true, key: crossContextualKey }),
     [crossContextualKey, onResize, id],
   )
+  useEffect(() => releaseSize, [releaseSize])
 
   return (
     <div
@@ -269,7 +267,6 @@ const VirtualThought = ({
           showContexts={showContexts}
           simplePath={simplePath}
           style={style}
-          zoomCursor={zoomCursor}
         />
       )}
 

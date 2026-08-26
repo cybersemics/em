@@ -5,6 +5,7 @@ import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
+import { HOME_DISPLAY_VALUE } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import attributeEquals from '../selectors/attributeEquals'
@@ -48,6 +49,8 @@ const DropEnd = ({
   const thoughtId = head(path)
   const isRootPath = isRoot(path)
   const value = useSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
+  // Simulated drag snapshots need a human-readable root label, but the canonical Home value remains HOME_TOKEN.
+  const displayValue = isRootPath ? HOME_DISPLAY_VALUE : value
   const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth + 1))
 
   const isParentTableCol1 = useSelector(state =>
@@ -132,7 +135,7 @@ const DropEnd = ({
         >
           {isHovering ? '*' : ''}
           {last ? '$' : ''}
-          {strip(value)}
+          {strip(displayValue)}
         </span>
       )}
       {(showDropHover || testFlags.simulateDrag) && (

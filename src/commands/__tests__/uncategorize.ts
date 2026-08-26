@@ -48,7 +48,7 @@ describe('uncategorize', () => {
   })
 
   it('persists undoing uncategorize of a duplicate uncle without a save error', async () => {
-    const { cleanup } = await initialize()
+    const { cleanup } = await initialize({ storage: 'memory' })
 
     try {
       store.dispatch([
