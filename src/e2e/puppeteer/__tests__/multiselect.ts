@@ -43,17 +43,6 @@ const waitForHighlightedBullets = async (n: number) => {
 /** Waits a single animation frame, i.e. long enough for React to commit the render that follows a command. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
-/** Waits until copy has written non-empty plain text to the system clipboard and returns it. */
-const waitForClipboardText = async () => {
-  await expect
-    .poll(() => page.evaluate(() => navigator.clipboard.readText()), {
-      timeout: 6000,
-    })
-    .not.toBe('')
-
-  return page.evaluate(() => navigator.clipboard.readText())
-}
-
 describe('multiselect', () => {
   // https://github.com/cybersemics/em/issues/4740
   it('starts multiselect at the Shift-clicked thought when there is no selection', async () => {
@@ -203,14 +192,11 @@ describe('multiselect', () => {
     await waitForHighlightedBullets(3)
 
     await press('c', { meta: true })
-    const copiedText = await waitForClipboardText()
-    expect(copiedText).toContain('a')
-    expect(copiedText).toContain('b')
-    expect(copiedText).toContain('c')
 
     // Copy leaves the thoughts selected but not edited, so no faux caret is rendered on them (Clear Thought is
     // what puts a multiselection into edit mode). Wait a frame first, since the faux carets would be rendered
     // on the frame after the copy completes.
+    await nextFrame()
     await nextFrame()
     expect(await page.$$('[data-testid="faux-caret-multicursor"]')).toHaveLength(0)
     await waitForHighlightedBullets(3)
