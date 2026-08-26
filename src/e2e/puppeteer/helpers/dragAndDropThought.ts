@@ -97,6 +97,10 @@ const dragAndDropThought = async (
       await page.mouse.move(dropPosition.x, dropPosition.y - 1)
     }
     await page.mouse.move(dropPosition.x, dropPosition.y)
+  } else {
+    // Trigger drag state when no explicit drop target is provided.
+    // Without this move, drag-and-drop alert visibility is flaky in CI.
+    await page.mouse.move(dragPosition.x + 1, dragPosition.y)
   }
 
   await page.locator('[data-testid="alert-content"]').wait()
