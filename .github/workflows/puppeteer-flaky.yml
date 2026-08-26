@@ -20,7 +20,13 @@
 #   - Optional Discord notification (flakes/infra failures only), linking each
 #     offender to its tracking issue — the one just filed, or the one already open.
 #
+# Follow-up:
+#   - A GitHub Copilot cloud agent task (Opus 5, the `worker-bee` agent) per issue
+#     just filed, so a new flake is being worked on before anyone reads the alert.
+#
 # To enable Discord notifications, add a `DISCORD_WEBHOOK_URL` repository secret.
+# To enable Copilot follow-up, add a `COPILOT_TASKS_TOKEN` repository secret — a
+# fine-grained PAT with the "Agent tasks" repository permission (read and write).
 
 name: Puppeteer Flaky
 
@@ -253,6 +259,19 @@ jobs:
             -d "$CONTENT" \
             "$DISCORD_WEBHOOK_URL"
           echo "Discord notification sent."
+
+      # Runs after the Discord alert so a human is told about the flake even if the dispatch fails.
+      # Uses a PAT, not GITHUB_TOKEN: the agent tasks API rejects app installation tokens.
+      - name: Start Copilot tasks
+        if: steps.aggregate.outputs.clean != 'true'
+        # A failed dispatch is worth seeing but must not change the job's result — the run already
+        # fails below on the flake itself.
+        continue-on-error: true
+        env:
+          COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
+        run: |
+          set -euo pipefail
+          node scripts/ci/start-copilot-tasks.mjs flaky-results/flaky-issues.json | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Fail job when flakes or infra failures found
         if: steps.aggregate.outputs.clean != 'true'
