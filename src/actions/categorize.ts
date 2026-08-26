@@ -79,22 +79,20 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   const newThoughtId = createId()
   const isInContextView = isContextViewActive(state, parentOf(cursor))
 
-  // When every visible sibling is selected, the parent's view options — =view, =sort, and =pin scoped through
-  // =children or =descendants — describe the very thoughts being wrapped, so they follow them into the new category.
-  // A scoped container moves whole, along with any other attributes it holds. The parent's own direct =pin stays,
-  // since it pins the parent itself rather than describing the wrapped children. A partial selection leaves everything
-  // on the parent, which keeps unselected children. An attribute that is itself selected (visible via
-  // showHiddenThoughts) is already moved by the selection.
+  // When every visible sibling is selected, the meta attributes that describe the parent's children — =view, =sort,
+  // and the =children, =grandchildren, and =descendants containers — follow the wrapped thoughts into the new
+  // category, each moving whole with everything it holds. The parent's own direct =pin stays, since it pins the
+  // parent itself rather than describing the wrapped children. A partial selection leaves everything on the parent,
+  // which keeps unselected children. An attribute that is itself selected (visible via showHiddenThoughts) is already
+  // moved by the selection.
   const parentId = head(rootedParentOf(state, simplePath))
   const selectedIds = new Set(multicursorPaths.map(path => head(simplifyPath(state, path))))
   const allSelected =
     multicursorPaths.length > 0 && getChildren(state, parentId).every(child => selectedIds.has(child.id))
   const movedAttributes = allSelected
-    ? ['=view', '=sort', '=children', '=descendants'].flatMap(value => {
+    ? ['=view', '=sort', '=children', '=grandchildren', '=descendants'].flatMap(value => {
         const id = findDescendant(state, parentId, value)
-        // =children and =descendants are view options only when they scope a =pin
-        const isViewOption = value === '=view' || value === '=sort' || !!findDescendant(state, id, '=pin')
-        const thought = id && isViewOption && !selectedIds.has(id) ? getThoughtById(state, id) : null
+        const thought = id && !selectedIds.has(id) ? getThoughtById(state, id) : null
         return thought ? [thought] : []
       })
     : []
