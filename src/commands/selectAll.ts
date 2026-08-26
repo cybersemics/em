@@ -4,11 +4,12 @@ import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/
 import { isTouch } from '../browser'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isAllSelected from '../selectors/isAllSelected'
+import isMultiEditing from '../selectors/isMultiEditing'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const selectAllCommand: Command = {
+const selectAllCommand = {
   id: 'selectAll',
-  label: 'Select All',
+  label: 'Select All' as const,
   labelInverse: 'Deselect All',
   description: 'Selects all thoughts at the current level. May reduce wrist strain.',
   descriptionInverse: 'Deselects all thoughts at the current level.',
@@ -35,7 +36,10 @@ const selectAllCommand: Command = {
     // If we're using meta+alt+a, always allow it
     const e = window.event as KeyboardEvent
     if (e && e.key === 'a' && e.metaKey && !e.altKey) {
-      return hasMulticursor(state)
+      // While a multiselection is being edited (see Clear Thought), Cmd/Ctrl + A must select the text of the thought
+      // being edited, as it does when editing a single thought, rather than re-selecting the thoughts. The explicit
+      // Cmd/Ctrl + Option + A shortcut still selects the thoughts. (#4519)
+      return hasMulticursor(state) && !isMultiEditing(state)
     }
 
     return true
@@ -54,6 +58,6 @@ const selectAllCommand: Command = {
           }),
     )
   },
-}
+} satisfies Command
 
 export default selectAllCommand

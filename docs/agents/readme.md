@@ -182,7 +182,7 @@ The rest (`test`, `lint`, `puppeteer`, `ios`, the Vercel and Tauri workflows) ar
 Worth knowing about, because nothing here will tell you when one of them breaks:
 
 - **[MCP server configuration](mcp.md).** An MCP server is an external tool the agent can call. Three matter here: [`chrome-devtools`](mcp.md#chrome-devtools) for driving Chrome, [`wdio`](mcp.md#wdio) for driving iOS, and [the GitHub server](mcp.md#the-github-server) for reading issues and CI runs. They are configured in Copilot's own settings, not in this repository. In particular, `chrome-devtools` must be given `--browser-url=http://127.0.0.1:9222` so that it joins the browser the setup step already started instead of launching a second one.
-- **The pre-built iOS app.** iOS work runs against an app binary uploaded to BrowserStack under the name `em-server-mode`. BrowserStack deletes uploads 30 days after they were last used, and if it lapses, iOS reproduction stops working until someone rebuilds it. Rebuilding it is a manual job on a Mac with Xcode, and nothing warns you before it expires.
+- **The pre-built iOS app.** iOS work runs against an app binary uploaded to BrowserStack under the name `em-server-mode`. BrowserStack deletes uploads 30 days after they were last used, and if it lapses, iOS reproduction stops working until someone rebuilds it. Rebuilding is one command on a Mac with Xcode signing set up — `yarn build:ios:browserstack` — and nothing warns you before it expires.
 - **Secrets.** `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, and `OPENAI_API_KEY` are repository secrets.
 - **Network allowances.** The agent runs behind a firewall that blocks outbound traffic by default. Hosts it needs are listed in `COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS` in the setup workflow. A new external dependency needs adding there or it will fail in a way that looks like a hang.
 
@@ -198,8 +198,9 @@ A few habits that keep it coherent:
 
 - **Check cross-references still hold.** These files refer to each other constantly, and to `docs/` and to real source paths. When you rename or restructure something, grep `.github/` for the old name.
 
-## Related but separate: issue estimation
+## Related but separate: issue triage
 
-`.github/instructions/estimate/` contains a prompt and 21 sample issues used to guess how long an issue will take, then sync that to Everhour. Three workflows drive it: on issue open, on an `/estimate` comment, and a manual backfill.
+Two Node programs under `scripts/` triage new issues rather than write code. **Neither is part of the coding agent, and neither prompt is read by Copilot.** Each loads its own prompt and calls OpenAI directly.
 
-Despite living under `instructions/`, **this is not read by Copilot and is not part of the coding agent.** It is a prompt loaded by a separate Node program in `scripts/estimate/`, which calls OpenAI directly. It is documented in [`scripts/estimate/README.md`](../../scripts/estimate/README.md).
+- **[`scripts/estimate/`](../../scripts/estimate/README.md)** — guesses how long an issue will take, then syncs that to Everhour. Its prompt and 21 sample issues live under `.github/instructions/estimate/`, which is the only reason that folder appears in the tree above. Three workflows drive it: on issue open, on an `/estimate` comment, and a manual backfill.
+- **[`scripts/issue-classifier/`](../../scripts/issue-classifier/README.md)** — assigns the best-matching open milestone to a newly opened issue, treating each milestone as a subsystem. One workflow drives it, on issue open or manual dispatch; it is silent when it succeeds and comments asking for a category only when the issue matches no existing milestone. Its prompt and samples sit beside its code rather than under `.github/instructions/`, and the samples are deliberately kept out of the prompt so that `yarn evaluate` measures the prompt rather than recalling its own examples.

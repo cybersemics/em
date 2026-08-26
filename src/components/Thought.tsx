@@ -12,9 +12,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
-import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { isMac, isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
@@ -172,10 +170,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
     return cursorParentId ? getChildren(state, cursorParentId).map(t => t.value) : []
   }, shallowEqual)
 
-  type TransitionStyle = {
-    transform: string
-    transition: string
-  }
+  type TransitionStyle = Pick<React.CSSProperties, 'transform' | 'transition'>
 
   const [alignmentTransition, setAlignmentTransition] = useState<{
     bullet: TransitionStyle
@@ -355,11 +350,9 @@ const ThoughtContainer = ({
     toggleMulticursorOnLongPress: true,
   })
 
-  const homeContext = useSelector(state => {
-    const pathParent = rootedParentOf(state, path)
-    const showContexts = isContextViewActive(state, path)
-    return showContexts && isRoot(pathParent)
-  })
+  // The ancestors of the context that are rendered as breadcrumbs in the context view.
+  // A context that is a direct child of the home context has a simplePath of length 1, so rootedParentOf returns HOME_PATH and ContextBreadcrumbs renders the HomeLink.
+  const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
   // true if the thought has an invalid option
   const invalidOption = useSelector(state => {
@@ -514,7 +507,6 @@ const ThoughtContainer = ({
   //   styleContainer,
   //   thought,
   //   grandparent,
-  //   homeContext,
   //   isTable,
   //   invalidOption,
   //   isChildHovering,
@@ -533,9 +525,7 @@ const ThoughtContainer = ({
       // Shift + Click selects all thoughts between the clicked thought and the previously selected thought.
       if (mouseEvent.shiftKey) {
         e.preventDefault()
-        // move the cursor to the clicked thought so selectBetween resolves the correct sibling level,
-        // preserving the existing multicursor selection, then add the clicked thought and fill the range
-        dispatch([setCursor({ path, preserveMulticursor: true }), addMulticursor({ path }), selectBetween()])
+        dispatch(selectBetween({ path }))
         return
       }
 
@@ -594,7 +584,7 @@ const ThoughtContainer = ({
         }),
       )}
     >
-      {showContexts && simplePath.length > 1 && (
+      {showContexts && !isRoot(simplePath) && (
         <div
           className={css({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
@@ -606,7 +596,7 @@ const ThoughtContainer = ({
             marginTop: '0.462rem',
           })}
         >
-          <ContextBreadcrumbs path={parentOf(simplePath)} homeContext={homeContext} />
+          <ContextBreadcrumbs path={contextBreadcrumbsAncestors} />
         </div>
       )}
 

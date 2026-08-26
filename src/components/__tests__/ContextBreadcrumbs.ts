@@ -1,5 +1,6 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleSidebarActionCreator as toggleSidebar } from '../../actions/toggleSidebar'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
@@ -18,6 +19,7 @@ it('strips HTML tags from breadcrumbs', async () => {
 `,
     }),
     editThought(['A', 'B'], '<font color="#ffffff"><b><i>B</i></b></font>'),
+    toggleSidebar({ value: true }),
   ])
 
   await act(vi.runOnlyPendingTimersAsync)

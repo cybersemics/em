@@ -104,6 +104,9 @@ jobs:
     name: BrowserStack
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0
+    env:
+      BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+      BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
 
     # The repo-wide gate — see the concurrency comment at the top of the file for why it sits at the
     # job level (it must coexist with the per-PR workflow-level group; a workflow gets only one
@@ -203,9 +206,11 @@ jobs:
           cache: 'yarn'
 
       - name: Install npm dependencies
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         uses: ./.github/actions/install
 
       - name: Build
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn build
 
       - name: Generate tunnel token
@@ -216,6 +221,7 @@ jobs:
           echo "TUNNEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
       - name: Serve
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         env:
           HAS_TOKEN_GATE: ${{ steps.server_mode.outputs.has_token_gate }}
         run: |
@@ -249,7 +255,12 @@ jobs:
             sleep 1
           done
 
+      - name: Skip BrowserStack
+        if: env.BROWSERSTACK_USERNAME == '' || env.BROWSERSTACK_ACCESS_KEY == ''
+        run: echo "Skipping BrowserStack because credentials are not configured."
+
       - name: Test iOS on BrowserStack
+        if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
         run: yarn test:ios
         env:
           BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}

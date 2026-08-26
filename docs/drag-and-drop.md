@@ -23,6 +23,14 @@ Both backends are configured with:
 
 The values come from [`constants.ts`](../src/constants.ts).
 
+#### Tauri desktop shell
+
+The desktop app runs the same web build inside a Tauri (wry) webview, so it selects `HTML5Backend` like any other desktop browser. That only works because [`desktop/tauri.conf.json`](../desktop/tauri.conf.json) sets `dragDropEnabled: false` on the window.
+
+Left at its default of `true`, Tauri installs a native drag-and-drop handler on the webview so it can surface OS file drops as `tauri://drag-*` events. On macOS that handler overrides the webview's `NSDraggingDestination` methods (`draggingEntered:`, `draggingUpdated:`, `performDragOperation:`, `draggingExited:`) and unconditionally reports every drag as consumed, so the `WKWebView` superclass implementation never runs and WebKit never dispatches the corresponding DOM `dragenter` / `dragover` / `drop` events. Only the destination side is intercepted — `dragstart` still fires, so `beginDrag` runs and the drag appears to start, but nothing can ever be hovered or dropped. Windows (WebView2) and Linux (WebKitGTK) intercept drops the same way.
+
+Disabling it removes that handler, so drag events reach the page normally. Nothing is lost: em never listened for the `tauri://drag-*` events, and OS file drops go back to arriving as react-dnd's `NativeTypes.FILE`, which is what the app already handles.
+
 ### State machine: `state.longPress`
 
 The whole subsystem is orchestrated by a single Redux state field, [`state.longPress`](../src/@types/State.ts), which is a `LongPressState` enum with these values (see [`constants.ts`](../src/constants.ts)):
@@ -91,7 +99,7 @@ Notable behavior in [`useDragAndDropThought.tsx`](../src/hooks/useDragAndDropTho
 
 ### `useDragAndDropSubThought`
 
-Used by `DropChild` and `DropEnd`. Drop-only — there is no drag source. See [`useDragAndDropSubThought.ts`](../src/hooks/useDragAndDropSubThought.ts).
+Used by `DropChild` and `DropEnd`. Drop-only — there is no drag source. See [`useDragAndDropSubThought.tsx`](../src/hooks/useDragAndDropSubThought.tsx).
 
 Distinguishing rules from `useDragAndDropThought`:
 
@@ -126,6 +134,8 @@ When the press ends, `useLongPress` defers `onLongPressEnd` by 10 ms so that the
 ### `useDragLeave`
 
 [`useDragLeave`](../src/hooks/useDragLeave.ts) tracks how many drop targets are currently being deep-hovered (a module-level `hoverCount`). When the count drops to zero, it debounces a 50 ms clear of `state.hoveringPath`. This prevents flicker when the cursor briefly leaves one drop zone before entering an adjacent one.
+
+Because `hoverCount` is shared across every drop target, only a change in `isDeepHovering` may adjust it. The hook's effect also re-runs on mount and when `canDropThought` or `hoverZone` change, and treating those as hover transitions would let a thought mounting mid-drag decrement the count to zero and blank the drop indicator while a target is still hovered. A separate unmount-only effect releases a target's contribution to the count, so a thought the layout unmounts mid-drag doesn't leak one.
 
 ### `useDropHoverColor`
 
@@ -177,6 +187,7 @@ The previous `QuickDropIcon` / `DeleteDrop` / `CopyOneDrop` / `ExportDrop` icon 
 - [`DragAndDropContext`](../src/components/DragAndDropContext.tsx) — `DndProvider` wrapping the app; selects backend by `isTouch`.
 - [`DragOnly`](../src/components/DragOnly.tsx) — a fragment that only renders its children when `state.longPress === DragInProgress` (or a test flag is set). Used to skip mounting drop targets and overlays when not dragging.
 - [`DropHover`](../src/components/DropHover.tsx) — the blue-bar visual indicator. Subscribes to `state.hoveringPath` and `state.hoverZone` and decides whether *this* particular drop target should render the bar. For sorted contexts, additionally compares the dragging value's `compareReasonable` order against neighbors to choose which gap to highlight.
+- [`usePinDropHover`](../src/hooks/usePinDropHover.ts) — test-only latch used by `DropHover`, `DropEnd`, `DropChild`, and `DropUncle`. When `testFlags.pinDropHovers` is set, a drop hover that has been shown during the current drag stays visible until the drag ends, so e2e snapshot tests can compare multiple drop hovers in a single screenshot (see [Testing](testing.md#drag-and-drop-visualization)).
 
 ## Multicursor drag
 

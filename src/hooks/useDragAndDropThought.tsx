@@ -34,6 +34,7 @@ import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
+import prevSibling from '../selectors/prevSibling'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
@@ -48,6 +49,7 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import throttleByMousePosition from '../util/throttleByMousePosition'
+import usePinDropHover from './usePinDropHover'
 
 export type DropValidationResult = {
   isValid: boolean
@@ -241,6 +243,11 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
             oldPath: thoughtFrom,
             newPath,
             newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
+            // props.simplePath is a SimplePath, so its previous sibling must always be resolved in normal view.
+            // See the note in DropHover on why the context view would otherwise be inferred for a cyclic context.
+            afterId: prevPath
+              ? head(prevPath)
+              : (prevSibling(state, props.simplePath, { showContexts: false })?.id ?? null),
           }),
         )
       }
@@ -365,12 +372,14 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     return state.draggingThoughts.some(draggedPath => equalPath(draggedPath, propsTypes.simplePath))
   })
 
+  const isHoveringPinned = usePinDropHover(isHovering)
+
   return {
     isDragging: isDraggingBullet || isDraggingEditable || isDraggingMultiple, // Combine both drag states: either this is the primary drag source OR it's part of multiselect drag
     dragSourceBullet,
     dragSourceEditable,
     dragPreview,
-    isHovering,
+    isHovering: isHoveringPinned,
     isDeepHovering,
     canDropThought,
     dropTarget,

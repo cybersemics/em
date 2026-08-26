@@ -2,6 +2,7 @@ import { createRequire } from 'node:module'
 import Terminal from 'vite-plugin-terminal'
 import { defineConfig } from 'vitest/config'
 
+const puppeteerMaxWorkers = Number(process.env.PUPPETEER_MAX_WORKERS || 2)
 const require = createRequire(import.meta.url)
 
 export default defineConfig({
@@ -9,6 +10,7 @@ export default defineConfig({
     projects: [
       {
         extends: './vite.config.ts',
+        plugins: [],
         test: {
           name: 'unit',
           globals: true,
@@ -37,6 +39,9 @@ export default defineConfig({
           exclude: ['node_modules/**'],
           environment: './src/e2e/puppeteer-environment.ts',
           setupFiles: ['./src/e2e/puppeteer/setup.ts'],
+          // Browserless runs all Puppeteer files in one Chrome service. Unbounded file parallelism overloads
+          // touch/focus handling and OPFS cleanup, so keep bounded parallelism instead of serializing the suite.
+          maxWorkers: puppeteerMaxWorkers,
         },
         plugins: [
           Terminal({

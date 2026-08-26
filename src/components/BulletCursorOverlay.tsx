@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -147,11 +147,8 @@ export default function BulletCursorOverlay({
     thoughtId: head(simplePath),
   })
 
-  const homeContext = useSelector(state => {
-    const pathParent = rootedParentOf(state, path)
-    const showContexts = isContextViewActive(state, path)
-    return showContexts && isRoot(pathParent)
-  })
+  // Must match the breadcrumbs rendered by Thought so that the cursor overlay is aligned with the thought.
+  const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
   useScrollCursorIntoView(y, height)
 
@@ -167,7 +164,7 @@ export default function BulletCursorOverlay({
       path={path}
       isMounted
     >
-      {showContexts && simplePath?.length > 1 && (
+      {showContexts && !isRoot(simplePath) && (
         <div
           className={css({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
@@ -179,7 +176,7 @@ export default function BulletCursorOverlay({
             marginTop: '0.462rem',
           })}
         >
-          <ContextBreadcrumbs hidden path={parentOf(simplePath)} homeContext={homeContext} />
+          <ContextBreadcrumbs hidden path={contextBreadcrumbsAncestors} />
         </div>
       )}
       <ThoughtPositioner path={path} hideBullet={hideBullet} cursorOverlay>

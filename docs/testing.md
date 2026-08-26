@@ -123,14 +123,14 @@ This rule is about waiting for real time to pass, not about safety limits or tim
 - Durations that are part of simulated input, such as how long a long press is held or how quickly a swipe moves, are action parameters rather than synchronization waits.
 
 ```ts
-// ❌ Don't: hand-rolled polling against a state backdoor (real code — do not imitate)
+// ❌ Don't: hand-rolled polling against a state backdoor
 const childCount = await page.evaluate(async () => {
   const em = window.em as WindowEm
   for (let i = 0; i < 20; i++) {
-    if (em.getAllChildrenAsThoughts(['A']).length > 0) break
+    if (em.getAllChildrenByContext(['A']).length > 0) break
     await new Promise(resolve => setTimeout(resolve, 50))
   }
-  return em.getAllChildrenAsThoughts(['A']).length
+  return em.getAllChildrenByContext(['A']).length
 })
 ```
 
@@ -145,11 +145,13 @@ expect(exported).toBe(`
 `)
 ```
 
-If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForContextHasChildWithValue`](../src/e2e/puppeteer/helpers/waitForContextHasChildWithValue.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
+If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
 
 The sanctioned `paste` and `setTheme` Puppeteer helpers still contain fixed sleeps. The iOS `showEditMenu` helper also has a documented WebKit settlement delay. These are known driver/synchronization debt, not general examples to copy. If one is changed, prefer replacing the delay with a named readiness condition when the platform exposes one.
 
 Treat a flaky test as deterministic behavior whose controlling condition is not known yet. Reproduce it, inspect the visible output and available diagnostics, and identify that condition before adding a delay, retry, or workaround. Do not make the whole suite slower to mask one uncertain test. Most application animation durations are already reduced to zero when `navigator.webdriver` is present; tests should wait for the resulting UI state, not replay production timing. Restoring production timing to reach an otherwise-unreachable state (such as the loading phase) is a backdoor decision, not a synchronization tactic — see [Sanctioned Backdoors](#sanctioned-backdoors).
+
+One controlling condition is worth naming because it recurs. On desktop, typing into a thought triggers distraction-free typing, which **unmounts** the toolbar, nav bar, and hamburger menu. It does not fire on the keystroke: it fires when the throttled edit commits `EDIT_THROTTLE` (500 ms) later, so a test that types and then clicks one of those elements has a ~500 ms budget that CI load can exhaust. The failure surfaces as Puppeteer's `Node is detached from document` when the unmount lands between resolving the element and clicking it, or as a selector timeout once the element is gone — nothing brings the HUD back but a pointer event ([`openSidebar`](../src/e2e/puppeteer/helpers/openSidebar.ts) moves the mouse for exactly this reason). When the act is a toolbar click, prefer an arrange that does not type: `paste` + `clickThought`.
 
 ### 4. Compose helpers
 
@@ -445,7 +447,9 @@ We use a fixed-domain pool rather than the ephemeral `*.trycloudflare.com` quick
 
 ##### How a run claims a tunnel
 
-[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run `TUNNEL_TOKEN` (the Vite app-gate secret — see `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts)).
+[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run `TUNNEL_TOKEN` (the Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts)).
+
+The gate must see `?__token=` on the **document** request. Vite rewrites `Accept: text/html` navigations (Chrome, Safari, BrowserStack iOS) to `/index.html` and drops the query string; curl's default `Accept: */*` does not take that path. That is why curl can 200 while a browser shows the gate's `Forbidden` on the same URL. The middleware reads Connect's `originalUrl` so the token survives that rewrite. The device URL is always `https://<hostname>/?__token=…` (slash before the query). Concatenating onto `https://host` without that slash yields `https://host?__token=`, which iOS Safari does not load as `/` — the first WDIO session fails `before` while later `specFileRetries` can still pass.
 
 A named tunnel accepts multiple simultaneous connectors (that's Cloudflare's HA design) and the edge load-balances **per request** across all of them. So once a run has attached its own connector it can no longer tell whether a hostname is exclusively its own: a `200` might be its own server and a `403` someone else's, at random. A single successful probe proves nothing — confirmed empirically, where two concurrent runs both got a clean `200` on the same tunnel and then had cross-talk for the rest of their sessions.
 
@@ -485,6 +489,8 @@ Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 - **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding `e2e/` and `.claude/`. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.js`](../src/setupTests.js). Used by `yarn test`.
 - **`puppeteer-e2e`** — custom environment [`puppeteer-environment.ts`](../src/e2e/puppeteer-environment.ts), setup file [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), only includes `src/e2e/puppeteer/__tests__/*.ts`. The `vite-plugin-terminal` plugin pipes `console.log` from the page back to the terminal so Puppeteer test failures are debuggable. Used by `yarn test:puppeteer`; locally, [`test-puppeteer.sh`](../src/e2e/puppeteer/test-puppeteer.sh) also starts Browserless and a dedicated Vite dev server on port 2552.
 
+Exceptions thrown inside a DOM event listener never propagate out of `dispatchEvent` — jsdom catches them and re-reports them as an `error` event on `window`. Vitest turns that event back into a run-failing unhandled error, but only while nothing else is listening for `error`, and [`initEvents.ts`](../src/util/initEvents.ts) registers a listener at module scope to drive the error banner, which suppresses that conversion in any test that imports app code. [`setupTests.js`](../src/setupTests.js) restores it by re-emitting trusted `error` events as `uncaughtException`, so a test that crashes on click fails the run instead of passing silently. Tests that dispatch a synthetic `ErrorEvent` to exercise the banner itself are unaffected, since events constructed in test code are not trusted.
+
 iOS tests are not part of the Vitest config — they run under WDIO, see [WebdriverIO tests](#5-webdriverio-tests).
 
 ### Isolation and cleanup
@@ -500,7 +506,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 ```
 
-`initStore` clears the shared store and enables fake timers. `createTestApp` additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the local YJS database, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
+`initStore` is async and enables fake timers. By default, it drops and reinitializes the in-memory TreeCRDT thoughtspace, clears the shared Redux store, and resets every [ministore](glossary.md#m) to its initial state. Ministores are module-level singletons that Vitest isolates per test file, not per test. `initStore({ persist: true })` skips the thoughtspace, Redux, and ministore resets. Pass it directly to `beforeEach(initStore)` so Vitest awaits it; wrappers must explicitly `await initStore()`. `createTestApp` resets ministores before `initialize({ storage: 'memory' })` runs, and additionally mounts the React tree, initializes persistence and event handlers, and enables the test drag-and-drop backend. `cleanupTestApp` clears storage, the TreeCRDT thoughtspace, the store, and event handlers, and flushes pending timers. Do not share fixture state between tests or rely on test execution order.
 
 ## Sanctioned Backdoors
 
@@ -512,16 +518,16 @@ Integration tests are blackbox, but named helpers may take shortcuts during arra
 | Incidental app setup | Arrange | [`command`](../src/e2e/puppeteer/helpers/command.ts), [`openModal`](../src/e2e/puppeteer/helpers/openModal.ts), [`setTheme`](../src/e2e/puppeteer/helpers/setTheme.ts) | Use only when the command, modal entry point, or Settings navigation is not under test. |
 | Browser/driver limitation | Arrange | Puppeteer [`setSelection`](../src/e2e/puppeteer/helpers/setSelection.ts) and [`closeKeyboard`](../src/e2e/puppeteer/helpers/closeKeyboard.ts); iOS [`setSelection`](../src/e2e/iOS/helpers/setSelection.ts) | Simulate browser state the driver cannot reliably produce. The subsequent behavior under test must still use a real user entry point. |
 | Visual snapshot stabilization | Arrange | [`hide`](../src/e2e/puppeteer/helpers/hide.ts), [`hideVisibility`](../src/e2e/puppeteer/helpers/hideVisibility.ts), [`hideHUD`](../src/e2e/puppeteer/helpers/hideHUD.ts), [`showMousePointer`](../src/e2e/puppeteer/helpers/showMousePointer.ts), [`screenshot`](../src/e2e/puppeteer/helpers/screenshot.ts) | DOM/style mutation is allowed only to remove irrelevant nondeterminism or expose input position in a visual test. Do not hide the subject of the snapshot. |
-| Test environment controls | Arrange | [`deviceEmulation`](../src/e2e/puppeteer/helpers/deviceEmulation.ts), [`setConnectionStatus`](../src/e2e/puppeteer/helpers/setConnectionStatus.ts), [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable controls in the corresponding `afterEach` or `afterAll` hook unless per-test page isolation resets them. The control must not change the semantic outcome under test. |
+| Test environment controls | Arrange | [`deviceEmulation`](../src/e2e/puppeteer/helpers/deviceEmulation.ts), [`setConnectionStatus`](../src/e2e/puppeteer/helpers/setConnectionStatus.ts), [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), the thoughtspace storage selection in [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable controls in the corresponding `afterEach` or `afterAll` hook unless per-test page isolation resets them. The control must not change the semantic outcome under test. |
 | Structural assertion | Assert | [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts) | Export the thought tree as plaintext. Do not make additional assertions on Redux state. |
-| Non-visual synchronization | Wait | [`waitForContextHasChildWithValue`](../src/e2e/puppeteer/helpers/waitForContextHasChildWithValue.ts), [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts), [`waitForState`](../src/e2e/puppeteer/helpers/waitForState.ts) | Use only when persistence or another prerequisite has no immediate visual signal. This is synchronization, not the test's assertion; assert the final user-visible result separately. |
+| Non-visual synchronization | Wait | [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts), [`waitForState`](../src/e2e/puppeteer/helpers/waitForState.ts) | Use only when persistence or another prerequisite has no immediate visual signal. This is synchronization, not the test's assertion; assert the final user-visible result separately. |
 | Timing/environment spoofing | Arrange | [`reloadWithProductionTiming`](../src/e2e/puppeteer/helpers/reloadWithProductionTiming.ts) (spoofs `navigator.webdriver` to restore production animation timing) | Use only for a state that cannot exist under test timing (such as the loading phase). Justify in the helper's doc comment and state how the spoof is undone (per-test page isolation counts, but say so). Subsequent waits must still name conditions rather than replay production durations. |
 
 DOM reads are different from backdoors: inline `page.evaluate`/`browser.execute` may read user-visible DOM when no helper exists, though a repeated read should become a named helper. It may not dispatch actions, mutate app state, set test flags, or write to the DOM.
 
 Backdoors are never the act. The behavior under test always goes through a real user entry point (Principle 2).
 
-A few older tests access `window.em`, set test flags inline, mutate the DOM, or hand-roll waits. Known examples include [`spaceToIndent.ts`](../src/e2e/puppeteer/__tests__/spaceToIndent.ts), the specialized initialization test in [`startup.ts`](../src/e2e/puppeteer/__tests__/startup.ts), replication-delay setup in [`scroll.ts`](../src/e2e/puppeteer/__tests__/scroll.ts), and drag-hover timing in [`drag-and-drop.ts`](../src/e2e/puppeteer/__tests__/drag-and-drop.ts). They predate this policy; do not imitate them. When one is materially changed, move the exception behind a named helper and add it to the category table.
+A few older tests access `window.em`, set test flags inline, mutate the DOM, or hand-roll waits. Known examples include the specialized initialization test in [`startup.ts`](../src/e2e/puppeteer/__tests__/startup.ts), replication-delay setup in [`scroll.ts`](../src/e2e/puppeteer/__tests__/scroll.ts), and drag-hover timing in [`drag-and-drop.ts`](../src/e2e/puppeteer/__tests__/drag-and-drop.ts). They predate this policy; do not imitate them. When one is materially changed, move the exception behind a named helper and add it to the category table.
 
 ## Reviewing Tests
 
@@ -557,16 +563,17 @@ There are three helper directories. Use them before reaching for raw Redux dispa
 
 The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup and operations that are otherwise verbose to write by hand:
 
-- [`createTestApp`](../src/test-helpers/createTestApp.tsx) — mounts `<App />` into the JSDOM environment via `@testing-library/react`, runs `initialize()`, swaps in `react-dnd-test-backend`, opts into fake timers, and closes the welcome modal. Use this when a test touches the rendered app. Pair every call with `cleanupTestApp` (it clears `localStorage`, the local YJS db, the store, and event handlers).
-- [`initStore`](../src/test-helpers/initStore.ts) — initializes the store without mounting the React tree, for store-level tests that don't need a DOM.
-- [`importToContext`](../src/test-helpers/importToContext.ts) — seeds the store with a tree from a multi-line plaintext outline (the same format the `Import` modal accepts). Most fixture setup goes through this.
+- [`createTestApp`](../src/test-helpers/createTestApp.tsx) — mounts `<App />` into the JSDOM environment via `@testing-library/react`, runs `initialize({ storage: 'memory' })`, swaps in `react-dnd-test-backend`, opts into fake timers, and closes the welcome modal. Use this when a test touches the rendered app. Pair every call with `cleanupTestApp` (it clears `localStorage`, the TreeCRDT thoughtspace, the store, and event handlers).
+- [`initStore`](../src/test-helpers/initStore.ts) — async store setup without mounting the React tree. Clears Redux state, resets ministores via `resetStores`, reinitializes the in-memory thoughtspace, and enables fake timers. Await it (or pass it directly to `beforeEach`).
+- [`importToContext`](../src/test-helpers/importToContext.ts) — seeds the store with a tree from a multi-line plaintext outline (the same format the `Import` modal accepts). Most fixture setup goes through this. It throws when the destination context does not resolve, so a mis-specified path fails the test instead of quietly importing nothing.
 - [`dispatch`](../src/test-helpers/dispatch.ts) — a thin wrapper that lets a test dispatch synchronously without re-typing `store.dispatch(...)` plumbing.
 - **Operate-by-value helpers.** Where a test would otherwise need to look up a `ThoughtId` to dispatch an action, prefer the value-keyed variants:
-  - [`newThoughtAtFirstMatch`](../src/test-helpers/newThoughtAtFirstMatch.ts), [`editThoughtByContext`](../src/test-helpers/editThoughtByContext.ts), [`moveThoughtAtFirstMatch`](../src/test-helpers/moveThoughtAtFirstMatch.ts), [`deleteThoughtAtFirstMatch`](../src/test-helpers/deleteThoughtAtFirstMatch.ts), [`addMulticursorAtFirstMatch`](../src/test-helpers/addMulticursorAtFirstMatch.ts).
+  - [`setCursorFirstMatch`](../src/test-helpers/setCursorFirstMatch.ts), [`newThoughtAtFirstMatch`](../src/test-helpers/newThoughtAtFirstMatch.ts), [`editThoughtByContext`](../src/test-helpers/editThoughtByContext.ts), [`moveThoughtAtFirstMatch`](../src/test-helpers/moveThoughtAtFirstMatch.ts), [`deleteThoughtAtFirstMatch`](../src/test-helpers/deleteThoughtAtFirstMatch.ts), [`addMulticursorAtFirstMatch`](../src/test-helpers/addMulticursorAtFirstMatch.ts).
+  - Every one of them **throws** when the context does not resolve; the cursor and multicursor helpers do so through [`contextToPathOrThrow`](../src/test-helpers/contextToPathOrThrow.ts), the rest through their own guards. This is deliberate ([Principle 4](#4-compose-helpers), [Principle 7](#7-make-false-positives-difficult)): `contextToPath` returns `null` for a context that does not exist in the current state, and a helper that passed that `null` through would set the cursor to `null` — indistinguishable from an explicit `setCursorFirstMatch(null)` — so a cursor-dependent reducer such as `categorize` would early-return and the test would pass against an untouched tree. Passing `null` explicitly to `setCursorFirstMatch` still clears the cursor; only a failed lookup throws.
 - **Read-by-value helpers.** [`getAllChildrenByContext`](../src/test-helpers/getAllChildrenByContext.ts), [`getChildrenRankedByContext`](../src/test-helpers/getChildrenRankedByContext.ts), [`getAllChildrenAsThoughtsByContext`](../src/test-helpers/getAllChildrenAsThoughtsByContext.ts), [`attributeByContext`](../src/test-helpers/attributeByContext.ts), [`contextToThought`](../src/test-helpers/contextToThought.ts).
+- [`multicursorValues`](../src/test-helpers/multicursorValues.ts) — the sorted thought values of the current multicursor set, so multiselect assertions read as values rather than ids.
 - [`expectPathToEqual`](../src/test-helpers/expectPathToEqual.ts) — Jest matcher that compares paths by their thought *values* rather than ids, so test failures are readable.
-- [`checkDataIntegrity`](../src/test-helpers/checkDataIntegrity.ts) — assertions that catch parent/child mismatches, missing Lexemes, and orphaned thoughts. Useful as a final assertion in mutation-heavy tests.
-- [`dataProviderTest`](../src/test-helpers/dataProviderTest.ts) — the alternate `DataProvider` implementation used by tests that exercise the storage layer without going through Yjs. (See [persistence.md](persistence.md) for the live YJS provider.)
+- [`dataProviderTest`](../src/test-helpers/dataProviderTest.ts) — shared assertions for storage providers that implement the data provider interface.
 
 ### `src/e2e/puppeteer/helpers/` — for Puppeteer tests
 
@@ -576,6 +583,7 @@ Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/hel
 |---|---|---|
 | Click or tap a selector | [`click`](../src/e2e/puppeteer/helpers/click.ts) | Uses a mouse click on desktop and automatically calls Puppeteer's `page.tap` when the page is using a mobile-emulation viewport. |
 | Click a thought or bullet by value | [`clickThought`](../src/e2e/puppeteer/helpers/clickThought.ts), [`clickBullet`](../src/e2e/puppeteer/helpers/clickBullet.ts) | Resolves the semantic target and performs an element click. Use `click` when the distinction between mouse and emulated touch input is under test. |
+| Click a toolbar button, and optionally a dropdown value | [`clickToolbar`](../src/e2e/puppeteer/helpers/clickToolbar.ts) | Clicks the toolbar button with the given label — typed as [`CommandLabel`](../src/@types/CommandLabel.ts), so a label that belongs to no command does not compile — e.g. `clickToolbar('Outdent')`, centering it in the horizontally scrolling toolbar first so that a button off screen, or under one of the toolbar's opaque scroll arrows, is still clicked. Further arguments are aria-labels matched within the button, which is where a picker is rendered, so a dropdown value follows its button, e.g. `clickToolbar('Sort Picker', 'Alphabetical')`. A value that is ambiguous on its own throws, naming the groups it matched; give the group first to disambiguate, e.g. `clickToolbar('Text Color', 'background color swatches', 'green')`. |
 | Type text | [`keyboard.type`](../src/e2e/puppeteer/helpers/keyboard.ts) | Sends text through Puppeteer's keyboard API. |
 | Press a key or shortcut | [`press`](../src/e2e/puppeteer/helpers/press.ts) | Presses a key with optional `alt`, `ctrl`, `meta`, and `shift` modifiers. |
 | Swipe/command gesture | [`gesture`](../src/e2e/puppeteer/helpers/gesture.ts) | Emits `touchStart`, stepped `touchMove` events, and `touchEnd` for the supplied direction path or command gesture. |
@@ -584,7 +592,7 @@ Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/hel
 | Scroll | [`scroll`](../src/e2e/puppeteer/helpers/scroll.ts), [`scrollBy`](../src/e2e/puppeteer/helpers/scrollBy.ts), [`scrollIntoView`](../src/e2e/puppeteer/helpers/scrollIntoView.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts) | Scrolls the window or a named container; use the narrowest helper that expresses the intent. |
 | Emulate a mobile device | [`emulate`](../src/e2e/puppeteer/helpers/emulate.ts) | Applies a Puppeteer device profile before touch-specific input. |
 
-Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), [`waitForContextHasChildWithValue`](../src/e2e/puppeteer/helpers/waitForContextHasChildWithValue.ts), and [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts). Every Puppeteer test should read as a sequence of these helpers.
+Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), and [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts). Every Puppeteer test should read as a sequence of these helpers.
 
 The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM.
 
@@ -592,11 +600,19 @@ The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exp
 
 The iOS suite has a separate driver vocabulary in [`../src/e2e/iOS/helpers/`](../src/e2e/iOS/helpers): [`tap`](../src/e2e/iOS/helpers/tap.ts) emits a W3C pointer action, [`keyboard.type`](../src/e2e/iOS/helpers/keyboard.ts) uses WDIO `sendKeys`, and [`gesture`](../src/e2e/iOS/helpers/gesture.ts) emits a touch pointer path. Helpers such as [`tapReturnKey`](../src/e2e/iOS/helpers/tapReturnKey.ts), [`hideKeyboardByTappingDone`](../src/e2e/iOS/helpers/hideKeyboardByTappingDone.ts), and [`showEditMenu`](../src/e2e/iOS/helpers/showEditMenu.ts) cross into native iOS UI when Web content APIs are insufficient.
 
+Tap toolbar buttons with [`tapToolbar`](../src/e2e/iOS/helpers/tapToolbar.ts), the iOS counterpart to Puppeteer's [`clickToolbar`](../src/e2e/puppeteer/helpers/clickToolbar.ts), rather than tapping the button element directly. Most of the toolbar's buttons sit outside a phone-width viewport until the horizontally scrolling toolbar is scrolled, and a tap aimed at an off-screen button hits nothing — silently, since the command simply never runs. `tapToolbar` centers the button first (the toolbar's edges are overlapped by opaque scroll arrows that swallow a tap on a button scrolled only just into view) and taps with a touch pointer, which [`ToolbarButton`](../src/components/ToolbarButton.tsx) requires on a touch device because it binds `onTouchStart`/`onTouchEnd` rather than `onMouseDown`/`onClick`.
+
 Do not import Puppeteer helpers into iOS tests or assume identical driver behavior. Keep the test vocabulary parallel at the level of user intent, not implementation.
 
 ## Test Flags
 
 [testFlags](../src/e2e/testFlags.ts) are used to alter runtime behavior of the app during tests. This is generally forbidden, as the automated test environment should be as close as possible to production so that it is testing the same behavior the end user sees. But there are some conditions that are difficult or impossible to create through normal user behavior (e.g. network latency) or that can enhance test readability (e.g. visualizations) when runtime alteration is warranted.
+
+### Thoughtspace storage
+
+Puppeteer preloads `testFlags.thoughtspaceStorage` before the application starts. Browser tests use in-memory storage by default, while persistence-specific suites call `usePersistentTreecrdtStorage` to use OPFS. The application entry point passes the selected storage explicitly to `initialize`, defaulting to persistent storage when no test override is present.
+
+Test durable persistence in a regular browser context. Private browsing storage is temporary: Safari Private Browsing falls back to memory and loses thoughts on reload, while Chromium Incognito keeps OPFS only until the private session ends.
 
 ### Drag-and-drop visualization
 
@@ -635,7 +651,9 @@ Test, Puppeteer, BrowserStack, and Vercel Preview each carry the same `paths-ign
 - **Documentation and agent/editor configuration** — `**/*.md`, `docs/`, `.github/instructions/`, `.github/skills/`, `.claude/`, `.agents/`, `.vscode/`, `.hooks/`.
 - **Native platform projects** — `android/`, `ios/`, `desktop/`, and `assets/` (the icon and splash sources generated into the first two).
 
-A change set confined to those paths cannot affect what any of the four workflows tests: `yarn build` is web-only (`build:packages`, `build:styles`, `vite build`), `yarn test` reads only `src/`, and BrowserStack exercises mobile Safari over a tunnel rather than the Capacitor app. None of the native directories contains a JS or TS file, and the web favicons come from `public/`, not `assets/`. **If a Capacitor asset is ever wired into the Vite build, the native entries must be removed** — otherwise a real change would ship untested.
+A change set confined to those paths is almost always unable to affect what any of the four workflows tests: `yarn build` is web-only (`build:packages`, `build:styles`, `vite build`), and BrowserStack exercises mobile Safari over a tunnel rather than the Capacitor app. None of the native directories contains a JS or TS file, and the web favicons come from `public/`, not `assets/`. **If a Capacitor asset is ever wired into the Vite build, the native entries must be removed** — otherwise a real change would ship untested.
+
+One narrow gap is worth knowing about. `yarn test` is `vitest --project unit`, whose `**/__tests__/**/*.ts` glob also collects the workspaces under `scripts/`, and the issue classifier's sample-integrity tests ([`scripts/issue-classifier/src/__tests__/samples.ts`](../scripts/issue-classifier/src/__tests__/samples.ts)) read the prompt and samples they guard as fixtures. Those assets live beside the code in `scripts/issue-classifier/`, so a sample edit is a `.jsonl` change that runs Test normally — but the prompt itself is `scripts/issue-classifier/instructions.md`, and `**/*.md` is filtered. A pull request that edits only the prompt therefore skips the checks on it, so run `yarn test` locally when editing it.
 
 Because `paths-ignore` skips a workflow outright, **no check is reported at all** rather than a skipped or passing one. That is only viable while these are not required status checks on `main`; making any of them required again would leave filtered pull requests waiting on a check that never arrives. **Lint is deliberately left unfiltered and required**, so every pull request — including a documentation-only one — still reports exactly one check.
 
@@ -695,7 +713,7 @@ When a pull request adds a regression test alongside a bug fix, it must satisfy 
 
 The [`tdd-write-failing-test` skill](../.github/skills/tdd-write-failing-test/SKILL.md) temporarily stages the red test as `it.skip` with a bare issue-URL comment. Its focused `run-test` runner unskips the test for local validation, so a skipped test can never masquerade as a pass. The TDD workflow likewise unskips it against the pre-fix implementation and expects the valid assertion failure described above. After the fix, remove `.skip`; the normal Test/Puppeteer/BrowserStack workflow must run the unchanged assertion and pass. Never merge the transient skip.
 
-The TDD workflow detects added `it(...)`/`test(...)` definitions in unit, Puppeteer, and iOS test files. It checks out the pre-fix implementation and overlays the changed test files — plus any changed test helpers, config, or setup they depend on — from the pull request. For tests that are not staged with the transient skip, the normal workflows prove the green side separately.
+The TDD workflow detects added `it(...)`/`test(...)` definitions in unit, Puppeteer, and iOS test files. It checks out the pre-fix implementation and overlays the changed test files — plus any changed test infrastructure they depend on (helpers, config/setup directories, and shared `src/e2e/*.ts` files) — from the pull request. For tests that are not staged with the transient skip, the normal workflows prove the green side separately.
 
 By default, the pre-fix implementation is the PR's base commit. If the bug was introduced later or another commit is a better control, add this on its own line in the pull request description:
 
@@ -959,19 +977,23 @@ Test `enter` and `leave` on each of the following actions:
 
 ### Database operations and fake timers
 
-`initStore` and `createTestApp` enable fake timers. When a test calls `initialize()` or performs database work directly, explicitly flush the resulting scheduled work before asserting:
+`initStore` and `createTestApp` enable fake timers. When a test calls `initialize({ storage: 'memory' })` or performs database work directly, explicitly flush the resulting scheduled work before asserting:
 
 ```ts
 vi.useFakeTimers()
-await initialize()
+await initialize({ storage: 'memory' })
 await vi.runAllTimersAsync()
 ```
 
-> It looks like we must use fake timers if we want the `store` state to be updated based on database operations (e.g., if we use `initialize()` to reload the state). I think this is because the `thoughtspace` operations are asynchronous and don't call the store operations prior to the test ending. (I'm not sure why we didn't get other errors that made this clear.)
+> It looks like we must use fake timers if we want the `store` state to be updated based on database operations (e.g., if we use `initialize({ storage: 'memory' })` to reload the state). I think this is because the `thoughtspace` operations are asynchronous and don't call the store operations prior to the test ending. (I'm not sure why we didn't get other errors that made this clear.)
 
 https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
+
+### Automated flaky-test detection
+
+The `Puppeteer Flaky` workflow (`.github/workflows/puppeteer-flaky.yml`) stress-runs the full Puppeteer suite nightly on `main` (15 iterations by default; `gh workflow run puppeteer-flaky.yml -f iterations=5` to run manually). `scripts/flaky-report.mjs` aggregates the Vitest JSON reports into a workflow summary that distinguishes intermittent failures (likely flakes) from consistent ones (likely regressions). When failures are found, the workflow sends a Discord notification (if the `DISCORD_WEBHOOK_URL` repository secret is set) and files a tracking issue for each **intermittently** failing test — titled `Flaky test: <file> > <full name>`, labelled `test`, and deduplicated by exact title match against open issues, so a test that is already tracked is not re-filed. A test that fails every iteration is a consistent failure rather than a flake; it appears in the summary and the Discord alert but is not filed as an issue.
 
 ### Triggering GitHub Actions workflows manually
 

@@ -146,11 +146,11 @@ jobs:
           # All test files (union of the above)
           ALL_TEST_FILES=$(printf '%s\n' "$UNIT_FILES" "$PUPPETEER_FILES" "$IOS_FILES" | sed '/^$/d' | sort -u)
 
-          # Test infrastructure: helpers, config, and setup used by the tests. These are
-          # checked out onto base alongside the test files, since a test that uses a new
-          # helper cannot compile on base without it.
+          # Test infrastructure: helpers, config, setup, and shared e2e root files used
+          # by the tests. These are checked out onto base alongside the test files, since
+          # a test/support change cannot compile on base without its infrastructure.
           HELPER_FILES=$(echo "$CHANGED_FILES" \
-            | grep -E '^src/(test-helpers/|e2e/[^/]+/(helpers|config|setup)/).*\.tsx?$' || true)
+            | grep -E '^src/test-helpers/.*\.tsx?$|^src/e2e/[^/]+\.tsx?$|^src/e2e/[^/]+/(helpers|config|setup)/.*\.tsx?$' || true)
 
           # Non-test application files: TypeScript source files that are not test files,
           # test helpers, or e2e infrastructure (helpers, config, setup).
@@ -361,20 +361,32 @@ jobs:
             exit 0
           fi
 
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
+
           # Check out each test file directly from the PR head. This reliably handles
           # both modified files and brand-new test files (including new directories),
           # where git apply --3way can fail because there is no base blob to merge.
           echo "=== Checking out test files from PR head ==="
           for f in $UNIT_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           # Test infrastructure the changed tests may depend on, e.g. a new helper.
           HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
           for f in $HELPER_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           echo "empty=false" >> "$GITHUB_OUTPUT"
@@ -481,19 +493,31 @@ jobs:
             exit 0
           fi
 
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
+
           # Test support is part of the test, not the application fix. Check it out
           # with the test so the base-branch run reaches the behavioral assertion.
           echo "=== Checking out puppeteer test files and support from PR head ==="
           for f in $PUPPETEER_FILES $PUPPETEER_SUPPORT_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           # Test infrastructure the changed tests may depend on, e.g. a new helper.
           HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
           for f in $HELPER_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           echo "empty=false" >> "$GITHUB_OUTPUT"
@@ -610,19 +634,31 @@ jobs:
             exit 0
           fi
 
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
+
           # Test support is part of the test, not the application fix. Check it out
           # with the test so the base-branch run reaches the behavioral assertion.
           echo "=== Checking out iOS test files and support from PR head ==="
           for f in $IOS_FILES $IOS_SUPPORT_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           # Test infrastructure the changed tests may depend on, e.g. a new helper.
           HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
           for f in $HELPER_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           echo "empty=false" >> "$GITHUB_OUTPUT"

@@ -96,10 +96,13 @@ export const config: WebdriverIO.Config = {
         console.info(`cloudflared tunnel: ${claimed.name} (${claimed.url})`)
       }
 
-      // Append tunnel token to the URL so the Vite token gate allows access
+      // Append the app-gate token via the URL API so the href always includes `/` before `?`.
+      // String concat on `https://host` produces `https://host?__token=`, which iOS Safari does
+      // not load as `/` — the first WDIO session then fails `before` while later retries pass.
       if (process.env.TUNNEL_TOKEN && process.env.CLOUDFLARED_URL) {
-        const sep = process.env.CLOUDFLARED_URL.includes('?') ? '&' : '?'
-        process.env.CLOUDFLARED_URL = `${process.env.CLOUDFLARED_URL}${sep}__token=${process.env.TUNNEL_TOKEN}`
+        const origin = new URL(process.env.CLOUDFLARED_URL)
+        origin.searchParams.set('__token', process.env.TUNNEL_TOKEN)
+        process.env.CLOUDFLARED_URL = origin.href
       }
 
       await baseConfig.onPrepare()

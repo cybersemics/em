@@ -24,8 +24,13 @@ import createThought from './createThought'
 import moveThought from './moveThought'
 import setCursor from './setCursor'
 
+export interface categorizePayload {
+  /** The value of the new category. Default: '' (an empty category for the user to fill in). */
+  value?: string
+}
+
 /** Inserts a new thought and adds the given thought as a subthought. */
-const categorize = (state: State): State => {
+const categorize = (state: State, { value = '' }: categorizePayload = {}): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -74,7 +79,7 @@ const categorize = (state: State): State => {
   return reducerFlow([
     createThought({
       path: rootedParentOf(state, simplePath),
-      value: '',
+      value,
       rank: newRank,
       id: newThoughtId,
     }),
@@ -103,14 +108,19 @@ const categorize = (state: State): State => {
           )),
     setCursor({
       path: appendToPath(cursorParent, newThoughtId),
-      offset: 0,
+      // Place the caret at the end of the category so the user can keep typing where its value leaves off. For the
+      // default empty category this is the usual offset 0.
+      offset: value.length,
       isKeyboardOpen: true,
     }),
   ])(state)
 }
 
 /** A Thunk that dispatches a 'categorize` action. */
-export const categorizeActionCreator = (): Thunk => dispatch => dispatch({ type: 'categorize' })
+export const categorizeActionCreator =
+  (payload?: categorizePayload): Thunk =>
+  dispatch =>
+    dispatch({ type: 'categorize', ...payload })
 
 export default categorize
 

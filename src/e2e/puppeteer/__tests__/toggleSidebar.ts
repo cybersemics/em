@@ -4,7 +4,6 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
-import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -39,9 +38,16 @@ describe('toggle sidebar', () => {
     await click(editableNodeHandle, { offset: 2 })
 
     await click('[aria-label=menu]')
-    await waitUntil(() => !document.querySelector('[data-testid="sidebar"][aria-hidden="true"]'))
+    // Wait for the sidebar to be open (mounted and not inert). The sidebar subtree only mounts
+    // while open, so checking for the absence of [inert] alone would pass before it even mounts.
+    await waitUntil(() => {
+      const sidebar = document.querySelector('[data-testid="sidebar"]')
+      return !!sidebar && !sidebar.hasAttribute('inert')
+    })
     await press('Escape')
-    await page.locator('[data-testid="sidebar"][aria-hidden="true"]').wait()
+    // The sidebar subtree unmounts entirely once the close animation completes,
+    // so wait for it to be removed from the DOM.
+    await waitUntil(() => !document.querySelector('[data-testid="sidebar"]'))
 
     // the focus must be after 'e' after cursor down
     const textContext = await getSelection().focusNode?.textContent
