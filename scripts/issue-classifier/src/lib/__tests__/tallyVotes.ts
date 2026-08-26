@@ -65,4 +65,51 @@ describe('tallyVotes', () => {
   it('returns null when no vote is usable, so the caller can retry', () => {
     expect(tallyVotes(['not json', '{}', vote('🥞 Flat Render')], TITLES)).toBeNull()
   })
+
+  it('calls it a refactor on a majority, and reports the count', () => {
+    const result = tallyVotes(
+      [
+        vote('📐 Layout', 'high', { refactor: true }),
+        vote('📐 Layout', 'high', { refactor: true }),
+        vote('📐 Layout', 'high'),
+      ],
+      TITLES,
+    )
+    expect(result).toMatchObject({ refactor: true, refactorVotes: 2, milestone: '📐 Layout' })
+  })
+
+  it('counts refactor votes across differing milestones, since the two are independent', () => {
+    // "This is a pure refactor" is the same claim whichever subsystem the vote named.
+    const result = tallyVotes(
+      [
+        vote('📐 Layout', 'high', { refactor: true }),
+        vote('🧤 Drag & Drop', 'high', { refactor: true }),
+        vote('👆 Multiselect', 'high'),
+      ],
+      TITLES,
+    )
+    expect(result).toMatchObject({ refactor: true, refactorVotes: 2 })
+  })
+
+  it('does not call it a refactor on an even split, which is the recoverable mistake', () => {
+    const result = tallyVotes(
+      [vote('📐 Layout', 'high', { refactor: true }), vote('📐 Layout', 'high', { refactor: false })],
+      TITLES,
+    )
+    expect(result).toMatchObject({ refactor: false, refactorVotes: 1 })
+  })
+
+  it('ignores a refactor vote that named a milestone which is not open', () => {
+    // The vote was already discarded as invalid output; it must not vote on refactor-ness either.
+    const result = tallyVotes([vote('🥞 Flat Render', 'high', { refactor: true }), vote('📐 Layout', 'high')], TITLES)
+    expect(result).toMatchObject({ refactor: false, refactorVotes: 0, validVotes: 1 })
+  })
+
+  it('keeps the refactor verdict independent of which milestone won', () => {
+    const result = tallyVotes(
+      [vote(null, 'high', { refactor: true }), vote(null, 'high', { refactor: true }), vote('📐 Layout', 'high')],
+      TITLES,
+    )
+    expect(result).toMatchObject({ milestone: null, refactor: true })
+  })
 })

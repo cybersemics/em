@@ -1,8 +1,8 @@
 # Issue Classifier
 
-Automatic issue classification for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are subsystems rather than releases, so the milestone is the issue's category.
+Automatic issue classification for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are subsystems rather than releases, so the milestone is the issue's category. It also marks pure refactors with the `refactor` label.
 
-Success is silent — the assigned milestone is the whole result. The only issues left unclassified are those that match no existing milestone, where a comment asks @raineorshine for the category instead.
+Success is silent — the assigned milestone is the whole result. The only issues left unclassified are those that match no existing milestone and are not refactors, where a comment asks @raineorshine for the category instead.
 
 ## Setup
 
@@ -29,6 +29,16 @@ Without an issue number the script falls back to `ISSUE_NUMBER` (set by a manual
 The prompt is assembled from two halves. The system message is [`instructions.md`](instructions.md) — what each milestone means, real example issue titles from it, and the rules for choosing between them. The user message carries the **currently open** milestones, fetched from the GitHub API on every run, so a milestone created or closed today is reflected immediately with no file to update. The model may only choose a title from that list, or `null`.
 
 Five independent samples are drawn in one request (self-consistency voting via the Chat Completions `n` parameter, which bills the input once and only multiplies the tiny output). Each vote is resolved against the open milestones — leniently, so a dropped emoji or `and` for `&` still matches, while a milestone that is not open is discarded as invalid rather than counted. The modal vote wins.
+
+### The refactor label
+
+The same votes answer a second question: is this a pure refactor — restructuring code without changing anything a user could observe? A majority says so and the `refactor` label goes on. An even split does not, matching how a split confidence rounds: not labeling is the recoverable mistake.
+
+**The two verdicts are independent, and the refactor one never overrides the milestone.** A refactor still belongs to the subsystem whose code it restructures, and this repository has milestoned them that way all along — 27 of the 100 most recent `refactor`-labeled issues carry a milestone. So a refactor that fits a subsystem gets both.
+
+What the label does change is the other case. A refactor that fits no subsystem used to be a question; now it is an answer, and the label is posted instead of a comment. Only an issue that is neither placeable nor a refactor still reaches a human. [#5130](https://github.com/cybersemics/em/issues/5130) is the shape this was built for: a helper extraction that belongs to no subsystem in particular.
+
+The verdict is read off the issue rather than off its labels. The workflow fires on `issues.opened`, when a label nobody has applied yet is not there to read — an existing `refactor` label is evidence, but its absence is not evidence of the opposite. A label the issue already carries is not re-applied, so a manual dispatch against an already-triaged issue reports no write it did not make.
 
 **The milestone is assigned whenever the votes name one.** There is no confidence threshold, and a tie resolves to its modal winner rather than a question — a tie is a choice between two plausible buckets, not a failure to find one.
 
@@ -83,6 +93,8 @@ Declines are reported as two lines rather than one rate. A genuine no-fit means 
 The harness runs the exact pipeline the workflow uses over every sample and grades it strictly: the assigned milestone must equal the recorded one, and a sample the votes could not place counts as a prediction of "no milestone", because that is what production would do. It reports accuracy, precision over the assignments actually made, an outcome breakdown, the mismatches, and a calibration table — then **exits non-zero below `ISSUE_CLASSIFIER_MIN_ACCURACY`** (default 0.66, set below a blind baseline that has measured 70–76% across four runs), so a prompt edit that regresses accuracy fails rather than printing a slightly worse number nobody compares.
 
 Run it before and after editing the instructions. It makes model calls but never writes to any issue, and it is deliberately not part of CI.
+
+**The refactor verdict is printed but not graded, and the corpus is why.** The frame every sample was drawn from required a milestone a human had assigned, so a refactor that fits no subsystem — the case the label exists for — cannot appear in it. Five samples do carry the `refactor` label, and they carry it in `input.labels`, which the prompt hands straight to the model; scoring those would measure whether it can read a label back to you. So each run prints `+refactor` beside the milestone it chose and records the flag in `ISSUE_CLASSIFIER_EVAL_JSON`, which is enough to catch a prompt edit that starts calling everything a refactor, and stops short of a number that would look like a measurement without being one. Grading it honestly means drawing a set from issues labeled `refactor` with the label stripped from the input — worth doing before anyone tunes the refactor rule, and not worth pretending the current corpus can substitute.
 
 Run `yarn test` from the repository root after editing `instructions.md`. The sample-integrity tests guard it, but the Test workflow ignores `**/*.md`, so a pull request that touches only the prompt will not run them — see [Path filtering](../../docs/testing.md#path-filtering). Sample edits are `.jsonl` and do trigger Test normally.
 
@@ -142,9 +154,9 @@ Full results are [a comment on #5098](https://github.com/cybersemics/em/pull/509
 
 ## Workflow
 
-| Workflow                                                         | Script         | Trigger                                     | Description                                                                                        |
-| ---------------------------------------------------------------- | -------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| [Issue Classifier](../../.github/workflows/issue-classifier.yml) | `src/issue.ts` | Issue opened, or manual `workflow_dispatch` | Assigns the best-matching open milestone, or comments asking for a category when it cannot decide. |
+| Workflow                                                         | Script         | Trigger                                     | Description                                                                                                                    |
+| ---------------------------------------------------------------- | -------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| [Issue Classifier](../../.github/workflows/issue-classifier.yml) | `src/issue.ts` | Issue opened, or manual `workflow_dispatch` | Assigns the best-matching open milestone and labels a pure refactor, or comments asking for a category when it can do neither. |
 
 It needs the `OPENAI_API_KEY` repository secret; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing unclassified issue gets a milestone, plus an optional `dry` toggle that runs the inference and prints the decision without assigning anything.
 
@@ -154,4 +166,4 @@ gh workflow run issue-classifier.yml -f issue=5092 -f dry=true
 
 `workflow_dispatch` only appears once the workflow is on the default branch, so this is available after the workflow merges, not from a branch. Locally, `yarn issue 5092 --dry` runs the identical path with no writes and needs only an OpenAI key.
 
-An issue is skipped, silently and successfully, when it already has a milestone or is really a pull request. A human's classification is never overwritten.
+An issue is skipped, silently and successfully, when it already has a milestone or is really a pull request — before inference runs, so a skipped issue is never labeled either. A human's classification is never overwritten.

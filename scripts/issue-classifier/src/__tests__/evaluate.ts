@@ -38,8 +38,8 @@ describe('computeMetrics', () => {
     expect(computeMetrics(rows).outcomes).toEqual({
       assignedCorrect: 1,
       assignedWrong: 2,
-      askedButFitted: 1,
-      askedCorrectly: 1,
+      unassignedButFitted: 1,
+      unassignedCorrectly: 1,
     })
   })
 
@@ -114,6 +114,8 @@ describe('grade', () => {
     totalVotes: 5,
     tied: false,
     confidence: 'high',
+    refactor: false,
+    refactorVotes: 0,
     rationale: '',
     secondChoice: null,
   }

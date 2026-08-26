@@ -62,6 +62,15 @@ export interface EvalRow {
   /** Whether the vote tied. Recorded for measurement only; a tie assigns its modal winner. */
   tied: boolean
   confidence: Confidence
+  /**
+   * Whether the votes judged the issue a pure refactor, which would have applied the `refactor`
+   * label. Recorded but never graded: the corpus was drawn from issues a human had milestoned, so it
+   * holds no refactor-without-milestone cases, and the five samples that do carry the label carry it
+   * in `input.labels`, which the prompt hands to the model. Scoring that would measure whether the
+   * model can read a label back, not whether it can recognize a refactor. Optional so the metric
+   * fixtures, which are about milestone accuracy, stay about milestone accuracy.
+   */
+  refactor?: boolean
 }
 
 /** Aggregate metrics computed from a set of graded predictions. */
@@ -72,10 +81,14 @@ export interface EvalMetrics {
   outcomes: {
     assignedCorrect: number
     assignedWrong: number
-    /** Asked a human even though a milestone was recorded — a miss, but a safe one. */
-    askedButFitted: number
-    /** Asked a human where asking was the right answer. */
-    askedCorrectly: number
+    /**
+     * Left the milestone empty even though one was recorded — a miss, but a safe one. Named for the
+     * absent milestone rather than for asking, because not every unassigned issue asks now: a pure
+     * refactor that fits no subsystem is labeled instead.
+     */
+    unassignedButFitted: number
+    /** Left the milestone empty where that was the right answer. */
+    unassignedCorrectly: number
   }
   /** Of the milestones actually assigned, the fraction that were right. The cost of a silent mistake. */
   precision: { count: number; total: number; fraction: number }
@@ -228,8 +241,8 @@ export const computeMetrics = (rows: EvalRow[]): EvalMetrics => {
     outcomes: {
       assignedCorrect: assignedRows.filter(row => row.predicted === row.expected).length,
       assignedWrong: assignedRows.filter(row => row.predicted !== row.expected).length,
-      askedButFitted: rows.filter(row => !row.assigned && row.expected !== null).length,
-      askedCorrectly: rows.filter(row => !row.assigned && row.expected === null).length,
+      unassignedButFitted: rows.filter(row => !row.assigned && row.expected !== null).length,
+      unassignedCorrectly: rows.filter(row => !row.assigned && row.expected === null).length,
     },
     precision: {
       count: assignedRows.filter(row => row.predicted === row.expected).length,
@@ -309,7 +322,7 @@ export const formatSignalReport = (rows: EvalRow[]): string => {
   lines.push('')
   lines.push('Declines (the votes named no milestone):')
   lines.push(
-    `  genuine no-fit    : ${declined.filter(row => row.expected === null).length}  (nothing fitted; the comment is the signal)`,
+    `  genuine no-fit    : ${declined.filter(row => row.expected === null).length}  (nothing fitted; the refactor label or the comment is the signal)`,
   )
   lines.push(
     `  spurious decline  : ${declined.filter(row => row.expected !== null).length}  (a milestone plainly fitted — prompt defect)`,
@@ -331,10 +344,10 @@ export const formatReport = (metrics: EvalMetrics): string => {
 
   lines.push('')
   lines.push('Outcomes:')
-  lines.push(`  assigned, correct : ${metrics.outcomes.assignedCorrect}`)
-  lines.push(`  assigned, wrong   : ${metrics.outcomes.assignedWrong}`)
-  lines.push(`  asked, but fitted : ${metrics.outcomes.askedButFitted}`)
-  lines.push(`  asked, correctly  : ${metrics.outcomes.askedCorrectly}`)
+  lines.push(`  assigned, correct     : ${metrics.outcomes.assignedCorrect}`)
+  lines.push(`  assigned, wrong       : ${metrics.outcomes.assignedWrong}`)
+  lines.push(`  unassigned, but fitted: ${metrics.outcomes.unassignedButFitted}`)
+  lines.push(`  unassigned, correctly : ${metrics.outcomes.unassignedCorrectly}`)
 
   lines.push('')
   lines.push('Confusion (expected → predicted), mismatches only:')
@@ -400,12 +413,18 @@ export const grade = async (
       agreement: selection.agreement,
       tied: selection.tied,
       confidence: selection.confidence,
+      refactor: selection.refactor,
     })
     const signals = `${Math.round(selection.agreement * 100)}%/${selection.confidence}`
+    // Printed rather than graded, so a prompt edit that starts calling everything a refactor is
+    // visible in the run it happened in instead of only in production.
+    const refactor = selection.refactor ? ' +refactor' : ''
     const outcome =
       selection.milestone !== null
-        ? `assigned ${selection.milestone} [${signals}]`
-        : `asked — no milestone fitted [${signals}]`
+        ? `assigned ${selection.milestone}${refactor} [${signals}]`
+        : selection.refactor
+          ? `labeled refactor — no milestone fitted [${signals}]`
+          : `asked — no milestone fitted [${signals}]`
     console.info(
       `  ${sample.source?.issue ? `#${sample.source.issue}` : sample.input.title.slice(0, 40)}: expected ${sample.expected ?? NONE}, ${outcome} ${predicted === sample.expected ? '✓' : '✗'}`,
     )

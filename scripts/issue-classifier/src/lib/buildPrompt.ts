@@ -34,7 +34,8 @@ const buildPrompt = (milestones: Milestone[], issue: IssueInput): string => {
   prompt += `Body:\n${issue.body}\n\n`
   prompt +=
     'Respond with only a JSON object with these fields, in this order: ' +
-    '{"rationale": "<brief reasoning>", "milestone": "<TITLE or null>", "confidence": "low|medium|high", "secondChoice": "<TITLE or null>"}. ' +
+    '{"rationale": "<brief reasoning>", "milestone": "<TITLE or null>", "confidence": "low|medium|high", ' +
+    '"refactor": true|false, "secondChoice": "<TITLE or null>"}. ' +
     'Put "rationale" first so you reason before committing to a milestone.\n'
 
   return prompt

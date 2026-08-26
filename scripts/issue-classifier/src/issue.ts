@@ -1,5 +1,6 @@
 /**
- * Assigns the best-matching open milestone to a GitHub issue, or asks a human when it cannot decide.
+ * Assigns the best-matching open milestone to a GitHub issue, labels a pure refactor as one, or asks
+ * a human when it can do neither.
  *
  * Driven by the .github/workflows/issue-classifier.yml workflow on `issues.opened` and on
  * manual dispatch. Also runs locally against any issue.
@@ -69,10 +70,12 @@ const main = async () => {
   const url = `https://github.com/${repo}/issues/${issueNumber}`
   const summary =
     result.action === 'assigned'
-      ? `${prefix}assigned #${issueNumber} to ${result.milestone} (${result.detail})`
-      : result.action === 'asked'
-        ? `${prefix}asked for a category on #${issueNumber} (${result.detail})`
-        : `Skipped #${issueNumber}: ${result.detail}`
+      ? `${prefix}assigned #${issueNumber} to ${result.milestone}${result.refactor ? ' and labeled it refactor' : ''} (${result.detail})`
+      : result.action === 'labeled'
+        ? `${prefix}labeled #${issueNumber} refactor with no milestone (${result.detail})`
+        : result.action === 'asked'
+          ? `${prefix}asked for a category on #${issueNumber} (${result.detail})`
+          : `Skipped #${issueNumber}: ${result.detail}`
   console.info(`${summary} - ${url}`)
 
   // A dry run's whole purpose is to show what would happen, and for the ask path what happens is a

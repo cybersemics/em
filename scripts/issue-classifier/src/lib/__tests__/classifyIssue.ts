@@ -25,22 +25,29 @@ const ASSIGNABLE: VoteResult = {
   totalVotes: 5,
   tied: false,
   confidence: 'high',
+  refactor: false,
+  refactorVotes: 0,
   rationale: 'The drop indicator is misplaced.',
   secondChoice: null,
 }
+
+/** A vote that judged the issue a pure refactor, on top of naming a milestone. */
+const REFACTOR: VoteResult = { ...ASSIGNABLE, refactor: true, refactorVotes: 4 }
 
 /** Builds a GitHub gateway backed by the given issue and milestones, recording every write. */
 const createGitHub = (issue: Issue = ISSUE, milestones: Milestone[] = MILESTONES) => {
   // Typed parameters so the recorded calls stay inspectable, e.g. comment.mock.calls[0][1].
   const setMilestone = vi.fn(async (issueNumber: number, milestoneNumber: number) => {})
+  const addLabels = vi.fn(async (issueNumber: number, labels: string[]) => {})
   const comment = vi.fn(async (issueNumber: number, body: string) => {})
   const github: GitHubGateway = {
     getIssue: async () => issue,
     listOpenMilestones: async () => milestones,
     setMilestone,
+    addLabels,
     comment,
   }
-  return { github, setMilestone, comment }
+  return { github, setMilestone, addLabels, comment }
 }
 
 describe('classifyIssue', () => {
@@ -59,7 +66,7 @@ describe('classifyIssue', () => {
     expect(comment).not.toHaveBeenCalled()
   })
 
-  it('asks a human only when the votes named no milestone', async () => {
+  it('asks a human when the votes named no milestone and it is not a refactor', async () => {
     const { github, setMilestone, comment } = createGitHub()
     const result = await classifyIssue({
       github,
@@ -72,6 +79,65 @@ describe('classifyIssue', () => {
     expect(result.action).toBe('asked')
     expect(setMilestone).not.toHaveBeenCalled()
     expect(comment.mock.calls[0][1]).toContain('@raineorshine')
+  })
+
+  it('labels a refactor and still assigns its milestone, since the two are independent', async () => {
+    const { github, setMilestone, addLabels, comment } = createGitHub()
+    const result = await classifyIssue({
+      github,
+      issueNumber: 4839,
+      instructions: 'instructions',
+      openaiApiKey: 'test-key',
+      select: async () => REFACTOR,
+    })
+
+    expect(result).toMatchObject({ action: 'assigned', milestone: '🧤 Drag & Drop', refactor: true })
+    expect(setMilestone).toHaveBeenCalledWith(4839, 20)
+    expect(addLabels).toHaveBeenCalledWith(4839, ['refactor'])
+    expect(comment).not.toHaveBeenCalled()
+  })
+
+  it('labels a refactor that fits no milestone instead of asking, since that is an answer', async () => {
+    const { github, setMilestone, addLabels, comment } = createGitHub()
+    const result = await classifyIssue({
+      github,
+      issueNumber: 4839,
+      instructions: 'instructions',
+      openaiApiKey: 'test-key',
+      select: async () => ({ ...REFACTOR, milestone: null }),
+    })
+
+    expect(result).toMatchObject({ action: 'labeled', milestone: null, refactor: true })
+    expect(addLabels).toHaveBeenCalledWith(4839, ['refactor'])
+    expect(setMilestone).not.toHaveBeenCalled()
+    expect(comment).not.toHaveBeenCalled()
+  })
+
+  it('adds no label when the votes did not call it a refactor', async () => {
+    const { github, addLabels } = createGitHub()
+    await classifyIssue({
+      github,
+      issueNumber: 4839,
+      instructions: 'instructions',
+      openaiApiKey: 'test-key',
+      select: async () => ASSIGNABLE,
+    })
+
+    expect(addLabels).not.toHaveBeenCalled()
+  })
+
+  it('does not re-add a refactor label the issue already carries', async () => {
+    const { github, addLabels } = createGitHub({ ...ISSUE, labels: ['refactor'] })
+    const result = await classifyIssue({
+      github,
+      issueNumber: 4839,
+      instructions: 'instructions',
+      openaiApiKey: 'test-key',
+      select: async () => REFACTOR,
+    })
+
+    expect(result).toMatchObject({ action: 'assigned', refactor: true })
+    expect(addLabels).not.toHaveBeenCalled()
   })
 
   it('assigns a tied vote rather than asking, taking its modal winner', async () => {
@@ -152,19 +218,20 @@ describe('classifyIssue', () => {
     expect(setMilestone).not.toHaveBeenCalled()
   })
 
-  it('writes nothing in a dry run', async () => {
-    const { github, setMilestone, comment } = createGitHub()
+  it('writes nothing in a dry run, label included', async () => {
+    const { github, setMilestone, addLabels, comment } = createGitHub()
     const result = await classifyIssue({
       github,
       issueNumber: 4839,
       instructions: 'instructions',
       openaiApiKey: 'test-key',
       dryRun: true,
-      select: async () => ASSIGNABLE,
+      select: async () => REFACTOR,
     })
 
-    expect(result).toMatchObject({ action: 'assigned', milestone: '🧤 Drag & Drop' })
+    expect(result).toMatchObject({ action: 'assigned', milestone: '🧤 Drag & Drop', refactor: true })
     expect(setMilestone).not.toHaveBeenCalled()
+    expect(addLabels).not.toHaveBeenCalled()
     expect(comment).not.toHaveBeenCalled()
   })
 })

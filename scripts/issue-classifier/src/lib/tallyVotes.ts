@@ -15,6 +15,10 @@ export interface VoteResult {
   tied: boolean
   /** Self-reported confidence, averaged over the votes that chose the winning milestone. */
   confidence: Confidence
+  /** Whether the votes judged the issue a pure refactor, which earns the `refactor` label. */
+  refactor: boolean
+  /** Number of valid votes that judged the issue a pure refactor, for the audit trail. */
+  refactorVotes: number
   /** Rationale carried from a winning vote, for the audit trail and the question posted to a human. */
   rationale: string
   /** Second-choice milestone from a winning vote, resolved against the open milestones. */
@@ -30,6 +34,12 @@ export interface VoteResult {
  * so folding it into the "no milestone" tally would let a confused model talk the workflow into
  * asking a human for the wrong reason. An explicit null milestone is the opposite: a real answer,
  * and it competes in the tally like any other candidate.
+ *
+ * Two things are tallied, not one. Which milestone owns the work is the modal vote; whether the
+ * issue is a pure refactor is a second, independent question that rides along on the same samples.
+ * They are orthogonal on purpose — a refactor still belongs to the subsystem it restructures — so
+ * the refactor tally cannot change which milestone wins, and the milestone tally cannot suppress
+ * the label.
  *
  * Returns null when no vote survives, which is the caller's signal to retry inference.
  */
@@ -67,6 +77,16 @@ const tallyVotes = (rawOutputs: string[], milestoneTitles: string[]): VoteResult
   // Round halves down, so a split between two levels reports the more cautious of them.
   const confidence = CONFIDENCE_LEVELS[Math.ceil(meanLevel - 0.5)]
 
+  // Counted over every valid vote rather than only the agreeing ones, which is where this departs
+  // from the confidence average above. Confidence is a claim about a particular milestone, so a vote
+  // that named a different one is answering a different question; "this is a pure refactor" is the
+  // same claim whether the vote said 📐 Layout or 🎨 Formatting. Votes naming a milestone that is not
+  // open were already dropped above, so a hallucinated milestone cannot smuggle in a refactor vote.
+  const refactorVotes = votes.filter(vote => vote.response.refactor).length
+  // A strict majority, so an even split falls to false — the same caution the confidence rounding
+  // takes, and the same direction: not labeling is the recoverable mistake.
+  const refactor = refactorVotes * 2 > votes.length
+
   return {
     milestone: winning.milestone,
     agreement: maxCount / votes.length,
@@ -74,6 +94,8 @@ const tallyVotes = (rawOutputs: string[], milestoneTitles: string[]): VoteResult
     totalVotes: rawOutputs.length,
     tied: leaders.length > 1,
     confidence,
+    refactor,
+    refactorVotes,
     rationale: winning.response.rationale,
     secondChoice: matchMilestone(winning.response.secondChoice, milestoneTitles),
   }
