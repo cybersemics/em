@@ -43,6 +43,17 @@ const waitForHighlightedBullets = async (n: number) => {
 /** Waits a single animation frame, i.e. long enough for React to commit the render that follows a command. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
+/** Waits until copy has written non-empty plain text to the system clipboard and returns it. */
+const waitForClipboardText = async () => {
+  await expect
+    .poll(() => page.evaluate(() => navigator.clipboard.readText()), {
+      timeout: 6000,
+    })
+    .not.toBe('')
+
+  return page.evaluate(() => navigator.clipboard.readText())
+}
+
 describe('multiselect', () => {
   // https://github.com/cybersemics/em/issues/4740
   it('starts multiselect at the Shift-clicked thought when there is no selection', async () => {
@@ -191,28 +202,41 @@ describe('multiselect', () => {
     await command('selectAll')
     await waitForHighlightedBullets(3)
 
-    await page.evaluate(() => {
-      const win = window as typeof window & { __copied: Record<string, string> }
-      win.__copied = {}
-      const original = DataTransfer.prototype.setData
-      DataTransfer.prototype.setData = function (type: string, data: string) {
-        win.__copied[type] = data
-        return original.call(this, type, data)
-      }
-    })
-
     await press('c', { meta: true })
-
-    await page.waitForFunction(
-      () => !!(window as typeof window & { __copied: Record<string, string> }).__copied['text/html'],
-      { timeout: 6000 },
-    )
+    const copiedText = await waitForClipboardText()
+    expect(copiedText).toContain('a')
+    expect(copiedText).toContain('b')
+    expect(copiedText).toContain('c')
 
     // Copy leaves the thoughts selected but not edited, so no faux caret is rendered on them (Clear Thought is
     // what puts a multiselection into edit mode). Wait a frame first, since the faux carets would be rendered
     // on the frame after the copy completes.
     await nextFrame()
     expect(await page.$$('[data-testid="faux-caret-multicursor"]')).toHaveLength(0)
+    await waitForHighlightedBullets(3)
+  })
+
+  // https://github.com/cybersemics/em/issues/5108
+  it('keeps multiselect edit mode active when Select All runs while multiselect is being edited', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('b')
+    await command('selectAll')
+    await waitForHighlightedBullets(3)
+
+    // Enter multiselect edit mode via Clear Thought.
+    await press('c', { alt: true, shift: true, meta: true })
+    await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
+
+    await command('selectAll')
+
+    // Select All should preserve edit mode in this branch, keeping the faux carets rendered.
+    await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
+    await waitForHighlightedBullets(3)
   })
 
   // https://github.com/cybersemics/em/issues/4738
