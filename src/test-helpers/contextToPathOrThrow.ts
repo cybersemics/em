@@ -27,7 +27,7 @@ const contextToPathOrThrow = (state: State, pathUnranked: string[], helperName: 
  * Resolves an unranked path to a SimplePath, throwing if it does not resolve.
  *
  * Use where a reducer or selector requires a SimplePath. If the context crosses an active context view, the result is
- * the Lexeme instance's real position in the tree, e.g. ['a', 'm', 'b'] with the context view active on a/m resolves
+ * the Lexeme context's real position in the tree, e.g. ['a', 'm', 'b'] with the context view active on a/m resolves
  * to b/m.
  */
 export const contextToSimplePath = (state: State, pathUnranked: string[], helperName: string): SimplePath =>

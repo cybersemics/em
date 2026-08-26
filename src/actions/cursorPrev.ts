@@ -7,9 +7,9 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { suppressExpansionActionCreator as suppressExpansion } from '../actions/suppressExpansion'
 import { HOME_TOKEN } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenSorted } from '../selectors/getChildren'
+import parentContextId from '../selectors/parentContextId'
 import prevContext from '../selectors/prevContext'
 import { prevSibling } from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -51,7 +51,7 @@ export const cursorPrevActionCreator = (): Thunk => (dispatch, getState) => {
   }
   // prev row in table view col2
   // (prev row in table view col1 is handled by prevSibling in the usual way)
-  else if (attributeEquals(state, contextThoughtId(state, rootedParentOf(state, cursorParent)), '=view', 'Table')) {
+  else if (attributeEquals(state, parentContextId(state, rootedParentOf(state, cursorParent)), '=view', 'Table')) {
     const prevRow = prevCol2(state, cursorParent)
     if (prevRow) {
       prev = prevRow.col2
@@ -63,9 +63,9 @@ export const cursorPrevActionCreator = (): Thunk => (dispatch, getState) => {
   if (!prev || !path) return
 
   const pathParent = rootedParentOf(state, path)
-  const parentId = contextThoughtId(state, pathParent)
+  const parentId = parentContextId(state, pathParent)
   const isCursorPinned =
-    attributeEquals(state, contextThoughtId(state, path), '=pin', 'true') ||
+    attributeEquals(state, parentContextId(state, path), '=pin', 'true') ||
     findDescendant(state, parentId, ['=children', '=pin', 'true'])
   const isTable = attributeEquals(state, parentId, '=view', 'Table')
 

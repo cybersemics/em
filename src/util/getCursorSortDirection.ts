@@ -1,13 +1,13 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import getSortPreference from '../selectors/getSortPreference'
+import parentContextPath from '../selectors/parentContextPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import head from './head'
 
 /** Retrieves the id of the parent of the thought displayed at the cursor. In the context view this is the parent of the context, e.g. the parent of b for the cursor a/m~/b — not the context view thought m. */
 const getParentIdFromCursor = (state: State): ThoughtId | null =>
-  state.cursor ? head(rootedParentOf(state, contextThoughtPath(state, state.cursor))) : null
+  state.cursor ? head(rootedParentOf(state, parentContextPath(state, state.cursor))) : null
 
 /** Cursor Sort Direction. */
 const getCursorSortDirection = (state: State) => {

@@ -3,11 +3,11 @@ import ThoughtId from '../../@types/ThoughtId'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import { HOME_TOKEN } from '../../constants'
-import contextThoughtId from '../../selectors/contextThoughtId'
-import contextThoughtPath from '../../selectors/contextThoughtPath'
 import contextToPath from '../../selectors/contextToPath'
 import getThoughtById from '../../selectors/getThoughtById'
 import isContextViewActive from '../../selectors/isContextViewActive'
+import parentContextId from '../../selectors/parentContextId'
+import parentContextPath from '../../selectors/parentContextPath'
 import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
@@ -65,7 +65,7 @@ describe('a context step is distinguishable from an ordinary child step', () => 
     expect(pathToContext(state, simplifyPath(state, pathOrdinaryChild))).toEqual(['a', 'm', 'b'])
   })
 
-  it('simplifyPath resolves the context-view row to its Lexeme instance', () => {
+  it('simplifyPath resolves the context-view row to its Lexeme context', () => {
     const state = store.getState()
     const pathContextRow = contextToPath(state, ['a', 'm', 'b'])!
 
@@ -103,29 +103,29 @@ describe('a context-view row resolves to two different thoughts', () => {
     ])
   })
 
-  it('simplifyPath gives the Lexeme instance, which delete and move operate on', () => {
+  it('simplifyPath gives the Lexeme context, which delete and move operate on', () => {
     const state = store.getState()
     const path = contextToPath(state, ['a', 'm', 'b'])!
 
     expect(pathToContext(state, simplifyPath(state, path))).toEqual(['b', 'm'])
   })
 
-  it('contextThoughtPath gives the context, which is displayed and edited', () => {
+  it('parentContextPath gives the context, which is displayed and edited', () => {
     const state = store.getState()
     const path = contextToPath(state, ['a', 'm', 'b'])!
 
-    expect(pathToContext(state, contextThoughtPath(state, path))).toEqual(['b'])
-    expect(getThoughtById(state, contextThoughtId(state, path))!.value).toBe('b')
+    expect(pathToContext(state, parentContextPath(state, path))).toEqual(['b'])
+    expect(getThoughtById(state, parentContextId(state, path))!.value).toBe('b')
   })
 
   it('the cyclic context a/m~/a resolves to a/m and to a', () => {
     const state = store.getState()
     const path = contextToPath(state, ['a', 'm', 'a'])!
 
-    // the instance is a/m — deleting a/m~/a removes m from the context a
+    // the Lexeme context is a/m — deleting a/m~/a removes m from the parent context a
     expect(pathToContext(state, simplifyPath(state, path))).toEqual(['a', 'm'])
     // the displayed thought is a — formatting a/m~/a formats a
-    expect(pathToContext(state, contextThoughtPath(state, path))).toEqual(['a'])
+    expect(pathToContext(state, parentContextPath(state, path))).toEqual(['a'])
   })
 
   it('pathToContext reports the values the user sees', () => {
@@ -134,7 +134,7 @@ describe('a context-view row resolves to two different thoughts', () => {
     expect(pathToContext(state, contextToPath(state, ['a', 'm', 'b'])!)).toEqual(['a', 'm', 'b'])
   })
 
-  it('descending past the boundary resolves against the instance', () => {
+  it('descending past the boundary resolves against the Lexeme context', () => {
     const state = store.getState()
     const path = contextToPath(state, ['a', 'm', 'b', 'y'])!
 
@@ -143,9 +143,9 @@ describe('a context-view row resolves to two different thoughts', () => {
 })
 
 describe('two thoughts of the same Lexeme in one context are addressable separately', () => {
-  // The context view lists cat and Cats separately, since they are separate Lexeme instances, but both are displayed
+  // The context view lists cat and Cats separately, since they are separate Lexeme contexts, but both are displayed
   // under the same context b. Storing the context in the Path made the two rows indistinguishable; storing the
-  // instance makes each row uniquely addressable.
+  // Lexeme context makes each row uniquely addressable.
   it('produces a distinct Path for each row', () => {
     store.dispatch([
       importText({ text: `- a\n  - cat\n- b\n  - cat\n  - Cats` }),
@@ -166,8 +166,8 @@ describe('two thoughts of the same Lexeme in one context are addressable separat
     expect(rowCat).not.toEqual(rowCats)
     expect(hashPath(rowCat)).not.toEqual(hashPath(rowCats))
     // both display the context b, but resolve to different instances
-    expect(getThoughtById(state, contextThoughtId(state, rowCat))!.value).toBe('b')
-    expect(getThoughtById(state, contextThoughtId(state, rowCats))!.value).toBe('b')
+    expect(getThoughtById(state, parentContextId(state, rowCat))!.value).toBe('b')
+    expect(getThoughtById(state, parentContextId(state, rowCats))!.value).toBe('b')
     expect(pathToContext(state, simplifyPath(state, rowCat))).toEqual(['b', 'cat'])
     expect(pathToContext(state, simplifyPath(state, rowCats))).toEqual(['b', 'Cats'])
   })

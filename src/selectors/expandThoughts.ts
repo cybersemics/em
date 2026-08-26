@@ -24,10 +24,10 @@ import publishMode from '../util/publishMode'
 import stripTags from '../util/stripTags'
 import unroot from '../util/unroot'
 import childIdsToThoughts from './childIdsToThoughts'
-import contextThoughtId from './contextThoughtId'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
 import pinned from './isPinned'
+import parentContextId from './parentContextId'
 import rootedParentOf from './rootedParentOf'
 
 /** Returns true if a thought is marked as done. */
@@ -41,7 +41,7 @@ const childrenPinned = (state: State, id: ThoughtId): boolean | null => {
   return pinned(state, childrenAttributeId)
 }
 
-/** Builds the Path of a rendered child, recording the context-view boundary when the child is a context rather than an ordinary child. In the context view the child is the Lexeme instance, e.g. b/m for the row a/m~/b. */
+/** Builds the Path of a rendered child, recording the context-view boundary when the child is a context rather than an ordinary child. In the context view the child is the Lexeme context, e.g. b/m for the row a/m~/b. */
 const childPathOf = (path: Path, childId: ThoughtId, showContexts: boolean): Path =>
   showContexts ? appendContextStep(path, childId) : unroot(appendToPath(path, childId))
 
@@ -50,7 +50,7 @@ const isTable = (state: State, id: ThoughtId) => attributeEquals(state, id, '=vi
 
 /** Returns true if the context is the first column in a table view. */
 const isTableColumn1 = (state: State, path: Path) =>
-  path.length > 1 && attributeEquals(state, contextThoughtId(state, parentOf(path) as Path), '=view', 'Table')
+  path.length > 1 && attributeEquals(state, parentContextId(state, parentOf(path) as Path), '=view', 'Table')
 
 /**
  * Check for =publish/=attributes/=children/=pin in publish mode.
@@ -92,14 +92,14 @@ function expandThoughtsRecursive(
 
   const simplePath = !path || path.length === 0 ? HOME_PATH : simplifyPath(state, path)
   // metaprogramming attributes (=children, =descendants, =pin, =view, =publish) are read off the thought the user sees,
-  // which in the context view is the context rather than the Lexeme instance
-  const thoughtId = contextThoughtId(state, path)
+  // which in the context view is the context rather than the Lexeme context
+  const thoughtId = parentContextId(state, path)
   const thought = getThoughtById(state, thoughtId)
 
   const showContexts = isContextViewActive(state, path)
   const childrenUnfiltered = showContexts
     ? childIdsToThoughts(state, thought ? getContexts(state, thought.value) : [])
-    : // headId is the Lexeme instance inside a context view, so this retrieves the children of the instance rather
+    : // headId is the Lexeme context inside a context view, so this retrieves its children rather
       // than of the context. See ContextView test "Expand grandchildren of contexts"
       getAllChildrenAsThoughts(state, headId(path))
 
@@ -132,7 +132,7 @@ function expandThoughtsRecursive(
     !containsURL(grandchild.value) &&
     // Do not expand only child when parent's subthoughts are pinned.
     // https://github.com/cybersemics/em/issues/1732
-    !(path.length > 1 && childrenPinned(state, contextThoughtId(state, parentOf(path)))) &&
+    !(path.length > 1 && childrenPinned(state, parentContextId(state, parentOf(path)))) &&
     // do not expand if thought or parent's subthoughts have =pin/false or =done
     pinned(state, visibleChildren[0].id) !== false &&
     !isDone(state, visibleChildren[0].id) &&

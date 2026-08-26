@@ -3,11 +3,11 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild } from '../selectors/getChildren'
 import getRankAfter from '../selectors/getRankAfter'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextPath from '../selectors/parentContextPath'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -33,13 +33,13 @@ const swapNote = (state: State): State => {
 
   if (!cursor) return state
 
-  // The cursor thought is converted to or from a note by moving it, so it is the Lexeme instance the path lands on.
+  // The cursor thought is converted to or from a note by moving it, so it is the Lexeme context the path lands on.
   // A context in the context view is rejected below, so the two agree here.
   const thoughtId = headId(cursor)
   // =note belongs to the thought the user sees, which in the context view is the context rather than the Lexeme
-  // instance (see resolveNotePath). Resolving the parent once keeps the lookups and the =note that is created in the
+  // Lexeme context (see resolveNotePath). Resolving the parent once keeps the lookups and the =note that is created in the
   // same context, and gives moveThought a destination it can resolve.
-  const parentPath = contextThoughtPath(state, parentOf(cursor))
+  const parentPath = parentContextPath(state, parentOf(cursor))
   const parentNoteId = findDescendant(state, head(parentPath), '=note')
   const parentNoteChildId = anyChild(state, parentNoteId)?.id
   const noteId = findDescendant(state, thoughtId, '=note')
@@ -73,7 +73,7 @@ const swapNote = (state: State): State => {
     })
   } else if (cursor.length > 1 && isContextStep(head(parentOf(cursor) as Path))) {
     // The note belongs to the thought the parent row displays (the context), but the cursor is a child of the Lexeme
-    // instance the row stands for. There is no coherent thought to swap between, so refuse rather than guess.
+    // Lexeme context the row stands for. There is no coherent thought to swap between, so refuse rather than guess.
     return alert(state, {
       value: `A subthought of a context in the context view cannot be converted to a note.`,
     })

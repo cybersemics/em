@@ -12,10 +12,11 @@ export const CONTEXT_STEP_PREFIX = '~'
 /**
  * Creates a Path step that crosses a context view.
  *
- * @param instanceId The Lexeme instance rendered at the position, e.g. the id of `b/m` for the row `a/m~/b`. Not the
- * context (`b`) — see ContextStep.
+ * @param lexemeContextId The Lexeme context rendered at the position, e.g. the id of `b/m` for the row `a/m~/b`.
+ * Not the parent context (`b`) that the row displays — see ContextStep.
  */
-export const contextStep = (instanceId: ThoughtId): ContextStep => `${CONTEXT_STEP_PREFIX}${instanceId}` as ContextStep
+export const contextStep = (lexemeContextId: ThoughtId): ContextStep =>
+  `${CONTEXT_STEP_PREFIX}${lexemeContextId}` as ContextStep
 
 /**
  * Returns true if a Path step crosses a context view.
@@ -26,7 +27,7 @@ export const contextStep = (instanceId: ThoughtId): ContextStep => `${CONTEXT_ST
  */
 export const isContextStep = (step: PathStep): step is ContextStep => !!step && step.startsWith(CONTEXT_STEP_PREFIX)
 
-/** Returns the id of the thought a Path step lands on. For a context step this is the Lexeme instance, e.g. `b/m` for the row `a/m~/b`. Absent steps propagate, as in isContextStep. */
+/** Returns the ThoughtId a Path step holds. For a context step this is the Lexeme context, e.g. `b/m` for the row `a/m~/b`, with the `~` stripped. Absent steps propagate, as in isContextStep. */
 export const stepId = (step: PathStep): ThoughtId =>
   (isContextStep(step) ? step.slice(CONTEXT_STEP_PREFIX.length) : step) as ThoughtId
 

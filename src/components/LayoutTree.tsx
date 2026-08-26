@@ -11,10 +11,10 @@ import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
-import { contextThoughtIds } from '../selectors/contextThoughtId'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
+import { parentContextIds } from '../selectors/parentContextId'
 import viewportStore from '../stores/viewport'
 import headId from '../util/headId'
 import parentOf from '../util/parentOf'
@@ -175,7 +175,7 @@ const LayoutTree = () => {
       return null
     const isCursorLeaf = !hasChildren(state, headId(state.cursor))
     // the displayed thought at that ancestor position, since it is compared against TreeThought.thoughtId
-    const cursorParentId = contextThoughtIds(state, state.cursor)[state.cursor.length - (isCursorLeaf ? 3 : 2)] ?? null
+    const cursorParentId = parentContextIds(state, state.cursor)[state.cursor.length - (isCursorLeaf ? 3 : 2)] ?? null
     return (cursorParentId && nextSibling(state, cursorParentId)?.id) || null
   })
 

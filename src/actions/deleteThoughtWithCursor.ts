@@ -3,9 +3,9 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
 import { ABSOLUTE_TOKEN } from '../constants'
-import contextThoughtId from '../selectors/contextThoughtId'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextId from '../selectors/parentContextId'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -28,19 +28,19 @@ const deleteThoughtWithCursor = (state: State): State => {
   // The head step records whether this position was reached by crossing a context view.
   const showContexts = isContextStep(head(cursor))
 
-  // In the context view the cursor a/m~/b displays the context b but stands for the Lexeme instance b/m, which is the
-  // thought that has to be deleted. The step records that instance directly, so there is no Lexeme scan to do.
-  const instanceId = headId(cursor)
+  // In the context view the cursor a/m~/b displays the context b but stands for the Lexeme context b/m, which is the
+  // thought that has to be deleted. The step records it directly, so there is no Lexeme scan to do.
+  const lexemeContextId = headId(cursor)
   const thought = pathToThought(state, cursor)
 
   if (!thought) return state
 
   /** Returns true if the context view needs to be closed after deleting . Specifically, returns true if there is only one context left after the delete or if the deleted cursor is a cyclic context, e.g. a/m~/a. */
   const shouldCloseContextView = once(() => {
-    const contextViewThought = getThoughtById(state, contextThoughtId(state, parentPath))
+    const contextViewThought = getThoughtById(state, parentContextId(state, parentPath))
     const numContexts = showContexts && contextViewThought ? getContexts(state, contextViewThought.value).length : 0
     // a cyclic context is one whose context is the grandparent, e.g. a/m~/a
-    const isCyclic = cursor.length > 2 && contextThoughtId(state, cursor) === headId(parentOf(parentOf(cursor)) as Path)
+    const isCyclic = cursor.length > 2 && parentContextId(state, cursor) === headId(parentOf(parentOf(cursor)) as Path)
     return isCyclic || numContexts <= 2
   })
 
@@ -52,12 +52,12 @@ const deleteThoughtWithCursor = (state: State): State => {
       showContexts && thought.parentId !== ABSOLUTE_TOKEN
         ? {
             pathParent: cursor,
-            thoughtId: instanceId,
+            thoughtId: lexemeContextId,
           }
         : {
             pathParent: parentPath,
             // the displayed thought: in the ABSOLUTE case that is the empty context itself (ABS/_), which is deleted
-            // along with the Lexeme instance inside it. In normal view it is the same thought as the instance.
+            // along with the Lexeme context inside it. In normal view the two are the same thought.
             thoughtId: thought.id,
           },
     ),

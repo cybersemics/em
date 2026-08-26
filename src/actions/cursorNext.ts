@@ -7,11 +7,11 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { suppressExpansionActionCreator as suppressExpansion } from '../actions/suppressExpansion'
 import { HOME_TOKEN } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenSorted } from '../selectors/getChildren'
 import nextContext from '../selectors/nextContext'
 import nextSibling from '../selectors/nextSibling'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
@@ -51,7 +51,7 @@ export const cursorNextActionCreator = (): Thunk => (dispatch, getState) => {
   }
   // next row in table view col2
   // (next row in table view col1 is handled by nextSibling in the usual way)
-  else if (attributeEquals(state, contextThoughtId(state, rootedParentOf(state, cursorParent)), '=view', 'Table')) {
+  else if (attributeEquals(state, parentContextId(state, rootedParentOf(state, cursorParent)), '=view', 'Table')) {
     const nextRow = nextCol2(state, cursorParent)
     if (nextRow) {
       next = nextRow.col2
@@ -63,11 +63,11 @@ export const cursorNextActionCreator = (): Thunk => (dispatch, getState) => {
   if (!next || !path) return
 
   const pathParent = rootedParentOf(state, path)
-  const parentId = contextThoughtId(state, pathParent)
+  const parentId = parentContextId(state, pathParent)
   const isCursorPinned =
     // =pin is created on the thought the row displays, so it must be read from there rather than from the Lexeme
-    // instance a context step lands on. Matches cursorPrev and the pin command.
-    attributeEquals(state, contextThoughtId(state, path), '=pin', 'true') ||
+    // Lexeme context a context step lands on. Matches cursorPrev and the pin command.
+    attributeEquals(state, parentContextId(state, path), '=pin', 'true') ||
     findDescendant(state, parentId, ['=children', '=pin', 'true'])
   const isTable = attributeEquals(state, parentId, '=view', 'Table')
 

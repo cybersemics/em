@@ -4,11 +4,11 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import cursorBack from '../actions/cursorBack'
 import setCursor from '../actions/setCursor'
-import contextThoughtId from '../selectors/contextThoughtId'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import nextContext from '../selectors/nextContext'
 import nextSibling from '../selectors/nextSibling'
+import parentContextId from '../selectors/parentContextId'
 import pathToThought from '../selectors/pathToThought'
 import prevContext from '../selectors/prevContext'
 import prevSibling from '../selectors/prevSibling'
@@ -39,18 +39,18 @@ const updateCursorAfterDelete = (state: State, statePrev: State) => {
   const showContexts = isContextStep(head(cursor))
   const simplePath = simplifyPath(statePrev, cursor)
 
-  // the thought the user saw at the cursor, i.e. the context rather than the Lexeme instance in the context view
+  // the thought the user saw at the cursor, i.e. the context rather than the Lexeme context in the context view
   const thought = pathToThought(statePrev, cursor)
 
   if (!thought) return state
 
   /** Returns true if the context view needs to be closed after deleting. Specifically, returns true if there is only one context left after the delete or if the deleted path is a cyclic context, e.g. a/m~/a. */
   const shouldCloseContextView = once(() => {
-    const contextViewThought = getThoughtById(statePrev, contextThoughtId(statePrev, parentPath))
+    const contextViewThought = getThoughtById(statePrev, parentContextId(statePrev, parentPath))
     const numContexts = showContexts && contextViewThought ? getContexts(statePrev, contextViewThought.value).length : 0
     // a cyclic context is one whose context is the grandparent, e.g. a/m~/a
     const isCyclic =
-      cursor.length > 2 && contextThoughtId(statePrev, cursor) === headId(parentOf(parentOf(cursor)) as Path)
+      cursor.length > 2 && parentContextId(statePrev, cursor) === headId(parentOf(parentOf(cursor)) as Path)
     return isCyclic || numContexts <= 2
   })
 

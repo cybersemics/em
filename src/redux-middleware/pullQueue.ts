@@ -10,11 +10,11 @@ import { pullActionCreator as pull } from '../actions/pull'
 import { pullAncestorsActionCreator as pullAncestors } from '../actions/pullAncestors'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import db from '../data-providers/thoughtspace'
-import contextThoughtId from '../selectors/contextThoughtId'
 import { getChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import thoughtToPath from '../selectors/thoughtToPath'
 import syncStatusStore from '../stores/syncStatus'
 import equalArrays from '../util/equalArrays'
@@ -57,15 +57,15 @@ const expandPullQueue = (state: State): Record<ThoughtId, true> => {
   }
 
   return keyValueBy(expandedPaths, (key, path) => {
-    // the thought the path lands on, i.e. the Lexeme instance in the context view, whose children are the ones rendered
+    // the thought the path lands on, i.e. the Lexeme context in the context view, whose children are the ones rendered
     const thoughtId = headId(path)
     const thought = getThoughtById(state, thoughtId)
     if (!thought) return null
 
     const showContexts = isContextViewActive(state, path)
     // the context view lists the contexts of the thought the row displays, which is the context rather than the
-    // Lexeme instance when the row is itself inside a context view
-    const contextViewThought = showContexts ? getThoughtById(state, contextThoughtId(state, path)) : null
+    // Lexeme context when the row is itself inside a context view
+    const contextViewThought = showContexts ? getThoughtById(state, parentContextId(state, path)) : null
 
     // get visible children
     const children = getChildren(state, thoughtId)

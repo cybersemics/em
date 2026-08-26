@@ -3,8 +3,8 @@ import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
 import setDescendant from '../actions/setDescendant'
 import { HeadingLevel } from '../commands/headings'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import { filterAllChildren } from '../selectors/getChildren'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
@@ -13,8 +13,8 @@ import reducerFlow from '../util/reducerFlow'
 const heading = (state: State, { level }: { level: HeadingLevel }): State => {
   if (!state.cursor) return state
   // A heading styles the thought the user sees, so in the context view it is set on the context rather than on the
-  // Lexeme instance.
-  const path = contextThoughtPath(state, state.cursor)
+  // Lexeme context.
+  const path = parentContextPath(state, state.cursor)
   const headingChildren = filterAllChildren(state, head(path), child => /^=heading[1-9]$/.test(child.value))
   return reducerFlow([
     // delete other headings

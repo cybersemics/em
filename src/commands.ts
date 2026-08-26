@@ -378,7 +378,7 @@ const recomputePath = (state: State, path: Path): Path | null => {
  * Truncates a path to its nearest ancestor that is not within a metaprogramming attribute. If a command moves the cursor or a multicursor into a metaprogramming attribute (e.g. swapNote moving a thought into =note), the selection should be set to the nearest non-attribute ancestor instead. Returns the path unchanged if it contains no attribute, or null if truncation would leave an empty path.
  */
 const nearestNonAttributeAncestor = (state: State, path: Path): Path | null => {
-  // Each step is resolved to the thought it lands on. In the context view that is the Lexeme instance, whose value is
+  // Each step is resolved to the thought it lands on. In the context view that is the Lexeme context, whose value is
   // the context view thought already checked earlier in the path, so no attribute ancestor is missed.
   const attributeIndex = pathIds(path).findIndex(id => {
     const thought = getThoughtById(state, id)

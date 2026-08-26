@@ -4,7 +4,7 @@ import State from '../@types/State'
 import getThoughtById from '../selectors/getThoughtById'
 import { isContextStep, stepId } from './pathStep'
 
-/** Converts a Path to a Context, i.e. the values the user sees at each step. A context step contributes the value of the context, not of the Lexeme instance it lands on, so a/m~/b converts to ['a', 'm', 'b']. */
+/** Converts a Path to a Context, i.e. the values the user sees at each step. A context step contributes the value of the context, not of the Lexeme context it lands on, so a/m~/b converts to ['a', 'm', 'b']. */
 const pathToContext = (state: State, path: Path): Context =>
   path.map(step => {
     const id = stepId(step)

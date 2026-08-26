@@ -11,13 +11,13 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { REGEX_PUNCTUATIONS, REGEX_TAGS, Settings } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, filterAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
 import containsURL from '../util/containsURL'
@@ -218,8 +218,8 @@ const ThoughtAnnotationContainer = React.memo(
 
     const value: string | undefined = useSelector(state => {
       // the value the user sees on the row, and whose contexts the superscript counts. In the context view that is the
-      // context rather than the Lexeme instance.
-      const thought = getThoughtById(state, contextThoughtId(state, path))
+      // context rather than the Lexeme context.
+      const thought = getThoughtById(state, parentContextId(state, path))
       return thought?.value || ''
     })
 

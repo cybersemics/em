@@ -8,8 +8,8 @@ import { splitThoughtActionCreator as splitThought } from '../actions/splitThoug
 import { isTouch } from '../browser'
 import Icon from '../components/icons/NewThoughtIcon'
 import * as selection from '../device/selection'
-import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
+import parentContextId from '../selectors/parentContextId'
 import pathToThought from '../selectors/pathToThought'
 import editingValueStore from '../stores/editingValue'
 import ellipsize from '../util/ellipsize'
@@ -48,8 +48,8 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }: { type: string }
     const thought = cursor && pathToThought(state, cursor)
 
     // Determine if thought is uneditable
-    // =uneditable is set on the thought the user sees, which in the context view is the context rather than the Lexeme instance
-    const uneditable = cursor && findDescendant(state, contextThoughtId(state, cursor), '=uneditable')
+    // =uneditable is set on the thought the user sees, which in the context view is the context rather than the Lexeme context
+    const uneditable = cursor && findDescendant(state, parentContextId(state, cursor), '=uneditable')
 
     dispatch(
       thought && uneditable

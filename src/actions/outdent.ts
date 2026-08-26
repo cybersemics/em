@@ -4,9 +4,9 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
-import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import getRankAfter from '../selectors/getRankAfter'
+import parentContextId from '../selectors/parentContextId'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
@@ -37,14 +37,14 @@ const outdent = (state: State, { selectionOffset }: outdentPayload = {}): State 
   }
   // cancel if parent is readonly or unextendable
   // =readonly and =unextendable belong to the thought the user sees, which in the context view is the context
-  else if (findDescendant(state, contextThoughtId(state, parentOf(cursor)), '=readonly')) {
+  else if (findDescendant(state, parentContextId(state, parentOf(cursor)), '=readonly')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
       )}" may not be de-indented.`,
     })
-  } else if (findDescendant(state, contextThoughtId(state, parentOf(cursor)), '=unextendable')) {
+  } else if (findDescendant(state, parentContextId(state, parentOf(cursor)), '=unextendable')) {
     return alert(state, {
       value: `"${ellipsize(headValue(state, parentOf(cursor)) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
@@ -84,7 +84,7 @@ export const outdentActionCreator = (): Thunk => (dispatch, getState) => {
   const { cursor } = state
   // <Editable> labels the DOM element with the displayed thought, so the cursor must resolve the same way
   const selectionOffset =
-    cursor && selection.isOnEditable(contextThoughtId(state, cursor)) && selection.isText()
+    cursor && selection.isOnEditable(parentContextId(state, cursor)) && selection.isText()
       ? (selection.offset() ?? 0)
       : null
   dispatch({ type: 'outdent', selectionOffset })

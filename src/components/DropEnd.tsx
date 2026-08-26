@@ -9,11 +9,11 @@ import { HOME_DISPLAY_VALUE } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
 import attributeEquals from '../selectors/attributeEquals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import dropHoverColor from '../selectors/dropHoverColor'
 import { getChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
 import { compareReasonable } from '../util/compareThought'
@@ -48,7 +48,7 @@ const DropEnd = ({
   if (!path) {
     throw new Error('path required')
   }
-  // the drop destination, i.e. the thought the path lands on. In the context view that is the Lexeme instance, whose
+  // the drop destination, i.e. the thought the path lands on. In the context view that is the Lexeme context, whose
   // children the drop-end sits beneath.
   const thoughtId = headId(path)
   const isRootPath = isRoot(path)
@@ -58,7 +58,7 @@ const DropEnd = ({
   const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth + 1))
 
   const isParentTableCol1 = useSelector(state =>
-    attributeEquals(state, contextThoughtId(state, rootedParentOf(state, path)), '=view', 'Table'),
+    attributeEquals(state, parentContextId(state, rootedParentOf(state, path)), '=view', 'Table'),
   )
 
   const { isHovering, dropTarget } = useDragAndDropSubThought({ path })

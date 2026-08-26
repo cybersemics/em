@@ -122,7 +122,7 @@ async function* fetchDescendants(
     // Though it results in redundant fetches, this approach is far less complex and far fewer implications than adding pause/resume support or a shared queue.
     // TODO: Avoid redundant cursor fetches
     const cursor = getState().cursor
-    // the Lexeme instance the cursor lands on, since that is the thought whose descendants are rendered beneath it
+    // the Lexeme context the cursor lands on, since that is the thought whose descendants are rendered beneath it
     const cursorId = cursor ? headId(cursor) : null
     const cursorThought = cursorId ? getThoughtById(getState(), cursorId) : null
     const isCursorPending = !!cursorId && (!cursorThought || cursorThought?.pending) && !cursorPendingIds.has(cursorId)

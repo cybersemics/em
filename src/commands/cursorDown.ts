@@ -10,7 +10,6 @@ import CursorDownIcon from '../components/icons/CursorDownIcon'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import documentSort from '../selectors/documentSort'
 import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -19,6 +18,7 @@ import isTableCol2 from '../selectors/isTableCol2'
 import nextSibling from '../selectors/nextSibling'
 import nextTableCousin from '../selectors/nextTableCousin'
 import nextThought from '../selectors/nextThought'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import headValue from '../util/headValue'
 import { replaceHead } from '../util/pathStep'
@@ -37,7 +37,7 @@ const cursorDownCommand = {
     if (!cursor) return true
 
     // use default browser behavior in prose mode
-    const parentId = contextThoughtId(state, rootedParentOf(state, cursor))
+    const parentId = parentContextId(state, rootedParentOf(state, cursor))
     const isProseView = attributeEquals(state, parentId, '=view', 'Prose')
     const cursorValue = headValue(state, cursor)
     const isProseMode =

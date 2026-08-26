@@ -4,11 +4,11 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import createThought from '../actions/createThought'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import findDescendant from '../selectors/findDescendant'
 import { hasChildren } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -26,9 +26,9 @@ const toggleThought = (
   if (!path || (!value && (!values || values.length === 0))) return state
 
   // The toggled thought is a child of the thought the user sees (=done and the other attributes toggled here belong
-  // to the context rather than the Lexeme instance in the context view). Resolving the path once keeps the lookup, the
+  // to the context rather than the Lexeme context in the context view). Resolving the path once keeps the lookup, the
   // thought that is created, and the deletions in the same context.
-  const contextPath = contextThoughtPath(state, path)
+  const contextPath = parentContextPath(state, path)
   const thoughtId = head(contextPath)
   const subthoughtId = findDescendant(state, thoughtId, _values[0])
   const idNew = createId()

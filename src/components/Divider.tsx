@@ -8,8 +8,8 @@ import ThoughtId from '../@types/ThoughtId'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import viewportStore, { ViewportState } from '../stores/viewport'
@@ -32,8 +32,8 @@ const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
     const childrenWithoutDividers = children.filter(child => !isDivider(child.value))
     const isOnlyChild = childrenWithoutDividers.length === 0
     const isTableView =
-      attributeEquals(state, contextThoughtId(state, parentPath), '=view', 'Table') ||
-      attributeEquals(state, contextThoughtId(state, grandParentPath), '=view', 'Table')
+      attributeEquals(state, parentContextId(state, parentPath), '=view', 'Table') ||
+      attributeEquals(state, parentContextId(state, grandParentPath), '=view', 'Table')
 
     const dependentThoughtIds = isOnlyChild
       ? isTableView
@@ -75,8 +75,8 @@ const Divider = ({ path, cssRaw }: { path: Path; cssRaw?: SystemStyleObject }) =
   const fontSize = useSelector(state => state.fontSize)
   const isCursorOnDivider = useSelector(state => equalPath(state.cursor, path))
   // The aria-label identifies the thought the user sees, which is what getThoughtWidths and formatSelection query the
-  // DOM by. In the context view that is the context rather than the Lexeme instance.
-  const thoughtId = useSelector(state => contextThoughtId(state, path))
+  // DOM by. In the context view that is the context rather than the Lexeme context.
+  const thoughtId = useSelector(state => parentContextId(state, path))
 
   /** Sets the cursor to the divider. */
   const setCursorToDivider = (e: React.MouseEvent | React.TouchEvent) => {

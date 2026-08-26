@@ -19,10 +19,10 @@ import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutosc
 import * as selection from '../device/selection'
 import globals from '../globals'
 import useFreshCallback from '../hooks/useFreshCallback'
-import contextThoughtId from '../selectors/contextThoughtId'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
+import parentContextId from '../selectors/parentContextId'
 import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
@@ -47,8 +47,8 @@ const Note = React.memo(
     const noteRef: { current: HTMLElement | null } = useRef(null)
     const fontSize = useSelector(state => state.fontSize)
     // The note is a metaprogramming attribute of the thought the user sees, which in the context view is the context
-    // rather than the Lexeme instance. formatSelection queries the note in the DOM by this id.
-    const thoughtId = useSelector(state => contextThoughtId(state, path))
+    // rather than the Lexeme context. formatSelection queries the note in the DOM by this id.
+    const thoughtId = useSelector(state => parentContextId(state, path))
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
     const [noteDraft, setNoteDraft] = useState<string | null>(null)
@@ -62,7 +62,7 @@ const Note = React.memo(
       preventAutoscrollEnd(noteRef.current)
       const state = store.getState()
       const targetPath = resolveNotePath(state, path)
-      const { noteId } = resolveNoteKey(state, contextThoughtId(state, path))
+      const { noteId } = resolveNoteKey(state, parentContextId(state, path))
       if (targetPath && !noteId) {
         setNoteDraft(noteValue(state, path) ?? '')
       }
@@ -152,7 +152,7 @@ const Note = React.memo(
 
           const resolvedTargetPath = resolveNotePath(state, path)
           const targetPath = resolvedTargetPath ?? path
-          const { noteId } = resolveNoteKey(state, contextThoughtId(state, path))
+          const { noteId } = resolveNoteKey(state, parentContextId(state, path))
 
           if (!noteId && resolvedTargetPath) {
             const values = value.split(',').map(value => value.trim())

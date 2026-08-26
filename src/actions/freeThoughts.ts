@@ -4,13 +4,13 @@ import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { ABSOLUTE_TOKEN, EM_TOKEN, FREE_THOUGHTS_MARGIN, FREE_THOUGHT_JUMPS, HOME_TOKEN } from '../constants'
 import globals from '../globals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import { getAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import headId from '../util/headId'
@@ -63,11 +63,11 @@ const freeThoughts = (state: State): State => {
     ...Object.values(state.expanded).flatMap(path => {
       const showContexts = isContextViewActive(state, path)
       // the context view lists the contexts of the thought the row displays, which is the context rather than the
-      // Lexeme instance when the row is itself inside a context view
-      const contextViewThought = showContexts ? getThoughtById(state, contextThoughtId(state, path)) : null
+      // Lexeme context when the row is itself inside a context view
+      const contextViewThought = showContexts ? getThoughtById(state, parentContextId(state, path)) : null
 
       return [
-        // a context step tags the instance, which is the thought that must be kept in memory
+        // a context step tags the Lexeme context, which is the thought that must be kept in memory
         ...pathIds(path),
         // preserve normal children even if context view is active, so that it is instantly available when the user switches back
         ...getAllChildren(state, headId(path)),

@@ -36,7 +36,6 @@ import asyncFocus from '../device/asyncFocus'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
@@ -45,6 +44,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursorSelector from '../selectors/hasMulticursor'
 import isMultiEditing from '../selectors/isMultiEditing'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import parentContextPath from '../selectors/parentContextPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import editingValueStore from '../stores/editingValue'
@@ -128,8 +128,8 @@ const Editable = ({
   transient,
 }: EditableProps) => {
   const dispatch = useDispatch()
-  // the displayed thought: simplePath is contextThoughtPath, so in the context view this is the context rather than
-  // the Lexeme instance. It labels the DOM element, so every lookup by `editable-<id>` must resolve to the same thought.
+  // the displayed thought: simplePath is parentContextPath, so in the context view this is the context rather than
+  // the Lexeme context. It labels the DOM element, so every lookup by `editable-<id>` must resolve to the same thought.
   const thoughtId = head(simplePath)
   const parentId = useSelector(state => head(rootedParentOf(state, simplePath)))
   const readonly = useSelector(state => findDescendant(state, thoughtId, '=readonly'))
@@ -732,8 +732,8 @@ const Editable = ({
               .filter(multicursorPath => !equalPath(multicursorPath, path))
               .flatMap(multicursorPath => {
                 // mirror the edit onto the thought the user sees, which in the context view is the context rather than
-                // the Lexeme instance
-                const multicursorSimplePath = contextThoughtPath(state, multicursorPath)
+                // the Lexeme context
+                const multicursorSimplePath = parentContextPath(state, multicursorPath)
                 const thought = getThoughtById(state, head(multicursorSimplePath))
                 return !thought || thought.value === newValue
                   ? []

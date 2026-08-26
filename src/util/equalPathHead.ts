@@ -6,7 +6,7 @@ import headId from './headId'
  * null.
  *
  * Compares the thoughts the Paths resolve to rather than their raw steps, so that a context-view Path and the
- * SimplePath of the Lexeme instance it stands for are recognized as the same thought — e.g. a/m~/b and b/m.
+ * SimplePath of the Lexeme context it stands for are recognized as the same thought — e.g. a/m~/b and b/m.
  */
 const equalPathHead = (path1: Path | null, path2: Path | null) =>
   path1 === path2 || (path1 && path2 && headId(path1) === headId(path2))

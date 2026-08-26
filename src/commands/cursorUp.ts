@@ -10,12 +10,12 @@ import CursorUpIcon from '../components/icons/CursorUp'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import documentSort from '../selectors/documentSort'
 import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import isTableCol2 from '../selectors/isTableCol2'
+import parentContextId from '../selectors/parentContextId'
 import prevSibling from '../selectors/prevSibling'
 import prevTableCousin from '../selectors/prevTableCousin'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -36,7 +36,7 @@ const cursorUpCommand = {
     if (!cursor) return true
 
     // use default browser behavior in prose mode
-    const parentId = contextThoughtId(state, rootedParentOf(state, cursor))
+    const parentId = parentContextId(state, rootedParentOf(state, cursor))
     const isProseView = attributeEquals(state, parentId, '=view', 'Prose')
     const isProseMode = isProseView && selection.offset()! > 0
     if (isProseMode) return false

@@ -29,7 +29,7 @@ const jump = (state: State, { steps }: { steps: number } = { steps: -1 }): State
   // it is possible that the thought id exists but has been moved
   // in this case, reconstruct a SimplePath by traversing from the root
   // A Path that crosses a context view cannot be reconstructed by traversing parents, since the crossing does not
-  // follow the parent chain. Fall back to the Lexeme instance's real position, which at least lands on the right
+  // follow the parent chain. Fall back to the Lexeme context's real position, which at least lands on the right
   // thought even though the context view around it is lost.
   const cursorNew =
     lastJumpCursor && !pathExists(state, lastJumpCursor) ? thoughtToPath(state, headId(lastJumpCursor)) : lastJumpCursor

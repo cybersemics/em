@@ -5,13 +5,13 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import createThought from '../actions/createThought'
 import setFirstSubthought from '../actions/setFirstSubthought'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren, hasChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -27,9 +27,9 @@ const toggleAttribute = (
   if (!path || (!value && (!values || values.length === 0))) return state
 
   // An attribute belongs to the thought the user sees, which in the context view is the context rather than the
-  // Lexeme instance (=pin, =view, etc. are read off the context when the row is rendered). Resolving the path once
+  // Lexeme context (=pin, =view, etc. are read off the context when the row is rendered). Resolving the path once
   // keeps the lookups, the thought that is created, and the deletions in the same context.
-  const contextPath = contextThoughtPath(state, path)
+  const contextPath = parentContextPath(state, path)
   const thoughtId = head(contextPath)
 
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])

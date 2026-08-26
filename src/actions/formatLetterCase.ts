@@ -2,10 +2,10 @@
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
-import contextThoughtId from '../selectors/contextThoughtId'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import hasMulticursor from '../selectors/hasMulticursor'
 import noteValue from '../selectors/noteValue'
+import parentContextId from '../selectors/parentContextId'
+import parentContextPath from '../selectors/parentContextPath'
 import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import applyLetterCase from '../util/applyLetterCase'
@@ -34,7 +34,7 @@ export const formatLetterCaseActionCreator =
 
     // The plain-text offsets of the selected text within the cursor thought, so that it can be re-selected after the
     // edit (#4840).
-    const cursorEditableSelector = `[aria-label="editable-${contextThoughtId(state, cursor)}"]`
+    const cursorEditableSelector = `[aria-label="editable-${parentContextId(state, cursor)}"]`
     const cursorEditable = state.noteFocus
       ? null
       : (document.querySelector(cursorEditableSelector) as HTMLElement | null)
@@ -82,8 +82,8 @@ export const formatLetterCaseActionCreator =
             editThought({
               oldValue: value,
               newValue,
-              // the thought the user sees, which in the context view is the context rather than the Lexeme instance
-              path: contextThoughtPath(state, path),
+              // the thought the user sees, which in the context view is the context rather than the Lexeme context
+              path: parentContextPath(state, path),
               force: true,
             }),
           ]

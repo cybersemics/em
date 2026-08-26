@@ -16,7 +16,7 @@ const lastVisibleDescendant = (state: State, path: Path): Path => {
   // must use the same Path rather than the simplified one
   if (!state.expanded[hashPath(path)]) return path
 
-  // children come from the thought the path lands on, which in the context view is the Lexeme instance
+  // children come from the thought the path lands on, which in the context view is the Lexeme context
   const children = getChildrenSorted(state, headId(path))
   if (children.length === 0) return path
 

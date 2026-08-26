@@ -20,7 +20,7 @@ const mergeDuplicates = (state: State): State => {
   if (!cursorThought) return state
 
   // Take the level from the cursor thought's parent rather than inferring it from the cursor Path. A Path that crosses
-  // a context view does not describe the thought's real ancestry, and simplifyPath resolves it to the Lexeme instance,
+  // a context view does not describe the thought's real ancestry, and simplifyPath resolves it to the Lexeme context,
   // e.g. a cursor on a/m~/b in the context view of a/m simplifies to b/m, whose level has nothing to do with the
   // thoughts the user is looking at. parentId is the displayed thought's actual level in every view.
   const parentId = cursorThought.parentId

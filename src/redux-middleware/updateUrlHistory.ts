@@ -34,7 +34,7 @@ const pathToUrl = (state: State, path: Path) => {
   const userId = window.location.pathname.split('/')[1] || '~'
   const queryString = window.location.search
   const thoughtsEncoded = path
-    // Note: Since thoughtId is a uuid, they are url safe. A context step contributes the id of its Lexeme instance,
+    // Note: Since thoughtId is a uuid, they are url safe. A context step contributes the id of its Lexeme context,
     // which is what decodeThoughtsUrl reconstructs the step from. The `~` suffix marks that the context view is active
     // on that component, and therefore that the next component crosses it.
     .map((step, i) => stepId(step) + (isContextViewActive(state, path.slice(0, i + 1) as Path) ? '~' : ''))

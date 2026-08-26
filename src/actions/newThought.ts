@@ -194,7 +194,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       return !preventSetCursor
         ? setCursor(newState, {
             isKeyboardOpen: true,
-            // A new context in the context view is a context-view row, so its step records the Lexeme instance that was
+            // A new context in the context view is a context-view row, so its step records the Lexeme context that was
             // just created inside it (ABS/_/m), not the empty context thought itself (ABS/_).
             path: insertContext ? appendContextStep(parentPath, newContextId!) : unroot([...parentPath!, newThoughtId]),
             offset: offset != null ? offset : getTextContentFromHTML(value).length,

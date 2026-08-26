@@ -18,11 +18,11 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import MoveThoughtAlert from '../components/MoveThoughtAlert'
 import { AlertType, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import getNextRank from '../selectors/getNextRank'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import parentContextId from '../selectors/parentContextId'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -193,7 +193,7 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     /** Returns true if the thought should be dropped at the top of a collapsed parent. */
     const shouldDropAtTop = (pathTo: Path) => {
       const parentPath = rootedParentOf(getState(), pathTo)
-      const parentId = contextThoughtId(getState(), parentPath)
+      const parentId = parentContextId(getState(), parentPath)
       const isExpanded = isPathExpanded(getState(), parentPath)
       return !isExpanded && attributeEquals(getState(), parentId, '=drop', 'top')
     }

@@ -7,10 +7,10 @@ import ThoughtId from '../@types/ThoughtId'
 import useHideBullet from '../hooks/useHideBullet'
 import useScrollCursorIntoView from '../hooks/useScrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import { findAnyChild, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import equalThoughtRanked from '../util/equalThoughtRanked'
@@ -104,8 +104,8 @@ export default function BulletCursorOverlay({
 }: BulletCursorOverlayProps) {
   const value: string | undefined = useSelector(state => {
     // the =children/=grandchildren/=bullet guards below apply to the thought the user sees, which in the context view
-    // is the context rather than the Lexeme instance
-    const thought = getThoughtById(state, contextThoughtId(state, path))
+    // is the context rather than the Lexeme context
+    const thought = getThoughtById(state, parentContextId(state, path))
     return thought?.value || ''
   })
 

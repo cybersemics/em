@@ -1,11 +1,11 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
-import contextThoughtId from '../selectors/contextThoughtId'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextId from '../selectors/parentContextId'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -45,9 +45,9 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   const allSameParent = multicursorPaths.every(path => equalPath(parentOf(path), parentOf(simplePath)))
 
   // The metaprogramming attributes that govern the destination belong to the thought the user sees there, which in the
-  // context view is the context rather than the Lexeme instance. Null when the cursor is a root child, which has no
+  // context view is the context rather than the Lexeme context. Null when the cursor is a root child, which has no
   // parent thought to check.
-  const cursorParentId = cursorParent.length > 0 ? contextThoughtId(state, cursorParent) : null
+  const cursorParentId = cursorParent.length > 0 ? parentContextId(state, cursorParent) : null
 
   // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
@@ -115,7 +115,7 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
             }),
           )),
     setCursor({
-      // In the context view the row is addressed by its Lexeme instance, which has just been moved under the new
+      // In the context view the row is addressed by its Lexeme context, which has just been moved under the new
       // category — so the cursor's own step still names it, and only the context it displays has changed. Building a
       // plain step from the category id instead would name a row that is not rendered.
       path: isInContextView ? cursor : appendToPath(cursorParent, newThoughtId),

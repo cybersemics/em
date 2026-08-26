@@ -48,7 +48,7 @@ const uncategorize = (state: State, { at }: Options): State => {
     return reducerFlow([
       state => uncategorize(state, { at: rootedParentOf(state, simplePath) }),
       setCursor({
-        // The row is addressed by its Lexeme instance, which uncategorize moves up a level rather than replacing, so
+        // The row is addressed by its Lexeme context, which uncategorize moves up a level rather than replacing, so
         // the cursor's own step still names it and only the context it displays has changed.
         path,
         isKeyboardOpen: state.isKeyboardOpen,

@@ -8,13 +8,13 @@ import getThoughtById from './getThoughtById'
 /**
  * Returns the id of the thought that is displayed and edited at the head of a Path.
  *
- * In the context view this is the context — `b` for the row `a/m~/b` — which is the parent of the Lexeme instance the
- * step lands on. Everywhere else it is the same as headId.
+ * In the context view this is the **parent context** — `b` for the row `a/m~/b` — i.e. the parent of the Lexeme
+ * context the step lands on. Everywhere else it is the same as headId.
  *
  * Use this for anything the user perceives as "this thought": its value, editing it, formatting it, and activating a
  * nested context view on it. Use headId/simplifyPath for anything structural: children, delete, move, sort, drop.
  */
-const contextThoughtId = (state: State, path: Path): ThoughtId => {
+const parentContextId = (state: State, path: Path): ThoughtId => {
   const step = head(path)
   const id = stepId(step)
   return isContextStep(step) ? (getThoughtById(state, id)?.parentId ?? id) : id
@@ -24,11 +24,11 @@ const contextThoughtId = (state: State, path: Path): ThoughtId => {
  * Returns the id of the thought displayed at each step of a Path.
  *
  * The dual of pathToContext, which returns their values. A context step contributes the context rather than the Lexeme
- * instance it lands on, so a/m~/b yields the ids of a, m, and b.
+ * Lexeme context it lands on, so a/m~/b yields the ids of a, m, and b.
  */
-export const contextThoughtIds = (state: State, path: Path): ThoughtId[] =>
+export const parentContextIds = (state: State, path: Path): ThoughtId[] =>
   path.map((step, i) =>
     isContextStep(step) ? (getThoughtById(state, stepId(step))?.parentId ?? stepId(step)) : stepId(step),
   )
 
-export default contextThoughtId
+export default parentContextId

@@ -6,9 +6,9 @@ import { archiveThoughtActionCreator as archiveThought } from '../actions/archiv
 import { errorActionCreator as error } from '../actions/error'
 import ArchiveIcon from '../components/icons/ArchiveIcon'
 import { DELETE_VIBRATE_DURATION, HOME_PATH } from '../constants'
-import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import hasMulticursor from '../selectors/hasMulticursor'
+import parentContextId from '../selectors/parentContextId'
 import resolveNotePath from '../selectors/resolveNotePath'
 import ellipsize from '../util/ellipsize'
 import haptics from '../util/haptics'
@@ -25,8 +25,8 @@ const exec: Command['exec'] = (dispatch, getState) => {
   if (cursor) {
     if (isEM(cursor) || isRoot(cursor)) {
       dispatch(error({ value: `The "${isEM(cursor) ? 'em' : 'home'} context" cannot be archived.` }))
-    } else if (findDescendant(state, contextThoughtId(state, cursor), '=readonly')) {
-      // =readonly, and the value shown in the error, belong to the thought the user sees, which in the context view is the context rather than the Lexeme instance
+    } else if (findDescendant(state, parentContextId(state, cursor), '=readonly')) {
+      // =readonly, and the value shown in the error, belong to the thought the user sees, which in the context view is the context rather than the Lexeme context
       const cursorValue = headValue(state, cursor)
       if (cursorValue === undefined) return
       dispatch(error({ value: `"${ellipsize(cursorValue)}" is read-only and cannot be archived.` }))

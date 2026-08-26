@@ -48,11 +48,11 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **Context** — `string[]` — a sequence of thought *values* from root to leaf, e.g. `['Animals', 'Cats']`. Ambiguous when duplicate values exist at the same level. Prefer `ThoughtId`/`Path` when an id is in scope. See [data-model.md → Context](data-model.md#context).
 
-**context step** — A `Path` step that crosses a context view, encoded as `` `~${instanceId}` `` — the id of the *Lexeme instance* rendered at that row, not the context it is displayed as. Makes the boundary explicit rather than inferred, so a context-view `Path` and a `SimplePath` of the same thoughts are distinct arrays with distinct `hashPath` keys. See [data-model.md → ContextStep](data-model.md#contextstep) and [`util/pathStep.ts`](../src/util/pathStep.ts).
+**context step** — A `Path` step that crosses a context view. Holds a `ThoughtId` like any other step, prefixed with `~` to mark the crossing — no Lexeme identifier is encoded. The id is that of the *Lexeme context* rendered at that row, not the *parent context* it is displayed as. Makes the boundary explicit rather than inferred, so a context-view `Path` and a `SimplePath` of the same thoughts are distinct arrays with distinct `hashPath` keys. See [data-model.md → ContextStep](data-model.md#contextstep) and [`util/pathStep.ts`](../src/util/pathStep.ts).
 
 **context view** — A view mode that replaces a thought's children with the contexts in which the thought's value appears. Toggled with `Option + Shift + S`. The "inbound links" dual to the outbound parent-child links. State: `state.contextViews`, keyed by `hashPath(path)`. See [data-model.md → Context view](data-model.md#context-view).
 
-**crossContextualKey** — `` `${contextSteps}|${headStep}` ``. The React key for a thought that may appear at multiple positions when context views are active. Both halves are unambiguous now that a *context step* records the Lexeme instance, so the same thought gets a different key at each occurrence. See [layout-rendering.md → Keys](layout-rendering.md#keys-crosscontextualkey).
+**crossContextualKey** — `` `${contextSteps}|${headStep}` ``. The React key for a thought that may appear at multiple positions when context views are active. Both halves are unambiguous now that a *context step* records the Lexeme context, so the same thought gets a different key at each occurrence. See [layout-rendering.md → Keys](layout-rendering.md#keys-crosscontextualkey).
 
 **cursor** — The active thought, stored as `state.cursor: Path | null`. Indicated by the gray bullet ring. Distinct from *caret*. Setting the cursor does not set the browser selection; see [cursor-and-caret.md](cursor-and-caret.md).
 
@@ -110,7 +110,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **Lexeme** — Object collecting all the contexts where a value (or any of its near-identical word forms — case, plurality, emoji variants) appears. Stored in `state.thoughts.lexemeIndex` keyed by `hashThought(value)`. The "inbound links" view of a thought. See [data-model.md → Lexeme](data-model.md#lexeme).
 
-**Lexeme instance** — A thought that belongs to a given `Lexeme`, as opposed to the *context* it sits in. The context view on `a/m` lists the contexts (`a`, `b`), but each row stands for an instance (`a/m`, `b/m`) — and it is the instance that supplies the row's children and that delete and move operate on. See [data-model.md → Resolving a Path in the context view](data-model.md#resolving-a-path-in-the-context-view).
+**Lexeme context** — An entry in `Lexeme.contexts`: a thought whose value hashes to that Lexeme's key. The context view on `a/m` renders one row per Lexeme context of *m* (`a/m`, `b/m`), each displaying its *parent context* (`a`, `b`). The Lexeme context supplies the row's children and is what delete, move, rank and sort operate on. See [data-model.md → Resolving a Path in the context view](data-model.md#resolving-a-path-in-the-context-view).
 
 **linearizeTree** — Selector that produces `treeThoughts: TreeThought[]` — an in-order traversal of every visible thought. Output drives layout. See [layout-rendering.md → linearizeTree](layout-rendering.md#linearizetree-the-in-order-traversal).
 
@@ -129,6 +129,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 **=note** — Meta-attribute that displays a smaller-text note under a thought.
 
 ## P
+
+**parent context** — The parent of a *Lexeme context*, and the thought a context-view row displays: `b` for the row `a/m~/b`. It is what `<Editable>` edits, what the row's metaprogramming attributes are read from, and what a nested context view lists the contexts of. Obtained with [`parentContextId`](../src/selectors/parentContextId.ts) / [`parentContextPath`](../src/selectors/parentContextPath.ts).
 
 **Path** — `[PathStep, ...PathStep[]]` — non-empty sequence of steps from root to a rendered thought. An ordinary child step is the child's `ThoughtId`; a step that crosses a context view is a *context step*. Root itself is implied (`[HOME_TOKEN]` is the special case). May contain cycles when traversing context views. See [data-model.md → Path](data-model.md#path).
 
@@ -164,7 +166,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **SimplePath** — A `Path` with no *context steps*, and therefore no cycles. Its elements are plain `ThoughtId`s, so it is assignable to `Path` but not the reverse. Required by code that needs a single contiguous context. Get one via `simplifyPath` or by structurally guaranteeing it and casting; check one at runtime with `isSimplePath`. See [data-model.md → SimplePath](data-model.md#simplepath).
 
-**simplifyPath** — [`simplifyPath.ts`](../src/selectors/simplifyPath.ts) — the `SimplePath` of the thought a `Path` describes, resolving its last *context step*. In the context view that is the Lexeme instance (`b/m` for `a/m~/b`); for the thought displayed there (`b`) use [`contextThoughtPath`](../src/selectors/contextThoughtPath.ts). Replaces the former `splitChain` / `lastThoughtsFromContextChain` pair, which inferred the boundary rather than reading it.
+**simplifyPath** — [`simplifyPath.ts`](../src/selectors/simplifyPath.ts) — the `SimplePath` of the thought a `Path` describes, resolving its last *context step*. In the context view that is the Lexeme context (`b/m` for `a/m~/b`); for the thought displayed there (`b`) use [`parentContextPath`](../src/selectors/parentContextPath.ts). Replaces the former `splitChain` / `lastThoughtsFromContextChain` pair, which inferred the boundary rather than reading it.
 
 **=sort** — Meta-attribute that sorts a context's children, replacing their manual order by renumbering their ranks. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
 

@@ -110,7 +110,7 @@ const importText = (
   const simplePath = simplifyPath(state, path)
   const convertedText = isRoam ? text : isMarkdown(text) ? textToHtml(markdownToText(text)) : textToHtml(text)
   const numLines = (convertedText.match(REGEX_LIST_ITEM) || []).length
-  // the thought the path lands on, i.e. the Lexeme instance in the context view, since the import inserts children
+  // the thought the path lands on, i.e. the Lexeme context in the context view, since the import inserts children
   const thoughtId = headId(path)
   const destThought = getThoughtById(state, thoughtId)
   if (!destThought) {

@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import contextThoughtId from '../selectors/contextThoughtId'
+import parentContextId from '../selectors/parentContextId'
 import pathToThought from '../selectors/pathToThought'
 import selectionOffsets from '../selectors/selectionOffsets'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -51,7 +51,7 @@ const extractCategory = (state: State, { selectionStart, selectionEnd }: extract
     oldValue: value,
     newValue,
     // The thought has been moved under the new category, so its path is no longer the cursor's. Its id is unchanged.
-    path: thoughtToPath(stateCategorized, contextThoughtId(state, cursor)),
+    path: thoughtToPath(stateCategorized, parentContextId(state, cursor)),
     force: true,
   })
 }

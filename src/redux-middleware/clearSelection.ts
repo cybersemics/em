@@ -1,8 +1,8 @@
 import { ThunkMiddleware } from 'redux-thunk'
 import State from '../@types/State'
 import * as selection from '../device/selection'
-import contextThoughtId from '../selectors/contextThoughtId'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextId from '../selectors/parentContextId'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
 
@@ -13,8 +13,8 @@ const cursorChangedMiddleware: ThunkMiddleware<State> = ({ getState }) => {
 
     const state = getState()
     // the displayed thought, i.e. the context in the context view, since whether the row is editable depends on what
-    // the user sees rather than on the Lexeme instance the cursor lands on
-    const cursorThoughtId = state.cursor ? contextThoughtId(state, state.cursor) : null
+    // the user sees rather than on the Lexeme context the cursor lands on
+    const cursorThoughtId = state.cursor ? parentContextId(state, state.cursor) : null
     const thought = cursorThoughtId ? getThoughtById(state, cursorThoughtId) : null
     const value = thought?.value ?? ''
     if (

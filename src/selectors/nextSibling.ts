@@ -8,16 +8,16 @@ import headId from '../util/headId'
 import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import { isContextStep } from '../util/pathStep'
-import contextThoughtId from './contextThoughtId'
 import getContextsSortedAndRanked from './getContextsSortedAndRanked'
 import getThoughtById from './getThoughtById'
+import parentContextId from './parentContextId'
 import rootedParentOf from './rootedParentOf'
 
 /**
  * Gets the next sibling after a thought according to its parent's sort preference. Supports normal view and context
  * view; a ThoughtId argument is always resolved in normal view since it carries no context-view information.
  *
- * In the context view the siblings are the other Lexeme instances, and the returned Thought is an instance — append it
+ * In the context view the siblings are the other Lexeme contexts, and the returned Thought is a Lexeme context — append it
  * with `replaceHead`, not `appendToPath`, so the context-view step is preserved.
  */
 const nextSibling = (state: State, idOrPath: ThoughtId | Path): Thought | null => {
@@ -31,7 +31,7 @@ const nextSibling = (state: State, idOrPath: ThoughtId | Path): Thought | null =
   const showContexts = typeof idOrPath !== 'string' && isContextStep(head(idOrPath))
   const contextViewThought =
     showContexts && typeof idOrPath !== 'string'
-      ? getThoughtById(state, contextThoughtId(state, rootedParentOf(state, idOrPath)))
+      ? getThoughtById(state, parentContextId(state, rootedParentOf(state, idOrPath)))
       : null
   const siblings = showContexts
     ? contextViewThought

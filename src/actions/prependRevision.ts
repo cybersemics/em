@@ -4,9 +4,9 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
 import newThought from '../actions/newThought'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild } from '../selectors/getChildren'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import getPublishUrl from '../util/getPublishUrl'
@@ -16,9 +16,9 @@ import reducerFlow from '../util/reducerFlow'
 /** Inserts a new revision from the given CID at the top of {path}/=publish/Revisions. */
 const prependRevision = (state: State, { path, cid }: { path: Path; cid: string }) => {
   // =publish is a metaprogramming attribute of the thought the user sees, which in the context view is the context
-  // rather than the Lexeme instance. Resolving the path once keeps the lookups and the thoughts that are created below
+  // rather than the Lexeme context. Resolving the path once keeps the lookups and the thoughts that are created below
   // in the same context.
-  const contextPath = contextThoughtPath(state, path)
+  const contextPath = parentContextPath(state, path)
 
   /** Gets the =publish thought. */
   const publishChild = (state: State) => findAnyChild(state, head(contextPath), child => child.value === '=publish')

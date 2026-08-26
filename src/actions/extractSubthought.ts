@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import contextThoughtPath from '../selectors/contextThoughtPath'
+import parentContextPath from '../selectors/parentContextPath'
 import pathToThought from '../selectors/pathToThought'
 import selectionOffsets from '../selectors/selectionOffsets'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -41,8 +41,8 @@ const extractSubthought = (state: State, { selectionStart, selectionEnd }: extra
     editThought({
       oldValue: value,
       newValue,
-      // the thought the user sees, which in the context view is the context rather than the Lexeme instance
-      path: contextThoughtPath(state, cursor),
+      // the thought the user sees, which in the context view is the context rather than the Lexeme context
+      path: parentContextPath(state, cursor),
       force: true,
       cursorOffset: state.cursorOffset != null ? state.cursorOffset - (value.length - newValue.length) : undefined,
     }),

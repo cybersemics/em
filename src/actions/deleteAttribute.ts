@@ -3,10 +3,10 @@ import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import findDescendant from '../selectors/findDescendant'
 import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
@@ -22,8 +22,8 @@ const deleteAttribute = (
   if (!path || (!value && (!values || values.length === 0))) return state
 
   // An attribute belongs to the thought the user sees, which in the context view is the context rather than the Lexeme
-  // instance. Resolving the path once keeps the lookups and the deletions in the same context.
-  const contextPath = contextThoughtPath(state, path)
+  // Lexeme context. Resolving the path once keeps the lookups and the deletions in the same context.
+  const contextPath = parentContextPath(state, path)
   const thoughtId = head(contextPath)
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
 

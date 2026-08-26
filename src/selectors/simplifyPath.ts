@@ -8,8 +8,8 @@ import thoughtToPath from './thoughtToPath'
 /**
  * Returns the SimplePath of the thought a Path describes, i.e. its position in the tree.
  *
- * In the context view this is the Lexeme instance: `a/m~/b` simplifies to `b/m`. For the thought that is *displayed*
- * there (`b`), use contextThoughtPath.
+ * In the context view this is the Lexeme context: `a/m~/b` simplifies to `b/m`. For the parent context that is
+ * *displayed* there (`b`), use parentContextPath.
  *
  * Only the last context-view boundary matters — everything after it is an ordinary chain of children within one
  * context, and is carried across verbatim rather than looked up. That keeps a *constructed* Path meaningful: a

@@ -12,11 +12,11 @@ import headId from '../util/headId'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import { replaceHead } from '../util/pathStep'
-import contextThoughtId from './contextThoughtId'
+import parentContextId from './parentContextId'
 
 /** Gets the first context in a context view. */
 const firstContext = (state: State, path: Path): Path | null => {
-  const thought = getThoughtById(state, contextThoughtId(state, path))
+  const thought = getThoughtById(state, parentContextId(state, path))
   const contexts = thought ? getContextsSortedAndRanked(state, thought.value) : []
 
   // if context view is empty, move to the next thought
@@ -43,7 +43,7 @@ const nextThought = (state: State, path?: Path, { ignoreChildren }: { ignoreChil
   path = path || state.cursor || HOME_PATH
   const onContextView = isContextViewActive(state, path) && !ignoreChildren
 
-  // children come from the thought the path lands on, which in the context view is the Lexeme instance
+  // children come from the thought the path lands on, which in the context view is the Lexeme context
   const firstChild = !ignoreChildren ? firstVisibleChild(state, headId(path)) : null
 
   // nextSibling reads the context view off the path's own head step, so it returns the next context when the path is a

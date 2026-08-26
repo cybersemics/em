@@ -6,8 +6,8 @@ import { loadFromUrlActionCreator as loadFromUrl } from '../actions/loadFromUrl'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setResourceCacheActionCreator } from '../actions/setResourceCache'
 import attribute from '../selectors/attribute'
-import contextThoughtId from '../selectors/contextThoughtId'
 import { getChildren, getChildrenRanked } from '../selectors/getChildren'
+import parentContextId from '../selectors/parentContextId'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
@@ -21,7 +21,7 @@ export const loadResourceActionCreator =
     const { resourceCache } = state
     // =src is a metaprogramming attribute of the thought the user sees, while the resource is loaded into the thought
     // the path lands on. The two only differ in the context view.
-    const src = attribute(state, contextThoughtId(state, path), '=src')
+    const src = attribute(state, parentContextId(state, path), '=src')
 
     /** Returns true if the path has any children. */
     const hasVisibleChildren = () => getChildren(state, headId(path)).length > 0

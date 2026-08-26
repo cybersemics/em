@@ -106,9 +106,9 @@ it('render home icon as breadcrumbs for each context whose parent is the home co
   ])
 })
 
-it('renders a separate row for each Lexeme instance within one context', async () => {
+it('renders a separate row for each Lexeme context within one context', async () => {
   // b holds two thoughts of the cat Lexeme, so the context view on a/cat lists b twice. Both rows display "b" but
-  // stand for different instances, and each renders its own children. Before the boundary was recorded in the Path,
+  // stand for different Lexeme contexts, and each renders its own children. Before the boundary was recorded in the Path,
   // both rows shared one Path and only one of them was addressable.
   await dispatch([
     importText({
@@ -135,17 +135,17 @@ it('renders a separate row for each Lexeme instance within one context', async (
       node => !!queryByLabelText(node, 'context-breadcrumbs') && queryByLabelText(node, 'thought')?.textContent === 'b',
     )
 
-  // both instances are listed, each displayed as its context b
+  // both Lexeme contexts are listed, each displayed as its parent context b
   expect(contextRows).toHaveLength(2)
 
   // each row is addressed by its own Path, so the cursor can land on either one
   const paths = contextRows.map(row => row.getAttribute('data-path'))
   expect(paths[0]).not.toEqual(paths[1])
 
-  // and each Path resolves to a different Lexeme instance, so the two rows render different children
+  // and each Path resolves to a different Lexeme context, so the two rows render different children
   const state = store.getState()
-  const instances = linearizeTree(state).filter(node => paths.includes(hashPath(node.path)))
-  expect(instances.map(node => pathToContext(state, simplifyPath(state, node.path)))).toEqual([
+  const lexemeContexts = linearizeTree(state).filter(node => paths.includes(hashPath(node.path)))
+  expect(lexemeContexts.map(node => pathToContext(state, simplifyPath(state, node.path)))).toEqual([
     ['b', 'cat'],
     ['b', 'Cats'],
   ])

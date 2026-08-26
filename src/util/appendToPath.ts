@@ -15,11 +15,11 @@ const appendToPath = <T extends Path | SimplePath>(path: T | null, ...children: 
 /**
  * Appends a step that crosses a context view, turning a Path into one that is no longer simple.
  *
- * @param instanceId The Lexeme instance rendered at the new position, e.g. the id of `b/m` for the row `a/m~/b`. See
- * ContextStep for why the instance is stored rather than the context.
+ * @param lexemeContextId The Lexeme context rendered at the new position, e.g. the id of `b/m` for the row
+ * `a/m~/b`. See ContextStep for why it is stored rather than the parent context.
  */
-export const appendContextStep = (path: Path | null, instanceId: ThoughtId): Path => {
-  const step: ContextStep = contextStep(instanceId)
+export const appendContextStep = (path: Path | null, lexemeContextId: ThoughtId): Path => {
+  const step: ContextStep = contextStep(lexemeContextId)
   return (!path || isRoot(path) ? [step] : [...path, step]) as Path
 }
 

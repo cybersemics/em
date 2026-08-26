@@ -4,10 +4,10 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
-import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
+import parentContextId from '../selectors/parentContextId'
 import prevSibling from '../selectors/prevSibling'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
@@ -36,9 +36,9 @@ const indent = (state: State, { selectionOffset }: indentPayload = {}): State =>
   if (!prev) return state
 
   // The metaprogramming attributes that govern the move belong to the thought the user sees at the parent, which in
-  // the context view is the context rather than the Lexeme instance. Null when the cursor is a root child, which has no
+  // the context view is the context rather than the Lexeme context. Null when the cursor is a root child, which has no
   // parent thought to check.
-  const parentId = cursor.length > 1 ? contextThoughtId(state, parentOf(cursor)) : null
+  const parentId = cursor.length > 1 ? parentContextId(state, parentOf(cursor)) : null
 
   // cancel if cursor is EM_TOKEN or HOME_TOKEN
   if (isEM(cursor) || isRoot(cursor)) {
@@ -91,7 +91,7 @@ export const indentActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
   const { cursor } = state
   const selectionOffset =
-    cursor && selection.isOnEditable(contextThoughtId(state, cursor)) && selection.isText()
+    cursor && selection.isOnEditable(parentContextId(state, cursor)) && selection.isText()
       ? (selection.offset() ?? 0)
       : null
   dispatch({ type: 'indent', selectionOffset })

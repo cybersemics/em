@@ -5,23 +5,23 @@ import State from '../@types/State'
 import { HOME_PATH } from '../constants'
 import parseLet from '../util/parseLet'
 import attributeEquals from './attributeEquals'
-import contextThoughtId from './contextThoughtId'
 import findDescendant from './findDescendant'
 import findFirstEnvContextWithZoom from './findFirstEnvContextWithZoom'
+import parentContextId from './parentContextId'
 import rootedParentOf from './rootedParentOf'
 
 const EMPTY_ENV: LazyEnv = {}
 
 /** Returns true if =focus/Zoom applies to the thought at the given path, whether set on the thought itself, on all of its siblings via its parent's =children, or through a =let binding named by one of its children. */
 const isZoomed = (state: State, path: Path, env: LazyEnv): boolean =>
-  attributeEquals(state, contextThoughtId(state, path), '=focus', 'Zoom') ||
+  attributeEquals(state, parentContextId(state, path), '=focus', 'Zoom') ||
   attributeEquals(
     state,
-    findDescendant(state, contextThoughtId(state, rootedParentOf(state, path)), '=children'),
+    findDescendant(state, parentContextId(state, rootedParentOf(state, path)), '=children'),
     '=focus',
     'Zoom',
   ) ||
-  !!findFirstEnvContextWithZoom(state, { id: contextThoughtId(state, path), env })
+  !!findFirstEnvContextWithZoom(state, { id: parentContextId(state, path), env })
 
 /** Returns the deepest ancestor-or-self of the cursor that =focus/Zoom applies to, or null if the cursor is not zoomed. Every thought outside the returned path's subtree is hidden by calculateAutofocus.
  *

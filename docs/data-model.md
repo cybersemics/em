@@ -136,11 +136,14 @@ it addresses.
 #### ContextStep
 
 ```ts
-type ContextStep = string & Brand<'ContextStep'>   // `~${instanceId}`
+type ContextStep = string & Brand<'ContextStep'>   // `~${lexemeContextId}`
 ```
 
-A step that crosses a context view, encoded as the id of the **Lexeme instance** rendered at that position, prefixed
-with `~`. For the row `a/m~/b` — the context `b` listed under the context view on `a/m` — the Path is
+A step that crosses a context view. It holds a `ThoughtId` like any other step — **no Lexeme identifier is encoded, and
+resolving a `Path` never consults a Lexeme** — prefixed with `~` to mark the crossing.
+
+The id is that of the [**Lexeme context**](#resolving-a-path-in-the-context-view): the entry in `Lexeme.contexts`
+rendered at that position. For the row `a/m~/b`, which displays the **parent context** `b`, the Path is
 `[a, m, ~<id of b/m>]`.
 
 Two things about that encoding are load-bearing:
@@ -150,10 +153,10 @@ Two things about that encoding are load-bearing:
   array of ids, and the boundary had to be guessed from `state.contextViews` and the
   Lexeme — a guess that is wrong whenever an ordinary child of `m` also happens to contain an `m` of its own. It also
   made `state.contextViews`, `state.expanded`, and `state.multicursors` collide between the two.
-- **The step stores the instance, not the context.** A single context can hold two thoughts of the same Lexeme — `b/cat`
-  and `b/Cats` are both listed under `a/cat~`, both displayed as `b`. Storing `b` would make those two rendered rows the
-  same Path and leave one of them unaddressable by the cursor. The context is recovered in O(1) from
-  `getThoughtById(state, instanceId).parentId`.
+- **The step stores the Lexeme context, not the parent context.** A single parent can hold two thoughts of the same
+  Lexeme — `b/cat` and `b/Cats` are both listed under `a/cat~`, both displayed as `b`. Storing `b` would make those two
+  rendered rows the same Path and leave one of them unaddressable by the cursor. The parent context is recovered in
+  O(1) from `getThoughtById(state, lexemeContextId).parentId`.
 
 Steps are manipulated through [`util/pathStep.ts`](../src/util/pathStep.ts): `contextStep`, `isContextStep`, `stepId`,
 `isSimplePath`, `pathIds`, `replaceHead`, `appendSteps`, `lastContextStepIndex`. Never take a step apart by hand.
@@ -254,7 +257,7 @@ A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/ro
 #### Basic traversal
 
 - [`parentOfThought`](../src/selectors/parentOfThought.ts) — parent `Thought` of a `ThoughtId`.
-- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. Both handle the context view, where the siblings of a context are the other Lexeme instances. They read that off the head step of the `Path` they are given, so nothing has to be inferred and a caller holding a `SimplePath` gets normal-view siblings automatically. The returned `Thought` is an instance in the context view, so build its `Path` with [`replaceHead`](../src/util/pathStep.ts) rather than `appendToPath`.
+- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. Both handle the context view, where the siblings of a context are the other Lexeme contexts. They read that off the head step of the `Path` they are given, so nothing has to be inferred and a caller holding a `SimplePath` gets normal-view siblings automatically. The returned `Thought` is a Lexeme context in the context view, so build its `Path` with [`replaceHead`](../src/util/pathStep.ts) rather than `appendToPath`.
 - [`rootedParentOf`](../src/selectors/rootedParentOf.ts) — parent `Path`, returning `[HOME_TOKEN]` for root children.
 - [`parentOf`](../src/util/parentOf.ts) — parent of a `Path` or `Context` (may be empty).
 - [`appendToPath`](../src/util/appendToPath.ts) — appends one or more thoughts to a `Path` / `SimplePath`, dropping the root token.
@@ -309,9 +312,9 @@ A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/ro
 #### Context view
 
 - [`isContextViewActive(state, path)`](../src/selectors/isContextViewActive.ts) — is context view turned on for this path?
-- [`appendContextStep(path, instanceId)`](../src/util/appendToPath.ts) — append a step that crosses a context view.
-- [`simplifyPath`](../src/selectors/simplifyPath.ts) — the `SimplePath` of the Lexeme instance a `Path` describes.
-- [`contextThoughtId`](../src/selectors/contextThoughtId.ts) / [`contextThoughtPath`](../src/selectors/contextThoughtPath.ts) — the thought displayed at the head of a `Path`.
+- [`appendContextStep(path, lexemeContextId)`](../src/util/appendToPath.ts) — append a step that crosses a context view.
+- [`simplifyPath`](../src/selectors/simplifyPath.ts) — the `SimplePath` of the Lexeme context a `Path` describes.
+- [`parentContextId`](../src/selectors/parentContextId.ts) / [`parentContextPath`](../src/selectors/parentContextPath.ts) — the thought displayed at the head of a `Path`.
 
 ## Visibility and sorting
 
@@ -387,10 +390,10 @@ The context view is gated by `state.contextViews`, an object keyed by `hashPath(
 Contexts under a context view can themselves render their own children (defaulting back to normal view). The mechanics:
 
 - In normal view, a child `Path` is appended directly: `appendToPath(parentPath, childId)`.
-- In context view, the step is a [ContextStep](#contextstep) built from the id of the Lexeme instance:
-  [`appendContextStep(parentPath, instanceId)`](../src/util/appendToPath.ts). The row displays the instance's *parent*,
-  but the step records the instance, because that is what makes each row uniquely addressable and what supplies the
-  row's children.
+- In context view, the step is a [ContextStep](#contextstep) built from the id of the Lexeme context:
+  [`appendContextStep(parentPath, lexemeContextId)`](../src/util/appendToPath.ts). The row displays the *parent
+  context*, but the step records the Lexeme context, because that is what makes each row uniquely addressable and what
+  supplies the row's children.
 
 To move between rows at the same level — the next or previous sibling, or the next or previous context — use
 [`replaceHead(path, id)`](../src/util/pathStep.ts) rather than `appendToPath(parentOf(path), id)`. It preserves whether
@@ -420,15 +423,15 @@ A context-view row involves two different thoughts, and which one you want depen
 
 | | thought | selector |
 |---|---|---|
-| **Lexeme instance** — supplies the row's children, and is what delete, move, rank, sort and drop operate on | `b/m` | [`headId(path)`](../src/util/headId.ts) / [`simplifyPath`](../src/selectors/simplifyPath.ts) |
-| **context** — displayed on the row, edited by `<Editable>`, owns the metaprogramming attributes, and is what a *nested* context view lists the contexts of | `b` | [`contextThoughtId`](../src/selectors/contextThoughtId.ts) / [`contextThoughtPath`](../src/selectors/contextThoughtPath.ts) |
+| **Lexeme context** — the entry in `Lexeme.contexts`. Supplies the row's children, and is what delete, move, rank, sort and drop operate on | `b/m` | [`headId(path)`](../src/util/headId.ts) / [`simplifyPath`](../src/selectors/simplifyPath.ts) |
+| **parent context** — its parent, and the thought the row displays. Edited by `<Editable>`, owns the metaprogramming attributes, and is what a *nested* context view lists the contexts of | `b` | [`parentContextId`](../src/selectors/parentContextId.ts) / [`parentContextPath`](../src/selectors/parentContextPath.ts) |
 
 Outside the context view all four agree, so on a `SimplePath` any of them is correct.
 
 This ambiguity is intrinsic: the context view is the transitional space between two parts of the tree, and the right
 thought genuinely depends on the command. The refactor that introduced `ContextStep` did not remove the ambiguity — it
 made every call site *state* which one it means, instead of leaving one global answer that was wrong half the time.
-Deleting `a/m~/a` removes `m` from the context `a` (the instance); formatting it makes the visible `a` bold (the
+Deleting `a/m~/a` removes `m` from `a` (the Lexeme context); formatting it makes the visible `a` bold (the parent
 context). Both are correct.
 
 `simplifyPath` resolves only the **last** boundary and carries the steps after it across verbatim. That is what keeps a
@@ -469,8 +472,8 @@ The cursor `Books/Read/C.S. Peirce/Philosophical Writings/Philosophy of Math~/Ph
 
 Related helpers:
 
-- [`simplifyPath`](../src/selectors/simplifyPath.ts) — `Path` → the `SimplePath` of the Lexeme instance.
-- [`contextThoughtPath`](../src/selectors/contextThoughtPath.ts) / [`contextThoughtId`](../src/selectors/contextThoughtId.ts) — the thought displayed at the head.
+- [`simplifyPath`](../src/selectors/simplifyPath.ts) — `Path` → the `SimplePath` of the Lexeme context.
+- [`parentContextPath`](../src/selectors/parentContextPath.ts) / [`parentContextId`](../src/selectors/parentContextId.ts) — the thought displayed at the head.
 - [`headId`](../src/util/headId.ts) — the id at the head, decoding a context step.
 - [`pathStep`](../src/util/pathStep.ts) — `contextStep`, `isContextStep`, `stepId`, `isSimplePath`, `pathIds`, `replaceHead`, `appendSteps`, `lastContextStepIndex`.
 - [`appendContextStep`](../src/util/appendToPath.ts) — enter a context view.

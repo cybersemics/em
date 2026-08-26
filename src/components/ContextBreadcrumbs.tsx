@@ -9,8 +9,8 @@ import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
-import contextThoughtId, { contextThoughtIds } from '../selectors/contextThoughtId'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextId, { parentContextIds } from '../selectors/parentContextId'
 import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
 import ellipsize from '../util/ellipsize'
@@ -50,12 +50,12 @@ const useEllipsizedThoughts = (
 
   // convert the path to a list of thought values
   // if editing, use the live editing value
-  // the thought displayed at each step, i.e. the context rather than the Lexeme instance inside a context view
-  const displayedIds = useSelector(state => contextThoughtIds(state, path), isEqual)
+  // the thought displayed at each step, i.e. the context rather than the Lexeme context inside a context view
+  const displayedIds = useSelector(state => parentContextIds(state, path), isEqual)
   const thoughtValuesLive = useSelector(
     state =>
       displayedIds.map(id =>
-        editingValue && state.cursor && id === contextThoughtId(state, state.cursor)
+        editingValue && state.cursor && id === parentContextId(state, state.cursor)
           ? editingValue
           : ((getThoughtById(state, id)?.value || null) as string | null),
       ),

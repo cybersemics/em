@@ -47,7 +47,7 @@ const initializeCursor = async () => {
     store.dispatch(setCursor({ path: null }))
   } else {
     // pull the path thoughts
-    // a context step lands on the Lexeme instance, which is the thought that has to be loaded for the cursor to render
+    // a context step lands on the Lexeme context, which is the thought that has to be loaded for the cursor to render
     const ids = pathIds(path)
     await store.dispatch(pull(ids, { maxDepth: 0 }))
     const newState = store.getState()

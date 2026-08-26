@@ -4,9 +4,9 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import createThought from '../actions/createThought'
 import setFirstSubthought from '../actions/setFirstSubthought'
-import contextThoughtPath from '../selectors/contextThoughtPath'
 import findDescendant from '../selectors/findDescendant'
 import getPrevRank from '../selectors/getPrevRank'
+import parentContextPath from '../selectors/parentContextPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -25,9 +25,9 @@ const setDescendant = (state: State, { path, value, values }: setDescendantPaylo
   if (!value && (!values || values.length === 0)) return state
 
   // The descendants set here are metaprogramming attributes (=note, =pin, =style, ...), which belong to the thought
-  // the user sees, i.e. the context rather than the Lexeme instance in the context view. Resolving the path once keeps
+  // the user sees, i.e. the context rather than the Lexeme context in the context view. Resolving the path once keeps
   // the lookup and the thoughts that are created below in the same context.
-  const contextPath = contextThoughtPath(state, path)
+  const contextPath = parentContextPath(state, path)
   const thoughtId = head(contextPath)
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
   const idNew = createId()

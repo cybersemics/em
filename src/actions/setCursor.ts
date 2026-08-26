@@ -12,10 +12,10 @@ import {
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
 import globals from '../globals'
-import contextThoughtId from '../selectors/contextThoughtId'
 import expandThoughts from '../selectors/expandThoughts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextId from '../selectors/parentContextId'
 import editingValueStore from '../stores/editingValue'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
@@ -70,7 +70,7 @@ const setCursor = (
     return state
   }
 
-  const thought = path && getThoughtById(state, contextThoughtId(state, path))
+  const thought = path && getThoughtById(state, parentContextId(state, path))
 
   // sync replaceContextViews with state.contextViews
   // ignore thoughts that are not in the path of replaceContextViews

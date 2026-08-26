@@ -40,7 +40,7 @@ const calculateAutofocus = (state: State, path: Path) => {
 
   // Generally if the cursor is on a leaf, the autofocus should be the same as its parent.
   // This avoids a visual shift when there are no additional descendants to focus on.
-  // use headId so that a context in the context view is judged by the children of its Lexeme instance, which are the children actually rendered beneath it
+  // use headId so that a context in the context view is judged by the children of its Lexeme context, which are the children actually rendered beneath it
   const isCursorLeaf = !hasChildren(state, headId(state.cursor))
 
   /** Returns true if the thought is the parent or sibling of the cursor. */

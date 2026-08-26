@@ -12,13 +12,13 @@ import { setDescendantActionCreator as setDescendant } from '../actions/setDesce
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { LongPressState } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
-import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import isPinned from '../selectors/isPinned'
+import parentContextId from '../selectors/parentContextId'
 import dndRef from '../util/dndRef'
 import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
@@ -126,7 +126,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
 
     const invalid = useSelector(state => isEditing && state.invalidState)
 
-    const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, contextThoughtId(state, path))?.value))
+    const bulletIsDivider = useSelector(state => isDivider(getThoughtById(state, parentContextId(state, path))?.value))
 
     const fontSize = useSelector(state => state.fontSize)
 
@@ -166,12 +166,12 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
             ...(isExpanded &&
             (!pathParent ||
               parentChildren?.length === 1 ||
-              findDescendant(state, pathParent && contextThoughtId(state, pathParent), ['=children', '=pin', 'true']) ||
+              findDescendant(state, pathParent && parentContextId(state, pathParent), ['=children', '=pin', 'true']) ||
               // =descendants/=pin propagates from any ancestor; the nearest ancestor that sets it wins.
               // Each ancestor's attributes belong to the thought displayed there, which in the context view is the
-              // context rather than the Lexeme instance.
+              // context rather than the Lexeme context.
               parentOf(path)
-                .map((step, i) => contextThoughtId(state, path.slice(0, i + 1) as Path))
+                .map((step, i) => parentContextId(state, path.slice(0, i + 1) as Path))
                 .reverse()
                 .reduce<boolean | null>(
                   (accum, id) => accum ?? isPinned(state, findDescendant(state, id, '=descendants')),
@@ -188,7 +188,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
     )
 
     // check if the thought is pinned
-    const isThoughtPinned = useSelector(state => !!isPinned(state, contextThoughtId(state, path)))
+    const isThoughtPinned = useSelector(state => !!isPinned(state, parentContextId(state, path)))
 
     const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
     // A selected thought stays collapsed even when it is the cursor, so state.expanded alone determines

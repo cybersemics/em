@@ -25,9 +25,9 @@ interface Options {
 /**
  * Resolves the id encoded at a context-view step.
  *
- * `pathToUrl` writes the Lexeme instance there, matching the Path encoding. Urls written before context steps existed
+ * `pathToUrl` writes the Lexeme context there, matching the Path encoding. Urls written before context steps existed
  * wrote the context instead, so an id whose value does not belong to the context view thought's Lexeme is treated as a
- * legacy context and resolved to an instance within it. That fallback is best-effort — a context holding two thoughts
+ * legacy parent context and resolved to a Lexeme context within it. That fallback is best-effort — a context holding two thoughts
  * of the same Lexeme is not recoverable from a legacy url — but it keeps old links working.
  */
 const resolveInstanceId = (state: State, contextViewId: ThoughtId, id: ThoughtId): ThoughtId => {

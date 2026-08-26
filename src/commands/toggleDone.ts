@@ -1,9 +1,9 @@
 import Command from '../@types/Command'
 import { toggleThoughtActionCreator as toggleThought } from '../actions/toggleThought'
 import Icon from '../components/icons/Check'
-import contextThoughtId from '../selectors/contextThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import hasMulticursor from '../selectors/hasMulticursor'
+import parentContextId from '../selectors/parentContextId'
 import headValue from '../util/headValue'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -25,8 +25,8 @@ const toggleDone = {
   },
   isActive: state => {
     const cursor = state.cursor
-    // =done is set on the thought the user sees, which in the context view is the context rather than the Lexeme instance
-    return !!cursor && !!findDescendant(state, contextThoughtId(state, cursor), ['=done'])
+    // =done is set on the thought the user sees, which in the context view is the context rather than the Lexeme context
+    return !!cursor && !!findDescendant(state, parentContextId(state, cursor), ['=done'])
   },
   exec: (dispatch, getState) => {
     const state = getState()

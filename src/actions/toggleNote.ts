@@ -1,9 +1,9 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import setNoteFocus from '../actions/setNoteFocus'
-import contextThoughtId from '../selectors/contextThoughtId'
 import { anyChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import parentContextId from '../selectors/parentContextId'
 import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -30,7 +30,7 @@ export const toggleNoteActionCreator = (): Thunk => (dispatch, getState) => {
   const targetPath = resolveNotePath(state, path)
   const targetThought = targetPath ? getThoughtById(state, headId(targetPath)) : undefined
   // the note belongs to the thought the user sees, which in the context view is the context (see resolveNotePath)
-  const { noteKey } = resolveNoteKey(state, contextThoughtId(state, path))
+  const { noteKey } = resolveNoteKey(state, parentContextId(state, path))
   const offset = anyChild(state, targetThought?.id)?.value.length ?? 0
 
   dispatch([

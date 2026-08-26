@@ -26,8 +26,8 @@ import parseLet from '../util/parseLet'
 import { isContextStep } from '../util/pathStep'
 import safeRefMerge from '../util/safeRefMerge'
 import attributeEquals from './attributeEquals'
-import contextThoughtId from './contextThoughtId'
-import contextThoughtPath from './contextThoughtPath'
+import parentContextId from './parentContextId'
+import parentContextPath from './parentContextPath'
 
 // style properties that accumulate down the hierarchy.
 // We need to accmulate positioning like marginLeft so that all descendants' positions are indented with the thought.
@@ -35,7 +35,7 @@ const ACCUM_STYLE_PROPERTIES = ['marginLeft', 'paddingLeft']
 
 /** Generates a VirtualThought key that is unique across context views. */
 // Include every context-view boundary the path crosses, plus the row's own step. Both are unambiguous now that a
-// context step records the Lexeme instance it lands on, so the same thought visible in normal view and in a context
+// context step records the Lexeme context it lands on, so the same thought visible in normal view and in a context
 // view gets different keys — as do two thoughts of the same Lexeme in one context (a/m~/cat and a/m~/cats).
 // Hashing the whole path would work too, but would change the key whenever an ancestor moves, remounting the node and
 // breaking the move animation.
@@ -74,19 +74,19 @@ const linearizeTree = (
   if (!isRoot(path) && !state.expanded[hashedPath] && !equalPath(state.expandHoverDownPath, path)) return []
 
   // Two thoughts are in play at a context-view row such as a/m~/b: the context `b`, which is displayed and whose
-  // metaprogramming attributes apply, and the Lexeme instance `b/m`, which supplies the children. Outside the context
+  // metaprogramming attributes apply, and the Lexeme context `b/m`, which supplies the children. Outside the context
   // view they are the same thought.
-  const thoughtId = contextThoughtId(state, path)
+  const thoughtId = parentContextId(state, path)
   const thought = getThoughtById(state, thoughtId)
-  const instanceId = headId(path)
+  const lexemeContextId = headId(path)
   const simplePath = simplifyPath(state, path)
   const contextViewActive = isContextViewActive(state, path)
   const children = contextViewActive
     ? thought
       ? getContextsSortedAndRanked(state, thought.value)
       : []
-    : // the instance rather than the context, so that a/m~/b renders the children of b/m without repeating the Lexeme
-      getChildrenRanked(state, instanceId)
+    : // the Lexeme context rather than the parent context, so a/m~/b renders the children of b/m without repeating the Lexeme
+      getChildrenRanked(state, lexemeContextId)
   const filteredChildren = children.filter(childrenFilterPredicate(state, simplePath))
 
   // short circuit if the context view only has one context and the NoOtherContexts component will be displayed
@@ -110,11 +110,11 @@ const linearizeTree = (
   )
 
   const thoughts = filteredChildren.reduce<TreeThought[]>((accum, filteredChild, i) => {
-    // In the context view the row displays the context, i.e. the parent of the Lexeme instance: a/m~/b displays b.
+    // In the context view the row displays the context, i.e. the parent of the Lexeme context: a/m~/b displays b.
     const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
     // Context thought may still be pending
     if (!child) return accum
-    // The step records the Lexeme instance (filteredChild), not the context, so that the row is uniquely addressable
+    // The step records the Lexeme context (filteredChild), not the context, so that the row is uniquely addressable
     // and the context-view boundary is explicit rather than re-derived from state.
     const childPath = contextViewActive
       ? appendContextStep(path, filteredChild.id)
@@ -159,8 +159,8 @@ const linearizeTree = (
       rank: child.rank,
       showContexts: contextViewActive,
       // the SimplePath of the displayed thought, i.e. the context in the context view. This is what Editable edits and
-      // what metaprogramming attributes are read from. Contrast simplifyPath(childPath), the Lexeme instance.
-      simplePath: contextThoughtPath(state, childPath),
+      // what metaprogramming attributes are read from. Contrast simplifyPath(childPath), the Lexeme context.
+      simplePath: parentContextPath(state, childPath),
       style,
       thoughtId: child.id,
       ...(isTable

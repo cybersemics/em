@@ -2,7 +2,7 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import * as selection from '../device/selection'
-import contextThoughtId from '../selectors/contextThoughtId'
+import parentContextId from '../selectors/parentContextId'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Records a snapshot of the browser text selection within the cursor thought, or clears it. See state.selectionOffsets. */
@@ -18,7 +18,7 @@ const saveSelectionOffsets = (state: State, { selectionOffsets }: { selectionOff
 export const saveSelectionOffsetsActionCreator = (): Thunk => (dispatch, getState) => {
   const state = getState()
   // the displayed thought, since that is what <Editable> labels the DOM element with
-  const thoughtId = state.cursor && contextThoughtId(state, state.cursor)
+  const thoughtId = state.cursor && parentContextId(state, state.cursor)
 
   // Only a selection on the cursor thought is worth recording, since that is the only thought the offsets index into.
   // offsetStart and offsetEnd call getRangeAt(0), which throws when the document has no range at all.

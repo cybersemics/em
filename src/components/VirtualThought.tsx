@@ -274,7 +274,7 @@ const VirtualThought = ({
       {isVisible && (
         <DropChild
           depth={depth}
-          // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct lexeme instance.
+          // In context view, we need to pass the source simplePath in order to add dragged thoughts to the correct Lexeme context.
           // For example, when dropping a thought onto a/m~/b, drop should be triggered with the props of m/b.
           // TODO: DragAndDropSubthoughts should be able to handle this.
           path={path}

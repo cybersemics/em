@@ -168,7 +168,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
   /** Sibling thoughts for the current cursor. */
   const siblingThoughts = useSelector((state: State) => {
     if (!state.cursor || !isCursor) return []
-    // children come from the thought the parent path lands on, which in the context view is the Lexeme instance
+    // children come from the thought the parent path lands on, which in the context view is the Lexeme context
     const cursorParentId = headId(rootedParentOf(state, state.cursor))
     return cursorParentId ? getChildren(state, cursorParentId).map(t => t.value) : []
   }, shallowEqual)

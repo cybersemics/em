@@ -26,7 +26,7 @@ const multicursor: Command['multicursor'] = {
 
     // The new subthought is inserted with the highest rank in each selected thought, including in a sorted context.
     const newSubthoughtPaths = filteredCursors.reduce<Path[]>((accum, path) => {
-      // the subthought is created under the thought the path lands on, which in the context view is the Lexeme instance
+      // the subthought is created under the thought the path lands on, which in the context view is the Lexeme context
       const id = headId(path)
       const lastChild = getThoughtById(state, id) ? _.last(getChildrenRanked(state, id)) : null
       return lastChild ? [...accum, appendToPath(path, lastChild.id)] : accum
