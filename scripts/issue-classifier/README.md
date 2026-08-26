@@ -1,8 +1,8 @@
 # Issue Classifier
 
-Automatic issue classification for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are subsystems rather than releases, so the milestone is the issue's category. It also marks pure refactors with the `refactor` label.
+Automatic issue classification for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are subsystems rather than releases, so the milestone is the issue's category. It also labels what kind of work the issue is: `bug`, `feature`, `performance`, `refactor`, `test`, `documentation`, or `agent`.
 
-Success is silent — the assigned milestone is the whole result. The only issues left unclassified are those that match no existing milestone and are not refactors, where a comment asks @raineorshine for the category instead.
+Success is silent — the milestone and the label are the whole result. The only issues left unclassified are those that match no existing milestone and are not refactors, where a comment asks @raineorshine for the category instead.
 
 ## Setup
 
@@ -30,15 +30,33 @@ The prompt is assembled from two halves. The system message is [`instructions.md
 
 Five independent samples are drawn in one request (self-consistency voting via the Chat Completions `n` parameter, which bills the input once and only multiplies the tiny output). Each vote is resolved against the open milestones — leniently, so a dropped emoji or `and` for `&` still matches, while a milestone that is not open is discarded as invalid rather than counted. The modal vote wins.
 
-### The refactor label
+### The kind label
 
-The same votes answer a second question: is this a pure refactor — restructuring code without changing anything a user could observe? A majority says so and the `refactor` label goes on. An even split does not, matching how a split confidence rounds: not labeling is the recoverable mistake.
+The same votes answer a second question: what kind of work is this? The answer is one of seven repository labels — `bug`, `feature`, `performance`, `refactor`, `test`, `documentation`, `agent` — or none, and it is applied to the issue.
 
-**The two verdicts are independent, and the refactor one never overrides the milestone.** A refactor still belongs to the subsystem whose code it restructures, and this repository has milestoned them that way all along — 27 of the 100 most recent `refactor`-labeled issues carry a milestone. So a refactor that fits a subsystem gets both.
+**One label, not a set.** Of the 800 most recent issues, 752 carry exactly one of the seven, 38 carry none, and only 10 carry two — almost all of those `refactor` with `test`. So the kind of an issue is a choice rather than a handful of independent flags, and the tally is the same modal vote the milestone uses, ties broken the same way. It is a plurality rather than a majority because there are eight candidates once "none" is counted: requiring more than half would leave most issues unlabeled on an ordinary 2-2-1 spread, and the asymmetry that governs milestones governs labels too — a wrong label sits visibly on the issue, one click from correct, while a missing one leaves it untyped in every filtered view.
 
-What the label does change is the other case. A refactor that fits no subsystem used to be a question; now it is an answer, and the label is posted instead of a comment. Only an issue that is neither placeable nor a refactor still reaches a human. [#5130](https://github.com/cybersemics/em/issues/5130) is the shape this was built for: a helper extraction that belongs to no subsystem in particular.
+**The kind and the milestone are independent, and neither decides the other.** Two milestones share a name with a label, ✅ Test Engineering and ✨ Agent Workflows, and the prompt says explicitly to ignore that in both directions — deriving one axis from the other would turn a single milestone mistake into two mistakes.
 
-The verdict is read off the issue rather than off its labels. The workflow fires on `issues.opened`, when a label nobody has applied yet is not there to read — an existing `refactor` label is evidence, but its absence is not evidence of the opposite. A label the issue already carries is not re-applied, so a manual dispatch against an already-triaged issue reports no write it did not make.
+**A label a human already applied is never contradicted.** Since the classifier picks exactly one kind, adding its own beside an existing one would leave an issue reading `bug` and `feature` at once. It writes only when the issue carries no kind at all, which also makes a manual re-dispatch a no-op rather than a second opinion.
+
+### Why only a refactor skips the question
+
+A milestone-less issue normally gets a comment, because the taxonomy having no home for it is worth a human's attention. One kind is exempt: a **pure refactor** is cross-cutting by definition — it restructures code without belonging to a user-facing subsystem — so finding no milestone for one is a correct answer rather than a gap. [#5130](https://github.com/cybersemics/em/issues/5130) is the shape: a helper extraction that belongs to no subsystem in particular.
+
+That is a claim about what the word means, and it deliberately does not rest on how often each kind goes unmilestoned, because that gradient has no natural cut point:
+
+| kind            | issues | milestoned |
+| --------------- | -----: | ---------: |
+| `bug`           |    563 |        67% |
+| `feature`       |     56 |        68% |
+| `refactor`      |     50 |        44% |
+| `test`          |     78 |        40% |
+| `performance`   |      8 |        25% |
+| `agent`         |     16 |         6% |
+| `documentation` |      1 |         0% |
+
+`agent` sits lowest, and thresholding there would be a mistake: ✨ Agent Workflows was created on 2026-08-24, so those issues predate their home rather than lacking one. The rest have homes too — `test` has ✅ Test Engineering, and a `bug`, `feature`, or `performance` issue names work inside some subsystem by definition. Only `refactor` does not, which is why it is the only exemption.
 
 **The milestone is assigned whenever the votes name one.** There is no confidence threshold, and a tie resolves to its modal winner rather than a question — a tie is a choice between two plausible buckets, not a failure to find one.
 
@@ -94,7 +112,7 @@ The harness runs the exact pipeline the workflow uses over every sample and grad
 
 Run it before and after editing the instructions. It makes model calls but never writes to any issue, and it is deliberately not part of CI.
 
-**The refactor verdict is printed but not graded, and the corpus is why.** The frame every sample was drawn from required a milestone a human had assigned, so a refactor that fits no subsystem — the case the label exists for — cannot appear in it. Five samples do carry the `refactor` label, and they carry it in `input.labels`, which the prompt hands straight to the model; scoring those would measure whether it can read a label back to you. So each run prints `+refactor` beside the milestone it chose and records the flag in `ISSUE_CLASSIFIER_EVAL_JSON`, which is enough to catch a prompt edit that starts calling everything a refactor, and stops short of a number that would look like a measurement without being one. Grading it honestly means drawing a set from issues labeled `refactor` with the label stripped from the input — worth doing before anyone tunes the refactor rule, and not worth pretending the current corpus can substitute.
+**The kind label is printed but not graded, and the corpus is why.** Nearly every sample carries its kind in `input.labels`, which the prompt hands straight to the model, so scoring the label against the corpus would measure whether the model can read a label back to you. The frame compounds it: every sample was drawn from issues a human had milestoned, so the one case the exemption exists for — a refactor with no milestone — cannot appear at all. Each run therefore prints `+<kind>` beside the milestone it chose and records it in `ISSUE_CLASSIFIER_EVAL_JSON`, which is enough to catch a prompt edit that starts calling everything a bug, and stops short of a number that would look like a measurement without being one. Grading it honestly means drawing a set with the kind stripped from the input — worth doing before anyone tunes the label rules, and not worth pretending the current corpus can substitute.
 
 Run `yarn test` from the repository root after editing `instructions.md`. The sample-integrity tests guard it, but the Test workflow ignores `**/*.md`, so a pull request that touches only the prompt will not run them — see [Path filtering](../../docs/testing.md#path-filtering). Sample edits are `.jsonl` and do trigger Test normally.
 
@@ -154,9 +172,9 @@ Full results are [a comment on #5098](https://github.com/cybersemics/em/pull/509
 
 ## Workflow
 
-| Workflow                                                         | Script         | Trigger                                     | Description                                                                                                                    |
-| ---------------------------------------------------------------- | -------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| [Issue Classifier](../../.github/workflows/issue-classifier.yml) | `src/issue.ts` | Issue opened, or manual `workflow_dispatch` | Assigns the best-matching open milestone and labels a pure refactor, or comments asking for a category when it can do neither. |
+| Workflow                                                         | Script         | Trigger                                     | Description                                                                                                                                   |
+| ---------------------------------------------------------------- | -------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Issue Classifier](../../.github/workflows/issue-classifier.yml) | `src/issue.ts` | Issue opened, or manual `workflow_dispatch` | Assigns the best-matching open milestone and labels what kind of work the issue is, or comments asking for a category when no milestone fits. |
 
 It needs the `OPENAI_API_KEY` repository secret; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing unclassified issue gets a milestone, plus an optional `dry` toggle that runs the inference and prints the decision without assigning anything.
 

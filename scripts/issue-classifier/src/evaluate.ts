@@ -63,14 +63,13 @@ export interface EvalRow {
   tied: boolean
   confidence: Confidence
   /**
-   * Whether the votes judged the issue a pure refactor, which would have applied the `refactor`
-   * label. Recorded but never graded: the corpus was drawn from issues a human had milestoned, so it
-   * holds no refactor-without-milestone cases, and the five samples that do carry the label carry it
-   * in `input.labels`, which the prompt hands to the model. Scoring that would measure whether the
-   * model can read a label back, not whether it can recognize a refactor. Optional so the metric
-   * fixtures, which are about milestone accuracy, stay about milestone accuracy.
+   * The kind of work the votes named, which would have been applied as a label. Recorded but never
+   * graded, and the corpus is why: almost every sample carries its kind in `input.labels`, which the
+   * prompt hands straight to the model, so scoring this would measure whether the model can read a
+   * label back rather than whether it can recognize one. Optional, so the metric fixtures — which are
+   * about milestone accuracy — stay about milestone accuracy.
    */
-  refactor?: boolean
+  label?: string | null
 }
 
 /** Aggregate metrics computed from a set of graded predictions. */
@@ -413,18 +412,18 @@ export const grade = async (
       agreement: selection.agreement,
       tied: selection.tied,
       confidence: selection.confidence,
-      refactor: selection.refactor,
+      label: selection.label,
     })
     const signals = `${Math.round(selection.agreement * 100)}%/${selection.confidence}`
-    // Printed rather than graded, so a prompt edit that starts calling everything a refactor is
-    // visible in the run it happened in instead of only in production.
-    const refactor = selection.refactor ? ' +refactor' : ''
+    // Printed rather than graded, so a prompt edit that starts calling everything a bug is visible in
+    // the run it happened in instead of only in production.
+    const label = selection.label ? ` +${selection.label}` : ''
     const outcome =
       selection.milestone !== null
-        ? `assigned ${selection.milestone}${refactor} [${signals}]`
-        : selection.refactor
+        ? `assigned ${selection.milestone}${label} [${signals}]`
+        : selection.label === 'refactor'
           ? `labeled refactor — no milestone fitted [${signals}]`
-          : `asked — no milestone fitted [${signals}]`
+          : `asked${label} — no milestone fitted [${signals}]`
     console.info(
       `  ${sample.source?.issue ? `#${sample.source.issue}` : sample.input.title.slice(0, 40)}: expected ${sample.expected ?? NONE}, ${outcome} ${predicted === sample.expected ? '✓' : '✗'}`,
     )

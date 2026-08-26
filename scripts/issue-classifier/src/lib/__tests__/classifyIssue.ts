@@ -12,7 +12,9 @@ const ISSUE: Issue = {
   number: 4839,
   title: 'Drop indicator is misplaced',
   body: 'One row too low.',
-  labels: ['bug'],
+  // Unlabeled, as a newly opened issue is: the repository has no issue templates, so nothing applies
+  // a label before the classifier runs. Tests that need a human's label add one explicitly.
+  labels: [],
   milestone: null,
   isPullRequest: false,
 }
@@ -25,14 +27,14 @@ const ASSIGNABLE: VoteResult = {
   totalVotes: 5,
   tied: false,
   confidence: 'high',
-  refactor: false,
-  refactorVotes: 0,
+  label: 'bug',
+  labelVotes: 5,
   rationale: 'The drop indicator is misplaced.',
   secondChoice: null,
 }
 
-/** A vote that judged the issue a pure refactor, on top of naming a milestone. */
-const REFACTOR: VoteResult = { ...ASSIGNABLE, refactor: true, refactorVotes: 4 }
+/** A vote that named the refactor kind, on top of naming a milestone. */
+const REFACTOR: VoteResult = { ...ASSIGNABLE, label: 'refactor', labelVotes: 4 }
 
 /** Builds a GitHub gateway backed by the given issue and milestones, recording every write. */
 const createGitHub = (issue: Issue = ISSUE, milestones: Milestone[] = MILESTONES) => {
@@ -66,8 +68,8 @@ describe('classifyIssue', () => {
     expect(comment).not.toHaveBeenCalled()
   })
 
-  it('asks a human when the votes named no milestone and it is not a refactor', async () => {
-    const { github, setMilestone, comment } = createGitHub()
+  it('asks a human when the votes named no milestone and the kind is not cross-cutting', async () => {
+    const { github, setMilestone, addLabels, comment } = createGitHub()
     const result = await classifyIssue({
       github,
       issueNumber: 4839,
@@ -76,12 +78,14 @@ describe('classifyIssue', () => {
       select: async () => ({ ...ASSIGNABLE, milestone: null }),
     })
 
-    expect(result.action).toBe('asked')
+    expect(result).toMatchObject({ action: 'asked', label: 'bug' })
     expect(setMilestone).not.toHaveBeenCalled()
     expect(comment.mock.calls[0][1]).toContain('@raineorshine')
+    // The kind is still recorded on an issue nobody could place.
+    expect(addLabels).toHaveBeenCalledWith(4839, ['bug'])
   })
 
-  it('labels a refactor and still assigns its milestone, since the two are independent', async () => {
+  it('labels the kind and still assigns the milestone, since the two are independent', async () => {
     const { github, setMilestone, addLabels, comment } = createGitHub()
     const result = await classifyIssue({
       github,
@@ -91,7 +95,7 @@ describe('classifyIssue', () => {
       select: async () => REFACTOR,
     })
 
-    expect(result).toMatchObject({ action: 'assigned', milestone: '🧤 Drag & Drop', refactor: true })
+    expect(result).toMatchObject({ action: 'assigned', milestone: '🧤 Drag & Drop', label: 'refactor' })
     expect(setMilestone).toHaveBeenCalledWith(4839, 20)
     expect(addLabels).toHaveBeenCalledWith(4839, ['refactor'])
     expect(comment).not.toHaveBeenCalled()
@@ -107,26 +111,27 @@ describe('classifyIssue', () => {
       select: async () => ({ ...REFACTOR, milestone: null }),
     })
 
-    expect(result).toMatchObject({ action: 'labeled', milestone: null, refactor: true })
+    expect(result).toMatchObject({ action: 'labeled', milestone: null, label: 'refactor' })
     expect(addLabels).toHaveBeenCalledWith(4839, ['refactor'])
     expect(setMilestone).not.toHaveBeenCalled()
     expect(comment).not.toHaveBeenCalled()
   })
 
-  it('adds no label when the votes did not call it a refactor', async () => {
+  it('adds no label when the votes named no kind', async () => {
     const { github, addLabels } = createGitHub()
-    await classifyIssue({
+    const result = await classifyIssue({
       github,
       issueNumber: 4839,
       instructions: 'instructions',
       openaiApiKey: 'test-key',
-      select: async () => ASSIGNABLE,
+      select: async () => ({ ...ASSIGNABLE, label: null, labelVotes: 3 }),
     })
 
+    expect(result).toMatchObject({ action: 'assigned', label: null })
     expect(addLabels).not.toHaveBeenCalled()
   })
 
-  it('does not re-add a refactor label the issue already carries', async () => {
+  it('does not re-add a label the issue already carries', async () => {
     const { github, addLabels } = createGitHub({ ...ISSUE, labels: ['refactor'] })
     const result = await classifyIssue({
       github,
@@ -136,8 +141,39 @@ describe('classifyIssue', () => {
       select: async () => REFACTOR,
     })
 
-    expect(result).toMatchObject({ action: 'assigned', refactor: true })
+    expect(result).toMatchObject({ action: 'assigned', label: 'refactor' })
     expect(addLabels).not.toHaveBeenCalled()
+  })
+
+  it('never contradicts a kind a human already chose', async () => {
+    // Adding `bug` beside a human's `refactor` would leave the issue claiming to be both.
+    const { github, addLabels } = createGitHub({ ...ISSUE, labels: ['refactor'] })
+    const result = await classifyIssue({
+      github,
+      issueNumber: 4839,
+      instructions: 'instructions',
+      openaiApiKey: 'test-key',
+      select: async () => ASSIGNABLE,
+    })
+
+    expect(result).toMatchObject({ action: 'assigned', label: 'refactor' })
+    expect(addLabels).not.toHaveBeenCalled()
+  })
+
+  it('honors a human refactor label when suppressing the question', async () => {
+    // A re-dispatch must not comment on an issue a human already typed as cross-cutting, whatever
+    // the votes made of it this time.
+    const { github, comment } = createGitHub({ ...ISSUE, labels: ['refactor'] })
+    const result = await classifyIssue({
+      github,
+      issueNumber: 4839,
+      instructions: 'instructions',
+      openaiApiKey: 'test-key',
+      select: async () => ({ ...ASSIGNABLE, milestone: null, label: null, labelVotes: 3 }),
+    })
+
+    expect(result).toMatchObject({ action: 'labeled', milestone: null, label: 'refactor' })
+    expect(comment).not.toHaveBeenCalled()
   })
 
   it('assigns a tied vote rather than asking, taking its modal winner', async () => {
@@ -229,7 +265,7 @@ describe('classifyIssue', () => {
       select: async () => REFACTOR,
     })
 
-    expect(result).toMatchObject({ action: 'assigned', milestone: '🧤 Drag & Drop', refactor: true })
+    expect(result).toMatchObject({ action: 'assigned', milestone: '🧤 Drag & Drop', label: 'refactor' })
     expect(setMilestone).not.toHaveBeenCalled()
     expect(addLabels).not.toHaveBeenCalled()
     expect(comment).not.toHaveBeenCalled()

@@ -66,50 +66,79 @@ describe('tallyVotes', () => {
     expect(tallyVotes(['not json', '{}', vote('🥞 Flat Render')], TITLES)).toBeNull()
   })
 
-  it('calls it a refactor on a majority, and reports the count', () => {
+  it('returns the modal label and the votes behind it', () => {
     const result = tallyVotes(
       [
-        vote('📐 Layout', 'high', { refactor: true }),
-        vote('📐 Layout', 'high', { refactor: true }),
+        vote('📐 Layout', 'high', { label: 'bug' }),
+        vote('📐 Layout', 'high', { label: 'bug' }),
+        vote('📐 Layout', 'high', { label: 'feature' }),
+      ],
+      TITLES,
+    )
+    expect(result).toMatchObject({ label: 'bug', labelVotes: 2, milestone: '📐 Layout' })
+  })
+
+  it('takes a plurality rather than requiring a majority, since there are eight candidates', () => {
+    const result = tallyVotes(
+      [
+        vote('📐 Layout', 'high', { label: 'test' }),
+        vote('📐 Layout', 'high', { label: 'test' }),
+        vote('📐 Layout', 'high', { label: 'bug' }),
+        vote('📐 Layout', 'high', { label: 'refactor' }),
         vote('📐 Layout', 'high'),
       ],
       TITLES,
     )
-    expect(result).toMatchObject({ refactor: true, refactorVotes: 2, milestone: '📐 Layout' })
+    expect(result).toMatchObject({ label: 'test', labelVotes: 2 })
   })
 
-  it('counts refactor votes across differing milestones, since the two are independent', () => {
-    // "This is a pure refactor" is the same claim whichever subsystem the vote named.
+  it('counts label votes across differing milestones, since the two are independent', () => {
+    // "This is a bug" is the same claim whichever subsystem the vote named.
     const result = tallyVotes(
       [
-        vote('📐 Layout', 'high', { refactor: true }),
-        vote('🧤 Drag & Drop', 'high', { refactor: true }),
-        vote('👆 Multiselect', 'high'),
+        vote('📐 Layout', 'high', { label: 'bug' }),
+        vote('🧤 Drag & Drop', 'high', { label: 'bug' }),
+        vote('👆 Multiselect', 'high', { label: 'feature' }),
       ],
       TITLES,
     )
-    expect(result).toMatchObject({ refactor: true, refactorVotes: 2 })
+    expect(result).toMatchObject({ label: 'bug', labelVotes: 2 })
   })
 
-  it('does not call it a refactor on an even split, which is the recoverable mistake', () => {
+  it('counts no label as a real candidate that can win', () => {
     const result = tallyVotes(
-      [vote('📐 Layout', 'high', { refactor: true }), vote('📐 Layout', 'high', { refactor: false })],
+      [vote('📐 Layout', 'high'), vote('📐 Layout', 'high'), vote('📐 Layout', 'high', { label: 'bug' })],
       TITLES,
     )
-    expect(result).toMatchObject({ refactor: false, refactorVotes: 1 })
+    expect(result).toMatchObject({ label: null, labelVotes: 2 })
   })
 
-  it('ignores a refactor vote that named a milestone which is not open', () => {
-    // The vote was already discarded as invalid output; it must not vote on refactor-ness either.
-    const result = tallyVotes([vote('🥞 Flat Render', 'high', { refactor: true }), vote('📐 Layout', 'high')], TITLES)
-    expect(result).toMatchObject({ refactor: false, refactorVotes: 0, validVotes: 1 })
-  })
-
-  it('keeps the refactor verdict independent of which milestone won', () => {
+  it('breaks a label tie by vote order, so the winner is deterministic', () => {
     const result = tallyVotes(
-      [vote(null, 'high', { refactor: true }), vote(null, 'high', { refactor: true }), vote('📐 Layout', 'high')],
+      [vote('📐 Layout', 'high', { label: 'feature' }), vote('📐 Layout', 'high', { label: 'bug' })],
       TITLES,
     )
-    expect(result).toMatchObject({ milestone: null, refactor: true })
+    expect(result).toMatchObject({ label: 'feature', labelVotes: 1 })
+  })
+
+  it('ignores the label on a vote that named a milestone which is not open', () => {
+    // The vote was already discarded as invalid output; it must not vote on the kind either.
+    const result = tallyVotes(
+      [vote('🥞 Flat Render', 'high', { label: 'bug' }), vote('📐 Layout', 'high', { label: 'test' })],
+      TITLES,
+    )
+    expect(result).toMatchObject({ label: 'test', labelVotes: 1, validVotes: 1 })
+  })
+
+  it('keeps the label independent of which milestone won', () => {
+    const result = tallyVotes(
+      [
+        vote(null, 'high', { label: 'refactor' }),
+        vote(null, 'high', { label: 'refactor' }),
+        vote('📐 Layout', 'high', { label: 'bug' }),
+      ],
+      TITLES,
+    )
+    expect(result).toMatchObject({ milestone: null, label: 'refactor' })
   })
 })

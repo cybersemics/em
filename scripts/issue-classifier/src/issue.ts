@@ -1,6 +1,6 @@
 /**
- * Assigns the best-matching open milestone to a GitHub issue, labels a pure refactor as one, or asks
- * a human when it can do neither.
+ * Assigns the best-matching open milestone to a GitHub issue and labels what kind of work it is, or
+ * asks a human when no milestone fits.
  *
  * Driven by the .github/workflows/issue-classifier.yml workflow on `issues.opened` and on
  * manual dispatch. Also runs locally against any issue.
@@ -70,9 +70,9 @@ const main = async () => {
   const url = `https://github.com/${repo}/issues/${issueNumber}`
   const summary =
     result.action === 'assigned'
-      ? `${prefix}assigned #${issueNumber} to ${result.milestone}${result.refactor ? ' and labeled it refactor' : ''} (${result.detail})`
+      ? `${prefix}assigned #${issueNumber} to ${result.milestone}${result.label ? ` and labeled it ${result.label}` : ''} (${result.detail})`
       : result.action === 'labeled'
-        ? `${prefix}labeled #${issueNumber} refactor with no milestone (${result.detail})`
+        ? `${prefix}labeled #${issueNumber} ${result.label} with no milestone (${result.detail})`
         : result.action === 'asked'
           ? `${prefix}asked for a category on #${issueNumber} (${result.detail})`
           : `Skipped #${issueNumber}: ${result.detail}`

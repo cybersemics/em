@@ -1,5 +1,10 @@
 import matchMilestone from './matchMilestone.ts'
-import parseSelection, { CONFIDENCE_LEVELS, type Confidence, type SelectionResponse } from './parseSelection.ts'
+import parseSelection, {
+  CONFIDENCE_LEVELS,
+  type Confidence,
+  type Label,
+  type SelectionResponse,
+} from './parseSelection.ts'
 
 /** Aggregated result of a self-consistency vote across several model samples. */
 export interface VoteResult {
@@ -15,10 +20,10 @@ export interface VoteResult {
   tied: boolean
   /** Self-reported confidence, averaged over the votes that chose the winning milestone. */
   confidence: Confidence
-  /** Whether the votes judged the issue a pure refactor, which earns the `refactor` label. */
-  refactor: boolean
-  /** Number of valid votes that judged the issue a pure refactor, for the audit trail. */
-  refactorVotes: number
+  /** The kind of work the votes named, applied as a label, or null when they named none. */
+  label: Label | null
+  /** Number of valid votes that chose the winning label, for the audit trail. */
+  labelVotes: number
   /** Rationale carried from a winning vote, for the audit trail and the question posted to a human. */
   rationale: string
   /** Second-choice milestone from a winning vote, resolved against the open milestones. */
@@ -35,11 +40,16 @@ export interface VoteResult {
  * asking a human for the wrong reason. An explicit null milestone is the opposite: a real answer,
  * and it competes in the tally like any other candidate.
  *
- * Two things are tallied, not one. Which milestone owns the work is the modal vote; whether the
- * issue is a pure refactor is a second, independent question that rides along on the same samples.
- * They are orthogonal on purpose — a refactor still belongs to the subsystem it restructures — so
- * the refactor tally cannot change which milestone wins, and the milestone tally cannot suppress
- * the label.
+ * Two things are tallied, not one, and both the same way: a modal vote with ties broken by vote
+ * order. Which milestone owns the work is one question; what kind of work it is — the label — is a
+ * second, independent one riding on the same samples. They are orthogonal on purpose, since a
+ * refactor still belongs to the subsystem it restructures, so neither tally can move the other.
+ *
+ * The label tally is modal rather than a majority because there are eight candidates once `null` is
+ * counted. A rule requiring more than half would leave most issues unlabeled on an ordinary 2-2-1
+ * spread, and the argument the milestone tally already makes applies unchanged: a wrong label sits
+ * visibly on the issue, one click from correct, while a missing one leaves it untyped in every
+ * filtered view someone browses.
  *
  * Returns null when no vote survives, which is the caller's signal to retry inference.
  */
@@ -77,15 +87,19 @@ const tallyVotes = (rawOutputs: string[], milestoneTitles: string[]): VoteResult
   // Round halves down, so a split between two levels reports the more cautious of them.
   const confidence = CONFIDENCE_LEVELS[Math.ceil(meanLevel - 0.5)]
 
-  // Counted over every valid vote rather than only the agreeing ones, which is where this departs
+  // Tallied over every valid vote rather than only the agreeing ones, which is where this departs
   // from the confidence average above. Confidence is a claim about a particular milestone, so a vote
-  // that named a different one is answering a different question; "this is a pure refactor" is the
-  // same claim whether the vote said 📐 Layout or 🎨 Formatting. Votes naming a milestone that is not
-  // open were already dropped above, so a hallucinated milestone cannot smuggle in a refactor vote.
-  const refactorVotes = votes.filter(vote => vote.response.refactor).length
-  // A strict majority, so an even split falls to false — the same caution the confidence rounding
-  // takes, and the same direction: not labeling is the recoverable mistake.
-  const refactor = refactorVotes * 2 > votes.length
+  // that named a different one is answering a different question; "this is a bug" is the same claim
+  // whether the vote said 📐 Layout or 🎨 Formatting. Votes naming a milestone that is not open were
+  // already dropped above, so a hallucinated milestone cannot smuggle its label in either.
+  const labelCounts = new Map<Label | null, number>()
+  for (const vote of votes) {
+    labelCounts.set(vote.response.label, (labelCounts.get(vote.response.label) ?? 0) + 1)
+  }
+  const maxLabelCount = Math.max(...labelCounts.values())
+  const labelLeaders = [...labelCounts.entries()].filter(([, count]) => count === maxLabelCount).map(([label]) => label)
+  const label = votes.find(vote => labelLeaders.includes(vote.response.label))!.response.label
+  const labelVotes = labelCounts.get(label)!
 
   return {
     milestone: winning.milestone,
@@ -94,8 +108,8 @@ const tallyVotes = (rawOutputs: string[], milestoneTitles: string[]): VoteResult
     totalVotes: rawOutputs.length,
     tied: leaders.length > 1,
     confidence,
-    refactor,
-    refactorVotes,
+    label,
+    labelVotes,
     rationale: winning.response.rationale,
     secondChoice: matchMilestone(winning.response.secondChoice, milestoneTitles),
   }

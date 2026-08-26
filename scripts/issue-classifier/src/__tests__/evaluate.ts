@@ -114,8 +114,8 @@ describe('grade', () => {
     totalVotes: 5,
     tied: false,
     confidence: 'high',
-    refactor: false,
-    refactorVotes: 0,
+    label: null,
+    labelVotes: 5,
     rationale: '',
     secondChoice: null,
   }

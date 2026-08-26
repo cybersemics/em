@@ -1,4 +1,5 @@
 import type { Milestone } from './github.ts'
+import { LABELS } from './parseSelection.ts'
 
 /** Issue data used to select a milestone. */
 export interface IssueInput {
@@ -35,7 +36,7 @@ const buildPrompt = (milestones: Milestone[], issue: IssueInput): string => {
   prompt +=
     'Respond with only a JSON object with these fields, in this order: ' +
     '{"rationale": "<brief reasoning>", "milestone": "<TITLE or null>", "confidence": "low|medium|high", ' +
-    '"refactor": true|false, "secondChoice": "<TITLE or null>"}. ' +
+    `"label": "<one of ${LABELS.join('|')}, or null>", "secondChoice": "<TITLE or null>"}. ` +
     'Put "rationale" first so you reason before committing to a milestone.\n'
 
   return prompt

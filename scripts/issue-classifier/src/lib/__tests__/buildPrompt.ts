@@ -43,6 +43,6 @@ describe('buildPrompt', () => {
     expect(prompt).toContain('or null if none of them fits')
     expect(prompt).toContain('"rationale"')
     expect(prompt).toContain('"confidence": "low|medium|high"')
-    expect(prompt).toContain('"refactor": true|false')
+    expect(prompt).toContain('"label": "<one of bug|feature|performance|refactor|test|documentation|agent, or null>"')
   })
 })
