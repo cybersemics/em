@@ -108,3 +108,12 @@ if (globalPrototype && globalPrototype !== Object.prototype) {
     }
   })
 }
+
+// Disable the Lottie icon animations, whose 5s repeating interval never runs out of pending timers: any test that
+// mounts an animated icon (e.g. the Command Universe) would make cleanupTestApp's vi.runAllTimersAsync abort with
+// "Aborting after running 100000 timers". Stubbing the hook keeps `animated` false, so LottieAnimation never mounts.
+// Puppeteer tests are handled separately in LottieAnimation, which seeks the animation to its last frame.
+vi.mock('./hooks/useLottieIntervalAnimation', () => ({
+  /** Stubbed useLottieIntervalAnimation that never animates. */
+  default: () => ({ isAnimated: false, onAnimationComplete: noop }),
+}))
