@@ -1,0 +1,85 @@
+name: Cancel PR Runs
+
+# Stops the checks still running on a pull request the moment it is merged or closed.
+#
+# GitHub does not do this on its own. Merging closes the PR but has no effect on jobs already
+# dispatched, and the branch deletion that follows (this repo has `deleteBranchOnMerge`) does not
+# reach them either — GitHub cancels runs whose *ref* is deleted, and a pull_request run lives on
+# `refs/pull/<n>/merge`, not on the head branch. #5120 merged at 11:58:26Z with four checks in
+# flight and every one of them ran to completion: Lint at +2m18s, BrowserStack at +3m51s, Test at
+# +4m38s, Puppeteer at +5m43s. That is runner time spent on code already in main, and a
+# BrowserStack device session held for four minutes against the repo-wide `browserstack` gate,
+# where it delays every other PR's iOS tests behind it.
+#
+# Nothing is lost by stopping them. A merge pushes to main, which starts Test, Puppeteer, Lint,
+# and BrowserStack again on the merged tree — a better signal than the PR's merge ref, because it
+# is what actually shipped. A PR closed without merging has nothing left to report to at all.
+#
+# Two consequences to expect. A merged PR's checks now read `cancelled` rather than green, which
+# is honest: those runs did not finish. And a PR that auto-merges on Lint alone (Dependabot's
+# path, see dependabot-automerge.yml) loses the tail of its slower suites — the push run on main
+# is what surfaces a regression from then on.
+on:
+  # Not `pull_request`: a fork PR gets a read-only GITHUB_TOKEN there, and cancelling needs
+  # actions: write. pull_request_target runs in the base repo's context, where the token can
+  # write. The usual pull_request_target hazard does not apply — this checks out nothing and
+  # executes no PR code, reading only two fields of the event payload.
+  #
+  # pull_request_target also takes the workflow file from the base branch, so edits here have no
+  # effect until they are merged to main.
+  pull_request_target:
+    types: [closed]
+
+# Declaring any permission zeroes the rest, and cancelling is all this workflow does. The PR's
+# head SHA comes from the event payload, so it needs no read scope to find its runs.
+permissions:
+  actions: write
+
+jobs:
+  cancel:
+    name: Cancel in-flight runs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel in-flight runs for the PR head
+        env:
+          GH_TOKEN: ${{github.token}}
+          REPO: ${{github.repository}}
+          PR_NUMBER: ${{github.event.pull_request.number}}
+          HEAD_SHA: ${{github.event.pull_request.head.sha}}
+          # Null when the fork has been deleted, which the filter below tolerates.
+          HEAD_REPO: ${{github.event.pull_request.head.repo.full_name}}
+          RUN_ID: ${{github.run_id}}
+        run: |
+          set -euo pipefail
+
+          # head_sha selects every run for the PR's head commit regardless of trigger, including
+          # the pull_request_target ones (BrowserStack, Vercel Preview) whose head_sha is the PR
+          # head rather than the base. Superseded commits need no sweep of their own — the
+          # per-PR concurrency groups already cancelled those (see docs/testing.md).
+          #
+          # The head_repository check keeps a same-SHA run belonging to another repository out of
+          # the list; it is skipped when the payload has no head repo. This run matches its own
+          # query, hence the RUN_ID exclusion — cancelling itself would abort the sweep midway.
+          runs=$(gh api --paginate "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100" |
+            jq -r --argjson self "$RUN_ID" --arg headRepo "${HEAD_REPO:-}" '
+              .workflow_runs[]
+              | select(.status != "completed")
+              | select(.id != $self)
+              | select($headRepo == "" or .head_repository.full_name == $headRepo)
+              | "\(.id)\t\(.name)"
+            ')
+
+          if [ -z "$runs" ]; then
+            echo "PR #$PR_NUMBER: no in-flight runs for $HEAD_SHA."
+            exit 0
+          fi
+
+          # A run can finish between the listing and the cancel, which answers 409. That is the
+          # outcome this step wanted, so it is reported and not treated as a failure.
+          echo "$runs" | while IFS=$'\t' read -r id name; do
+            if gh api --silent --method POST "repos/$REPO/actions/runs/$id/cancel"; then
+              echo "Cancelled $name ($id)."
+            else
+              echo "Could not cancel $name ($id) — it most likely finished on its own."
+            fi
+          done
