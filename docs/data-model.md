@@ -216,7 +216,7 @@ A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/ro
 #### Basic traversal
 
 - [`parentOfThought`](../src/selectors/parentOfThought.ts) — parent `Thought` of a `ThoughtId`.
-- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. `prevSibling` also handles context view.
+- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. `prevSibling` also handles context view, inferring it from the parent path. Since nothing distinguishes a `SimplePath` from a context-view `Path` at runtime, a caller holding a `SimplePath` must pass `{ showContexts: false }`, or a thought in a cyclic context — whose simple parent path *is* the path the context view is active on, e.g. `a/m/x` rendered at `a/m~/a/x` — will be looked up among the contexts of `m` rather than its children.
 - [`rootedParentOf`](../src/selectors/rootedParentOf.ts) — parent `Path`, returning `[HOME_TOKEN]` for root children.
 - [`parentOf`](../src/util/parentOf.ts) — parent of a `Path` or `Context` (may be empty).
 - [`appendToPath`](../src/util/appendToPath.ts) — appends one or more thoughts to a `Path` / `SimplePath`, dropping the root token.
@@ -393,6 +393,8 @@ When `cursor` is `a/m~/b/y`, then `contextChain` is (ranks omitted for readabili
 ```
 
 Each segment is a `SimplePath`. The transition from one segment to the next happens at each `m~` boundary.
+
+An active context view is not on its own enough to split: the id following the context-view thought must be one of that thought's contexts. The distinction matters in a cyclic context (see [Context view recursion](#context-view-recursion) above), where a `SimplePath` and a context-view `Path` can be the same array of ids. The thought rendered at `a/m~/a/x` has the `SimplePath` `a/m/x`, and a context view is active on `a/m` — but `x` is an ordinary child of `m` rather than a context of it, so `a/m/x` is left whole instead of being split into `[['a', 'm'], ['x']]`.
 
 A more involved example (paste into **em** to try):
 

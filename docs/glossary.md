@@ -188,6 +188,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## U
 
+**undo step** — What one Undo reverts: a single patch on `state.undoPatches`, or two when a navigation action follows an undoable action or an edit follows a `newThought`. The undo slider moves by undo steps. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
+
 **updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write so observers can filter out self-originated change events.
 
 **updateThoughts** — The action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push. The push queue persists those batches through the active data provider's `updateThoughts`.

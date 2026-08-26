@@ -243,7 +243,11 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
             oldPath: thoughtFrom,
             newPath,
             newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
-            afterId: prevPath ? head(prevPath) : (prevSibling(state, props.simplePath)?.id ?? null),
+            // props.simplePath is a SimplePath, so its previous sibling must always be resolved in normal view.
+            // See the note in DropHover on why the context view would otherwise be inferred for a cyclic context.
+            afterId: prevPath
+              ? head(prevPath)
+              : (prevSibling(state, props.simplePath, { showContexts: false })?.id ?? null),
           }),
         )
       }

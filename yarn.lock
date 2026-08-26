@@ -11748,6 +11748,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"em-issue-classifier@workspace:scripts/issue-classifier":
+  version: 0.0.0-use.local
+  resolution: "em-issue-classifier@workspace:scripts/issue-classifier"
+  dependencies:
+    dotenv: "npm:^17.4.2"
+    prettier: "npm:^3.9.6"
+    typescript: "npm:5.9.3"
+    zod: "npm:^4.4.3"
+  languageName: unknown
+  linkType: soft
+
 "em@workspace:.":
   version: 0.0.0-use.local
   resolution: "em@workspace:."

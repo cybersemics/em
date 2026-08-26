@@ -45,6 +45,7 @@
     "icons:web": "yarn --cwd scripts/icons install && yarn --cwd scripts/icons generate:web",
     "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
+    "lint:prettier": "FORCE_COLOR=1 prettier --check .",
     "lint:src": "FORCE_COLOR=1 NODE_OPTIONS=--max-old-space-size=4096 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:tsc": "tsc",
     "lint": "FORCE_COLOR=1 npm-run-all --serial \"lint:*\"",
@@ -90,7 +91,8 @@
   },
   "workspaces": [
     "packages/*",
-    "scripts/estimate"
+    "scripts/estimate",
+    "scripts/issue-classifier"
   ],
   "dependencies": {
     "@capacitor/android": "^8.5.0",
