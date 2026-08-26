@@ -515,7 +515,7 @@ describe('multicursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4330
-  it('move =pin to the new category when all siblings are selected', () => {
+  it('keep =pin on the parent when all siblings are selected, since it pins the parent itself', () => {
     const steps = [
       importText({
         text: `
@@ -538,9 +538,9 @@ describe('multicursor', () => {
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - A
+    - =pin
+      - true
     - ${'' /* prevent trim_trailing_whitespace */}
-      - =pin
-        - true
       - B
         - C
       - D
@@ -651,7 +651,7 @@ describe('multicursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4330
-  it('move only =pin out of =children when =children has other attributes', () => {
+  it('move the entire =children to the new category when it holds other attributes besides =pin', () => {
     const steps = [
       importText({
         text: `
@@ -678,14 +678,13 @@ describe('multicursor', () => {
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - A
-    - =children
-      - =style
-        - color
-          - tomato
     - ${'' /* prevent trim_trailing_whitespace */}
       - =children
         - =pin
           - true
+        - =style
+          - color
+            - tomato
       - B
         - C
       - D
