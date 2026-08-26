@@ -29,6 +29,12 @@ describe('selectMilestone', () => {
     expect(selection).toMatchObject({ milestone: '🧤 Drag & Drop', agreement: 1 })
   })
 
+  it('hands the open milestone titles to inference, where they constrain the response schema', async () => {
+    const infer = vi.fn(async () => [vote('🧤 Drag & Drop')])
+    await selectMilestone(options(infer))
+    expect(infer).toHaveBeenCalledWith(expect.objectContaining({ milestoneTitles: ['🧤 Drag & Drop', '📐 Layout'] }))
+  })
+
   it('returns a medium-confidence vote unchanged, since nothing gates on confidence', async () => {
     const selection = await selectMilestone(options(async () => [vote('🧤 Drag & Drop', 'medium')]))
     expect(selection).toMatchObject({ milestone: '🧤 Drag & Drop', confidence: 'medium' })

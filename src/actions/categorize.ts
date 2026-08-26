@@ -41,7 +41,9 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   const simplePath = simplifyPath(state, multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
 
   // Check if all selected thoughts belong to the same parent
-  const allSameParent = multicursorPaths.every(path => equalPath(parentOf(path), parentOf(simplePath)))
+  const allSameParent = multicursorPaths.every(path =>
+    equalPath(parentOf(simplifyPath(state, path)), parentOf(simplePath)),
+  )
 
   // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
