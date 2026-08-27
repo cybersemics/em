@@ -643,7 +643,7 @@ it('describe an extracted subthought by the extracted text', () => {
 ## Current Behavior
 
 \`\`\`
-- hello world
+- hello  world
   - big
 \`\`\`
 

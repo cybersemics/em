@@ -202,9 +202,9 @@ describe('Extract Subthought', () => {
       // Both halves of the split carry the whole enclosing chain, so re-joining them duplicates <b> at the top level
       // and <i> one level down, the latter only becoming adjacent once the <b>s have merged.
       const state = store.getState()
-      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>Lorem <i>ipsum sit</i> amet</b>')
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>Lorem <i>ipsum  sit</i> amet</b>')
       expect(
-        getAllChildrenAsThoughtsByContext(state, ['<b>Lorem <i>ipsum sit</i> amet</b>']).map(child => child.value),
+        getAllChildrenAsThoughtsByContext(state, ['<b>Lorem <i>ipsum  sit</i> amet</b>']).map(child => child.value),
       ).toEqual(['<b><i>dolor</i></b>'])
     })
 
@@ -225,9 +225,9 @@ describe('Extract Subthought', () => {
         store.dispatch(extractSubthought())
       })
 
-      // The duplicate space that preceeded "sit" has been trimmed.
+      // The space on either side of the selection is left in place, as it is for an unformatted thought.
       const state = store.getState()
-      const newValue = '<span style="color: red;">Lorem </span><span style="color: green;">sit</span>'
+      const newValue = '<span style="color: red;">Lorem </span><span style="color: green;"> sit</span>'
       expect(getThoughtById(state, head(state.cursor!))!.value).toBe(newValue)
       expect(getAllChildrenAsThoughtsByContext(state, [newValue]).map(child => child.value)).toEqual([
         '<span style="color: red;">ipsum </span><span style="color: green;">dolor</span>',
@@ -249,9 +249,11 @@ describe('Extract Subthought', () => {
         store.dispatch(extractSubthought())
       })
 
+      // The space on either side of the selection is left in place, as it is for an unformatted thought, and the <b>
+      // the split empties is dropped rather than left in the value.
       const state = store.getState()
-      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one three')
-      expect(getAllChildrenAsThoughtsByContext(state, ['one three']).map(child => child.value)).toEqual(['<b>two</b>'])
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one  three')
+      expect(getAllChildrenAsThoughtsByContext(state, ['one  three']).map(child => child.value)).toEqual(['<b>two</b>'])
     })
 
     it('extracts a selection that starts in the third text node', async () => {
