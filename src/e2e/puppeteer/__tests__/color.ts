@@ -573,7 +573,7 @@ it('Set background color with multicursor selection', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/4234
-it.skip('Set the background color of text that is marked as code', async () => {
+it('Set the background color of text that is marked as code', async () => {
   const importText = `
   - Hello beautiful people`
 

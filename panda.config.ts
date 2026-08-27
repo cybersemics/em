@@ -348,6 +348,11 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'codeBg',
     fontFamily: 'monospace',
   },
+  /** Lets a background color applied to the selection show through the code background, which is only a default and
+   * would otherwise paint over it. Formatting nests the color wrapper outside the code element (#4234). */
+  'font[style*="background-color"] code, span[style*="background-color"] code': {
+    backgroundColor: 'transparent',
+  },
   kbd: {
     fontFamily: 'inherit',
   },
