@@ -102,6 +102,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
+  const showColorPicker = useSelector(state => state.showColorPicker)
   const showDropdown = useSelector(state => state.showColorPicker || state.showLetterCase)
   const positionFixedStyles = usePositionFixed()
 
@@ -172,6 +173,17 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
       window.removeEventListener('resize', updateArrows)
     }
   }, [updateArrows])
+
+  // A keyboard shortcut can open the Color Picker while its toolbar button is outside the scroll viewport.
+  // Center the button after the picker renders so that the picker is fully visible, including when the toolbar
+  // remounts after distraction-free typing.
+  useEffect(() => {
+    if (customize || !showColorPicker) return
+
+    toolbarRef.current
+      ?.querySelector<HTMLElement>('[data-command-id="textColor"]')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+  }, [customize, showColorPicker])
 
   // disable pressing on drag
   useEffect(() => {

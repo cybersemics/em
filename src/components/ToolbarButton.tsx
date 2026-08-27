@@ -233,6 +233,7 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
     <div
       {...longPress.props}
       aria-label={command.label}
+      data-command-id={commandId}
       data-testid='toolbar-icon'
       data-active={isButtonActive}
       ref={dndRef(node => dragSource(dropTarget(node)))}

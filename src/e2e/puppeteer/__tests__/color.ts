@@ -16,6 +16,7 @@ import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 /** Click the first note. Assumes that there will be only a single note. */
@@ -69,6 +70,44 @@ const codeBackgroundColor = () =>
   })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
+
+// https://github.com/cybersemics/em/issues/4604
+it('scrolls the entire Color Picker into view when opened with the keyboard shortcut', async () => {
+  await page.setViewport({ width: 640, height: 812 })
+  await paste('- One')
+  await clickThought('One')
+
+  const textColorIsOutsideToolbar = await page.evaluate(() => {
+    const toolbar = document.querySelector('[data-testid="toolbar"]')
+    const textColor = document.querySelector('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+    if (!toolbar || !textColor) throw new Error('Toolbar or Text Color button not found.')
+
+    return textColor.getBoundingClientRect().right > toolbar.getBoundingClientRect().right
+  })
+  expect(textColorIsOutsideToolbar).toBe(true)
+
+  await press('h', { meta: true, shift: true })
+  await waitForSelector('[aria-label="text color swatches"]')
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const toolbar = document.querySelector('[data-testid="toolbar"]')
+        const swatchGroups = document.querySelectorAll(
+          '[aria-label="text color swatches"], [aria-label="background color swatches"]',
+        )
+        if (!toolbar || swatchGroups.length !== 2) throw new Error('Toolbar or Color Picker swatches not found.')
+
+        const toolbarRect = toolbar.getBoundingClientRect()
+        const swatchGroupRects = Array.from(swatchGroups).map(group => group.getBoundingClientRect())
+        return {
+          leftEdgeVisible: swatchGroupRects.every(groupRect => groupRect.left >= toolbarRect.left),
+          rightEdgeVisible: swatchGroupRects.every(groupRect => groupRect.right <= toolbarRect.right),
+        }
+      }),
+    )
+    .toEqual({ leftEdgeVisible: true, rightEdgeVisible: true })
+})
 
 it('Set the text color of the text and bullet', async () => {
   const importText = `
