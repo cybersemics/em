@@ -3,6 +3,10 @@ name: Tauri Release (main)
 # Publishes a rolling development build of the em desktop app on every push to main.
 # All artifacts are attached to a single, continuously-updated prerelease (tag
 # `pre`), so releases do not accumulate — each push overwrites the assets.
+# Assets are named without the app version (em_main_aarch64.dmg, …) because uploads
+# only replace same-named assets: versioned names change on every version bump,
+# which would strand the previous version's assets on the release indefinitely.
+# Version-free names also give the rolling channel permanent download URLs.
 
 on:
   push:
@@ -153,6 +157,7 @@ jobs:
             > On macOS, right-click the app and choose **Open** to bypass Gatekeeper (or run `xattr -cr /Applications/em.app`).
           prerelease: true
           releaseDraft: false
+          releaseAssetNamePattern: '[name]_main_[arch][setup][ext]'
           args: ${{ matrix.args }}
 
       - name: Build and publish desktop app (Developer ID + notarization)
@@ -180,4 +185,5 @@ jobs:
             > On macOS, right-click the app and choose **Open** to bypass Gatekeeper (or run `xattr -cr /Applications/em.app`).
           prerelease: true
           releaseDraft: false
+          releaseAssetNamePattern: '[name]_main_[arch][setup][ext]'
           args: ${{ matrix.args }}
