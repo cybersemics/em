@@ -1,5 +1,6 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
@@ -18,6 +19,7 @@ import {
   clearAiDisclosureAcknowledgement,
   hasAcknowledgedAiDisclosure,
 } from '../../util/aiDisclosure'
+import headValue from '../../util/headValue'
 import generateThought from '../generateThought'
 
 // Mock fetch for testing
@@ -174,7 +176,7 @@ test('handle empty or missing title tags and leave thought empty', async () => {
     - https://example.com`)
 })
 
-test('not fetch title when thought is not empty', async () => {
+test('replace a non-empty thought with the complete generated thought', async () => {
   const text = `
       - Some existing text
         - https://example.com
@@ -186,7 +188,7 @@ test('not fetch title when thought is not empty', async () => {
 
   // Mock AI response
   mockFetch.mockResolvedValueOnce({
-    json: () => Promise.resolve({ content: ' additional content', err: null }),
+    json: () => Promise.resolve({ thought: 'Replacement text' }),
   })
 
   await dispatch([importText({ text }), setCursor(['Some existing text'])])
@@ -198,13 +200,18 @@ test('not fetch title when thought is not empty', async () => {
 
   // Verify fetch was called only once for AI, not for webpage
   expect(mockFetch).toHaveBeenCalledTimes(1)
-  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: expect.any(String),
+  })
+  expect(JSON.parse(mockFetch.mock.calls[0][1]?.body as string)).toEqual({ input: expect.any(String) })
 
   const state = store.getState()
   const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
-  - Some existing text additional content
+  - Replacement text
     - https://example.com`)
 
   vi.unstubAllEnvs()
@@ -222,19 +229,28 @@ test('not fetch title when first child is not a URL', async () => {
 
   // Mock AI response
   mockFetch.mockResolvedValueOnce({
-    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+    json: () => Promise.resolve({ thought: 'AI generated text' }),
   })
 
   await dispatch([importText({ text }), setCursor([''])])
+
+  const generatedCursorOffsets: (number | null)[] = []
+  const unsubscribe = store.subscribe(() => {
+    const state = store.getState()
+    if (state.cursor && headValue(state, state.cursor) === 'AI generated text') {
+      generatedCursorOffsets.push(state.cursorOffset)
+    }
+  })
 
   // use act, otherwise pending value (...) will still be rendered
   await act(async () => {
     executeCommand(generateThought)
   })
+  unsubscribe()
 
   // Verify fetch was called only once for AI, not for webpage
   expect(mockFetch).toHaveBeenCalledTimes(1)
-  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', expect.any(Object))
 
   const state = store.getState()
   const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
@@ -242,6 +258,149 @@ test('not fetch title when first child is not a URL', async () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - AI generated text
     - Not a URL`)
+  expect(generatedCursorOffsets[0]).toBe('AI generated text'.length)
+
+  vi.unstubAllEnvs()
+})
+
+test('send ancestors and siblings when generating an empty thought', async () => {
+  const text = `
+      - Grocery list
+        - potato
+        - carrot
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thought: 'broccoli' }),
+  })
+
+  await dispatch([importText({ text }), setCursor(['Grocery list', 'carrot']), newThought({ value: '' })])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ input: '[] Grocery list\n  [] potato\n  [] carrot\n  [x]' }),
+  })
+
+  vi.unstubAllEnvs()
+})
+
+test('send top-level siblings when generating a top-level thought', async () => {
+  const text = `
+      - potato
+      - carrot
+      - onion
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thought: 'garlic' }),
+  })
+
+  await dispatch([importText({ text }), setCursor(['onion'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ input: '[] potato\n[] carrot\n[x] onion' }),
+  })
+
+  vi.unstubAllEnvs()
+})
+
+test('replace a non-empty thought using its ancestors and siblings', async () => {
+  const text = `
+      - Grocery list
+        - potato
+        - carrot
+        - onion
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thought: 'garlic' }),
+  })
+
+  await dispatch([importText({ text }), setCursor(['Grocery list', 'onion'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ input: '[] Grocery list\n  [] potato\n  [] carrot\n  [x] onion' }),
+  })
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Grocery list
+    - potato
+    - carrot
+    - garlic`)
+
+  vi.unstubAllEnvs()
+})
+
+test('restore the original thought and allow retry when the AI request fails', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockRejectedValueOnce(new Error('Network error'))
+
+  await dispatch([importText({ text: '- original' }), setCursor(['original'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+    await vi.waitFor(() => expect(store.getState().error).toBe('Failed to generate thought'))
+  })
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - original`)
+  expect(store.getState().cursorCleared).toBe(false)
+
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thought: 'replacement' }),
+  })
+
+  await act(async () => {
+    executeCommand(generateThought)
+    await vi.waitFor(() =>
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - replacement`),
+    )
+  })
+
+  vi.unstubAllEnvs()
+})
+
+test('preserve the original thought when the AI returns an empty replacement', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thought: '  ' }),
+  })
+
+  await dispatch([importText({ text: '- original' }), setCursor(['original'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+    await vi.waitFor(() => expect(store.getState().error).toBe('Failed to generate thought'))
+  })
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - original`)
+  expect(store.getState().cursorCleared).toBe(false)
 
   vi.unstubAllEnvs()
 })
@@ -281,7 +440,7 @@ test('continues the current request after allowing AI once', async () => {
 
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
   mockFetch.mockResolvedValueOnce({
-    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+    json: () => Promise.resolve({ thought: 'AI generated text' }),
   })
 
   await dispatch([importText({ text }), setCursor([''])])
@@ -295,7 +454,7 @@ test('continues the current request after allowing AI once', async () => {
     continuation?.()
   })
 
-  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', expect.any(Object))
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -311,7 +470,7 @@ test('restore the original value rather than the pending value on undo', async (
 
   // Mock AI response
   mockFetch.mockResolvedValueOnce({
-    json: () => Promise.resolve({ content: 'generated', err: null }),
+    json: () => Promise.resolve({ thought: 'replacement' }),
   })
 
   await dispatch([importText({ text: `- a` }), setCursor(['a'])])
@@ -323,7 +482,7 @@ test('restore the original value rather than the pending value on undo', async (
 
   // Precondition: the thought was generated, otherwise the undo below would have nothing to revert.
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - a generated`)
+  - replacement`)
 
   await dispatch(undo())
 
@@ -343,7 +502,7 @@ test('continues the current request after always allowing AI', async () => {
 
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
   mockFetch.mockResolvedValueOnce({
-    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+    json: () => Promise.resolve({ thought: 'AI generated text' }),
   })
 
   await dispatch([importText({ text }), setCursor([''])])
@@ -357,7 +516,7 @@ test('continues the current request after always allowing AI', async () => {
     continuation?.()
   })
 
-  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', expect.any(Object))
   expect(hasAcknowledgedAiDisclosure()).toBe(true)
 
   vi.unstubAllEnvs()
@@ -372,7 +531,7 @@ test('allow next use without persisting AI disclosure acknowledgement', async ()
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
   allowAiDisclosureOnce()
   mockFetch.mockResolvedValueOnce({
-    json: () => Promise.resolve({ content: 'AI generated text', err: null }),
+    json: () => Promise.resolve({ thought: 'AI generated text' }),
   })
 
   await dispatch([importText({ text }), setCursor([''])])
@@ -381,24 +540,68 @@ test('allow next use without persisting AI disclosure acknowledgement', async ()
     executeCommand(generateThought)
   })
 
-  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url', expect.any(Object))
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', expect.any(Object))
   expect(store.getState().showModal).toBeNull()
 
   vi.unstubAllEnvs()
 })
 
 describe('multicursor', () => {
-  it('generates a thought for each selected thought', async () => {
-    // Mock AI URL environment variable
+  it('builds every prompt from the original sibling values', async () => {
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
     acknowledgeAiDisclosure()
 
-    // The selected thoughts are generated concurrently in document order, so the mocked responses are consumed in the
-    // order a, b, c. Distinct content proves each response is applied to its own thought.
     mockFetch
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'one', err: null }) })
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'two', err: null }) })
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'three', err: null }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'one' }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'two' }) })
+
+    await dispatch([
+      importText({
+        text: `
+          - Grocery list
+            - potato
+            - carrot
+            - onion
+        `,
+      }),
+      setCursor(['Grocery list', 'potato']),
+      addMulticursor(['Grocery list', 'potato']),
+      addMulticursor(['Grocery list', 'carrot']),
+    ])
+
+    await act(async () => {
+      executeCommandWithMulticursor(generateThought, { store })
+    })
+    await act(async () => {
+      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
+    })
+
+    expect(mockFetch).toHaveBeenNthCalledWith(1, 'http://test-ai-url/generateThought', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: '[] Grocery list\n  [x] potato\n  [] carrot\n  [] onion',
+      }),
+    })
+    expect(mockFetch).toHaveBeenNthCalledWith(2, 'http://test-ai-url/generateThought', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: '[] Grocery list\n  [] potato\n  [x] carrot\n  [] onion',
+      }),
+    })
+
+    vi.unstubAllEnvs()
+  })
+
+  it('replaces each selected thought', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+
+    mockFetch
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'one' }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'two' }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'three' }) })
 
     await dispatch([
       importText({
@@ -417,17 +620,14 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
-
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - a one
-  - b two
-  - c three`)
+  - one
+  - two
+  - three`)
 
     vi.unstubAllEnvs()
   })
@@ -462,9 +662,6 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
-
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
@@ -479,14 +676,13 @@ describe('multicursor', () => {
   })
 
   it('reverts every generated thought on a single undo', async () => {
-    // Mock AI URL environment variable
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
     acknowledgeAiDisclosure()
 
     mockFetch
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'one', err: null }) })
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'two', err: null }) })
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'three', err: null }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'one' }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'two' }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'three' }) })
 
     await dispatch([
       importText({
@@ -505,18 +701,14 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
-
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
 
-    // Precondition: all three thoughts were generated, otherwise the undo below would have nothing to revert.
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - a one
-  - b two
-  - c three`)
+  - one
+  - two
+  - three`)
 
     await dispatch(undo())
 
@@ -524,21 +716,18 @@ describe('multicursor', () => {
   - a
   - b
   - c`)
-
-    // The whole run is a single undo step labelled with the command, rather than one Edit Thought step per generation.
     expect(store.getState().alert?.value).toBe('Undo: Generate Thought')
 
     vi.unstubAllEnvs()
   })
 
-  it('keeps the cursor and the multicursor selection after generating', async () => {
-    // Mock AI URL environment variable
+  it('keeps the cursor and multicursor selection after replacing thoughts', async () => {
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
     acknowledgeAiDisclosure()
 
     mockFetch
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'one', err: null }) })
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'two', err: null }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'one' }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'two' }) })
 
     await dispatch([
       importText({
@@ -555,36 +744,27 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
-
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
 
-    // Precondition: both thoughts were generated, otherwise there would be no completion that could have moved the
-    // cursor.
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - a one
-  - b two`)
-
     const state = store.getState()
-    expectPathToEqual(state, state.cursor, ['a one'])
+    expectPathToEqual(state, state.cursor, ['one'])
     expect(
       Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
-    ).toEqual([['a one'], ['b two']])
+    ).toEqual([['one'], ['two']])
   })
 
-  it('generates the other selected thoughts when one request returns an error', async () => {
-    // Mock AI URL environment variable
+  it('replaces the other selected thoughts when one request returns an error', async () => {
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
     acknowledgeAiDisclosure()
 
     mockFetch
       .mockResolvedValueOnce({
-        json: () => Promise.resolve({ content: '', err: { status: 500, message: 'Model unavailable' } }),
+        json: () => Promise.resolve({ error: 'Model unavailable' }),
+        status: 500,
       })
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'two', err: null }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'two' }) })
 
     await dispatch([
       importText({
@@ -601,31 +781,25 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
-
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
 
-    // a is left at its original value, without the pending ellipsis, and b is generated as usual.
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
-  - b two`)
-
+  - two`)
     expect(store.getState().error).toBe('Model unavailable')
 
     vi.unstubAllEnvs()
   })
 
-  it('generates a thought for each selected thought when there is no cursor', async () => {
-    // Mock AI URL environment variable
+  it('replaces every selected thought when there is no cursor', async () => {
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
     acknowledgeAiDisclosure()
 
     mockFetch
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'one', err: null }) })
-      .mockResolvedValueOnce({ json: () => Promise.resolve({ content: 'two', err: null }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'one' }) })
+      .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'two' }) })
 
     await dispatch([
       importText({
@@ -639,24 +813,19 @@ describe('multicursor', () => {
       addMulticursor(['b']),
     ])
 
-    // The keydown handler gates execution on canExecute against the real state, so a cursorless multiselect would not
-    // otherwise reach executeCommandWithMulticursor.
     expect(store.getState().cursor).toBeNull()
     expect(generateThought.canExecute!(store.getState())).toBe(true)
 
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
-
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - a one
-  - b two`)
+  - one
+  - two`)
 
     vi.unstubAllEnvs()
   })
