@@ -68,6 +68,40 @@ it('Clicking a context moves the cursor to that context', async () => {
   expectPathToEqual(state, state.cursor, ['b1', 'b2'])
 })
 
+it('render home icon as breadcrumbs for each context whose parent is the home context', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - a
+          - m
+        - b
+          - m
+      `,
+    }),
+    setCursor(['a', 'm']),
+    toggleContextView(),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const tree = screen.getAllByLabelText('tree-node').map(node => {
+    const breadcrumbs = queryByLabelText(node, 'context-breadcrumbs')
+    return {
+      value: queryByLabelText(node, 'thought')?.textContent,
+      homeBreadcrumbs: !!breadcrumbs && !!queryByLabelText(breadcrumbs, 'home'),
+    }
+  })
+
+  // The contexts a and b are both direct children of the home context, so each renders the home icon as its breadcrumbs.
+  expect(tree).toEqual([
+    { value: 'a', homeBreadcrumbs: false },
+    { value: 'm', homeBreadcrumbs: false },
+    { value: 'a', homeBreadcrumbs: true },
+    { value: 'b', homeBreadcrumbs: true },
+    { value: 'b', homeBreadcrumbs: false },
+  ])
+})
+
 describe('freeThoughts', () => {
   // Mock freeThoughtsThreshold to 0 so freeThoughts deallocates any thought that is not explicitly preserved.
   const freeThoughtsThreshold = globals.freeThoughtsThreshold
@@ -296,29 +330,6 @@ describe.skip('render', () => {
 
     const breadcrumbsCDE = await findAllByLabelText(subthoughts[1], 'context-breadcrumbs')
     expect(breadcrumbsCDE[0]).toHaveTextContent('c • d')
-  })
-
-  it('render home icon as breadcrumbs for each thought whose parent is the home context', async () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-            - m
-          - b
-            - m
-        `,
-      }),
-      setCursor(['a', 'm']),
-      toggleContextView(),
-    ])
-
-    const subthoughts = await findSubthoughts('m')
-
-    const homeIconA = await findByLabelText(subthoughts[0], 'home')
-    expect(homeIconA).toBeTruthy()
-
-    const homeIconB = await findByLabelText(subthoughts[1], 'home')
-    expect(homeIconB).toBeTruthy()
   })
 
   it('render home icon as thought for each thought in the home context', async () => {

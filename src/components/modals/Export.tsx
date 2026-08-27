@@ -22,9 +22,10 @@ import ThoughtId from '../../@types/ThoughtId'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
-import { isIOS, isMac, isTouch } from '../../browser'
+import { isIOS, isTouch } from '../../browser'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
+import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
@@ -42,6 +43,7 @@ import fastClick from '../../util/fastClick'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
+import isCommandKey from '../../util/isCommandKey'
 import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
 import throttleConcat from '../../util/throttleConcat'
@@ -144,20 +146,37 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
     () => {
       isMounted.current = true
 
-      const replications = simplePaths.map(simplePath => {
-        const id = head(simplePath)
+      /** Waits for pending local persistence before reading the selected subtrees for export. */
+      const startReplicationsAfterLocalWrites = async () => {
+        await thoughtspaceRuntime.waitForIdle()
+        if (!isMounted.current) return null
 
-        return replicateTree(id, {
-          // TODO: Warn the user if offline or not fully replicated
-          remote: false,
-          onThought: thought => {
-            if (!isMounted.current) return
-            setExportingThoughtsThrottled(thought)
-          },
+        const replications = simplePaths.map(simplePath => {
+          const id = head(simplePath)
+
+          return replicateTree(id, {
+            // TODO: Warn the user if offline or not fully replicated
+            remote: false,
+            onThought: thought => {
+              if (!isMounted.current) return
+              setExportingThoughtsThrottled(thought)
+            },
+          })
         })
-      })
 
-      Promise.all(replications.map(replication => replication.promise)).then(thoughtIndices => {
+        return {
+          replications,
+          thoughtIndicesPromise: Promise.all(replications.map(replication => replication.promise)),
+        }
+      }
+
+      const replicationsStartedPromise = startReplicationsAfterLocalWrites()
+
+      void (async () => {
+        const startedReplications = await replicationsStartedPromise
+        if (!startedReplications) return
+
+        const thoughtIndices = await startedReplications.thoughtIndicesPromise
         if (!isMounted.current) return
 
         setExportingThoughtsThrottled.flush()
@@ -173,11 +192,13 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
 
         setExportedState(exportedState)
         setIsPulling(false)
-      })
+      })()
 
       return () => {
         isMounted.current = false
-        replications.forEach(replication => replication.cancel())
+        void replicationsStartedPromise.then(startedReplications => {
+          startedReplications?.replications.forEach(replication => replication.cancel())
+        })
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -462,7 +483,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     (e: KeyboardEvent) => {
       if (
         e.key === 'c' &&
-        (isMac ? e.metaKey : e.ctrlKey) &&
+        isCommandKey(e) &&
         exportContent &&
         // do not override copy shortcut if user has text selected
         selection.isCollapsed() !== false &&

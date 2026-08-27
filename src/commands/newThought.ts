@@ -60,15 +60,15 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }: { type: string }
   }
 }
 
+// Create a new empty thought after each selected thought. Each newThought in the multicursor loop sets the cursor to the thought it creates, so preventSetCursor keeps the cursor on the last created thought instead of restoring the pre-command cursor, and clearMulticursor drops the stale selection — leaving the user ready to type into the new thought.
 const multicursor: Command['multicursor'] = {
-  filter: 'last-sibling',
   clearMulticursor: true,
   preventSetCursor: true,
 }
 
-const newThoughtCommand: Command = {
+const newThoughtCommand = {
   id: 'newThought',
-  label: 'New Thought',
+  label: 'New Thought' as const,
   description: 'Create a shiny new thought.',
   // Support multiple keyboard shortcuts
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
@@ -82,6 +82,6 @@ const newThoughtCommand: Command = {
   isChainable: command => command.id === 'outdent',
   canExecute: () => isDocumentEditable(),
   exec,
-}
+} satisfies Command
 
 export default newThoughtCommand

@@ -1,5 +1,13 @@
 import { UnknownAction } from 'redux'
+import type { WindowEm } from '../initialize'
 import Thunk from './Thunk'
+
+/** Explicit pre-initialization view of window for preload scripts. */
+export type PreloadedEmWindow = {
+  em?: {
+    testFlags?: Partial<WindowEm['testFlags']>
+  }
+}
 
 declare global {
   interface Document {
@@ -8,7 +16,8 @@ declare global {
   }
 
   interface Window {
-    em: unknown
+    /** Fully initialized application namespace. Preload writers use {@link PreloadedEmWindow}. */
+    em: WindowEm
     debug: (message: string) => void
     // FIX: Used only in puppeteer test environment. So need way to switch global context based on environment.
     delay: (ms: number) => Promise<boolean>
