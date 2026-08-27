@@ -1,6 +1,6 @@
 # Import Pipeline
 
-Importing is every path by which text becomes thoughts: pasting into a thought, dropping a file onto the app, a clipboard manager mutating the contenteditable, resuming an interrupted import on startup, or loading a URL. All of these converge on a small set of shared stages. Bug fixes belong inside those stages — a paste bug fixed in a component handler instead of the router, or a sanitization rule added outside the two existing sanitization points, creates a divergent code path that the next bug report will land between.
+Importing is every path by which text becomes thoughts: pasting into a thought, dropping a file onto the app, a clipboard manager mutating the contenteditable, or resuming an interrupted import on startup. All of these converge on a small set of shared stages. Bug fixes belong inside those stages — a paste bug fixed in a component handler instead of the router, or a sanitization rule added outside the two existing sanitization points, creates a divergent code path that the next bug report will land between.
 
 This doc covers the entry points, the `importData` router, the two import executors (`importText` and `importFiles`), the parse/sanitize funnel, and the copy side that produces em's own clipboard data. The final section maps open issues to the stage where each fix belongs.
 
@@ -12,7 +12,6 @@ flowchart TD
     clipapp["Editable onChangeHandler<br/><i>clipboard app insert</i>"]
     dnd["useDragAndDropThought /<br/>useDragAndDropSubThought<br/><i>OS file drop</i>"]
     resume["initialize<br/><i>resume interrupted import</i>"]
-    url["loadFromUrl"]
 
     importData{"importData<br/><b>router</b>"}
     importText["importText<br/><b>atomic reducer</b>"]
@@ -24,7 +23,6 @@ flowchart TD
     importData -- "multiline" --> importFiles
     dnd --> importFiles
     resume --> importFiles
-    url --> importText
 
     subgraph funnel ["parse funnel"]
         textToHtml["textToHtml<br/><i>plaintext/markdown → &lt;ul&gt;&lt;li&gt; HTML</i>"]
@@ -53,7 +51,6 @@ flowchart TD
 | [`Editable` `onChangeHandler`](../src/components/Editable.tsx) | A clipboard app (Paste for iOS, the Android clipboard viewer) mutates the contenteditable directly; detected by `<div>` insertion | `importData` with the inserted text, `<div>`s converted back to newlines |
 | [`useDragAndDropThought`](../src/hooks/useDragAndDropThought.tsx) / [`useDragAndDropSubThought`](../src/hooks/useDragAndDropSubThought.tsx) | OS files dropped onto a thought | `importFiles` directly |
 | [`initialize`](../src/initialize.ts) | App startup with an unfinished import in the resume manifest | `importFiles({ resume: true })` |
-| [`loadFromUrl`](../src/actions/loadFromUrl.ts) | Loading raw text from a URL | `importText` directly |
 | [`importToContext`](../src/test-helpers/importToContext.ts) / [`paste`](../src/test-helpers/paste.ts) | Test helpers (RTL and Puppeteer) | `importText` directly |
 
 `useOnPaste` also detects a raw `State` JSON payload (a `thoughtIndex` dump) and asks for confirmation before overwriting.
