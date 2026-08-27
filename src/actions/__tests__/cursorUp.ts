@@ -217,6 +217,21 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['x'])
   })
 
+  // https://github.com/cybersemics/em/issues/4951
+  it('move cursor from a new empty thought to the last thought in an ascending sorted context', () => {
+    const text = `
+      - a
+        - =sort
+          - Alphabetical
+            - Asc
+        - b
+        - c
+    `
+    const steps = [importText({ text }), setCursor(['a', 'c']), newThought(''), cursorUp]
+    const state = reducerFlow(steps)(initialState())
+    expectPathToEqual(state, state.cursor, ['a', 'c'])
+  })
+
   it('should move to the last visible thought of pinned thought', () => {
     const text = `
       - a
