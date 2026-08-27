@@ -225,7 +225,54 @@ Two independent layers:
 
 ## Consolidation sequence
 
-The pipeline is being consolidated toward one funnel, one router, and two commit strategies chosen by parsed size. The work is decomposed into independently landable steps, in dependency order:
+The pipeline is being consolidated toward one funnel, one router, and two commit strategies chosen by parsed size.
+
+### Current
+
+Today's shape, schematically — the [Overview](#overview) diagram has the full detail. Routing precedes parsing and runs on regex heuristics; each executor invokes the parse funnel for itself; markdown conversion is reachable only through `importText`; drag-and-drop and resume bypass the router, and resume reaches into storage from inside `importFiles`.
+
+```mermaid
+flowchart TD
+    paste["clipboard paste"] --> router
+    dnd["OS file drop"] --> persist
+    resume["initialize<br/><i>interrupted import</i>"] -- "resume: true —<br/>reads manifest + IDB itself" --> persist
+
+    router{"importData<br/><b>route first, parse later</b><br/><i>REGEX_HTML_SINGLE_LINE ·<br/>REGEX_NONFORMATTING_HTML · isMarkdown</i>"}
+    router -- "single line or markdown" --> parseText
+    router -- "multiline" --> persist
+
+    parseText["importText parses for itself:<br/>markdownToText if markdown,<br/>then textToHtml → htmlToJson"]
+    parseText -- "single line" --> splice["<b>inline splice</b> at caret<br/><i>unsanitized</i>"]
+    parseText -- "multiline markdown" --> atomic["<b>atomic commit</b><br/>importJson → one updateThoughts<br/><i>merges duplicates via collapse</i>"]
+
+    persist["importFiles persists raw text + manifest,<br/>then parses for itself:<br/>textToHtml → htmlToJson<br/><i>no markdown conversion</i>"]
+    persist --> serial["<b>serial resumable commit</b><br/>newThought per block<br/><i>pulls + merges duplicates ·<br/>checkpoints per thought</i>"]
+```
+
+### Expected
+
+After the sequence below: every source calls one entry point, small content is parsed once and routed on the parsed tree, large content is structural by fiat and parsed downstream by the serial executor, raw text remains the only persisted form, and nothing merges duplicates on import.
+
+```mermaid
+flowchart TD
+    paste["clipboard paste"] --> entry
+    dnd["OS file drop<br/><i>files · insertBefore (step 6)</i>"] --> entry
+    resume["initialize<br/><i>hands over text · path · offset<br/>from manifest + IDB (#5174)</i>"] --> entry
+
+    entry{"import entry point<br/><b>router · size gate (#5175)</b>"}
+    entry -- "below threshold:<br/>parse once, route on Block[]" --> funnel
+    entry -- "at/above threshold:<br/>structural by fiat, unparsed" --> persist
+
+    funnel["shared parse funnel<br/>markdownToText (#5172) →<br/>textToHtml → htmlToJson"]
+    funnel -- "single block" --> splice["<b>inline splice</b> at caret<br/><i>funnel-sanitized like all content</i>"]
+    funnel -- "multiple blocks" --> atomic["<b>atomic commit</b><br/>importJson → one updateThoughts<br/><i>selection preserved · no manifest</i>"]
+
+    persist["persist raw text + manifest"] --> serial["<b>serial resumable commit</b><br/>parses downstream via the same funnel<br/>newThought per block · checkpoint per thought<br/><i>no duplicate pull or merge (#2712)</i>"]
+```
+
+### Steps
+
+The work is decomposed into independently landable steps, in dependency order:
 
 1. [#2712](https://github.com/cybersemics/em/issues/2712) — remove duplicate-descendant merging from import. The starting point: it deletes `pullDuplicateDescendants` and the per-thought pull that makes serial import slow, decides #3622's merge-vs-duplicate product question, and equalizes the two executors' capabilities so they differ only in commit strategy. Caveat for implementers: merging currently makes resume accidentally idempotent — once it is removed, a stale `thoughtsImported` checkpoint produces real duplicates, so the per-thought un-throttled manifest update in `importFiles` becomes load-bearing.
 2. [#5172](https://github.com/cybersemics/em/issues/5172) — move markdown conversion into the shared funnel, so dropped `.md` files import with the same structure as pasted markdown. Relatively self-contained.
