@@ -302,7 +302,7 @@ There is no global or default sort preference: a context without `=sort` is sort
 - Thoughts created or edited afterwards are given a rank that keeps the context sorted, via [`getSortedRank`](../src/selectors/getSortedRank.ts) — a fractional rank between the neighbors the new value sorts between.
 - Toggling sort back off restores the pre-sort manual order from `state.manualSortMap`, which records each child's rank at the moment the context was first sorted.
 
-The comparator itself lives in [`getSortComparator`](../src/selectors/getChildren.ts) and is applied directly by [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts). Those are the selectors that compute the desired order (for `sort`, for insertion points, for sibling navigation); they agree with the rendered order only because the ranks are kept materialized.
+The comparator itself lives in [`getSortComparator`](../src/selectors/getChildren.ts) and is applied directly by [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts). Those are the selectors that compute the desired order (for `sort`, for insertion points, for sibling navigation); they agree with the rendered order only because the ranks are kept materialized. Thoughts whose sort keys are equal — duplicate values, or two thoughts created at the same millisecond — are ordered by `rank`, the last fallback of every comparator. Without it their order would come from `childrenMap` insertion order, which can disagree with their rank order, so sibling navigation would move the cursor between duplicates in a different order than they appear on screen.
 
 ## Views
 

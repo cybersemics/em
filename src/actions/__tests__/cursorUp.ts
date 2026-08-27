@@ -195,7 +195,7 @@ describe('normal view', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5156
-  it.skip('move cursor from the first of two duplicate thoughts in a sorted context to the parent', () => {
+  it('move cursor from the first of two duplicate thoughts in a sorted context to the parent', () => {
     const text = `
       - x
         - =sort
