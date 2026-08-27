@@ -817,6 +817,68 @@ describe('dash splitting', () => {
   })
 })
 
+describe('symbol splitting', () => {
+  // https://github.com/cybersemics/em/issues/4393
+  it('splits thought on arrows', () => {
+    const value = 'a → b → c'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+  })
+
+  it('splits thought on each of the symbols ↑↓←→+', () => {
+    const value = 'a ↑ b ↓ c ← d → e + f'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e
+  - f`)
+  })
+
+  it('splits thought on comma rather than on a symbol', () => {
+    const value = 'a → b, c'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a → b
+  - c`)
+  })
+
+  it('splits thought on sentence punctuation rather than on a symbol', () => {
+    const value = 'a → b. c'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a → b.
+  - c`)
+  })
+
+  it('splits thought on a symbol when the period is part of an abbreviation', () => {
+    const value = 'Mr. Jones → and me'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Mr. Jones
+  - and me`)
+  })
+
+  it('splits thought on a symbol when the period is part of a url', () => {
+    const value = 'go to en.wikipedia.org → and back'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - go to en.wikipedia.org
+  - and back`)
+  })
+})
+
 describe('colon splitting', () => {
   it('splits thought with colon into main thought and subthought', () => {
     const value = 'Start: 1'

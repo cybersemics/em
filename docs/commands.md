@@ -56,7 +56,7 @@ const pinCommand = {
 
 The `satisfies Command` and the `as const` on the label are load-bearing rather than stylistic. Annotating the constant `: Command` instead would type it as the interface, discarding what each command actually says about itself; `satisfies` checks the object against the interface while keeping the inferred type. The label needs `as const` on top of that, because the interface types `label` as `string` and that contextual type widens the literal even under `satisfies`. Together they let [`CommandLabel`](../src/@types/CommandLabel.ts) be derived as the union of every command's label, the same way [`CommandId`](../src/@types/CommandId.ts) is derived from the barrel's keys, so neither type has to repeat what the commands already declare. A command that skips either one widens its label to `string` and collapses that union. Rather than let that pass silently, `CommandLabel` resolves to a message naming the fix, so every call site that passes a label fails to compile and reports it.
 
-`exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, or `'chainedGesture'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
+`exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, `'desktopCommandUniverse'`, or `'commandCenter'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
 
 A command bound to an array of keyboard shortcuts also receives `keyboardIndex`, the index within that array of the shortcut that was pressed (`undefined` when the command was not activated by one of its own keyboard shortcuts). This lets one command cover a family of related shortcuts: `applyColor` maps Command/Ctrl + Option/Alt + *n* and Option/Alt + *n* to the *n*th text and background swatch of the [`ColorPicker`](../src/components/ColorPicker.tsx). Since only the first shortcut of an array is displayed, such a command can set `keyboardDisplay` to a single `Key` representing the whole range (`applyColor` displays `Cmd + Option + 0-8`).
 
@@ -106,7 +106,7 @@ A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/u
 `handleGestureEnd` runs when the gesture finishes. It looks up the final sequence in `commandGestureIndex`, with two special cases:
 
 - **Mobile Command Universe.** If the sequence ends with the `openMobileCommandUniverse` gesture, that command runs.
-- **Chained commands.** If the sequence *starts* with a gesture for an `isChainable` command and continues with another command's gesture, the two are chained and executed together. The canonical example: `selectAll` is chainable, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Chained gestures are dispatched with `type: 'chainedGesture'` so undo coalesces correctly.
+- **Chained commands.** If the sequence *starts* with a gesture for an `isChainable` command and continues with another command's gesture, the two are chained and executed together. The canonical example: `selectAll` is chainable, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Both commands execute inside one command transaction whose metadata identifies the combined command, so they produce one undo patch.
 
 After execution, an alert briefly confirms the command's `label` (in training mode), unless the command has `hideAlert: true`.
 
@@ -146,9 +146,11 @@ A selection is started by long pressing a thought ([`useDragHold`](../src/hooks/
 | `preventSetCursor` | Don't restore the cursor at the end. |
 | `reverse` | Iterate cursors in reverse document order (matters for ops like move). |
 | `clearMulticursor` | Clear the multicursor selection after execution. |
-| `filter` | One of `'all'` (default), `'first-sibling'`, `'last-sibling'`, `'prefer-ancestor'`. |
+| `filter` | One of `'all'` (default), `'first-sibling'`, `'last-sibling'`, `'prefer-ancestor'`, applied by [`filterCursors`](../src/selectors/filterCursors.ts). |
 
-`executeCommandWithMulticursor` walks the filtered cursors in document order (`documentSort`), `setCursor`s each path in turn, calls the regular `exec`, and finally restores the original cursor (unless `preventSetCursor` is set). The command executor keeps one command transaction open across the loop, so the entire multi-step operation produces one undo patch with the command's metadata.
+`executeCommandWithMulticursor` walks the filtered cursors in document order (`documentSort`), `setCursor`s each path in turn, calls the regular `exec`, and finally restores the original cursor (unless `preventSetCursor` is set) and the multicursors themselves (unless `clearMulticursor` is set). The command executor keeps one command transaction open across the loop, so the entire multi-step operation produces one undo patch with the command's metadata.
+
+Restoring the multicursors is what keeps the Command Center open on mobile. [`setCursor`](../src/actions/setCursor.ts) clears `state.multicursors` unless `preserveMulticursor` is passed, and [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) closes the Command Center as soon as the selection is empty — so a command that moves the selected thought (`swapParent`, whose reducer ends in `setCursor`) empties the selection mid-run and would dismiss the panel under the user, were the loop not to add the thoughts back at its new path. A command that bypasses the loop, as the `disallow` branch does for a single selected thought, must not move the thought it acts on for this reason.
 
 A command tapped in the Command Center is executed with `type: 'commandCenter'`, and the loop then ends by selecting the thought the cursor landed on whenever nothing is selected any more — which is exactly what a `clearMulticursor` command such as [`delete`](../src/commands/delete.ts) leaves behind. Otherwise the Command Center would dismiss itself the moment such a command was tapped, since [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) closes it as soon as the selection empties; instead it stays open, selecting the cursor thought the same way opening it does, and can be used again straight away. Deleting the last thought leaves no cursor to select, so there the Command Center closes as usual.
 
@@ -162,7 +164,7 @@ An asynchronous `execMulticursor` returns its Promise to the executor. The comma
 
 Three fields shape what happens when the command might not be runnable:
 
-- **`canExecute(state)`** — boolean predicate. If false, `exec` is not called.
+- **`canExecute(state)`** — boolean predicate. If false, `exec` is not called. It also drives the enabled appearance of the [Toolbar](../src/components/ToolbarButton.tsx) and [Command Center](../src/components/CommandCenter/PanelCommand.tsx) buttons, so a predicate that reports a command as executable when it would be a no-op leaves an enabled button that does nothing when tapped. A command that acts on the selection must therefore test [`selectedPaths`](../src/selectors/selectedPaths.ts) — the multicursors if there are any, otherwise the cursor — rather than `state.cursor`, which is not the thought the command runs on when a thought elsewhere in the tree is selected. Pass the command's own `multicursor.filter` to `selectedPaths` so that the predicate judges exactly the paths the loop will execute on; otherwise a path that the filter drops (such as a descendant of another selected thought) can disable a command that would have worked. Quantify with `every` rather than `some`, since the multicursor loop aborts the whole selection as soon as one path fails `canExecute`: `indent` and `outdent` require every selected path to be movable, and `swapParent` requires every selected path to be a subthought, so that a selection containing a top-level thought — which has no grandparent to swap with — disables the command outright rather than silently swapping the rest. Because `selectedPaths` prefers the multicursors, such a predicate returns the same value for every path in the loop, so the one predicate both dims the button and blocks the gesture; no `disallow` branch is needed, and none should be added, since that branch bypasses the multicursor restore described above.
 - **`preventDefault`** — call `e.preventDefault()` even when `canExecute` returns false. Useful for keyboard shortcuts that should *always* swallow the keypress.
 - **`permitDefault`** — do *not* call `e.preventDefault()` even when the command runs. Useful for shortcuts that piggyback on existing browser behavior (e.g. system copy/paste).
 - **`allowExecuteFromModal`** — allow the command to run while a modal is open. Defaults to false; navigation commands set this to true.
@@ -317,7 +319,7 @@ https://github.com/user-attachments/assets/5466ad2a-6b7c-4869-a23c-03d9d752dc9b
 
 ### Open Command Center
 
-Opens a special keyboard which contains commands that can be executed on the cursor thought.
+Opens a special keyboard which contains commands that can be executed on the cursor thought. Opening it selects the cursor thought as a multicursor, so every command tapped there runs through `executeCommandWithMulticursor` on a selection of exactly one thought. A `disallow` command is therefore still executable from the Command Center; it only alerts once a second thought is selected.
 
 ### Close Command Center
 
@@ -493,9 +495,9 @@ Merges all duplicate siblings at the same level as the cursor. The first thought
 
 ### Split Sentences
 
-Splits multiple sentences in a single thought into separate thoughts.
+Splits multiple sentences in a single thought into separate thoughts. Sentence punctuation (`.;!?`) takes priority, and slashes are split into a chain of descendants, e.g. `one/two/three`.
 
-A thought that contains only a single sentence is split into siblings on commas, or on the word "and" if there is no comma. A dash or a colon splits it into a main thought and a child instead, e.g. `one - 1` and `Start: 1` both become a thought with a single child. A colon only splits when it is followed by whitespace, so that a time such as `10:30` is left intact. In a comma-separated list, a dash only splits when it is surrounded by whitespace, so that a hyphenated word such as `Jean-Michel` is left intact; the right side of such a dash is then split on its commas, e.g. `Shopping list - apples, bananas` becomes a thought with two children.
+A thought that contains only a single sentence is split into siblings on commas, then on the symbols `↑↓←→+`, then on the word "and". A period that belongs to an abbreviation, a decimal, or a url is not a sentence boundary, so `Mr. Jones → and me` also counts as a single sentence; such a thought splits on its commas and symbols, but not on "and", which commonly joins the parts of one sentence, e.g. `Fruit cost: apple $10.23 and pear $10.70`. A dash or a colon splits it into a main thought and a child instead, e.g. `one - 1` and `Start: 1` both become a thought with a single child. A colon only splits when it is followed by whitespace, so that a time such as `10:30` is left intact. In a comma-separated list, a dash only splits when it is surrounded by whitespace, so that a hyphenated word such as `Jean-Michel` is left intact; the right side of such a dash is then split on its commas, e.g. `Shopping list - apples, bananas` becomes a thought with two children.
 
 <kbd>Command + Shift + S</kbd>
 
