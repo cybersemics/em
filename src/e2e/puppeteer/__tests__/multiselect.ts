@@ -41,6 +41,9 @@ const waitForHighlightedBullets = async (n: number) => {
   }
 }
 
+/** Waits a single animation frame, i.e. long enough for React to commit the render that follows a command. */
+const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
+
 /** Reads the CSS cursor rendered over the text of every thought. */
 const textCursors = () => page.$$eval('[data-editable]', editables => editables.map(el => getComputedStyle(el).cursor))
 
@@ -178,6 +181,52 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('a')
     expect(copied['text/html']).toContain('b')
     expect(copied['text/html']).toContain('c')
+  })
+
+  // https://github.com/cybersemics/em/issues/5108
+  it('does not enter edit mode when the multiselection is copied', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('b')
+    await command('selectAll')
+    await waitForHighlightedBullets(3)
+
+    await press('c', { meta: true })
+
+    // Copy leaves the thoughts selected but not edited, so no faux caret is rendered on them (Clear Thought is
+    // what puts a multiselection into edit mode). Wait a frame first, since the faux carets would be rendered
+    // on the frame after the copy completes.
+    await nextFrame()
+    await nextFrame()
+    expect(await page.$$('[data-testid="faux-caret-multicursor"]')).toHaveLength(0)
+    await waitForHighlightedBullets(3)
+  })
+
+  // https://github.com/cybersemics/em/issues/5108
+  it('keeps multiselect edit mode active when Select All runs while multiselect is being edited', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('b')
+    await command('selectAll')
+    await waitForHighlightedBullets(3)
+
+    // Enter multiselect edit mode via Clear Thought.
+    await press('c', { alt: true, shift: true, meta: true })
+    await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
+
+    await command('selectAll')
+
+    // Select All should preserve edit mode in this branch, keeping the faux carets rendered.
+    await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
+    await waitForHighlightedBullets(3)
   })
 
   // https://github.com/cybersemics/em/issues/4738
