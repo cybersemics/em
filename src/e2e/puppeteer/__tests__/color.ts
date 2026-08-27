@@ -609,14 +609,18 @@ it('Set the background color of text that is marked as code', async () => {
 // https://github.com/cybersemics/em/issues/4234
 it('Set the background color of text that is marked as code with the =style attribute', async () => {
   const importText = `
-  - Hello <code>beautiful</code> people
+  - Hello beautiful people
     - =style
       - background-color
         - red`
 
   await paste(importText)
 
-  await clickThought('Hello <code>beautiful</code> people')
+  await clickThought('Hello beautiful people')
+
+  await setSelection(6, 15)
+  await press('K', { meta: true })
+  await waitForEditable('Hello <code>beautiful</code> people')
   await nextFrame()
 
   const background = await codeBackgroundColor()
