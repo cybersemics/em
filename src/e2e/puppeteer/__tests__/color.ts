@@ -54,6 +54,20 @@ const setNoteCaret = (offset: number) =>
 /** Waits one frame for selectionchange-driven command state to propagate. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
+/** Returns the background that actually paints behind the code text of the thought being edited, i.e. the nearest
+ * self-or-ancestor of the code element that is not transparent. */
+const codeBackgroundColor = () =>
+  page.evaluate(() => {
+    const code = document.querySelector('[data-editing=true] [data-editable] code')
+    if (!code) throw new Error('No code element found in the editing thought')
+    for (let el: Element | null = code; el; el = el.parentElement) {
+      const backgroundColor = window.getComputedStyle(el).backgroundColor
+      if (backgroundColor && backgroundColor !== 'transparent' && !backgroundColor.startsWith('rgba(0, 0, 0, 0'))
+        return backgroundColor
+    }
+    return null
+  })
+
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 it('Set the text color of the text and bullet', async () => {
@@ -588,17 +602,23 @@ it('Set the background color of text that is marked as code', async () => {
   await clickToolbar('Text Color', 'background color swatches', 'red')
   await nextFrame()
 
-  // the background that actually paints behind the code text is the nearest self-or-ancestor that is not transparent
-  const background = await page.evaluate(() => {
-    const code = document.querySelector('[data-editing=true] [data-editable] code')
-    if (!code) throw new Error('No code element found in the editing thought')
-    for (let el: Element | null = code; el; el = el.parentElement) {
-      const backgroundColor = window.getComputedStyle(el).backgroundColor
-      if (backgroundColor && backgroundColor !== 'transparent' && !backgroundColor.startsWith('rgba(0, 0, 0, 0'))
-        return backgroundColor
-    }
-    return null
-  })
+  const background = await codeBackgroundColor()
+  expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
+})
 
+// https://github.com/cybersemics/em/issues/4234
+it('Set the background color of text that is marked as code with the =style attribute', async () => {
+  const importText = `
+  - Hello <code>beautiful</code> people
+    - =style
+      - background-color
+        - red`
+
+  await paste(importText)
+
+  await clickThought('Hello <code>beautiful</code> people')
+  await nextFrame()
+
+  const background = await codeBackgroundColor()
   expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
 })
