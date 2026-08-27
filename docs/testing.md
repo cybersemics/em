@@ -1,4 +1,4 @@
-# Testing
+ft# Testing
 
 ## How to use this guide
 
@@ -401,7 +401,7 @@ yarn test:ios:local
 
 #### Setting up credentials for BrowserStack
 
-The BrowserStack configuration automatically starts and stops a temporary Cloudflare tunnel automatically so the real device can reach the local HTTPS app.
+The BrowserStack configuration automatically starts and stops a temporary Cloudflare tunnel so the real device can reach the local HTTPS app.
 
 To test with BrowserStack, you need **credentials to access BrowserStack** and credentials to make the Cloudflare tunnel work.
 
@@ -414,15 +414,6 @@ BROWSERSTACK_ACCESS_KEY=your_access_key
 
 # make sure to enclose with 'quotes'
 CLOUDFLARE_TUNNEL_POOL='[{"name":"…","hostname":"…","token":"…"}, …]'
-```
-
-Then, generate and add a secret for the tunnel to your shell profile (`.zshrc` or the like.) This secret protects the tunnel so that only you and BrowserStack can access it – as opposed to making the tunnel's content accessible to the public internet.
-
-Make sure the secret is alphanumeric – avoid special characters like %$@+!, as the secret needs to be URL-safe. You can easily generate secure alphanumeric strings with this command: `openssl rand -hex 32`
-
-```dotenv
-# add to your shell config
-TUNNEL_TOKEN=a_secure_alphanumeric_string
 ```
 
 Local Appium requires macOS with Xcode and an iOS Simulator, Appium, and the XCUITest driver:
@@ -466,7 +457,7 @@ We use a fixed-domain pool rather than the ephemeral `*.trycloudflare.com` quick
 
 ##### How a run claims a tunnel
 
-[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run `TUNNEL_TOKEN` (the Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts)).
+[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts). The gate only guards the tunnel's public hostnames; every other authority (localhost, a LAN IP, `bs-local.com`) cannot have come through the tunnel — Cloudflare routes to the tunnel by Host header — and passes ungated. `onPrepare` discovers the token by asking the dev server's off-tunnel-only `/__tunnel-token` route over localhost, so a local run needs no `TUNNEL_TOKEN`; CI generates one per run and exports it to both its server and the runner (env `TUNNEL_TOKEN` overrides generation), which is also why every server on the pool is gated — the claim probe below relies on foreign servers 403ing this run's token.
 
 The gate must see `?__token=` on the **document** request. Vite rewrites `Accept: text/html` navigations (Chrome, Safari, BrowserStack iOS) to `/index.html` and drops the query string; curl's default `Accept: */*` does not take that path. That is why curl can 200 while a browser shows the gate's `Forbidden` on the same URL. The middleware reads Connect's `originalUrl` so the token survives that rewrite. The device URL is always `https://<hostname>/?__token=…` (slash before the query). Concatenating onto `https://host` without that slash yields `https://host?__token=`, which iOS Safari does not load as `/` — the first WDIO session fails `before` while later `specFileRetries` can still pass.
 
