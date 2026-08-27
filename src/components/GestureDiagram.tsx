@@ -300,7 +300,9 @@ const GesturePath = ({
 
     return (
       <>
-        <path d={joinPathSegments(RDLD_SEGMENTS.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
+        {highlight! > 0 && (
+          <path d={joinPathSegments(RDLD_SEGMENTS.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
+        )}
         <path d={joinPathSegments(RDLD_SEGMENTS.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
       </>
     )
