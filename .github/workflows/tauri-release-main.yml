@@ -187,3 +187,22 @@ jobs:
           releaseDraft: false
           releaseAssetNamePattern: '[name]_main_[arch][setup][ext]'
           args: ${{ matrix.args }}
+
+  # Keep the `pre` tag pointing at the commit that was just built, so the release
+  # page's commit chip and the auto-generated source archives match the published
+  # assets. tauri-action only sets the tag target when it first creates the tag and
+  # never moves an existing one (its releaseCommitish input is "unused if the Git
+  # tag already exists"), so without this the tag would sit at its creation commit
+  # forever. Runs only after all platforms publish, so the tag never points at a
+  # commit whose asset set is incomplete. GITHUB_TOKEN pushes do not trigger other
+  # workflows, and the prod release workflow only matches `v*` tags in any case.
+  retag:
+    name: Point pre tag at built commit
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Force-move pre tag to the built commit
+        run: git push --force origin "$GITHUB_SHA:refs/tags/pre"
