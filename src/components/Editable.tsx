@@ -53,7 +53,6 @@ import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import addEmojiSpace from '../util/addEmojiSpace'
-import containsURL from '../util/containsURL'
 import debugLog from '../util/debugLog'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -66,6 +65,7 @@ import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import stripTags from '../util/stripTags'
+import trailingURL from '../util/trailingURL'
 import trimHtml from '../util/trimHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
@@ -706,11 +706,11 @@ const Editable = ({
         }
 
         const newNumContext = getContexts(state, newValue).length
-        const isNewValueURL = containsURL(newValue)
+        const isNewValueURL = !!trailingURL(newValue)
 
         const contextLengthChange =
           newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
-        const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
+        const urlChange = isNewValueURL || isNewValueURL !== !!trailingURL(oldValueRef.current)
 
         // A formatting-only edit changes the markup but not the plain text (e.g. applying a font or background color).
         // Persist it immediately rather than through the edit throttle so that formatSelection's follow-up strip thunk

@@ -52,6 +52,51 @@ it('renders the email annotation when a backColor is applied', async () => {
   expect(screen.getByLabelText('email-link')).toHaveAttribute('href', 'mailto:foo@bar.com')
 })
 
+it('renders the url annotation on a thought that is exactly a url', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - https://test.com
+      `,
+    }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.getByLabelText('url-link')).toHaveAttribute('href', 'https://test.com')
+})
+
+it('renders the url annotation on a thought that ends with a url, linking only the url', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - Read and make sense of https://github.com/cybersemics/em/blob/main/docs/import-pipeline.md
+      `,
+    }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.getByLabelText('url-link')).toHaveAttribute(
+    'href',
+    'https://github.com/cybersemics/em/blob/main/docs/import-pipeline.md',
+  )
+})
+
+it('does not render the url annotation on a thought with a url in the middle', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - https://test.com is a url
+      `,
+    }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.queryByLabelText('url-link')).toBeNull()
+})
+
 it('does not render the email annotation on a non-email thought', async () => {
   await dispatch([
     importText({
