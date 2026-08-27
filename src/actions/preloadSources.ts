@@ -1,11 +1,9 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { loadResourceActionCreator as loadResource } from '../actions/loadResource'
-import contextToPath from '../selectors/contextToPath'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
-import thoughtToContext from '../selectors/thoughtToContext'
-import unroot from '../util/unroot'
+import thoughtToPath from '../selectors/thoughtToPath'
 
 /** Fetch and import all =src attributes with =preload. */
 export const preloadSourcesActionCreator = (): Thunk => (dispatch, getState) => {
@@ -25,8 +23,7 @@ export const preloadSourcesActionCreator = (): Thunk => (dispatch, getState) => 
       if (!thought) return false
       const parentThought = getThoughtById(state, thought.parentId)
       if (!parentThought) return false
-      const context = thoughtToContext(state, parentThought.id)
-      return contextToPath(state, unroot(context!))
+      return thoughtToPath(state, parentThought.id)
     })
 
   // preload sources

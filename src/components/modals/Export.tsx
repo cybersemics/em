@@ -22,7 +22,7 @@ import ThoughtId from '../../@types/ThoughtId'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
-import { isIOS, isMac, isTouch } from '../../browser'
+import { isIOS, isTouch } from '../../browser'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
@@ -43,6 +43,7 @@ import fastClick from '../../util/fastClick'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
+import isCommandKey from '../../util/isCommandKey'
 import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
 import throttleConcat from '../../util/throttleConcat'
@@ -482,7 +483,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     (e: KeyboardEvent) => {
       if (
         e.key === 'c' &&
-        (isMac ? e.metaKey : e.ctrlKey) &&
+        isCommandKey(e) &&
         exportContent &&
         // do not override copy shortcut if user has text selected
         selection.isCollapsed() !== false &&
