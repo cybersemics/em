@@ -33,7 +33,8 @@ const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd
 
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     const length = node.textContent!.length
-    if (!start && selectionStart <= offset + length) start = { node, offset: selectionStart - offset }
+    // the start boundary belongs to the node the character is in, as it does when the user drags a selection into it
+    if (!start && selectionStart < offset + length) start = { node, offset: selectionStart - offset }
     if (start && selectionEnd <= offset + length) {
       end = { node, offset: selectionEnd - offset }
       break
@@ -208,6 +209,62 @@ describe('Extract Subthought', () => {
       expect(getThoughtById(state, head(state.cursor!))!.value).toBe(newValue)
       expect(getAllChildrenAsThoughtsByContext(state, [newValue]).map(child => child.value)).toEqual([
         '<span style="color: red;">ipsum </span><span style="color: green;">dolor</span>',
+      ])
+    })
+
+    // Skipped until selectionOffsets measures the whole thought rather than the text node the selection starts in.
+    it.skip('extracts a selection that starts in the second text node', async () => {
+      store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      setSelection(thought!, 4, 7)
+
+      store.dispatch(extractSubthought())
+
+      const state = store.getState()
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one three')
+      expect(getAllChildrenAsThoughtsByContext(state, ['one three']).map(child => child.value)).toEqual(['<b>two</b>'])
+    })
+
+    // Skipped until selectionOffsets measures the whole thought rather than the text node the selection starts in.
+    it.skip('extracts a selection that starts in the third text node', async () => {
+      store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      setSelection(thought!, 8, 13)
+
+      store.dispatch(extractSubthought())
+
+      const state = store.getState()
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one <b>two</b>')
+      expect(getAllChildrenAsThoughtsByContext(state, ['one <b>two</b>']).map(child => child.value)).toEqual(['three'])
+    })
+
+    it('extracts text that has a background color', async () => {
+      // seeded with newThought because importText rewrites the font tag that applyColor produces into a span
+      const value =
+        '<font color="#000000" style="background-color: rgb(0, 214, 136);">Lorem ipsum dolor sit amet</font>'
+      store.dispatch([newThought({ value }), setCursor([value])])
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      setSelection(thought!, 0, 11)
+
+      store.dispatch(extractSubthought())
+
+      const state = store.getState()
+      const newValue = '<font color="#000000" style="background-color: rgb(0, 214, 136);">dolor sit amet</font>'
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe(newValue)
+      expect(getAllChildrenAsThoughtsByContext(state, [newValue]).map(child => child.value)).toEqual([
+        '<font color="#000000" style="background-color: rgb(0, 214, 136);">Lorem ipsum</font>',
       ])
     })
   })
