@@ -66,11 +66,11 @@ it('renders the url annotation on a thought that is exactly a url', async () => 
   expect(screen.getByLabelText('url-link')).toHaveAttribute('href', 'https://test.com')
 })
 
-it('renders the url annotation on a thought that ends with a url, linking only the url', async () => {
+it('renders the url annotation on a thought that contains a url, linking only the url', async () => {
   await dispatch([
     importText({
       text: `
-        - Read and make sense of https://github.com/cybersemics/em/blob/main/docs/import-pipeline.md
+        - Read and make sense of https://github.com/cybersemics/em/blob/main/docs/import-pipeline.md today
       `,
     }),
   ])
@@ -83,11 +83,25 @@ it('renders the url annotation on a thought that ends with a url, linking only t
   )
 })
 
-it('does not render the url annotation on a thought with a url in the middle', async () => {
+it('renders the url annotation on a thought that contains multiple urls, linking the last one', async () => {
   await dispatch([
     importText({
       text: `
-        - https://test.com is a url
+        - compare https://first.com with https://second.com before deciding
+      `,
+    }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.getByLabelText('url-link')).toHaveAttribute('href', 'https://second.com')
+})
+
+it('does not render the url annotation on a thought without a url', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - this thought has no link in it
       `,
     }),
   ])

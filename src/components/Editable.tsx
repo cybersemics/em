@@ -62,10 +62,10 @@ import head from '../util/head'
 import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
+import lastURL from '../util/lastURL'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import stripTags from '../util/stripTags'
-import trailingURL from '../util/trailingURL'
 import trimHtml from '../util/trimHtml'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
@@ -706,11 +706,11 @@ const Editable = ({
         }
 
         const newNumContext = getContexts(state, newValue).length
-        const isNewValueURL = !!trailingURL(newValue)
+        const isNewValueURL = !!lastURL(newValue)
 
         const contextLengthChange =
           newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
-        const urlChange = isNewValueURL || isNewValueURL !== !!trailingURL(oldValueRef.current)
+        const urlChange = isNewValueURL || isNewValueURL !== !!lastURL(oldValueRef.current)
 
         // A formatting-only edit changes the markup but not the plain text (e.g. applying a font or background color).
         // Persist it immediately rather than through the edit throttle so that formatSelection's follow-up strip thunk

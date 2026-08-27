@@ -26,11 +26,11 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isEmail from '../util/isEmail'
 import isVisibleContext from '../util/isVisibleContext'
+import lastURL from '../util/lastURL'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import resolveArray from '../util/resolveArray'
 import stripTags from '../util/stripTags'
-import trailingURL from '../util/trailingURL'
 import FauxCaret from './FauxCaret'
 import StaticSuperscript from './StaticSuperscript'
 import ThoughtAnnotationWrapper from './ThoughtAnnotationWrapper'
@@ -268,8 +268,8 @@ const ThoughtAnnotationContainer = React.memo(
     const url = useSelector(state => {
       const childrenUrls = filterAllChildren(state, head(simplePath), child => containsURL(child.value))
       return (
-        // link the thought if it ends with a url, e.g. "Deep work https://calnewport.com/deep-work"
-        trailingURL(value) ??
+        // link the thought if it contains a url, e.g. "Deep work https://calnewport.com/deep-work is a great book"
+        lastURL(value) ??
         // if the only subthought is a url and the thought is not expanded, link the thought
         (!isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
           ? stripTags(childrenUrls[0].value)
