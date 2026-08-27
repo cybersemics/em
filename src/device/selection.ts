@@ -241,25 +241,6 @@ export const offsetFromNode = (node: Node): number | null => {
   return range.toString().length
 }
 
-/** Returns the character offset at the end of the selection. Returns null if there is no selection. */
-export const offsetEnd = (): number | null => {
-  const selection = window.getSelection()
-  if (!selection) return null
-  const range = selection.getRangeAt(0)
-  if (!range) return null
-  const selectionStart = range.startOffset || 0
-  return selectionStart + selection.toString().length
-}
-
-/** Returns the character offset at the start of the selection. Returns null if there is no selection. */
-export const offsetStart = (): number | null => {
-  const selection = window.getSelection()
-  if (!selection) return null
-  const range = selection.getRangeAt(0)
-  if (!range) return null
-  return range.startOffset || 0
-}
-
 /** Returns the plain-text character offsets [start, end) of the current selection relative to the given editable
  * element (ignoring nested HTML), or null if there is no selection within it. Used to apply formatting to an
  * arbitrary sub-range synchronously (#4637). */

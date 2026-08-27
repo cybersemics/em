@@ -3,6 +3,7 @@ import Thunk from '../@types/Thunk'
 import { HOME_PATH, REGEX_NONFORMATTING_HTML } from '../constants'
 import * as selection from '../device/selection'
 import rootedParentOf from '../selectors/rootedParentOf'
+import head from '../util/head'
 import isMarkdown from '../util/isMarkdown'
 import timestamp from '../util/timestamp'
 import { importFilesActionCreator as importFiles } from './importFiles'
@@ -95,6 +96,10 @@ export const importDataActionCreator = ({
     // Resumable imports (via importFiles) import thoughts one at a time and can be resumed if the page is refreshed or there is another interruption. They have a progress bar and they allow duplicates pending descendants to be loaded and merged.
     // Non-resumable imports (via importText), in contrast, are atomic, fast, and preserve the browser selection. Due to the lack of support for duplicates pending descendants, they are only used for single line imports.
     if (!multiline || markdown) {
+      // Measured against the destination editable so that the offsets index into its whole value, as importText's textOffsetToHtmlOffset expects, rather than into the text node the selection starts in.
+      const destEditable = path ? document.querySelector(`[aria-label="editable-${head(path)}"]`) : null
+      const replaceRange = destEditable ? selection.offsetRange(destEditable as HTMLElement) : null
+
       dispatch(
         importText({
           // use caret position to correctly track the last navigated point for caret
@@ -107,10 +112,10 @@ export const importDataActionCreator = ({
           // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
           rawDestValue,
           // use selection start and end for importText to replace (if the imported thoughts are one line)
-          ...(selection.isActive() && !selection.isCollapsed()
+          ...(replaceRange && replaceRange.start !== replaceRange.end
             ? {
-                replaceStart: selection.offsetStart()!,
-                replaceEnd: selection.offsetEnd()!,
+                replaceStart: replaceRange.start,
+                replaceEnd: replaceRange.end,
               }
             : null),
         }),

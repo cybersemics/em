@@ -166,28 +166,26 @@ describe('Extract Subthought', () => {
     })
 
     it('merges the tags that become adjacent at every level of nesting', async () => {
-      // The tags are nested around a single text node because selectionOffsets measures from the start of the text
-      // node the selection begins in, so offsets into a later one would not line up with the value.
       store.dispatch([
-        importText({ text: '- <b><i>Lorem ipsum dolor</i></b>' }),
-        setCursor(['<b><i>Lorem ipsum dolor</i></b>']),
+        importText({ text: '- <b>Lorem <i>ipsum dolor sit</i> amet</b>' }),
+        setCursor(['<b>Lorem <i>ipsum dolor sit</i> amet</b>']),
       ])
 
       await act(vi.runOnlyPendingTimersAsync)
 
       const thought = await findCursor()
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 12)
+      setSelection(thought!, 12, 17)
 
       store.dispatch(extractSubthought())
 
       // Both halves of the split carry the whole enclosing chain, so re-joining them duplicates <b> at the top level
       // and <i> one level down, the latter only becoming adjacent once the <b>s have merged.
       const state = store.getState()
-      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b><i>Lorem dolor</i></b>')
-      expect(getAllChildrenAsThoughtsByContext(state, ['<b><i>Lorem dolor</i></b>']).map(child => child.value)).toEqual(
-        ['<b><i>ipsum</i></b>'],
-      )
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>Lorem <i>ipsum sit</i> amet</b>')
+      expect(
+        getAllChildrenAsThoughtsByContext(state, ['<b>Lorem <i>ipsum sit</i> amet</b>']).map(child => child.value),
+      ).toEqual(['<b><i>dolor</i></b>'])
     })
 
     it('keeps each color when the selection spans two of them', async () => {
@@ -212,8 +210,7 @@ describe('Extract Subthought', () => {
       ])
     })
 
-    // Skipped until selectionOffsets measures the whole thought rather than the text node the selection starts in.
-    it.skip('extracts a selection that starts in the second text node', async () => {
+    it('extracts a selection that starts in the second text node', async () => {
       store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
 
       await act(vi.runOnlyPendingTimersAsync)
@@ -229,8 +226,7 @@ describe('Extract Subthought', () => {
       expect(getAllChildrenAsThoughtsByContext(state, ['one three']).map(child => child.value)).toEqual(['<b>two</b>'])
     })
 
-    // Skipped until selectionOffsets measures the whole thought rather than the text node the selection starts in.
-    it.skip('extracts a selection that starts in the third text node', async () => {
+    it('extracts a selection that starts in the third text node', async () => {
       store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
 
       await act(vi.runOnlyPendingTimersAsync)
