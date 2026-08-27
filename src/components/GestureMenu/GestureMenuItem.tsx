@@ -1,19 +1,11 @@
-import { FC } from 'react'
+import { FC, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { css, cx } from '../../../styled-system/css'
-import { gestureMenuFogRecipe } from '../../../styled-system/recipes'
+import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
 import State from '../../@types/State'
 import { gestureString } from '../../commands'
 import useGestureHighlight from '../../hooks/useGestureHighlight'
-import {
-  GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM,
-  GESTURE_MENU_ITEM_LABEL_DESCRIPTION_GAP_REM,
-  GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM,
-  GESTURE_MENU_ITEM_SELECTED_PADDING_TOP_REM,
-  type GestureMenuFogDepth,
-} from '../../hooks/useGestureMenuLayout'
 import store from '../../stores/app'
 import GestureDiagram from '../GestureDiagram'
 
@@ -28,9 +20,9 @@ const GestureMenuItem: FC<{
   selected: boolean
   gestureInProgress: string
   isFirstCommand?: boolean
-  /** Fog depth applied to trailing single-column rows when the list overflows. 0/undefined = no fog. */
-  fogDepth?: GestureMenuFogDepth
-}> = ({ command, selected, gestureInProgress, isFirstCommand, fogDepth = 0 }) => {
+  isLastCommand?: boolean
+}> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand }) => {
+  const ref = useRef<HTMLDivElement | null>(null)
   const disabled = useSelector((state: State) => !isExecutable(state, command))
   const isActive = command.isActive?.(store.getState())
   const description = useSelector((state: State) => {
@@ -40,30 +32,29 @@ const GestureMenuItem: FC<{
 
   const gestureHighlight = useGestureHighlight({ command, gestureInProgress, selected, disabled })
 
+  useEffect(() => {
+    if (!selected) return
+    if (!isFirstCommand && !isLastCommand) {
+      ref.current?.scrollIntoView({ block: 'nearest' })
+      return
+    }
+    const scrollContainer = ref.current?.parentElement
+    if (scrollContainer) {
+      scrollContainer.scrollTop = isFirstCommand ? 0 : scrollContainer.scrollHeight
+    }
+  })
+
   return (
     <div
-      data-testid='gesture-menu-item'
-      className={cx(
-        css({
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: selected ? 'stretch' : 'center',
-          gap: '0.89rem',
-          // Allow the row to shrink within a grid cell so the label's nowrap text does not overflow the column.
-          minWidth: 0,
-        }),
-        // panda types recipe variant keys as strings, so the numeric depth is stringified for the lookup.
-        gestureMenuFogRecipe({ depth: `${fogDepth}` }),
-      )}
-      // paddingTop/paddingBottom are computed from GESTURE_MENU_ITEM_SELECTED_PADDING_*_REM (shared
-      // with useGestureMenuLayout's reserve calc), so they're plain inline styles — panda's css()
-      // only extracts statically analyzable literals, not values from an imported constant.
-      style={{
-        // Always reserve the top padding on a column's first row so selecting it doesn't shift the
-        // column down and misalign its top from sibling columns.
-        paddingTop: selected || isFirstCommand ? `${GESTURE_MENU_ITEM_SELECTED_PADDING_TOP_REM}rem` : 0,
-        paddingBottom: selected ? `${GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM}rem` : 0,
-      }}
+      ref={ref}
+      className={css({
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: selected ? 'stretch' : 'center',
+        gap: '0.89rem',
+        paddingTop: selected ? '0.6rem' : 0,
+        paddingBottom: selected ? '0.1rem' : 0,
+      })}
     >
       <div
         className={css({
@@ -93,8 +84,8 @@ const GestureMenuItem: FC<{
         className={css({
           display: 'flex',
           flexDirection: 'column',
+          gap: '0.5rem',
         })}
-        style={{ gap: `${GESTURE_MENU_ITEM_LABEL_DESCRIPTION_GAP_REM}rem` }}
       >
         <div
           className={css({
@@ -119,8 +110,8 @@ const GestureMenuItem: FC<{
               fontWeight: 400,
               color: 'fgOverlay75',
               marginBlock: 0,
+              lineHeight: '1.1rem',
             })}
-            style={{ lineHeight: `${GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM}rem` }}
           >
             {description}
           </p>
