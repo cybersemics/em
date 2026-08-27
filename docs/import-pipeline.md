@@ -2,7 +2,7 @@
 
 Importing is every path by which text becomes thoughts: pasting into a thought, dropping a file onto the app, a clipboard manager mutating the contenteditable, or resuming an interrupted import on startup. All of these converge on a small set of shared stages. Bug fixes belong inside those stages — a paste bug fixed in a component handler instead of the router, or a sanitization rule added outside the two existing sanitization points, creates a divergent code path that the next bug report will land between.
 
-This doc covers the entry points, the `importData` router, the two import executors (`importText` and `importFiles`), the parse/sanitize funnel, and the copy side that produces em's own clipboard data. The final section maps open issues to the stage where each fix belongs.
+This doc covers the entry points, the `importData` router, the two import executors (`importText` and `importFiles`), the parse/sanitize funnel, and the copy side that produces em's own clipboard data. The final sections map open issues to the stage where each fix belongs and lay out the planned consolidation sequence.
 
 ## Overview
 
@@ -142,7 +142,7 @@ The funnel's shape is a deliberate decision, recorded in [#2814](https://github.
 Two consequences for anyone extending the pipeline:
 
 - Source-specific handling (Notes, ChatGPT, WorkFlowy) and any external-vs-internal sanitization belong in `htmlToJson`, operating on himalaya nodes; the ChatGPT `p1/p2` branch and `stripStyleAttribute` are the existing examples. Do not reintroduce a pre-parse `strip` of the raw HTML.
-- `importText` and `importFiles` are expected to converge toward `importFiles`. New behavior goes into the shared funnel or `importFiles`, not into `importText`'s paths.
+- `importText` and `importFiles` are expected to converge on one funnel and one router, with two commit strategies — atomic for small trees, serial and resumable for large — chosen by parsed size rather than by regex heuristics ([#5175](https://github.com/cybersemics/em/issues/5175)). New behavior goes into the shared funnel, not into `importText`'s paths. The work is laid out in [Consolidation sequence](#consolidation-sequence).
 
 ## The copy side
 
@@ -218,7 +218,18 @@ Two independent layers:
 
 ### Structural paste edge cases
 
-- [#3622](https://github.com/cybersemics/em/issues/3622) (paste at same indentation does nothing): pasted top-level thoughts that duplicate existing siblings are merged (by `importFiles`' duplicate check, or by the collapse-merge in `importText`), so a copy → paste of siblings into the same context appears to no-op. Any fix must decide the product question — merge vs. duplicate siblings — inside the existing duplicate handling in `importFiles`/`mergeThoughts`, not by adding a pre-check in the paste handler.
+- [#3622](https://github.com/cybersemics/em/issues/3622) (paste at same indentation does nothing): pasted top-level thoughts that duplicate existing siblings are merged (by `importFiles`' duplicate check, or by the collapse-merge in `importText`), so a copy → paste of siblings into the same context appears to no-op. Any fix must decide the product question — merge vs. duplicate siblings — inside the existing duplicate handling in `importFiles`/`mergeThoughts`, not by adding a pre-check in the paste handler. The decision has since been made in [#2712](https://github.com/cybersemics/em/issues/2712): do not merge duplicates on import.
 - [#2826](https://github.com/cybersemics/em/issues/2826) (stuck at "Storing from clipboard" with trailing whitespace): reproduce at the funnel level (`textToHtml` → `htmlToJson` → `flattenTree` on the exact input) before touching `importFiles`; the hang is in parsing, not persistence.
 - [#3510](https://github.com/cybersemics/em/issues/3510) (ChatGPT list loses nesting), [#2897](https://github.com/cybersemics/em/issues/2897) (Wikipedia nesting false positive), [#1033](https://github.com/cybersemics/em/issues/1033) (iOS Notes structure), [#2154](https://github.com/cybersemics/em/issues/2154)–[#2157](https://github.com/cybersemics/em/issues/2157): all are `htmlToJson`/`textToHtml` parse bugs with skipped tests already written in [`importData.ts`](../src/actions/__tests__/importData.ts) / [`importText.ts`](../src/actions/__tests__/importText.ts) — restore the test first, then fix the funnel. The fragile spots are `joinChildren` (sibling/child chunking) and the ChatGPT `p1/p2` class heuristic.
 - [#3479](https://github.com/cybersemics/em/issues/3479) (Unknown inline token, hang on large paste): `isMarkdown`'s link regex false-positives on ordinary bracketed text, routing huge plain-text files through the atomic markdown path. Tighten `isMarkdown` and make `markdownToText`'s unknown-token case lossless (emit `token.raw`) rather than adding size limits elsewhere.
+
+## Consolidation sequence
+
+The pipeline is being consolidated toward one funnel, one router, and two commit strategies chosen by parsed size. The work is decomposed into independently landable steps, in dependency order:
+
+1. [#2712](https://github.com/cybersemics/em/issues/2712) — remove duplicate-descendant merging from import. The starting point: it deletes `pullDuplicateDescendants` and the per-thought pull that makes serial import slow, decides #3622's merge-vs-duplicate product question, and equalizes the two executors' capabilities so they differ only in commit strategy. Caveat for implementers: merging currently makes resume accidentally idempotent — once it is removed, a stale `thoughtsImported` checkpoint produces real duplicates, so the per-thought un-throttled manifest update in `importFiles` becomes load-bearing.
+2. [#5172](https://github.com/cybersemics/em/issues/5172) — move markdown conversion into the shared funnel, so dropped `.md` files import with the same structure as pasted markdown. Relatively self-contained.
+3. [#5173](https://github.com/cybersemics/em/issues/5173) — retire `importData`'s markdown routing branch; multiline markdown imports resumably. Depends on #5172; closes the routing half of #3479.
+4. [#5174](https://github.com/cybersemics/em/issues/5174) — move resume reconstruction out of `importFiles` into `initialize`; per-thought checkpointing stays in the executor.
+5. [#5175](https://github.com/cybersemics/em/issues/5175) — parse before routing behind a size threshold: below it, route on the parsed `Block[]` — single block → inline splice, small tree → atomic commit, large tree → serial resumable commit — and hand the blocks to the executor alongside the raw text; at or above it, content is structural by fiat and reaches the serial executor unparsed. Raw text remains the only persisted form. Retires the routing regexes.
+6. Route drag-and-drop through the same entry point (not yet filed): drops pass `files` and `insertBefore` to the router and benefit from the same size gate. Carries an open product question — whether a single-line file drop splices into the target thought's value like a paste, or inserts a new thought like a thought drop (current behavior).
