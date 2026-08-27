@@ -160,7 +160,9 @@ describe('Extract Subthought', () => {
 
   describe('formatting', () => {
     it('extracts the selection with its formatting intact', async () => {
-      store.dispatch([importText({ text: '- <b>Lorem ipsum dolor</b>' }), setCursor(['<b>Lorem ipsum dolor</b>'])])
+      act(() => {
+        store.dispatch([importText({ text: '- <b>Lorem ipsum dolor</b>' }), setCursor(['<b>Lorem ipsum dolor</b>'])])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -168,7 +170,9 @@ describe('Extract Subthought', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 6, 12)
 
-      store.dispatch(extractSubthought())
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
 
       const state = store.getState()
       expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>Lorem dolor</b>')
@@ -178,10 +182,12 @@ describe('Extract Subthought', () => {
     })
 
     it('merges the tags that become adjacent at every level of nesting', async () => {
-      store.dispatch([
-        importText({ text: '- <b>Lorem <i>ipsum dolor sit</i> amet</b>' }),
-        setCursor(['<b>Lorem <i>ipsum dolor sit</i> amet</b>']),
-      ])
+      act(() => {
+        store.dispatch([
+          importText({ text: '- <b>Lorem <i>ipsum dolor sit</i> amet</b>' }),
+          setCursor(['<b>Lorem <i>ipsum dolor sit</i> amet</b>']),
+        ])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -189,7 +195,9 @@ describe('Extract Subthought', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 12, 17)
 
-      store.dispatch(extractSubthought())
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
 
       // Both halves of the split carry the whole enclosing chain, so re-joining them duplicates <b> at the top level
       // and <i> one level down, the latter only becoming adjacent once the <b>s have merged.
@@ -202,7 +210,9 @@ describe('Extract Subthought', () => {
 
     it('keeps each color when the selection spans two of them', async () => {
       const value = '<span style="color: red;">Lorem ipsum </span><span style="color: green;">dolor sit</span>'
-      store.dispatch([importText({ text: `- ${value}` }), setCursor([value])])
+      act(() => {
+        store.dispatch([importText({ text: `- ${value}` }), setCursor([value])])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -211,7 +221,9 @@ describe('Extract Subthought', () => {
       // "ipsum dolor", which starts in the red half and ends in the green half
       setSelection(thought!, 6, 17)
 
-      store.dispatch(extractSubthought())
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
 
       // The duplicate space that preceeded "sit" has been trimmed.
       const state = store.getState()
@@ -223,7 +235,9 @@ describe('Extract Subthought', () => {
     })
 
     it('extracts a selection that starts in the second text node', async () => {
-      store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
+      act(() => {
+        store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -231,7 +245,9 @@ describe('Extract Subthought', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 4, 7)
 
-      store.dispatch(extractSubthought())
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
 
       const state = store.getState()
       expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one three')
@@ -239,7 +255,9 @@ describe('Extract Subthought', () => {
     })
 
     it('extracts a selection that starts in the third text node', async () => {
-      store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
+      act(() => {
+        store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -247,7 +265,9 @@ describe('Extract Subthought', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 8, 13)
 
-      store.dispatch(extractSubthought())
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
 
       const state = store.getState()
       expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one <b>two</b>')
@@ -258,7 +278,9 @@ describe('Extract Subthought', () => {
       // seeded with newThought because importText rewrites the font tag that applyColor produces into a span
       const value =
         '<font color="#000000" style="background-color: rgb(0, 214, 136);">Lorem ipsum dolor sit amet</font>'
-      store.dispatch([newThought({ value }), setCursor([value])])
+      act(() => {
+        store.dispatch([newThought({ value }), setCursor([value])])
+      })
 
       await act(vi.runOnlyPendingTimersAsync)
 
@@ -266,7 +288,9 @@ describe('Extract Subthought', () => {
       expect(thought).toBeTruthy()
       setSelection(thought!, 0, 11)
 
-      store.dispatch(extractSubthought())
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
 
       const state = store.getState()
       const newValue = '<font color="#000000" style="background-color: rgb(0, 214, 136);">dolor sit amet</font>'
