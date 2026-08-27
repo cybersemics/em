@@ -44,7 +44,7 @@ The first five steps below are sequential and must be performed **in order**, be
 Once both gates are satisfied (or determined not to apply), continue with the lifecycle below:
 
 - Begin by creating a new branch for the work. If a previous agent working on the same task already created a branch and a PR, use that one.
-- When opening a PR, include the bare issue number at the top of the description (e.g. "#1234").
+- When opening a PR, start the description with a closing keyword and the issue number (e.g. "Fixes #1234") when merging the PR resolves the issue — GitHub then links the issue in the sidebar's Development section and closes it automatically on merge. Use the bare issue number (e.g. "#1234") only when the PR relates to the issue without resolving it.
 - Keep the PR description free of redundancy. Say each thing once: no reviewer-notes section that restates the summary, and no consequence the reader has already drawn from it. Never state that tests pass — GitHub renders the CI status on the PR itself.
 - Make all commits in this branch. Push after each meaningful change. Never commit directly to main or protected branches.
   - Run `yarn prettier --write .` before committing any changes to ensure proper code formatting. There is no pre-commit hook, and formatting violations in source files fail `yarn lint` in CI.

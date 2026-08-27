@@ -64,7 +64,9 @@ const tallyVotes = (rawOutputs: string[]): VoteResult => {
     totalVotes: rawOutputs.length,
     confidence: winning.confidence,
     rationale: winning.rationale,
-    secondChoice: winning.secondChoice,
+    // The strict response schema requires every property, so a vote with no second choice carries
+    // an explicit null; normalize it to undefined for the optional field downstream.
+    secondChoice: winning.secondChoice ?? undefined,
   }
 }
 

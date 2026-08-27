@@ -216,7 +216,7 @@ A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/ro
 #### Basic traversal
 
 - [`parentOfThought`](../src/selectors/parentOfThought.ts) — parent `Thought` of a `ThoughtId`.
-- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. `prevSibling` also handles context view.
+- [`nextSibling`](../src/selectors/nextSibling.ts) / [`prevSibling`](../src/selectors/prevSibling.ts) — next/previous sibling, honoring the parent's sort preference. `prevSibling` also handles context view, inferring it from the parent path. Since nothing distinguishes a `SimplePath` from a context-view `Path` at runtime, a caller holding a `SimplePath` must pass `{ showContexts: false }`, or a thought in a cyclic context — whose simple parent path *is* the path the context view is active on, e.g. `a/m/x` rendered at `a/m~/a/x` — will be looked up among the contexts of `m` rather than its children.
 - [`rootedParentOf`](../src/selectors/rootedParentOf.ts) — parent `Path`, returning `[HOME_TOKEN]` for root children.
 - [`parentOf`](../src/util/parentOf.ts) — parent of a `Path` or `Context` (may be empty).
 - [`appendToPath`](../src/util/appendToPath.ts) — appends one or more thoughts to a `Path` / `SimplePath`, dropping the root token.
@@ -303,6 +303,10 @@ There is no global or default sort preference: a context without `=sort` is sort
 - Toggling sort back off restores the pre-sort manual order from `state.manualSortMap`, which records each child's rank at the moment the context was first sorted.
 
 The comparator itself lives in [`getSortComparator`](../src/selectors/getChildren.ts) and is applied directly by [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts). Those are the selectors that compute the desired order (for `sort`, for insertion points, for sibling navigation); they agree with the rendered order only because the ranks are kept materialized.
+
+Empty and emoji-only thoughts have no meaningful sort key, so they are sorted to their point of creation, i.e. by `rank`, in every sort preference. [`newThought`](../src/actions/newThought.ts) and [`editThought`](../src/actions/editThought.ts) leave their rank alone rather than calling [`getSortedRank`](../src/selectors/getSortedRank.ts) — a thought you have just created stays where you created it while you type into it — and [`getSortComparator`](../src/selectors/getChildren.ts) compares them by rank so that the sorted order matches the rendered order — the tree is always rendered in rank order via [`getChildrenRanked`](../src/selectors/getChildren.ts).
+
+The exemption only holds until the sort is applied. [`sort`](../src/actions/sort.ts) re-ranks every child of a context to match the sort condition, so it asks `getSortComparator` for the comparator *without* the exemption (`sortEmpty`) and empty thoughts float to the top, ahead of everything else in either direction (`compareEmpty` is first in both `compareReasonable` and `compareReasonableDescending`). The ranks it assigns then agree with the sort condition for every child. `sort` runs whenever the sort preference is set from the Sort Picker or the `toggleSort` command, and after [`swapParent`](../src/actions/swapParent.ts) and [`uncategorize`](../src/actions/uncategorize.ts) move thoughts into a sorted context.
 
 ## Views
 
@@ -393,6 +397,8 @@ When `cursor` is `a/m~/b/y`, then `contextChain` is (ranks omitted for readabili
 ```
 
 Each segment is a `SimplePath`. The transition from one segment to the next happens at each `m~` boundary.
+
+An active context view is not on its own enough to split: the id following the context-view thought must be one of that thought's contexts. The distinction matters in a cyclic context (see [Context view recursion](#context-view-recursion) above), where a `SimplePath` and a context-view `Path` can be the same array of ids. The thought rendered at `a/m~/a/x` has the `SimplePath` `a/m/x`, and a context view is active on `a/m` — but `x` is an ordinary child of `m` rather than a context of it, so `a/m/x` is left whole instead of being split into `[['a', 'm'], ['x']]`.
 
 A more involved example (paste into **em** to try):
 
