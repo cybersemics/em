@@ -304,6 +304,8 @@ There is no global or default sort preference: a context without `=sort` is sort
 
 The comparator itself lives in [`getSortComparator`](../src/selectors/getChildren.ts) and is applied directly by [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts). Those are the selectors that compute the desired order (for `sort`, for insertion points, for sibling navigation); they agree with the rendered order only because the ranks are kept materialized.
 
+Empty and emoji-only thoughts have no meaningful sort key, so they are sorted to their point of creation, i.e. by `rank`, in every sort preference. [`newThought`](../src/actions/newThought.ts) and [`editThought`](../src/actions/editThought.ts) leave their rank alone rather than calling [`getSortedRank`](../src/selectors/getSortedRank.ts), and [`getSortComparator`](../src/selectors/getChildren.ts) compares them by rank so that the sorted order matches the rendered order — the tree is always rendered in rank order via [`getChildrenRanked`](../src/selectors/getChildren.ts).
+
 ## Views
 
 ### Normal view
