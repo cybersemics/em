@@ -544,6 +544,11 @@ const GestureDiagram = ({
               markerUnits='userSpaceOnUse'
               orient='auto-start-reverse'
             >
+              {/* No glow filter here. Markers are rendered as part of the referencing path, so the path's own
+                  drop-shadow already glows the arrowhead. A second filter on this path would be rendered into
+                  the marker's own surface, which is bounded by the marker viewport, and its blur radius would be
+                  measured in the marker's local coordinate system — which viewBox scales up by markerWidth / 10.
+                  The oversized glow then saturates the marker tile and its edge shows as a box around the tip. */}
               <path
                 d={
                   arrowhead === 'filled'
@@ -561,7 +566,6 @@ const GestureDiagram = ({
                 }
                 stroke={arrowhead === 'outlined' ? (color ?? token('colors.fg')) : 'none'}
                 strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
-                style={dropShadow ? { filter: dropShadow } : undefined}
               />
             </marker>
           )}
