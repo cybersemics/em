@@ -493,7 +493,7 @@ Merges all duplicate siblings at the same level as the cursor. The first thought
 
 ### Split Sentences
 
-Splits multiple sentences in a single thought into separate thoughts.
+Splits multiple sentences in a single thought into separate thoughts. When the sentences become siblings of a thought that already has siblings, they are placed in a new empty category, which keeps them distinct from those siblings, and the cursor is placed on the category so that it can be named right away. A thought with no siblings is split in place, since there is nothing to distinguish the sentences from, and so is a split that creates a child rather than siblings.
 
 A thought that contains only a single sentence is split into siblings on commas, or on the word "and" if there is no comma. A dash or a colon splits it into a main thought and a child instead, e.g. `one - 1` and `Start: 1` both become a thought with a single child. A colon only splits when it is followed by whitespace, so that a time such as `10:30` is left intact. In a comma-separated list, a dash only splits when it is surrounded by whitespace, so that a hyphenated word such as `Jean-Michel` is left intact; the right side of such a dash is then split on its commas, e.g. `Shopping list - apples, bananas` becomes a thought with two children.
 
