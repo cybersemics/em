@@ -36,8 +36,8 @@ import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
  *
  * In order to avoid keyboard focus messiness, this is only called when the keyboard is open and the caret is on a thought.
  * This means that when the keyboard is closed, a native undo step will not be registered and the native undo stack will drift out of sync.
- * The native undo stack will already drift out of sync for unrelated reasons such as `undoTwice` behavior, and non-editing actions that are
- * undoable.
+ * The native undo stack can already drift out of sync because non-editing actions may be undoable without creating a
+ * native editing step.
  *
  * Limitations:
  *

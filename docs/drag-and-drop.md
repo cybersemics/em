@@ -198,7 +198,7 @@ When a user has multiple thoughts selected via the multicursor (`state.multicurs
 3. Sort the array by document order with [`documentSort`](../src/selectors/documentSort.ts) so drops apply in the correct order.
 4. Set `state.draggingThoughts` to the simple paths and dispatch `longPress({ value: DragInProgress })`.
 
-The drop handler iterates the array and dispatches `moveThought` per item. To make undo coalesce the whole multi-move into one entry, it wraps the dispatch in `setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' })` and clears it after.
+The drop handler iterates the array and dispatches `moveThought` per item. Since drag-and-drop is not executed through the command dispatcher, it wraps the dispatch in `setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' })` and clears it afterward. The enhancer coalesces the moves into one action-metadata patch whose label is used by Undo and Redo.
 
 A selected thought that would be a no-op at the drop position (dropping a thought on or immediately before itself — e.g. dropping the first child `b` above itself) is a valid drop target, so the drop indicator still shows and the drop is *not* aborted; that item is simply skipped while the remaining selected thoughts still move. To keep the selection in document order, the first dragged item is placed before the drop target and each subsequent item is placed after the previous one (via `getRankAfter`), so the skipped no-op still anchors the position of the items that follow it.
 

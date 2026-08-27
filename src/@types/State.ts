@@ -112,8 +112,8 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
-  /** The last undoable action that was executed. Usually this is the same as undoPatches.at(-1).actions[0]. However, on undo this will equal redoPatches.at(-1).actions[0]. This is important for special case animatons, like swapParent, that should be enabled not just when the action is originally executed, but also when it is reversed via undo. */
-  lastUndoableActionType?: ActionType
+  /** The action or command source of the last undoable patch. On undo this is the source of the corresponding redo patch. Used by special-case animations that also run when a change is reversed. */
+  lastUndoableActionType?: ActionType | CommandId
   latestCommands: Command[]
   /** Tracks the state of long press and drag-and-drop. */
   longPress: LongPressState

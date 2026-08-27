@@ -7,7 +7,7 @@ import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { swapParentActionCreator as swapParent } from '../../actions/swapParent'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { undoActionCreator as undo } from '../../actions/undo'
-import { executeCommandWithMulticursor } from '../../commands'
+import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import deleteEmptyThoughtOrOutdentCommand from '../../commands/deleteEmptyThoughtOrOutdent'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
@@ -38,7 +38,7 @@ it('report the thoughtspace at the start, the steps up to the end, and the thoug
   ])
 
   // start after b was created, end after c was indented
-  expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 5, end: 2 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -46,8 +46,9 @@ it('report the thoughtspace at the start, the steps up to the end, and the thoug
 \`\`\`
 
 1. Set the cursor on \`b\`.
-2. New Thought \`c\`.
-3. Indent.
+2. New Thought.
+3. Edit the empty thought to \`c\`.
+4. Indent.
 
 ## Current Behavior
 
@@ -78,7 +79,7 @@ it('describe the same steps when the current state is between the start and the 
     undo(),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 5, end: 2 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -86,8 +87,9 @@ it('describe the same steps when the current state is between the start and the 
 \`\`\`
 
 1. Set the cursor on \`b\`.
-2. New Thought \`c\`.
-3. Indent.
+2. New Thought.
+3. Edit the empty thought to \`c\`.
+4. Indent.
 
 ## Current Behavior
 
@@ -157,7 +159,7 @@ it('name each action as dispatched, preceded by the cursor it acts on', () => {
     moveThoughtDown(),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 5, end: 0 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 7, end: 0 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -215,7 +217,7 @@ it('name a multicursor command by its label, preceded by the selection it acts o
 
 1. Set the cursor on \`a\`.
 2. Select \`a\` and \`b\`.
-3. Move Thought Down.
+3. Press \`Ctrl + Shift + ↓\`. Move Thought \`b\` after \`a\`.
 
 ## Current Behavior
 
@@ -230,6 +232,19 @@ it('name a multicursor command by its label, preceded by the selection it acts o
 
 
 `)
+})
+
+it.each([
+  ['toolbar', 'Tap the Move Thought Down button.'],
+  ['gesture', 'Swipe `dud`.'],
+  ['commandCenter', 'Tap Move Thought Down in the Command Center.'],
+  ['desktopCommandUniverse', 'Choose Move Thought Down in the Command Universe.'],
+] as const)('describe the %s input method of a command', (type, sentence) => {
+  store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a'])])
+
+  executeCommandWithMulticursor(moveThoughtDownCommand, { store, type })
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toContain(sentence)
 })
 
 it('describe a toggled attribute by its path', () => {
@@ -329,8 +344,8 @@ it('describe meta attributes that are set, changed, and removed', () => {
 
 1. Set the cursor on \`a\`.
 2. Set Descendant \`=view/Table\`.
-3. Toggle Sort (sets \`=sort/Alphabetical/Asc\`).
-4. Toggle Sort (sets \`=sort/Alphabetical/Desc\`).
+3. Press \`Ctrl + Alt + s\`. This sets \`=sort/Alphabetical/Asc\`.
+4. Press \`Ctrl + Alt + s\`. This sets \`=sort/Alphabetical/Desc\`.
 5. Delete Attribute \`=view/Table\`.
 
 ## Current Behavior
@@ -605,7 +620,7 @@ it('describe the deletion of an empty thought', () => {
 \`\`\`
 
 1. Set the cursor on the empty thought.
-2. Delete Empty Thought.
+2. Press \`Backspace\`. Delete Thought.
 
 ## Current Behavior
 
@@ -618,6 +633,14 @@ it('describe the deletion of an empty thought', () => {
 
 
 `)
+})
+
+it('uses keyboardIndex to describe the exact shortcut that invoked a command', () => {
+  store.dispatch([importText({ text: '- a\n  - ' }), setCursor(['a', ''])])
+
+  executeCommand(deleteEmptyThoughtOrOutdentCommand, { store, type: 'keyboard', keyboardIndex: 1 })
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toContain('Press `Shift + Backspace`.')
 })
 
 it('describe an extracted subthought by the extracted text', () => {
@@ -715,7 +738,7 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
     },
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 3, end: 0 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 5, end: 0 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -803,7 +826,7 @@ it('place a thought created above the cursor by the cursor', () => {
 \`\`\`
 
 1. Set the cursor on \`c\`.
-2. New Thought before \`c\`.
+2. Press \`Shift + Enter\`. New Thought Above before \`c\`.
 
 ## Current Behavior
 
@@ -842,7 +865,7 @@ it('place a subthought created above the existing subthoughts by the first of th
 \`\`\`
 
 1. Set the cursor on \`a\`.
-2. New Subthought before \`x\`.
+2. Press \`Ctrl + Shift + Enter\`. New Subthought Top before \`x\`.
 
 ## Current Behavior
 
@@ -862,11 +885,13 @@ it('place a subthought created above the existing subthoughts by the first of th
 it('omit the thoughtspace when it is empty', () => {
   store.dispatch([newThought({}), editThought([''], 'a'), newThought({}), editThought([''], 'b'), indent()])
 
-  expect(stepsToReproduce(store.getState(), { start: 3, end: 0 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 5, end: 0 })).toBe(`## Steps to Reproduce
 
-1. New Thought \`a\`.
-2. New Thought \`b\`.
-3. Indent.
+1. New Thought.
+2. Edit the empty thought to \`a\`.
+3. New Thought.
+4. Edit the empty thought to \`b\`.
+5. Indent.
 
 ## Current Behavior
 

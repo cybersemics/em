@@ -1,13 +1,15 @@
 import Patch from '../@types/Patch'
-import { isNavigation } from '../util/actionMetadata.registry'
 
 /**
- * Recursively calculates last action type from patches/inversePatches history if it is one of the navigation actions and finally returns the action.
- * Returns undefined if there is no navigation actions in patches/inversePatches.
+ * Recursively skips navigation-only patches and returns the source id of the latest undoable patch.
  */
 const getLatestActionType = (patchArr: Patch[], n = 1): string | undefined => {
-  const lastActionType = patchArr[patchArr.length - n]?.[0]?.actions[0]
-  return isNavigation(lastActionType) ? getLatestActionType(patchArr, n + 1) : lastActionType
+  const patch = patchArr[patchArr.length - n]
+  if (!patch) return undefined
+  if (patch.metadata.isNavigation) return getLatestActionType(patchArr, n + 1)
+  return patch.metadata.source === 'command'
+    ? patch.metadata.label
+    : (patch.metadata.label ?? patch.metadata.actionType)
 }
 
 export default getLatestActionType

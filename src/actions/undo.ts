@@ -8,7 +8,7 @@ import { alertActionCreator as alert } from './alert'
 /** Action-creator for undo.
  *
  * @param cursorAtEnd  Place the caret at the end of the restored thought instead of restoring the cursor offset captured before the undone action. Used by native undo (iOS three-finger swipe / shake-to-undo), which is expected to leave the caret at the end of the restored word.
- * @param count  The exact number of patches to revert instead of one step. Used by the undo slider to move through the history by whole steps (see selectors/undoSteps).
+ * @param count  The exact number of patches to revert. Used by the undo slider to move directly through patch history (see selectors/undoHistory).
  */
 export const undoActionCreator =
   ({ cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {}): Thunk =>

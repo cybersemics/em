@@ -13,7 +13,7 @@ import { redoActionCreator as redo } from '../../actions/redo'
 import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
-import { executeCommandWithMulticursor } from '../../commands'
+import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
@@ -177,6 +177,48 @@ describe('undo persistence', () => {
 })
 
 describe('undo', () => {
+  it('records command and input metadata once on the patch', () => {
+    store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a'])])
+
+    executeCommand(moveThoughtDownCommand, { store, type: 'toolbar', keyboardIndex: 1 })
+
+    const patch = store.getState().undoPatches.at(-1)!
+    expect(patch.metadata).toEqual({
+      source: 'command',
+      commandId: 'moveThoughtDown',
+      label: 'Move Thought Down',
+      type: 'toolbar',
+      keyboardIndex: 1,
+      isNavigation: false,
+    })
+    expect(patch.ops.length).toBeGreaterThan(0)
+    expect(patch.ops.every(operation => !('actions' in operation))).toBe(true)
+
+    store.dispatch(undo())
+    expect(store.getState().redoPatches.at(-1)?.metadata).toEqual(patch.metadata)
+    store.dispatch(redo())
+    expect(store.getState().undoPatches.at(-1)?.metadata).toEqual(patch.metadata)
+  })
+
+  it('keeps command patches separate from contiguous direct edits', () => {
+    store.dispatch([importText({ text: '- a' }), setCursor(['a']), editThought(['a'], 'ab')])
+    const patchCountBeforeCommand = store.getState().undoPatches.length
+
+    executeCommand(
+      {
+        ...moveThoughtDownCommand,
+        canExecute: undefined,
+        exec: dispatch => dispatch(editThought(['ab'], 'abc')),
+      },
+      { store },
+    )
+    store.dispatch(editThought(['abc'], 'abcd'))
+
+    const patches = store.getState().undoPatches.slice(patchCountBeforeCommand - 1)
+    expect(patches).toHaveLength(3)
+    expect(patches.map(patch => patch.metadata.source)).toEqual(['action', 'command', 'action'])
+  })
+
   it('undo edit', () => {
     store.dispatch([
       importText({
@@ -241,10 +283,10 @@ describe('undo', () => {
     const { undoPatches } = store.getState()
     const lastPatch = undoPatches[undoPatches.length - 1]
 
-    const thoughtsExists = lastPatch.some(({ path }) => path.includes('/thoughts'))
+    const thoughtsExists = lastPatch.ops.some(({ path }) => path.includes('/thoughts'))
     expect(thoughtsExists).toEqual(true)
 
-    const alertExists = lastPatch.some(({ path }) => path.includes('/alert'))
+    const alertExists = lastPatch.ops.some(({ path }) => path.includes('/alert'))
     expect(alertExists).toEqual(false)
   })
 
@@ -267,7 +309,8 @@ describe('undo', () => {
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
-    expect(exported).toEqual(`- ${HOME_TOKEN}`)
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - `)
   })
 
   it('cursor should restore to same thought if the thought has been edited after undo', () => {
@@ -496,10 +539,14 @@ describe('undo', () => {
       // The Note command opens the note again, setting noteFocus and noteOffset back to exactly what that patch restores and
       // leaving it with nothing left to revert.
       toggleNote(),
-      // Undoing a patch that reverts nothing produces an empty patch for redo. An empty patch carries no actions, so redoing it
-      // threw on the spread of its actions, which left the redo stack permanently broken.
+      // Undoing a patch that reverts nothing produces an empty patch for redo. Patch-level metadata keeps it identifiable and
+      // safe to replay.
       undo(),
     ])
+
+    const emptyRedoPatch = store.getState().redoPatches.at(-1)!
+    expect(emptyRedoPatch.ops).toEqual([])
+    expect(emptyRedoPatch.metadata).toMatchObject({ source: 'action', actionType: 'setNoteFocus' })
 
     expect(() => store.dispatch([redo(), redo()])).not.toThrow()
 
@@ -673,8 +720,8 @@ describe('redo', () => {
  * GROUPING - Some actions are grouped together into a single undo step.
  ******************************************************************/
 
-describe('grouping', () => {
-  it('group all navigation actions following an undoable(non-navigation) action and undo them together', () => {
+describe('patch-level steps', () => {
+  it('undoes only the latest direct navigation patch', () => {
     store.dispatch([
       importText({
         text: `
@@ -690,38 +737,22 @@ describe('grouping', () => {
       moveThoughtDown(),
       cursorDown(),
       setCursor(['a', 'b1']),
-      // undo 'moveThoughtDown', 'cursorDown' and 'setCursor'
       undo(),
     ])
 
-    const cursorAfterFirstUndo = childIdsToThoughts(store.getState(), store.getState().cursor!)
-    expect(cursorAfterFirstUndo).toMatchObject([{ value: 'a' }])
-
-    const exportedAfterFirstUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    const expectedOutputAfterFirstUndo = `- ${HOME_TOKEN}
+    expect(store.getState().undoPatches.at(-1)?.metadata).toMatchObject({
+      source: 'action',
+      actionType: 'moveThoughtDown',
+      isNavigation: false,
+    })
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - c
   - a
     - b1
-  - c
-  - d`
-
-    expect(exportedAfterFirstUndo).toEqual(expectedOutputAfterFirstUndo)
-    // undo 'cursorBack' and 'editThought'
-    store.dispatch(undo())
-
-    const cursorAfterSecondUndo = childIdsToThoughts(store.getState(), store.getState().cursor!)
-    expect(cursorAfterSecondUndo).toMatchObject([{ value: 'a' }, { value: 'b' }])
-
-    const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    const expectedOutputAfterSecondUndo = `- ${HOME_TOKEN}
-  - a
-    - b
-  - c
-  - d`
-
-    expect(exportedAfterSecondUndo).toEqual(expectedOutputAfterSecondUndo)
+  - d`)
   })
 
-  it('newThought action should be grouped with the succeeding patch', () => {
+  it('keeps a direct newThought action separate from a succeeding non-command edit', () => {
     store.dispatch([
       importText({
         text: `
@@ -731,7 +762,7 @@ describe('grouping', () => {
       newThought({ value: 'c' }),
       newThought({ value: 'd' }),
       editThought(['d'], 'd1'),
-      // undo thought change and preceding newThought action
+      // undo only the edit patch
       undo(),
     ])
 
@@ -740,7 +771,8 @@ describe('grouping', () => {
     const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b
-  - c`
+  - c
+  - d`
 
     expect(exported).toEqual(expectedOutput)
   })
@@ -770,10 +802,17 @@ describe('grouping', () => {
     expect(exportedAfterUndo).not.toContain('<b>')
     expect(exportedAfterUndo).toContain('<li>d1</li>')
 
-    // a second undo reverts the content edit, but grouped with preceding newThought → thought deleted
+    // a second undo reverts only the content edit; the newThought patch is a separate step
     store.dispatch(undo())
     const exportedSecond = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exportedSecond).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d`)
+
+    store.dispatch(undo())
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - a
   - b
   - c`)
@@ -954,8 +993,7 @@ describe('grouping', () => {
   })
 
   it('letter case edit directly after newThought should not delete the thought on undo', () => {
-    // Issue J: applying letter case (e.g. UpperCase) directly after creating a thought caused undoTwice
-    // to fire because the case change was not recognized as a formatting edit.
+    // A letter case change is formatting-only and must remain a distinct patch from thought creation.
     store.dispatch([
       importText({
         text: `
@@ -976,9 +1014,8 @@ describe('grouping', () => {
 
   it('undo letter case should not move caret to the beginning of the thought', () => {
     // Issue K: after undoing a letter case change, the caret was moving to position 0.
-    // Root cause: formatLetterCase dispatched a separate setCursor action, creating a navigation
-    // patch that triggered undoTwice, restoring cursorOffset to the pre-setCursor value (0 on
-    // desktop when editingValueStore is non-null from a prior edit).
+    // Root cause: formatLetterCase dispatched a separate setCursor action whose restored cursorOffset was 0 on
+    // desktop when editingValueStore was non-null from a prior edit.
     // Fix: formatLetterCase now passes cursorOffset directly to editThought (matching the other formatting actions),
     // and undoReducer preserves the current cursorOffset when undoing a formatting-only edit.
     store.dispatch([importText({ text: `- hello` }), setCursor(['hello'])])
@@ -1266,7 +1303,7 @@ describe('grouping', () => {
   - hello`)
   })
 
-  it('ignore dead actions and combine dispensible actions with the preceding patch', () => {
+  it('keeps a trailing direct navigation action separate from the preceding edit', () => {
     store.dispatch([
       importText({
         text: `
@@ -1279,7 +1316,7 @@ describe('grouping', () => {
       editThought(['a', 'b'], 'bd'),
       // dispensible set cursor (which only updates datanonce)
       setCursor(null),
-      // undo setCursor and thoughtChange in a sinle action
+      // undo only the trailing navigation patch
       undo(),
     ])
 
@@ -1287,7 +1324,7 @@ describe('grouping', () => {
 
     const expectedOutput = `- ${HOME_TOKEN}
   - a
-    - b
+    - bd
     - c
     - d`
 
@@ -1306,8 +1343,7 @@ describe('multicursor grouping', () => {
         - d
         - x`,
       }),
-      // Add a a penultimate action to ensure that it doesn't get grouped with the multicursor.
-      // Otherwise undoTwice will not be under test coverage and there can be a false positive.
+      // Add a penultimate action to ensure that it doesn't get grouped with the multicursor command patch.
       editThought(['x'], 'e'),
       setCursor(['a']),
       addMulticursor(['a']),
@@ -1355,11 +1391,10 @@ describe('multicursor grouping', () => {
     expect(exported).toEqual(expectedOutput)
   })
 
-  it('should undo a multicursor command and a trailing navigation action together in a single undo', () => {
+  it('keeps a trailing non-command navigation patch separate from a multicursor command', () => {
     // Reproduces #4314: archiving multiple selected thoughts via the DropGutter while the Command Center is open
-    // leaves a trailing setCursor (navigation) patch on top of the multicursor command patch. The multicursor
-    // command patch stores its undoLabel (here the command id 'archive', which is not a registered action type) at
-    // actions[0], so the first undo must still restore the archived thoughts, not just the trailing cursor change.
+    // leaves a trailing setCursor (navigation) patch on top of the multicursor command patch. The first undo must
+    // restore only that trailing navigation patch; the next undo restores the archived thoughts.
     store.dispatch([
       importText({
         text: `
@@ -1392,9 +1427,20 @@ describe('multicursor grouping', () => {
     // Command Center closes). Moving the cursor to a different surviving thought creates a separate navigation-only patch.
     store.dispatch(setCursor(['e']))
 
-    // A single undo must undo both the trailing navigation and the multicursor command, restoring the archived thoughts.
+    // The first undo reverts only the direct navigation patch.
     store.dispatch(undo())
 
+    exportedTrailingNav = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedTrailingNav).toEqual(`- ${HOME_TOKEN}
+  - =archive
+    - c
+    - b
+    - a
+  - d
+  - e`)
+
+    // The second undo reverts the command patch.
+    store.dispatch(undo())
     exportedTrailingNav = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
     expect(exportedTrailingNav).toEqual(`- ${HOME_TOKEN}
   - a
@@ -1406,10 +1452,10 @@ describe('multicursor grouping', () => {
 })
 
 describe('count', () => {
-  it('undo and redo an exact number of patches instead of a whole step', () => {
+  it('undo and redo an exact number of patches', () => {
     store.dispatch([newThought({}), editThought([''], 'a')])
 
-    // a whole step would also undo the new thought
+    // count: 1 reverts only the most recent direct-action patch.
     store.dispatch(undo({ count: 1 }))
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}

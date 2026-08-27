@@ -413,12 +413,13 @@ describe('multicursor', () => {
       addMulticursor(['b']),
       addMulticursor(['c']),
     ])
+    const undoPatchesBefore = store.getState().undoPatches.length
 
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // Wait for every generation to settle. execMulticursor holds the command transaction open for the whole run, so the flag
     // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
@@ -428,6 +429,13 @@ describe('multicursor', () => {
   - a one
   - b two
   - c three`)
+    expect(store.getState().undoPatches).toHaveLength(undoPatchesBefore + 1)
+    expect(store.getState().undoPatches.at(-1)?.metadata).toMatchObject({
+      source: 'command',
+      commandId: 'generateThought',
+      label: 'Generate Thought',
+      type: 'keyboard',
+    })
 
     vi.unstubAllEnvs()
   })
@@ -463,7 +471,7 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // Wait for every generation to settle. execMulticursor holds the command transaction open for the whole run, so the flag
     // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
@@ -506,7 +514,7 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // Wait for every generation to settle. execMulticursor holds the command transaction open for the whole run, so the flag
     // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
@@ -556,7 +564,7 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // Wait for every generation to settle. execMulticursor holds the command transaction open for the whole run, so the flag
     // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
@@ -602,7 +610,7 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // Wait for every generation to settle. execMulticursor holds the command transaction open for the whole run, so the flag
     // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
@@ -648,7 +656,7 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // Wait for every generation to settle. execMulticursor holds the command transaction open for the whole run, so the flag
     // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))

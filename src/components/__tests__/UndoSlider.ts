@@ -10,7 +10,6 @@ import store from '../../stores/app'
 import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
-import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
@@ -22,12 +21,9 @@ afterEach(cleanupTestApp)
 /** Creates a, b, and c, indents c and then b, and opens the undo slider. */
 const arrange = async () => {
   await dispatch([
-    newThought({}),
-    editThought([''], 'a'),
-    newThought({}),
-    editThought([''], 'b'),
-    newThought({}),
-    editThought([''], 'c'),
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    newThought({ value: 'c' }),
     indent(),
     setCursor(['b']),
     indent(),
@@ -57,6 +53,7 @@ it('move the thoughtspace to the point in time under the start handle', async ()
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
@@ -70,6 +67,7 @@ it('move the thoughtspace to the point in time under the end handle and keep the
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
 
   await press('undo slider end', 'ArrowLeft')
 
@@ -78,11 +76,12 @@ it('move the thoughtspace to the point in time under the end handle and keep the
   - b
     - c`)
   expect(handle('undo slider start').textContent).toBe('New Thought')
-  expect(handle('undo slider end').textContent).toBe('Indent')
+  expect(handle('undo slider end').textContent).toBe('Set Cursor')
 })
 
 it('keep the end handle at least one step after the start handle', async () => {
   await arrange()
+  await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
@@ -103,20 +102,22 @@ it('stop the start handle one step before the end handle', async () => {
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
   await press('undo slider end', 'ArrowLeft')
 
   await press('undo slider start', 'ArrowRight')
   await press('undo slider start', 'ArrowRight')
 
-  // the start handle moves one step forward, where c has been created but not yet indented, and then stops before the end handle
+  // the start handle stops one patch before the end handle, after c has been indented but before setCursor.
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
   - b
-  - c`)
+    - c`)
 })
 
 it('move the thoughtspace to a handle when it is tapped', async () => {
   await arrange()
+  await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
@@ -141,6 +142,7 @@ it('keep the handles where they were when the slider is closed and reopened', as
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
+  await press('undo slider start', 'ArrowLeft')
   await press('undo slider end', 'ArrowLeft')
 
   await click('[data-testid="toolbar-icon"][aria-label="Toggle Undo Slider"]')
@@ -152,12 +154,13 @@ it('keep the handles where they were when the slider is closed and reopened', as
   await click('[data-testid="toolbar-icon"][aria-label="Toggle Undo Slider"]')
   await act(vi.runAllTimersAsync)
 
-  expect(handle('undo slider start').getAttribute('aria-valuenow')).toBe('3')
+  expect(handle('undo slider start').getAttribute('aria-valuenow')).toBe('4')
   expect(handle('undo slider end').getAttribute('aria-valuenow')).toBe('1')
 })
 
 it('copy the steps to reproduce the actions between the start and the end', async () => {
   await arrange()
+  await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')
   await press('undo slider start', 'ArrowLeft')

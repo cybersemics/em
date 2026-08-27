@@ -44,19 +44,11 @@ const selectAllCommand = {
 
     return true
   },
-  exec: (dispatch, getState, e) => {
+  exec: (dispatch, getState) => {
     // Toggle between Select All and Deselect All
     // i.e. If all thoughts at the current level are selected, clear the multicursor instead.
     // Only Deselect All on mobile, since desktop has Escape to easily deselect all.
-    dispatch(
-      isTouch && isAllSelected(getState())
-        ? clearMulticursors()
-        : addAllMulticursor({
-            // Hacky magic value, but it's the easiest way to tell the command that this is a chained gesture so that it can adjust the undo behavior.
-            // Select All and the chained command need to be undone together, and this is not a property of the Command object but of the way it is invoked, so is somewhat appropriately stored on the event object, albeit ad hoc.
-            mergeNext: e.type === 'chainedGesture',
-          }),
-    )
+    dispatch(isTouch && isAllSelected(getState()) ? clearMulticursors() : addAllMulticursor())
   },
 } satisfies Command
 

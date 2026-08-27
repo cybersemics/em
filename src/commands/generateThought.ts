@@ -7,7 +7,6 @@ import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCl
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
@@ -212,22 +211,12 @@ const generateThought = {
     // preventSetCursor is not needed: execMulticursor never moves the cursor, so the restore at the end of the loop
     // sets it to the path it is already on.
     execMulticursor: (cursors, dispatch, getState) => {
-      /** Generates a thought for every selected thought within a single undo bracket. */
+      /** Generates a thought for every selected thought within the command transaction. */
       const generateAll = async () => {
-        // Yield before opening the undo bracket. executeCommandWithMulticursor is synchronous: it opens its own
-        // bracket, calls execMulticursor, and closes the bracket again as soon as it returns — long before any
-        // generation completes. A bracket opened here synchronously would be closed by that same run, and every
-        // generated thought would land outside it and cost the user another undo.
-        await Promise.resolve()
-
-        dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'generateThought' }))
-
         // Generate concurrently, so that the selection takes one round trip rather than one per thought and every
-        // selected thought shows its pending state immediately. allSettled rather than all, so that a rejected request
-        // cannot skip the dispatch below and leave the bracket open over the remaining generations.
+        // selected thought shows its pending state immediately. allSettled keeps the command transaction open until
+        // every request finishes even when one request rejects.
         await Promise.allSettled(cursors.map(path => dispatch(generateThoughtAtPathActionCreator(path))))
-
-        dispatch(setIsMulticursorExecuting({ value: false }))
       }
 
       /** Requests disclosure when any selected thought will use AI, then generates the full selection. */
@@ -237,10 +226,10 @@ const generateThought = {
           dispatch(showModal({ id: 'aiDisclosure' }))
           return
         }
-        generateAll()
+        return generateAll()
       }
 
-      generateAllWithDisclosure()
+      return generateAllWithDisclosure()
     },
   },
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),

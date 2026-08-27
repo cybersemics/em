@@ -251,7 +251,7 @@ it('Native undo places the caret at the end of the restored thought', async () =
   expect(await getCaretOffset()).toBe('correct'.length)
 })
 
-// We have to test this in puppeteer because chained commands are executed as separate commands at a higher level than action-creators and undone with an ad hoc mergeNext property on the action.
+// Exercise the gesture-level chain so the transaction boundary is verified at the same layer that combines the commands.
 it('Undo Select All + Categorize chained command in one step', async () => {
   await emulate(KnownDevices['iPhone 15 Pro'])
 
