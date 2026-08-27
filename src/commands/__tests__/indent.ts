@@ -146,3 +146,37 @@ describe('multicursor', () => {
     expect(exported).toEqual(expectedOutput)
   })
 })
+
+describe('canExecute', () => {
+  // https://github.com/cybersemics/em/issues/4866
+  it('cannot indent the first thought in its context', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+    ])
+
+    expect(indentCommand.canExecute!(store.getState())).toBe(false)
+  })
+
+  it('can indent a thought that is selected along with its only child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+            - c
+        `,
+      }),
+      setCursor(['b']),
+      addMulticursor(['b']),
+      addMulticursor(['b', 'c']),
+    ])
+
+    expect(indentCommand.canExecute!(store.getState())).toBe(true)
+  })
+})
