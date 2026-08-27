@@ -139,7 +139,6 @@ interface State {
   /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]
   remoteSearch: boolean
-  resourceCache: Index<string>
   rootContext: Context
   search: string | null
   searchContexts: Index<Context> | null
@@ -154,13 +153,13 @@ interface State {
    * opens, so it does not participate in the render cycle.
    */
   selectionOffsets: { thoughtId: ThoughtId; start: number; end: number } | null
-  showBulletPicker?: boolean
-  showColorPicker?: boolean
-  showLetterCase?: boolean
+  showBulletPicker: boolean
+  showColorPicker: boolean
+  showLetterCase: boolean
   showDesktopCommandUniverse: boolean
   showGestureMenu: boolean
   showHiddenThoughts: boolean
-  showSortPicker?: boolean
+  showSortPicker: boolean
   showCommandCenter: boolean
   /**
    * The currently shown modal dialog box.
@@ -170,7 +169,7 @@ interface State {
   showModal?: Modal | null
   showSidebar: boolean
   showMobileCommandUniverse?: boolean
-  showUndoSlider?: boolean
+  showUndoSlider: boolean
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.
