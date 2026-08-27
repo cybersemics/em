@@ -142,7 +142,7 @@ The funnel's shape is a deliberate decision, recorded in [#2814](https://github.
 Two consequences for anyone extending the pipeline:
 
 - Source-specific handling (Notes, ChatGPT, WorkFlowy) and any external-vs-internal sanitization belong in `htmlToJson`, operating on himalaya nodes; the ChatGPT `p1/p2` branch and `stripStyleAttribute` are the existing examples. Do not reintroduce a pre-parse `strip` of the raw HTML.
-- `importText` and `importFiles` are expected to converge on one funnel and one router, with two commit strategies — atomic for small trees, serial and resumable for large — chosen by parsed size rather than by regex heuristics ([#5175](https://github.com/cybersemics/em/issues/5175)). New behavior goes into the shared funnel, not into `importText`'s paths. The work is laid out in [Consolidation sequence](#consolidation-sequence).
+- `importText` and `importFiles` are expected to converge on one funnel and one router, with two commit strategies — an atomic foreground Redux commit for small trees, a background bulk write into the TreeCRDT store for large — chosen by parsed size rather than by regex heuristics ([#5175](https://github.com/cybersemics/em/issues/5175)). New behavior goes into the shared funnel, not into `importText`'s paths. The work is laid out in [Consolidation sequence](#consolidation-sequence).
 
 ## The copy side
 
@@ -225,7 +225,7 @@ Two independent layers:
 
 ## Consolidation sequence
 
-The pipeline is being consolidated toward one funnel, one router, and two commit strategies chosen by parsed size.
+The pipeline is being consolidated toward one funnel, one router, and two commit strategies chosen by parsed size: an atomic foreground commit through Redux for small content, and a background bulk write into the TreeCRDT store ([`src/data-providers/treecrdt/`](../src/data-providers/treecrdt/)) for large.
 
 ### Current
 
@@ -251,32 +251,34 @@ flowchart TD
 
 ### Expected
 
-After the sequence below: every source calls one entry point, small content is parsed once and routed on the parsed tree, large content is structural by fiat and parsed downstream by the serial executor, raw text remains the only persisted form, and nothing merges duplicates on import.
+After the sequence below: every source calls one entry point; small content is parsed once, routed on the parsed tree, and committed through Redux in the foreground; large content is structural by fiat and imported in bulk — parsed downstream through the same funnel, written to the TreeCRDT store in one or a few sqlite transactions, and materialized into Redux like another client's edits, rendering through the normal pull mechanism so only the visible slice enters app state. Raw text is persisted, next to its checkpoint in sqlite, only for imports that span multiple transactions. Nothing merges duplicates on import.
 
 ```mermaid
 flowchart TD
     paste["clipboard paste"] --> entry
-    dnd["OS file drop<br/><i>files · insertBefore (step 6)</i>"] --> entry
-    resume["initialize<br/><i>hands over text · path · offset<br/>from manifest + IDB (#5174)</i>"] --> entry
+    dnd["OS file drop<br/><i>files · insertBefore (step 7)</i>"] --> entry
+    resume["initialize<br/><i>re-enters an unfinished<br/>chunked import (#5174)</i>"] --> entry
 
     entry{"import entry point<br/><b>router · size gate (#5175)</b>"}
     entry -- "below threshold:<br/>parse once, route on Block[]" --> funnel
-    entry -- "at/above threshold:<br/>structural by fiat, unparsed" --> persist
+    entry -- "at/above threshold:<br/>structural by fiat, unparsed" --> bulkgen
 
     funnel["shared parse funnel<br/>markdownToText (#5172) →<br/>textToHtml → htmlToJson"]
     funnel -- "single block" --> splice["<b>inline splice</b> at caret<br/><i>funnel-sanitized like all content</i>"]
-    funnel -- "multiple blocks" --> atomic["<b>atomic commit</b><br/>importJson → one updateThoughts<br/><i>selection preserved · no manifest</i>"]
+    funnel -- "multiple blocks" --> atomic["<b>atomic commit</b><br/>importJson → one updateThoughts<br/><i>undoable · selection preserved</i>"]
 
-    persist["persist raw text + manifest"] --> serial["<b>serial resumable commit</b><br/>parses downstream via the same funnel<br/>newThought per block · checkpoint per thought<br/><i>no duplicate pull or merge (#2712)</i>"]
+    bulkgen["parses downstream via the same funnel →<br/>importJson-style generation<br/><i>no duplicate pull or merge (#2712)</i>"] --> write["<b>bulk CRDT write</b> (step 6)<br/>provider updateThoughts per transaction<br/><i>whole subtree in one transaction when it fits ·<br/>chunked with in-transaction checkpoint<br/>+ persisted raw text when not</i>"]
+    write --> ingest["materializes into Redux like<br/>another client's edits · renders via pull"]
 ```
 
 ### Steps
 
 The work is decomposed into independently landable steps, in dependency order:
 
-1. [#2712](https://github.com/cybersemics/em/issues/2712) — remove duplicate-descendant merging from import. The starting point: it deletes `pullDuplicateDescendants` and the per-thought pull that makes serial import slow, decides #3622's merge-vs-duplicate product question, and equalizes the two executors' capabilities so they differ only in commit strategy. Caveat for implementers: merging currently makes resume accidentally idempotent — once it is removed, a stale `thoughtsImported` checkpoint produces real duplicates, so the per-thought un-throttled manifest update in `importFiles` becomes load-bearing.
+1. [#2712](https://github.com/cybersemics/em/issues/2712) — remove duplicate-descendant merging from import. The starting point, and a hard prerequisite for step 6: it deletes `pullDuplicateDescendants` and the per-thought pull that makes serial import slow, and decides #3622's merge-vs-duplicate product question. Merging also made import path-dependent — each block's destination depended on what earlier blocks had merged into — so removing it turns the whole import into a pure function of `Block[]` + destination, which is what allows a subtree to be written at once. Caveat for the interim: merging currently makes resume accidentally idempotent — once it is removed, a stale `thoughtsImported` checkpoint produces real duplicates, so the per-thought un-throttled manifest update in `importFiles` is load-bearing until step 6's in-transaction checkpoint removes the drift possibility.
 2. [#5172](https://github.com/cybersemics/em/issues/5172) — move markdown conversion into the shared funnel, so dropped `.md` files import with the same structure as pasted markdown. Relatively self-contained.
 3. [#5173](https://github.com/cybersemics/em/issues/5173) — retire `importData`'s markdown routing branch; multiline markdown imports resumably. Depends on #5172; closes the routing half of #3479.
-4. [#5174](https://github.com/cybersemics/em/issues/5174) — move resume reconstruction out of `importFiles` into `initialize`; per-thought checkpointing stays in the executor.
-5. [#5175](https://github.com/cybersemics/em/issues/5175) — parse before routing behind a size threshold: below it, route on the parsed `Block[]` — single block → inline splice, small tree → atomic commit, large tree → serial resumable commit — and hand the blocks to the executor alongside the raw text; at or above it, content is structural by fiat and reaches the serial executor unparsed. Raw text remains the only persisted form. Retires the routing regexes.
-6. Route drag-and-drop through the same entry point (not yet filed): drops pass `files` and `insertBefore` to the router and benefit from the same size gate. Carries an open product question — whether a single-line file drop splices into the target thought's value like a paste, or inserts a new thought like a thought drop (current behavior).
+4. [#5174](https://github.com/cybersemics/em/issues/5174) — move resume reconstruction out of `importFiles` into `initialize`, scoped to the seam only: `initialize` hands the entry point text, path, and offset instead of `importFiles` reaching into storage itself. The storage substrate — localStorage manifest, IDB raw text, per-thought checkpointing — is deliberately left untouched, because step 6 replaces it wholesale.
+5. [#5175](https://github.com/cybersemics/em/issues/5175) — parse before routing behind a size threshold: below it, route on the parsed `Block[]` — single block → inline splice, small tree → atomic commit, large tree → bulk import — and hand the blocks to the executor alongside the raw text; at or above it, content is structural by fiat and reaches the bulk-import path unparsed. Raw text remains the only persisted form of content. Retires the routing regexes.
+6. Import large content directly into the TreeCRDT store (not yet filed) — replace the per-thought Redux loop entirely: the parsed tree feeds `importJson`-style generation, written through the provider's `updateThoughts` ([`thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts)) — the whole subtree in one sqlite transaction when it fits, chunked with the checkpoint committed in the same transaction as its batch when it does not, so checkpoint and data can never drift. Imported ops materialize into Redux via [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) like another client's edits and render through the normal pull mechanism, so only the visible slice enters app state. Design seams: materialization must classify the import's same-tab writes as ingest-worthy, since they have no optimistic Redux twin; bulk imports sit outside undo history, so "undo" is deleting the imported subtree; progress moves to batch completions and cursor placement to first materialization; transaction size doubles as a sync-load knob. Absorbs #5174's substrate — the localStorage manifest and IDB raw text retire into sqlite, kept only for imports that span multiple transactions.
+7. Route drag-and-drop through the same entry point (not yet filed): drops pass `files` and `insertBefore` to the router and benefit from the same size gate. Carries an open product question — whether a single-line file drop splices into the target thought's value like a paste, or inserts a new thought like a thought drop (current behavior).
