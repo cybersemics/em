@@ -24,11 +24,8 @@ const selectionOffsets = (state: State): { start: number; end: number } | null =
     return state.selectionOffsets
   }
 
-  const editable = document.querySelector(`[aria-label="editable-${thoughtId}"]`)
-  const offsets = editable ? selection.offsetRange(editable as HTMLElement) : null
-
   // A selection outside the cursor thought selects none of its text, which the caller reports as such.
-  return offsets ?? { start: 0, end: 0 }
+  return selection.offsetRangeThought(thoughtId) ?? { start: 0, end: 0 }
 }
 
 export default selectionOffsets

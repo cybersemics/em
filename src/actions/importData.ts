@@ -97,8 +97,7 @@ export const importDataActionCreator = ({
     // Non-resumable imports (via importText), in contrast, are atomic, fast, and preserve the browser selection. Due to the lack of support for duplicates pending descendants, they are only used for single line imports.
     if (!multiline || markdown) {
       // Measured against the destination editable so that the offsets index into its whole value, as importText's textOffsetToHtmlOffset expects, rather than into the text node the selection starts in.
-      const destEditable = path ? document.querySelector(`[aria-label="editable-${head(path)}"]`) : null
-      const replaceRange = destEditable ? selection.offsetRange(destEditable as HTMLElement) : null
+      const replaceRange = path ? selection.offsetRangeThought(head(path)) : null
 
       dispatch(
         importText({

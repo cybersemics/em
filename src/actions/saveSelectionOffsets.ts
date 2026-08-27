@@ -20,8 +20,7 @@ export const saveSelectionOffsetsActionCreator = (): Thunk => (dispatch, getStat
   const thoughtId = state.cursor && head(state.cursor)
 
   // Only a selection on the cursor thought is worth recording, since that is the only thought the offsets index into.
-  const editable = thoughtId ? document.querySelector(`[aria-label="editable-${thoughtId}"]`) : null
-  const offsets = editable ? selection.offsetRange(editable as HTMLElement) : null
+  const offsets = thoughtId ? selection.offsetRangeThought(thoughtId) : null
 
   // Clear the snapshot when there is no selection to record, so that a stale one is never mistaken for a current one.
   dispatch({

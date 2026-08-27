@@ -256,6 +256,13 @@ export const offsetRange = (editable: HTMLElement): { start: number; end: number
   return { start, end: start + range.toString().length }
 }
 
+/** Returns the plain-text character offsets [start, end) of the current selection relative to the given thought's
+ * editable, or null if the thought is not rendered or the selection is not within it. */
+export const offsetRangeThought = (thoughtId: string): { start: number; end: number } | null => {
+  const editable = document.querySelector(`[aria-label="editable-${thoughtId}"]`)
+  return editable ? offsetRange(editable as HTMLElement) : null
+}
+
 /** Clamps a saved offset to what the node can currently address. The node's contents may have changed while the
  * selection was saved, and an out-of-bounds offset makes the Selection API throw. */
 const validOffset = (node: Node, offset: number): number =>
