@@ -32,16 +32,16 @@ flowchart TD
         textToHtml --> htmlToJson
     end
 
-    importText -- "multi-line text" --> funnel
+    importText --> funnel
     importFiles --> funnel
 
     inline["editThought<br/><i>insert at caret</i>"]
     importJson["importJson<br/><i>Block[] → thoughtIndex /<br/>lexemeIndex updates</i>"]
     newThought["newThought, one block at a time<br/><i>serial, resumable, merges duplicates</i>"]
 
-    importText -- "single line" --> inline
-    htmlToJson --> importJson
-    htmlToJson --> newThought
+    textToHtml -- "importText, ≤1 li:<br/>splice raw text at caret<br/>(converted output discarded)" --> inline
+    htmlToJson -- "importText" --> importJson
+    htmlToJson -- "importFiles" --> newThought
     importJson --> updateThoughts["updateThoughts"]
 ```
 
@@ -85,7 +85,7 @@ The pasted string is spliced into the destination thought's value at the caret a
 - [`addEmojiSpace`](../src/util/addEmojiSpace.ts) runs on the combined value, and the caret offset is adjusted if a space was inserted.
 - `editableRender` forces a re-render so the caret is restored instead of jumping to the start of the thought.
 
-**The single-line path performs no sanitization.** Whatever HTML string reaches it — including a raw `<span style="color: rgb(0,0,0)">` matched by the single-line regex from an external source — is inserted into the thought value verbatim. The parse funnel's tag and style stripping only run on the structural path. This asymmetry is the root of most external-color paste bugs (see [Known issues](#known-issues-and-where-fixes-belong)).
+**The single-line path performs no sanitization.** `textToHtml` runs on every input — the `<li` count of its output is what selects this path — but the splice at [`importText.ts`](../src/actions/importText.ts) inserts the **raw** input string and discards the converted output. Whatever sanitization `textToHtml` performed is thrown away, and `htmlToJson`'s tag and style stripping never runs at all. So whatever HTML string reaches this path — including a raw `<span style="color: rgb(0,0,0)">` matched by the single-line regex from an external source — is inserted into the thought value verbatim. This asymmetry is the root of most external-color paste bugs (see [Known issues](#known-issues-and-where-fixes-belong)).
 
 ### Multi-line path
 
@@ -210,7 +210,7 @@ When the HTML flavor is merely a wrapper around the plain text (iOS share-sheet 
 Two independent layers:
 
 1. **Copy**: `device/copy` cannot write `text/html` on mobile Safari (no native copy event) or through `@capacitor/clipboard` (string-only API). Capacitor is fixable: extend the native plugin (or use the platform clipboard APIs directly) to write an HTML flavor plus the `text/em` marker. That work belongs entirely in `device/copy`'s platform matrix.
-2. **Paste**: `exportContext`'s `text/plain` encodes bold/italic as markdown asterisks, but the single-line `importText` path inserts text verbatim without the markdown conversion that `textToHtml` applies on the structural path (`REGEX_MARKDOWN_BOLD`/`REGEX_MARKDOWN_ITALICS`). Running single-line plain text through the same conversion (or through `textToHtml` itself) removes the asymmetry and fixes the literal `**One**` without touching the copy side.
+2. **Paste**: `exportContext`'s `text/plain` encodes bold/italic as markdown asterisks. `textToHtml` converts them to `<b>`/`<i>` (`REGEX_MARKDOWN_BOLD`/`REGEX_MARKDOWN_ITALICS`) — but the single-line `importText` path splices the raw text and discards the converted output, so the asterisks survive literally. Splicing the already-converted output instead of the raw text removes the asymmetry and fixes the literal `**One**` without touching the copy side.
 
 ### Destination formatting must survive a paste
 
