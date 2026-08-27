@@ -68,5 +68,21 @@
 - Write a JSDOC comment for each function definition.
 - Add descriptive comments to code that is counterintuitive, non-obvious, or requires explanation.
 - JSDOC prose must be complete sentences (`jsdoc/require-description-complete-sentence`). Put shell commands, which are neither capitalized nor sentence-terminated, in a fenced code block, and end the lead-in line with a period rather than a colon — a colon merges the fence into the preceding paragraph and the rule then demands a period after the command. For a single command, inline code inside a sentence reads better than a fence: ``Run manually with `node scripts/estimate/src/backfill.ts`.`` Never let the rule's autofixer capitalize a command, path, or identifier.
+- Prefer an options object over a long list of positional arguments. A call like `useGestureHighlight(command, gestureInProgress, true, false)` is unreadable at the call site — the booleans and bare strings say nothing about what they mean, and their order is only recoverable by opening the definition. Destructure a single object instead and document each property inline with the type, which puts the names at the call site and makes the order irrelevant:
+  ```ts
+  // ✗ opaque at the call site
+  const useGestureHighlight = (command: Command, gestureInProgress: string | undefined, selected: boolean | undefined, disabled: boolean) => ...
+
+  // ✓ named at the call site
+  const useGestureHighlight = ({ command, gestureInProgress, selected, disabled }: {
+    /** The command whose gesture diagram to highlight. */
+    command: Command
+    /** The raw gesture string traced so far, or undefined if none active. */
+    gestureInProgress: string | undefined
+    ...
+  }) => ...
+  ```
+  - The one or two arguments that identify the subject may stay positional, with the rest in a trailing options object, as `getSortedRank(state, id, value, { staleId })` does. This is the usual shape for selectors and reducers, whose leading `state` argument is unambiguous.
+  - React components already receive a props object, so this rule is about ordinary functions and hooks.
 - Avoid overly vague variable names or extraneous affixes such as "data".
 - Avoid redundancy in code and naming.
