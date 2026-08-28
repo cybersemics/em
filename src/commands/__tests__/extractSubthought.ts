@@ -18,44 +18,10 @@ import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildren
 import initStore from '../../test-helpers/initStore'
 import findCursor from '../../test-helpers/queries/findCursor'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
+import selectRange from '../../test-helpers/selectRange'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
 import extractSubthoughtCommand from '../extractSubthought'
-
-/**
- * Set range selection at the given plain text offsets, walking across any nested formatting nodes.
- */
-const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd: number) => {
-  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
-  let start: { node: Node; offset: number } | null = null
-  let end: { node: Node; offset: number } | null = null
-  let offset = 0
-
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    const length = node.textContent!.length
-    // the start boundary belongs to the node the character is in, as it does when the user drags a selection into it
-    if (!start && selectionStart < offset + length) start = { node, offset: selectionStart - offset }
-    if (start && selectionEnd <= offset + length) {
-      end = { node, offset: selectionEnd - offset }
-      break
-    }
-    offset += length
-  }
-
-  if (!start || !end)
-    throw new Error(`No text at offsets ${selectionStart}-${selectionEnd} of "${element.textContent}"`)
-
-  const range = document.createRange()
-  const sel = window.getSelection()
-
-  range.setStart(start.node, start.offset)
-  range.setEnd(end.node, end.offset)
-
-  sel?.removeAllRanges()
-  sel?.addRange(range)
-
-  return range.toString()
-}
 
 /**
  * Moves the browser selection off the thought and onto an input, as the Command Universe's search box does when it
@@ -116,7 +82,7 @@ describe('Extract Subthought', () => {
     const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
 
-    const selectedText = setSelection(thought!, 10, 17)
+    const selectedText = selectRange(thought!, 10, 17)
     act(() => {
       store.dispatch([extractSubthought()])
     })
@@ -145,7 +111,7 @@ describe('Extract Subthought', () => {
     const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
 
-    const selectedText = setSelection(thought!, 10, 22)
+    const selectedText = selectRange(thought!, 10, 22)
     act(() => {
       store.dispatch([extractSubthought()])
     })
@@ -168,7 +134,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findCursor()
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 12)
+      selectRange(thought!, 6, 12)
 
       act(() => {
         store.dispatch(extractSubthought())
@@ -193,7 +159,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findCursor()
       expect(thought).toBeTruthy()
-      setSelection(thought!, 12, 17)
+      selectRange(thought!, 12, 17)
 
       act(() => {
         store.dispatch(extractSubthought())
@@ -219,7 +185,7 @@ describe('Extract Subthought', () => {
       const thought = await findCursor()
       expect(thought).toBeTruthy()
       // "ipsum dolor", which starts in the red half and ends in the green half
-      setSelection(thought!, 6, 17)
+      selectRange(thought!, 6, 17)
 
       act(() => {
         store.dispatch(extractSubthought())
@@ -243,7 +209,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findCursor()
       expect(thought).toBeTruthy()
-      setSelection(thought!, 4, 7)
+      selectRange(thought!, 4, 7)
 
       act(() => {
         store.dispatch(extractSubthought())
@@ -265,7 +231,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findCursor()
       expect(thought).toBeTruthy()
-      setSelection(thought!, 8, 13)
+      selectRange(thought!, 8, 13)
 
       act(() => {
         store.dispatch(extractSubthought())
@@ -288,7 +254,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findCursor()
       expect(thought).toBeTruthy()
-      setSelection(thought!, 0, 11)
+      selectRange(thought!, 0, 11)
 
       act(() => {
         store.dispatch(extractSubthought())
@@ -322,7 +288,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findThoughtByText('alpha bravo')
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       act(() => {
         store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
@@ -356,7 +322,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findThoughtByText('alpha bravo')
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       // select a thought other than the one being edited, as alt-clicking its bullet does
       act(() => {
@@ -390,7 +356,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findThoughtByText('alpha bravo')
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       act(() => {
         store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
@@ -459,7 +425,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findThoughtByText('alpha bravo')
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       act(() => {
         store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
@@ -494,7 +460,7 @@ describe('Extract Subthought', () => {
       await act(vi.runOnlyPendingTimersAsync)
 
       const thought = await findThoughtByText('hello world')
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       // Opening the Command Universe snapshots the selection; its search input then takes it. Executing a command
       // closes the Command Universe first, so the snapshot has to survive the close.
@@ -531,7 +497,7 @@ describe('Extract Subthought', () => {
       await act(vi.runOnlyPendingTimersAsync)
 
       const thought = await findThoughtByText('alpha bravo')
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       act(() => {
         store.dispatch(desktopCommandUniverse())
