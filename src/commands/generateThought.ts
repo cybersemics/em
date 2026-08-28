@@ -193,6 +193,9 @@ const generateThoughtAtPathActionCreator =
         oldValue: thought.value,
         newValue: valueNew,
         path: simplePath,
+        // The generation completes whenever the request returns, not as part of a typing stream, so it must never
+        // merge with a user edit that happens to be contiguous in the same direction.
+        preventMerge: true,
       }),
     ])
 

@@ -397,6 +397,105 @@ test('preserve an edit made while the thought is generating as its own undo step
   vi.unstubAllEnvs()
 })
 
+// Unlike the deletion above, an addition matches the generation's own direction (Longer), so without explicit
+// isolation the contiguous-edit rule would merge the generation into the user's edit.
+test('preserve an addition made while the thought is generating as its own undo step', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+
+  /** Resolves the pending AI request. Assigned when the mocked fetch is called, so the test controls exactly when the generation completes. */
+  let resolveAiRequest: (response: { json: () => Promise<{ content: string; err: null }> }) => void = () => {}
+  mockFetch.mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        resolveAiRequest = resolve
+      }),
+  )
+
+  await dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    setCursor(['a']),
+  ])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  // Precondition: the request is in flight and the cursor thought shows the pending value.
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a...
+  - b`)
+
+  // The user adds characters to another thought while the generation is still pending.
+  await dispatch(editThought(['b'], 'bee'))
+
+  await act(async () => {
+    resolveAiRequest({ json: () => Promise.resolve({ content: 'generated', err: null }) })
+  })
+
+  // Precondition: the generation was applied after the interleaved edit.
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a generated
+  - bee`)
+
+  await dispatch(undo())
+
+  // Undo reverts only the generation. The interleaved edit is a separate undo step and must survive.
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - bee`)
+
+  vi.unstubAllEnvs()
+})
+
+// The generation is likewise isolated on the other side: an edit made after it completes never merges into its
+// undo step, so the first undo reverts only that edit.
+test('preserve the generated value when an edit made after generation is undone', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ content: 'generated', err: null }),
+  })
+
+  await dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    setCursor(['a']),
+  ])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  // The user adds characters to another thought after the generation has completed.
+  await dispatch(editThought(['b'], 'bee'))
+
+  // Precondition: both the generation and the edit were applied.
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a generated
+  - bee`)
+
+  await dispatch(undo())
+
+  // Undo reverts only the edit that followed the generation.
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a generated
+  - b`)
+
+  vi.unstubAllEnvs()
+})
+
 test('continues the current request after always allowing AI', async () => {
   const text = `
       -${' '}
