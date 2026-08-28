@@ -19,6 +19,19 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
+// Pinned so CI is reproducible. Override to reproduce a bug reported on another device or iOS version —
+// WebKit's text interaction has changed across major versions, so the OS is sometimes the variable under test
+// (see docs/cursor-and-caret.md). Same names the agent bring-up script uses (scripts/start-ios-session.mjs).
+const deviceName = process.env.EM_IOS_DEVICE ?? 'iPhone 15 Plus'
+const osVersion = process.env.EM_IOS_VERSION ?? '17'
+
+// The trackpad spec drives the virtual keyboard's caret scrub, which only drags the caret out of its editing
+// host on Safari 26. On the pinned OS the caret clamps to the thought, so the test would pass without
+// exercising the behaviour it exists to protect. Run it on a current iOS, and only it.
+const TRACKPAD_SPEC = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/trackpad.ts')
+const trackpadDeviceName = process.env.EM_IOS_TRACKPAD_DEVICE ?? 'iPhone 15 Pro Max'
+const trackpadOsVersion = process.env.EM_IOS_TRACKPAD_VERSION ?? '26'
+
 let tunnelProcess: ChildProcess | null = null
 
 /**
@@ -34,6 +47,7 @@ let tunnelProcess: ChildProcess | null = null
  * 4. Start the app: yarn start (on port 3000).
  *
  * Run: yarn test:ios:browserstack.
+ * Target another device: EM_IOS_DEVICE='iPhone 15 Pro Max' EM_IOS_VERSION=26 yarn test:ios:browserstack.
  */
 export const config: WebdriverIO.Config = {
   ...baseConfig,
@@ -46,17 +60,35 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       ...baseConfig.baseCapabilities,
-      'appium:deviceName': 'iPhone 15 Plus',
-      'appium:platformVersion': '17',
+      'appium:deviceName': deviceName,
+      'appium:platformVersion': osVersion,
+      'wdio:exclude': [TRACKPAD_SPEC],
       'bstack:options': {
-        deviceName: 'iPhone 15 Plus',
-        osVersion: '17',
+        deviceName,
+        osVersion,
         projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
         buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
         sessionName: 'iOS Safari Tests',
         // The device reaches the dev server over the public cloudflared HTTPS URL (onPrepare), so
         // BrowserStack Local (`local: true`) is not used on this path. These flags collect diagnostic
         // data on BrowserStack's web dashboard, which we don't need/use.
+        debug: false,
+        networkLogs: false,
+        consoleLogs: 'errors',
+        idleTimeout: 60,
+      },
+    },
+    {
+      ...baseConfig.baseCapabilities,
+      'appium:deviceName': trackpadDeviceName,
+      'appium:platformVersion': trackpadOsVersion,
+      'wdio:specs': [TRACKPAD_SPEC],
+      'bstack:options': {
+        deviceName: trackpadDeviceName,
+        osVersion: trackpadOsVersion,
+        projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
+        buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
+        sessionName: 'iOS Safari Trackpad Tests',
         debug: false,
         networkLogs: false,
         consoleLogs: 'errors',

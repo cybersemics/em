@@ -397,6 +397,15 @@ yarn test:ios:browserstack
 yarn test:ios:local
 ```
 
+The BrowserStack run uses two devices. Most specs are pinned to an iPhone 15 Plus on iOS 17 so CI is reproducible; [`trackpad.ts`](../src/e2e/iOS/__tests__/trackpad.ts) runs on an iPhone 15 Pro Max on iOS 26, because the virtual keyboard's caret scrub only drags the caret out of its editing host on Safari 26 — on 18 it clamps to the thought, so on the pinned OS that test would pass without exercising anything ([#3276](https://github.com/cybersemics/em/issues/3276)). The split lives in the `capabilities` array in `wdio.browserstack.conf.ts`, using `wdio:specs` and `wdio:exclude`.
+
+Override either device with environment variables when the OS is the variable under test — WebKit's text interaction has changed across major versions, so a bug reported on a current device may not appear on the pinned one:
+
+```sh
+EM_IOS_DEVICE='iPhone 15 Pro Max' EM_IOS_VERSION=26 yarn test:ios:browserstack          # the pinned specs
+EM_IOS_TRACKPAD_DEVICE='iPhone 17' EM_IOS_TRACKPAD_VERSION=27 yarn test:ios:browserstack # trackpad.ts
+```
+
 For BrowserStack, put the credentials in `.env.test.local`:
 
 ```dotenv
