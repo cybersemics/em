@@ -9,7 +9,7 @@ beforeEach(initStore)
 
 describe('canExecute', () => {
   // https://github.com/cybersemics/em/issues/4844
-  it.skip('can change the letter case of thoughts selected without a cursor', () => {
+  it('can change the letter case of thoughts selected without a cursor', () => {
     store.dispatch([
       importText({
         text: `

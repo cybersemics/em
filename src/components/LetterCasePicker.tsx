@@ -26,8 +26,12 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
     dispatch(formatLetterCase(command))
   }
   const selected = useSelector(state => {
-    const value = (!!state.cursor && getThoughtById(state, head(state.cursor))?.value) || ''
+    // The letter case is that of the cursor thought, so no swatch is selected when thoughts are selected without a
+    // cursor (#4844). Otherwise the empty value would match LowerCase and mark it as the letter case of thoughts it
+    // was not read from.
+    if (!state.cursor) return ''
 
+    const value = getThoughtById(state, head(state.cursor))?.value || ''
     // The letter case of the thought should be independent of its formatting.
     const doc = new DOMParser().parseFromString(value, 'text/html')
     const { textContent } = doc.body
