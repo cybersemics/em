@@ -32,6 +32,8 @@ _Examples:_ Imported ChatGPT list loses nesting and inserts &lt;br&gt; · Import
 **🎁 Collaboration** — Sharing a thoughtspace with other people and publishing one publicly.
 _Examples:_ Publish: blog · Share subtree · Publish: Unnamed lists
 
+**💎 Premium** — Premium feature design, gating, and upgrade flows: which features and commands are gated behind the premium tier, how gated commands appear, free-tier usage limits and quotas, the usage screen, and the upgrade, billing, and cancelation flows. It owns the gate, not the feature behind it: a defect in a feature that happens to be premium belongs to that feature's own subsystem.
+
 **📱 iOS** — **Secondary; yields to any primary subsystem.** Quirks specific to iOS that no other milestone readily describes: the Capacitor shell and app lifecycle, the native keyboard, the share sheet, the status bar, the native magnifier and selection UI, and Mobile Safari behaviour with no counterpart elsewhere. An `[iOS]` prefix alone is never enough.
 _Examples:_ [iOS Capacitor] App crashes on launch on iOS 27; migrate to UIScene lifecycle · [iOS Capacitor] Alert is hidden behind the onscreen keyboard · [iOS] Toolbar and navbar position fixed broken after keyboard is closed
 
