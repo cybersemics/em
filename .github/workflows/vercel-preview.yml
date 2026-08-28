@@ -1,5 +1,10 @@
 name: Vercel Preview
 
+# TEMPORARY: pull_request runs this branch's workflow so the paired deployment can be validated
+# from a branch in cybersemics/em. Remove it and restore the original concurrency group before
+# merging; pull_request_target remains the production trigger for fork-safe previews.
+run-name: Vercel Preview (${{ github.event_name }})
+
 # pull_request_target runs in the base repo's context, so repo secrets are
 # available even for fork PRs. Untrusted fork code is gated by GitHub's
 # "require approval for outside collaborators" setting before it runs.
@@ -16,6 +21,23 @@ name: Vercel Preview
 # A run is skipped only when EVERY changed file matches, so a PR that also touches app code still
 # deploys a preview as usual.
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      # Documentation and agent/editor configuration.
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      # Native platform projects, and the icon/splash sources generated into them.
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
   pull_request_target:
     types: [opened, synchronize, reopened]
     paths-ignore:
@@ -36,9 +58,10 @@ on:
 
 # Rapidfire pushes to the same PR cancel the older preview build. Keyed on the PR number rather
 # than github.ref because pull_request_target sets github.ref to the *base* branch — every open PR
-# against main would otherwise share one group and cancel each other.
+# against main would otherwise share one group and cancel each other. The temporary event suffix
+# prevents the base branch's pull_request_target run from cancelling this branch's validation run.
 concurrency:
-  group: vercel-preview-${{ github.event.pull_request.number }}
+  group: vercel-preview-${{ github.event.pull_request.number }}-${{ github.event_name }}
   cancel-in-progress: true
 
 permissions:
@@ -56,7 +79,12 @@ jobs:
   preview:
     name: Deploy Preview
     runs-on: ubuntu-latest
-    if: github.event.pull_request.changed_files > 0
+    # A regular pull_request receives secrets only for a branch in this repository. Forks continue
+    # to use the trusted pull_request_target workflow from the default branch.
+    if: >
+      github.event.pull_request.changed_files > 0 &&
+      (github.event_name == 'pull_request_target' ||
+      github.event.pull_request.head.repo.full_name == github.repository)
 
     steps:
       - name: Clone repository
@@ -67,7 +95,7 @@ jobs:
           # pull_request_target workflow unless this is set. See the header comment
           # for why running fork code in this context is intentionally gated.
           # https://gh.io/securely-using-pull_request_target
-          allow-unsafe-pr-checkout: true
+          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
 
       - name: Enable Corepack
         run: corepack enable
