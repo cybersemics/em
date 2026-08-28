@@ -8,16 +8,16 @@ const generateThought = async (
   /** Indented outline in which [x] marks the target thought and [] marks context thoughts. */
   input: string,
 ): Promise<string> => {
-  const systemMessage = `You will be given an indented outline of notes. Each line starts with a marker:
+  const systemMessage = `You will be given an indented outline of values (referred to as "thoughts") in a note-taking app. Each line starts with a marker:
 
-* [] identifies a note
-* [x] identifies the note that you will generate/replace.
+* [] identifies a thought in the note-taking app
+* [x] identifies the thought that you will generate/replace.
 
-Generate a complete replacement note that fits the surrounding context.
+Generate a complete replacement thought that fits the surrounding context.
 
-Return the entire final note, not only a suffix to append.
+Return the entire final thought, not only a suffix to append.
 
-For example, if the input is:
+For example, if the input thoughts are:
 
 \`\`\`
 [] States in Alphabetical Order
@@ -27,9 +27,9 @@ For example, if the input is:
   [] Colorado
 \`\`\`
 
-You should respond with: {"generatedNote": "California"}
+You should respond with: {"thought": "California"}
 
-If the input is:
+If the input thoughts are:
 
 \`\`\`
 [] Grocery List
@@ -38,13 +38,13 @@ If the input is:
   [] Onions
 \`\`\`
 
-You should respond with: {"generatedNote": "Carrots"}`
+You should respond with: {"thought": "Carrots"}`
 
-  const userMessage = `User's notes:
+  const userMessage = `User's note-taking app thoughts:
 \`\`\`
 ${input}
 \`\`\``
-  const { generatedNote } = await completeChat({
+  const { thought } = await completeChat({
     messages: [
       { role: 'system', content: systemMessage },
       { role: 'user', content: userMessage },
@@ -52,11 +52,11 @@ ${input}
     model: Model.GPT_5_6_LUNA,
     reasoningEffort: ReasoningEffort.NONE,
     schema: z.object({
-      generatedNote: z.string().trim().min(1).describe('The complete replacement for the target note'),
+      thought: z.string().trim().min(1).describe('The complete replacement for the target thought'),
     }),
   })
 
-  return generatedNote
+  return thought
 }
 
 export default generateThought
