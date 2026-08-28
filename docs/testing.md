@@ -646,6 +646,8 @@ When the failure is wrong, fix the test—not the application—and rerun it aga
 
 The primary Test, Puppeteer, and BrowserStack workflows run on pushes to `main` and on pull requests (BrowserStack uses `pull_request_target`). The TDD workflow runs on pull requests that add tests. All four accept `workflow_dispatch` with an optional `rerun_id` so the `ghworkflow` shell function (see [Tips](#triggering-github-actions-workflows-manually)) can fan out manually triggered runs for flake hunting.
 
+Vercel Preview runs on pull requests separately from the test workflows. It deploys the pull request's `em-ai` service first, verifies its health route, then supplies that deployment's URL as `VITE_AI_URL` while building the matching `em` web preview. The GitHub `Preview` deployment links to the user-facing web app; the workflow summary includes the paired AI service URL for diagnostics. Both deploys run sequentially in one job so the GitHub deployment status represents the entire pair.
+
 #### Path filtering
 
 Test, Puppeteer, BrowserStack, and Vercel Preview each carry the same `paths-ignore` filter, covering two groups:
@@ -653,7 +655,7 @@ Test, Puppeteer, BrowserStack, and Vercel Preview each carry the same `paths-ign
 - **Documentation and agent/editor configuration** — `**/*.md`, `docs/`, `.github/instructions/`, `.github/skills/`, `.claude/`, `.agents/`, `.vscode/`, `.hooks/`.
 - **Native platform projects** — `android/`, `ios/`, `desktop/`, and `assets/` (the icon and splash sources generated into the first two).
 
-A change set confined to those paths is almost always unable to affect what any of the four workflows tests: `yarn build` is web-only (`build:packages`, `build:styles`, `vite build`), and BrowserStack exercises mobile Safari over a tunnel rather than the Capacitor app. None of the native directories contains a JS or TS file, and the web favicons come from `public/`, not `assets/`. **If a Capacitor asset is ever wired into the Vite build, the native entries must be removed** — otherwise a real change would ship untested.
+A change set confined to those paths is almost always unable to affect what any of the workflows tests or deploys: the test workflows exercise the web app, while Vercel Preview builds the web app and `packages/ai`. None of the native directories contains a JS or TS file, and the web favicons come from `public/`, not `assets/`. **If a Capacitor asset is ever wired into the Vite build, the native entries must be removed** — otherwise a real change would ship untested.
 
 One narrow gap is worth knowing about. `yarn test` is `vitest --project unit`, whose `**/__tests__/**/*.ts` glob also collects the workspaces under `scripts/`, and the issue classifier's sample-integrity tests ([`scripts/issue-classifier/src/__tests__/samples.ts`](../scripts/issue-classifier/src/__tests__/samples.ts)) read the prompt and samples they guard as fixtures. Those assets live beside the code in `scripts/issue-classifier/`, so a sample edit is a `.jsonl` change that runs Test normally — but the prompt itself is `scripts/issue-classifier/instructions.md`, and `**/*.md` is filtered. A pull request that edits only the prompt therefore skips the checks on it, so run `yarn test` locally when editing it.
 
@@ -687,6 +689,7 @@ BrowserStack is the one exception: it queues rather than supersedes, for the rea
 | **Puppeteer** | [`.github/workflows/puppeteer.yml`](../.github/workflows/puppeteer.yml) | `yarn test:puppeteer` against a `browserless/chrome:latest` service container on port 7566. | On failure, image-snapshot diffs are uploaded in the `__diff_output__` artifact. |
 | **BrowserStack** | [`.github/workflows/ios.yml`](../.github/workflows/ios.yml) | `yarn test:ios` (an alias of `test:ios:browserstack`) against real iOS devices via BrowserStack. | Uses `pull_request_target` so credentials are available, guarded by `changed_files > 0` and `paths-ignore`, serialized repo-wide, and deduplicated per PR (see [Layered BrowserStack concurrency](#layered-browserstack-concurrency)). |
 | **TDD** | [`.github/workflows/tdd.yml`](../.github/workflows/tdd.yml) | Runs newly added unit, Puppeteer, and iOS tests against the selected pre-fix commit. | Expects the new regression test to fail before the fix. Pull requests only. |
+| **Vercel Preview** | [`.github/workflows/vercel-preview.yml`](../.github/workflows/vercel-preview.yml) | Deploys paired `em-ai` and `em` previews, with the AI preview URL compiled into the web app. | Uses `pull_request_target`, shares the standard `paths-ignore` filter, and reports the web URL through GitHub Deployments. |
 
 When a Puppeteer snapshot test fails on a pull request, the [`Puppeteer Diff Comment`](../.github/workflows/puppeteer-diff-comment.yml) workflow safely publishes the diff images to the `snapshot-diffs` branch and upserts a PR comment with the affected files and targeted `yarn test:puppeteer -u ...` command. The raw `__diff_output__` artifact is also available from the workflow run. Locally, the diff path is printed in the test runner output. See [Visual snapshot tests](#visual-snapshot-tests).
 
