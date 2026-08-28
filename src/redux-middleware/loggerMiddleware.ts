@@ -112,7 +112,7 @@ const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string):
   debugLog.log(actionType, { steps: popped.length, actions })
 }
 
-/** Redux Middleware for logging all actions. Logs to the console when testFlags.logActions is set (useful for e2e/remote debugging when Redux Developer Tools are not available), and captures every action into the persistent debugLog when it is enabled (see the Debug Logging setting) — along with derived forensics: structured updateThoughts summaries, a `move` entry for every rank or parent change, duplicate-sibling-rank integrity warnings, and undo/redo attribution. */
+/** Redux Middleware for logging all actions. Logs to the console when testFlags.logActions is set (useful for e2e/remote debugging when Redux Developer Tools are not available), and captures every action into the persistent debugLog when it is enabled (via the Debug Logging setting, or automatically on development and preview hosts) — along with derived forensics: structured updateThoughts summaries, a `move` entry for every rank or parent change, duplicate-sibling-rank integrity warnings, and undo/redo attribution. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
   return next => action => {

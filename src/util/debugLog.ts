@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import pkg from '../../package.json'
 import State from '../@types/State'
 import storage from './storage'
@@ -28,6 +29,9 @@ const FRAME_GAP_THRESHOLD_MS = 500
 
 /** Maximum characters of a thought value rendered in the format() state dump. */
 const DUMP_VALUE_MAX_LENGTH = 100
+
+/** The localStorage key recording a device-local opt-out of auto-enabled logging (see autoEnabled), so a development or preview host can be aligned with production (e.g. for performance testing). A preference rather than log data, so clear() leaves it alone. */
+const OPT_OUT_KEY = 'debugLogOptOut'
 
 /** A single rolling-log entry. `seq`, `t`, `dt`, and `type` form a common envelope; all other fields are event-specific. */
 interface DebugLogEntry {
@@ -95,6 +99,19 @@ let frameId: number | null = null
 let lastFrameTime = 0
 // performance.now() of the last frame marker write, used to throttle it
 let lastMarkerWritten = 0
+
+/** True when the app is served from a development or preview host, where logging defaults to on (disableable per device — see setAutoOptOut): localhost (or another loopback address, matching serviceWorkerRegistration.ts) and Vercel preview deployments (*.vercel.app). Excludes the test environments that also run on localhost — Vitest via MODE, Puppeteer via navigator.webdriver — so tests keep explicit setEnabled semantics and production timing, and excludes the native Capacitor and Tauri shells, which serve production builds from localhost-like origins (capacitor://localhost, https://localhost, tauri://localhost). */
+const autoEnabled =
+  typeof window !== 'undefined' &&
+  typeof navigator !== 'undefined' &&
+  import.meta.env.MODE !== 'test' &&
+  !navigator.webdriver &&
+  !Capacitor.isNativePlatform() &&
+  /^https?:$/.test(window.location.protocol) &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '[::1]' ||
+    /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/.test(window.location.hostname) ||
+    window.location.hostname.endsWith('.vercel.app'))
 
 /** Truncates over-long string fields so a single pathological value cannot exhaust the localStorage quota. */
 const capFields = (fields?: Record<string, unknown>): Record<string, unknown> => {
@@ -268,13 +285,43 @@ const setEnabled = (value: boolean): void => {
   }
 }
 
+/** Returns whether this device has opted out of auto-enabled logging. Only consulted on auto-enable hosts. Never throws. */
+const isAutoOptOut = (): boolean => {
+  try {
+    return storage.getItem(OPT_OUT_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+/** Records or clears the device-local opt-out of auto-enabled logging and applies it immediately. No-op off auto-enable hosts, so the opt-out cannot suppress the synced Debug Logging setting in production. Never throws. */
+const setAutoOptOut = (optOut: boolean): void => {
+  if (!autoEnabled) return
+  try {
+    if (optOut) {
+      storage.setItem(OPT_OUT_KEY, 'true')
+    } else {
+      storage.removeItem(OPT_OUT_KEY)
+    }
+  } catch {
+    // The opt-out must never interfere with the app.
+  }
+  setEnabled(!optOut)
+}
+
+// Start logging immediately on development and preview hosts (unless this device opted out) so initialization is captured, rather than waiting for the settings mirror in AppComponent to mount.
+if (autoEnabled && !isAutoOptOut()) setEnabled(true)
+
 /** A synchronous, bounded, persistent rolling debug log for diagnosing catastrophic bugs (e.g. freezes) that survive a device restart, where console logging is unavailable. See src/util/debugLog.ts. */
 const debugLog = {
+  autoEnabled,
   clear,
   format,
+  isAutoOptOut,
   isEnabled,
   log,
   read,
+  setAutoOptOut,
   setEnabled,
 }
 

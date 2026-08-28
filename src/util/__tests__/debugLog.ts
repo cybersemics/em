@@ -187,3 +187,86 @@ describe('format', () => {
     expect(text.indexOf('banana')).toBeLessThan(text.indexOf('apple'))
   })
 })
+
+// Auto-enable is decided at module load, so each case stubs the environment, resets the module registry, and imports a fresh instance (the same pattern as the hydration test above). The localhost hostname comes from jsdom's default URL; the *.vercel.app case needs a different jsdom URL, which is only configurable per file, so it lives in debugLogVercel.ts.
+describe('auto-enable', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    // no-ops unless the corresponding test failed before its own cleanup
+    Reflect.deleteProperty(navigator, 'webdriver')
+    vi.doUnmock('@capacitor/core')
+  })
+
+  it('does not auto-enable in the test environment', async () => {
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('auto-enables on localhost outside the test environment and records a session marker', async () => {
+    vi.stubEnv('MODE', 'development')
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(true)
+    expect(fresh.isEnabled()).toBe(true)
+    expect(fresh.read().some(e => e.type === 'session')).toBe(true)
+    // stop the fresh instance's frame heartbeat so it cannot log into later tests
+    fresh.setEnabled(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('does not auto-enable in automated browser sessions (navigator.webdriver)', async () => {
+    vi.stubEnv('MODE', 'development')
+    Object.defineProperty(navigator, 'webdriver', { value: true, configurable: true })
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('does not auto-enable in the native Capacitor shell', async () => {
+    vi.stubEnv('MODE', 'production')
+    vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true } }))
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('respects a persisted device-local opt-out on load', async () => {
+    localStorage.setItem('debugLogOptOut', 'true')
+    vi.stubEnv('MODE', 'development')
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(true)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('setAutoOptOut disables and re-enables logging and persists the choice', async () => {
+    vi.stubEnv('MODE', 'development')
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.isEnabled()).toBe(true)
+
+    fresh.setAutoOptOut(true)
+    expect(fresh.isEnabled()).toBe(false)
+    expect(fresh.isAutoOptOut()).toBe(true)
+    expect(localStorage.getItem('debugLogOptOut')).toBe('true')
+
+    fresh.setAutoOptOut(false)
+    expect(fresh.isEnabled()).toBe(true)
+    expect(fresh.isAutoOptOut()).toBe(false)
+    expect(localStorage.getItem('debugLogOptOut')).toBeNull()
+
+    // stop the fresh instance's frame heartbeat so it cannot log into later tests
+    fresh.setEnabled(false)
+  })
+
+  it('setAutoOptOut is a no-op off auto-enable hosts, so the opt-out cannot suppress the synced setting in production', () => {
+    debugLog.setAutoOptOut(true)
+    expect(localStorage.getItem('debugLogOptOut')).toBeNull()
+    debugLog.setEnabled(true)
+    expect(debugLog.isEnabled()).toBe(true)
+  })
+})
