@@ -1,13 +1,22 @@
 name: Vercel Preview
 
-# TEMPORARY: pull_request runs this branch's workflow so the paired deployment can be validated
-# from a branch in cybersemics/em. Remove it and restore the original concurrency group before
-# merging; pull_request_target remains the production trigger for fork-safe previews.
+# TEMPORARY PAIRED-PREVIEW VALIDATION: pull_request runs this branch's workflow so it can be
+# validated before the updated pull_request_target workflow reaches main. The two events otherwise
+# publish competing GitHub deployments, so the branch run uses "Paired Preview (temporary)" below.
+#
+# Before merging to main:
+# 1. Delete the pull_request trigger block.
+# 2. Change run-name back to "Vercel Preview".
+# 3. Remove "-${{ github.event_name }}" from the concurrency group.
+# 4. Simplify the job condition to "github.event.pull_request.changed_files > 0".
+# 5. Set allow-unsafe-pr-checkout to true (only pull_request_target will remain).
+# 6. Replace the conditional deploymentEnvironment below with the literal "Preview".
 run-name: Vercel Preview (${{ github.event_name }})
 
-# pull_request_target runs in the base repo's context, so repo secrets are
-# available even for fork PRs. Untrusted fork code is gated by GitHub's
-# "require approval for outside collaborators" setting before it runs.
+# pull_request_target runs in the base repo's context, so repo secrets are available even for fork
+# PRs. GitHub's "require approval for outside collaborators" setting is the trust gate, not a
+# sandbox: approving a run allows the checked-out PR code to execute with the secrets listed below.
+# Review fork changes for secret-exfiltration paths before approving them.
 #
 # The Vercel builds are the web app and AI service, so documentation, agent/editor configuration,
 # and the native platform projects cannot change the preview. A PR confined to them gets no
@@ -80,7 +89,7 @@ jobs:
     name: Deploy Preview
     runs-on: ubuntu-latest
     # A regular pull_request receives secrets only for a branch in this repository. Forks continue
-    # to use the trusted pull_request_target workflow from the default branch.
+    # to use the approval-gated pull_request_target workflow from the default branch.
     if: >
       github.event.pull_request.changed_files > 0 &&
       (github.event_name == 'pull_request_target' ||
@@ -123,11 +132,17 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo
+            // TEMPORARY: Keep the branch-validation deployment separate from the legacy Preview
+            // deployment created by main's pull_request_target workflow. Otherwise GitHub chooses
+            // whichever deployment record was created last for the PR's "View deployment" link.
+            // Replace this conditional with the literal "Preview" when removing pull_request.
+            const deploymentEnvironment =
+              context.eventName === 'pull_request' ? 'Paired Preview (temporary)' : 'Preview'
             const { data } = await github.rest.repos.createDeployment({
               owner,
               repo,
               ref: context.payload.pull_request.head.sha,
-              environment: 'Preview',
+              environment: deploymentEnvironment,
               // Defaults to true, which makes GitHub merge the base branch into ref and
               // return a merge result *instead of* creating a deployment.
               auto_merge: false,
