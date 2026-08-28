@@ -27,7 +27,7 @@ OPENAI_API_KEY=your-development-key
 
 ### Running and testing the server
 
-Local development runs the Express app directly with `tsx`, loads `.env.local`, watches the source for changes, and listens on port 3111 to match the client's `VITE_AI_URL` in `.env.development`. It does not require a Vercel login or project link.
+Local development runs the Express app directly with `tsx`, loads `.env.local`, watches the source for changes, and listens on port 3111 by default to match the client's `VITE_AI_URL` in `.env.development`. Set `PORT` to override the server port. It does not require a Vercel login or project link.
 
 ```sh
 cd packages/ai
@@ -114,4 +114,5 @@ Function metrics (invocations, duration percentiles, error rate, cold starts, me
 ## Environment variables
 
 - `OPENAI_API_KEY` — required by the AI server locally and in the `em-ai` Vercel Production and Preview environments.
+- `PORT` — optional local server port. Defaults to `3111`.
 - `VITE_AI_URL` — public, build-time client base URL. Development uses `http://localhost:3111/ai`, production uses `https://ai.emthought.space/ai`, and pull request builds receive their matching `em-ai` preview URL from the workflow.
