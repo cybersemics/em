@@ -119,6 +119,7 @@ const FontSize = () => {
 /** Controls for the persistent debug log: copy the captured entries to the clipboard or clear them. Only rendered when Debug Logging is enabled, either through the setting or automatically on development and preview hosts. */
 const DebugLog = () => {
   const settingEnabled = useSelector(getUserSetting(Settings.debugCrashLog))
+  const dispatch = useDispatch()
   const [status, setStatus] = useState<string | null>(null)
 
   if (!settingEnabled && !debugLog.autoEnabled) return null
@@ -127,9 +128,13 @@ const DebugLog = () => {
     <div className={css({ marginTop: '1em' })}>
       <a
         {...fastClick(() => {
-          const text = debugLog.format()
-          copy(text)
-          setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
+          // dispatch a thunk to read fresh state, so format() can append the state.thoughts dump that resolves
+          // the ids in the entries to values and shows current sibling order
+          dispatch((_, getState) => {
+            const text = debugLog.format(getState())
+            copy(text)
+            setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
+          })
         })}
         className={extendTapRecipe()}
       >

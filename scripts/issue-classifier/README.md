@@ -1,6 +1,6 @@
 # Issue Classifier
 
-Automatic issue classification for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are subsystems rather than releases, so the milestone is the issue's category. It also labels what kind of work the issue is: `bug`, `feature`, `performance`, `refactor`, `test`, `documentation`, or `agent`.
+Automatic issue classification for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are domains rather than releases, so the milestone is the issue's category. It also labels what kind of work the issue is: `bug`, `feature`, `performance`, `refactor`, `test`, `documentation`, or `agent`.
 
 Success is silent — the milestone and the label are the whole result. The only issues left unclassified are those that match no existing milestone and are not refactors, where a comment asks @raineorshine for the category instead.
 
@@ -42,7 +42,7 @@ The same votes answer a second question: what kind of work is this? The answer i
 
 ### Why only a refactor skips the question
 
-A milestone-less issue normally gets a comment, because the taxonomy having no home for it is worth a human's attention. One kind is exempt: a **pure refactor** is cross-cutting by definition — it restructures code without belonging to a user-facing subsystem — so finding no milestone for one is a correct answer rather than a gap. [#5130](https://github.com/cybersemics/em/issues/5130) is the shape: a helper extraction that belongs to no subsystem in particular.
+A milestone-less issue normally gets a comment, because the taxonomy having no home for it is worth a human's attention. One kind is exempt: a **pure refactor** is cross-cutting by definition — it restructures code without belonging to a user-facing domain — so finding no milestone for one is a correct answer rather than a gap. [#5130](https://github.com/cybersemics/em/issues/5130) is the shape: a helper extraction that belongs to no domain in particular.
 
 That is a claim about what the word means, and it deliberately does not rest on how often each kind goes unmilestoned, because that gradient has no natural cut point:
 
@@ -56,7 +56,7 @@ That is a claim about what the word means, and it deliberately does not rest on 
 | `agent`         |     16 |         6% |
 | `documentation` |      1 |         0% |
 
-`agent` sits lowest, and thresholding there would be a mistake: ✨ Agent Workflows was created on 2026-08-24, so those issues predate their home rather than lacking one. The rest have homes too — `test` has ✅ Test Engineering, and a `bug`, `feature`, or `performance` issue names work inside some subsystem by definition. Only `refactor` does not, which is why it is the only exemption.
+`agent` sits lowest, and thresholding there would be a mistake: ✨ Agent Workflows was created on 2026-08-24, so those issues predate their home rather than lacking one. The rest have homes too — `test` has ✅ Test Engineering, and a `bug`, `feature`, or `performance` issue names work inside some domain by definition. Only `refactor` does not, which is why it is the only exemption.
 
 **The milestone is assigned whenever the votes name one.** There is no confidence threshold, and a tie resolves to its modal winner rather than a question — a tie is a choice between two plausible buckets, not a failure to find one.
 
