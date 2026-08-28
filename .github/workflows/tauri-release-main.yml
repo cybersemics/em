@@ -20,7 +20,8 @@ concurrency:
   group: tauri-release-main
   cancel-in-progress: true
 
-# tauri-action needs write access to create/update the GitHub Release.
+# The release job and tauri-action need write access to create/update the
+# GitHub Release.
 permissions:
   contents: write
 
@@ -40,8 +41,82 @@ env:
   APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
 
 jobs:
+  # Resolve the rolling release up front and hand its id to the build matrix.
+  # tauri-action's own release lookup is its only GitHub API call not covered by
+  # its retryAttempts input, and a single 10s connect timeout there has failed an
+  # otherwise-successful build (run 33205754427). Passing releaseId makes
+  # tauri-action skip that unretried lookup entirely, so this job performs it
+  # instead, with explicit retries. It also takes over refreshing the release
+  # name and body, which tauri-action only does when it resolves the release
+  # itself.
+  release:
+    name: Resolve rolling release
+    runs-on: ubuntu-latest
+    outputs:
+      id: ${{ steps.release.outputs.id }}
+    steps:
+      - name: Get or create the pre release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_NAME: em desktop (main)
+          # Interpolated here rather than in the script so the backticks in the
+          # markdown never reach the shell.
+          RELEASE_BODY: |
+            em desktop prerelease build from the latest commit on `main`.
+
+            Commit: ${{ github.sha }}
+            Run: ${{ github.run_number }}
+
+            > ⚠️ These builds are **unsigned** and may trigger Gatekeeper (macOS) or SmartScreen (Windows) warnings.
+            > On macOS, right-click the app and choose **Open** to bypass Gatekeeper (or run `xattr -cr /Applications/em.app`).
+        run: |
+          # Retry transient GitHub API failures (connect timeouts, 5xx) with
+          # backoff. Progress goes to stderr so callers can capture stdout.
+          retry() {
+            for attempt in 1 2 3 4 5; do
+              if "$@"; then return 0; fi
+              echo "Attempt $attempt of $1 failed; retrying after backoff." >&2
+              sleep $((attempt * 10))
+            done
+            return 1
+          }
+
+          # Fetch the release for the pre tag, creating it if it does not exist
+          # (first run only — thereafter uploads replace assets on the existing
+          # release). A create that loses a race fails with 422 and the next
+          # attempt's fetch resolves it.
+          resolve() {
+            gh api "repos/$GITHUB_REPOSITORY/releases/tags/pre" --jq .id 2>/dev/null ||
+              gh api -X POST "repos/$GITHUB_REPOSITORY/releases" \
+                -f tag_name=pre \
+                -f name="$RELEASE_NAME" \
+                -F prerelease=true \
+                -f target_commitish="$GITHUB_SHA" \
+                --jq .id
+          }
+
+          # Refresh the name and body so the release always describes the
+          # latest build.
+          refresh() {
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/releases/$release_id" \
+              -f name="$RELEASE_NAME" \
+              -f body="$RELEASE_BODY" >/dev/null
+          }
+
+          release_id=$(retry resolve) || {
+            echo "Failed to resolve the pre release after multiple attempts." >&2
+            exit 1
+          }
+          retry refresh || {
+            echo "Failed to update the pre release metadata after multiple attempts." >&2
+            exit 1
+          }
+          echo "id=$release_id" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build (${{ matrix.platform }} ${{ matrix.args }})
+    needs: release
     strategy:
       fail-fast: false
       matrix:
@@ -145,18 +220,13 @@ jobs:
           # rejected as "damaged". Keep notarization credentials unset in this path.
           APPLE_SIGNING_IDENTITY: '-'
         with:
-          tagName: pre
-          releaseName: em desktop (main)
-          releaseBody: |
-            em desktop prerelease build from the latest commit on `main`.
-
-            Commit: ${{ github.sha }}
-            Run: ${{ github.run_number }}
-
-            > ⚠️ These builds are **unsigned** and may trigger Gatekeeper (macOS) or SmartScreen (Windows) warnings.
-            > On macOS, right-click the app and choose **Open** to bypass Gatekeeper (or run `xattr -cr /Applications/em.app`).
-          prerelease: true
-          releaseDraft: false
+          # The release job resolves the release id so tauri-action skips its
+          # own unretried lookup (see that job's comment). Release metadata
+          # (tag, name, body) is managed there as well.
+          releaseId: ${{ needs.release.outputs.id }}
+          # Retry transient build and upload failures (crates.io or GitHub API
+          # network flakes).
+          retryAttempts: 2
           releaseAssetNamePattern: '[name]_main_[arch][setup][ext]'
           args: ${{ matrix.args }}
 
@@ -173,29 +243,24 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          tagName: pre
-          releaseName: em desktop (main)
-          releaseBody: |
-            em desktop prerelease build from the latest commit on `main`.
-
-            Commit: ${{ github.sha }}
-            Run: ${{ github.run_number }}
-
-            > ⚠️ These builds are **unsigned** and may trigger Gatekeeper (macOS) or SmartScreen (Windows) warnings.
-            > On macOS, right-click the app and choose **Open** to bypass Gatekeeper (or run `xattr -cr /Applications/em.app`).
-          prerelease: true
-          releaseDraft: false
+          # The release job resolves the release id so tauri-action skips its
+          # own unretried lookup (see that job's comment). Release metadata
+          # (tag, name, body) is managed there as well.
+          releaseId: ${{ needs.release.outputs.id }}
+          # Retry transient build and upload failures (crates.io or GitHub API
+          # network flakes).
+          retryAttempts: 2
           releaseAssetNamePattern: '[name]_main_[arch][setup][ext]'
           args: ${{ matrix.args }}
 
   # Keep the `pre` tag pointing at the commit that was just built, so the release
   # page's commit chip and the auto-generated source archives match the published
-  # assets. tauri-action only sets the tag target when it first creates the tag and
-  # never moves an existing one (its releaseCommitish input is "unused if the Git
-  # tag already exists"), so without this the tag would sit at its creation commit
-  # forever. Runs only after all platforms publish, so the tag never points at a
-  # commit whose asset set is incomplete. GITHUB_TOKEN pushes do not trigger other
-  # workflows, and the prod release workflow only matches `v*` tags in any case.
+  # assets. The release job's create only sets the tag target when the tag does
+  # not exist yet (GitHub ignores target_commitish for an existing tag), so
+  # without this the tag would sit at its creation commit forever. Runs only
+  # after all platforms publish, so the tag never points at a commit whose asset
+  # set is incomplete. GITHUB_TOKEN pushes do not trigger other workflows, and
+  # the prod release workflow only matches `v*` tags in any case.
   retag:
     name: Point pre tag at built commit
     needs: build
