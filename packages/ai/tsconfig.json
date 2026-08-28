@@ -4,6 +4,12 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "noEmit": true
+    // @vercel/node applies defaults before resolving `extends`, so these inherited root options must be explicit.
+    // https://github.com/vercel/vercel/issues/15332
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "strict": true,
+    "target": "es2018"
   }
 }
