@@ -25,7 +25,7 @@ it('does not unescape encoded thought values in ContextBreadcrumbs', async () =>
   await dispatch([
     importText({
       text: `
-          - &lt;x y="" z=""&gt;&lt;/x&gt;
+          - &lt;one two&gt;
       `,
     }),
   ])
@@ -33,6 +33,8 @@ it('does not unescape encoded thought values in ContextBreadcrumbs', async () =>
   await act(vi.runOnlyPendingTimersAsync)
 
   const contextBreadcrumbs = document.querySelector('[aria-label="context-breadcrumbs"]')!
-  expect(contextBreadcrumbs.innerHTML).toContain('&lt;x y="" z=""&gt;&lt;/x&gt;')
-  expect(contextBreadcrumbs.innerHTML).not.toContain('<x y="" z=""></x>')
+  expect(contextBreadcrumbs.innerHTML).toContain('&lt;one two&gt;')
+  expect(contextBreadcrumbs.innerHTML).not.toContain('&lt;one two=""&gt;&lt;/one&gt;')
+  expect(contextBreadcrumbs.textContent).toContain('<one two>')
+  expect(contextBreadcrumbs.textContent).not.toContain('<one two=""></one>')
 })
