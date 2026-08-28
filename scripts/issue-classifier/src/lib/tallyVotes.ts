@@ -43,7 +43,7 @@ export interface VoteResult {
  * Two things are tallied, not one, and both the same way: a modal vote with ties broken by vote
  * order. Which milestone owns the work is one question; what kind of work it is — the label — is a
  * second, independent one riding on the same samples. They are orthogonal on purpose, since a
- * refactor still belongs to the subsystem it restructures, so neither tally can move the other.
+ * refactor still belongs to the domain it restructures, so neither tally can move the other.
  *
  * The label tally is modal rather than a majority because there are eight candidates once `null` is
  * counted. A rule requiring more than half would leave most issues unlabeled on an ordinary 2-2-1
