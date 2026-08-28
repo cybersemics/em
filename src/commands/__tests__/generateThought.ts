@@ -8,6 +8,7 @@ import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import dispatch from '../../test-helpers/dispatch'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -331,6 +332,67 @@ test('restore the original value rather than the pending value on undo', async (
   // original value before the generated value is applied. Otherwise undo reverts to "a...".
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a`)
+
+  vi.unstubAllEnvs()
+})
+
+// An edit made while a generation is in flight must remain its own undo step. Grouping the generation's undo
+// step by holding a command transaction open across the request's async window would absorb the user's edit into
+// the Generate Thought step, so a single undo would revert both the generation and the edit.
+// The interleaved edit is a deletion (Shorter) while the generation is an addition (Longer): contiguous edits in
+// the same direction legitimately merge into one undo step, so only an opposite-direction edit isolates the
+// grouping behavior under test.
+test('preserve an edit made while the thought is generating as its own undo step', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+
+  /** Resolves the pending AI request. Assigned when the mocked fetch is called, so the test controls exactly when the generation completes. */
+  let resolveAiRequest: (response: { json: () => Promise<{ content: string; err: null }> }) => void = () => {}
+  mockFetch.mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        resolveAiRequest = resolve
+      }),
+  )
+
+  await dispatch([
+    importText({
+      text: `
+        - a
+        - banana
+      `,
+    }),
+    setCursor(['a']),
+  ])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  // Precondition: the request is in flight and the cursor thought shows the pending value.
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a...
+  - banana`)
+
+  // The user deletes a character from another thought while the generation is still pending.
+  await dispatch(editThought(['banana'], 'banan'))
+
+  await act(async () => {
+    resolveAiRequest({ json: () => Promise.resolve({ content: 'generated', err: null }) })
+  })
+
+  // Precondition: the generation was applied after the interleaved edit.
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a generated
+  - banan`)
+
+  await dispatch(undo())
+
+  // Undo reverts only the generation. The interleaved edit is a separate undo step and must survive.
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - banan`)
 
   vi.unstubAllEnvs()
 })
