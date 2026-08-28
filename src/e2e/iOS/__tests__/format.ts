@@ -55,4 +55,30 @@ describe('Format', () => {
 
     expect(await thoughtHtml()).toBe('One')
   })
+
+  // https://github.com/cybersemics/em/issues/5107
+  it.skip('re-applying a text color that was undone applies it again', async () => {
+    await paste(`
+    - One`)
+    await clickThought('One') // set the cursor on the thought
+
+    // Apply a green font color via the toolbar, then tap the toolbar button again to close the picker.
+    await tapToolbar('Text Color', 'text color swatches', 'green')
+    await tapToolbar('Text Color')
+
+    /** Native undo closes the keyboard, so the editable will lose focus.
+     * Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */
+    const thoughtHtml = () => browser.execute(() => document.querySelector('[data-editable]')?.innerHTML)
+
+    // Trigger native undo the way iOS shake-to-undo / three-finger swipe does (see above).
+    await browser.execute(() => document.execCommand('undo'))
+    await browser.waitUntil(async () => (await thoughtHtml()) === 'One', {
+      timeoutMsg: 'undo did not remove the green font color',
+    })
+
+    // Reopen the picker and tap the same green swatch again.
+    await tapToolbar('Text Color', 'text color swatches', 'green')
+
+    expect(await thoughtHtml()).toBe('<font color="#00d688">One</font>')
+  })
 })
