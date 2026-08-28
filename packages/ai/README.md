@@ -64,7 +64,8 @@ The package is deployed at [ai.emthought.space](https://ai.emthought.space) by a
 In the Vercel project settings (Settings → Build and Deployment):
 
 - **Root Directory** = `packages/ai`. Keep "Include files outside of the Root Directory" enabled so the Yarn workspace install resolves from the repo root.
-- **Framework Preset** = `Express`.
+- **Framework Preset** = `Express`. `vercel.json` pins the preset, and the deployment workflows enable Vercel's unified
+  backend builder so the TypeScript module graph is bundled instead of being emitted as unresolved Node ESM imports.
 - **Framework Settings** — leave Build Command and Output Directory overrides off. The Install Command may be overridden with `yarn`.
 - **Deployment Protection** — Vercel Authentication must be disabled so em clients can reach the service.
 
