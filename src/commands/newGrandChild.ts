@@ -11,8 +11,8 @@ const newGrandChildCommand = {
   multicursor: {
     // The action sets the cursor to the new empty grandchild with the keyboard open, ready to type. The default restore would move the caret back to the originally selected thought.
     preventSetCursor: true,
-    // The selection of parent thoughts is stale once the caret is in a new empty grandchild; keeping it would aim the next multicursor command at the parents while the user is typing elsewhere.
-    clearMulticursor: true,
+    // Select the new grandchildren rather than the parents they were created under, which also expands the ancestors of each one so that the grandchildren created away from the cursor are visible.
+    selectNewCursors: true,
   },
   // TODO: Create unique icon
   svg: SettingsIcon,

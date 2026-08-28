@@ -2,12 +2,14 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 import newGrandChildCommand from '../newGrandChild'
 
 beforeEach(initStore)
@@ -137,7 +139,7 @@ describe('multicursor', () => {
       - ${''}`)
   })
 
-  it('places the caret in the last created empty grandchild and clears the multicursor', () => {
+  it('places the caret in the last created empty grandchild', () => {
     store.dispatch([
       importText({
         text: `
@@ -158,9 +160,6 @@ describe('multicursor', () => {
 
     // the cursor must end in the new empty grandchild of the last selected thought, ready to type
     expectPathToEqual(state, state.cursor, ['c', 'd', ''])
-
-    // the selection of parent thoughts is stale once the caret is in a new empty thought
-    expect(state.multicursors).toEqual({})
   })
 
   it('places the caret in the new empty grandchild when a single thought is selected', () => {
@@ -235,7 +234,7 @@ describe('multicursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3564
-  it.skip('selects the new grandchildren after execution', () => {
+  it('selects the new grandchildren after execution', () => {
     store.dispatch([
       importText({
         text: `
@@ -258,5 +257,29 @@ describe('multicursor', () => {
     expect(multicursors).toHaveLength(2)
     expectPathToEqual(state, multicursors[0], ['a', 'b', ''])
     expectPathToEqual(state, multicursors[1], ['c', 'd', ''])
+  })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it('expands the first subthought of each selected thought so that its new grandchild is visible', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+            - d
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    const state = store.getState()
+
+    expect(state.expanded[hashPath(contextToPath(state, ['a', 'b'])!)]).toBeTruthy()
+    expect(state.expanded[hashPath(contextToPath(state, ['c', 'd'])!)]).toBeTruthy()
   })
 })

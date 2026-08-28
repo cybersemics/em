@@ -4,7 +4,6 @@ import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenRanked } from '../../selectors/getChildren'
-import hasMulticursor from '../../selectors/hasMulticursor'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -107,25 +106,6 @@ describe('multicursor', () => {
     expectPathToEqual(state, state.cursor, ['b', ''])
   })
 
-  it('clears the multicursor after execution', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-          - b
-          - c
-        `,
-      }),
-      setCursor(['a']),
-      addMulticursor(['a']),
-      addMulticursor(['b']),
-    ])
-
-    executeCommandWithMulticursor(newThoughtAboveCommand, { store })
-
-    expect(hasMulticursor(store.getState())).toBeFalse()
-  })
-
   it('reverts every created thought on a single undo', () => {
     store.dispatch([
       importText({
@@ -163,7 +143,7 @@ describe('multicursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3564
-  it.skip('selects the new thoughts after execution', () => {
+  it('selects the new thoughts after execution', () => {
     store.dispatch([
       importText({
         text: `
