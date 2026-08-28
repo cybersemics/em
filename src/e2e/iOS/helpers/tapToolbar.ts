@@ -17,7 +17,7 @@ const tapOptions = { y: 60, pointerType: 'touch' } as const
  */
 const tapToolbar = async (label: CommandLabel, ...values: string[]) => {
   const toolbarSelector = `[data-testid="toolbar-icon"][aria-label="${label}"]`
-  const button = await waitForElement(toolbarSelector)
+  await waitForElement(toolbarSelector)
 
   // The toolbar scrolls horizontally and most of its buttons start off-screen, so tapping the button's reported rect
   // would land outside the viewport and silently do nothing. Center it rather than scrolling it just far enough,
@@ -30,7 +30,12 @@ const tapToolbar = async (label: CommandLabel, ...values: string[]) => {
     document.querySelector(selector)!.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' })
   }, toolbarSelector)
 
-  await tap(button, tapOptions)
+  // A picker is rendered inside the button that opens it, so an open picker expands the button's rect down over the
+  // swatches and a tap aimed at the button's center lands on a swatch instead. Aim at the button's icon, which is its
+  // first svg in document order for both a plain icon and an icon wrapped alongside a picker.
+  const icon = await waitForElement(`${toolbarSelector} svg`)
+
+  await tap(icon, tapOptions)
 
   if (values.length === 0) return
 
