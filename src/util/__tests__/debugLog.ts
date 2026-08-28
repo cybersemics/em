@@ -233,4 +233,40 @@ describe('auto-enable', () => {
     expect(fresh.autoEnabled).toBe(false)
     expect(fresh.isEnabled()).toBe(false)
   })
+
+  it('respects a persisted device-local opt-out on load', async () => {
+    localStorage.setItem('debugLogOptOut', 'true')
+    vi.stubEnv('MODE', 'development')
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(true)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('setAutoOptOut disables and re-enables logging and persists the choice', async () => {
+    vi.stubEnv('MODE', 'development')
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.isEnabled()).toBe(true)
+
+    fresh.setAutoOptOut(true)
+    expect(fresh.isEnabled()).toBe(false)
+    expect(fresh.isAutoOptOut()).toBe(true)
+    expect(localStorage.getItem('debugLogOptOut')).toBe('true')
+
+    fresh.setAutoOptOut(false)
+    expect(fresh.isEnabled()).toBe(true)
+    expect(fresh.isAutoOptOut()).toBe(false)
+    expect(localStorage.getItem('debugLogOptOut')).toBeNull()
+
+    // stop the fresh instance's frame heartbeat so it cannot log into later tests
+    fresh.setEnabled(false)
+  })
+
+  it('setAutoOptOut is a no-op off auto-enable hosts, so the opt-out cannot suppress the synced setting in production', () => {
+    debugLog.setAutoOptOut(true)
+    expect(localStorage.getItem('debugLogOptOut')).toBeNull()
+    debugLog.setEnabled(true)
+    expect(debugLog.isEnabled()).toBe(true)
+  })
 })
