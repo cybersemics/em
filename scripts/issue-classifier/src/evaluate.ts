@@ -83,7 +83,7 @@ export interface EvalMetrics {
     /**
      * Left the milestone empty even though one was recorded — a miss, but a safe one. Named for the
      * absent milestone rather than for asking, because not every unassigned issue asks now: a pure
-     * refactor that fits no subsystem is labeled instead.
+     * refactor that fits no domain is labeled instead.
      */
     unassignedButFitted: number
     /** Left the milestone empty where that was the right answer. */
