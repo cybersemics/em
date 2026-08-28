@@ -16,7 +16,7 @@ import FadeTransition from './FadeTransition'
 import CopyClipboard from './icons/CopyClipboard'
 
 /** The maximum number of steps the slider spans. */
-const MAX_STEPS = 10
+const MAX_STEPS = 20
 
 /** The positions of the end and start handles, counted in steps back from the present (0), and the length of the history they were set against. */
 interface Handles {
