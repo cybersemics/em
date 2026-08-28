@@ -1,4 +1,4 @@
-ft# Testing
+# Testing
 
 ## How to use this guide
 
