@@ -133,3 +133,67 @@ vi.mock(import('./hooks/useLottieIntervalAnimation'), () => ({
   /** Stubbed useLottieIntervalAnimation that never animates. */
   default: () => ({ isAnimated: false, onAnimationComplete: noop }),
 }))
+
+// React reports a state update that escaped act() with a console.error, and nothing turns that into a failure: the
+// component goes on re-rendering outside React's control and the test still passes. A rendered test that dispatches
+// outside act() is therefore invisible unless someone reads the console, which is how 2351 of these accumulated in
+// two test files. Fail the test that emitted them instead. See docs/testing.md#3-jsdom-tests.
+//
+// The failure is raised in afterEach rather than thrown from console.error. React emits the warning from inside
+// scheduleUpdateOnFiber, part-way through react-redux's notification of its subscribers; throwing there would abandon
+// the remaining subscribers and cascade into failures that no longer point at the cause. Capturing the stack at the
+// escape and reporting it afterwards names the same call site without unwinding React mid-update.
+const actEscapes: { components: Set<string>; count: number; stack: string | null } = {
+  components: new Set(),
+  count: 0,
+  stack: null,
+}
+const consoleErrorOriginal = console.error
+
+console.error = (...args) => {
+  // The warning is a format string; React passes the component name as the first substitution.
+  if (typeof args[0] === 'string' && args[0].includes('was not wrapped in act(...)')) {
+    actEscapes.count++
+    actEscapes.components.add(args[1] || 'Unknown')
+    // Capture one stack per test. Error.stackTraceLimit defaults to 10, which truncates well above the dispatch that
+    // scheduled the update, and raising it is too expensive to do on every escape: one dispatch against the mounted
+    // app warns once per subscribed component, so escapes arrive dozens at a time.
+    if (!actEscapes.stack) {
+      const stackTraceLimit = Error.stackTraceLimit
+      Error.stackTraceLimit = 100
+      actEscapes.stack = new Error().stack ?? null
+      Error.stackTraceLimit = stackTraceLimit
+    }
+    return
+  }
+  consoleErrorOriginal(...args)
+}
+
+afterEach(() => {
+  if (!actEscapes.count) return
+
+  const { count, stack } = actEscapes
+  const components = Array.from(actEscapes.components).sort().join(', ')
+
+  // Only this repo's own frames locate the offending call; the React and Redux frames between them are noise.
+  const frames = (stack ?? '')
+    .split('\n')
+    .filter(line => line.includes('/src/') && !line.includes('/node_modules/') && !line.includes('/setupTests.'))
+    .map(line => line.replace(`${process.cwd()}/`, ''))
+  // The line to fix is in the test itself. Report it separately: the middleware chain that every dispatch passes
+  // through sits above it and would otherwise crowd it out of the trace.
+  const testFrame = frames.find(line => line.includes('__tests__'))
+  const path = frames.filter(line => !line.includes('/redux-middleware/')).slice(0, 6)
+
+  actEscapes.components = new Set()
+  actEscapes.count = 0
+  actEscapes.stack = null
+
+  throw new Error(
+    `${count} update${count === 1 ? '' : 's'} to ${components} escaped act() in this test.\n\n` +
+      'Wrap whatever caused it in act(() => …): a store dispatch, a command execution, a focus() call, or a timer ' +
+      'advance. See the JSDOM tests section of docs/testing.md.\n\n' +
+      (testFrame ? `Escaped from:\n${testFrame}\n\n` : '') +
+      `First escape:\n${path.join('\n')}`,
+  )
+})

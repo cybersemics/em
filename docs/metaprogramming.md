@@ -101,11 +101,6 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 - **`=path`** — used under a `=note` to redirect the note's content to another thought (looked up by path), instead of rendering the literal child of `=note`. The target's visible children are rendered in their configured sort order, separated by commas, and editing the note updates the corresponding children. See [`resolveNoteKey`](../src/selectors/resolveNoteKey.ts).
 - **`=let`** — define lexically-scoped named values that descendants can reference. [`parseLet`](../src/util/parseLet.ts) reads a context's `=let` children, and [`linearizeTree`](../src/selectors/linearizeTree.ts) accumulates them down the tree into the `env` carried on every [`TreeThought`](../src/@types/TreeThought.ts), so a nearer `=let` overrides an outer one that binds the same name. A thought with a child that matches an env entry picks up that entry's `=style` ([`useThoughtStyle`](../src/hooks/useThoughtStyle.ts)), `=styleContainer` ([`useThoughtStyleContainer`](../src/hooks/useThoughtStyleContainer.ts)), `=bullet` ([`useHideBullet`](../src/hooks/useHideBullet.ts)), and `=focus/Zoom` (which zooms the thought via [`zoomPath`](../src/selectors/zoomPath.ts) as well as carrying the properties above). The definitions are never applied to `=let` itself nor to the bindings inside it.
 
-### Content sources
-
-- **`=src`** — load the contents of a remote URL (or local file) as the subthoughts of this thought. The first child of `=src` is the URL. Consumed by [`loadResource`](../src/actions/loadResource.ts).
-- **`=preload`** — when set, `=src` content is preloaded eagerly on app start instead of waiting until the thought is opened. Consumed by [`preloadSources`](../src/actions/preloadSources.ts).
-
 ### Publishing
 
 - **`=publish`** — holds publish-related metadata (byline, attributes, etc.) for a context that is going to be exported or published. Consumed by [`Byline`](../src/components/Byline.tsx) and the publish flow in [`expandThoughts`](../src/selectors/expandThoughts.ts).

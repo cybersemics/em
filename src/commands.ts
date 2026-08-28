@@ -11,7 +11,6 @@ import Direction from './@types/Direction'
 import Gesture from './@types/Gesture'
 import Index from './@types/IndexType'
 import Key from './@types/Key'
-import MulticursorFilter from './@types/MulticursorFilter'
 import Patch from './@types/Patch'
 import Path from './@types/Path'
 import State from './@types/State'
@@ -34,6 +33,7 @@ import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings
 import * as selection from './device/selection'
 import globals from './globals'
 import documentSort from './selectors/documentSort'
+import filterCursors from './selectors/filterCursors'
 import getThoughtById from './selectors/getThoughtById'
 import getUserSetting from './selectors/getUserSetting'
 import hasMulticursor from './selectors/hasMulticursor'
@@ -49,12 +49,10 @@ import { isNavigation } from './util/actionMetadata.registry'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
-import hashPath from './util/hashPath'
 import head from './util/head'
 import isAttribute from './util/isAttribute'
+import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
-import parentOf from './util/parentOf'
-import UnreachableError from './util/unreachable'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
 
@@ -314,57 +312,6 @@ export const chainCommand = (command1: Command, command2: Command): Command => {
 
 const eventNoop = { preventDefault: noop } as Event
 
-/** Filter the cursors based on the filter type. Cursors are sorted in document order. */
-const filterCursors = (state: State, cursors: Path[], filter: MulticursorFilter = 'all') => {
-  switch (filter) {
-    case 'all':
-      return cursors
-
-    case 'first-sibling': {
-      const seenParents = new Set<string>()
-
-      return cursors.filter(cursor => {
-        const parent = hashPath(parentOf(cursor))
-
-        if (seenParents.has(parent)) return false
-        seenParents.add(parent)
-
-        return true
-      })
-    }
-
-    case 'last-sibling': {
-      const seenParents = new Set<string>()
-
-      return cursors.reverse().filter(cursor => {
-        const parent = hashPath(parentOf(cursor))
-
-        if (seenParents.has(parent)) return false
-        seenParents.add(parent)
-
-        return true
-      })
-    }
-
-    case 'prefer-ancestor': {
-      const seenCursors = new Set<string>()
-
-      return cursors.filter(cursor => {
-        const parent = hashPath(parentOf(cursor))
-
-        // Always add the cursor to the set to resolve direct chains.
-        seenCursors.add(hashPath(cursor))
-
-        return !seenCursors.has(parent)
-      })
-    }
-
-    default:
-      // Make sure all cases are covered
-      throw new UnreachableError(filter)
-  }
-}
-
 /** Recomputes a path after a command has executed, in case the thought was moved. Returns null if the thought no longer exists. Paths that cross a context view are returned as-is, since they do not follow the parent chain and therefore cannot be reconstructed by thoughtToPath. */
 const recomputePath = (state: State, path: Path): Path | null => {
   // e.g. a/m~/a does not follow the parent chain (the trailing a is a context of the Lexeme m, whose real parent is the root), so thoughtToPath would collapse it to a.
@@ -606,6 +553,18 @@ export const executeCommandWithMulticursor = (
         dispatch(addMulticursor({ path: restoredPath }))
       }),
     )
+  }
+
+  // A command tapped in the Command Center that ends with an empty selection (e.g. delete, whose thoughts no
+  // longer exist to be restored above) would dismiss the Command Center, since multicursorAlertMiddleware
+  // closes it when nothing is selected. Select the thought the cursor landed on instead, the same way the
+  // Command Center is opened in the first place, so that it stays open and can be used again. When the last
+  // thought was deleted there is no cursor left to select and it closes as usual.
+  if (type === 'commandCenter') {
+    const state = commandStore.getState()
+    if (!hasMulticursor(state) && state.cursor) {
+      commandStore.dispatch(addMulticursor({ path: state.cursor }))
+    }
   }
 
   multicursor.onComplete?.(filteredPaths, commandStore.dispatch, commandStore.getState)
@@ -871,7 +830,7 @@ export const keyDown = (e: KeyboardEvent) => {
   const state = store.getState()
 
   // track meta key for expansion algorithm
-  if (!(isMac ? e.metaKey : e.ctrlKey)) {
+  if (!isCommandKey(e)) {
     // disable suppress expansion without triggering re-render
     globals.suppressExpansion = false
   }

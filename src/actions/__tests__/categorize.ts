@@ -1,6 +1,8 @@
 import { AlertType, HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import isContextViewActive from '../../selectors/isContextViewActive'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
@@ -149,13 +151,48 @@ describe('context view', () => {
         - y`)
   })
 
-  // Skipped: the single-cursor branch passes the simplified path to moveThought as oldPath, and moveThought
-  // simplifies it again. When the context view is active on a prefix of that simplified path — true only for the
-  // context the view was activated from — the second simplification resolves `x` as a context of `m` rather than as
-  // its child, finds nothing, and moveThought throws "sourceThought not found". The test above passes only because
-  // `b/m/y` does not share the `a/m` prefix.
-  // Unskip when https://github.com/cybersemics/em/issues/5104 is fixed.
-  it.skip('categorize context subthought in the context the context view was activated from', () => {
+  // https://github.com/cybersemics/em/issues/3391
+  it('categorize multiselected thoughts in a nested context view', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - m
+              - x
+                - f
+                - g
+          - b
+            - m
+              - y`,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'x', 'f']),
+      addMulticursor(['a', 'm', 'a', 'x', 'f']),
+      addMulticursor(['a', 'm', 'a', 'x', 'g']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+        - ${'' /* prevent trim_trailing_whitespace */}
+          - f
+          - g
+  - b
+    - m
+      - y`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'x', ''])
+    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['a', 'm']))).toBeTruthy()
+  })
+
+  // Unlike the test above, the subthought is shown under the context the view was activated from, so its SimplePath
+  // shares the prefix the context view is keyed on. That prefix is what the path resolution has to leave alone.
+  it('categorize context subthought in the context the context view was activated from', () => {
     const text = `
       - a
         - m
@@ -410,5 +447,353 @@ describe('multicursor', () => {
       - C
       - D
     - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('move =view to the new category when all siblings are selected', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =view
+            - Table
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      addMulticursor(['A', 'D']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - =view
+        - Table
+      - B
+        - C
+      - D
+        - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('keep =view on the parent when only some siblings are selected', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =view
+            - Table
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - =view
+      - Table
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - B
+        - C
+    - D
+      - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('move =children to the new category even when it contains no view options', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =children
+            - =style
+              - color
+                - tomato
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      addMulticursor(['A', 'D']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - =children
+        - =style
+          - color
+            - tomato
+      - B
+        - C
+      - D
+        - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('move =grandchildren to the new category when all siblings are selected', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =grandchildren
+            - =style
+              - color
+                - tomato
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      addMulticursor(['A', 'D']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - =grandchildren
+        - =style
+          - color
+            - tomato
+      - B
+        - C
+      - D
+        - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('keep =pin on the parent when all siblings are selected, since it pins the parent itself', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =pin
+            - true
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      addMulticursor(['A', 'D']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - =pin
+      - true
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - B
+        - C
+      - D
+        - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('move =sort to the new category when all siblings are selected', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =sort
+            - Alphabetical
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      addMulticursor(['A', 'D']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - =sort
+        - Alphabetical
+      - B
+        - C
+      - D
+        - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('move =children/=pin to the new category when all siblings are selected', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =children
+            - =pin
+              - true
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      addMulticursor(['A', 'D']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - =children
+        - =pin
+          - true
+      - B
+        - C
+      - D
+        - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('move =descendants/=pin to the new category when all siblings are selected', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =descendants
+            - =pin
+              - true
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      addMulticursor(['A', 'D']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - =descendants
+        - =pin
+          - true
+      - B
+        - C
+      - D
+        - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('move the entire =children to the new category when it holds other attributes besides =pin', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =children
+            - =pin
+              - true
+            - =style
+              - color
+                - tomato
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      addMulticursor(['A', 'D']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - =children
+        - =pin
+          - true
+        - =style
+          - color
+            - tomato
+      - B
+        - C
+      - D
+        - E`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4330
+  it('keep =pin on the parent when only some siblings are selected', () => {
+    const steps = [
+      importText({
+        text: `
+        - A
+          - =pin
+            - true
+          - B
+            - C
+          - D
+            - E`,
+      }),
+      setCursor(['A', 'B']),
+      addMulticursor(['A', 'B']),
+      categorize,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A
+    - =pin
+      - true
+    - ${'' /* prevent trim_trailing_whitespace */}
+      - B
+        - C
+    - D
+      - E`)
   })
 })

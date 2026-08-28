@@ -1,4 +1,8 @@
+import { buildResponseFormat } from './parseSelection.ts'
+
 // Inference tuning constants, overridable via ISSUE_CLASSIFIER_* env vars for experimentation.
+// The model must support Structured Outputs (strict json_schema response_format); one that does not
+// fails the request outright rather than degrading to unvalidated output.
 const MODEL = process.env.ISSUE_CLASSIFIER_MODEL ?? 'gpt-5.6-terra'
 // Number of independent samples to draw per selection for self-consistency voting. Sent as the
 // Chat Completions `n` parameter, which bills input once and only multiplies the (tiny) output —
@@ -21,16 +25,27 @@ export interface InferenceOptions {
   prompt: string
   /** Milestone selection instructions used as the system message. */
   instructions: string
+  /** Open milestone titles the response schema constrains `milestone` and `secondChoice` to. */
+  milestoneTitles: string[]
   /** Number of samples to draw for voting. Defaults to VOTES; overridable per call. */
   votes?: number
 }
 
 /**
  * Calls the OpenAI chat completions API, drawing `votes` independent samples in a single request
- * via the `n` parameter. Returns the raw string content of every choice (including any malformed
- * ones) for downstream tallying — aggregation and vote-counting live in tallyVotes.
+ * via the `n` parameter. Every sample is constrained to the response schema by Structured Outputs
+ * (see buildResponseFormat), so a conforming reply cannot be malformed or name a milestone that is
+ * not open. Returns the raw string content of every choice — including a refusal or truncated
+ * reply, which arrives as unparseable content — for downstream tallying; aggregation and
+ * vote-counting live in tallyVotes.
  */
-const inference = async ({ apiKey, prompt, instructions, votes = VOTES }: InferenceOptions): Promise<string[]> => {
+const inference = async ({
+  apiKey,
+  prompt,
+  instructions,
+  milestoneTitles,
+  votes = VOTES,
+}: InferenceOptions): Promise<string[]> => {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -46,7 +61,7 @@ const inference = async ({ apiKey, prompt, instructions, votes = VOTES }: Infere
         { role: 'system', content: instructions },
         { role: 'user', content: prompt },
       ],
-      response_format: { type: 'json_object' },
+      response_format: buildResponseFormat(milestoneTitles),
     }),
   })
 
