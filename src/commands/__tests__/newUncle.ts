@@ -199,4 +199,28 @@ describe('multicursor', () => {
   - e
     - f`)
   })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it.skip('selects the new uncles after execution', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+            - d
+        `,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['c', 'd']),
+    ])
+
+    executeCommandWithMulticursor(newUncleCommand, { store })
+
+    const state = store.getState()
+    const newThoughts = getChildrenRankedByContext(state, [HOME_TOKEN]).filter(child => child.value === '')
+
+    expect(Object.values(state.multicursors).map(head)).toEqual(newThoughts.map(child => child.id))
+  })
 })

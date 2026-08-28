@@ -233,4 +233,30 @@ describe('multicursor', () => {
   - e
     - f`)
   })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it.skip('selects the new grandchildren after execution', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+            - d
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    const state = store.getState()
+    const multicursors = Object.values(state.multicursors)
+
+    expect(multicursors).toHaveLength(2)
+    expectPathToEqual(state, multicursors[0], ['a', 'b', ''])
+    expectPathToEqual(state, multicursors[1], ['c', 'd', ''])
+  })
 })
