@@ -68,9 +68,17 @@ In the Vercel project settings (Settings → Build and Deployment):
 - **Framework Settings** — leave Build Command and Output Directory overrides off. The Install Command may be overridden with `yarn`.
 - **Deployment Protection** — Vercel Authentication must be disabled so em clients can reach the service.
 
-Set `OPENAI_API_KEY` in the `em-ai` Production environment. The key is a server secret and must never be added to the repository or exposed through a `VITE_*` variable.
+Set `OPENAI_API_KEY` in both the `em-ai` Production and Preview environments. Use a dedicated, tightly
+budgeted key for Preview: the preview workflow runs pull request code, including approved fork code, so provider
+limits are an additional safeguard against accidental or malicious use. The key is a server secret and must never
+be added to the repository or exposed through a `VITE_*` variable.
 
 Production is deployed by the `Vercel Production` GitHub Actions workflow on every push to `main`. The workflow selects `em-ai` with `VERCEL_PROJECT_ID_EM_AI`, runs `vercel pull`, `vercel build --prod`, and `vercel deploy --prebuilt --prod`.
+
+Pull requests are deployed by the `Vercel Preview` workflow. It deploys `em-ai` first, checks the health route, and
+then builds the matching `em` preview with the generated AI deployment URL as `VITE_AI_URL`. The pull request's
+GitHub deployment links to the user-facing `em` preview, while the workflow summary includes the `em-ai` URL for
+diagnostics. Vercel Authentication must remain disabled for preview deployments so the browser can call the API.
 
 Vercel's own Git deployment is disabled in `vercel.json` to prevent duplicate deployments. The repository's `.env.production` sets the AI service base URL to `https://ai.emthought.space/ai`.
 
@@ -105,5 +113,5 @@ Function metrics (invocations, duration percentiles, error rate, cold starts, me
 
 ## Environment variables
 
-- `OPENAI_API_KEY` — required by the AI server locally and in the `em-ai` Vercel project.
-- `VITE_AI_URL` — public, build-time client base URL. Development uses `http://localhost:3111/ai`; production uses `https://ai.emthought.space/ai`.
+- `OPENAI_API_KEY` — required by the AI server locally and in the `em-ai` Vercel Production and Preview environments.
+- `VITE_AI_URL` — public, build-time client base URL. Development uses `http://localhost:3111/ai`, production uses `https://ai.emthought.space/ai`, and pull request builds receive their matching `em-ai` preview URL from the workflow.
