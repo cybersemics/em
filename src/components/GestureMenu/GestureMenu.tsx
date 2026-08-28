@@ -7,11 +7,11 @@ import { gestureString } from '../../commands'
 import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
 import useFilteredCommands from '../../hooks/useFilteredCommands'
 import useGestureMenuLayout, {
-  GESTURE_MENU_COLUMN_GAP_REM,
-  GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM,
-  GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM,
-  GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM,
-  GESTURE_MENU_ROW_GAP_REM,
+  COLUMN_GAP_REM,
+  HEADER_BLOCK_MARGIN_BOTTOM_REM,
+  HEADER_FONT_SIZE_REM,
+  HEADER_TITLE_MARGIN_BOTTOM_REM,
+  ROW_GAP_REM,
 } from '../../hooks/useGestureMenuLayout'
 import gestureStore, {
   onGestureMenuEntered,
@@ -117,12 +117,12 @@ const GestureMenu: FC<{
             }}
           >
             {/* Header */}
-            <div style={{ marginBottom: `${GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM}rem` }}>
+            <div style={{ marginBottom: `${HEADER_BLOCK_MARGIN_BOTTOM_REM}rem` }}>
               <div
                 style={{
-                  color: 'gestureMenuLabel',
-                  marginBottom: `${GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM}rem`,
-                  fontSize: `${GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM}rem`,
+                  color: 'gestureMenuTitle',
+                  marginBottom: `${HEADER_TITLE_MARGIN_BOTTOM_REM}rem`,
+                  fontSize: `${HEADER_FONT_SIZE_REM}rem`,
                   fontWeight: 500,
                 }}
               >
@@ -147,7 +147,7 @@ const GestureMenu: FC<{
                   // Track count comes from what fits, not what's used, so the tracks keep their width
                   // as commands drop away; unused tracks simply render empty.
                   gridTemplateColumns: `repeat(${maxColumns}, minmax(0, 1fr))`,
-                  columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
+                  columnGap: `${COLUMN_GAP_REM}rem`,
                 }}
               >
                 {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)
@@ -164,7 +164,7 @@ const GestureMenu: FC<{
                         // Auto rows (rather than a fixed repeat(rowsPerColumn)) so a short last column
                         // is only as tall as its own items, with no trailing empty tracks.
                         gridAutoRows: 'min-content',
-                        rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                        rowGap: `${ROW_GAP_REM}rem`,
                       }}
                     >
                       {renderCommands(columnCommands)}

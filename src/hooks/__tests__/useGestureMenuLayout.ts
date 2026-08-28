@@ -1,23 +1,23 @@
 import { renderHook } from '@testing-library/react'
 import React, { act } from 'react'
 import { Provider } from 'react-redux'
+import { token } from '../../../styled-system/tokens'
 import { fontSizeActionCreator } from '../../actions/fontSize'
 import store from '../../stores/app'
 import viewportStore from '../../stores/viewport'
 import useGestureMenuLayout, {
-  GESTURE_MENU_COLUMN_GAP_REM,
-  GESTURE_MENU_HEADER_HEIGHT_REM,
-  GESTURE_MENU_MD_BREAKPOINT,
-  GESTURE_MENU_MIN_COLUMN_WIDTH_REM,
-  GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM,
-  GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM,
-  GESTURE_MENU_PANEL_PADDING_TOP_CAPACITOR_REM,
-  GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM,
-  GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM,
-  GESTURE_MENU_ROW_GAP_REM,
-  GESTURE_MENU_ROW_PITCH_REM,
-  GESTURE_MENU_SELECTED_ROW_REM,
-  GESTURE_MENU_TABLET_SAFE_HEIGHT_RATIO,
+  APPROXIMATE_ROW_HEIGHT_REM,
+  CAPACITOR_TOP_PADDING_REM,
+  COLUMN_GAP_REM,
+  ESTIMATED_HEADER_HEIGHT_REM,
+  ESTIMATED_SELECTED_ITEM_EXTRA_HEIGHT_REM,
+  MIN_COLUMN_WIDTH_REM,
+  MULTI_COLUMN_BLOCK_PADDING_REM,
+  MULTI_COLUMN_INLINE_PADDING_REM,
+  ROW_GAP_REM,
+  SINGLE_COLUMN_BLOCK_PADDING_REM,
+  SINGLE_COLUMN_INLINE_PADDING_REM,
+  TABLET_AVAILABLE_HEIGHT_RATIO,
 } from '../useGestureMenuLayout'
 
 /**
@@ -155,19 +155,19 @@ describe('useGestureMenuLayout', () => {
     const { maxColumns, horizontalPaddingRem, isMobilePortrait } = layout(12)
     expect(isMobilePortrait).toBe(false)
     expect(maxColumns).toBe(1)
-    expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
+    expect(horizontalPaddingRem).toBe(SINGLE_COLUMN_INLINE_PADDING_REM)
   })
 
   it('keeps the wide padding once a second column fits', () => {
     setViewport(854, SHORT)
     const { maxColumns, horizontalPaddingRem } = layout(10)
     expect(maxColumns).toBe(2)
-    expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM)
+    expect(horizontalPaddingRem).toBe(MULTI_COLUMN_INLINE_PADDING_REM)
   })
 
   it('keeps the narrow padding below the md breakpoint', () => {
     setViewport(390, TALL)
-    expect(layout(12).horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
+    expect(layout(12).horizontalPaddingRem).toBe(SINGLE_COLUMN_INLINE_PADDING_REM)
   })
 
   it('stays single-column when a second column would not fit the wide padding', () => {
@@ -180,13 +180,13 @@ describe('useGestureMenuLayout', () => {
     const { maxColumns, columnCount, horizontalPaddingRem } = layout(10)
     expect(maxColumns).toBe(1)
     expect(columnCount).toBe(1)
-    expect(horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
+    expect(horizontalPaddingRem).toBe(SINGLE_COLUMN_INLINE_PADDING_REM)
   })
 
   it('never opens a column narrower than the minimum width', () => {
     // The invariant the wide-padding basis buys, and the reason the 675–773px band stays single-column:
     // whenever more than one column opens, the content left by the wide gutters divides into columns
-    // that are each at least GESTURE_MENU_MIN_COLUMN_WIDTH_REM. Mirrors the hook's own columnWidth:
+    // that are each at least MIN_COLUMN_WIDTH_REM. Mirrors the hook's own columnWidth:
     // calc((100% − (maxColumns−1) × gap) / maxColumns), resolved against the padded content box.
     //
     // Sampled every 10px across the whole range, then every 1px around the two- and three-column
@@ -194,7 +194,10 @@ describe('useGestureMenuLayout', () => {
     // A full 1px sweep of the range renders the hook 1000× and exceeds the 5s test timeout.
     const rem = 18
     const coarse = []
-    for (let w = GESTURE_MENU_MD_BREAKPOINT; w <= 1400; w += 10) coarse.push(w)
+
+    const mdBreakpoint = parseInt(token('breakpoints.md'))
+
+    for (let w = mdBreakpoint; w <= 1400; w += 10) coarse.push(w)
     const fine = []
     for (const threshold of [774, 1089]) {
       for (let w = threshold - 8; w <= threshold + 8; w += 1) fine.push(w)
@@ -205,9 +208,9 @@ describe('useGestureMenuLayout', () => {
       const { maxColumns } = layout(30)
       if (maxColumns === 1) continue
       multiColumnWidths++
-      const contentPx = innerWidth - 2 * GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM * rem
-      const columnPx = (contentPx - (maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM * rem) / maxColumns
-      expect(columnPx).toBeGreaterThanOrEqual(GESTURE_MENU_MIN_COLUMN_WIDTH_REM * rem)
+      const contentPx = innerWidth - 2 * MULTI_COLUMN_INLINE_PADDING_REM * rem
+      const columnPx = (contentPx - (maxColumns - 1) * COLUMN_GAP_REM * rem) / maxColumns
+      expect(columnPx).toBeGreaterThanOrEqual(MIN_COLUMN_WIDTH_REM * rem)
     }
     // Guards the sweep against passing vacuously: a regression pinning maxColumns to 1 would skip every
     // assertion above and still report green.
@@ -236,7 +239,7 @@ describe('useGestureMenuLayout', () => {
     setViewport(854, SHORT)
     const { maxColumns, verticalPaddingRem } = layout(10)
     expect(maxColumns).toBe(2)
-    expect(verticalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM)
+    expect(verticalPaddingRem).toBe(MULTI_COLUMN_BLOCK_PADDING_REM)
   })
 
   it('keeps the roomier vertical padding when only one column fits', () => {
@@ -245,12 +248,12 @@ describe('useGestureMenuLayout', () => {
     const { maxColumns, verticalPaddingRem, isMobilePortrait } = layout(12)
     expect(isMobilePortrait).toBe(false)
     expect(maxColumns).toBe(1)
-    expect(verticalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM)
+    expect(verticalPaddingRem).toBe(SINGLE_COLUMN_BLOCK_PADDING_REM)
   })
 
   it('keeps the roomier vertical padding below the md breakpoint', () => {
     setViewport(390, TALL)
-    expect(layout(12).verticalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM)
+    expect(layout(12).verticalPaddingRem).toBe(SINGLE_COLUMN_BLOCK_PADDING_REM)
   })
 
   it('budgets the row count against the vertical padding it reports', () => {
@@ -260,8 +263,9 @@ describe('useGestureMenuLayout', () => {
     setViewport(854, MID)
     const { rowsPerColumn, verticalPaddingRem } = layout(30)
     const rem = 18
-    const columnPx = rowsPerColumn * GESTURE_MENU_ROW_PITCH_REM * rem - GESTURE_MENU_ROW_GAP_REM * rem
-    const chromePx = (GESTURE_MENU_HEADER_HEIGHT_REM + 2 * verticalPaddingRem + GESTURE_MENU_SELECTED_ROW_REM) * rem
+    const columnPx = rowsPerColumn * APPROXIMATE_ROW_HEIGHT_REM * rem - ROW_GAP_REM * rem
+    const chromePx =
+      (ESTIMATED_HEADER_HEIGHT_REM + 2 * verticalPaddingRem + ESTIMATED_SELECTED_ITEM_EXTRA_HEIGHT_REM) * rem
     expect(columnPx + chromePx).toBeLessThanOrEqual(MID)
   })
 
@@ -349,11 +353,9 @@ describe('useGestureMenuLayout', () => {
     setViewport(854, MID)
     const { rowsPerColumn } = layout(30)
     const rem = 18
-    const columnPx = rowsPerColumn * GESTURE_MENU_ROW_PITCH_REM * rem - GESTURE_MENU_ROW_GAP_REM * rem
+    const columnPx = rowsPerColumn * APPROXIMATE_ROW_HEIGHT_REM * rem - ROW_GAP_REM * rem
     const chromePx =
-      (GESTURE_MENU_HEADER_HEIGHT_REM +
-        2 * GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM +
-        GESTURE_MENU_SELECTED_ROW_REM) *
+      (ESTIMATED_HEADER_HEIGHT_REM + 2 * MULTI_COLUMN_BLOCK_PADDING_REM + ESTIMATED_SELECTED_ITEM_EXTRA_HEIGHT_REM) *
       rem
     expect(columnPx + chromePx).toBeLessThanOrEqual(MID)
   })
@@ -384,7 +386,7 @@ describe('useGestureMenuLayout', () => {
   describe('narrow-tablet second column', () => {
     /** The rendered width of one column, in px, for a layout the hook has just returned. */
     const columnPx = (innerWidth: number, { maxColumns, horizontalPaddingRem }: ReturnType<typeof layout>) =>
-      (innerWidth - 2 * horizontalPaddingRem * REM - (maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM * REM) / maxColumns
+      (innerWidth - 2 * horizontalPaddingRem * REM - (maxColumns - 1) * COLUMN_GAP_REM * REM) / maxColumns
 
     it('opens a second column on a tablet the wide gutters hold to one', () => {
       // iPad mini portrait: 744 − 2×5rem leaves 564px and two minimum columns need 594px, but
@@ -392,39 +394,37 @@ describe('useGestureMenuLayout', () => {
       setViewport(744, 1133)
       const result = asTablet(() => layout(28))
       expect(result.maxColumns).toBe(2)
-      expect(result.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
+      expect(result.horizontalPaddingRem).toBe(SINGLE_COLUMN_INLINE_PADDING_REM)
     })
 
     it('keeps a retried column at least the minimum column width', () => {
       setViewport(744, 1133)
       const result = asTablet(() => layout(28))
-      expect(columnPx(744, result)).toBeGreaterThanOrEqual(GESTURE_MENU_MIN_COLUMN_WIDTH_REM * REM)
+      expect(columnPx(744, result)).toBeGreaterThanOrEqual(MIN_COLUMN_WIDTH_REM * REM)
     })
 
     it('tightens the vertical padding on a retried tablet, like any other multi-column viewport', () => {
       setViewport(744, 1133)
-      expect(asTablet(() => layout(28)).verticalPaddingRem).toBe(
-        GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM,
-      )
+      expect(asTablet(() => layout(28)).verticalPaddingRem).toBe(MULTI_COLUMN_BLOCK_PADDING_REM)
     })
 
     it('does not retry on a tablet that already fits two columns at the wide padding', () => {
       setViewport(834, 1194)
       const result = asTablet(() => layout(28))
       expect(result.maxColumns).toBe(2)
-      expect(result.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM)
+      expect(result.horizontalPaddingRem).toBe(MULTI_COLUMN_INLINE_PADDING_REM)
     })
 
     it('does not retry at 12.9-inch geometry in either orientation', () => {
       setViewport(1024, 1366)
       const portrait = asTablet(() => layout(28))
       expect(portrait.maxColumns).toBe(2)
-      expect(portrait.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM)
+      expect(portrait.horizontalPaddingRem).toBe(MULTI_COLUMN_INLINE_PADDING_REM)
 
       setViewport(1366, 1024)
       const landscape = asTablet(() => layout(28))
       expect(landscape.maxColumns).toBe(3)
-      expect(landscape.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_MULTI_COLUMN_FIT_REM)
+      expect(landscape.horizontalPaddingRem).toBe(MULTI_COLUMN_INLINE_PADDING_REM)
     })
 
     it('does not retry when the device is not a tablet', () => {
@@ -432,7 +432,7 @@ describe('useGestureMenuLayout', () => {
       setViewport(744, 1133)
       const result = layout(28)
       expect(result.maxColumns).toBe(1)
-      expect(result.horizontalPaddingRem).toBe(GESTURE_MENU_PANEL_PADDING_HORIZONTAL_SINGLE_COLUMN_FIT_REM)
+      expect(result.horizontalPaddingRem).toBe(SINGLE_COLUMN_INLINE_PADDING_REM)
     })
 
     it('leaves a tablet too narrow for two columns at either padding on one column', () => {
@@ -472,12 +472,10 @@ describe('useGestureMenuLayout', () => {
       // with it and the device rows above become the thing that has to be re-measured.
       setViewport(1024, 1366)
       const overheadRem =
-        GESTURE_MENU_HEADER_HEIGHT_REM +
-        2 * GESTURE_MENU_PANEL_PADDING_VERTICAL_MULTI_COLUMN_FIT_REM +
-        GESTURE_MENU_SELECTED_ROW_REM
+        ESTIMATED_HEADER_HEIGHT_REM + 2 * MULTI_COLUMN_BLOCK_PADDING_REM + ESTIMATED_SELECTED_ITEM_EXTRA_HEIGHT_REM
       const expected = Math.floor(
-        (1366 * GESTURE_MENU_TABLET_SAFE_HEIGHT_RATIO - overheadRem * REM + GESTURE_MENU_ROW_GAP_REM * REM) /
-          (GESTURE_MENU_ROW_PITCH_REM * REM),
+        (1366 * TABLET_AVAILABLE_HEIGHT_RATIO - overheadRem * REM + ROW_GAP_REM * REM) /
+          (APPROXIMATE_ROW_HEIGHT_REM * REM),
       )
       expect(asTablet(() => layout(28)).rowsPerColumn).toBe(expected)
     })
@@ -520,12 +518,12 @@ describe('useGestureMenuLayout', () => {
   describe('top padding', () => {
     it('takes the tighter Capacitor top padding when only one column fits', () => {
       setViewport(393, 852)
-      expect(underCapacitor(() => layout(28)).paddingTopRem).toBe(GESTURE_MENU_PANEL_PADDING_TOP_CAPACITOR_REM)
+      expect(underCapacitor(() => layout(28)).paddingTopRem).toBe(CAPACITOR_TOP_PADDING_REM)
     })
 
     it('uses the ordinary vertical padding in a browser at the same size', () => {
       setViewport(393, 852)
-      expect(layout(28).paddingTopRem).toBe(GESTURE_MENU_PANEL_PADDING_VERTICAL_SINGLE_COLUMN_FIT_REM)
+      expect(layout(28).paddingTopRem).toBe(SINGLE_COLUMN_BLOCK_PADDING_REM)
     })
 
     it('does not move when a narrowing gesture drains a column under Capacitor', () => {

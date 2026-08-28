@@ -7,10 +7,10 @@ import State from '../../@types/State'
 import { gestureString } from '../../commands'
 import useGestureHighlight from '../../hooks/useGestureHighlight'
 import {
-  GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM,
-  GESTURE_MENU_ITEM_LABEL_DESCRIPTION_GAP_REM,
-  GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM,
-  GESTURE_MENU_ITEM_SELECTED_PADDING_TOP_REM,
+  SELECTED_ITEM_DESCRIPTION_LINE_HEIGHT_REM,
+  SELECTED_ITEM_GAP_REM,
+  SELECTED_ITEM_PADDING_BOTTOM_REM,
+  SELECTED_ITEM_PADDING_TOP_REM,
 } from '../../hooks/useGestureMenuLayout'
 import store from '../../stores/app'
 import GestureDiagram from '../GestureDiagram'
@@ -69,8 +69,8 @@ const GestureMenuItem: FC<{
       style={{
         // Always reserve the top padding on a column's first row so selecting it doesn't shift the
         // column down and misalign its top from sibling columns.
-        paddingTop: selected || isFirstCommand ? `${GESTURE_MENU_ITEM_SELECTED_PADDING_TOP_REM}rem` : 0,
-        paddingBottom: selected ? `${GESTURE_MENU_ITEM_SELECTED_PADDING_BOTTOM_REM}rem` : 0,
+        paddingTop: selected || isFirstCommand ? `${SELECTED_ITEM_PADDING_TOP_REM}rem` : 0,
+        paddingBottom: selected ? `${SELECTED_ITEM_PADDING_BOTTOM_REM}rem` : 0,
       }}
     >
       <div
@@ -102,7 +102,7 @@ const GestureMenuItem: FC<{
           display: 'flex',
           flexDirection: 'column',
         })}
-        style={{ gap: `${GESTURE_MENU_ITEM_LABEL_DESCRIPTION_GAP_REM}rem` }}
+        style={{ gap: `${SELECTED_ITEM_GAP_REM}rem` }}
       >
         <div
           className={css({
@@ -128,7 +128,7 @@ const GestureMenuItem: FC<{
               color: 'fgOverlay75',
               marginBlock: 0,
             })}
-            style={{ lineHeight: `${GESTURE_MENU_ITEM_DESCRIPTION_LINE_HEIGHT_REM}rem` }}
+            style={{ lineHeight: `${SELECTED_ITEM_DESCRIPTION_LINE_HEIGHT_REM}rem` }}
           >
             {description}
           </p>
