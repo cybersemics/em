@@ -733,6 +733,9 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
+
+    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
@@ -759,6 +762,8 @@ describe('multicursor', () => {
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
     acknowledgeAiDisclosure()
 
+    // The selected thoughts are generated concurrently in document order, so the mocked responses are consumed in the
+    // order a, b, c. Distinct content proves each response is applied to its own thought.
     mockFetch
       .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'one' }) })
       .mockResolvedValueOnce({ json: () => Promise.resolve({ thought: 'two' }) })
@@ -781,6 +786,9 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
+
+    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
@@ -823,6 +831,9 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
+
+    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
@@ -862,10 +873,14 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
+
+    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
 
+    // Precondition: all three thoughts were generated, otherwise the undo below would have nothing to revert.
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - one
   - two
@@ -877,6 +892,8 @@ describe('multicursor', () => {
   - a
   - b
   - c`)
+
+    // The whole run is a single undo step labelled with the command, rather than one Edit Thought step per generation.
     expect(store.getState().alert?.value).toBe('Undo: Generate Thought')
 
     vi.unstubAllEnvs()
@@ -905,10 +922,15 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
+
+    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
 
+    // Precondition: both thoughts were generated, otherwise there would be no completion that could have moved the
+    // cursor.
     const state = store.getState()
     expectPathToEqual(state, state.cursor, ['one'])
     expect(
@@ -942,10 +964,14 @@ describe('multicursor', () => {
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
+
+    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
 
+    // a is left at its original value, without the pending ellipsis, and b is generated as usual.
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
   - two`)
@@ -974,12 +1000,17 @@ describe('multicursor', () => {
       addMulticursor(['b']),
     ])
 
+    // The keydown handler gates execution on canExecute against the real state, so a cursorless multiselect would not
+    // otherwise reach executeCommandWithMulticursor.
     expect(store.getState().cursor).toBeNull()
     expect(generateThought.canExecute!(store.getState())).toBe(true)
 
     await act(async () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
+
+    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
+    // going false is exactly the condition that all of the requests have been applied.
     await act(async () => {
       await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
     })
