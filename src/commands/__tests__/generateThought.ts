@@ -506,7 +506,7 @@ test('preserve an edit made while the thought is generating as its own undo step
   acknowledgeAiDisclosure()
 
   /** Resolves the pending AI request. Assigned when the mocked fetch is called, so the test controls exactly when the generation completes. */
-  let resolveAiRequest: (response: { json: () => Promise<{ content: string; err: null }> }) => void = () => {}
+  let resolveAiRequest: (response: { json: () => Promise<{ thought: string }> }) => void = () => {}
   mockFetch.mockImplementationOnce(
     () =>
       new Promise(resolve => {
@@ -538,7 +538,7 @@ test('preserve an edit made while the thought is generating as its own undo step
   await dispatch(editThought(['banana'], 'banan'))
 
   await act(async () => {
-    resolveAiRequest({ json: () => Promise.resolve({ content: 'generated', err: null }) })
+    resolveAiRequest({ json: () => Promise.resolve({ thought: 'a generated' }) })
   })
 
   // Precondition: the generation was applied after the interleaved edit.
@@ -563,7 +563,7 @@ test('preserve an addition made while the thought is generating as its own undo 
   acknowledgeAiDisclosure()
 
   /** Resolves the pending AI request. Assigned when the mocked fetch is called, so the test controls exactly when the generation completes. */
-  let resolveAiRequest: (response: { json: () => Promise<{ content: string; err: null }> }) => void = () => {}
+  let resolveAiRequest: (response: { json: () => Promise<{ thought: string }> }) => void = () => {}
   mockFetch.mockImplementationOnce(
     () =>
       new Promise(resolve => {
@@ -595,7 +595,7 @@ test('preserve an addition made while the thought is generating as its own undo 
   await dispatch(editThought(['b'], 'bee'))
 
   await act(async () => {
-    resolveAiRequest({ json: () => Promise.resolve({ content: 'generated', err: null }) })
+    resolveAiRequest({ json: () => Promise.resolve({ thought: 'a generated' }) })
   })
 
   // Precondition: the generation was applied after the interleaved edit.
@@ -620,7 +620,7 @@ test('preserve the generated value when an edit made after generation is undone'
   acknowledgeAiDisclosure()
 
   mockFetch.mockResolvedValueOnce({
-    json: () => Promise.resolve({ content: 'generated', err: null }),
+    json: () => Promise.resolve({ thought: 'a generated' }),
   })
 
   await dispatch([
