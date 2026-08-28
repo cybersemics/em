@@ -3,7 +3,7 @@ import State from '../@types/State'
 import testFlags from '../e2e/testFlags'
 import debugLog from '../util/debugLog'
 
-/** Redux Middleware for logging all actions. Logs to the console when testFlags.logActions is set (useful for e2e/remote debugging when Redux Developer Tools are not available), and captures every action into the persistent debugLog when it is enabled (see the Debug Logging setting). */
+/** Redux Middleware for logging all actions. Logs to the console when testFlags.logActions is set (useful for e2e/remote debugging when Redux Developer Tools are not available), and captures every action into the persistent debugLog when it is enabled (via the Debug Logging setting, or automatically on development and preview hosts). */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const loggerMiddleware: Middleware<any, State, Dispatch> = () => {
   return next => action => {

@@ -135,3 +135,50 @@ describe('format', () => {
     expect(text).toContain('"data":" "')
   })
 })
+
+// Auto-enable is decided at module load, so each case stubs the environment, resets the module registry, and imports a fresh instance (the same pattern as the hydration test above). The localhost hostname comes from jsdom's default URL; the *.vercel.app case needs a different jsdom URL, which is only configurable per file, so it lives in debugLogVercel.ts.
+describe('auto-enable', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    // no-ops unless the corresponding test failed before its own cleanup
+    Reflect.deleteProperty(navigator, 'webdriver')
+    vi.doUnmock('@capacitor/core')
+  })
+
+  it('does not auto-enable in the test environment', async () => {
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('auto-enables on localhost outside the test environment and records a session marker', async () => {
+    vi.stubEnv('MODE', 'development')
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(true)
+    expect(fresh.isEnabled()).toBe(true)
+    expect(fresh.read().some(e => e.type === 'session')).toBe(true)
+    // stop the fresh instance's frame heartbeat so it cannot log into later tests
+    fresh.setEnabled(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('does not auto-enable in automated browser sessions (navigator.webdriver)', async () => {
+    vi.stubEnv('MODE', 'development')
+    Object.defineProperty(navigator, 'webdriver', { value: true, configurable: true })
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('does not auto-enable in the native Capacitor shell', async () => {
+    vi.stubEnv('MODE', 'production')
+    vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true } }))
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+})

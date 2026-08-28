@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core'
 import pkg from '../../package.json'
 import storage from './storage'
 
@@ -50,6 +51,19 @@ let lastTime = 0
 let frameId: number | null = null
 // performance.now() of the last emitted frame heartbeat, used to throttle it
 let lastFrameLogged = 0
+
+/** True when the app is served from a development or preview host, where logging is always on: localhost (or another loopback address, matching serviceWorkerRegistration.ts) and Vercel preview deployments (*.vercel.app). Excludes the test environments that also run on localhost — Vitest via MODE, Puppeteer via navigator.webdriver — so tests keep explicit setEnabled semantics and production timing, and excludes the native Capacitor and Tauri shells, which serve production builds from localhost-like origins (capacitor://localhost, https://localhost, tauri://localhost). */
+const autoEnabled =
+  typeof window !== 'undefined' &&
+  typeof navigator !== 'undefined' &&
+  import.meta.env.MODE !== 'test' &&
+  !navigator.webdriver &&
+  !Capacitor.isNativePlatform() &&
+  /^https?:$/.test(window.location.protocol) &&
+  (window.location.hostname === 'localhost' ||
+    window.location.hostname === '[::1]' ||
+    /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/.test(window.location.hostname) ||
+    window.location.hostname.endsWith('.vercel.app'))
 
 /** Truncates over-long string fields so a single pathological value cannot exhaust the localStorage quota. */
 const capFields = (fields?: Record<string, unknown>): Record<string, unknown> => {
@@ -168,8 +182,12 @@ const setEnabled = (value: boolean): void => {
   }
 }
 
+// Start logging immediately on development and preview hosts so initialization is captured, rather than waiting for the settings mirror in AppComponent to mount. The mirror ORs the Debug Logging setting with autoEnabled, so toggling the setting cannot turn auto logging off.
+if (autoEnabled) setEnabled(true)
+
 /** A synchronous, bounded, persistent rolling debug log for diagnosing catastrophic bugs (e.g. freezes) that survive a device restart, where console logging is unavailable. See src/util/debugLog.ts. */
 const debugLog = {
+  autoEnabled,
   clear,
   format,
   isEnabled,

@@ -116,12 +116,12 @@ const FontSize = () => {
   )
 }
 
-/** Controls for the persistent debug log: copy the captured entries to the clipboard or clear them. Only rendered when Debug Logging is enabled. */
+/** Controls for the persistent debug log: copy the captured entries to the clipboard or clear them. Only rendered when Debug Logging is enabled, either through the setting or automatically on development and preview hosts. */
 const DebugLog = () => {
-  const enabled = useSelector(getUserSetting(Settings.debugCrashLog))
+  const settingEnabled = useSelector(getUserSetting(Settings.debugCrashLog))
   const [status, setStatus] = useState<string | null>(null)
 
-  if (!enabled) return null
+  if (!settingEnabled && !debugLog.autoEnabled) return null
 
   return (
     <div className={css({ marginTop: '1em' })}>
@@ -227,6 +227,8 @@ const ModalSettings = () => {
           Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes).
           Everything is stored locally on this device and nothing is transmitted. Leave this off unless a developer asks
           you to enable it. Use “Copy debug log” to share the captured log.
+          {debugLog.autoEnabled &&
+            ' Debug Logging is always on in this development or preview version of em, regardless of this setting.'}
         </Setting>
 
         <DebugLog />
