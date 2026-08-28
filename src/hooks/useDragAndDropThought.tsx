@@ -34,6 +34,7 @@ import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
+import prevSibling from '../selectors/prevSibling'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
@@ -242,6 +243,11 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
             oldPath: thoughtFrom,
             newPath,
             newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
+            // props.simplePath is a SimplePath, so its previous sibling must always be resolved in normal view.
+            // See the note in DropHover on why the context view would otherwise be inferred for a cyclic context.
+            afterId: prevPath
+              ? head(prevPath)
+              : (prevSibling(state, props.simplePath, { showContexts: false })?.id ?? null),
           }),
         )
       }

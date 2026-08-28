@@ -30,7 +30,7 @@ it('toggle on when there is no =pin attribute', () => {
   executeCommand(pinCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - =pin
@@ -63,7 +63,7 @@ it('toggle on when =pin/false', () => {
   executeCommand(pinCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - =pin
@@ -96,7 +96,7 @@ it('remove =pin when toggling off', () => {
   executeCommand(pinCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -127,7 +127,7 @@ it('remove =pin/true when toggling off', () => {
   executeCommand(pinCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -162,7 +162,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - =pin
@@ -203,7 +203,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
     - c
@@ -237,7 +237,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =pin
     - b
@@ -271,7 +271,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c
@@ -302,7 +302,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(pinCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - =pin

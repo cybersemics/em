@@ -1,9 +1,10 @@
 import path from 'path'
-import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
@@ -449,6 +450,37 @@ describe('drop', () => {
       })
     })
   })
+
+  // https://github.com/cybersemics/em/issues/5089
+  it('drops a thought dragged out of a cyclic context', async () => {
+    await paste(`
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `)
+
+    await clickThought('a')
+    await clickThought('m')
+    await command('toggleContextView')
+    // move the cursor to the cyclic context a/m~/a so that x is rendered
+    await press('ArrowDown')
+    await waitForEditable('x')
+
+    await dragAndDropThought('x', 'm', { position: 'before' })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+  - x
+  - m
+- b
+  - m
+    - y
+`)
+  })
 })
 
 /* Multiple drop hovers pinned in a single snapshot for comparison of their relative position and width.
@@ -513,9 +545,8 @@ describe('hover expansion', () => {
     await hideHUD()
 
     // inject MOCK_EXPAND_HOVER_DELAY
-    const em = window.em as WindowEm
     await page.evaluate(value => {
-      em.testFlags.expandHoverDelay = value
+      window.em.testFlags.expandHoverDelay = value
     }, MOCK_EXPAND_HOVER_DELAY)
   })
 

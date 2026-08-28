@@ -20,10 +20,18 @@ jobs:
 
     strategy:
       # Deploy each Vercel project independently; one failing project must not
-      # block the other.
+      # block the others. Kept while the matrix has a single entry so that
+      # restoring em-ai below needs no other change.
       fail-fast: false
       matrix:
-        project: [em, em-ai]
+        # em-ai is disabled until its Vercel project is configured correctly. Its build
+        # fails typechecking packages/ai/src/prompt.ts (TS2351: the default `openai`
+        # import is not constructable), so every push to main reported a failed
+        # "Deploy em-ai" job alongside a successful "Deploy em":
+        # https://github.com/cybersemics/em/actions/runs/32899468133/job/97969643022
+        # Re-enable by adding em-ai back to this list; the env below already selects
+        # its project ID.
+        project: [em]
 
     # Serialize production deploys per project without cancelling an in-flight
     # deploy, so overlapping pushes to main queue rather than race.

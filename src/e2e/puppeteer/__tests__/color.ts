@@ -3,6 +3,7 @@ import rgbToHex from '../../../util/rgbToHex'
 import rgbaToHex from '../../../util/rgbaToHex'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
@@ -10,10 +11,10 @@ import getSelection from '../helpers/getSelection'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import keyboard from '../helpers/keyboard'
 import multiselectThoughts from '../helpers/multiselectThoughts'
-import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -53,6 +54,20 @@ const setNoteCaret = (offset: number) =>
 /** Waits one frame for selectionchange-driven command state to propagate. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
+/** Returns the background that actually paints behind the code text of the thought being edited, i.e. the nearest
+ * self-or-ancestor of the code element that is not transparent. */
+const codeBackgroundColor = () =>
+  page.evaluate(() => {
+    const code = document.querySelector('[data-editing=true] [data-editable] code')
+    if (!code) throw new Error('No code element found in the editing thought')
+    for (let el: Element | null = code; el; el = el.parentElement) {
+      const backgroundColor = window.getComputedStyle(el).backgroundColor
+      if (backgroundColor && backgroundColor !== 'transparent' && !backgroundColor.startsWith('rgba(0, 0, 0, 0'))
+        return backgroundColor
+    }
+    return null
+  })
+
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 it('Set the text color of the text and bullet', async () => {
@@ -64,8 +79,7 @@ it('Set the text color of the text and bullet', async () => {
 
   await clickThought('Golden Retriever')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
 
   const cursorText = await getEditingText()
   const bulletColor = await getBulletColor()
@@ -76,10 +90,14 @@ it('Set the text color of the text and bullet', async () => {
 })
 
 it('Bullet keeps the font color after deleting all text without moving the cursor', async () => {
-  await newThought('hello')
+  const importText = `
+    - hello`
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await paste(importText)
+
+  await clickThought('hello')
+
+  await clickToolbar('Text Color', 'text color swatches', 'red')
   await waitForEditable('<font color="#ff573d">hello</font>')
 
   const bulletColorBeforeDelete = await getBulletColor()
@@ -101,10 +119,14 @@ it('Bullet keeps the font color after deleting all text without moving the curso
 })
 
 it('Bullet clears the font color after deleting all text and moving the cursor away', async () => {
-  await newThought('hello')
+  const importText = `
+    - hello`
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await paste(importText)
+
+  await clickThought('hello')
+
+  await clickToolbar('Text Color', 'text color swatches', 'red')
   await waitForEditable('<font color="#ff573d">hello</font>')
 
   await selectAllEditingText()
@@ -143,15 +165,13 @@ it('Bullet keeps the font color after applying Upper Case', async () => {
   await clickThought('hello')
 
   // apply a font color
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
 
   let bulletColor = await getBulletColor()
   expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
 
   // apply Upper Case; the bullet should still match the font color (markup must not be corrupted)
-  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
-  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+  await clickToolbar('Letter Case', 'UpperCase')
 
   const cursorText = await getEditingText()
   expect(cursorText).toContain('HELLO')
@@ -168,8 +188,7 @@ it('Set the background color of the text', async () => {
   await paste(importText)
 
   await clickThought('Golden Retriever')
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await clickToolbar('Text Color', 'background color swatches', 'green')
 
   const cursorText = await getEditingText()
   const bulletColor = await getBulletColor()
@@ -189,8 +208,7 @@ it('Bullet tracks the font color on a numeric thought that has a background colo
   expect(extractColor(cursorText!)?.backgroundColor).toBe(null)
 
   // apply a background color first
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await clickToolbar('Text Color', 'background color swatches', 'green')
   cursorText = await getEditingText()
   const backStyle = extractColor(cursorText!)
   expect(backStyle?.backgroundColor && rgbToHex(backStyle.backgroundColor)).toBe(rgbaToHex(colors.light.green))
@@ -217,8 +235,7 @@ it('Bullet remains the default color when a substring color is set', async () =>
 
   await setSelection(0, 6)
   // Set color for selected text
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
 
   // Verify bullet color remains default and only substring is colored
   const bulletColor = await getBulletColor()
@@ -233,12 +250,11 @@ it('remove all formatting from the thought', async () => {
 
   await clickThought('Labrador')
   // Apply formats like Bold, Italic, Underline, Text color etc.
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Italic"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Underline"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Strikethrough"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickToolbar('Bold')
+  await clickToolbar('Italic')
+  await clickToolbar('Underline')
+  await clickToolbar('Strikethrough')
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
 
   await press('0', { meta: true }) // Remove Format.
 
@@ -267,8 +283,7 @@ it('Verify superscript colors in different views', async () => {
   // Test 1: Verify that partial text coloring doesn't affect superscript
   await clickThought('hello world')
   await setSelection(6, 11) // Select only "world" in "hello world"
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await clickToolbar('Text Color', 'text color swatches', 'red')
 
   const supColor1 = await getSuperscriptColor()
   expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
@@ -293,13 +308,15 @@ it('Verify superscript colors in different views', async () => {
   // Switch to context view and verify superscript color
   await clickThought('a')
   await clickThought('m')
-  await click('[data-testid="toolbar-icon"][aria-label="Context View"]')
+  await clickToolbar('Context View')
 
-  // ArrowDown to the green 'b' context. Keyboard traversal visits the first context and its child before reaching it.
-  // TODO: Why does clickThought('b') not work here?
-  await press('ArrowDown')
-  await press('ArrowDown')
-  await press('ArrowDown')
+  // Click the green 'b' context. clickThought matches the editable's innerHTML, which is why the color markup has to
+  // be included: after 'b' is colored, its value is no longer the bare 'b' that clickThought('b') would look for.
+  await clickThought('<font color="#00d688">b</font>')
+
+  // The superscript is only read from the thought under the cursor, so wait for the click to land before reading it.
+  await waitForCursor('<font color="#00d688">b</font>')
+
   const supColor3 = await getSuperscriptColor()
   expect(supColor3).toBeTruthy()
   expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
@@ -313,8 +330,7 @@ it('Clicking on a formatting tag does not close color dropdown', async () => {
 
   await clickThought('Golden Retriever')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
   await clickThought('<font color="#00c7e6">Golden Retriever</font>')
 
   const textColorSwatch = await page.$('[aria-label="text color swatches"] [aria-label="blue"]')
@@ -331,8 +347,7 @@ it('Toggle the background color of the note', async () => {
   `)
 
   await clickFirstNote()
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await clickToolbar('Text Color', 'background color swatches', 'green')
 
   const intermediate = await getFirstNoteText()
   expect(intermediate).toBe('<font color="#000000" style="background-color: rgb(0, 214, 136);">Note</font>')
@@ -353,8 +368,7 @@ it('A thought and a note can have the same background color', async () => {
 
   // set the background color on the thought
   await clickThought('a')
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await clickToolbar('Text Color', 'background color swatches', 'green')
 
   // set the background color on the note
   await clickFirstNote()
@@ -374,8 +388,7 @@ it('Can change the color of a thought that already has the same color applied to
   `)
 
   // change the color on the thought
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await clickToolbar('Text Color', 'text color swatches', 'red')
 
   const thought = await getEditingText()
   expect(thought).toBe('<font color="#ff573d">some formatted text</font>')
@@ -388,8 +401,7 @@ it('Can change the background color of a thought that already has the same backg
   `)
 
   // change the background color on the thought
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="red"]')
+  await clickToolbar('Text Color', 'background color swatches', 'red')
 
   const thought = await getEditingText()
   expect(thought).toBe('<font color="#000000" style="background-color: rgb(255, 87, 61);">some formatted text</font>')
@@ -405,8 +417,7 @@ it('Can change the color of a note that already has the same color applied to pa
 
   // change the color on the note
   await clickFirstNote()
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="red"]')
+  await clickToolbar('Text Color', 'text color swatches', 'red')
 
   const note = await getFirstNoteText()
   expect(note).toBe('<font color="#ff573d">some formatted text</font>')
@@ -481,7 +492,7 @@ it('caret stays in place when applying font color to a note that has a backgroun
   // place the caret in the middle of the note text
   await setNoteCaret(10)
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await clickToolbar('Text Color')
 
   // apply a background color to the whole note
   await click('[aria-label="background color swatches"] [aria-label="green"]')
@@ -511,7 +522,7 @@ it('caret stays in place when repeatedly applying font color over background col
   // place the caret in the middle of the note text
   await setNoteCaret(10)
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await clickToolbar('Text Color')
 
   // apply background then font color twice; the resolved caret offset is identical each time,
   // so the caret restoration must re-fire even when the offset does not change (#4630)
@@ -539,8 +550,7 @@ it('Set text color with multicursor selection', async () => {
   // Ctrl+click both thoughts to add them both to the multicursor set.
   await multiselectThoughts(['Labrador', 'Golden Retriever'])
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
 
   // Verify the cursor thought (Golden Retriever) has the correct color.
   const goldenText = await getEditingText()
@@ -562,8 +572,7 @@ it('Set background color with multicursor selection', async () => {
   // Ctrl+click both thoughts to add them both to the multicursor set.
   await multiselectThoughts(['Labrador', 'Golden Retriever'])
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await clickToolbar('Text Color', 'background color swatches', 'green')
 
   // Verify the cursor thought (Golden Retriever) has the correct background color.
   const goldenText = await getEditingText()
@@ -575,4 +584,45 @@ it('Set background color with multicursor selection', async () => {
   const labradorText = await getEditingText()
   const labradorBgColor = extractColor(labradorText!)?.backgroundColor
   expect(labradorBgColor && rgbToHex(labradorBgColor)).toBe(rgbaToHex(colors.light.green))
+})
+
+// https://github.com/cybersemics/em/issues/4234
+it('Set the background color of text that is marked as code', async () => {
+  const importText = `
+  - Hello beautiful people`
+
+  await paste(importText)
+
+  await clickThought('Hello beautiful people')
+
+  await setSelection(6, 15)
+  await press('K', { meta: true })
+  await waitForEditable('Hello <code>beautiful</code> people')
+
+  await clickToolbar('Text Color', 'background color swatches', 'red')
+  await nextFrame()
+
+  const background = await codeBackgroundColor()
+  expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
+})
+
+// https://github.com/cybersemics/em/issues/4234
+it('Set the background color of text that is marked as code with the =style attribute', async () => {
+  const importText = `
+  - Hello beautiful people
+    - =style
+      - background-color
+        - red`
+
+  await paste(importText)
+
+  await clickThought('Hello beautiful people')
+
+  await setSelection(6, 15)
+  await press('K', { meta: true })
+  await waitForEditable('Hello <code>beautiful</code> people')
+  await nextFrame()
+
+  const background = await codeBackgroundColor()
+  expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
 })

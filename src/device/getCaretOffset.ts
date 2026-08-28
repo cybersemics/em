@@ -474,6 +474,10 @@ const getCaretOffset = (editable: HTMLElement | null, { clientX, clientY }: Coor
   if (!text) return { offset: 0 }
 
   const lines = getTextNodeLines(nearest)
+  // Lines are derived from character rects, so a text node with no layout (a zero-size rect, as in jsdom)
+  // yields none. There is no offset to compute in that case; defer to the browser's default caret placement.
+  if (!lines.length) return { offset: null }
+
   const targetLine = findClosestLine(lines, clientY)
   const lineIndex = lines.indexOf(targetLine)
   const lastLineIndex = lines.length - 1

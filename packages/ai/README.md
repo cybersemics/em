@@ -34,6 +34,8 @@ Other scripts:
 
 The package is deployed by a dedicated Vercel project (`em-ai`) connected to this repository.
 
+> **Note:** Deployment is currently disabled. Vercel's own Git auto-deploy is off for every branch (`vercel.json`), and the [Vercel Production workflow](../../.github/workflows/vercel-production.yml) — which deploys each project on push to `main` — has `em-ai` removed from its matrix, because the Vercel build fails typechecking `src/prompt.ts` with `TS2351` (the default `openai` import is not constructable). Nothing deploys this package until that is fixed and `em-ai` is added back to the matrix. `yarn lint` at the repo root will not catch it: root `tsc` includes only `src/`, so this package is type-checked only by its own `yarn typecheck` and by the Vercel build.
+
 In the Vercel project settings (Settings → Build and Deployment):
 
 - **Root Directory** = `packages/ai`. Keep "Include files outside of the Root Directory" enabled so the Yarn workspace install resolves from the repo root.

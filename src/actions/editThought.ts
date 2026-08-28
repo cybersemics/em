@@ -6,7 +6,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../data-providers/thoughtspaceSession'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
@@ -41,6 +41,8 @@ export interface editThoughtPayload {
   oldValue: string
   newValue: string
   path: SimplePath
+  /** Isolate the edit in the undo history: it never merges with a contiguous edit on either side, so it is always its own undo step. Set on programmatic edits such as a generated thought, which are not part of the user's typing stream. */
+  preventMerge?: boolean
 }
 
 /** Changes the text of an existing thought. */

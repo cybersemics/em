@@ -4,9 +4,9 @@ import Icon from '../components/icons/LetterCaseWithPicker'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 /** Toggle the letter case picker. */
-const letterCase: Command = {
+const letterCase = {
   id: 'letterCase',
-  label: 'Letter Case',
+  label: 'Letter Case' as const,
   description: 'Change the Letter case.',
   svg: Icon,
   canExecute: state => isDocumentEditable() && !!state.cursor,
@@ -16,6 +16,6 @@ const letterCase: Command = {
   },
   isActive: state => !!state.cursor,
   isDropdownOpen: state => !!state.showLetterCase,
-}
+} satisfies Command
 
 export default letterCase

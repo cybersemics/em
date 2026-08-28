@@ -1,5 +1,5 @@
-import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import exportThoughts from '../helpers/exportThoughts'
 import paste from '../helpers/paste'
 
@@ -26,21 +26,19 @@ it('a thought formatted with multiple styles is given greater priority than thou
   await clickThought('A')
 
   // Sort - Alphabetically - Descending (None → Alphabetical/Asc → Alphabetical/Desc)
-  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
-  await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Sort Picker"]')
-  await click('[aria-label="sort options"] [aria-label="Alphabetical"]')
+  await clickToolbar('Sort Picker', 'Alphabetical')
+  await clickToolbar('Sort Picker', 'Alphabetical')
 
   // Add Bold to E and C
   await clickThought('E')
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await clickToolbar('Bold')
   await clickThought('C')
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await clickToolbar('Bold')
 
   // Add Italic to D, then Bold to D (cursor remains on D after each format)
   await clickThought('D')
-  await click('[data-testid="toolbar-icon"][aria-label="Italic"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await clickToolbar('Italic')
+  await clickToolbar('Bold')
 
   await clickThought('B')
 

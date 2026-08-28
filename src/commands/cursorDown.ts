@@ -25,9 +25,9 @@ import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorDownCommand: Command = {
+const cursorDownCommand = {
   id: 'cursorDown',
-  label: 'Cursor Down',
+  label: 'Cursor Down' as const,
   keyboard: [{ key: Key.ArrowDown }, { key: Key.ArrowDown, shift: true }],
   hideFromHelp: true,
   multicursor: false,
@@ -123,6 +123,6 @@ const cursorDownCommand: Command = {
       dispatch(lastPath ? setCursor({ path: lastPath }) : cursorDown())
     }
   }),
-}
+} satisfies Command
 
 export default cursorDownCommand
