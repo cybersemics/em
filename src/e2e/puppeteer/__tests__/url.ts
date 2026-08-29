@@ -98,7 +98,7 @@ it('collapsed thought with url child', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/4684
-it.skip('url icon hangs no lower than the email icon', async () => {
+it('url icon hangs no lower than the email icon', async () => {
   await paste(`
     - https://test.com
     - test@test.com

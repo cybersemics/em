@@ -10,8 +10,9 @@ const UrlIcon = () => {
       viewBox='0 0 30 30'
       className={css({
         marginLeft: '2px',
-        // Make sure the icon doesn't take up extra space.
-        padding: '0.05em 0.167em 0.167em 0',
+        // Pad only the right, to separate the icon from the text that follows it. Vertical padding would make the
+        // svg taller than the 1em link that clips it, pushing the icon below the text baseline.
+        paddingRight: '0.167em',
         cursor: 'pointer',
       })}
     >
