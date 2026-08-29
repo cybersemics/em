@@ -10,6 +10,23 @@ on:
         description: 'Optional ID for tracking repeated runs'
         required: false
 
+# Supersede the in-progress run when a pull request is pushed again; its result is about to be
+# replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
+# so it is already per-PR. (vercel-preview.yml must key on the PR number instead because
+# pull_request_target sets github.ref to the base branch.)
+#
+# workflow_dispatch falls back to github.run_id, which is unique per run and therefore never
+# collides. That is deliberate, and not the same as cancel-in-progress: false — a shared group with
+# cancellation off *queues* runs, and GitHub cancels a pending run when a newer one queues behind
+# it, which would break the `ghworkflow` flake hunt (docs/testing.md § Triggering GitHub Actions
+# workflows manually) that fans out many runs on one ref.
+#
+# This group is separate from ios.yml's `browserstack` one, so the contention noted on the ios job
+# below is unchanged; cancelling a superseded run only ever reduces the draw on that shared pool.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -17,6 +34,10 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
+  # Skip Puppeteer's Chrome download on install — none of this workflow's jobs uses the bundled
+  # browser (Puppeteer tests attach to the browserless/chrome service via CDP; only
+  # agent-scripts.yml launches the bundled browser), saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -32,16 +53,21 @@ jobs:
       has_ios: ${{ steps.classify.outputs.has_ios }}
       has_skipped_unit: ${{ steps.classify.outputs.has_skipped_unit }}
       has_skipped_puppeteer: ${{ steps.classify.outputs.has_skipped_puppeteer }}
+      has_skipped_ios: ${{ steps.classify.outputs.has_skipped_ios }}
       unit_files: ${{ steps.classify.outputs.unit_files }}
       puppeteer_files: ${{ steps.classify.outputs.puppeteer_files }}
       ios_files: ${{ steps.classify.outputs.ios_files }}
+      helper_files: ${{ steps.classify.outputs.helper_files }}
       skipped_unit_files: ${{ steps.classify.outputs.skipped_unit_files }}
       skipped_puppeteer_files: ${{ steps.classify.outputs.skipped_puppeteer_files }}
+      skipped_ios_files: ${{ steps.classify.outputs.skipped_ios_files }}
       merge_base: ${{ steps.classify.outputs.merge_base }}
+      tdd_commit: ${{ steps.tdd_commit.outputs.tdd_commit }}
       skip: ${{ steps.skip.outputs.skip }}
       skip_reason: ${{ steps.skip.outputs.reason }}
       skip_unit: ${{ steps.skip.outputs.skip_unit }}
       skip_puppeteer: ${{ steps.skip.outputs.skip_puppeteer }}
+      skip_ios: ${{ steps.skip.outputs.skip_ios }}
 
     steps:
       - name: Clone repository
@@ -111,6 +137,7 @@ jobs:
 
           UNIT_SKIPPED_FILES=$(filter_added_skipped_tests "$UNIT_FILES" "$MERGE_BASE" "$HEAD_SHA")
           PUPPETEER_SKIPPED_FILES=$(filter_added_skipped_tests "$PUPPETEER_FILES" "$MERGE_BASE" "$HEAD_SHA")
+          IOS_SKIPPED_FILES=$(filter_added_skipped_tests "$IOS_FILES" "$MERGE_BASE" "$HEAD_SHA")
 
           UNIT_FILES=$(filter_new_tests "$UNIT_FILES" "$MERGE_BASE" "$HEAD_SHA")
           PUPPETEER_FILES=$(filter_new_tests "$PUPPETEER_FILES" "$MERGE_BASE" "$HEAD_SHA")
@@ -118,6 +145,12 @@ jobs:
 
           # All test files (union of the above)
           ALL_TEST_FILES=$(printf '%s\n' "$UNIT_FILES" "$PUPPETEER_FILES" "$IOS_FILES" | sed '/^$/d' | sort -u)
+
+          # Test infrastructure: helpers, config, setup, and shared e2e root files used
+          # by the tests. These are checked out onto base alongside the test files, since
+          # a test/support change cannot compile on base without its infrastructure.
+          HELPER_FILES=$(echo "$CHANGED_FILES" \
+            | grep -E '^src/test-helpers/.*\.tsx?$|^src/e2e/[^/]+\.tsx?$|^src/e2e/[^/]+/(helpers|config|setup)/.*\.tsx?$' || true)
 
           # Non-test application files: TypeScript source files that are not test files,
           # test helpers, or e2e infrastructure (helpers, config, setup).
@@ -146,6 +179,9 @@ jobs:
           echo ""
           echo "=== Non-test application files ==="
           echo "$NON_TEST_FILES"
+          echo ""
+          echo "=== Test infrastructure files ==="
+          echo "$HELPER_FILES"
 
           # Set outputs
           HAS_UNIT="false"
@@ -153,26 +189,31 @@ jobs:
           HAS_IOS="false"
           HAS_SKIPPED_UNIT="false"
           HAS_SKIPPED_PUPPETEER="false"
+          HAS_SKIPPED_IOS="false"
 
           if [ -n "$UNIT_FILES" ]; then HAS_UNIT="true"; fi
           if [ -n "$PUPPETEER_FILES" ]; then HAS_PUPPETEER="true"; fi
           if [ -n "$IOS_FILES" ]; then HAS_IOS="true"; fi
           if [ -n "$UNIT_SKIPPED_FILES" ]; then HAS_SKIPPED_UNIT="true"; fi
           if [ -n "$PUPPETEER_SKIPPED_FILES" ]; then HAS_SKIPPED_PUPPETEER="true"; fi
+          if [ -n "$IOS_SKIPPED_FILES" ]; then HAS_SKIPPED_IOS="true"; fi
 
           echo "has_unit=$HAS_UNIT" >> "$GITHUB_OUTPUT"
           echo "has_puppeteer=$HAS_PUPPETEER" >> "$GITHUB_OUTPUT"
           echo "has_ios=$HAS_IOS" >> "$GITHUB_OUTPUT"
           echo "has_skipped_unit=$HAS_SKIPPED_UNIT" >> "$GITHUB_OUTPUT"
           echo "has_skipped_puppeteer=$HAS_SKIPPED_PUPPETEER" >> "$GITHUB_OUTPUT"
+          echo "has_skipped_ios=$HAS_SKIPPED_IOS" >> "$GITHUB_OUTPUT"
 
           # Store file lists (newline-separated) for downstream jobs
           # Use base64 to safely pass through GITHUB_OUTPUT
           echo "unit_files=$(echo "$UNIT_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "puppeteer_files=$(echo "$PUPPETEER_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "ios_files=$(echo "$IOS_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "helper_files=$(echo "$HELPER_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_unit_files=$(echo "$UNIT_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "skipped_puppeteer_files=$(echo "$PUPPETEER_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
+          echo "skipped_ios_files=$(echo "$IOS_SKIPPED_FILES" | base64 -w 0)" >> "$GITHUB_OUTPUT"
           echo "merge_base=$MERGE_BASE" >> "$GITHUB_OUTPUT"
 
           # Store whether any non-test app code changed
@@ -188,6 +229,30 @@ jobs:
           echo "Has unit skipped tests: $HAS_SKIPPED_UNIT"
           echo "Has puppeteer skipped tests: $HAS_SKIPPED_PUPPETEER"
           echo "Has app code changes: $HAS_APP_CHANGES"
+
+      - name: Parse /tdd command from PR description
+        id: tdd_commit
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+
+          # Look for /tdd <commit> at the beginning of a line (7–40 lowercase hex chars)
+          TDD_COMMIT=$(printf '%s' "$PR_BODY" | grep -oP '^/tdd\s+\K[a-f0-9]{7,40}' | head -1 || true)
+
+          if [ -n "$TDD_COMMIT" ]; then
+            # Validate the commit exists in the repository
+            if git cat-file -t "$TDD_COMMIT" >/dev/null 2>&1; then
+              echo "Found /tdd command — using commit: $TDD_COMMIT"
+              echo "tdd_commit=$TDD_COMMIT" >> "$GITHUB_OUTPUT"
+            else
+              echo "::warning::/tdd commit '$TDD_COMMIT' not found in repository — falling back to base SHA: $BASE_SHA"
+              echo "tdd_commit=$BASE_SHA" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "No /tdd command found — using base SHA: $BASE_SHA"
+            echo "tdd_commit=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Check skip conditions
         id: skip
@@ -205,6 +270,7 @@ jobs:
           REASON=""
           SKIP_UNIT="false"
           SKIP_PUPPETEER="false"
+          SKIP_IOS="false"
 
           # 1. Check for skip-tdd label
           LABELS='${{ toJSON(github.event.pull_request.labels.*.name) }}'
@@ -221,6 +287,10 @@ jobs:
           if echo "$LABELS" | grep -q '"skip-tdd-puppeteer"'; then
             SKIP_PUPPETEER="true"
             REASON="${REASON:+$REASON; }PR has skip-tdd-puppeteer label"
+          fi
+          if echo "$LABELS" | grep -q '"skip-tdd-ios"'; then
+            SKIP_IOS="true"
+            REASON="${REASON:+$REASON; }PR has skip-tdd-ios label"
           fi
 
           # 2. No changed tests at all
@@ -244,12 +314,14 @@ jobs:
           echo "reason=$REASON" >> "$GITHUB_OUTPUT"
           echo "skip_unit=$SKIP_UNIT" >> "$GITHUB_OUTPUT"
           echo "skip_puppeteer=$SKIP_PUPPETEER" >> "$GITHUB_OUTPUT"
+          echo "skip_ios=$SKIP_IOS" >> "$GITHUB_OUTPUT"
 
           echo "=== Skip decision ==="
           echo "Skip: $SKIP"
           echo "Reason: $REASON"
           echo "Skip unit: $SKIP_UNIT"
           echo "Skip puppeteer: $SKIP_PUPPETEER"
+          echo "Skip ios: $SKIP_IOS"
 
   # ---------------------------------------------------------------------------
   # Unit: apply changed unit test diff to base, run them, expect failure.
@@ -264,48 +336,60 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ needs.detect.outputs.tdd_commit }}
           fetch-depth: 999
 
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
 
-      - name: Generate and apply test diff
+      - name: Restore GitHub Actions files from PR HEAD
+        if: github.event_name == 'pull_request'
+        run: git checkout FETCH_HEAD -- .github/actions/
+
+      - name: Checkout test files from PR head
         id: patch
         run: |
-          MERGE_BASE="${{ needs.detect.outputs.merge_base }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
           # Decode the file list
           UNIT_FILES=$(echo "${{ needs.detect.outputs.unit_files }}" | base64 -d)
 
           echo "=== Changed unit test files ==="
           echo "$UNIT_FILES"
 
-          # Generate diff for only the changed test files
-          # shellcheck disable=SC2086
-          git diff "$MERGE_BASE" "$HEAD_SHA" -- $UNIT_FILES > /tmp/test.patch || true
-
-          if [ ! -s /tmp/test.patch ]; then
-            echo "Empty patch — nothing to apply"
+          if [ -z "$UNIT_FILES" ]; then
+            echo "No unit test files to process"
             echo "empty=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "=== Patch preview (first 100 lines) ==="
-          head -100 /tmp/test.patch
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
 
-          # Apply the patch; allow failures for new files (--3way helps)
-          if git apply --3way /tmp/test.patch 2>/tmp/patch-error.log; then
-            echo "Patch applied successfully"
-            echo "empty=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::Patch application had issues (may be expected for new test files)"
-            cat /tmp/patch-error.log
-            # Try with --reject to apply what we can
-            git apply --reject /tmp/test.patch 2>/dev/null || true
-            echo "empty=false" >> "$GITHUB_OUTPUT"
-          fi
+          # Check out each test file directly from the PR head. This reliably handles
+          # both modified files and brand-new test files (including new directories),
+          # where git apply --3way can fail because there is no base blob to merge.
+          echo "=== Checking out test files from PR head ==="
+          for f in $UNIT_FILES; do
+            sync_from_head "$f"
+          done
+
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
+            sync_from_head "$f"
+          done
+
+          echo "empty=false" >> "$GITHUB_OUTPUT"
 
       - name: Enable Corepack
         if: steps.patch.outputs.empty != 'true'
@@ -325,10 +409,11 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: 'yarn'
 
       - name: Install npm dependencies
         if: steps.patch.outputs.empty != 'true'
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Run changed unit tests on base (expect failure)
         if: steps.patch.outputs.empty != 'true'
@@ -354,8 +439,9 @@ jobs:
             echo "This means the tests are genuinely covering new behavior."
           else
             echo ""
-            echo "❌ TDD concern: changed tests PASS on the base branch."
-            echo "This may indicate the tests do not cover new functionality introduced by this PR."
+            echo "❌ TDD flagged: changed tests PASS on the base branch."
+            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
+            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
             exit 1
           fi
 
@@ -379,7 +465,7 @@ jobs:
       - name: Clone repository
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ needs.detect.outputs.tdd_commit }}
           fetch-depth: 999
 
       - name: Fetch PR head
@@ -389,38 +475,52 @@ jobs:
         if: github.event_name == 'pull_request'
         run: git checkout FETCH_HEAD -- .github/actions/
 
-      - name: Generate and apply test diff
+      - name: Checkout test files and support from PR head
         id: patch
         run: |
-          MERGE_BASE="${{ needs.detect.outputs.merge_base }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-
           PUPPETEER_FILES=$(echo "${{ needs.detect.outputs.puppeteer_files }}" | base64 -d)
+          PUPPETEER_SUPPORT_FILES=$(git diff --name-only "${{ needs.detect.outputs.merge_base }}" FETCH_HEAD -- \
+            | grep -E '^src/e2e/(browserEnvironment|puppeteer)/(helpers|config|setup)/' || true)
 
           echo "=== Changed puppeteer test files ==="
           echo "$PUPPETEER_FILES"
+          echo "=== Changed puppeteer test support files ==="
+          echo "$PUPPETEER_SUPPORT_FILES"
 
-          # shellcheck disable=SC2086
-          git diff "$MERGE_BASE" "$HEAD_SHA" -- $PUPPETEER_FILES > /tmp/test.patch || true
-
-          if [ ! -s /tmp/test.patch ]; then
-            echo "Empty patch — nothing to apply"
+          if [ -z "$PUPPETEER_FILES" ]; then
+            echo "No puppeteer test files to process"
             echo "empty=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          echo "=== Patch preview (first 100 lines) ==="
-          head -100 /tmp/test.patch
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
 
-          if git apply --3way /tmp/test.patch 2>/tmp/patch-error.log; then
-            echo "Patch applied successfully"
-            echo "empty=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "::warning::Patch application had issues"
-            cat /tmp/patch-error.log
-            git apply --reject /tmp/test.patch 2>/dev/null || true
-            echo "empty=false" >> "$GITHUB_OUTPUT"
-          fi
+          # Test support is part of the test, not the application fix. Check it out
+          # with the test so the base-branch run reaches the behavioral assertion.
+          echo "=== Checking out puppeteer test files and support from PR head ==="
+          for f in $PUPPETEER_FILES $PUPPETEER_SUPPORT_FILES; do
+            sync_from_head "$f"
+          done
+
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
+            sync_from_head "$f"
+          done
+
+          echo "empty=false" >> "$GITHUB_OUTPUT"
 
       - name: Enable Corepack
         if: steps.patch.outputs.empty != 'true'
@@ -440,10 +540,11 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: 'yarn'
 
       - name: Install npm dependencies
         if: steps.patch.outputs.empty != 'true'
-        run: yarn
+        uses: ./.github/actions/install
 
       - name: Start SSL proxy
         if: steps.patch.outputs.empty != 'true'
@@ -479,37 +580,174 @@ jobs:
             echo "This means the tests are genuinely covering new behavior."
           else
             echo ""
-            echo "❌ TDD concern: changed puppeteer tests PASS on the base branch."
-            echo "This may indicate the tests do not cover new functionality introduced by this PR."
+            echo "❌ TDD flagged: changed puppeteer tests PASS on the base branch."
+            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
+            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
             exit 1
           fi
 
   # ---------------------------------------------------------------------------
-  # iOS BrowserStack: skipped in v1.
-  #
-  # BrowserStack iOS tests require BROWSERSTACK_USERNAME and
-  # BROWSERSTACK_ACCESS_KEY secrets, a running local server tunneled via
-  # BrowserStack Local, and real device time. Running these against the base
-  # branch just for TDD validation is expensive and complex.
-  #
-  # For now, if iOS tests change alongside app code, we note it but do not
-  # gate the PR. A future iteration can add this when cost/benefit is clearer.
+  # iOS BrowserStack: check out the changed iOS test diff onto base, run on
+  # BrowserStack, expect failure. Real device time — gate independently with the
+  # `skip-tdd-ios` label. Requires BROWSERSTACK_* secrets (available on same-repo
+  # PRs; fork PRs do not receive them and this job will be unable to authenticate).
   # ---------------------------------------------------------------------------
   ios:
-    name: TDD — iOS (skipped)
+    name: TDD — iOS tests
     needs: detect
-    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.has_ios == 'true'
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_ios != 'true' && needs.detect.outputs.has_ios == 'true'
     runs-on: ubuntu-latest
+    env:
+      # Activates the console proxy (src/util/consoleProxy.ts) at build time; BrowserStack can't access
+      # iOS console logs, and the wdio config's beforeTest waits for the proxy. Mirrors ios.yml.
+      VITE_BROWSER_CONSOLE_CAPTURE: 1
+
     steps:
-      - name: iOS TDD check not yet implemented
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.detect.outputs.tdd_commit }}
+          fetch-depth: 999
+
+      - name: Fetch PR head
+        run: git fetch origin ${{ github.event.pull_request.head.sha }}
+
+      - name: Restore GitHub Actions files from PR HEAD
+        if: github.event_name == 'pull_request'
+        run: git checkout FETCH_HEAD -- .github/actions/
+
+      - name: Checkout test files and support from PR head
+        id: patch
         run: |
-          echo "⚠️ Changed iOS test files detected, but BrowserStack TDD validation"
-          echo "is not yet implemented (requires secrets, device time, tunneling)."
-          echo ""
-          echo "Changed files:"
-          echo "${{ needs.detect.outputs.ios_files }}" | base64 -d
-          echo ""
-          echo "Skipping — this will be addressed in a future iteration."
+          IOS_FILES=$(echo "${{ needs.detect.outputs.ios_files }}" | base64 -d)
+          IOS_SUPPORT_FILES=$(git diff --name-only "${{ needs.detect.outputs.merge_base }}" FETCH_HEAD -- \
+            | grep -E '^src/e2e/(browserEnvironment|iOS)/(helpers|config|setup)/' || true)
+
+          echo "=== Changed iOS test files ==="
+          echo "$IOS_FILES"
+          echo "=== Changed iOS test support files ==="
+          echo "$IOS_SUPPORT_FILES"
+
+          if [ -z "$IOS_FILES" ]; then
+            echo "No iOS test files to process"
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
+
+          # Test support is part of the test, not the application fix. Check it out
+          # with the test so the base-branch run reaches the behavioral assertion.
+          echo "=== Checking out iOS test files and support from PR head ==="
+          for f in $IOS_FILES $IOS_SUPPORT_FILES; do
+            sync_from_head "$f"
+          done
+
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
+            sync_from_head "$f"
+          done
+
+          echo "empty=false" >> "$GITHUB_OUTPUT"
+
+      - name: Enable Corepack
+        if: steps.patch.outputs.empty != 'true'
+        run: corepack enable
+
+      - name: Unskip added iOS tests before running on base
+        if: steps.patch.outputs.empty != 'true' && needs.detect.outputs.has_skipped_ios == 'true'
+        uses: ./.github/actions/unskip-added-tests
+        with:
+          merge-base: ${{ needs.detect.outputs.merge_base }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          skipped-files: ${{ needs.detect.outputs.skipped_ios_files }}
+          no-files-message: No iOS skipped test files to unskip.
+
+      - name: Set Node.js version
+        if: steps.patch.outputs.empty != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        if: steps.patch.outputs.empty != 'true'
+        uses: ./.github/actions/install
+
+      - name: Build
+        if: steps.patch.outputs.empty != 'true'
+        run: yarn build
+
+      # Vite app-gate token (see tunnelTokenGate in vite.config.ts). Must be set before Serve
+      # starts the dev server, and passed to the test step below so the wdio config's tunnel-pool
+      # claim (cloudflareTunnelPool.ts) can prove a candidate is answering THIS run's server.
+      - name: Generate tunnel token
+        if: steps.patch.outputs.empty != 'true'
+        run: |
+          TOKEN=$(openssl rand -hex 16)
+          echo "::add-mask::$TOKEN"
+          echo "TUNNEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Serve
+        if: steps.patch.outputs.empty != 'true'
+        # HTTP=1 forces a plain-HTTP origin here: Cloudflare's tunnel already terminates HTTPS at its edge for Safari (a real CA-signed cert on the public hostname), so this local connector-to-origin hop never needs its own TLS.
+        run: HTTP=1 yarn servebuild &
+
+      - name: Run changed iOS tests on base (expect failure)
+        if: steps.patch.outputs.empty != 'true'
+        id: run_tests
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          BROWSERSTACK_BUILD_NAME: 'TDD - ${{ github.run_id }}'
+          BROWSERSTACK_PROJECT_NAME: 'em'
+          TUNNEL_TOKEN: ${{ env.TUNNEL_TOKEN }}
+          # Same tunnel pool ios.yml uses — see cloudflareTunnelPool.ts. Eliminates this job's
+          # previous fallback to an ephemeral *.trycloudflare.com quick tunnel. Note this means a
+          # TDD run and an ios.yml run can contend for the pool, since they are in different
+          # concurrency groups — that contention is what cloudflareTunnelPool.ts is built to resolve.
+          CLOUDFLARE_TUNNEL_POOL: ${{ secrets.CLOUDFLARE_TUNNEL_POOL }}
+        run: |
+          IOS_FILES=$(echo "${{ needs.detect.outputs.ios_files }}" | base64 -d)
+
+          echo "=== Running changed iOS tests ==="
+          echo "$IOS_FILES"
+
+          # wdio --spec filters the config's specs to the changed file(s).
+          SPEC_ARGS=""
+          for f in $IOS_FILES; do SPEC_ARGS="$SPEC_ARGS --spec $f"; done
+
+          set +e
+          yarn test:ios $SPEC_ARGS 2>&1
+          TEST_EXIT=$?
+          set -e
+
+          echo "test_exit=$TEST_EXIT" >> "$GITHUB_OUTPUT"
+
+          if [ "$TEST_EXIT" -ne 0 ]; then
+            echo ""
+            echo "✅ TDD validated: changed iOS tests FAIL on the base branch (exit code $TEST_EXIT)."
+            echo "This means the tests are genuinely covering new behavior."
+          else
+            echo ""
+            echo "❌ TDD flagged: changed iOS tests PASS on the base branch."
+            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
+            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-ios' label to the PR to skip this workflow."
+            exit 1
+          fi
 
   # ---------------------------------------------------------------------------
   # Summary: single status check that downstream branch protection can require.
@@ -561,18 +799,18 @@ jobs:
           # A job result of "skipped" means no changed tests of that type
 
           if [ "$UNIT_RESULT" = "failure" ]; then
-            echo "❌ Unit tests passed on base branch — TDD concern"
+            echo "❌ Unit tests passed on base branch — TDD flagged"
             FAILED="true"
           fi
 
           if [ "$PUPPETEER_RESULT" = "failure" ]; then
-            echo "❌ Puppeteer tests passed on base branch — TDD concern"
+            echo "❌ Puppeteer tests passed on base branch — TDD flagged"
             FAILED="true"
           fi
 
-          # iOS is informational only in v1
           if [ "$IOS_RESULT" = "failure" ]; then
-            echo "⚠️ iOS job had an issue (informational only)"
+            echo "❌ iOS tests passed on base branch — TDD flagged"
+            FAILED="true"
           fi
 
           if [ "$FAILED" = "true" ]; then

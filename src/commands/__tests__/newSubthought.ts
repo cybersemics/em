@@ -1,6 +1,8 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import store from '../../stores/app'
@@ -13,38 +15,191 @@ import newSubthoughtCommand from '../newSubthought'
 beforeEach(initStore)
 
 describe('multicursor', () => {
-  it('create a new subthought on the last multicursor', () => {
+  it('creates a new empty subthought in each selected thought', () => {
     store.dispatch([
       importText({
         text: `
-            - a
-            - b
-            - c
-            - d
-            - e
-          `,
+          - a
+          - b
+          - c
+        `,
       }),
-      setCursor(['c']),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
       addMulticursor(['c']),
-      addMulticursor(['d']),
+    ])
+
+    executeCommandWithMulticursor(newSubthoughtCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - ${''}
+  - b
+    - ${''}
+  - c
+    - ${''}`)
+  })
+
+  it('inserts the new subthought below existing children', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - a1
+            - a2
+          - b
+            - b1
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    executeCommandWithMulticursor(newSubthoughtCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - a1
+    - a2
+    - ${''}
+  - b
+    - b1
+    - ${''}`)
+  })
+
+  it('creates a subthought in each of a selected parent and its selected child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(newSubthoughtCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+      - ${''}
+    - ${''}
+  - c
+    - ${''}`)
+  })
+
+  it('places the cursor in the new subthought of the last selected thought', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
     ])
 
     executeCommandWithMulticursor(newSubthoughtCommand, { store })
 
     const state = store.getState()
-    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expectPathToEqual(state, state.cursor, ['b', ''])
+  })
+
+  it('selects the new subthoughts so that each of them is expanded into view', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    executeCommandWithMulticursor(newSubthoughtCommand, { store })
+
+    const state = store.getState()
+
+    expect(
+      Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
+    ).toEqual([
+      ['a', ''],
+      ['b', ''],
+    ])
+
+    // A thought is only expanded when it is the cursor or a multicursor parent, so the selection above is what makes both new subthoughts visible.
+    expect(
+      Object.values(state.expanded).map(path => childIdsToThoughts(state, path).map(thought => thought.value)),
+    ).toIncludeAllMembers([['a'], ['b']])
+  })
+
+  it('clears the multicursor when a single thought is selected, so that the new subthought can be typed into', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+    ])
+
+    executeCommandWithMulticursor(newSubthoughtCommand, { store })
+
+    expect(hasMulticursor(store.getState())).toBeFalse()
+  })
+
+  it('reverts every created subthought on a single undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(newSubthoughtCommand, { store })
+
+    // Precondition: all three subthoughts were created, otherwise the undo below would have nothing to revert.
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - ${''}
+  - b
+    - ${''}
+  - c
+    - ${''}`)
+
+    store.dispatch(undo())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
   - b
-  - c
-  - d
-    - ${''}
-  - e`)
-
-    // expect multicursor to be cleared
-    expect(hasMulticursor(state)).toBeFalse()
-
-    // expect cursor to be on the new thought
-    expectPathToEqual(state, state.cursor, ['d', ''])
+  - c`)
   })
 })

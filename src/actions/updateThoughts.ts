@@ -1,6 +1,4 @@
 import _ from 'lodash'
-import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
 import PushBatch from '../@types/PushBatch'
 import SimplePath from '../@types/SimplePath'
@@ -8,11 +6,9 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
 import { editThoughtPayload } from '../actions/editThought'
-import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN } from '../constants'
+import { HOME_TOKEN } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
-import { getLexeme } from '../selectors/getLexeme'
 import getSetting from '../selectors/getSetting'
-import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -21,7 +17,6 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
-import nonNull from '../util/nonNull'
 import reducerFlow from '../util/reducerFlow'
 
 export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdatesOld'> & {
@@ -78,84 +73,6 @@ const repairCursorReducer = (state: State): State => {
     : state
 }
 
-/** Creates a reducer spy that throws an error if any data integrity issues are found.
- * - No missing thought values.
- * - thought.parentId exists.
- * - child.parentId matches parent.children id.
- * - Each thought has a corresponding Lexeme.
- */
-const dataIntegrityCheck =
-  (thoughtIndexUpdates: Index<Thought | null>, lexemeIndexUpdates: Index<Lexeme | null>) => (state: State) => {
-    // undefined thought value
-    Object.entries(thoughtIndexUpdates).forEach(([id, thought]) => {
-      if (!thought) return
-      if (thought.value == null) {
-        console.error('id', id)
-        console.error('thought', thought)
-        throw new Error('Missing thought value')
-      }
-    })
-
-    Object.values(thoughtIndexUpdates).forEach(thought => {
-      if (!thought) return
-
-      // make sure thought.parentId exists in thoughtIndex
-      if (
-        ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
-        !getThoughtById(state, thought.parentId) &&
-        // Unfortunately 2-part deletes produce false positives of invalid parentId.
-        // False positives occur in Part II, so we can't check pendingDeletes (it has already been flushed).
-        // Instead, check the undo patch and disable the check if the last action is deleteThought or deleteThoughtWithCursor.
-        // It's hacky, but it seems better than omitting the check completely.
-        // If we get more false positives or false negatives, we can adjust the condition.
-        !state.undoPatches[state.undoPatches.length - 1]?.[0].actions[0]?.startsWith('deleteThought')
-      ) {
-        console.error('thought', thought)
-        throw new Error(`Parent ${thought.parentId} of ${thought.value} (${thought.id}) does not exist`)
-      }
-
-      // make sure thought's children's parentId matches the thought's id.
-      const children = Object.values(thought.childrenMap || {})
-        .map(id => getThoughtById(state, id))
-        // the child may not exist in the thoughtIndex yet if it is pending
-        .filter(nonNull)
-      children.forEach(child => {
-        if (child.parentId !== thought.id) {
-          console.error('child', child)
-          console.error('thought', thought)
-          throw new Error('child.parentId !== thought.id')
-        }
-      })
-
-      // assert that a lexeme exists for the thought
-      const lexeme = getLexeme(state, thought.value)
-      if (!lexeme) {
-        console.error('thought', thought)
-        throw new Error(`Thought "${thought.value}" (${thought.id}) is missing a corresponding Lexeme.`)
-      } else if (
-        ![HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(thought.id) &&
-        !lexeme.contexts.some(cx => cx === thought.id)
-      ) {
-        console.error('lexemeIndexUpdates', lexemeIndexUpdates)
-        console.error('thoughtIndexUpdates', thoughtIndexUpdates)
-        console.error('thought', thought)
-        console.error('lexeme', lexeme)
-        throw new Error(`Thought "${thought.value}" (${thought.id}) is missing from its Lexeme's contexts.`)
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      else if (Array.from(lexeme as any).length === 21) {
-        throw new Error(`Lexeme has been converted to an array? That can't be right.`)
-      }
-    })
-
-    return state
-  }
-
-/** Returns true if a non-root context begins with HOME_TOKEN. Used as a data integrity check. */
-// const isInvalidContext = (state: State, cx: ThoughtContext) => {
-//   cx && cx.context && cx.context[0] === HOME_TOKEN && cx.context.length > 1
-// }
-
 /**
  * Updates lexemeIndex and thoughtIndex with any number of thoughts.
  *
@@ -172,6 +89,7 @@ const updateThoughts = (
     updates,
     pendingDeletes,
     preventExpandThoughts,
+    movePlacements,
     local = true,
     remote = true,
     idbSynced,
@@ -186,8 +104,40 @@ const updateThoughts = (
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
   const lexemeIndexUpdatesOld = keyValueBy(lexemeIndexUpdates, key => ({ [key]: lexemeIndexOld[key] }))
 
+  // Last-write-wins guard for reconcile updates (local === false), e.g. a forced pull (RecentlyEdited's
+  // pullJumpHistory) or a cross-device onThoughtChange. The pulled snapshot is read asynchronously from
+  // the data provider and may predate a local edit that landed in the meantime; if it overwrote the newer
+  // in-memory thought it would corrupt parent/child links (e.g. after Swap Parent, producing a parent-chain
+  // cycle and hanging the app). Drop any incoming thought that is no newer than the existing non-pending
+  // thought.
+  //
+  // The comparison must be `<=`, not `<`: a single high-level action such as swapParent runs several
+  // moveThought reducers synchronously in one reducerFlow, so every thought it touches is stamped with the
+  // *same* lastUpdated millisecond, and each moveThought queues its own push batch — including the
+  // transient intermediate state (e.g. the old parent's childrenMap before the moved child is removed). A
+  // forced pull that reads that intermediate snapshot re-dispatches it with a lastUpdated equal to the
+  // final state's, so a strict `<` would let it through and clobber the correct result (planting a child in
+  // two contexts → cycle → hang, https://github.com/cybersemics/em/issues/3948). Because the final state is
+  // emitted last, its lastUpdated is always >= any intermediate, so `<=` reliably discards the stale echo
+  // while genuinely newer cross-device edits (strictly greater) still win.
+  //
+  // Skip when overwritePending is set (freeThoughts/deleteThought/generateThought intentionally overwrite)
+  // and keep deletions (null) and missing/pending thoughts so pulls still load them.
+  const thoughtIndexUpdatesFresh =
+    local || overwritePending
+      ? thoughtIndexUpdates
+      : keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {
+          const thoughtOld = thoughtIndexOld[id]
+          return thoughtUpdate &&
+            thoughtOld &&
+            !thoughtOld.pending &&
+            thoughtUpdate.lastUpdated <= thoughtOld.lastUpdated
+            ? null
+            : { [id]: thoughtUpdate }
+        })
+
   // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
-  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdates, { overwritePending })
+  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdatesFresh, { overwritePending })
   const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
@@ -198,10 +148,11 @@ const updateThoughts = (
     lexemeIndexUpdates,
     lexemeIndexUpdatesOld,
     local,
+    movePlacements,
     pendingDeletes,
     recentlyEdited: recentlyEditedNew,
     remote,
-    thoughtIndexUpdates,
+    thoughtIndexUpdates: thoughtIndexUpdatesFresh,
     updates,
   }
 
@@ -213,7 +164,7 @@ const updateThoughts = (
     // disable isLoading if tutorial is on
     if (getSetting(state, 'Tutorial') === 'On') return false
 
-    const rootThought: Thought | null = thoughtIndexUpdates[HOME_TOKEN] || thoughtIndex[HOME_TOKEN]
+    const rootThought: Thought | null = thoughtIndexUpdatesFresh[HOME_TOKEN] || thoughtIndex[HOME_TOKEN]
     const isRootLoaded =
       rootThought &&
       !rootThought.pending &&
@@ -252,14 +203,6 @@ const updateThoughts = (
         // calculate expanded using fresh thoughts and cursor
         ...(!preventExpandThoughts ? { expanded: expandThoughts(state, state.cursor) } : null),
       }
-    },
-
-    // data integrity checks
-    // immediately throws if any data integity issues are found
-    // otherwise noop
-    state => {
-      dataIntegrityCheck(thoughtIndexUpdates, lexemeIndexUpdates)
-      return state
     },
   ])(state)
 }

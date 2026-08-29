@@ -10,7 +10,7 @@ Dependency notes:
 
 */
 
-module.exports = {
+export default {
   reject: [
     // TypeError: TextDecoder is not a constructor
     // TextDecoder is not exposed by jsdom v16

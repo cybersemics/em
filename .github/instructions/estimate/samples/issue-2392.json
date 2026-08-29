@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[Capacitor] Haptic feedback",
+    "body": "Use the Capacitor Haptics API to provide physical feedback to the user.\r\n\r\nhttps://capacitorjs.com/docs/apis/haptics\r\n\r\nHaptic options:\r\n\r\n- [impact](https://capacitorjs.com/docs/apis/haptics#impact) - light | medium | heavy\r\n- [notification](https://capacitorjs.com/docs/apis/haptics#notification) - success | warning | error\r\n- [vibrate](https://capacitorjs.com/docs/apis/haptics#vibrate) - duration\r\n- [selectionStart](https://capacitorjs.com/docs/apis/haptics#selectionstart)\r\n- [selectionChanged](https://capacitorjs.com/docs/apis/haptics#selectionchanged)\r\n- [selectionEnd](https://capacitorjs.com/docs/apis/haptics#selectionend)\r\n\r\nHaptic requirements:\r\n\r\n- Gesture\r\n  - start: `selectionStart`\r\n  - swipe: `selectionChanged`\r\n  - end: `selectionEnd`\r\n    - *except* Back/Forward: `impact` (light)\r\n    - *except* Delete: `notification` (warning)\r\n    - *except* Delete permanently: `notification` (warning)\r\n  - cancel: `notification` (warning)\r\n- Scroll\r\n  - Continuous `impact`? Like old iPod or Nest wheel.\r\n- Long tap\r\n  - start: `selectionStart`\r\n- Drag-and-drop\r\n  - start: `selectionStart`\r\n  - drop target changes: `selectionChanged`\r\n  - end: `selectionEnd`\r\n  - cancel: `notification` (warning)\r\n- Hamburger menu\r\n  - toggle: `impact` (light)\r\n- Link\r\n  - click: `impact` (light)\r\n- Button\r\n  - click: `impact` (light)\r\n\r\nPlan for 1–2 iterations of tweaks once initial implementation can be physically tested.",
+    "labels": ["feature"]
+  },
+  "expected": "XL",
+  "source": {
+    "type": "everhour",
+    "issue": 2392,
+    "hours": 24
+  }
+}

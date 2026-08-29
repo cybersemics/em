@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Sidebar: Console error `DialogContent` requires a `DialogTitle`",
+    "body": "Regression: #3654\n\n## Steps to Reproduce\n\nOpen the app in Chrome and look in the JS console.\n\n## Current Behavior\n\n<img width=\"734\" height=\"163\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/fa3fe938-49c5-4efe-9366-e0d73dafaa03\" />\n\n## Expected Behavior\n\nNo error or warning.",
+    "labels": ["bug"]
+  },
+  "expected": "XXS",
+  "source": {
+    "type": "everhour",
+    "issue": 3716,
+    "hours": 1
+  }
+}

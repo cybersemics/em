@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 interface Options {
   timeout?: number
@@ -14,7 +14,7 @@ const waitForEditable = async (
     timeout: 6000,
   },
 ) =>
-  await page.waitForFunction(
+  page.waitForFunction(
     (value: string) => {
       return Array.from(document.querySelectorAll('[data-editable]')).find(element => element.innerHTML === value)
     },

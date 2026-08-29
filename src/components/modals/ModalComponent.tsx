@@ -17,6 +17,7 @@ export type ModalProps = PropsWithChildren<{
   hideModalActions?: boolean
   id: ModalType
   onClose?: () => void
+  onClosed?: () => void
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
   style?: React.CSSProperties
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
@@ -41,9 +42,9 @@ class ModalComponent extends React.Component<ModalProps> {
      * A handler that closes the modal when the escape key is pressed.
      */
     this.onKeyDown = (e: KeyboardEvent) => {
-      // TODO: This is a hack to prevent the escape key from closing the modal when the command palette is open.
+      // TODO: This is a hack to prevent the escape key from closing the modal when the desktop command universe is open.
       // Better to use a global shortcut.
-      if (e.key === 'Escape' && !this.props.preventCloseOnEscape && !store.getState().showCommandPalette) {
+      if (e.key === 'Escape' && !this.props.preventCloseOnEscape && !store.getState().showDesktopCommandUniverse) {
         e.stopPropagation()
         this.close!()
       }
@@ -59,6 +60,7 @@ class ModalComponent extends React.Component<ModalProps> {
       }
       setTimeout(() => {
         store.dispatch(closeModal())
+        this.props.onClosed?.()
       }, durations.get('medium'))
     }
 

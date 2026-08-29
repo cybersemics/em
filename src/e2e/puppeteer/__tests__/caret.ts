@@ -5,6 +5,7 @@ import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
@@ -19,6 +20,8 @@ import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
+import { page } from '../session'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -87,8 +90,10 @@ describe('all platforms', () => {
     await waitUntil(() => window.getSelection()?.focusOffset === 0)
     await click(editableNodeHandle, { edge: 'right' })
 
+    // Manual caret placement may put the selection on the element (offset 1) or the text node (offset length)
+    const nodeType = await getSelection().focusNode?.nodeType
     const offset = await getSelection().focusOffset
-    expect(offset).toBe('Richard Feynman'.length)
+    expect(offset).toBe(nodeType === Node.TEXT_NODE ? 'Richard Feynman'.length : 1)
   })
 
   it('clicking in the middle of a thought, the caret should be set to the point that is clicked.', async () => {
@@ -126,29 +131,6 @@ describe('all platforms', () => {
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
-  })
-
-  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
-    const importText = `
-    - a
-    - b`
-
-    await paste(importText)
-    await clickThought('a')
-
-    // Set cursor to null
-    await click('#content')
-
-    await waitForThoughtExistInDb('a')
-    await waitForThoughtExistInDb('b')
-
-    await refresh()
-
-    await waitForEditable('b')
-    await clickThought('b')
-
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('b')
   })
 
   // https://github.com/cybersemics/em/issues/1568
@@ -219,7 +201,7 @@ describe('all platforms', () => {
     })
   })
 
-  it('caret should move to editable after closing the command palette, then executing a cursor down command', async () => {
+  it('caret should move to editable after closing the desktop command universe, then executing a cursor down command', async () => {
     const importText = `
       - a`
 
@@ -230,12 +212,95 @@ describe('all platforms', () => {
     await press('ArrowDown')
 
     // Wait for the caret to move to the editable
-    // because the closing of command palette is asynchronous and the caret may not be in the editable yet
+    // because the closing of desktop command universe is asynchronous and the caret may not be in the editable yet
     // otherwise the test intermittently fails in CI.
     await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'a')
 
     // no assertions needed, the test will fail if the caret is not in the editable
     // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
+  })
+
+  // https://github.com/cybersemics/em/issues/4426
+  it('clicking the end of a wrapped line whose next line begins with formatted text keeps the caret on that line', async () => {
+    // Inline formatting splits the editable into sibling text nodes. The unformatted prefix fills the line and
+    // the long bold word does not fit in the remaining space, so the soft wrap falls exactly on the boundary
+    // between the two text nodes.
+    const prefix =
+      'Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea '
+    const value = `${prefix}<b>commodoconsequatduisauteiruredolorinrepre</b> henderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.`
+
+    await paste(value)
+
+    const editableNodeHandle = await waitForEditable(value)
+    // Click the thought to make it the cursor, which activates manual caret positioning on subsequent clicks.
+    await click(editableNodeHandle, { offset: 1 })
+
+    // Measure the layout: the vertical center of the visual line on which the unformatted prefix ends,
+    // relative to the editable's center, which is what the click helper's y option is added to.
+    const { boldWrapsToNewLine, wrapLineY } = await page.evaluate(() => {
+      const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+      const editableRect = editable.getBoundingClientRect()
+      const plainNode = editable.firstChild as Text
+      const boldNode = editable.querySelector('b')!.firstChild as Text
+
+      const prefixEndRange = document.createRange()
+      prefixEndRange.setStart(plainNode, plainNode.length - 1)
+      prefixEndRange.setEnd(plainNode, plainNode.length)
+      const prefixEndRect = prefixEndRange.getBoundingClientRect()
+
+      const boldStartRange = document.createRange()
+      boldStartRange.setStart(boldNode, 0)
+      boldStartRange.setEnd(boldNode, 1)
+      const boldStartRect = boldStartRange.getBoundingClientRect()
+
+      return {
+        boldWrapsToNewLine: boldStartRect.top > prefixEndRect.top + prefixEndRect.height / 2,
+        wrapLineY: Math.round(
+          prefixEndRect.top + prefixEndRect.height / 2 - (editableRect.y + editableRect.height / 2),
+        ),
+      }
+    })
+
+    // Precondition: the bold text must begin a new visual line for this bug to manifest.
+    expect(boldWrapsToNewLine).toBe(true)
+
+    // Click past the end of the wrapped line.
+    await click(editableNodeHandle, { edge: 'right', y: wrapLineY })
+
+    // The caret must stay at the end of the wrapped line, before the trailing wrap space, rather than jump to
+    // the start of the bold text on the next line.
+    const focusText = await getSelection().focusNode?.textContent
+    expect(focusText).toBe(prefix)
+
+    const offset = await getSelection().focusOffset
+    expect(offset).toBe(prefix.trimEnd().length)
+  })
+})
+
+describe('persistent storage', () => {
+  usePersistentTreecrdtStorage()
+
+  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
+    const importText = `
+    - a
+    - b`
+
+    await paste(importText)
+    await clickThought('a')
+
+    // Set cursor to null
+    await click('#content')
+
+    await waitForThoughtExistInDb('a')
+    await waitForThoughtExistInDb('b')
+
+    await refresh()
+
+    await waitForEditable('b')
+    await clickThought('b')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('b')
   })
 })
 
@@ -358,7 +423,10 @@ describe('mobile only', () => {
 
     // Step 3: close the Command Center via the Done button
     await click('[data-testid="command-center-done"]')
-    await waitForSelector('[data-testid=command-center-panel]', { hidden: true })
+
+    // The command center panel stays in the DOM when closed (transformed off-screen), so { hidden: true }
+    // on the panel never resolves. Wait for the visible multiselect highlight to clear instead.
+    await waitForSelector('[aria-label="bullet"][data-highlighted="true"]', { hidden: true })
 
     // Step 4: create a second thought
     await gesture(newThoughtCommand)
@@ -371,5 +439,74 @@ describe('mobile only', () => {
 
     // keyboard should not open, so the active element should be the body or null
     await waitUntil(() => !document.activeElement || document.activeElement === document.body)
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3958
+  it('caret should be dismissed when the virtual keyboard is closed without blurring (e.g. Android Down Arrow)', async () => {
+    await paste(`
+    - One
+    - Two
+    - Three`)
+
+    // tap thought One to put the caret on it (keyboard open)
+    await clickThought('One')
+    await clickThought('One')
+
+    // precondition: the caret is on a thought with the keyboard open
+    expect(await getSelection().focusNode).toBeTruthy()
+
+    // Simulate dismissing the virtual keyboard with the Android Down Arrow button.
+    // Because the app declares interactive-widget=overlays-content (index.html), the keyboard overlays
+    // content and does not fire a visualViewport resize; instead the Chromium VirtualKeyboard API reports
+    // the keyboard geometry. Unlike the Done button (which blurs the editable, see closeKeyboard), the Down
+    // Arrow only hides the keyboard: its occluded height collapses to 0 with no blur event. Emulate that by
+    // faking the keyboard geometry (open then dismissed) and firing the geometrychange event the app listens to.
+    await page.evaluate(() => {
+      // The VirtualKeyboard API is not in TypeScript's lib.dom; cast locally so this test compiles
+      // independently of the ambient declaration in src/@types/VirtualKeyboard.d.ts.
+      const virtualKeyboard = (navigator as unknown as { virtualKeyboard: EventTarget }).virtualKeyboard
+      /** Overrides the reported keyboard occluded height to simulate the keyboard opening/closing. */
+      const overrideHeight = (height: number) =>
+        Object.defineProperty(virtualKeyboard, 'boundingRect', { configurable: true, get: () => ({ height }) })
+      /** Fires a geometrychange event, as the browser does when the virtual keyboard shows/hides. */
+      const fireGeometryChange = () => virtualKeyboard.dispatchEvent(new Event('geometrychange'))
+
+      // keyboard open: it occludes part of the screen
+      overrideHeight(300)
+      fireGeometryChange()
+
+      // Down Arrow pressed: keyboard hides, occluded height collapses to 0 (no blur)
+      overrideHeight(0)
+      fireGeometryChange()
+    })
+
+    // the caret should be dismissed along with the keyboard
+    await waitUntil(() => !window.getSelection()?.focusNode)
+    expect(await getSelection().focusNode).toBeFalsy()
+  })
+
+  // Regression test for https://github.com/cybersemics/em/issues/3996
+  // .skip keeps normal CI green while the test is red; remove the .skip when the fix lands.
+  it('tapping a text formatting button after the keyboard is manually dismissed should not open the keyboard', async () => {
+    // Step 1: create a thought
+    await gesture(newThoughtCommand)
+    await keyboard.type('One')
+    await waitForEditable('One')
+
+    // Step 2: manually dismiss the keyboard (blur the active element, as the native Done button does)
+    await closeKeyboard()
+    await waitUntil(() => !document.activeElement || document.activeElement === document.body)
+
+    // Step 3: tap the Bold button on the toolbar
+    await clickToolbar('Bold')
+
+    // the formatting should still be applied to the whole thought
+    await waitUntil(() => !!document.querySelector('[data-editable] b'))
+
+    // the keyboard should NOT open, so the editable should not be re-focused (the active element should remain the body or null)
+    const activeLabel = await page.evaluate(
+      () => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? null,
+    )
+    expect(activeLabel).not.toMatch(/^editable-/)
   })
 })

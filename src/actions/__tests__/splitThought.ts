@@ -1,7 +1,7 @@
 import { HOME_TOKEN } from '../../constants'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
@@ -90,9 +90,7 @@ it('cursor moves to second thought', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(cursorThoughts).toMatchObject([{ value: 'ple', rank: 1 }])
+  expectPathToEqual(stateNew, stateNew.cursor, ['ple'])
 })
 
 it('move children to the correct sibling in a sorted context', () => {
@@ -133,6 +131,35 @@ it('move children to the correct sibling in a sorted context', () => {
       - A
       - B
       - C`)
+})
+
+// https://github.com/cybersemics/em/issues/4582
+it('note remains on the original thought when split', () => {
+  const steps = [
+    importText({
+      text: `
+      - The world of greatest Airbender
+        - =note
+          - Avatar Aang
+      `,
+    }),
+    setCursor(['The world of greatest Airbender']),
+    splitThought({
+      splitResult: {
+        left: 'The world of greatest ',
+        right: 'Airbender',
+      },
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - The world of greatest
+    - =note
+      - Avatar Aang
+  - Airbender`)
 })
 
 it('split thought with whitespace in HTML formatting', () => {

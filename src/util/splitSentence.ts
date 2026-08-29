@@ -1,6 +1,8 @@
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import * as selection from '../device/selection'
 import isAbbreviation from './isAbbreviation'
 import once from './once'
+import trimHtml from './trimHtml'
 
 /**
  * Function: calculateRemoveFront.
@@ -64,37 +66,193 @@ function isUrl(str1: string, s: string) {
  */
 const SEPARATOR_TOKEN = '__SEP__'
 
-/**
- * Inserts separators in place of commas, unless the comma is part of a style within a font tag (#3455).
- */
-function separateByComma(str: string) {
-  const EMBEDDED_COMMA_TOKEN = '__COMMA__'
-  const styleRegex = /style="[^"]+$/
-
-  return str
-    .split(',')
-    .reduce((str, s) => {
-      return str + s + (styleRegex.test(str + s) ? EMBEDDED_COMMA_TOKEN : SEPARATOR_TOKEN)
-    }, '')
-    .replaceAll(EMBEDDED_COMMA_TOKEN, ',')
-}
-
 interface SplitResult {
   value: string
   insertNewSubThought?: boolean
 }
 
 /**
+ * Splits HTML at a text offset into the HTML before and after the offset, with formatting tags re-balanced onto both halves.
+ *
+ * @param htmlValue The source HTML.
+ * @param offset The text offset to split at.
+ */
+function splitHtmlAtTextOffset(htmlValue: string, offset: number): { left: string; right: string } {
+  const div = document.createElement('div')
+  div.innerHTML = htmlValue
+
+  const nodeOffset = selection.offsetFromClosestParent(div, offset)
+  if (!nodeOffset?.node) throw new Error(`Unable to map text offset to an HTML node: ${offset}`)
+
+  const range = document.createRange()
+  range.setStart(nodeOffset.node, nodeOffset.offset)
+  range.setEnd(nodeOffset.node, nodeOffset.offset)
+
+  const splitNodesResult = selection.splitNode(div, range)
+  if (!splitNodesResult) return { left: '', right: '' }
+
+  const leftDiv = document.createElement('div')
+  const rightDiv = document.createElement('div')
+  leftDiv.appendChild(splitNodesResult.left.cloneContents())
+  rightDiv.appendChild(splitNodesResult.right.cloneContents())
+
+  return { left: leftDiv.innerHTML, right: rightDiv.innerHTML }
+}
+
+/**
+ * Returns HTML between text offsets while preserving valid tag structure.
+ *
+ * @param htmlValue The source HTML.
+ * @param startOffset Inclusive text offset.
+ * @param endOffset Exclusive text offset.
+ */
+function sliceHtmlByTextOffsets(htmlValue: string, startOffset: number, endOffset: number): string {
+  // Split at the end offset, then split the left half at the start offset.
+  // A single Range spanning both offsets cannot be used: when both boundaries fall inside the same text node, cloneContents returns a bare text node and all surrounding formatting tags are dropped (#4229). splitNode anchors one boundary at the root so that the formatting ancestors are re-balanced onto each half.
+  const { left } = splitHtmlAtTextOffset(htmlValue, endOffset)
+  return splitHtmlAtTextOffset(left, startOffset).right
+}
+
+/**
+ * Splits formatted HTML into parts by plain text sentence values.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param plainValues The split values calculated from plain text.
+ */
+function splitFormattedHtmlByPlainValues(htmlValue: string, plainValues: string[]): string[] {
+  if (plainValues.length <= 1) return [trimHtml(htmlValue)]
+
+  let remaining = htmlValue
+  let remainingText = getTextContentFromHTML(remaining)
+  const htmlValues: string[] = []
+
+  for (const nextPlainValue of plainValues.slice(1)) {
+    const splitOffset = remainingText.indexOf(nextPlainValue)
+    if (splitOffset < 0) {
+      throw new Error(`Unable to find split boundary in remaining text: "${nextPlainValue}"`)
+    }
+
+    const div = document.createElement('div')
+    div.innerHTML = remaining
+
+    const nodeOffset = selection.offsetFromClosestParent(div, splitOffset)
+    if (!nodeOffset?.node) throw new Error(`Unable to resolve split node at offset: ${splitOffset}`)
+
+    const range = document.createRange()
+    range.setStart(nodeOffset.node, nodeOffset.offset)
+    range.setEnd(nodeOffset.node, nodeOffset.offset)
+
+    const splitNodesResult = selection.splitNode(div, range)
+    if (!splitNodesResult) throw new Error('Unable to split HTML node at sentence boundary')
+
+    const leftDiv = document.createElement('div')
+    const rightDiv = document.createElement('div')
+
+    leftDiv.appendChild(splitNodesResult.left.cloneContents())
+    rightDiv.appendChild(splitNodesResult.right.cloneContents())
+
+    htmlValues.push(trimHtml(leftDiv.innerHTML))
+    remaining = rightDiv.innerHTML
+    remainingText = getTextContentFromHTML(remaining)
+  }
+
+  htmlValues.push(trimHtml(remaining))
+  return htmlValues
+}
+
+/** Symbols that delimit sub-sentences, e.g. "a → b → c" (#4393). A colon is not included: it splits into a child rather than a sibling, which is handled before the sub-sentence split. */
+const symbolSplitRegex = /[↑↓←→+]/
+
+/** Matches a sub-sentence symbol at the beginning of the remaining text. */
+const symbolLeadingRegex = /^[↑↓←→+]/
+
+/**
+ * Returns the punctuation delimiter that splits a single sentence into sub-sentences: a comma, or one of the symbols ↑↓←→+ when there is no comma. Returns null when the value contains neither.
+ *
+ * @param plainValue The plain text thought value.
+ */
+function punctuationSubSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } | null {
+  return plainValue.includes(',')
+    ? { split: /,/, leading: /^,/ }
+    : symbolSplitRegex.test(plainValue)
+      ? { split: symbolSplitRegex, leading: symbolLeadingRegex }
+      : null
+}
+
+/**
+ * Returns the delimiter to split a single sentence into sub-sentences, as a regex that matches the delimiter anywhere and a regex that matches it at the beginning of the remaining text.
+ * Comma takes priority over the symbols ↑↓←→+, which take priority over "and". Each is only used when the value contains none of the delimiters above it.
+ * "and" is matched with word boundaries so that it does not split within a word, e.g. "Standard" (#4810).
+ *
+ * @param plainValue The plain text thought value.
+ */
+function subSentenceDelimiter(plainValue: string): { split: RegExp; leading: RegExp } {
+  return punctuationSubSentenceDelimiter(plainValue) ?? { split: /\band\b/i, leading: /^and\b/i }
+}
+
+/**
+ * Inserts separators in place of the punctuation sub-sentence delimiter, unless the delimiter is part of a style within a font tag (#3455).
+ * The word "and" is deliberately not a delimiter here: this runs on a value whose periods turned out not to be sentence boundaries, where "and" routinely joins the parts of a single sentence, e.g. "Fruit cost: apple $10.23 and pear $10.70".
+ */
+function separateBySubSentenceDelimiter(str: string) {
+  const delimiter = punctuationSubSentenceDelimiter(str)
+  if (!delimiter) return str
+
+  const styleRegex = /style="[^"]+$/
+  // Splitting with a capture group keeps the delimiter, so that one embedded in a style can be restored in place. The parts alternate text and delimiter, e.g. "a, b" -> ["a", ",", " b"].
+  const parts = str.split(new RegExp(`(${delimiter.split.source})`))
+
+  return parts.reduce(
+    (accum, part, i) =>
+      // the delimiters sit at odd indices, each emitted by the text part before it
+      i % 2 === 1 ? accum : accum + part + (styleRegex.test(accum + part) ? (parts[i + 1] ?? '') : SEPARATOR_TOKEN),
+    '',
+  )
+}
+
+/**
+ * Splits formatted HTML by sub-sentence delimiters based on plain text offsets.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param plainValue The plain text thought value.
+ */
+function splitFormattedHtmlBySubSentence(htmlValue: string, plainValue: string): string[] {
+  const { split, leading: delimiterRegex } = subSentenceDelimiter(plainValue)
+  const splitValues = plainValue.split(split)
+  let offset = 0
+
+  return splitValues.reduce((accum: string[], splitValue) => {
+    const startOffset = offset
+    const endOffset = startOffset + splitValue.length
+    const htmlSplitValue = sliceHtmlByTextOffsets(htmlValue, startOffset, endOffset)
+    const formattedValue = trimHtml(htmlSplitValue)
+
+    const trailingText = plainValue.slice(endOffset)
+    const delimiterMatch = trailingText.match(delimiterRegex)
+    offset = endOffset + (delimiterMatch ? delimiterMatch[0].length : 0)
+
+    return getTextContentFromHTML(formattedValue).trim() ? [...accum, formattedValue] : accum
+  }, [])
+}
+
+/**
  * Splits given value by special characters.
  */
 const splitSentence = (value: string): SplitResult[] => {
+  const plainValue = getTextContentFromHTML(value)
+
   // Check for parenthetical content at the end of the thought first
   // pattern : ), ).
   // "This is a thought (and a subthought)" -> "-This is a thought   -and a subthought"
-  const parentheticalMatch = value.match(/^(.*?)\s*\((.*?)\)\.?$/)
+  const parentheticalMatch = plainValue.match(/^(.*?)\s*\((.*?)\)\.?$/)
   if (parentheticalMatch) {
-    const [_, mainThought, subThought] = parentheticalMatch
-    return [{ value: mainThought.trim() }, { value: subThought.trim(), insertNewSubThought: true }].filter(
+    const [, mainThought] = parentheticalMatch
+    const parentheticalIndex = plainValue.indexOf('(', mainThought.length)
+    const closingParentheticalIndex = plainValue.lastIndexOf(')')
+    const mainHtml = sliceHtmlByTextOffsets(value, 0, mainThought.length)
+    const subHtml = sliceHtmlByTextOffsets(value, parentheticalIndex + 1, closingParentheticalIndex)
+
+    return [{ value: trimHtml(mainHtml) }, { value: trimHtml(subHtml), insertNewSubThought: true }].filter(
       s => s.value !== '',
     )
   }
@@ -103,44 +261,83 @@ const splitSentence = (value: string): SplitResult[] => {
   // pattern2, multiple symbols: ?! !!! ...
   const mainSplitRegex = /[.;!?]+/g
 
-  const sentenceSplitters = value.match(mainSplitRegex)
+  const sentenceSplitters = plainValue.match(mainSplitRegex)
 
   /**
    * Checks if the value has no other main split characters  except one period at the end, i.e. value is just one sentence.
    * If so, allow split on comma only if there are no main split characters in the value or has only one period at the end.
    */
-  const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(value.trim()))
+  const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(plainValue.trim()))
 
-  // if we're sub-sentence or in one sentence territory, check for dash splitting first
+  // if we're sub-sentence or in one sentence territory, check for child splitting first
   // e.g. "one - 1" -> "- one   - 1" (as child)
+  // e.g. "Start: 1" -> "- Start   - 1" (as child)
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
-    // Check for dash (-, –, or —) and split into child if found
+    // Check for a dash (-, –, or —) or a colon and split into child if found
     // This handles Case 1: Split into child when there's only one sentence
-    // Match the first dash that has content on both sides
-    const dashMatch = value.match(/^(.+?)\s*([-–—])\s*(.+)$/)
-    if (dashMatch) {
-      const [_, leftPart, __, rightPart] = dashMatch
+    // Match the first delimiter that has content on both sides. A colon must be followed by whitespace so that it does not split a time, e.g. "10:30".
+    // A dash surrounded by whitespace is a delimiter and takes priority over commas, e.g. "Shopping list - apples, bananas".
+    // A dash without surrounding whitespace may be part of a hyphenated word, so commas take priority, e.g. "Jeff Koons, Jean-Michel Basquiat" (#3525).
+    const isCommaList = plainValue.split(',').filter(s => s.trim()).length > 1
+    const childMatch = plainValue.match(
+      isCommaList ? /^(.+?)(?:\s+[-–—]\s+|\s*:\s+)(.+)$/ : /^(.+?)\s*(?:[-–—]\s*|:\s+)(.+)$/,
+    )
+    if (childMatch) {
+      const [_, leftPart, rightPart] = childMatch
       const trimmedLeft = leftPart.trim()
       const trimmedRight = rightPart.trim()
       // Only split if both parts have content
       if (trimmedLeft && trimmedRight) {
-        return [{ value: trimmedLeft }, { value: trimmedRight, insertNewSubThought: true }]
+        const rightPartStart = plainValue.lastIndexOf(rightPart)
+        const leftHtml = sliceHtmlByTextOffsets(value, 0, leftPart.length)
+        const rightHtml = sliceHtmlByTextOffsets(value, rightPartStart, plainValue.length)
+        // the right side of the dash is split by comma so that each item becomes its own child
+        // e.g. "Shopping list - apples, bananas" -> "- Shopping list   - apples   - bananas"
+        const rightValues = rightPart.includes(',')
+          ? splitFormattedHtmlBySubSentence(rightHtml, rightPart)
+          : [trimHtml(rightHtml)]
+        return [
+          { value: trimHtml(leftHtml) },
+          // only the first item becomes a child of the left side; the rest are its siblings
+          ...rightValues.map((value, i) => ({ value, ...(i === 0 ? { insertNewSubThought: true } : null) })),
+        ]
       }
     }
 
-    // if we're sub-sentence or in one sentence territory, split by comma and "and"
-    // e.g. "john, johnson, and john doe" -> "- john - johnson - john doe"
-    return value
-      .split(/,|and/i)
+    // Check for slash and split into a chain of descendants, each part a child of the previous
+    // e.g. "one/two/three" -> "- one  - two (child)  - three (grandchild)"
+    if (plainValue.includes('/')) {
+      let offset = 0
+      const boundaries = plainValue.split('/').map(part => {
+        const start = offset
+        offset += part.length + 1
+        return { start, end: start + part.length }
+      })
+      const parts = boundaries.filter(({ start, end }) => plainValue.slice(start, end).trim() !== '')
+      // Only split if the slash has content on both sides
+      if (parts.length > 1) {
+        return parts.map(({ start, end }, i) => ({
+          value: trimHtml(sliceHtmlByTextOffsets(value, start, end)),
+          ...(i > 0 ? { insertNewSubThought: true } : null),
+        }))
+      }
+    }
+
+    // if we're sub-sentence or in one sentence territory, split by comma, or by the word "and" if there is no comma
+    // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
+    // e.g. "Alice and the Lion" -> "- Alice - the Lion"
+    const splitValues = plainValue
+      .split(subSentenceDelimiter(plainValue).split)
       .map(s => s.trim())
       .filter(s => s !== '')
-      .map(value => ({ value }))
+    const values = plainValue !== value ? splitFormattedHtmlBySubSentence(value, plainValue) : splitValues
+    return values.map(value => ({ value }))
   }
 
   /**
-   * When the setences can be split, it has multiple situations.
+   * When the sentences can be split, it has multiple situations.
    */
-  const sentences = value.split(mainSplitRegex)
+  const sentences = plainValue.split(mainSplitRegex)
   const initialValue = sentences[0]
 
   const resultSentences = sentences.reduce((newSentence: string, s: string, i: number) => {
@@ -186,12 +383,12 @@ const splitSentence = (value: string): SplitResult[] => {
     return newSentence + SEPARATOR_TOKEN + currSentence
   }, initialValue)
 
-  // if the return string is one sentence that ends with no other main split characters except one period at the end, split the thought by comma
+  // if the return string is one sentence that ends with no other main split characters except one period at the end, split the thought by its sub-sentence delimiter
   const hasOnlyPeriodSplitterAtEnd = !/;!?$/.test(resultSentences)
 
-  let right =
+  const right =
     !resultSentences.match(SEPARATOR_TOKEN) && hasOnlyPeriodSplitterAtEnd
-      ? separateByComma(resultSentences)
+      ? separateBySubSentenceDelimiter(resultSentences)
           .split(SEPARATOR_TOKEN)
           .filter(s => /\S+/.test(s))
           .map(s => s.trim())
@@ -201,47 +398,15 @@ const splitSentence = (value: string): SplitResult[] => {
           .map(s => s.trim())
           .join(SEPARATOR_TOKEN)
 
-  let res: string[] = []
-  let match = right.match(SEPARATOR_TOKEN)
+  const splitValues = right
+    .split(SEPARATOR_TOKEN)
+    .map(sentence => sentence.trim())
+    .filter(Boolean)
 
-  const div = document.createElement('div')
-  div.innerHTML = right
+  const values =
+    splitValues.length > 1 && plainValue !== value ? splitFormattedHtmlByPlainValues(value, splitValues) : splitValues
 
-  // Find the separator token within the div's text content, then traverse to find the correct offset within the DOM fragment. (#3615)
-  while (match) {
-    const range = document.createRange()
-    const index = div.textContent!.indexOf(match[0])
-
-    if (index < 0) break
-
-    const nodeOffset = selection.offsetFromClosestParent(div, index)
-    if (!nodeOffset?.node) break
-
-    range.setStart(nodeOffset.node, nodeOffset.offset)
-    range.setEnd(nodeOffset.node, nodeOffset.offset + match[0].length)
-
-    const splitNodesResult = selection.splitNode(div, range)
-
-    if (!splitNodesResult) break
-
-    const leftDiv = document.createElement('div')
-    const rightDiv = document.createElement('div')
-
-    leftDiv.appendChild(splitNodesResult.left.cloneContents())
-    rightDiv.appendChild(splitNodesResult.right.cloneContents())
-
-    // Add the next sentence, with properly-formatted HTML tags, to the results
-    res = [...res, leftDiv.innerHTML]
-    right = rightDiv.innerHTML
-
-    // Move on to the next match
-    match = right.match(SEPARATOR_TOKEN)
-    div.innerHTML = right
-  }
-
-  if (right.length) res = [...res, right]
-
-  return res.map(value => ({ value }))
+  return values.map(value => ({ value }))
 }
 
 export default splitSentence

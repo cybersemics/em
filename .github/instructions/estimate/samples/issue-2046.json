@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Footer: Add drop shadow to breadcrumbs",
+    "body": "## Steps to Reproduce\r\n\r\nCreate a thought and scroll down. \r\n\r\n## Current Behavior\r\n\r\n![image](https://github.com/cybersemics/em/assets/750276/c9f97d13-36a7-49c1-a4c3-9fc730aee8b9)\r\n\r\n## Expected Behavior\r\n\r\nAdd a drop shadow to the top edge of the footer breadcrumbs to provide a smoother transition. It should be the same drop shadow as the toolbar.",
+    "labels": ["bug"]
+  },
+  "expected": "XS",
+  "source": {
+    "type": "everhour",
+    "issue": 2046,
+    "hours": 2
+  }
+}

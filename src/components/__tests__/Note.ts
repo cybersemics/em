@@ -1,9 +1,17 @@
 import { fireEvent, screen } from '@testing-library/dom'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { redoActionCreator as redo } from '../../actions/redo'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
+import { undoActionCreator as undo } from '../../actions/undo'
+import { HOME_TOKEN } from '../../constants'
+import contextToThoughtId from '../../selectors/contextToThoughtId'
+import exportContext from '../../selectors/exportContext'
+import { getChildrenSorted } from '../../selectors/getChildren'
+import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
@@ -69,9 +77,304 @@ describe('=note', () => {
     const element = screen.getByText('foo')
     expect(element)
   })
+
+  // https://github.com/cybersemics/em/issues/4479
+  test('undoes and redoes contiguous typing in a note as one edit', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - `,
+      }),
+      setCursor(['a']),
+      toggleNote(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: 'a' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: 'ab' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: 'abc' } })
+    })
+
+    await act(async () => {
+      store.dispatch(undo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - `)
+
+    await act(async () => {
+      store.dispatch(redo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - abc`)
+
+    await act(vi.runAllTimersAsync)
+  })
+
+  // https://github.com/cybersemics/em/issues/4954
+  test('move thought down with the caret in a note', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - test
+        - b`,
+      }),
+      setCursor(['a']),
+      toggleNote(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(screen.getByLabelText('note-editable'), {
+        key: 'ArrowDown',
+        metaKey: true,
+        shiftKey: true,
+      })
+    })
+
+    await act(vi.runAllTimersAsync)
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - b
+  - a
+    - =note
+      - test`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4954
+  test('cursor next with the caret in a note', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - test
+          - x
+        - b`,
+      }),
+      setCursor(['a']),
+      toggleNote(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      fireEvent.keyDown(screen.getByLabelText('note-editable'), {
+        key: 'ArrowDown',
+        metaKey: true,
+      })
+    })
+
+    await act(vi.runAllTimersAsync)
+
+    expectPathToEqual(store.getState(), store.getState().cursor, ['b'])
+  })
 })
 
 describe('=note/=path', () => {
+  // https://github.com/cybersemics/em/issues/4845
+  test('renders all path target children as comma-delimited note text', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - =path
+              - b
+          - b
+            - =sort
+              - Alphabetical
+            - c
+            - d
+            - e`,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('c, d, e')
+  })
+
+  test('edits the corresponding target children while alphabetical sorting changes', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - =path
+              - b
+          - b
+            - =sort
+              - Alphabetical
+            - c
+              - child of c
+            - d
+              - child of d
+            - e`,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.focus(noteEditor)
+      fireEvent.input(noteEditor, { target: { innerHTML: 'z, d, e' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: 'zz, d, e' } })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(noteEditor.innerHTML).toBe('zz, d, e')
+
+    const state = store.getState()
+    const targetId = contextToThoughtId(state, ['a', 'b'])!
+    const children = getChildrenSorted(state, targetId)
+    const zz = children.find(child => child.value === 'zz')!
+    const d = children.find(child => child.value === 'd')!
+
+    expect(children.map(child => child.value)).toEqual(['d', 'e', 'zz'])
+    expect(getChildrenSorted(state, zz.id).map(child => child.value)).toEqual(['child of c'])
+    expect(getChildrenSorted(state, d.id).map(child => child.value)).toEqual(['child of d'])
+
+    await act(vi.runAllTimersAsync)
+  })
+
+  test('preserves child identity when duplicate values are edited', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - =path
+              - b
+          - b
+            - c
+              - child of first c
+            - c
+              - child of second c
+            - d`,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.focus(noteEditor)
+      fireEvent.input(noteEditor, { target: { innerHTML: 'x, c, d' } })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const state = store.getState()
+    const targetId = contextToThoughtId(state, ['a', 'b'])!
+    const children = getChildrenSorted(state, targetId)
+    const x = children.find(child => child.value === 'x')!
+    const c = children.find(child => child.value === 'c')!
+
+    expect(getChildrenSorted(state, x.id).map(child => child.value)).toEqual(['child of first c'])
+    expect(getChildrenSorted(state, c.id).map(child => child.value)).toEqual(['child of second c'])
+
+    await act(vi.runAllTimersAsync)
+  })
+
+  test('safely adds and removes target children when commas change', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - =path
+              - b
+          - b
+            - c
+            - d
+            - e`,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.focus(noteEditor)
+      fireEvent.input(noteEditor, { target: { innerHTML: 'c, d, e, f' } })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    let state = store.getState()
+    const targetId = contextToThoughtId(state, ['a', 'b'])!
+    expect(getChildrenSorted(state, targetId).map(child => child.value)).toEqual(['c', 'd', 'e', 'f'])
+
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: 'c, de' } })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    state = store.getState()
+    expect(noteEditor.innerHTML).toBe('c, de')
+    expect(getChildrenSorted(state, targetId).map(child => child.value)).toEqual(['c', 'de'])
+
+    await act(vi.runAllTimersAsync)
+  })
+
+  test('undoes and redoes a multi-child path note edit atomically', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - =path
+              - b
+          - b
+            - c
+            - d
+            - e`,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.focus(noteEditor)
+      fireEvent.input(noteEditor, { target: { innerHTML: 'cc, dd, ee' } })
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const targetId = contextToThoughtId(store.getState(), ['a', 'b'])!
+    expect(getChildrenSorted(store.getState(), targetId).map(child => child.value)).toEqual(['cc', 'dd', 'ee'])
+
+    await act(async () => {
+      store.dispatch(undo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(getChildrenSorted(store.getState(), targetId).map(child => child.value)).toEqual(['c', 'd', 'e'])
+
+    await act(async () => {
+      store.dispatch(redo())
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(getChildrenSorted(store.getState(), targetId).map(child => child.value)).toEqual(['cc', 'dd', 'ee'])
+
+    await act(vi.runAllTimersAsync)
+  })
+
   test('renders a path-based note with correct content', async () => {
     await dispatch([
       importText({
