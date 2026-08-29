@@ -1,6 +1,9 @@
-import { act } from 'react'
+import { act, createElement } from 'react'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import MoveThoughtAlert from '../../components/MoveThoughtAlert'
+import store from '../../stores/app'
+import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
@@ -61,6 +64,29 @@ it('strips formatting tags from move alerts', async () => {
 
   const alertContent = document.querySelector('[data-testid="alert-content"]')!
   expect(alertContent.textContent).toContain('"aaa" moved to "bbb".')
+  expect(alertContent.textContent).not.toContain('<font')
+})
+
+it('strips formatting tags from move alert destination label in reversed drag case', async () => {
+  await dispatch([
+    importText({
+      text: `
+          - aaa
+          - bbb
+      `,
+    }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const toPath = contextToPathOrThrow(store.getState(), ['aaa'])
+
+  await dispatch([editThought(['aaa'], '<font color="#ff573d"><b>aaa</b></font>')])
+
+  await dispatch([alert(() => createElement(MoveThoughtAlert, { from: 'bbb', toPath }))])
+
+  const alertContent = document.querySelector('[data-testid="alert-content"]')!
+  expect(alertContent.textContent).toContain('"bbb" moved to "aaa".')
   expect(alertContent.textContent).not.toContain('<font')
 })
 

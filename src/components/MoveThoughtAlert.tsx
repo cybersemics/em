@@ -1,3 +1,4 @@
+import { escape as escapeHtml } from 'html-escaper'
 import { FC } from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
@@ -7,6 +8,7 @@ import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isRoot from '../util/isRoot'
+import toVisibleText from '../util/toVisibleText'
 import Link from './Link'
 
 interface MoveThoughtAlertProps {
@@ -25,9 +27,12 @@ interface MoveThoughtAlertProps {
 /** Alert shown after drag-and-drop moves a thought to another context. */
 const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numThoughts = 1, toPath, top }) => {
   const isRootPath = isRoot(toPath)
-  const to = useSelector(state => (isRootPath ? 'home' : getThoughtById(state, head(toPath))?.value || ''))
+  const to = useSelector(state =>
+    isRootPath ? 'home' : toVisibleText(getThoughtById(state, head(toPath))?.value || ''),
+  )
   const context = useSelector(state => (contextPath ? headValue(state, contextPath) : null))
-  const alertFrom = numThoughts === 1 ? `"${ellipsize(from)}"` : `${numThoughts} thoughts`
+  const alertFrom = numThoughts === 1 ? `"${ellipsize(escapeHtml(toVisibleText(from)))}"` : `${numThoughts} thoughts`
+  const contextText = toVisibleText(context || 'MISSING_CONTEXT')
 
   return (
     <span>
@@ -37,11 +42,16 @@ const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numTho
       ) : (
         <>
           &quot;
-          <Link simplePath={toPath} label={ellipsize(to)} style={{ cursor: 'pointer', textDecoration: 'underline' }} />
+          <Link
+            simplePath={toPath}
+            label={to}
+            charLimit={16}
+            style={{ cursor: 'pointer', textDecoration: 'underline' }}
+          />
           &quot;
         </>
       )}
-      {contextPath ? ` in the context of ${ellipsize(context || 'MISSING_CONTEXT')}` : ''}.
+      {contextPath ? ` in the context of ${ellipsize(escapeHtml(contextText))}` : ''}.
     </span>
   )
 }
