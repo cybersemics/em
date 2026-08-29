@@ -43,8 +43,11 @@ it('render EmptyThoughtspace when there are only invisible thoughts in the root 
   expect(document.querySelector('[aria-label="empty-thoughtspace"]')).toBeTruthy()
 })
 
+// The text selector and its context menu must be dismissed along with the keyboard. Covered here rather than in the
+// puppeteer suite because that browser collapses a touch selection on blur, so the test passes there with or without
+// the fix. See cursor-and-caret.md → Testing.
 // https://github.com/cybersemics/em/issues/4833
-it.skip('clicking empty space dismisses the text selection', async () => {
+it('clicking empty space dismisses the text selection', async () => {
   await dispatch([importText({ text: '- Cybersemics Institute' }), setCursor(['Cybersemics Institute'])])
 
   await act(vi.runOnlyPendingTimersAsync)
