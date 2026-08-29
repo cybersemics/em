@@ -59,12 +59,6 @@ const Content: FC = () => {
     // make sure that the click doesn't occur during a long press (#3120)
     if (state.longPress !== LongPressState.Inactive) return
 
-    // A tap outside a thought dismisses the keyboard by blurring the editable, but the browser keeps a native touch
-    // selection alive across the blur, leaving the selection handles and the text context menu on screen after the
-    // keyboard is gone (#4833). Only a range is cleared: a caret is dismissed by the blur, and clearing it here would
-    // blur the editable that a tap on a bullet is about to move the caret into.
-    if (!selection.isCollapsed()) selection.clear()
-
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
   }
@@ -78,7 +72,18 @@ const Content: FC = () => {
           // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
           if (!selection.isThought(e.target)) dispatch(clickOnEmptySpace)
         },
-        { enableHaptics: false },
+        {
+          enableHaptics: false,
+          // A tap outside a thought dismisses the keyboard by blurring the editable, but the browser keeps a native
+          // touch selection alive across the blur, leaving the selection handles and the text context menu on screen
+          // after the keyboard is gone (#4833). The selection is cleared on tap down rather than in the tap up handler
+          // above, which does not fire until the tap completes; by then the keyboard is already animating away and the
+          // context menu visibly lingers and blinks. Only a range is cleared: a caret is dismissed by the blur, and
+          // clearing it here would blur the editable that a tap on a bullet is about to move the caret into.
+          tapDown: e => {
+            if (!selection.isThought(e.target) && !selection.isCollapsed()) selection.clear()
+          },
+        },
       )}
     >
       <div
