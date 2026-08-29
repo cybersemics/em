@@ -24,9 +24,11 @@ import importJson from '../util/importJson'
 import isMarkdown from '../util/isMarkdown'
 import isRoot from '../util/isRoot'
 import markdownToText from '../util/markdownToText'
+import mergeAdjacentTags from '../util/mergeAdjacentTags'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
+import splitHtmlAtTextOffset from '../util/splitHtmlAtTextOffset'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
@@ -36,23 +38,6 @@ import uncategorize from './uncategorize'
 
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
-
-/** Converts a plain text offset to the corresponding offset in an HTML string, skipping over HTML tags. Returns the HTML string length if the text offset exceeds the text content length. */
-const textOffsetToHtmlOffset = (html: string, textOffset: number): number => {
-  let textCount = 0
-  let inTag = false
-  for (let i = 0; i < html.length; i++) {
-    if (html[i] === '<') {
-      inTag = true
-    } else if (html[i] === '>') {
-      inTag = false
-    } else if (!inTag) {
-      if (textCount === textOffset) return i
-      textCount++
-    }
-  }
-  return html.length
-}
 
 export interface ImportTextPayload {
   caretPosition?: number
@@ -123,19 +108,16 @@ const importText = (
     // insert the text into the destValue in the correct place
     // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
 
-    // Convert text offsets to HTML offsets since destValue may contain formatting tags.
-    const htmlCaretPosition = textOffsetToHtmlOffset(destValue, caretPosition)
-    const htmlReplaceStart = replaceStart != null ? textOffsetToHtmlOffset(destValue, replaceStart) : undefined
-    const htmlReplaceEnd = replaceEnd != null ? textOffsetToHtmlOffset(destValue, replaceEnd) : undefined
-
-    const replacedDestValue = state.cursorCleared
-      ? ''
-      : destValue.slice(0, htmlReplaceStart || 0) + destValue.slice(htmlReplaceEnd || 0)
-
-    const insertPosition = htmlReplaceStart || htmlCaretPosition
-    const combinedValue = `${replacedDestValue.slice(0, insertPosition)}${text}${replacedDestValue.slice(insertPosition)}`
+    // Split destValue at the plain text offsets rather than slicing it at the equivalent HTML indices, which cuts through the markup and leaves a tag unclosed (#5154).
+    const insertOffset = replaceStart ?? caretPosition
+    const combinedValue = state.cursorCleared
+      ? text
+      : mergeAdjacentTags(
+          `${splitHtmlAtTextOffset(destValue, insertOffset).left}${text}${splitHtmlAtTextOffset(destValue, replaceEnd ?? insertOffset).right}`,
+        )
     const newValue = addEmojiSpace(combinedValue)
-    const offsetBeforeEmojiSpace = caretPosition + getTextContentFromHTML(text).length
+    // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
+    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(text).length
     const emojiSpaceInsertionOffset = newValue === combinedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
     const offset =
       emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset

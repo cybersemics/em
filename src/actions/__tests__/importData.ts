@@ -1,12 +1,20 @@
+import { act } from 'react'
 import MimeType from '../../@types/MimeType'
 import { EMPTY_SPACE, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import initStore from '../../test-helpers/initStore'
+import findCursor from '../../test-helpers/queries/findCursor'
+import selectRange from '../../test-helpers/selectRange'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import removeHome from '../../util/removeHome'
 import importDataActionCreator from '../importData'
+import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
 
 /** Helper function that initializes the store, imports html into the root, and exports it as plaintext to make easily readable assertions. This is async because importFiles is async. */
@@ -1298,4 +1306,37 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
     - a
     - b
     - c`)
+})
+
+describe('paste over a selection', () => {
+  beforeEach(createTestApp)
+  afterEach(cleanupTestApp)
+
+  // https://github.com/cybersemics/em/issues/5154
+  it('replaces the selected text when the selection starts inside a formatting tag', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    // "two", the bold word, as the user highlights it before pasting over it
+    selectRange(thought!, 4, 7)
+
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['one <b>two</b> three'])!,
+            text: 'three',
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one three three')
+  })
 })
