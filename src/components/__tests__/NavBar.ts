@@ -79,7 +79,7 @@ it('strips formatting tags from move alert destination label in reversed drag ca
 
   await act(vi.runOnlyPendingTimersAsync)
 
-  const toPath = contextToPathOrThrow(store.getState(), ['aaa'])
+  const toPath = contextToPathOrThrow(store.getState(), ['aaa'], 'NavBar test')
 
   await dispatch([editThought(['aaa'], '<font color="#ff573d"><b>aaa</b></font>')])
 
