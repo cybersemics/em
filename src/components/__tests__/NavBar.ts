@@ -110,7 +110,7 @@ it('does not show serialized closing tags in ContextBreadcrumbs', async () => {
 })
 
 // https://github.com/cybersemics/em/pull/4121#pullrequestreview-5057343884
-it.skip('shows home when a thought is moved to the home level', async () => {
+it('shows home when a thought is moved to the home level', async () => {
   await dispatch([alert(() => createElement(MoveThoughtAlert, { from: 'ccc', toPath: [] as unknown as SimplePath }))])
 
   const alertContent = document.querySelector('[data-testid="alert-content"]')!

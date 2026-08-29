@@ -26,7 +26,7 @@ interface MoveThoughtAlertProps {
 
 /** Alert shown after drag-and-drop moves a thought to another context. */
 const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numThoughts = 1, toPath, top }) => {
-  const isRootPath = isRoot(toPath)
+  const isRootPath = toPath.length === 0 || isRoot(toPath)
   const to = useSelector(state =>
     isRootPath ? 'home' : toVisibleText(getThoughtById(state, head(toPath))?.value || ''),
   )
