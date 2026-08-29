@@ -1,4 +1,5 @@
 import { act, createElement } from 'react'
+import SimplePath from '../../@types/SimplePath'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import MoveThoughtAlert from '../../components/MoveThoughtAlert'
@@ -106,4 +107,12 @@ it('does not show serialized closing tags in ContextBreadcrumbs', async () => {
   const contextBreadcrumbs = document.querySelector('[aria-label="context-breadcrumbs"]')!
   expect(contextBreadcrumbs.textContent).toContain('<aaa>')
   expect(contextBreadcrumbs.textContent).not.toContain('</aaa>')
+})
+
+// https://github.com/cybersemics/em/pull/4121#pullrequestreview-5057343884
+it.skip('shows home when a thought is moved to the home level', async () => {
+  await dispatch([alert(() => createElement(MoveThoughtAlert, { from: 'ccc', toPath: [] as unknown as SimplePath }))])
+
+  const alertContent = document.querySelector('[data-testid="alert-content"]')!
+  expect(alertContent.textContent).toContain('"ccc" moved to home.')
 })
