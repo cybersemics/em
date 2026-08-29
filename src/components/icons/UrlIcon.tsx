@@ -4,14 +4,17 @@ import { token } from '../../../styled-system/tokens'
 /** Url icon. */
 const UrlIcon = () => {
   return (
+    // The link clips this svg to 1em and pins its top, so the artwork can only be raised by giving it room below.
+    // Extending the viewBox past the 30x30 artwork scales the icon down to the text's cap height and rests it on
+    // the baseline, level with the text.
     <svg
       width='1em'
       height='1em'
-      viewBox='0 0 30 30'
+      viewBox='0 0 30 33'
       className={css({
         marginLeft: '2px',
-        // Pad only the right, to separate the icon from the text that follows it. Vertical padding would make the
-        // svg taller than the 1em link that clips it, pushing the icon below the text baseline.
+        // Separate the icon from the text that follows it. Vertical padding would make the svg taller than the
+        // 1em link that clips it, pushing the icon back below the baseline.
         paddingRight: '0.167em',
         cursor: 'pointer',
       })}
