@@ -1,6 +1,8 @@
 import { KnownDevices } from 'puppeteer'
 import clearThoughtCommand from '../../../commands/clearThought'
 import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
 import getSelection from '../helpers/getSelection'
@@ -8,6 +10,7 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -379,6 +382,33 @@ describe('clearThought', () => {
     // one that holds the caret.
     await press('Backspace')
     await waitForNoEditables()
+  })
+
+  // https://github.com/cybersemics/em/issues/4629
+  it.skip('restores every formatting mark applied to the cleared thought', async () => {
+    await paste('- hello')
+
+    await waitForEditable('hello')
+    await clickThought('hello')
+
+    await setSelection(0, 'hello'.length)
+    await command('bold')
+    await command('underline')
+    await waitForFirstEditable('<u><b>hello</b></u>')
+
+    await clearThought()
+    await waitForFirstEditable('')
+
+    await page.keyboard.type('World')
+    await page.waitForFunction(() => document.querySelector('[data-editable]')?.textContent === 'World')
+
+    expect(
+      await page.$eval('[data-editable]', el => ({
+        bold: !!el.querySelector('b'),
+        underline: !!el.querySelector('u'),
+        text: el.textContent,
+      })),
+    ).toEqual({ bold: true, underline: true, text: 'World' })
   })
 })
 
