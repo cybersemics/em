@@ -3,6 +3,7 @@ import { alertActionCreator as alert } from '../../actions/alert'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -45,4 +46,38 @@ it('does not strip angle-bracket thought values from move alerts', async () => {
 
   const alertContent = document.querySelector('[data-testid="alert-content"]')!
   expect(alertContent.textContent).toContain('"<aaa>" moved to "bbb".')
+})
+
+it('normalizes unknown html tags in move alerts', async () => {
+  await dispatch([alert('"bbb" moved to "<aaa></aaa>".')])
+
+  const alertContent = document.querySelector('[data-testid="alert-content"]')!
+  expect(alertContent.textContent).toContain('"bbb" moved to "<aaa>".')
+  expect(alertContent.textContent).not.toContain('<aaa></aaa>')
+})
+
+it('strips formatting tags from move alerts', async () => {
+  await dispatch([alert('"<font color="#ff573d"><b>aaa</b></font>" moved to "bbb".')])
+
+  const alertContent = document.querySelector('[data-testid="alert-content"]')!
+  expect(alertContent.textContent).toContain('"aaa" moved to "bbb".')
+  expect(alertContent.textContent).not.toContain('<font')
+})
+
+it('does not show serialized closing tags in ContextBreadcrumbs', async () => {
+  await dispatch([
+    importText({
+      text: `
+          - parent
+            - child
+      `,
+    }),
+    editThought(['parent'], '<aaa></aaa>'),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const contextBreadcrumbs = document.querySelector('[aria-label="context-breadcrumbs"]')!
+  expect(contextBreadcrumbs.textContent).toContain('<aaa>')
+  expect(contextBreadcrumbs.textContent).not.toContain('</aaa>')
 })

@@ -1,3 +1,4 @@
+import { escape as escapeHtml } from 'html-escaper'
 import { isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
@@ -18,7 +19,7 @@ import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import stripTags from '../util/stripTags'
+import toVisibleText from '../util/toVisibleText'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
@@ -61,7 +62,7 @@ const useEllipsizedThoughts = (
 
   // if charLimit is exceeded then replace the remaining characters with an ellipsis
   const charLimitedThoughts: OverflowPath = path.map((id, i) => {
-    const value = thoughtValuesLive[i] ? stripTags(thoughtValuesLive[i]) : null
+    const value = thoughtValuesLive[i] ? toVisibleText(thoughtValuesLive[i]) : null
 
     return {
       // It is possible that the thought is no longer in state, in which case value will be null.
@@ -106,7 +107,7 @@ const BreadCrumb = React.memo(
     }
   >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
     const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-    const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
+    const value = useSelector(state => toVisibleText(getThoughtById(state, head(simplePath))?.value || ''))
     const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
     const delimiterStyle: React.CSSProperties = {
       fontSize: '0.8em',
@@ -121,7 +122,7 @@ const BreadCrumb = React.memo(
         {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
         {!isDeleting &&
           (staticText ? (
-            ellipsize(value || '')
+            ellipsize(escapeHtml(value || ''))
           ) : label === HOME_TOKEN ? (
             <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
           ) : (
