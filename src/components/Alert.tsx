@@ -11,7 +11,6 @@ import { AlertType } from '../constants'
 import alertStore from '../stores/alert'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
-import strip from '../util/strip'
 import Notification from './Notification'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
@@ -49,7 +48,7 @@ const useDelayedEffect = (callback: () => void, delay: number | null | undefined
 const Alert: FC = () => {
   const alert = useSelector(state => state.alert)
   const alertStoreValue = alertStore.useState()
-  const value = strip(alertStoreValue ?? alert?.value ?? '')
+  const value = alertStoreValue ?? alert?.value ?? ''
   const iconSize = useSelector(state => 0.78 * state.fontSize)
   const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
   const dispatch = useDispatch()
