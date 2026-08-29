@@ -7,6 +7,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
+import { page } from '../session'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -94,4 +95,26 @@ it('collapsed thought with url child', async () => {
 
   const image = await screenshot()
   expect(image).toMatchImageSnapshot()
+})
+
+// https://github.com/cybersemics/em/issues/4684
+it.skip('url icon hangs no lower than the email icon', async () => {
+  await paste(`
+    - https://test.com
+    - test@test.com
+  `)
+
+  // Measure each icon from the top of its own annotation box. Both thoughts are single line, so the two boxes
+  // share a line box and the comparison isolates the icons' vertical placement from the font's metrics.
+  const [url, email] = await page.evaluate(() =>
+    ['url-link', 'email-link'].map(label => {
+      const icon = document.querySelector(`[aria-label="${label}"]`)
+      if (!icon) throw new Error(`Missing ${label} annotation.`)
+      const annotation = icon.closest('[aria-label="thought-annotation"]')
+      if (!annotation) throw new Error(`Missing thought annotation for ${label}.`)
+      return icon.querySelector('path')!.getBoundingClientRect().bottom - annotation.getBoundingClientRect().top
+    }),
+  )
+
+  expect(url).toBeLessThanOrEqual(email)
 })
