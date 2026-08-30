@@ -241,7 +241,7 @@
     "eslint-plugin-react-refresh": "^0.5.5",
     "expect-webdriverio": "^6.0.2",
     "fake-indexeddb": "^6.2.5",
-    "happy-dom": "^20.11.6",
+    "happy-dom": "^20.11.8",
     "it-all": "^3.0.11",
     "jest": "^30.4.2",
     "jest-environment-node": "^30.4.1",
