@@ -11748,7 +11748,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     eslint-plugin-react-refresh: "npm:^0.5.4"
-    expect-webdriverio: "npm:^6.0.2"
+    expect-webdriverio: "npm:^6.0.9"
     fake-indexeddb: "npm:^6.2.5"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
@@ -13216,29 +13216,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expect-webdriverio@npm:^6.0.2":
-  version: 6.0.3
-  resolution: "expect-webdriverio@npm:6.0.3"
-  dependencies:
-    "@vitest/snapshot": "npm:^4.1.10"
-    deep-eql: "npm:^5.0.2"
-    expect: "npm:^30.4.1"
-    jest-matcher-utils: "npm:^30.4.1"
-  peerDependencies:
-    "@wdio/globals": ^9.0.0
-    "@wdio/logger": ^9.0.0
-    webdriverio: ^9.0.0
-  peerDependenciesMeta:
-    "@wdio/globals":
-      optional: false
-    "@wdio/logger":
-      optional: false
-    webdriverio:
-      optional: false
-  checksum: 10c0/a468020db6d4ce56d2c08d46ddd8c47d0f91e90465eb8655fbd7fba08f5d027b128f09bae7f12524d3150ab4cb470fe46b6d3a232306cb46ad2d3109e7ff36ab
-  languageName: node
-  linkType: hard
-
 "expect-webdriverio@npm:^6.0.5":
   version: 6.0.5
   resolution: "expect-webdriverio@npm:6.0.5"
@@ -13259,6 +13236,29 @@ __metadata:
     webdriverio:
       optional: false
   checksum: 10c0/5c1d2ce57fc36b42d41afc5d18e096fb532462adbf65c82a0e8d0e97426e00cddfde547c9213d6efdc686db2d24ca316c016c215dc4add30124c2d0b29c6740c
+  languageName: node
+  linkType: hard
+
+"expect-webdriverio@npm:^6.0.9":
+  version: 6.0.9
+  resolution: "expect-webdriverio@npm:6.0.9"
+  dependencies:
+    "@vitest/snapshot": "npm:^4.1.10"
+    deep-eql: "npm:^5.0.2"
+    expect: "npm:^30.4.1"
+    jest-matcher-utils: "npm:^30.4.1"
+  peerDependencies:
+    "@wdio/globals": ^9.0.0
+    "@wdio/logger": ^9.0.0
+    webdriverio: ^9.28.0
+  peerDependenciesMeta:
+    "@wdio/globals":
+      optional: false
+    "@wdio/logger":
+      optional: false
+    webdriverio:
+      optional: false
+  checksum: 10c0/4a21a57a233ef74d779c43aa77441b583d0c8619ae7ff38900bebd9c97a4234101a6e30347c50774e3c019479f44f68292f20756605ae13b6a80bc65a87f0c7b
   languageName: node
   linkType: hard
 
