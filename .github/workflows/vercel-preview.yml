@@ -1,17 +1,6 @@
 name: Vercel Preview
 
-# TEMPORARY PAIRED-PREVIEW VALIDATION: pull_request runs this branch's workflow so it can be
-# validated before the updated pull_request_target workflow reaches main. The two events otherwise
-# publish competing GitHub deployments, so the branch run uses "Paired Preview (temporary)" below.
-#
-# Before merging to main:
-# 1. Delete the pull_request trigger block.
-# 2. Change run-name back to "Vercel Preview".
-# 3. Remove "-${{ github.event_name }}" from the concurrency group.
-# 4. Simplify the job condition to "github.event.pull_request.changed_files > 0".
-# 5. Set allow-unsafe-pr-checkout to true (only pull_request_target will remain).
-# 6. Replace the conditional deploymentEnvironment below with the literal "Preview".
-run-name: Vercel Preview (${{ github.event_name }})
+run-name: Vercel Preview
 
 # pull_request_target runs in the base repo's context, so repo secrets are available even for fork
 # PRs. GitHub's "require approval for outside collaborators" setting is the trust gate, not a
@@ -30,23 +19,6 @@ run-name: Vercel Preview (${{ github.event_name }})
 # A run is skipped only when EVERY changed file matches, so a PR that also touches app code still
 # deploys a preview as usual.
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    paths-ignore:
-      # Documentation and agent/editor configuration.
-      - '**/*.md'
-      - 'docs/**'
-      - '.github/instructions/**'
-      - '.github/skills/**'
-      - '.claude/**'
-      - '.agents/**'
-      - '.vscode/**'
-      - '.hooks/**'
-      # Native platform projects, and the icon/splash sources generated into them.
-      - 'android/**'
-      - 'ios/**'
-      - 'desktop/**'
-      - 'assets/**'
   pull_request_target:
     types: [opened, synchronize, reopened]
     paths-ignore:
@@ -67,10 +39,9 @@ on:
 
 # Rapidfire pushes to the same PR cancel the older preview build. Keyed on the PR number rather
 # than github.ref because pull_request_target sets github.ref to the *base* branch — every open PR
-# against main would otherwise share one group and cancel each other. The temporary event suffix
-# prevents the base branch's pull_request_target run from cancelling this branch's validation run.
+# against main would otherwise share one group and cancel each other.
 concurrency:
-  group: vercel-preview-${{ github.event.pull_request.number }}-${{ github.event_name }}
+  group: vercel-preview-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
@@ -88,12 +59,7 @@ jobs:
   preview:
     name: Deploy Preview
     runs-on: ubuntu-latest
-    # A regular pull_request receives secrets only for a branch in this repository. Forks continue
-    # to use the approval-gated pull_request_target workflow from the default branch.
-    if: >
-      github.event.pull_request.changed_files > 0 &&
-      (github.event_name == 'pull_request_target' ||
-      github.event.pull_request.head.repo.full_name == github.repository)
+    if: github.event.pull_request.changed_files > 0
 
     steps:
       - name: Clone repository
@@ -104,7 +70,7 @@ jobs:
           # pull_request_target workflow unless this is set. See the header comment
           # for why running fork code in this context is intentionally gated.
           # https://gh.io/securely-using-pull_request_target
-          allow-unsafe-pr-checkout: ${{ github.event_name == 'pull_request_target' }}
+          allow-unsafe-pr-checkout: true
 
       - name: Enable Corepack
         run: corepack enable
@@ -132,17 +98,11 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo
-            // TEMPORARY: Keep the branch-validation deployment separate from the legacy Preview
-            // deployment created by main's pull_request_target workflow. Otherwise GitHub chooses
-            // whichever deployment record was created last for the PR's "View deployment" link.
-            // Replace this conditional with the literal "Preview" when removing pull_request.
-            const deploymentEnvironment =
-              context.eventName === 'pull_request' ? 'Paired Preview (temporary)' : 'Preview'
             const { data } = await github.rest.repos.createDeployment({
               owner,
               repo,
               ref: context.payload.pull_request.head.sha,
-              environment: deploymentEnvironment,
+              environment: 'Preview',
               // Defaults to true, which makes GitHub merge the base branch into ref and
               // return a merge result *instead of* creating a deployment.
               auto_merge: false,
