@@ -8864,7 +8864,7 @@ __metadata:
     body-parser: "npm:^2.3.0"
     cors: "npm:^2.8.6"
     express: "npm:^4.18.2"
-    openai: "npm:^7.5.0"
+    openai: "npm:^7.7.0"
     typescript: "npm:^5.9.3"
   languageName: unknown
   linkType: soft
@@ -11633,7 +11633,7 @@ __metadata:
   resolution: "em-estimate@workspace:scripts/estimate"
   dependencies:
     dotenv: "npm:^17.4.2"
-    openai: "npm:^7.5.0"
+    openai: "npm:^7.7.0"
     prettier: "npm:^3.9.6"
     typescript: "npm:5.9.3"
     zod: "npm:^4.4.3"
@@ -11772,7 +11772,7 @@ __metadata:
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^6.0.1"
     npm-run-all2: "npm:^9.0.3"
-    openai: "npm:^7.5.0"
+    openai: "npm:^7.7.0"
     page-lifecycle: "⚠️ OVERRIDDEN BY 'resolutions' - Source: https://github.com/magic-akari/page-lifecycle#feat/add-types | Tarball: https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0 | Configured in: package.json#resolutions"
     pluralize: "npm:^8.0.0"
     postinstall-postinstall: "npm:^2.1.0"
@@ -18751,13 +18751,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^7.5.0":
-  version: 7.5.0
-  resolution: "openai@npm:7.5.0"
+"openai@npm:^7.7.0":
+  version: 7.7.0
+  resolution: "openai@npm:7.7.0"
   peerDependencies:
     "@aws-sdk/credential-provider-node": ">=3.972.0 <4"
     "@smithy/hash-node": ">=4.3.0 <5"
     "@smithy/signature-v4": ">=5.4.0 <6"
+    undici: ">=5 <9"
     ws: ^8.18.0
     zod: ^3.25 || ^4.0
   peerDependenciesMeta:
@@ -18767,11 +18768,13 @@ __metadata:
       optional: true
     "@smithy/signature-v4":
       optional: true
+    undici:
+      optional: true
     ws:
       optional: true
     zod:
       optional: true
-  checksum: 10c0/b16541492ea03cdc1646db9ae2aaea44571fb779708704108ca94256efa9a65d9ca4044723d1e4f579653f5a6ad84724d5bc1079b9572512820d1668495dc07c
+  checksum: 10c0/6d84a98bcc0915d221d2837d9f4985d35ded6826785b4d6aab4be98819182618b7de68d1d8955138381674eb4d601ca01fb8359f1d0c0577cf994a8ded4a5ad6
   languageName: node
   linkType: hard
 
