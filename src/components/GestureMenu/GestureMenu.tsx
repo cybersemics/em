@@ -110,10 +110,12 @@ const GestureMenu: FC<{
       >
         {gestureInProgress && (
           <div
+            data-testid='gesture-menu-content'
             style={{
               paddingBlock: `${verticalPaddingRem}rem`,
               paddingInline: `${horizontalPaddingRem}rem`,
               paddingTop: `${paddingTopRem}rem`,
+              paddingLeft: `calc(${horizontalPaddingRem}rem + ${token.var('spacing.safeAreaLeft')})`,
             }}
           >
             {/* Header */}

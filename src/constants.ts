@@ -187,6 +187,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'italic',
   'underline',
   'strikethrough',
+  'code',
   'textColor',
   'letterCase',
   'toggleContextView',
@@ -212,7 +213,8 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'cursorUp',
   // 'deleteEmptyThoughtOrOutdent',
   // 'deleteThoughtWithCursor',
-  // 'extractThought',
+  // 'extractCategory',
+  // 'extractSubthought',
   // 'help',
   // 'home',
   // 'join',
@@ -252,8 +254,6 @@ export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
 // starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 export const REGEX_PLAINTEXT_BULLET = /^\s*(?:[-—▪◦•]|\*\s)/m
-
-export const IPFS_GATEWAY = 'ipfs.infura.io'
 
 // delay before long press is activated
 // also used for react-dnd's delayTouchStart
@@ -345,10 +345,6 @@ export const META_PROGRAMMING_HELP = [
   {
     code: 'readonly',
     description: 'The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.',
-  },
-  {
-    code: 'src',
-    description: 'Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.',
   },
   {
     code: 'style',
@@ -540,7 +536,8 @@ export const COMMAND_GROUPS: {
       'newSubthoughtTop',
       'newUncle',
       'newGrandChild',
-      'extractThought',
+      'extractSubthought',
+      'extractCategory',
       'generateThought',
     ],
   },
@@ -550,7 +547,15 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Moving thoughts',
-    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp', 'swapParent'],
+    commands: [
+      'indent',
+      'outdent',
+      'bumpThoughtDown',
+      'moveThoughtDown',
+      'moveThoughtUp',
+      'swapParent',
+      'swapGrandparent',
+    ],
   },
   {
     title: 'Editing thoughts',

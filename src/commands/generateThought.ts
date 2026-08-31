@@ -1,5 +1,6 @@
 import Command from '../@types/Command'
 import Path from '../@types/Path'
+import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
@@ -7,12 +8,14 @@ import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
+import { showModalActionCreator as showModal } from '../actions/showModal'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import simplifyPath from '../selectors/simplifyPath'
+import requestAiDisclosure from '../util/aiDisclosure'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isURL from '../util/isURL'
@@ -59,6 +62,15 @@ const fetchWebpageTitle = async (url: string): Promise<string | null> => {
   }
 
   return null
+}
+
+/** Returns true when generating the thought at the given path will send context to the AI service. */
+const generatesWithAi = (state: State, path: Path) => {
+  const simplePath = simplifyPath(state, path)
+  const thought = getThoughtById(state, head(simplePath))
+  if (!thought || thought.generating) return false
+  const firstChild = getChildrenRanked(state, thought.id)[0]
+  return thought.value !== '' || !firstChild || !isURL(firstChild.value)
 }
 
 /**
@@ -181,6 +193,9 @@ const generateThoughtAtPathActionCreator =
         oldValue: thought.value,
         newValue: valueNew,
         path: simplePath,
+        // The generation completes whenever the request returns, not as part of a typing stream, so it must never
+        // merge with a user edit that happens to be contiguous in the same direction.
+        preventMerge: true,
       }),
     ])
 
@@ -199,7 +214,7 @@ const generateThought = {
   multicursor: {
     // preventSetCursor is not needed: execMulticursor never moves the cursor, so the restore at the end of the loop
     // sets it to the path it is already on.
-    execMulticursor: (cursors, dispatch) => {
+    execMulticursor: (cursors, dispatch, getState) => {
       /** Generates a thought for every selected thought within a single undo bracket. */
       const generateAll = async () => {
         // Yield before opening the undo bracket. executeCommandWithMulticursor is synchronous: it opens its own
@@ -218,17 +233,35 @@ const generateThought = {
         dispatch(setIsMulticursorExecuting({ value: false }))
       }
 
-      generateAll()
+      /** Requests disclosure when any selected thought will use AI, then generates the full selection. */
+      const generateAllWithDisclosure = () => {
+        const usesAi = cursors.some(path => generatesWithAi(getState(), path))
+        if (usesAi && requestAiDisclosure(generateAllWithDisclosure)) {
+          dispatch(showModal({ id: 'aiDisclosure' }))
+          return
+        }
+        generateAll()
+      }
+
+      generateAllWithDisclosure()
     },
   },
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
-  exec: async (dispatch, getState) => {
+  exec: async (dispatch, getState, e, commandContext) => {
     const state = getState()
 
     // do nothing if generation is already in progress
     if (state.cursorCleared) return
 
     const cursor = state.cursor!
+
+    if (
+      generatesWithAi(state, cursor) &&
+      requestAiDisclosure(() => generateThought.exec(dispatch, getState, e, commandContext))
+    ) {
+      dispatch(showModal({ id: 'aiDisclosure' }))
+      return
+    }
 
     // Render the cursor thought as an empty thought while its value is generated. cursorCleared is a single global
     // flag that only applies to the thought being edited, so it is set here rather than in generateThoughtAtPath.

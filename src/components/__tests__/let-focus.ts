@@ -75,3 +75,31 @@ it('apply =focus/Zoom/=style defined in a =let expression to the cursor', async 
   // =focus only applies to the cursor, so bear is not styled
   expect(thoughtBear).not.toHaveStyle({ color: 'rgba(255, 192, 203, 1)' })
 })
+
+it('hide the siblings of the cursor with =focus/Zoom defined in a =let expression', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - =let
+          - =foo
+            - =focus
+              - Zoom
+        - apple
+          - =foo
+        - bear
+      `,
+    }),
+  ])
+
+  const editableApple = (await findThoughtByText('apple'))!
+
+  // Subthought renders the wrapper that carries the autofocus opacity around the element that Thought labels 'child'.
+  // bear is fully visible until apple becomes the cursor
+  expect(getClosestByLabel(await findThoughtByText('bear'), 'child')!.parentElement).toHaveStyle({ opacity: '1' })
+
+  const user = userEvent.setup({ delay: null })
+  await user.click(editableApple)
+
+  expect(getClosestByLabel(await findThoughtByText('bear'), 'child')!.parentElement).toHaveStyle({ opacity: '0' })
+  expect(getClosestByLabel(editableApple, 'child')!.parentElement).toHaveStyle({ opacity: '1' })
+})

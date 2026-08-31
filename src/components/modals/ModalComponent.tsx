@@ -17,6 +17,7 @@ export type ModalProps = PropsWithChildren<{
   hideModalActions?: boolean
   id: ModalType
   onClose?: () => void
+  onClosed?: () => void
   onSubmit?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void
   style?: React.CSSProperties
   actions?: (modalActionHelpers: ModalActionHelpers) => React.ReactNode
@@ -59,6 +60,7 @@ class ModalComponent extends React.Component<ModalProps> {
       }
       setTimeout(() => {
         store.dispatch(closeModal())
+        this.props.onClosed?.()
       }, durations.get('medium'))
     }
 

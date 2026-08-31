@@ -14,6 +14,7 @@ import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -52,6 +53,20 @@ const setNoteCaret = (offset: number) =>
 
 /** Waits one frame for selectionchange-driven command state to propagate. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
+
+/** Returns the background that actually paints behind the code text of the thought being edited, i.e. the nearest
+ * self-or-ancestor of the code element that is not transparent. */
+const codeBackgroundColor = () =>
+  page.evaluate(() => {
+    const code = document.querySelector('[data-editing=true] [data-editable] code')
+    if (!code) throw new Error('No code element found in the editing thought')
+    for (let el: Element | null = code; el; el = el.parentElement) {
+      const backgroundColor = window.getComputedStyle(el).backgroundColor
+      if (backgroundColor && backgroundColor !== 'transparent' && !backgroundColor.startsWith('rgba(0, 0, 0, 0'))
+        return backgroundColor
+    }
+    return null
+  })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
@@ -295,11 +310,13 @@ it('Verify superscript colors in different views', async () => {
   await clickThought('m')
   await clickToolbar('Context View')
 
-  // ArrowDown to the green 'b' context. Keyboard traversal visits the first context and its child before reaching it.
-  // TODO: Why does clickThought('b') not work here?
-  await press('ArrowDown')
-  await press('ArrowDown')
-  await press('ArrowDown')
+  // Click the green 'b' context. clickThought matches the editable's innerHTML, which is why the color markup has to
+  // be included: after 'b' is colored, its value is no longer the bare 'b' that clickThought('b') would look for.
+  await clickThought('<font color="#00d688">b</font>')
+
+  // The superscript is only read from the thought under the cursor, so wait for the click to land before reading it.
+  await waitForCursor('<font color="#00d688">b</font>')
+
   const supColor3 = await getSuperscriptColor()
   expect(supColor3).toBeTruthy()
   expect(rgbToHex(supColor3!)).toBe(rgbaToHex(colors.light.green)) // Superscript should match the green color in context view
@@ -567,4 +584,45 @@ it('Set background color with multicursor selection', async () => {
   const labradorText = await getEditingText()
   const labradorBgColor = extractColor(labradorText!)?.backgroundColor
   expect(labradorBgColor && rgbToHex(labradorBgColor)).toBe(rgbaToHex(colors.light.green))
+})
+
+// https://github.com/cybersemics/em/issues/4234
+it('Set the background color of text that is marked as code', async () => {
+  const importText = `
+  - Hello beautiful people`
+
+  await paste(importText)
+
+  await clickThought('Hello beautiful people')
+
+  await setSelection(6, 15)
+  await press('K', { meta: true })
+  await waitForEditable('Hello <code>beautiful</code> people')
+
+  await clickToolbar('Text Color', 'background color swatches', 'red')
+  await nextFrame()
+
+  const background = await codeBackgroundColor()
+  expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
+})
+
+// https://github.com/cybersemics/em/issues/4234
+it('Set the background color of text that is marked as code with the =style attribute', async () => {
+  const importText = `
+  - Hello beautiful people
+    - =style
+      - background-color
+        - red`
+
+  await paste(importText)
+
+  await clickThought('Hello beautiful people')
+
+  await setSelection(6, 15)
+  await press('K', { meta: true })
+  await waitForEditable('Hello <code>beautiful</code> people')
+  await nextFrame()
+
+  const background = await codeBackgroundColor()
+  expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
 })

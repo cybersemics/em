@@ -8,8 +8,6 @@ import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
 import { initThoughtsActionCreator as initThoughts } from './actions/initThoughts'
-import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
-import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
@@ -20,7 +18,7 @@ import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
 import exportContext from './selectors/exportContext'
-import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked } from './selectors/getChildren'
+import { getAllChildren, getChildrenRanked } from './selectors/getChildren'
 import getContexts from './selectors/getContexts'
 import getLexeme from './selectors/getLexeme'
 import getThoughtById from './selectors/getThoughtById'
@@ -34,7 +32,6 @@ import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import owner from './util/owner'
-import urlDataSource from './util/urlDataSource'
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
@@ -88,22 +85,19 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
     },
   })
 
-  // load local state unless loading a public context or source url
+  // load local state unless loading a public context
   // await initDB()
 
-  const src = urlDataSource()
   const thoughtsLocalPromise =
     owner() === '~'
       ? // authenticated or offline user
-        Promise.resolve(store.dispatch(src ? loadFromUrl(src) : initThoughts(clientId)))
+        Promise.resolve(store.dispatch(initThoughts(clientId)))
       : // other user context
         Promise.resolve()
 
-  // load =preload sources
   thoughtsLocalPromise.then(() => {
     // extra delay for good measure to not block rendering
     setTimeout(() => {
-      store.dispatch(preloadSources)
       store.dispatch(importFiles({ resume: true }))
     }, 500)
   })
@@ -187,9 +181,6 @@ const windowEm = {
   }),
   getAllChildrenByContext: withState((state: State, context: Context) =>
     getAllChildren(state, contextToThoughtId(state, context) || null),
-  ),
-  getAllChildrenAsThoughts: withState((state: State, context: Context) =>
-    getAllChildrenAsThoughts(state, contextToThoughtId(state, context) || null),
   ),
   getAllChildrenRankedByContext: withState((state: State, context: Context) =>
     getChildrenRanked(state, contextToThoughtId(state, context) || null),

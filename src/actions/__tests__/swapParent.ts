@@ -72,6 +72,30 @@ it('swaps two empty thoughts without error', () => {
   expect(cursorThought!.value).toBe('')
 })
 
+// https://github.com/cybersemics/em/issues/3628
+it('preserves both notes when swapping a parent and child that each have a note', () => {
+  const text = `
+    - parent
+      - =note
+        - parent note
+      - child
+        - =note
+          - child note
+  `
+
+  const steps = [importText({ text }), setCursor(['parent', 'child']), swapParent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - child
+    - =note
+      - parent note
+    - parent
+      - =note
+        - child note`)
+})
+
 it('swaps child thought with parent', () => {
   const text = `
   - x
@@ -150,6 +174,38 @@ it('swapped parent should take the rank of the child', () => {
     - a`)
 
   expectPathToEqual(stateNew, stateNew.cursor, ['d'])
+})
+
+// Regression test for the sibling reordering reported in
+// https://github.com/cybersemics/em/pull/5058#issuecomment-5382410421
+// The parent and the siblings move under the child before the child's own children have left it. Reusing the ranks
+// they held under the parent collided with the ranks already there, and the rerank that a collision triggers
+// resolved the tie in an arbitrary order, moving a sibling the swap should not have touched.
+it('does not reorder the siblings around the parent moving into the cursor thought', () => {
+  const text = `
+    - a
+      - b
+        - w
+        - c
+          - d
+          - e
+        - f
+  `
+
+  const steps = [importText({ text }), setCursor(['a', 'b', 'c']), swapParent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  // b takes the slot c vacated, between w and f. f in particular stays last.
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - c
+      - w
+      - b
+        - d
+        - e
+      - f`)
 })
 
 describe('context view', () => {
