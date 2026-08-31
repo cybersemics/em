@@ -26,7 +26,8 @@ yarn test:ios:browserstack  # BrowserStack credentials required
 yarn test:ios:local         # local Appium and iOS Simulator required
 ```
 
-See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
+> [!IMPORTANT]
+> See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
 
 ### Run a specific test
 
@@ -393,20 +394,27 @@ Start the app before either iOS suite:
 ```sh
 # terminal 1
 yarn start
-
 # terminal 2: choose one
 yarn test:ios:browserstack
 yarn test:ios:local
 ```
 
-For BrowserStack, put the credentials in `.env.test.local`:
+#### Setting up credentials for BrowserStack
+
+The BrowserStack configuration automatically starts and stops a temporary Cloudflare tunnel so the real device can reach the local HTTPS app.
+
+To test with BrowserStack, you need **credentials to access BrowserStack** and credentials to make the Cloudflare tunnel work.
+
+Put these credentials in `.env.test.local`. Contact the project maintainer for these:
+
 
 ```dotenv
 BROWSERSTACK_USERNAME=your_username
 BROWSERSTACK_ACCESS_KEY=your_access_key
-```
 
-The BrowserStack configuration starts and stops a temporary Cloudflare tunnel automatically so the real device can reach the local HTTPS app.
+# make sure to enclose with 'quotes'
+CLOUDFLARE_TUNNEL_POOL='[{"name":"…","hostname":"…","token":"…"}, …]'
+```
 
 Local Appium requires macOS with Xcode and an iOS Simulator, Appium, and the XCUITest driver:
 
@@ -449,7 +457,7 @@ We use a fixed-domain pool rather than the ephemeral `*.trycloudflare.com` quick
 
 ##### How a run claims a tunnel
 
-[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run `TUNNEL_TOKEN` (the Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts)).
+[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts). The gate only guards the tunnel's public hostnames; every other authority (localhost, a LAN IP, `bs-local.com`) cannot have come through the tunnel — Cloudflare routes to the tunnel by Host header — and passes ungated. `onPrepare` discovers the token by asking the dev server's off-tunnel-only `/__tunnel-token` route over localhost, so a local run needs no `TUNNEL_TOKEN`; CI generates one per run and exports it to both its server and the runner (env `TUNNEL_TOKEN` overrides generation), which is also why every server on the pool is gated — the claim probe below relies on foreign servers 403ing this run's token.
 
 The gate must see `?__token=` on the **document** request. Vite rewrites `Accept: text/html` navigations (Chrome, Safari, BrowserStack iOS) to `/index.html` and drops the query string; curl's default `Accept: */*` does not take that path. That is why curl can 200 while a browser shows the gate's `Forbidden` on the same URL. The middleware reads Connect's `originalUrl` so the token survives that rewrite. The device URL is always `https://<hostname>/?__token=…` (slash before the query). Concatenating onto `https://host` without that slash yields `https://host?__token=`, which iOS Safari does not load as `/` — the first WDIO session fails `before` while later `specFileRetries` can still pass.
 
@@ -478,9 +486,6 @@ Requires an **Account**-scoped Cloudflare permission grant including `Cloudflare
 3. The script writes `cloudflare-tunnel-pool.json` (gitignored — it contains live tokens). Set its contents as the GitHub Actions secret `CLOUDFLARE_TUNNEL_POOL`: `gh secret set CLOUDFLARE_TUNNEL_POOL < cloudflare-tunnel-pool.json`.
 4. Re-run the script (same or a larger `POOL_SIZE`) any time to top up the pool — it reuses tunnels that already exist rather than recreating them.
 
-##### If you're a developer who needs tunnel access
-
-If you're a developer or agent making changes to BrowserStack CI, you'll need access to a **separate tunnel pool used for the development environment**. Ask the project maintainer, who will be able to give you access to the values needed for the `CLOUDFLARE_TUNNEL_POOL` secret.
 
 Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
@@ -699,7 +704,23 @@ Concurrency only supersedes runs *within* an open pull request. Nothing in GitHu
 - **`pull_request_target`, not `pull_request`.** Cancelling needs `actions: write`, and a fork pull request's token is read-only under `pull_request`. The workflow checks out nothing and executes no pull request code, so the usual `pull_request_target` hazard does not arise. It also reads its own file from the base branch, so edits to it take effect only once merged.
 - **The `main` run is never swept up.** Runs are selected by head SHA, and merging always writes a new commit — merge, squash, and rebase alike — so the push run on `main` carries a different `head_sha` than the head it was merged from. The regression signal the sweep relies on cannot cancel itself.
 - **A merged pull request now shows `cancelled` checks.** Those runs genuinely did not finish, and reporting them as anything else would be false. Branch protection is unaffected: it evaluates the head commit's checks before the merge, and the sweep runs after.
-- **Auto-merge gives up the tail of the slow suites.** Lint is the only required check, so `gh pr merge --auto` ([`dependabot-automerge.yml`](../.github/workflows/dependabot-automerge.yml)) can merge while Test, Puppeteer, and BrowserStack are still running, and the sweep then cancels them. From that point the push run on `main` is what surfaces a regression.
+- **Auto-merge gives up the tail of the slow suites.** Lint is the only required check, so `gh pr merge --auto` ([`dependabot-automerge.yml`](../.github/workflows/dependabot-automerge.yml)) can merge while Test, Puppeteer, and BrowserStack are still running, and the sweep then cancels them. From that point the push run on `main` is what surfaces a regression. A bump whose checks fail never reaches any of that — see [Failing Dependabot pull requests](#failing-dependabot-pull-requests).
+
+#### Failing Dependabot pull requests
+
+Auto-merge only lands a bump whose checks pass. One that fails stops dead and waits for a human, and the failures are usually small and mechanical — a renamed export, a tightened type, an assertion that moved. [`Dependabot Fix`](../.github/workflows/dependabot-fix.yml) puts an agent on one as soon as it happens: a GitHub Copilot cloud agent session started through the [agent tasks API](https://docs.github.com/en/rest/agent-tasks/agent-tasks) by [`scripts/ci/start-dependabot-fix-task.mjs`](../scripts/ci/start-dependabot-fix-task.mjs) — Opus 5 and the `worker-bee` agent, the same pair the [flaky-test detector](#automated-flaky-test-detection) uses. It commits to the pull request's own branch rather than opening a second one, which the agent tasks API arranges when it is given `head_ref` and `base_ref` for an open pull request. Dependabot stops rebasing a branch anyone else has pushed to, which is the intended outcome: from then on the fix and the bump travel together.
+
+**It triggers on every check completion, not on the failures.** A pull request's checks finish at different times and the last one to finish is often green — on #5203, Lint failed at 02:14 and BrowserStack at 02:29, with Test passing at 02:16 in between — so triggering on `failure` would fire while other checks were still running. Instead [`scripts/ci/collect-dependabot-failures.cjs`](../scripts/ci/collect-dependabot-failures.cjs) bails unless it is the last one out, which is also what keeps four failing checks from starting four sessions on one pull request. Being `workflow_run`-triggered, it reports no check of its own to the head commit and so never waits on itself.
+
+Five more guards decide whether a session is warranted, and each one is a reason nothing happens:
+
+- **The pull request must be open and authored by `dependabot[bot]`.** The `dependabot/` branch prefix alone is not proof of one, and a human pushing such a branch should not get a session aimed at their code.
+- **A failure that is also red on the base branch is not the bump's doing.** Those are annotated as such in the prompt, and when *every* failure is one of them no session starts at all — a broken `main` would otherwise put an agent on every open bump at once.
+- **One session per head commit.** The workflow keeps a single marked comment on the pull request carrying the commit it was started for, so a rebase gets a fresh session and a re-run of one check does not.
+- **`cancelled` is not a failure.** [Cancel PR Runs](#merged-and-closed-pull-requests) leaves cancelled checks behind on a merged pull request, and they mean nothing broke.
+- **Three sessions per pull request.** A session that pushes a fix moves the head commit, so without a cap a bump the agent cannot fix would start a fresh session on every attempt. The count lives in the same comment, which names the attempt it is on — the cap is visible before it is reached rather than as silence afterwards. A manual dispatch overrides both this and the per-commit dedupe.
+
+The session's prompt names each failing check and includes an excerpt of the first three failing jobs' logs, anchored on the runner's `##[error]` annotations — the tail of an Actions log is the same twenty lines of checkout cleanup every time, so a plain tail would say nothing. Like the flaky detector, this needs the `COPILOT_TASKS_TOKEN` repository secret; without it the workflow says so and does nothing. To start a session by hand, or to start a second one on the same commit: `gh workflow run dependabot-fix.yml -f pr=<number>`.
 
 #### Layered BrowserStack concurrency
 
