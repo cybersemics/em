@@ -1,7 +1,7 @@
 import { KnownDevices } from 'puppeteer'
 import clearThoughtCommand from '../../../commands/clearThought'
 import click from '../helpers/click'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import getSelection from '../helpers/getSelection'
 import longPressThought from '../helpers/longPressThought'
@@ -383,9 +383,7 @@ describe('clearThought', () => {
 })
 
 describe('mobile', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   // https://github.com/cybersemics/em/pull/4520
   it('dismisses the Command Center and mirrors typing when Clear Thought is performed on a multiselection', async () => {
