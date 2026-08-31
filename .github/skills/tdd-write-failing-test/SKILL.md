@@ -71,7 +71,7 @@ Do **not** label it a "regression test" (it is just a normal test), and do **not
 ```ts
 import { KnownDevices } from 'puppeteer'
 import click from '../helpers/click'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import newThought from '../helpers/newThought'
 import { page } from '../session'
@@ -79,9 +79,7 @@ import { page } from '../session'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('command center', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   // https://github.com/cybersemics/em/issues/4331
   it.skip('overlay stays solid after a modal opened over it is closed', async () => {
@@ -95,7 +93,7 @@ describe('command center', () => {
 })
 ```
 
-- The Command Center is **mobile-only** (`isTouch`); emulate a mobile device in `beforeEach`, mirroring `multiselect.ts`. (em reads its touch/layout profile at load — if a touch-gated feature fails to render, emulation may need to precede navigation; you confirm it renders in Step 5.)
+- The Command Center is **mobile-only** (`isTouch`); select the device at suite scope with `deviceEmulation.useForSuite`, mirroring `multiselect.ts`. em reads its touch/layout profile at load, and `setup` applies the device before navigation — emulating after the page has loaded reloads it and restarts app initialization.
 - `setup.ts` already navigates + skips the tutorial before each test.
 
 ### iOS — WDIO + Mocha + iOS helpers (`src/e2e/iOS/__tests__/`)
