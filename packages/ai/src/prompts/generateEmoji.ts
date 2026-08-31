@@ -2,6 +2,7 @@ import emojiRegex from 'emoji-regex'
 import { z } from 'zod'
 import Model from '../@types/Model'
 import ReasoningEffort from '../@types/ReasoningEffort'
+import Service from '../@types/Service'
 import completeChat from '../completeChat'
 
 /** Regular expression for matching emoji. */
@@ -50,6 +51,7 @@ Order them from most to least semantically precise and culturally recognizable.`
     ],
     model: Model.GPT_5_6_LUNA,
     reasoningEffort: ReasoningEffort.NONE,
+    service: Service.GENERATE_EMOJI,
     schema: z.object({
       emojis: z
         .array(z.string())

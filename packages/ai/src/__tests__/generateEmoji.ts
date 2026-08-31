@@ -2,6 +2,7 @@ const completeChat = vi.hoisted(() => vi.fn())
 
 vi.mock('../completeChat', () => ({ default: completeChat }))
 
+import Service from '../@types/Service'
 import generateEmoji from '../prompts/generateEmoji'
 
 const candidates = ['🐕', '🐶', '🦮', '🐾', '🦴', '🐕‍🦺', '🐩', '🐺', '🏠', '🦊', '🌳', '⚽', '🚶', '🛋️', '❤️']
@@ -25,6 +26,7 @@ it('returns the first ten unique single-grapheme emoji', async () => {
         }),
         { content: 'Dog', role: 'user' },
       ],
+      service: Service.GENERATE_EMOJI,
     }),
   )
 })

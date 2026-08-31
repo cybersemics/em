@@ -31,8 +31,8 @@ const TOTAL_RESULT_MATCH_THRESHOLD = 2
 const normalizeEmoji = (value: string): string => value.replace(/\uFE0F/g, '')
 
 beforeAll(() => {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OPENAI_API_KEY is required')
+  if (!process.env.OPENAI_API_KEY_GENERATE_EMOJI && !process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY_GENERATE_EMOJI or OPENAI_API_KEY is required')
   }
 })
 
