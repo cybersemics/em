@@ -1,7 +1,11 @@
 import CommandState from '../@types/CommandState'
 import FormattingCommand from '../@types/FormattingCommand'
+import { ALLOWED_FORMATTING_TAGS } from '../constants'
 
 const commands = Object.values(FormattingCommand)
+
+/** Matches an opening or closing formatting tag that does not toggle a command, such as the <font> tag that wraps a thought with a text or background color. Such a tag is transparent: it neither applies nor interrupts a formatting command. */
+const REGEX_TRANSPARENT_TAG = new RegExp(`^</?(${ALLOWED_FORMATTING_TAGS.join('|')})[^>]*>`, 'i')
 
 /**
  * This is a utility for creating opening and closing markup tag.
@@ -113,6 +117,12 @@ const getCommandState = (value: string): CommandState => {
     }
     // Check for more tags, to avoid parsing a subsequent character as a non-tag character
     if (foundTag) {
+      continue
+    }
+    // Skip a formatting tag that does not toggle a command, e.g. the <font> tag that wraps a thought with a background color. Otherwise it would be parsed as text and clear the commands that it is nested within, hiding the active state of the formatting buttons (#3928).
+    const transparentTag = value.match(REGEX_TRANSPARENT_TAG)
+    if (transparentTag) {
+      value = value.substring(transparentTag[0].length)
       continue
     }
     // Handle all of the subsequent non-tag characters
