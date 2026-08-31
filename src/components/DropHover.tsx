@@ -5,6 +5,7 @@ import { dropHoverRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
@@ -12,6 +13,7 @@ import usePinDropHover from '../hooks/usePinDropHover'
 import attributeEquals from '../selectors/attributeEquals'
 import calculateAutofocus from '../selectors/calculateAutofocus'
 import dropHoverColor from '../selectors/dropHoverColor'
+import { getChildrenRanked } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import prevSibling from '../selectors/prevSibling'
@@ -65,6 +67,24 @@ const DropHover = ({ simplePath }: { simplePath: SimplePath }) => {
     />
   )
 }
+/** Returns true if dropping the dragged thoughts immediately before the given thought would leave them where they already are. */
+const isDropNoop = (state: State, simplePath: SimplePath) => {
+  const children = getChildrenRanked(state, head(rootedParentOf(state, simplePath)))
+  const dropIndex = children.findIndex(child => child.id === head(simplePath))
+  const draggingIndexes = state.draggingThoughts.map(draggingPath =>
+    children.findIndex(child => child.id === head(draggingPath)),
+  )
+  const lastIndex = draggingIndexes[draggingIndexes.length - 1]
+
+  // all the dragged thoughts must be siblings of the drop destination and form a contiguous block ending at lastIndex
+  const isContiguousBlock = draggingIndexes.every(
+    (index, i) => index !== -1 && index === lastIndex - draggingIndexes.length + 1 + i,
+  )
+
+  // dropping the block immediately before its first thought or immediately before the sibling that follows it is a noop
+  return isContiguousBlock && (dropIndex === lastIndex || dropIndex === lastIndex + 1)
+}
+
 /** A drop-hover element that is rendered during drag-and-drop when it is possible to drop in a ThoughtDrop zone (next to a Thought). The canDrop and drop handlers can be found in the DropTarget components, DragAndDropThought and DragAndDropSubthoughts. */
 const DropHoverIfVisible = ({
   isHovering,
@@ -111,6 +131,11 @@ const DropHoverIfVisible = ({
     })
 
     if (contiguousDraggingThoughts.some(draggingPath => equalPath(draggingPath, simplePath))) {
+      return false
+    }
+
+    // Don't show the drop hover where the dragged thoughts already are, since dropping there would not move them.
+    if (isDropNoop(state, simplePath)) {
       return false
     }
 

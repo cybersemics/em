@@ -112,7 +112,7 @@ describe('drag', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5229
-  it.skip('does not show a drop hover below the dragged thought', async () => {
+  it('does not show a drop hover below the dragged thought', async () => {
     await paste(`
       - aaa
       - bbb

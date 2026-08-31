@@ -186,7 +186,7 @@ The previous `QuickDropIcon` / `DeleteDrop` / `CopyOneDrop` / `ExportDrop` icon 
 
 - [`DragAndDropContext`](../src/components/DragAndDropContext.tsx) — `DndProvider` wrapping the app; selects backend by `isTouch`.
 - [`DragOnly`](../src/components/DragOnly.tsx) — a fragment that only renders its children when `state.longPress === DragInProgress` (or a test flag is set). Used to skip mounting drop targets and overlays when not dragging.
-- [`DropHover`](../src/components/DropHover.tsx) — the blue-bar visual indicator. Subscribes to `state.hoveringPath` and `state.hoverZone` and decides whether *this* particular drop target should render the bar. For sorted contexts, additionally compares the dragging value's `compareReasonable` order against neighbors to choose which gap to highlight.
+- [`DropHover`](../src/components/DropHover.tsx) — the blue-bar visual indicator. Subscribes to `state.hoveringPath` and `state.hoverZone` and decides whether *this* particular drop target should render the bar. The bar is suppressed where a drop would not move anything: in the gaps between contiguous selected thoughts, and at the position the dragged thoughts already occupy (dropping a thought immediately above or below itself). For sorted contexts, additionally compares the dragging value's `compareReasonable` order against neighbors to choose which gap to highlight.
 - [`usePinDropHover`](../src/hooks/usePinDropHover.ts) — test-only latch used by `DropHover`, `DropEnd`, `DropChild`, and `DropUncle`. When `testFlags.pinDropHovers` is set, a drop hover that has been shown during the current drag stays visible until the drag ends, so e2e snapshot tests can compare multiple drop hovers in a single screenshot (see [Testing](testing.md#drag-and-drop-visualization)).
 
 ## Multicursor drag
@@ -200,7 +200,7 @@ When a user has multiple thoughts selected via the multicursor (`state.multicurs
 
 The drop handler iterates the array and dispatches `moveThought` per item. To make undo coalesce the whole multi-move into one entry, it wraps the dispatch in `setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' })` and clears it after.
 
-A selected thought that would be a no-op at the drop position (dropping a thought on or immediately before itself — e.g. dropping the first child `b` above itself) is a valid drop target, so the drop indicator still shows and the drop is *not* aborted; that item is simply skipped while the remaining selected thoughts still move. To keep the selection in document order, the first dragged item is placed before the drop target and each subsequent item is placed after the previous one (via `getRankAfter`), so the skipped no-op still anchors the position of the items that follow it.
+A selected thought that would be a no-op at the drop position (dropping a thought on or immediately before itself — e.g. dropping the first child `b` above itself) is a valid drop target, so the drop indicator still shows and the drop is *not* aborted; that item is simply skipped while the remaining selected thoughts still move. Only when the *entire* selection would stay where it is does the indicator disappear, since then the drop would move nothing at all. To keep the selection in document order, the first dragged item is placed before the drop target and each subsequent item is placed after the previous one (via `getRankAfter`), so the skipped no-op still anchors the position of the items that follow it.
 
 ## Performance considerations
 
