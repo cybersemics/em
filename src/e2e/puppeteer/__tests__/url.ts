@@ -7,7 +7,6 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
-import { page } from '../session'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -97,32 +96,19 @@ it('collapsed thought with url child', async () => {
   expect(image).toMatchImageSnapshot()
 })
 
+// Both icons are clipped by the 1em link that wraps them, so only the painted result shows whether they sit level
+// with the text rather than hanging below it.
 // https://github.com/cybersemics/em/issues/4684
-it('url and email icons rest on the text baseline', async () => {
+it('url and email icon alignment', async () => {
+  await hideHUD()
+
   await paste(`
     - https://test.com
     - test@test.com
   `)
 
-  // Measure each icon's ink against the text baseline of its own thought, located with a zero-size baseline-aligned
-  // strut. A positive value means the icon's artwork hangs below the text it annotates.
-  const [url, email] = await page.evaluate(() =>
-    ['url-link', 'email-link'].map(label => {
-      const link = document.querySelector(`[aria-label="${label}"]`)
-      if (!link) throw new Error(`Missing ${label} annotation.`)
-      const annotation = link.closest('[aria-label="thought-annotation"]')
-      if (!annotation) throw new Error(`Missing thought annotation for ${label}.`)
-      const strut = document.createElement('span')
-      strut.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'
-      annotation.appendChild(strut)
-      const baseline = strut.getBoundingClientRect().bottom
-      strut.remove()
-      return link.querySelector('path')!.getBoundingClientRect().bottom - baseline
-    }),
-  )
+  await press('Escape')
 
-  expect(url).toBeLessThan(1)
-  expect(email).toBeLessThan(1)
-  // Both icons share a link style, so their offset from each other is independent of the font's metrics.
-  expect(Math.abs(url - email)).toBeLessThan(0.5)
+  const image = await screenshot()
+  expect(image).toMatchImageSnapshot()
 })
