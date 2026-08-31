@@ -95,11 +95,42 @@ describe('DropGutter: mobile only', () => {
         - c
         `)
 
+    await page.evaluate(() => {
+      ;(window as any).em.testFlags.logActions = true
+    })
     await clickThought('a')
+    console.log('DIAG_BEFORE_TAP:', JSON.stringify(await page.evaluate((() => {
+      const btn = document.querySelector('[aria-label="Add to Favorites"]') as HTMLElement | null
+      const toolbar = document.querySelector('#toolbar') as HTMLElement | null
+      const r = btn?.getBoundingClientRect()
+      return {
+        scrollLeft: toolbar?.scrollLeft,
+        clientWidth: toolbar?.clientWidth,
+        rect: r ? { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) } : null,
+        topAtCenter: r ? (document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) as HTMLElement | null)?.closest('[aria-label]')?.getAttribute('aria-label') ?? null : null,
+        editing: document.querySelector('[data-editing=true] [data-editable]')?.innerHTML ?? null,
+        alert: document.querySelector('[data-testid="alert-content"]')?.textContent ?? null,
+      }
+    }))))
     await click('[aria-label="Add to Favorites"]')
-
-    // wait until the favorite alert appears
-    await waitForAlertContent('Added "a" to favorites')
+    try {
+      await waitForAlertContent('Added "a" to favorites')
+    } catch (e) {
+      console.log('DIAG_FAILED:', JSON.stringify(await page.evaluate((() => {
+      const btn = document.querySelector('[aria-label="Add to Favorites"]') as HTMLElement | null
+      const toolbar = document.querySelector('#toolbar') as HTMLElement | null
+      const r = btn?.getBoundingClientRect()
+      return {
+        scrollLeft: toolbar?.scrollLeft,
+        clientWidth: toolbar?.clientWidth,
+        rect: r ? { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) } : null,
+        topAtCenter: r ? (document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) as HTMLElement | null)?.closest('[aria-label]')?.getAttribute('aria-label') ?? null : null,
+        editing: document.querySelector('[data-editing=true] [data-editable]')?.innerHTML ?? null,
+        alert: document.querySelector('[data-testid="alert-content"]')?.textContent ?? null,
+      }
+    }))))
+      throw e
+    }
 
     await dragToDropGutter(await waitForEditable('a'))
 
