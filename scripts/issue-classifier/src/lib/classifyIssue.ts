@@ -8,10 +8,10 @@ import type { VoteResult } from './tallyVotes.ts'
  * The one label whose absence of a milestone is an answer rather than a gap.
  *
  * A pure refactor is cross-cutting by definition — it restructures code without belonging to a
- * user-facing subsystem — so finding no milestone for one is correct, not a hole in the taxonomy.
+ * user-facing domain — so finding no milestone for one is correct, not a hole in the taxonomy.
  * That is a claim about what the word means, and it does not generalize to the other labels even
  * though some of them go unmilestoned more often: `test` has ✅ Test Engineering, `agent` has
- * ✨ Agent Workflows, and a `bug`, `feature`, or `performance` issue names work inside some subsystem
+ * ✨ Agent Workflows, and a `bug`, `feature`, or `performance` issue names work inside some domain
  * by definition, so no milestone for one of those is worth a human's attention.
  */
 const CROSS_CUTTING_LABEL = 'refactor'
@@ -71,8 +71,8 @@ export interface ClassifyIssueOptions {
  * a repository with no open milestones — is reachable in a deterministic test.
  *
  * The label is a second, independent verdict rather than a competing one: it says what kind of work
- * the issue is, not which subsystem owns it, so an issue gets the label *and* its milestone. What it
- * changes is the case where no milestone fits. A pure refactor matching no subsystem is a finished
+ * the issue is, not which domain owns it, so an issue gets the label *and* its milestone. What it
+ * changes is the case where no milestone fits. A pure refactor matching no domain is a finished
  * classification rather than a question — see CROSS_CUTTING_LABEL — so the label stands alone and
  * nothing is asked. Every other kind still reaches a human, carrying its label with it.
  *
@@ -153,7 +153,7 @@ const classifyIssue = async ({
     }
   }
 
-  // A refactor that fits no subsystem is classified, not unclassifiable: the label is the answer, so
+  // A refactor that fits no domain is classified, not unclassifiable: the label is the answer, so
   // there is nothing left to ask.
   if (label === CROSS_CUTTING_LABEL) {
     return {
