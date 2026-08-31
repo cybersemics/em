@@ -1056,6 +1056,26 @@ describe('single-line paste into a thought', () => {
     )
   })
 
+  it('replaces a range that falls inside a formatting tag', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      // the "w" of the bold "two"
+      importTextAtFirstMatch({
+        at: ['one <b>two</b> three'],
+        text: 'X',
+        caretPosition: 6,
+        replaceStart: 5,
+        replaceEnd: 6,
+      }),
+    ])(initialState())
+
+    // Composing the halves as left + text + right would leave the text between them, outside the <b> that both carry,
+    // splitting the bold run in two.
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['one <b>tXo</b> three'])!)!.value).toBe(
+      'one <b>tXo</b> three',
+    )
+  })
+
   it('replaces the whole value when the thought is cleared', () => {
     const stateNew = reducerFlow([
       newThought({ value: 'one <b>two</b> three' }),
