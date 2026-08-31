@@ -20,24 +20,6 @@ interface GeneratedEmojiResult {
 /** Adds an emoji prefix to a thought value. */
 const addEmojiPrefix = (emoji: string, value: string): string => `${emoji}${value ? ` ${value}` : ''}`
 
-/** Updates the in-memory generated emoji cache for a thought. */
-const setCacheEntry = (
-  id: string,
-  entry: {
-    baseValue: string
-    emojis: string[]
-    index: number
-    renderedValue: string
-  },
-) => {
-  generatedEmojiStore.update(state => ({
-    entries: {
-      ...state.entries,
-      [id]: entry,
-    },
-  }))
-}
-
 /**
  * Generates emoji for the thought at a path, or instantly cycles cached alternatives.
  *
@@ -72,7 +54,12 @@ const generateEmoji =
           preventMerge: true,
         }),
       )
-      setCacheEntry(thought.id, { ...cache, index, renderedValue: value })
+      generatedEmojiStore.update(state => ({
+        entries: {
+          ...state.entries,
+          [thought.id]: { ...cache, index, renderedValue: value },
+        },
+      }))
       return { cursorOffsetDelta, value }
     }
 
@@ -202,12 +189,17 @@ const generateEmoji =
 
     if (!emoji || !emojis) return null
 
-    setCacheEntry(thought.id, {
-      baseValue,
-      emojis,
-      index: 0,
-      renderedValue: value,
-    })
+    generatedEmojiStore.update(state => ({
+      entries: {
+        ...state.entries,
+        [thought.id]: {
+          baseValue,
+          emojis,
+          index: 0,
+          renderedValue: value,
+        },
+      },
+    }))
     return { cursorOffsetDelta, value }
   }
 
