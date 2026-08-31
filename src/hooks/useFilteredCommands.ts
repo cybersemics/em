@@ -101,8 +101,11 @@ const useFilteredCommands = (
 
     // sorted commands
     const sorted = _.sortBy(possibleCommands, command => {
+      // sort by the same label that the filter matched against, i.e. only use the inverse label of an active command when active commands are sorted first
       const label = (
-        command.labelInverse && command.isActive?.(store.getState()) ? command.labelInverse : command.label
+        sortActiveCommandsFirst && command.labelInverse && command.isActive?.(store.getState())
+          ? command.labelInverse
+          : command.label
       ).toLowerCase()
 
       // In gesture mode, help command should always be at the end

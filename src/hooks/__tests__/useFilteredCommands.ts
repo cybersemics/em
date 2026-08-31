@@ -210,9 +210,8 @@ describe('useFilteredCommands', () => {
 
       // In the mock commands for testing, Show Hidden Thoughts has inverse label Hide Hidden Thoughts and it is active.
       // Though, sortActiveCommandsFirst is not set - meaning that it is false.
-      // So sorting should reference regular label Show Hidden Thoughts, but the hook uses inverse label.
-      // TODO: remove `.skip` after `useFilteredCommands` hook is updated
-      it.skip('should alphabetize commands by label', () => {
+      // So sorting should reference the regular label Show Hidden Thoughts.
+      it('should alphabetize commands by label', () => {
         const { result } = renderHook(() => useFilteredCommands('', {}), { wrapper })
 
         const labels = result.current.map(cmd => cmd.label)
@@ -259,9 +258,7 @@ describe('useFilteredCommands', () => {
         expect(newThoughtIndex).toBeLessThan(selectAllIndex)
       })
 
-      // Though, sortActiveCommandsFirst is false, sorting functionality references inverse label for sorting which is not correct.
-      // TODO: remove `.skip` after `useFilteredCommands` hook is updated
-      it.skip('should ignore labelInverse when sortActiveCommandsFirst is false', () => {
+      it('should ignore labelInverse when sortActiveCommandsFirst is false', () => {
         const { result } = renderHook(() => useFilteredCommands('', { sortActiveCommandsFirst: false }), { wrapper })
 
         const labels = result.current.map(cmd => cmd.label)
