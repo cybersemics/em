@@ -72,6 +72,30 @@ it('swaps two empty thoughts without error', () => {
   expect(cursorThought!.value).toBe('')
 })
 
+// https://github.com/cybersemics/em/issues/3628
+it('preserves both notes when swapping a parent and child that each have a note', () => {
+  const text = `
+    - parent
+      - =note
+        - parent note
+      - child
+        - =note
+          - child note
+  `
+
+  const steps = [importText({ text }), setCursor(['parent', 'child']), swapParent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - child
+    - =note
+      - parent note
+    - parent
+      - =note
+        - child note`)
+})
+
 it('swaps child thought with parent', () => {
   const text = `
   - x

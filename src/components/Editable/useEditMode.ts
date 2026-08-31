@@ -4,7 +4,7 @@ import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
-import { isMac, isSafari, isTouch } from '../../browser'
+import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import getCaretOffset from '../../device/getCaretOffset'
@@ -18,6 +18,7 @@ import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
 import equalPath from '../../util/equalPath'
 import head from '../../util/head'
+import isCommandKey from '../../util/isCommandKey'
 
 // #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
 // two taps into a double-tap and emits a delayed, retargeted synthesized mousedown/click/dblclick on the
@@ -270,9 +271,8 @@ const useEditMode = ({
      * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
      */
     const onMouseDown = (e: MouseEvent) => {
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
+      // If CMD/CTRL is pressed, this is a multiselect click, so don't focus the editable.
+      if (isCommandKey(e)) {
         e.preventDefault()
         return
       }

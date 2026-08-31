@@ -62,6 +62,9 @@ jobs:
         run: yarn dlx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
       - name: Build
+        env:
+          # The AI service uses the unified backend builder so its TypeScript module graph is bundled.
+          VERCEL_EXPERIMENTAL_BACKENDS: ${{ matrix.project == 'em-ai' && '1' || '0' }}
         run: yarn dlx vercel build --prod --token="$VERCEL_TOKEN"
 
       - name: Deploy

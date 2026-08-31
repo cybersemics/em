@@ -1,7 +1,7 @@
 ---
 name: write-issue
 description: >-
-  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, or adding reproduction steps to an issue that lacks them.
+  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another.
 allowed-tools:
   - bash
 ---
@@ -50,11 +50,13 @@ Include preconditions that are awkward but load-bearing — a specific device wi
 
 ### Current Behavior
 
-What happens, as an observation, with the evidence: a screenshot, a video, or a debug log. Not the cause, and not a proposed fix.
+What happens, as an observation, with the evidence: a screenshot, a video, or a debug log. Not the cause, and not a proposed fix. Quote a one-line error inline rather than in a fenced block; keep fences for output that actually spans lines.
 
 ### Expected Behavior
 
 What should happen instead. Write it as a condition that can be checked — a state the app is or is not in — since it is what a regression test will assert. Where the correct state is visible elsewhere in the app, a screenshot of that is useful alongside the screenshot of the bug.
+
+State the goal, not the shape of the fix. What the fix looks like is the assignee's call, and writing it out for them in advance is work they will redo.
 
 ## Optional sections
 
@@ -63,6 +65,12 @@ What should happen instead. Write it as a condition that can be checked — a st
 - **`## Debug Log`**, for an attached log file.
 
 One issue per reproduction. Where two failures share a cause and a fix, a single issue may carry both, each under its own `#` heading with its own three subsections — see [#4954](https://github.com/cybersemics/em/issues/4954).
+
+## Length
+
+Say the thing and stop. An issue is a report, not a write-up — the reader needs to know what is broken and what should happen instead, and every sentence past that is one they read before they can start.
+
+Word count is not the measure — a bug needing eight steps gets eight steps. What gets cut is the writing that is about your investigation rather than about the bug.
 
 ## Title
 
@@ -80,11 +88,41 @@ Add `design-needed` when the correct behaviour has not been decided.
 
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
+## Blocked by
+
+"Blocked by" is a GitHub relationship, not a line of body text. `Blocked by #5228` in the body renders as a plain reference: the issue is not marked blocked, it does not show as blocked in issue lists or projects, and #5228 does not show what it is holding up.
+
+Set the relationship with `gh`, at creation or after:
+
+```bash
+gh issue create --title "..." --body-file body.md --blocked-by 5228
+```
+
+```bash
+gh issue edit 5226 --add-blocked-by 5228
+```
+
+Both take a comma-separated list of issue numbers or issue URLs; `--remove-blocked-by` undoes it. Configure it from the blocked issue only — GitHub records the inverse itself, and #5228 lists #5226 under Blocking. Where the new issue is the prerequisite rather than the dependent, `--blocking` and `--add-blocking` are the same thing pointed the other way.
+
+The blocker must be an issue. A pull request number is refused: `gh` cannot resolve it — `Could not resolve to an Issue with the number of 5085` — and the REST endpoint refuses the pull request's own database id with `Target issue may only be an issue`. Where the prerequisite is a pull request, block on the issue that pull request implements and name the pull request in the `## Notes` bullet, as [#5236](https://github.com/cybersemics/em/issues/5236) does with #4400 and #5085. If no such issue exists, open one for what the pull request delivers, let the pull request close it, and block on that.
+
+Verify it landed, since a body reference and a relationship look alike once rendered:
+
+```bash
+gh issue view 5226 --repo cybersemics/em --json blockedBy
+```
+
+Prefer `gh` to the REST endpoint, `POST /repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by`, which takes `issue_id` — the blocker's numeric database id, from `gh api repos/cybersemics/em/issues/5228 --jq .id` — rather than its issue number.
+
+Keep a `## Notes` bullet beside the relationship where the reason is not obvious from the two titles. The relationship carries the fact; only the note carries the why. [#5226](https://github.com/cybersemics/em/issues/5226):
+
+> Blocked by #5228, which makes Select All toggle to Deselect All on desktop as well as touch. The third step is that toggle, so it has to exist first.
+
+`- [ ] Blocked by #5228` is not a substitute. Nothing tracks a checkbox.
+
 ## Evidence
 
 Screenshots and videos are usually already in the conversation that prompted the issue. Copy the attachment markup across verbatim, `<img src="https://github.com/user-attachments/...">` and all; those URLs stay valid in another issue. Do not re-upload or re-host, and do not describe an image you could link.
-
-Attribute observations you did not make. An issue written up from someone else's report should not read as though you reproduced it.
 
 ## Splitting an issue out of a discussion
 
@@ -100,11 +138,14 @@ New issues often originate in a comment thread on another issue or PR.
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - Current and Expected merged into one sentence, leaving nothing to assert.
-- A theory about the cause in place of the symptom. A theory belongs in `## Notes`.
+- A theory about the cause in place of the symptom.
+- An Expected Behavior that specifies the fix rather than naming the goal.
+- A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
+- A `Blocked by` line in the body with no relationship configured on GitHub.
 
-## When the correct behaviour is unknown
+## When something is unknown
 
 State the uncertainty in the preamble rather than omitting the issue.
 
-The exception is Expected Behavior: do not guess it. Apply `design-needed` and leave the decision to a maintainer, since a guess there becomes a regression test asserting behaviour nobody chose.
+Do not guess Expected Behavior. Apply `design-needed` and leave the decision to a maintainer, since a guess there becomes a regression test asserting behaviour nobody chose.

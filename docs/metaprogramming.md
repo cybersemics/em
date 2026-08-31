@@ -101,11 +101,6 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 - **`=path`** — used under a `=note` to redirect the note's content to another thought (looked up by path), instead of rendering the literal child of `=note`. The target's visible children are rendered in their configured sort order, separated by commas, and editing the note updates the corresponding children. See [`resolveNoteKey`](../src/selectors/resolveNoteKey.ts).
 - **`=let`** — define lexically-scoped named values that descendants can reference. [`parseLet`](../src/util/parseLet.ts) reads a context's `=let` children, and [`linearizeTree`](../src/selectors/linearizeTree.ts) accumulates them down the tree into the `env` carried on every [`TreeThought`](../src/@types/TreeThought.ts), so a nearer `=let` overrides an outer one that binds the same name. A thought with a child that matches an env entry picks up that entry's `=style` ([`useThoughtStyle`](../src/hooks/useThoughtStyle.ts)), `=styleContainer` ([`useThoughtStyleContainer`](../src/hooks/useThoughtStyleContainer.ts)), `=bullet` ([`useHideBullet`](../src/hooks/useHideBullet.ts)), and `=focus/Zoom` (which zooms the thought via [`zoomPath`](../src/selectors/zoomPath.ts) as well as carrying the properties above). The definitions are never applied to `=let` itself nor to the bindings inside it.
 
-### Content sources
-
-- **`=src`** — load the contents of a remote URL (or local file) as the subthoughts of this thought. The first child of `=src` is the URL. Consumed by [`loadResource`](../src/actions/loadResource.ts).
-- **`=preload`** — when set, `=src` content is preloaded eagerly on app start instead of waiting until the thought is opened. Consumed by [`preloadSources`](../src/actions/preloadSources.ts).
-
 ### Publishing
 
 - **`=publish`** — holds publish-related metadata (byline, attributes, etc.) for a context that is going to be exported or published. Consumed by [`Byline`](../src/components/Byline.tsx) and the publish flow in [`expandThoughts`](../src/selectors/expandThoughts.ts).
@@ -151,6 +146,6 @@ enum Settings {
 
 (See the in-app **Settings** modal for human-readable descriptions of each.)
 
-A separate set of *cached* settings — `CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']` — is also persisted to `localStorage` by the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) enhancer so they're available before Yjs hydrates on first paint. See [persistence.md](persistence.md) for the caching mechanics.
+A separate set of *cached* settings — `CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']` — is also persisted to `localStorage` by the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) enhancer so they're available before the thoughtspace hydrates on first paint. See [persistence.md](persistence.md) for the caching mechanics.
 
 Reads go through [`getSetting`](../src/selectors/getSetting.ts), which first consults the in-memory thought (e.g. `[EM, 'Settings', 'Tutorial']`) and falls back to the localStorage cache when needed.

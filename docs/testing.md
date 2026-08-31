@@ -26,7 +26,8 @@ yarn test:ios:browserstack  # BrowserStack credentials required
 yarn test:ios:local         # local Appium and iOS Simulator required
 ```
 
-See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
+> [!IMPORTANT]
+> See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
 
 ### Run a specific test
 
@@ -151,7 +152,9 @@ The sanctioned `paste` and `setTheme` Puppeteer helpers still contain fixed slee
 
 Treat a flaky test as deterministic behavior whose controlling condition is not known yet. Reproduce it, inspect the visible output and available diagnostics, and identify that condition before adding a delay, retry, or workaround. Do not make the whole suite slower to mask one uncertain test. Most application animation durations are already reduced to zero when `navigator.webdriver` is present; tests should wait for the resulting UI state, not replay production timing. Restoring production timing to reach an otherwise-unreachable state (such as the loading phase) is a backdoor decision, not a synchronization tactic — see [Sanctioned Backdoors](#sanctioned-backdoors).
 
-One controlling condition is worth naming because it recurs. On desktop, typing into a thought triggers distraction-free typing, which **unmounts** the toolbar, nav bar, and hamburger menu. It does not fire on the keystroke: it fires when the throttled edit commits `EDIT_THROTTLE` (500 ms) later, so a test that types and then clicks one of those elements has a ~500 ms budget that CI load can exhaust. The failure surfaces as Puppeteer's `Node is detached from document` when the unmount lands between resolving the element and clicking it, or as a selector timeout once the element is gone — nothing brings the HUD back but a pointer event ([`openSidebar`](../src/e2e/puppeteer/helpers/openSidebar.ts) moves the mouse for exactly this reason). When the act is a toolbar click, prefer an arrange that does not type: `paste` + `clickThought`.
+Two controlling conditions are worth naming because they recur. The first is distraction-free typing. On desktop, typing into a thought triggers distraction-free typing, which **unmounts** the toolbar, nav bar, and hamburger menu. It does not fire on the keystroke: it fires when the throttled edit commits `EDIT_THROTTLE` (500 ms) later, so a test that types and then clicks one of those elements has a ~500 ms budget that CI load can exhaust. The failure surfaces as Puppeteer's `Node is detached from document` when the unmount lands between resolving the element and clicking it, or as a selector timeout once the element is gone — nothing brings the HUD back but a pointer event ([`openSidebar`](../src/e2e/puppeteer/helpers/openSidebar.ts) moves the mouse for exactly this reason). When the act is a toolbar click, prefer an arrange that does not type: `paste` + `clickThought`.
+
+The second is cursor movement. `cursorUp`, `cursorDown`, `cursorNext`, `cursorPrev`, and `cursorBack` are throttled to one execution per animation frame by [`throttleByAnimationFrame`](../src/util/throttleByAnimationFrame.ts), so consecutive `press('ArrowDown')` calls that land in the same frame collapse into a single move. Puppeteer dispatches keys far faster than a person can press them, and the surplus presses are dropped silently — the cursor stops short, and the failure surfaces later as a missing or wrong reading on whatever thought the test believed it was on. Wait for each move to land with [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts) before pressing again, or skip the traversal altogether and `clickThought` the target.
 
 ### 4. Compose helpers
 
@@ -291,7 +294,7 @@ Anything that tests a rendered component requires a DOM. If there are no browser
 
 - [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/) (RTL)
 
-Mount the app with `createTestApp`, seed state via dispatch (allowed at this level for arrange), and assert on the DOM by `aria-label`/`data-testid`.
+Mount the app with `createTestApp`, seed state via dispatch (allowed at this level for arrange), and assert on the DOM by `aria-label`/`data-testid`. Wrap every dispatch and command execution in `act(() => …)`: the mounted components subscribe to the store, so an unwrapped dispatch re-renders them outside React's act scope, which fails the test.
 
 Related tests: [components](../src/components/__tests__)
 
@@ -340,7 +343,7 @@ The Puppeteer tests are run via Vitest using the `puppeteer-e2e` project defined
 
 High level helper functions are available for executing common user interactions: [/src/e2e/puppeteer/helpers](../src/e2e/puppeteer/helpers)
 
-Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer. Select the device at suite scope so that shared setup applies it before navigation; changing mobile or touch emulation after navigation may reload the page and restart app initialization.
+Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer. Select the device at suite scope so that shared setup applies it before navigation. This is the only supported way to emulate a device, because `page.emulate` reloads the page whenever mobile or touch emulation changes, restarting app initialization and discarding whatever the test had already set up. A test that needs a different viewport or orientation without changing touch support can call `page.setViewport`, which does not reload.
 
 ```ts
 deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
@@ -391,7 +394,6 @@ Start the app before either iOS suite:
 ```sh
 # terminal 1
 yarn start
-
 # terminal 2: choose one
 yarn test:ios:browserstack
 yarn test:ios:local
@@ -406,14 +408,21 @@ EM_IOS_DEVICE='iPhone 15 Pro Max' EM_IOS_VERSION=26 yarn test:ios:browserstack  
 EM_IOS_TRACKPAD_DEVICE='iPhone 17' EM_IOS_TRACKPAD_VERSION=27 yarn test:ios:browserstack # trackpad.ts
 ```
 
-For BrowserStack, put the credentials in `.env.test.local`:
+#### Setting up credentials for BrowserStack
+
+The BrowserStack configuration automatically starts and stops a temporary Cloudflare tunnel so the real device can reach the local HTTPS app.
+
+To test with BrowserStack, you need **credentials to access BrowserStack** and credentials to make the Cloudflare tunnel work.
+
+Put these credentials in `.env.test.local`. Contact the project maintainer for these:
 
 ```dotenv
 BROWSERSTACK_USERNAME=your_username
 BROWSERSTACK_ACCESS_KEY=your_access_key
-```
 
-The BrowserStack configuration starts and stops a temporary Cloudflare tunnel automatically so the real device can reach the local HTTPS app.
+# make sure to enclose with 'quotes'
+CLOUDFLARE_TUNNEL_POOL='[{"name":"…","hostname":"…","token":"…"}, …]'
+```
 
 Local Appium requires macOS with Xcode and an iOS Simulator, Appium, and the XCUITest driver:
 
@@ -456,7 +465,7 @@ We use a fixed-domain pool rather than the ephemeral `*.trycloudflare.com` quick
 
 ##### How a run claims a tunnel
 
-[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run `TUNNEL_TOKEN` (the Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts)).
+[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts). The gate only guards the tunnel's public hostnames; every other authority (localhost, a LAN IP, `bs-local.com`) cannot have come through the tunnel — Cloudflare routes to the tunnel by Host header — and passes ungated. `onPrepare` discovers the token by asking the dev server's off-tunnel-only `/__tunnel-token` route over localhost, so a local run needs no `TUNNEL_TOKEN`; CI generates one per run and exports it to both its server and the runner (env `TUNNEL_TOKEN` overrides generation), which is also why every server on the pool is gated — the claim probe below relies on foreign servers 403ing this run's token.
 
 The gate must see `?__token=` on the **document** request. Vite rewrites `Accept: text/html` navigations (Chrome, Safari, BrowserStack iOS) to `/index.html` and drops the query string; curl's default `Accept: */*` does not take that path. That is why curl can 200 while a browser shows the gate's `Forbidden` on the same URL. The middleware reads Connect's `originalUrl` so the token survives that rewrite. The device URL is always `https://<hostname>/?__token=…` (slash before the query). Concatenating onto `https://host` without that slash yields `https://host?__token=`, which iOS Safari does not load as `/` — the first WDIO session fails `before` while later `specFileRetries` can still pass.
 
@@ -485,9 +494,6 @@ Requires an **Account**-scoped Cloudflare permission grant including `Cloudflare
 3. The script writes `cloudflare-tunnel-pool.json` (gitignored — it contains live tokens). Set its contents as the GitHub Actions secret `CLOUDFLARE_TUNNEL_POOL`: `gh secret set CLOUDFLARE_TUNNEL_POOL < cloudflare-tunnel-pool.json`.
 4. Re-run the script (same or a larger `POOL_SIZE`) any time to top up the pool — it reuses tunnels that already exist rather than recreating them.
 
-##### If you're a developer who needs tunnel access
-
-If you're a developer or agent making changes to BrowserStack CI, you'll need access to a **separate tunnel pool used for the development environment**. Ask the project maintainer, who will be able to give you access to the values needed for the `CLOUDFLARE_TUNNEL_POOL` secret.
 
 Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
@@ -495,10 +501,10 @@ Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
 [`vitest.config.ts`](../vitest.config.ts) defines two projects, both extending [`vite.config.ts`](../vite.config.ts):
 
-- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding `e2e/` and `.claude/`. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.js`](../src/setupTests.js). Used by `yarn test`.
+- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding `e2e/` and `.claude/`. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.ts`](../src/setupTests.ts). Used by `yarn test`.
 - **`puppeteer-e2e`** — custom environment [`puppeteer-environment.ts`](../src/e2e/puppeteer-environment.ts), setup file [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), only includes `src/e2e/puppeteer/__tests__/*.ts`. The `vite-plugin-terminal` plugin pipes `console.log` from the page back to the terminal so Puppeteer test failures are debuggable. Used by `yarn test:puppeteer`; locally, [`test-puppeteer.sh`](../src/e2e/puppeteer/test-puppeteer.sh) also starts Browserless and a dedicated Vite dev server on port 2552.
 
-Exceptions thrown inside a DOM event listener never propagate out of `dispatchEvent` — jsdom catches them and re-reports them as an `error` event on `window`. Vitest turns that event back into a run-failing unhandled error, but only while nothing else is listening for `error`, and [`initEvents.ts`](../src/util/initEvents.ts) registers a listener at module scope to drive the error banner, which suppresses that conversion in any test that imports app code. [`setupTests.js`](../src/setupTests.js) restores it by re-emitting trusted `error` events as `uncaughtException`, so a test that crashes on click fails the run instead of passing silently. Tests that dispatch a synthetic `ErrorEvent` to exercise the banner itself are unaffected, since events constructed in test code are not trusted.
+Exceptions thrown inside a DOM event listener never propagate out of `dispatchEvent` — jsdom catches them and re-reports them as an `error` event on `window`. Vitest turns that event back into a run-failing unhandled error, but only while nothing else is listening for `error`, and [`initEvents.ts`](../src/util/initEvents.ts) registers a listener at module scope to drive the error banner, which suppresses that conversion in any test that imports app code. [`setupTests.ts`](../src/setupTests.ts) restores it by re-emitting trusted `error` events as `uncaughtException`, so a test that crashes on click fails the run instead of passing silently. Tests that dispatch a synthetic `ErrorEvent` to exercise the banner itself are unaffected, since events constructed in test code are not trusted.
 
 iOS tests are not part of the Vitest config — they run under WDIO, see [WebdriverIO tests](#5-webdriverio-tests).
 
@@ -574,10 +580,11 @@ The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup a
 
 - [`createTestApp`](../src/test-helpers/createTestApp.tsx) — mounts `<App />` into the JSDOM environment via `@testing-library/react`, runs `initialize({ storage: 'memory' })`, swaps in `react-dnd-test-backend`, opts into fake timers, and closes the welcome modal. Use this when a test touches the rendered app. Pair every call with `cleanupTestApp` (it clears `localStorage`, the TreeCRDT thoughtspace, the store, and event handlers).
 - [`initStore`](../src/test-helpers/initStore.ts) — async store setup without mounting the React tree. Clears Redux state, resets ministores via `resetStores`, reinitializes the in-memory thoughtspace, and enables fake timers. Await it (or pass it directly to `beforeEach`).
-- [`importToContext`](../src/test-helpers/importToContext.ts) — seeds the store with a tree from a multi-line plaintext outline (the same format the `Import` modal accepts). Most fixture setup goes through this.
+- [`importToContext`](../src/test-helpers/importToContext.ts) — seeds the store with a tree from a multi-line plaintext outline (the same format the `Import` modal accepts). Most fixture setup goes through this. It throws when the destination context does not resolve, so a mis-specified path fails the test instead of quietly importing nothing.
 - [`dispatch`](../src/test-helpers/dispatch.ts) — a thin wrapper that lets a test dispatch synchronously without re-typing `store.dispatch(...)` plumbing.
 - **Operate-by-value helpers.** Where a test would otherwise need to look up a `ThoughtId` to dispatch an action, prefer the value-keyed variants:
-  - [`newThoughtAtFirstMatch`](../src/test-helpers/newThoughtAtFirstMatch.ts), [`editThoughtByContext`](../src/test-helpers/editThoughtByContext.ts), [`moveThoughtAtFirstMatch`](../src/test-helpers/moveThoughtAtFirstMatch.ts), [`deleteThoughtAtFirstMatch`](../src/test-helpers/deleteThoughtAtFirstMatch.ts), [`addMulticursorAtFirstMatch`](../src/test-helpers/addMulticursorAtFirstMatch.ts).
+  - [`setCursorFirstMatch`](../src/test-helpers/setCursorFirstMatch.ts), [`newThoughtAtFirstMatch`](../src/test-helpers/newThoughtAtFirstMatch.ts), [`editThoughtByContext`](../src/test-helpers/editThoughtByContext.ts), [`moveThoughtAtFirstMatch`](../src/test-helpers/moveThoughtAtFirstMatch.ts), [`deleteThoughtAtFirstMatch`](../src/test-helpers/deleteThoughtAtFirstMatch.ts), [`addMulticursorAtFirstMatch`](../src/test-helpers/addMulticursorAtFirstMatch.ts).
+  - Every one of them **throws** when the context does not resolve; the cursor and multicursor helpers do so through [`contextToPathOrThrow`](../src/test-helpers/contextToPathOrThrow.ts), the rest through their own guards. This is deliberate ([Principle 4](#4-compose-helpers), [Principle 7](#7-make-false-positives-difficult)): `contextToPath` returns `null` for a context that does not exist in the current state, and a helper that passed that `null` through would set the cursor to `null` — indistinguishable from an explicit `setCursorFirstMatch(null)` — so a cursor-dependent reducer such as `categorize` would early-return and the test would pass against an untouched tree. Passing `null` explicitly to `setCursorFirstMatch` still clears the cursor; only a failed lookup throws.
 - **Read-by-value helpers.** [`getAllChildrenByContext`](../src/test-helpers/getAllChildrenByContext.ts), [`getChildrenRankedByContext`](../src/test-helpers/getChildrenRankedByContext.ts), [`getAllChildrenAsThoughtsByContext`](../src/test-helpers/getAllChildrenAsThoughtsByContext.ts), [`attributeByContext`](../src/test-helpers/attributeByContext.ts), [`contextToThought`](../src/test-helpers/contextToThought.ts).
 - [`multicursorValues`](../src/test-helpers/multicursorValues.ts) — the sorted thought values of the current multicursor set, so multiselect assertions read as values rather than ids.
 - [`expectPathToEqual`](../src/test-helpers/expectPathToEqual.ts) — Jest matcher that compares paths by their thought *values* rather than ids, so test failures are readable.
@@ -598,7 +605,7 @@ Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/hel
 | Long press | [`longPressThought`](../src/e2e/puppeteer/helpers/longPressThought.ts) | Holds a touch until the thought's bullet reports the long-press highlight, then releases. |
 | Drag and drop | [`dragAndDropThought`](../src/e2e/puppeteer/helpers/dragAndDropThought.ts), [`dragAndDropFavorite`](../src/e2e/puppeteer/helpers/dragAndDropFavorite.ts), [`dragAndDrop`](../src/e2e/puppeteer/helpers/dragAndDrop.ts) | Drives real mouse down/move/up input and waits for drag-specific visible conditions. |
 | Scroll | [`scroll`](../src/e2e/puppeteer/helpers/scroll.ts), [`scrollBy`](../src/e2e/puppeteer/helpers/scrollBy.ts), [`scrollIntoView`](../src/e2e/puppeteer/helpers/scrollIntoView.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts) | Scrolls the window or a named container; use the narrowest helper that expresses the intent. |
-| Emulate a mobile device | [`emulate`](../src/e2e/puppeteer/helpers/emulate.ts) | Applies a Puppeteer device profile before touch-specific input. |
+| Emulate a mobile device | [`deviceEmulation.useForSuite`](../src/e2e/puppeteer/helpers/deviceEmulation.ts) | Selects a Puppeteer device profile at suite scope, which `setup` applies before navigation. There is no mid-session equivalent; see the emulation note above. |
 
 Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), and [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts). Every Puppeteer test should read as a sequence of these helpers.
 
@@ -652,6 +659,8 @@ When the failure is wrong, fix the test—not the application—and rerun it aga
 
 The primary Test, Puppeteer, and BrowserStack workflows run on pushes to `main` and on pull requests (BrowserStack uses `pull_request_target`). The TDD workflow runs on pull requests that add tests. All four accept `workflow_dispatch` with an optional `rerun_id` so the `ghworkflow` shell function (see [Tips](#triggering-github-actions-workflows-manually)) can fan out manually triggered runs for flake hunting.
 
+Vercel Preview runs on pull requests separately from the test workflows. It deploys the pull request's `em-ai` service first, verifies its health route, then supplies that deployment's URL as `VITE_AI_URL` while building the matching `em` web preview. The GitHub `Preview` deployment links to the user-facing web app; the workflow summary includes the paired AI service URL for diagnostics. Both deploys run sequentially in one job so the GitHub deployment status represents the entire pair.
+
 #### Path filtering
 
 Test, Puppeteer, BrowserStack, and Vercel Preview each carry the same `paths-ignore` filter, covering two groups:
@@ -659,7 +668,9 @@ Test, Puppeteer, BrowserStack, and Vercel Preview each carry the same `paths-ign
 - **Documentation and agent/editor configuration** — `**/*.md`, `docs/`, `.github/instructions/`, `.github/skills/`, `.claude/`, `.agents/`, `.vscode/`, `.hooks/`.
 - **Native platform projects** — `android/`, `ios/`, `desktop/`, and `assets/` (the icon and splash sources generated into the first two).
 
-A change set confined to those paths cannot affect what any of the four workflows tests: `yarn build` is web-only (`build:packages`, `build:styles`, `vite build`), `yarn test` reads only `src/`, and BrowserStack exercises mobile Safari over a tunnel rather than the Capacitor app. None of the native directories contains a JS or TS file, and the web favicons come from `public/`, not `assets/`. **If a Capacitor asset is ever wired into the Vite build, the native entries must be removed** — otherwise a real change would ship untested.
+A change set confined to those paths is almost always unable to affect what any of the workflows tests or deploys: the test workflows exercise the web app, while Vercel Preview builds the web app and `packages/ai`. None of the native directories contains a JS or TS file, and the web favicons come from `public/`, not `assets/`. **If a Capacitor asset is ever wired into the Vite build, the native entries must be removed** — otherwise a real change would ship untested.
+
+One narrow gap is worth knowing about. `yarn test` is `vitest --project unit`, whose `**/__tests__/**/*.ts` glob also collects the workspaces under `scripts/`, and the issue classifier's sample-integrity tests ([`scripts/issue-classifier/src/__tests__/samples.ts`](../scripts/issue-classifier/src/__tests__/samples.ts)) read the prompt and samples they guard as fixtures. Those assets live beside the code in `scripts/issue-classifier/`, so a sample edit is a `.jsonl` change that runs Test normally — but the prompt itself is `scripts/issue-classifier/instructions.md`, and `**/*.md` is filtered. A pull request that edits only the prompt therefore skips the checks on it, so run `yarn test` locally when editing it.
 
 Because `paths-ignore` skips a workflow outright, **no check is reported at all** rather than a skipped or passing one. That is only viable while these are not required status checks on `main`; making any of them required again would leave filtered pull requests waiting on a check that never arrives. **Lint is deliberately left unfiltered and required**, so every pull request — including a documentation-only one — still reports exactly one check.
 
@@ -679,7 +690,7 @@ concurrency:
 
 **Only pull-request runs are grouped.** Every other event falls back to `github.run_id`, which is unique per run and so never collides. This is not the same as `cancel-in-progress: false`: a *shared* group with cancellation off queues runs instead, and GitHub cancels a pending run when a newer one queues behind it — the reason BrowserStack also sets `queue: max`. Two things depend on non-pull-request runs neither cancelling nor queueing: each push to `main` needs its own result to identify the commit that broke the build, and the `ghworkflow` flake hunt ([Tips](#triggering-github-actions-workflows-manually)) fans out many `workflow_dispatch` runs on a single ref that must all actually run.
 
-**Cancelling does not strand the required check.** A cancelled run reports `cancelled`, not `success`, and Lint is the one required status check on `main`. It still cannot block a merge, because branch protection evaluates the checks on the pull request's *head* commit and only a superseded commit's run is ever cancelled — the head commit's run always finishes, since nothing supersedes it. This is the opposite of the `paths-ignore` hazard above, where the check that would gate the merge is never reported at all.
+**Cancelling does not strand the required check.** A cancelled run reports `cancelled`, not `success`, and Lint is the one required status check on `main`. It still cannot block a merge, because branch protection evaluates the checks on the pull request's *head* commit, and while the pull request is open only a superseded commit's run is ever cancelled — the head commit's run always finishes, since nothing supersedes it. (The close-time sweep described below does cancel the head commit's runs, but only after the merge it would have gated has already happened.) This is the opposite of the `paths-ignore` hazard above, where the check that would gate the merge is never reported at all.
 
 Downstream workflows already tolerate it: [`Puppeteer Diff Comment`](../.github/workflows/puppeteer-diff-comment.yml) acts only on a `success` or `failure` conclusion, so a cancelled run posts nothing from its partial artifacts.
 
@@ -691,8 +702,36 @@ BrowserStack is the one exception: it queues rather than supersedes, for the rea
 | **Puppeteer** | [`.github/workflows/puppeteer.yml`](../.github/workflows/puppeteer.yml) | `yarn test:puppeteer` against a `browserless/chrome:latest` service container on port 7566. | On failure, image-snapshot diffs are uploaded in the `__diff_output__` artifact. |
 | **BrowserStack** | [`.github/workflows/ios.yml`](../.github/workflows/ios.yml) | `yarn test:ios` (an alias of `test:ios:browserstack`) against real iOS devices via BrowserStack. | Uses `pull_request_target` so credentials are available, guarded by `changed_files > 0` and `paths-ignore`, serialized repo-wide, and deduplicated per PR (see [Layered BrowserStack concurrency](#layered-browserstack-concurrency)). |
 | **TDD** | [`.github/workflows/tdd.yml`](../.github/workflows/tdd.yml) | Runs newly added unit, Puppeteer, and iOS tests against the selected pre-fix commit. | Expects the new regression test to fail before the fix. Pull requests only. |
+| **Vercel Preview** | [`.github/workflows/vercel-preview.yml`](../.github/workflows/vercel-preview.yml) | Deploys paired `em-ai` and `em` previews, with the AI preview URL compiled into the web app. | Uses `pull_request_target`, shares the standard `paths-ignore` filter, and reports the web URL through GitHub Deployments. |
 
 When a Puppeteer snapshot test fails on a pull request, the [`Puppeteer Diff Comment`](../.github/workflows/puppeteer-diff-comment.yml) workflow safely publishes the diff images to the `snapshot-diffs` branch and upserts a PR comment with the affected files and targeted `yarn test:puppeteer -u ...` command. The raw `__diff_output__` artifact is also available from the workflow run. Locally, the diff path is printed in the test runner output. See [Visual snapshot tests](#visual-snapshot-tests).
+
+#### Merged and closed pull requests
+
+Concurrency only supersedes runs *within* an open pull request. Nothing in GitHub stops the head commit's own runs when that pull request is merged or closed: the merge closes the pull request but leaves already-dispatched jobs alone, and the head-branch deletion that follows (`deleteBranchOnMerge` is on) does not reach them either, because a `pull_request` run lives on `refs/pull/<n>/merge` rather than on the branch. #5120 merged with four checks in flight and all four ran to completion — Lint 2m18s after the merge, BrowserStack 3m51s, Test 4m38s, Puppeteer 5m43s — spending runner time on code already in `main`, and holding a BrowserStack device session against the repo-wide gate for four minutes of it.
+
+[`Cancel PR Runs`](../.github/workflows/cancel-pr-runs.yml) closes that gap. It triggers on `pull_request_target` with `types: [closed]`, lists every run whose `head_sha` is the pull request's head commit, and cancels those that are not yet `completed`. Nothing is lost by stopping them: a merge pushes to `main`, which starts Test, Puppeteer, Lint, and BrowserStack again on the merged tree — a better signal than the pull request's merge ref, because it is what actually shipped — and a pull request closed without merging has nothing left to report to at all.
+
+- **`pull_request_target`, not `pull_request`.** Cancelling needs `actions: write`, and a fork pull request's token is read-only under `pull_request`. The workflow checks out nothing and executes no pull request code, so the usual `pull_request_target` hazard does not arise. It also reads its own file from the base branch, so edits to it take effect only once merged.
+- **The `main` run is never swept up.** Runs are selected by head SHA, and merging always writes a new commit — merge, squash, and rebase alike — so the push run on `main` carries a different `head_sha` than the head it was merged from. The regression signal the sweep relies on cannot cancel itself.
+- **A merged pull request now shows `cancelled` checks.** Those runs genuinely did not finish, and reporting them as anything else would be false. Branch protection is unaffected: it evaluates the head commit's checks before the merge, and the sweep runs after.
+- **Auto-merge gives up the tail of the slow suites.** Lint is the only required check, so `gh pr merge --auto` ([`dependabot-automerge.yml`](../.github/workflows/dependabot-automerge.yml)) can merge while Test, Puppeteer, and BrowserStack are still running, and the sweep then cancels them. From that point the push run on `main` is what surfaces a regression. A bump whose checks fail never reaches any of that — see [Failing Dependabot pull requests](#failing-dependabot-pull-requests).
+
+#### Failing Dependabot pull requests
+
+Auto-merge only lands a bump whose checks pass. One that fails stops dead and waits for a human, and the failures are usually small and mechanical — a renamed export, a tightened type, an assertion that moved. [`Dependabot Fix`](../.github/workflows/dependabot-fix.yml) puts an agent on one as soon as it happens: a GitHub Copilot cloud agent session started through the [agent tasks API](https://docs.github.com/en/rest/agent-tasks/agent-tasks) by [`scripts/ci/start-dependabot-fix-task.mjs`](../scripts/ci/start-dependabot-fix-task.mjs) — Opus 5 and the `worker-bee` agent, the same pair the [flaky-test detector](#automated-flaky-test-detection) uses. It commits to the pull request's own branch rather than opening a second one, which the agent tasks API arranges when it is given `head_ref` and `base_ref` for an open pull request. Dependabot stops rebasing a branch anyone else has pushed to, which is the intended outcome: from then on the fix and the bump travel together.
+
+**It triggers on every check completion, not on the failures.** A pull request's checks finish at different times and the last one to finish is often green — on #5203, Lint failed at 02:14 and BrowserStack at 02:29, with Test passing at 02:16 in between — so triggering on `failure` would fire while other checks were still running. Instead [`scripts/ci/collect-dependabot-failures.cjs`](../scripts/ci/collect-dependabot-failures.cjs) bails unless it is the last one out, which is also what keeps four failing checks from starting four sessions on one pull request. Being `workflow_run`-triggered, it reports no check of its own to the head commit and so never waits on itself.
+
+Five more guards decide whether a session is warranted, and each one is a reason nothing happens:
+
+- **The pull request must be open and authored by `dependabot[bot]`.** The `dependabot/` branch prefix alone is not proof of one, and a human pushing such a branch should not get a session aimed at their code.
+- **A failure that is also red on the base branch is not the bump's doing.** Those are annotated as such in the prompt, and when *every* failure is one of them no session starts at all — a broken `main` would otherwise put an agent on every open bump at once.
+- **One session per head commit.** The workflow keeps a single marked comment on the pull request carrying the commit it was started for, so a rebase gets a fresh session and a re-run of one check does not.
+- **`cancelled` is not a failure.** [Cancel PR Runs](#merged-and-closed-pull-requests) leaves cancelled checks behind on a merged pull request, and they mean nothing broke.
+- **Three sessions per pull request.** A session that pushes a fix moves the head commit, so without a cap a bump the agent cannot fix would start a fresh session on every attempt. The count lives in the same comment, which names the attempt it is on — the cap is visible before it is reached rather than as silence afterwards. A manual dispatch overrides both this and the per-commit dedupe.
+
+The session's prompt names each failing check and includes an excerpt of the first three failing jobs' logs, anchored on the runner's `##[error]` annotations — the tail of an Actions log is the same twenty lines of checkout cleanup every time, so a plain tail would say nothing. Like the flaky detector, this needs the `COPILOT_TASKS_TOKEN` repository secret; without it the workflow says so and does nothing. To start a session by hand, or to start a second one on the same commit: `gh workflow run dependabot-fix.yml -f pr=<number>`.
 
 #### Layered BrowserStack concurrency
 
@@ -703,7 +742,7 @@ BrowserStack has two concurrency requirements that no single group can satisfy: 
 
 Two consequences of that wait are handled inside the `run` job, after the gate admits it — a job-level `if:` cannot handle either, because it is evaluated when the run is *created*, while the pull request is still open:
 
-- **Merged or closed PRs cancel themselves.** The first step re-reads the pull request state and cancels its own run via the API if the PR is no longer open — a merge triggers the workflow's own `push` run on `main`, so re-testing the merged code would prove nothing while occupying the gate for a full suite. Cancelling rather than exiting green is deliberate: no test ran, so nothing may report as passed.
+- **Merged or closed PRs cancel themselves.** The first step re-reads the pull request state and cancels its own run via the API if the PR is no longer open — a merge triggers the workflow's own `push` run on `main`, so re-testing the merged code would prove nothing while occupying the gate for a full suite. Cancelling rather than exiting green is deliberate: no test ran, so nothing may report as passed. [`Cancel PR Runs`](#merged-and-closed-pull-requests) now sweeps these runs at close time, which makes this step a backstop for the one race it cannot cover — a run created from a `synchronize` event that lands after the sweep has already listed runs. It is worth keeping, because a run admitted through this gate is the most expensive one in the repo to waste.
 - **Checkout pins `github.event.pull_request.head.sha`, not the head branch name.** A branch name makes `actions/checkout` build a wildcard refspec, and a wildcard matching nothing makes `git fetch` exit non-zero with an **empty stderr** — so a branch deleted on merge used to fail the clone with a bare `The process '/usr/bin/git' failed with exit code 1`. A SHA is fetched exactly and stays reachable in the base repository via `refs/pull/<n>/head` after the branch is deleted (including for fork pull requests, which is why no `repository:` input is needed), keeping the checkout robust in the window between the cancel step's check and the fetch.
 
 Accepted tradeoff: a suite cancelled mid-run leaves its BrowserStack session to expire on the provider's idle timeout instead of closing cleanly, briefly counting against the pool — cheaper than running entire suites against superseded commits.
@@ -999,7 +1038,9 @@ In a rendered JSDOM test, wrap timer advancement that causes React updates in `a
 
 ### Automated flaky-test detection
 
-The `Puppeteer Flaky` workflow (`.github/workflows/puppeteer-flaky.yml`) stress-runs the full Puppeteer suite nightly on `main` (15 iterations by default; `gh workflow run puppeteer-flaky.yml -f iterations=5` to run manually). `scripts/flaky-report.mjs` aggregates the Vitest JSON reports into a workflow summary that distinguishes intermittent failures (likely flakes) from consistent ones (likely regressions). When failures are found, the workflow sends a Discord notification (if the `DISCORD_WEBHOOK_URL` repository secret is set) and files a tracking issue for each **intermittently** failing test — titled `Flaky test: <file> > <full name>`, labelled `test`, and deduplicated by exact title match against open issues, so a test that is already tracked is not re-filed. A test that fails every iteration is a consistent failure rather than a flake; it appears in the summary and the Discord alert but is not filed as an issue.
+The `Puppeteer Flaky` workflow (`.github/workflows/puppeteer-flaky.yml`) stress-runs the full Puppeteer suite nightly on `main` (15 iterations by default; `gh workflow run puppeteer-flaky.yml -f iterations=5` to run manually). `scripts/flaky-report.mjs` aggregates the Vitest JSON reports into a workflow summary that distinguishes intermittent failures (likely flakes) from consistent ones (likely regressions). When failures are found, the workflow files a tracking issue for each **intermittently** failing test — titled `Flaky test: <file> > <full name>`, labelled `test`, and deduplicated by exact title match against open issues, so a test that is already tracked is not re-filed. A test that fails every iteration is a consistent failure rather than a flake; it appears in the summary and the Discord alert but is not filed as an issue. It then sends a Discord notification (if the `DISCORD_WEBHOOK_URL` repository secret is set) listing the top offenders, each linked to its tracking issue — the one just filed, or the one that was already open, including for a consistent failure that a previous run already filed. Issues are filed first so those links exist; the notification is sent even if filing fails, in which case the offenders are listed without links.
+
+Each issue the run **just filed** then gets a GitHub Copilot cloud agent working on it, started through the [agent tasks API](https://docs.github.com/en/rest/agent-tasks/agent-tasks) by `scripts/ci/start-copilot-tasks.mjs` — Opus 5 (a flake is diagnosis-heavy, so it gets the strongest model), the `worker-bee` agent, and a pull request opened up front against the branch the run tested. An issue that was already open is left alone, since starting another session against the same flake every night would pile up duplicate branches on it — so a flake filed by hand, or one that predates this, never gets a session automatically. At most three tasks start per run — a run that files more than that is usually reporting something systemic, so the rest are named in the workflow summary for a human to assign by hand. This needs a `COPILOT_TASKS_TOKEN` repository secret: a fine-grained PAT with the **Agent tasks** repository permission set to read and write, since the endpoint rejects the workflow's own `GITHUB_TOKEN`. Without the secret the step says so and does nothing. It runs after the Discord alert, so a failed dispatch never costs anyone the notification.
 
 ### Triggering GitHub Actions workflows manually
 

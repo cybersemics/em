@@ -138,7 +138,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     noteOffset: null,
     recentlyEdited: {},
     redoPatches: [],
-    resourceCache: {},
     rootContext: [HOME_TOKEN],
     search: null,
     selectionOffsets: null,

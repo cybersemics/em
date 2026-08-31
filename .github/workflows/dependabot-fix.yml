@@ -1,0 +1,107 @@
+# Starts an Opus 5 agent session on a Dependabot pull request whose checks failed.
+#
+# Dependabot opens a bump, `dependabot-automerge.yml` approves it and enables auto-merge, and the
+# bump lands on its own — until a check fails, at which point the pull request stops dead and waits
+# for a human. Most of those failures are small and mechanical: a renamed export, a tightened type,
+# an assertion that moved. This puts an agent on one the moment it happens, so the bump is being
+# worked on rather than queueing behind whoever next reads the checks tab.
+#
+# Runs:
+#   - Automatically, when a check completes on a `dependabot/*` branch (see below)
+#   - Manually: `gh workflow run dependabot-fix.yml -f pr=5203`
+#
+# Follow-up:
+#   - A GitHub Copilot cloud agent session (Opus 5, the `worker-bee` agent), committing to the
+#     pull request's own branch rather than opening a second pull request
+#   - A single comment on the pull request linking that session
+#
+# Why every completion and not just the failures. A pull request's checks finish at different
+# times, and the last one to finish is often a green one — on #5203, Lint failed at 02:14 and
+# BrowserStack at 02:29, with Test passing at 02:16 in between. Triggering only on `failure` would
+# therefore fire while other checks were still running, so this triggers on every completion and
+# the collect step bails unless it is the last one out. That single-dispatch rule is what keeps
+# four failing checks from starting four sessions on one pull request; the comment it leaves is the
+# backstop for the race where two checks finish at once.
+#
+# SECURITY: this runs in the base-repo context with a write-capable token, and feeds the pull
+# request title and job logs into an agent prompt. It checks out only the base repo's own code,
+# never the pull request's, and executes none of it. The collect step additionally requires the
+# branch to live in this repository and the pull request to be authored by `dependabot[bot]`, so a
+# human pushing a `dependabot/`-prefixed branch cannot aim a session at their own code.
+#
+# `workflow_run` reads this file from the default branch, so edits here have no effect until they
+# are merged to main.
+#
+# To enable, add a `COPILOT_TASKS_TOKEN` repository secret — a fine-grained PAT with the
+# "Agent tasks" repository permission (read and write). It is the same secret puppeteer-flaky.yml
+# uses. Without it the workflow reports the omission and does nothing.
+
+name: Dependabot Fix
+
+on:
+  workflow_run:
+    workflows: ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'Vercel Preview', 'TDD', 'Agent Scripts']
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Pull request number to start a session on'
+        required: true
+        type: string
+
+# Serialize per branch so two checks finishing at once cannot both get past the dedupe. Never
+# cancel: a queued run is the one that would notice the last check completing. GitHub drops a
+# pending run when a newer one queues behind it, which is the desired outcome here — the newest
+# run sees the most complete picture of the pull request.
+concurrency:
+  group: dependabot-fix-${{ github.event.workflow_run.head_branch || inputs.pr }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read # read the failing jobs' logs, and the workflow names behind their check runs
+  checks: read # list the check runs on the pull request head and on the base branch
+  contents: read # check out scripts/ci from the base repo
+  pull-requests: write # resolve the pull request, and upsert the session comment
+
+jobs:
+  session:
+    name: Start fix session
+    runs-on: ubuntu-latest
+    # Cheap gate so the six other completions on a normal pull request cost nothing. Everything
+    # this cannot see from the event payload — author, checks, dedupe — is checked in the step below.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (startsWith(github.event.workflow_run.head_branch, 'dependabot/') &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
+
+    steps:
+      # `workflow_run` resolves `github.ref` to the default branch, so this checks out the base
+      # repo's own code — never the pull request's — solely to make scripts/ci/ available below.
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Collect failing checks
+        id: collect
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          # Empty on workflow_dispatch, where PR_NUMBER identifies the pull request instead.
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          PR_NUMBER: ${{ inputs.pr }}
+          # Job logs are fetched with fetch() rather than octokit, because the endpoint answers a
+          # redirect to storage that must be followed without the Authorization header.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            await require('./scripts/ci/collect-dependabot-failures.cjs')({ github, context, core })
+
+      # Uses a PAT, not GITHUB_TOKEN: the agent tasks API rejects app installation tokens.
+      - name: Start Opus 5 session
+        if: steps.collect.outputs.dispatch == 'true'
+        env:
+          COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          node scripts/ci/start-dependabot-fix-task.mjs dependabot-fix/report.json | tee -a "$GITHUB_STEP_SUMMARY"
