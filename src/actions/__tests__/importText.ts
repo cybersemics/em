@@ -1007,3 +1007,61 @@ it('set cursor on last thought after importing multiple thoughts in non-empty cu
       - x
       - y`)
 })
+
+describe('single-line paste into a thought', () => {
+  it('inserts into an empty thought', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: '' }),
+      importTextAtFirstMatch({ at: [''], text: 'abc', caretPosition: 0 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['abc'])!)!.value).toBe('abc')
+  })
+
+  it('appends when the caret offset is past the end of the value', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'ab' }),
+      importTextAtFirstMatch({ at: ['ab'], text: 'cd', caretPosition: 10 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['abcd'])!)!.value).toBe('abcd')
+  })
+
+  it('inserts at the caret without disturbing the surrounding formatting', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'X', caretPosition: 5 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['one <b>tXwo</b> three'])!)!.value).toBe(
+      'one <b>tXwo</b> three',
+    )
+  })
+
+  it('replaces a range that starts at the beginning of the value', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      importTextAtFirstMatch({
+        at: ['one <b>two</b> three'],
+        text: 'ONE',
+        caretPosition: 3,
+        replaceStart: 0,
+        replaceEnd: 3,
+      }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['ONE <b>two</b> three'])!)!.value).toBe(
+      'ONE <b>two</b> three',
+    )
+  })
+
+  it('replaces the whole value when the thought is cleared', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      (state: State) => ({ ...state, cursorCleared: true }),
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 0 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')
+  })
+})
