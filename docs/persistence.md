@@ -142,8 +142,6 @@ Remote sync speaks the TreeCRDT sync protocol over a WebSocket ([`treecrdtWebSoc
 
 Failures are non-fatal by design: a failed start logs a warning and em keeps running against local storage only; a failed `pushLocalOps` logs and moves on.
 
-The [`server/`](../server) subpackage and [`src/@types/WebsocketProviderType.ts`](../src/@types/WebsocketProviderType.ts) are leftovers from the previous Hocuspocus/Yjs implementation. Nothing in the TreeCRDT client imports them.
-
 ## Push queue (Redux → TreeCRDT)
 
 [`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) is a Redux store enhancer that runs after every reducer. It drains `state.pushQueue` (a list of `PushBatch` objects pushed there by [`updateThoughts`](../src/actions/updateThoughts.ts) and friends) and partitions it into:
