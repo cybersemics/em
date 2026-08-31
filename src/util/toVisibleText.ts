@@ -29,12 +29,6 @@ const STRIP_TAGS = new Set([
 /** Matches HTML-like tags. */
 const REGEX_TAG = /<\/?([a-z][\w-]*)([^>]*)>/gi
 
-/** Collapses serialized empty tags like <aaa></aaa> to <aaa>. */
-const REGEX_EMPTY_TAG_PAIR = /<([a-z][\w-]*)([^>]*)><\/\1>/gi
-
-/** Removes empty quoted attributes like two="" to recover user-entered "<one two>" text. */
-const REGEX_EMPTY_QUOTED_ATTR = /\s([^\s=]+)=""/g
-
 /** Escapes non-formatting tags so strip does not treat them as markup. */
 const preserveUnknownTags = (value: string) =>
   value.replace(REGEX_TAG, (match, tagName) => (STRIP_TAGS.has(tagName.toLowerCase()) ? match : escapeHtml(match)))
@@ -43,7 +37,7 @@ const preserveUnknownTags = (value: string) =>
 const toVisibleText = (value: string) => {
   if (!value) return ''
   const stripped = strip(preserveUnknownTags(value))
-  return unescapeHtml(stripped).replace(REGEX_EMPTY_TAG_PAIR, '<$1$2>').replace(REGEX_EMPTY_QUOTED_ATTR, ' $1')
+  return unescapeHtml(stripped)
 }
 
 export default toVisibleText
