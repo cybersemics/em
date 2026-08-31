@@ -1,11 +1,6 @@
 import { KnownDevices } from 'puppeteer'
-import colors from '../../../colors.config'
 import clearThoughtCommand from '../../../commands/clearThought'
-import rgbaToHex from '../../../util/rgbaToHex'
 import click from '../helpers/click'
-import clickThought from '../helpers/clickThought'
-import clickToolbar from '../helpers/clickToolbar'
-import command from '../helpers/command'
 import emulate from '../helpers/emulate'
 import gesture from '../helpers/gesture'
 import getSelection from '../helpers/getSelection'
@@ -43,19 +38,6 @@ const editingIndex = () =>
 
 /** Waits a single animation frame, i.e. long enough for the faux carets to be repositioned after an edit. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
-
-/** Selects all contents of the editable cursor thought, including nested formatting tags. */
-const selectAllEditingText = () =>
-  page.evaluate(() => {
-    const editable = document.querySelector('[data-editing=true] [data-editable]')
-    if (!editable) throw new Error('No editing editable found')
-
-    const range = document.createRange()
-    range.selectNodeContents(editable)
-    const selection = window.getSelection()
-    selection?.removeAllRanges()
-    selection?.addRange(range)
-  })
 
 /** Returns the number of thoughts whose bullet is highlighted, i.e. the size of the multiselection. */
 const multiselectSize = () => page.$$eval('[aria-label="bullet"][data-highlighted="true"]', els => els.length)
@@ -397,57 +379,6 @@ describe('clearThought', () => {
     // one that holds the caret.
     await press('Backspace')
     await waitForNoEditables()
-  })
-
-  // https://github.com/cybersemics/em/issues/4629
-  it('restores every formatting mark applied to the cleared thought', async () => {
-    await paste('- aaa')
-
-    await waitForEditable('aaa')
-    await clickThought('aaa')
-
-    await selectAllEditingText()
-    await command('bold')
-    await selectAllEditingText()
-    await command('underline')
-    await selectAllEditingText()
-    await command('strikethrough')
-    await selectAllEditingText()
-    await clickToolbar('Text Color', 'text color swatches', 'red')
-    await page.waitForFunction(() => {
-      const editable = document.querySelector('[data-editable]')
-      return (
-        !!editable?.querySelector('b') &&
-        !!editable.querySelector('u') &&
-        !!editable.querySelector('strike') &&
-        !!editable.querySelector('font[color]')
-      )
-    })
-
-    await clearThought()
-    await waitForFirstEditable('')
-
-    await page.keyboard.type('bbb')
-    await page.waitForFunction(() => document.querySelector('[data-editable]')?.textContent === 'bbb')
-
-    // Every mark that was applied to the original text is re-applied to the newly typed text, not just the outermost
-    // one. The marks are asserted individually rather than as an exact HTML string so that the test does not depend on
-    // the order they nest in.
-    expect(
-      await page.$eval('[data-editable]', el => ({
-        bold: !!el.querySelector('b'),
-        underline: !!el.querySelector('u'),
-        strikethrough: !!el.querySelector('strike'),
-        color: el.querySelector('font')?.getAttribute('color') ?? null,
-        text: el.textContent,
-      })),
-    ).toEqual({
-      bold: true,
-      underline: true,
-      strikethrough: true,
-      color: rgbaToHex(colors.light.red),
-      text: 'bbb',
-    })
   })
 })
 

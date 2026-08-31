@@ -1,13 +1,17 @@
+import { fireEvent } from '@testing-library/dom'
 import { act } from 'react'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import initStore from '../../test-helpers/initStore'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import headValue from '../../util/headValue'
 import clearThoughtCommand from '../clearThought'
 import cursorBackCommand from '../cursorBack'
@@ -123,5 +127,48 @@ describe('clearThought', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(document.activeElement).toBe(editable)
+  })
+
+  // Typing into a cleared thought re-applies the formatting of the original value. Every mark must be transferred, not
+  // just the outermost one.
+  // https://github.com/cybersemics/em/issues/4629
+  it('re-applies every formatting mark of the cleared thought to the newly typed text', async () => {
+    await act(async () => {
+      store.dispatch([importText({ text: '- aaa' }), setCursorFirstMatchActionCreator(['aaa'])])
+    })
+
+    await act(async () => {
+      store.dispatch([
+        formatSelection('bold'),
+        formatSelection('underline'),
+        formatSelection('strikethrough'),
+        formatSelection('foreColor', 'red'),
+      ])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe(
+      '<font color="#ff573d"><strike><u><b>aaa</b></u></strike></font>',
+    )
+
+    await act(async () => {
+      executeCommand(clearThoughtCommand)
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // type into the cleared thought, which renders as empty
+    const editable = (await findThoughtByText(''))!
+    editable.innerHTML = 'bbb'
+    fireEvent.input(editable, { bubbles: true })
+
+    await act(vi.runAllTimersAsync)
+
+    const stateAfter = store.getState()
+    expect(getThoughtById(stateAfter, head(stateAfter.cursor!))!.value).toBe(
+      '<font color="#ff573d"><strike><u><b>bbb</b></u></strike></font>',
+    )
   })
 })
