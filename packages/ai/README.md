@@ -8,6 +8,7 @@ It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](http
 
 - `GET /` - Health check. Returns `Server is running`.
 - `POST /ai/generateThought` - Generates a complete replacement for the target thought marked with `[x]` in the indented input outline; context thoughts are marked with `[]`. The request body is `{ "input": "..." }`; the response is `{ "thought": "..." }` on success or `{ "error": "..." }` on failure. The client appends `/generateThought` to `VITE_AI_URL`.
+- `POST /ai/generateEmoji` - Generates ten distinct, ordered emoji for a thought value. The request body is `{ "value": "..." }`; the response is `{ "emojis": ["...", "..."] }` on success or `{ "error": "..." }` on failure. The client appends `/generateEmoji` to `VITE_AI_URL`.
 
 ## Local development
 
@@ -53,6 +54,7 @@ The response should contain `{ "thought": "..." }`. To test Generate Thought in 
 
 Other scripts:
 
+- `evaluate:emoji` - Runs the Generate Emoji prompt against the semantic corpus from issue #4400 and requires a configurable number of matches among the ten generated results. Requires `OPENAI_API_KEY` in `.env.local` and is intentionally separate from deterministic tests.
 - `typecheck` - Type-check the source with `tsc` (no emit). Not used by Vercel, which builds the function from source.
 
 > **Note:** This package has no `build` script on purpose. A `build` script makes Vercel run a static build and then fail looking for an output directory; omitting it lets Vercel auto-detect the Express app and deploy it as a Function.
@@ -106,7 +108,7 @@ curl --request POST \
   https://ai.emthought.space/ai/generateThought
 ```
 
-The first request must return `Server is running`; the second must return JSON containing `thought`.
+The first request must return `Server is running`; the second must return JSON containing `thought`. Smoke-test Generate Emoji with the same request shape documented under Routes and `/ai/generateEmoji`.
 
 ## Metrics
 
