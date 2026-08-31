@@ -1,5 +1,6 @@
 import { errorActionCreator as error } from '../../actions/error'
 import store from '../../stores/app'
+import { updateMultitouch } from '../../stores/multitouch'
 // Importing initEvents registers the global window 'error' listener as a side effect.
 import initEvents from '../initEvents'
 
@@ -32,4 +33,23 @@ it('prevents native pinch-to-zoom gestures (iOS Safari)', () => {
     document.dispatchEvent(e)
     expect(e.defaultPrevented).toBe(true)
   })
+})
+
+// A non-passive (blocking) touchmove listener on window marks the entire viewport as a blocking touch-handler
+// region, which changes Chrome's compositing and shifts the subpixel anti-aliasing of composited elements
+// (it broke the render-thoughts image snapshots). It suppresses the native caret/selection during a
+// multi-touch gesture, which can only occur on a touch device, so it must not be registered otherwise.
+// See #4233.
+it('does not block touchmove on a non-touch device', () => {
+  initEvents(store)
+
+  // latch multitouch, which is the only condition under which touchmove is blocked
+  updateMultitouch({ type: 'touchstart', touches: { length: 2 } } as TouchEvent)
+
+  const e = new Event('touchmove', { cancelable: true })
+  window.dispatchEvent(e)
+  expect(e.defaultPrevented).toBe(false)
+
+  // reset the latch with a fresh single-finger touchstart
+  updateMultitouch({ type: 'touchstart', touches: { length: 1 } } as TouchEvent)
 })

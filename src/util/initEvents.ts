@@ -431,7 +431,14 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchcancel', updateMultitouch)
   // prevent the native caret / text selection and scrolling from following the fingers during a multi-touch
   // gesture (non-passive so preventDefault is honored). See #4233.
-  window.addEventListener('touchmove', onMultitouchMove, { passive: false })
+  //
+  // Only registered on touch devices. A non-passive (blocking) touchmove listener on window marks the entire
+  // viewport as a blocking touch-handler region, which changes how Chrome composites the page and shifts the
+  // subpixel anti-aliasing of composited elements such as the NavBar home icon. That is invisible to the user
+  // but breaks the render-thoughts image snapshots on desktop, where the listener can never fire anyway.
+  if (isTouch) {
+    window.addEventListener('touchmove', onMultitouchMove, { passive: false })
+  }
   // disable native pinch-to-zoom / two-finger page panning on iOS Safari (#4233)
   document.addEventListener('gesturestart', onSafariGesture)
   document.addEventListener('gesturechange', onSafariGesture)
