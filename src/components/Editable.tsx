@@ -113,10 +113,10 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
-// Maximum time between a tap's touchend and the click that the browser synthesizes from it. Generous enough to
-// cover Safari's legacy click delay, and short enough that a click that far apart from the last touch can be
+// Maximum time between a tap's touchend and the click that the browser synthesizes from it. Long enough to cover
+// the delay observed on iOS Safari, and short enough that a click that far apart from the last touch can be
 // treated as a real click from a mouse or trackpad.
-const TAP_CLICK_TIMEOUT = 500
+const TAP_CLICK_TIMEOUT = 200
 
 /**
  * An editable thought with throttled editing.
@@ -944,10 +944,11 @@ const Editable = ({
   )
 
   // Time of the last touchend that ran handleTapBehavior, used to ignore the click that the browser synthesizes
-  // from the same tap. The preventDefault called on touchend is not enough on its own: iOS Safari only suppresses
-  // the synthesized click for a quick tap, and dispatches it anyway when the press is held a few hundred
-  // milliseconds — longer than a tap, shorter than a long press. handleTapBehavior would then run a second time
-  // and, while a multiselect is active, toggle the thought's selection off again right after selecting it.
+  // from the same tap while a multiselect is active. The preventDefault called on touchend is not enough on its
+  // own: iOS Safari dispatches the synthesized click anyway when the press is held longer than a quick tap.
+  // handleTapBehavior would then run a second time and toggle the thought's selection off again right after
+  // selecting it. The tap's other behaviors are idempotent, so only the multiselect toggle needs the guard and
+  // the two-tap pattern that activates edit mode is left alone.
   const tapTouchEndTimeRef = useRef(-Infinity)
 
   /**
@@ -1034,8 +1035,9 @@ const Editable = ({
     /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
     const onClick = (e: MouseEvent) => {
       // Drop the click that the browser synthesizes from the tap that was just handled on touchend, otherwise
-      // handleTapBehavior runs twice for a single tap (see tapTouchEndTimeRef).
-      if (performance.now() - tapTouchEndTimeRef.current < TAP_CLICK_TIMEOUT) return
+      // handleTapBehavior toggles the multicursor twice for a single tap (see tapTouchEndTimeRef). Only a tap that
+      // toggles the selection needs this; while the multiselection is being edited a tap places the caret as usual.
+      if (hasMulticursor && !multiEditing && performance.now() - tapTouchEndTimeRef.current < TAP_CLICK_TIMEOUT) return
 
       // If CMD/CTRL is pressed, this is a multiselect click, so don't focus the editable.
       if (isCommandKey(e)) {
@@ -1060,7 +1062,7 @@ const Editable = ({
       editable.removeEventListener('click', onClick)
       editable.removeEventListener('touchend', onTouchEnd)
     }
-  }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior])
+  }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior, multiEditing])
 
   // The html that is rendered in the editable. Note that it is empty while the thought is cleared, even though the
   // thought still has its value, which is shown as a placeholder.
