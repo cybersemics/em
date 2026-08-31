@@ -104,6 +104,8 @@ gh issue edit 5226 --add-blocked-by 5228
 
 Both take a comma-separated list of issue numbers or issue URLs; `--remove-blocked-by` undoes it. Configure it from the blocked issue only — GitHub records the inverse itself, and #5228 lists #5226 under Blocking. Where the new issue is the prerequisite rather than the dependent, `--blocking` and `--add-blocking` are the same thing pointed the other way.
 
+The blocker must be an issue. A pull request number is refused: `gh` cannot resolve it — `Could not resolve to an Issue with the number of 5085` — and the REST endpoint refuses the pull request's own database id with `Target issue may only be an issue`. Where the prerequisite is a pull request, block on the issue that pull request implements and name the pull request in the `## Notes` bullet, as [#5236](https://github.com/cybersemics/em/issues/5236) does with #4400 and #5085. If no such issue exists, open one for what the pull request delivers, let the pull request close it, and block on that.
+
 Verify it landed, since a body reference and a relationship look alike once rendered:
 
 ```bash
