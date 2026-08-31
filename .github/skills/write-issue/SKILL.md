@@ -1,7 +1,7 @@
 ---
 name: write-issue
 description: >-
-  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, or adding reproduction steps to an issue that lacks them.
+  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another.
 allowed-tools:
   - bash
 ---
@@ -88,6 +88,36 @@ Add `design-needed` when the correct behaviour has not been decided.
 
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
+## Blocked by
+
+"Blocked by" is a GitHub relationship, not a line of body text. `Blocked by #5228` in the body renders as a plain reference: the issue is not marked blocked, it does not show as blocked in issue lists or projects, and #5228 does not show what it is holding up.
+
+Set the relationship with `gh`, at creation or after:
+
+```bash
+gh issue create --title "..." --body-file body.md --blocked-by 5228
+```
+
+```bash
+gh issue edit 5226 --add-blocked-by 5228
+```
+
+Both take a comma-separated list of issue numbers or issue URLs; `--remove-blocked-by` undoes it. Configure it from the blocked issue only — GitHub records the inverse itself, and #5228 lists #5226 under Blocking. Where the new issue is the prerequisite rather than the dependent, `--blocking` and `--add-blocking` are the same thing pointed the other way.
+
+Verify it landed, since a body reference and a relationship look alike once rendered:
+
+```bash
+gh issue view 5226 --repo cybersemics/em --json blockedBy
+```
+
+Prefer `gh` to the REST endpoint, `POST /repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by`, which takes `issue_id` — the blocker's numeric database id, from `gh api repos/cybersemics/em/issues/5228 --jq .id` — rather than its issue number.
+
+Keep a `## Notes` bullet beside the relationship where the reason is not obvious from the two titles. The relationship carries the fact; only the note carries the why. [#5226](https://github.com/cybersemics/em/issues/5226):
+
+> Blocked by #5228, which makes Select All toggle to Deselect All on desktop as well as touch. The third step is that toggle, so it has to exist first.
+
+`- [ ] Blocked by #5228` is not a substitute. Nothing tracks a checkbox.
+
 ## Evidence
 
 Screenshots and videos are usually already in the conversation that prompted the issue. Copy the attachment markup across verbatim, `<img src="https://github.com/user-attachments/...">` and all; those URLs stay valid in another issue. Do not re-upload or re-host, and do not describe an image you could link.
@@ -110,6 +140,7 @@ New issues often originate in a comment thread on another issue or PR.
 - An Expected Behavior that specifies the fix rather than naming the goal.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
+- A `Blocked by` line in the body with no relationship configured on GitHub.
 
 ## When something is unknown
 
