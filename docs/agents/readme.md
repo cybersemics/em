@@ -90,7 +90,8 @@ flowchart TD
     I --> E
     H -- yes --> J["<b>Exit gate</b> — end-session skill"]
     J --> J1["Nothing left untrue, nothing left behind,<br/>nothing claimed that was not observed"]
-    J1 --> K["Done"]
+    J1 --> J2["<b>PR Ready</b> — a workflow takes the<br/>pull request out of draft"]
+    J2 --> K["Done"]
 
     click C "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "The issue-repro skill"
     click C1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "How the browser is brought up"
@@ -103,6 +104,7 @@ flowchart TD
     click I "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "The test-diagnosis skill"
     click J "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The end-session skill"
     click J1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The exit checklist, step by step"
+    click J2 "https://github.com/cybersemics/em/blob/HEAD/.github/workflows/pr-ready.yml" "The PR Ready workflow"
 ```
 
 Both gates exist to stop the same failure. An agent that starts reading source code before it has seen the bug happen will form a theory from the code and then go looking for evidence to support it. Making it reproduce the problem first means it has a real observation to work from. Making it write the plan against quoted, existing code means it extends what is there instead of building something new beside it.
@@ -150,6 +152,7 @@ end-session: escalating — checklist passed per .github/skills/end-session/SKIL
 │   └── unskip-added-tests/          Switches .skip tests back on — see tdd.md
 └── workflows/
     ├── copilot-setup-steps.yml      Builds the agent's environment
+    ├── pr-ready.yml                 Undrafts a finished PR whose checks passed
     └── tdd.yml                      Checks new tests genuinely fail first
 
 scripts/
@@ -172,10 +175,11 @@ CLAUDE.md            → AGENTS.md
 .claude/skills       → .agents/skills
 ```
 
-Two workflows are part of this system rather than ordinary CI:
+Three workflows are part of this system rather than ordinary CI:
 
 - **[`copilot-setup-steps.yml`](../../.github/workflows/copilot-setup-steps.yml)** builds the environment the agent wakes up in — the display, the browser, the dev server, credentials. It must be named exactly that, and its job must be called `copilot-setup-steps`, or Copilot ignores it. Covered in [Environment](environment.md#what-the-setup-step-builds).
 - **[`tdd.yml`](../../.github/workflows/tdd.yml)** independently verifies that any new test genuinely fails before the fix. Covered in [The TDD workflow](tdd.md#how-the-check-works).
+- **[`pr-ready.yml`](../../.github/workflows/pr-ready.yml)** takes a finished Copilot pull request out of draft once every check on it has passed. Copilot opens a draft and never leaves one — at the end of a session it requests a review and stops — so without this the pull request waits in draft until a human notices it, invisible to reviewers and ineligible for auto-merge. It fires on every check completion and [`scripts/ci/mark-copilot-pr-ready.cjs`](../../scripts/ci/mark-copilot-pr-ready.cjs) bails unless it is the last one out, the same arrangement [`Dependabot Fix`](../testing.md#failing-dependabot-pull-requests) uses. Three further guards decide the rest: the pull request must still be a draft authored by the agent, since a human's draft is deliberate and the `copilot/` branch prefix is not proof of authorship; its newest `copilot_work_*` timeline event must be `copilot_work_finished`, because the agent pushes several commits per session and each one runs the full suite, so green checks alone would undraft work still in progress; and no check may have failed, a draft being the correct state for a pull request that is red. Doing this from the prompt files instead was considered and rejected — the agent would have to run `gh pr ready` itself, no Copilot session in this repository has ever managed it, and an instruction that silently fails is worse than none.
 
 The rest (`test`, `lint`, `puppeteer`, `ios`, the Vercel and Tauri workflows) are normal project CI. The agent has to make them pass, but they were not built for it.
 
