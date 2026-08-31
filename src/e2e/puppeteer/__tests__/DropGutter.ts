@@ -3,7 +3,7 @@ import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import getEditable from '../helpers/getEditable'
 import paste from '../helpers/paste'
 import waitForAlertContent from '../helpers/waitForAlertContent'
@@ -11,6 +11,8 @@ import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
 /** Check if a thought is in the DOM. */
 const isThoughtInDOM = async (value: string) => {
@@ -84,10 +86,6 @@ const dragToDropGutter = async (nodeHandle: ElementHandle<Element> | JSHandle<un
 }
 
 describe('DropGutter: mobile only', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
-
   it('should remove favorite thought when dropped on DropGutter', async () => {
     await paste(`
         - a
@@ -95,42 +93,11 @@ describe('DropGutter: mobile only', () => {
         - c
         `)
 
-    await page.evaluate(() => {
-      ;(window as any).em.testFlags.logActions = true
-    })
     await clickThought('a')
-    console.log('DIAG_BEFORE_TAP:', JSON.stringify(await page.evaluate((() => {
-      const btn = document.querySelector('[aria-label="Add to Favorites"]') as HTMLElement | null
-      const toolbar = document.querySelector('#toolbar') as HTMLElement | null
-      const r = btn?.getBoundingClientRect()
-      return {
-        scrollLeft: toolbar?.scrollLeft,
-        clientWidth: toolbar?.clientWidth,
-        rect: r ? { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) } : null,
-        topAtCenter: r ? (document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) as HTMLElement | null)?.closest('[aria-label]')?.getAttribute('aria-label') ?? null : null,
-        editing: document.querySelector('[data-editing=true] [data-editable]')?.innerHTML ?? null,
-        alert: document.querySelector('[data-testid="alert-content"]')?.textContent ?? null,
-      }
-    }))))
     await click('[aria-label="Add to Favorites"]')
-    try {
-      await waitForAlertContent('Added "a" to favorites')
-    } catch (e) {
-      console.log('DIAG_FAILED:', JSON.stringify(await page.evaluate((() => {
-      const btn = document.querySelector('[aria-label="Add to Favorites"]') as HTMLElement | null
-      const toolbar = document.querySelector('#toolbar') as HTMLElement | null
-      const r = btn?.getBoundingClientRect()
-      return {
-        scrollLeft: toolbar?.scrollLeft,
-        clientWidth: toolbar?.clientWidth,
-        rect: r ? { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) } : null,
-        topAtCenter: r ? (document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) as HTMLElement | null)?.closest('[aria-label]')?.getAttribute('aria-label') ?? null : null,
-        editing: document.querySelector('[data-editing=true] [data-editable]')?.innerHTML ?? null,
-        alert: document.querySelector('[data-testid="alert-content"]')?.textContent ?? null,
-      }
-    }))))
-      throw e
-    }
+
+    // wait until the favorite alert appears
+    await waitForAlertContent('Added "a" to favorites')
 
     await dragToDropGutter(await waitForEditable('a'))
 
