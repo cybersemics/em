@@ -105,7 +105,7 @@ describe('all platforms', () => {
   })
 
   // test case 5
-  it.skip('on 2x cursorDown, the caret should move from the end of a cursor into the 2nd line of the new multi-line cursor.', async () => {
+  it('on 2x cursorDown, the caret should move from the end of a cursor into the 2nd line of the new multi-line cursor.', async () => {
     const multiLineCursor =
       "Beautiful antique furnishings fill this quiet, comfortable flat across from the Acropolis museum. AC works great. It is in an heavily touristic area, but the convenience can't be beat. Highly recommended."
     const importText = `
@@ -280,7 +280,7 @@ describe('all platforms', () => {
     await paste(importText)
 
     const editableNodeHandle = await waitForEditable(multiLineCursor)
-    // due to an outstanding bug (see test case 5), pressing ArrowDown from offset 0 will skip to the next thought
+    // click at offset 1 rather than 0 so that the subsequent ArrowLeft lands on the start of the 2nd line
     await click(editableNodeHandle, { offset: 1 })
     await press('ArrowDown')
     await press('ArrowLeft')
