@@ -60,7 +60,7 @@ The descendant attribute lookups consult these inheritance points in addition to
 - [`useThoughtStyle`](../src/hooks/useThoughtStyle.ts) reads `=children/=style` from the parent and `=grandchildren/=style` from the grandparent.
 - [`useHideBullet`](../src/hooks/useHideBullet.ts) reads `=bullet/None` directly, plus the `=children/=bullet`/`=grandchildren/=bullet` variants.
 - The pinned-children behavior at `=children/=pin/true` is what replaced the old `=pinChildren` attribute.
-- `=children` and `=grandchildren` thoughts are themselves filtered out of rendering — they never appear as siblings.
+- `=children` and `=grandchildren` thoughts are themselves filtered out of rendering, so they never appear as siblings unless hidden thoughts are shown. When they are shown, [`linearizeTree`](../src/selectors/linearizeTree.ts) exempts `=children` from its own `=style`; `=grandchildren` needs no exemption, since the grandparent style skips a level and so never reaches it.
 
 Not every attribute is propagable. Currently the `=children`/`=grandchildren` inheritance chain is plumbed through for `=style`, `=styleAnnotation`, `=styleContainer`, `=bullet`, and `=pin`; `=descendants` supports only `=pin`. Other attributes apply only to the direct parent.
 
