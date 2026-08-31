@@ -111,6 +111,23 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
+  // https://github.com/cybersemics/em/issues/5229
+  it.skip('does not show a drop hover below the dragged thought', async () => {
+    await paste(`
+      - aaa
+      - bbb
+      - ccc
+    `)
+
+    await clickThought('aaa')
+
+    // hover the drop target directly below aaa, i.e. aaa's own position
+    await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
+
+    const dropHovers = await page.$$('[data-testid=drop-hover]')
+    expect(dropHovers).toHaveLength(0)
+  })
+
   it('DropChild', async () => {
     await paste(`
       - a
