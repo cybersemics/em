@@ -113,10 +113,10 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
-// Maximum time between a tap's touchend and the click that the browser synthesizes from it. Long enough to cover
-// the delay observed on iOS Safari, and short enough that a click that far apart from the last touch can be
-// treated as a real click from a mouse or trackpad.
-const TAP_CLICK_TIMEOUT = 200
+// Maximum time between a tap's touchend and the click that the browser synthesizes from it. Debug logs of taps on
+// iOS Safari put that delay at 1-64 ms, and the fastest measured double tap at 100 ms, so this is long enough to
+// catch the synthesized click and short enough that the next tap of a double tap is never mistaken for one.
+const TAP_CLICK_TIMEOUT = 100
 
 /**
  * An editable thought with throttled editing.
@@ -948,7 +948,9 @@ const Editable = ({
   // own: iOS Safari dispatches the synthesized click anyway when the press is held longer than a quick tap.
   // handleTapBehavior would then run a second time and toggle the thought's selection off again right after
   // selecting it. The tap's other behaviors are idempotent, so only the multiselect toggle needs the guard and
-  // the two-tap pattern that activates edit mode is left alone.
+  // the two-tap pattern that activates edit mode is left alone. A touchstart clears the time, since a new touch
+  // proves that a click that follows belongs to it rather than to the previous tap; this keeps the second tap of
+  // a fast double tap working even when its own touchend does not reach handleTapBehavior.
   const tapTouchEndTimeRef = useRef(-Infinity)
 
   /**
@@ -1027,7 +1029,7 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, path, setCursorOnThought],
   )
 
-  /** Registers native event listeners for tap behavior (click and touchend). */
+  /** Registers native event listeners for tap behavior (touchstart, click, and touchend). */
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
@@ -1048,6 +1050,12 @@ const Editable = ({
       handleTapBehavior(e)
     }
 
+    /** Forgets the last handled touchend, since a new touch proves that any click that follows belongs to it rather
+     * than to the previous tap. */
+    const onTouchStart = () => {
+      tapTouchEndTimeRef.current = -Infinity
+    }
+
     /** Handles touchend for haptics and tap behavior. */
     const onTouchEnd = (e: TouchEvent) => {
       haptics.light()
@@ -1055,10 +1063,12 @@ const Editable = ({
       handleTapBehavior(e)
     }
 
+    editable.addEventListener('touchstart', onTouchStart)
     editable.addEventListener('click', onClick)
     editable.addEventListener('touchend', onTouchEnd, { passive: false })
 
     return () => {
+      editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('click', onClick)
       editable.removeEventListener('touchend', onTouchEnd)
     }

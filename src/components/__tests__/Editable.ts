@@ -176,3 +176,31 @@ it('toggles the multicursor once when a mid press dispatches both touchend and a
 
   expect(Object.keys(store.getState().multicursors)).toHaveLength(2)
 })
+
+// A tap whose touchend does not reach the tap handler (e.g. its editable was re-rendered mid-tap) is carried by its
+// synthesized click alone. The touchstart clears the previous tap's touchend time so that this click is not mistaken
+// for the previous tap's synthesized click and dropped, which would lose the second tap of a fast double tap.
+it('toggles the multicursor on a click that follows a new touchstart', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    addMulticursorAtFirstMatch(['a']),
+  ])
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const editable = (await findThoughtByText('b'))!
+
+  act(() => {
+    fireEvent.touchStart(editable)
+    fireEvent.touchEnd(editable)
+    fireEvent.touchStart(editable)
+    fireEvent.click(editable)
+  })
+
+  // the first tap selected b, the second deselected it
+  expect(Object.keys(store.getState().multicursors)).toHaveLength(1)
+})
