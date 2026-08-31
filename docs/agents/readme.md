@@ -189,7 +189,7 @@ Worth knowing about, because nothing here will tell you when one of them breaks:
 
 - **[MCP server configuration](mcp.md).** An MCP server is an external tool the agent can call. Three matter here: [`chrome-devtools`](mcp.md#chrome-devtools) for driving Chrome, [`wdio`](mcp.md#wdio) for driving iOS, and [the GitHub server](mcp.md#the-github-server) for reading issues and CI runs. They are configured in Copilot's own settings, not in this repository. In particular, `chrome-devtools` must be given `--browser-url=http://127.0.0.1:9222` so that it joins the browser the setup step already started instead of launching a second one.
 - **The pre-built iOS app.** iOS work runs against an app binary uploaded to BrowserStack under the name `em-server-mode`. BrowserStack deletes uploads 30 days after they were last used, and if it lapses, iOS reproduction stops working until someone rebuilds it. Rebuilding is one command on a Mac with Xcode signing set up — `yarn build:ios:browserstack` — and nothing warns you before it expires.
-- **Secrets.** `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, and `OPENAI_API_KEY` are repository secrets.
+- **Secrets.** `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, and `OPENAI_API_KEY` are repository secrets. `OPENAI_API_KEY_ISSUE_CLASSIFIER` and `OPENAI_API_KEY_ESTIMATE` are too: each script prefers its own key so that its spend is reported separately, and falls back to `OPENAI_API_KEY`.
 - **Network allowances.** The agent runs behind a firewall that blocks outbound traffic by default. Hosts it needs are listed in `COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS` in the setup workflow. A new external dependency needs adding there or it will fail in a way that looks like a hang.
 
 ## Changing any of this
