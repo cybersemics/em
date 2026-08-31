@@ -35,7 +35,10 @@ describe('MultiGesture', () => {
 
   beforeEach(() => {
     // touchend resets disableScroll/abandon between scenarios (window 'touchend' → reset()).
-    window.dispatchEvent(new Event('touchend'))
+    const touchend = new Event('touchend')
+    // jsdom does not construct TouchEvent.changedTouches, which the touchend listener logs.
+    Object.defineProperty(touchend, 'changedTouches', { value: [] })
+    window.dispatchEvent(touchend)
   })
 
   it('disables scroll for a single-finger touch in the gesture zone', () => {
