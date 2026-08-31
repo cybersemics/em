@@ -19,7 +19,7 @@ Install dependencies from the repository root:
 yarn
 ```
 
-Create `packages/ai/.env.local` with an OpenAI API key for development. This file is ignored by git.
+Create `packages/ai/.env.local` with an OpenAI API key for development. This file is ignored by git. `OPENAI_API_KEY` is the fallback for every service, so a single key is all that local development needs. See [API keys](#api-keys) for the per-service keys used in deployment.
 
 ```dotenv
 OPENAI_API_KEY=your-development-key
@@ -69,10 +69,12 @@ In the Vercel project settings (Settings → Build and Deployment):
 - **Framework Settings** — leave Build Command and Output Directory overrides off. The Install Command may be overridden with `yarn`.
 - **Deployment Protection** — Vercel Authentication must be disabled so em clients can reach the service.
 
-Set `OPENAI_API_KEY` in both the `em-ai` Production and Preview environments. Use a dedicated, tightly
-budgeted key for Preview: the preview workflow runs pull request code, including approved fork code, so provider
-limits are an additional safeguard against accidental or malicious use. The key is a server secret and must never
-be added to the repository or exposed through a `VITE_*` variable.
+Set the keys described under [API keys](#api-keys) in both the `em-ai` Production and Preview environments. Give
+Preview its own OpenAI project rather than only its own keys: the preview workflow runs pull request code, including
+approved fork code, and budgets, rate limits, and model allowlists are project settings, so the project is the boundary
+that bounds the blast radius. A project budget only sends a notification and does not stop requests once it is reached;
+the only hard stop OpenAI provides is prepaid credits with auto-recharge disabled, which applies to the whole
+organization. Keys are server secrets and must never be added to the repository or exposed through a `VITE_*` variable.
 
 Production is deployed by the `Vercel Production` GitHub Actions workflow on every push to `main`. The workflow selects `em-ai` with `VERCEL_PROJECT_ID_EM_AI`, runs `vercel pull`, `vercel build --prod`, and `vercel deploy --prebuilt --prod`.
 
@@ -82,6 +84,26 @@ GitHub deployment links to the user-facing `em` preview, while the workflow summ
 diagnostics. Vercel Authentication must remain disabled for preview deployments so the browser can call the API.
 
 Vercel's own Git deployment is disabled in `vercel.json` to prevent duplicate deployments. The repository's `.env.production` sets the AI service base URL to `https://ai.emthought.space/ai`.
+
+### API keys
+
+Each service authenticates with its own OpenAI API key so that its usage and spend can be read separately.
+`completeChat` looks up `OPENAI_API_KEY_{SERVICE}` for the `Service` it is passed and falls back to `OPENAI_API_KEY`.
+
+| Service          | Environment variable              |
+| ---------------- | --------------------------------- |
+| Generate Thought | `OPENAI_API_KEY_GENERATE_THOUGHT` |
+
+Adding a service means adding a member to [`src/@types/Service.ts`](src/@types/Service.ts), passing it to
+`completeChat`, and creating a key of the same name in the OpenAI dashboard. The fallback keeps a deployment that sets
+only `OPENAI_API_KEY` working, at the cost of merging that service into the shared key's total.
+
+API key is a reporting dimension in the OpenAI dashboard: the Usage and Spend views filter and group by key, and the
+Usage and Costs APIs accept `api_key_ids` and `group_by=api_key_id`. The Costs API identifies a key by its ID rather
+than its name, so match the ID against the key list in the dashboard when reading a report.
+
+Keys segment reporting only. Two keys in the same project draw on the same budget and the same rate limits, and there
+is no per-key spend cap.
 
 ### Rate limiting
 
@@ -114,6 +136,7 @@ Function metrics (invocations, duration percentiles, error rate, cold starts, me
 
 ## Environment variables
 
-- `OPENAI_API_KEY` — required by the AI server locally and in the `em-ai` Vercel Production and Preview environments.
+- `OPENAI_API_KEY` — fallback OpenAI API key for any service that has no key of its own. Required by the AI server locally, and in the `em-ai` Vercel Production and Preview environments for as long as any service relies on the fallback.
+- `OPENAI_API_KEY_GENERATE_THOUGHT` — optional per-service key for Generate Thought in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `PORT` — optional local server port. Defaults to `3111`.
 - `VITE_AI_URL` — public, build-time client base URL. Development uses `http://localhost:3111/ai`, production uses `https://ai.emthought.space/ai`, and pull request builds receive their matching `em-ai` preview URL from the workflow.
