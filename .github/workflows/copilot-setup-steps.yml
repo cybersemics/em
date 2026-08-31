@@ -15,10 +15,12 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   # BrowserStack hub (attachExistingSession.ts) and the heartbeat keepalive
-  # (.github/skills/browser-control-ios/heartbeat.sh) both need outbound access,
-  # as does the cloudflared tunnel (wdio.browserstack.conf.ts) that exposes the
-  # dev server to the BrowserStack device.
-  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: hub-cloud.browserstack.com,hub.browserstack.com,api.browserstack.com,trycloudflare.com
+  # (.github/skills/browser-control-ios/heartbeat.sh) both need outbound access, as does the
+  # Cloudflare tunnel pool (cloudflareTunnelPool.ts) that exposes the dev server to the
+  # BrowserStack device. That pool lives entirely on emthought.cc (a domain we own and control
+  # every tunnel/DNS record on), not the shared trycloudflare.com quick-tunnel domain — allowlisting
+  # trycloudflare.com would allowlist anyone's tunnel, not just ours.
+  COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: hub-cloud.browserstack.com,hub.browserstack.com,api.browserstack.com,emthought.cc
 
 jobs:
   # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.

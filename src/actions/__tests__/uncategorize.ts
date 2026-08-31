@@ -86,7 +86,7 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
-  it('merge duplicate children', () => {
+  it('keep duplicate children on uncategorize (no merge)', () => {
     const steps = [
       newThought('a'),
       newSubthought('b'),
@@ -104,6 +104,7 @@ describe('normal view', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - c
+    - d
     - d`)
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
@@ -445,6 +446,34 @@ describe('uncategorizing contexts with meta attributes', () => {
           - a
             - b
               - =children
+                - =pin
+                  - true
+              - c
+            - d
+          - e
+        `,
+      }),
+      setCursor(['a', 'b']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - c
+    - d
+  - e`)
+  })
+
+  it('should delete =descendants/=pin when uncategorizing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - b
+              - =descendants
                 - =pin
                   - true
               - c

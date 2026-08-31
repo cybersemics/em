@@ -12,7 +12,7 @@ This is the **Plan** skill. Before you create a branch, edit a file, or write a 
 
 The reason this skill exists: agents solve problems locally. They default to writing new code instead of extending what is there, duplicate logic that already exists, and rationalise whatever they slapped together after the fact. Every one of those failures is the same root cause — **not looking at and understanding what already exists before writing new code.** This skill forces the reconnaissance first, and makes you defend it before you are allowed to build.
 
-Follow these instructions **directly**, while observing the methodology described to you (the issue-repro gate, and the use of `ci-monitor`, `test-diagnosis`, and `puppeteer` skills where appropriate). DO NOT deviate from this process, skip stages, or begin implementation before the Critique stage passes.
+Follow these instructions **directly**, while observing the methodology described to you (the issue-repro gate, and the use of `ci-monitor`, `test-diagnosis`, and `puppeteer-update-snapshots` skills where appropriate). DO NOT deviate from this process, skip stages, or begin implementation before the Critique stage passes.
 
 ## When this skill runs
 
@@ -104,7 +104,7 @@ if all checks pass → record the plan, then proceed to implementation
 
 Record the final plan where the work will be reviewed:
 
-- If a PR exists or will exist, put the plan in the **PR description** (below the issue number).
+- If a PR exists or will exist, put the plan in the **PR description** (below the issue reference).
 - Otherwise, output it in full in your response before you write any code.
 
 ### Gate confirmation

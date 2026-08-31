@@ -4,16 +4,21 @@ import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
-import { isMac, isSafari, isTouch } from '../../browser'
+import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
+import virtualKeyboard from '../../device/virtual-keyboard'
+import globals from '../../globals'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
+import isMultiEditing from '../../selectors/isMultiEditing'
+import isMulticursorPath from '../../selectors/isMulticursorPath'
 import multitouchStore from '../../stores/multitouch'
 import equalPath from '../../util/equalPath'
+import isCommandKey from '../../util/isCommandKey'
 
 // #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
 // two taps into a double-tap and emits a delayed, retargeted synthesized mousedown/click/dblclick on the
@@ -55,6 +60,8 @@ const useEditMode = ({
   const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
   const editing = useSelector(state => state.isKeyboardOpen)
   const isMulticursor = useSelector(hasMulticursor)
+  const isCursorCleared = useSelector(state => state.cursorCleared)
+  const wasCursorCleared = usePrevious(isCursorCleared)
   const noteFocus = useSelector(state => state.noteFocus)
   const dragHold = useSelector(state => state.longPress === LongPressState.DragHold)
   const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
@@ -85,6 +92,24 @@ const useEditMode = ({
         if (style?.visibility === 'hidden') {
           selection.clear()
         } else {
+          // Neither the Android WebView nor Chromium raises the virtual keyboard when a thought enters edit
+          // mode by side effect, e.g. via a gesture such as Clear Thought (#4686): the keyboard is raised by a
+          // tap, not by the caret being placed programmatically. Request it before setting the selection,
+          // which focuses the editing host implicitly and would make a later focus() a no-op.
+          // Only show it in edit mode, otherwise the keyboard would re-open after the user dismissed it (#3996).
+          if (editMode && contentRef.current) {
+            virtualKeyboard.show(contentRef.current)
+          }
+
+          // selection.set focuses the editing host only implicitly, i.e. only when nothing else holds the focus,
+          // and asyncFocus parks it on a hidden input. After a drag-and-drop the selection is cleared, so Clear
+          // Thought left the editable unfocused with no caret, faux caret or keyboard (#4519). Only on the
+          // transition into the cleared state; focusing on any other run blurs the previously focused editable
+          // before the selection is set, which recomputes the cursor offset and ends the editing session.
+          if (isCursorCleared && wasCursorCleared === false && contentRef.current) {
+            contentRef.current.focus()
+          }
+
           selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
         }
       }
@@ -97,8 +122,12 @@ const useEditMode = ({
           !noteFocus &&
           contentRef.current &&
           (cursorOffset !== null || !selection.isThought()) &&
-          !isMulticursor &&
+          // Normally the selection is not set while a multiselection is active. However, when clearing multiple
+          // thoughts, the caret must be placed on the first (cursor) thought so the user can type. Only the cursor
+          // thought reaches this point (guarded by isEditing above); the other cleared thoughts show a faux caret.
+          (!isMulticursor || isCursorCleared) &&
           !dragHold &&
+          !dragInProgress &&
           !disabledRef.current)
 
       if (shouldSetSelection) {
@@ -115,10 +144,28 @@ const useEditMode = ({
         Replacing setTimeout with requestAnimationFrame guarantees (hopefully?) that it will be processed before the next repaint,
         keeping the keyboard open while rapidly deleting thoughts. (#3129)
 
-        If the last action is swapParent, set the selection synchronously to keep the focus stable after the swap.
+        If the last action is a swap, set the selection synchronously to keep the focus stable after the swap.
       */
-        if (isTouch && isSafari() && lastUndoableActionType !== 'swapParent' && !selection.isThought()) {
+        if (
+          isTouch &&
+          isSafari() &&
+          lastUndoableActionType !== 'swapParent' &&
+          lastUndoableActionType !== 'swapGrandparent' &&
+          !selection.isThought()
+        ) {
           asyncFocus()
+
+          // asyncFocus parks the focus on its dummy input so that the programmatic selection below is honored.
+          // Setting the browser selection focuses the editing host implicitly only when nothing else holds the focus,
+          // so the editable has to take it back explicitly. Otherwise the focus stays stranded on the dummy input:
+          // WKWebView never raises the keyboard for the editable, no caret renders, and document.hasFocus() stays
+          // false, which trips the page lifecycle handler in initEvents into clearing the selection 10ms later and
+          // dismissing the keyboard. Reached whenever the caret is placed with no prior selection on a thought, e.g.
+          // creating a thought after an undo cleared the selection (#4692).
+          // Not in the cleared state, which setSelectionToCursorOffset focuses itself on the transition into it
+          // (#4519). Focusing on its later runs would leave the editable focused for the next run's asyncFocus to
+          // blur, which ends the editing session and closes the keyboard mid-edit.
+          if (!isCursorCleared) contentRef.current?.focus()
         }
 
         setSelectionToCursorOffset()
@@ -131,6 +178,8 @@ const useEditMode = ({
       isEditing,
       // update selection when multicursor changes, otherwise the selection will not be set when multicursor is cleared
       isMulticursor,
+      // update selection when entering the cleared state so the caret is placed on the first thought of a multiselection
+      isCursorCleared,
       hasNoteFocus,
       dragInProgress,
       noteFocus,
@@ -160,9 +209,12 @@ const useEditMode = ({
     if (!editable) return
 
     /** Sets the DOM selection and updates the Redux cursor state. */
-    const setCaretOffset = (offset: number, { cursorHistoryClear }: { cursorHistoryClear?: boolean } = {}) => {
+    const setCaretOffset = (
+      offset: number,
+      { cursorHistoryClear, preserveMulticursor }: { cursorHistoryClear?: boolean; preserveMulticursor?: boolean } = {},
+    ) => {
       selection.set(editable, { offset })
-      dispatch(setCursor({ path, offset, cursorHistoryClear }))
+      dispatch(setCursor({ path, offset, cursorHistoryClear, preserveMulticursor }))
     }
 
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
@@ -223,9 +275,8 @@ const useEditMode = ({
      * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
      */
     const onMouseDown = (e: MouseEvent) => {
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
+      // If CMD/CTRL is pressed, this is a multiselect click, so don't focus the editable.
+      if (isCommandKey(e)) {
         e.preventDefault()
         return
       }
@@ -251,9 +302,24 @@ const useEditMode = ({
         return
       }
 
+      // While a multiselection is being edited (Clear Thought), a tap moves the caret as usual. The multiselection is
+      // preserved when the tapped thought belongs to it, so that edits keep mirroring to the other selected thoughts.
+      const state = store.getState()
+      const multiEditing = isMultiEditing(state)
+      const preserveMulticursor = multiEditing && isMulticursorPath(state, path)
+
+      // Suppress the synthesized mousedown that iOS Safari can emit for a tap whose touchend already moved
+      // the cursor without entering edit mode (see globals.suppressFocusAfterCursorMove). The cursor move
+      // re-rendered this thought with editingOrOnCursor true before the mousedown arrived, so the branch
+      // below would place the caret and refocus the editable as if this were a second tap.
+      if (isTouch && isSafari() && globals.suppressFocusAfterCursorMove) {
+        e.preventDefault()
+        return
+      }
+
       // If editing or the cursor is on the thought, allow the default browser selection or perform manual caret positioning so the offset is correct.
       // See: #981
-      if (editingOrOnCursor && !isMulticursor) {
+      if (editingOrOnCursor && (!isMulticursor || multiEditing)) {
         const { inVoidArea, offset } = getCaretOffset(editable, {
           clientX: e.clientX,
           clientY: e.clientY,
@@ -270,7 +336,7 @@ const useEditMode = ({
           // Setting the caret offset will activate the declarative shouldSetSelection effect, which will call preventAutoscroll and selection.set
           // all over again. Since the selection is managed imperatively in this handler, this duplicate behavior is undesirable.
           allowDefaultSelection()
-          setCaretOffset(offset)
+          setCaretOffset(offset, { preserveMulticursor })
 
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is
@@ -319,6 +385,7 @@ const useEditMode = ({
     allowDefaultSelection,
     path,
     dispatch,
+    store,
     style?.visibility,
   ])
 

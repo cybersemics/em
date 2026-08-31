@@ -14,7 +14,7 @@ export interface LongPressProps {
   onContextMenu: (e: React.MouseEvent | React.PointerEvent) => void
   onDragEnd?: () => void
   onMouseDown?: (e: React.MouseEvent | React.TouchEvent) => void
-  onMouseUp?: () => void
+  onMouseUp?: (e?: React.MouseEvent) => void
   onTouchStart: (e: React.MouseEvent | React.TouchEvent) => void
   onTouchEnd: () => void
   onTouchCancel: () => void
@@ -22,11 +22,11 @@ export interface LongPressProps {
 
 /** Custom hook to manage long press.
  * The onLongPressStart handler is called after the delay if the user is still pressing.
- * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove).
+ * The onLongPressEnd handler is called when the long press ends, either by the user lifting their finger (touchend, mouseup) or by the user moving their finger (touchmove, touchcancel, mousemove). It receives the event that ended the long press, if any, so that modifier keys and the event type (e.g. touchend vs touchcancel) can be read.
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: (() => void) | null = noop,
+  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent) => void) | null = noop,
   delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
 ) => {
   const [pressing, setPressing] = useState(false)
@@ -93,21 +93,24 @@ const useLongPress = (
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
-  const stop = useCallback(() => {
-    setPressing(false)
+  const stop = useCallback(
+    (e?: React.MouseEvent | React.TouchEvent) => {
+      setPressing(false)
 
-    // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
-    // but endDrag in useDragAndDropThought will happen instead.
-    allowTouchToScroll(true)
+      // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
+      // but endDrag in useDragAndDropThought will happen instead.
+      allowTouchToScroll(true)
 
-    // This gives other components a chance to short circuit.
-    // We can't stop propagation here without messing up other components like Bullet.
-    setTimeout(() => {
-      clearTimeout(timerIdRef.current)
-      timerIdRef.current = 0
-      onLongPressEnd?.()
-    }, 10)
-  }, [onLongPressEnd, setPressing])
+      // This gives other components a chance to short circuit.
+      // We can't stop propagation here without messing up other components like Bullet.
+      setTimeout(() => {
+        clearTimeout(timerIdRef.current)
+        timerIdRef.current = 0
+        onLongPressEnd?.(e)
+      }, 10)
+    },
+    [onLongPressEnd, setPressing],
+  )
 
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
   // Allow double tap to open the context menu as usual.

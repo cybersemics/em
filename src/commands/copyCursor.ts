@@ -48,9 +48,9 @@ const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () =
   return exportedVisible
 }
 
-const copyCursorCommand: Command = {
+const copyCursorCommand = {
   id: 'copyCursor',
-  label: 'Copy Cursor',
+  label: 'Copy Cursor' as const,
   description: 'Copies the cursor and all descendants.',
   keyboard: { key: 'c', meta: true },
   multicursor: {
@@ -91,6 +91,6 @@ const copyCursorCommand: Command = {
 
     dispatch(alert(`Copied ${phrase} to the clipboard`))
   },
-}
+} satisfies Command
 
 export default copyCursorCommand

@@ -348,6 +348,13 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'codeBg',
     fontFamily: 'monospace',
   },
+  /** Lets an explicitly applied background show through the code background, which is only a default and would
+   * otherwise paint over it. The background is carried either by the color wrapper that formatting nests outside the
+   * code element, or by the thought's container when it comes from =style (#4234). */
+  'font[style*="background-color"] code, span[style*="background-color"] code, [aria-label="child"][style*="background-color"] code':
+    {
+      backgroundColor: 'transparent',
+    },
   kbd: {
     fontFamily: 'inherit',
   },
@@ -394,17 +401,8 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
     fontFamily: 'monospace',
   },
-  // PandaCSS does not directly support fallbacks: https://github.com/chakra-ui/panda/discussions/846
   ':root': {
-    '--active-glow-gradient':
-      'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
     '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
-  },
-  '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
-    ':root': {
-      '--active-glow-gradient':
-        'linear-gradient(180deg in oklch, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
-    },
   },
 })
 
@@ -428,8 +426,8 @@ export default defineConfig({
       breakpoints: {
         sm: '320px', // approx size of iPhone SE
         md: '400px', // approx size of iPhone 12 Pro
-        lg: '600px', // approx size of iPad
-        xl: '768px', // approx size of landscape tablet or laptop
+        lg: '600px', // landscape mobile devices and larger
+        xl: '800px', // approx size of a laptop
         '2xl': '1000px', // approx size of a desktop
         '3xl': '1200px', // approx size of a large desktop
       },
@@ -488,6 +486,7 @@ export default defineConfig({
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
+            'gestureContentBlur',
             'hamburgerMenu',
             'sidebar',
             'modal',
@@ -549,11 +548,6 @@ export default defineConfig({
           },
         },
         durations,
-        gradients: {
-          activeGlow: {
-            value: 'var(--active-glow-gradient)',
-          },
-        },
       },
     },
   },

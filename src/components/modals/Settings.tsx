@@ -9,6 +9,7 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
+import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 import debugLog from '../../util/debugLog'
 import fastClick from '../../util/fastClick'
 import haptics from '../../util/haptics'
@@ -115,37 +116,93 @@ const FontSize = () => {
   )
 }
 
-/** Controls for the persistent debug log: copy the captured entries to the clipboard or clear them. Only rendered when Debug Logging is enabled. */
-const DebugLog = () => {
-  const enabled = useSelector(getUserSetting(Settings.debugCrashLog))
+/** The Debug Logging setting together with the debug log copy/clear controls. On development and preview hosts (debugLog.autoEnabled), logging defaults to on and the checkbox controls a device-local opt-out instead of the synced user setting, so this device can be aligned with production (e.g. for performance testing) without enabling logging on the user's other devices. */
+const DebugLogging = () => {
+  const settingEnabled = useSelector(getUserSetting(Settings.debugCrashLog))
+  // the device-local state on auto-enabled hosts; the logger has already applied any persisted opt-out at module load
+  const [localEnabled, setLocalEnabled] = useState(debugLog.isEnabled)
+  const dispatch = useDispatch()
   const [status, setStatus] = useState<string | null>(null)
+  const enabled = debugLog.autoEnabled ? localEnabled : settingEnabled
 
-  if (!enabled) return null
+  const intro =
+    'Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes). Everything is stored locally on this device and nothing is transmitted. '
 
   return (
-    <div className={css({ marginTop: '1em' })}>
-      <a
-        {...fastClick(() => {
-          const text = debugLog.format()
-          copy(text)
-          setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
-        })}
-        className={extendTapRecipe()}
-      >
-        Copy debug log
-      </a>
-      <span className={css({ margin: '0 0.5em', color: 'dim' })}>·</span>
-      <a
-        {...fastClick(() => {
-          debugLog.clear()
-          setStatus('Cleared')
-        })}
-        className={extendTapRecipe()}
-      >
-        Clear debug log
-      </a>
-      {status ? <span className={css({ marginLeft: '0.5em', color: 'dim' })}> ({status})</span> : null}
-    </div>
+    <>
+      {debugLog.autoEnabled ? (
+        <Checkbox
+          checked={localEnabled}
+          title='Debug Logging'
+          onChange={() => {
+            debugLog.setAutoOptOut(localEnabled)
+            setLocalEnabled(!localEnabled)
+          }}
+        >
+          {intro}Debug Logging is on by default in this development or preview version of em. Turning it off aligns this
+          device with production (e.g. for performance testing) and does not affect other devices. Use “Copy debug log”
+          to share the captured log.
+        </Checkbox>
+      ) : (
+        <Setting settingsKey={Settings.debugCrashLog} title='Debug Logging'>
+          {intro}Leave this off unless a developer asks you to enable it. Use “Copy debug log” to share the captured
+          log.
+        </Setting>
+      )}
+      {enabled && (
+        <div className={css({ marginTop: '1em' })}>
+          <a
+            {...fastClick(() => {
+              // dispatch a thunk to read fresh state, so format() can append the state.thoughts dump that resolves
+              // the ids in the entries to values and shows current sibling order
+              dispatch((_, getState) => {
+                const text = debugLog.format(getState())
+                copy(text)
+                setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
+              })
+            })}
+            className={extendTapRecipe()}
+          >
+            Copy debug log
+          </a>
+          <span className={css({ margin: '0 0.5em', color: 'dim' })}>·</span>
+          <a
+            {...fastClick(() => {
+              debugLog.clear()
+              setStatus('Cleared')
+            })}
+            className={extendTapRecipe()}
+          >
+            Clear debug log
+          </a>
+          {status ? <span className={css({ marginLeft: '0.5em', color: 'dim' })}> ({status})</span> : null}
+        </div>
+      )}
+    </>
+  )
+}
+
+/** Lets a user manage their AI data acknowledgement on this device. */
+const AiAcknowledgement = () => {
+  const [acknowledged, setAcknowledged] = useState(hasAcknowledgedAiDisclosure)
+  const dispatch = useDispatch()
+
+  return (
+    <Checkbox
+      checked={acknowledged}
+      title='AI Data Acknowledgment'
+      onChange={() => {
+        if (acknowledged) {
+          clearAiDisclosureAcknowledgement()
+          setAcknowledged(false)
+        } else {
+          dispatch(showModal({ id: 'aiDisclosure' }))
+        }
+      }}
+    >
+      Allows AI features without asking each time on this device. Relevant thought content may be sent to an AI service
+      when an AI feature is used.
+    </Checkbox>
   )
 }
 
@@ -192,21 +249,13 @@ const ModalSettings = () => {
           superscript will not be visible, but the context view can still be activated and used as normal.
         </Setting>
 
-        <Setting settingsKey={Settings.disableGestureTracing} title='Gesture Tracing' invert>
-          Draw a trace onto the screen while making a gesture on a touch screen device.
-        </Setting>
-
         <Setting settingsKey={Settings.leftHanded} title='Left Handed'>
           Moves the scroll zone to the left side of the screen and the gesture zone to the right.
         </Setting>
 
-        <Setting settingsKey={Settings.debugCrashLog} title='Debug Logging'>
-          Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes).
-          Everything is stored locally on this device and nothing is transmitted. Leave this off unless a developer asks
-          you to enable it. Use “Copy debug log” to share the captured log.
-        </Setting>
+        <AiAcknowledgement />
 
-        <DebugLog />
+        <DebugLogging />
 
         <a
           className={css({ color: 'error' })}

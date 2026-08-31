@@ -10,6 +10,7 @@ import CursorDownIcon from '../components/icons/CursorDownIcon'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
+import documentSort from '../selectors/documentSort'
 import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isMulticursorPath from '../selectors/isMulticursorPath'
@@ -24,9 +25,9 @@ import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorDownCommand: Command = {
+const cursorDownCommand = {
   id: 'cursorDown',
-  label: 'Cursor Down',
+  label: 'Cursor Down' as const,
   keyboard: [{ key: Key.ArrowDown }, { key: Key.ArrowDown, shift: true }],
   hideFromHelp: true,
   multicursor: false,
@@ -76,7 +77,9 @@ const cursorDownCommand: Command = {
       const isNextPathMulticursor = nextPath && isMulticursorPath(state, nextPath)
 
       dispatch([
-        setCursor({ path: nextPath, preserveMulticursor: true }),
+        // Update the multicursor before moving the cursor, since setCursor computes state.expanded and a
+        // selected thought must not expand its own children.
+        // https://github.com/cybersemics/em/issues/4738
         dispatch => {
           // New multicursor set
           if (isMulticursorEmpty) {
@@ -105,13 +108,21 @@ const cursorDownCommand: Command = {
             return
           }
         },
+        setCursor({ path: nextPath, preserveMulticursor: true }),
       ])
 
       requestAnimationFrame(() => {
         selection.clear()
       })
-    } else dispatch(cursorDown())
+    } else {
+      const state = getState()
+      const sortedPaths = hasMulticursor(state) ? documentSort(state, Object.values(state.multicursors)) : []
+      const lastPath = sortedPaths[sortedPaths.length - 1]
+
+      // when a multiselect is active, collapse it and move the cursor to the last selected thought in document order
+      dispatch(lastPath ? setCursor({ path: lastPath }) : cursorDown())
+    }
   }),
-}
+} satisfies Command
 
 export default cursorDownCommand

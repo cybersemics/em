@@ -22,6 +22,12 @@ const ALERT_WITH_MINITORE = '__ALERT_WITH_MINITORE__'
 /** Set an alert with an optional close link. */
 const alertReducer = (state: State, { alertType, value, importFileId, clearDelay }: Options) => {
   if (value === state.alert?.value) return state
+  // Default clearDelay to 5000ms when undefined. Use null to prevent auto-dismiss.
+  const resolvedClearDelay = clearDelay === undefined ? 5000 : clearDelay
+  // Guard against an invalid clearDelay, which must be a finite number of milliseconds or null.
+  if (resolvedClearDelay !== null && !Number.isFinite(resolvedClearDelay)) {
+    console.warn(`Invalid alert clearDelay: ${resolvedClearDelay}. Expected a finite number of milliseconds or null.`)
+  }
   return {
     ...state,
     // Deselect All when closing the MulticursorActive alert
@@ -31,8 +37,10 @@ const alertReducer = (state: State, { alertType, value, importFileId, clearDelay
           alertType,
           value,
           importFileId,
-          // Default clearDelay to 5000ms when undefined. Use null to prevent auto-dismiss.
-          clearDelay: clearDelay === undefined ? 5000 : clearDelay,
+          // Under Puppeteer/webdriver, disable auto-dismiss by mocking clearDelay to null so alerts never
+          // time out. This keeps e2e tests deterministic without sleeping or per-alert flags: an alert is
+          // assumed present until manually cleared.
+          clearDelay: typeof navigator !== 'undefined' && navigator.webdriver ? null : resolvedClearDelay,
         }
       : null,
   }

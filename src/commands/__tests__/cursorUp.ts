@@ -1,8 +1,12 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { executeCommand } from '../../commands'
+import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursorAtFirstMatch } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
+import multicursorValues from '../../test-helpers/multicursorValues'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 import headValue from '../../util/headValue'
 import cursorUpCommand from '../cursorUp'
 
@@ -17,13 +21,8 @@ beforeEach(initStore)
 /** Synthetic Shift+Up keyboard event. */
 const shiftUpEvent = { shiftKey: true, preventDefault: () => {} } as unknown as KeyboardEvent
 
-/** Returns the sorted values of the current multicursor set. */
-const multicursorValues = (): (string | undefined)[] => {
-  const state = store.getState()
-  return Object.values(state.multicursors)
-    .map(path => headValue(state, path))
-    .sort()
-}
+/** Synthetic Up keyboard event (no shift). */
+const upEvent = { shiftKey: false, preventDefault: () => {} } as unknown as KeyboardEvent
 
 describe('cursorUp Shift+Up multiselect in table view second column', () => {
   it('extends the multiselect to the previous col2 cell within the same cell', () => {
@@ -119,5 +118,58 @@ describe('cursorUp Shift+Up multiselect in table view second column', () => {
     executeCommand(cursorUpCommand, { store, event: shiftUpEvent })
 
     expect(multicursorValues()).toEqual(['a', 'b'])
+  })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it('does not expand the thought the multiselect is extended onto', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - x
+          - b
+          - c
+        `,
+      }),
+      setCursor(['c']),
+    ])
+
+    executeCommand(cursorUpCommand, { store, event: shiftUpEvent })
+    executeCommand(cursorUpCommand, { store, event: shiftUpEvent })
+
+    const state = store.getState()
+    const pathA = contextToPath(state, ['a'])!
+
+    expect(multicursorValues()).toEqual(['a', 'b', 'c'])
+    // a is selected, so its subthought x must stay collapsed
+    expect(state.expanded[hashPath(pathA)]).toBeUndefined()
+  })
+})
+
+describe('cursorUp Up (no shift) with an active multiselect', () => {
+  // https://github.com/cybersemics/em/issues/4741
+  it('collapses the multiselect and moves the cursor to the first selected thought in document order', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+          - d
+          - e
+        `,
+      }),
+      // place the cursor away from the selection to prove the target is the first selected thought, not relative to the cursor
+      setCursor(['e']),
+      addMulticursorAtFirstMatch(['b']),
+      addMulticursorAtFirstMatch(['c']),
+      addMulticursorAtFirstMatch(['d']),
+    ])
+
+    executeCommand(cursorUpCommand, { store, event: upEvent })
+
+    const state = store.getState()
+    expect(state.cursor && headValue(state, state.cursor)).toBe('b')
+    expect(state.multicursors).toEqual({})
   })
 })

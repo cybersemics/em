@@ -1,11 +1,11 @@
-import { nanoid } from 'nanoid'
 import ThoughtId from '../@types/ThoughtId'
 
-/** Creates a universally unique identifier. */
-// Should be safe to use a nanoid of length 13 rather than the default 21 since thoughts only need to be unique per thoughtspace.
-// 100 IDs/hr @ length 13 for ~89 thousand years -> 1% probability of collision
-// If thoughts are stored globally, we should increase this length.
-// See: https://zelark.github.io/nano-id-cc/
-const createId: (length?: number) => ThoughtId = (length = 13) => nanoid(length) as ThoughtId
+/** Creates a 128-bit random hex identifier compatible with treecrdt NodeId (32 lowercase hex chars, 16 bytes). */
+const createId = (): ThoughtId => {
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  let hex = ''
+  for (const b of bytes) hex += b.toString(16).padStart(2, '0')
+  return hex as ThoughtId
+}
 
 export default createId

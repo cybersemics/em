@@ -1,7 +1,9 @@
 import path from 'path'
+import { HOME_TOKEN } from '../../../constants'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import command from '../helpers/command'
 import exportThoughts from '../helpers/exportThoughts'
 import hide from '../helpers/hide'
@@ -217,8 +219,7 @@ describe('Color Theme', () => {
     await paste(importText)
 
     await clickThought('Golden Retriever')
-    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-    await click('[aria-label="background color swatches"] [aria-label="green"]')
+    await clickToolbar('Text Color', 'background color swatches', 'green')
 
     await clickThought('Labrador')
     await click('[aria-label="text color swatches"] [aria-label="purple"]')
@@ -283,7 +284,7 @@ describe('Superscripts', () => {
     const x = boundingBox.x + 1
     const y = boundingBox.y + boundingBox.height / 2
 
-    await page.mouse.click(x, y, { clickCount: 2 })
+    await page.mouse.click(x, y, { count: 2 })
 
     await press('c', { ctrl: true })
     await clickThought('This is a thought')
@@ -292,7 +293,7 @@ describe('Superscripts', () => {
     // get exported html and compress all indentation (whitespace before/after newline)
     const output = (await exportThoughts({ mimeType: 'text/html' })).replace(/\s*\n\s*/g, '')
 
-    const expected = `<ul><li>__ROOT__<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
+    const expected = `<ul><li>${HOME_TOKEN}<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
 
     expect(output).toBe(expected)
   })

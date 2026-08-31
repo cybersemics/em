@@ -1,6 +1,7 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import State from '../@types/State'
-import { HOME_TOKEN } from '../constants'
+import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import { tsidShared } from '../data-providers/thoughtspaceSession'
 import isTutorial from '../selectors/isTutorial'
 import equalPath from '../util/equalPath'
 
@@ -11,19 +12,25 @@ import equalPath from '../util/equalPath'
 const validateNextState = (nextState: State, action: Action): void => {
   const { isLoading, showModal, thoughts } = nextState
 
-  // Try to catch the __EM__ with empty childrenMap bug
+  // Try to catch the EM_TOKEN with empty childrenMap bug
   // https://github.com/cybersemics/em/issues/2223
+  const emThought = thoughts.thoughtIndex[EM_TOKEN]
   if (
     // childrenMap is expected to be empty on the loading screen, welcome screen, and beginning of tutorial
     !isLoading &&
     showModal !== 'welcome' &&
     !isTutorial(nextState) &&
+    // Shared links skip the welcome flow that normally creates EM/Settings, so EM may stay empty in a valid shared doc.
+    !tsidShared &&
+    // guard against EM thought not yet loaded
+    emThought &&
+    !emThought.pending &&
     // after that, it should never be empty
-    Object.keys(thoughts.thoughtIndex.__EM__.childrenMap).length === 0
+    Object.keys(emThought.childrenMap).length === 0
   ) {
     console.error(action)
     throw new Error(
-      '__EM__ with empty childrenMap detected. This should never happen after the welcome screen is closed.',
+      'EM_TOKEN with empty childrenMap detected. This should never happen after the welcome screen is closed.',
     )
   } else if (equalPath(nextState.cursor, [HOME_TOKEN])) {
     console.error(action)

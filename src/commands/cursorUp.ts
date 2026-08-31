@@ -10,6 +10,7 @@ import CursorUpIcon from '../components/icons/CursorUp'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
+import documentSort from '../selectors/documentSort'
 import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isMulticursorPath from '../selectors/isMulticursorPath'
@@ -23,9 +24,9 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorUpCommand: Command = {
+const cursorUpCommand = {
   id: 'cursorUp',
-  label: 'Cursor Up',
+  label: 'Cursor Up' as const,
   keyboard: [{ key: Key.ArrowUp }, { key: Key.ArrowUp, shift: true }],
   hideFromHelp: true,
   multicursor: false,
@@ -78,7 +79,9 @@ const cursorUpCommand: Command = {
       const isPrevPathMulticursor = prevPath && isMulticursorPath(state, prevPath)
 
       dispatch([
-        setCursor({ path: prevPath, preserveMulticursor: true }),
+        // Update the multicursor before moving the cursor, since setCursor computes state.expanded and a
+        // selected thought must not expand its own children.
+        // https://github.com/cybersemics/em/issues/4738
         dispatch => {
           // New multicursor set
           if (isMulticursorEmpty) {
@@ -107,13 +110,20 @@ const cursorUpCommand: Command = {
             return
           }
         },
+        setCursor({ path: prevPath, preserveMulticursor: true }),
       ])
 
       requestAnimationFrame(() => {
         selection.clear()
       })
-    } else dispatch(cursorUp())
+    } else {
+      const state = getState()
+      const firstPath = hasMulticursor(state) ? documentSort(state, Object.values(state.multicursors))[0] : null
+
+      // when a multiselect is active, collapse it and move the cursor to the first selected thought in document order
+      dispatch(firstPath ? setCursor({ path: firstPath }) : cursorUp())
+    }
   }),
-}
+} satisfies Command
 
 export default cursorUpCommand
