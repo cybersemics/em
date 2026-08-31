@@ -10,6 +10,7 @@ import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursorAtFirstMatch } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
@@ -149,4 +150,29 @@ it('inserts emoji spacing immediately before colored text', async () => {
 
   expect(editable.textContent).toBe('👋 Hello')
   expect(editable.innerHTML).toBe('👋 <font color="#ff0000">Hello</font>')
+})
+
+// A press that is longer than a quick tap but shorter than a long press ("mid press") gets its synthesized click
+// from the browser even though the touchend called preventDefault, which used to toggle the multicursor a second
+// time so that the selection flashed on and off again.
+it('toggles the multicursor once when a mid press dispatches both touchend and a synthesized click', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    addMulticursorAtFirstMatch(['a']),
+  ])
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const editable = (await findThoughtByText('b'))!
+
+  act(() => {
+    fireEvent.touchEnd(editable)
+    fireEvent.click(editable)
+  })
+
+  expect(Object.keys(store.getState().multicursors)).toHaveLength(2)
 })

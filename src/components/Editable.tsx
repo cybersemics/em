@@ -113,6 +113,11 @@ const applyOuterTag = (newValue: string, oldValue: string): string => {
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
+// Maximum time between a tap's touchend and the click that the browser synthesizes from it. Generous enough to
+// cover Safari's legacy click delay, and short enough that a click that far apart from the last touch can be
+// treated as a real click from a mouse or trackpad.
+const TAP_CLICK_TIMEOUT = 500
+
 /**
  * An editable thought with throttled editing.
  * Use rank instead of headRank(simplePath) as it will be different for context view.
@@ -938,6 +943,13 @@ const Editable = ({
     [value, isVisible, setCursorOnThought],
   )
 
+  // Time of the last touchend that ran handleTapBehavior, used to ignore the click that the browser synthesizes
+  // from the same tap. The preventDefault called on touchend is not enough on its own: iOS Safari only suppresses
+  // the synthesized click for a quick tap, and dispatches it anyway when the press is held a few hundred
+  // milliseconds — longer than a tap, shorter than a long press. handleTapBehavior would then run a second time
+  // and, while a multiselect is active, toggle the thought's selection off again right after selecting it.
+  const tapTouchEndTimeRef = useRef(-Infinity)
+
   /**
    * Shared on tap logic dispatched after both click and touchend.
    * Checks long-press, multicursor, disabled, and visibility to decide whether to set the cursor.
@@ -1021,6 +1033,10 @@ const Editable = ({
 
     /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
     const onClick = (e: MouseEvent) => {
+      // Drop the click that the browser synthesizes from the tap that was just handled on touchend, otherwise
+      // handleTapBehavior runs twice for a single tap (see tapTouchEndTimeRef).
+      if (performance.now() - tapTouchEndTimeRef.current < TAP_CLICK_TIMEOUT) return
+
       // If CMD/CTRL is pressed, this is a multiselect click, so don't focus the editable.
       if (isCommandKey(e)) {
         e.preventDefault()
@@ -1033,6 +1049,7 @@ const Editable = ({
     /** Handles touchend for haptics and tap behavior. */
     const onTouchEnd = (e: TouchEvent) => {
       haptics.light()
+      tapTouchEndTimeRef.current = performance.now()
       handleTapBehavior(e)
     }
 
