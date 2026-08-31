@@ -19,8 +19,8 @@ import { pullActionCreator as pull } from '../actions/pull'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import globals from '../globals'
-import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild } from '../selectors/getChildren'
 import { getLexeme } from '../selectors/getLexeme'
@@ -31,6 +31,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import syncStatusStore from '../stores/syncStatus'
 import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
+import createId from '../util/createId'
 import flattenTree from '../util/flattenTree'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -180,6 +181,13 @@ const pullDuplicateDescendants =
     }
   }
 
+/** Resolves a descendant Path by walking the given values down from a base Path. Returns null if any value has no matching child. Unlike contextToPath, the ids of the base Path are preserved, which is essential when there are duplicate thoughts, as a Context resolves a value to the first matching thought. */
+const descendantPath = (state: State, basePath: Path, values: string[]): Path | null =>
+  values.reduce<Path | null>((accum, value) => {
+    const child = accum ? findAnyChild(state, head(accum), child => child.value === value) : null
+    return accum && child ? appendToPath(accum, child.id) : null
+  }, basePath)
+
 /** Action-creator for importFiles. */
 export const importFilesActionCreator =
   ({ files, path, resume }: ImportFilesPayload): Thunk<Promise<void>> =>
@@ -245,7 +253,7 @@ export const importFilesActionCreator =
               }),
             )
 
-            const resumePath = i === 0 ? contextToPath(getState(), unroot([...parentContext, block.scope]))! : file.path
+            const resumePath = i === 0 ? appendToPath(parentPath!, duplicate ? duplicate.id : idNew) : file.path
             await manager.update(resumePath, i + 1)
           }
 
@@ -260,18 +268,15 @@ export const importFilesActionCreator =
           const stateAfterPull = getState()
 
           // if inserting into an empty destination with a sibling afterwards, import into the parent
-          const baseContext = pathToContext(
-            stateAfterPull,
-            insertBeforeNew
-              ? rootedParentOf(stateAfterPull, path)
-              : destEmpty && ancestors.length === 0
-                ? rootedParentOf(stateAfterPull, path)
-                : path,
-          )
+          const basePath =
+            insertBeforeNew || (destEmpty && ancestors.length === 0) ? rootedParentOf(stateAfterPull, path) : path
+          const baseContext = pathToContext(stateAfterPull, basePath)
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
-          // TODO: It would be better to get the id from importText rather than contextToPath
-          const parentPath = contextToPath(stateAfterPull, parentContext)
+          // Resolve the destination Path from the ids of the destination Path rather than from parentContext.
+          // A Context resolves a value to the first matching thought, so it lands the import on a pre-existing
+          // duplicate sibling rather than on the thought that was actually dropped on or pasted into.
+          const parentPath = descendantPath(stateAfterPull, basePath, relativeAncestorContext)
 
           // validate parentPath
           if (!parentPath) {
@@ -301,10 +306,20 @@ export const importFilesActionCreator =
           // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
           // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
           // See https://github.com/cybersemics/em/issues/4448.
+          // Like moveThought, only metaprogramming attributes should auto-merge/skip duplicates.
+          // Normal duplicate siblings must coexist.
+          const isMetaDuplicate = isAttribute(block.scope) || parentContext.some(isAttribute)
           const duplicate =
-            block.scope !== '' ? findAnyChild(stateAfterPull, id, child => child.value === block.scope) : undefined
+            block.scope !== '' && isMetaDuplicate
+              ? findAnyChild(stateAfterPull, id, child => child.value === block.scope)
+              : undefined
           const lexeme = getLexeme(stateAfterPull, block.scope)
           const hasContext = !!lexeme?.contexts.includes(id)
+
+          // Generate the id of the imported thought in advance so that the cursor can be set on the thought that is
+          // actually created. contextToPath cannot be used, as it resolves a value to the first matching thought and
+          // thus lands on a pre-existing duplicate sibling rather than the imported thought.
+          const idNew = createId()
 
           return new Promise<void>(resolve => {
             /** Updates the progress and resolves the task. */
@@ -345,6 +360,7 @@ export const importFilesActionCreator =
                   // Any missing children from previously interrupted imports are cleaned up in createThought.
                   newThought({
                     at: importThoughtPath,
+                    id: idNew,
                     insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
                     insertBefore: ancestors.length === 0 && insertBeforeNew,
                     preventSetCursor: true,
@@ -355,8 +371,6 @@ export const importFilesActionCreator =
               // ensure the last imported thought is not deleted by freeThoughts
               (dispatch, getState) => {
                 const stateAfterImport = getState()
-                const pathNew = contextToPath(stateAfterImport, unroot([...parentContext, block.scope]))
-
                 // set cursor to first imported visible thought
                 if (!didSetCursor) {
                   const isThoughtVisible =
@@ -364,7 +378,17 @@ export const importFilesActionCreator =
                     (!isAttribute(block.scope) && ancestors.every(ancestor => !isAttribute(ancestor.scope)))
 
                   if (isThoughtVisible) {
-                    dispatch(setCursor({ path: pathNew, isKeyboardOpen: false }))
+                    dispatch(
+                      setCursor({
+                        path: appendToPath(parentPath, duplicate ? duplicate.id : idNew),
+                        // Preserve the keyboard state rather than closing it. Closing it makes the imported thought's
+                        // Editable fire a focus event when the caret is set, which sets the cursor again with no
+                        // offset and thus moves the caret back to the beginning of the thought.
+                        isKeyboardOpen: stateAfterImport.isKeyboardOpen,
+                        // place the caret at the end of the imported thought, as newThought does
+                        offset: getTextContentFromHTML(block.scope).length,
+                      }),
+                    )
                     didSetCursor = true
                   }
                 }
