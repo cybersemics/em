@@ -851,8 +851,7 @@ it('importing a metaprogramming attribute that duplicates a sibling merges hiera
     - b`)
 })
 
-// TODO
-it.skip('encode single open angled bracket', () => {
+it('encode single open angled bracket', () => {
   const text = `
 - a
   - <b
