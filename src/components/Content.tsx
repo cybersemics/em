@@ -76,12 +76,11 @@ const Content: FC = () => {
           enableHaptics: false,
           // A tap outside a thought dismisses the keyboard by blurring the editable, but the browser keeps a native
           // touch selection alive across the blur, leaving the selection handles and the text context menu on screen
-          // after the keyboard is gone (#4833). The selection is cleared on tap down rather than in the tap up handler
-          // above, which does not fire until the tap completes; by then the keyboard is already animating away and the
-          // context menu visibly lingers and blinks. Only a range is cleared: a caret is dismissed by the blur, and
-          // clearing it here would blur the editable that a tap on a bullet is about to move the caret into.
+          // after the keyboard is gone (#4833). Collapsing the range on tap down dismisses them before the tap's own
+          // blur starts the keyboard animation, so the two teardowns do not overlap and the menu does not flash back.
+          // Only a range is collapsed: a caret is dismissed by the blur anyway.
           tapDown: e => {
-            if (!selection.isThought(e.target) && !selection.isCollapsed()) selection.clear()
+            if (!selection.isThought(e.target)) selection.collapse()
           },
         },
       )}
