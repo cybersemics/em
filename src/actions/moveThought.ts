@@ -12,6 +12,7 @@ import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
+import getMovePlacement from '../selectors/getMovePlacement'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -46,20 +47,6 @@ export interface MoveThoughtPayload {
    * Undefined means derive placement from newRank for legacy em rank-based callers.
    */
   afterId?: ThoughtId | null
-}
-
-/** Derives an explicit TreeCRDT afterId from em's temporary rank ordering. */
-const getMoveThoughtAfterIdByRank = (
-  state: State,
-  destinationThoughtId: ThoughtId,
-  sourceThoughtId: ThoughtId,
-  newRank: number,
-): ThoughtId | null => {
-  const after = getChildrenRanked(state, destinationThoughtId)
-    .filter(child => child.id !== sourceThoughtId && child.rank < newRank)
-    .at(-1)
-
-  return after?.id ?? null
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
@@ -113,7 +100,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   const effectiveAfterId =
     afterId !== undefined
       ? afterId
-      : getMoveThoughtAfterIdByRank(state, destinationThoughtId, sourceThought.id, newRank)
+      : getMovePlacement(state, destinationThoughtId, { id: sourceThought.id, rank: newRank })
 
   if (
     effectiveAfterId === sourceThought.id ||

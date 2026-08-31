@@ -58,7 +58,7 @@ describe('persistent storage', () => {
   usePersistentTreecrdtStorage()
 
   // https://github.com/cybersemics/em/issues/5126
-  it.skip('a thought typed into a sorted context keeps its sorted position after a refresh', async () => {
+  it('a thought typed into a sorted context keeps its sorted position after a refresh', async () => {
     await paste(`
       - c
       - a
