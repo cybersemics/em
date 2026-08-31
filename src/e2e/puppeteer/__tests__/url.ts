@@ -98,23 +98,31 @@ it('collapsed thought with url child', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/4684
-it('url icon hangs no lower than the email icon', async () => {
+it('url and email icons rest on the text baseline', async () => {
   await paste(`
     - https://test.com
     - test@test.com
   `)
 
-  // Measure each icon from the top of its own annotation box. Both thoughts are single line, so the two boxes
-  // share a line box and the comparison isolates the icons' vertical placement from the font's metrics.
+  // Measure each icon's ink against the text baseline of its own thought, located with a zero-size baseline-aligned
+  // strut. A positive value means the icon's artwork hangs below the text it annotates.
   const [url, email] = await page.evaluate(() =>
     ['url-link', 'email-link'].map(label => {
-      const icon = document.querySelector(`[aria-label="${label}"]`)
-      if (!icon) throw new Error(`Missing ${label} annotation.`)
-      const annotation = icon.closest('[aria-label="thought-annotation"]')
+      const link = document.querySelector(`[aria-label="${label}"]`)
+      if (!link) throw new Error(`Missing ${label} annotation.`)
+      const annotation = link.closest('[aria-label="thought-annotation"]')
       if (!annotation) throw new Error(`Missing thought annotation for ${label}.`)
-      return icon.querySelector('path')!.getBoundingClientRect().bottom - annotation.getBoundingClientRect().top
+      const strut = document.createElement('span')
+      strut.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'
+      annotation.appendChild(strut)
+      const baseline = strut.getBoundingClientRect().bottom
+      strut.remove()
+      return link.querySelector('path')!.getBoundingClientRect().bottom - baseline
     }),
   )
 
-  expect(url).toBeLessThanOrEqual(email)
+  expect(url).toBeLessThan(1)
+  expect(email).toBeLessThan(1)
+  // Both icons share a link style, so their offset from each other is independent of the font's metrics.
+  expect(Math.abs(url - email)).toBeLessThan(0.5)
 })
