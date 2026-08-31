@@ -14,6 +14,7 @@ import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
+import scrubSpaceBar from '../helpers/scrubSpaceBar'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
@@ -120,26 +121,46 @@ describe('Caret', () => {
 
   // #3276: The virtual keyboard's trackpad (long press the space bar) moves the caret by hit-testing a point
   // that follows the finger across the whole document, not by walking the focused editing host, so any thought
-  // that is an editing host can capture the caret mid-drag. This asserts the containment that prevents it; the
-  // gesture itself is driven in trackpad.ts, which runs on a newer iOS than this spec is pinned to.
-  describe('Keyboard trackpad containment (#3276)', () => {
-    it('only the cursor thought is an editing host while the keyboard is open', async () => {
-      await newThought('foo')
-      await newThought('bar')
-      await waitUntil(isKeyboardShown)
+  // that is an editing host can capture the caret mid-drag. Does not reproduce in the Simulator, which keeps
+  // the caret in its editing host; a real device drags it out on the pinned iOS as readily as on a current one.
+  it('a caret scrubbed past the left edge stays in the cursor thought (#3276)', async () => {
+    await newThought()
+    await paste(
+      [''],
+      `
+    - a
+      - b
+        - c
+          - d
+        - e`,
+    )
 
-      const hosts = await browser.execute(() =>
-        JSON.stringify(
-          Array.from(document.querySelectorAll('[data-editable]')).map(el => ({
-            value: el.textContent,
-            editable: (el as HTMLElement).isContentEditable,
-          })),
-        ),
-      )
-
-      const editingHosts = (JSON.parse(hosts) as { value: string; editable: boolean }[]).filter(t => t.editable)
-      expect(editingHosts.map(t => t.value)).toEqual(['bar'])
+    // the issue reports a smaller font makes it easier to trigger, the rows sitting closer together
+    await browser.execute(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const em = (window as any).em
+      em.store.dispatch({ type: 'fontSize', value: 16 })
     })
+
+    // the cursor must be deep enough that moving it up collapses a subtree, which is what moves the thoughts
+    // under the finger and lets the caret keep walking
+    await clickThought('a')
+    await clickThought('b')
+    await clickThought('c')
+
+    // y:60 compensates for the offset between web and screen coordinates
+    const editable = await waitForEditable('d')
+    await tap(editable, { y: 60 })
+    await tap(editable, { y: 60 })
+    await waitUntil(isKeyboardShown)
+
+    await scrubSpaceBar(-6)
+
+    // unfixed, the cursor walks to an ancestor, the selection is left nowhere, and the keyboard stays up over
+    // a thought that can no longer be typed into
+    expect(await getEditingText()).toBe('d')
+    expect(await getSelection().focusNode?.textContent).toBe('d')
+    expect(await isKeyboardShown()).toBeTruthy()
   })
 
   it.skip('Tap empty content while keyboard up', async () => {
