@@ -2,6 +2,7 @@ import _ from 'lodash'
 import MimeType from '../../@types/MimeType'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
+import cursorCleared from '../../actions/cursorCleared'
 import importText, { ImportTextPayload } from '../../actions/importText'
 import newThought from '../../actions/newThought'
 import { ABSOLUTE_TOKEN, EMPTY_SPACE, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
@@ -1058,7 +1059,8 @@ describe('single-line paste into a thought', () => {
   it('replaces the whole value when the thought is cleared', () => {
     const stateNew = reducerFlow([
       newThought({ value: 'one <b>two</b> three' }),
-      (state: State) => ({ ...state, cursorCleared: true }),
+      // cursorCleared is not curried, so unlike its neighbors it cannot compose point-free
+      state => cursorCleared(state, { value: true }),
       importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 0 }),
     ])(initialState())
 
