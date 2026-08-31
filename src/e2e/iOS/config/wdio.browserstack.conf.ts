@@ -27,13 +27,6 @@ const date = new Date().toISOString().slice(0, 10)
 const deviceName = process.env.EM_IOS_DEVICE ?? 'iPhone 15 Plus'
 const osVersion = process.env.EM_IOS_VERSION ?? '17'
 
-// The trackpad spec drives the virtual keyboard's caret scrub, which only drags the caret out of its editing
-// host on Safari 26. On the pinned OS the caret clamps to the thought, so the test would pass without
-// exercising the behaviour it exists to protect. Run it on a current iOS, and only it.
-const TRACKPAD_SPEC = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/trackpad.ts')
-const trackpadDeviceName = process.env.EM_IOS_TRACKPAD_DEVICE ?? 'iPhone 15 Pro Max'
-const trackpadOsVersion = process.env.EM_IOS_TRACKPAD_VERSION ?? '26'
-
 let tunnelProcess: ChildProcess | null = null
 
 /**
@@ -108,7 +101,6 @@ export const config: WebdriverIO.Config = {
       ...baseConfig.baseCapabilities,
       'appium:deviceName': deviceName,
       'appium:platformVersion': osVersion,
-      'wdio:exclude': [TRACKPAD_SPEC],
       'bstack:options': {
         deviceName,
         osVersion,
@@ -118,23 +110,6 @@ export const config: WebdriverIO.Config = {
         // The device reaches the dev server over the public cloudflared HTTPS URL (onPrepare), so
         // BrowserStack Local (`local: true`) is not used on this path. These flags collect diagnostic
         // data on BrowserStack's web dashboard, which we don't need/use.
-        debug: false,
-        networkLogs: false,
-        consoleLogs: 'errors',
-        idleTimeout: 60,
-      },
-    },
-    {
-      ...baseConfig.baseCapabilities,
-      'appium:deviceName': trackpadDeviceName,
-      'appium:platformVersion': trackpadOsVersion,
-      'wdio:specs': [TRACKPAD_SPEC],
-      'bstack:options': {
-        deviceName: trackpadDeviceName,
-        osVersion: trackpadOsVersion,
-        projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
-        buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
-        sessionName: 'iOS Safari Trackpad Tests',
         debug: false,
         networkLogs: false,
         consoleLogs: 'errors',

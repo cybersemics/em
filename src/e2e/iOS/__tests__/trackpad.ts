@@ -1,10 +1,9 @@
 /**
  * IOS virtual-keyboard trackpad tests.
  *
- * These run on a current iOS rather than the pinned one the rest of the suite uses. The trackpad
- * (long press the space bar) only drags the caret out of its editing host on Safari 26 — on 18 the caret
- * clamps to the thought, which is the behaviour change that produced #3276 in the first place. Pinned to 17,
- * this test would pass without exercising anything. See wdio.browserstack.conf.ts.
+ * Kept separate from caret.ts so the two specs run in parallel; the setup here is heavier than the taps that
+ * file uses. The gesture reproduces #3276 on the pinned iOS, so no special device is needed — note that it
+ * does not reproduce in the Simulator, which is a simulator/device difference rather than a version one.
  */
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
