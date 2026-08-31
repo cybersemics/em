@@ -1,4 +1,5 @@
 import path from 'path'
+import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
@@ -113,7 +114,7 @@ describe('drag', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5229
-  it('does not show a drop hover below the dragged thought', async () => {
+  it('cancels a drop on the dragged thought own position', async () => {
     await paste(`
       - aaa
       - bbb
@@ -122,16 +123,25 @@ describe('drag', () => {
 
     await clickThought('aaa')
 
-    // drag aaa over a valid destination first, so that a drop hover is known to be rendered
+    // hover the drop target directly below aaa, i.e. aaa's own position
+    await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
+
+    // the drop hover is still shown at the thought's own position; only the drop is cancelled
     // (.drop-hover is the class that dropHoverRecipe gives every drop hover bar)
-    await dragAndDropThought('aaa', 'bbb', { hold: true, position: 'after' })
     await waitUntil(() => !!document.querySelector('.drop-hover'), { timeout: 6000 })
 
-    // move to the drop target directly below aaa, i.e. aaa's own position
-    await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after', skipMouseDown: true })
+    // release on the same drop target
+    await dragAndDropThought('aaa', 'aaa', { position: 'after', skipMouseDown: true })
 
-    // poll since the drop hover is only removed after the throttled hover dispatch and React finishes rendering
-    await waitUntil(() => !document.querySelector('.drop-hover'), { timeout: 6000 })
+    // moveThought throws "afterId must be null or a child of the destination context" if the no-op drop is not cancelled
+    expect(await page.evaluate(() => (window.em as WindowEm).testHelpers.getState().error)).toBeNull()
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- aaa
+- bbb
+- ccc
+`)
   })
 
   it('DropChild', async () => {
