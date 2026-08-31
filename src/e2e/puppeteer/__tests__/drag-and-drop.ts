@@ -124,7 +124,8 @@ describe('drag', () => {
     // hover the drop target directly below aaa, i.e. aaa's own position
     await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
 
-    const dropHovers = await page.$$('[data-testid=drop-hover]')
+    // .drop-hover is the class that dropHoverRecipe gives every drop hover bar
+    const dropHovers = await page.$$('.drop-hover')
     expect(dropHovers).toHaveLength(0)
   })
 
