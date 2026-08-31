@@ -427,6 +427,14 @@ Extract selected part of a thought as its new parent. Where Extract Subthought d
 
 <kbd>Command + Control + Option + e</kbd>
 
+### Define Term
+
+Writes a 10–20 word dictionary entry for the current thought using AI and displays it in an alert.
+
+On first use, em shows the same blocking AI data disclosure as Generate Thought. The command sends the current thought to `${VITE_AI_URL}/defineTerm`; server errors are shown in the error banner, and rate limiting asks the user to try again later. It does not modify the thought or multicursor selection.
+
+Gesture: ↑ → ←
+
 ### Generate Thought
 
 Generates a thought using AI.
