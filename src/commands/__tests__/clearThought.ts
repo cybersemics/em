@@ -1,4 +1,4 @@
-import { fireEvent } from '@testing-library/dom'
+import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
@@ -161,14 +161,14 @@ describe('clearThought', () => {
 
     // type into the cleared thought, which renders as empty
     const editable = (await findThoughtByText(''))!
-    editable.innerHTML = 'bbb'
-    fireEvent.input(editable, { bubbles: true })
+    const user = userEvent.setup({ delay: null })
+    await user.type(editable, 'b')
 
     await act(vi.runAllTimersAsync)
 
     const stateAfter = store.getState()
     expect(getThoughtById(stateAfter, head(stateAfter.cursor!))!.value).toBe(
-      '<font color="#ff573d"><strike><u><b>bbb</b></u></strike></font>',
+      '<font color="#ff573d"><strike><u><b>b</b></u></strike></font>',
     )
   })
 })
