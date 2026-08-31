@@ -13,6 +13,7 @@ import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
@@ -121,12 +122,16 @@ describe('drag', () => {
 
     await clickThought('aaa')
 
-    // hover the drop target directly below aaa, i.e. aaa's own position
-    await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
+    // drag aaa over a valid destination first, so that a drop hover is known to be rendered
+    // (.drop-hover is the class that dropHoverRecipe gives every drop hover bar)
+    await dragAndDropThought('aaa', 'bbb', { hold: true, position: 'after' })
+    await waitUntil(() => !!document.querySelector('.drop-hover'), { timeout: 6000 })
 
-    // .drop-hover is the class that dropHoverRecipe gives every drop hover bar
-    const dropHovers = await page.$$('.drop-hover')
-    expect(dropHovers).toHaveLength(0)
+    // move to the drop target directly below aaa, i.e. aaa's own position
+    await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after', skipMouseDown: true })
+
+    // poll since the drop hover is only removed after the throttled hover dispatch and React finishes rendering
+    await waitUntil(() => !document.querySelector('.drop-hover'), { timeout: 6000 })
   })
 
   it('DropChild', async () => {
