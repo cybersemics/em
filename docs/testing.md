@@ -399,12 +399,6 @@ yarn test:ios:browserstack
 yarn test:ios:local
 ```
 
-The BrowserStack run is pinned to an iPhone 15 Plus on iOS 17 so CI is reproducible. Override it with `EM_IOS_DEVICE` and `EM_IOS_VERSION` when the OS is the variable under test — WebKit's text interaction has changed across major versions, so a bug reported on a current device may not appear on the pinned one:
-
-```sh
-EM_IOS_DEVICE='iPhone 15 Pro Max' EM_IOS_VERSION=26 yarn test:ios:browserstack
-```
-
 #### Setting up credentials for BrowserStack
 
 The BrowserStack configuration automatically starts and stops a temporary Cloudflare tunnel so the real device can reach the local HTTPS app.
@@ -412,6 +406,7 @@ The BrowserStack configuration automatically starts and stops a temporary Cloudf
 To test with BrowserStack, you need **credentials to access BrowserStack** and credentials to make the Cloudflare tunnel work.
 
 Put these credentials in `.env.test.local`. Contact the project maintainer for these:
+
 
 ```dotenv
 BROWSERSTACK_USERNAME=your_username

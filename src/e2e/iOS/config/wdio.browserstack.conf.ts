@@ -21,12 +21,6 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
-// Pinned so CI is reproducible. Override to reproduce a bug reported on another device or iOS version —
-// WebKit's text interaction has changed across major versions, so the OS is sometimes the variable under test
-// (see docs/cursor-and-caret.md). Same names the agent bring-up script uses (scripts/start-ios-session.mjs).
-const deviceName = process.env.EM_IOS_DEVICE ?? 'iPhone 15 Plus'
-const osVersion = process.env.EM_IOS_VERSION ?? '17'
-
 let tunnelProcess: ChildProcess | null = null
 
 /**
@@ -86,7 +80,6 @@ const probeDevServer = async (): Promise<{ token: string | null } | null> => {
  * discovers it via the gate's /__tunnel-token route (see tunnelTokenGate in vite.config.ts).
  *
  * Run: yarn test:ios:browserstack.
- * Target another device: EM_IOS_DEVICE='iPhone 15 Pro Max' EM_IOS_VERSION=26 yarn test:ios:browserstack.
  */
 export const config: WebdriverIO.Config = {
   ...baseConfig,
@@ -99,11 +92,11 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       ...baseConfig.baseCapabilities,
-      'appium:deviceName': deviceName,
-      'appium:platformVersion': osVersion,
+      'appium:deviceName': 'iPhone 15 Plus',
+      'appium:platformVersion': '17',
       'bstack:options': {
-        deviceName,
-        osVersion,
+        deviceName: 'iPhone 15 Plus',
+        osVersion: '17',
         projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
         buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
         sessionName: 'iOS Safari Tests',
