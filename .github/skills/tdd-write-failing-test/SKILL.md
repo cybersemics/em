@@ -56,7 +56,7 @@ Agent judgement — both are valid. Default to grouping with the nearest existin
 
 ## Step 3: Author the test (reuse your repro; per-platform template)
 
-The fixture handles app launch, navigation, and tutorial-skip **per test** — do not redo those inside the test. Start straight from your helper calls. Tap em controls through the **`click` / `tap` helper**, never a raw click (see `browser-control`'s fastClick trap).
+The fixture handles app launch, navigation, and tutorial-skip **per test** — do not redo those inside the test. Start straight from your helper calls. Tap em controls through the **`click` / `tap` helper**, never a raw click (see `browser-control`'s touch-only-control trap).
 
 Annotate the test with a **single, bare issue-URL comment** — nothing more:
 
