@@ -1,3 +1,26 @@
+# Approves a Dependabot bump and arms auto-merge, so it lands on its own once Lint passes.
+#
+# Gated on the pull request's AUTHOR, not on who pushed. A `pull_request` workflow cannot run at
+# all while a pull request is conflicting: GitHub never builds `refs/pull/<n>/merge`, so the
+# `opened` run never happens. A bump that is born conflicting — main took another lockfile change
+# seconds earlier — therefore misses what would otherwise be its only chance to arm auto-merge, and
+# the `synchronize` that lands when the conflict is resolved is the sole recovery. That push comes
+# from whoever resolved it: `dependabot-fix.yml`'s agent, or a human. Gating on `github.actor` skips
+# exactly that run, which is how #5208 came to sit MERGEABLE with `autoMergeRequest: null`, waiting
+# on a human that nothing had asked for.
+#
+# SECURITY: `github.actor` was what stopped a non-Dependabot actor from arming auto-merge, so the
+# author check is paired with the same two guards `dependabot-fix.yml` uses — the head branch must
+# live in this repository and carry the `dependabot/` prefix. What remains is that a collaborator
+# pushing to an open Dependabot branch gets their commit auto-merged, which is deliberate: it is
+# precisely what `dependabot-fix.yml` is built to do. Approval is held to the narrower actor check
+# for that reason; see the step.
+#
+# Requires `DEPENDABOT_AUTOMERGE_TOKEN` in BOTH secret stores. A Dependabot-triggered run reads
+# Dependabot secrets ("Secret source: Dependabot" in the run log); every other run, including the
+# `synchronize` this fix exists to catch, reads Actions secrets. Deleting either copy breaks one of
+# the two paths silently, with an empty `GH_TOKEN` rather than a missing-secret error.
+
 name: Auto-merge Dependabot
 on:
   pull_request:
@@ -7,10 +30,19 @@ permissions:
   pull-requests: write
 jobs:
   automerge:
-    if: github.actor == 'dependabot[bot]'
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'dependabot/')
     runs-on: ubuntu-latest
     steps:
+      # Only when Dependabot itself pushed. `main` requires 0 approving reviews, so this satisfies
+      # no gate today and skipping it costs nothing — auto-merge below arms either way. If that
+      # count is ever raised, an approval stamped on a commit an agent or a human wrote would be
+      # automation standing in for the review of hand-written code; withholding it instead leaves
+      # auto-merge armed and waiting for a human, which is the right way for this to fail.
       - name: Approve
+        if: github.actor == 'dependabot[bot]'
         run: gh pr review "$PR_URL" --approve
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
