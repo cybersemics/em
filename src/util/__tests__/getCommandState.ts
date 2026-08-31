@@ -122,15 +122,16 @@ it('text and background color on font tag', () => {
   })
 })
 
-// NOT IMPLEMENTED
-it.skip('text and background color on span tag', () => {
+// A color in a style attribute is read through CSSOM, which normalizes it to rgb(), unlike the color attribute of a
+// font tag which is read verbatim. Downstream comparisons normalize both forms (see isColorSelected).
+it('text and background color on span tag', () => {
   expect(getCommandState('<span style="color: #000000; background-color: rgb(0, 0, 255);">a</span>')).toStrictEqual({
     bold: false,
     italic: false,
     underline: false,
     strikethrough: false,
     code: false,
-    foreColor: '#000000',
+    foreColor: 'rgb(0, 0, 0)',
     backColor: 'rgb(0, 0, 255)',
   })
 })
