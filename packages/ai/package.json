@@ -5,7 +5,6 @@
   "version": "0.0.0",
   "description": "An HTTP server that provides AI services to em.",
   "scripts": {
-    "evaluate:emoji": "tsx --env-file=.env.local src/evaluateGenerateEmoji.ts",
     "typecheck": "tsc --noEmit",
     "start": "tsx watch --env-file=.env.local src/dev.ts"
   },

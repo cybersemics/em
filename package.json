@@ -62,6 +62,7 @@
     "test:ios:browserstack": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
     "test:puppeteer": "./src/e2e/puppeteer/test-puppeteer.sh",
     "test": "vitest --project unit",
+    "test:evals": "node --env-file=packages/ai/.env.local $(yarn bin vitest) run --project eval",
     "websocket-server": "cd server && yarn build && yarn start"
   },
   "lockfile-lint": {

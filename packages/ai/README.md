@@ -54,8 +54,9 @@ The response should contain `{ "thought": "..." }`. To test Generate Thought in 
 
 Other scripts:
 
-- `evaluate:emoji` - Runs the Generate Emoji prompt against the semantic corpus from issue #4400 and requires a configurable number of matches among the ten generated results. Requires `OPENAI_API_KEY` in `.env.local` and is intentionally separate from deterministic tests.
 - `typecheck` - Type-check the source with `tsc` (no emit). Not used by Vercel, which builds the function from source.
+
+Live model evaluations live in `src/evals/` and run together from the repository root with `yarn test:evals`. The Generate Emoji evaluation requires at least two matches among the ten generated results for each semantic category from issue #4400 and retries failures up to twice to accommodate model nondeterminism. Evaluations require `OPENAI_API_KEY` in `.env.local` and are intentionally excluded from the default deterministic test suite.
 
 > **Note:** This package has no `build` script on purpose. A `build` script makes Vercel run a static build and then fail looking for an output directory; omitting it lets Vercel auto-detect the Express app and deploy it as a Function.
 
