@@ -1,6 +1,8 @@
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
+import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
@@ -72,4 +74,19 @@ it('the selected text remains selected after a letter case change that lengthens
   await waitUntil(() => window.getSelection()?.toString() === 'STRASSE')
 
   expect(await getSelection().toString()).toBe('STRASSE')
+})
+
+// https://github.com/cybersemics/em/issues/4774
+it.skip('flushes pending edits before applying letter case from the picker', async () => {
+  await paste('a')
+
+  await clickThought('a')
+  await clickToolbar('Letter Case')
+  await page.hover('[aria-label="Letter Case"] [aria-label="UpperCase"]')
+  await keyboard.type('b')
+  await clickToolbar('Letter Case', 'UpperCase')
+
+  await new Promise(resolve => setTimeout(resolve, 700))
+
+  expect(await getEditingText()).toBe('AB')
 })
