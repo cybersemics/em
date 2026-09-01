@@ -131,7 +131,7 @@ describe('command center', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5260
-  it.skip('does not reopen when the keyboard is dismissed after Clear Thought', async () => {
+  it('does not reopen when the keyboard is dismissed after Clear Thought', async () => {
     await paste('- a')
     await clickThought('a')
 
