@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { MotionValue, motion, useTransform } from 'motion/react'
+import { MotionValue, PanInfo, motion, useTransform } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Sheet, SheetRef, useScrollPosition } from 'react-modal-sheet'
@@ -200,6 +200,45 @@ const CommandCenter = () => {
   /** Only let a downward drag collapse the drawer when the command list is scrolled to the top, so the gesture does not conflict with scrolling the list. */
   const isDragDisabled = scrollPosition !== undefined && scrollPosition !== 'top'
 
+  /** The full-width strip at the bottom of the standard stage that the expand chevron sits in. */
+  const chevronBandRef = useRef<HTMLDivElement>(null)
+  /** True while a drag is in progress that began outside the chevron band at the standard stage, and so may not cross into the expanded stage. */
+  const isExpandBlockedRef = useRef(false)
+  /** True while a drag is in progress that began at the expanded stage. Such a drag collapses to the standard stage however far or fast it is thrown, so that leaving the Command Center always takes a second, deliberate swipe from the standard stage. */
+  const [isDismissBlocked, setIsDismissBlocked] = useState(false)
+
+  /** The y the sheet rests at in the standard stage, i.e. the whole travel between the two stages. */
+  const getStandardY = useCallback(() => sheetRef.current?.snapPoints[SNAP_STANDARD]?.snapValueY ?? 0, [])
+
+  /** Classifies the gesture by where it starts, since both restrictions below depend on the stage the drag began at and the region it began in, rather than on where it ends up. */
+  const onDragStart = useCallback(
+    (event: MouseEvent | TouchEvent | PointerEvent) => {
+      const startedExpanded = (sheetRef.current?.y.get() ?? Infinity) < getStandardY() / 2
+      setIsDismissBlocked(startedExpanded)
+      const target = event.target
+      isExpandBlockedRef.current =
+        !startedExpanded && !(target instanceof Node && !!chevronBandRef.current?.contains(target))
+    },
+    [getStandardY],
+  )
+
+  /**
+   * Holds the drawer at the standard stage for the rest of a drag that did not begin in the chevron band,
+   * so that only a swipe starting near the arrow can cross into the expanded stage. Downward drags are
+   * untouched, so dragging the drawer body down still closes it. The Sheet calls this before writing
+   * `y + delta` itself, so the ceiling is applied by pre-adjusting `y` such that the Sheet's own write
+   * lands exactly on the standard snap.
+   */
+  const onDrag = useCallback(
+    (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      if (!isExpandBlockedRef.current) return
+      const y = sheetRef.current?.y
+      const standardY = getStandardY()
+      if (y && y.get() + info.delta.y < standardY) y.set(standardY - info.delta.y)
+    },
+    [getStandardY],
+  )
+
   /** Prevent native page scroll when dragging the sheet. The page body is scrollable, and without this the browser scrolls the body on touchmove, stealing touch from the sheet's drag handler. React touch handlers are passive so we need a non-passive listener via addEventListener. */
   const preventTouchMoveRef = useCallback((el: HTMLDivElement | null) => {
     if (!el) return
@@ -294,6 +333,10 @@ const CommandCenter = () => {
           onSnap={onSnap}
           onOpenEnd={onOpenEnd}
           onCloseEnd={onCloseEnd}
+          onDragStart={onDragStart}
+          onDrag={onDrag}
+          /** A drag that begins at the expanded stage may only collapse to the standard stage; closing the Command Center always takes a second swipe from there. */
+          disableDismiss={isDismissBlocked}
           /** The expanded stage's search field would otherwise auto-snap the sheet and disable dragging while the keyboard is open. Em manages the virtual keyboard itself. */
           avoidKeyboard={false}
           tweenConfig={{
@@ -349,24 +392,44 @@ const CommandCenter = () => {
               zIndex: 'auto',
             }}
           >
-            <motion.button
-              {...fastClick(() => sheetRef.current?.snapTo(SNAP_STANDARD))}
-              data-testid='command-center-collapse'
-              aria-label='Collapse Command Center'
+            {/*
+             * Sheet.Header is the only slot outside Sheet.Content that react-modal-sheet gives its drag
+             * props to, so wrapping the chevron in one makes a swipe on it drive the sheet exactly as a
+             * swipe on the drawer body does. Kept out of flow so that it cannot change the measured sheet
+             * height that the snap points are computed from. It is deliberately not gated on
+             * isDragDisabled: the chevron floats above the drawer and is not part of the command list, so
+             * it stays a handle no matter where that list is scrolled.
+             */}
+            <Sheet.Header
               /** Floats above the top edge of the drawer, over the falloff gradient. */
               className={css({
-                all: 'unset',
                 position: 'absolute',
                 bottom: '100%',
                 left: '50%',
-                transform: 'translateX(-50%)',
-                cursor: 'pointer',
-                padding: '0.556rem 1.333rem',
               })}
-              style={{ opacity: collapseOpacity, pointerEvents: expandedPointerEvents }}
+              style={{
+                /** Overrides the library's own width: 100%, which would otherwise leave a full-width strip over the thoughtspace. */
+                width: 'auto',
+                /** Motion rewrites the element's transform while dragging, so the centering offset has to be a motion style rather than a CSS transform. */
+                x: '-50%',
+                opacity: collapseOpacity,
+                pointerEvents: expandedPointerEvents,
+              }}
             >
-              <ChevronIcon direction='down' />
-            </motion.button>
+              <button
+                {...fastClick(() => sheetRef.current?.snapTo(SNAP_STANDARD))}
+                data-testid='command-center-collapse'
+                aria-label='Collapse Command Center'
+                className={css({
+                  all: 'unset',
+                  display: 'block',
+                  cursor: 'pointer',
+                  padding: '0.556rem 1.333rem',
+                })}
+              >
+                <ChevronIcon direction='down' />
+              </button>
+            </Sheet.Header>
             <Sheet.Content
               className={css({
                 overflow: 'visible',
@@ -474,24 +537,34 @@ const CommandCenter = () => {
                     </div>
                   </motion.div>
                 </div>
-                <motion.button
-                  {...fastClick(() => sheetRef.current?.snapTo(SNAP_EXPANDED))}
-                  data-testid='command-center-expand'
-                  aria-label='Expand Command Center'
-                  /** Sits in the chevron band at the bottom edge of the standard stage, just above the safe area inset. */
+                <motion.div
+                  ref={chevronBandRef}
+                  /** The chevron band: the full-width strip at the bottom edge of the standard stage, just above the safe area inset. It is full width rather than just the button because it doubles as the only region a drag may start in and still expand the drawer, and a thumb swipe that lands beside the arrow should still count. */
                   className={css({
-                    all: 'unset',
                     position: 'absolute',
+                    left: 0,
+                    right: 0,
                     bottom: 'calc(var(--command-center-stage-offset) + {spacing.safeAreaBottom})',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    cursor: 'pointer',
-                    padding: '0.222rem 1.333rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   })}
                   style={{ opacity: expandOpacity, pointerEvents: standardPointerEvents }}
                 >
-                  <ChevronIcon direction='up' />
-                </motion.button>
+                  <button
+                    {...fastClick(() => sheetRef.current?.snapTo(SNAP_EXPANDED))}
+                    data-testid='command-center-expand'
+                    aria-label='Expand Command Center'
+                    className={css({
+                      all: 'unset',
+                      display: 'block',
+                      cursor: 'pointer',
+                      padding: '0.222rem 1.333rem',
+                    })}
+                  >
+                    <ChevronIcon direction='up' />
+                  </button>
+                </motion.div>
               </div>
             </Sheet.Content>
           </Sheet.Container>
