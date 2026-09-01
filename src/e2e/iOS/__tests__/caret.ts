@@ -28,7 +28,7 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandle = await waitForEditable('foo')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     await waitUntil(isKeyboardShown)
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -40,7 +40,7 @@ describe('Caret', () => {
     await newThought('bar', { insertNewSubthought: true })
 
     const editableNodeHandle = await waitForEditable('foo')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     await waitUntil(async () => (await getEditingText()) === 'foo')
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -71,7 +71,7 @@ describe('Caret', () => {
     await newThought('d', { insertNewSubthought: true })
 
     const editableNodeHandle = await waitForEditable('c')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
     await waitUntil(async () => (await getEditingText()) === 'c')
 
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -91,7 +91,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandle = await waitForEditable('d')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
     await waitUntil(async () => (await getEditingText()) !== 'c')
 
     const editingText = await getEditingText()
@@ -111,7 +111,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandle = await waitForEditable('d')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     await waitUntil(async () => (await getEditingText()) === 'd')
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -131,7 +131,11 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandleD = await waitForEditable('d')
-    await tap(editableNodeHandleD, { y: 200 })
+    // Tap 140px below d, into the empty content under the tree. Was 200 while tap conflated page and screen
+    // coordinates, of which 60 was the Safari chrome inset that tap now measures for itself. Unverified: both
+    // of these tests are skipped, so the remaining 140 is the old offset with the inset removed, not a fresh
+    // measurement.
+    await tap(editableNodeHandleD, { y: 140 })
 
     // Wait until cursor change
     await waitUntil(async () => (await getEditingText()) === 'b')
@@ -154,7 +158,11 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandleD = await waitForEditable('d')
-    await tap(editableNodeHandleD, { y: 200 })
+    // Tap 140px below d, into the empty content under the tree. Was 200 while tap conflated page and screen
+    // coordinates, of which 60 was the Safari chrome inset that tap now measures for itself. Unverified: both
+    // of these tests are skipped, so the remaining 140 is the old offset with the inset removed, not a fresh
+    // measurement.
+    await tap(editableNodeHandleD, { y: 140 })
 
     // Wait until cursor change
     await waitUntil(async () => (await getEditingText()) === 'b')
@@ -175,7 +183,7 @@ describe('Caret', () => {
       segmentLength: elementRect.width,
     })
 
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     const editingText = await getEditingText()
     expect(editingText).toBe('foo')
