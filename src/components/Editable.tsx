@@ -887,12 +887,12 @@ const Editable = ({
           const isDragging =
             state.longPress === LongPressState.DragHold || state.longPress === LongPressState.DragInProgress
           // A tap that moved the cursor without entering edit mode can likewise produce this focus despite
-          // preventDefault (see globals.suppressFocusAfterCursorMove). The !isKeyboardOpen check keeps
+          // preventDefault (see globals.suppressCursorAfterTouch). The !isKeyboardOpen check keeps
           // programmatic focus flows intact: commands that activate edit mode by side effect set
           // state.isKeyboardOpen before useEditMode focuses the editable.
-          const isSpuriousTapFocus = globals.suppressFocusAfterCursorMove && !state.isKeyboardOpen
+          const isSpuriousTapFocus = globals.suppressCursorAfterTouch && !state.isKeyboardOpen
           if (isSpuriousTapFocus) {
-            debugLog.log('guard', { step: 'suppressFocusAfterCursorMove' })
+            debugLog.log('guard', { step: 'suppressCursorAfterTouch' })
           }
           if (state.showCommandCenter || isDragging || isSpuriousTapFocus) {
             selection.clear()
@@ -917,11 +917,11 @@ const Editable = ({
         // would otherwise override the cursor that archiveThought placed on the previous sibling.
         // When hidden thoughts are shown, isVisible is true and the cursor can still be set. (#4077)
         // Do not activate edit mode when the focus is the tail of a tap that already moved the cursor
-        // without edit mode (see globals.suppressFocusAfterCursorMove); the block above dismissed it.
+        // without edit mode or a completed drag (see globals.suppressCursorAfterTouch); the block above dismissed it.
         if (
           state.longPress === LongPressState.Inactive &&
           isVisible &&
-          !(globals.suppressFocusAfterCursorMove && !state.isKeyboardOpen)
+          !(globals.suppressCursorAfterTouch && !state.isKeyboardOpen)
         ) {
           setCursorOnThought({ isKeyboardOpen: true })
         }
@@ -946,6 +946,13 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const state = getState()
+
+        // Ignore cursor-producing events that belong to a completed touch. Drag cleanup may finish before the browser
+        // emits its compatibility click, so longPress alone cannot identify the event as part of the drag release.
+        if (globals.suppressCursorAfterTouch) {
+          e.preventDefault()
+          return
+        }
 
         // Record the tap inputs that determine which branch runs. `cancelable: false` on a touchend means the
         // preventDefault below is a silent no-op and iOS Safari will still synthesize focus/mouse events for the tap.
@@ -981,7 +988,7 @@ const Editable = ({
           // would treat them as a second tap and open the keyboard. Flag them for suppression until the next
           // touchstart proves the user actually tapped again.
           if (e.type === 'touchend' && isTouch && isSafari()) {
-            globals.suppressFocusAfterCursorMove = true
+            globals.suppressCursorAfterTouch = true
           }
 
           if (!isVisible) {

@@ -8,6 +8,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { longPressActionCreator as longPress } from '../../actions/longPress'
 import Editable from '../../components/Editable'
 import { LongPressState } from '../../constants'
+import globals from '../../globals'
 import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import dispatch from '../../test-helpers/dispatch'
@@ -31,16 +32,26 @@ vi.mock('react-dnd', async importOriginal => {
   }
 })
 
+vi.mock('../../browser', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../browser')>()
+  return { ...actual, isTouch: true }
+})
+
 /** Provides the Redux store to hooks and components under test. */
 const wrapper = ({ children }: PropsWithChildren) => createElement(Provider, { store, children })
 
 beforeEach(async () => {
   await initStore()
+  globals.suppressCursorAfterTouch = false
   dragEndCallbacks.length = 0
 })
 
+afterEach(() => {
+  globals.suppressCursorAfterTouch = false
+})
+
 // https://github.com/cybersemics/em/issues/4839
-it('preserves an unrelated cursor when a trailing click fires after drag end', async () => {
+it('preserves an unrelated cursor when a trailing click fires after drag cleanup', async () => {
   await dispatch([
     importText({
       text: `
@@ -84,19 +95,12 @@ it('preserves an unrelated cursor when a trailing click fires after drag end', a
     moveThought({ from: ['a', 'b'], to: ['a', 'b'], newRank: 2 }),
   ])
 
-  await act(async () => {
-    dragEndCallbacks[0]()
-    fireEvent.click(editableB)
-  })
-
-  expect(store.getState().cursor).toEqual(contextToPath(store.getState(), ['a']))
-  expect(store.getState().longPress).toBe(LongPressState.DragInProgress)
-  await act(vi.runOnlyPendingTimersAsync)
+  await act(async () => dragEndCallbacks[0]())
   expect(store.getState().longPress).toBe(LongPressState.Inactive)
 
   await act(async () => {
     fireEvent.click(editableB)
   })
 
-  expect(store.getState().cursor).toEqual(pathB)
+  expect(store.getState().cursor).toEqual(contextToPath(store.getState(), ['a']))
 })

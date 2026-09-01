@@ -230,6 +230,7 @@ const useEditMode = ({
           state.isKeyboardOpen &&
           !equalPath(state.cursor, path) &&
           !hasMulticursor(state) &&
+          !globals.suppressCursorAfterTouch &&
           state.longPress === LongPressState.Inactive &&
           style?.visibility !== 'hidden'
         if (!move) return
@@ -291,10 +292,10 @@ const useEditMode = ({
       const preserveMulticursor = multiEditing && isMulticursorPath(state, path)
 
       // Suppress the synthesized mousedown that iOS Safari can emit for a tap whose touchend already moved
-      // the cursor without entering edit mode (see globals.suppressFocusAfterCursorMove). The cursor move
+      // the cursor without entering edit mode or a completed drag (see globals.suppressCursorAfterTouch). The cursor move
       // re-rendered this thought with editingOrOnCursor true before the mousedown arrived, so the branch
       // below would place the caret and refocus the editable as if this were a second tap.
-      if (isTouch && isSafari() && globals.suppressFocusAfterCursorMove) {
+      if (isTouch && globals.suppressCursorAfterTouch) {
         e.preventDefault()
         return
       }

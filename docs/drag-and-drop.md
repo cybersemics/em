@@ -263,6 +263,8 @@ The fourth layered touch-backend patch registers capture-phase `pointerup` and `
 
 The fifth layered touch-backend patch coordinates the `pointerup` fallback with the canonical `touchend` handler. `pointerup` prevents its default action immediately but defers drag completion to the next task. If `touchend` arrives normally, it cancels the fallback and ends the drag while the app's drag protections are still active; if `touchend` is missing, the fallback ends the drag on the next task. `pointercancel` continues to end immediately. The pending fallback is also canceled during backend teardown.
 
+When a touch drag ends, application cleanup returns `state.longPress` to `Inactive` immediately so scrolling, gestures, alerts, and multicursor cleanup are restored without a timer. Before that transition, `useDragAndDropThought` sets `globals.suppressCursorAfterTouch`. `Editable` ignores cursor-producing compatibility events while the flag is set, and the next capture-phase `touchstart` clears it. This ties suppression to the completed touch gesture rather than assuming that the browser will dispatch its trailing click or focus before a zero-delay timer.
+
 ### `react-dnd-html5-backend-npm-16.0.1-754940d855.patch`
 
 Single change to the HTML5 backend: removes a `e.preventDefault()` call inside the native-item drop handler. Removing it lets native drag sources (e.g. external file drops) proceed without their default behavior being suppressed at the wrong moment.
