@@ -31,6 +31,9 @@ describe('Magnifier', () => {
     console.info('magnifier drag', { offsetBefore, offsetAfter, ...dragActivation })
 
     expect(dragActivation).toEqual({ dragHold: false, dragInProgress: false })
+
+    // the caret follows the magnifier through the text rather than being destroyed with the editable
     expect(await getSelection().focusNode?.textContent).toBe(value)
+    expect(offsetAfter).toBeGreaterThan(offsetBefore!)
   })
 })
