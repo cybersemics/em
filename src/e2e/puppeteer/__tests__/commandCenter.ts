@@ -1,8 +1,10 @@
 import { KnownDevices } from 'puppeteer'
+import clearThoughtCommand from '../../../commands/clearThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import closeKeyboard from '../helpers/closeKeyboard'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
@@ -126,5 +128,27 @@ describe('command center', () => {
     // control: the same swipe starting above the system-gesture strip must still open the Command Center
     await gesture('u', { xStart: innerWidth / 4, yStart: innerHeight - 200 })
     await waitUntil(() => (window.em as WindowEm).testHelpers.getState().showCommandCenter)
+  })
+
+  // https://github.com/cybersemics/em/issues/5260
+  it.skip('does not reopen when the keyboard is dismissed after Clear Thought', async () => {
+    await paste('- a')
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForSelector('[data-testid=command-center-panel]')
+
+    // Clear Thought closes the Command Center and opens the keyboard to edit the cleared thought
+    await gesture(clearThoughtCommand)
+    await waitUntil(() => !(window.em as WindowEm).testHelpers.getState().showCommandCenter)
+
+    // dismiss the keyboard, as tapping a blank area does
+    await closeKeyboard()
+    await waitUntil(() => !(window.em as WindowEm).testHelpers.getState().isKeyboardOpen)
+
+    const showCommandCenter = await page.evaluate(
+      () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
+    )
+    expect(showCommandCenter).toBeFalsy()
   })
 })
