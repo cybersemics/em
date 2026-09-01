@@ -8,6 +8,7 @@ import store from '../../../stores/app'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
 import head from '../../../util/head'
+import useCaretRestore from '../useCaretRestore'
 import useEditMode from '../useEditMode'
 
 // Emulate iOS Safari, where the virtual keyboard's trackpad (long press the space bar) moves the browser
@@ -38,6 +39,16 @@ const createEditable = (thoughtId: string, value: string) => {
   return editable
 }
 
+/** Renders a note editable, as Note does. */
+const createNoteEditable = (value: string) => {
+  const note = document.createElement('div')
+  note.setAttribute('contenteditable', 'true')
+  note.setAttribute('aria-label', 'note-editable')
+  note.appendChild(document.createTextNode(value))
+  document.body.appendChild(note)
+  return note
+}
+
 /** Mounts useEditMode on the cursor thought's editable. */
 const mountEditMode = (editable: HTMLElement) =>
   renderHook(
@@ -58,7 +69,6 @@ const moveSelectionTo = async (editable: HTMLElement) => {
     selection.set(editable, { offset: 0 })
     document.dispatchEvent(new Event('selectionchange'))
   })
-  // the restore is coalesced into the next animation frame
   await act(vi.runAllTimersAsync)
 }
 
@@ -125,4 +135,24 @@ it('does not restore the caret just after a tap moved the selection to another t
   await moveSelectionTo(other)
 
   expect(selection.isOnEditable(cursorId)).toBe(false)
+})
+
+it('restores the caret to the end of a note when the selection is dragged out of it', async () => {
+  store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a']), keyboardOpen({ value: true })])
+
+  const note = createNoteEditable('A')
+  const other = createEditable('other-id', 'b')
+
+  renderHook(() => useCaretRestore({ editableRef: { current: note }, enabled: true, end: true }), {
+    wrapper: ({ children }) => createElement(Provider, { store, children }),
+  })
+  act(() => note.focus())
+
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  await moveSelectionTo(other)
+
+  // a one-character note is short enough that the trackpad escapes it with no drag at all, and it only escapes
+  // from the end, where the note abuts the parent thought
+  expect(selection.offsetFromNode(note)).toBe(1)
 })

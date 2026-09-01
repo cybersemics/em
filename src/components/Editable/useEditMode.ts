@@ -17,28 +17,9 @@ import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
 import equalPath from '../../util/equalPath'
-import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
-
-// #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
-// two taps into a double-tap and emits a delayed, retargeted synthesized mousedown/click/dblclick on the
-// previously-focused thought ~50-250ms after the second tap's touchend. That delayed mousedown would drive
-// onMouseDown -> setCursor and yank the cursor back. We record the last real touchend (time + element); a
-// genuine mousedown follows its own touchend within a few ms on the same element, whereas the ghost arrives
-// later on a different thought, so it can be detected and dropped.
-let lastTouchEndTime = 0
-let lastTouchEndTarget: EventTarget | null = null
-const GHOST_MOUSE_WINDOW_MS = 700
-
-/**
- * Returns true if the last real touchend recently (within GHOST_MOUSE_WINDOW_MS) landed on a DIFFERENT
- * editable than `editable` — the shared signature of iOS's rapid-tap retargeting (#4173). Reads the last
- * recorded touchend from module state.
- */
-const isRetargetedTap = (editable: EventTarget): boolean =>
-  !!lastTouchEndTarget &&
-  lastTouchEndTarget !== editable &&
-  performance.now() - lastTouchEndTime < GHOST_MOUSE_WINDOW_MS
+import lastTouch from './lastTouch'
+import useCaretRestore from './useCaretRestore'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
@@ -78,6 +59,8 @@ const useEditMode = ({
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
   const editingOrOnCursor = isCursor || editing
+
+  useCaretRestore({ editableRef: contentRef, enabled: isCursor && !!editing })
 
   useEffect(
     () => {
@@ -224,10 +207,8 @@ const useEditMode = ({
     const onTouchEnd = (e: TouchEvent) => {
       pressingRef.current = false
       // Evaluate against the PREVIOUS touchend before overwriting it below.
-      const willRetarget = isRetargetedTap(editable)
-      lastTouchEndTime = performance.now()
-      lastTouchEndTarget = editable
-
+      const willRetarget = lastTouch.isRetargeted(editable)
+      lastTouch.record(editable)
       // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
       // retargets the synthesized mousedown/focus to the previously-focused thought (onMouseDown suppresses
       // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.
@@ -286,7 +267,7 @@ const useEditMode = ({
       // second tap already moved focus. A genuine mousedown follows its own touchend within a few ms on the
       // same element; a ghost arrives later on a different thought. Dropping it (preventDefault also blocks
       // the focus change) keeps the cursor on the thought the user actually tapped.
-      if (isTouch && isSafari() && isRetargetedTap(editable)) {
+      if (isTouch && isSafari() && lastTouch.isRetargeted(editable)) {
         e.preventDefault()
         return
       }
@@ -349,39 +330,11 @@ const useEditMode = ({
      */
     const onFocus = () => queueMicrotask(() => preventAutoscrollEnd(editable))
 
-    /**
-     * Keeps the caret inside the cursor thought while the keyboard is open. The iOS keyboard trackpad drags the
-     * browser selection out of the editing host by hit-testing the whole document; unlike a tap it never moves
-     * the focus, so the editable is left focused with the caret stranded in another thought, and the keyboard
-     * stays up while typing goes nowhere. Restoring only while this editable still holds the focus is what
-     * distinguishes that from the many flows that legitimately move the selection away after blurring it
-     * (selection.clear, the Command Center, drag start). (#3276).
-     */
-    const onSelectionChange = () => {
-      if (document.activeElement !== editable || !isCursor || !editing) return
-
-      // The trackpad moves the selection without generating a single touch event in the page, so anything the
-      // user did with a finger is not this. A press still in progress is a long press dragging a selection
-      // within this thought; a recently ended one is a tap, which may deliberately have moved the selection to
-      // a thought that is about to become the cursor.
-      if (pressingRef.current || performance.now() - lastTouchEndTime < GHOST_MOUSE_WINDOW_MS) return
-
-      if (selection.isOnEditable(head(path))) return
-
-      // The selection only ever escapes past the left edge, where the caret already was. Dragging right keeps it
-      // clamped to the end of the thought and inside the editable, so this never runs for that direction — only
-      // the natively drawn caret drifts out there (see docs/cursor-and-caret.md).
-      // selectionchange is queued rather than dispatched synchronously, so this cannot recurse; and a set that
-      // the browser declines fires no event at all, so it cannot spin either.
-      selection.set(editable, { offset: 0 })
-    }
-
     editable.addEventListener('mousedown', onMouseDown)
     if (isTouch && isSafari()) {
       editable.addEventListener('touchstart', onTouchStart)
       editable.addEventListener('touchend', onTouchEnd)
       editable.addEventListener('focus', onFocus)
-      document.addEventListener('selectionchange', onSelectionChange)
     }
 
     return () => {
@@ -390,7 +343,6 @@ const useEditMode = ({
         editable.removeEventListener('touchstart', onTouchStart)
         editable.removeEventListener('touchend', onTouchEnd)
         editable.removeEventListener('focus', onFocus)
-        document.removeEventListener('selectionchange', onSelectionChange)
       }
     }
   }, [
