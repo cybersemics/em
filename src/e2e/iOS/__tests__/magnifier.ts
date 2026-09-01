@@ -13,7 +13,7 @@ import waitUntil from '../helpers/waitUntil'
 
 describe('Magnifier', () => {
   // https://github.com/cybersemics/em/issues/3763
-  it.skip('dragging the magnifier moves the caret instead of dragging the thought', async () => {
+  it('dragging the magnifier moves the caret instead of dragging the thought', async () => {
     const value = 'the quick brown fox'
     await newThought(value)
     const editable = await waitForEditable(value)

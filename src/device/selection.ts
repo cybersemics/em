@@ -536,11 +536,10 @@ export const split = (el: HTMLElement): SplitResult | null => {
 }
 
 /**
- * Returns the position and height of the caret relative to the top left of the focused thought, or null if the caret is
- * not in a thought. This is the real caret's own geometry, so a faux caret rendered at the same offsets within another
- * thought is guaranteed to match it, no matter how the two thoughts' values differ (see MulticursorFauxCaret).
+ * Returns the caret's geometry in viewport coordinates, along with the editable that holds it, or null if the caret is
+ * not in a thought.
  */
-export const caretRect = (): { x: number; y: number; height: number } | null => {
+const caretRectViewport = (): { editable: HTMLElement; x: number; y: number; height: number } | null => {
   const editable = document.activeElement
   if (!isHTMLElement(editable) || !isContentEditable(editable)) return null
 
@@ -570,12 +569,25 @@ export const caretRect = (): { x: number; y: number; height: number } | null => 
   const [paddingTop, , paddingBottom, paddingLeft] = getElementPaddings(editable)
   const lineHeight = parseFloat(window.getComputedStyle(editable).lineHeight)
   return rect?.height
-    ? { x: rect.x - editableRect.x, y: rect.y - editableRect.y, height: rect.height }
+    ? { editable, x: rect.x, y: rect.y, height: rect.height }
     : {
-        x: paddingLeft,
-        y: paddingTop,
+        editable,
+        x: editableRect.x + paddingLeft,
+        y: editableRect.y + paddingTop,
         height: lineHeight || editableRect.height - paddingTop - paddingBottom,
       }
+}
+
+/**
+ * Returns the position and height of the caret relative to the top left of the focused thought, or null if the caret is
+ * not in a thought. This is the real caret's own geometry, so a faux caret rendered at the same offsets within another
+ * thought is guaranteed to match it, no matter how the two thoughts' values differ (see MulticursorFauxCaret).
+ */
+export const caretRect = (): { x: number; y: number; height: number } | null => {
+  const caret = caretRectViewport()
+  if (!caret) return null
+  const editableRect = caret.editable.getBoundingClientRect()
+  return { x: caret.x - editableRect.x, y: caret.y - editableRect.y, height: caret.height }
 }
 
 /** Returns the selection text, or null if there is no selection. */
@@ -657,6 +669,18 @@ export const getBoundingClientRect = () => {
   return null
 }
 
+/** Returns true if the point is within the given number of pixels of the bounds, on every side. */
+const isNearBounds = (
+  x: number,
+  y: number,
+  bounds: { left: number; right: number; top: number; bottom: number },
+  distance: number,
+): boolean =>
+  x >= bounds.left - distance &&
+  x <= bounds.right + distance &&
+  y >= bounds.top - distance &&
+  y <= bounds.bottom + distance
+
 /** Returns true if the point is within the given number of pixels from the browser selection. */
 export const isNear = (
   x: number,
@@ -669,10 +693,29 @@ export const isNear = (
   const rect = getBoundingClientRect()
   if (!rect) return false
 
-  const left = rect.left - distance
-  const right = rect.right + distance
-  const top = rect.top - distance
-  const bottom = rect.bottom + distance
+  return isNearBounds(x, y, rect, distance)
+}
 
-  return x >= left && y >= top && x <= right && y <= bottom
+/**
+ * Returns true if the point is within the given number of pixels of a collapsed caret and falls inside the editable
+ * that holds it. Where isNear is about a range of selected text, this is about the insertion point — a press that lands
+ * here is the user reaching for the caret, so it must not be claimed as a long press or a gesture (#3763). The point
+ * must be inside the editable so that a press on the bullet, which sits just left of a caret at the start of the text,
+ * still starts a drag.
+ */
+export const isCaretNear = (
+  x: number,
+  y: number,
+  /** Distance from the point (px). */
+  distance: number,
+): boolean => {
+  // A range is handled by isNear and by selectionRangeStore, which disable the same interactions ahead of the press.
+  if (!isActive() || !isCollapsed()) return false
+
+  const caret = caretRectViewport()
+  if (!caret) return false
+
+  if (!isNearBounds(x, y, caret.editable.getBoundingClientRect(), 0)) return false
+
+  return isNearBounds(x, y, { left: caret.x, right: caret.x, top: caret.y, bottom: caret.y + caret.height }, distance)
 }

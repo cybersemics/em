@@ -64,6 +64,12 @@ const canDrag = (props: ThoughtContainerProps) => {
   if (isTouch && hasSelectionRange) return false
 
   const state = store.getState()
+
+  // Every touch drag is preceded by a long press that sets DragHold, so a press that never reached it did not start a
+  // drag. That is how a press on the caret, which useLongPress leaves unmarked, is kept from becoming one once it moves
+  // past the touch slop (#3763).
+  if (isTouch && state.longPress !== LongPressState.DragHold) return false
+
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
   const isDraggable = props.isVisible || props.isCursorParent

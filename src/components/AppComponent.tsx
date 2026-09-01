@@ -84,7 +84,7 @@ const shouldCancelGesture = (
   const distance = state.fontSize * 2
   return (
     isOnToolbar(x, y) ||
-    (x && y && selection.isNear(x, y, distance)) ||
+    (x && y && (selection.isNear(x, y, distance) || selection.isCaretNear(x, y, state.fontSize))) ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
