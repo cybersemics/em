@@ -9,6 +9,9 @@
     // ...
   })
   ```
+- A thought's value is HTML, while the selection offsets a command receives are plain text offsets into that value. Any command that slices, splits, or extracts a range of a thought must therefore split the value as HTML rather than slice it as a string: `value.slice(selectionStart, selectionEnd)` lands in the middle of a tag as soon as the thought carries formatting, leaking the markup into the extracted text and leaving the remainder unbalanced ([issue #4103](https://github.com/cybersemics/em/issues/4103), [issue #5267](https://github.com/cybersemics/em/issues/5267)).
+  - Split with [`splitHtmlAtTextOffset`](../../src/util/splitHtmlAtTextOffset.ts), which maps the offset onto a text node with `selection.offsetFromClosestParent` and re-balances the enclosing tags onto both halves with `selection.splitNode`.
+  - Follow [`extractSubthought`](../../src/actions/extractSubthought.ts) for the whole shape: it takes a range by splitting at the end offset and then splitting that left half at the start offset, merges the tags that become adjacent when the remaining halves are re-joined so that `<b>Lorem </b><b>dolor</b>` collapses back into one, `trimHtml`s each part, and keeps the plain string slice as a fast path for a value with no markup. [`splitSentence`](../../src/util/splitSentence.ts) applies the same split at every sentence boundary. See [Caret / Browser Selection](../../docs/cursor-and-caret.md#caret--browser-selection).
 
 ### Files, modules, and exports
 

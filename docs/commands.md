@@ -207,6 +207,8 @@ The copy button to the right of the slider copies a **bug report** for the actio
 
 A command file is typically self-contained: it imports the action creator(s) and selectors it needs and dispatches them in `exec`. Avoid putting business logic in the command file — keep it in actions/selectors so the command stays a thin wiring layer.
 
+A command whose input is a range of the thought's text — Extract Subthought, Extract Category, Split Sentences — receives plain-text offsets into a value that is HTML, so it has to split the value rather than slice the string, or the markup of a formatted thought is cut mid-tag. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
+
 ## Reference
 
 The full list of user-facing commands. For the canonical, always-up-to-date set, read [`src/commands/`](../src/commands) directly.
