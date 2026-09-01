@@ -452,6 +452,13 @@ export const executeCommandWithMulticursor = (
   // Every executeCommand call below is given the already resolved command, so it cannot resolve repeat itself. Forward the recorded keyboardIndex explicitly, otherwise it would be derived from the repeat keypress and lost.
   const keyboardIndex = resolved.keyboardIndex
 
+  // Keyboard and gesture paths flush pending edits before they call executeCommandWithMulticursor.
+  // Flush here for other command entry points (toolbar/command center/desktop command universe) so
+  // text-mutating commands do not get overwritten by a trailing throttled edit.
+  if (type !== 'keyboard' && type !== 'gesture') {
+    commandEmitter.trigger('command', command)
+  }
+
   const state = commandStore.getState()
 
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.

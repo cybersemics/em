@@ -77,7 +77,7 @@ it('the selected text remains selected after a letter case change that lengthens
 })
 
 // https://github.com/cybersemics/em/issues/4774
-it.skip('flushes pending edits before applying letter case from the picker', async () => {
+it('flushes pending edits before applying letter case from the picker', async () => {
   await paste('a')
 
   await clickThought('a')

@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
+import { commandEmitter } from '../commands'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -18,6 +19,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 export const formatLetterCaseActionCreator =
   (command: LetterCaseType): Thunk =>
   (dispatch, getState) => {
+    commandEmitter.trigger('command')
     const state = getState()
     const cursor = state.cursor
     if (!cursor) return
