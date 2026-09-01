@@ -358,7 +358,7 @@ const useEditMode = ({
      * (selection.clear, the Command Center, drag start). (#3276).
      */
     const onSelectionChange = () => {
-      if (document.activeElement !== editable || !isCursor || !editing || noteFocus) return
+      if (document.activeElement !== editable || !isCursor || !editing) return
 
       // The trackpad moves the selection without generating a single touch event in the page, so anything the
       // user did with a finger is not this. A press still in progress is a long press dragging a selection
@@ -394,7 +394,6 @@ const useEditMode = ({
       }
     }
   }, [
-    noteFocus,
     contentRef,
     editing,
     editingOrOnCursor,
