@@ -12,16 +12,13 @@ import waitForElement from '../helpers/waitForElement'
 /** Retrieve the innerHTML of the first note on the page. Assumes that there will be only a single note. */
 const getFirstNoteText = () => browser.execute(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
 
-/** Tap a swatch in the color picker while it is already open. Calling tapToolbar would tap the Text Color button again first, which toggles the picker closed and unmounts the swatches. */
-const tapSwatch = async (group: string, color: string) =>
-  tap(await waitForElement(`[aria-label="${group}"] [aria-label="${color}"]`), toolbarTapOptions)
-
 describe('Color', () => {
   it('Can change the background color of a thought that already has the same background color applied to part of its text, then change the text color', async () => {
     await paste(`- some <font color="#000000" style="background-color: rgb(255, 87, 61);">formatted</font> text`)
 
     await tapToolbar('Text Color', 'background color swatches', 'red')
-    await tapSwatch('text color swatches', 'red')
+    // The picker is already open, so tap the swatch directly; tapToolbar would tap the Text Color button again and toggle the picker closed.
+    await tap(await waitForElement('[aria-label="text color swatches"] [aria-label="red"]'), toolbarTapOptions)
 
     // Applying a font color clears the background color.
     const thought = await getEditingText()
@@ -42,7 +39,7 @@ describe('Color', () => {
     await tapToolbar('Note')
 
     await tapToolbar('Text Color', 'background color swatches', 'red')
-    await tapSwatch('text color swatches', 'red')
+    await tap(await waitForElement('[aria-label="text color swatches"] [aria-label="red"]'), toolbarTapOptions)
 
     const result = await getFirstNoteText()
     expect(result).toBe('<font color="#ff573d">Multi-word note</font>')
