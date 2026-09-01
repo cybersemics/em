@@ -61,8 +61,7 @@
     "test:ios:local": "wdio run src/e2e/iOS/config/wdio.local.conf.ts",
     "test:ios:browserstack": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
     "test:puppeteer": "./src/e2e/puppeteer/test-puppeteer.sh",
-    "test": "vitest --project unit",
-    "websocket-server": "cd server && yarn build && yarn start"
+    "test": "vitest --project unit"
   },
   "lockfile-lint": {
     "allowed-schemes": [
