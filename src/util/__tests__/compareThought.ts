@@ -273,6 +273,45 @@ describe('compareReasonable', () => {
     expect(compareReasonable('élan', 'élan')).toBe(0)
     expect(compareReasonable('every', 'élan')).toBe(1)
   })
+
+  it('sort a colored thought by its text, whether the color is on a font or a span tag', () => {
+    // <font color> and <font style="background-color"> are written by the formatting commands
+    expect(compareReasonable('<font color="#ff573d">apple</font>', 'apple')).toBe(0)
+    expect(
+      compareReasonable('<font color="#000000" style="background-color: rgb(0, 214, 136);">apple</font>', 'apple'),
+    ).toBe(0)
+    expect(compareReasonable('<font style="background-color: rgb(0, 128, 255);">apple</font>', 'apple')).toBe(0)
+
+    // <span style="color"> is written when a colored thought is pasted or split
+    expect(compareReasonable('<span style="color: rgb(255, 87, 61);">apple</span>', 'apple')).toBe(0)
+    expect(compareReasonable('<span style="background-color: rgb(0, 214, 136);">apple</span>', 'apple')).toBe(0)
+    expect(
+      compareReasonable('<span style="color: #000000;background-color: rgb(0, 214, 136);">apple</span>', 'apple'),
+    ).toBe(0)
+
+    // the two markups sort together, so re-coloring or pasting a thought does not move it
+    expect(compareReasonable('<span style="color: pink;">apple</span>', '<font color="#ff573d">apple</font>')).toBe(0)
+    expect(compareReasonable('<span style="color: pink;">apple</span>', 'banana')).toBe(-1)
+    expect(compareReasonable('<span style="color: pink;">banana</span>', 'apple')).toBe(1)
+
+    // a color does not hide the leading emoji or the empty value that the earlier comparators sort on
+    expect(compareReasonable('<span style="color: pink;">🍍 apple</span>', 'banana')).toBe(-1)
+    expect(compareReasonable('<span style="color: pink;"></span>', 'apple')).toBe(-1)
+    expect(compareReasonable('<font color="#ff573d"></font>', 'apple')).toBe(-1)
+  })
+
+  it('sort a formatted thought by its formatting, even when a color is applied to it', () => {
+    // the color is ignored, but the bold it wraps still sorts above plain text
+    expect(compareReasonable('<font color="#ff573d"><b>apple</b></font>', '<b>apple</b>')).toBe(0)
+    expect(compareReasonable('<font color="#ff573d"><b>apple</b></font>', 'apple')).toBe(-1)
+    expect(compareReasonable('<span style="color: pink;"><b>apple</b></span>', 'apple')).toBe(-1)
+    // the inner tag's closing tag is not consumed along with the color wrapper's
+    expect(compareReasonable('<b><span style="color: pink;">apple</span></b>', '<b>apple</b>')).toBe(0)
+
+    // a span that carries formatting rather than a color is left in place, so it still sorts as formatted
+    expect(compareReasonable('<span style="font-weight: 700;">apple</span>', 'apple')).toBe(-1)
+    expect(compareReasonable('<span style="color: pink;font-weight: 700;">apple</span>', 'apple')).toBe(-1)
+  })
 })
 
 describe('compareThought', () => {
@@ -316,6 +355,13 @@ describe('compareThought', () => {
     it('sort equally-formatted thoughts by their visible text, ignoring formatting markup (#3977)', () => {
       expect(compareThoughtDescending(thought('<b><i>E</b>'), thought('<i><b>D</b></i>'))).toBe(-1)
       expect(compareThoughtDescending(thought('<b><i>C</b>'), thought('<i><b>D</b></i>'))).toBe(1)
+    })
+
+    it('sort a colored thought by its text in descending order, whether the color is on a font or a span tag', () => {
+      expect(compareThoughtDescending(thought('<font color="#ff573d">apple</font>'), thought('apple'))).toBe(0)
+      expect(compareThoughtDescending(thought('<span style="color: pink;">apple</span>'), thought('apple'))).toBe(0)
+      expect(compareThoughtDescending(thought('<span style="color: pink;">apple</span>'), thought('banana'))).toBe(1)
+      expect(compareThoughtDescending(thought('<span style="color: pink;">banana</span>'), thought('apple'))).toBe(-1)
     })
 
     it('sort empty thought above formatted thoughts in descending order', () => {
