@@ -21,8 +21,8 @@ import uncategorize from '../../commands/uncategorize'
 import isTutorial from '../../selectors/isTutorial'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
+import ChevronImg from '../ChevronImg'
 import CommandTable from '../CommandTable'
-import ChevronIcon from '../icons/ChevronIcon'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
@@ -45,6 +45,18 @@ const CHEVRON_BAND_REM = 1.556
 const GRID_SLIDE_REM = 0.889
 /** How far the CommandTable slides up as it fades in, as a multiple of the font size. */
 const TABLE_SLIDE_REM = 1.333
+
+/** Dimensions of the chevron path, in px, matching the Command Center design. These are the path's own bounds, as reported by Figma; the centre-aligned stroke adds half its width beyond them on every side, so the svg box is larger by CHEVRON_STROKE in each axis. */
+const CHEVRON_WIDTH = 25
+const CHEVRON_HEIGHT = 7
+const CHEVRON_STROKE = 5
+
+/** Colour of the chevron. Translucent enough that the drawer's backdrop reads through the mark itself, matching the design, where it is a 53% white stroke inside a layer at 23% opacity. */
+const CHEVRON_COLOR = token('colors.fgOverlay30')
+
+/** The svg box, grown from the path bounds to accommodate the stroke that overhangs them. */
+const CHEVRON_BOX_WIDTH = CHEVRON_WIDTH + CHEVRON_STROKE
+const CHEVRON_BOX_HEIGHT = CHEVRON_HEIGHT + CHEVRON_STROKE
 
 /**
  * A custom hook that returns the last non-zero number of multicursors.
@@ -427,7 +439,14 @@ const CommandCenter = () => {
                   padding: '0.556rem 1.333rem',
                 })}
               >
-                <ChevronIcon direction='down' />
+                <ChevronImg
+                  variant='stroked'
+                  direction='down'
+                  width={CHEVRON_BOX_WIDTH}
+                  height={CHEVRON_BOX_HEIGHT}
+                  strokeWidth={CHEVRON_STROKE}
+                  fill={CHEVRON_COLOR}
+                />
               </button>
             </Sheet.Header>
             <Sheet.Content
@@ -562,7 +581,14 @@ const CommandCenter = () => {
                       padding: '0.222rem 1.333rem',
                     })}
                   >
-                    <ChevronIcon direction='up' />
+                    <ChevronImg
+                      variant='stroked'
+                      direction='up'
+                      width={CHEVRON_BOX_WIDTH}
+                      height={CHEVRON_BOX_HEIGHT}
+                      strokeWidth={CHEVRON_STROKE}
+                      fill={CHEVRON_COLOR}
+                    />
                   </button>
                 </motion.div>
               </div>
