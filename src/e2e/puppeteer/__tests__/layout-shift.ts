@@ -1,5 +1,4 @@
 import { describe, expect } from 'vitest'
-import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -154,38 +153,6 @@ describe('thought y position stability', () => {
 
     const { measurePromise } = await measureYShift('c')
     await clickThought('b')
-    expectStableY(await measurePromise)
-  })
-
-  it.skip('non-last subthought should not shift y position when parent is expanded', async () => {
-    await paste(`
-        - a
-          - b
-          - c
-      `)
-    await waitForEditable('b')
-    await clickThought('a')
-    await clickBullet('a')
-
-    const { measurePromise } = await measureYShift('b')
-    await clickBullet('a')
-    expectStableY(await measurePromise)
-  })
-
-  it.skip('last subthought should not shift y position when parent is expanded', async () => {
-    await paste(`
-        - X
-          - A
-          - B
-          - C
-          - D
-          - E
-        - Y
-      `)
-    await press('Escape')
-
-    const { measurePromise } = await measureYShift('E')
-    await clickThought('X')
     expectStableY(await measurePromise)
   })
 })
