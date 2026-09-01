@@ -17,6 +17,7 @@ import paste from '../helpers/paste'
 import scrubSpaceBar from '../helpers/scrubSpaceBar'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -160,6 +161,32 @@ describe('Caret', () => {
     // a thought that can no longer be typed into
     expect(await getEditingText()).toBe('d')
     expect(await getSelection().focusNode?.textContent).toBe('d')
+    expect(await isKeyboardShown()).toBeTruthy()
+  })
+
+  // The same hit test escapes a note without any drag: a note is short enough that the point lands outside it
+  // as soon as the space bar is held, and it leaves from the end, where the note abuts the parent thought.
+  it('a caret scrubbed in a note stays in the note (#3276)', async () => {
+    await newThought()
+    await paste(
+      [''],
+      `
+    - a
+      - =note
+        - A`,
+    )
+
+    // y:60 compensates for the offset between web and screen coordinates
+    const note = await waitForElement('[aria-label="note-editable"]')
+    await tap(note, { y: 60 })
+    await waitUntil(isKeyboardShown)
+
+    // zero steps: holding the space bar is the whole gesture
+    await scrubSpaceBar(0)
+
+    // unfixed, the selection is left nowhere with the keyboard still up
+    expect(await getSelection().focusNode?.textContent).toBe('A')
+    expect(await getSelection().focusOffset).toBe(1)
     expect(await isKeyboardShown()).toBeTruthy()
   })
 
