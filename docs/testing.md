@@ -655,6 +655,10 @@ The primary Test, Puppeteer, and BrowserStack workflows run on pushes to `main` 
 
 Vercel Preview runs on pull requests separately from the test workflows. It deploys the pull request's `em-ai` service first, verifies its health route, then supplies that deployment's URL as `VITE_AI_URL` while building the matching `em` web preview. The GitHub `Preview` deployment links to the user-facing web app; the workflow summary includes the paired AI service URL for diagnostics. Both deploys run sequentially in one job so the GitHub deployment status represents the entire pair.
 
+Both it and [`Vercel Production`](../.github/workflows/vercel-production.yml) install the CLI once per run through [`.github/actions/vercel-cli`](../.github/actions/vercel-cli/action.yml) and call a plain `vercel` thereafter. The obvious `yarn dlx vercel` at each call site reinstalls it every time — six times in Preview, three in Production — and Yarn relinks and rebuilds on each one even with the download cached, so that costs about a minute and a half per preview run for a binary the run already has. Installing once also fixes one CLI version across every step of a run.
+
+The version is still whatever `latest` is when the run starts; the CLI is deliberately unpinned so deploys track Vercel's tooling. That leaves the install exposed to Vercel's own publish order: the CLI pins each of its workspace packages exactly, and if one is published *after* the CLI depending on it, `latest` is unresolvable until it lands and the install fails with `ETARGET` (`YN0082` under Yarn). It is rare — across the six releases before it the package reached npm 46 seconds to 4 minutes *ahead* of the CLI — but `vercel@59.11.0` inverted the order and left a seven-minute hole on 2026-09-01 that a preview run fell into, failing 26 seconds before the missing package was published. The install therefore retries for five minutes before giving up; the `pull`, `build`, and `deploy` steps that follow are left to fail fast on genuine errors.
+
 #### Path filtering
 
 Test, Puppeteer, BrowserStack, and Vercel Preview each carry the same `paths-ignore` filter, covering two groups:
