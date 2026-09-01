@@ -4,14 +4,15 @@ import { KnownDevices } from 'puppeteer'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
+import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
 import waitForSelector from '../helpers/waitForSelector'
-import { page } from '../setup'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -20,6 +21,9 @@ expect.extend({
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 it('DesktopCommandUniverse', async () => {
+  // hide the HUD so that the snapshot only includes the command universe and is not affected by unrelated toolbar or navbar changes
+  await hideHUD()
+
   await press('P', { meta: true })
 
   // wait for the desktop command universe to appear before taking screenshot
@@ -34,41 +38,49 @@ it('DesktopCommandUniverse', async () => {
   })
 })
 
-it('GestureMenu', async () => {
-  await page.emulate(KnownDevices['iPhone 15 Pro'])
+describe('mobile', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
-  await hideHUD()
+  it('GestureMenu', async () => {
+    await hideHUD()
 
-  await paste('Hello')
+    await paste('Hello')
 
-  // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
-  await clickThought('Hello')
+    // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
+    await clickThought('Hello')
 
-  // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Command Universe and does not need to be updated every time a gesture is added or changed.
-  await gesture('rdldrd', { hold: true })
+    // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Command Universe and does not need to be updated every time a gesture is added or changed.
+    await gesture('rdldrd', { hold: true })
 
-  // wait for the gesture menu to appear
-  await waitForSelector('[data-testid=popup-value]')
+    // wait for the gesture menu to appear
+    await waitForSelector('[data-testid=popup-value]')
 
-  expect(await screenshot()).toMatchImageSnapshot()
-})
+    // wait for the glow background image to load before taking snapshot
+    await waitForSelector('[data-testid=glow-background]')
 
-it('CommandCenter', async () => {
-  await page.emulate(KnownDevices['iPhone 15 Pro'])
+    // Hide the gesture trace before taking the snapshot. Its glow is drawn on a canvas and can render slightly
+    // differently across environments, causing flaky snapshot diffs. The trace is not relevant to this snapshot,
+    // so we hide it to keep the result consistent.
+    await hide('[data-testid=gesture-trace]')
 
-  // the undo button toggles between active and inactive states for some reason. Hence hide the HUD to ensure the undo button is not visible.
-  await hideHUD()
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
 
-  await paste('Hello')
+  it('CommandCenter', async () => {
+    // the undo button toggles between active and inactive states for some reason. Hence hide the HUD to ensure the undo button is not visible.
+    await hideHUD()
 
-  // Sometimes after pasting, the cursor is not on the thought. Hence click it to ensure the cursor is on the thought.
-  await clickThought('Hello')
+    await paste('Hello')
 
-  // open the Command Center
-  await gesture(openCommandCenterCommand)
+    // Sometimes after pasting, the cursor is not on the thought. Hence click it to ensure the cursor is on the thought.
+    await clickThought('Hello')
 
-  // wait for the command center panel to appear before taking screenshot
-  await waitForSelector('[data-testid=command-center-panel]')
+    // open the Command Center
+    await gesture(openCommandCenterCommand)
 
-  expect(await screenshot()).toMatchImageSnapshot()
+    // wait for the command center panel to appear before taking screenshot
+    await waitForSelector('[data-testid=command-center-panel]')
+
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
 })

@@ -10,8 +10,19 @@ public class WebviewBackgroundPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "WebviewBackgroundPlugin"
     public let jsName = "WebviewBackground"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "changeBackgroundColor", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "changeBackgroundColor", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setHistoryAvailability", returnType: CAPPluginReturnPromise)
     ]
+
+    /// Forwards native undo/redo gestures to the web layer as a `nativeHistory` event.
+    ///
+    /// Requires the bridge view controller to supply a `NativeHistoryWebView`; with any other web view the
+    /// gesture stays with WebKit and no event is emitted. See `NativeHistoryUndoManager`.
+    @objc override public func load() {
+        (webView as? NativeHistoryWebView)?.onNativeHistory = { [weak self] type in
+            self?.notifyListeners("nativeHistory", data: ["type": type.rawValue])
+        }
+    }
 
     @objc func changeBackgroundColor(_ call: CAPPluginCall) {
         let color = call.getString("color") ?? ""
@@ -19,6 +30,19 @@ public class WebviewBackgroundPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async {
             self.webView?.backgroundColor = UIColor(named: color)
             self.webView?.scrollView.backgroundColor = UIColor(named: color)
+        }
+    }
+
+    /// Reports whether the app has an action to undo or redo, which determines whether iOS offers the
+    /// native history gesture. Without it the undo manager would have to claim an availability it cannot
+    /// honor, and iOS would confirm an undo or redo that does nothing. See `NativeHistoryUndoManager`.
+    @objc func setHistoryAvailability(_ call: CAPPluginCall) {
+        let canUndo = call.getBool("canUndo") ?? false
+        let canRedo = call.getBool("canRedo") ?? false
+
+        DispatchQueue.main.async {
+            (self.webView as? NativeHistoryWebView)?.setHistoryAvailability(canUndo: canUndo, canRedo: canRedo)
+            call.resolve()
         }
     }
 }

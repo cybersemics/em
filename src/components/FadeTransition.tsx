@@ -16,6 +16,7 @@ const FadeTransition = ({
   type,
   id = 0,
   children,
+  nodeRef,
   ...props
 }: PropsWithChildren<
   {
@@ -40,15 +41,8 @@ const FadeTransition = ({
   const ref = useRef<HTMLDivElement>(null)
 
   return (
-    <CSSTransition
-      key={id}
-      classNames={fadeClasses}
-      timeout={durations.get(type)}
-      // This would get overridden by {...props} anyway, but make it explicit for clarity.
-      nodeRef={props.nodeRef ?? ref}
-      {...props}
-    >
-      {props.nodeRef ? (
+    <CSSTransition key={id} classNames={fadeClasses} timeout={durations.get(type)} {...props} nodeRef={nodeRef ?? ref}>
+      {nodeRef ? (
         // If a nodeRef was provided, render children directly. Some components like ContextBreadcrumbs rely on the DOM hierarchy and will break if wrapped in a span. This can be removed if we refactor those components to not rely on the DOM hierarchy.
         children
       ) : (

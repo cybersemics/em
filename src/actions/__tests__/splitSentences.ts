@@ -1,10 +1,14 @@
+import MimeType from '../../@types/MimeType'
 import newThought from '../../actions/newThought'
 import splitSentences from '../../actions/splitSentences'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+import cursorForward from '../cursorForward'
+import importText from '../importText'
 
 /**
  * Function: splitThought.
@@ -12,11 +16,11 @@ import reducerFlow from '../../util/reducerFlow'
  * @param thought The thought that needs to be split.
  * @returns The thought string after being split.
  */
-function splitThought(value: string) {
+function splitThought(value: string, format: MimeType = 'text/plain') {
   const steps = [newThought(value), splitSentences()]
 
   const stateNew = reducerFlow(steps)(initialState())
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  const exported = exportContext(stateNew, [HOME_TOKEN], format)
   return exported
 }
 
@@ -674,6 +678,20 @@ describe('parenthetical content', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - This (has parentheses) in the middle`)
   })
+
+  it('cursorForward moves to the extracted subthought after splitting a thought with existing children', () => {
+    const text = `
+      - One two (three four)
+        - A
+        - B
+        - C
+    `
+    const steps = [importText({ text }), setCursor(['One two (three four)']), splitSentences(), cursorForward]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['One two', 'three four'])
+  })
 })
 
 describe('dash splitting', () => {
@@ -722,6 +740,37 @@ describe('dash splitting', () => {
     - two - three`)
   })
 
+  it('splits by dash and then by comma when the dash is surrounded by whitespace', () => {
+    const value = 'Shopping list - apples, bananas, potatoes'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Shopping list
+    - apples
+    - bananas
+    - potatoes`)
+  })
+
+  it('splits by comma when the dash is not surrounded by whitespace', () => {
+    const value = 'Shopping list, apples-bananas, potatoes'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Shopping list
+  - apples-bananas
+  - potatoes`)
+  })
+
+  it('preserves formatting on each comma-delimited segment after a dash split', () => {
+    const value = '<b>Shopping list - apples, bananas</b>'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - **Shopping list**
+    - **apples**
+    - **bananas**`)
+  })
+
   it('does not split when dash is at the beginning', () => {
     const value = '- one'
     const exported = splitThought(value)
@@ -765,5 +814,212 @@ describe('dash splitting', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - one
     - 1.`)
+  })
+})
+
+describe('symbol splitting', () => {
+  // https://github.com/cybersemics/em/issues/4393
+  it('splits thought on arrows', () => {
+    const value = 'a → b → c'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+  })
+
+  it('splits thought on each of the symbols ↑↓←→+', () => {
+    const value = 'a ↑ b ↓ c ← d → e + f'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e
+  - f`)
+  })
+
+  it('splits thought on comma rather than on a symbol', () => {
+    const value = 'a → b, c'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a → b
+  - c`)
+  })
+
+  it('splits thought on sentence punctuation rather than on a symbol', () => {
+    const value = 'a → b. c'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a → b.
+  - c`)
+  })
+
+  it('splits thought on a symbol when the period is part of an abbreviation', () => {
+    const value = 'Mr. Jones → and me'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Mr. Jones
+  - and me`)
+  })
+
+  it('splits thought on a symbol when the period is part of a url', () => {
+    const value = 'go to en.wikipedia.org → and back'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - go to en.wikipedia.org
+  - and back`)
+  })
+})
+
+describe('colon splitting', () => {
+  it('splits thought with colon into main thought and subthought', () => {
+    const value = 'Start: 1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Start
+    - 1`)
+  })
+
+  it('splits on first colon when multiple colons are present', () => {
+    const value = 'one: two: three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two: three`)
+  })
+
+  it('does not split a time, since the colon is not followed by a space', () => {
+    const value = '10:30'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - 10:30`)
+  })
+
+  it('does not split when the colon is at the beginning', () => {
+    const value = ': 1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - : 1`)
+  })
+})
+
+describe('slash splitting', () => {
+  it('splits thought with slashes into a chain of descendants', () => {
+    const value = 'one/two/three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two
+      - three`)
+  })
+
+  it('splits thought with a single slash into main thought and subthought', () => {
+    const value = 'one/two'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two`)
+  })
+
+  it('splits thought with slashes and extra spaces', () => {
+    const value = 'one / two / three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two
+      - three`)
+  })
+
+  it('does not split when slash is at the beginning', () => {
+    const value = '/one'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - /one`)
+  })
+
+  it('does not split when slash is at the end', () => {
+    const value = 'one/'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one/`)
+  })
+
+  it('splits by slash when there is only one sentence ending with a period', () => {
+    const value = 'one/two.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two.`)
+  })
+
+  it('splits by sentences when both slashes and multiple sentences are present', () => {
+    const value = 'one/two. three.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one/two.
+  - three.`)
+  })
+
+  it('splits by dash before slash when both are present', () => {
+    const value = 'one - two/three'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - two/three`)
+  })
+
+  it('does not split a url containing slashes', () => {
+    const value = 'https://abc.com/xyz/def'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - https://abc.com/xyz/def`)
+  })
+
+  it('preserves formatting on each slash-delimited segment', () => {
+    const value = '<b>one/two</b>'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - **one**
+    - **two**`)
+  })
+})
+
+describe('formatting', () => {
+  // https://github.com/cybersemics/em/issues/4229
+  it('preserves formatting on every comma-delimited segment, including segments in the middle', () => {
+    const value = '<font color="#ff573d">Hello, beautiful, people.</font>'
+    const exported = splitThought(value, 'text/html')
+
+    expect(exported).toBe(`<ul>
+  <li>${HOME_TOKEN}  
+    <ul>
+      <li><font color="#ff573d">Hello</font></li>
+      <li><font color="#ff573d">beautiful</font></li>
+      <li><font color="#ff573d">people.</font></li>
+    </ul>
+  </li>
+</ul>`)
   })
 })

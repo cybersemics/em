@@ -3,13 +3,19 @@ import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import exportThoughts from '../helpers/exportThoughts'
+import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
+import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
-import { page } from '../setup'
+import waitUntil from '../helpers/waitUntil'
+import { page } from '../session'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
 // 'd' fails with slight rendering differences for some reason.
@@ -20,7 +26,6 @@ import { page } from '../setup'
 const UNCLE_DIFF_THRESHOLD = 0.4
 
 // Override EXPAND_HOVER_DELAY
-// TODO: Fails intermittently with "Drag destination element not found" when set to 10.
 const MOCK_EXPAND_HOVER_DELAY = 100
 
 expect.extend({
@@ -30,39 +35,46 @@ expect.extend({
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 /**
- * Checks if an element with the given text content is visible in the UI.
+ * Waits until the element with the given text content is not visible in the UI, i.e. unmounted, or hidden by display: none, visibility: hidden, or opacity: 0 on itself or any ancestor.
  *
- * This function checks not only if the element exists in the DOM, but also if it or any parent has CSS properties that would hide it (display: none, visibility: hidden, opacity: 0).
+ * Poll because hover-collapse happens asynchronously. It only occurs after the hover delay expires and React finishes rendering, so a fixed sleep can be flaky on CI.
  *
  * @param text The exact text content to search for.
  * @param selector The CSS selector to search within (defaults to '[data-editable]', which selects thoughts).
- * @returns Promise<boolean> True if the element is visible, false otherwise.
+ * @throws If the element is still visible after the timeout.
  */
-const isElementVisible = async (text: string, selector = '[data-editable]'): Promise<boolean> => {
-  return page.evaluate(
-    (text, selector) => {
-      const elements = Array.from(document.querySelectorAll(selector))
-      const element = elements.find(el => el.innerHTML === text)
+const waitUntilElementNotVisible = async (text: string, selector = '[data-editable]'): Promise<void> => {
+  // match the waitForEditable timeout, which accounts for parallel test load
+  const timeout = 6000
+  await page
+    .waitForFunction(
+      (text, selector) => {
+        const elements = Array.from(document.querySelectorAll(selector))
+        const element = elements.find(el => el.innerHTML === text)
 
-      // If element doesn't exist, it's not visible
-      if (!element) return false
+        // If element doesn't exist, it's not visible
+        if (!element) return true
 
-      // Check if the element or any of its ancestors has display: none or visibility: hidden
-      let currentNode: Element | null = element
-      while (currentNode) {
-        const style = window.getComputedStyle(currentNode)
-        if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
-          return false
+        // Check if the element or any of its ancestors has display: none, visibility: hidden, or opacity: 0
+        let currentNode: Element | null = element
+        while (currentNode) {
+          const style = window.getComputedStyle(currentNode)
+          if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+            return true
+          }
+          // Move up to parent node
+          currentNode = currentNode.parentElement
         }
-        // Move up to parent node
-        currentNode = currentNode.parentElement
-      }
 
-      return true
-    },
-    text,
-    selector,
-  )
+        return false
+      },
+      { timeout },
+      text,
+      selector,
+    )
+    .catch(() => {
+      throw new Error(`Element "${text}" is still visible after ${timeout}ms. Expected it to be hidden or unmounted.`)
+    })
 }
 /* From jest-image-snapshot README:
     
@@ -99,6 +111,37 @@ describe('drag', () => {
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
+  })
+
+  // https://github.com/cybersemics/em/issues/5229
+  it('cancels a drop on the dragged thought own position', async () => {
+    await paste(`
+      - aaa
+      - bbb
+      - ccc
+    `)
+
+    await clickThought('aaa')
+
+    // hover the drop target directly below aaa, i.e. aaa's own position
+    await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
+
+    // the drop hover is still shown at the thought's own position; only the drop is cancelled
+    // (.drop-hover is the class that dropHoverRecipe gives every drop hover bar)
+    await waitUntil(() => !!document.querySelector('.drop-hover'), { timeout: 6000 })
+
+    // release on the same drop target
+    await dragAndDropThought('aaa', 'aaa', { position: 'after', skipMouseDown: true })
+
+    // moveThought throws "afterId must be null or a child of the destination context" if the no-op drop is not cancelled
+    expect(await page.evaluate(() => (window.em as WindowEm).testHelpers.getState().error)).toBeNull()
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- aaa
+- bbb
+- ccc
+`)
   })
 
   it('DropChild', async () => {
@@ -317,6 +360,37 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
+  it('renders destination link in moved alert', async () => {
+    await paste(`
+      - a
+        - b
+      - c
+      - d
+    `)
+
+    await press('Escape')
+
+    await dragAndDropThought('d', 'a', {
+      position: 'child',
+      showAlert: true,
+    })
+
+    await waitForAlertContent('"d" moved to "a"')
+
+    const destinationLinkText = await page.$eval(
+      '[data-testid=alert-content] [data-thought-link]',
+      el => el.textContent,
+    )
+    expect(destinationLinkText).toBe('a')
+
+    await page.click('[aria-label=nav] [data-testid=home] a')
+    await page.waitForFunction(() => !document.querySelector('[data-editing=true] [data-editable]'))
+    expect(await getEditingText()).toBeUndefined()
+
+    await page.click('[data-testid=alert-content] [data-thought-link]')
+    expect(await getEditingText()).toBe('a')
+  })
+
   it('should allow dropping before first thought in table row', async () => {
     await paste(`
       - x
@@ -409,6 +483,94 @@ describe('drop', () => {
       })
     })
   })
+
+  // https://github.com/cybersemics/em/issues/5089
+  it('drops a thought dragged out of a cyclic context', async () => {
+    await paste(`
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `)
+
+    await clickThought('a')
+    await clickThought('m')
+    await command('toggleContextView')
+    // move the cursor to the cyclic context a/m~/a so that x is rendered
+    await press('ArrowDown')
+    await waitForEditable('x')
+
+    await dragAndDropThought('x', 'm', { position: 'before' })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+  - x
+  - m
+- b
+  - m
+    - y
+`)
+  })
+})
+
+/* Multiple drop hovers pinned in a single snapshot for comparison of their relative position and width.
+   testFlags.pinDropHovers keeps each drop hover visible after it has been hovered during a drag, so a
+   single screenshot can capture more than one. The drop hover colors alternate by depth, which visually
+   distinguishes the pinned bars. See: https://github.com/cybersemics/em/issues/3115. */
+describe('pinned drop hovers', () => {
+  beforeEach(hideHUD)
+
+  it('DropChild of d and DropEnd after d', async () => {
+    await paste(`
+      - x
+      - a
+        - b
+        - c
+        - d
+    `)
+
+    await simulateDragAndDrop({ pinDropHovers: true })
+
+    await clickThought('a')
+
+    // hover the DropChild of the leaf thought d (drop as a child of d)
+    await dragAndDropThought('x', 'd', { hold: true, position: 'child' })
+
+    // then hover the DropEnd at the end of a's children (drop as a sibling after d)
+    await dragAndDropThought('x', 'd', { hold: true, position: 'after', skipMouseDown: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('cliff DropEnd and root sibling ThoughtDrop', async () => {
+    // pin a and b open so that c is visible without the cursor, creating a multi-level cliff below c
+    await paste(`
+      - x
+      - a
+        - =pin
+          - true
+        - b
+          - =pin
+            - true
+          - c
+      - d
+    `)
+
+    await simulateDragAndDrop({ pinDropHovers: true })
+
+    // hover the cliff DropEnd below the deepest thought c
+    await dragAndDropThought('x', 'c', { hold: true, position: 'after' })
+
+    // then hover the ThoughtDrop before the root thought d
+    await dragAndDropThought('x', 'd', { hold: true, position: 'before', skipMouseDown: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })
 
 describe('hover expansion', () => {
@@ -416,9 +578,8 @@ describe('hover expansion', () => {
     await hideHUD()
 
     // inject MOCK_EXPAND_HOVER_DELAY
-    const em = window.em as WindowEm
     await page.evaluate(value => {
-      em.testFlags.expandHoverDelay = value
+      window.em.testFlags.expandHoverDelay = value
     }, MOCK_EXPAND_HOVER_DELAY)
   })
 
@@ -443,8 +604,8 @@ describe('hover expansion', () => {
     // Start dragging thought C
     await dragAndDropThought('C', 'A', { hold: true, position: 'child' })
 
-    // Wait for expansion to occur
-    await sleep(MOCK_EXPAND_HOVER_DELAY)
+    // Wait for the expansion to commit before starting the next drag.
+    await waitForEditable('A1')
 
     // Verify that A1 and A2 are visible (A has expanded)
     const a1Editable = await waitForEditable('A1')
@@ -465,20 +626,15 @@ describe('hover expansion', () => {
     // First expand thought A by dragging over it
     await dragAndDropThought('C', 'A', { hold: true, position: 'child' })
 
-    // Wait for expansion to occur
-    await sleep(MOCK_EXPAND_HOVER_DELAY)
+    // Wait for the expansion to commit before starting the next drag.
+    await waitForEditable('A1')
 
     // Now drag to thought B instead
     await dragAndDropThought('C', 'B', { hold: true, position: 'after', skipMouseDown: true })
 
-    await sleep(MOCK_EXPAND_HOVER_DELAY)
-
     // Verify that A1 and A2 are no longer visible (A has collapsed)
-    const a1Visible = await isElementVisible('A1')
-    const a2Visible = await isElementVisible('A2')
-
-    expect(a1Visible).toBe(false)
-    expect(a2Visible).toBe(false)
+    await waitUntilElementNotVisible('A1')
+    await waitUntilElementNotVisible('A2')
   })
 
   it('collapses nested thoughts when dragging away', async () => {
@@ -495,14 +651,11 @@ describe('hover expansion', () => {
     // First expand thought A by dragging over it
     await dragAndDropThought('C', 'A', { hold: true, position: 'child' })
 
-    // Wait for expansion to occur
-    await sleep(MOCK_EXPAND_HOVER_DELAY)
+    // Wait for the expansion to commit before starting the next drag.
+    await waitForEditable('A1')
 
     // Now move to A1 using the dragAndDropThought function with skipMouseDown
     await dragAndDropThought('C', 'A1', { hold: true, position: 'child', skipMouseDown: true })
-
-    // Wait for A1 to expand
-    await sleep(MOCK_EXPAND_HOVER_DELAY)
 
     // Verify that A1-1 and A1-2 are visible (A1 has expanded)
     const a11Editable = await waitForEditable('A1-1')
@@ -514,26 +667,15 @@ describe('hover expansion', () => {
     // Now drag to A2
     await dragAndDropThought('C', 'A2', { hold: true, position: 'child', skipMouseDown: true })
 
-    // Wait for any state changes
-    await sleep(MOCK_EXPAND_HOVER_DELAY)
-
     // Verify that A1-1 and A1-2 are no longer visible (A1 has collapsed)
-    const a11Visible = await isElementVisible('A1-1')
-    const a12Visible = await isElementVisible('A1-2')
-
-    expect(a11Visible).toBe(false)
-    expect(a12Visible).toBe(false)
+    await waitUntilElementNotVisible('A1-1')
+    await waitUntilElementNotVisible('A1-2')
 
     // Now drag completely away to B
     await dragAndDropThought('C', 'B', { hold: true, position: 'after', skipMouseDown: true })
 
-    await sleep(MOCK_EXPAND_HOVER_DELAY)
-
     // Verify that all A's children (A1 and A2) are no longer visible (A has collapsed)
-    const a1Visible = await isElementVisible('A1')
-    const a2Visible = await isElementVisible('A2')
-
-    expect(a1Visible).toBe(false)
-    expect(a2Visible).toBe(false)
+    await waitUntilElementNotVisible('A1')
+    await waitUntilElementNotVisible('A2')
   })
 })

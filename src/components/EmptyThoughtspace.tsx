@@ -31,7 +31,9 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
   return (
     <div
       aria-label='empty-thoughtspace'
-      className={css({ animation: '{durations.medium} ease-out 0s normal forwards fadein' })}
+      className={css({
+        animation: '{durations.medium} ease-out 0s normal forwards fadein',
+      })}
     >
       {
         // show nothing during the preconnecting phase (See: useOfflineStatus)

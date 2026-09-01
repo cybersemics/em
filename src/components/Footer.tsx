@@ -9,7 +9,7 @@ import fontSizeDown from '../actions/fontSizeDown'
 import fontSizeUp from '../actions/fontSizeUp'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { tsid } from '../data-providers/yjs'
+import { tsid } from '../data-providers/thoughtspaceSession'
 import scrollTo from '../device/scrollTo'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -216,6 +216,10 @@ const Footer = () => {
       <li className={liClass}>
         <span className={css({ color: 'dim' })}>App Version: </span>
         {pkg.version}
+      </li>
+      <li className={liClass}>
+        <span className={css({ color: 'dim' })}>Commit: </span>
+        <span className={css({ fontStyle: 'monospace' })}>{__COMMIT_HASH__}</span>
       </li>
     </ul>
   )

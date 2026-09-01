@@ -8,7 +8,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **absolute context** — A second root context whose ordering reflects recency rather than the home tree. `state.absoluteContextTime` is the timestamp captured when the absolute context was last entered; it shifts visibility for newly added thoughts so they surface in the absolute view. See `childrenFilterPredicate` in [`getChildren.ts`](../src/selectors/getChildren.ts).
 
-**accessToken** — Per-device 21-char nanoid stored in `localStorage`. Authenticates the device against the (currently inert) websocket server. Override with `?auth=<token>`. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
+**accessToken** — Per-device 21-char nanoid stored in `localStorage`. The device's secret: *clientId* (and from it the *replicaId*) is derived from it, and it keys the device's entry in *permissionsStore*. Override with `?auth=<token>`. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
 
 **action** — A Redux state-mutating function under [`/src/actions`](../src/actions). Reducers are preferred over thunks; thunks only when a side effect is needed. Compose with [`util/reducerFlow`](../src/util/reducerFlow.ts).
 
@@ -16,15 +16,15 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **attribute / meta-attribute** — A child thought whose value starts with `=` (e.g. `=pin`, `=style`, `=view`). Meta-attributes change app behaviour for their parent (or, with `=children`/`=grandchildren`, for descendants). Stored under their value in `childrenMap` for `O(1)` lookup. See [metaprogramming.md](metaprogramming.md).
 
+**attribute-child index** — `em_attribute_children`, an app-owned SQLite table mapping each `=attribute` child to its parent and value. It restores the value-keying half of *childrenMap*, which TreeCRDT itself does not store. Rebuilt from the tree when its version changes, then maintained on every write. See [persistence.md → Derived tables](persistence.md#derived-tables).
+
 **autocrop** — Vertical: hides the empty space above a deep cursor by translating the layout container upward and counter-scrolling to keep visible thoughts stable. Horizontal: see *indent*. See [layout-rendering.md → useAutocrop](layout-rendering.md#useautocrop-vertical-autocrop).
 
-**autofocus** — Per-thought visibility classification (`show | dim | hide | hide-parent`) computed from depth relative to the cursor. The closer to the cursor, the more visible. See [`Autofocus.ts`](../src/@types/Autofocus.ts) and [`calculateAutofocus.ts`](../src/selectors/calculateAutofocus.ts).
+**autofocus** — Per-thought visibility classification (`show | dim | hide | hide-parent`) computed from depth relative to the cursor. The closer to the cursor, the more visible. `=focus/Zoom` overrides this by hiding everything outside the zoomed thought's subtree. See [`Autofocus.ts`](../src/@types/Autofocus.ts) and [`calculateAutofocus.ts`](../src/selectors/calculateAutofocus.ts).
 
 ## B
 
 **backend (drag)** — react-dnd backend selected by `isTouch`: `TouchBackend` on touch, `HTML5Backend` on desktop. Both patched. See [drag-and-drop.md → Backend selection](drag-and-drop.md#backend-selection).
-
-**background replication** — Loads a Y.Doc and deallocates after first sync; doesn't retain. Used by the doclog controller and one-shot reads. Contrast with *foreground replication*. See [persistence.md → Replication](persistence.md#replication).
 
 **belowCursor** — Flag set on every `TreeThought` after the cursor is encountered during the in-order walk. Used to exclude hidden thoughts below the cursor from `totalHeight` so the document doesn't have a giant trailing dead zone.
 
@@ -58,13 +58,11 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## D
 
-**DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. `db` in [`yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts) is the live implementation.
+**DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. The active implementation is exported through [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts).
 
-**dbQueue / freeQueue** — Two halves of the push-queue split. `dbQueue` writes batches with `local || remote` set; `freeQueue` releases entries from the in-memory cache. See [persistence.md → Push queue](persistence.md#push-queue-redux--yjs).
+**dbQueue / freeQueue** — Two halves of the push-queue split. `dbQueue` writes batches with `local || remote` set; `freeQueue` releases entries from the in-memory cache. See [persistence.md → Push queue](persistence.md#push-queue-redux--treecrdt).
 
-**docKey** — Identifier for a Y.Doc. For a thought, it's the parent's `ThoughtId` (or `ROOT_PARENT_ID` for root contexts). For a Lexeme, `hashThought(value)`. The `docKeys: Map<ThoughtId, string>` in `thoughtspace.ts` is the ledger that maps each thought to the doc that contains it.
-
-**doclog** — Yjs document used to track replication state across clients. Driven by a *background replication* controller.
+**docId** — The TreeCRDT document identifier for the thoughtspace. Equal to *tsid*. See [persistence.md → The TreeCRDT client](persistence.md#the-treecrdt-client).
 
 **DragCanceled / DragHold / DragInProgress / Inactive** — Values of [`LongPressState`](../src/constants.ts), the state machine for the drag/long-press subsystem. See [drag-and-drop.md → State machine](drag-and-drop.md#state-machine-statelongpress).
 
@@ -76,25 +74,25 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **EM_TOKEN** — Sentinel `ThoughtId` (`'__EM__'`) for the hidden system context where user settings (e.g. `[EM, 'Settings']`) are stored. See [`constants.ts`](../src/constants.ts).
 
-**expanded** — `state.expanded: Index<boolean>`, keyed by `hashPath(path)`. A thought's children are walked by `linearizeTree` only if its path is in this map. See [`expandThoughts`](../src/selectors/expandThoughts.ts).
+**expanded** — `state.expanded: Index<boolean>`, keyed by `hashPath(path)`. A thought's children are walked by `linearizeTree` only if its path is in this map. Expansion is derived from the cursor _and_ the multicursor: a selected thought expands its ancestors but stays collapsed itself, so any reducer that changes `state.multicursors` must recalculate `expanded`. See [`expandThoughts`](../src/selectors/expandThoughts.ts).
 
 ## F
 
 **fetchDescendants** — Async iterable that does breadth-first traversal of thought IDs and yields `{ thoughtIndex, lexemeIndex }` chunks. The actual pull engine. See [persistence.md → fetchDescendants](persistence.md#fetchdescendants-the-actual-pull-engine).
 
-**foreground replication** — Default replication mode. Adds the docKey to `thoughtRetained`, subscribes to change events, and keeps the Y.Doc cached until `freeThought` is called. Contrast with *background replication*.
-
-**freeThought / freeLexeme** — Releases a Y.Doc from the in-memory cache (after IDB sync). Idempotent and safe under concurrent re-pull. Distinct from *deleteThought*, which also wipes IDB.
+**freeThought / freeLexeme** — `DataProvider` methods for releasing a thought or Lexeme from the provider's in-memory cache. No-ops under TreeCRDT, which keeps the whole thoughtspace in one SQLite database; freeing memory means dropping entries from the Redux indexes. See [persistence.md → Memory management](persistence.md#memory-management).
 
 ## G
 
 **generating** — Flag on `Thought` set while content is being produced by AI. Distinct from `pending` (loading from storage).
 
+**GLOBAL_ROOT_TOKEN** — The root node of the TreeCRDT tree, and the value `ROOT_PARENT_ID` aliases. `HOME_TOKEN`, `EM_TOKEN`, and `ABSOLUTE_TOKEN` are inserted as its children during initialization. See [`constants.ts`](../src/constants.ts).
+
 **gesture** — Swipe pattern for command activation on touch. Defined per command via the `gesture` field on [`Command`](../src/@types/Command.ts). See [commands.md → Gesture activation](commands.md#gesture-activation).
 
 ## H
 
-**HOME_TOKEN** — Sentinel `ThoughtId` (`'__ROOT__'`) for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
+**HOME_TOKEN** — Sentinel `ThoughtId` for the home root. The path `[HOME_TOKEN]` represents the root thought itself; every regular `Path` starts with a child of HOME (or ABSOLUTE) and the root token is implied. See [data-model.md → Path](data-model.md#path).
 
 ## I
 
@@ -116,9 +114,13 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## M
 
+**materialization** — TreeCRDT applying operations to its SQLite read model, after which `client.onMaterialized` fires. em ignores events produced by its own writes (identified by *writeId*) and refreshes Redux from the rest. See [persistence.md → Change observation](persistence.md#change-observation-materialization).
+
 **meta-attribute** — See *attribute*.
 
 **ministore** — Lightweight non-Redux store for ephemeral UI state, in [`/src/stores`](../src/stores). Used when the value doesn't need to participate in undo/redo, persistence, or selectors (e.g. `editingValue`, `viewport`, `scrollTop`).
+
+**movePlacements** — `Index<ThoughtId | null>` on `PushBatch`. Keyed by moved thought; the value is the sibling to place it after (`null` = first). Carries reorder intent from the action layer to TreeCRDT, which stores sibling order directly instead of by rank. See [persistence.md → Order and placement](persistence.md#order-and-placement).
 
 **multicursor** — Multiple selected thoughts. `state.multicursors: Index<Path>` keyed by `hashPath(path)`. Commands that support multicursor declare it via the `multicursor` field on `Command`. Drag picks up the full set into `draggingThoughts`. See [commands.md → Multicursor](commands.md#multicursor).
 
@@ -132,13 +134,13 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **pending** — Flag on `Thought` indicating the id is known to exist (`thoughtIndex[id]` is set) but the real data hasn't been pulled from local/remote storage yet. UI renders placeholders; the pull queue fetches based on visible pending IDs.
 
-**permissionsClientDoc** — Separate Y.Doc holding `Index<Share>` keyed by access token (one entry per device with access). CRUD in [`permissionsModel.ts`](../src/data-providers/yjs/permissionsModel.ts).
+**permissionsStore** — Ministore holding `Index<Share>` keyed by access token (one entry per device with access), persisted with `idb-keyval` under `em-permissions:${tsid}`. See [`permissionsStore.ts`](../src/data-providers/permissionsStore.ts); CRUD in [`permissionsModel.ts`](../src/data-providers/permissionsModel.ts).
 
-**=pin / =pinChildren** — Meta-attributes that keep a thought (or all children of a context) expanded. `=pin` is also pre-loaded eagerly during `fetchDescendants` to avoid a flash of expanded children before `=pin/false` resolves.
+**=pin** — Meta-attribute that keeps a thought expanded. Scoped variants: `=children/=pin` keeps all children of a context expanded (the replacement for the old `=pinChildren`), and `=descendants/=pin` keeps the entire subtree expanded. `=pin` is also pre-loaded eagerly during `fetchDescendants` to avoid a flash of expanded children before `=pin/false` resolves. See [metaprogramming.md](metaprogramming.md#pinning--expansion).
 
-**pull queue** — [`pullQueue.ts`](../src/redux-middleware/pullQueue.ts) middleware that, on every action, computes the visible thought IDs and triggers `pull` for any pending ones. Debounced 10 ms, throttled 100 ms. See [persistence.md → Pull queue](persistence.md#pull-queue-yjs--redux).
+**pull queue** — [`pullQueue.ts`](../src/redux-middleware/pullQueue.ts) middleware that, on every action, computes the visible thought IDs and triggers `pull` for any pending ones. Debounced 10 ms, throttled 100 ms. See [persistence.md → Pull queue](persistence.md#pull-queue-treecrdt--redux).
 
-**push queue** — [`pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) Redux enhancer that drains `state.pushQueue` after every action, partitioning into `dbQueue` (writes) and `freeQueue` (cache release). See [persistence.md → Push queue](persistence.md#push-queue-redux--yjs).
+**push queue** — [`pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) Redux enhancer that drains `state.pushQueue` after every action, partitioning into `dbQueue` (writes) and `freeQueue` (cache release). See [persistence.md → Push queue](persistence.md#push-queue-redux--treecrdt).
 
 ## Q
 
@@ -146,25 +148,27 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## R
 
-**rank** — `number` on `Thought` that determines sort order among siblings. Unique per parent; absolute value irrelevant. Fractional and negative values let inserts avoid renumbering. Overridden visually by `=sort` if set. See [data-model.md → rank](data-model.md#rank).
+**rank** — `number` on `Thought` that determines sort order among siblings. Unique per parent; absolute value irrelevant. Fractional and negative values let inserts avoid renumbering. Rank is the only order the render path reads: a parent's `=sort` takes effect by renumbering its children's ranks, not by re-sorting at render time. See [data-model.md → rank](data-model.md#rank).
 
 **reducerFlow** — [`util/reducerFlow.ts`](../src/util/reducerFlow.ts) — composes a list of reducers into a single reducer. Standard pattern in `actions/`.
 
-**replication** — Loading a Y.Doc into the in-memory cache (from local IDB and, when wired, from the websocket server). `replicateThought` / `replicateLexeme` are idempotent under concurrency. See [persistence.md → Replication](persistence.md#replication).
+**replicaId** — The 32-byte id TreeCRDT mints local operations under, derived from *clientId* by `clientIdToReplicaId`. A low-level CRDT identity, not an auth identity.
+
+**replication** — Loading thoughts out of local storage and into memory. [`replicateTree`](../src/data-providers/data-helpers/replicateTree.ts) walks a subtree in the background without populating Redux; the pull queue is the foreground path. `syncStatusStore.replicationProgress` tracks it for the UI.
 
 **ROOT_CONTEXTS** — `[HOME_TOKEN, ABSOLUTE_TOKEN]`. The two top-level contexts.
 
-**ROOT_PARENT_ID** — Sentinel `ThoughtId` used as the docKey for root-context Y.Docs. Distinct from `HOME_TOKEN` / `ABSOLUTE_TOKEN`, which are the root *thoughts*; `ROOT_PARENT_ID` is the *parent* of those root thoughts in the persistence layer.
+**ROOT_PARENT_ID** — Sentinel `ThoughtId` for the parent of the root thoughts. An alias for `GLOBAL_ROOT_TOKEN`, the TreeCRDT tree root. Distinct from `HOME_TOKEN` / `ABSOLUTE_TOKEN`, which are the root *thoughts*; `ROOT_PARENT_ID` is their *parent*. `getThoughtById` reports it as the `parentId` of any thought whose TreeCRDT parent is the tree root.
 
 ## S
 
-**schema version** — `SCHEMA_LATEST` in [`constants.ts`](../src/constants.ts). Sent with every `db.updateThoughts` call so legacy data can be migrated.
+**session lock** — Exclusive Web Lock named `em-treecrdt-session:${tsid}`, held for the lifetime of the page so only one tab opens a thoughtspace at a time. A second tab renders [`ThoughtspaceInUse`](../src/components/ThoughtspaceInUse.tsx) instead of the app. See [persistence.md → Single-tab access](persistence.md#single-tab-access).
 
 **shortcut** — Legacy term for *command*. The folder was renamed `/src/shortcuts → /src/commands`; some doc references and helper names persist.
 
 **SimplePath** — A `Path` branded as having no cycles (no context-view crossings). Required by code that needs a single contiguous context. Get one via `simplifyPath` or by structurally guaranteeing it and casting. See [data-model.md → SimplePath](data-model.md#simplepath).
 
-**=sort** — Meta-attribute that overrides manual rank ordering. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
+**=sort** — Meta-attribute that sorts a context's children, replacing their manual order by renumbering their ranks. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
 
 **splitChain** — [`splitChain.ts`](../src/selectors/splitChain.ts) — splits a `Path` into `SimplePath[]` at every context-view boundary. Inverse: [`contextChainToPath`](../src/util/contextChainToPath.ts).
 
@@ -172,27 +176,31 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## T
 
-**tangential context** — A context that hasn't been pulled directly through the cursor's ancestor chain but is referenced via a Lexeme entry in another loaded thought. `replicateThought` walks the Lexeme's `cx-${id}` entries and pulls ancestors so tangential references resolve. See `thoughtspace.ts` lines around the comment "tangential contexts".
+**tangential context** — A context that hasn't been pulled directly through the cursor's ancestor chain but is referenced from elsewhere — via a Lexeme's `contexts`, or by the context view. `fetchDescendants` enqueues the parent of any thought whose parent isn't loaded, so the ancestor chain resolves. See the comment "load ancestors of tangential contexts" in [`fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts).
 
-**Thought** — In-memory record under `state.thoughts.thoughtIndex`. Distinct from `ThoughtDb`, the persisted shape with single-letter keys (`v`, `r`, `m`, …). See [data-model.md → Thought](data-model.md#thought) and [persistence.md → Compact storage keys](persistence.md#compact-storage-keys).
+**Thought** — In-memory record under `state.thoughts.thoughtIndex`. Only part of it is persisted: TreeCRDT stores a *ThoughtPayload* per node and derives `parentId`, `rank`, and `childrenMap` from the tree on read. See [data-model.md → Thought](data-model.md#thought) and [persistence.md → Document model](persistence.md#document-model).
 
-**ThoughtDb** — On-disk shape of a thought: same fields as `Thought` but keyed by single letters to keep CRDT updates compact. `thoughtToDb` / `getThought` translate.
+**ThoughtId** — Branded string identifying a thought: 32 lowercase hex characters (128 bits), the format TreeCRDT requires for a node id. Minted by [`createId`](../src/util/createId.ts). See [`@types/ThoughtId.ts`](../src/@types/ThoughtId.ts).
 
-**ThoughtId** — Branded 21-char nanoid string identifying a thought. See [`@types/ThoughtId.ts`](../src/@types/ThoughtId.ts).
+**ThoughtPayload** — The bytes stored on a TreeCRDT node: JSON-encoded `value`, `created`, `lastUpdated`, `updatedBy`, and optional `archived`. See [`payload.ts`](../src/data-providers/treecrdt/payload.ts).
 
 **thoughtspace** — A user's complete thought tree, identified by *tsid*. The unit of sharing: switching `?share=<tsid>` switches the app onto a different thoughtspace.
 
-**thoughtRetained** — Set of docKeys retained by foreground replication. While a docKey is in this set, its Y.Doc is not deallocated.
+**ThoughtspaceRuntime** — Lifecycle interface around the active provider ([`thoughtspace.ts`](../src/data-providers/thoughtspace.ts)): `acquireAccess`, `init`, `drop`, `waitForIdle`, `persistPushQueueBatches`. Implemented for TreeCRDT in [`runtime.ts`](../src/data-providers/treecrdt/runtime.ts).
+
+**TreeCRDT** — The CRDT that backs local persistence: one operation-based tree per thoughtspace, materialized into SQLite (wa-sqlite, OPFS-backed) and optionally synced over a WebSocket. See [persistence.md](persistence.md).
 
 **TreeThought / TreeThoughtPositioned** — The two parallel lists produced per render: visible thoughts in document order, and the same with `x`/`y`/`width`/`height`/`cliff` filled in. See [layout-rendering.md → Two lists](layout-rendering.md#two-lists-one-ordering).
 
-**tsid** — Thoughtspace ID. 21-char nanoid in `localStorage`. Used as the Y.Doc id prefix for every per-thoughtspace doc (`${tsid}/t/${docKey}`, `${tsid}/l/${key}`, `${tsid}/permissions`). Override with `?share=<tsid>`.
+**tsid** — Thoughtspace ID. 21-char nanoid in `localStorage`. Scopes everything per-thoughtspace: the TreeCRDT `docId`, the OPFS database file (`/treecrdt-em-${tsid}.db`), the session lock, and the permissions key. Override with `?share=<tsid>`.
 
 ## U
 
-**updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write so observers can filter out self-originated change events.
+**undo step** — What one Undo reverts: a single patch on `state.undoPatches`, or two when a navigation action follows an undoable action or an edit follows a `newThought`. The undo slider moves by undo steps. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
 
-**updateThoughts** — Both an action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push, and the `DataProvider` entry point ([`yjs/thoughtspace.ts`](../src/data-providers/yjs/thoughtspace.ts)) that writes to Yjs. The action calls into the provider via the push queue.
+**updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write. (Self-originated materialization events are filtered by *writeId*, not by this field.)
+
+**updateThoughts** — The action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push. The push queue persists those batches through the active data provider's `updateThoughts`.
 
 ## V
 
@@ -200,6 +208,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **VirtualThought** — Component that wraps each rendered thought, measures its height, and reports back via `onResize`. See [layout-rendering.md → VirtualThought](layout-rendering.md#virtualthought--when-does-it-re-measure).
 
-## Y
+## W
 
-**Y.Doc** — A Yjs document. In em, one per parent thought (containing all its children) and one per Lexeme. Persisted locally via `IndexeddbPersistence`. See [persistence.md → Document model](persistence.md#document-model).
+**write barrier** — [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts). Serializes em → TreeCRDT persistence and exposes an idle barrier, so a materialization refresh cannot reapply stale rows over newer optimistic state. Also mints each write's *writeId*.
+
+**writeId** — `em-local:${sourceId}:${n}`, attached to every local TreeCRDT write and echoed on the materialization changes it produces. Lets this tab recognize and skip its own already-applied writes.

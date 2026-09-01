@@ -1,0 +1,29 @@
+/* latin */
+@font-face {
+  font-family: 'Radio Canada Big';
+  font-style: normal;
+  font-weight: 400;
+  font-display: optional;
+  src: url(RadioCanadaBig-Regular.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Radio Canada Big';
+  font-style: normal;
+  font-weight: 500;
+  font-display: optional;
+  src: url(RadioCanadaBig-Medium.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Radio Canada Big';
+  font-style: normal;
+  font-weight: 600;
+  font-display: optional;
+  src: url(RadioCanadaBig-SemiBold.woff2) format('woff2');
+}
+@font-face {
+  font-family: 'Radio Canada Big';
+  font-style: normal;
+  font-weight: 700;
+  font-display: optional;
+  src: url(RadioCanadaBig-Bold.woff2) format('woff2');
+}

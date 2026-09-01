@@ -4,11 +4,11 @@ import FormattingCommand from '../@types/FormattingCommand'
 const commands = Object.values(FormattingCommand)
 
 /**
- * This is a utility for creating opening and closing markup tag.
+ * This is a utility for creating opening and closing markup tags that match any of the given tag names.
  */
-const createTag = (tag: string) => ({
-  open: new RegExp(`^<${tag}[^>]*>`, 'i'),
-  close: new RegExp(`^</${tag}>`, 'i'),
+const createTag = (...tagNames: string[]) => ({
+  open: new RegExp(`^<(?:${tagNames.join('|')})[^>]*>`, 'i'),
+  close: new RegExp(`^</(?:${tagNames.join('|')})>`, 'i'),
 })
 
 const tags = {
@@ -17,25 +17,29 @@ const tags = {
   underline: createTag('u'),
   strikethrough: createTag('strike'),
   code: createTag('code'),
-  foreColor: createTag('span'),
-  backColor: createTag('span'),
+  // a color is carried by either a <font color> (applied by formatSelectionHtml) or a <span style="color">
+  foreColor: createTag('span', 'font'),
+  backColor: createTag('span', 'font'),
 }
 
 /** Extracts the foreground and background colors from the given string.
  * Returns an object with foreColor and backColor properties.
- * If the string does not contain a font or span tag, undefined is returned.
+ * A color is only returned if its span or font tag wraps all of the text in savedValue (#3904).
+ * Otherwise, undefined is returned.
  */
-const extractColors = (savedValue: string) => {
-  const foreColorRegex = /<(?:span|font)[^>]*\s(?:color=["']?([^"']+)["']?[^>]*>)/i
-  const backColorRegex = /<(?:span|font)[^>]*\sstyle=["'][^"']*background-color:\s*([^;"']+)/i
+const extractColors = (savedValue: string): { foreColor: string | undefined; backColor: string | undefined } => {
+  const doc = new DOMParser().parseFromString(savedValue, 'text/html')
+  const tags = Array.from(doc.body.querySelectorAll<HTMLElement>('span, font')).filter(
+    el => el.textContent === doc.body.textContent,
+  )
 
-  // Attempt to extract the font color
-  const foreColorMatch = savedValue.match(foreColorRegex)
-  const foreColor = foreColorMatch ? foreColorMatch[1].trim() : undefined
+  let foreColor: string | undefined
+  let backColor: string | undefined
 
-  // Attempt to extract the background-color from span
-  const backColorMatch = savedValue.match(backColorRegex)
-  const backColor = backColorMatch ? backColorMatch[1].trim() : undefined
+  for (const el of tags) {
+    foreColor = el.getAttribute('color') || el.style.color || foreColor
+    backColor = el.style.backgroundColor || backColor
+  }
 
   return { foreColor, backColor }
 }

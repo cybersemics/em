@@ -1,6 +1,8 @@
 import addAllMulticursor from '../../actions/addAllMulticursor'
+import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
+import toggleContextView from '../../actions/toggleContextView'
 import contextToPath from '../../selectors/contextToPath'
 import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
@@ -108,6 +110,113 @@ describe('addAllMulticursor', () => {
       [hashPath(a1)]: a1,
       [hashPath(a2)]: a2,
       [hashPath(a3)]: a3,
+    })
+  })
+
+  it('selects all contexts at the cursor level inside a context view', () => {
+    const text = `
+      - a
+        - m
+          - x
+          - y
+          - z
+      - b
+        - m
+          - t
+          - u
+          - v
+    `
+
+    const stateNew = reducerFlow([
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a']),
+      addAllMulticursor,
+    ])(initialState())
+
+    const a = contextToPath(stateNew, ['a', 'm', 'a'])!
+    const b = contextToPath(stateNew, ['a', 'm', 'b'])!
+
+    expect(stateNew.multicursors).toEqual({
+      [hashPath(a)]: a,
+      [hashPath(b)]: b,
+    })
+  })
+
+  it('selects all siblings of a context after crossing a context view boundary', () => {
+    const text = `
+      - a
+        - m
+          - x
+          - y
+          - z
+      - b
+        - m
+          - t
+          - u
+          - v
+    `
+
+    const stateNew = reducerFlow([
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'b', 't']),
+      addAllMulticursor,
+    ])(initialState())
+
+    const t = contextToPath(stateNew, ['a', 'm', 'b', 't'])!
+    const u = contextToPath(stateNew, ['a', 'm', 'b', 'u'])!
+    const v = contextToPath(stateNew, ['a', 'm', 'b', 'v'])!
+
+    expect(stateNew.multicursors).toEqual({
+      [hashPath(t)]: t,
+      [hashPath(u)]: u,
+      [hashPath(v)]: v,
+    })
+  })
+
+  it('selects all contexts at the cursor level inside a nested context view', () => {
+    const text = `
+      - a
+        - m
+          - p
+            - n
+              - ap
+          - q
+            - n
+              - aq
+      - b
+        - m
+          - r
+            - n
+              - br
+          - s
+            - n
+              - bs
+    `
+
+    const stateNew = reducerFlow([
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'p', 'n']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'p', 'n', 'p']),
+      addAllMulticursor,
+    ])(initialState())
+
+    const p = contextToPath(stateNew, ['a', 'm', 'a', 'p', 'n', 'p'])!
+    const q = contextToPath(stateNew, ['a', 'm', 'a', 'p', 'n', 'q'])!
+    const r = contextToPath(stateNew, ['a', 'm', 'a', 'p', 'n', 'r'])!
+    const s = contextToPath(stateNew, ['a', 'm', 'a', 'p', 'n', 's'])!
+
+    expect(stateNew.multicursors).toEqual({
+      [hashPath(p)]: p,
+      [hashPath(q)]: q,
+      [hashPath(r)]: r,
+      [hashPath(s)]: s,
     })
   })
 })

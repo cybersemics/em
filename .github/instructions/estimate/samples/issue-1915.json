@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Bullets shift position at other font sizes",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- A\r\n  - B\r\n    - C\r\n      - D\r\n```\r\n\r\n1. Set the font size to 13. \r\n2. Move the cursor between `B` and `C`. \r\n\r\n## Current Behavior\r\n\r\nBullets shift position during the translateX animation. \r\n\r\nhttps://github.com/cybersemics/em/assets/750276/f23a9bee-a9fb-4c70-810b-ca4d50fa4157\r\n\r\n## Expected Behavior\r\n\r\nBullets should not shift position.\r\n\r\n## Notes\r\n\r\nOccurs at any font size other than the default 18. Appears to be caused by some combination of translateX, the `Scale` component, and the bullet SVGs. \r\n\r\nBullets were converted to SVG in order to solve cross-platform positioning issues (#1175). A robust proposal should be presented that takes account of the lessons learned in #1402 and #1505 and suggests a fix that does not cause a regression.",
+    "labels": ["bug"]
+  },
+  "expected": "XXL",
+  "source": {
+    "type": "everhour",
+    "issue": 1915,
+    "hours": 40
+  }
+}

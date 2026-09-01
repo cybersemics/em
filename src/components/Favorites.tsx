@@ -122,7 +122,7 @@ const FavoritesOptions = ({
         <span
           {...fastClick(() => setShowOptions(!showOptions))}
           className={css({
-            color: 'modalExportUnused',
+            color: 'fgOverlay30',
             cursor: 'pointer',
             fontSize: '0.7em',
             fontWeight: 'bold',
@@ -148,7 +148,13 @@ const FavoritesOptions = ({
         <SlideTransition duration='veryFast' in={showOptions} nodeRef={formRef} from='down' unmountOnExit>
           <form
             ref={formRef}
-            className={css({ fontSize: 'sm', backgroundColor: 'checkboxForm', borderRadius: '0.5em', padding: '1em' })}
+            className={css({
+              fontSize: 'sm',
+              backgroundColor: 'fgOverlay30',
+              mixBlendMode: 'overlay',
+              borderRadius: '0.5em',
+              padding: '1em',
+            })}
           >
             <Checkbox
               checked={!hideContexts}
@@ -184,19 +190,17 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   return (
     <div className='favorites' data-testid='favorites'>
       <div>
+        <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
         {simplePaths.length > 0 ? (
-          <div>
-            <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
-            <div className={css({ marginTop: '1em' })}>
-              {simplePaths.map(simplePath => (
-                <DragAndDropFavorite
-                  key={head(simplePath)}
-                  simplePath={simplePath}
-                  disableDragAndDrop={disableDragAndDrop}
-                  hideContext={hideContexts}
-                />
-              ))}
-            </div>
+          <div className={css({ marginTop: '1em' })}>
+            {simplePaths.map(simplePath => (
+              <DragAndDropFavorite
+                key={head(simplePath)}
+                simplePath={simplePath}
+                disableDragAndDrop={disableDragAndDrop}
+                hideContext={hideContexts}
+              />
+            ))}
           </div>
         ) : (
           <div className={css({ marginTop: '1em', maxWidth: 450 })}>

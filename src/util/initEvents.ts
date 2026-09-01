@@ -5,21 +5,23 @@ import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { alertActionCreator as alert } from '../actions/alert'
-import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
 import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isAndroidWebView, isIOS, isSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
+import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
+import virtualKeyboardHandler from '../device/virtual-keyboard'
+import globals from '../globals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
+import { updateCaretRect } from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import { updateSafariKeyboardState } from '../stores/safariKeyboardStore'
 import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
@@ -27,9 +29,9 @@ import syncStatusStore from '../stores/syncStatus'
 import { updateSize } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
+import debugLog from './debugLog'
 import durations from './durations'
 import equalPath from './equalPath'
-import handleKeyboardVisibility from './handleKeyboardVisibility'
 
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
@@ -159,9 +161,19 @@ const saveErrorReload = (savingProgress: number) => {
   }
 }
 
-/** Add window event handlers. */
+type EventHandlers = {
+  keyDown: typeof keyDown
+  keyUp: typeof keyUp
+  cleanup: () => void
+}
+
+let eventHandlers: EventHandlers | null = null
+
+/** Add window event handlers once. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const initEvents = (store: Store<State, any>) => {
+  if (eventHandlers) return eventHandlers
+
   let lastState: number
   let lastPath: Path | null
 
@@ -218,10 +230,12 @@ const initEvents = (store: Store<State, any>) => {
     // update command state store
     updateCommandState()
 
-    if (isTouch && isSafari() && !isIOS) {
-      updateSafariKeyboardState()
-    }
+    updateCaretRect()
   }
+
+  /** Input event listener. The caret is measured again after the text changes, since a deletion moves the caret without
+   * the browser firing another selectionchange once the new text has been laid out. */
+  const onInput = () => updateCaretRect()
 
   /** MouseMove event listener. */
   const onMouseMove = _.debounce(
@@ -289,18 +303,25 @@ const initEvents = (store: Store<State, any>) => {
     scrollAtEdge.stop()
   }
 
+  /** Clears the spurious-focus suppression flag: a new touch means any subsequent focus/mousedown was initiated by
+   * the user, not synthesized from the previous tap. Registered in the capture phase because touchstart propagation
+   * is unreliable in the bubble phase (see the note on the touchmove listener below). */
+  const onTouchStart = () => {
+    globals.suppressFocusAfterCursorMove = false
+  }
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
+
+    // Log lifecycle transitions so that events can be correlated with the app being backgrounded or foregrounded, e.g. a false Command Center open right before an app switch. More direct than inferring suspension from gaps in the log timeline.
+    debugLog.log('lifecycle', { oldState, newState })
 
     // dismiss the gesture alert on hide
     if (newState === 'hidden' || oldState === 'hidden') {
       const state = store.getState()
       if (state.alert?.alertType === AlertType.GestureHint) {
         store.dispatch(alert(null))
-      }
-      if (state.showDesktopCommandUniverse) {
-        store.dispatch(desktopCommandUniverse())
       }
       if (state.showGestureMenu) {
         store.dispatch(gestureMenu())
@@ -315,6 +336,10 @@ const initEvents = (store: Store<State, any>) => {
       oldState === 'active' &&
       newState === 'passive' &&
       document.activeElement &&
+      // document.activeElement falls back to the body when nothing is focused, so the keyboard can only be open if
+      // some other element has focus. Without this, Clear Thought's asynchronous focus was mistaken for an app
+      // switch and the caret it had just placed was cleared. https://github.com/cybersemics/em/pull/4520
+      document.activeElement !== document.body &&
       !document.hasFocus()
     ) {
       passiveTimeout = setTimeout(selection.clear, 10) as unknown as number
@@ -351,18 +376,9 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
-  /** Drag over handler for file drag-and-drop. Prevents the browser from showing the "open file" cursor and ensures drop events fire outside of react-dnd drop targets. */
-  const dragOver = (e: DragEvent) => {
-    if (e.dataTransfer?.types.includes('Files')) {
-      e.preventDefault()
-    }
-  }
-
   /** Drop handler for file drag-and-drop. */
   const drop = (e: DragEvent) => {
     if (e.dataTransfer?.types.includes('Files')) {
-      // Prevent the browser from opening the dropped file in a new tab.
-      e.preventDefault()
       // wait until the next tick so that the thought/subthought drop handler has a chance to be called before draggingFile is reset
       // See: DragAndDropThought and DragAndDropSubthoughts
       setTimeout(() => {
@@ -375,31 +391,30 @@ const initEvents = (store: Store<State, any>) => {
   window.history.scrollRestoration = 'manual'
 
   document.addEventListener('selectionchange', onSelectionChange)
+  document.addEventListener('input', onInput)
   window.addEventListener('beforeinput', beforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
   window.addEventListener('mousemove', onMouseMove)
   // Note: touchstart may not be propagated after dragHold
+  window.addEventListener('touchstart', onTouchStart, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)
   window.addEventListener('dragleave', dragLeave)
-  window.addEventListener('dragover', dragOver)
   window.addEventListener('drop', drop)
 
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
 
-  // Add Visual Viewport resize listener for keyboard detection
-  if (isTouch && isAndroidWebView() && window.visualViewport) {
-    window.visualViewport.addEventListener('resize', handleKeyboardVisibility)
+  // Initialize virtual keyboard handlers
+  virtualKeyboardHandler.init()
 
-    // Force an immediate check in case keyboard is already visible
-    handleKeyboardVisibility()
-  }
+  // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
+  nativeHistory.init()
 
   // clean up on app switch in PWA
   // https://github.com/cybersemics/em/issues/1030
@@ -411,36 +426,44 @@ const initEvents = (store: Store<State, any>) => {
   const cleanup = () => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
+    document.removeEventListener('input', onInput)
     window.removeEventListener('beforeinput', beforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('touchstart', onTouchStart, { capture: true })
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener('dragenter', dragEnter)
     window.removeEventListener('dragleave', dragLeave)
-    window.removeEventListener('dragover', dragOver)
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
-
-    // Remove Visual Viewport event listener
-    if (isTouch && isAndroidWebView() && window.visualViewport) {
-      window.visualViewport.removeEventListener('resize', handleKeyboardVisibility)
-    }
+    virtualKeyboardHandler.destroy()
+    nativeHistory.destroy()
+    eventHandlers = null
   }
 
+  eventHandlers = { keyDown, keyUp, cleanup }
+
   // return input handlers as another way to remove them on cleanup
-  return { keyDown, keyUp, cleanup }
+  return eventHandlers
 }
 
 /** Error event listener. This does not catch React errors. See the ErrorFallback component that is used in the error boundary of the App component. */
 // const onError = (e: { message: string; error?: Error }) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const onError = (e: any) => {
+  // Ignore opaque cross-origin "Script error." events. The browser emits these when an error occurs in a
+  // script served from a different origin without CORS headers. They carry no actionable information (no
+  // stack, filename, or line number), so showing them as an error banner only confuses the user. On iOS
+  // Safari, interacting with the browser's native share menu triggers such an error.
+  // See https://github.com/cybersemics/em/issues/4402.
+  if (!e.error && (e.message === 'Script error.' || e.message === 'Script error')) return
+
   console.error({ message: e.message, code: e.code, errors: e.errors })
   if (e.error && 'stack' in e.error) {
     console.error(e.error.stack)

@@ -13,6 +13,8 @@ type TreeThought = {
   env?: LazyEnv
   // index among visible siblings at the same level
   indexChild: number
+  // index among visible non-attribute siblings at the same level, used to number =bullet/Ordered lists (-1 for attributes)
+  childIndexNonAttribute: number
   // index among all visible thoughts in the tree
   indexDescendant: number
   isCursor: boolean

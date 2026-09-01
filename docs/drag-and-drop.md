@@ -23,6 +23,14 @@ Both backends are configured with:
 
 The values come from [`constants.ts`](../src/constants.ts).
 
+#### Tauri desktop shell
+
+The desktop app runs the same web build inside a Tauri (wry) webview, so it selects `HTML5Backend` like any other desktop browser. That only works because [`desktop/tauri.conf.json`](../desktop/tauri.conf.json) sets `dragDropEnabled: false` on the window.
+
+Left at its default of `true`, Tauri installs a native drag-and-drop handler on the webview so it can surface OS file drops as `tauri://drag-*` events. On macOS that handler overrides the webview's `NSDraggingDestination` methods (`draggingEntered:`, `draggingUpdated:`, `performDragOperation:`, `draggingExited:`) and unconditionally reports every drag as consumed, so the `WKWebView` superclass implementation never runs and WebKit never dispatches the corresponding DOM `dragenter` / `dragover` / `drop` events. Only the destination side is intercepted — `dragstart` still fires, so `beginDrag` runs and the drag appears to start, but nothing can ever be hovered or dropped. Windows (WebView2) and Linux (WebKitGTK) intercept drops the same way.
+
+Disabling it removes that handler, so drag events reach the page normally. Nothing is lost: em never listened for the `tauri://drag-*` events, and OS file drops go back to arriving as react-dnd's `NativeTypes.FILE`, which is what the app already handles.
+
 ### State machine: `state.longPress`
 
 The whole subsystem is orchestrated by a single Redux state field, [`state.longPress`](../src/@types/State.ts), which is a `LongPressState` enum with these values (see [`constants.ts`](../src/constants.ts)):
@@ -91,7 +99,7 @@ Notable behavior in [`useDragAndDropThought.tsx`](../src/hooks/useDragAndDropTho
 
 ### `useDragAndDropSubThought`
 
-Used by `DropChild` and `DropEnd`. Drop-only — there is no drag source. See [`useDragAndDropSubThought.ts`](../src/hooks/useDragAndDropSubThought.ts).
+Used by `DropChild` and `DropEnd`. Drop-only — there is no drag source. See [`useDragAndDropSubThought.tsx`](../src/hooks/useDragAndDropSubThought.tsx).
 
 Distinguishing rules from `useDragAndDropThought`:
 
@@ -121,9 +129,13 @@ On desktop, `useLongPress` runs its own `setTimeout(delay)` because the HTML5 ba
 
 `useLongPress` also calls [`allowTouchToScroll(false)`](../src/device/allowTouchToScroll.ts) on long-press start to prevent iOS Safari from initiating a scroll before drag-and-drop kicks in (see [issue #3141](https://github.com/cybersemics/em/issues/3141)).
 
+When the press ends, `useLongPress` defers `onLongPressEnd` by 10 ms so that the browser's click event fires first. This lets click handlers short circuit while `state.longPress` is still `DragHold` — [`BulletPositioner`](../src/components/BulletPositioner.tsx) uses this to avoid collapsing a thought that was only being held. The ending event is forwarded to `onLongPressEnd`, so handlers can also inspect the modifier keys that were held and the event type. `useDragHold` uses it for the reverse case: with `toggleMulticursorOnLongPress` (set by [`Thought`](../src/components/Thought.tsx)) a long press ending in `DragHold` toggles the multicursor, except in two cases: when Shift or Cmd (Ctrl on non-Mac) was held, since `Thought`'s click handler has already updated the multiselect and a second toggle would deselect the thought; and when the press ended in `touchcancel` rather than `touchend`, since a cancelled touch means the system claimed the gesture — e.g. the iOS bottom-edge app switcher swipe, which delivers a `touchstart` with no `touchmove` and would otherwise falsely activate multiselect (and with it the Command Center) right before the app suspends.
+
 ### `useDragLeave`
 
 [`useDragLeave`](../src/hooks/useDragLeave.ts) tracks how many drop targets are currently being deep-hovered (a module-level `hoverCount`). When the count drops to zero, it debounces a 50 ms clear of `state.hoveringPath`. This prevents flicker when the cursor briefly leaves one drop zone before entering an adjacent one.
+
+Because `hoverCount` is shared across every drop target, only a change in `isDeepHovering` may adjust it. The hook's effect also re-runs on mount and when `canDropThought` or `hoverZone` change, and treating those as hover transitions would let a thought mounting mid-drag decrement the count to zero and blank the drop indicator while a target is still hovered. A separate unmount-only effect releases a target's contribution to the count, so a thought the layout unmounts mid-drag doesn't leak one.
 
 ### `useDropHoverColor`
 
@@ -175,6 +187,7 @@ The previous `QuickDropIcon` / `DeleteDrop` / `CopyOneDrop` / `ExportDrop` icon 
 - [`DragAndDropContext`](../src/components/DragAndDropContext.tsx) — `DndProvider` wrapping the app; selects backend by `isTouch`.
 - [`DragOnly`](../src/components/DragOnly.tsx) — a fragment that only renders its children when `state.longPress === DragInProgress` (or a test flag is set). Used to skip mounting drop targets and overlays when not dragging.
 - [`DropHover`](../src/components/DropHover.tsx) — the blue-bar visual indicator. Subscribes to `state.hoveringPath` and `state.hoverZone` and decides whether *this* particular drop target should render the bar. For sorted contexts, additionally compares the dragging value's `compareReasonable` order against neighbors to choose which gap to highlight.
+- [`usePinDropHover`](../src/hooks/usePinDropHover.ts) — test-only latch used by `DropHover`, `DropEnd`, `DropChild`, and `DropUncle`. When `testFlags.pinDropHovers` is set, a drop hover that has been shown during the current drag stays visible until the drag ends, so e2e snapshot tests can compare multiple drop hovers in a single screenshot (see [Testing](testing.md#drag-and-drop-visualization)).
 
 ## Multicursor drag
 
@@ -186,6 +199,8 @@ When a user has multiple thoughts selected via the multicursor (`state.multicurs
 4. Set `state.draggingThoughts` to the simple paths and dispatch `longPress({ value: DragInProgress })`.
 
 The drop handler iterates the array and dispatches `moveThought` per item. To make undo coalesce the whole multi-move into one entry, it wraps the dispatch in `setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' })` and clears it after.
+
+A selected thought that would be a no-op at the drop position (dropping a thought on or immediately before itself — e.g. dropping the first child `b` above itself) is a valid drop target, so the drop indicator still shows and the drop is *not* aborted; that item is simply skipped while the remaining selected thoughts still move. To keep the selection in document order, the first dragged item is placed before the drop target and each subsequent item is placed after the previous one (via `getRankAfter`), so the skipped no-op still anchors the position of the items that follow it.
 
 ## Performance considerations
 

@@ -4,15 +4,12 @@ import CategorizeIcon from '../components/icons/CategorizeIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const categorizeCommand: Command = {
+const categorizeCommand = {
   id: 'categorize',
-  label: 'Categorize',
+  label: 'Categorize' as const,
   description: 'Move the current thought into a new, empty thought at the same level.',
   gesture: 'lu',
-  keyboard: [
-    { key: 'o', meta: true, alt: true },
-    { key: ']', meta: true },
-  ],
+  keyboard: { key: 'o', meta: true, alt: true },
   // Multicursor functionality is handled in the categorize action.
   // TODO: Implement this with multicursor: true so that we don't need to make a special case of this command in Select All chaining.
   // See: useFilteredCommands
@@ -22,6 +19,6 @@ const categorizeCommand: Command = {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec: dispatch => dispatch(categorize()),
-}
+} satisfies Command
 
 export default categorizeCommand

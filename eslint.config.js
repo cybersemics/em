@@ -1,5 +1,5 @@
 import panda from '@pandacss/eslint-plugin'
-import stylisticTs from '@stylistic/eslint-plugin'
+import stylistic from '@stylistic/eslint-plugin'
 import typescriptEslint from '@typescript-eslint/eslint-plugin'
 import typescriptParser from '@typescript-eslint/parser'
 import exportDefaultIdentifier from 'eslint-plugin-export-default-identifier'
@@ -77,10 +77,10 @@ const rules = {
     },
   ],
   'jsx-a11y/anchor-is-valid': 0,
-  'react/jsx-curly-spacing': 2,
-  'react/jsx-equals-spacing': 2,
+  '@stylistic/jsx-curly-spacing': 2,
+  '@stylistic/jsx-equals-spacing': 2,
   'react/react-in-jsx-scope': 0,
-  'react/jsx-tag-spacing': [2, { beforeSelfClosing: 'allow' }],
+  '@stylistic/jsx-tag-spacing': [2, { beforeSelfClosing: 'allow' }],
   'react/no-children-prop': 0,
   'react/no-unescaped-entities': 0,
   'react/prop-types': 0,
@@ -88,21 +88,24 @@ const rules = {
   'prettier/prettier': 2,
   'arrow-body-style': 0,
   'prefer-arrow-callback': 0,
+  'em/no-direct-durations-config-import': 2,
 }
 
 export default [
   {
     ignores: [
       'node_modules/**',
+      '.claude/worktrees/**',
       'packages/**/dist/**/*',
       'packages/**/.build/**/*',
       '**/styled-system/*',
       '**/ios/*',
       '**/android/**',
+      '**/desktop/**',
       '**/build/*',
       '**/docs/*',
       '**/functions/*',
-      '**/scripts/*',
+      'public/wa-sqlite/**',
     ],
   },
   {
@@ -115,7 +118,8 @@ export default [
       },
     },
     plugins: {
-      '@stylistic/ts': stylisticTs,
+      '@stylistic': stylistic,
+      '@stylistic/ts': stylistic,
       'export-default-identifier': exportDefaultIdentifier,
       jsdoc,
       react,
@@ -130,7 +134,7 @@ export default [
     rules,
     settings: {
       react: {
-        version: 'detect',
+        version: '19',
       },
     },
   },
@@ -222,6 +226,31 @@ export default [
     files: ['./src/util/storage.ts'],
     rules: {
       'no-restricted-globals': 0,
+    },
+  },
+  // actions/github-script evaluates its `script:` body in a CommonJS context and resolves relative
+  // require() paths against the workspace, so the scripts it loads must be CommonJS. package.json
+  // sets "type": "module", hence the .cjs extension.
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'writable',
+        process: 'readonly',
+        require: 'readonly',
+      },
+    },
+  },
+  // A constants module is a collection of peer values with no primary export, so there is no
+  // meaningful default export to prefer. Named exports keep them individually tree-shakeable and
+  // importable by name.
+  {
+    files: ['**/constants.ts'],
+    rules: {
+      'import/prefer-default-export': 0,
     },
   },
 ]

@@ -4,17 +4,19 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import mergeThoughts from '../actions/mergeThoughts'
 import rerank from '../actions/rerank'
 import updateThoughts from '../actions/updateThoughts'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../data-providers/thoughtspaceSession'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
+import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
@@ -34,13 +36,36 @@ export interface MoveThoughtPayload {
   offset?: number
   // skip the auto rerank to prevent infinite loop
   skipRerank?: boolean
+  /** When true, skips merging with a duplicate thought in the destination context. Use when the caller manages duplicate handling itself (e.g. swapParent). */
+  skipMerge?: boolean
   /** The new rank of the destination thought. This will be ignored if the thought is moved into a sorted context. */
   newRank: number
+  /**
+   * ID of sibling after which to place in TreeCRDT.
+   * Explicit null means first child.
+   * Undefined means derive placement from newRank for legacy em rank-based callers.
+   */
+  afterId?: ThoughtId | null
+}
+
+/** Derives an explicit TreeCRDT afterId from em's temporary rank ordering. */
+const getMoveThoughtAfterIdByRank = (
+  state: State,
+  destinationThoughtId: ThoughtId,
+  sourceThoughtId: ThoughtId,
+  newRank: number,
+): ThoughtId | null => {
+  const after = getChildrenRanked(state, destinationThoughtId)
+    .filter(child => child.id !== sourceThoughtId && child.rank < newRank)
+    .at(-1)
+
+  return after?.id ?? null
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
-const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRank }: MoveThoughtPayload) => {
+const moveThought = (state: State, payload: MoveThoughtPayload) => {
+  const { oldPath, newPath, offset, skipRerank, skipMerge, newRank, afterId } = payload
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   const recentlyEdited = state.recentlyEdited
   // try {
@@ -50,8 +75,10 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   //   console.error(e)
   // }
 
-  const sourceThoughtPath = oldPath
-  const destinationThoughtPath = rootedParentOf(state, newPath)
+  const oldPathSimple = simplifyPath(state, oldPath)
+  const newPathSimple = simplifyPath(state, newPath)
+  const sourceThoughtPath = oldPathSimple
+  const destinationThoughtPath = rootedParentOf(state, newPathSimple)
   const sourceThoughtId = head(sourceThoughtPath)
   const destinationThoughtId = head(destinationThoughtPath)
 
@@ -63,7 +90,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   }
 
   // use parentid from oldPath until parentId data integrity issue is fixed
-  const sourceParentId = head(rootedParentOf(state, oldPath))
+  const sourceParentId = head(rootedParentOf(state, sourceThoughtPath))
   if (sourceThought.parentId !== sourceParentId) {
     console.warn(`Invalid parentId: sourceThought.parentId does not match parentOf(oldPath).`)
     console.info('oldPath', oldPath)
@@ -83,6 +110,17 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
 
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
+  const effectiveAfterId =
+    afterId !== undefined
+      ? afterId
+      : getMoveThoughtAfterIdByRank(state, destinationThoughtId, sourceThought.id, newRank)
+
+  if (
+    effectiveAfterId === sourceThought.id ||
+    (effectiveAfterId !== null && !childrenOfDestination.some(child => child.id === effectiveAfterId))
+  ) {
+    throw new Error(`moveThought: afterId must be null or a child of the destination context.`)
+  }
 
   /**
    * Find first normalized duplicate thought.
@@ -90,12 +128,27 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
   const duplicateSubthought = () =>
     childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
-  // if thought is being moved to the same context that is not a duplicate case
-  const duplicateThought = !sameContext ? duplicateSubthought() : null
+  const destinationContext = pathToContext(state, destinationThoughtPath)
+
+  // Auto-merge duplicate siblings is limited to metaprogramming-attribute contexts.
+  // Attribute subtrees (e.g. =children, =style) must be hierarchically merged on move/paste so a
+  // context never ends up with two of the same attribute. Normal thoughts are NOT merged, so
+  // duplicate siblings coexist rather than silently disappearing (see
+  // https://github.com/cybersemics/em/issues/3621).
+  // isAttribute(sourceThought.value) merges the attribute node itself; destinationContext.some(isAttribute)
+  // detects that the destination is inside a meta subtree, which drives the hierarchical recursion as
+  // mergeThoughts moves each descendant back through moveThought.
+  const isMetaMerge = isAttribute(sourceThought.value) || !!destinationContext?.some(isAttribute)
+
+  // skipMerge bypasses the auto-merge when the caller intentionally moves a thought to a context
+  // that already contains a thought with the same value (e.g. swapParent).
+  // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
+  // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
+  // See https://github.com/cybersemics/em/issues/4448.
+  const duplicateThought =
+    !sameContext && !skipMerge && sourceThought.value !== '' && isMetaMerge ? duplicateSubthought() : null
 
   const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
-
-  const destinationContext = pathToContext(state, destinationThoughtPath)
 
   const isArchived = destinationContext?.indexOf('=archive') !== -1
 
@@ -177,6 +230,7 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
         lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,
+        movePlacements: { [sourceThought.id]: effectiveAfterId },
       })
     },
     // update cursor if moved path is on the cursor
@@ -208,15 +262,15 @@ const moveThought = (state: State, { oldPath, newPath, offset, skipRerank, newRa
     !skipRerank
       ? state => {
           const rankPrecision = 10e-8
-          const children = getChildrenRanked(state, head(rootedParentOf(state, newPath)))
+          const children = getChildrenRanked(state, head(rootedParentOf(state, newPathSimple)))
           const ranksTooClose = children.some((thought, i) => {
             if (i === 0) return false
             const secondThought = getThoughtById(state, children[i - 1].id)
             if (!secondThought) return false
             return Math.abs(thought.rank - secondThought.rank) < rankPrecision
           })
-          // TODO: Explicitly converting to simplePath becauase context view has not been implemented yet and later we would want to change oldPath and newPath to be sourceThoughtId and destinationThoughtId instead.
-          return ranksTooClose ? rerank(state, rootedParentOf(state, newPath) as SimplePath) : state
+          // Rerank operates on the physical parent path, so use the simplified destination path.
+          return ranksTooClose ? rerank(state, rootedParentOf(state, newPathSimple) as SimplePath) : state
         }
       : null,
   ])(state)

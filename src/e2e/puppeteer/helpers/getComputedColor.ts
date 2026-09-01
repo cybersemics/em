@@ -1,5 +1,5 @@
 import { ElementHandle } from 'puppeteer'
-import { page } from '../setup'
+import { page } from '../session'
 
 /**
  * Get computed color.
