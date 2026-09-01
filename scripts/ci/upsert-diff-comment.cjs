@@ -16,13 +16,36 @@ const HEADING = '### 🖼️ Puppeteer snapshot diffs'
 const esc = s =>
   String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
 
+/**
+ * Renders one diff image as a table whose header labels the three panels of jest-image-snapshot's
+ * composite. The image spans all three columns, so the percentage widths — which GitHub's sanitizer
+ * preserves, unlike `style` — keep the labels aligned over their panels as the image scales down.
+ */
+const diffTable = ({ label, url }) =>
+  [
+    '<table width="100%">',
+    '  <tr>',
+    `    <th colspan="3" align="left">${label}</th>`,
+    '  </tr>',
+    '  <tr>',
+    '    <th width="34%">Expected (base branch)</th>',
+    '    <th width="32%">Diff</th>',
+    '    <th width="34%">Actual (PR branch)</th>',
+    '  </tr>',
+    '  <tr>',
+    `    <td colspan="3"><img src="${url}" alt="${label}" width="900" /></td>`,
+    '  </tr>',
+    '</table>',
+  ].join('\n')
+
 /** Comment body listing every diff image inline, with the command to update the affected snapshots. */
 const diffBody = ({ rels, base, author, runUrl }) => {
   const blocks = rels
     .map(rel => {
       const url = `${base}/${rel.split('/').map(encodeURIComponent).join('/')}`
-      const label = esc(rel.replace('/__diff_output__/', ' / '))
-      return `**${label}**\n\n<img src="${url}" alt="${label}" width="900" />`
+      // ui/__diff_output__/thought-1-diff.png -> ui / thought-1, matching the snapshot's own name.
+      const label = esc(rel.replace('/__diff_output__/', ' / ').replace(/-diff\.png$/, ''))
+      return diffTable({ label, url })
     })
     .join('\n\n')
   const authorMention = author ? `@${esc(author)}` : ''
@@ -35,18 +58,19 @@ const diffBody = ({ rels, base, author, runUrl }) => {
     MARKER,
     HEADING,
     '',
-    `${authorMention}: These snapshot tests failed, which indicates a visual regression. Please review your changes. If the visual changes are intentional, update the snapshots for the affected test files:`,
-    '',
-    `\`\`\`\n${updateCommand}\n\`\`\``,
+    `${authorMention}: These snapshot tests failed, which indicates a visual regression. Please review your changes.`,
     '',
     `<details open><summary>${rels.length} broken snapshot${rels.length === 1 ? '' : 's'}</summary>`,
     '',
-    `Left: Expected (base branch) | Right: Actual (PR branch)`,
     blocks,
     '',
     '</details>',
     '',
-    `[View workflow run](${runUrl})`,
+    `[Workflow run](${runUrl})`,
+    '',
+    'If the visual changes are intentional, update the snapshots for the affected test files:',
+    '',
+    `\`\`\`\n${updateCommand}\n\`\`\``,
   ].join('\n')
 }
 
@@ -58,7 +82,7 @@ const resolvedBody = ({ runId, runUrl }) =>
     '',
     `✅ No snapshot diffs in the latest run (${runId}). Any previously reported diffs have been cleared.`,
     '',
-    `[View workflow run](${runUrl})`,
+    `[Workflow run](${runUrl})`,
   ].join('\n')
 
 /** Creates or updates the single marked snapshot-diff comment on the PR. */
