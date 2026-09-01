@@ -45,10 +45,17 @@ export const clear = (): void => {
       : focusNode?.parentNode?.nodeType === Node.ELEMENT_NODE
         ? (focusNode.parentNode as HTMLElement)
         : null
+
+  // Empty the selection before blurring, not after. A blur that leaves the range in place puts the document in a
+  // state where text is selected but no longer editable, which Chrome on Android reports to its browser process as
+  // a separate selection update: the editable text menu (Cut/Copy/Paste) is replaced by the read-only one
+  // (Copy/Share/Select all) for a frame before the removal hides it, so dismissing the keyboard on a selected
+  // thought makes a second menu blink (#5259).
+  window.getSelection()?.removeAllRanges()
+
   if (focusElement) {
     focusElement.blur()
   }
-  window.getSelection()?.removeAllRanges()
 
   // On mobile safari it is possible that the keyboard stays up even when there is no selection.
   // Blur the active document element to close the keyboard.

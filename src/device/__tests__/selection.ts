@@ -108,7 +108,7 @@ describe('html', () => {
 
 describe('clear', () => {
   // https://github.com/cybersemics/em/issues/5259
-  it.skip('empties the selection before blurring the editable', () => {
+  it('empties the selection before blurring the editable', () => {
     const editable = document.createElement('div')
     editable.setAttribute('contenteditable', 'true')
     editable.setAttribute('data-editable', 'true')
