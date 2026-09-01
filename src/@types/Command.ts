@@ -127,7 +127,7 @@ interface Command {
   repeatable?: boolean
 
   /** An icon that represents the command in the Toolbar. */
-  svg?: (icon: IconType) => React.ReactNode
+  svg?: (icon: IconType & { active?: boolean }) => React.ReactNode
 
   /** When true, renders the gesture with rounded corners in the GestureDiagram. */
   rounded?: boolean
