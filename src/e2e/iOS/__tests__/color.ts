@@ -12,7 +12,7 @@ import waitForElement from '../helpers/waitForElement'
 /** Retrieve the innerHTML of the first note on the page. Assumes that there will be only a single note. */
 const getFirstNoteText = () => browser.execute(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
 
-/** Tap a swatch in the color picker while it is already open. tapToolbar would tap the Text Color button again first, which toggles the picker closed and unmounts the swatches. */
+/** Tap a swatch in the color picker while it is already open. Calling tapToolbar would tap the Text Color button again first, which toggles the picker closed and unmounts the swatches. */
 const tapSwatch = async (group: string, color: string) =>
   tap(await waitForElement(`[aria-label="${group}"] [aria-label="${color}"]`), toolbarTapOptions)
 
