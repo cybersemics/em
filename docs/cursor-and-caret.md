@@ -183,6 +183,16 @@ A programmatic replacement of the rendered text fires neither event, so `Multicu
 
 Geometry is mirrored rather than the character offset because the thought that holds the real caret and the thoughts that render a faux caret do not always contain the same text: the mirrored value is trimmed, and while the thoughts are cleared the overlaid editable is empty. Laying out a copy of the text to find the offset's position therefore drifted from the real caret. `selection.caretRect()` asks the browser where the caret actually is, so the faux carets agree with it by construction, including inside formatted text and across line wraps.
 
+### `commandStateStore`
+
+[`src/stores/commandStateStore.ts`](../src/stores/commandStateStore.ts).
+
+A non-Redux ministore tracking which formatting applies at the caret — bold, italic, underline, strikethrough, code, and the text and background colors — which is what highlights a formatting button in the toolbar and marks a swatch in the [`ColorPicker`](../src/components/ColorPicker.tsx) as selected. A selected swatch means the next tap on it removes the color rather than applying it, so a stale value silently turns a tap into a no-op.
+
+`updateCommandState` derives it two ways. With an active selection on a thought it asks the browser through `document.queryCommandState`, which reports formatting that has been enabled but not yet typed. With no selection — the usual state on mobile once the keyboard is down — it parses the cursor thought's value and reports only formatting that covers the whole thought.
+
+It is refreshed from the `selectionchange` handler in [`initEvents`](../src/util/initEvents.ts), and from [`updateUrlHistory`](../src/redux-middleware/updateUrlHistory.ts) whenever the cursor moves or the cursor thought's value changes. The second trigger covers what `selectionchange` cannot: with no focused editable the browser fires no selection event, so a value the user did not type — undo, redo, or any other programmatic replacement — would otherwise leave the toolbar describing formatting the thought no longer has.
+
 ### Multiselect faux caret
 
 [Clear Thought](../src/commands/clearThought.ts) works on a multiselection: it clears every selected thought and keeps the multicursors alive so that subsequent typing is mirrored to all of them by `Editable`'s `onChangeHandler`, which dispatches an `editThought` per selected thought on every keystroke rather than through the edit throttle, so that they stay in sync character by character. Only one thought can hold the real browser caret, so the others render a faux caret to show that they are being edited too.
