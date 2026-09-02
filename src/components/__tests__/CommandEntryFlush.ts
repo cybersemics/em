@@ -43,6 +43,18 @@ it('flushes pending edits before executing a toolbar command', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/4774
+it('flushes pending edits before executing a formatSelection command from the toolbar', async () => {
+  await dispatch([newThought({ value: 'a' })])
+
+  queuePendingEdit()
+
+  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(cursorValue()).toBe('<b>ab</b>')
+})
+
+// https://github.com/cybersemics/em/issues/4774
 it('flushes pending edits before executing a desktop command universe command', async () => {
   await dispatch([newThought({ value: 'a' })])
 
