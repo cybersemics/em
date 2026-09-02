@@ -3,6 +3,7 @@ import getSelection from '../helpers/getSelection'
 import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
 import setClipboard from '../helpers/setClipboard'
+import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForEditingTextChange from '../helpers/waitForEditingTextChange'
 
@@ -62,4 +63,18 @@ it('inserts a space immediately after an emoji pasted at the beginning of a thou
   await waitForEditingTextChange('Hello')
   expect(await getEditingText()).toBe('🧠 Hello')
   expect(await getSelection().focusOffset).toBe('🧠 '.length)
+})
+
+// https://github.com/cybersemics/em/issues/5297
+it.skip('replaces the selected text in a thought containing an HTML entity', async () => {
+  await press('Enter')
+  await keyboard.type('Foo & Bar')
+  await waitForEditable('Foo &amp; Bar')
+  await setClipboard({ text: 'Baz' })
+  await setSelection('Foo & '.length, 'Foo & Bar'.length)
+
+  await press('Insert', { shift: true })
+
+  await waitForEditingTextChange('Foo &amp; Bar')
+  expect(await getEditingText()).toBe('Foo &amp; Baz')
 })
