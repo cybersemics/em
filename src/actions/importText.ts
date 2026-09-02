@@ -21,6 +21,7 @@ import createId from '../util/createId'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import importJson from '../util/importJson'
+import insertHtmlAtTextOffset from '../util/insertHtmlAtTextOffset'
 import isMarkdown from '../util/isMarkdown'
 import isRoot from '../util/isRoot'
 import markdownToText from '../util/markdownToText'
@@ -38,23 +39,6 @@ import uncategorize from './uncategorize'
 
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
-
-/** Converts a plain text offset to the corresponding offset in an HTML string, skipping over HTML tags. Returns the HTML string length if the text offset exceeds the text content length. */
-const textOffsetToHtmlOffset = (html: string, textOffset: number): number => {
-  let textCount = 0
-  let inTag = false
-  for (let i = 0; i < html.length; i++) {
-    if (html[i] === '<') {
-      inTag = true
-    } else if (html[i] === '>') {
-      inTag = false
-    } else if (!inTag) {
-      if (textCount === textOffset) return i
-      textCount++
-    }
-  }
-  return html.length
-}
 
 export interface ImportTextPayload {
   caretPosition?: number
@@ -125,9 +109,9 @@ const importText = (
     // insert the text into the destValue in the correct place
     // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
 
-    // Remove the replaced range by splitting at the plain text offsets. Slicing at the equivalent HTML indices cuts
-    // between two different tag contexts, leaving a tag unclosed (#5154). Insertion is still a slice, since a converted
-    // offset always lands on a text character and so inherits the formatting there.
+    // Both halves of the edit are addressed by plain text offset and resolved through the DOM. Indexing into the markup
+    // instead cuts between two tag contexts, leaving a tag unclosed (#5154), and counts an entity as as many characters
+    // as its markup is long (#5297).
     const replacedDestValue = state.cursorCleared
       ? ''
       : replaceStart != null && replaceEnd != null
@@ -137,8 +121,7 @@ const importText = (
         : destValue
 
     const insertOffset = replaceStart ?? caretPosition
-    const insertPosition = textOffsetToHtmlOffset(replacedDestValue, insertOffset)
-    const combinedValue = `${replacedDestValue.slice(0, insertPosition)}${text}${replacedDestValue.slice(insertPosition)}`
+    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, text)
     const newValue = addEmojiSpace(combinedValue)
     // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
     const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(text).length

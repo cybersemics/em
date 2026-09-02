@@ -66,7 +66,7 @@ it('inserts a space immediately after an emoji pasted at the beginning of a thou
 })
 
 // https://github.com/cybersemics/em/issues/5297
-it.skip('replaces the selected text in a thought containing an HTML entity', async () => {
+it('replaces the selected text in a thought containing an HTML entity', async () => {
   await press('Enter')
   await keyboard.type('Foo & Bar')
   await waitForEditable('Foo &amp; Bar')
