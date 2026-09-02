@@ -158,7 +158,6 @@ const testHelpers = {
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
   importToContext: withDispatch(importToContext),
   getLexemeFromThoughtspace: (value: string) => db.getLexemeById(hashThought(value)),
-  getState: store.getState,
 }
 
 // add useful functions to window.em for debugging
