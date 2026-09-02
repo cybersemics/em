@@ -13,7 +13,6 @@ import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
 import db, { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
-import * as selection from './device/selection'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -158,7 +157,6 @@ const testHelpers = {
   dropThoughtspace: thoughtspaceRuntime.drop,
   waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
-  setSelection: selection.set,
   importToContext: withDispatch(importToContext),
   getLexemeFromThoughtspace: (value: string) => db.getLexemeById(hashThought(value)),
   getState: store.getState,
