@@ -11,6 +11,11 @@ import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import SettingsIcon from './icons/SettingsIcon'
 
+const GESTURE_GRADIENT = {
+  from: token('colors.gestureDiagramGradientStart'),
+  to: token('colors.gestureDiagramGradientEnd'),
+}
+
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
@@ -60,17 +65,27 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
             textAlign: 'center',
           })}
         >
-          <GestureDiagram
-            cssRaw={css.raw({
-              width: { sm: '80px', md: '130px' },
-              height: { sm: '80px', md: '130px' },
+          <div
+            className={css({
+              width: '100%',
+              aspectRatio: '1 / 1',
+              maxWidth: '130px',
+              margin: '0 auto',
             })}
-            path={gestureString(command)}
-            size={130}
-            arrowSize={25}
-            strokeWidth={7.5}
-            arrowhead={'outlined'}
-          />
+          >
+            <GestureDiagram
+              path={gestureString(command)}
+              fillContainer
+              size={150}
+              arrowSize={1}
+              strokeWidth={12}
+              arrowhead='outlined-wide'
+              cornerRadius={12}
+              rounded={command.rounded}
+              gradient={GESTURE_GRADIENT}
+              glow={false}
+            />
+          </div>
         </td>
       ) : null}
 

@@ -1,6 +1,12 @@
 import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
 import GestureDiagram from '../GestureDiagram'
 import ModalComponent from './ModalComponent'
+
+const COMMAND_UNIVERSE_GRADIENT = {
+  from: token('colors.gestureDiagramGradientStart'),
+  to: token('colors.gestureDiagramGradientEnd'),
+}
 
 /** Modal used for GestureDiagram snapshot test. */
 const ModalTestGestureDiagram = () => {
@@ -37,6 +43,50 @@ const ModalTestGestureDiagram = () => {
       />
 
       {/* Add specific rounded gesture examples */}
+
+      {/* Command Universe presentation: one representative of each geometry family. */}
+      <GestureDiagram
+        path='rdr'
+        size={48}
+        arrowSize={4}
+        strokeWidth={4}
+        arrowhead='outlined-wide'
+        cornerRadius={5}
+        gradient={COMMAND_UNIVERSE_GRADIENT}
+        glow={false}
+      />
+      <GestureDiagram
+        path='lurd'
+        size={48}
+        arrowSize={4}
+        strokeWidth={4}
+        rounded
+        arrowhead='outlined-wide'
+        gradient={COMMAND_UNIVERSE_GRADIENT}
+        glow={false}
+      />
+      <GestureDiagram
+        path='rdld'
+        size={48}
+        arrowSize={4}
+        strokeWidth={4}
+        gradient={COMMAND_UNIVERSE_GRADIENT}
+        glow={false}
+      />
+
+      <div className={css({ display: 'inline-block', width: '48px', verticalAlign: 'middle' })}>
+        <GestureDiagram
+          path='rdrd'
+          fillContainer
+          size={48}
+          arrowSize={4}
+          strokeWidth={4}
+          arrowhead='outlined-wide'
+          cornerRadius={5}
+          gradient={COMMAND_UNIVERSE_GRADIENT}
+          glow={false}
+        />
+      </div>
     </ModalComponent>
   )
 }
