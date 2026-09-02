@@ -3,7 +3,7 @@ import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
@@ -16,11 +16,9 @@ import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-describe('command center', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
+describe('command center', () => {
   // https://github.com/cybersemics/em/issues/3444
   it('creates a note when the Note command is tapped with a single thought selected', async () => {
     await paste('- Hello')

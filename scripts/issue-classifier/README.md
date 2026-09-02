@@ -1,6 +1,6 @@
 # Issue Classifier
 
-Automatic issue classification for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are subsystems rather than releases, so the milestone is the issue's category. It also labels what kind of work the issue is: `bug`, `feature`, `performance`, `refactor`, `test`, `documentation`, or `agent`.
+Automatic issue classification for the `em` project. When an issue is opened, this picks the open GitHub milestone that best matches it and assigns it. Milestones here are domains rather than releases, so the milestone is the issue's category. It also labels what kind of work the issue is: `bug`, `feature`, `performance`, `refactor`, `test`, `documentation`, or `agent`.
 
 Success is silent — the milestone and the label are the whole result. The only issues left unclassified are those that match no existing milestone and are not refactors, where a comment asks @raineorshine for the category instead.
 
@@ -14,6 +14,10 @@ OPENAI_API_KEY=
 ```
 
 `GITHUB_TOKEN` is only needed to write. Reading milestones and issues from a public repository works without one, so `--dry` runs and `yarn evaluate` need nothing but an OpenAI key.
+
+Every script here reads `OPENAI_API_KEY_ISSUE_CLASSIFIER` first and falls back to `OPENAI_API_KEY`. The
+separate name is what lets this classifier's spend be read on its own in the OpenAI dashboard, which
+reports by API key; one shared key in `.env` is all a local run needs.
 
 ## Usage
 
@@ -42,7 +46,7 @@ The same votes answer a second question: what kind of work is this? The answer i
 
 ### Why only a refactor skips the question
 
-A milestone-less issue normally gets a comment, because the taxonomy having no home for it is worth a human's attention. One kind is exempt: a **pure refactor** is cross-cutting by definition — it restructures code without belonging to a user-facing subsystem — so finding no milestone for one is a correct answer rather than a gap. [#5130](https://github.com/cybersemics/em/issues/5130) is the shape: a helper extraction that belongs to no subsystem in particular.
+A milestone-less issue normally gets a comment, because the taxonomy having no home for it is worth a human's attention. One kind is exempt: a **pure refactor** is cross-cutting by definition — it restructures code without belonging to a user-facing domain — so finding no milestone for one is a correct answer rather than a gap. [#5130](https://github.com/cybersemics/em/issues/5130) is the shape: a helper extraction that belongs to no domain in particular.
 
 That is a claim about what the word means, and it deliberately does not rest on how often each kind goes unmilestoned, because that gradient has no natural cut point:
 
@@ -56,7 +60,7 @@ That is a claim about what the word means, and it deliberately does not rest on 
 | `agent`         |     16 |         6% |
 | `documentation` |      1 |         0% |
 
-`agent` sits lowest, and thresholding there would be a mistake: ✨ Agent Workflows was created on 2026-08-24, so those issues predate their home rather than lacking one. The rest have homes too — `test` has ✅ Test Engineering, and a `bug`, `feature`, or `performance` issue names work inside some subsystem by definition. Only `refactor` does not, which is why it is the only exemption.
+`agent` sits lowest, and thresholding there would be a mistake: ✨ Agent Workflows was created on 2026-08-24, so those issues predate their home rather than lacking one. The rest have homes too — `test` has ✅ Test Engineering, and a `bug`, `feature`, or `performance` issue names work inside some domain by definition. Only `refactor` does not, which is why it is the only exemption.
 
 **The milestone is assigned whenever the votes name one.** There is no confidence threshold, and a tie resolves to its modal winner rather than a question — a tie is a choice between two plausible buckets, not a failure to find one.
 
@@ -176,7 +180,7 @@ Full results are [a comment on #5098](https://github.com/cybersemics/em/pull/509
 | ---------------------------------------------------------------- | -------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Issue Classifier](../../.github/workflows/issue-classifier.yml) | `src/issue.ts` | Issue opened, or manual `workflow_dispatch` | Assigns the best-matching open milestone and labels what kind of work the issue is, or comments asking for a category when no milestone fits. |
 
-It needs the `OPENAI_API_KEY` repository secret; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing unclassified issue gets a milestone, plus an optional `dry` toggle that runs the inference and prints the decision without assigning anything.
+It needs the `OPENAI_API_KEY_ISSUE_CLASSIFIER` repository secret, or `OPENAI_API_KEY` as the fallback; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing unclassified issue gets a milestone, plus an optional `dry` toggle that runs the inference and prints the decision without assigning anything.
 
 ```sh
 gh workflow run issue-classifier.yml -f issue=5092 -f dry=true
