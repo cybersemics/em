@@ -294,7 +294,7 @@ describe('Extract category', () => {
 
   describe('formatting', () => {
     // https://github.com/cybersemics/em/issues/5267
-    it.skip('extracts the selection with its formatting intact', async () => {
+    it('extracts the selection with its formatting intact', async () => {
       // seeded with newThought because importText rewrites the font tag that applyColor produces into a span
       const value = '<font color="#ff573d">Lorem ipsum dolor</font>'
       act(() => {
