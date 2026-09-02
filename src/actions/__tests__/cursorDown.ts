@@ -1,18 +1,24 @@
 import { act } from 'react'
+import State from '../../@types/State'
 import cursorDown from '../../actions/cursorDown'
 import importText from '../../actions/importText'
 import { importTextActionCreator as importTextAction } from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
+import setCursorReducer from '../../actions/setCursor'
 import toggleContextView from '../../actions/toggleContextView'
 import { executeCommand } from '../../commands'
 import newSubthoughtTopShortcut from '../../commands/newSubthoughtTop'
 import toggleSortShortcut from '../../commands/toggleSort'
+import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import appendToPath from '../../util/appendToPath'
+import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -66,6 +72,31 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
+  })
+
+  // https://github.com/cybersemics/em/issues/5156
+  it('move cursor from the second of two duplicate thoughts in a sorted context to the next thought', () => {
+    const text = `
+      - x
+        - =sort
+          - Alphabetical
+            - Asc
+        - a
+        - b
+        - c
+    `
+    const state = reducerFlow([importText({ text }), setCursor(['x', 'a']), newThought({ value: 'a' })])(initialState())
+
+    // duplicates are rendered in rank order, so the second `a` and the first `b` are identified by rank
+    const children = getChildrenRankedByContext(state, ['x'])
+    const secondA = children.filter(child => child.value === 'a')[1]
+    const firstB = children.find(child => child.value === 'b')!
+    const stateNew = reducerFlow([
+      (state: State) => setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, secondA.id) }),
+      cursorDown,
+    ])(state)
+
+    expect(head(stateNew.cursor!)).toBe(firstB.id)
   })
 
   describe('use store', () => {
