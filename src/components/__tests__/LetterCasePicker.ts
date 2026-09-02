@@ -1,6 +1,7 @@
 import { act } from 'react'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { commandEmitter } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -152,4 +153,17 @@ it('Recognizes a styled thought with uppercase text as UpperCase', async () => {
 
   const upperCase = document.querySelector('[aria-label="UpperCase"][data-selected="true"]')
   expect(upperCase).toBeInTheDocument()
+})
+
+it('flushes pending edits before applying letter case from the picker', async () => {
+  await dispatch([newThought({ value: 'a' })])
+  const commandEmitterTriggerSpy = vi.spyOn(commandEmitter, 'trigger')
+
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  expect(commandEmitterTriggerSpy.mock.calls.some(call => call[0] === 'command' && call[1]?.id === 'letterCase')).toBe(
+    true,
+  )
+  expect(commandEmitterTriggerSpy.mock.calls.some(call => call[0] === 'command' && call[1] === undefined)).toBe(true)
 })
