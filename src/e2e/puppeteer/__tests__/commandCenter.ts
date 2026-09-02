@@ -3,11 +3,12 @@ import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
+import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitUntil from '../helpers/waitUntil'
@@ -15,11 +16,9 @@ import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-describe('command center', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
+describe('command center', () => {
   // https://github.com/cybersemics/em/issues/3444
   it('creates a note when the Note command is tapped with a single thought selected', async () => {
     await paste('- Hello')
@@ -43,6 +42,28 @@ describe('command center', () => {
     // the caret is placed in the new note, so typing goes into the note rather than back into the thought
     await keyboard.type('World')
     await waitUntil(() => document.querySelector('[aria-label="note-editable"]')?.textContent === 'World')
+  })
+
+  // https://github.com/cybersemics/em/issues/3445
+  it('stays open when the Delete command is tapped', async () => {
+    await paste(`
+        - a
+        - b
+        `)
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForSelector('[data-testid=command-center-panel]')
+
+    await click('[data-testid="command-center-panel"] [aria-label="Delete"]')
+
+    // wait for the thought to be deleted before asserting on the Command Center
+    await waitForAlertContent('Deleted 1 thought')
+
+    const showCommandCenter = await page.evaluate(
+      () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
+    )
+    expect(showCommandCenter).toBe(true)
   })
 
   // When the user swipes up from the bottom edge of the screen to switch apps on iOS, the page receives a

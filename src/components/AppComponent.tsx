@@ -130,9 +130,11 @@ const AppComponent: FC = () => {
   const rootRef = useRef<HTMLDivElement>(null)
 
   // Mirror the Debug Logging setting into the persistent debug log. Kept here (a single always-mounted
-  // top-level effect) so the logger stays decoupled from the Redux store.
+  // top-level effect) so the logger stays decoupled from the Redux store. On development and preview
+  // hosts (debugLog.autoEnabled) logging defaults to on and follows the device-local opt-out instead of
+  // the synced setting, so this device can be aligned with production without affecting other devices.
   useEffect(() => {
-    debugLog.setEnabled(debugCrashLog)
+    debugLog.setEnabled(debugLog.autoEnabled ? !debugLog.isAutoOptOut() : debugCrashLog)
   }, [debugCrashLog])
 
   useEffect(() => {

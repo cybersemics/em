@@ -1,4 +1,5 @@
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
+import isFormattingElement from './isFormattingElement'
 import rgbToHex from './rgbToHex'
 import rgbaToHex from './rgbaToHex'
 
@@ -135,10 +136,6 @@ const removeEmptyFormatting = (container: HTMLElement) => {
     if ((el.textContent ?? '') === '') el.remove()
   }
 }
-
-/** Returns true if the node is a formatting element (b/i/u/font/span/etc.). */
-const isFormattingElement = (node: Node): node is HTMLElement =>
-  node.nodeType === Node.ELEMENT_NODE && ALLOWED_FORMATTING_TAGS.includes((node as HTMLElement).tagName.toLowerCase())
 
 /** Inserts a node at the (collapsed) range, lifting out of any empty formatting ancestors that extractContents left
  * behind. Without this, re-coloring content that already fills a single wrapper (e.g. the second dispatch of a

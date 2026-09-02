@@ -255,8 +255,6 @@ export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 export const REGEX_PLAINTEXT_BULLET = /^\s*(?:[-—▪◦•]|\*\s)/m
 
-export const IPFS_GATEWAY = 'ipfs.infura.io'
-
 // delay before long press is activated
 // also used for react-dnd's delayTouchStart
 export const TIMEOUT_LONG_PRESS_THOUGHT = 400
@@ -347,10 +345,6 @@ export const META_PROGRAMMING_HELP = [
   {
     code: 'readonly',
     description: 'The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.',
-  },
-  {
-    code: 'src',
-    description: 'Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.',
   },
   {
     code: 'style',

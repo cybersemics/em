@@ -9,6 +9,7 @@ import db, { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import debugLog from '../util/debugLog'
 import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
 import mergeBatch from '../util/mergeBatch'
@@ -85,6 +86,31 @@ const pushQueue: StoreEnhancer<any> =
           }
         })
 
+        // Log the flush so database lastUpdated stamps can be correlated with debug log entries and unlanded writes
+        // detected (a `push` with no matching `pushSynced` is a write that never completed).
+        const debugEnabled = debugLog.isEnabled()
+        const thoughtUpdates = debugEnabled
+          ? (dbQueue ?? []).flatMap(batch => Object.entries(batch.thoughtIndexUpdates))
+          : []
+        if (debugEnabled) {
+          // sample of the thought updates being written; the full set is visible in the corresponding action entries
+          const sample = thoughtUpdates.slice(0, 10).map(([id, thought]) => {
+            if (!thought) return { id, deleted: true }
+            const value = thought.value.length > 100 ? `${thought.value.slice(0, 100)}…` : thought.value
+            return { id, value, rank: thought.rank }
+          })
+          debugLog.log('push', {
+            batches: (dbQueue ?? []).length,
+            thoughtCount: thoughtUpdates.length,
+            deleteCount: thoughtUpdates.filter(([, thought]) => !thought).length,
+            lexemeCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.lexemeIndexUpdates).length, 0),
+            moveCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.movePlacements ?? {}).length, 0),
+            local: (dbQueue ?? []).some(batch => batch.local !== false),
+            remote: (dbQueue ?? []).some(batch => batch.remote !== false),
+            thoughts: sample,
+          })
+        }
+
         /** Pushes queued updates to the active thoughtspace provider sequentially. */
         const applyDbQueue = async () => {
           await thoughtspaceRuntime.persistPushQueueBatches(
@@ -101,9 +127,11 @@ const pushQueue: StoreEnhancer<any> =
         void applyDbQueue()
           .then(() => {
             dbQueue?.forEach(batch => batch.idbSynced?.())
+            debugLog.log('pushSynced', { thoughtCount: thoughtUpdates.length })
           })
           .catch(err => {
             console.error('Thoughtspace persistence failed', err)
+            debugLog.log('pushError', { error: String(err) })
           })
       }
 
