@@ -5,6 +5,7 @@ import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
 import getThoughtById from '../selectors/getThoughtById'
+import selectedPaths from '../selectors/selectedPaths'
 import applyLetterCase from '../util/applyLetterCase'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
@@ -13,6 +14,8 @@ import LowerCaseIcon from './icons/LowerCaseIcon'
 import SentenceCaseIcon from './icons/SentenceCaseIcon'
 import TitleCaseIcon from './icons/TitleCaseIcon'
 import UpperCaseIcon from './icons/UpperCaseIcon'
+
+const casingTypes: LetterCaseType[] = ['LowerCase', 'UpperCase', 'SentenceCase', 'TitleCase']
 
 /** Letter Case Picker component. */
 const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
@@ -26,23 +29,25 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
     dispatch(formatLetterCase(command))
   }
   const selected = useSelector(state => {
-    // The letter case is that of the cursor thought, so no swatch is selected when thoughts are selected without a
-    // cursor (#4844). Otherwise the empty value would match LowerCase and mark it as the letter case of thoughts it
-    // was not read from.
-    if (!state.cursor) return ''
+    // The swatches are only rendered while the picker is open, and deriving the letter case of a large multiselection
+    // is not free, so there is nothing to derive until then.
+    if (!state.showLetterCase) return ''
 
-    const value = getThoughtById(state, head(state.cursor))?.value || ''
-    // The letter case of the thought should be independent of its formatting.
-    const doc = new DOMParser().parseFromString(value, 'text/html')
-    const { textContent } = doc.body
+    // The selected swatch is the letter case of the thoughts that formatLetterCase edits, i.e. the multiselection when
+    // there is one, which may have no cursor at all once the Home button has dismissed it (#4844).
+    const paths = selectedPaths(state)
+    // No swatch is selected when there is nothing to edit, otherwise `every` below would be vacuously true and
+    // highlight the first letter case.
+    if (!paths.length) return ''
 
-    if (textContent === applyLetterCase('LowerCase', textContent)) return 'LowerCase'
-    if (textContent === applyLetterCase('UpperCase', textContent)) return 'UpperCase'
-    if (textContent === applyLetterCase('SentenceCase', textContent)) return 'SentenceCase'
-    if (textContent === applyLetterCase('TitleCase', textContent)) return 'TitleCase'
-    return ''
+    const texts = paths.map(path => {
+      const value = getThoughtById(state, head(path))?.value || ''
+      // The letter case of the thought should be independent of its formatting.
+      return new DOMParser().parseFromString(value, 'text/html').body.textContent ?? ''
+    })
+
+    return casingTypes.find(type => texts.every(text => text === applyLetterCase(type, text))) ?? ''
   })
-  const casingTypes: LetterCaseType[] = ['LowerCase', 'UpperCase', 'SentenceCase', 'TitleCase']
 
   return (
     <Popover show={showLetterCase} size={size}>
