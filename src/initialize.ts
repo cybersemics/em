@@ -156,7 +156,6 @@ const testHelpers = {
   executeCommandById: (id: CommandId) => {
     executeCommand(commandById(id))
   },
-  dropThoughtspace: thoughtspaceRuntime.drop,
   waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
   importToContext: withDispatch(importToContext),
