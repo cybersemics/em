@@ -7,6 +7,7 @@ import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
+import focusWithoutAutoscroll from '../../device/focusWithoutAutoscroll'
 import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
@@ -83,6 +84,7 @@ const useEditMode = ({
       // Get the cursorOffset directly from the store rather than subscribing to it reactively with useSelector.
       // Otherwise, it will try to set the selection while typing.
       const { cursorOffset, lastUndoableActionType } = store.getState()
+      const preventNativeAutoscroll = isTouch && isSafari() && !isCursorCleared
 
       /** Set the selection to the current Editable at the cursor offset. */
       const setSelectionToCursorOffset = () => {
@@ -106,10 +108,14 @@ const useEditMode = ({
           // transition into the cleared state; focusing on any other run blurs the previously focused editable
           // before the selection is set, which recomputes the cursor offset and ends the editing session.
           if (isCursorCleared && wasCursorCleared === false && contentRef.current) {
-            contentRef.current.focus()
+            contentRef.current.focus({ preventScroll: true })
           }
 
-          selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
+          if (preventNativeAutoscroll) {
+            focusWithoutAutoscroll(contentRef.current, { offset: cursorOffset ?? 0 })
+          } else {
+            selection.set(contentRef.current, { offset: cursorOffset ?? 0 })
+          }
         }
       }
 
@@ -130,7 +136,7 @@ const useEditMode = ({
           !disabledRef.current)
 
       if (shouldSetSelection) {
-        preventAutoscroll(contentRef.current)
+        if (!preventNativeAutoscroll) preventAutoscroll(contentRef.current)
 
         /*
         When a new thought is created, the Shift key should be on when Auto-Capitalization is enabled.
@@ -164,7 +170,7 @@ const useEditMode = ({
           // Not in the cleared state, which setSelectionToCursorOffset focuses itself on the transition into it
           // (#4519). Focusing on its later runs would leave the editable focused for the next run's asyncFocus to
           // blur, which ends the editing session and closes the keyboard mid-edit.
-          if (!isCursorCleared) contentRef.current?.focus()
+          if (!isCursorCleared) contentRef.current?.focus({ preventScroll: true })
         }
 
         setSelectionToCursorOffset()
@@ -313,7 +319,28 @@ const useEditMode = ({
           clientY: e.clientY,
         })
 
-        if (offset !== null) {
+        const preventNativeAutoscroll = isTouch && isSafari() && !multiEditing
+        if (preventNativeAutoscroll) e.preventDefault()
+
+        if (offset !== null || preventNativeAutoscroll) {
+          const targetOffset = offset ?? 0
+
+          if (preventNativeAutoscroll) {
+            // Move Redux first so Editable.onFocus recognizes this as the current thought and does
+            // not replace the coordinate-derived offset while focus is being transferred.
+            dispatch(
+              setCursor({
+                path,
+                offset: targetOffset,
+                isKeyboardOpen: true,
+                cursorHistoryClear: true,
+                preserveMulticursor,
+              }),
+            )
+            focusWithoutAutoscroll(editable, { offset: targetOffset })
+            return
+          }
+
           // Prevent the browser from autoscrolling to this editable element.
           // For some reason doesn't work on touchend.
           preventAutoscroll(editable, {
@@ -324,7 +351,7 @@ const useEditMode = ({
           // Setting the caret offset will activate the declarative shouldSetSelection effect, which will call preventAutoscroll and selection.set
           // all over again. Since the selection is managed imperatively in this handler, this duplicate behavior is undesirable.
           allowDefaultSelection()
-          setCaretOffset(offset, { preserveMulticursor })
+          setCaretOffset(targetOffset, { preserveMulticursor })
 
           // It's important to avoid preventDefault when the tap is somewhere that can be handled by native browser selection behavior.
           // If the tap is prevented, it will interfere with functionality like double tap or the context menu. If the selection is

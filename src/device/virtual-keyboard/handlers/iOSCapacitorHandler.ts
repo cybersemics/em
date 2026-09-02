@@ -82,7 +82,7 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
     // thought. The selection is then applied without focus and is wiped again as soon as the hidden asyncFocus
     // input blurs, leaving the new thought with no caret and no keyboard (#4869). A script-initiated focus
     // restores both. Keyboard.show() is not an option: the Capacitor plugin only implements it on Android.
-    editable.focus()
+    editable.focus({ preventScroll: true })
   },
 }
 
