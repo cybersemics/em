@@ -4,7 +4,7 @@ import { KnownDevices } from 'puppeteer'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
@@ -38,49 +38,49 @@ it('DesktopCommandUniverse', async () => {
   })
 })
 
-it('GestureMenu', async () => {
-  await emulate(KnownDevices['iPhone 15 Pro'])
+describe('mobile', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
-  await hideHUD()
+  it('GestureMenu', async () => {
+    await hideHUD()
 
-  await paste('Hello')
+    await paste('Hello')
 
-  // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
-  await clickThought('Hello')
+    // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
+    await clickThought('Hello')
 
-  // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Command Universe and does not need to be updated every time a gesture is added or changed.
-  await gesture('rdldrd', { hold: true })
+    // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Command Universe and does not need to be updated every time a gesture is added or changed.
+    await gesture('rdldrd', { hold: true })
 
-  // wait for the gesture menu to appear
-  await waitForSelector('[data-testid=popup-value]')
+    // wait for the gesture menu to appear
+    await waitForSelector('[data-testid=popup-value]')
 
-  // wait for the glow background image to load before taking snapshot
-  await waitForSelector('[data-testid=glow-background]')
+    // wait for the glow background image to load before taking snapshot
+    await waitForSelector('[data-testid=glow-background]')
 
-  // Hide the gesture trace before taking the snapshot. Its glow is drawn on a canvas and can render slightly
-  // differently across environments, causing flaky snapshot diffs. The trace is not relevant to this snapshot,
-  // so we hide it to keep the result consistent.
-  await hide('[data-testid=gesture-trace]')
+    // Hide the gesture trace before taking the snapshot. Its glow is drawn on a canvas and can render slightly
+    // differently across environments, causing flaky snapshot diffs. The trace is not relevant to this snapshot,
+    // so we hide it to keep the result consistent.
+    await hide('[data-testid=gesture-trace]')
 
-  expect(await screenshot()).toMatchImageSnapshot()
-})
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
 
-it('CommandCenter', async () => {
-  await emulate(KnownDevices['iPhone 15 Pro'])
+  it('CommandCenter', async () => {
+    // the undo button toggles between active and inactive states for some reason. Hence hide the HUD to ensure the undo button is not visible.
+    await hideHUD()
 
-  // the undo button toggles between active and inactive states for some reason. Hence hide the HUD to ensure the undo button is not visible.
-  await hideHUD()
+    await paste('Hello')
 
-  await paste('Hello')
+    // Sometimes after pasting, the cursor is not on the thought. Hence click it to ensure the cursor is on the thought.
+    await clickThought('Hello')
 
-  // Sometimes after pasting, the cursor is not on the thought. Hence click it to ensure the cursor is on the thought.
-  await clickThought('Hello')
+    // open the Command Center
+    await gesture(openCommandCenterCommand)
 
-  // open the Command Center
-  await gesture(openCommandCenterCommand)
+    // wait for the command center panel to appear before taking screenshot
+    await waitForSelector('[data-testid=command-center-panel]')
 
-  // wait for the command center panel to appear before taking screenshot
-  await waitForSelector('[data-testid=command-center-panel]')
-
-  expect(await screenshot()).toMatchImageSnapshot()
+    expect(await screenshot()).toMatchImageSnapshot()
+  })
 })

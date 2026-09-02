@@ -3,9 +3,9 @@ import { showModalActionCreator as showModal } from '../actions/showModal'
 import Icon from '../components/icons/HelpIcon'
 import scrollTo from '../device/scrollTo'
 
-const customizeToolbarCommand: Command = {
+const customizeToolbarCommand = {
   id: 'customizeToolbar',
-  label: 'Customize Toolbar',
+  label: 'Customize Toolbar' as const,
   description: 'Add or remove buttons from the toolbar.',
   multicursor: false,
   svg: Icon,
@@ -14,6 +14,6 @@ const customizeToolbarCommand: Command = {
     scrollTo('top')
   },
   allowExecuteFromModal: true,
-}
+} satisfies Command
 
 export default customizeToolbarCommand

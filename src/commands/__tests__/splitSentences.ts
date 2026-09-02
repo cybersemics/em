@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { keyboardOpenActionCreator as keyboardOpen } from '../../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
@@ -238,6 +239,29 @@ describe('splitSentences', () => {
     - 1`)
   })
 
+  // https://github.com/cybersemics/em/issues/3525
+  it('splits by comma when both a comma and a dash are present', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - Jeff Koons, Jean-Michel Basquiat (creator of Untitled), Cindy Sherman (a photographer), Richard Prince
+        `,
+      }),
+      setCursor([
+        'Jeff Koons, Jean-Michel Basquiat (creator of Untitled), Cindy Sherman (a photographer), Richard Prince',
+      ]),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Jeff Koons
+  - Jean-Michel Basquiat (creator of Untitled)
+  - Cindy Sherman (a photographer)
+  - Richard Prince`)
+  })
+
   it('splits by sentences when both dash and multiple sentences are present', () => {
     store.dispatch([
       importText({
@@ -255,6 +279,40 @@ describe('splitSentences', () => {
   - one - 1.
   - two.
   - three.`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4675
+  it('does not enter edit mode if the keyboard is closed', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - one. two. three.
+        `,
+      }),
+      setCursor(['one. two. three.']),
+      keyboardOpen({ value: false }),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    expect(store.getState().isKeyboardOpen).toBe(false)
+  })
+
+  // https://github.com/cybersemics/em/issues/4675
+  it('stays in edit mode if the keyboard is open', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - one. two. three.
+        `,
+      }),
+      setCursor(['one. two. three.']),
+      keyboardOpen({ value: true }),
+    ])
+
+    executeCommand(splitSentencesCommand, { store })
+
+    expect(store.getState().isKeyboardOpen).toBe(true)
   })
 
   describe('multicursor', () => {
@@ -283,6 +341,30 @@ describe('splitSentences', () => {
   - C.
   - This is C.
   - More C.`)
+    })
+
+    // https://github.com/cybersemics/em/issues/4396
+    it('splits thoughts with a colon into a main thought and child', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - Start: 1
+            - End: 5
+          `,
+        }),
+        setCursor(['Start: 1']),
+        addMulticursor(['Start: 1']),
+        addMulticursor(['End: 5']),
+      ])
+
+      executeCommandWithMulticursor(splitSentencesCommand, { store })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - Start
+    - 1
+  - End
+    - 5`)
     })
 
     it('handles mixed scenarios with single and multiple sentences', async () => {

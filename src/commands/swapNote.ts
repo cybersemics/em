@@ -4,9 +4,9 @@ import SwapNoteIcon from '../components/icons/SwapNoteIcon'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const swapNote: Command = {
+const swapNote = {
   id: 'swapNote',
-  label: 'Swap Note',
+  label: 'Swap Note' as const,
   description: 'Convert a thought to a note.',
   keyboard: { key: 'n', alt: true, shift: true },
   gesture: 'ulr',
@@ -18,6 +18,6 @@ const swapNote: Command = {
   exec: dispatch => {
     dispatch(swapNoteActionCreator())
   },
-}
+} satisfies Command
 
 export default swapNote

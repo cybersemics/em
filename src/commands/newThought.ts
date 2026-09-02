@@ -66,9 +66,9 @@ const multicursor: Command['multicursor'] = {
   preventSetCursor: true,
 }
 
-const newThoughtCommand: Command = {
+const newThoughtCommand = {
   id: 'newThought',
-  label: 'New Thought',
+  label: 'New Thought' as const,
   description: 'Create a shiny new thought.',
   // Support multiple keyboard shortcuts
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
@@ -82,6 +82,6 @@ const newThoughtCommand: Command = {
   isChainable: command => command.id === 'outdent',
   canExecute: () => isDocumentEditable(),
   exec,
-}
+} satisfies Command
 
 export default newThoughtCommand

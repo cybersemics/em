@@ -40,6 +40,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import appendToPath from '../util/appendToPath'
+import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
@@ -212,6 +213,16 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   )
     return
 
+  // Attribute the upcoming moveThought/createThought actions to a drag-and-drop drop, since drops have no `command`
+  // entry in the debug log (commands.ts only logs keyboard/gesture/toolbar commands).
+  debugLog.log('drop', {
+    zone: 'thought',
+    targetId: head(props.simplePath),
+    targetValue: pathToThought(state, props.simplePath)?.value,
+    items: draggedItems.length,
+    showContexts: !!props.showContexts,
+  })
+
   store.dispatch((dispatch, getState) => {
     // set multicursor executing to true if there are multiple thoughts being dragged
     if (draggedItems.length > 1) {
@@ -244,7 +255,11 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
             oldPath: thoughtFrom,
             newPath,
             newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
-            afterId: prevPath ? head(prevPath) : (prevSibling(state, props.simplePath)?.id ?? null),
+            // props.simplePath is a SimplePath, so its previous sibling must always be resolved in normal view.
+            // See the note in DropHover on why the context view would otherwise be inferred for a cyclic context.
+            afterId: prevPath
+              ? head(prevPath)
+              : (prevSibling(state, props.simplePath, { showContexts: false })?.id ?? null),
           }),
         )
       }

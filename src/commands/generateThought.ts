@@ -1,5 +1,6 @@
 import Command from '../@types/Command'
 import Path from '../@types/Path'
+import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
@@ -7,12 +8,15 @@ import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
+import { showModalActionCreator as showModal } from '../actions/showModal'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
+import { HOME_TOKEN } from '../constants'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import simplifyPath from '../selectors/simplifyPath'
+import requestAiDisclosure from '../util/aiDisclosure'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isURL from '../util/isURL'
@@ -61,6 +65,15 @@ const fetchWebpageTitle = async (url: string): Promise<string | null> => {
   return null
 }
 
+/** Returns true when generating the thought at the given path will send context to the AI service. */
+const generatesWithAi = (state: State, path: Path) => {
+  const simplePath = simplifyPath(state, path)
+  const thought = getThoughtById(state, head(simplePath))
+  if (!thought || thought.generating) return false
+  const firstChild = getChildrenRanked(state, thought.id)[0]
+  return thought.value !== '' || !firstChild || !isURL(firstChild.value)
+}
+
 /**
  * Generates a new value for the thought at the given path and applies it to the thought. If the thought is empty and
  * its first child is a URL, the title of the webpage is fetched; otherwise the value is generated with AI. The thought
@@ -68,13 +81,15 @@ const fetchWebpageTitle = async (url: string): Promise<string | null> => {
  * no generation was performed.
  *
  * Takes an explicit path instead of reading state.cursor so that it can be run for every thought of a multiselect.
+ * An optional source state allows every thought in a multiselect to build its prompt from the same pre-generation
+ * snapshot.
  * Cursor-specific side effects (cursorCleared and the caret at the end of the generated value) are the caller's
  * responsibility, since they apply to a single thought and this may be one of many running concurrently.
  */
 const generateThoughtAtPathActionCreator =
-  (path: Path): Thunk<Promise<string | null>> =>
+  (path: Path, sourceState?: State): Thunk<Promise<string | null>> =>
   async (dispatch, getState) => {
-    const state = getState()
+    const state = sourceState ?? getState()
 
     const simplePath = simplifyPath(state, path)
     const thought = getThoughtById(state, head(simplePath))
@@ -82,7 +97,8 @@ const generateThoughtAtPathActionCreator =
 
     // Do nothing if a generation is already in progress for this thought. Two overlapping runs would each restore their
     // own snapshot of the thought and race to edit it.
-    if (thought.generating) return null
+    const currentThought = getThoughtById(getState(), thought.id)
+    if (!currentThought || currentThought.generating) return null
 
     const children = getChildrenRanked(state, thought.id)
     const firstChild = children[0]
@@ -125,31 +141,47 @@ const generateThoughtAtPathActionCreator =
     } else {
       // prompt with ancestors and siblings
       const ancestors = pathToContext(state, parentOf(simplePath))
-      const siblingsText = children.map(child => (child.id === thought.id ? `${child.value}_` : child.value)).join('\n')
-
-      // if there is only one child, then insert the "blank" at the end of the ancestor chain:
-      //   e.g. Films/Watched/Carol/Starring:/_
-      // Otherwise, insert it after all the children:
-      //   e.g. Films/Watched/Carol/Starring:/
-      //        Cate Blanchett
-      //        Rooney Mara
-      //        _
-      const ancestorsText = ancestors.join('/')
-      const input = `${ancestorsText}${children.length > 1 ? '/\n' : ''}${siblingsText}`
+      const siblings = getChildrenRanked(state, head(parentOf(simplePath)) ?? HOME_TOKEN)
+      const ancestorLines = ancestors.map(
+        (ancestor, index) => `${'  '.repeat(index)}[]${ancestor ? ` ${ancestor}` : ''}`,
+      )
+      const siblingIndent = '  '.repeat(ancestors.length)
+      const siblingLines = siblings.map(
+        sibling =>
+          `${siblingIndent}${sibling.id === thought.id ? '[x]' : '[]'}${sibling.value ? ` ${sibling.value}` : ''}`,
+      )
+      const input = [...ancestorLines, ...siblingLines].join('\n')
 
       // generate thought
-      const res = await fetch(import.meta.env.VITE_AI_URL!, { method: 'POST', body: input })
-      const { content, err } = (await res.json()) as { content: string; err: { status: number; message: string } }
-      if (err) {
-        if (err.status === 429) {
-          dispatch(alert('Rate limit reached. Please try again later.'))
-        } else {
-          dispatch(error({ value: err.message }))
+      try {
+        const res = await fetch(`${import.meta.env.VITE_AI_URL!}/generateThought`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ input }),
+        })
+        const response: unknown = await res.json()
+        if (!response || typeof response !== 'object') {
+          throw new Error('Invalid AI response')
         }
-      } else {
-        // Trim the AI content to avoid double spaces
-        const trimmedContent = content.trim()
-        valueNew = `${thought.value}${thought.value && trimmedContent ? ' ' : ''}${trimmedContent}`
+        const generatedThought = 'thought' in response ? response.thought : undefined
+        const errorMessage = 'error' in response ? response.error : undefined
+        if (typeof errorMessage === 'string') {
+          if (res.status === 429) {
+            dispatch(alert('Rate limit reached. Please try again later.'))
+          } else {
+            dispatch(error({ value: errorMessage }))
+          }
+        } else if (typeof generatedThought === 'string') {
+          const trimmedThought = generatedThought.trim()
+          if (!trimmedThought) {
+            throw new Error('Invalid AI response')
+          }
+          valueNew = trimmedThought
+        } else {
+          throw new Error('Invalid AI response')
+        }
+      } catch {
+        dispatch(error({ value: 'Failed to generate thought' }))
       }
     }
 
@@ -177,10 +209,14 @@ const generateThoughtAtPathActionCreator =
       }),
       // editThought automatically sets Thought.generating to false
       editThought({
+        cursorOffset: getState().isMulticursorExecuting ? undefined : valueNew.length,
         force: true,
         oldValue: thought.value,
         newValue: valueNew,
         path: simplePath,
+        // The generation completes whenever the request returns, not as part of a typing stream, so it must never
+        // merge with a user edit that happens to be contiguous in the same direction.
+        preventMerge: true,
       }),
     ])
 
@@ -188,9 +224,9 @@ const generateThoughtAtPathActionCreator =
   }
 
 /** Generate a thought using AI. */
-const generateThought: Command = {
+const generateThought = {
   id: 'generateThought',
-  label: 'Generate Thought',
+  label: 'Generate Thought' as const,
   description: 'Generates a thought using AI.',
   // svg: Icon,
   keyboard: { key: 'g', meta: true, alt: true },
@@ -199,7 +235,7 @@ const generateThought: Command = {
   multicursor: {
     // preventSetCursor is not needed: execMulticursor never moves the cursor, so the restore at the end of the loop
     // sets it to the path it is already on.
-    execMulticursor: (cursors, dispatch) => {
+    execMulticursor: (cursors, dispatch, getState) => {
       /** Generates a thought for every selected thought within a single undo bracket. */
       const generateAll = async () => {
         // Yield before opening the undo bracket. executeCommandWithMulticursor is synchronous: it opens its own
@@ -208,27 +244,46 @@ const generateThought: Command = {
         // generated thought would land outside it and cost the user another undo.
         await Promise.resolve()
 
+        const sourceState = getState()
         dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'generateThought' }))
 
         // Generate concurrently, so that the selection takes one round trip rather than one per thought and every
         // selected thought shows its pending state immediately. allSettled rather than all, so that a rejected request
         // cannot skip the dispatch below and leave the bracket open over the remaining generations.
-        await Promise.allSettled(cursors.map(path => dispatch(generateThoughtAtPathActionCreator(path))))
+        await Promise.allSettled(cursors.map(path => dispatch(generateThoughtAtPathActionCreator(path, sourceState))))
 
         dispatch(setIsMulticursorExecuting({ value: false }))
       }
 
-      generateAll()
+      /** Requests disclosure when any selected thought will use AI, then generates the full selection. */
+      const generateAllWithDisclosure = () => {
+        const usesAi = cursors.some(path => generatesWithAi(getState(), path))
+        if (usesAi && requestAiDisclosure(generateAllWithDisclosure)) {
+          dispatch(showModal({ id: 'aiDisclosure' }))
+          return
+        }
+        generateAll()
+      }
+
+      generateAllWithDisclosure()
     },
   },
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
-  exec: async (dispatch, getState) => {
+  exec: async (dispatch, getState, e, commandContext) => {
     const state = getState()
 
     // do nothing if generation is already in progress
     if (state.cursorCleared) return
 
     const cursor = state.cursor!
+
+    if (
+      generatesWithAi(state, cursor) &&
+      requestAiDisclosure(() => generateThought.exec(dispatch, getState, e, commandContext))
+    ) {
+      dispatch(showModal({ id: 'aiDisclosure' }))
+      return
+    }
 
     // Render the cursor thought as an empty thought while its value is generated. cursorCleared is a single global
     // flag that only applies to the thought being edited, so it is set here rather than in generateThoughtAtPath.
@@ -243,6 +298,6 @@ const generateThought: Command = {
       cursorCleared({ value: false }),
     ])
   },
-}
+} satisfies Command
 
 export default generateThought
