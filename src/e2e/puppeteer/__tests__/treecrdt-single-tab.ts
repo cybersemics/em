@@ -2,6 +2,7 @@ import type { ConsoleMessage, Page } from 'puppeteer'
 import exportThoughts from '../helpers/exportThoughts'
 import paste from '../helpers/paste'
 import refresh from '../helpers/refresh'
+import waitForEditable from '../helpers/waitForEditable'
 import { page, setPage } from '../session'
 import { createTreecrdtTestPage, usePersistentTreecrdtStorage } from '../setup'
 
@@ -9,10 +10,6 @@ vi.setConfig({ testTimeout: 60000 })
 const thoughtspaceStorage = usePersistentTreecrdtStorage()
 
 const PERSISTENCE_ERROR = /sqlite3_open_v2|SQL logic error|database is locked|Thoughtspace persistence failed|TreeCRDT/i
-
-/** Waits for startup hydration to attach the persisted thought to the home context. */
-const waitForHydratedThought = (target: Page, value: string): Promise<unknown> =>
-  target.waitForFunction(expected => !!window.em.getThoughtByContext([expected]), { timeout: 10000 }, value)
 
 /** Captures page failures that would otherwise be easy to miss behind the bootstrap screen. */
 const captureRuntimeErrors = (target: Page, errors: string[]): void => {
@@ -30,7 +27,8 @@ it('keeps one active tab across refreshes and successive tab handoffs', async ()
   expect(await exportThoughts()).toContain('persisted in the first tab')
 
   await refresh()
-  await waitForHydratedThought(first, 'persisted in the first tab')
+  // Startup after a reload opens the OPFS database and hydrates the thought, which can take longer than the default 6 s.
+  await waitForEditable('persisted in the first tab', { timeout: 10000 })
   expect(await exportThoughts()).toContain('persisted in the first tab')
 
   const sessionId = await first.evaluate(() => localStorage.getItem('tsid'))
@@ -68,16 +66,14 @@ it('keeps one active tab across refreshes and successive tab handoffs', async ()
     second.waitForNavigation({ waitUntil: 'load' }),
     second.evaluate(() => (document.querySelector('[aria-label=retry-thoughtspace]') as HTMLElement | null)?.click()),
   ])
-  await second.evaluate(() => window.em.testHelpers.waitForInitialized())
-  await second.waitForSelector('#content')
+  await waitForEditable('persisted in the first tab', { timeout: 10000 })
   expect(await second.evaluate(() => localStorage.getItem('tsid'))).toBe(sessionId)
-  await waitForHydratedThought(second, 'persisted in the first tab')
 
   expect(await exportThoughts()).toContain('persisted in the first tab')
   expect(errors).toEqual([])
 
   await refresh()
-  await waitForHydratedThought(second, 'persisted in the first tab')
+  await waitForEditable('persisted in the first tab', { timeout: 10000 })
 
   expect(await exportThoughts()).toContain('persisted in the first tab')
   expect(errors).toEqual([])
@@ -106,8 +102,7 @@ it('keeps one active tab across refreshes and successive tab handoffs', async ()
     third.waitForNavigation({ waitUntil: 'load' }),
     third.evaluate(() => (document.querySelector('[aria-label=retry-thoughtspace]') as HTMLElement | null)?.click()),
   ])
-  await third.evaluate(() => window.em.testHelpers.waitForInitialized())
-  await waitForHydratedThought(third, 'persisted in the first tab')
+  await waitForEditable('persisted in the first tab', { timeout: 10000 })
 
   expect(await exportThoughts()).toContain('persisted in the first tab')
   expect(errors).toEqual([])

@@ -55,7 +55,7 @@ const initializeCursor = async () => {
 type InitializeOptions = { storage: ThoughtspaceStorage }
 
 /** Initialize local db and window events. */
-const initializeInternal = async ({ storage }: InitializeOptions) => {
+export const initialize = async ({ storage }: InitializeOptions) => {
   initOfflineStatusStore(/* websocket */)
   const eventHandlers = initEvents(store)
 
@@ -107,28 +107,6 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   return eventHandlers
 }
 
-let initializationPromise: ReturnType<typeof initializeInternal> | null = null
-let resolveInitializationStarted: (() => void) | null = null
-
-/** Allows readiness waiters to arrive before access acquisition finishes. */
-const initializationStartedPromise = new Promise<void>(resolve => {
-  resolveInitializationStarted = resolve
-})
-
-/** Initialize local db and window events. */
-export const initialize = (options: InitializeOptions): ReturnType<typeof initializeInternal> => {
-  initializationPromise = initializeInternal(options)
-  resolveInitializationStarted?.()
-  resolveInitializationStarted = null
-  return initializationPromise
-}
-
-/** Waits for app initialization to finish. Used by e2e tests before interacting with exposed helpers. */
-export const waitForInitialized = async (): Promise<void> => {
-  if (!initializationPromise) await initializationStartedPromise
-  await initializationPromise
-}
-
 testFlags.initialize = initialize
 
 /** Partially apply state to a function. */
@@ -154,7 +132,6 @@ const testHelpers = {
     executeCommand(commandById(id))
   },
   dropThoughtspace: thoughtspaceRuntime.drop,
-  waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
   importToContext: withDispatch(importToContext),
 }

@@ -292,7 +292,8 @@ describe('persistent storage', () => {
 
     await refresh()
 
-    await waitForEditable('b')
+    // Startup after a reload opens the OPFS database and hydrates the thought, which can take longer than the default 6 s.
+    await waitForEditable('b', { timeout: 10000 })
     await clickThought('b')
 
     const textContext = await getSelection().focusNode?.textContent

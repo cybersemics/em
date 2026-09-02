@@ -24,11 +24,15 @@ it('keeps the thoughtspace writable when persistent storage falls back to memory
   // Exceed SQLite's path capacity so the real dedicated-worker OPFS open fails deterministically.
   await page.evaluateOnNewDocument(() => localStorage.setItem('tsid', 'x'.repeat(512)))
   await page.reload({ waitUntil: 'load' })
-  await page.evaluate(() => window.em.testHelpers.waitForInitialized())
 
-  expect(warnings).toContain(
-    'Persistent thoughtspace storage is unavailable. em is using temporary in-memory storage; changes will be lost when this page reloads or closes.',
-  )
+  // The warning is logged once the thoughtspace has opened its in-memory client, so its arrival is the condition the
+  // test waits for. Nothing on screen distinguishes the fallback: the empty-thoughtspace prompt renders as soon as the
+  // app shell mounts, before the thoughtspace opens.
+  await expect
+    .poll(() => warnings, { timeout: 10000 })
+    .toContain(
+      'Persistent thoughtspace storage is unavailable. em is using temporary in-memory storage; changes will be lost when this page reloads or closes.',
+    )
 
   await press('Enter')
   await keyboard.type('fallback write')

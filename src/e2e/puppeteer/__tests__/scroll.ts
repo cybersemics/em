@@ -84,8 +84,9 @@ describe('scrollCursorIntoView', () => {
     const initialScrollY = await page.evaluate(() => window.scrollY)
     expect(initialScrollY).toBe(0)
 
-    // Wait for the cursor to be restored to thought 't'
-    await waitForEditable('t')
+    // Wait for the cursor to be restored to thought 't'. Startup after a reload opens the OPFS database and hydrates
+    // the thought, which can take longer than the default 6 s.
+    await waitForEditable('t', { timeout: 10000 })
 
     // Verify the editing thought is still 't'
     const editingText = await getEditingText()

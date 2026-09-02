@@ -36,7 +36,8 @@ it('set the cursor to a thought in the home context on load', async () => {
 
   await refresh()
 
-  await waitForEditable('b')
+  // Startup after a reload opens the OPFS database and hydrates the thought, which can take longer than the default 6 s.
+  await waitForEditable('b', { timeout: 10000 })
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('b')
@@ -61,7 +62,8 @@ it('set the cursor on a subthought on load', async () => {
 
   await refresh()
 
-  await waitForEditable('z')
+  // Startup after a reload opens the OPFS database and hydrates the thought, which can take longer than the default 6 s.
+  await waitForEditable('z', { timeout: 10000 })
 
   const thoughtValue = await getEditingText()
   expect(thoughtValue).toBe('z')

@@ -23,7 +23,8 @@ it('load buffered ancestors of contexts when context view is activated', async (
 
   await refresh()
 
-  await waitForEditable('m')
+  // Startup after a reload opens the OPFS database and hydrates the thought, which can take longer than the default 6 s.
+  await waitForEditable('m', { timeout: 10000 })
 
   await clickThought('m')
   await clickToolbar('Context View')
