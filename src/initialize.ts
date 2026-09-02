@@ -11,7 +11,7 @@ import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
-import db, { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
+import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -157,7 +157,6 @@ const testHelpers = {
   waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
   importToContext: withDispatch(importToContext),
-  getLexemeFromThoughtspace: (value: string) => db.getLexemeById(hashThought(value)),
 }
 
 // add useful functions to window.em for debugging
