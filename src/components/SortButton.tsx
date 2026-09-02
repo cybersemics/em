@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import CommandSortType from '../@types/CommandSortType'
+import useOnClickOutside from '../hooks/useOnClickOutside'
 import theme from '../selectors/theme'
 import FadeTransition from './FadeTransition'
 import SortOption from './SortOption'
@@ -18,6 +19,8 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const closeDropdown = useCallback(() => setDropdownOpen(false), [])
 
   /** Closes the sort dropdown when the user scrolls. */
   const handleScroll = () => {
@@ -31,6 +34,9 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
     }
   }, [])
 
+  // Close the dropdown when the user taps outside of it, e.g. on the search field.
+  useOnClickOutside(buttonRef, closeDropdown)
+
   /**
    * Handles the sort change.
    */
@@ -42,6 +48,8 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
 
   return (
     <button
+      ref={buttonRef}
+      aria-label='sort commands'
       onClick={() => setDropdownOpen(!isDropdownOpen)}
       className={css({
         width: '45px',
@@ -65,6 +73,7 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
       </div>
       <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>
         <div
+          aria-label='command sort options'
           className={cx(
             css({
               position: 'absolute',
