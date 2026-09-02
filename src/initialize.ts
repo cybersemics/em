@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import moize from 'moize'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
@@ -160,7 +159,6 @@ const testHelpers = {
   importToContext: withDispatch(importToContext),
   getLexemeFromThoughtspace: (value: string) => db.getLexemeById(hashThought(value)),
   getState: store.getState,
-  _: _,
 }
 
 // add useful functions to window.em for debugging
