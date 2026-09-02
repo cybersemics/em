@@ -1,8 +1,13 @@
 import { throttle } from 'lodash'
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import VirtualKeyboardState from '../@types/VirtualKeyboardState'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
 import testFlags from '../e2e/testFlags'
 import editingValueStore from '../stores/editingValue'
+import virtualKeyboardStore from '../stores/virtualKeyboardStore'
+
+/** Selects the final height that the keyboard is animating toward. */
+const selectKeyboardTargetHeight = (state: VirtualKeyboardState) => state.targetHeight
 
 const throttledScrollCursorIntoView = throttle((y: number, height: number) => scrollCursorIntoView(y, height), 400)
 
@@ -29,6 +34,13 @@ const useScrollCursorIntoView = (y: number, height: number) => {
      */
     setTimeout(() => throttledScrollCursorIntoView(sizeRef.current.y, sizeRef.current.height))
   })
+
+  /** Re-evaluates cursor visibility when the keyboard's destination changes. */
+  const onKeyboardTargetChange = useCallback(() => {
+    scrollCursorIntoView(sizeRef.current.y, sizeRef.current.height)
+  }, [])
+
+  virtualKeyboardStore.useSelectorEffect(onKeyboardTargetChange, selectKeyboardTargetHeight)
 
   useEffect(() => scrollCursorIntoView(y, height), [height, y])
 }
