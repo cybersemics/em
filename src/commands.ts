@@ -538,7 +538,10 @@ export const executeCommandWithMulticursor = (
             ...newCursors.map(path => addMulticursor({ path })),
             // state.expanded is recalculated on setCursor, so set the cursor to the last new thought to expand the
             // ancestors of the new selection. The cursor is already there, so this does not move it.
-            setCursor({ path: newCursors[newCursors.length - 1], preserveMulticursor: true }),
+            // The new thoughts are selected rather than edited — there is no typing into several of them at once — so
+            // close the keyboard that each exec opened. Otherwise multicursorAlertMiddleware reads the selection as a
+            // multiselection being edited (Clear Thought) and leaves the Command Center closed over it on mobile.
+            setCursor({ path: newCursors[newCursors.length - 1], isKeyboardOpen: false, preserveMulticursor: true }),
           ],
     )
   } else if (!multicursor.clearMulticursor) {

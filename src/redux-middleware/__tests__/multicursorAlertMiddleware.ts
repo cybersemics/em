@@ -7,6 +7,8 @@ import { executeCommandWithMulticursor } from '../../commands'
 import clearThoughtCommand from '../../commands/clearThought'
 import deleteCommand from '../../commands/delete'
 import indentCommand from '../../commands/indent'
+import newSubthoughtCommand from '../../commands/newSubthought'
+import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
 import newThoughtCommand from '../../commands/newThought'
 import { initialize } from '../../initialize'
 import contextToPath from '../../selectors/contextToPath'
@@ -186,7 +188,7 @@ it('does not show the Command Center when undoing a multicursor delete while the
 })
 
 // https://github.com/cybersemics/em/issues/3564
-it.skip('keeps the Command Center open when New Thought replaces the multiselection with the thoughts it creates', async () => {
+it('keeps the Command Center open when New Thought replaces the multiselection with the thoughts it creates', async () => {
   await initialize({ storage: 'memory' })
 
   store.dispatch([
@@ -207,6 +209,59 @@ it.skip('keeps the Command Center open when New Thought replaces the multiselect
   // New Thought selects the new empty thoughts it creates, so the multiselection is replaced rather than ended and
   // the Command Center must stay open over it.
   executeCommandWithMulticursor(newThoughtCommand, { store })
+
+  expect(Object.keys(store.getState().multicursors).length).toBe(3)
+  expect(store.getState().showCommandCenter).toBe(true)
+})
+
+// https://github.com/cybersemics/em/issues/3564
+it('keeps the Command Center open when New Subthought replaces the multiselection with the thoughts it creates', async () => {
+  await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+        - c`,
+    }),
+    setCursor(['a']),
+    addMulticursor(['a']),
+    addMulticursor(['b']),
+    addMulticursor(['c']),
+  ])
+
+  expect(store.getState().showCommandCenter).toBe(true)
+
+  executeCommandWithMulticursor(newSubthoughtCommand, { store })
+
+  expect(Object.keys(store.getState().multicursors).length).toBe(3)
+  expect(store.getState().showCommandCenter).toBe(true)
+})
+
+// https://github.com/cybersemics/em/issues/3564
+it('keeps the Command Center open when New Subthought (above) replaces the multiselection with the thoughts it creates', async () => {
+  await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - x
+        - b
+          - y
+        - c
+          - z`,
+    }),
+    setCursor(['a']),
+    addMulticursor(['a']),
+    addMulticursor(['b']),
+    addMulticursor(['c']),
+  ])
+
+  expect(store.getState().showCommandCenter).toBe(true)
+
+  executeCommandWithMulticursor(newSubthoughtTopCommand, { store })
 
   expect(Object.keys(store.getState().multicursors).length).toBe(3)
   expect(store.getState().showCommandCenter).toBe(true)
