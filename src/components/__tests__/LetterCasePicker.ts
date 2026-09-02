@@ -1,7 +1,7 @@
+import { fireEvent } from '@testing-library/react'
 import { act } from 'react'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
-import { commandEmitter } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -157,13 +157,15 @@ it('Recognizes a styled thought with uppercase text as UpperCase', async () => {
 
 it('flushes pending edits before applying letter case from the picker', async () => {
   await dispatch([newThought({ value: 'a' })])
-  const commandEmitterTriggerSpy = vi.spyOn(commandEmitter, 'trigger')
+  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+  editable.innerHTML = 'ab'
+  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
 
   await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
   await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+  await act(vi.runOnlyPendingTimersAsync)
 
-  expect(commandEmitterTriggerSpy.mock.calls.some(call => call[0] === 'command' && call[1]?.id === 'letterCase')).toBe(
-    true,
-  )
-  expect(commandEmitterTriggerSpy.mock.calls.some(call => call[0] === 'command' && call[1] === undefined)).toBe(true)
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - AB`)
 })
