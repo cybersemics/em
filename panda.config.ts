@@ -491,6 +491,7 @@ export default defineConfig({
             'toolbarArrow',
             'toolbar',
             'navbar',
+            'backgroundGlowFalloff',
             'latestCommands',
             'tutorialTraceGesture',
             'dropEmpty',
