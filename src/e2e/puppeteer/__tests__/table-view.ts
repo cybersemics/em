@@ -1,7 +1,6 @@
 import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
-import command from '../helpers/command'
 import getEditable from '../helpers/getEditable'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
@@ -145,15 +144,18 @@ describe('Table View', () => {
   it('Table View applied to a subthought', async () => {
     await page.setViewport({ width: 375, height: 812 })
 
+    // The fixture carries the =view/Table that Table View applies to the parent of the cursor. The layout under test does
+    // not depend on how the attribute was set, and the toolbar is hidden by hideHUD.
     await paste(`
       - One two three four five six seven
+        - =view
+          - Table
         - Eight nine ten eleven twelve thirteen fourteen
           - Fifteen sixteen seventeen eighteen nineteen twenty
     `)
 
-    // Cursor on the subthought, then toggle Table View — applies =view/Table to its parent.
+    // Cursor on the subthought, i.e. on a col1 cell.
     await clickThought('Eight nine ten eleven twelve thirteen fourteen')
-    await command('toggleTableView')
 
     await waitForLayout()
 
@@ -168,15 +170,18 @@ describe('Table View', () => {
   it('Table View applied to the root context', async () => {
     await page.setViewport({ width: 375, height: 812 })
 
+    // The fixture carries the =view/Table that Table View applies to the root context when the cursor is on a top-level
+    // thought. The layout under test does not depend on how the attribute was set, and the toolbar is hidden by hideHUD.
     await paste(`
+      - =view
+        - Table
       - One two three four five six seven
         - Eight nine ten eleven twelve thirteen fourteen
           - Fifteen sixteen seventeen eighteen nineteen twenty
     `)
 
-    // Cursor on the top-level thought, then toggle Table View — applies =view/Table to the root context.
+    // Cursor on the top-level thought, i.e. on a col1 cell of the root table.
     await clickThought('One two three four five six seven')
-    await command('toggleTableView')
 
     await waitForLayout()
 

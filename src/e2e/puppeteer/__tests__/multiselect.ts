@@ -1,7 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
-import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
@@ -118,7 +117,7 @@ describe('multiselect', () => {
 
     // place the cursor on b, then select all thoughts at the current level
     await clickThought('b')
-    await command('selectAll')
+    await press('a', { meta: true, alt: true })
 
     // The native copy event fires on the focused editable (permitDefault on copyCursor). Capture the
     // clipboard data it writes. With a multicursor active it must export all selected thoughts.
@@ -170,7 +169,7 @@ describe('multiselect', () => {
 
     // place the cursor on b, then select all thoughts at the current level and copy
     await clickThought('b')
-    await command('selectAll')
+    await press('a', { meta: true, alt: true })
     await press('c', { meta: true })
 
     const copied = await page.evaluate(() => (window as typeof window & { __copied: Record<string, string> }).__copied)
@@ -192,7 +191,7 @@ describe('multiselect', () => {
         `)
 
     await clickThought('b')
-    await command('selectAll')
+    await press('a', { meta: true, alt: true })
     await waitForHighlightedBullets(3)
 
     await press('c', { meta: true })
@@ -215,14 +214,14 @@ describe('multiselect', () => {
         `)
 
     await clickThought('b')
-    await command('selectAll')
+    await press('a', { meta: true, alt: true })
     await waitForHighlightedBullets(3)
 
     // Enter multiselect edit mode via Clear Thought.
     await press('c', { alt: true, shift: true, meta: true })
     await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
 
-    await command('selectAll')
+    await press('a', { meta: true, alt: true })
 
     // Select All should preserve edit mode in this branch, keeping the faux carets rendered.
     await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
