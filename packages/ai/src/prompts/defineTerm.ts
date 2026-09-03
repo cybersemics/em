@@ -5,7 +5,7 @@ import Service from '../@types/Service'
 import completeChat from '../completeChat'
 
 /** Prompts the LLM to write a concise dictionary entry for each term. */
-const defineTerms = async (terms: string[]): Promise<string[]> => {
+const defineTerm = async (terms: string[]): Promise<string[]> => {
   const definitions = await completeChat({
     messages: [
       {
@@ -17,7 +17,7 @@ const defineTerms = async (terms: string[]): Promise<string[]> => {
     ],
     model: Model.GPT_5_6_LUNA,
     reasoningEffort: ReasoningEffort.NONE,
-    service: Service.DEFINE_TERMS,
+    service: Service.DEFINE_TERM,
     schema: z.object(
       Object.fromEntries(
         terms.map((term, index) => [
@@ -31,4 +31,4 @@ const defineTerms = async (terms: string[]): Promise<string[]> => {
   return terms.map((_, index) => definitions[`definition_${index}`].trim())
 }
 
-export default defineTerms
+export default defineTerm

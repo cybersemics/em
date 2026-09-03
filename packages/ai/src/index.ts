@@ -4,7 +4,7 @@ import cors from 'cors'
 import { RateLimitError } from 'openai'
 import { checkRateLimit } from '@vercel/firewall'
 import { z, ZodError, ZodType } from 'zod'
-import defineTerms from './prompts/defineTerms'
+import defineTerm from './prompts/defineTerm'
 import generateEmoji from './prompts/generateEmoji'
 import generateThought from './prompts/generateThought'
 
@@ -72,12 +72,12 @@ app.get('/', async (req, res) => {
 
 /** Defines one or more terms. */
 createPostRoute({
-  path: '/ai/defineTerms',
+  path: '/ai/defineTerm',
   requestSchema: z.object({
     terms: z.array(z.string().trim().min(1)).min(1).describe('The terms to define'),
   }),
   handler: async request => {
-    const definitions = await defineTerms(request.terms)
+    const definitions = await defineTerm(request.terms)
     return { definitions }
   },
 })

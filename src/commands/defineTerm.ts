@@ -22,7 +22,7 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 
-/** The immutable input captured for one thought in a Define Terms request. */
+/** The immutable input captured for one thought in a Define Term request. */
 interface DefinitionRequest {
   originalValue: string
   requestId: symbol
@@ -30,7 +30,7 @@ interface DefinitionRequest {
   thought: Thought
 }
 
-/** Active Define Terms request for each thought. */
+/** Active Define Term request for each thought. */
 const pendingDefinitions = new Map<ThoughtId, symbol>()
 
 /** Returns the visible, decoded term represented by a thought value. */
@@ -44,7 +44,7 @@ const canDefineTermAtPath = (state: State, path: Path): boolean => {
 }
 
 /** Defines all thoughts at the given paths in one API request and adds each definition as the first subthought of its unchanged source thought. */
-const defineTermsAtPaths =
+const defineTermAtPaths =
   (paths: Path[]): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     const state = getState()
@@ -89,7 +89,7 @@ const defineTermsAtPaths =
         throw new Error('import.meta.env.VITE_AI_URL is not configured')
       }
 
-      const response = await fetch(`${import.meta.env.VITE_AI_URL}/defineTerms`, {
+      const response = await fetch(`${import.meta.env.VITE_AI_URL}/defineTerm`, {
         body: JSON.stringify({ terms: requests.map(request => request.term) }),
         headers: { 'Content-Type': 'application/json' },
         method: 'POST',
@@ -142,7 +142,7 @@ const defineTermsAtPaths =
         )
       })
     } catch {
-      dispatch(error({ value: 'Failed to define terms' }))
+      dispatch(error({ value: 'Failed to define term' }))
     } finally {
       const currentState = getState()
       const thoughtIndexUpdates = Object.fromEntries(
@@ -171,9 +171,9 @@ const defineTermsAtPaths =
   }
 
 /** Defines the selected thoughts using one AI request and adds each definition as a subthought. */
-const defineTerms = {
-  id: 'defineTerms',
-  label: 'Define Terms' as const,
+const defineTerm = {
+  id: 'defineTerm',
+  label: 'Define Term' as const,
   description: 'Adds a concise AI-generated dictionary definition as a subthought of each selected thought.',
   gesture: 'url',
   svg: GenerateThoughtIcon,
@@ -183,9 +183,9 @@ const defineTerms = {
       /** Waits for the definition request before closing the multicursor undo bracket. */
       const defineAll = async () => {
         await Promise.resolve()
-        dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'defineTerms' }))
+        dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'defineTerm' }))
         try {
-          await dispatch(defineTermsAtPaths(cursors))
+          await dispatch(defineTermAtPaths(cursors))
         } finally {
           dispatch(setIsMulticursorExecuting({ value: false }))
         }
@@ -211,13 +211,13 @@ const defineTerms = {
     const cursor = getState().cursor
     if (!cursor) return
 
-    if (requestAiDisclosure(() => defineTerms.exec(dispatch, getState, event, commandContext))) {
+    if (requestAiDisclosure(() => defineTerm.exec(dispatch, getState, event, commandContext))) {
       dispatch(showModal({ id: 'aiDisclosure' }))
       return
     }
 
-    await dispatch(defineTermsAtPaths([cursor]))
+    await dispatch(defineTermAtPaths([cursor]))
   },
 } satisfies Command
 
-export default defineTerms
+export default defineTerm

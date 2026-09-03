@@ -1,9 +1,9 @@
 import { AddressInfo } from 'node:net'
 import { Server } from 'node:http'
 
-const defineTerms = vi.hoisted(() => vi.fn())
+const defineTerm = vi.hoisted(() => vi.fn())
 
-vi.mock('../prompts/defineTerms', () => ({ default: defineTerms }))
+vi.mock('../prompts/defineTerm', () => ({ default: defineTerm }))
 
 import app from '../index'
 
@@ -28,17 +28,17 @@ it('defines multiple terms through one service call', async () => {
     'A domesticated bird raised worldwide for eggs, meat, feathers, and companionship.',
     'A round, edible fruit with crisp flesh that grows on trees.',
   ]
-  defineTerms.mockResolvedValueOnce(definitions)
+  defineTerm.mockResolvedValueOnce(definitions)
   const { port } = server.address() as AddressInfo
 
-  const response = await fetch(`http://127.0.0.1:${port}/ai/defineTerms`, {
+  const response = await fetch(`http://127.0.0.1:${port}/ai/defineTerm`, {
     body: JSON.stringify({ terms: ['chicken', 'apple'] }),
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
   })
 
   await expect(response.json()).resolves.toEqual({ definitions })
-  expect(defineTerms).toHaveBeenCalledOnce()
-  expect(defineTerms).toHaveBeenCalledWith(['chicken', 'apple'])
+  expect(defineTerm).toHaveBeenCalledOnce()
+  expect(defineTerm).toHaveBeenCalledWith(['chicken', 'apple'])
   expect(response.status).toBe(200)
 })

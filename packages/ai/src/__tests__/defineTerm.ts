@@ -3,7 +3,7 @@ const completeChat = vi.hoisted(() => vi.fn())
 vi.mock('../completeChat', () => ({ default: completeChat }))
 
 import Service from '../@types/Service'
-import defineTerms from '../prompts/defineTerms'
+import defineTerm from '../prompts/defineTerm'
 
 beforeEach(() => {
   completeChat.mockReset()
@@ -17,7 +17,7 @@ it('returns definitions in term order using one LLM request', async () => {
     definition_1: `  ${appleDefinition}`,
   })
 
-  await expect(defineTerms(['Dog', 'Apple'])).resolves.toEqual([dogDefinition, appleDefinition])
+  await expect(defineTerm(['Dog', 'Apple'])).resolves.toEqual([dogDefinition, appleDefinition])
   expect(completeChat).toHaveBeenCalledTimes(1)
   expect(completeChat).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -28,7 +28,7 @@ it('returns definitions in term order using one LLM request', async () => {
         }),
         { content: 'Terms to define:\n\nDog\nApple', role: 'user' },
       ],
-      service: Service.DEFINE_TERMS,
+      service: Service.DEFINE_TERM,
     }),
   )
 })
@@ -41,7 +41,7 @@ it('builds a separate response field for arbitrary and duplicate terms', async (
   ])
   completeChat.mockResolvedValueOnce(definitions)
 
-  await defineTerms(['__proto__', 'duplicate', 'duplicate'])
+  await defineTerm(['__proto__', 'duplicate', 'duplicate'])
 
   const schema = completeChat.mock.calls[0][0].schema
   expect(Object.entries(schema.parse(definitions))).toEqual(Object.entries(definitions))
