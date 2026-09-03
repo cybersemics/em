@@ -8,6 +8,7 @@ import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
+import resetApp from '../helpers/resetApp'
 import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
@@ -122,6 +123,16 @@ describe('command center', () => {
       () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
     )
     expect(showCommandCenter).toBeFalsy()
+
+    // Chrome 151 keeps the compositor scroll from the uncanceled system gesture active after touchend,
+    // so run the independent positive control in a fresh document as it would be after returning to the app.
+    await resetApp()
+    await paste(`
+        - a
+        - b
+        `)
+    await clickThought('a')
+    await page.evaluate(() => document.documentElement.style.setProperty('--safe-area-inset-bottom', '34px'))
 
     // control: the same swipe starting above the system-gesture strip must still open the Command Center
     await gesture('u', { xStart: innerWidth / 4, yStart: innerHeight - 200 })
