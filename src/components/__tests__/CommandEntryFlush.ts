@@ -54,6 +54,37 @@ it('flushes pending edits before executing a formatSelection command from the to
   expect(cursorValue()).toBe('<b>ab</b>')
 })
 
+// A picker swatch dispatches its action creator directly, so the next two cover the flushes in formatSelectionColor
+// and formatLetterCase rather than the one in executeCommandWithMulticursor. The edit is queued after the picker is
+// opened, since opening it is itself a toolbar command that flushes.
+// https://github.com/cybersemics/em/issues/4774
+it('flushes pending edits before applying a color from the picker', async () => {
+  await dispatch([newThought({ value: 'a' })])
+
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+
+  queuePendingEdit()
+
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(cursorValue()).toBe('<font color="#00c7e6">ab</font>')
+})
+
+// https://github.com/cybersemics/em/issues/4774
+it('flushes pending edits before applying letter case from the picker', async () => {
+  await dispatch([newThought({ value: 'a' })])
+
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+
+  queuePendingEdit()
+
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(cursorValue()).toBe('AB')
+})
+
 // https://github.com/cybersemics/em/issues/4774
 it('flushes pending edits before executing a desktop command universe command', async () => {
   await dispatch([newThought({ value: 'a' })])

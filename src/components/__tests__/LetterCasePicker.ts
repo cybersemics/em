@@ -1,4 +1,3 @@
-import { fireEvent } from '@testing-library/react'
 import { act } from 'react'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
 import { homeActionCreator as home } from '../../actions/home'
@@ -154,22 +153,6 @@ it('Recognizes a styled thought with uppercase text as UpperCase', async () => {
 
   const upperCase = document.querySelector('[aria-label="UpperCase"][data-selected="true"]')
   expect(upperCase).toBeInTheDocument()
-})
-
-it('flushes pending edits before applying letter case from the picker', async () => {
-  await dispatch([newThought({ value: 'a' })])
-  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
-  editable.innerHTML = 'ab'
-  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
-
-  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
-  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
-
-  await act(vi.runOnlyPendingTimersAsync)
-
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- ${HOME_TOKEN}
-  - AB`)
 })
 
 // https://github.com/cybersemics/em/issues/4844
