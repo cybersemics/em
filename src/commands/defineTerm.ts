@@ -174,7 +174,10 @@ const defineTermAtPaths =
 const defineTerm = {
   id: 'defineTerm',
   label: 'Define Term' as const,
-  description: 'Adds a concise AI-generated dictionary definition as a subthought of each selected thought.',
+  description: state =>
+    Object.keys(state.multicursors).length > 1
+      ? 'Adds a concise AI-generated dictionary definition as a subthought of each selected thought.'
+      : 'Adds a concise AI-generated dictionary definition as a subthought of the current thought.',
   gesture: 'url',
   svg: GenerateThoughtIcon,
   multicursor: {

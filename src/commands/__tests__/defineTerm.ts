@@ -178,6 +178,14 @@ it('is disabled without a selection or on an empty thought', async () => {
   expect(defineTerm.canExecute!(store.getState())).toBe(false)
 })
 
+it('pluralizes the description when more than one thought is selected', async () => {
+  await dispatch([importText({ text: '- chicken\n- apple' }), setCursor(['chicken'])])
+  expect(defineTerm.description(store.getState())).toContain('the current thought')
+
+  await dispatch([addMulticursor(['chicken']), addMulticursor(['apple'])])
+  expect(defineTerm.description(store.getState())).toContain('each selected thought')
+})
+
 it('is disabled while a definition request is pending', async () => {
   acknowledgeAiDisclosure()
   /** Resolves the pending AI request after the command gating is asserted. */
