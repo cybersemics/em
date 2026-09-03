@@ -9,6 +9,7 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
+import storageStatusStore from '../../stores/storageStatus'
 import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 import debugLog from '../../util/debugLog'
 import fastClick from '../../util/fastClick'
@@ -206,6 +207,71 @@ const AiAcknowledgement = () => {
   )
 }
 
+/** Reports whether this browser can persist thoughts. Private browsing modes vary: Safari disallows the Origin Private File System outright, so the thoughtspace silently falls back to in-memory storage, while Chrome incognito allows it and discards it when the session ends. The report names which case applies on a device whose console is not reachable. */
+const StorageDiagnostics = () => {
+  const clientStorage = storageStatusStore.useState()
+  const [report, setReport] = useState<string | null>(null)
+
+  /** Runs one probe, reporting a rejection as its message so that a single unsupported API does not abort the whole report. */
+  const probe = async (label: string, f: () => Promise<unknown>): Promise<string> =>
+    `${label}: ${await f().then(String, (e: Error) => `FAILED (${e.name}: ${e.message})`)}`
+
+  /** Probes browser storage and renders the report. */
+  const run = async () => {
+    setReport('Running...')
+    const results = await Promise.all([
+      probe('OPFS getDirectory', async () => {
+        await navigator.storage.getDirectory()
+        return 'ok'
+      }),
+      probe('OPFS write + read', async () => {
+        const root = await navigator.storage.getDirectory()
+        const fileHandle = await root.getFileHandle('em-storage-probe', { create: true })
+        const writable = await fileHandle.createWritable()
+        await writable.write('probe')
+        await writable.close()
+        const text = await (await fileHandle.getFile()).text()
+        await root.removeEntry('em-storage-probe')
+        return text === 'probe' ? 'ok' : `read back ${text}`
+      }),
+      probe('storage.persisted()', () => navigator.storage.persisted()),
+      probe('estimate().quota', async () => (await navigator.storage.estimate()).quota),
+    ])
+    setReport(
+      [`client.storage: ${clientStorage ?? 'not initialized'}`, ...results, `userAgent: ${navigator.userAgent}`].join(
+        '\n',
+      ),
+    )
+  }
+
+  return (
+    <div className={css({ marginTop: '2em' })}>
+      <a {...fastClick(run)} className={extendTapRecipe()}>
+        Test storage
+      </a>
+      {report ? (
+        <>
+          <span className={css({ margin: '0 0.5em', color: 'dim' })}>&middot;</span>
+          <a {...fastClick(() => copy(report))} className={extendTapRecipe()}>
+            Copy
+          </a>
+          <pre
+            className={css({
+              color: 'dim',
+              fontSize: 'sm',
+              marginTop: '0.5em',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            })}
+          >
+            {report}
+          </pre>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
 /** User settings modal. */
 const ModalSettings = () => {
   const dispatch = useDispatch()
@@ -256,6 +322,8 @@ const ModalSettings = () => {
         <AiAcknowledgement />
 
         <DebugLogging />
+
+        <StorageDiagnostics />
 
         <a
           className={css({ color: 'error' })}

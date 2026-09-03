@@ -121,6 +121,7 @@ This rule is about waiting for real time to pass, not about safety limits or tim
 
 - Runner timeouts such as Vitest's `testTimeout` and WDIO's `waitforTimeout` are legitimate safety limits.
 - When elapsed time is the behavior under test (debounce, throttle, delayed UI, etc.), use fake timers and advance them explicitly instead of sleeping in real time.
+- In store and JSDOM tests, where `initStore` and `createTestApp` already enable fake timers, `vi.waitFor` is a sleep loop in disguise. Flush the timers instead — see [Fake timers: flush, don't poll](#fake-timers-flush-dont-poll).
 - Durations that are part of simulated input, such as how long a long press is held or how quickly a swipe moves, are action parameters rather than synchronization waits.
 
 ```ts
@@ -146,7 +147,7 @@ expect(exported).toBe(`
 `)
 ```
 
-If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
+If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
 
 The sanctioned `paste` and `setTheme` Puppeteer helpers still contain fixed sleeps. The iOS `showEditMenu` helper also has a documented WebKit settlement delay. These are known driver/synchronization debt, not general examples to copy. If one is changed, prefer replacing the delay with a named readiness condition when the platform exposes one.
 
@@ -491,10 +492,11 @@ Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
 ### Vitest configuration
 
-[`vitest.config.ts`](../vitest.config.ts) defines two projects, both extending [`vite.config.ts`](../vite.config.ts):
+[`vitest.config.ts`](../vitest.config.ts) defines three projects, all extending [`vite.config.ts`](../vite.config.ts):
 
-- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding `e2e/` and `.claude/`. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.ts`](../src/setupTests.ts). Used by `yarn test`.
+- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding `e2e/`, `evals/`, and `.claude/`. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.ts`](../src/setupTests.ts). Used by `yarn test`.
 - **`puppeteer-e2e`** — custom environment [`puppeteer-environment.ts`](../src/e2e/puppeteer-environment.ts), setup file [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), only includes `src/e2e/puppeteer/__tests__/*.ts`. The `vite-plugin-terminal` plugin pipes `console.log` from the page back to the terminal so Puppeteer test failures are debuggable. Used by `yarn test:puppeteer`; locally, [`test-puppeteer.sh`](../src/e2e/puppeteer/test-puppeteer.sh) also starts Browserless and a dedicated Vite dev server on port 2552.
+- **`eval`** — `node` environment and picks up live model evaluations under `packages/ai/src/evals/`. Its concurrent cases retry failures up to twice and allow 60 seconds per case. The directory is excluded from `unit` so `yarn test` remains deterministic and credential-free; run all evaluations explicitly with `yarn test:evals`, which loads `packages/ai/.env.local` before Vitest imports the AI client.
 
 Exceptions thrown inside a DOM event listener never propagate out of `dispatchEvent` — jsdom catches them and re-reports them as an `error` event on `window`. Vitest turns that event back into a run-failing unhandled error, but only while nothing else is listening for `error`, and [`initEvents.ts`](../src/util/initEvents.ts) registers a listener at module scope to drive the error banner, which suppresses that conversion in any test that imports app code. [`setupTests.ts`](../src/setupTests.ts) restores it by re-emitting trusted `error` events as `uncaughtException`, so a test that crashes on click fails the run instead of passing silently. Tests that dispatch a synthetic `ErrorEvent` to exercise the banner itself are unaffected, since events constructed in test code are not trusted.
 
@@ -527,7 +529,7 @@ Integration tests are blackbox, but named helpers may take shortcuts during arra
 | Visual snapshot stabilization | Arrange | [`hide`](../src/e2e/puppeteer/helpers/hide.ts), [`hideVisibility`](../src/e2e/puppeteer/helpers/hideVisibility.ts), [`hideHUD`](../src/e2e/puppeteer/helpers/hideHUD.ts), [`showMousePointer`](../src/e2e/puppeteer/helpers/showMousePointer.ts), [`screenshot`](../src/e2e/puppeteer/helpers/screenshot.ts) | DOM/style mutation is allowed only to remove irrelevant nondeterminism or expose input position in a visual test. Do not hide the subject of the snapshot. |
 | Test environment controls | Arrange | [`deviceEmulation`](../src/e2e/puppeteer/helpers/deviceEmulation.ts), [`setConnectionStatus`](../src/e2e/puppeteer/helpers/setConnectionStatus.ts), [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), the thoughtspace storage selection in [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable controls in the corresponding `afterEach` or `afterAll` hook unless per-test page isolation resets them. The control must not change the semantic outcome under test. |
 | Structural assertion | Assert | [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts) | Export the thought tree as plaintext. Do not make additional assertions on Redux state. |
-| Non-visual synchronization | Wait | [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts), [`waitForState`](../src/e2e/puppeteer/helpers/waitForState.ts) | Use only when persistence or another prerequisite has no immediate visual signal. This is synchronization, not the test's assertion; assert the final user-visible result separately. |
+| Non-visual synchronization | Wait | [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) | Use only when persistence or another prerequisite has no immediate visual signal. `waitForThoughtspaceIdle` waits for every queued persistence write to commit and rejects if one failed; call it only to synchronize before a reload or before asserting that a write landed. It is synchronization, not the test's assertion; assert the final user-visible result separately. |
 | Timing/environment spoofing | Arrange | [`reloadWithProductionTiming`](../src/e2e/puppeteer/helpers/reloadWithProductionTiming.ts) (spoofs `navigator.webdriver` to restore production animation timing) | Use only for a state that cannot exist under test timing (such as the loading phase). Justify in the helper's doc comment and state how the spoof is undone (per-test page isolation counts, but say so). Subsequent waits must still name conditions rather than replay production durations. |
 
 DOM reads are different from backdoors: inline `page.evaluate`/`browser.execute` may read user-visible DOM when no helper exists, though a repeated read should become a named helper. It may not dispatch actions, mutate app state, set test flags, or write to the DOM.
@@ -599,7 +601,7 @@ Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/hel
 | Scroll | [`scroll`](../src/e2e/puppeteer/helpers/scroll.ts), [`scrollBy`](../src/e2e/puppeteer/helpers/scrollBy.ts), [`scrollIntoView`](../src/e2e/puppeteer/helpers/scrollIntoView.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts) | Scrolls the window or a named container; use the narrowest helper that expresses the intent. |
 | Emulate a mobile device | [`deviceEmulation.useForSuite`](../src/e2e/puppeteer/helpers/deviceEmulation.ts) | Selects a Puppeteer device profile at suite scope, which `setup` applies before navigation. There is no mid-session equivalent; see the emulation note above. |
 
-Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), and [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts). Every Puppeteer test should read as a sequence of these helpers.
+Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), [`waitForCommandCenterOpen`](../src/e2e/puppeteer/helpers/waitForCommandCenterOpen.ts), and [`waitForCommandCenterClosed`](../src/e2e/puppeteer/helpers/waitForCommandCenterClosed.ts). Persistence has no visual signal, so [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) waits for the thoughtspace to commit every queued write; [`refresh`](../src/e2e/puppeteer/helpers/refresh.ts) calls it before reloading, so a test that reloads right after a paste does not need to wait for persistence itself; typed text reaches the queue only when its edit throttle flushes, so run a command such as Escape before reloading to commit it. Every Puppeteer test should read as a sequence of these helpers.
 
 The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM.
 
@@ -607,7 +609,7 @@ The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exp
 
 The iOS suite has a separate driver vocabulary in [`../src/e2e/iOS/helpers/`](../src/e2e/iOS/helpers): [`tap`](../src/e2e/iOS/helpers/tap.ts) emits a W3C pointer action, [`keyboard.type`](../src/e2e/iOS/helpers/keyboard.ts) uses WDIO `sendKeys`, and [`gesture`](../src/e2e/iOS/helpers/gesture.ts) emits a touch pointer path. Helpers such as [`tapReturnKey`](../src/e2e/iOS/helpers/tapReturnKey.ts), [`hideKeyboardByTappingDone`](../src/e2e/iOS/helpers/hideKeyboardByTappingDone.ts), and [`showEditMenu`](../src/e2e/iOS/helpers/showEditMenu.ts) cross into native iOS UI when Web content APIs are insufficient.
 
-Tap toolbar buttons with [`tapToolbar`](../src/e2e/iOS/helpers/tapToolbar.ts), the iOS counterpart to Puppeteer's [`clickToolbar`](../src/e2e/puppeteer/helpers/clickToolbar.ts), rather than tapping the button element directly. Most of the toolbar's buttons sit outside a phone-width viewport until the horizontally scrolling toolbar is scrolled, and a tap aimed at an off-screen button hits nothing — silently, since the command simply never runs. `tapToolbar` centers the button first (the toolbar's edges are overlapped by opaque scroll arrows that swallow a tap on a button scrolled only just into view) and taps with a touch pointer, which [`ToolbarButton`](../src/components/ToolbarButton.tsx) requires on a touch device because it binds `onTouchStart`/`onTouchEnd` rather than `onMouseDown`/`onClick`. The touch pointer also preserves the caret: `ToolbarButton` preventDefaults `touchend` to suppress the blur, whereas a mouse tap blurs the editable — which for a note clears `noteFocus`, so the command applies to the thought instead.
+Tap toolbar buttons with [`tapToolbar`](../src/e2e/iOS/helpers/tapToolbar.ts), the iOS counterpart to Puppeteer's [`clickToolbar`](../src/e2e/puppeteer/helpers/clickToolbar.ts), rather than tapping the button element directly. Most of the toolbar's buttons sit outside a phone-width viewport until the horizontally scrolling toolbar is scrolled, and a tap aimed at an off-screen button hits nothing — silently, since the command simply never runs. `tapToolbar` centers the button first (the toolbar's edges are overlapped by opaque scroll arrows that swallow a tap on a button scrolled only just into view) and taps with a touch pointer, which [`ToolbarButton`](../src/components/ToolbarButton.tsx) requires on a touch device because it binds `onTouchStart`/`onTouchEnd` rather than `onMouseDown`/`onClick`. It aims at the button's icon rather than the center of its rect, since a picker is rendered inside the button that opens it and an open picker expands that rect down over the swatches. The touch pointer also preserves the caret: `ToolbarButton` preventDefaults `touchend` to suppress the blur, whereas a mouse tap blurs the editable — which for a note clears `noteFocus`, so the command applies to the thought instead.
 
 A second value in a dropdown that is already open is tapped directly, since calling `tapToolbar` again would tap its button and toggle the dropdown closed. Tap it with [`tap`](../src/e2e/iOS/helpers/tap.ts) and the `toolbarTapOptions` exported by `tapToolbar`, so it uses the same touch pointer and offset.
 
@@ -1032,9 +1034,9 @@ Test `enter` and `leave` on each of the following actions:
 
 ## Tips and Tricks
 
-### Database operations and fake timers
+### Fake timers: flush, don't poll
 
-`initStore` and `createTestApp` enable fake timers. When a test calls `initialize({ storage: 'memory' })` or performs database work directly, explicitly flush the resulting scheduled work before asserting:
+`initStore` and `createTestApp` enable fake timers. Under fake timers, nothing scheduled runs until the test advances the clock, so a test that triggers asynchronous work must flush it explicitly before asserting. When a test calls `initialize({ storage: 'memory' })` or performs database work directly:
 
 ```ts
 vi.useFakeTimers()
@@ -1047,6 +1049,29 @@ await vi.runAllTimersAsync()
 https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
+
+The same flush settles an asynchronous command. `generateThought` and `generateEmoji` each await a network request and, under multicursor, hold an undo bracket open across every selected thought. With `fetch` mocked, that whole run is timer- and microtask-bound, so one `vi.runAllTimersAsync()` after `executeCommandWithMulticursor` brings the store to its settled state, undo bracket closed included:
+
+```ts
+// ✅ Do: flush, then assert on the result
+await act(async () => {
+  executeCommandWithMulticursor(generateThought, { store })
+  await vi.runAllTimersAsync()
+})
+
+expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - one
+  - two`)
+```
+
+```ts
+// ❌ Don't: poll an internal flag until the command looks finished
+await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
+```
+
+`vi.waitFor` is the store-test form of the sleep loop that [Principle 3](#3-never-wait-for-wall-clock-time-wait-for-the-response) forbids. It only passes under fake timers because Vitest advances the clock by the polling interval on each retry, so it reaches the same settled state in fixed-size steps — and it does so by watching a flag that is not the result under test. The flush names the condition exactly (every scheduled callback has run), takes one line, and when the command does not settle, it fails at the assertion on the outline rather than as a polling timeout. Keep the assertion outside the waiter, so that the test reads as act → flush → assert.
+
+This is a workaround for the commands not being awaitable: `executeCommandWithMulticursor` discards the promise, so a test cannot `await` the command itself. [#5337](https://github.com/cybersemics/em/issues/5337) tracks returning it. ([#5338](https://github.com/cybersemics/em/pull/5338), [#5222](https://github.com/cybersemics/em/pull/5222))
 
 ### Automated flaky-test detection
 
