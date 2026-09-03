@@ -98,7 +98,7 @@ const openKeyboardAt = async (value: string) => {
     { timeoutMsg: `cursor did not move to ${value}` },
   )
   await waitForViewportSettled()
-  if (!(await isKeyboardShown())) await tap(await waitForEditable(value), { y: 60 })
+  if (!(await isKeyboardShown())) await tap(await waitForEditable(value), { pointerType: 'touch', y: 60 })
   await browser.waitUntil(isKeyboardShown, { timeoutMsg: 'software keyboard did not open' })
   await waitForViewportSettled()
 }
