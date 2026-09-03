@@ -233,6 +233,29 @@ const useEditMode = ({
       lastTouchEndTime = performance.now()
       lastTouchEndTarget = editable
 
+      // When the cursor is selected but the keyboard is closed, focus must be transferred during the real
+      // touch event. The synthesized mousedown arrives too late for iOS to reliably raise the keyboard, and its
+      // native focus is deliberately blocked below to prevent WebKit autoscroll (#3765).
+      if (editingOrOnCursor && !editing && !isMulticursor && style?.visibility !== 'hidden') {
+        const { offset } = getCaretOffset(editable, {
+          clientX: e.changedTouches[0].clientX,
+          clientY: e.changedTouches[0].clientY,
+        })
+        const targetOffset = offset ?? 0
+
+        dispatch(
+          setCursor({
+            path,
+            offset: targetOffset,
+            isKeyboardOpen: true,
+            cursorHistoryClear: true,
+          }),
+        )
+        asyncFocus({ force: true })
+        focusWithoutAutoscroll(editable, { offset: targetOffset })
+        return
+      }
+
       // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
       // retargets the synthesized mousedown/focus to the previously-focused thought (onMouseDown suppresses
       // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.

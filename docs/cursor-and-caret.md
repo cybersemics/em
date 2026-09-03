@@ -234,7 +234,7 @@ Because the temporary CSS inflates the editable's padding, any height measured d
 
 ### `focusWithoutAutoscroll.ts`
 
-[`src/device/focusWithoutAutoscroll.ts`](../src/device/focusWithoutAutoscroll.ts) transfers ordinary thought and note focus on iOS without WebKit's native reveal. The initiating mousedown is canceled, the editable is focused with `preventScroll`, and any synchronous scroll caused by setting the browser selection is restored before paint. [`scrollCursorIntoView`](#scrollcursorintoviewts) is then the only code that deliberately moves the viewport for these focus changes.
+[`src/device/focusWithoutAutoscroll.ts`](../src/device/focusWithoutAutoscroll.ts) transfers ordinary thought and note focus on iOS without WebKit's native reveal. When a selected thought is tapped with the keyboard closed, focus is transferred during the real `touchend`, while iOS still considers it user-initiated and can open the keyboard. The later synthesized `mousedown` is canceled, the editable is focused with `preventScroll`, and any synchronous scroll caused by setting the browser selection is restored before paint. [`scrollCursorIntoView`](#scrollcursorintoviewts) is then the only code that deliberately moves the viewport for these focus changes.
 
 Autocomplete retargeting and cleared multicursor editing retain `preventAutoscroll`. Both have additional blur and focus-timing invariants, so they are not part of the ordinary-focus ownership transfer.
 
