@@ -1,9 +1,9 @@
 import { isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
 import viewportStore from '../stores/viewport'
-import virtualKeyboardStore from '../stores/virtualKeyboardStore'
+import autoscrollBounds from './autoscrollBounds'
 
-/** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
+/** Scrolls the minimum amount necessary to move the cursor into the autoscroll comfort zone. */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // preventAutoscroll works by briefly increasing the element's height, which breaks isElementInViewport.
   // Therefore, we need to wait until preventAutoscroll is done.
@@ -15,17 +15,8 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
     return
   }
 
-  // determine if the elements is above or below the viewport
-  // toolbar element is not present when distractionFreeTyping is activated
   const viewport = viewportStore.getState()
-
-  // Use the keyboard's destination rather than the animated height so the cursor is placed against
-  // the final visible area as soon as the keyboard starts moving. On Capacitor, visualViewport does
-  // not resize because the Keyboard plugin uses resize: 'none'.
-  const keyboardTargetHeight = virtualKeyboardStore.getState().targetHeight
-  const visibleViewportHeight = keyboardTargetHeight
-    ? window.innerHeight - keyboardTargetHeight
-    : (window.visualViewport?.height ?? window.innerHeight)
+  const bounds = autoscrollBounds()
 
   /** The y position of the element relative to the document. */
   const yDocument = viewport.layoutTreeTop + y
@@ -33,22 +24,21 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   /** The y position of the element relative to the viewport. */
   const yViewport = yDocument - window.scrollY
 
-  const toolbarRect = document.getElementById('toolbar')?.getBoundingClientRect()
-  const toolbarBottom = toolbarRect ? toolbarRect.bottom : 0
-  const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
-  const isAboveViewport = yViewport < toolbarBottom
-  const isBelowViewport = yViewport + height > visibleViewportHeight - (navbarRect?.height ?? 0)
+  const crossedTop = yViewport < bounds.top
+  const crossedBottom = yViewport + height > bounds.bottom
 
-  if (!isAboveViewport && !isBelowViewport) return
+  if (!crossedTop && !crossedBottom) return
 
   // The native el.scrollIntoView causes a bug where the top part of the content is cut off, even when a significant delay is added.
   // Therefore, we need to calculate the scroll position ourselves
 
-  // leave a margin between the element and the viewport edge equal to half the element's height
-  // add offset to account for the navbar height and prevent scrolled to elements from being hidden below
-  const scrollYNew = isAboveViewport
-    ? yDocument - (toolbarRect?.height ?? 0) - height / 2
-    : yDocument - visibleViewportHeight + height * 1.5 + (navbarRect?.height ?? 0)
+  // Both offsets are measured from the cursor's top edge. The bottom offset therefore includes the
+  // cursor's full height plus the same half-height landing distance used at the top.
+  const topLandingOffset = height * 0.5
+  const bottomLandingOffset = height * 1.5
+  const scrollYNew = crossedTop
+    ? yDocument - bounds.toolbarHeight - topLandingOffset
+    : yDocument - bounds.visibleHeight + bottomLandingOffset + bounds.navbarHeight
 
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
@@ -56,7 +46,7 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const top = Math.max(1, scrollYNew)
 
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
-  const behavior: ScrollBehavior = scrollDistance < visibleViewportHeight ? 'smooth' : 'auto'
+  const behavior: ScrollBehavior = scrollDistance < bounds.visibleHeight ? 'smooth' : 'auto'
 
   window.scrollTo({
     top,
