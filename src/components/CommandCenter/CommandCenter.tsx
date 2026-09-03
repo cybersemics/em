@@ -212,6 +212,35 @@ const CommandCenter = () => {
   /** Only let a downward drag collapse the drawer when the command list is scrolled to the top, so the gesture does not conflict with scrolling the list. */
   const isDragDisabled = scrollPosition !== undefined && scrollPosition !== 'top'
 
+  /*
+   * How far the collapse band's lower edge sits below the drawer's top edge, i.e. the height of the
+   * header row. Measured rather than derived from fontSize so the band lands on the row's bottom edge
+   * whatever the row grows to. Both the row and the drawer's top move together under the drag
+   * transform, so the difference is stable mid-gesture.
+   *
+   * This is a callback ref rather than an effect because the Sheet mounts its content after the open
+   * flag flips: an effect keyed on that flag runs while the row does not exist yet, bails, and never
+   * runs again, leaving the band the width of the chevron alone.
+   */
+  const [collapseBandInset, setCollapseBandInset] = useState(0)
+  const headerRowObserverRef = useRef<ResizeObserver | null>(null)
+  const setHeaderRowRef = useCallback((el: HTMLDivElement | null) => {
+    headerRowObserverRef.current?.disconnect()
+    headerRowObserverRef.current = null
+    if (!el) return
+    /** Re-measures the header row's bottom relative to the sheet container's top, ignoring the zero it reads before the row has been laid out. */
+    const measure = () => {
+      const container = el.closest('.react-modal-sheet-container')
+      if (!container) return
+      const inset = el.getBoundingClientRect().bottom - container.getBoundingClientRect().top
+      if (inset > 0) setCollapseBandInset(inset)
+    }
+    measure()
+    const resizeObserver = new ResizeObserver(measure)
+    resizeObserver.observe(el)
+    headerRowObserverRef.current = resizeObserver
+  }, [])
+
   /** The full-width strip at the bottom of the standard stage that the expand chevron sits in. */
   const chevronBandRef = useRef<HTMLDivElement>(null)
   /** True while a drag is in progress that began outside the chevron band at the standard stage, and so may not cross into the expanded stage. */
@@ -409,21 +438,30 @@ const CommandCenter = () => {
              * props to, so wrapping the chevron in one makes a swipe on it drive the sheet exactly as a
              * swipe on the drawer body does. Kept out of flow so that it cannot change the measured sheet
              * height that the snap points are computed from. It is deliberately not gated on
-             * isDragDisabled: the chevron floats above the drawer and is not part of the command list, so
-             * it stays a handle no matter where that list is scrolled.
+             * isDragDisabled: the band covers the chevron and the header row, neither of which is part of
+             * the command list, so it stays a handle no matter where that list is scrolled.
              */}
             <Sheet.Header
-              /** Floats above the top edge of the drawer, over the falloff gradient. */
+              /**
+               * The collapse band: the full-width strip spanning the collapse chevron and the header row
+               * beneath it, so that a swipe landing beside the arrow still collapses the drawer. Its upper
+               * part floats above the drawer over the falloff gradient; the padding is what carries its
+               * lower edge down past the header row, which keeps the arrow itself at the band's top edge —
+               * exactly where it sat when the band was only as wide as the button.
+               */
               className={css({
                 position: 'absolute',
-                bottom: '100%',
-                left: '50%',
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-start',
+                /** Sheet.Header is rendered before Sheet.Content, so without this the header row paints over the band and a drag there reaches Sheet.Content instead — which is gated on isDragDisabled, the very gate the band exists to bypass. Safe because the band is pointer-events: none in the standard stage, and Done is pointer-events: none in the expanded one. */
+                zIndex: 1,
               })}
               style={{
-                /** Overrides the library's own width: 100%, which would otherwise leave a full-width strip over the thoughtspace. */
-                width: 'auto',
-                /** Motion rewrites the element's transform while dragging, so the centering offset has to be a motion style rather than a CSS transform. */
-                x: '-50%',
+                bottom: `calc(100% - ${collapseBandInset}px)`,
+                paddingBottom: collapseBandInset,
                 opacity: collapseOpacity,
                 pointerEvents: expandedPointerEvents,
               }}
@@ -476,6 +514,7 @@ const CommandCenter = () => {
                 }
               >
                 <div
+                  ref={setHeaderRowRef}
                   className={css({
                     display: 'flex',
                     alignItems: 'flex-end',
