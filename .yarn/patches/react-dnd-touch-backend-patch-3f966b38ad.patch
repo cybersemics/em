@@ -1,0 +1,56 @@
+diff --git a/dist/TouchBackendImpl.js b/dist/TouchBackendImpl.js
+index e802cce11de2ca2bcea100cb55d62a6dcb2c617d..0df76b606ff2d72c479d3f5b52c5cc29107ad94b 100644
+--- a/dist/TouchBackendImpl.js
++++ b/dist/TouchBackendImpl.js
+@@ -67,10 +67,10 @@ export class TouchBackendImpl {
+         // iOS WKWebView intermittently drops the terminating `touchend` event, which leaves the drag
+         // stuck at DragInProgress (the dragged thought never drops/archives and "blinks"). The pointer
+         // events `pointerup`/`pointercancel` ARE reliably delivered on finger-lift, so register them as
+-        // fallback end-triggers. handleTopMoveEndCapture is idempotent (guards on isDragging/didDrop) and
+-        // a no-op for plain taps, so this is safe alongside the normal `touchend` path. See em issue #4315.
++        // fallback end-triggers. Defer pointerup so a normal touchend can finish the drag first and suppress
++        // its trailing tap; pointercancel still ends immediately. See em issues #4315 and #4839.
+         const pointerEndOptions = supportsPassive ? { capture: true, passive: false } : true;
+-        root.addEventListener('pointerup', this.handleTopMoveEndCapture, pointerEndOptions);
++        root.addEventListener('pointerup', this.handleTopPointerEndCapture, pointerEndOptions);
+         root.addEventListener('pointercancel', this.handleTopMoveEndCapture, pointerEndOptions);
+         if (this.options.enableMouseEvents && !this.options.ignoreContextMenu) {
+             this.addEventListener(root, 'contextmenu', this.handleTopMoveEndCapture);
+@@ -91,9 +91,13 @@ export class TouchBackendImpl {
+         this.removeEventListener(root, 'move', this.handleTopMoveCapture, true);
+         this.removeEventListener(root, 'move', this.handleTopMove);
+         this.removeEventListener(root, 'end', this.handleTopMoveEndCapture, true);
++        if (this.pointerEndTimeout) {
++            clearTimeout(this.pointerEndTimeout);
++            this.pointerEndTimeout = undefined;
++        }
+         // Mirror the iOS pointer-event fallback end-triggers registered in setup() (em issue #4315).
+         const pointerEndOptions = supportsPassive ? { capture: true, passive: false } : true;
+-        root.removeEventListener('pointerup', this.handleTopMoveEndCapture, pointerEndOptions);
++        root.removeEventListener('pointerup', this.handleTopPointerEndCapture, pointerEndOptions);
+         root.removeEventListener('pointercancel', this.handleTopMoveEndCapture, pointerEndOptions);
+         if (this.options.enableMouseEvents && !this.options.ignoreContextMenu) {
+             this.removeEventListener(root, 'contextmenu', this.handleTopMoveEndCapture);
+@@ -396,7 +400,22 @@ export class TouchBackendImpl {
+             }
+             return undefined;
+         };
++        this.handleTopPointerEndCapture = (e)=>{
++            if (!eventShouldEndDrag(e) || !this.monitor.isDragging() || this.monitor.didDrop()) {
++                return;
++            }
++            if (e.cancelable) e.preventDefault();
++            if (this.pointerEndTimeout) clearTimeout(this.pointerEndTimeout);
++            this.pointerEndTimeout = setTimeout(()=>{
++                this.pointerEndTimeout = undefined;
++                this.handleTopMoveEndCapture(e);
++            });
++        };
+         this.handleTopMoveEndCapture = (e)=>{
++            if (this.pointerEndTimeout) {
++                clearTimeout(this.pointerEndTimeout);
++                this.pointerEndTimeout = undefined;
++            }
+             this.scrollHasBegun = false;
+             this._isScrolling = false;
+             this.lastTargetTouchFallback = undefined;
