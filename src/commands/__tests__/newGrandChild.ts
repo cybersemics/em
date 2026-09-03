@@ -14,6 +14,27 @@ import newGrandChildCommand from '../newGrandChild'
 
 beforeEach(initStore)
 
+describe('canExecute', () => {
+  it('requires the current thought to have a visible child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+            - c
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(false)
+
+    store.dispatch(setCursor(['b']))
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
+  })
+})
+
 describe('multicursor', () => {
   it('creates a new empty grandchild in each selected thought', () => {
     store.dispatch([
@@ -126,6 +147,8 @@ describe('multicursor', () => {
       addMulticursor(['a']),
       addMulticursor(['b']),
     ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
 
     executeCommandWithMulticursor(newGrandChildCommand, { store })
 

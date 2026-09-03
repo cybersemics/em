@@ -55,4 +55,39 @@ describe('Format', () => {
 
     expect(await thoughtHtml()).toBe('One')
   })
+
+  // https://github.com/cybersemics/em/issues/5107
+  it('applies a text color again after it was undone with the keyboard down', async () => {
+    // Use a pre-existing thought so the format edit is its own undo step (not coalesced with newThought).
+    await paste(`
+    - One`)
+    await clickThought('One') // set the cursor on the thought
+
+    // Apply a green font color via the toolbar.
+    await tapToolbar('Text Color', 'text color swatches', 'green')
+
+    /** Reads the innerHTML of the (single) thought, independent of edit/keyboard state. */
+    const thoughtHtml = () => browser.execute(() => document.querySelector('[data-editable]')?.innerHTML)
+
+    // Precondition: the color was applied, otherwise the undo below would have nothing to revert.
+    expect(await thoughtHtml()).toBe('<font color="#00d688">One</font>')
+
+    // Tap the Text Color button again to close the picker.
+    await tapToolbar('Text Color')
+
+    // Dismiss the keyboard, which blurs the editable while leaving the cursor set. This is the state the device is in
+    // when the shake-to-undo dialog takes focus, and the state in which no selectionchange follows the undo.
+    await hideKeyboardByTappingDone()
+
+    await tapToolbar('Undo')
+    await browser.waitUntil(async () => (await thoughtHtml()) === 'One', {
+      timeoutMsg: 'undo did not remove the green font color',
+    })
+
+    // Re-open the picker and tap the same green swatch. The swatch is no longer selected, so this applies the color
+    // rather than toggling it back off.
+    await tapToolbar('Text Color', 'text color swatches', 'green')
+
+    expect(await thoughtHtml()).toBe('<font color="#00d688">One</font>')
+  })
 })
