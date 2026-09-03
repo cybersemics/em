@@ -11,21 +11,16 @@ const insertHtmlAtTextOffset = (htmlValue: string, offset: number, html: string)
   const div = document.createElement('div')
   div.innerHTML = htmlValue
 
-  const nodeOffset = selection.offsetFromClosestParent(div, offset)
-
-  const range = document.createRange()
-  if (nodeOffset?.node) {
-    range.setStart(nodeOffset.node, nodeOffset.offset)
-    range.setEnd(nodeOffset.node, nodeOffset.offset)
-  } else {
-    // there is no text to resolve the offset against, e.g. a cleared thought
-    range.selectNodeContents(div)
-    range.collapse()
-  }
-
   const template = document.createElement('template')
   template.innerHTML = html
-  range.insertNode(template.content)
+
+  const range = selection.collapsedRangeAtOffset(div, offset)
+  // a value with no text, e.g. a cleared thought, has nothing to resolve the offset against
+  if (range) {
+    range.insertNode(template.content)
+  } else {
+    div.appendChild(template.content)
+  }
 
   return div.innerHTML
 }

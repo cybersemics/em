@@ -371,6 +371,23 @@ export const offsetFromClosestParent = (nodeRoot: Node, offsetRoot: number): Nod
   return offsetFromClosestParentRecursive(nodeRoot, offsetRoot)
 }
 
+/**
+ * Returns a collapsed Range at a plain text offset within the given root, mapping through nested formatting tags. Returns null if the root has no text content to resolve the offset against.
+ *
+ * @param root The node the offset is relative to.
+ * @param offset The offset that is taken relative to the root's value with all the html tags removed.
+ */
+export const collapsedRangeAtOffset = (root: Node, offset: number): Range | null => {
+  const nodeOffset = offsetFromClosestParent(root, offset)
+  if (!nodeOffset?.node) return null
+
+  const range = document.createRange()
+  range.setStart(nodeOffset.node, nodeOffset.offset)
+  range.setEnd(nodeOffset.node, nodeOffset.offset)
+
+  return range
+}
+
 /** Set the selection at the desired offset on the given node. Inserts empty text node when element has no children.
  * NOTE: asyncFocus() needs to be called on mobile before set and before any asynchronous effects that call set.
  *
