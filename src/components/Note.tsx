@@ -14,7 +14,9 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
-import { isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
+import focusWithoutAutoscroll from '../device/focusWithoutAutoscroll'
+import getCaretOffset from '../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -78,7 +80,7 @@ const Note = React.memo(
       const { noteOffset } = store.getState()
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
-        selection.set(noteRef.current!, { offset: noteOffset })
+        focusWithoutAutoscroll(noteRef.current, { offset: noteOffset })
         // Clear noteOffset after placing the caret so it acts as a one-shot request. Otherwise repeatedly
         // restoring the caret to the same offset (e.g. applying a font color over a background color multiple
         // times) would set noteOffset to an unchanged value, the effect would not re-run, and the caret would
@@ -207,7 +209,19 @@ const Note = React.memo(
       [dispatch],
     )
 
-    const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
+    const onMouseDown = useCallback((e: React.MouseEvent) => {
+      const note = noteRef.current
+      if (!note) return
+
+      if (!isTouch || !isSafari()) {
+        preventAutoscroll(note)
+        return
+      }
+
+      const { offset } = getCaretOffset(note, { clientX: e.clientX, clientY: e.clientY })
+      e.preventDefault()
+      focusWithoutAutoscroll(note, { offset: offset ?? 0 })
+    }, [])
 
     const onCopy = useCallback((e: React.ClipboardEvent) => {
       const html = selection.html()

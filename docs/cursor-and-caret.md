@@ -228,9 +228,15 @@ When the cursor crosses an edge, it lands half its own height back inside the co
 
 [`src/device/preventAutoscroll.ts`](../src/device/preventAutoscroll.ts).
 
-When `selection.set` runs on a thought that's near the bottom of the viewport, the browser will sometimes scroll the editable into view. This is fine in theory but can fight with em's own viewport autocrop logic and produce a jumpy keyboard. `preventAutoscroll` temporarily applies CSS that puts the element near the viewport center (so the browser thinks no scroll is needed), restores the original styles after a 10 ms timeout, and is invoked by `useEditMode` before `selection.set`.
+When `selection.set` runs on a thought that's near the bottom of the viewport, the browser will sometimes scroll the editable into view. This is fine in theory but can fight with em's own viewport autocrop logic and produce a jumpy keyboard. `preventAutoscroll` temporarily applies CSS that puts the element near the viewport center (so the browser thinks no scroll is needed), restores the original styles after a 10 ms timeout, and is invoked before legacy selection writes.
 
 Because the temporary CSS inflates the editable's padding, any height measured during the autoscroll window is too large. `getAutoscrollPadding(el)` returns the number of pixels of padding currently added to an element so that `VirtualThought.updateSize` can subtract it and record the thought's true height even during the window. Without this, a height change that occurs during the window — e.g. a note added by Swap Note — would be recorded with an inflated height or skipped entirely, leaving the next thought overlapping the note ([#4279](https://github.com/cybersemics/em/issues/4279)).
+
+### `focusWithoutAutoscroll.ts`
+
+[`src/device/focusWithoutAutoscroll.ts`](../src/device/focusWithoutAutoscroll.ts) transfers ordinary thought and note focus on iOS without WebKit's native reveal. When a selected thought is tapped with the keyboard closed, focus is transferred during the real `touchend`, while iOS still considers it user-initiated and can open the keyboard. The later synthesized `mousedown` is canceled, the editable is focused with `preventScroll`, and any synchronous scroll caused by setting the browser selection is restored before paint. [`scrollCursorIntoView`](#scrollcursorintoviewts) is then the only code that deliberately moves the viewport for these focus changes.
+
+Autocomplete retargeting and cleared multicursor editing retain `preventAutoscroll`. Both have additional blur and focus-timing invariants, so they are not part of the ordinary-focus ownership transfer.
 
 ## Testing
 
