@@ -220,7 +220,7 @@ const BackgroundGlowPicker = () => {
               type='range'
               min={0}
               max={1}
-              step={0.05}
+              step={0.01}
               value={opacity}
               onChange={e => backgroundGlowStore.update({ opacity: +e.target.value })}
               // prevent the browser from scrolling the page while dragging the slider handle
