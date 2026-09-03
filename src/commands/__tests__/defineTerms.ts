@@ -1,4 +1,3 @@
-import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
@@ -40,11 +39,7 @@ it('adds the generated dictionary entry as a subthought of the cursor thought', 
   await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
 
   executeCommand(defineTerms)
-  await act(async () => {
-    await vi.waitFor(() =>
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition),
-    )
-  })
+  await vi.runAllTimersAsync()
 
   expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/defineTerms', {
     body: JSON.stringify({ terms: ['apple'] }),
@@ -62,11 +57,7 @@ it('inserts the definition before existing subthoughts', async () => {
   await dispatch([importText({ text: '- apple\n  - red\n  - green' }), setCursor(['apple'])])
 
   executeCommand(defineTerms)
-  await act(async () => {
-    await vi.waitFor(() =>
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition),
-    )
-  })
+  await vi.runAllTimersAsync()
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - apple
@@ -82,9 +73,7 @@ it('sends visible text and preserves formatting while escaping the definition', 
   await dispatch([importText({ text: '- <b>Dog</b>' }), setCursor(['<b>Dog</b>'])])
 
   executeCommand(defineTerms)
-  await act(async () => {
-    await vi.waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
-  })
+  await vi.runAllTimersAsync()
 
   expect(mockFetch).toHaveBeenCalledWith(
     'http://test-ai-url/defineTerms',
@@ -113,11 +102,8 @@ it('continues the current request after allowing AI once', async () => {
 
   const continuation = acceptAiDisclosure({ remember: false })
   continuation?.()
-  await act(async () => {
-    await vi.waitFor(() =>
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition),
-    )
-  })
+  await vi.runAllTimersAsync()
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition)
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
 })
@@ -131,9 +117,8 @@ it('surfaces an AI service error without changing the thought', async () => {
   await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
 
   executeCommand(defineTerms)
-  await act(async () => {
-    await vi.waitFor(() => expect(store.getState().error).toBe('Model unavailable'))
-  })
+  await vi.runAllTimersAsync()
+  expect(store.getState().error).toBe('Model unavailable')
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - apple`)
@@ -148,9 +133,8 @@ it('asks the user to retry after reaching the rate limit', async () => {
   await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
 
   executeCommand(defineTerms)
-  await act(async () => {
-    await vi.waitFor(() => expect(store.getState().alert?.value).toBe('Rate limit reached. Please try again later.'))
-  })
+  await vi.runAllTimersAsync()
+  expect(store.getState().alert?.value).toBe('Rate limit reached. Please try again later.')
 })
 
 it('reports an invalid AI response', async () => {
@@ -159,9 +143,8 @@ it('reports an invalid AI response', async () => {
   await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
 
   executeCommand(defineTerms)
-  await act(async () => {
-    await vi.waitFor(() => expect(store.getState().error).toBe('Failed to define terms'))
-  })
+  await vi.runAllTimersAsync()
+  expect(store.getState().error).toBe('Failed to define terms')
 })
 
 it('does not overwrite an edit made while inference is pending', async () => {
@@ -177,16 +160,12 @@ it('does not overwrite an edit made while inference is pending', async () => {
   await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
 
   executeCommand(defineTerms)
-  await act(async () => {
-    await vi.waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
-  })
+  await vi.runAllTimersAsync()
+  expect(mockFetch).toHaveBeenCalledTimes(1)
   await dispatch(editThoughtByContext(['apple'], 'apples'))
   resolveAiRequest({ json: () => Promise.resolve({ definitions: [appleDefinition] }) })
-  await act(async () => {
-    await vi.waitFor(() =>
-      expect(getThoughtById(store.getState(), head(store.getState().cursor!))?.generating).toBe(false),
-    )
-  })
+  await vi.runAllTimersAsync()
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))?.generating).toBe(false)
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - apples`)
@@ -212,17 +191,13 @@ it('is disabled while a definition request is pending', async () => {
   await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
 
   executeCommand(defineTerms)
-  await act(async () => {
-    await vi.waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
-  })
+  await vi.runAllTimersAsync()
+  expect(mockFetch).toHaveBeenCalledTimes(1)
   expect(defineTerms.canExecute!(store.getState())).toBe(false)
 
   resolveAiRequest({ json: () => Promise.resolve({ definitions: [appleDefinition] }) })
-  await act(async () => {
-    await vi.waitFor(() =>
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition),
-    )
-  })
+  await vi.runAllTimersAsync()
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition)
 })
 
 describe('multicursor', () => {
@@ -245,9 +220,7 @@ describe('multicursor', () => {
     ])
 
     executeCommandWithMulticursor(defineTerms, { store })
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    await vi.runAllTimersAsync()
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - potato
@@ -275,9 +248,7 @@ describe('multicursor', () => {
     ])
 
     executeCommandWithMulticursor(defineTerms, { store })
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    await vi.runAllTimersAsync()
 
     const state = store.getState()
     expectPathToEqual(state, state.cursor, ['chicken'])
@@ -297,9 +268,7 @@ describe('multicursor', () => {
     ])
 
     executeCommandWithMulticursor(defineTerms, { store })
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    await vi.runAllTimersAsync()
     await dispatch(undo())
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
@@ -321,9 +290,7 @@ describe('multicursor', () => {
     ])
 
     executeCommandWithMulticursor(defineTerms, { store })
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    await vi.runAllTimersAsync()
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - chicken
@@ -348,9 +315,7 @@ describe('multicursor', () => {
 
     const continuation = acceptAiDisclosure({ remember: false })
     continuation?.()
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    await vi.runAllTimersAsync()
 
     expect(mockFetch).toHaveBeenCalledTimes(1)
   })
@@ -369,9 +334,7 @@ describe('multicursor', () => {
 
     expect(defineTerms.canExecute!(store.getState())).toBe(true)
     executeCommandWithMulticursor(defineTerms, { store })
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    await vi.runAllTimersAsync()
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - chicken
