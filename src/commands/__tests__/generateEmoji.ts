@@ -242,7 +242,7 @@ it('generates emoji for every selected thought within one undo step', async () =
 
   await act(async () => {
     executeCommandWithMulticursor(generateEmoji, { store })
-    await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
+    await vi.runAllTimersAsync()
   })
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
