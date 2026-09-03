@@ -303,11 +303,11 @@ const initEvents = (store: Store<State, any>) => {
     scrollAtEdge.stop()
   }
 
-  /** Clears the spurious-focus suppression flag: a new touch means any subsequent focus/mousedown was initiated by
-   * the user, not synthesized from the previous tap. Registered in the capture phase because touchstart propagation
-   * is unreliable in the bubble phase (see the note on the touchmove listener below). */
+  /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
+   * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
+   * phase (see the note on the touchmove listener below). */
   const onTouchStart = () => {
-    globals.suppressFocusAfterCursorMove = false
+    globals.suppressCursorAfterTouch = false
   }
 
   /** Handle a page lifecycle state change, i.e. switching apps. */

@@ -61,7 +61,8 @@
     "test:ios:local": "wdio run src/e2e/iOS/config/wdio.local.conf.ts",
     "test:ios:browserstack": "wdio run src/e2e/iOS/config/wdio.browserstack.conf.ts",
     "test:puppeteer": "./src/e2e/puppeteer/test-puppeteer.sh",
-    "test": "vitest --project unit"
+    "test": "vitest --project unit",
+    "test:evals": "node --env-file=packages/ai/.env.local $(yarn bin vitest) run --project eval"
   },
   "lockfile-lint": {
     "allowed-schemes": [
@@ -72,8 +73,6 @@
       "workspace:"
     ],
     "allowed-hosts": [
-      "codeload.github.com",
-      "github.com",
       "npm",
       "yarn"
     ],
@@ -84,7 +83,6 @@
   },
   "resolutions": {
     "@pandacss/node@npm:0.47.0": "patch:@pandacss/node@npm%3A0.47.0#~/.yarn/patches/@pandacss-node-npm-0.47.0.patch",
-    "page-lifecycle": "https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0",
     "use-latest": "^1.3.0",
     "use-isomorphic-layout-effect": "^1.2.1"
   },
@@ -138,7 +136,7 @@
     "murmurhash3js": "^3.0.1",
     "nanoid": "^6.0.1",
     "openai": "^7.7.0",
-    "page-lifecycle": "⚠️ OVERRIDDEN BY 'resolutions' - Source: https://github.com/magic-akari/page-lifecycle#feat/add-types | Tarball: https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0 | Configured in: package.json#resolutions",
+    "page-lifecycle": "^0.1.2",
     "pluralize": "^8.0.0",
     "qrcode.react": "^4.2.0",
     "rc-slider": "^11.1.9",
@@ -146,7 +144,7 @@
     "react-contenteditable": "^3.3.7",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "patch:react-dnd-html5-backend@npm%3A16.0.1#~/.yarn/patches/react-dnd-html5-backend-npm-16.0.1-754940d855.patch",
-    "react-dnd-touch-backend": "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@patch%25253Areact-dnd-touch-backend@npm%2525253A16.0.1%252523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%25253A%25253Aversion=16.0.1&hash=77964d%2523~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%253A%253Aversion=16.0.1&hash=33fdd5%23~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch%3A%3Aversion=16.0.1&hash=40a9c2#~/.yarn/patches/react-dnd-touch-backend-patch-03e51a5757.patch",
+    "react-dnd-touch-backend": "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@patch%25253Areact-dnd-touch-backend@patch%2525253Areact-dnd-touch-backend@npm%252525253A16.0.1%25252523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%2525253A%2525253Aversion=16.0.1&hash=77964d%252523~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%25253A%25253Aversion=16.0.1&hash=33fdd5%2523~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch%253A%253Aversion=16.0.1&hash=40a9c2%23~/.yarn/patches/react-dnd-touch-backend-patch-03e51a5757.patch%3A%3Aversion=16.0.1&hash=3c713c#~/.yarn/patches/react-dnd-touch-backend-patch-3f966b38ad.patch",
     "react-dom": "^19.2.8",
     "react-error-boundary": "^6.1.3",
     "react-gravatar": "^2.6.3",
