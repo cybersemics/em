@@ -33,6 +33,23 @@ describe('canExecute', () => {
 
     expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
   })
+
+  it('can execute on a selected thought with a visible child when the cursor is on a thought with none', () => {
+    // The selected thought is not necessarily the cursor, e.g. when a thought is long pressed while the cursor is elsewhere.
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+            - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
+  })
 })
 
 describe('multicursor', () => {
