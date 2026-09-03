@@ -5,7 +5,7 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { chainCommand, gestureString, globalCommands } from '../commands'
+import { chainCommand, gestureString, globalCommands, hashCommand, parseCommandShortcut } from '../commands'
 import gestureStore from '../stores/gesture'
 
 /** Returns true if the command can be executed. */
@@ -36,6 +36,10 @@ const useFilteredCommands = (
   const store = useStore()
 
   const possibleCommandsSorted = useMemo(() => {
+    // if the search query looks like a keyboard shortcut (e.g. "cmd option k"), match commands by their shortcut
+    // instead of by label. null means the query is a normal label search.
+    const shortcutHash = search ? parseCommandShortcut(search) : null
+
     // if a chainable command is in progress, extend the command list with chained commands (first command + second command)
     const visibleCommandsChained = [
       ...globalCommands,
@@ -68,6 +72,13 @@ const useFilteredCommands = (
 
         // only commands with keyboard shortcuts are visible
         if (platformCommandsOnly && !command.keyboard) return false
+
+        // if the query is a recognized keyboard shortcut, match by shortcut instead of label
+        if (shortcutHash) {
+          if (!command.keyboard) return false
+          const keyboardShortcuts = Array.isArray(command.keyboard) ? command.keyboard : [command.keyboard]
+          return keyboardShortcuts.some(shortcut => hashCommand(shortcut) === shortcutHash)
+        }
 
         // if no query is entered, all commands with keyboard shortcuts are visible
         if (!search) return true

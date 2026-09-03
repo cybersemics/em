@@ -2,25 +2,37 @@ import { archiveThoughtActionCreator as archiveThought } from '../../actions/arc
 import { clearActionCreator as clear } from '../../actions/clear'
 import { cursorBackActionCreator as cursorBack } from '../../actions/cursorBack'
 import { cursorDownActionCreator as cursorDown } from '../../actions/cursorDown'
+import { editThoughtActionCreator as editThoughtRaw } from '../../actions/editThought'
+import { formatLetterCaseActionCreator as formatLetterCase } from '../../actions/formatLetterCase'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { redoActionCreator as redo } from '../../actions/redo'
+import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
+import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
 import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
+import isUndoEnabled from '../../selectors/isUndoEnabled'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
+import archiveCommand from '../archive'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
+import moveCursorForward from '../moveCursorForward'
 
 beforeEach(initStore)
 
@@ -35,7 +47,7 @@ beforeEach(initStore)
  */
 describe('undo persistence', () => {
   it('persists undo thought change', async () => {
-    await initialize()
+    await initialize({ storage: 'memory' })
 
     store.dispatch([
       importText({
@@ -51,7 +63,7 @@ describe('undo persistence', () => {
     // clear and call initialize again to reload from local db (simulating page refresh)
     store.dispatch(clear())
 
-    await initialize()
+    await initialize({ storage: 'memory' })
     await vi.runAllTimersAsync()
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
@@ -64,6 +76,103 @@ describe('undo persistence', () => {
 
     await vi.runAllTimersAsync()
     vi.useRealTimers()
+  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+
+  it('persists undo move placement after reload', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(moveThoughtDownCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - d
+  - a
+  - b
+  - c
+  - e`)
+
+    store.dispatch(undo())
+    await waitForThoughtspaceIdle()
+
+    store.dispatch(clear())
+
+    await initialize({ storage: 'memory' })
+    await vi.runAllTimersAsync()
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e`)
+  }, 10000 /* increase timeout to give time for two calls to initialize() */)
+
+  it('persists redo move placement after reload', async () => {
+    await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(moveThoughtDownCommand, { store })
+    store.dispatch(undo())
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e`)
+
+    store.dispatch(redo())
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - d
+  - a
+  - b
+  - c
+  - e`)
+
+    store.dispatch(clear())
+
+    await initialize({ storage: 'memory' })
+    await vi.runAllTimersAsync()
+    await waitForThoughtspaceIdle()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - d
+  - a
+  - b
+  - c
+  - e`)
   }, 10000 /* increase timeout to give time for two calls to initialize() */)
 })
 
@@ -91,7 +200,6 @@ describe('undo', () => {
 
     // TODO: This does not seem to properly test restorePushQueueFromPatches.
     // It passes even when the Lexeme is set to null.
-    // It was only noticed because of the Lexeme data integrity check added to updateThoughts.
     // See: undoRedoEnhancer commit on 7/2/22
     const lexemeA = getLexeme(stateNew, 'a')
     expect(lexemeA).toBeTruthy()
@@ -183,7 +291,7 @@ describe('undo', () => {
   })
 
   it('cursor should restore correctly after undo archive', async () => {
-    await initialize()
+    await initialize({ storage: 'memory' })
 
     store.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
 
@@ -236,6 +344,170 @@ describe('undo', () => {
   - d
   - e`
     expect(exported).toEqual(expectedOutput)
+  })
+
+  // https://github.com/cybersemics/em/issues/4842
+  it('undo should restore all thoughts after a multicursor letter case change', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB
+        - CCC
+        - DDD`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      addMulticursor(['CCC']),
+      addMulticursor(['DDD']),
+      formatLetterCase('LowerCase'),
+    ])
+
+    let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - aaa
+  - bbb
+  - ccc
+  - ddd`)
+
+    store.dispatch(undo())
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - AAA
+  - BBB
+  - CCC
+  - DDD`)
+  })
+
+  // https://github.com/cybersemics/em/issues/4841
+  it('undo should restore all thoughts after a multicursor text color change', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB
+        - CCC`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      addMulticursor(['CCC']),
+      formatSelection('foreColor', 'green'),
+    ])
+
+    let values = getAllChildrenAsThoughtsByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+    expect(values).toEqual([
+      '<font color="#00d688">AAA</font>',
+      '<font color="#00d688">BBB</font>',
+      '<font color="#00d688">CCC</font>',
+    ])
+
+    store.dispatch(undo())
+
+    values = getAllChildrenAsThoughtsByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
+    expect(values).toEqual(['AAA', 'BBB', 'CCC'])
+  })
+
+  it('undo should stay enabled and not throw after a multicursor command that nets to no change', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d`,
+      }),
+      // Select b, c, and d.
+      setCursor(['b']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+      addMulticursor(['d']),
+    ])
+
+    // Indent the selected thoughts under a. This is the undoable change that must remain undoable after the subsequent no-op command.
+    executeCommandWithMulticursor(moveCursorForward, { store })
+
+    let exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d`)
+
+    expect(isUndoEnabled(store.getState())).toBe(true)
+
+    // Execute a multicursor command that nets to no change. The space-to-indent guard bails on the non-empty thoughts, so indent dispatches nothing, but the surrounding setIsMulticursorExecuting actions still run.
+    // Previously this appended an empty patch to undoPatches, which disabled Undo and threw on the next undo/redo.
+    executeCommandWithMulticursor(indentCommand, { store, type: 'keyboard' })
+
+    // Structure is unchanged by the no-op command.
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d`)
+
+    // Undo must remain enabled (the no-op command must not push an empty patch that disables undo).
+    expect(isUndoEnabled(store.getState())).toBe(true)
+
+    // Undo must not throw and should restore the pre-indent structure.
+    expect(() => store.dispatch(undo())).not.toThrow()
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d`)
+
+    // Redo must not throw and should restore the indented structure.
+    expect(() => store.dispatch(redo())).not.toThrow()
+
+    exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c
+    - d`)
+  })
+
+  it('undo a patch that a non-undoable action already reverted', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - hello
+        - b`,
+      }),
+      setCursor(['a']),
+      editThought(['a'], 'aa'),
+      // Open, close, and open the note again with the Note command. It is not undoable, so it records no patch, and it leaves
+      // cursorOffset at the end of the thought.
+      toggleNote(),
+      toggleNote(),
+      toggleNote(),
+      // Note.tsx dispatches setNoteFocus when the note is blurred. It is undoable, so it records a patch, and noteFocus and
+      // noteOffset are the only two properties it restores.
+      setNoteFocus({ value: false }),
+      // The Note command opens the note again, setting noteFocus and noteOffset back to exactly what that patch restores and
+      // leaving it with nothing left to revert.
+      toggleNote(),
+      // Undoing a patch that reverts nothing produces an empty patch for redo. An empty patch carries no actions, so redoing it
+      // threw on the spread of its actions, which left the redo stack permanently broken.
+      undo(),
+    ])
+
+    expect(() => store.dispatch([redo(), redo()])).not.toThrow()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - aa
+    - =note
+      - hello
+  - b`)
   })
 
   // Broken when space-to-indent was added.
@@ -473,6 +745,319 @@ describe('grouping', () => {
     expect(exported).toEqual(expectedOutput)
   })
 
+  it('formatting edits should not be grouped with newThought on undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b`,
+      }),
+      newThought({ value: 'c' }),
+      newThought({ value: 'd' }),
+      editThought(['d'], 'd1'),
+      editThought(['d1'], '<b>d1</b>'),
+    ])
+
+    // verify the bold formatting was applied before undo
+    const exportedBeforeUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedBeforeUndo).toContain('<li><b>d1</b></li>')
+
+    // undo should only revert the formatting, not the content edit or the newThought
+    store.dispatch(undo())
+
+    // formatting undone; verify the bold is gone but thought still exists with plain text value
+    const exportedAfterUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterUndo).not.toContain('<b>')
+    expect(exportedAfterUndo).toContain('<li>d1</li>')
+
+    // a second undo reverts the content edit, but grouped with preceding newThought → thought deleted
+    store.dispatch(undo())
+    const exportedSecond = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedSecond).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+  })
+
+  it('multiple consecutive formatting edits should each be a separate undo step', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      // content edit: 'a' → 'hello'
+      editThought(['a'], 'hello'),
+      // first formatting-only edit: plain → bold
+      editThought(['hello'], '<b>hello</b>'),
+      // second formatting-only edit: bold → bold+italic (context must match the current thought value)
+      editThought(['<b>hello</b>'], '<b><i>hello</i></b>'),
+    ])
+
+    // verify bold+italic was applied
+    const exportedBeforeUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedBeforeUndo).toContain('<li><b><i>hello</i></b></li>')
+
+    // first undo should only revert the italic (second formatting edit)
+    store.dispatch(undo())
+    const exportedAfterFirstUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterFirstUndo).toContain('<li><b>hello</b></li>')
+
+    // second undo should only revert the bold (first formatting edit)
+    store.dispatch(undo())
+    const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterSecondUndo).toContain('<li>hello</li>')
+    expect(exportedAfterSecondUndo).not.toContain('<b>')
+  })
+
+  // Each ColorPicker application is now a single synchronous editThought (no mergePrev/batching), so consecutive color
+  // applications are separate undo steps. The HTML values mirror what formatSelectionHtml produces for each command.
+  it('undoing after applying two background colors reverts only the most recent (#4636)', () => {
+    const greenBg = '<font color="#000000" style="background-color: rgb(0, 214, 136);">hello</font>'
+    const redBg = '<font color="#000000" style="background-color: rgb(255, 87, 61);">hello</font>'
+    store.dispatch([
+      importText({
+        text: `
+          - hello`,
+      }),
+      // first background color: green
+      editThought(['hello'], greenBg),
+      // second background color: red
+      editThought([greenBg], redBg),
+    ])
+
+    // verify the red background is applied
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + redBg + '</li>')
+
+    // a single undo reverts only the most recent color, restoring the green background
+    store.dispatch(undo())
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + greenBg + '</li>')
+  })
+
+  it('undoing after applying two foreground colors reverts only the most recent', () => {
+    const blue = '<font color="#00c7e6">hello</font>'
+    const red = '<font color="#ff573d">hello</font>'
+    store.dispatch([
+      importText({
+        text: `
+          - hello`,
+      }),
+      // first foreground color: blue
+      editThought(['hello'], blue),
+      // second foreground color: red
+      editThought([blue], red),
+    ])
+
+    // verify the red foreground is applied
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + red + '</li>')
+
+    // a single undo reverts only the most recent color, restoring the blue foreground
+    store.dispatch(undo())
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + blue + '</li>')
+  })
+
+  it('undoing after applying a background color over a foreground color restores the foreground color', () => {
+    const blue = '<font color="#00c7e6">hello</font>'
+    const greenBg = '<font color="#000000" style="background-color: rgb(0, 214, 136);">hello</font>'
+    store.dispatch([
+      importText({
+        text: `
+          - hello`,
+      }),
+      // foreground color: blue
+      editThought(['hello'], blue),
+      // background color: green (replaces the foreground with contrasting black text)
+      editThought([blue], greenBg),
+    ])
+
+    // verify the background color is applied
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + greenBg + '</li>')
+
+    // a single undo reverts the background color, leaving the foreground color
+    store.dispatch(undo())
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>' + blue + '</li>')
+  })
+
+  it('formatting edit applied directly after newThought should not delete the thought on undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      newThought({ value: 'hello' }),
+    ])
+    // formatting-only edit: no content edit between newThought and formatting
+    store.dispatch(editThought(['hello'], '<b>hello</b>'))
+
+    // undo should only revert the formatting, not delete the thought (newThought is penultimate)
+    store.dispatch(undo())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exported).not.toContain('<b>')
+    expect(exported).toContain('<li>hello</li>')
+  })
+
+  it('applying formatting after undoing a formatting edit should not delete the thought on the next undo', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      // content edit: 'a' → 'hello'
+      editThought(['a'], 'hello'),
+      // formatting-only edit: plain → bold
+      editThought(['hello'], '<b>hello</b>'),
+    ])
+
+    // undo the bold formatting
+    store.dispatch(undo())
+    const exportedAfterUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterUndo).toContain('<li>hello</li>')
+    expect(exportedAfterUndo).not.toContain('<b>')
+
+    // apply a different formatting after the undo (e.g. italic)
+    store.dispatch(editThought(['hello'], '<i>hello</i>'))
+
+    // verify italic was applied
+    const exportedAfterReformat = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterReformat).toContain('<li><i>hello</i></li>')
+
+    // undo the italic — should only revert the formatting, thought must still exist
+    store.dispatch(undo())
+    const exportedAfterSecondUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterSecondUndo).toContain('<li>hello</li>')
+    expect(exportedAfterSecondUndo).not.toContain('<i>')
+  })
+
+  it('undoing a formatting edit should preserve trailing space in thought value', () => {
+    // Issue F: applying formatting to a thought with a trailing space was stripping the space on undo
+    // because trimHtml previously stripped whitespace inside closing tags (e.g. "<b>hello </b>" → "<b>hello</b>").
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      // content edit: 'a' → 'hello ' (with trailing space)
+      editThought(['a'], 'hello '),
+      // formatting-only edit: preserve the trailing space inside the bold tag
+      editThought(['hello '], '<b>hello </b>'),
+    ])
+
+    // verify the bold with trailing space was applied
+    const exportedBeforeUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedBeforeUndo).toContain('<li><b>hello </b></li>')
+
+    // undo should revert the formatting and restore "hello " (with trailing space)
+    store.dispatch(undo())
+    const exportedAfterUndo = exportContext(store.getState(), [HOME_TOKEN], 'text/html')
+    expect(exportedAfterUndo).not.toContain('<b>')
+    expect(exportedAfterUndo).toContain('<li>hello </li>')
+  })
+
+  it('letter case edit directly after newThought should not delete the thought on undo', () => {
+    // Issue J: applying letter case (e.g. UpperCase) directly after creating a thought caused undoTwice
+    // to fire because the case change was not recognized as a formatting edit.
+    store.dispatch([
+      importText({
+        text: `
+          - a`,
+      }),
+      newThought({ value: 'hello' }),
+    ])
+    // letter case edit: no content edit between newThought and letter case
+    store.dispatch(editThought(['hello'], 'HELLO'))
+
+    // first undo should only revert the case change, not delete the thought
+    store.dispatch(undo())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toContain('hello')
+    expect(exported).not.toContain('HELLO')
+  })
+
+  it('undo letter case should not move caret to the beginning of the thought', () => {
+    // Issue K: after undoing a letter case change, the caret was moving to position 0.
+    // Root cause: formatLetterCase dispatched a separate setCursor action, creating a navigation
+    // patch that triggered undoTwice, restoring cursorOffset to the pre-setCursor value (0 on
+    // desktop when editingValueStore is non-null from a prior edit).
+    // Fix: formatLetterCase now passes cursorOffset directly to editThought (matching the other formatting actions),
+    // and undoReducer preserves the current cursorOffset when undoing a formatting-only edit.
+    store.dispatch([importText({ text: `- hello` }), setCursor(['hello'])])
+
+    const path = contextToPath(store.getState(), ['hello'])!
+
+    // Simulate formatLetterCase (after fix): editThought with cursorOffset set to actual position (5).
+    store.dispatch(
+      editThoughtRaw({
+        oldValue: 'hello',
+        newValue: 'HELLO',
+        path: path!,
+        cursorOffset: 5,
+        force: true,
+      }),
+    )
+
+    expect(store.getState().cursorOffset).toBe(5)
+
+    // Undo should revert the value but preserve cursorOffset at 5 (not revert it to the pre-edit value).
+    store.dispatch(undo())
+
+    expect(store.getState().cursorOffset).toBe(5)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toContain('hello')
+    expect(exported).not.toContain('HELLO')
+  })
+
+  // https://github.com/cybersemics/em/pull/4692
+  it('undo should not close the virtual keyboard', () => {
+    // newThought opens the keyboard as a side effect (setCursor with isKeyboardOpen: true), so the transition was
+    // recorded in its undo patch and undo silently turned edit mode back off. On iOS that desyncs the flag from the
+    // still-open keyboard mid-reducer and drives the dismissal machinery, so the next thought is created without a
+    // caret and without the keyboard. isKeyboardOpen is device state and must survive undo.
+    store.dispatch(newThought({ value: '' }))
+    expect(store.getState().isKeyboardOpen).toBe(true)
+
+    const pathKeyboard = contextToPath(store.getState(), [''])!
+    store.dispatch(editThoughtRaw({ oldValue: '', newValue: 'ab', path: pathKeyboard, cursorOffset: 2 }))
+    expect(store.getState().isKeyboardOpen).toBe(true)
+
+    store.dispatch(undo())
+
+    expect(store.getState().isKeyboardOpen).toBe(true)
+  })
+
+  it('undo of a force formatting edit should increment editableNonce so the ContentEditable re-renders', () => {
+    // Issue K ("nothing happens after undo"): editThought with force:true bumps editableNonce, and that bump
+    // was captured in the undo patch. Undoing reverted the nonce and editableRender then re-incremented it to
+    // the same value, resulting in no net change. Since the ContentEditable only updates its innerHTML on a
+    // nonce change while editing (allowInnerHTMLChange is false after typing), the reverted value was never
+    // rendered and the formatted text appeared unchanged after undo.
+    // Fix: editableNonce is excluded from undo/redo patches, so undoing a force edit yields a true net increment.
+    store.dispatch([importText({ text: `- hello` }), setCursor(['hello'])])
+
+    const path = contextToPath(store.getState(), ['hello'])!
+
+    store.dispatch(
+      editThoughtRaw({
+        oldValue: 'hello',
+        newValue: 'HELLO',
+        path: path!,
+        force: true,
+      }),
+    )
+
+    const nonceBeforeUndo = store.getState().editableNonce
+
+    store.dispatch(undo())
+
+    // the nonce must strictly increase so the ContentEditable re-renders the reverted value
+    expect(store.getState().editableNonce).toBeGreaterThan(nonceBeforeUndo)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toContain('hello')
+    expect(exported).not.toContain('HELLO')
+  })
+
   it('contiguous edits should be grouped', () => {
     store.dispatch([
       importText({
@@ -492,6 +1077,164 @@ describe('grouping', () => {
   - B`
 
     expect(exported).toEqual(expectedOutput)
+  })
+
+  it('contiguous note additions should undo and redo in one step', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-add
+          - =note
+            - x`,
+      }),
+      editThought(['note-add', '=note', 'x'], 'xy'),
+      editThought(['note-add', '=note', 'xy'], 'xyz'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-add'], 'text/plain')).toEqual(`- note-add
+  - =note
+    - x`)
+
+    store.dispatch(redo())
+
+    expect(exportContext(store.getState(), ['note-add'], 'text/plain')).toEqual(`- note-add
+  - =note
+    - xyz`)
+  })
+
+  it('contiguous note deletes should undo in one step', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-delete
+          - =note
+            - xyz`,
+      }),
+      editThought(['note-delete', '=note', 'xyz'], 'xy'),
+      editThought(['note-delete', '=note', 'xy'], 'x'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-delete'], 'text/plain')).toEqual(`- note-delete
+  - =note
+    - xyz`)
+  })
+
+  it('note replacements should stay as separate undo steps', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-replace
+          - =note
+            - cat`,
+      }),
+      editThought(['note-replace', '=note', 'cat'], 'bat'),
+      editThought(['note-replace', '=note', 'bat'], 'bit'),
+      undo(),
+    ])
+
+    expect(exportContext(store.getState(), ['note-replace'], 'text/plain')).toEqual(`- note-replace
+  - =note
+    - bat`)
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), ['note-replace'], 'text/plain')).toEqual(`- note-replace
+  - =note
+    - cat`)
+  })
+
+  // https://github.com/cybersemics/em/pull/4524#issuecomment-4899657845
+  it('creating an empty note should undo without reverting the previous edit', () => {
+    store.dispatch([newThought({ value: '' }), editThought([''], 'One'), setCursor(['One'])])
+
+    const undoPatchesBefore = store.getState().undoPatches.length
+
+    store.dispatch(toggleNote())
+
+    expect(store.getState().undoPatches.length).toBe(undoPatchesBefore + 1)
+    expect(exportContext(store.getState(), ['One'], 'text/plain')).toEqual(`- One
+  - =note
+    - `)
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - One`)
+  })
+
+  it('deleting an empty note should undo without reverting the previous edit', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - note-delete-empty
+          - =note
+            - `,
+      }),
+      setCursor(['note-delete-empty']),
+      setNoteFocus({ value: true, offset: 0 }),
+    ])
+
+    const undoPatchesBefore = store.getState().undoPatches.length
+
+    store.dispatch(toggleNote())
+
+    expect(store.getState().undoPatches.length).toBe(undoPatchesBefore + 1)
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - note-delete-empty`)
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), ['note-delete-empty'], 'text/plain')).toEqual(`- note-delete-empty
+  - =note
+    - `)
+  })
+
+  it('note offset should round trip with a note edit', () => {
+    const original = 'one two three'
+    const updated = 'one two'
+
+    store.dispatch([
+      importText({
+        text: `
+        - note-offset
+          - =note
+            - ${original}`,
+      }),
+      setCursor(['note-offset']),
+    ])
+
+    store.dispatch(setNoteFocus({ value: true, offset: null }))
+
+    const path = contextToPath(store.getState(), ['note-offset', '=note', original])!
+    store.dispatch(
+      editThoughtRaw({
+        path,
+        oldValue: original,
+        newValue: updated,
+        noteOffset: updated.length,
+      }),
+    )
+
+    expect(store.getState().noteOffset).toBe(updated.length)
+
+    store.dispatch(undo())
+
+    expect(store.getState().noteFocus).toBe(true)
+    expect(store.getState().noteOffset).toBe(original.length)
+    expect(exportContext(store.getState(), ['note-offset'], 'text/plain')).toEqual(`- note-offset
+  - =note
+    - ${original}`)
+
+    store.dispatch(setNoteFocus({ value: true, offset: null }))
+
+    store.dispatch(redo())
+
+    expect(store.getState().noteOffset).toBe(updated.length)
+    expect(exportContext(store.getState(), ['note-offset'], 'text/plain')).toEqual(`- note-offset
+  - =note
+    - ${updated}`)
   })
 
   it('contiguous edit additions should should not be grouped with deletions', () => {
@@ -610,5 +1353,71 @@ describe('multicursor grouping', () => {
   - c
   - e`
     expect(exported).toEqual(expectedOutput)
+  })
+
+  it('should undo a multicursor command and a trailing navigation action together in a single undo', () => {
+    // Reproduces #4314: archiving multiple selected thoughts via the DropGutter while the Command Center is open
+    // leaves a trailing setCursor (navigation) patch on top of the multicursor command patch. The multicursor
+    // command patch stores its undoLabel (here the command id 'archive', which is not a registered action type) at
+    // actions[0], so the first undo must still restore the archived thoughts, not just the trailing cursor change.
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c
+        - d
+        - e`,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    // Archive all selected thoughts as a single multicursor command. The cursor lands on the surviving sibling d.
+    executeCommandWithMulticursor(archiveCommand, { store })
+
+    // The archived thoughts (a, b, c) are moved to the hidden =archive context.
+    let exportedTrailingNav = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedTrailingNav).toEqual(`- ${HOME_TOKEN}
+  - =archive
+    - c
+    - b
+    - a
+  - d
+  - e`)
+
+    // Simulate the trailing navigation patch that lands on top of the command patch (e.g. cursor restore after the
+    // Command Center closes). Moving the cursor to a different surviving thought creates a separate navigation-only patch.
+    store.dispatch(setCursor(['e']))
+
+    // A single undo must undo both the trailing navigation and the multicursor command, restoring the archived thoughts.
+    store.dispatch(undo())
+
+    exportedTrailingNav = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedTrailingNav).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c
+  - d
+  - e`)
+  })
+})
+
+describe('count', () => {
+  it('undo and redo an exact number of patches instead of a whole step', () => {
+    store.dispatch([newThought({}), editThought([''], 'a')])
+
+    // a whole step would also undo the new thought
+    store.dispatch(undo({ count: 1 }))
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - `)
+
+    store.dispatch(redo({ count: 1 }))
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a`)
   })
 })

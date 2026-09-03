@@ -17,7 +17,7 @@ afterEach(cleanupTestApp)
 // TODO: TransactionInactiveError: A request was placed against a transaction which is currently not active, or which is finished.
 it.skip('merge up to pending destination descendant', async () => {
   timer.useFakeTimer()
-  initialize()
+  initialize({ storage: 'memory' })
   await timer.runAllAsync()
 
   const text = `
@@ -42,7 +42,7 @@ it.skip('merge up to pending destination descendant', async () => {
   appStore.dispatch(clear())
   await timer.runAllAsync()
 
-  initialize()
+  initialize({ storage: 'memory' })
 
   await timer.runAllAsync()
 

@@ -10,6 +10,7 @@ import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getAllChildren } from '../../selectors/getChildren'
 import getLexeme from '../../selectors/getLexeme'
+import getThoughtById from '../../selectors/getThoughtById'
 import contextToThought from '../../test-helpers/contextToThought'
 import editThought from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -451,7 +452,7 @@ it.skip('should strip tags whose font weight is less than or equal to 400', () =
   const paste = `<span style="font-weight:400;">Hello world. </span> <span style="font-weight:100;">This is a test </span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>Hello world.  This is a test</li>
     </ul>
@@ -464,7 +465,7 @@ it('should convert font weight to 700 if the font weight in a tag is greater tha
   const paste = `<span style="font-weight: 500;">Hello world. </span><span style="font-weight: 800;">This is a test</span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="font-weight: 700;">Hello world. </span><span style="font-weight: 700;">This is a test</span></li>
     </ul>
@@ -477,7 +478,7 @@ it('should not strip whole tag unless other style apart from font-weight should 
   const paste = `<span style="font-weight: 400; font-style: italic;">a</span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="font-style: italic;">a</span></li>
     </ul>
@@ -499,7 +500,7 @@ it('allow formatting tags', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>guardians <b>of the </b><b>galaxy </b></li>
       <li>guardians <i>of the </i><i>universe </i></li>
@@ -629,7 +630,7 @@ it('import single line with style attributes', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="color: rgb(255, 255, 255);font-weight: bold;background-color: rgb(0, 0, 0);">Atonement</span></li>
     </ul>
@@ -644,7 +645,7 @@ it('import single line with style attributes and a single br tag', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="color: pink;">Marcel Duchamp: The Art of the Possible</span></li>
     </ul>
@@ -776,14 +777,42 @@ it(`import sibling empty thoughts`, () => {
   `
 
   const stateNew = importText(initialState(), { text })
-  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+  const values = getAllChildrenByContext(stateNew, [HOME_TOKEN]).map(id => getThoughtById(stateNew, id)?.value)
 
-  expect(exported).toBe(`- ${HOME_TOKEN}
-  - a
-  - b`)
+  // empty thoughts are preserved on import. See https://github.com/cybersemics/em/issues/4448.
+  expect(values).toEqual(['a', '', '', 'b'])
 })
 
-it('set cursor correctly after duplicate merge', () => {
+// Regression test for https://github.com/cybersemics/em/issues/4448
+// An empty thought within a series of copied plaintext thoughts (e.g. Select All + Copy of "- A\n- B\n- \n- D")
+// should be preserved on paste, not silently dropped.
+it('import a series of plaintext thoughts with an empty thought in the middle', () => {
+  const text = `- A\n- B\n- \n- D`
+
+  const stateNew = importText(initialState(), { text })
+  const values = getAllChildrenByContext(stateNew, [HOME_TOKEN]).map(id => getThoughtById(stateNew, id)?.value)
+
+  expect(values).toEqual(['A', 'B', '', 'D'])
+})
+
+// Regression test for https://github.com/cybersemics/em/issues/4448 (Issue B)
+// Pasting a series that contains multiple empty thoughts into a non-leaf destination routes through the
+// dummy/collapse (uncategorize) path, where the empty thoughts were previously merged into a single empty
+// thought. Each empty thought should be preserved as a distinct sibling.
+it('import multiple empty thoughts within a series into a non-leaf destination', () => {
+  const initialHtml = `<li>x<ul><li>y</li></ul></li>`
+  const importedHtml = `<ul><li>A</li><li></li><li>B</li><li></li><li>C</li></ul>`
+
+  const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
+  const simplePath = contextToPath(state1, ['x'])!
+  const state2 = importText(state1, { path: simplePath, text: importedHtml })
+
+  const values = getAllChildrenByContext(state2, ['x']).map(id => getThoughtById(state2, id)?.value)
+
+  expect(values).toEqual(['y', 'A', '', 'B', '', 'C'])
+})
+
+it('importing a normal thought that duplicates a sibling keeps both (no merge)', () => {
   const text = '- a\n  - b'
 
   const stateNew = reducerFlow([
@@ -799,6 +828,26 @@ it('set cursor correctly after duplicate merge', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
+  - a
+    - b`)
+})
+
+it('importing a metaprogramming attribute that duplicates a sibling merges hierarchically', () => {
+  const text = '- =a\n  - b'
+
+  const stateNew = reducerFlow([
+    newThought('=a'),
+    newThought(''),
+    importTextAtFirstMatch({
+      at: [''],
+      text,
+    }),
+  ])(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =a
     - b`)
 })
 

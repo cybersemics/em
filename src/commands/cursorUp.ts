@@ -10,10 +10,13 @@ import CursorUpIcon from '../components/icons/CursorUp'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
+import documentSort from '../selectors/documentSort'
 import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import isTableCol2 from '../selectors/isTableCol2'
 import prevSibling from '../selectors/prevSibling'
+import prevTableCousin from '../selectors/prevTableCousin'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
@@ -21,9 +24,9 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorUpCommand: Command = {
+const cursorUpCommand = {
   id: 'cursorUp',
-  label: 'Cursor Up',
+  label: 'Cursor Up' as const,
   keyboard: [{ key: Key.ArrowUp }, { key: Key.ArrowUp, shift: true }],
   hideFromHelp: true,
   multicursor: false,
@@ -58,13 +61,17 @@ const cursorUpCommand: Command = {
         : // otherwise, get the last thought in the home context
           getChildrenSorted(state, HOME_TOKEN).slice(-1)[0]
 
-      const prevPath = prevThought
-        ? // non-first child path
-          appendToPath(parentOf(path), prevThought.id)
-        : // when the cursor is on the first child in a context, move up a level
-          !isRoot(pathParent)
-          ? pathParent
-          : null
+      const prevPath =
+        // in the second column of a table view, extend to the previous thought at the same depth (the previous cousin), crossing col1 row boundaries instead of falling through to the col1 parent
+        cursor && isTableCol2(state, cursor)
+          ? prevTableCousin(state, cursor)
+          : prevThought
+            ? // non-first child path
+              appendToPath(parentOf(path), prevThought.id)
+            : // when the cursor is on the first child in a context, move up a level
+              !isRoot(pathParent)
+              ? pathParent
+              : null
 
       // if there is no previous path, do nothing
       if (!prevPath) return
@@ -72,7 +79,9 @@ const cursorUpCommand: Command = {
       const isPrevPathMulticursor = prevPath && isMulticursorPath(state, prevPath)
 
       dispatch([
-        setCursor({ path: prevPath, preserveMulticursor: true }),
+        // Update the multicursor before moving the cursor, since setCursor computes state.expanded and a
+        // selected thought must not expand its own children.
+        // https://github.com/cybersemics/em/issues/4738
         dispatch => {
           // New multicursor set
           if (isMulticursorEmpty) {
@@ -101,13 +110,20 @@ const cursorUpCommand: Command = {
             return
           }
         },
+        setCursor({ path: prevPath, preserveMulticursor: true }),
       ])
 
       requestAnimationFrame(() => {
         selection.clear()
       })
-    } else dispatch(cursorUp())
+    } else {
+      const state = getState()
+      const firstPath = hasMulticursor(state) ? documentSort(state, Object.values(state.multicursors))[0] : null
+
+      // when a multiselect is active, collapse it and move the cursor to the first selected thought in document order
+      dispatch(firstPath ? setCursor({ path: firstPath }) : cursorUp())
+    }
   }),
-}
+} satisfies Command
 
 export default cursorUpCommand

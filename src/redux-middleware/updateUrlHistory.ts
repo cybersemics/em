@@ -6,6 +6,7 @@ import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { hasChildren } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import { updateCommandState } from '../stores/commandStateStore'
 import storageModel from '../stores/storageModel'
@@ -25,6 +26,9 @@ let pathPrev: Path | null = null
 
 /** The last cursor value. Updated immediately on every action. */
 let cursorPrev: Path | null = null
+
+/** The value of the last cursor thought. Updated immediately on every action. */
+let cursorThoughtValuePrev: string | null = null
 
 /** Encodes context array into a URL. */
 const pathToUrl = (state: State, path: Path) => {
@@ -134,13 +138,17 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
     next(action)
     updateUrlHistoryThrottled(getState)
 
-    // Update the command state whenever the cursor changes.
+    // Update the command state whenever the cursor moves or the cursor thought's value changes.
     // Otherwise the command state will not update when the cursor is moved with no selection (mobile only, when the keyboard is down), since updateCommandState is otherwise only called on selection change.
-    const cursor = getState().cursor
-    if (!equalPath(cursor, cursorPrev)) {
+    // The value changes without a selection change when a formatting edit is undone or redone with the keyboard down, which would otherwise leave a color swatch or formatting command selected for formatting the thought no longer has (#5107).
+    const state = getState()
+    const cursor = state.cursor
+    const cursorThoughtValue = cursor ? (getThoughtById(state, head(cursor))?.value ?? null) : null
+    if (!equalPath(cursor, cursorPrev) || cursorThoughtValue !== cursorThoughtValuePrev) {
       updateCommandState()
     }
     cursorPrev = cursor
+    cursorThoughtValuePrev = cursorThoughtValue
   }
 }
 

@@ -3,14 +3,16 @@ import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import getEditable from '../helpers/getEditable'
 import paste from '../helpers/paste'
 import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
-import { page } from '../setup'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
 /** Check if a thought is in the DOM. */
 const isThoughtInDOM = async (value: string) => {
@@ -84,10 +86,6 @@ const dragToDropGutter = async (nodeHandle: ElementHandle<Element> | JSHandle<un
 }
 
 describe('DropGutter: mobile only', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
-
   it('should remove favorite thought when dropped on DropGutter', async () => {
     await paste(`
         - a

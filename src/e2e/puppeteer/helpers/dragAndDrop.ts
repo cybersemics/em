@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Performs Drag and Drop functionality in Puppeteer browser. */
 const dragAndDrop = async (selectorDrag: string, selectorDrop: string) => {

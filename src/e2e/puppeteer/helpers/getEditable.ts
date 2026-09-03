@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /**
  * Get editable node handle for the given value.

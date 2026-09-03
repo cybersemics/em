@@ -95,15 +95,17 @@ export default [
   {
     ignores: [
       'node_modules/**',
+      '.claude/worktrees/**',
       'packages/**/dist/**/*',
       'packages/**/.build/**/*',
       '**/styled-system/*',
       '**/ios/*',
       '**/android/**',
+      '**/desktop/**',
       '**/build/*',
       '**/docs/*',
       '**/functions/*',
-      '**/scripts/*',
+      'public/wa-sqlite/**',
     ],
   },
   {
@@ -224,6 +226,31 @@ export default [
     files: ['./src/util/storage.ts'],
     rules: {
       'no-restricted-globals': 0,
+    },
+  },
+  // actions/github-script evaluates its `script:` body in a CommonJS context and resolves relative
+  // require() paths against the workspace, so the scripts it loads must be CommonJS. package.json
+  // sets "type": "module", hence the .cjs extension.
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'writable',
+        process: 'readonly',
+        require: 'readonly',
+      },
+    },
+  },
+  // A constants module is a collection of peer values with no primary export, so there is no
+  // meaningful default export to prefer. Named exports keep them individually tree-shakeable and
+  // importable by name.
+  {
+    files: ['**/constants.ts'],
+    rules: {
+      'import/prefer-default-export': 0,
     },
   },
 ]
