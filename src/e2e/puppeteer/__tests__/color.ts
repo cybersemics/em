@@ -13,6 +13,8 @@ import keyboard from '../helpers/keyboard'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import scrollBy from '../helpers/scrollBy'
+import scrollIntoView from '../helpers/scrollIntoView'
 import setSelection from '../helpers/setSelection'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
@@ -55,6 +57,7 @@ const setNoteCaret = (offset: number) =>
 /** Waits one frame for selectionchange-driven command state to propagate. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
+<<<<<<< Updated upstream
 /** Returns the background that actually paints behind the code text of the thought being edited, i.e. the nearest
  * self-or-ancestor of the code element that is not transparent. */
 const codeBackgroundColor = () =>
@@ -67,15 +70,59 @@ const codeBackgroundColor = () =>
         return backgroundColor
     }
     return null
+=======
+/** Returns the horizontal geometry needed to verify Color Picker toolbar scrolling. */
+const getColorPickerGeometry = () =>
+  page.evaluate(() => {
+    const toolbar = document.querySelector('[data-testid="toolbar"]')
+    const colorPicker = document.querySelector('[aria-label="Color Picker"]')
+    if (!toolbar || !colorPicker) throw new Error('Toolbar or Color Picker not found.')
+
+    const toolbarRect = toolbar.getBoundingClientRect()
+    const colorPickerRect = colorPicker.getBoundingClientRect()
+    return {
+      colorPickerLeft: colorPickerRect.left,
+      colorPickerRight: colorPickerRect.right,
+      scrollLeft: toolbar.scrollLeft,
+      toolbarLeft: toolbarRect.left,
+      toolbarRight: toolbarRect.right,
+    }
+>>>>>>> Stashed changes
   })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 // https://github.com/cybersemics/em/issues/4604
-it('scrolls the entire Color Picker into view when opened with the keyboard shortcut', async () => {
+it('scrolls the Color Picker only as far as needed when opened with the keyboard shortcut', async () => {
   await page.setViewport({ width: 640, height: 812 })
   await paste('- One')
   await clickThought('One')
+
+  await scrollIntoView('[data-testid="toolbar-icon"][aria-label="Text Color"]', {
+    block: 'nearest',
+    inline: 'center',
+  })
+  await scrollBy('[data-testid="toolbar"]', 20, 0)
+  const scrollLeftBeforeOpeningVisiblePicker = await page.$eval(
+    '[data-testid="toolbar"]',
+    toolbar => toolbar.scrollLeft,
+  )
+
+  await press('h', { meta: true, shift: true })
+  await waitForSelector('[aria-label="Color Picker"]')
+  await nextFrame()
+  await nextFrame()
+
+  const visiblePickerGeometry = await getColorPickerGeometry()
+  expect(visiblePickerGeometry.colorPickerLeft).toBeGreaterThanOrEqual(visiblePickerGeometry.toolbarLeft)
+  expect(visiblePickerGeometry.colorPickerRight).toBeLessThanOrEqual(visiblePickerGeometry.toolbarRight)
+  expect(visiblePickerGeometry.scrollLeft).toBe(scrollLeftBeforeOpeningVisiblePicker)
+
+  await press('h', { meta: true, shift: true })
+  await expect
+    .poll(() => page.evaluate(() => document.querySelector('[aria-label="Color Picker"]') === null))
+    .toBe(true)
+  await scrollBy('[data-testid="toolbar"]', -10000, 0)
 
   const textColorIsOutsideToolbar = await page.evaluate(() => {
     const toolbar = document.querySelector('[data-testid="toolbar"]')
@@ -87,26 +134,22 @@ it('scrolls the entire Color Picker into view when opened with the keyboard shor
   expect(textColorIsOutsideToolbar).toBe(true)
 
   await press('h', { meta: true, shift: true })
-  await waitForSelector('[aria-label="text color swatches"]')
+  await waitForSelector('[aria-label="Color Picker"]')
 
   await expect
-    .poll(() =>
-      page.evaluate(() => {
-        const toolbar = document.querySelector('[data-testid="toolbar"]')
-        const swatchGroups = document.querySelectorAll(
-          '[aria-label="text color swatches"], [aria-label="background color swatches"]',
-        )
-        if (!toolbar || swatchGroups.length !== 2) throw new Error('Toolbar or Color Picker swatches not found.')
-
-        const toolbarRect = toolbar.getBoundingClientRect()
-        const swatchGroupRects = Array.from(swatchGroups).map(group => group.getBoundingClientRect())
-        return {
-          leftEdgeVisible: swatchGroupRects.every(groupRect => groupRect.left >= toolbarRect.left),
-          rightEdgeVisible: swatchGroupRects.every(groupRect => groupRect.right <= toolbarRect.right),
-        }
-      }),
-    )
-    .toEqual({ leftEdgeVisible: true, rightEdgeVisible: true })
+    .poll(async () => {
+      const geometry = await getColorPickerGeometry()
+      return {
+        leftEdgeVisible: geometry.colorPickerLeft >= geometry.toolbarLeft,
+        rightEdgeAligned: Math.abs(geometry.colorPickerRight - geometry.toolbarRight) < 1,
+        rightEdgeVisible: geometry.colorPickerRight <= geometry.toolbarRight,
+      }
+    })
+    .toEqual({
+      leftEdgeVisible: true,
+      rightEdgeAligned: true,
+      rightEdgeVisible: true,
+    })
 })
 
 it('Set the text color of the text and bullet', async () => {

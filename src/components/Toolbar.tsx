@@ -174,15 +174,25 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [updateArrows])
 
-  // A keyboard shortcut can open the Color Picker while its toolbar button is outside the scroll viewport.
-  // Center the button after the picker renders so that the picker is fully visible, including when the toolbar
-  // remounts after distraction-free typing.
+  // A keyboard shortcut can open the Color Picker outside the toolbar viewport. Scroll only by the clipped
+  // distance after the picker renders, including when the toolbar remounts after distraction-free typing.
   useEffect(() => {
     if (customize || !showColorPicker) return
 
-    toolbarRef.current
-      ?.querySelector<HTMLElement>('[data-command-id="textColor"]')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    const toolbar = toolbarRef.current
+    const colorPicker = toolbar?.querySelector<HTMLElement>('[aria-label="Color Picker"]')
+    if (!toolbar || !colorPicker) return
+
+    const toolbarRect = toolbar.getBoundingClientRect()
+    const colorPickerRect = colorPicker.getBoundingClientRect()
+    const scrollOffset =
+      colorPickerRect.left < toolbarRect.left
+        ? colorPickerRect.left - toolbarRect.left
+        : colorPickerRect.right > toolbarRect.right
+          ? colorPickerRect.right - toolbarRect.right
+          : 0
+
+    if (scrollOffset !== 0) toolbar.scrollBy({ behavior: 'smooth', left: scrollOffset })
   }, [customize, showColorPicker])
 
   // disable pressing on drag
