@@ -13,6 +13,7 @@ import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
@@ -109,6 +110,40 @@ describe('drag', () => {
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
+  })
+
+  // https://github.com/cybersemics/em/issues/5229
+  it('cancels a drop on the dragged thought own position', async () => {
+    await paste(`
+      - aaa
+      - bbb
+      - ccc
+    `)
+
+    await clickThought('aaa')
+
+    // hover the drop target directly below aaa, i.e. aaa's own position
+    await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
+
+    // the drop hover is still shown at the thought's own position; only the drop is cancelled
+    // (.drop-hover is the class that dropHoverRecipe gives every drop hover bar)
+    await waitUntil(() => !!document.querySelector('.drop-hover'), { timeout: 6000 })
+
+    // release on the same drop target
+    await dragAndDropThought('aaa', 'aaa', { position: 'after', skipMouseDown: true })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- aaa
+- bbb
+- ccc
+`)
+
+    // moveThought throws "afterId must be null or a child of the destination context" if the no-op drop is not
+    // cancelled. The error escapes to the window and is shown in the error banner, and the outline above is unchanged
+    // either way, so also check that no banner is showing now that the drop has been processed.
+    const errorBanner = await page.evaluate(() => document.querySelector('[role="alert"]')?.textContent ?? null)
+    expect(errorBanner).toBeNull()
   })
 
   it('DropChild', async () => {

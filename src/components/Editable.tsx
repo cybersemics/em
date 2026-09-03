@@ -62,6 +62,7 @@ import head from '../util/head'
 import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
+import isFormattingElement from '../util/isFormattingElement'
 import lastURL from '../util/lastURL'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
@@ -93,19 +94,21 @@ interface EditableProps {
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
 }
 
-/** If oldValue is wrapped in a formatting node, transfer that wrapper to the new value. */
-const applyOuterTag = (newValue: string, oldValue: string): string => {
+/** Descends a chain of formatting elements that each wrap the whole thought, returning the innermost one. */
+const innermostWrapper = (element: HTMLElement): HTMLElement =>
+  element.childNodes.length === 1 && isFormattingElement(element.firstChild)
+    ? innermostWrapper(element.firstChild)
+    : element
+
+/** If oldValue is wrapped in formatting nodes, transfer those wrappers to the new value. Every wrapper in the chain is
+ * preserved, so a thought formatted with several marks (e.g. bold + underline + text color) keeps all of them. */
+const applyOuterTags = (newValue: string, oldValue: string): string => {
   const div = document.createElement('div')
   div.innerHTML = oldValue
 
-  if (
-    div.childNodes.length > 1 ||
-    div.firstChild?.nodeType === Node.TEXT_NODE ||
-    !(div.firstChild instanceof HTMLElement)
-  )
-    return newValue
+  if (div.childNodes.length > 1 || !isFormattingElement(div.firstChild)) return newValue
 
-  div.firstChild.innerHTML = newValue
+  innermostWrapper(div.firstChild).innerHTML = newValue
 
   return div.firstChild.outerHTML
 }
@@ -608,7 +611,7 @@ const Editable = ({
         // When the cursor is cleared, there may be an existing style that wraps the entire thought.
         // That style should be re-applied once they type something. (#3673)
 
-        const wrappedValue = state.cursorCleared ? applyOuterTag(e.target.value, oldValue) : e.target.value
+        const wrappedValue = state.cursorCleared ? applyOuterTags(e.target.value, oldValue) : e.target.value
         const trimmedWrappedValue = trimHtml(wrappedValue)
         const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
         const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
