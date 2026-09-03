@@ -6,6 +6,7 @@ import series from '../../../util/series.js'
 import clickThought from '../helpers/clickThought.js'
 import isKeyboardShown from '../helpers/isKeyboardShown.js'
 import paste from '../helpers/paste.js'
+import tap from '../helpers/tap.js'
 import tapReturnKey from '../helpers/tapReturnKey.js'
 import waitForEditable from '../helpers/waitForEditable.js'
 
@@ -100,7 +101,7 @@ const openKeyboardAt = async (value: string) => {
     { timeoutMsg: `cursor did not move to ${value}` },
   )
   await waitForViewportSettled()
-  if (!(await isKeyboardShown())) await clickThought(value)
+  if (!(await isKeyboardShown())) await tap(await waitForEditable(value), { y: 60 })
   await browser.waitUntil(isKeyboardShown, { timeoutMsg: 'software keyboard did not open' })
   await waitForViewportSettled()
 }
