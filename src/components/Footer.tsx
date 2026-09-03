@@ -1,4 +1,4 @@
-import React, { FC, PropsWithChildren, useEffect, useRef, useState } from 'react'
+import React, { FC, PropsWithChildren, useEffect, useId, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import pkg from '../../package.json'
 import { css, cx } from '../../styled-system/css'
@@ -141,6 +141,7 @@ const glowSwatchClass = css({
 const BackgroundGlowPicker = () => {
   const [showPicker, setShowPicker] = useState(false)
   const { image, opacity } = backgroundGlowStore.useState()
+  const opacityId = useId()
 
   return (
     <div className={css({ display: 'inline-block', position: 'relative' })}>
@@ -211,17 +212,24 @@ const BackgroundGlowPicker = () => {
             })}
           </div>
           <div className={css({ display: 'flex', alignItems: 'center', gap: '0.5em', marginTop: '0.75em' })}>
-            <span className={css({ color: 'dim' })}>Opacity</span>
+            <label htmlFor={opacityId} className={css({ color: 'dim' })}>
+              Opacity
+            </label>
             <input
+              id={opacityId}
               type='range'
               min={0}
               max={1}
-              step={0.05}
+              step={0.01}
               value={opacity}
               onChange={e => backgroundGlowStore.update({ opacity: +e.target.value })}
               // prevent the browser from scrolling the page while dragging the slider handle
               className={css({ flexGrow: 1, touchAction: 'none' })}
             />
+            {/* The exact value, so the opacity that looks best on a device can be read off and hard-coded as the default. Two decimals and tabular digits keep the label a fixed width, so the slider does not shift under the finger while it is dragged. */}
+            <output htmlFor={opacityId} className={css({ fontVariantNumeric: 'tabular-nums' })}>
+              {opacity.toFixed(2)}
+            </output>
           </div>
         </div>
       )}
