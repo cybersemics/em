@@ -77,16 +77,19 @@ it('the selected text remains selected after a letter case change that lengthens
 })
 
 // https://github.com/cybersemics/em/issues/4774
+// These commands are covered in component tests as well, but it feels valuable to have some level
+// of belt-and-suspenders coverage for timing issues related to edits. Copilot has dutifully warned
+// that this test is a flake candidate, and additionally violates the principle of covering each
+// behaviour at exactly one level.
 it('flushes pending edits before applying letter case from the picker', async () => {
   await paste('a')
 
   await clickThought('a')
   await clickToolbar('Letter Case')
-  await page.hover('[aria-label="Letter Case"] [aria-label="UpperCase"]')
   await keyboard.type('b')
   await clickToolbar('Letter Case', 'UpperCase')
 
-  await new Promise(resolve => setTimeout(resolve, 700))
+  await waitForEditable('AB')
 
   expect(await getEditingText()).toBe('AB')
 })
