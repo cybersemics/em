@@ -87,8 +87,10 @@ const RDLD_SEGMENTS: readonly GestureSegment[] = [
   { kind: 'line', from: { x: 45, y: 58.5 }, to: { x: 45, y: 72 }, gestureIndex: 3 },
 ]
 
-/** Converts a gesture into the canonical line, arc, or quadratic segments used by every renderer. */
-const getGestureGeometry = (
+type BaseGestureGeometry = Omit<GestureGeometry, 'chevron'>
+
+/** Converts a gesture into its unadorned line, arc, or quadratic segments. */
+const getBaseGestureGeometry = (
   path: Gesture,
   {
     reversalOffset,
@@ -99,7 +101,7 @@ const getGestureGeometry = (
     rounded?: boolean
     size: number
   },
-): GestureGeometry => {
+): BaseGestureGeometry => {
   if (path === 'rdld') return { path, extendedPath: path, segments: RDLD_SEGMENTS }
 
   if (rounded) {
@@ -184,6 +186,121 @@ const getGestureGeometry = (
     gestureIndex: gestureIndexes[i],
   }))
   return { path, extendedPath, segments }
+}
+
+/** Returns a point a limited distance from the first point toward the second. */
+const pointTowards = (from: GesturePoint, to: GesturePoint, distance: number): GesturePoint => {
+  const dx = to.x - from.x
+  const dy = to.y - from.y
+  const length = Math.hypot(dx, dy) || 1
+  // Limiting the offset to half the segment prevents neighboring corners from crossing.
+  const offset = Math.min(distance, length / 2)
+  return { x: from.x + (dx / length) * offset, y: from.y + (dy / length) * offset }
+}
+
+/** Replaces each interior vertex of line geometry with a quadratic corner. */
+const softenCorners = (geometry: BaseGestureGeometry, cornerRadius: number): BaseGestureGeometry => {
+  if (cornerRadius <= 0 || geometry.segments.length < 2 || geometry.segments.some(segment => segment.kind !== 'line')) {
+    return geometry
+  }
+
+  const lines = geometry.segments as readonly LineGestureSegment[]
+  const points = [lines[0].from, ...lines.map(segment => segment.to)]
+  const segments = points.slice(1, -1).reduce<GestureSegment[]>((softened, vertex, index) => {
+    const before = pointTowards(vertex, points[index], cornerRadius)
+    const after = pointTowards(vertex, points[index + 2], cornerRadius)
+    const from = softened.at(-1)?.to ?? points[0]
+    return [
+      ...softened,
+      { kind: 'line', from, to: before, gestureIndex: lines[index].gestureIndex },
+      {
+        kind: 'quadratic',
+        from: before,
+        control: vertex,
+        to: after,
+        gestureIndex: lines[index].gestureIndex,
+      },
+    ]
+  }, [])
+  const from = segments.at(-1)?.to ?? points[0]
+  return {
+    ...geometry,
+    segments: [...segments, { kind: 'line', from, to: points.at(-1)!, gestureIndex: lines.at(-1)!.gestureIndex }],
+  }
+}
+
+/** Returns the final direction vector of a canonical segment. */
+const getEndTangent = (segment: GestureSegment): GesturePoint => {
+  if (segment.kind === 'line') return { x: segment.to.x - segment.from.x, y: segment.to.y - segment.from.y }
+  if (segment.kind === 'quadratic') return { x: segment.to.x - segment.control.x, y: segment.to.y - segment.control.y }
+
+  const radians = (segment.endAngle * Math.PI) / 180
+  const radial = { x: Math.cos(radians), y: Math.sin(radians) }
+  return segment.sweepFlag === 1 ? { x: -radial.y, y: radial.x } : { x: radial.y, y: -radial.x }
+}
+
+/** Constructs a chevron whose apex follows the final gesture tangent. */
+const getChevron = (
+  tip: GesturePoint,
+  tangent: GesturePoint,
+  {
+    apexAngle,
+    halfSpan,
+  }: {
+    /** Interior angle at the chevron apex. */
+    apexAngle: number
+    /** Perpendicular distance from the centerline to either leg. */
+    halfSpan: number
+  },
+): readonly [GesturePoint, GesturePoint, GesturePoint] => {
+  const length = Math.hypot(tangent.x, tangent.y) || 1
+  const forwardX = tangent.x / length
+  const forwardY = tangent.y / length
+  const sideX = -forwardY
+  const sideY = forwardX
+  const depth = halfSpan / Math.max(Math.tan((apexAngle / 2) * (Math.PI / 180)), 0.01)
+  const legsX = tip.x - (forwardX * depth) / 2
+  const legsY = tip.y - (forwardY * depth) / 2
+  return [
+    { x: legsX + sideX * halfSpan, y: legsY + sideY * halfSpan },
+    { x: legsX + forwardX * depth, y: legsY + forwardY * depth },
+    { x: legsX - sideX * halfSpan, y: legsY - sideY * halfSpan },
+  ]
+}
+
+/** Builds the complete canonical shape consumed by paint and framing. */
+const getGestureGeometry = (
+  path: Gesture,
+  {
+    chevron,
+    cornerRadius = 0,
+    reversalOffset,
+    rounded,
+    size,
+  }: {
+    /** Dimensions of a geometry-based chevron, or undefined for an SVG marker. */
+    chevron?: { apexAngle: number; halfSpan: number }
+    /** Radius used to soften vertices in line geometry. */
+    cornerRadius?: number
+    /** Orthogonal offset used to separate reversing directions. */
+    reversalOffset: number
+    /** Whether to construct the legacy circular-arc topology. */
+    rounded?: boolean
+    /** Nominal gesture extent in SVG user units. */
+    size: number
+  },
+): GestureGeometry => {
+  const geometry = softenCorners(getBaseGestureGeometry(path, { reversalOffset, rounded, size }), cornerRadius)
+  if (!chevron || path === 'rdld') return { ...geometry, chevron: null }
+
+  const finalSegment = geometry.segments.at(-1)!
+  const chevronPoints = getChevron(finalSegment.to, getEndTangent(finalSegment), chevron)
+  return {
+    ...geometry,
+    // Extending the centerline to the apex lets the gradient finish at the gesture's visual tip.
+    segments: [...geometry.segments.slice(0, -1), { ...finalSegment, to: chevronPoints[1] }] as GestureSegment[],
+    chevron: chevronPoints,
+  }
 }
 
 export default getGestureGeometry
