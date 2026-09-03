@@ -24,6 +24,7 @@ import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -301,6 +302,11 @@ const endDrag = () => {
   // long-press start that blocks all scrolling; it is only removed on touchend, which does not fire after a drag (e.g. a
   // multiselect drop onto a subthought), leaving scrolling frozen until it is explicitly re-enabled here.
   allowTouchToScroll(true)
+
+  // A browser may dispatch the release's compatibility click or focus after drag cleanup. Keep only cursor events
+  // suppressed until the next real touchstart; do not hold longPress open and block unrelated gesture state.
+  if (isTouch) globals.suppressCursorAfterTouch = true
+
   store.dispatch([
     longPress({ value: LongPressState.Inactive }),
     (dispatch, getState) => {

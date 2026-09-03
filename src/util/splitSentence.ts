@@ -208,6 +208,31 @@ function splitFormattedHtmlBySubSentence(htmlValue: string, plainValue: string):
   }, [])
 }
 
+/** Matches a copula, that is a finite form of "to be", surrounded by whitespace. The form "am" is excluded since it is usually a time, e.g. "10 am", and the non-finite forms "be", "been", and "being" do not separate a subject from a predicate, e.g. "It will be a good day". */
+const copulaRegex = /\s+(?:is|are|was|were)\s+/i
+
+/** Matches a subject that is a bare pronoun, which would make a meaningless thought on its own, e.g. "This is a single sentence" or "There is a problem". */
+const pronounRegex = /^(?:i|you|he|she|it|we|they|this|that|these|those|there|here|who|what|which|where|when|why|how)$/i
+
+/**
+ * Formats the predicate of a copula split as a thought of its own: drops a leading article and, when the subject is capitalized, capitalizes the first letter, e.g. "the most valuable resource" -> "Most valuable resource".
+ *
+ * @param htmlValue The trimmed predicate HTML.
+ * @param subject The plain text subject.
+ */
+function formatPredicate(htmlValue: string, subject: string): string {
+  const plainValue = getTextContentFromHTML(htmlValue)
+  // an article is only dropped when something follows it
+  const article = plainValue.match(/^(?:a|an|the)\s+(?=\S)/i)
+  const withoutArticle = article
+    ? trimHtml(sliceHtmlByTextOffsets(htmlValue, article[0].length, plainValue.length))
+    : htmlValue
+  // trimHtml leaves leading tags in place, so the first letter follows them, e.g. "<b>m</b>ost"
+  return /^\s*\p{Lu}/u.test(subject)
+    ? withoutArticle.replace(/^((?:<[^>]*>)*)(\S)/, (match, tags, char) => tags + char.toUpperCase())
+    : withoutArticle
+}
+
 /**
  * Splits given value by special characters.
  */
@@ -252,11 +277,18 @@ const splitSentence = (value: string): SplitResult[] => {
     // A dash surrounded by whitespace is a delimiter and takes priority over commas, e.g. "Shopping list - apples, bananas".
     // A dash without surrounding whitespace may be part of a hyphenated word, so commas take priority, e.g. "Jeff Koons, Jean-Michel Basquiat" (#3525).
     const isCommaList = plainValue.split(',').filter(s => s.trim()).length > 1
-    const childMatch = plainValue.match(
+    const punctuationMatch = plainValue.match(
       isCommaList ? /^(.+?)(?:\s+[-–—]\s+|\s*:\s+)(.+)$/ : /^(.+?)\s*(?:[-–—]\s*|:\s+)(.+)$/,
     )
+    // Otherwise a copula splits the sentence into its subject and its predicate
+    // e.g. "Attention is the most valuable resource" -> "- Attention   - Most valuable resource" (as child)
+    // Only a sentence with exactly one copula is split: "The sky is blue and the grass is green" is two clauses rather than a subject and a predicate, so it is left to the sibling delimiters below.
+    const clauses = plainValue.split(copulaRegex)
+    const copulaMatch =
+      !punctuationMatch && clauses.length === 2 && !pronounRegex.test(clauses[0].trim()) ? clauses : null
+    const childMatch = punctuationMatch?.slice(1) ?? copulaMatch
     if (childMatch) {
-      const [_, leftPart, rightPart] = childMatch
+      const [leftPart, rightPart] = childMatch
       const trimmedLeft = leftPart.trim()
       const trimmedRight = rightPart.trim()
       // Only split if both parts have content
@@ -264,7 +296,7 @@ const splitSentence = (value: string): SplitResult[] => {
         const rightPartStart = plainValue.lastIndexOf(rightPart)
         const leftHtml = sliceHtmlByTextOffsets(value, 0, leftPart.length)
         const rightHtml = sliceHtmlByTextOffsets(value, rightPartStart, plainValue.length)
-        // the right side of the dash is split by comma so that each item becomes its own child
+        // the right side of the delimiter is split by comma so that each item becomes its own child
         // e.g. "Shopping list - apples, bananas" -> "- Shopping list   - apples   - bananas"
         const rightValues = rightPart.includes(',')
           ? splitFormattedHtmlBySubSentence(rightHtml, rightPart)
@@ -272,7 +304,11 @@ const splitSentence = (value: string): SplitResult[] => {
         return [
           { value: trimHtml(leftHtml) },
           // only the first item becomes a child of the left side; the rest are its siblings
-          ...rightValues.map((value, i) => ({ value, ...(i === 0 ? { insertNewSubThought: true } : null) })),
+          ...rightValues.map((value, i) => ({
+            // the predicate of a copula becomes a thought of its own, so it is formatted as one
+            value: copulaMatch ? formatPredicate(value, leftPart) : value,
+            ...(i === 0 ? { insertNewSubThought: true } : null),
+          })),
         ]
       }
     }

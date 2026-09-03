@@ -32,7 +32,13 @@ const newSubthoughtTopCommand = {
       dispatch([
         ...newSubthoughtPaths.map(path => path && addMulticursor({ path })),
         // The cursor is already in the last new subthought, but addMulticursor does not recalculate state.expanded, so re-setting it is what expands the selected thoughts and reveals their new subthoughts.
-        setCursor({ path: last(newSubthoughtPaths) ?? null, offset: 0, preserveMulticursor: true }),
+        // The new subthoughts are selected rather than edited, so close the keyboard that each exec opened, otherwise the Command Center stays closed over the selection on mobile (see selectNewCursors in commands.ts).
+        setCursor({
+          path: last(newSubthoughtPaths) ?? null,
+          isKeyboardOpen: false,
+          offset: 0,
+          preserveMulticursor: true,
+        }),
       ])
     },
   },
