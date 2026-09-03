@@ -256,7 +256,11 @@ export const offsetFromNode = (node: Node): number | null => {
   return range.toString().length
 }
 
-/** Returns the character offset at the end of the selection. Returns null if there is no selection. */
+/** Returns the character offset at the end of the selection. Returns null if there is no selection.
+ *
+ * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
+ * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
+ */
 export const offsetEnd = (): number | null => {
   const selection = window.getSelection()
   if (!selection) return null
@@ -266,7 +270,11 @@ export const offsetEnd = (): number | null => {
   return selectionStart + selection.toString().length
 }
 
-/** Returns the character offset at the start of the selection. Returns null if there is no selection. */
+/** Returns the character offset at the start of the selection. Returns null if there is no selection.
+ *
+ * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
+ * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
+ */
 export const offsetStart = (): number | null => {
   const selection = window.getSelection()
   if (!selection) return null
@@ -288,6 +296,13 @@ export const offsetRange = (editable: HTMLElement): { start: number; end: number
   pre.setEnd(range.startContainer, range.startOffset)
   const start = pre.toString().length
   return { start, end: start + range.toString().length }
+}
+
+/** Returns the plain-text character offsets [start, end) of the current selection relative to the given thought's
+ * editable, or null if the thought is not rendered or the selection is not within it. */
+export const offsetRangeThought = (thoughtId: string): { start: number; end: number } | null => {
+  const editable = document.querySelector(`[aria-label="editable-${thoughtId}"]`)
+  return editable ? offsetRange(editable as HTMLElement) : null
 }
 
 /** Clamps a saved offset to what the node can currently address. The node's contents may have changed while the

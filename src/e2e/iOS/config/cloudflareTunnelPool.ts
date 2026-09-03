@@ -172,11 +172,12 @@ async function claim(
   // handed to it above, so the pool has no business being in this process at all.
   delete childEnv.CLOUDFLARE_TUNNEL_POOL
 
-  // http:// here matches the origin the CI "Serve" step starts with HTTP=1 — Cloudflare's tunnel already
-  // terminates HTTPS at its edge for Safari (a real CA-signed cert on the public hostname), so this local
-  // connector-to-origin hop never needs its own TLS. (Also: these are remotely-managed tunnels, so this
-  // --url is only a fallback — Cloudflare's stored ingress config for the hostname takes precedence, and
-  // must point at the same http://localhost:3000 origin.)
+  // These are remotely-managed tunnels: Cloudflare's stored ingress config per tunnel decides the
+  // origin, and this --url is only a fallback for a tunnel missing that config. The CI pool's
+  // stored ingress is http://localhost:3000 (CI serves plain HTTP via HTTP=1); the dev pool's is
+  // https://localhost:3000 with No TLS Verify, so a default `yarn start` works as the origin for
+  // local runs. The tunnel's public side is real-cert HTTPS either way. The fallback here matches
+  // the CI pool.
   const proc = spawn(
     bin,
     ['tunnel', '--no-autoupdate', '--protocol', 'http2', 'run', '--url', 'http://localhost:3000'],

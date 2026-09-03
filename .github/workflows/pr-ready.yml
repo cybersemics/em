@@ -1,0 +1,81 @@
+# Takes a finished Copilot pull request out of draft once every check on it has passed.
+#
+# Copilot opens its pull requests as a draft and never takes them out of one: when a session ends
+# it requests a review and stops. Nothing else moves it either, so the pull request sits in draft
+# — invisible to reviewers, ineligible for auto-merge — until someone notices. Every non-draft
+# Copilot pull request in this repository was undrafted by hand.
+#
+# Runs:
+#   - Automatically, when a check completes on a `copilot/*` branch (see below)
+#   - Manually: `gh workflow run pr-ready.yml -f pr=5224`
+#
+# Why every completion and not just the successes. A pull request's checks finish at different
+# times, so triggering on `success` would fire while other checks were still running. This triggers
+# on every completion and the step bails unless it is the last one out — the same arrangement
+# dependabot-fix.yml uses, and for the same reason.
+#
+# Why not an instruction in the prompt files. The agent would have to run `gh pr ready` itself, and
+# its token cannot be relied on to carry `contents: write` — no Copilot session in this repository
+# has ever undrafted its own pull request. An instruction that silently fails is worse than none.
+# Here the permission is declared below and the trigger is a signal this repository owns outright.
+#
+# GITHUB_TOKEN is sufficient; no PAT is involved. `markPullRequestReadyForReview` needs
+# `contents: write` alongside `pull-requests: write` (cli/cli#6924), both granted below. The usual
+# reason to reach for a PAT does not apply: a GITHUB_TOKEN mutation raises no further workflow runs,
+# and nothing in this repository triggers on `ready_for_review`.
+#
+# `workflow_run` reads this file from the default branch, so edits here have no effect until they
+# are merged to main.
+
+name: PR Ready
+
+on:
+  workflow_run:
+    workflows: ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'Vercel Preview', 'TDD', 'Agent Scripts']
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Pull request number to mark ready for review'
+        required: true
+        type: string
+
+# Serialize per branch so two checks finishing at once cannot both reach the mutation. Never
+# cancel: a queued run is the one that would notice the last check completing.
+concurrency:
+  group: pr-ready-${{ github.event.workflow_run.head_branch || inputs.pr }}
+  cancel-in-progress: false
+
+permissions:
+  checks: read # list the check runs on the pull request head
+  contents: write # markPullRequestReadyForReview requires it — see cli/cli#6924
+  pull-requests: write # read the pull request and take it out of draft
+
+jobs:
+  ready:
+    name: Mark ready for review
+    runs-on: ubuntu-latest
+    # Cheap gate so the six other completions on a normal pull request cost nothing. Author,
+    # draft status, session state, and the checks themselves are verified in the step below.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (startsWith(github.event.workflow_run.head_branch, 'copilot/') &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
+
+    steps:
+      # `workflow_run` resolves `github.ref` to the default branch, so this checks out the base
+      # repo's own code — never the pull request's — solely to make scripts/ci/ available below.
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Mark ready for review
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          # Empty on workflow_dispatch, where PR_NUMBER identifies the pull request instead.
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          PR_NUMBER: ${{ inputs.pr }}
+        with:
+          script: |
+            await require('./scripts/ci/mark-copilot-pr-ready.cjs')({ github, context, core })

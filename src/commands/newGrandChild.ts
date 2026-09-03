@@ -1,6 +1,9 @@
 import Command from '../@types/Command'
+import State from '../@types/State'
 import { newGrandChildActionCreator as newGrandChild } from '../actions/newGrandChild'
 import SettingsIcon from '../components/icons/SettingsIcon'
+import { hasChildren } from '../selectors/getChildren'
+import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
 const newGrandChildCommand = {
@@ -16,7 +19,7 @@ const newGrandChildCommand = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: () => isDocumentEditable(),
+  canExecute: (state: State) => isDocumentEditable() && !!state.cursor && hasChildren(state, head(state.cursor)),
   exec: dispatch => dispatch(newGrandChild()),
 } satisfies Command
 

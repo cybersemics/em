@@ -26,8 +26,8 @@ const main = async () => {
   const githubToken = process.env.GITHUB_TOKEN
   if (!githubToken) throw new Error('GITHUB_TOKEN is required')
 
-  const openaiApiKey = process.env.OPENAI_API_KEY
-  if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
+  const openaiApiKey = process.env.OPENAI_API_KEY_ESTIMATE || process.env.OPENAI_API_KEY
+  if (!openaiApiKey) throw new Error('OPENAI_API_KEY_ESTIMATE or OPENAI_API_KEY is required')
 
   const everhourApiKey = process.env.EVERHOUR_API_KEY
   if (!everhourApiKey) throw new Error('EVERHOUR_API_KEY is required')
