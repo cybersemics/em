@@ -27,7 +27,7 @@ const PuppeteerEnvironment: Environment = {
     ).toString('base64')
 
     const browser = await puppeteer
-      .connect({ browserWSEndpoint: `ws://localhost:7566?launch=${encodeURIComponent(launch)}` })
+      .connect({ browserWSEndpoint: `ws://localhost:7566/chromium?launch=${encodeURIComponent(launch)}` })
       // catch and log a launch error, otherwise it will not appear in the CI logs
       .catch((err: Error) => {
         // using `console.log` here to avoid errors or logs being swallowed by vitest

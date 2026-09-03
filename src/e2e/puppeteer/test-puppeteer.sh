@@ -49,7 +49,7 @@ trap cleanup EXIT INT TERM
 if [ -z "$GITHUB_ACTIONS" ]; then
     # We're not in a GitHub Action, so start the browserless docker container
     echo "Starting browserless docker container..."
-    CONTAINER_ID=$(docker run -d --rm -p 7566:3000 --add-host=host.docker.internal:host-gateway -e "TIMEOUT=0" ghcr.io/browserless/chromium:v2.56.2)
+    CONTAINER_ID=$(docker run -d --rm -p 127.0.0.1:7566:3000 --add-host=host.docker.internal:host-gateway -e "TIMEOUT=0" ghcr.io/browserless/chromium:v2.56.2)
     ./src/e2e/puppeteer/install-browserless-fonts.sh "$CONTAINER_ID"
 
     # Wait for the container to be ready
