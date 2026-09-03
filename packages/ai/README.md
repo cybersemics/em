@@ -96,7 +96,7 @@ Each service authenticates with its own OpenAI API key so that its usage and spe
 
 | Service          | Environment variable              |
 | ---------------- | --------------------------------- |
-| Define Terms     | `OPENAI_API_KEY_DEFINE_TERM`      |
+| Define Terms     | `OPENAI_API_KEY_DEFINE_TERMS`      |
 | Generate Emoji   | `OPENAI_API_KEY_GENERATE_EMOJI`   |
 | Generate Thought | `OPENAI_API_KEY_GENERATE_THOUGHT` |
 
@@ -147,7 +147,7 @@ Function metrics (invocations, duration percentiles, error rate, cold starts, me
 ## Environment variables
 
 - `OPENAI_API_KEY` — fallback OpenAI API key for any service that has no key of its own.
-- `OPENAI_API_KEY_DEFINE_TERM` — per-service key for Define Terms in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
+- `OPENAI_API_KEY_DEFINE_TERMS` — per-service key for Define Terms in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_EMOJI` — per-service key for Generate Emoji in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_THOUGHT` — per-service key for Generate Thought in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `PORT` — optional local server port. Defaults to `3111`.

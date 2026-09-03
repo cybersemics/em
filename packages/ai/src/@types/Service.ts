@@ -4,8 +4,7 @@
  * `OPENAI_API_KEY_{SERVICE}` environment variable.
  */
 enum Service {
-  /** Retains the deployed singular API-key suffix while the route and implementation use the plural name. */
-  DEFINE_TERMS = 'DEFINE_TERM',
+  DEFINE_TERMS = 'DEFINE_TERMS',
   GENERATE_EMOJI = 'GENERATE_EMOJI',
   GENERATE_THOUGHT = 'GENERATE_THOUGHT',
 }

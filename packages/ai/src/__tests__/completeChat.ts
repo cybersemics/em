@@ -34,7 +34,7 @@ afterEach(() => {
 })
 
 it.each([
-  [Service.DEFINE_TERMS, 'OPENAI_API_KEY_DEFINE_TERM', 'define-term-key'],
+  [Service.DEFINE_TERMS, 'OPENAI_API_KEY_DEFINE_TERMS', 'define-terms-key'],
   [Service.GENERATE_EMOJI, 'OPENAI_API_KEY_GENERATE_EMOJI', 'generate-emoji-key'],
   [Service.GENERATE_THOUGHT, 'OPENAI_API_KEY_GENERATE_THOUGHT', 'generate-thought-key'],
 ] as const)('authenticates %s with its service key', async (service, environmentVariable, apiKey) => {
