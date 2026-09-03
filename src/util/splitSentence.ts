@@ -209,6 +209,35 @@ function splitFormattedHtmlBySubSentence(htmlValue: string, plainValue: string):
 }
 
 /**
+ * Splits a value into a main thought and a child at the first delimiter matched by the given regex, e.g. "one - 1" -> "- one   - 1". The right side of the delimiter is split by comma so that each item becomes its own child, e.g. "Shopping list - apples, bananas" -> "- Shopping list   - apples   - bananas". Returns null when the delimiter does not match or either side is empty.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param plainValue The plain text thought value.
+ * @param delimiterRegex Matches the delimiter, capturing the text before it and the text after it.
+ */
+function splitIntoChild(htmlValue: string, plainValue: string, delimiterRegex: RegExp): SplitResult[] | null {
+  const match = plainValue.match(delimiterRegex)
+  if (!match) return null
+
+  const [, leftPart, rightPart] = match
+  // Only split if both parts have content
+  if (!leftPart.trim() || !rightPart.trim()) return null
+
+  const rightPartStart = plainValue.lastIndexOf(rightPart)
+  const leftHtml = sliceHtmlByTextOffsets(htmlValue, 0, leftPart.length)
+  const rightHtml = sliceHtmlByTextOffsets(htmlValue, rightPartStart, plainValue.length)
+  const rightValues = rightPart.includes(',')
+    ? splitFormattedHtmlBySubSentence(rightHtml, rightPart)
+    : [trimHtml(rightHtml)]
+
+  return [
+    { value: trimHtml(leftHtml) },
+    // only the first item becomes a child of the left side; the rest are its siblings
+    ...rightValues.map((value, i) => ({ value, ...(i === 0 ? { insertNewSubThought: true } : null) })),
+  ]
+}
+
+/**
  * Splits given value by special characters.
  */
 const splitSentence = (value: string): SplitResult[] => {
@@ -242,40 +271,17 @@ const splitSentence = (value: string): SplitResult[] => {
    */
   const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(plainValue.trim()))
 
-  // if we're sub-sentence or in one sentence territory, check for child splitting first
-  // e.g. "one - 1" -> "- one   - 1" (as child)
-  // e.g. "Start: 1" -> "- Start   - 1" (as child)
+  // if we're sub-sentence or in one sentence territory, try the delimiters in order of precedence:
+  // 1. a dash surrounded by whitespace or a colon splits into a child, e.g. "one - 1" -> "- one   - 1", "Start: 1" -> "- Start   - 1"
+  // 2. a slash splits into a chain of descendants, e.g. "one/two/three" -> "- one   - two   - three"
+  // 3. a comma, one of the symbols ↑↓←→+, or the word "and" splits into siblings, e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
+  // 4. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
+  // A dash without surrounding whitespace is usually part of a compound word, e.g. "Jean-Michel", so it has the lowest precedence of all: it only splits when the value contains no other delimiter (#3525).
+  // e.g. "Jeff Koons, Jean-Michel Basquiat" splits at the comma and "a → b-c" splits at the arrow.
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
-    // Check for a dash (-, –, or —) or a colon and split into child if found
-    // This handles Case 1: Split into child when there's only one sentence
-    // Match the first delimiter that has content on both sides. A colon must be followed by whitespace so that it does not split a time, e.g. "10:30".
-    // A dash surrounded by whitespace is a delimiter and takes priority over commas, e.g. "Shopping list - apples, bananas".
-    // A dash without surrounding whitespace may be part of a hyphenated word, so commas take priority, e.g. "Jeff Koons, Jean-Michel Basquiat" (#3525).
-    const isCommaList = plainValue.split(',').filter(s => s.trim()).length > 1
-    const childMatch = plainValue.match(
-      isCommaList ? /^(.+?)(?:\s+[-–—]\s+|\s*:\s+)(.+)$/ : /^(.+?)\s*(?:[-–—]\s*|:\s+)(.+)$/,
-    )
-    if (childMatch) {
-      const [_, leftPart, rightPart] = childMatch
-      const trimmedLeft = leftPart.trim()
-      const trimmedRight = rightPart.trim()
-      // Only split if both parts have content
-      if (trimmedLeft && trimmedRight) {
-        const rightPartStart = plainValue.lastIndexOf(rightPart)
-        const leftHtml = sliceHtmlByTextOffsets(value, 0, leftPart.length)
-        const rightHtml = sliceHtmlByTextOffsets(value, rightPartStart, plainValue.length)
-        // the right side of the dash is split by comma so that each item becomes its own child
-        // e.g. "Shopping list - apples, bananas" -> "- Shopping list   - apples   - bananas"
-        const rightValues = rightPart.includes(',')
-          ? splitFormattedHtmlBySubSentence(rightHtml, rightPart)
-          : [trimHtml(rightHtml)]
-        return [
-          { value: trimHtml(leftHtml) },
-          // only the first item becomes a child of the left side; the rest are its siblings
-          ...rightValues.map((value, i) => ({ value, ...(i === 0 ? { insertNewSubThought: true } : null) })),
-        ]
-      }
-    }
+    // A colon must be followed by whitespace so that it does not split a time, e.g. "10:30".
+    const childValues = splitIntoChild(value, plainValue, /^(.+?)(?:\s+[-–—]\s+|\s*:\s+)(.+)$/)
+    if (childValues) return childValues
 
     // Check for slash and split into a chain of descendants, each part a child of the previous
     // e.g. "one/two/three" -> "- one  - two (child)  - three (grandchild)"
@@ -296,7 +302,7 @@ const splitSentence = (value: string): SplitResult[] => {
       }
     }
 
-    // if we're sub-sentence or in one sentence territory, split by comma, or by the word "and" if there is no comma
+    // split by comma, or by the symbols ↑↓←→+ if there is no comma, or by the word "and" if there is neither
     // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
     // e.g. "Alice and the Lion" -> "- Alice - the Lion"
     const splitValues = plainValue
@@ -304,7 +310,11 @@ const splitSentence = (value: string): SplitResult[] => {
       .map(s => s.trim())
       .filter(s => s !== '')
     const values = plainValue !== value ? splitFormattedHtmlBySubSentence(value, plainValue) : splitValues
-    return values.map(value => ({ value }))
+    if (values.length > 1) return values.map(value => ({ value }))
+
+    // nothing else splits the value, so a dash without surrounding whitespace is the delimiter of last resort
+    // e.g. "one-1" -> "- one   - 1"
+    return splitIntoChild(value, plainValue, /^(.+?)[-–—](.+)$/) ?? values.map(value => ({ value }))
   }
 
   /**

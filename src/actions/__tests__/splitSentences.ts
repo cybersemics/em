@@ -761,7 +761,7 @@ describe('dash splitting', () => {
   - potatoes`)
   })
 
-  it.skip('splits by a symbol rather than by a dash without surrounding whitespace', () => {
+  it('splits by a symbol rather than by a dash without surrounding whitespace', () => {
     const value = 'Jeff Koons → Jean-Michel Basquiat → Cindy Sherman'
     const exported = splitThought(value)
 
@@ -771,7 +771,7 @@ describe('dash splitting', () => {
   - Cindy Sherman`)
   })
 
-  it.skip('splits by "and" rather than by a dash without surrounding whitespace', () => {
+  it('splits by "and" rather than by a dash without surrounding whitespace', () => {
     const value = 'Jean-Michel and Basquiat'
     const exported = splitThought(value)
 
@@ -780,7 +780,7 @@ describe('dash splitting', () => {
   - Basquiat`)
   })
 
-  it.skip('splits by slash rather than by a dash without surrounding whitespace', () => {
+  it('splits by slash rather than by a dash without surrounding whitespace', () => {
     const value = 'front-end/back-end'
     const exported = splitThought(value)
 
@@ -789,7 +789,7 @@ describe('dash splitting', () => {
     - back-end`)
   })
 
-  it.skip('splits by colon rather than by a dash without surrounding whitespace', () => {
+  it('splits by colon rather than by a dash without surrounding whitespace', () => {
     const value = 'Co-author: Jean-Michel'
     const exported = splitThought(value)
 
