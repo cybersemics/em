@@ -122,7 +122,7 @@ describe('Autoscroll', () => {
     await paste(Array.from({ length: 8 }, (_, i) => `- Thought ${i + 1}`).join('\n'))
     await waitForEditable('Thought 8')
     await openKeyboardAt('Thought 4')
-    const { scrollY: initialScrollY } = await expectCursorVisible()
+    const { scrollY: initialScrollY } = await expectCursorAboveKeyboard()
 
     const geometries = await series(
       Array.from({ length: 12 }, () => async () => {
