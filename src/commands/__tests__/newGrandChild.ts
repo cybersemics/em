@@ -2,17 +2,65 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 import newGrandChildCommand from '../newGrandChild'
 
 beforeEach(initStore)
 
+describe('canExecute', () => {
+  it('requires the current thought to have a visible child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+            - c
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(false)
+
+    store.dispatch(setCursor(['b']))
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
+  })
+})
+
 describe('multicursor', () => {
+  // https://github.com/cybersemics/em/pull/5129
+  it('does not execute unless every selected thought has a visible child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['a', 'b']),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(false)
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+  - c`)
+  })
+
   it('creates a new empty grandchild in each selected thought', () => {
     store.dispatch([
       importText({
@@ -111,33 +159,7 @@ describe('multicursor', () => {
         - ${''}`)
   })
 
-  it('skips a selected thought with no children while the rest of the selection proceeds', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-          - b
-            - c
-        `,
-      }),
-      setCursor(['a']),
-      addMulticursor(['a']),
-      addMulticursor(['b']),
-    ])
-
-    executeCommandWithMulticursor(newGrandChildCommand, { store })
-
-    // a has no subthought to create a grandchild in, so the action is a no-op for it. b still gets its new grandchild.
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toEqual(`- ${HOME_TOKEN}
-  - a
-  - b
-    - c
-      - ${''}`)
-  })
-
-  it('places the caret in the last created empty grandchild and clears the multicursor', () => {
+  it('places the caret in the last created empty grandchild', () => {
     store.dispatch([
       importText({
         text: `
@@ -158,9 +180,6 @@ describe('multicursor', () => {
 
     // the cursor must end in the new empty grandchild of the last selected thought, ready to type
     expectPathToEqual(state, state.cursor, ['c', 'd', ''])
-
-    // the selection of parent thoughts is stale once the caret is in a new empty thought
-    expect(state.multicursors).toEqual({})
   })
 
   it('places the caret in the new empty grandchild when a single thought is selected', () => {
@@ -232,5 +251,55 @@ describe('multicursor', () => {
     - d
   - e
     - f`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it('selects the new grandchildren after execution', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+            - d
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    const state = store.getState()
+    const multicursors = Object.values(state.multicursors)
+
+    expect(multicursors).toHaveLength(2)
+    expectPathToEqual(state, multicursors[0], ['a', 'b', ''])
+    expectPathToEqual(state, multicursors[1], ['c', 'd', ''])
+  })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it('expands the first subthought of each selected thought so that its new grandchild is visible', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+            - d
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    const state = store.getState()
+
+    expect(state.expanded[hashPath(contextToPath(state, ['a', 'b'])!)]).toBeTruthy()
+    expect(state.expanded[hashPath(contextToPath(state, ['c', 'd'])!)]).toBeTruthy()
   })
 })

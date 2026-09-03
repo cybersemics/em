@@ -73,6 +73,21 @@ export const selectNode = (node: Node): void => {
   sel.addRange(range)
 }
 
+/**
+ * Collapses a selected range to a caret at its end, leaving focus and the keyboard alone.
+ *
+ * Android draws the text context menu for the range, so this dismisses the menu on its own. Unlike `clear`, it
+ * does not blur, which is what keeps the menu's dismissal from overlapping the keyboard's: tearing a range down
+ * while the keyboard is going away makes Android rebuild the menu, so it flashes back after it has already gone
+ * ([#4833](https://github.com/cybersemics/em/issues/4833)). Collapsing while the keyboard is still up lets the
+ * menu fade out in one pass, and the caret it leaves behind is dismissed by the blur that follows.
+ */
+export const collapse = (): void => {
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed) return
+  sel.collapseToEnd()
+}
+
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
 export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 
