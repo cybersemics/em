@@ -2,31 +2,40 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 import newGrandChildCommand from '../newGrandChild'
 
 beforeEach(initStore)
 
 describe('canExecute', () => {
-  it('cannot create a grandchild in a thought with no children', () => {
+  it('requires the current thought to have a visible child', () => {
     store.dispatch([
       importText({
         text: `
           - a
+          - b
+            - c
         `,
       }),
       setCursor(['a']),
     ])
 
     expect(newGrandChildCommand.canExecute(store.getState())).toBe(false)
+
+    store.dispatch(setCursor(['b']))
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
   })
 
-  it('can create a grandchild in a selected thought with children when the cursor is on a thought with none', () => {
+  it('can execute on a selected thought with a visible child when the cursor is on a thought with none', () => {
+    // The selected thought is not necessarily the cursor, e.g. when a thought is long pressed while the cursor is elsewhere.
     store.dispatch([
       importText({
         text: `
@@ -41,26 +50,34 @@ describe('canExecute', () => {
 
     expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
   })
+})
 
-  it('cannot create a grandchild when a selected thought has no children', () => {
+describe('multicursor', () => {
+  // https://github.com/cybersemics/em/pull/5129
+  it('does not execute unless every selected thought has a visible child', () => {
     store.dispatch([
       importText({
         text: `
           - a
-          - b
-            - c
+            - b
+          - c
         `,
       }),
-      setCursor(['b']),
+      setCursor(['a']),
       addMulticursor(['a']),
-      addMulticursor(['b']),
+      addMulticursor(['a', 'b']),
     ])
 
     expect(newGrandChildCommand.canExecute(store.getState())).toBe(false)
-  })
-})
 
-describe('multicursor', () => {
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+  - c`)
+  })
+
   it('creates a new empty grandchild in each selected thought', () => {
     store.dispatch([
       importText({
@@ -159,32 +176,7 @@ describe('multicursor', () => {
         - ${''}`)
   })
 
-  it('does not create a grandchild when a selected thought has no children', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-          - b
-            - c
-        `,
-      }),
-      setCursor(['a']),
-      addMulticursor(['a']),
-      addMulticursor(['b']),
-    ])
-
-    executeCommandWithMulticursor(newGrandChildCommand, { store })
-
-    // a has no subthought to create a grandchild in, so the command is disabled for the whole selection rather than partially applying to b.
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toEqual(`- ${HOME_TOKEN}
-  - a
-  - b
-    - c`)
-  })
-
-  it('places the caret in the last created empty grandchild and clears the multicursor', () => {
+  it('places the caret in the last created empty grandchild', () => {
     store.dispatch([
       importText({
         text: `
@@ -205,9 +197,6 @@ describe('multicursor', () => {
 
     // the cursor must end in the new empty grandchild of the last selected thought, ready to type
     expectPathToEqual(state, state.cursor, ['c', 'd', ''])
-
-    // the selection of parent thoughts is stale once the caret is in a new empty thought
-    expect(state.multicursors).toEqual({})
   })
 
   it('places the caret in the new empty grandchild when a single thought is selected', () => {
@@ -279,5 +268,55 @@ describe('multicursor', () => {
     - d
   - e
     - f`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it('selects the new grandchildren after execution', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+            - d
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    const state = store.getState()
+    const multicursors = Object.values(state.multicursors)
+
+    expect(multicursors).toHaveLength(2)
+    expectPathToEqual(state, multicursors[0], ['a', 'b', ''])
+    expectPathToEqual(state, multicursors[1], ['c', 'd', ''])
+  })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it('expands the first subthought of each selected thought so that its new grandchild is visible', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+            - d
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    const state = store.getState()
+
+    expect(state.expanded[hashPath(contextToPath(state, ['a', 'b'])!)]).toBeTruthy()
+    expect(state.expanded[hashPath(contextToPath(state, ['c', 'd'])!)]).toBeTruthy()
   })
 })

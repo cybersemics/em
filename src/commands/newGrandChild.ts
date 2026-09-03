@@ -1,4 +1,5 @@
 import Command from '../@types/Command'
+import State from '../@types/State'
 import { newGrandChildActionCreator as newGrandChild } from '../actions/newGrandChild'
 import SettingsIcon from '../components/icons/SettingsIcon'
 import { hasChildren } from '../selectors/getChildren'
@@ -14,13 +15,12 @@ const newGrandChildCommand = {
   multicursor: {
     // The action sets the cursor to the new empty grandchild with the keyboard open, ready to type. The default restore would move the caret back to the originally selected thought.
     preventSetCursor: true,
-    // The selection of parent thoughts is stale once the caret is in a new empty grandchild; keeping it would aim the next multicursor command at the parents while the user is typing elsewhere.
-    clearMulticursor: true,
+    // Select the new grandchildren rather than the parents they were created under, which also expands the ancestors of each one so that the grandchildren created away from the cursor are visible.
+    selectNewCursors: true,
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: state => {
-    // The action no-ops on a thought with no visible child, since there is no subthought to create the grandchild in. The command is therefore only executable if every selected thought has a visible child, so that a selection containing an ineligible thought disables it rather than partially applying. The selected thoughts are not necessarily the cursor, e.g. when a thought is long pressed while the cursor is elsewhere.
+  canExecute: (state: State) => {
     const paths = selectedPaths(state)
     return isDocumentEditable() && paths.length > 0 && paths.every(path => hasChildren(state, head(path)))
   },
