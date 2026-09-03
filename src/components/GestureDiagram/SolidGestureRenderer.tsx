@@ -1,4 +1,5 @@
 import { token } from '../../../styled-system/tokens'
+import serializeGesturePath from './serializeGesturePath'
 import GestureArrowhead from './types/GestureArrowhead'
 import GestureGeometry from './types/GestureGeometry'
 import GestureSegment from './types/GestureSegment'
@@ -24,24 +25,15 @@ interface SolidGestureRendererProps {
   strokeWidth: number
 }
 
-/** Serializes consecutive canonical segments as one continuous SVG path. */
-const serializeGesturePath = (segments: readonly GestureSegment[]) =>
-  segments.reduce((pathData, segment, index) => {
-    const commaSeparated = segments[0]?.kind === 'quadratic'
-    return `${pathData}${index === 0 ? `M ${segment.from.x}${commaSeparated ? ',' : ' '}${segment.from.y} ` : ' '}${
-      segment.kind === 'line'
-        ? `L ${segment.to.x}${commaSeparated ? ',' : ' '}${segment.to.y}`
-        : segment.kind === 'arc'
-          ? `A ${segment.radius} ${segment.radius} 0 0 ${segment.sweepFlag} ${segment.to.x} ${segment.to.y}`
-          : `Q ${segment.control.x},${segment.control.y} ${segment.to.x},${segment.to.y}`
-    }`
-  }, '')
-
 /** Serializes a legacy rounded segment, which is always a circular arc. */
 const serializeArc = (segment: ArcGestureSegment) =>
   `M ${segment.from.x} ${segment.from.y} A ${segment.radius} ${segment.radius} 0 0 ${segment.sweepFlag} ${segment.to.x} ${segment.to.y}`
 
-/** Paints canonical gesture geometry with binary solid colors. */
+/**
+ * Paints the solid, binary highlight treatment used by the Gesture Menu.
+ * GestureDiagram selects this renderer when `useGradient` is false.
+ * Unlike either gradient renderer, it uses continuous paths and discrete active/inactive colors.
+ */
 const SolidGestureRenderer = ({
   arrowhead,
   color,
