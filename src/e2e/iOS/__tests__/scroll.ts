@@ -115,6 +115,28 @@ describe('Autoscroll', () => {
     await expectCursorAboveKeyboard()
   })
 
+  // https://github.com/cybersemics/em/issues/3765
+  it('keeps the keyboard open and the cursor visible when focus moves to a lower thought', async () => {
+    await paste(Array.from({ length: 20 }, (_, i) => `- Thought ${i + 1}`).join('\n'))
+    await openKeyboardAt('Thought 4')
+
+    const editable = await waitForEditable('Thought 20')
+    await browser.execute((editable: HTMLElement) => editable.scrollIntoView({ block: 'center' }), editable)
+    await waitForViewportSettled()
+    await tap(await waitForEditable('Thought 20'), { pointerType: 'touch', y: 60 })
+    await browser.waitUntil(
+      async () =>
+        browser.execute(
+          () => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'Thought 20',
+        ),
+      { timeoutMsg: 'cursor did not move to Thought 20' },
+    )
+    await browser.waitUntil(isKeyboardShown, { timeoutMsg: 'software keyboard closed while focus moved' })
+    await waitForViewportSettled()
+
+    await expectCursorAboveKeyboard()
+  })
+
   it('keeps each new thought visible while Return is pressed repeatedly above the software keyboard', async () => {
     await paste(Array.from({ length: 8 }, (_, i) => `- Thought ${i + 1}`).join('\n'))
     await waitForEditable('Thought 8')
