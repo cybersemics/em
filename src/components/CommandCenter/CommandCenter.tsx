@@ -212,35 +212,6 @@ const CommandCenter = () => {
   /** Only let a downward drag collapse the drawer when the command list is scrolled to the top, so the gesture does not conflict with scrolling the list. */
   const isDragDisabled = scrollPosition !== undefined && scrollPosition !== 'top'
 
-  /*
-   * How far the collapse band's lower edge sits below the drawer's top edge, i.e. the height of the
-   * header row. Measured rather than derived from fontSize so the band lands on the row's bottom edge
-   * whatever the row grows to. Both the row and the drawer's top move together under the drag
-   * transform, so the difference is stable mid-gesture.
-   *
-   * This is a callback ref rather than an effect because the Sheet mounts its content after the open
-   * flag flips: an effect keyed on that flag runs while the row does not exist yet, bails, and never
-   * runs again, leaving the band the width of the chevron alone.
-   */
-  const [collapseBandInset, setCollapseBandInset] = useState(0)
-  const headerRowObserverRef = useRef<ResizeObserver | null>(null)
-  const setHeaderRowRef = useCallback((el: HTMLDivElement | null) => {
-    headerRowObserverRef.current?.disconnect()
-    headerRowObserverRef.current = null
-    if (!el) return
-    /** Re-measures the header row's bottom relative to the sheet container's top, ignoring the zero it reads before the row has been laid out. */
-    const measure = () => {
-      const container = el.closest('.react-modal-sheet-container')
-      if (!container) return
-      const inset = el.getBoundingClientRect().bottom - container.getBoundingClientRect().top
-      if (inset > 0) setCollapseBandInset(inset)
-    }
-    measure()
-    const resizeObserver = new ResizeObserver(measure)
-    resizeObserver.observe(el)
-    headerRowObserverRef.current = resizeObserver
-  }, [])
-
   /** The full-width strip at the bottom of the standard stage that the expand chevron sits in. */
   const chevronBandRef = useRef<HTMLDivElement>(null)
   /** True while a drag is in progress that began outside the chevron band at the standard stage, and so may not cross into the expanded stage. */
@@ -435,57 +406,93 @@ const CommandCenter = () => {
           >
             {/*
              * Sheet.Header is the only slot outside Sheet.Content that react-modal-sheet gives its drag
-             * props to, so wrapping the chevron in one makes a swipe on it drive the sheet exactly as a
-             * swipe on the drawer body does. Kept out of flow so that it cannot change the measured sheet
-             * height that the snap points are computed from. It is deliberately not gated on
-             * isDragDisabled: the band covers the chevron and the header row, neither of which is part of
-             * the command list, so it stays a handle no matter where that list is scrolled.
+             * props to, so wrapping the collapse band in one makes a swipe on it drive the sheet exactly as
+             * a swipe on the drawer body does. It is deliberately not gated on isDragDisabled: the band
+             * covers the chevron and the header row, neither of which is part of the command list, so it
+             * stays a handle no matter where that list is scrolled.
+             *
+             * The row is a child of the band rather than a neighbour it reaches down over, so the band ends
+             * at the row's bottom edge by construction and nothing has to be measured. Being in flow, the
+             * row still counts toward the measured sheet height the snap points derive from, exactly as it
+             * did inside Sheet.Content.
              */}
             <Sheet.Header
               /**
                * The collapse band: the full-width strip spanning the collapse chevron and the header row
-               * beneath it, so that a swipe landing beside the arrow still collapses the drawer. Its upper
-               * part floats above the drawer over the falloff gradient; the padding is what carries its
-               * lower edge down past the header row, which keeps the arrow itself at the band's top edge —
-               * exactly where it sat when the band was only as wide as the button.
+               * beneath it, so that a swipe landing beside the arrow still collapses the drawer. It keeps the
+               * library's full-bleed width — insetting it here would pull the band in from the screen edges
+               * and leave a thumb swipe near an edge outside it — so the horizontal inset lives on the row.
+               * The bottom margin replaces the row gap the content root loses when the row leaves it, which
+               * is what keeps the measured sheet height, and therefore the snap points, unchanged.
                */
               className={css({
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'flex-start',
-                /** Sheet.Header is rendered before Sheet.Content, so without this the header row paints over the band and a drag there reaches Sheet.Content instead — which is gated on isDragDisabled, the very gate the band exists to bypass. Safe because the band is pointer-events: none in the standard stage, and Done is pointer-events: none in the expanded one. */
-                zIndex: 1,
+                position: 'relative',
+                marginBottom: '0.889rem',
               })}
-              style={{
-                bottom: `calc(100% - ${collapseBandInset}px)`,
-                paddingBottom: collapseBandInset,
-                opacity: collapseOpacity,
-                pointerEvents: expandedPointerEvents,
-              }}
             >
-              <button
-                {...fastClick(() => sheetRef.current?.snapTo(SNAP_STANDARD))}
-                data-testid='command-center-collapse'
-                aria-label='Collapse Command Center'
+              <motion.div
+                /** The chevron strip, floating above the drawer's top edge over the falloff gradient. Full width so that it is part of the band rather than a button-sized island in it, and inert in the standard stage, where it would otherwise eat taps on the thoughtspace behind it. */
                 className={css({
-                  all: 'unset',
-                  display: 'block',
-                  cursor: 'pointer',
-                  padding: '0.556rem 1.333rem',
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                })}
+                style={{ opacity: collapseOpacity, pointerEvents: expandedPointerEvents }}
+              >
+                <button
+                  {...fastClick(() => sheetRef.current?.snapTo(SNAP_STANDARD))}
+                  data-testid='command-center-collapse'
+                  aria-label='Collapse Command Center'
+                  className={css({
+                    all: 'unset',
+                    display: 'block',
+                    cursor: 'pointer',
+                    padding: '0.556rem 1.333rem',
+                  })}
+                >
+                  <ChevronImg
+                    variant='stroked'
+                    direction='down'
+                    width={CHEVRON_BOX_WIDTH}
+                    height={CHEVRON_BOX_HEIGHT}
+                    strokeWidth={CHEVRON_STROKE}
+                    fill={CHEVRON_COLOR}
+                  />
+                </button>
+              </motion.div>
+              <div
+                className={css({
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                  /** The inset the row used to inherit from the content root, which it no longer lives in. It sits here rather than on the band so the band stays full-bleed. */
+                  margin: '0 1.333rem',
                 })}
               >
-                <ChevronImg
-                  variant='stroked'
-                  direction='down'
-                  width={CHEVRON_BOX_WIDTH}
-                  height={CHEVRON_BOX_HEIGHT}
-                  strokeWidth={CHEVRON_STROKE}
-                  fill={CHEVRON_COLOR}
-                />
-              </button>
+                <MultiselectMessage />
+                <motion.button
+                  {...fastClick(onClose)}
+                  data-testid='command-center-done'
+                  className={css({
+                    all: 'unset',
+                    fontSize: '0.85em',
+                    fontWeight: 500,
+                    letterSpacing: '-0.011em',
+                    color: 'fg',
+                    opacity: 0.5,
+                    borderRadius: 46,
+                    cursor: 'pointer',
+                    padding: '8px 16px',
+                    background: 'commandCenterDoneButton',
+                  })}
+                  style={{ opacity: doneOpacity, pointerEvents: standardPointerEvents }}
+                >
+                  Done
+                </motion.button>
+              </div>
             </Sheet.Header>
             <Sheet.Content
               className={css({
@@ -513,35 +520,6 @@ const CommandCenter = () => {
                   } as React.CSSProperties
                 }
               >
-                <div
-                  ref={setHeaderRowRef}
-                  className={css({
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    justifyContent: 'space-between',
-                  })}
-                >
-                  <MultiselectMessage />
-                  <motion.button
-                    {...fastClick(onClose)}
-                    data-testid='command-center-done'
-                    className={css({
-                      all: 'unset',
-                      fontSize: '0.85em',
-                      fontWeight: 500,
-                      letterSpacing: '-0.011em',
-                      color: 'fg',
-                      opacity: 0.5,
-                      borderRadius: 46,
-                      cursor: 'pointer',
-                      padding: '8px 16px',
-                      background: 'commandCenterDoneButton',
-                    })}
-                    style={{ opacity: doneOpacity, pointerEvents: standardPointerEvents }}
-                  >
-                    Done
-                  </motion.button>
-                </div>
                 <div className={css({ position: 'relative' })}>
                   <motion.div
                     className={css({
