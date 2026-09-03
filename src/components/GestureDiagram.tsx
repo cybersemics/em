@@ -1,38 +1,48 @@
 import { nanoid } from 'nanoid'
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
-import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
+import getGestureGeometry from './GestureDiagram/getGestureGeometry'
+import GestureArrowhead from './GestureDiagram/types/GestureArrowhead'
+import GestureGeometry from './GestureDiagram/types/GestureGeometry'
+import GestureSegment from './GestureDiagram/types/GestureSegment'
 
 interface GestureDiagramProps {
+  /** Length of the SVG arrowhead marker. */
   arrowSize?: number
+  /** Solid stroke color or legacy gradient endpoint. */
   color?: string
-  // override auto height
+  /** Maximum rendered height in pixels. */
   maxHeight?: number
-  // highlight the first n segments of the gesture diagram
+  /** Number of semantic gesture directions to highlight. */
   highlight?: number
+  /** Gesture directions, or null for the cancel gesture. */
   path: Gesture | null
+  /** Orthogonal offset used to separate reversing directions. */
   reversalOffset?: number
+  /** Nominal gesture extent in SVG user units. */
   size?: number
+  /** Base gesture stroke width. */
   strokeWidth?: number
+  /** Runtime styles applied to the SVG element. */
   style?: React.CSSProperties
-  // overrides the SVG's viewBox attribute
-  // if not provided, viewBox will be calculated automatically
-  // TODO: improve auto cropping so there is no excess space
+  /** Explicit SVG viewBox; when omitted, the rendered gesture is measured automatically. */
   viewBox?: `${number} ${number} ${number} ${number}`
-  // override auto width
+  /** Maximum rendered width in pixels. */
   maxWidth?: number
+  /** Applies the positional adjustment used by GestureContainer. */
   inGestureContainer?: boolean
+  /** Panda CSS overrides applied to the outer element. */
   cssRaw?: SystemStyleObject
   /** Whether to render the gesture with rounded corners. */
   rounded?: boolean
   /** If true, the cancel gesture will have the same styling as the other gestures. Otherwise, there are additional sizing and margin styles applied. */
   styleCancelAsRegularGesture?: boolean
   /** Which kind of arrowhead to draw. 'none' skips the marker entirely. */
-  arrowhead?: 'filled' | 'outlined' | 'none'
+  arrowhead?: GestureArrowhead
   /** When true, renders a drop-shadow glow filter on all path segments. Default: true. */
   glow?: boolean
   /** When true (default), renders gradient strokes via <defs> + GradientStyleBlock. When false, uses solid strokes from highlightColor/color. */
@@ -41,23 +51,7 @@ interface GestureDiagramProps {
   highlightColor?: string
 }
 
-/** Returns the direction resulting from a 90 degree clockwise rotation. */
-const rotateClockwise = (dir: Direction) =>
-  ({
-    l: 'u',
-    r: 'd',
-    u: 'r',
-    d: 'l',
-  })[dir]
-
-/** Returns the opposite direction of the given direction l/r/d/u. */
-const oppositeDirection = (dir: Direction) =>
-  ({
-    l: 'r',
-    r: 'l',
-    u: 'd',
-    d: 'u',
-  })[dir]
+type ArcGestureSegment = Extract<GestureSegment, { kind: 'arc' }>
 
 /** Generate a list of pre-computed gradients for the special case of the mobile command universe question mark diagram. */
 const MobileCommandUniverseGradients = () => (
@@ -103,52 +97,21 @@ const MobileCommandUniverseGradients = () => (
   </>
 )
 
-/** Calculates the coordinates for a curved segment that can be consumed by other functions. */
-const generateArcCoordinates = (index: number, pathDirs: Direction[], size: number) => {
-  const radius = size * 0.4
-  const center = { x: 50, y: 50 }
-
-  /** Determine base angle based on first direction and second direction. */
-  const getBaseAngle = (first: Direction, second: Direction): number => {
-    if (first === 'l' || first === 'r') {
-      return second === 'u' ? 90 : -90
-    } else {
-      return second === 'r' ? 0 : 180
-    }
-  }
-
-  const clockwise = rotateClockwise(pathDirs[0]) === pathDirs[1]
-  const sweepFlag = clockwise ? 1 : 0
-  const baseAngle = getBaseAngle(pathDirs[0], pathDirs[1])
-
-  // Calculate total angle and segment angle based on path length
-  const totalAngle = (pathDirs.length - 1) * (clockwise ? 90 : -90)
-  const segmentAngle = totalAngle / pathDirs.length
-
-  // Calculate angles for this segment
-  const [startAngle, endAngle] = [baseAngle + index * segmentAngle, baseAngle + (index + 1) * segmentAngle]
-
-  // Convert angles to radians
-  const startRad = (startAngle * Math.PI) / 180
-  const endRad = (endAngle * Math.PI) / 180
-
-  // Calculate points
-  const startX = center.x + radius * Math.cos(startRad)
-  const startY = center.y + radius * Math.sin(startRad)
-  const endX = center.x + radius * Math.cos(endRad)
-  const endY = center.y + radius * Math.sin(endRad)
-
-  return { startX, startY, radius, sweepFlag, endX, endY }
-}
-
 /** Generates radial gradients for curved segments of the gesture. */
-const ArcGradient = ({ index, extendedPath, size }: { index: number; extendedPath: Gesture; size: number }) => {
-  const { startX, startY, radius } = generateArcCoordinates(index, Array.from(extendedPath) as Direction[], size)
+const ArcGradient = ({
+  index,
+  extendedPath,
+  segment,
+}: {
+  index: number
+  extendedPath: Gesture
+  segment: ArcGestureSegment
+}) => {
   return (
     <radialGradient
-      cx={startX}
-      cy={startY}
-      r={radius}
+      cx={segment.from.x}
+      cy={segment.from.y}
+      r={segment.radius}
       id={`${extendedPath}-gradient-${index}`}
       key={`${extendedPath}-gradient-${index}`}
       gradientUnits='userSpaceOnUse'
@@ -187,32 +150,37 @@ const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highli
   )
 }
 
-// The 4 custom Bezier segments for the rdld (Command Universe) question-mark gesture.
-const RDLD_SEGMENTS = [
-  'M 29.7,13.5 Q 46.8,-4.5 63,13.5',
-  'M 63,13.5 Q 72,27 54,40.5',
-  'M 54,40.5 Q 45,49.5 45,58.5',
-  'M 45,58.5 L 45,72',
-]
+/** Serializes one canonical segment as an independently renderable SVG path. */
+const segmentPathData = (segment: GestureSegment, path: Gesture) =>
+  segment.kind === 'line'
+    ? path === 'rdld'
+      ? `M ${segment.from.x},${segment.from.y} L ${segment.to.x},${segment.to.y}`
+      : `M ${segment.from.x} ${segment.from.y} l ${segment.to.x - segment.from.x} ${segment.to.y - segment.from.y}`
+    : segment.kind === 'arc'
+      ? `M ${segment.from.x} ${segment.from.y} A ${segment.radius} ${segment.radius} 0 0 ${segment.sweepFlag} ${segment.to.x} ${segment.to.y}`
+      : `M ${segment.from.x},${segment.from.y} Q ${segment.control.x},${segment.control.y} ${segment.to.x},${segment.to.y}`
 
-/** Joins SVG path segments into one path by stripping redundant leading move commands from continuations. */
-const joinPathSegments = (segments: string[]) =>
-  segments.reduce((acc, segment, i) => (i === 0 ? segment : `${acc} ${segment.replace(/^M [\d.,]+ /, '')}`), '')
+/** Serializes consecutive canonical segments as one continuous SVG path. */
+const gesturePathData = (segments: readonly GestureSegment[]) =>
+  segments.reduce((pathData, segment, i) => {
+    const rdld = segments[0]?.kind === 'quadratic'
+    return `${pathData}${i === 0 ? `M ${segment.from.x}${rdld ? ',' : ' '}${segment.from.y} ` : ' '}${
+      segment.kind === 'line'
+        ? `L ${segment.to.x}${rdld ? ',' : ' '}${segment.to.y}`
+        : segment.kind === 'arc'
+          ? `A ${segment.radius} ${segment.radius} 0 0 ${segment.sweepFlag} ${segment.to.x} ${segment.to.y}`
+          : `Q ${segment.control.x},${segment.control.y} ${segment.to.x},${segment.to.y}`
+    }`
+  }, '')
 
 type GesturePathProps = {
   arrowhead: 'filled' | 'outlined' | 'none'
   color?: string
   dropShadow?: string
-  extendedPath: Gesture
+  geometry: GestureGeometry
   highlight?: number
   highlightColor?: string
   id: string
-  path: Gesture
-  pathSegments: { dx: number; dy: number }[]
-  positions: { x: number; y: number }[]
-  rounded?: boolean
-  scale: number
-  size: number
   strokeWidth: number
   useGradient: boolean
 }
@@ -222,25 +190,14 @@ const GesturePath = ({
   arrowhead,
   color,
   dropShadow,
-  extendedPath,
+  geometry,
   highlight,
   highlightColor,
   id,
-  path,
-  pathSegments,
-  positions,
-  rounded,
-  scale,
-  size,
   strokeWidth,
   useGradient,
 }: GesturePathProps) => {
-  /** Generates an SVG path string for a curved segment of the gesture. */
-  const generateArcPath = (index: number, pathDirs: Direction[]) => {
-    const { startX, startY, radius, sweepFlag, endX, endY } = generateArcCoordinates(index, pathDirs, size)
-    return `M ${startX} ${startY} A ${radius} ${radius} 0 0 ${sweepFlag} ${endX} ${endY}`
-  }
-
+  const { path, segments } = geometry
   const commonPathProps = {
     strokeWidth: strokeWidth * 1.5,
     strokeLinecap: 'round' as const,
@@ -257,15 +214,11 @@ const GesturePath = ({
   // Combined-path rendering for straight, solid-color paths. Using a single <path>
   // with strokeLinejoin='round' avoids overlapping round caps at joints, which
   // become visible as blobs/beads when strokeWidth is large relative to segment length.
-  if (!useGradient && !rounded && path !== 'rdld') {
-    /** Builds an SVG path `d` attribute string from a list of points. */
-    const makePath = (points: typeof positions) =>
-      points.map((pos, i) => `${i === 0 ? 'M' : 'L'} ${pos.x} ${pos.y}`).join(' ')
-
+  if (!useGradient && segments[0]?.kind === 'line' && path !== 'rdld') {
     if (allHighlighted || noneHighlighted) {
       return (
         <path
-          d={makePath(positions)}
+          d={gesturePathData(segments)}
           stroke={allHighlighted ? activeColor : inactiveColor}
           markerEnd={markerEnd}
           {...commonPathProps}
@@ -275,9 +228,9 @@ const GesturePath = ({
 
     return (
       <>
-        <path d={makePath(positions.slice(0, highlight! + 1))} stroke={activeColor} {...commonPathProps} />
+        <path d={gesturePathData(segments.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
         <path
-          d={makePath(positions.slice(highlight))}
+          d={gesturePathData(segments.slice(highlight))}
           stroke={inactiveColor}
           markerEnd={markerEnd}
           {...commonPathProps}
@@ -291,7 +244,7 @@ const GesturePath = ({
     if (allHighlighted || noneHighlighted) {
       return (
         <path
-          d={joinPathSegments(RDLD_SEGMENTS)}
+          d={gesturePathData(segments)}
           stroke={allHighlighted ? activeColor : inactiveColor}
           {...commonPathProps}
         />
@@ -301,9 +254,9 @@ const GesturePath = ({
     return (
       <>
         {highlight! > 0 && (
-          <path d={joinPathSegments(RDLD_SEGMENTS.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
+          <path d={gesturePathData(segments.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
         )}
-        <path d={joinPathSegments(RDLD_SEGMENTS.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
+        <path d={gesturePathData(segments.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
       </>
     )
   }
@@ -311,26 +264,19 @@ const GesturePath = ({
   // Per-segment rendering for gradient or rounded paths.
   return (
     <>
-      {pathSegments.map((segment, i) => {
-        const { x, y } = positions[i]
-        const d =
-          path === 'rdld'
-            ? RDLD_SEGMENTS[i]
-            : rounded
-              ? generateArcPath(i, Array.from(path) as Direction[])
-              : `M ${x} ${y} l ${segment.dx * scale} ${segment.dy * scale}`
+      {segments.map((segment, i) => {
         const stroke = useGradient
-          ? `url(#${extendedPath}-gradient-${i})`
+          ? `url(#${geometry.extendedPath}-gradient-${i})`
           : highlight != null && (i < highlight || highlight === path.length)
             ? activeColor
             : inactiveColor
         return (
           <path
-            d={d}
+            d={segmentPathData(segment, path)}
             key={i}
             stroke={stroke}
             {...commonPathProps}
-            markerEnd={i === pathSegments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? markerEnd : undefined}
+            markerEnd={i === segments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? markerEnd : undefined}
           />
         )
       })}
@@ -377,6 +323,18 @@ const GestureDiagram = ({
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
+  const geometry = useMemo(
+    () =>
+      path === null
+        ? null
+        : getGestureGeometry(path, {
+            reversalOffset: reversalOffset!,
+            rounded,
+            size,
+          }),
+    [path, reversalOffset, rounded, size],
+  )
+
   // If path is null, render a cancel gesture svg
   if (path === null) {
     return (
@@ -410,89 +368,7 @@ const GestureDiagram = ({
     )
   }
 
-  /** Calculates the change in x,y position of each segment of the gesture diagram. */
-  const pathSegmentDelta = (dir: Direction, i: number, pathDirs: Direction[]) => {
-    const beforePrev = pathDirs[i - 2]
-    const prev = pathDirs[i - 1]
-    const next = pathDirs[i + 1]
-    const afterNext = pathDirs[i + 2]
-    const horizontal = dir === 'l' || dir === 'r'
-    const path = pathDirs.join('')
-
-    const negative = dir === 'l' || dir === 'd' // negative movement along the respective axis
-
-    const clockwisePrev = rotateClockwise(prev) === dir
-    const clockwiseAfterNext = rotateClockwise(next) === afterNext
-    const reversal = i < path.length - 1 && next === oppositeDirection(dir) && afterNext !== dir
-
-    // shorten the segment to make up for a reversal
-    const shorten =
-      (i > 1 && prev === oppositeDirection(beforePrev)) ||
-      (i < path.length - 2 && next === oppositeDirection(afterNext))
-        ? reversalOffset!
-        : 0
-
-    const flipOffset =
-      (i < path.length - 2 && !negative === clockwiseAfterNext) || (i > 0 && !negative === clockwisePrev)
-
-    // when there is a reversal of direction, instead of moving 0 on the orthogonal plane, offset the vertex to avoid segment overlap
-    const dx = horizontal
-      ? (size - shorten) * (negative ? -1 : 1)
-      : (reversal ? reversalOffset! : 0) * (flipOffset ? -1 : 1) // the negative multiplier here ensures the offset is moving away from the previous segment so it doesn't trace backwards
-    const dy = !horizontal
-      ? (size - shorten) * (!negative ? -1 : 1)
-      : (reversal ? reversalOffset! : 0) * (flipOffset ? -1 : 1)
-
-    return { dx, dy }
-  }
-
-  // Convert path string to array of directions
-  // Special cases:
-  // - Extend the last segment of →↓← so that the New Uncle gesture is more intuitive
-  // - Extend the middle segment of ←↓→ so that the Select All gesture is more intuitive
-  const extendedPath = path === 'rdl' ? 'rddl' : path === 'ldr' ? 'lddr' : path
-  const extendedPathArray = Array.from(extendedPath) as Direction[]
-  const pathSegments = extendedPathArray.map(pathSegmentDelta)
-
-  const sumWidth = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dx, 0))
-  const sumHeight = Math.abs(pathSegments.reduce((accum, cur) => accum + cur.dy, 0))
-  const scale = size / Math.max(size, sumWidth, sumHeight)
-
-  // Compute the positions of all points
-  const positions = pathSegments.reduce(
-    (accum, segment) => {
-      const prevPos = accum[accum.length - 1]
-      const x = prevPos.x + segment.dx * scale
-      const y = prevPos.y + segment.dy * scale
-      return [...accum, { x, y }]
-    },
-    [{ x: 0, y: 0 }],
-  )
-
-  // Detect if the last position overlaps with any previous position
-  const lastPosition = positions[positions.length - 1]
-  const overlapsWithPrevious = positions
-    .slice(0, positions.length - 1)
-    .some(pos => pos.x === lastPosition.x && pos.y === lastPosition.y)
-
-  // Shorten the last segment if it overlaps with a previous segment
-  if (overlapsWithPrevious) {
-    const lastSegmentStartPos = positions[positions.length - 2]
-    const lastSegment = pathSegments[pathSegments.length - 1]
-
-    // Shorten to 60% of the original length
-    const scale = 0.6
-
-    // Update the last segment
-    lastSegment.dx *= scale
-    lastSegment.dy *= scale
-
-    // Update the last position
-    positions[positions.length - 1] = {
-      x: lastSegmentStartPos.x + lastSegment.dx,
-      y: lastSegmentStartPos.y + lastSegment.dy,
-    }
-  }
+  const { extendedPath, segments } = geometry!
 
   /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
   const onRef = (el: SVGGraphicsElement | null) => {
@@ -570,23 +446,23 @@ const GestureDiagram = ({
               {extendedPath === 'rdld' ? (
                 <MobileCommandUniverseGradients />
               ) : (
-                pathSegments.map((segment, i) => {
-                  return rounded ? (
+                segments.map((segment, i) => {
+                  return segment.kind === 'arc' ? (
                     <ArcGradient
                       key={`${extendedPath}-gradient-${i}`}
                       index={i}
                       extendedPath={extendedPath}
-                      size={size}
+                      segment={segment}
                     />
                   ) : (
                     <linearGradient
                       id={`${extendedPath}-gradient-${i}`}
                       key={`${extendedPath}-gradient-${i}`}
                       gradientUnits='userSpaceOnUse'
-                      x1={positions[i].x}
-                      x2={positions[i].x + segment.dx * scale}
-                      y1={positions[i].y}
-                      y2={positions[i].y + segment.dy * scale}
+                      x1={segment.from.x}
+                      x2={segment.to.x}
+                      y1={segment.from.y}
+                      y2={segment.to.y}
                     >
                       <stop offset='0%' className={`${extendedPath}-gradient-${i}-start`} />
                       <stop offset='100%' className={`${extendedPath}-gradient-${i}-stop`} />
@@ -604,16 +480,10 @@ const GestureDiagram = ({
           arrowhead={arrowhead}
           color={color}
           dropShadow={dropShadow}
-          extendedPath={extendedPath}
+          geometry={geometry!}
           highlight={highlight}
           highlightColor={highlightColor}
           id={id}
-          path={path}
-          pathSegments={pathSegments}
-          positions={positions}
-          rounded={rounded}
-          scale={scale}
-          size={size}
           strokeWidth={strokeWidth}
           useGradient={useGradient}
         />
