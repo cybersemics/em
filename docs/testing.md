@@ -121,6 +121,7 @@ This rule is about waiting for real time to pass, not about safety limits or tim
 
 - Runner timeouts such as Vitest's `testTimeout` and WDIO's `waitforTimeout` are legitimate safety limits.
 - When elapsed time is the behavior under test (debounce, throttle, delayed UI, etc.), use fake timers and advance them explicitly instead of sleeping in real time.
+- In store and JSDOM tests, where `initStore` and `createTestApp` already enable fake timers, `vi.waitFor` is a sleep loop in disguise. Flush the timers instead — see [Fake timers: flush, don't poll](#fake-timers-flush-dont-poll).
 - Durations that are part of simulated input, such as how long a long press is held or how quickly a swipe moves, are action parameters rather than synchronization waits.
 
 ```ts
@@ -1031,9 +1032,9 @@ Test `enter` and `leave` on each of the following actions:
 
 ## Tips and Tricks
 
-### Database operations and fake timers
+### Fake timers: flush, don't poll
 
-`initStore` and `createTestApp` enable fake timers. When a test calls `initialize({ storage: 'memory' })` or performs database work directly, explicitly flush the resulting scheduled work before asserting:
+`initStore` and `createTestApp` enable fake timers. Under fake timers, nothing scheduled runs until the test advances the clock, so a test that triggers asynchronous work must flush it explicitly before asserting. When a test calls `initialize({ storage: 'memory' })` or performs database work directly:
 
 ```ts
 vi.useFakeTimers()
@@ -1046,6 +1047,29 @@ await vi.runAllTimersAsync()
 https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
+
+The same flush settles an asynchronous command. `generateThought` and `generateEmoji` each await a network request and, under multicursor, hold an undo bracket open across every selected thought. With `fetch` mocked, that whole run is timer- and microtask-bound, so one `vi.runAllTimersAsync()` after `executeCommandWithMulticursor` brings the store to its settled state, undo bracket closed included:
+
+```ts
+// ✅ Do: flush, then assert on the result
+await act(async () => {
+  executeCommandWithMulticursor(generateThought, { store })
+  await vi.runAllTimersAsync()
+})
+
+expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - one
+  - two`)
+```
+
+```ts
+// ❌ Don't: poll an internal flag until the command looks finished
+await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
+```
+
+`vi.waitFor` is the store-test form of the sleep loop that [Principle 3](#3-never-wait-for-wall-clock-time-wait-for-the-response) forbids. It only passes under fake timers because Vitest advances the clock by the polling interval on each retry, so it reaches the same settled state in fixed-size steps — and it does so by watching a flag that is not the result under test. The flush names the condition exactly (every scheduled callback has run), takes one line, and when the command does not settle, it fails at the assertion on the outline rather than as a polling timeout. Keep the assertion outside the waiter, so that the test reads as act → flush → assert.
+
+This is a workaround for the commands not being awaitable: `executeCommandWithMulticursor` discards the promise, so a test cannot `await` the command itself. [#5337](https://github.com/cybersemics/em/issues/5337) tracks returning it. ([#5338](https://github.com/cybersemics/em/pull/5338), [#5222](https://github.com/cybersemics/em/pull/5222))
 
 ### Automated flaky-test detection
 
