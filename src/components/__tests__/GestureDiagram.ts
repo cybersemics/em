@@ -154,3 +154,31 @@ describe('gesture shape', () => {
     expect(renderedPathData(markup)).toHaveLength(gradientPieceCount)
   })
 })
+
+describe('fill-container framing', () => {
+  const props = {
+    fillContainer: true,
+    size: 150,
+    arrowSize: 1,
+    strokeWidth: 12,
+    arrowhead: 'outlined-wide' as const,
+    gradient: { from: '#111', to: '#eee' },
+  }
+
+  it('reserves a square container before browser measurement', () => {
+    const markup = render({ ...props, path: 'rdr' })
+
+    expect(markup).toContain('style="width:100%;aspect-ratio:1 / 1"')
+    expect(markup).toContain('class="w_100% h_100% d_block"')
+  })
+
+  it('scales the rdld glyph and compensates its stroke width', () => {
+    const markup = render({ ...props, path: 'rdld' })
+    const renderedStrokeWidth = Math.max(
+      ...[...markup.matchAll(/<path[^>]*stroke-width="([^"]+)"/g)].map(([, value]) => +value),
+    )
+
+    expect(markup).toContain('transform="scale(')
+    expect(renderedStrokeWidth).toBeCloseTo((12 * 1.5) / (150 / 76))
+  })
+})
