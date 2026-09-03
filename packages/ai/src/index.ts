@@ -7,6 +7,7 @@ import { z, ZodError, ZodType } from 'zod'
 import defineTerm from './prompts/defineTerm'
 import generateEmoji from './prompts/generateEmoji'
 import generateThought from './prompts/generateThought'
+import UpstreamResponseError from './UpstreamResponseError'
 
 // express
 const app = express()
@@ -54,6 +55,8 @@ const createPostRoute = <T>({
         res.status(400).send({ error: error.message })
       } else if (error instanceof RateLimitError) {
         res.status(429).send({ error: 'Rate limit reached' })
+      } else if (error instanceof UpstreamResponseError) {
+        res.status(502).send({ error: error.message })
       } else {
         console.error(`Failed to handle request at ${path}`, error)
         res.status(500).send({ error: 'Internal server error' })

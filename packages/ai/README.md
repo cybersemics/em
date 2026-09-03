@@ -7,7 +7,7 @@ It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](http
 ## Routes
 
 - `GET /` - Health check. Returns `Server is running`.
-- `POST /ai/defineTerm` - Writes a 10–20 word dictionary entry for a term. The request body is `{ "term": "..." }`; the response is `{ "definition": "..." }` on success or `{ "error": "..." }` on failure. The client appends `/defineTerm` to `VITE_AI_URL`.
+- `POST /ai/defineTerm` - Writes a 10–20 word dictionary entry for a term. The request body is `{ "term": "..." }`; the response is `{ "definition": "..." }` on success or `{ "error": "..." }` on failure. A response outside the required word range is retried once; a second invalid response returns `502` with a safe error message. The client appends `/defineTerm` to `VITE_AI_URL`.
 - `POST /ai/generateThought` - Generates a complete replacement for the target thought marked with `[x]` in the indented input outline; context thoughts are marked with `[]`. The request body is `{ "input": "..." }`; the response is `{ "thought": "..." }` on success or `{ "error": "..." }` on failure. The client appends `/generateThought` to `VITE_AI_URL`.
 - `POST /ai/generateEmoji` - Generates ten distinct, ordered emoji for a thought value. The request body is `{ "value": "..." }`; the response is `{ "emojis": ["...", "..."] }` on success or `{ "error": "..." }` on failure. The client appends `/generateEmoji` to `VITE_AI_URL`.
 

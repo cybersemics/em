@@ -429,9 +429,9 @@ Extract selected part of a thought as its new parent. Where Extract Subthought d
 
 ### Define Term
 
-Writes a 10–20 word dictionary entry for the current thought using AI and displays it in an alert.
+Appends a 10–20 word AI-generated dictionary entry to each selected thought, separated from the original value by `: `. Existing formatting is preserved. The command is disabled when any selected thought is empty, already contains `: `, or has another AI request in progress.
 
-On first use, em shows the same blocking AI data disclosure as Generate Thought. The command sends the current thought to `${VITE_AI_URL}/defineTerm`; server errors are shown in the error banner, and rate limiting asks the user to try again later. It does not modify the thought or multicursor selection.
+On first use, em shows the same blocking AI data disclosure as Generate Thought. The command sends the visible text of each selected thought to `${VITE_AI_URL}/defineTerm`, with requests running concurrently. Successful definitions are applied together as one undo step while failed requests leave their thoughts unchanged. If a thought is edited or deleted before its request finishes, the response is discarded rather than overwriting the newer state. Server errors are shown in the error banner, and rate limiting asks the user to try again later.
 
 Gesture: ↑ → ←
 

@@ -4,6 +4,7 @@ vi.mock('../completeChat', () => ({ default: completeChat }))
 
 import Service from '../@types/Service'
 import defineTerm from '../prompts/defineTerm'
+import UpstreamResponseError from '../UpstreamResponseError'
 
 beforeEach(() => {
   completeChat.mockReset()
@@ -28,17 +29,50 @@ it('returns a 10–20 word dictionary entry for the term', async () => {
   )
 })
 
-it('rejects definitions containing fewer than 10 words', async () => {
-  completeChat.mockResolvedValueOnce({ definition: 'Too short.' })
-
-  await expect(defineTerm('Example')).rejects.toThrow('The definition must contain at least 10 words')
-})
-
-it('rejects definitions containing more than 20 words', async () => {
+it('trims a valid definition before counting and returning it', async () => {
   completeChat.mockResolvedValueOnce({
-    definition:
-      'This definition deliberately contains far more than twenty separate words so that the function rejects it before any invalid response can reach the client application.',
+    definition: '  Exactly ten separate words form this valid\npadded dictionary definition.  ',
   })
 
-  await expect(defineTerm('Example')).rejects.toThrow('The definition must contain at most 20 words')
+  await expect(defineTerm('Example')).resolves.toBe(
+    'Exactly ten separate words form this valid padded dictionary definition.',
+  )
+})
+
+it('retries a definition containing fewer than 10 words', async () => {
+  completeChat
+    .mockResolvedValueOnce({ definition: 'Too short.' })
+    .mockResolvedValueOnce({
+      definition: 'A sufficiently detailed replacement definition containing exactly ten clear words.',
+    })
+
+  await expect(defineTerm('Example')).resolves.toBe(
+    'A sufficiently detailed replacement definition containing exactly ten clear words.',
+  )
+  expect(completeChat).toHaveBeenCalledTimes(2)
+})
+
+it('retries a definition containing more than 20 words', async () => {
+  completeChat
+    .mockResolvedValueOnce({
+      definition:
+        'This definition deliberately contains far more than twenty separate words so that the function rejects it before any invalid response can reach the client application.',
+    })
+    .mockResolvedValueOnce({
+      definition: 'A sufficiently detailed replacement definition containing exactly ten clear words.',
+    })
+
+  await expect(defineTerm('Example')).resolves.toBe(
+    'A sufficiently detailed replacement definition containing exactly ten clear words.',
+  )
+  expect(completeChat).toHaveBeenCalledTimes(2)
+})
+
+it('reports an invalid upstream response after the retry is exhausted', async () => {
+  completeChat.mockResolvedValue({ definition: 'Still too short.' })
+  const result = defineTerm('Example')
+
+  await expect(result).rejects.toThrow(UpstreamResponseError)
+  await expect(result).rejects.toThrow('The AI could not generate a 10–20 word definition. Please try again.')
+  expect(completeChat).toHaveBeenCalledTimes(2)
 })
