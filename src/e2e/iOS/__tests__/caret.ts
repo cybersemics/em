@@ -12,9 +12,11 @@ import getElementRectByScreen from '../helpers/getElementRectByScreen'
 import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
+import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import scrubSpaceBar from '../helpers/scrubSpaceBar'
+import setFontSize from '../helpers/setFontSize'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
@@ -137,11 +139,7 @@ describe('Caret', () => {
     )
 
     // the issue reports a smaller font makes it easier to trigger, the rows sitting closer together
-    await browser.execute(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const em = (window as any).em
-      em.store.dispatch({ type: 'fontSize', value: 16 })
-    })
+    await setFontSize(16)
 
     // the cursor must be deep enough that moving it up collapses a subtree, which is what moves the thoughts
     // under the finger and lets the caret keep walking
@@ -162,6 +160,10 @@ describe('Caret', () => {
     expect(await getEditingText()).toBe('d')
     expect(await getSelection().focusNode?.textContent).toBe('d')
     expect(await isKeyboardShown()).toBeTruthy()
+
+    await keyboard.type('123')
+    // The caret was restored at the start of the thought
+    expect(await getEditingText()).toBe('123d')
   })
 
   // The same hit test escapes a note without any drag: a note is short enough that the point lands outside it
