@@ -15,8 +15,6 @@ interface CursorViewportGeometry {
   bottom: number
   /** Bottom edge of the visible viewport above fixed navigation. */
   bottomEdge: number
-  /** Current document scroll position. */
-  scrollY: number
   /** Top edge of the cursor editable. */
   top: number
   /** Bottom edge of the toolbar. */
@@ -37,7 +35,6 @@ const getCursorViewportGeometry = async (): Promise<CursorViewportGeometry> => {
     return JSON.stringify({
       bottom: cursor.bottom,
       bottomEdge: Math.min(viewportBottom, navbar?.top ?? viewportBottom),
-      scrollY: window.scrollY,
       top: cursor.top,
       topEdge: toolbar?.bottom ?? 0,
     })
@@ -122,16 +119,18 @@ describe('Autoscroll', () => {
     await paste(Array.from({ length: 8 }, (_, i) => `- Thought ${i + 1}`).join('\n'))
     await waitForEditable('Thought 8')
     await openKeyboardAt('Thought 4')
-    const { scrollY: initialScrollY } = await expectCursorAboveKeyboard()
+    await expectCursorAboveKeyboard()
+    const initialThoughtCount = await browser.execute(() => document.querySelectorAll('[data-editable]').length)
 
-    const geometries = await series(
-      Array.from({ length: 12 }, () => async () => {
+    await series(
+      Array.from({ length: 12 }, (_, index) => async () => {
         await tapReturnKey()
         await waitForViewportSettled()
-        return expectCursorVisible()
+        expect(await browser.execute(() => document.querySelectorAll('[data-editable]').length)).toBe(
+          initialThoughtCount + index + 1,
+        )
+        await expectCursorVisible()
       }),
     )
-
-    expect(Math.max(...geometries.map(geometry => geometry.scrollY))).toBeGreaterThan(initialScrollY)
   })
 })
