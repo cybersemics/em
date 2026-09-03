@@ -433,6 +433,12 @@ WebdriverIO tests provide automated test coverage of actual iOS devices (among o
 
 The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config). [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) contains common iOS Safari settings and lifecycle hooks. [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) loads credentials, starts the Cloudflare tunnel, and configures `@wdio/browserstack-service`. [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) configures local Appium and the iOS Simulator.
 
+#### TypeScript for the iOS tests
+
+The iOS tests are typechecked by their own [`src/e2e/iOS/tsconfig.json`](../src/e2e/iOS/tsconfig.json), which is the only program that declares WebdriverIO's globals — `browser`, `$`, `$$`, and `expect` from `@wdio/globals/types`, mocha's `describe`/`it` via `@wdio/mocha-framework`, and `@wdio/browserstack-service`'s global interfaces (`State`, `GRRUrls`, …). The root `tsconfig.json` excludes `src/e2e/iOS`, so none of those exist for app code: a file that forgets to import the app's own `State` fails to compile instead of silently binding to BrowserStack's. `yarn lint` runs both programs (`lint:tsc`), and editors pick the nearest `tsconfig.json`, so each file sees the globals of the runtime it targets.
+
+A module shared with the app is checked by both programs and therefore cannot reference `browser`. The console proxy is split along that line: [`src/util/consoleProxy.ts`](../src/util/consoleProxy.ts) is the app side and owns the storage key and record shape, while draining the buffer and waiting for the proxy to install live in [`wdio.base.conf.ts`](../src/e2e/iOS/config/wdio.base.conf.ts).
+
 #### Origin health check
 
 An iOS run is only as good as the origin it loads, and a wrong origin is indistinguishable from a working one to a naive check: a Cloudflare edge error page (502, 1033, "can't reach origin") and the Vite token gate's `403` are both well-formed HTML documents with a `<body>`. Two hooks in [`wdio.base.conf.ts`](../src/e2e/iOS/config/wdio.base.conf.ts) assert the page is actually em:
