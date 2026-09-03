@@ -6,6 +6,8 @@
 // later on a different thought, so it can be detected and dropped.
 let lastTouchEndTime = 0
 let lastTouchEndTarget: EventTarget | null = null
+// A somewhat arbitrary window within which a mousedown following a touchend is considered part of the same interaction.
+// If the last touch on this editable occurred outside this window, then the mouse event will be discarded.
 const GHOST_MOUSE_WINDOW_MS = 700
 
 /** Tracks the last real touchend, so that events iOS synthesizes from it can be told from genuine ones. */
