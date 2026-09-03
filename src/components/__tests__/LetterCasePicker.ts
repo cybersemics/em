@@ -1,6 +1,7 @@
 import { fireEvent } from '@testing-library/react'
 import { act } from 'react'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
+import { homeActionCreator as home } from '../../actions/home'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -163,9 +164,28 @@ it('flushes pending edits before applying letter case from the picker', async ()
 
   await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
   await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
   await act(vi.runOnlyPendingTimersAsync)
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
   expect(exported).toEqual(`- ${HOME_TOKEN}
   - AB`)
+})
+
+// https://github.com/cybersemics/em/issues/4844
+it('Set Upper Case with a multicursor selection that has no cursor', async () => {
+  await dispatch([newThought({ value: 'foo' }), home(), addMulticursorAtFirstMatch(['foo'])])
+
+  expect(store.getState().cursor).toBeNull()
+
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - FOO`)
+
+  expect(document.querySelector('[aria-label="UpperCase"][data-selected="true"]')).toBeInTheDocument()
 })

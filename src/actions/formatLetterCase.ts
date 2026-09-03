@@ -22,24 +22,26 @@ export const formatLetterCaseActionCreator =
     commandEmitter.trigger('command')
     const state = getState()
     const cursor = state.cursor
-    if (!cursor) return
+    const isMulticursor = hasMulticursor(state)
+    // thoughts can be selected without a cursor, e.g. by Cmd/Ctrl + Clicking a thought after dismissing the cursor with the Home button (#4844)
+    if (!cursor && !isMulticursor) return
 
     // when the caret is on a note, format the note instead of the thought (#4469)
     // resolveNotePath returns null if the thought has no note, in which case there is nothing to format
-    const targetPath = state.noteFocus ? resolveNotePath(state, cursor) : cursor
-    const isMulticursor = hasMulticursor(state)
+    const targetPath = !cursor ? null : state.noteFocus ? resolveNotePath(state, cursor) : cursor
     const paths = isMulticursor ? Object.values(state.multicursors) : targetPath ? [targetPath] : []
     // a multicursor may exclude the cursor thought, in which case its value is not letter-cased and its offsets do not move
-    const isCursorEdited = paths.some(path => head(path) === head(cursor))
+    const isCursorEdited = !!cursor && paths.some(path => head(path) === head(cursor))
     const offset = selection.offsetThought()
-    const cursorSimplePath = simplifyPath(state, cursor)
+    const cursorSimplePath = cursor ? simplifyPath(state, cursor) : null
 
     // The plain-text offsets of the selected text within the cursor thought, so that it can be re-selected after the
-    // edit (#4840).
-    const cursorEditableSelector = `[aria-label="editable-${head(cursor)}"]`
-    const cursorEditable = state.noteFocus
-      ? null
-      : (document.querySelector(cursorEditableSelector) as HTMLElement | null)
+    // edit (#4840). There is no caret to restore when the selected thoughts have no cursor.
+    const cursorEditableSelector = cursor ? `[aria-label="editable-${head(cursor)}"]` : null
+    const cursorEditable =
+      cursorEditableSelector && !state.noteFocus
+        ? (document.querySelector(cursorEditableSelector) as HTMLElement | null)
+        : null
     const cursorText = cursorEditable?.textContent ?? null
     const selectedRange = cursorEditable ? selection.offsetRange(cursorEditable) : null
 
@@ -67,7 +69,7 @@ export const formatLetterCaseActionCreator =
           }
         : selectedRange
     const editActions = paths.flatMap(path => {
-      const value = state.noteFocus ? noteValue(state, cursor) : getThoughtById(state, head(path))?.value
+      const value = state.noteFocus && cursor ? noteValue(state, cursor) : getThoughtById(state, head(path))?.value
 
       if (!value) return []
 
@@ -102,7 +104,9 @@ export const formatLetterCaseActionCreator =
       // It shouldn't be possible to have noteFocus be true with the keyboard closed, so setCursor shouldn't be necessary for notes.
       // It seems like the caret goes to the end of the note anyway when its value is replaced.
       // preserveMulticursor keeps the multiselected thoughts selected, otherwise setCursor clears them (#4840).
-      !state.noteFocus ? setCursor({ path: cursorSimplePath, offset: cursorOffset, preserveMulticursor: true }) : null,
+      !state.noteFocus && cursorSimplePath
+        ? setCursor({ path: cursorSimplePath, offset: cursorOffset, preserveMulticursor: true })
+        : null,
 
       isMulticursor ? setIsMulticursorExecuting({ value: false }) : null,
     ])
@@ -112,7 +116,13 @@ export const formatLetterCaseActionCreator =
     // ContentEditable replaces the editable's contents from a passive effect, which is not guaranteed to run before the
     // next animation frame, so wait for the replacement itself rather than for a frame. Otherwise the re-selection can
     // land on the old text and be wiped by the re-render, leaving nothing selected (#4985).
-    if (restoreRange && restoreRange.end > restoreRange.start && cursorEditable && cursorText !== null) {
+    if (
+      restoreRange &&
+      restoreRange.end > restoreRange.start &&
+      cursorEditableSelector &&
+      cursorEditable &&
+      cursorText !== null
+    ) {
       // a multicursor may exclude the cursor thought, in which case its text is re-rendered unchanged
       const newText = isCursorEdited ? transformedText(cursorText) : cursorText
       const observer = new MutationObserver(() => {
