@@ -27,6 +27,7 @@ import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
+import useOnClickOutside from '../../hooks/useOnClickOutside'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
@@ -243,20 +244,8 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
 
-  // Close the dropdown when clicking outside of it. Inlined from the unmaintained use-onclickoutside package.
-  useEffect(() => {
-    /** Closes the dropdown on mousedown/touchstart outside the dropdown element. */
-    const listener = (e: MouseEvent | TouchEvent) => {
-      if (!dropDownRef.current || dropDownRef.current.contains(e.target as Node)) return
-      closeDropdown()
-    }
-    document.addEventListener('mousedown', listener)
-    document.addEventListener('touchstart', listener, { passive: true })
-    return () => {
-      document.removeEventListener('mousedown', listener)
-      document.removeEventListener('touchstart', listener)
-    }
-  }, [closeDropdown])
+  // Close the dropdown when clicking outside of it.
+  useOnClickOutside(dropDownRef, closeDropdown)
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
