@@ -2,7 +2,6 @@ import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
-import command from '../helpers/command'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
@@ -499,7 +498,8 @@ describe('drop', () => {
 
     await clickThought('a')
     await clickThought('m')
-    await command('toggleContextView')
+    // Open the context view with its keyboard shortcut, since this suite's hideHUD hides the toolbar.
+    await press('s', { alt: true, shift: true })
     // move the cursor to the cyclic context a/m~/a so that x is rendered
     await press('ArrowDown')
     await waitForEditable('x')

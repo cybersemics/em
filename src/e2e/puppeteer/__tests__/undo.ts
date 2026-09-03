@@ -1,7 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
 import clickThought from '../helpers/clickThought'
-import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
@@ -69,16 +68,18 @@ const getNoteSelection = () =>
 // https://github.com/cybersemics/em/issues/4479
 it('undoes and redoes contiguous note typing with its caret', async () => {
   await newThought('a')
-  await command('note')
+  // Open the note with its keyboard shortcut rather than the toolbar button: typing "a" triggered distraction-free
+  // typing, which unmounts the toolbar once the throttled edit commits.
+  await press('n', { alt: true, meta: true })
   await waitForSelector('[aria-label="note-editable"]')
   await keyboard.type('abc')
   await waitForNoteText('abc')
 
-  await command('undo')
+  await press('z', { meta: true })
   await waitForNoteText('')
   const undone = await getNoteState()
 
-  await command('redo')
+  await press('z', { meta: true, shift: true })
   await waitForNoteText('abc')
   const redone = await getNoteState()
 
@@ -121,7 +122,7 @@ it('restores the note caret after undo so Backspace edits the note without mergi
   await press('Backspace')
   await waitForNoteText('The worl of birds')
 
-  await command('undo')
+  await press('z', { meta: true })
   await waitForNoteText('The world of birds')
   const undone = await getNoteState()
 

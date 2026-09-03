@@ -1,5 +1,4 @@
 import moize from 'moize'
-import CommandId from './@types/CommandId'
 import Context from './@types/Context'
 import MimeType from './@types/MimeType'
 import State from './@types/State'
@@ -10,7 +9,6 @@ import { initThoughtsActionCreator as initThoughts } from './actions/initThought
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
-import { commandById, executeCommand } from './commands'
 import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -153,9 +151,6 @@ const withDispatch =
     store.dispatch(f(...args))
 
 const testHelpers = {
-  executeCommandById: (id: CommandId) => {
-    executeCommand(commandById(id))
-  },
   waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
   importToContext: withDispatch(importToContext),

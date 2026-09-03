@@ -4,7 +4,6 @@ import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
-import command from '../helpers/command'
 import exportThoughts from '../helpers/exportThoughts'
 import hide from '../helpers/hide'
 import hideHUD from '../helpers/hideHUD'
@@ -260,7 +259,7 @@ describe('Superscripts', () => {
     await clickThought('a')
     await clickThought('m')
 
-    await command('toggleContextView')
+    await clickToolbar('Context View')
 
     await hideHUD()
     expect(await screenshot()).toMatchImageSnapshot()
