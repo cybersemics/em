@@ -40,10 +40,17 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
     ? yDocument - bounds.toolbarHeight - topLandingOffset
     : yDocument - bounds.visibleHeight + bottomLandingOffset + bounds.navbarHeight
 
+  // An edge can be crossed even when the document has no room to move. Clamp to a reachable target
+  // and leave genuine no-ops alone rather than manufacturing Safari's protective 1px floor.
+  const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
+  const target = Math.min(Math.max(scrollYNew, 0), maxScroll)
+  if (target === window.scrollY) return
+
   // scroll to 1 instead of 0
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
-  const top = Math.max(1, scrollYNew)
+  const top = Math.max(1, target)
+  if (top === window.scrollY) return
 
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
   const behavior: ScrollBehavior = scrollDistance < bounds.visibleHeight ? 'smooth' : 'auto'

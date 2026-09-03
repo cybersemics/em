@@ -1,6 +1,8 @@
 import type { PreloadedEmWindow } from '../../../@types'
 import series from '../../../util/series'
+import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -133,6 +135,20 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 usePersistentTreecrdtStorage()
 
 describe('scrollCursorIntoView', () => {
+  // https://github.com/cybersemics/em/issues/3765
+  it('does not manufacture a scroll when expanded toolbar chrome leaves no reachable target above', async () => {
+    await paste('- Labrador\n- Golden Retriever')
+    await clickThought('Golden Retriever')
+    await clickToolbar('Text Color', 'background color swatches', 'green')
+    await clickThought('Labrador')
+    await click('[aria-label="text color swatches"] [aria-label="purple"]')
+    await waitForBrowserSettled()
+    await waitForScrollSettled()
+
+    const scrollY = await page.evaluate(() => window.scrollY)
+    expect(scrollY).toBe(0)
+  })
+
   it('does not scroll when keyboard navigation keeps the cursor inside the visible viewport', async () => {
     await paste(Array.from({ length: 12 }, (_, i) => `- Thought ${i + 1}`).join('\n'))
     await clickThought('Thought 5')

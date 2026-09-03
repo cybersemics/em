@@ -29,6 +29,7 @@ beforeEach(() => {
     configurable: true,
     value: { height: 800 },
   })
+  Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: 2000 })
 
   viewportStore.update({
     innerHeight: 800,
@@ -101,4 +102,20 @@ it('scrolls the cursor above the Capacitor keyboard when visualViewport does not
   scrollCursorIntoView(600, 30)
 
   expect(window.scrollTo).toHaveBeenCalledWith({ top: 195, behavior: 'smooth' })
+})
+
+it('does not scroll when the crossed edge has no reachable target', () => {
+  Object.defineProperty(window, 'scrollY', { configurable: true, value: 1 })
+
+  scrollCursorIntoView(50, 30)
+
+  expect(window.scrollTo).not.toHaveBeenCalled()
+})
+
+it('clamps the bottom target to the end of the document', () => {
+  Object.defineProperty(window, 'scrollY', { configurable: true, value: 1100 })
+
+  scrollCursorIntoView(2000, 30)
+
+  expect(window.scrollTo).toHaveBeenCalledWith({ top: 1200, behavior: 'smooth' })
 })
