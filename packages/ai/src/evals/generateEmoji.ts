@@ -7,7 +7,7 @@ const semanticCases: Record<string, string> = {
   Books: '📚📖📘📕📗📙📓📔📒🔖',
   Cosmos: '🌌🪐✨🌠🌍🌎🌏☄️🌙⭐',
   Discourse: '💬🗨️📣🗣️🧠📢📝📰🎙️📖',
-  Dog: '🐕🐶🦮🐾🦴🐕‍🦺🐩🐺🏠🦴',
+  Dog: '🐕🐶🦮🐾🦴🐕‍🦺🐩🐺🏠🦊',
   Email: '📧💌✉️📨📩📬📪📫🗳️📝',
   Events: '🎟️🎤🎪🎬🎉🎭🎫🎙️🎼📅',
   Film: '🎬🎥📽️🎞️🍿🎦🎭📺🎟️📹',
@@ -17,7 +17,7 @@ const semanticCases: Record<string, string> = {
   Home: '🏡🏠🛋️🛏️🚪🪴🪑🛁🖼️🔑',
   Irritable: '🌵🦔🐡🦂🐝🐍🦀🌶️🦨🐗',
   Mind: '🧠💭🧩🔍🌀💡🪞📖🧘🎓',
-  Peace: '☮️🕊️🪷🌿🕯️🤝🌈🫂🕊☀️',
+  Peace: '☮️🕊️🪷🌿🕯️🤝🌈🫂🫒☀️',
   Question: '❓🤔⁉️🧠💬❔🔍🧐💭🗨️',
   Work: '🛠️🔨🔧🧰⚙️🏭🚜🪚⛏️🧱',
 }
