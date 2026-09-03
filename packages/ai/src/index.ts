@@ -4,10 +4,9 @@ import cors from 'cors'
 import { RateLimitError } from 'openai'
 import { checkRateLimit } from '@vercel/firewall'
 import { z, ZodError, ZodType } from 'zod'
-import defineTerm from './prompts/defineTerm'
+import defineTerms from './prompts/defineTerms'
 import generateEmoji from './prompts/generateEmoji'
 import generateThought from './prompts/generateThought'
-import UpstreamResponseError from './UpstreamResponseError'
 
 // express
 const app = express()
@@ -55,8 +54,6 @@ const createPostRoute = <T>({
         res.status(400).send({ error: error.message })
       } else if (error instanceof RateLimitError) {
         res.status(429).send({ error: 'Rate limit reached' })
-      } else if (error instanceof UpstreamResponseError) {
-        res.status(502).send({ error: error.message })
       } else {
         console.error(`Failed to handle request at ${path}`, error)
         res.status(500).send({ error: 'Internal server error' })
@@ -73,15 +70,15 @@ app.get('/', async (req, res) => {
   res.type('text').send('Server is running')
 })
 
-/** Defines a term. */
+/** Defines one or more terms. */
 createPostRoute({
-  path: '/ai/defineTerm',
+  path: '/ai/defineTerms',
   requestSchema: z.object({
-    term: z.string().trim().min(1).describe('The term to define'),
+    terms: z.array(z.string().trim().min(1)).min(1).describe('The terms to define'),
   }),
   handler: async request => {
-    const definition = await defineTerm(request.term)
-    return { definition }
+    const definitions = await defineTerms(request.terms)
+    return { definitions }
   },
 })
 

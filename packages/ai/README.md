@@ -7,7 +7,7 @@ It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](http
 ## Routes
 
 - `GET /` - Health check. Returns `Server is running`.
-- `POST /ai/defineTerm` - Writes a 10–20 word dictionary entry for a term. The request body is `{ "term": "..." }`; the response is `{ "definition": "..." }` on success or `{ "error": "..." }` on failure. A response outside the required word range is retried once; a second invalid response returns `502` with a safe error message. The client appends `/defineTerm` to `VITE_AI_URL`.
+- `POST /ai/defineTerms` - Writes a 10–20 word dictionary entry for each term in one LLM request. The request body is `{ "terms": ["..."] }`; the response is `{ "definitions": ["..."] }` in matching order on success or `{ "error": "..." }` on failure. The client appends `/defineTerms` to `VITE_AI_URL`.
 - `POST /ai/generateThought` - Generates a complete replacement for the target thought marked with `[x]` in the indented input outline; context thoughts are marked with `[]`. The request body is `{ "input": "..." }`; the response is `{ "thought": "..." }` on success or `{ "error": "..." }` on failure. The client appends `/generateThought` to `VITE_AI_URL`.
 - `POST /ai/generateEmoji` - Generates ten distinct, ordered emoji for a thought value. The request body is `{ "value": "..." }`; the response is `{ "emojis": ["...", "..."] }` on success or `{ "error": "..." }` on failure. The client appends `/generateEmoji` to `VITE_AI_URL`.
 
@@ -96,7 +96,7 @@ Each service authenticates with its own OpenAI API key so that its usage and spe
 
 | Service          | Environment variable              |
 | ---------------- | --------------------------------- |
-| Define Term      | `OPENAI_API_KEY_DEFINE_TERM`      |
+| Define Terms     | `OPENAI_API_KEY_DEFINE_TERM`      |
 | Generate Emoji   | `OPENAI_API_KEY_GENERATE_EMOJI`   |
 | Generate Thought | `OPENAI_API_KEY_GENERATE_THOUGHT` |
 
@@ -134,11 +134,11 @@ curl --request POST \
   https://ai.emthought.space/ai/generateThought
 curl --request POST \
   --header 'Content-Type: application/json' \
-  --data '{"term":"Dog"}' \
-  https://ai.emthought.space/ai/defineTerm
+  --data '{"terms":["Dog","Apple"]}' \
+  https://ai.emthought.space/ai/defineTerms
 ```
 
-The first request must return `Server is running`; the second must return JSON containing `thought`; the third must return JSON containing `definition`. Smoke-test Generate Emoji with the same request shape documented under Routes and `/ai/generateEmoji`.
+The first request must return `Server is running`; the second must return JSON containing `thought`; the third must return JSON containing two `definitions`. Smoke-test Generate Emoji with the same request shape documented under Routes and `/ai/generateEmoji`.
 
 ## Metrics
 
@@ -147,7 +147,7 @@ Function metrics (invocations, duration percentiles, error rate, cold starts, me
 ## Environment variables
 
 - `OPENAI_API_KEY` — fallback OpenAI API key for any service that has no key of its own.
-- `OPENAI_API_KEY_DEFINE_TERM` — per-service key for Define Term in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
+- `OPENAI_API_KEY_DEFINE_TERM` — per-service key for Define Terms in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_EMOJI` — per-service key for Generate Emoji in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_THOUGHT` — per-service key for Generate Thought in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `PORT` — optional local server port. Defaults to `3111`.

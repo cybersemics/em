@@ -538,7 +538,7 @@ export const COMMAND_GROUPS: {
       'newGrandChild',
       'extractSubthought',
       'extractCategory',
-      'defineTerm',
+      'defineTerms',
       'generateEmoji',
       'generateThought',
     ],

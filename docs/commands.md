@@ -427,11 +427,11 @@ Extract selected part of a thought as its new parent. Where Extract Subthought d
 
 <kbd>Command + Control + Option + e</kbd>
 
-### Define Term
+### Define Terms
 
 Appends a 10–20 word AI-generated dictionary entry to each selected thought, separated from the original value by `: `. Existing formatting is preserved. The command is disabled when any selected thought is empty, already contains `: `, or has another AI request in progress.
 
-On first use, em shows the same blocking AI data disclosure as Generate Thought. The command sends the visible text of each selected thought to `${VITE_AI_URL}/defineTerm`, with requests running concurrently. Successful definitions are applied together as one undo step while failed requests leave their thoughts unchanged. If a thought is edited or deleted before its request finishes, the response is discarded rather than overwriting the newer state. Server errors are shown in the error banner, and rate limiting asks the user to try again later.
+On first use, em shows the same blocking AI data disclosure as Generate Thought. The command sends the visible text of all selected thoughts to `${VITE_AI_URL}/defineTerms` in one request, and the service generates all definitions in one structured LLM response. A valid response is applied as one undo step; a failed or malformed batch leaves the thoughts unchanged. If an individual thought is edited or deleted before the request finishes, its definition is discarded rather than overwriting the newer state. Server errors are shown in the error banner, and rate limiting asks the user to try again later.
 
 Gesture: ↑ → ←
 
