@@ -199,7 +199,7 @@ The copy button to the right of the slider copies a **bug report** for the actio
 
 ### Adding a new command
 
-1. Create `src/commands/yourCommand.ts`. Default-export a `Command` object with at minimum `id`, `label`, `exec`, and `multicursor`.
+1. Create `src/commands/yourCommand.ts`. Default-export a `Command` object with at minimum `id`, `label`, `exec`, and `multicursor`. Name the command in the singular — `defineTerm`, not `defineTerms` — since a command affects a single thought by default, and carry the singular through all internal terminology (file name, `id`, action names, variables). Multiselect support is secondary and may call for plural forms only in certain user-facing labels.
 2. Add `export { default as yourCommand } from './yourCommand'` to [`src/commands/index.ts`](../src/commands/index.ts).
 3. Pick at least one activation surface:
    - `keyboard` — a `Key` object or string. The `index()` startup pass will warn if you collide with an existing shortcut.
