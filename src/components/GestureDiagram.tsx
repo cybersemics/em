@@ -5,10 +5,11 @@ import { token } from '../../styled-system/tokens'
 import { SystemStyleObject } from '../../styled-system/types'
 import Gesture from '../@types/Gesture'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
+import ArrowheadMarker from './GestureDiagram/ArrowheadMarker'
+import SegmentedGradientGestureRenderer from './GestureDiagram/SegmentedGradientGestureRenderer'
+import SolidGestureRenderer from './GestureDiagram/SolidGestureRenderer'
 import getGestureGeometry from './GestureDiagram/getGestureGeometry'
 import GestureArrowhead from './GestureDiagram/types/GestureArrowhead'
-import GestureGeometry from './GestureDiagram/types/GestureGeometry'
-import GestureSegment from './GestureDiagram/types/GestureSegment'
 
 interface GestureDiagramProps {
   /** Length of the SVG arrowhead marker. */
@@ -51,239 +52,6 @@ interface GestureDiagramProps {
   highlightColor?: string
 }
 
-type ArcGestureSegment = Extract<GestureSegment, { kind: 'arc' }>
-
-/** Generate a list of pre-computed gradients for the special case of the mobile command universe question mark diagram. */
-const MobileCommandUniverseGradients = () => (
-  <>
-    <radialGradient
-      cx={29.7}
-      cy={13.5}
-      r={33.3}
-      id={`rdld-gradient-0`}
-      key={`rdld-gradient-0`}
-      gradientUnits='userSpaceOnUse'
-    >
-      <stop offset='0%' className={`rdld-gradient-0-start`} />
-      <stop offset='100%' className={`rdld-gradient-0-stop`} />
-    </radialGradient>
-    <linearGradient id={`rdld-gradient-1`} key={`rdld-gradient-1`} gradientUnits='userSpaceOnUse'>
-      <stop offset='0%' className={`rdld-gradient-1-start`} />
-      <stop offset='100%' className={`rdld-gradient-1-stop`} />
-    </linearGradient>
-    <radialGradient
-      cx={54}
-      cy={40.5}
-      r={18.5}
-      id={`rdld-gradient-2`}
-      key={`rdld-gradient-2`}
-      gradientUnits='userSpaceOnUse'
-    >
-      <stop offset='0%' className={`rdld-gradient-2-start`} />
-      <stop offset='100%' className={`rdld-gradient-2-stop`} />
-    </radialGradient>
-    <linearGradient
-      x1={45}
-      y1={58.5}
-      x2={45}
-      y2={72}
-      id={`rdld-gradient-3`}
-      key={`rdld-gradient-3`}
-      gradientUnits='userSpaceOnUse'
-    >
-      <stop offset='0%' className={`rdld-gradient-3-start`} />
-      <stop offset='100%' className={`rdld-gradient-3-stop`} />
-    </linearGradient>
-  </>
-)
-
-/** Generates radial gradients for curved segments of the gesture. */
-const ArcGradient = ({
-  index,
-  extendedPath,
-  segment,
-}: {
-  index: number
-  extendedPath: Gesture
-  segment: ArcGestureSegment
-}) => {
-  return (
-    <radialGradient
-      cx={segment.from.x}
-      cy={segment.from.y}
-      r={segment.radius}
-      id={`${extendedPath}-gradient-${index}`}
-      key={`${extendedPath}-gradient-${index}`}
-      gradientUnits='userSpaceOnUse'
-    >
-      <stop offset='0%' className={`${extendedPath}-gradient-${index}-start`} />
-      <stop offset='100%' className={`${extendedPath}-gradient-${index}-stop`} />
-    </radialGradient>
-  )
-}
-
-/** Generate CSS rules defining the colors for the gradients that are applied to gesture diagram path segments. */
-const GradientStyleBlock = ({ color, highlight, path }: { color?: string; highlight?: number; path: Gesture }) => {
-  const index = path === 'rdl' ? 3 : path === 'ldr' ? 2 : undefined
-  // The initial path segment should start at 25% opacity. Subsequent path segmenets should start at 50% opacity.
-  // The final path segment should start at 75% opacity.
-  const stopColors = Array.from(path).map((_, i) => (i === 0 ? 25 : path.length > 2 && i === path.length - 1 ? 75 : 50))
-
-  return (
-    <style>
-      {stopColors.map((startPercent, i) => {
-        const stopPercent = i === path.length - 1 ? 100 : stopColors[i + 1]
-
-        // Highlight the segment if its index is less than the highlight index.
-        // Special Case: Highlight the extended segment and all segments after it.
-        const stopColor =
-          highlight != null && (i < highlight || highlight === path.length || (highlight === index && i === index))
-            ? token('colors.vividHighlight')
-            : color || token('colors.fg')
-
-        return `
-            .${path}-gradient-${i}-start { stop-color: color-mix(in srgb, ${stopColor} ${startPercent}%, ${token('colors.bg')}) }
-            .${path}-gradient-${i}-stop { stop-color: color-mix(in srgb, ${stopColor} ${stopPercent}%, ${token('colors.bg')}) }
-          `
-      })}
-    </style>
-  )
-}
-
-/** Serializes one canonical segment as an independently renderable SVG path. */
-const segmentPathData = (segment: GestureSegment, path: Gesture) =>
-  segment.kind === 'line'
-    ? path === 'rdld'
-      ? `M ${segment.from.x},${segment.from.y} L ${segment.to.x},${segment.to.y}`
-      : `M ${segment.from.x} ${segment.from.y} l ${segment.to.x - segment.from.x} ${segment.to.y - segment.from.y}`
-    : segment.kind === 'arc'
-      ? `M ${segment.from.x} ${segment.from.y} A ${segment.radius} ${segment.radius} 0 0 ${segment.sweepFlag} ${segment.to.x} ${segment.to.y}`
-      : `M ${segment.from.x},${segment.from.y} Q ${segment.control.x},${segment.control.y} ${segment.to.x},${segment.to.y}`
-
-/** Serializes consecutive canonical segments as one continuous SVG path. */
-const gesturePathData = (segments: readonly GestureSegment[]) =>
-  segments.reduce((pathData, segment, i) => {
-    const rdld = segments[0]?.kind === 'quadratic'
-    return `${pathData}${i === 0 ? `M ${segment.from.x}${rdld ? ',' : ' '}${segment.from.y} ` : ' '}${
-      segment.kind === 'line'
-        ? `L ${segment.to.x}${rdld ? ',' : ' '}${segment.to.y}`
-        : segment.kind === 'arc'
-          ? `A ${segment.radius} ${segment.radius} 0 0 ${segment.sweepFlag} ${segment.to.x} ${segment.to.y}`
-          : `Q ${segment.control.x},${segment.control.y} ${segment.to.x},${segment.to.y}`
-    }`
-  }, '')
-
-type GesturePathProps = {
-  arrowhead: 'filled' | 'outlined' | 'none'
-  color?: string
-  dropShadow?: string
-  geometry: GestureGeometry
-  highlight?: number
-  highlightColor?: string
-  id: string
-  strokeWidth: number
-  useGradient: boolean
-}
-
-/** Renders the gesture path as SVG path element(s). */
-const GesturePath = ({
-  arrowhead,
-  color,
-  dropShadow,
-  geometry,
-  highlight,
-  highlightColor,
-  id,
-  strokeWidth,
-  useGradient,
-}: GesturePathProps) => {
-  const { path, segments } = geometry
-  const commonPathProps = {
-    strokeWidth: strokeWidth * 1.5,
-    strokeLinecap: 'round' as const,
-    strokeLinejoin: 'round' as const,
-    fill: 'none' as const,
-    style: dropShadow ? { filter: dropShadow } : undefined,
-  }
-  const allHighlighted = highlight != null && highlight >= path.length
-  const noneHighlighted = highlight == null || highlight === 0
-  const markerEnd = arrowhead !== 'none' ? `url(#${id})` : undefined
-  const activeColor = highlightColor ?? token('colors.vividHighlight')
-  const inactiveColor = color ?? token('colors.fg')
-
-  // Combined-path rendering for straight, solid-color paths. Using a single <path>
-  // with strokeLinejoin='round' avoids overlapping round caps at joints, which
-  // become visible as blobs/beads when strokeWidth is large relative to segment length.
-  if (!useGradient && segments[0]?.kind === 'line' && path !== 'rdld') {
-    if (allHighlighted || noneHighlighted) {
-      return (
-        <path
-          d={gesturePathData(segments)}
-          stroke={allHighlighted ? activeColor : inactiveColor}
-          markerEnd={markerEnd}
-          {...commonPathProps}
-        />
-      )
-    }
-
-    return (
-      <>
-        <path d={gesturePathData(segments.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
-        <path
-          d={gesturePathData(segments.slice(highlight))}
-          stroke={inactiveColor}
-          markerEnd={markerEnd}
-          {...commonPathProps}
-        />
-      </>
-    )
-  }
-
-  // Combined-path rendering for the rdld (Command Universe) solid-color special case.
-  if (!useGradient && path === 'rdld') {
-    if (allHighlighted || noneHighlighted) {
-      return (
-        <path
-          d={gesturePathData(segments)}
-          stroke={allHighlighted ? activeColor : inactiveColor}
-          {...commonPathProps}
-        />
-      )
-    }
-
-    return (
-      <>
-        {highlight! > 0 && (
-          <path d={gesturePathData(segments.slice(0, highlight))} stroke={activeColor} {...commonPathProps} />
-        )}
-        <path d={gesturePathData(segments.slice(highlight))} stroke={inactiveColor} {...commonPathProps} />
-      </>
-    )
-  }
-
-  // Per-segment rendering for gradient or rounded paths.
-  return (
-    <>
-      {segments.map((segment, i) => {
-        const stroke = useGradient
-          ? `url(#${geometry.extendedPath}-gradient-${i})`
-          : highlight != null && (i < highlight || highlight === path.length)
-            ? activeColor
-            : inactiveColor
-        return (
-          <path
-            d={segmentPathData(segment, path)}
-            key={i}
-            stroke={stroke}
-            {...commonPathProps}
-            markerEnd={i === segments.length - 1 && path !== 'rdld' && arrowhead !== 'none' ? markerEnd : undefined}
-          />
-        )
-      })}
-    </>
-  )
-}
-
 /** Renders an SVG representation of a gesture.
  *
  * @param path Any combination of l/r/u/d,or null for a cancel gesture (X).
@@ -312,7 +80,8 @@ const GestureDiagram = ({
   useGradient = true,
   highlightColor,
 }: GestureDiagramProps) => {
-  const [id] = useState(nanoid())
+  // One stable prefix keeps this diagram's marker, masks, and gradients unique in the document.
+  const [instanceId] = useState(nanoid)
 
   // match signaturePad shadow in TraceGesture component
   // TODO: Why isn't this working?
@@ -368,8 +137,6 @@ const GestureDiagram = ({
     )
   }
 
-  const { extendedPath, segments } = geometry!
-
   /** Crop the viewbox to the diagram and adjust the svg element's height when first rendered. */
   const onRef = (el: SVGGraphicsElement | null) => {
     if (!el) return
@@ -409,84 +176,41 @@ const GestureDiagram = ({
         viewBox={viewBox}
       >
         <defs>
-          {arrowhead !== 'none' && (
-            <marker
-              id={id}
-              viewBox='0 0 10 10'
-              refX={rounded ? '0' : '5'}
-              refY='5'
-              markerWidth={arrowSize! * (arrowhead === 'outlined' ? 2 : 1)}
-              markerHeight={arrowSize! * (arrowhead === 'outlined' ? 3 : 1)}
-              markerUnits='userSpaceOnUse'
-              orient='auto-start-reverse'
-            >
-              <path
-                d={
-                  arrowhead === 'filled'
-                    ? 'M 0 0 L 10 5 L 0 10 z'
-                    : arrowhead === 'outlined'
-                      ? 'M 0 0 L 5 5 L 0 10'
-                      : undefined
-                }
-                fill={
-                  arrowhead === 'outlined'
-                    ? 'none'
-                    : highlight != null && highlight >= path.length
-                      ? (highlightColor ?? token('colors.vividHighlight'))
-                      : (color ?? token('colors.fg'))
-                }
-                stroke={arrowhead === 'outlined' ? (color ?? token('colors.fg')) : 'none'}
-                strokeWidth={arrowhead === 'outlined' ? strokeWidth / 3 : 0}
-                style={dropShadow ? { filter: dropShadow } : undefined}
-              />
-            </marker>
-          )}
-          {useGradient && (
-            <>
-              {extendedPath === 'rdld' ? (
-                <MobileCommandUniverseGradients />
-              ) : (
-                segments.map((segment, i) => {
-                  return segment.kind === 'arc' ? (
-                    <ArcGradient
-                      key={`${extendedPath}-gradient-${i}`}
-                      index={i}
-                      extendedPath={extendedPath}
-                      segment={segment}
-                    />
-                  ) : (
-                    <linearGradient
-                      id={`${extendedPath}-gradient-${i}`}
-                      key={`${extendedPath}-gradient-${i}`}
-                      gradientUnits='userSpaceOnUse'
-                      x1={segment.from.x}
-                      x2={segment.to.x}
-                      y1={segment.from.y}
-                      y2={segment.to.y}
-                    >
-                      <stop offset='0%' className={`${extendedPath}-gradient-${i}-start`} />
-                      <stop offset='100%' className={`${extendedPath}-gradient-${i}-stop`} />
-                    </linearGradient>
-                  )
-                })
-              )}
-            </>
-          )}
+          <ArrowheadMarker
+            arrowSize={arrowSize!}
+            color={color}
+            dropShadow={dropShadow}
+            highlightColor={highlightColor}
+            highlighted={highlight != null && highlight >= path.length}
+            instanceId={instanceId}
+            kind={arrowhead}
+            rounded={rounded}
+            strokeWidth={strokeWidth}
+          />
         </defs>
 
-        {useGradient && <GradientStyleBlock color={color} highlight={highlight} path={extendedPath} />}
-
-        <GesturePath
-          arrowhead={arrowhead}
-          color={color}
-          dropShadow={dropShadow}
-          geometry={geometry!}
-          highlight={highlight}
-          highlightColor={highlightColor}
-          id={id}
-          strokeWidth={strokeWidth}
-          useGradient={useGradient}
-        />
+        {useGradient ? (
+          <SegmentedGradientGestureRenderer
+            arrowhead={arrowhead}
+            color={color}
+            dropShadow={dropShadow}
+            geometry={geometry!}
+            highlight={highlight}
+            instanceId={instanceId}
+            strokeWidth={strokeWidth}
+          />
+        ) : (
+          <SolidGestureRenderer
+            arrowhead={arrowhead}
+            color={color}
+            dropShadow={dropShadow}
+            geometry={geometry!}
+            highlight={highlight}
+            highlightColor={highlightColor}
+            instanceId={instanceId}
+            strokeWidth={strokeWidth}
+          />
+        )}
       </svg>
     </span>
   )
