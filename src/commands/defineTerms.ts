@@ -6,12 +6,13 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
-import { editThoughtActionCreator as editThought } from '../actions/editThought'
+import { createThoughtActionCreator as createThought } from '../actions/createThought'
 import { errorActionCreator as error } from '../actions/error'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
+import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
 import selectedPaths from '../selectors/selectedPaths'
 import simplifyPath from '../selectors/simplifyPath'
@@ -39,11 +40,10 @@ const normalizeTerm = (value: string): string => unescapeHtml(strip(value))
 const canDefineTermAtPath = (state: State, path: Path): boolean => {
   const thought = getThoughtById(state, head(simplifyPath(state, path)))
   if (!thought || thought.generating) return false
-  const term = normalizeTerm(thought.value)
-  return term.length > 0 && !term.includes(': ')
+  return normalizeTerm(thought.value).length > 0
 }
 
-/** Defines all thoughts at the given paths in one API request and appends responses to unchanged source values. */
+/** Defines all thoughts at the given paths in one API request and adds each definition as the first subthought of its unchanged source thought. */
 const defineTermsAtPaths =
   (paths: Path[]): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
@@ -134,12 +134,10 @@ const defineTermsAtPaths =
         const definition = (definitions[index] as string).trim().replace(/\s+/g, ' ')
 
         dispatch(
-          editThought({
-            force: true,
-            newValue: `${request.originalValue}: ${escapeHtml(definition)}`,
-            oldValue: request.originalValue,
+          createThought({
             path: simplifyPath(currentState, currentPath),
-            preventMerge: true,
+            rank: getPrevRank(currentState, request.thought.id),
+            value: escapeHtml(definition),
           }),
         )
       })
@@ -172,11 +170,11 @@ const defineTermsAtPaths =
     }
   }
 
-/** Defines the selected thoughts using one AI request and appends each definition. */
+/** Defines the selected thoughts using one AI request and adds each definition as a subthought. */
 const defineTerms = {
   id: 'defineTerms',
   label: 'Define Terms' as const,
-  description: 'Appends a concise AI-generated dictionary definition to each selected thought.',
+  description: 'Adds a concise AI-generated dictionary definition as a subthought of each selected thought.',
   gesture: 'url',
   svg: GenerateThoughtIcon,
   multicursor: {

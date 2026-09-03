@@ -4,6 +4,7 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
@@ -33,7 +34,7 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-it('appends the generated dictionary entry to the cursor thought', async () => {
+it('adds the generated dictionary entry as a subthought of the cursor thought', async () => {
   acknowledgeAiDisclosure()
   mockFetch.mockResolvedValueOnce({ json: () => Promise.resolve({ definitions: [appleDefinition] }) })
   await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
@@ -41,7 +42,7 @@ it('appends the generated dictionary entry to the cursor thought', async () => {
   executeCommand(defineTerms)
   await act(async () => {
     await vi.waitFor(() =>
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(`apple: ${appleDefinition}`),
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition),
     )
   })
 
@@ -51,7 +52,27 @@ it('appends the generated dictionary entry to the cursor thought', async () => {
     method: 'POST',
   })
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - apple: ${appleDefinition}`)
+  - apple
+    - ${appleDefinition}`)
+})
+
+it('inserts the definition before existing subthoughts', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({ json: () => Promise.resolve({ definitions: [appleDefinition] }) })
+  await dispatch([importText({ text: '- apple\n  - red\n  - green' }), setCursor(['apple'])])
+
+  executeCommand(defineTerms)
+  await act(async () => {
+    await vi.waitFor(() =>
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition),
+    )
+  })
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - apple
+    - ${appleDefinition}
+    - red
+    - green`)
 })
 
 it('sends visible text and preserves formatting while escaping the definition', async () => {
@@ -70,9 +91,10 @@ it('sends visible text and preserves formatting while escaping the definition', 
     expect.objectContaining({ body: JSON.stringify({ terms: ['Dog'] }) }),
   )
   const cursor = store.getState().cursor!
-  expect(getThoughtById(store.getState(), head(cursor))?.value).toBe(
-    '<b>Dog</b>: A comparison where &lt;angle brackets&gt; and ampersands &amp; remain literal text.',
-  )
+  expect(getThoughtById(store.getState(), head(cursor))?.value).toBe('<b>Dog</b>')
+  expect(getChildrenRanked(store.getState(), head(cursor)).map(child => child.value)).toEqual([
+    'A comparison where &lt;angle brackets&gt; and ampersands &amp; remain literal text.',
+  ])
 })
 
 it('shows the AI disclosure before sending the term', async () => {
@@ -93,7 +115,7 @@ it('continues the current request after allowing AI once', async () => {
   continuation?.()
   await act(async () => {
     await vi.waitFor(() =>
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(`apple: ${appleDefinition}`),
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition),
     )
   })
 
@@ -170,14 +192,10 @@ it('does not overwrite an edit made while inference is pending', async () => {
   - apples`)
 })
 
-it('is disabled without a selection or on an empty or already-defined thought', async () => {
+it('is disabled without a selection or on an empty thought', async () => {
   expect(defineTerms.canExecute!(store.getState())).toBe(false)
 
   await dispatch([importText({ text: '- ' }), setCursor([''])])
-  expect(defineTerms.canExecute!(store.getState())).toBe(false)
-
-  await initStore()
-  await dispatch([importText({ text: '- apple: a fruit' }), setCursor(['apple: a fruit'])])
   expect(defineTerms.canExecute!(store.getState())).toBe(false)
 })
 
@@ -202,13 +220,13 @@ it('is disabled while a definition request is pending', async () => {
   resolveAiRequest({ json: () => Promise.resolve({ definitions: [appleDefinition] }) })
   await act(async () => {
     await vi.waitFor(() =>
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(`apple: ${appleDefinition}`),
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toContain(appleDefinition),
     )
   })
 })
 
 describe('multicursor', () => {
-  it('appends a definition to every selected thought using one API request', async () => {
+  it('adds a definition under every selected thought using one API request', async () => {
     acknowledgeAiDisclosure()
     mockFetch.mockResolvedValueOnce({
       json: () => Promise.resolve({ definitions: [chickenDefinition, appleDefinition] }),
@@ -233,8 +251,10 @@ describe('multicursor', () => {
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - potato
-  - chicken: ${chickenDefinition}
-  - apple: ${appleDefinition}`)
+  - chicken
+    - ${chickenDefinition}
+  - apple
+    - ${appleDefinition}`)
     expect(mockFetch).toHaveBeenCalledTimes(1)
     expect(mockFetch).toHaveBeenCalledWith(
       'http://test-ai-url/defineTerms',
@@ -260,11 +280,11 @@ describe('multicursor', () => {
     })
 
     const state = store.getState()
-    expectPathToEqual(state, state.cursor, [`chicken: ${chickenDefinition}`])
-    expect(multicursorValues()).toEqual([`apple: ${appleDefinition}`, `chicken: ${chickenDefinition}`])
+    expectPathToEqual(state, state.cursor, ['chicken'])
+    expect(multicursorValues()).toEqual(['apple', 'chicken'])
   })
 
-  it('reverts all appended definitions with one undo', async () => {
+  it('reverts all added definitions with one undo', async () => {
     acknowledgeAiDisclosure()
     mockFetch.mockResolvedValueOnce({
       json: () => Promise.resolve({ definitions: [chickenDefinition, appleDefinition] }),
@@ -335,24 +355,6 @@ describe('multicursor', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1)
   })
 
-  it('is disabled when any selected thought already contains a definition', async () => {
-    acknowledgeAiDisclosure()
-    await dispatch([
-      importText({ text: '- chicken\n- apple: a fruit' }),
-      setCursor(['chicken']),
-      addMulticursor(['chicken']),
-      addMulticursor(['apple: a fruit']),
-    ])
-
-    expect(defineTerms.canExecute!(store.getState())).toBe(false)
-    executeCommandWithMulticursor(defineTerms, { store })
-
-    expect(mockFetch).not.toHaveBeenCalled()
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - chicken
-  - apple: a fruit`)
-  })
-
   it('defines a cursorless multiselect', async () => {
     acknowledgeAiDisclosure()
     mockFetch.mockResolvedValueOnce({
@@ -372,8 +374,10 @@ describe('multicursor', () => {
     })
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - chicken: ${chickenDefinition}
-  - apple: ${appleDefinition}`)
+  - chicken
+    - ${chickenDefinition}
+  - apple
+    - ${appleDefinition}`)
     expect(store.getState().cursor).toBeNull()
   })
 })
