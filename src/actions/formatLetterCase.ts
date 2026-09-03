@@ -19,6 +19,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 export const formatLetterCaseActionCreator =
   (command: LetterCaseType): Thunk =>
   (dispatch, getState) => {
+    // A picker swatch dispatches this directly rather than executing a command, so nothing else flushes for it (#4774).
     commandEmitter.trigger('command')
     const state = getState()
     const cursor = state.cursor

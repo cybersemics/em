@@ -452,9 +452,10 @@ export const executeCommandWithMulticursor = (
   // Every executeCommand call below is given the already resolved command, so it cannot resolve repeat itself. Forward the recorded keyboardIndex explicitly, otherwise it would be derived from the repeat keypress and lost.
   const keyboardIndex = resolved.keyboardIndex
 
-  // Keyboard and gesture paths flush pending edits before they call executeCommandWithMulticursor.
-  // Flush here for other command entry points (toolbar/command center/desktop command universe) so
-  // text-mutating commands do not get overwritten by a trailing throttled edit.
+  // Editable dispatches editThought on a throttle with leading: false, so a command that runs inside that window would
+  // read the pre-edit value and the trailing edit would then commit over the command's own result (#4774). Keyboard and
+  // gesture already flushed in keyDown and handleGestureEnd; every other entry point (toolbar, Command Center, Command
+  // Universe) flushes here, before the state read below.
   if (type !== 'keyboard' && type !== 'gesture') {
     commandEmitter.trigger('command', command)
   }
