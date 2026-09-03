@@ -25,6 +25,7 @@ import getThoughtById from './selectors/getThoughtById'
 import thoughtToContext from './selectors/thoughtToContext'
 import store from './stores/app'
 import offlineStatusStore, { init as initOfflineStatusStore } from './stores/offlineStatusStore'
+import storageStatusStore from './stores/storageStatus'
 import syncStatusStore from './stores/syncStatus'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
@@ -61,7 +62,7 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   initOfflineStatusStore(/* websocket */)
   const eventHandlers = initEvents(store)
 
-  const { clientId } = await thoughtspaceRuntime.init({
+  const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
     storage,
     materialization: {
       getSnapshot: () => {
@@ -84,6 +85,8 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
       },
     },
   })
+
+  storageStatusStore.update(storageInUse)
 
   // load local state unless loading a public context
   // await initDB()
