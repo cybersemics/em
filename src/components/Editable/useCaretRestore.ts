@@ -54,11 +54,13 @@ const useCaretRestore = ({
 
     editable.addEventListener('touchstart', onTouchStart)
     editable.addEventListener('touchend', onTouchEnd)
+    editable.addEventListener('touchcancel', onTouchEnd)
     document.addEventListener('selectionchange', onSelectionChange)
 
     return () => {
       editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('touchend', onTouchEnd)
+      editable.removeEventListener('touchcancel', onTouchEnd)
       document.removeEventListener('selectionchange', onSelectionChange)
     }
   }, [editableRef, enabled, end])
