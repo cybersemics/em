@@ -761,6 +761,52 @@ describe('dash splitting', () => {
   - potatoes`)
   })
 
+  it.skip('splits by a symbol rather than by a dash without surrounding whitespace', () => {
+    const value = 'Jeff Koons → Jean-Michel Basquiat → Cindy Sherman'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Jeff Koons
+  - Jean-Michel Basquiat
+  - Cindy Sherman`)
+  })
+
+  it.skip('splits by "and" rather than by a dash without surrounding whitespace', () => {
+    const value = 'Jean-Michel and Basquiat'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Jean-Michel
+  - Basquiat`)
+  })
+
+  it.skip('splits by slash rather than by a dash without surrounding whitespace', () => {
+    const value = 'front-end/back-end'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - front-end
+    - back-end`)
+  })
+
+  it.skip('splits by colon rather than by a dash without surrounding whitespace', () => {
+    const value = 'Co-author: Jean-Michel'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Co-author
+    - Jean-Michel`)
+  })
+
+  it('splits by a dash without surrounding whitespace when there is no other delimiter', () => {
+    const value = 'one-1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - 1`)
+  })
+
   it('preserves formatting on each comma-delimited segment after a dash split', () => {
     const value = '<b>Shopping list - apples, bananas</b>'
     const exported = splitThought(value)
