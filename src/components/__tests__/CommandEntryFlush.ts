@@ -17,41 +17,34 @@ afterEach(async () => {
   await cleanupTestApp()
 })
 
-/** Returns the current cursor thought value. */
-const cursorValue = () => {
-  const state = store.getState()
-  return state.cursor ? getThoughtById(state, head(state.cursor))?.value : null
-}
-
-/** Applies an input event that leaves a throttled edit pending. */
-const queuePendingEdit = () => {
-  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
-  editable.innerHTML = 'ab'
-  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
-}
-
 // https://github.com/cybersemics/em/issues/4774
 it('flushes pending edits before executing a toolbar command', async () => {
   await dispatch([newThought({ value: 'a' })])
 
-  queuePendingEdit()
+  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+  editable.innerHTML = 'ab'
+  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
 
   await click('[data-testid="toolbar-icon"][aria-label="Note"]')
   await act(vi.runOnlyPendingTimersAsync)
 
-  expect(cursorValue()).toBe('ab')
+  const state = store.getState()
+  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('ab')
 })
 
 // https://github.com/cybersemics/em/issues/4774
 it('flushes pending edits before executing a formatSelection command from the toolbar', async () => {
   await dispatch([newThought({ value: 'a' })])
 
-  queuePendingEdit()
+  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+  editable.innerHTML = 'ab'
+  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
 
   await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
   await act(vi.runOnlyPendingTimersAsync)
 
-  expect(cursorValue()).toBe('<b>ab</b>')
+  const state = store.getState()
+  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>ab</b>')
 })
 
 // A picker swatch dispatches its action creator directly, so the next two cover the flushes in formatSelectionColor
@@ -63,12 +56,15 @@ it('flushes pending edits before applying a color from the picker', async () => 
 
   await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
 
-  queuePendingEdit()
+  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+  editable.innerHTML = 'ab'
+  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
 
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
   await act(vi.runOnlyPendingTimersAsync)
 
-  expect(cursorValue()).toBe('<font color="#00c7e6">ab</font>')
+  const state = store.getState()
+  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<font color="#00c7e6">ab</font>')
 })
 
 // https://github.com/cybersemics/em/issues/4774
@@ -77,19 +73,24 @@ it('flushes pending edits before applying letter case from the picker', async ()
 
   await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
 
-  queuePendingEdit()
+  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+  editable.innerHTML = 'ab'
+  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
 
   await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
   await act(vi.runOnlyPendingTimersAsync)
 
-  expect(cursorValue()).toBe('AB')
+  const state = store.getState()
+  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('AB')
 })
 
 // https://github.com/cybersemics/em/issues/4774
 it('flushes pending edits before executing a desktop command universe command', async () => {
   await dispatch([newThought({ value: 'a' })])
 
-  queuePendingEdit()
+  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+  editable.innerHTML = 'ab'
+  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
 
   await act(async () => {
     store.dispatch(desktopCommandUniverse())
@@ -101,14 +102,17 @@ it('flushes pending edits before executing a desktop command universe command', 
   fireEvent.keyDown(window, { key: 'Enter' })
   await act(vi.runOnlyPendingTimersAsync)
 
-  expect(cursorValue()).toBe('ab')
+  const state = store.getState()
+  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('ab')
 })
 
 // https://github.com/cybersemics/em/issues/4774
 it('flushes pending edits before executing a command center command', async () => {
   await dispatch([newThought({ value: 'a' })])
 
-  queuePendingEdit()
+  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
+  editable.innerHTML = 'ab'
+  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
 
   const { container } = render(
     createElement(Provider, {
@@ -124,5 +128,6 @@ it('flushes pending edits before executing a command center command', async () =
   fireEvent.click(noteButton)
   await act(vi.runOnlyPendingTimersAsync)
 
-  expect(cursorValue()).toBe('ab')
+  const state = store.getState()
+  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('ab')
 })
