@@ -1,7 +1,11 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
+import { HOME_TOKEN } from '../../constants'
 import * as copyModule from '../../device/copy'
+import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
@@ -55,6 +59,30 @@ describe('copyCursor', () => {
     executeCommandWithMulticursor(copyCursorCommand, { store })
 
     expect(copyModule.default).toHaveBeenCalledWith('a', expect.objectContaining({ html: expect.any(String) }))
+  })
+
+  it('does not add an undo step', async () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      newThought({ value: 'c' }),
+      setCursor(['a']),
+    ])
+
+    executeCommandWithMulticursor(copyCursorCommand, { store })
+    await vi.runAllTimersAsync()
+
+    store.dispatch(undo())
+
+    // Undo reverts the thought created before the copy, not the copy.
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b`)
   })
 
   describe('multicursor', () => {
@@ -242,6 +270,32 @@ describe('copyCursor', () => {
       const stateAfter = store.getState()
       expect(stateAfter.cursor).toEqual(cursorBefore)
       expect(stateAfter.multicursors).toEqual(multicursorsBefore)
+    })
+
+    it('does not add an undo step', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - a
+            - b
+          `,
+        }),
+        setCursor(['a']),
+        newThought({ value: 'c' }),
+        setCursor(['a']),
+        addMulticursor(['a']),
+        addMulticursor(['b']),
+      ])
+
+      executeCommandWithMulticursor(copyCursorCommand, { store })
+      await vi.runAllTimersAsync()
+
+      store.dispatch(undo())
+
+      // Undo reverts the thought created before the copy, not the copy.
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b`)
     })
   })
 })
