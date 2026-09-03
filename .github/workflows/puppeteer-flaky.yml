@@ -121,14 +121,17 @@ jobs:
         iteration: ${{ fromJSON(needs.setup.outputs.matrix) }}
     services:
       browserless:
-        image: browserless/chrome:latest
+        image: ghcr.io/browserless/chromium:v2.56.2
         ports:
           - 7566:3000
         env:
-          CONNECTION_TIMEOUT: -1
+          TIMEOUT: 0
     steps:
       - name: Clone repository
         uses: actions/checkout@v6
+
+      - name: Install Microsoft Core Fonts
+        run: ./src/e2e/puppeteer/install-browserless-fonts.sh '${{ job.services.browserless.id }}'
 
       - name: Enable Corepack
         run: corepack enable

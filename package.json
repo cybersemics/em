@@ -21,7 +21,7 @@
   },
   "type": "module",
   "scripts": {
-    "browserless": "docker run -p 7566:3000 -e \"CONNECTION_TIMEOUT=-1\" browserless/chrome",
+    "browserless": "docker run -p 7566:3000 -e \"TIMEOUT=0\" ghcr.io/browserless/chromium:v2.56.2",
     "build": "yarn build:packages && yarn build:styles && vite build",
     "build:ios:browserstack": "./scripts/build-em-browserstack-ipa.sh",
     "build:packages": "yarn --cwd packages/webview build",
