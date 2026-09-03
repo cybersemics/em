@@ -88,7 +88,7 @@ const serializePiece = (points: readonly GesturePoint[]) =>
   points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
 
 /** Divides a polyline into pieces annotated with cumulative path distance. */
-const measureStrokePieces = (samples: readonly GesturePoint[]): StrokePiece[] => {
+const measureStrokePieces = (samples: readonly GesturePoint[]): { pieces: StrokePiece[]; length: number } => {
   // Repeated points have zero length and cannot define a useful linear gradient direction.
   const points = samples.filter(
     (point, index) => index === 0 || point.x !== samples[index - 1].x || point.y !== samples[index - 1].y,
@@ -101,13 +101,17 @@ const measureStrokePieces = (samples: readonly GesturePoint[]): StrokePiece[] =>
     [],
   )
   const length = cumulative.at(-1) ?? 0
-  return length === 0
-    ? []
-    : points.slice(1).map((point, index) => ({
-        points: [points[index], point],
-        start: cumulative[index] / length,
-        end: cumulative[index + 1] / length,
-      }))
+  return {
+    pieces:
+      length === 0
+        ? []
+        : points.slice(1).map((point, index) => ({
+            points: [points[index], point],
+            start: cumulative[index] / length,
+            end: cumulative[index + 1] / length,
+          })),
+    length,
+  }
 }
 
 /** Returns the percentage of the end color at one normalized path distance. */
@@ -150,7 +154,7 @@ const ContinuousGradientGestureRenderer = ({
   instanceId,
   strokeWidth,
 }: ContinuousGradientGestureRendererProps) => {
-  const pieces = measureStrokePieces(flattenGestureGeometry(geometry))
+  const { pieces, length } = measureStrokePieces(flattenGestureGeometry(geometry))
   const ramp: StrokeRamp = {
     from: gradient.from,
     to: gradient.to,
@@ -164,16 +168,34 @@ const ContinuousGradientGestureRenderer = ({
     fill: 'none' as const,
   }
   const markerEnd =
-    geometry.path !== 'rdld' && arrowhead !== 'none' && pieces.length ? `url(#${instanceId}-arrowhead)` : undefined
+    geometry.path !== 'rdld' && arrowhead !== 'none' && !geometry.chevron && pieces.length
+      ? `url(#${instanceId}-arrowhead)`
+      : undefined
+  const chevronMouth = geometry.chevron
+    ? {
+        x: (geometry.chevron[0].x + geometry.chevron[2].x) / 2,
+        y: (geometry.chevron[0].y + geometry.chevron[2].y) / 2,
+      }
+    : null
+  // The chevron uses the final portion of the same ramp rather than starting a new gradient.
+  const chevronPiece =
+    geometry.chevron && chevronMouth
+      ? {
+          points: [chevronMouth, geometry.chevron[1]] as const,
+          start:
+            1 - Math.hypot(geometry.chevron[1].x - chevronMouth.x, geometry.chevron[1].y - chevronMouth.y) / length,
+          end: 1,
+        }
+      : null
 
   /** Defines one local gradient along a short stroke piece. */
-  const renderGradient = (piece: StrokePiece, index: number, form: 'color' | 'alpha') => {
+  const renderGradient = (piece: StrokePiece, key: string, form: 'color' | 'alpha') => {
     const [first, last] = piece.points
     const [start, end] = getRampStops(ramp, piece, form)
     return (
       <linearGradient
-        key={`${form}-${index}`}
-        id={`${instanceId}-piece-${index}-${form}`}
+        key={`${form}-${key}`}
+        id={`${instanceId}-${key}-${form}`}
         gradientUnits='userSpaceOnUse'
         x1={first.x}
         y1={first.y}
@@ -198,6 +220,9 @@ const ContinuousGradientGestureRenderer = ({
           {...pathProps}
         />
       ))}
+      {geometry.chevron && (
+        <path d={serializePiece(geometry.chevron)} stroke={`url(#${instanceId}-chevron-${form})`} {...pathProps} />
+      )}
     </>
   )
 
@@ -208,8 +233,10 @@ const ContinuousGradientGestureRenderer = ({
   return (
     <g style={dropShadow ? { filter: dropShadow } : undefined}>
       <defs>
-        {pieces.map((piece, index) => renderGradient(piece, index, 'color'))}
-        {pieces.map((piece, index) => renderGradient(piece, index, 'alpha'))}
+        {pieces.map((piece, index) => renderGradient(piece, `piece-${index}`, 'color'))}
+        {chevronPiece && renderGradient(chevronPiece, 'chevron', 'color')}
+        {pieces.map((piece, index) => renderGradient(piece, `piece-${index}`, 'alpha'))}
+        {chevronPiece && renderGradient(chevronPiece, 'chevron', 'alpha')}
         {/* The mask preserves the requested alpha where rounded piece caps overlap. */}
         <mask
           id={`${instanceId}-alpha`}
@@ -226,6 +253,13 @@ const ContinuousGradientGestureRenderer = ({
       <g mask={`url(#${instanceId}-alpha)`}>{renderStrokes('color')}</g>
       {highlightPath && (
         <path d={highlightPath} stroke={highlightColor ?? token('colors.vividHighlight')} {...pathProps} />
+      )}
+      {geometry.chevron && highlight != null && highlight >= geometry.path.length && (
+        <path
+          d={serializePiece(geometry.chevron)}
+          stroke={highlightColor ?? token('colors.vividHighlight')}
+          {...pathProps}
+        />
       )}
     </g>
   )

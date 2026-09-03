@@ -36,7 +36,8 @@ const ArrowheadMarker = ({
 }: ArrowheadMarkerProps) => {
   if (kind === 'none') return null
 
-  const outlined = kind === 'outlined'
+  // A solid outlined-wide arrow falls back to the conventional marker; gradient-wide arrows use geometry and omit this component.
+  const outlined = kind === 'outlined' || kind === 'outlined-wide'
   const markerColor = highlighted ? (highlightColor ?? token('colors.vividHighlight')) : (color ?? token('colors.fg'))
 
   return (

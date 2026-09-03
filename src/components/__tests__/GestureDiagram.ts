@@ -108,3 +108,49 @@ describe('continuous path-length gradient', () => {
     expect(glyphStops.length).toBeGreaterThan(20)
   })
 })
+
+describe('gesture shape', () => {
+  const gradient = { from: '#111', to: '#eee' }
+
+  /** Parses the coordinates from a path containing only move and line commands. */
+  const pointsOf = (pathData: string) => {
+    const values = pathData.match(/-?[\d.]+/g)!.map(Number)
+    return Array.from({ length: values.length / 2 }, (_, index) => ({
+      x: values[index * 2],
+      y: values[index * 2 + 1],
+    }))
+  }
+
+  it('samples softened corners into additional gradient pieces', () => {
+    const sharp = render({ path: 'rdr', gradient, arrowhead: 'none' })
+    const soft = render({ path: 'rdr', gradient, arrowhead: 'none', cornerRadius: 5 })
+
+    expect(soft.match(/-piece-\d+-color/g)!.length).toBeGreaterThan(sharp.match(/-piece-\d+-color/g)!.length)
+  })
+
+  it('draws an outlined-wide chevron at the requested apex angle', () => {
+    const markup = render({
+      path: 'rdr',
+      gradient,
+      arrowhead: 'outlined-wide',
+      chevronApexAngle: 60,
+      chevronSize: 2.2,
+    })
+    const chevron = pointsOf(renderedPathData(markup).at(-1)!)
+    const [leg1, apex, leg2] = chevron
+    const a = { x: leg1.x - apex.x, y: leg1.y - apex.y }
+    const b = { x: leg2.x - apex.x, y: leg2.y - apex.y }
+    const cosine = (a.x * b.x + a.y * b.y) / (Math.hypot(a.x, a.y) * Math.hypot(b.x, b.y))
+
+    expect(markup).not.toContain('marker-end')
+    expect((Math.acos(cosine) * 180) / Math.PI).toBeCloseTo(60)
+  })
+
+  it('keeps the rdld glyph arrowhead-free', () => {
+    const markup = render({ path: 'rdld', gradient, arrowhead: 'outlined-wide' })
+    const gradientPieceCount = [...markup.matchAll(/<linearGradient id="[^"]+-piece-\d+-color"/g)].length
+
+    expect(markup).not.toContain('marker-end')
+    expect(renderedPathData(markup)).toHaveLength(gradientPieceCount)
+  })
+})
