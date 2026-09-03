@@ -872,6 +872,86 @@ describe('dash splitting', () => {
   })
 })
 
+describe('hyphenated "and" compound', () => {
+  // https://github.com/cybersemics/em/issues/5215
+  it('splits the words before a hyphenated "and" compound into the main thought and the compound words into its children', () => {
+    const value = 'Implies set-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Implies
+    - set
+    - forget`)
+  })
+
+  it('splits a hyphenated "and" compound with no words before it into siblings', () => {
+    const value = 'set-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - set
+  - forget`)
+  })
+
+  it('splits every word of a hyphenated "and" compound with more than two words into its own child', () => {
+    const value = 'Implies wait-and-see-and-act'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Implies
+    - wait
+    - see
+    - act`)
+  })
+
+  it('keeps the trailing period on the last compound word', () => {
+    const value = 'Implies set-and-forget.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Implies
+    - set
+    - forget.`)
+  })
+
+  it('preserves formatting on the main thought and on each compound word', () => {
+    const value = '<b>Implies set-and-forget</b>'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - **Implies**
+    - **set**
+    - **forget**`)
+  })
+
+  it('splits by a dash surrounded by whitespace rather than by a hyphenated "and" compound', () => {
+    const value = 'Notes - set-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Notes
+    - set-and-forget`)
+  })
+
+  it('splits by comma rather than by a hyphenated "and" compound', () => {
+    const value = 'set-and-forget, fire-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - set-and-forget
+  - fire-and-forget`)
+  })
+
+  it('splits by a symbol rather than by a hyphenated "and" compound', () => {
+    const value = 'a → set-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - set-and-forget`)
+  })
+})
+
 describe('symbol splitting', () => {
   // https://github.com/cybersemics/em/issues/4393
   it('splits thought on arrows', () => {
