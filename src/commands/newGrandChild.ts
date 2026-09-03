@@ -20,8 +20,10 @@ const newGrandChildCommand = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: (state: State) =>
-    isDocumentEditable() && selectedPaths(state).some(path => hasChildren(state, head(path))),
+  canExecute: (state: State) => {
+    const paths = selectedPaths(state)
+    return isDocumentEditable() && paths.length > 0 && paths.every(path => hasChildren(state, head(path)))
+  },
   exec: dispatch => dispatch(newGrandChild()),
 } satisfies Command
 

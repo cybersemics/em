@@ -36,6 +36,31 @@ describe('canExecute', () => {
 })
 
 describe('multicursor', () => {
+  // https://github.com/cybersemics/em/pull/5129
+  it('does not execute unless every selected thought has a visible child', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['a', 'b']),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(false)
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b
+  - c`)
+  })
+
   it('creates a new empty grandchild in each selected thought', () => {
     store.dispatch([
       importText({
@@ -132,34 +157,6 @@ describe('multicursor', () => {
     - d
       - e
         - ${''}`)
-  })
-
-  it('skips a selected thought with no children while the rest of the selection proceeds', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-          - b
-            - c
-        `,
-      }),
-      setCursor(['a']),
-      addMulticursor(['a']),
-      addMulticursor(['b']),
-    ])
-
-    expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
-
-    executeCommandWithMulticursor(newGrandChildCommand, { store })
-
-    // a has no subthought to create a grandchild in, so the action is a no-op for it. b still gets its new grandchild.
-    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-
-    expect(exported).toEqual(`- ${HOME_TOKEN}
-  - a
-  - b
-    - c
-      - ${''}`)
   })
 
   it('places the caret in the last created empty grandchild', () => {
