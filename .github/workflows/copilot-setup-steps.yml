@@ -93,9 +93,9 @@ jobs:
 
       # Pre-pull the browserless image so the puppeteer test harness (src/e2e/puppeteer/test-puppeteer.sh,
       # invoked by the run-test skill) finds it cached and skips the multi-layer pull. Paying it here, at
-      # setup time, keeps it out of the agent's run. Matches the untagged image the script's `docker run` uses.
+      # setup time, keeps it out of the agent's run. Matches the pinned image the script's `docker run` uses.
       - name: Pre-pull browserless image
-        run: docker pull browserless/chrome
+        run: docker pull ghcr.io/browserless/chromium:v2.56.2
 
       # Launch a single shared Chrome exposing a CDP endpoint on :9222 that BOTH the chrome-devtools MCP
       # (configured with --browser-url=http://127.0.0.1:9222) and the web executor bridge
