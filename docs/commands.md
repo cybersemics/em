@@ -395,7 +395,7 @@ https://github.com/user-attachments/assets/e7077d5d-2387-48b5-8a60-c944d38889ec
 
 ### New Grandchild
 
-Create a thought within the first subthought.
+Create a thought within the first subthought. With a multiselect, a new grandchild is created in every selected thought and the caret lands in the last one. The command is disabled when any selected thought has no subthought to create the grandchild in.
 
 ### Categorize
 

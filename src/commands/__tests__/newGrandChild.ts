@@ -12,6 +12,54 @@ import newGrandChildCommand from '../newGrandChild'
 
 beforeEach(initStore)
 
+describe('canExecute', () => {
+  it('cannot create a grandchild in a thought with no children', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(false)
+  })
+
+  it('can create a grandchild in a selected thought with children when the cursor is on a thought with none', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+            - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
+  })
+
+  it('cannot create a grandchild when a selected thought has no children', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+            - c
+        `,
+      }),
+      setCursor(['b']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(false)
+  })
+})
+
 describe('multicursor', () => {
   it('creates a new empty grandchild in each selected thought', () => {
     store.dispatch([
@@ -111,7 +159,7 @@ describe('multicursor', () => {
         - ${''}`)
   })
 
-  it('skips a selected thought with no children while the rest of the selection proceeds', () => {
+  it('does not create a grandchild when a selected thought has no children', () => {
     store.dispatch([
       importText({
         text: `
@@ -127,14 +175,13 @@ describe('multicursor', () => {
 
     executeCommandWithMulticursor(newGrandChildCommand, { store })
 
-    // a has no subthought to create a grandchild in, so the action is a no-op for it. b still gets its new grandchild.
+    // a has no subthought to create a grandchild in, so the command is disabled for the whole selection rather than partially applying to b.
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 
     expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
   - b
-    - c
-      - ${''}`)
+    - c`)
   })
 
   it('places the caret in the last created empty grandchild and clears the multicursor', () => {

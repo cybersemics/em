@@ -1,8 +1,8 @@
 import Command from '../@types/Command'
-import State from '../@types/State'
 import { newGrandChildActionCreator as newGrandChild } from '../actions/newGrandChild'
 import SettingsIcon from '../components/icons/SettingsIcon'
 import { hasChildren } from '../selectors/getChildren'
+import selectedPaths from '../selectors/selectedPaths'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
@@ -19,7 +19,11 @@ const newGrandChildCommand = {
   },
   // TODO: Create unique icon
   svg: SettingsIcon,
-  canExecute: (state: State) => isDocumentEditable() && !!state.cursor && hasChildren(state, head(state.cursor)),
+  canExecute: state => {
+    // The action no-ops on a thought with no visible child, since there is no subthought to create the grandchild in. The command is therefore only executable if every selected thought has a visible child, so that a selection containing an ineligible thought disables it rather than partially applying. The selected thoughts are not necessarily the cursor, e.g. when a thought is long pressed while the cursor is elsewhere.
+    const paths = selectedPaths(state)
+    return isDocumentEditable() && paths.length > 0 && paths.every(path => hasChildren(state, head(path)))
+  },
   exec: dispatch => dispatch(newGrandChild()),
 } satisfies Command
 
