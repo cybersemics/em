@@ -69,9 +69,6 @@ describe('multicursor', () => {
   - ${''}
   - e`)
 
-    // expect multicursor to be cleared
-    expect(hasMulticursor(state)).toBeFalse()
-
     // expect cursor to be on the last created thought (the empty thought after d), ready for typing
     const children = getChildrenRanked(state, HOME_TOKEN)
     expect(head(state.cursor!)).toBe(children[5].id)
@@ -107,9 +104,6 @@ describe('multicursor', () => {
   - b
     - b1
     - ${''}`)
-
-    // expect multicursor to be cleared
-    expect(hasMulticursor(state)).toBeFalse()
 
     // expect cursor to be on the last created thought (the empty thought after b1)
     const bChildren = getChildrenRanked(state, head(state.cursor!.slice(0, -1)))
@@ -178,5 +172,27 @@ describe('multicursor', () => {
   - a
   - b
   - c`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it('selects the new thoughts after execution', () => {
+    store.dispatch([
+      importText({
+        text: `
+            - a
+            - b
+          `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    executeCommandWithMulticursor(newThoughtCommand, { store })
+
+    const state = store.getState()
+    const newThoughts = getChildrenRanked(state, HOME_TOKEN).filter(child => child.value === '')
+
+    expect(Object.values(state.multicursors).map(head)).toEqual(newThoughts.map(child => child.id))
   })
 })

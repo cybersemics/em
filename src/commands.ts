@@ -485,6 +485,9 @@ export const executeCommandWithMulticursor = (
     }),
   )
 
+  // The thoughts created by the executions, collected for selectNewCursors.
+  const newCursors: Path[] = []
+
   // If there is a custom execMulticursor function, call it with the filtered multicursors.
   // Otherwise, execute the command once for each of the filtered multicursors.
   if (multicursor.execMulticursor) {
@@ -500,6 +503,14 @@ export const executeCommandWithMulticursor = (
 
       commandStore.dispatch(setCursor({ path: recomputedPath }))
       executeCommand(command, { store: commandStore, type, event, keyboardIndex })
+
+      // The command sets the cursor to the thought it created, so a cursor on a different thought than the one that was
+      // just set is the new thought. A command that could not act on the selected thought leaves the cursor where it
+      // was and contributes nothing (e.g. newUncle on a thought at the root).
+      const cursorAfter = commandStore.getState().cursor
+      if (multicursor.selectNewCursors && cursorAfter && !equalPath(cursorAfter, recomputedPath)) {
+        newCursors.push(cursorAfter)
+      }
     }
   }
 
@@ -516,7 +527,24 @@ export const executeCommandWithMulticursor = (
   }
 
   // Restore multicursors
-  if (!multicursor.clearMulticursor) {
+  if (multicursor.selectNewCursors) {
+    // Setting the cursor to each selected thought emptied the multicursors, so the thoughts that were created can
+    // simply be selected. A single new thought is not a selection, so clear it and end as the command does without a
+    // multiselect, with the caret in the new thought.
+    commandStore.dispatch(
+      newCursors.length < 2
+        ? clearMulticursors()
+        : [
+            ...newCursors.map(path => addMulticursor({ path })),
+            // state.expanded is recalculated on setCursor, so set the cursor to the last new thought to expand the
+            // ancestors of the new selection. The cursor is already there, so this does not move it.
+            // The new thoughts are selected rather than edited — there is no typing into several of them at once — so
+            // close the keyboard that each exec opened. Otherwise multicursorAlertMiddleware reads the selection as a
+            // multiselection being edited (Clear Thought) and leaves the Command Center closed over it on mobile.
+            setCursor({ path: newCursors[newCursors.length - 1], isKeyboardOpen: false, preserveMulticursor: true }),
+          ],
+    )
+  } else if (!multicursor.clearMulticursor) {
     commandStore.dispatch(
       paths.map(path => (dispatch, getState) => {
         const state = getState()

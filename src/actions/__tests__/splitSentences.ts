@@ -798,6 +798,15 @@ describe('dash splitting', () => {
     - Jean-Michel`)
   })
 
+  it('splits by a copula rather than by a dash without surrounding whitespace', () => {
+    const value = 'Jean-Michel is a painter'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Jean-Michel
+    - Painter`)
+  })
+
   it('splits by a dash without surrounding whitespace when there is no other delimiter', () => {
     const value = 'one-1'
     const exported = splitThought(value)
@@ -1129,6 +1138,178 @@ describe('slash splitting', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - **one**
     - **two**`)
+  })
+})
+
+describe('copula splitting', () => {
+  it('splits thought with a copula into a subject and its predicate as a child, dropping the article and capitalizing the predicate', () => {
+    const value = 'Attention is the most valuable resource'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Attention
+    - Most valuable resource`)
+  })
+
+  it('keeps the predicate lowercase when the subject is lowercase', () => {
+    const value = 'attention is the most valuable resource'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - attention
+    - most valuable resource`)
+  })
+
+  it('drops a leading "a" or "an" from the predicate but not from the subject', () => {
+    const value = 'A dog is an animal'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - A dog
+    - Animal`)
+  })
+
+  it('splits on "are" rather than on "and"', () => {
+    const value = 'Cats and dogs are animals'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Cats and dogs
+    - Animals`)
+  })
+
+  it('splits on "was"', () => {
+    const value = 'Rome was the capital of the empire'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Rome
+    - Capital of the empire`)
+  })
+
+  it('splits on "were"', () => {
+    const value = 'The Beatles were a band'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - The Beatles
+    - Band`)
+  })
+
+  it('splits on "and" when there is more than one copula', () => {
+    const value = 'The sky is blue and the grass is green'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - The sky is blue
+  - the grass is green`)
+  })
+
+  it('splits the predicate by comma so that each item becomes its own child', () => {
+    const value = 'Best fruits are apples, bananas, oranges'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Best fruits
+    - Apples
+    - Bananas
+    - Oranges`)
+  })
+
+  it('splits by comma when there is more than one copula', () => {
+    const value = 'Attention is the most valuable resource, time is second'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Attention is the most valuable resource
+  - time is second`)
+  })
+
+  it('splits on a dash rather than on the copula', () => {
+    const value = 'Attention is key - focus on it'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Attention is key
+    - focus on it`)
+  })
+
+  it('splits on the copula rather than on a slash', () => {
+    const value = 'Input/output is the bottleneck'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Input/output
+    - Bottleneck`)
+  })
+
+  it('does not split on a copula within a word', () => {
+    const value = 'This island is beautiful'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - This island
+    - Beautiful`)
+  })
+
+  it('does not split when the subject is a pronoun', () => {
+    const value = 'There is a problem'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - There is a problem`)
+  })
+
+  it('does not split when the copula is at the beginning', () => {
+    const value = 'Is attention the most valuable resource'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Is attention the most valuable resource`)
+  })
+
+  it('does not split when the copula is at the end', () => {
+    const value = 'Whatever attention is'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Whatever attention is`)
+  })
+
+  it('splits on the copula when there is only one sentence ending with a period', () => {
+    const value = 'Attention is the most valuable resource.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Attention
+    - Most valuable resource.`)
+  })
+
+  it('splits by sentences when both a copula and multiple sentences are present', () => {
+    const value = 'Attention is key. Focus on it.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Attention is key.
+  - Focus on it.`)
+  })
+
+  it('preserves formatting on the subject and the predicate', () => {
+    const value = '<b>Attention</b> is the most <i>valuable</i> resource'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - **Attention**
+    - Most *valuable* resource`)
+  })
+
+  it('drops the article and capitalizes the predicate within formatting', () => {
+    const value = 'Attention is <b>the most</b> valuable resource'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Attention
+    - **Most** valuable resource`)
   })
 })
 

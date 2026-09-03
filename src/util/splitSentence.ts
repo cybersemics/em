@@ -208,6 +208,34 @@ function splitFormattedHtmlBySubSentence(htmlValue: string, plainValue: string):
   }, [])
 }
 
+/** Matches a copula, that is a finite form of "to be", surrounded by whitespace. The form "am" is excluded since it is usually a time, e.g. "10 am", and the non-finite forms "be", "been", and "being" do not separate a subject from a predicate, e.g. "It will be a good day". */
+const copulaRegex = /\s+(?:is|are|was|were)\s+/i
+
+/** Matches a sentence with a copula, capturing the subject before it and the predicate after it. */
+const copulaSplitRegex = new RegExp(`^(.+?)${copulaRegex.source}(.+)$`, 'i')
+
+/** Matches a subject that is a bare pronoun, which would make a meaningless thought on its own, e.g. "This is a single sentence" or "There is a problem". */
+const pronounRegex = /^(?:i|you|he|she|it|we|they|this|that|these|those|there|here|who|what|which|where|when|why|how)$/i
+
+/**
+ * Formats the predicate of a copula split as a thought of its own: drops a leading article and, when the subject is capitalized, capitalizes the first letter, e.g. "the most valuable resource" -> "Most valuable resource".
+ *
+ * @param htmlValue The trimmed predicate HTML.
+ * @param subject The plain text subject.
+ */
+function formatPredicate(htmlValue: string, subject: string): string {
+  const plainValue = getTextContentFromHTML(htmlValue)
+  // an article is only dropped when something follows it
+  const article = plainValue.match(/^(?:a|an|the)\s+(?=\S)/i)
+  const withoutArticle = article
+    ? trimHtml(sliceHtmlByTextOffsets(htmlValue, article[0].length, plainValue.length))
+    : htmlValue
+  // trimHtml leaves leading tags in place, so the first letter follows them, e.g. "<b>m</b>ost"
+  return /^\s*\p{Lu}/u.test(subject)
+    ? withoutArticle.replace(/^((?:<[^>]*>)*)(\S)/, (match, tags, char) => tags + char.toUpperCase())
+    : withoutArticle
+}
+
 /**
  * Splits a value into a main thought and a child at the first delimiter matched by the given regex, e.g. "one - 1" -> "- one   - 1". The right side of the delimiter is split by comma so that each item becomes its own child, e.g. "Shopping list - apples, bananas" -> "- Shopping list   - apples   - bananas". Returns null when the delimiter does not match or either side is empty.
  *
@@ -304,17 +332,32 @@ const splitSentence = (value: string): SplitResult[] => {
 
   // if we're sub-sentence or in one sentence territory, try the delimiters in order of precedence:
   // 1. a dash surrounded by whitespace or a colon splits into a child, e.g. "one - 1" -> "- one   - 1", "Start: 1" -> "- Start   - 1"
-  // 2. a slash splits into a chain of descendants, e.g. "one/two/three" -> "- one   - two   - three"
-  // 3. a comma or one of the symbols ↑↓←→+ splits into siblings, e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
-  // 4. a hyphenated "and" compound at the end of the value splits into a child per word, e.g. "Implies set-and-forget" -> "- Implies   - set   - forget"
-  // 5. the word "and" splits into siblings, e.g. "Alice and the Lion" -> "- Alice - the Lion"
-  // 6. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
+  // 2. a copula splits into a subject and its predicate as a child, e.g. "Attention is the most valuable resource" -> "- Attention   - Most valuable resource"
+  // 3. a slash splits into a chain of descendants, e.g. "one/two/three" -> "- one   - two   - three"
+  // 4. a comma or one of the symbols ↑↓←→+ splits into siblings, e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
+  // 5. a hyphenated "and" compound at the end of the value splits into a child per word, e.g. "Implies set-and-forget" -> "- Implies   - set   - forget"
+  // 6. the word "and" splits into siblings, e.g. "Alice and the Lion" -> "- Alice - the Lion"
+  // 7. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
   // A dash without surrounding whitespace is usually part of a compound word, e.g. "Jean-Michel", so it has the lowest precedence of all: it only splits when the value contains no other delimiter (#3525).
   // e.g. "Jeff Koons, Jean-Michel Basquiat" splits at the comma and "a → b-c" splits at the arrow.
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
     // A colon must be followed by whitespace so that it does not split a time, e.g. "10:30".
     const childValues = splitIntoChild(value, plainValue, /^(.+?)(?:\s+[-–—]\s+|\s*:\s+)(.+)$/)
     if (childValues) return childValues
+
+    // Only a sentence with exactly one copula is split: "The sky is blue and the grass is green" is two clauses rather than a subject and a predicate, so it is left to the sibling delimiters below.
+    // A subject that is a bare pronoun is not split off either, e.g. "There is a problem".
+    const clauses = plainValue.split(copulaRegex)
+    const copulaValues =
+      clauses.length === 2 && !pronounRegex.test(clauses[0].trim())
+        ? splitIntoChild(value, plainValue, copulaSplitRegex)
+        : null
+    if (copulaValues) {
+      // the predicate of a copula becomes a thought of its own, so it is formatted as one
+      return copulaValues.map((result, i) =>
+        i === 0 ? result : { ...result, value: formatPredicate(result.value, clauses[0]) },
+      )
+    }
 
     // Check for slash and split into a chain of descendants, each part a child of the previous
     // e.g. "one/two/three" -> "- one  - two (child)  - three (grandchild)"
