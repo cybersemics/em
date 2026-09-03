@@ -238,6 +238,37 @@ function splitIntoChild(htmlValue: string, plainValue: string, delimiterRegex: R
 }
 
 /**
+ * Splits a value that ends with a hyphenated "and" compound into the words before the compound as the main thought and the compound's words as its children, e.g. "Implies set-and-forget" -> "- Implies   - set   - forget". A compound with no words before it splits into siblings, e.g. "set-and-forget" -> "- set   - forget". Returns null when the value does not end with such a compound.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param plainValue The plain text thought value.
+ */
+function splitHyphenatedAndCompound(htmlValue: string, plainValue: string): SplitResult[] | null {
+  const match = plainValue.match(/^(.*?)\s*(\S+(?:-and-\S+)+)\s*$/i)
+  if (!match) return null
+
+  const [, leadIn, compound] = match
+  // the compound is the last word of the value, so it starts where it last occurs
+  const compoundStart = plainValue.lastIndexOf(compound)
+  const words = compound.split(/-and-/i)
+  const wordValues = words.map((word, i) => {
+    // each word starts after the words before it and the "-and-" that joins each of them to the next
+    const start =
+      compoundStart +
+      words.slice(0, i).reduce((length, previousWord) => length + previousWord.length + '-and-'.length, 0)
+    return trimHtml(sliceHtmlByTextOffsets(htmlValue, start, start + word.length))
+  })
+
+  return leadIn.trim()
+    ? [
+        { value: trimHtml(sliceHtmlByTextOffsets(htmlValue, 0, leadIn.length)) },
+        // only the first word becomes a child of the main thought; the rest are its siblings
+        ...wordValues.map((value, i) => ({ value, ...(i === 0 ? { insertNewSubThought: true } : null) })),
+      ]
+    : wordValues.map(value => ({ value }))
+}
+
+/**
  * Splits given value by special characters.
  */
 const splitSentence = (value: string): SplitResult[] => {
@@ -274,8 +305,10 @@ const splitSentence = (value: string): SplitResult[] => {
   // if we're sub-sentence or in one sentence territory, try the delimiters in order of precedence:
   // 1. a dash surrounded by whitespace or a colon splits into a child, e.g. "one - 1" -> "- one   - 1", "Start: 1" -> "- Start   - 1"
   // 2. a slash splits into a chain of descendants, e.g. "one/two/three" -> "- one   - two   - three"
-  // 3. a comma, one of the symbols ↑↓←→+, or the word "and" splits into siblings, e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
-  // 4. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
+  // 3. a comma or one of the symbols ↑↓←→+ splits into siblings, e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
+  // 4. a hyphenated "and" compound at the end of the value splits into a child per word, e.g. "Implies set-and-forget" -> "- Implies   - set   - forget"
+  // 5. the word "and" splits into siblings, e.g. "Alice and the Lion" -> "- Alice - the Lion"
+  // 6. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
   // A dash without surrounding whitespace is usually part of a compound word, e.g. "Jean-Michel", so it has the lowest precedence of all: it only splits when the value contains no other delimiter (#3525).
   // e.g. "Jeff Koons, Jean-Michel Basquiat" splits at the comma and "a → b-c" splits at the arrow.
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
@@ -301,6 +334,12 @@ const splitSentence = (value: string): SplitResult[] => {
         }))
       }
     }
+
+    // A hyphenated "and" compound at the end of the value, e.g. "set-and-forget", is a list of single words rather than a sentence joined by "and", so it is split before the word "and" is. A comma or a symbol still takes priority, e.g. "set-and-forget, fire-and-forget" splits at the comma (#5215).
+    const compoundValues = punctuationSubSentenceDelimiter(plainValue)
+      ? null
+      : splitHyphenatedAndCompound(value, plainValue)
+    if (compoundValues) return compoundValues
 
     // split by comma, or by the symbols ↑↓←→+ if there is no comma, or by the word "and" if there is neither
     // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
