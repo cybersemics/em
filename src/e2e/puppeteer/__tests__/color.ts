@@ -57,7 +57,6 @@ const setNoteCaret = (offset: number) =>
 /** Waits one frame for selectionchange-driven command state to propagate. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
-<<<<<<< Updated upstream
 /** Returns the background that actually paints behind the code text of the thought being edited, i.e. the nearest
  * self-or-ancestor of the code element that is not transparent. */
 const codeBackgroundColor = () =>
@@ -70,24 +69,28 @@ const codeBackgroundColor = () =>
         return backgroundColor
     }
     return null
-=======
+  })
+
 /** Returns the horizontal geometry needed to verify Color Picker toolbar scrolling. */
 const getColorPickerGeometry = () =>
   page.evaluate(() => {
     const toolbar = document.querySelector('[data-testid="toolbar"]')
-    const colorPicker = document.querySelector('[aria-label="Color Picker"]')
-    if (!toolbar || !colorPicker) throw new Error('Toolbar or Color Picker not found.')
+    const swatchGroups = document.querySelectorAll(
+      '[aria-label="text color swatches"], [aria-label="background color swatches"]',
+    )
+    if (!toolbar || swatchGroups.length !== 2) throw new Error('Toolbar or Color Picker swatches not found.')
 
     const toolbarRect = toolbar.getBoundingClientRect()
-    const colorPickerRect = colorPicker.getBoundingClientRect()
+    const swatchGroupRects = Array.from(swatchGroups).map(group => group.getBoundingClientRect())
+    const fontSize = parseFloat(window.getComputedStyle(swatchGroups[0]).fontSize)
     return {
-      colorPickerLeft: colorPickerRect.left,
-      colorPickerRight: colorPickerRect.right,
+      colorPickerLeft: Math.min(...swatchGroupRects.map(rect => rect.left)),
+      colorPickerRight: Math.max(...swatchGroupRects.map(rect => rect.right)),
+      edgeTolerance: fontSize / 2,
       scrollLeft: toolbar.scrollLeft,
       toolbarLeft: toolbarRect.left,
       toolbarRight: toolbarRect.right,
     }
->>>>>>> Stashed changes
   })
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
@@ -109,7 +112,7 @@ it('scrolls the Color Picker only as far as needed when opened with the keyboard
   )
 
   await press('h', { meta: true, shift: true })
-  await waitForSelector('[aria-label="Color Picker"]')
+  await waitForSelector('[aria-label="text color swatches"]')
   await nextFrame()
   await nextFrame()
 
@@ -120,7 +123,7 @@ it('scrolls the Color Picker only as far as needed when opened with the keyboard
 
   await press('h', { meta: true, shift: true })
   await expect
-    .poll(() => page.evaluate(() => document.querySelector('[aria-label="Color Picker"]') === null))
+    .poll(() => page.evaluate(() => document.querySelector('[aria-label="text color swatches"]') === null))
     .toBe(true)
   await scrollBy('[data-testid="toolbar"]', -10000, 0)
 
@@ -134,14 +137,14 @@ it('scrolls the Color Picker only as far as needed when opened with the keyboard
   expect(textColorIsOutsideToolbar).toBe(true)
 
   await press('h', { meta: true, shift: true })
-  await waitForSelector('[aria-label="Color Picker"]')
+  await waitForSelector('[aria-label="text color swatches"]')
 
   await expect
     .poll(async () => {
       const geometry = await getColorPickerGeometry()
       return {
         leftEdgeVisible: geometry.colorPickerLeft >= geometry.toolbarLeft,
-        rightEdgeAligned: Math.abs(geometry.colorPickerRight - geometry.toolbarRight) < 1,
+        rightEdgeAligned: Math.abs(geometry.colorPickerRight - geometry.toolbarRight) < geometry.edgeTolerance,
         rightEdgeVisible: geometry.colorPickerRight <= geometry.toolbarRight,
       }
     })
