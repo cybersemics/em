@@ -18,6 +18,9 @@ let errorTimer = 0
 /** On cursorNext and cursorPrev, momentarily suppress expansion of children. This avoids performance issues when desktop users hold ArrowDown or ArrowUp to move across many siblings. */
 let suppressExpansion = false
 
+/** The arrow key (e.g. 'ArrowLeft' or 'ArrowRight') that just crossed a table column boundary on a discrete keypress. While set, auto-repeat of that key is suppressed so that holding it does not continuously advance the caret into or through the adjacent thought — the key must be released and pressed again to move further. Cleared on keyup. */
+let arrowKeyBoundaryCross: string | null = null
+
 /** The maximum size of the thoughtIndex before freeThoughts kicks in to free memory. */
 // e.g. Art • Buddhist Art • :: • Regions • China • Period • Era of North-South division • North • East • Northern Qi
 // = 455 thoughts loaded into memory
@@ -29,6 +32,20 @@ let freeThoughtsThreshold = 500
 /** Escape hatch to abandon imports when frozen. This is a workaround for a bug that has not been resolved. */
 let abandonImport = false
 
+/** Used to suppress the Editable change handler to ignore execCommand in registerNativeUndoStep. */
+let suppressChange = false
+
+/** Used to suppress the blur handlers that resync the editable's innerHTML to the value in Redux. Set while the
+ * editable is momentarily blurred and refocused to retarget focus after iOS autocomplete, which does not end editing. */
+let suppressBlurSync = false
+
+/** Set when a touchend on a non-cursor thought moves the cursor without entering edit mode, and cleared on the next
+ * touchstart. While set, any focus or mousedown on an editable is the tail of that same tap: iOS Safari sometimes
+ * synthesizes them even though touchend called preventDefault (e.g. a non-cancelable touchend during scroll momentum),
+ * and by the time they arrive the tapped thought has already become the cursor, so they would incorrectly activate
+ * edit mode. A legitimate second tap always begins with a new touchstart, which clears the flag first. */
+let suppressFocusAfterCursorMove = false
+
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -37,6 +54,10 @@ const globals = {
   offlineTimer,
   rendered,
   suppressExpansion,
+  suppressChange,
+  suppressBlurSync,
+  suppressFocusAfterCursorMove,
+  arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }
 

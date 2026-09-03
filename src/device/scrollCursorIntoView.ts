@@ -52,11 +52,11 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const top = Math.max(1, scrollYNew)
 
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
-  const behavior = scrollDistance < visualViewportHeight ? 'smooth' : 'auto'
+  const behavior: ScrollBehavior = scrollDistance < visualViewportHeight ? 'smooth' : 'auto'
 
   window.scrollTo({
     top,
-    behavior,
+    behavior: navigator.webdriver ? 'instant' : behavior,
   })
 }
 

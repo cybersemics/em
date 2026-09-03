@@ -7,8 +7,9 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { isTouch } from '../browser'
+import { getAutoscrollPadding } from '../device/preventAutoscroll'
 import useDelayedAutofocus from '../hooks/useDelayedAutofocus'
+import useFreshCallback from '../hooks/useFreshCallback'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import useSelectorEffect from '../hooks/useSelectorEffect'
 import { hasChildren } from '../selectors/getChildren'
@@ -54,6 +55,7 @@ const selectCursor = (state: State) => state.cursor
 const VirtualThought = ({
   debugIndex,
   depth,
+  childIndexNonAttribute,
   dropUncle,
   env,
   indexDescendant,
@@ -67,16 +69,17 @@ const VirtualThought = ({
   singleLineHeight,
   style,
   crossContextualKey,
-  zoomCursor,
   cliff,
   prevCliff,
   isLastVisible,
   autofocus,
   moveStyle,
+  wrappingWidth,
 }: {
   // contextChain is needed to uniquely identify thoughts across context views
   debugIndex?: number
   depth: number
+  childIndexNonAttribute: number
   dropUncle?: boolean
   env?: LazyEnv
   indexDescendant: number
@@ -91,13 +94,14 @@ const VirtualThought = ({
   style?: React.CSSProperties
   /** A key that uniquely identifies the thought across context views. */
   crossContextualKey: string
-  zoomCursor?: boolean
   cliff?: number
   prevCliff?: number
   isLastVisible?: boolean
   autofocus: Autofocus
   /** Optional animation styles for moveThought animations. Applied to a child wrapper so height measurement is unaffected. */
   moveStyle?: React.CSSProperties
+  /** The horizontal width available to the thought before it wraps. Changes when the thought enters or leaves a table column (e.g. toggling Table View), so it is used to trigger a height re-measurement. Otherwise the stale wrapped height leaves a blank gap below the thought. */
+  wrappingWidth?: number
 }) => {
   // TODO: Why re-render the thought when its height changes? This information should be passively passed up to LayoutTree.
   const [height, setHeight] = useState<number | null>(singleLineHeight)
@@ -118,7 +122,7 @@ const VirtualThought = ({
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
   // Wait until the fade out animation has completed before removing.
   // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
-  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
+  const isVisible = autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: durations.get('layoutSlowShift'),
     selector: autofocusNew => autofocus === 'hide' && autofocusNew === 'hide' && !!height,
@@ -132,7 +136,6 @@ const VirtualThought = ({
   //   index,
   //   isHeader,
   //   isMultiColumnTable,
-  //   zoomCursor,
   //   path,
   //   prevChildId,
   //   shimHiddenThought
@@ -145,22 +148,20 @@ const VirtualThought = ({
   const updateSize = useCallback(() => {
     if (!ref.current) return
 
-    // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
-    // On touch devices, use offsetHeight to avoid transform-induced fractional measurements and ensure layout height is used.
-    const heightNew = isTouch
-      ? Math.max(
-          ref.current.offsetHeight,
-          (ref.current.querySelector('[aria-label="thought-annotation"]') as HTMLElement | null)?.offsetHeight || 0,
-        )
-      : Math.max(
-          ref.current.getBoundingClientRect().height,
-          ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
-        )
-    const widthNew = ref.current.querySelector(`[data-editable]`)?.getBoundingClientRect().width
-
-    // skip updating height when preventAutoscroll is enabled, as it modifies the element's height in order to trick Safari into not scrolling
+    // preventAutoscroll temporarily inflates the editable's padding to trick the browser out of autoscrolling.
+    // Subtract that padding so the measured height reflects the thought's true height even while the autoscroll
+    // window is open. Otherwise a height change that occurs during the window — e.g. a note added to this thought
+    // by Swap Note on touch devices — would be recorded with an inflated height or skipped entirely, leaving the
+    // next thought overlapping the note. (#4279)
     const editable = ref.current.querySelector(`[data-editable]`)
-    if (editable?.hasAttribute('data-prevent-autoscroll')) return
+    const autoscrollPadding = getAutoscrollPadding(editable as HTMLElement | null)
+
+    // Need to grab max height between .thought and .thought-annotation since the annotation height might be bigger (due to wrapping link icon).
+    const heightNew = Math.max(
+      ref.current.getBoundingClientRect().height - autoscrollPadding,
+      ref.current.querySelector('[aria-label="thought-annotation"]')?.getBoundingClientRect().height || 0,
+    )
+    const widthNew = editable?.getBoundingClientRect().width
 
     // Get the updated autofocus, otherwise isVisible will be stale.
     // Using the local autofocus and adding it as a dependency works when clicking on the cursor's parent but not when activating cursorBack from the keyboad for some reason.
@@ -189,6 +190,7 @@ const VirtualThought = ({
     style,
     isContextViewActive,
     editingValue,
+    wrappingWidth,
   ])
 
   // Recalculate height on cursor change since indentation can change line wrapping
@@ -216,15 +218,15 @@ const VirtualThought = ({
   }, [updateSize, value])
 
   // trigger onResize with null on unmount to allow subscribers to clean up
-  useEffect(
-    () => {
-      return () => {
-        onResize?.({ height: null, width: null, id: id, isVisible: true, key: crossContextualKey })
-      }
-    },
-    // these should be memoized and not change for the life of the component, so this is effectively componentWillUnmount
+  // onResize is not stable for the life of the component: TreeNode memoizes it on cliff, which changes whenever the
+  // thought's position in the tree changes. Listing it as a dependency would run the cleanup on every such change,
+  // momentarily dropping the thought's tracked size while it is still mounted. useFreshCallback keeps the reference
+  // stable so the cleanup is only run on unmount, while still calling the latest onResize.
+  const releaseSize = useFreshCallback(
+    () => onResize?.({ height: null, width: null, id: id, isVisible: true, key: crossContextualKey }),
     [crossContextualKey, onResize, id],
   )
+  useEffect(() => releaseSize, [releaseSize])
 
   return (
     <div
@@ -252,6 +254,7 @@ const VirtualThought = ({
         <Subthought
           autofocus={autofocus}
           debugIndex={debugIndex}
+          childIndexNonAttribute={childIndexNonAttribute}
           depth={depth + 1}
           dropUncle={dropUncle}
           env={env}
@@ -264,7 +267,6 @@ const VirtualThought = ({
           showContexts={showContexts}
           simplePath={simplePath}
           style={style}
-          zoomCursor={zoomCursor}
         />
       )}
 

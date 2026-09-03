@@ -36,7 +36,7 @@ describe('DOM', () => {
 
     // This ensures that the thought b exists so we can confirm later that it is deleted.
     const initialExportedData = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(initialExportedData).toBe(`- __ROOT__
+    expect(initialExportedData).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
 
@@ -49,7 +49,7 @@ describe('DOM', () => {
 
     // This ensures that the thought b doesn't exist now.
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
   })
 })

@@ -175,6 +175,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   return (
     <div
+      data-testid='gesture-trace'
       className={css({
         zIndex: 'gestureTrace',
         position: 'fixed',
@@ -208,12 +209,11 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     </div>
   )
 }
-/** Renders the TraceGesture component as long as it is not disabled in the settings. */
+/** Renders the TraceGesture component unless a modal or the mobile command universe is shown. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
   const showModal = useSelector(state => state.showModal)
   const showMobileCommandUniverse = useSelector(state => state.showMobileCommandUniverse)
-  const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
-  return <>{!disableGestureTracing && !showModal && !showMobileCommandUniverse && <TraceGesture {...props} />}</>
+  return <>{!showModal && !showMobileCommandUniverse && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper

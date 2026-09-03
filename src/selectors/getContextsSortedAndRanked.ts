@@ -49,7 +49,9 @@ const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
     const path = unroot(simplePath)
     const breadcrumbs = rootedParentOf(state, parentOf(path))
     const parent = getThoughtById(state, thought.parentId)
-    const breadcrumbThoughts = childIdsToThoughts(state, breadcrumbs)
+    // Root token values are provider implementation details. Treat the root as an empty breadcrumb so
+    // context order does not change between providers that use different root ids.
+    const breadcrumbThoughts = isRoot(breadcrumbs) ? [] : childIdsToThoughts(state, breadcrumbs)
     if (!breadcrumbThoughts.every(nonNull)) return MISSING_TOKEN
     const encodedBreadcrumbs = breadcrumbThoughts
       .map(thought => (thought ? thought.value : MISSING_TOKEN))

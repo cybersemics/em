@@ -1,5 +1,5 @@
 import { KeyInput, Keyboard } from 'puppeteer'
-import { page } from '../setup'
+import { page } from '../session'
 
 type Options = Parameters<Keyboard['press']>[1]
 
