@@ -224,6 +224,8 @@ On mobile, the Command Center normally opens whenever a multiselection is active
 
 When the cursor crosses an edge, it lands half its own height back inside the comfort zone. This landing distance is existing behavior. The top and bottom landing offsets are both measured from the cursor's top edge, so the top offset is half the cursor height while the bottom offset includes the full cursor height plus the same half-height distance. The top trigger is the toolbar's bottom edge, while the historical top landing calculation subtracts the toolbar's height; these values remain separate so naming the comfort zone does not change existing safe-area or browser-offset behavior. Bottom landing and smooth-versus-instant selection likewise continue using the same visible-height and navbar measurements.
 
+Requested scroll positions are clamped to the document's reachable range before being passed to `window.scrollTo`. If the best reachable target is the current position, autoscroll does nothing instead of manufacturing Mobile Safari's protective 1px floor.
+
 ### `preventAutoscroll.ts`
 
 [`src/device/preventAutoscroll.ts`](../src/device/preventAutoscroll.ts).
