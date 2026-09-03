@@ -1,9 +1,8 @@
 import { fireEvent, render } from '@testing-library/react'
 import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
-import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
-import noteCommand from '../../commands/note'
+import { commandById } from '../../commands'
 import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import click from '../../test-helpers/click'
@@ -17,23 +16,10 @@ afterEach(async () => {
   await cleanupTestApp()
 })
 
+// Every case drives Bold, whose result a stale edit would overwrite. A command that does not change thought text (e.g.
+// Note) leaves the same value behind whether or not anything flushed, so it cannot demonstrate the flush at all.
 // https://github.com/cybersemics/em/issues/4774
 it('flushes pending edits before executing a toolbar command', async () => {
-  await dispatch([newThought({ value: 'a' })])
-
-  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
-  editable.innerHTML = 'ab'
-  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
-
-  await click('[data-testid="toolbar-icon"][aria-label="Note"]')
-  await act(vi.runOnlyPendingTimersAsync)
-
-  const state = store.getState()
-  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('ab')
-})
-
-// https://github.com/cybersemics/em/issues/4774
-it('flushes pending edits before executing a formatSelection command from the toolbar', async () => {
   await dispatch([newThought({ value: 'a' })])
 
   const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
@@ -84,28 +70,8 @@ it('flushes pending edits before applying letter case from the picker', async ()
   expect(getThoughtById(state, head(state.cursor!))!.value).toBe('AB')
 })
 
-// https://github.com/cybersemics/em/issues/4774
-it('flushes pending edits before executing a desktop command universe command', async () => {
-  await dispatch([newThought({ value: 'a' })])
-
-  const editable = document.querySelector('[data-editing=true] [data-editable]') as HTMLElement
-  editable.innerHTML = 'ab'
-  fireEvent.input(editable, { inputType: 'insertText', data: 'b' })
-
-  await act(async () => {
-    store.dispatch(desktopCommandUniverse())
-  })
-  await act(vi.runOnlyPendingTimersAsync)
-
-  const searchInput = document.querySelector('input[placeholder="Search for a command"]') as HTMLInputElement
-  fireEvent.input(searchInput, { target: { value: 'Note' } })
-  fireEvent.keyDown(window, { key: 'Enter' })
-  await act(vi.runOnlyPendingTimersAsync)
-
-  const state = store.getState()
-  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('ab')
-})
-
+// The Command Universe is not covered here: opening it focuses its search input, which blurs the editable and flushes
+// through Editable's onBlur, so its edit is committed before any command runs.
 // https://github.com/cybersemics/em/issues/4774
 it('flushes pending edits before executing a command center command', async () => {
   await dispatch([newThought({ value: 'a' })])
@@ -118,16 +84,16 @@ it('flushes pending edits before executing a command center command', async () =
     createElement(Provider, {
       store,
       children: createElement(PanelCommand, {
-        command: noteCommand,
+        command: commandById('bold'),
         size: 'small',
       }),
     }),
   )
 
-  const noteButton = container.querySelector(`[aria-label="${noteCommand.label}"]`) as HTMLElement
-  fireEvent.click(noteButton)
+  const boldButton = container.querySelector('[aria-label="Bold"]') as HTMLElement
+  fireEvent.click(boldButton)
   await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
-  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('ab')
+  expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>ab</b>')
 })
