@@ -6,12 +6,14 @@ import { SystemStyleObject } from '../../styled-system/types'
 import Gesture from '../@types/Gesture'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
 import ArrowheadMarker from './GestureDiagram/ArrowheadMarker'
+import ContinuousGradientGestureRenderer from './GestureDiagram/ContinuousGradientGestureRenderer'
 import SegmentedGradientGestureRenderer from './GestureDiagram/SegmentedGradientGestureRenderer'
 import SolidGestureRenderer from './GestureDiagram/SolidGestureRenderer'
 import getGestureGeometry from './GestureDiagram/getGestureGeometry'
 import GestureArrowhead from './GestureDiagram/types/GestureArrowhead'
+import GestureGradient from './GestureDiagram/types/GestureGradient'
 
-interface GestureDiagramProps {
+interface GestureDiagramBaseProps {
   /** Length of the SVG arrowhead marker. */
   arrowSize?: number
   /** Solid stroke color or legacy gradient endpoint. */
@@ -46,11 +48,25 @@ interface GestureDiagramProps {
   arrowhead?: GestureArrowhead
   /** When true, renders a drop-shadow glow filter on all path segments. Default: true. */
   glow?: boolean
-  /** When true (default), renders gradient strokes via <defs> + GradientStyleBlock. When false, uses solid strokes from highlightColor/color. */
-  useGradient?: boolean
-  /** Stroke color for highlighted segments when useGradient=false. Default: token('colors.vividHighlight'). */
+  /** Stroke color for highlighted directions. Default: token('colors.vividHighlight'). */
   highlightColor?: string
 }
+
+type GestureDiagramProps = GestureDiagramBaseProps &
+  (
+    | {
+        /** Enables the existing segmented gradient when no custom gradient is supplied. */
+        useGradient?: true
+        /** Enables continuous path-length rendering with this custom color ramp. */
+        gradient?: GestureGradient
+      }
+    | {
+        /** Selects solid binary rendering for uses such as the Gesture Menu. */
+        useGradient: false
+        /** A solid gesture cannot also supply a gradient. */
+        gradient?: never
+      }
+  )
 
 /** Renders an SVG representation of a gesture.
  *
@@ -78,6 +94,7 @@ const GestureDiagram = ({
   arrowhead = 'filled',
   glow = true,
   useGradient = true,
+  gradient,
   highlightColor,
 }: GestureDiagramProps) => {
   // One stable prefix keeps this diagram's marker, masks, and gradients unique in the document.
@@ -189,7 +206,18 @@ const GestureDiagram = ({
           />
         </defs>
 
-        {useGradient ? (
+        {gradient ? (
+          <ContinuousGradientGestureRenderer
+            arrowhead={arrowhead}
+            dropShadow={dropShadow}
+            geometry={geometry!}
+            gradient={gradient}
+            highlight={highlight}
+            highlightColor={highlightColor}
+            instanceId={instanceId}
+            strokeWidth={strokeWidth}
+          />
+        ) : useGradient ? (
           <SegmentedGradientGestureRenderer
             arrowhead={arrowhead}
             color={color}

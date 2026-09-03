@@ -121,7 +121,11 @@ const serializeSegment = (segment: GestureSegment, path: Gesture) =>
       ? `M ${segment.from.x} ${segment.from.y} A ${segment.radius} ${segment.radius} 0 0 ${segment.sweepFlag} ${segment.to.x} ${segment.to.y}`
       : `M ${segment.from.x},${segment.from.y} Q ${segment.control.x},${segment.control.y} ${segment.to.x},${segment.to.y}`
 
-/** Paints the existing gradient mode, restarting a gradient on every geometry segment. */
+/**
+ * Preserves the default gradient treatment used by existing GestureDiagram callers.
+ * GestureDiagram selects this renderer when no custom `gradient` prop is supplied.
+ * Unlike ContinuousGradientGestureRenderer, each geometry segment restarts its own ramp.
+ */
 const SegmentedGradientGestureRenderer = ({
   arrowhead,
   color,
