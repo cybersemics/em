@@ -152,6 +152,19 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // leaving the gesture menu and transparent overlay stuck on screen. See #3887.
       if (this.currentStart) return
 
+      // Two-finger tracing must not be interpreted as a gesture. If a second finger touches down
+      // before any gesture has begun, abandon the sequence so nothing happens: onPanResponderMove
+      // and onPanResponderRelease both bail out when this.abandon is set, preventing the trace,
+      // the gesture menu, and any command from being triggered. This runs after the currentStart
+      // guard above so a stray finger during an already-recognized single-finger gesture is still
+      // ignored rather than abandoning it (see #3887). See #4233.
+      if (e.touches.length > 1) {
+        this.abandon = true
+        this.disableScroll = false
+        clearGesture()
+        return
+      }
+
       if (testFlags.logMultigesture) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY

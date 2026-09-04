@@ -16,6 +16,7 @@ import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
+import multitouchStore from '../../stores/multitouch'
 import equalPath from '../../util/equalPath'
 import isCommandKey from '../../util/isCommandKey'
 
@@ -239,6 +240,10 @@ const useEditMode = ({
           !hasMulticursor(state) &&
           !globals.suppressCursorAfterTouch &&
           state.longPress === LongPressState.Inactive &&
+          // Do not move the cursor when the tap is part of a multi-touch gesture (e.g. pinch or two-finger
+          // trace): the caret must stay where it was. The latch persists through the terminating touchend of
+          // the gesture and resets on the next single-finger touchstart. See #4233.
+          !multitouchStore.getState() &&
           style?.visibility !== 'hidden'
         if (!move) return
 
@@ -273,6 +278,13 @@ const useEditMode = ({
     const onMouseDown = (e: MouseEvent) => {
       // If CMD/CTRL is pressed, this is a multiselect click, so don't focus the editable.
       if (isCommandKey(e)) {
+        e.preventDefault()
+        return
+      }
+
+      // Ignore synthesized mouse events that are part of a multi-touch gesture (e.g. pinch): the caret must
+      // not move to the touch. preventDefault also blocks the native focus/caret change. See #4233.
+      if (multitouchStore.getState()) {
         e.preventDefault()
         return
       }
