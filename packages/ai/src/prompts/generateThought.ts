@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import Model from '../@types/Model'
 import ReasoningEffort from '../@types/ReasoningEffort'
+import Service from '../@types/Service'
 import completeChat from '../completeChat'
 
 /** Prompts the LLM to generate a thought. */
@@ -51,6 +52,7 @@ ${input}
     ],
     model: Model.GPT_5_6_LUNA,
     reasoningEffort: ReasoningEffort.NONE,
+    service: Service.GENERATE_THOUGHT,
     schema: z.object({
       thought: z.string().trim().min(1).describe('The complete replacement for the target thought'),
     }),

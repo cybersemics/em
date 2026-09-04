@@ -2,7 +2,6 @@ import type { ConsoleMessage, Page } from 'puppeteer'
 import exportThoughts from '../helpers/exportThoughts'
 import paste from '../helpers/paste'
 import refresh from '../helpers/refresh'
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import { page, setPage } from '../session'
 import { createTreecrdtTestPage, usePersistentTreecrdtStorage } from '../setup'
 
@@ -29,7 +28,6 @@ it('keeps one active tab across refreshes and successive tab handoffs', async ()
 
   await paste('persisted in the first tab')
   expect(await exportThoughts()).toContain('persisted in the first tab')
-  await waitForThoughtExistInDb('persisted in the first tab')
 
   await refresh()
   await waitForHydratedThought(first, 'persisted in the first tab')

@@ -8,6 +8,21 @@ allowed-tools:
 
 Issues reporting broken behaviour in this repo follow a fixed format.
 
+## Ask before posting
+
+The issue is read by someone who cannot ask you anything. Every gap in it becomes a question in a comment thread, or a guess by whoever picks it up.
+
+So put your open questions to the reporter first, and post once the answers are in. Ask about anything whose answer changes what the issue says:
+
+- A step you would otherwise have to guess at — which setting, which value, which platform, what the thought tree was.
+- Whether what you are describing is one bug or two.
+- Expected Behavior, where the correct behaviour is a decision rather than an observation.
+- Evidence you believe exists and do not have — a screenshot, a video, a debug log.
+
+Ask them in one pass rather than one at a time, and only where the answer is the reporter's to give: a question you can settle by reproducing the bug or by reading the code is yours to settle.
+
+What you post is then succinct and free of loose ends — no "possibly", no "I think this is related to", no alternative left unruled-out. Where an answer genuinely cannot be had, name it as a known unknown in the preamble rather than leaving it implied.
+
 ## The template
 
 Exactly these headings, at `##`, in this order:
@@ -143,9 +158,10 @@ New issues often originate in a comment thread on another issue or PR.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
+- A loose end left for the reader — an unruled-out alternative, a missing value, an unnamed platform — that the reporter could have answered before posting.
 
 ## When something is unknown
 
-State the uncertainty in the preamble rather than omitting the issue.
+Ask, as above. State whatever survives the answers in the preamble rather than omitting the issue.
 
 Do not guess Expected Behavior. Apply `design-needed` and leave the decision to a maintainer, since a guess there becomes a regression test asserting behaviour nobody chose.

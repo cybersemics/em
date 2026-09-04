@@ -96,6 +96,7 @@ Notable behavior in [`useDragAndDropThought.tsx`](../src/hooks/useDragAndDropTho
 - **`canDrop`** rejects the drop if `state.longPress !== DragInProgress` (so it short-circuits when the drag has been canceled), if the parent path has the context view active (you can't drop into a context view), or if the destination is a descendant of any dragged thought (use of [`canDropPath`](../src/hooks/useDragAndDropThought.tsx), a [moize](https://github.com/planttheidea/moize)-cached helper with `maxSize: 50`, since `canDrop` runs every frame during hover).
 - **`drop`** validates each item separately (root/EM contexts can't move out of their root; can't drop on self), animates the dragged thought's flight to a collapsed destination via [`animateDroppedThought`](../src/util/animateDroppedThought.ts), and then dispatches either `moveThought` (default) or `createThought` (when in the context view, dropping creates a new entry under the dragged context). Wraps multicursor drops in `setIsMulticursorExecuting` so undo coalesces them.
 - **`hover`** is throttled by mouse position via [`throttleByMousePosition`](../src/util/throttleByMousePosition.ts) to update `state.hoveringPath` and `state.hoverZone` only when the cursor actually moves.
+- **`endDrag`** restores scrolling and clears the drag hint synchronously, then resets `state.longPress` on the next task. Keeping the existing drag protections active through the current task prevents a click synthesized from the drag's release from moving the cursor to the dragged thought; a separate user click occurs later and is handled normally.
 
 ### `useDragAndDropSubThought`
 
@@ -215,7 +216,7 @@ Drag-and-drop runs hot — `canDrop` and `hover` fire many times per second duri
 
 ## react-dnd patches
 
-Four patches live under [`.yarn/patches/`](../.yarn/patches), three for the touch backend and one for the HTML5 backend. Patches stack: each patch is applied on top of the previous one's output. To create a new touch-backend patch, you must specify the correct candidate package (because there are already two layered patches):
+Five patches live under [`.yarn/patches/`](../.yarn/patches), four for the touch backend and one for the HTML5 backend. Patches stack: each patch is applied on top of the previous one's output. To create a new touch-backend patch, you must specify the correct candidate package (because there are already several layered patches):
 
 ```
 $ yarn patch -u react-dnd-touch-backend
@@ -247,7 +248,7 @@ From [em PR #3138](https://github.com/cybersemics/em/pull/3138) — fixes anothe
 
 ### `react-dnd-touch-backend-patch-2c3a2052b6.patch`
 
-The third (most recent) layered touch-backend patch. It adds **scroll-to-cancel**: if a `scroll` event fires before the drag has started, cancel the pending drag; if scroll fires *during* a drag, end the drag. Specifically:
+The third layered touch-backend patch. It adds **scroll-to-cancel**: if a `scroll` event fires before the drag has started, cancel the pending drag; if scroll fires *during* a drag, end the drag. Specifically:
 
 - Adds a `handleScroll` arrow-method to `TouchBackendImpl` that clears the pending-drag timer (or calls `endDrag` if a drag is already live), then unbinds itself.
 - Registers `handleScroll` on `window` from `handleTopMoveStartDelay` (the backend's "you started touching, here comes the long-press timer" handler) so the scroll listener is only active during the relevant window.
@@ -255,6 +256,16 @@ The third (most recent) layered touch-backend patch. It adds **scroll-to-cancel*
 - Cleans up `this.timeout = 0` after the timer fires and at touchSlop, so the scroll handler can distinguish "drag pending" from "drag started".
 
 This addresses the iOS Safari edge case where a vertical scroll begins before `touchSlop` is exceeded — once Safari starts scrolling, it can't be cancelled programmatically, so the drag has to bow out.
+
+### `react-dnd-touch-backend-patch-03e51a5757.patch`
+
+The fourth layered touch-backend patch registers capture-phase `pointerup` and `pointercancel` fallbacks for iOS WKWebView. A dragged source can be removed before its terminating `touchend` reaches the document, so these pointer events ensure the backend still drops and ends the drag instead of leaving `state.longPress` stuck at `DragInProgress`.
+
+### `react-dnd-touch-backend-patch-3f966b38ad.patch`
+
+The fifth layered touch-backend patch coordinates the `pointerup` fallback with the canonical `touchend` handler. `pointerup` prevents its default action immediately but defers drag completion to the next task. If `touchend` arrives normally, it cancels the fallback and ends the drag while the app's drag protections are still active; if `touchend` is missing, the fallback ends the drag on the next task. `pointercancel` continues to end immediately. The pending fallback is also canceled during backend teardown.
+
+When a touch drag ends, application cleanup returns `state.longPress` to `Inactive` immediately so scrolling, gestures, alerts, and multicursor cleanup are restored without a timer. Before that transition, `useDragAndDropThought` sets `globals.suppressCursorAfterTouch`. `Editable` ignores cursor-producing compatibility events while the flag is set, and the next capture-phase `touchstart` clears it. This ties suppression to the completed touch gesture rather than assuming that the browser will dispatch its trailing click or focus before a zero-delay timer.
 
 ### `react-dnd-html5-backend-npm-16.0.1-754940d855.patch`
 
