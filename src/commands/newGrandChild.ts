@@ -3,6 +3,7 @@ import State from '../@types/State'
 import { newGrandChildActionCreator as newGrandChild } from '../actions/newGrandChild'
 import SettingsIcon from '../components/icons/SettingsIcon'
 import { hasChildren } from '../selectors/getChildren'
+import getRootPath from '../selectors/getRootPath'
 import selectedPaths from '../selectors/selectedPaths'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -10,7 +11,8 @@ import isDocumentEditable from '../util/isDocumentEditable'
 const newGrandChildCommand = {
   id: 'newGrandChild',
   label: 'New Grandchild' as const,
-  description: 'Create a thought within the first subthought.',
+  description:
+    'Create a thought within the first subthought. With no cursor, creates a thought within the first thought in the root.',
   gesture: 'rdrd',
   multicursor: {
     // The action sets the cursor to the new empty grandchild with the keyboard open, ready to type. The default restore would move the caret back to the originally selected thought.
@@ -21,8 +23,10 @@ const newGrandChildCommand = {
   // TODO: Create unique icon
   svg: SettingsIcon,
   canExecute: (state: State) => {
-    const paths = selectedPaths(state)
-    return isDocumentEditable() && paths.length > 0 && paths.every(path => hasChildren(state, head(path)))
+    const selected = selectedPaths(state)
+    // Without a selection, the root stands in for the cursor: the new thought is created in the first visible child of the root, so the root must have a visible child.
+    const paths = selected.length > 0 ? selected : [getRootPath(state)]
+    return isDocumentEditable() && paths.every(path => hasChildren(state, head(path)))
   },
   exec: dispatch => dispatch(newGrandChild()),
 } satisfies Command
