@@ -17,7 +17,7 @@ describe('mobile', () => {
   deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   // https://github.com/cybersemics/em/issues/4827
-  it.skip("move the cursor to the note's thought without opening the keyboard on the first tap of a note", async () => {
+  it("move the cursor to the note's thought without opening the keyboard on the first tap of a note", async () => {
     await paste(`
       - a
       - b
