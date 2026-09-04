@@ -297,9 +297,31 @@ function splitHyphenatedAndCompound(htmlValue: string, plainValue: string): Spli
 }
 
 /**
+ * Splits a value at a caret offset into the text before the caret as the main thought and the text after it as a child, e.g. "Hello wo|rld" -> "- Hello wo   - rld". Returns null when the caret is not strictly inside the text or either side is blank, e.g. a caret at the end of the value or just before a trailing space.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param caretOffset The plain text offset of the caret.
+ */
+function splitAtCaret(htmlValue: string, caretOffset: number): SplitResult[] | null {
+  const plainValue = getTextContentFromHTML(htmlValue)
+  if (caretOffset <= 0 || caretOffset >= plainValue.length) return null
+
+  // An unformatted value is sliced directly, avoiding the DOM. A formatted one is split as HTML so that its tags are re-balanced onto each half.
+  const halves =
+    plainValue === htmlValue
+      ? { left: htmlValue.slice(0, caretOffset), right: htmlValue.slice(caretOffset) }
+      : splitHtmlAtTextOffset(htmlValue, caretOffset)
+  const left = trimHtml(halves.left)
+  const right = trimHtml(halves.right)
+  if (!getTextContentFromHTML(left).trim() || !getTextContentFromHTML(right).trim()) return null
+
+  return [{ value: left }, { value: right, insertNewSubThought: true }]
+}
+
+/**
  * Splits given value by special characters.
  */
-const splitSentence = (value: string): SplitResult[] => {
+const splitSentenceByDelimiters = (value: string): SplitResult[] => {
   const plainValue = getTextContentFromHTML(value)
 
   // Check for parenthetical content at the end of the thought first
@@ -472,6 +494,18 @@ const splitSentence = (value: string): SplitResult[] => {
     splitValues.length > 1 && plainValue !== value ? splitFormattedHtmlByPlainValues(value, splitValues) : splitValues
 
   return values.map(value => ({ value }))
+}
+
+/**
+ * Splits given value by special characters. A value that none of the delimiters split is split at the caret instead, when one is given, into the text before the caret as the main thought and the text after it as a child.
+ *
+ * @param value The HTML thought value.
+ * @param caretOffset The plain text offset of a collapsed selection within the value, if any.
+ */
+const splitSentence = (value: string, caretOffset?: number | null): SplitResult[] => {
+  const results = splitSentenceByDelimiters(value)
+  if (results.length > 1 || caretOffset == null) return results
+  return splitAtCaret(value, caretOffset) ?? results
 }
 
 export default splitSentence
