@@ -160,6 +160,8 @@ interface State {
   showGestureMenu: boolean
   showHiddenThoughts: boolean
   showSortPicker: boolean
+  /** Whether the Time bullet popover is open. Which bullet it is anchored to is timePickerPath. See: actions/toggleTimePicker. */
+  showTimePicker: boolean
   showCommandCenter: boolean
   /**
    * The currently shown modal dialog box.
@@ -170,6 +172,8 @@ interface State {
   showSidebar: boolean
   showMobileCommandUniverse?: boolean
   showUndoSlider: boolean
+  /** The thought whose Time bullet popover is open. Only meaningful while showTimePicker is true. */
+  timePickerPath: Path | null
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.

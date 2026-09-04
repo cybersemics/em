@@ -12,6 +12,7 @@ import { LongPressProps } from '../hooks/useLongPress'
 import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
+import getBulletTime from '../selectors/getBulletTime'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
@@ -21,11 +22,14 @@ import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import commandStateStore from '../stores/commandStateStore'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
+import equalPath from '../util/equalPath'
+import formatTime from '../util/formatTime'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 import BulletPositioner from './BulletPositioner'
+import TimePicker from './TimePicker'
 
 interface BulletProps {
   dragSource: ConnectDragSource
@@ -215,30 +219,27 @@ const BulletParent = ({
 const numberToLetters = (n: number): string =>
   n <= 0 ? '' : numberToLetters(Math.floor((n - 1) / 26)) + String.fromCharCode(97 + ((n - 1) % 26))
 
-/** An ordered-list glyph (number or letter) rendered in place of a bullet for =children/=bullet/Ordered or =children/=bullet/Alpha. Rendered inside the same scaling bullet SVG (viewBox 0 0 600 600) so it sizes and positions consistently across platforms and font sizes. */
-const BulletOrdered = ({ fill, index, style }: { fill?: string; index: number; style: 'Ordered' | 'Alpha' }) => {
-  const label = style === 'Alpha' ? numberToLetters(index) : `${index}`
-  return (
-    <text
-      aria-label='bullet-glyph'
-      data-bullet={style === 'Alpha' ? 'alpha' : 'ordered'}
-      // Right-anchor the glyph so multi-character ordinals form a period-aligned column. x is offset to the right of the
-      // viewBox center (300) so a single character is centered on the bullet position, aligning with the leaf bullet and
-      // cursor overlay (both centered at cx=300).
-      x={567}
-      // Sit on the thought text's alphabetic baseline. The viewBox (0 0 600 600) is mapped to lineHeight (fontSize *
-      // 1.25), so the text baseline falls at a fixed user-space y independent of font size; 440 aligns the glyph with
-      // the text baseline while keeping it visually centered in the cursor overlay (radius 245 at cy=300).
-      y={440}
-      textAnchor='end'
-      className={css({ fill: 'bullet' })}
-      // fontSize 480 in user space renders at fontSize * 1.25 * (480/600) = fontSize, matching the thought text size.
-      style={{ fill, fontSize: '480px' }}
-    >
-      {label}.
-    </text>
-  )
-}
+/** A text glyph rendered in place of a bullet: a number for =bullet/Ordered, a letter for =bullet/Alpha, or a clock time for =bullet/Time. Rendered inside the same scaling bullet SVG (viewBox 0 0 600 600) so it sizes and positions consistently across platforms and font sizes. */
+const BulletText = ({ fill, kind, label }: { fill?: string; kind: 'ordered' | 'alpha' | 'time'; label: string }) => (
+  <text
+    aria-label='bullet-glyph'
+    data-bullet={kind}
+    // Right-anchor the glyph so multi-character ordinals and times form a right-aligned column. x is offset to the
+    // right of the viewBox center (300) so a single character is centered on the bullet position, aligning with the
+    // leaf bullet and cursor overlay (both centered at cx=300).
+    x={567}
+    // Sit on the thought text's alphabetic baseline. The viewBox (0 0 600 600) is mapped to lineHeight (fontSize *
+    // 1.25), so the text baseline falls at a fixed user-space y independent of font size; 440 aligns the glyph with
+    // the text baseline while keeping it visually centered in the cursor overlay (radius 245 at cy=300).
+    y={440}
+    textAnchor='end'
+    className={css({ fill: 'bullet' })}
+    // fontSize 480 in user space renders at fontSize * 1.25 * (480/600) = fontSize, matching the thought text size.
+    style={{ fill, fontSize: '480px' }}
+  >
+    {label}
+  </text>
+)
 
 /** A larger circle that surrounds the bullet of the cursor thought. */
 const BulletHighlightOverlay = ({
@@ -355,6 +356,10 @@ const Bullet = ({
     return { index: childIndexNonAttribute + 1, style: bulletStyle }
   }, shallowEqual)
 
+  /** The clock time of a thought in a =bullet/Time list, or null. Like ordered numbering, it does not apply in the context view. */
+  const bulletTime = useSelector(state => (showContexts ? null : getBulletTime(state, thoughtId)), shallowEqual)
+  const showTimePicker = useSelector(state => state.showTimePicker && equalPath(state.timePickerPath, path))
+
   const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
   // A selected thought stays collapsed even when it is the cursor, so state.expanded alone determines
   // whether its bullet points down.
@@ -365,51 +370,66 @@ const Bullet = ({
   const isRootChildLeaf = simplePath.length === 2 && leaf
 
   return (
-    <BulletPositioner
-      dragSource={dragSource}
-      longPressProps={longPressProps}
-      isEditing={isEditing}
-      leaf={leaf}
-      path={path}
-      simplePath={simplePath}
-      isCursorGrandparent={isCursorGrandparent}
-      isCursorParent={isCursorParent}
-      isInContextView={isInContextView}
-      isDragging={isDragging}
-      isTableCol1={isTableCol1}
-      ref={svgElement}
-    >
-      <g>
-        {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isDropGutterDeleteHovering && (
-          <BulletHighlightOverlay isHighlighted={isHighlighted} leaf={leaf} publish={publish} simplePath={simplePath} />
-        )}
-        {ordered != null ? (
-          <BulletOrdered fill={fill} index={ordered.index} style={ordered.style} />
-        ) : leaf && !showContexts ? (
-          <BulletLeaf
-            done={isDone}
-            fill={fill}
-            isHighlighted={isHighlighted}
-            dimmed={isDropGutterDeleteHovering}
-            missing={missing}
-            pending={pending}
-            showContexts={showContexts}
-            isBulletExpanded={isBulletExpanded}
-          />
-        ) : (
-          <BulletParent
-            currentScale={svgElement.current?.currentScale || 1}
-            done={isDone}
-            fill={fill}
-            isHighlighted={isHighlighted}
-            childrenMissing={childrenMissing}
-            pending={pending}
-            showContexts={showContexts}
-            isBulletExpanded={isBulletExpanded}
-          />
-        )}
-      </g>
-    </BulletPositioner>
+    <>
+      <BulletPositioner
+        dragSource={dragSource}
+        longPressProps={longPressProps}
+        isEditing={isEditing}
+        leaf={leaf}
+        path={path}
+        simplePath={simplePath}
+        isCursorGrandparent={isCursorGrandparent}
+        isCursorParent={isCursorParent}
+        isInContextView={isInContextView}
+        isDragging={isDragging}
+        isTableCol1={isTableCol1}
+        ref={svgElement}
+      >
+        <g>
+          {!(publish && (isRoot || isRootChildLeaf)) && isHighlighted && !isDropGutterDeleteHovering && (
+            <BulletHighlightOverlay
+              isHighlighted={isHighlighted}
+              leaf={leaf}
+              publish={publish}
+              simplePath={simplePath}
+            />
+          )}
+          {ordered != null ? (
+            <BulletText
+              fill={fill}
+              kind={ordered.style === 'Alpha' ? 'alpha' : 'ordered'}
+              label={`${ordered.style === 'Alpha' ? numberToLetters(ordered.index) : ordered.index}.`}
+            />
+          ) : bulletTime ? (
+            <BulletText fill={fill} kind='time' label={formatTime(bulletTime.minutes, { hour12: bulletTime.hour12 })} />
+          ) : leaf && !showContexts ? (
+            <BulletLeaf
+              done={isDone}
+              fill={fill}
+              isHighlighted={isHighlighted}
+              dimmed={isDropGutterDeleteHovering}
+              missing={missing}
+              pending={pending}
+              showContexts={showContexts}
+              isBulletExpanded={isBulletExpanded}
+            />
+          ) : (
+            <BulletParent
+              currentScale={svgElement.current?.currentScale || 1}
+              done={isDone}
+              fill={fill}
+              isHighlighted={isHighlighted}
+              childrenMissing={childrenMissing}
+              pending={pending}
+              showContexts={showContexts}
+              isBulletExpanded={isBulletExpanded}
+            />
+          )}
+        </g>
+      </BulletPositioner>
+      {/* The popover is HTML, so it cannot be a child of the bullet svg; it is rendered into document.body beneath the svg (see TimePicker). */}
+      {showTimePicker && <TimePicker anchor={svgElement} simplePath={simplePath} />}
+    </>
   )
 }
 

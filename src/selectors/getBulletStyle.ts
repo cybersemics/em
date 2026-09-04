@@ -5,7 +5,7 @@ import attribute from './attribute'
 import findDescendant from './findDescendant'
 
 /** The set of recognized `=bullet` style values. */
-const BULLET_STYLES: BulletStyle[] = ['None', 'Ordered', 'Alpha']
+const BULLET_STYLES: BulletStyle[] = ['None', 'Ordered', 'Alpha', 'Time']
 
 /**
  * Gets the bullet style applied to a context's children via `=children/=bullet`.
