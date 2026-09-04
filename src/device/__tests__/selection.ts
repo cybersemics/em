@@ -1,5 +1,5 @@
 import getTextContentFromHTML from '../../device/getTextContentFromHTML'
-import { html, offsetFromClosestParent } from '../selection'
+import { clear, html, offsetFromClosestParent } from '../selection'
 
 /** Create dummy div with given html value. */
 const createDummyDiv = (htmlValue: string) => {
@@ -101,6 +101,34 @@ describe('html', () => {
     selection.addRange(range)
 
     expect(html()).toBe('<b></b>')
+
+    document.body.removeChild(editable)
+  })
+})
+
+describe('clear', () => {
+  // https://github.com/cybersemics/em/issues/5259
+  it('empties the selection before blurring the editable', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.setAttribute('data-editable', 'true')
+    editable.innerHTML = 'aaa'
+    document.body.appendChild(editable)
+    editable.focus()
+
+    const range = document.createRange()
+    range.setStart(editable.firstChild!, 0)
+    range.setEnd(editable.firstChild!, 3)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    const selectedTextOnBlur: string[] = []
+    editable.addEventListener('blur', () => selectedTextOnBlur.push(window.getSelection()!.toString()))
+
+    clear()
+
+    expect(selectedTextOnBlur).toEqual([''])
 
     document.body.removeChild(editable)
   })
