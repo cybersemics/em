@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { UnknownAction } from 'redux'
 import Thunk from '../../@types/Thunk'
@@ -12,6 +13,7 @@ import head from '../../util/head'
 import { formatSelectionActionCreator as formatSelection } from '../formatSelection'
 import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
+import { setCursorActionCreator as setCursorPath } from '../setCursor'
 import { toggleNoteActionCreator as toggleNote } from '../toggleNote'
 
 /**
@@ -402,6 +404,36 @@ describe('formatSelection color', () => {
     await dispatch(formatSelection('backColor', 'green'))
 
     expect(cursorValue()).toBe('')
+  })
+
+  // #3910: an empty thought has no text to color, so the color is applied to the text typed into it afterwards
+  it.skip('applies a color to the text typed into an empty thought (#3910)', async () => {
+    await dispatch(newThought({ value: '' }))
+
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    const user = userEvent.setup({ delay: null })
+    await user.type(getEditable(), 'Hello')
+    await act(vi.runAllTimersAsync)
+
+    expect(cursorValue()).toBe('<font color="#00d688">Hello</font>')
+  })
+
+  // #3910: the color must be applied even when the cursor left the empty thought and came back before the color was set
+  it.skip('applies a color set after the cursor moved away from the empty thought and back (#3910)', async () => {
+    await dispatch([newThought({ value: 'a' }), newThought({ value: '' })])
+    const emptyPath = store.getState().cursor!
+
+    await dispatch(setCursor(['a']))
+    await dispatch(setCursorPath({ path: emptyPath }))
+
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    const user = userEvent.setup({ delay: null })
+    await user.type(getEditable(), 'Hello')
+    await act(vi.runAllTimersAsync)
+
+    expect(cursorValue()).toBe('<font color="#00d688">Hello</font>')
   })
 
   // #3901: applying the default background color to a thought that has no custom background is a no-op.
