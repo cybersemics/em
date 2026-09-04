@@ -10,12 +10,8 @@ const splitHtmlAtTextOffset = (htmlValue: string, offset: number): { left: strin
   const div = document.createElement('div')
   div.innerHTML = htmlValue
 
-  const nodeOffset = selection.offsetFromClosestParent(div, offset)
-  if (!nodeOffset?.node) throw new Error(`Unable to map text offset to an HTML node: ${offset}`)
-
-  const range = document.createRange()
-  range.setStart(nodeOffset.node, nodeOffset.offset)
-  range.setEnd(nodeOffset.node, nodeOffset.offset)
+  const range = selection.collapsedRangeAtOffset(div, offset)
+  if (!range) throw new Error(`Unable to map text offset to an HTML node: ${offset}`)
 
   const splitNodesResult = selection.splitNode(div, range)
   if (!splitNodesResult) return { left: '', right: '' }

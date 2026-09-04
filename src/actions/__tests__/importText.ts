@@ -2,6 +2,7 @@ import _ from 'lodash'
 import MimeType from '../../@types/MimeType'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
+import cursorCleared from '../../actions/cursorCleared'
 import importText, { ImportTextPayload } from '../../actions/importText'
 import newThought from '../../actions/newThought'
 import { ABSOLUTE_TOKEN, EMPTY_SPACE, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
@@ -1006,4 +1007,94 @@ it('set cursor on last thought after importing multiple thoughts in non-empty cu
     - b
       - x
       - y`)
+})
+
+describe('single-line paste into a thought', () => {
+  it('inserts into an empty thought', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: '' }),
+      importTextAtFirstMatch({ at: [''], text: 'abc', caretPosition: 0 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['abc'])!)!.value).toBe('abc')
+  })
+
+  it('appends when the caret offset is past the end of the value', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'ab' }),
+      importTextAtFirstMatch({ at: ['ab'], text: 'cd', caretPosition: 10 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['abcd'])!)!.value).toBe('abcd')
+  })
+
+  it('inserts at the caret without disturbing the surrounding formatting', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'X', caretPosition: 5 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['one <b>tXwo</b> three'])!)!.value).toBe(
+      'one <b>tXwo</b> three',
+    )
+  })
+
+  it('replaces a range that starts at the beginning of the value', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      importTextAtFirstMatch({
+        at: ['one <b>two</b> three'],
+        text: 'ONE',
+        caretPosition: 3,
+        replaceStart: 0,
+        replaceEnd: 3,
+      }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['ONE <b>two</b> three'])!)!.value).toBe(
+      'ONE <b>two</b> three',
+    )
+  })
+
+  it('replaces a range that falls inside a formatting tag', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      // the "w" of the bold "two"
+      importTextAtFirstMatch({
+        at: ['one <b>two</b> three'],
+        text: 'X',
+        caretPosition: 6,
+        replaceStart: 5,
+        replaceEnd: 6,
+      }),
+    ])(initialState())
+
+    // Composing the halves as left + text + right would leave the text between them, outside the <b> that both carry,
+    // splitting the bold run in two.
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['one <b>tXo</b> three'])!)!.value).toBe(
+      'one <b>tXo</b> three',
+    )
+  })
+
+  it('replaces the whole value when the thought is cleared', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      // cursorCleared is not curried, so unlike its neighbors it cannot compose point-free
+      state => cursorCleared(state, { value: true }),
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 0 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')
+  })
+
+  it('replaces the whole value when the thought is cleared and the caret is past the beginning', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      state => cursorCleared(state, { value: true }),
+      // a cleared thought still shows its text, so the caret can sit at an offset the emptied value cannot resolve
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 5 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')
+  })
 })

@@ -256,33 +256,6 @@ export const offsetFromNode = (node: Node): number | null => {
   return range.toString().length
 }
 
-/** Returns the character offset at the end of the selection. Returns null if there is no selection.
- *
- * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
- * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
- */
-export const offsetEnd = (): number | null => {
-  const selection = window.getSelection()
-  if (!selection) return null
-  const range = selection.getRangeAt(0)
-  if (!range) return null
-  const selectionStart = range.startOffset || 0
-  return selectionStart + selection.toString().length
-}
-
-/** Returns the character offset at the start of the selection. Returns null if there is no selection.
- *
- * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
- * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
- */
-export const offsetStart = (): number | null => {
-  const selection = window.getSelection()
-  if (!selection) return null
-  const range = selection.getRangeAt(0)
-  if (!range) return null
-  return range.startOffset || 0
-}
-
 /** Returns the plain-text character offsets [start, end) of the current selection relative to the given editable
  * element (ignoring nested HTML), or null if there is no selection within it. Used to apply formatting to an
  * arbitrary sub-range synchronously (#4637). */
@@ -411,6 +384,23 @@ export const offsetFromClosestParent = (nodeRoot: Node, offsetRoot: number): Nod
   }
 
   return offsetFromClosestParentRecursive(nodeRoot, offsetRoot)
+}
+
+/**
+ * Returns a collapsed Range at a plain text offset within the given root, mapping through nested formatting tags. Returns null if the root has no text content to resolve the offset against.
+ *
+ * @param root The node the offset is relative to.
+ * @param offset The offset that is taken relative to the root's value with all the html tags removed.
+ */
+export const collapsedRangeAtOffset = (root: Node, offset: number): Range | null => {
+  const nodeOffset = offsetFromClosestParent(root, offset)
+  if (!nodeOffset?.node) return null
+
+  const range = document.createRange()
+  range.setStart(nodeOffset.node, nodeOffset.offset)
+  range.setEnd(nodeOffset.node, nodeOffset.offset)
+
+  return range
 }
 
 /** Set the selection at the desired offset on the given node. Inserts empty text node when element has no children.
