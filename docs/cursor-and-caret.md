@@ -36,7 +36,7 @@ All access to the browser selection API goes through [`device/selection.ts`](../
 
 The `selection.ts` module groups its functions roughly into:
 
-- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetFromNode()`, `offsetStart()`, `offsetEnd()`, `offsetRange(editable)`, `offsetRangeThought(thoughtId)`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`, `isCaretNear(x, y, distance)`.
+- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetFromNode()`, `offsetStart()`, `offsetEnd()`, `offsetRange(editable)`, `offsetRangeThought(thoughtId)`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`, `isCaretNear(x, y)`.
 
 `offsetStart` and `offsetEnd` are the exception to the plain-text rule: they return an offset relative to the node the selection starts in, which matches the thought's plain-text offset only when the value has a single text node. `importData` is their last caller ([issue #5154](https://github.com/cybersemics/em/issues/5154)); everything else measures with `offsetRange` or `offsetRangeThought`.
 - **Writes:** `set(node, { offset?, end? })`, `setRange(node, { start, end })`, `clear()`, `collapse()`, `select(el)`, `removeCurrentSelection()`.
@@ -179,9 +179,9 @@ A non-Redux ministore tracking whether there is an active *non-collapsed* select
 
 The main consumer is [`useDragAndDropThought`](../src/hooks/useDragAndDropThought.tsx)'s `canDrag`: when the user has a text range selected on touch, dragging is disabled so they can use the iOS magnifier and copy/paste UI without inadvertently starting a drag. See [drag-and-drop.md](drag-and-drop.md).
 
-The collapsed case cannot be expressed by this store, because whether a press belongs to the caret depends on *where* the finger landed, which is only known at touchstart. [`selection.isCaretNear(x, y, distance)`](../src/device/selection.ts) answers that: true when the point is within `distance` of a collapsed caret **and** inside the editable that holds it. It shares its rect-padding comparison with `isNear` and measures the caret with the same viewport geometry that backs [`caretRect`](#caretrectstore), so a caret at the start or end of the text — where the browser puts the selection on the element node and there is no client rect — is located correctly rather than treated as absent.
+The collapsed case cannot be expressed by this store, because whether a press belongs to the caret depends on *where* the finger landed, which is only known at touchstart. [`selection.isCaretNear(x, y)`](../src/device/selection.ts) answers that: true when the point is within `DEFAULT_FONT_SIZE` of a collapsed caret **and** inside the editable that holds it. It shares its rect-padding comparison with `isNear` and measures the caret with the same viewport geometry that backs [`caretRect`](#caretrectstore), so a caret at the start or end of the text — where the browser puts the selection on the element node and there is no client rect — is located correctly rather than treated as absent.
 
-Three call sites consume it, all at `state.fontSize`, and all three are needed because they guard independent subsystems ([issue #3763](https://github.com/cybersemics/em/issues/3763)):
+Three call sites consume it, and all three are needed because they guard independent subsystems ([issue #3763](https://github.com/cybersemics/em/issues/3763)):
 
 - [`useLongPress`](../src/hooks/useLongPress.ts) does not mark a press that lands on the caret, so no `DragHold`.
 - `canDrag` requires `DragHold` on touch, so react-dnd's own timer cannot start a drag behind `useLongPress`'s back.
