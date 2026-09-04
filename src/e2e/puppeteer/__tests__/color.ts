@@ -95,6 +95,14 @@ it('Applies a text color set on an empty thought to the text typed into it', asy
 
   await clickToolbar('Text Color', 'text color swatches', 'green')
 
+  // The placeholder previews the color that the typed text will take.
+  const placeholderColor = await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    if (!editable) throw new Error('Editing thought not found')
+    return getComputedStyle(editable, '::before').color
+  })
+  expect(rgbToHex(placeholderColor)).toBe(rgbaToHex(colors.light.green))
+
   await keyboard.type('Hello')
 
   await waitForEditable(`<font color="${rgbaToHex(colors.light.green)}">Hello</font>`)

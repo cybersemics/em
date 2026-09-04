@@ -170,9 +170,14 @@ const Editable = ({
       isMulticursorPath(state, state.cursor),
   )
 
+  // Formatting applied to the thought while it was empty is held in pendingFormatStore until the user types (#3910).
+  // Style the placeholder with it so that the empty thought previews the formatting the typed text will take.
+  const pendingFormatValue = pendingFormatStore.useSelector(pendingFormat =>
+    pendingFormat.id === thoughtId ? pendingFormat.value : '',
+  )
   const placeholderCommandState = useMemo(
-    () => (isCursorCleared ? getCommandState(value) : null),
-    [isCursorCleared, value],
+    () => (isCursorCleared ? getCommandState(value) : pendingFormatValue ? getCommandState(pendingFormatValue) : null),
+    [isCursorCleared, pendingFormatValue, value],
   )
   const placeholderForeColor =
     typeof placeholderCommandState?.foreColor === 'string' ? placeholderCommandState.foreColor : undefined
