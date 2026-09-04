@@ -285,23 +285,23 @@ const main = async sha => {
   const repo = process.env.GITHUB_REPOSITORY
   const pr = await resolvePullRequest(repo, sha)
   if (!pr) {
-    console.log(`No open pull request in ${repo} contains ${sha}; nothing to do.`)
+    console.info(`No open pull request in ${repo} contains ${sha}; nothing to do.`)
     return
   }
   if (pr.head.sha !== sha) {
-    console.log(`PR #${pr.number} has moved on to ${pr.head.sha}; ignoring stale event for ${sha}.`)
+    console.info(`PR #${pr.number} has moved on to ${pr.head.sha}; ignoring stale event for ${sha}.`)
     return
   }
   const run = await newestPreviewRun(repo, sha)
   if (!run) {
-    console.log(`No Vercel Preview run for ${sha}; nothing to do.`)
+    console.info(`No Vercel Preview run for ${sha}; nothing to do.`)
     return
   }
   const deployment = await deploymentForRun(repo, sha, run.id)
   const { outside, state } = parseBody(pr.body)
   const target = decide({ run, deployment, current: state })
   if (!target) {
-    console.log(`Vercel Preview run ${run.id} is ${run.status}; leaving PR #${pr.number} as it is.`)
+    console.info(`Vercel Preview run ${run.id} is ${run.status}; leaving PR #${pr.number} as it is.`)
     return
   }
   if (run.status === 'completed' && run.conclusion === 'success' && !deployment?.url) {
@@ -312,7 +312,7 @@ const main = async sha => {
   const block = renderBlock(installing ? { ...target, stable: { ...target.stable, image: `./${QR_FILE}` } } : target)
   const body = spliceBody(outside, block)
   if (body === (pr.body ?? '').trimEnd()) {
-    console.log(`PR #${pr.number} already reflects run ${run.id}; nothing to write.`)
+    console.info(`PR #${pr.number} already reflects run ${run.id}; nothing to write.`)
     return
   }
 
@@ -320,7 +320,7 @@ const main = async sha => {
   // this run stale, and a human may have edited the description in the meantime.
   const latest = await api(`/repos/${repo}/pulls/${pr.number}`)
   if (latest.state !== 'open' || latest.head.sha !== sha) {
-    console.log(`PR #${pr.number} changed under us (state ${latest.state}, head ${latest.head.sha}); not writing.`)
+    console.info(`PR #${pr.number} changed under us (state ${latest.state}, head ${latest.head.sha}); not writing.`)
     return
   }
   const fresh = spliceBody(parseBody(latest.body).outside, block)
@@ -332,7 +332,7 @@ const main = async sha => {
       : target.stable
         ? `stable ${target.stable.sha.slice(0, 7)}`
         : 'block removed'
-    console.log(`PR #${pr.number}: ${outcome}.`)
+    console.info(`PR #${pr.number}: ${outcome}.`)
     return
   }
 
@@ -345,7 +345,7 @@ const main = async sha => {
   } else if (written.includes(`./${QR_FILE}`) || !parseBody(written).state?.stable?.image) {
     throw new Error('The QR upload did not leave an attachment URL in the managed block.')
   }
-  console.log(`PR #${pr.number}: installed QR for ${target.stable.url} (${target.stable.sha.slice(0, 7)}).`)
+  console.info(`PR #${pr.number}: installed QR for ${target.stable.url} (${target.stable.sha.slice(0, 7)}).`)
 }
 
 export default main
