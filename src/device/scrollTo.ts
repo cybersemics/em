@@ -1,3 +1,5 @@
+import scrollWindowTo from './scrollWindowTo'
+
 /** Scrolls the content to the top or bottom. Always scrolls instantly in integration tests, ignoring the passed behavior. */
 const scrollTo = (target: 'top' | 'bottom', behavior?: ScrollBehavior) => {
   const top = target === 'top' ? 0 : target === 'bottom' ? document.body.scrollHeight : null
@@ -6,11 +8,7 @@ const scrollTo = (target: 'top' | 'bottom', behavior?: ScrollBehavior) => {
     throw new Error('Unrecognized scrollTo target: ' + target)
   }
 
-  window.scrollTo({
-    top,
-    left: 0,
-    behavior: navigator.webdriver ? 'instant' : behavior,
-  })
+  scrollWindowTo(top, navigator.webdriver ? 'instant' : behavior)
 }
 
 export default scrollTo
