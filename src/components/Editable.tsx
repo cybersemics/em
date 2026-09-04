@@ -51,6 +51,7 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import caretRectStore from '../stores/caretRectStore'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
+import pendingFormatStore from '../stores/pendingFormatStore'
 import storageModel from '../stores/storageModel'
 import addEmojiSpace from '../util/addEmojiSpace'
 import debugLog from '../util/debugLog'
@@ -611,7 +612,20 @@ const Editable = ({
         // When the cursor is cleared, there may be an existing style that wraps the entire thought.
         // That style should be re-applied once they type something. (#3673)
 
-        const wrappedValue = state.cursorCleared ? applyOuterTags(e.target.value, oldValue) : e.target.value
+        // Formatting applied to the thought while it was empty has been held in pendingFormatStore, since an empty
+        // value has no text to wrap. Transfer it onto the first text typed into the thought and consume it (#3910).
+        // The wrapped value takes the immediate, forced branch below, which re-renders the editable with the
+        // formatting so that the browser carries it through the rest of the typing.
+        const pendingFormat = pendingFormatStore.getState()
+        const isPendingFormat =
+          pendingFormat.id === head(simplePath) && oldValue.length === 0 && e.target.value.length > 0
+        if (isPendingFormat) pendingFormatStore.update({ id: null, value: '' })
+
+        const wrappedValue = state.cursorCleared
+          ? applyOuterTags(e.target.value, oldValue)
+          : isPendingFormat
+            ? applyOuterTags(e.target.value, pendingFormat.value)
+            : e.target.value
         const trimmedWrappedValue = trimHtml(wrappedValue)
         const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
         const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)

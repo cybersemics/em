@@ -197,9 +197,19 @@ Geometry is mirrored rather than the character offset because the thought that h
 
 A non-Redux ministore tracking which formatting applies at the caret — bold, italic, underline, strikethrough, code, and the text and background colors — which is what highlights a formatting button in the toolbar and marks a swatch in the [`ColorPicker`](../src/components/ColorPicker.tsx) as selected. A selected swatch means the next tap on it removes the color rather than applying it, so a stale value silently turns a tap into a no-op.
 
-`updateCommandState` derives it two ways. With an active selection on a thought it asks the browser through `document.queryCommandState`, which reports formatting that has been enabled but not yet typed. With no selection — the usual state on mobile once the keyboard is down — it parses the cursor thought's value and reports only formatting that covers the whole thought.
+`updateCommandState` derives it three ways. When the cursor thought is empty and [`pendingFormatStore`](#pendingformatstore) is holding formatting for it, it reports that formatting, since the thought's own value cannot carry it. With an active selection on a thought it asks the browser through `document.queryCommandState`, which reports formatting that has been enabled but not yet typed. With no selection — the usual state on mobile once the keyboard is down — it parses the cursor thought's value and reports only formatting that covers the whole thought.
 
 It is refreshed from the `selectionchange` handler in [`initEvents`](../src/util/initEvents.ts), and from [`updateUrlHistory`](../src/redux-middleware/updateUrlHistory.ts) whenever the cursor moves or the cursor thought's value changes. The second trigger covers what `selectionchange` cannot: with no focused editable the browser fires no selection event, so a value the user did not type — undo, redo, or any other programmatic replacement — would otherwise leave the toolbar describing formatting the thought no longer has.
+
+### `pendingFormatStore`
+
+[`src/stores/pendingFormatStore.ts`](../src/stores/pendingFormatStore.ts).
+
+A non-Redux ministore holding formatting that has been applied to an *empty* thought. An empty thought's value must stay empty — emptiness is what makes it a placeholder, and what Backspace and the bullet key off — so a color or a bold applied to it has nowhere to live in the thoughtspace. Instead [`formatSelection`](../src/actions/formatSelection.ts) accumulates it here, keyed by thought id, and `Editable`'s `onChangeHandler` transfers the tags onto the first text typed into that thought with `applyOuterTags` and clears the store. Since the wrapped value differs from what was typed, the edit takes the immediate, forced branch, so the editable re-renders with the formatting and the browser carries it through the rest of the typing — the same mechanism that re-applies a cleared thought's formatting (#3673).
+
+The formatting is stored as an ordinary thought value wrapping a single placeholder character, e.g. `<font color="#00d688">x</font>`, so that it composes through the same utilities as a real value: `formatSelectionHtml` applies further commands to it (replacing a color, toggling a bold back off), `getCommandState` derives the toolbar and bullet state from it, and `applyOuterTags` transfers its wrappers onto the typed text.
+
+The entry is keyed by thought id rather than cleared when the cursor moves, so the formatting survives navigating away from the empty thought and back. It is superseded when the same thought is formatted once it has text, and consumed by the first edit — after which the value itself carries the formatting.
 
 ### Multiselect faux caret
 

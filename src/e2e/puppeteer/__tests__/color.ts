@@ -11,6 +11,7 @@ import getSelection from '../helpers/getSelection'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import keyboard from '../helpers/keyboard'
 import multiselectThoughts from '../helpers/multiselectThoughts'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
@@ -87,6 +88,19 @@ it('Set the text color of the text and bullet', async () => {
   expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
   expect(result?.color).toBe(rgbaToHex(colors.light.blue))
   expect(result?.backgroundColor).toBe(null)
+})
+
+it('Applies a text color set on an empty thought to the text typed into it', async () => {
+  await newThought()
+
+  await clickToolbar('Text Color', 'text color swatches', 'green')
+
+  await keyboard.type('Hello')
+
+  await waitForEditable(`<font color="${rgbaToHex(colors.light.green)}">Hello</font>`)
+
+  const bulletColor = await getBulletColor()
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.green))
 })
 
 it('Bullet keeps the font color after deleting all text without moving the cursor', async () => {
