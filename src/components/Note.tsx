@@ -14,7 +14,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { setNoteFocusActionCreator as setNoteFocus } from '../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
-import { isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import globals from '../globals'
@@ -57,6 +57,24 @@ const Note = React.memo(
     const onFocus = useFreshCallback(() => {
       preventAutoscrollEnd(noteRef.current)
       const state = store.getState()
+
+      // iOS Safari sometimes synthesizes the focus of a tap even though onTouchEnd called preventDefault (see
+      // globals.suppressCursorAfterTouch). The tap already moved the cursor without opening the keyboard, so dismiss
+      // the focus rather than treating it as the second tap that enters edit mode. As in Editable's onFocus, the
+      // selection is cleared again after two animation frames, since clearing it synchronously alone leaves iOS
+      // Writing Tools stuck open and the selection restored.
+      if (isTouch && globals.suppressCursorAfterTouch && !state.isKeyboardOpen) {
+        selection.clear()
+        dispatch(keyboardOpen({ value: false }))
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            selection.clear()
+            dispatch(keyboardOpen({ value: false }))
+          })
+        })
+        return
+      }
+
       const targetPath = resolveNotePath(state, path)
       const { noteId } = resolveNoteKey(state, head(path))
       if (targetPath && !noteId) {
@@ -209,6 +227,44 @@ const Note = React.memo(
 
     const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
 
+    /**
+     * Applies the two-tap pattern of thoughts to the note on mobile (see docs/cursor-and-caret.md#mobile): the first
+     * tap moves the cursor to the note's thought without opening the keyboard, and only a tap on a note whose thought
+     * already has the cursor is left to the browser, which focuses the note and opens the keyboard through onFocus.
+     * A tap while the keyboard is already open likewise enters the note directly, as it does on a thought.
+     */
+    const onTouchEnd = useCallback(
+      (e: React.TouchEvent) => {
+        if (!isTouch || disabled) return
+
+        dispatch((dispatch, getState) => {
+          const state = getState()
+
+          // A touchend that ends a touchmove is a scroll or gesture rather than a tap.
+          if (globals.touching) {
+            e.preventDefault()
+            return
+          }
+
+          if (state.isKeyboardOpen || equalPathHead(state.cursor, path)) return
+
+          // preventDefault stops the browser from synthesizing the tap's mousedown and focus, which would open the
+          // keyboard.
+          e.preventDefault()
+
+          // iOS Safari sometimes synthesizes the focus anyway, e.g. when the touchend is not cancelable because the tap
+          // landed during scroll momentum. Flag it for onFocus to dismiss until the next touchstart proves the user
+          // tapped again (see globals.suppressCursorAfterTouch).
+          if (isSafari()) {
+            globals.suppressCursorAfterTouch = true
+          }
+
+          dispatch(setCursor({ path, cursorHistoryClear: true }))
+        })
+      },
+      [disabled, dispatch, path],
+    )
+
     const onCopy = useCallback((e: React.ClipboardEvent) => {
       const html = selection.html()
       const text = selection.text()
@@ -278,6 +334,7 @@ const Note = React.memo(
           onBlur={onBlur}
           onFocus={onFocus}
           onMouseDown={onMouseDown}
+          onTouchEnd={onTouchEnd}
           role='button'
         />
         <span className={css({ fontSize: '1.1em', position: 'absolute', margin: '-0.15em 0 0 -1.175em' })}>
