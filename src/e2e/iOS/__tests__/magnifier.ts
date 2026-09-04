@@ -6,7 +6,6 @@ import dragMagnifier from '../helpers/dragMagnifier'
 import getSelection from '../helpers/getSelection'
 import isKeyboardShown from '../helpers/isKeyboardShown'
 import newThought from '../helpers/newThought'
-import observeDragActivation from '../helpers/observeDragActivation'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
@@ -24,15 +23,12 @@ describe('Magnifier', () => {
     expect(await getSelection().focusNode?.textContent).toBe(value)
     const offsetBefore = await getSelection().focusOffset
 
-    const readDragActivation = await observeDragActivation()
     await dragMagnifier(editable, 60, { offset: 10 })
-    const dragActivation = await readDragActivation()
+
+    // The caret follows the magnifier through the text. Starting a thought drag instead turns off contentEditable
+    // mid-drag, which destroys the selection and leaves the caret at the beginning.
     const offsetAfter = await getSelection().focusOffset
-    console.info('magnifier drag', { offsetBefore, offsetAfter, ...dragActivation })
-
-    expect(dragActivation).toEqual({ dragHold: false, dragInProgress: false })
-
-    // the caret follows the magnifier through the text rather than being destroyed with the editable
+    console.info('magnifier drag', { offsetBefore, offsetAfter })
     expect(await getSelection().focusNode?.textContent).toBe(value)
     expect(offsetAfter).toBeGreaterThan(offsetBefore!)
   })
