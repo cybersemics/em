@@ -87,7 +87,7 @@ const shouldCancelGesture = (
     isOnToolbar(x, y) ||
     // Cancel when the touch starts on a range input (e.g. the background glow debug sliders). Otherwise the gesture disables scrolling by calling preventDefault on touchmove, which blocks the slider's native drag.
     !!(x && y && document.elementFromPoint(x, y)?.closest('input[type="range"]')) ||
-    (x && y && selection.isNear(x, y, distance)) ||
+    (x && y && (selection.isNear(x, y, distance) || selection.isCaretNear(x, y))) ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
