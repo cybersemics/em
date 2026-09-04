@@ -412,6 +412,28 @@ describe('drag', () => {
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
+
+  it('holding the mouse on a bullet highlights it, ready to drag', async () => {
+    await paste('- a')
+    await waitForEditable('a')
+
+    // Only the bullet carries longPressProps on desktop — Thought gives them to the editable just when isTouch — so
+    // this is the whole of the mouse route into DragHold, and nothing else covered it.
+    const bullet = await page.$('[aria-label="bullet"]')
+    if (!bullet) throw new Error('Bullet not found.')
+    const boundingBox = await bullet.boundingBox()
+    if (!boundingBox) throw new Error('Bullet has no bounding box.')
+
+    await page.mouse.move(boundingBox.x + boundingBox.width / 2, boundingBox.y + boundingBox.height / 2)
+    await page.mouse.down()
+    const highlighted = await page
+      .waitForFunction((el: Element) => el.getAttribute('data-highlighted') === 'true', { timeout: 5000 }, bullet)
+      .then(() => true)
+      .catch(() => false)
+    await page.mouse.up()
+
+    expect(highlighted).toBe(true)
+  })
 })
 
 describe('drop', () => {

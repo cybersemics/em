@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
-import { ALLOWED_FORMATTING_TAGS } from '../constants'
+import { ALLOWED_FORMATTING_TAGS, DEFAULT_FONT_SIZE } from '../constants'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -712,18 +712,16 @@ export const isNear = (
 }
 
 /**
- * Returns true if the point is within the given number of pixels of a collapsed caret and falls inside the editable
- * that holds it. Where isNear is about a range of selected text, this is about the insertion point — a press that lands
+ * Returns true if the point is on the collapsed caret, i.e. within a touch target of it and inside the editable that
+ * holds it. Where isNear is about a range of selected text, this is about the insertion point — a press that lands
  * here is the user reaching for the caret, so it must not be claimed as a long press or a gesture (#3763). The point
  * must be inside the editable so that a press on the bullet, which sits just left of a caret at the start of the text,
  * still starts a drag.
+ *
+ * The zone is DEFAULT_FONT_SIZE rather than the user's font size, so that a finger-sized target does not grow with
+ * their text, and so that every caller agrees on where the caret ends.
  */
-export const isCaretNear = (
-  x: number,
-  y: number,
-  /** Distance from the point (px). */
-  distance: number,
-): boolean => {
+export const isCaretNear = (x: number, y: number): boolean => {
   // A range is handled by isNear and by selectionRangeStore, which disable the same interactions ahead of the press.
   if (!isActive() || !isCollapsed()) return false
 
@@ -732,5 +730,10 @@ export const isCaretNear = (
 
   if (!isNearBounds(x, y, caret.editable.getBoundingClientRect(), 0)) return false
 
-  return isNearBounds(x, y, { left: caret.x, right: caret.x, top: caret.y, bottom: caret.y + caret.height }, distance)
+  return isNearBounds(
+    x,
+    y,
+    { left: caret.x, right: caret.x, top: caret.y, bottom: caret.y + caret.height },
+    DEFAULT_FONT_SIZE,
+  )
 }

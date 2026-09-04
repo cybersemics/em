@@ -30,7 +30,6 @@ const useLongPress = (
 ) => {
   const [pressing, setPressing] = useState(false)
   const longPressState = useSelector(state => state.longPress)
-  const fontSize = useSelector(state => state.fontSize)
   const timerIdRef = useRef<number | undefined>(undefined)
   const dispatch = useDispatch()
   const dragDropManager = useDragDropManager()
@@ -79,19 +78,16 @@ const useLongPress = (
    * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      if (!('touches' in e.nativeEvent)) {
-        if (e.nativeEvent.button !== 2) setPressing(true)
-        return
-      }
+      if (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2) return
 
       // A press that lands on the caret is the user reaching for the iOS magnifier, not the start of a drag. Never
       // marking the press keeps the rest of the chain — haptics, the scroll lock, DragHold — from running (#3763).
-      const touch = e.nativeEvent.touches[0]
-      if (touch && selection.isCaretNear(touch.clientX, touch.clientY, fontSize)) return
+      const touch = 'touches' in e.nativeEvent ? e.nativeEvent.touches[0] : null
+      if (touch && selection.isCaretNear(touch.clientX, touch.clientY)) return
 
       setPressing(true)
     },
-    [fontSize, setPressing],
+    [setPressing],
   )
 
   // track that long press has stopped on mouseUp, touchEnd, or touchCancel
