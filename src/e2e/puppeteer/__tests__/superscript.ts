@@ -11,7 +11,7 @@ import { usePersistentTreecrdtStorage } from '../setup'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 usePersistentTreecrdtStorage()
 
-// https://github.com/cybersemics/em/issues/5353
+// https://github.com/cybersemics/em/issues/1074
 it.skip('show the superscript after editing a thought to match a thought that has not been loaded', async () => {
   await paste(`
     - x
