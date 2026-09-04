@@ -10,10 +10,12 @@ import { deleteAttributeActionCreator as deleteAttribute } from '../actions/dele
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
+import { toggleTimePickerActionCreator as toggleTimePicker } from '../actions/toggleTimePicker'
 import { isSafari, isTouch, isiPhone } from '../browser'
 import { LongPressState } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
 import findDescendant from '../selectors/findDescendant'
+import getBulletTime from '../selectors/getBulletTime'
 import getChildren from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -169,6 +171,15 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
             return
           }
 
+          // A Time bullet opens its time picker instead of moving the cursor; expand and collapse happen via the
+          // cursor. The picker is not offered in the context view, where the time is not rendered either.
+          if (!showContexts && getBulletTime(state, head(simplePath))) {
+            // Stop the click from reaching Content, which would close the dropdown that was just opened.
+            e.stopPropagation()
+            dispatch(toggleTimePicker({ path }))
+            return
+          }
+
           const isExpanded = state.expanded[hashPath(path)]
           const children = getChildren(state, head(path))
           const shouldCollapse = isExpanded && children.length > 0
@@ -197,7 +208,7 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
           ])
         })
       },
-      [dispatch, dragHold, path, simplePath],
+      [dispatch, dragHold, path, showContexts, simplePath],
     )
 
     // check if the thought is pinned

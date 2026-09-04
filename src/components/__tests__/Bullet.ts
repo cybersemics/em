@@ -10,6 +10,7 @@ import contextToPath from '../../selectors/contextToPath'
 import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import findCursor from '../../test-helpers/queries/findCursor'
@@ -733,5 +734,249 @@ describe('multiselect', () => {
 
     expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
     expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'false')
+  })
+})
+
+describe('time', () => {
+  // https://github.com/cybersemics/em/issues/5162
+  it('render a clock time instead of a bullet for =children/=bullet/Time, stepping from when Time was applied', async () => {
+    // Time is applied at 9:47, so the list starts at 10:00.
+    vi.setSystemTime(new Date(2026, 0, 1, 9, 47))
+
+    await dispatch([
+      importText({
+        text: `
+        - Morning
+          - =children
+            - =bullet
+              - Time
+                - 15min
+          - Standup
+          - Deep work
+          - Email
+          - Break
+          - Review
+            - =stepStart
+              - 1:30 pm
+          - Retro
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const times = document.querySelectorAll('[data-bullet="time"]')
+    expect(Array.from(times).map(el => el.textContent)).toEqual(['10:00', '10:15', '10:30', '10:45', '1:30', '1:45'])
+
+    // the timed children should not render a leaf bullet glyph
+    const leaves = document.querySelectorAll('[data-bullet="leaf"]')
+    expect(leaves.length).toBe(0)
+  })
+
+  it('tapping a Time bullet opens the time picker without moving the cursor', async () => {
+    vi.setSystemTime(new Date(2026, 0, 1, 9, 47))
+
+    await dispatch([
+      importText({
+        text: `
+        - Morning
+          - =children
+            - =bullet
+              - Time
+          - Standup
+          - Deep work
+      `,
+      }),
+      setCursor(['Morning', 'Standup']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(getBulletByContext(['Morning', 'Deep work']))
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(document.querySelector('[aria-label="time picker"]')).toBeInTheDocument()
+
+    const thoughtCursor = await findCursor()
+    expect(thoughtCursor).toHaveTextContent('Standup')
+  })
+
+  it('selecting a time in the time picker writes =stepStart on the thought and closes the picker', async () => {
+    vi.setSystemTime(new Date(2026, 0, 1, 9, 47))
+
+    await dispatch([
+      importText({
+        text: `
+        - Morning
+          - =children
+            - =bullet
+              - Time
+          - Standup
+          - Deep work
+            - =stepStart
+              - 1:30 pm
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(getBulletByContext(['Morning', 'Standup']))
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await click('[aria-label="time picker"] [aria-label="time list"] [aria-label="11:00"]')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - Morning
+    - =children
+      - =bullet
+        - Time
+    - Standup
+      - =stepStart
+        - 11:00 am
+    - Deep work
+      - =stepStart
+        - 1:30 pm`)
+
+    expect(document.querySelector('[aria-label="time picker"]')).toBeNull()
+
+    const times = document.querySelectorAll('[data-bullet="time"]')
+    expect(Array.from(times).map(el => el.textContent)).toEqual(['11:00', '1:30'])
+  })
+
+  it('Clear time deletes =stepStart so that the derived time resumes', async () => {
+    vi.setSystemTime(new Date(2026, 0, 1, 9, 47))
+
+    await dispatch([
+      importText({
+        text: `
+        - Morning
+          - =children
+            - =bullet
+              - Time
+          - Standup
+          - Deep work
+            - =stepStart
+              - 1:30 pm
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(getBulletByContext(['Morning', 'Deep work']))
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await click('[aria-label="time picker"] [aria-label="Clear time"]')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - Morning
+    - =children
+      - =bullet
+        - Time
+    - Standup
+    - Deep work`)
+  })
+
+  it('do not offer Clear time on a thought without =stepStart', async () => {
+    vi.setSystemTime(new Date(2026, 0, 1, 9, 47))
+
+    await dispatch([
+      importText({
+        text: `
+        - Morning
+          - =children
+            - =bullet
+              - Time
+          - Standup
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(getBulletByContext(['Morning', 'Standup']))
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(document.querySelector('[aria-label="time picker"]')).toBeInTheDocument()
+    expect(document.querySelector('[aria-label="time picker"] [aria-label="Clear time"]')).toBeNull()
+  })
+
+  it('selecting a step in the time picker rewrites the step of the list', async () => {
+    vi.setSystemTime(new Date(2026, 0, 1, 9, 47))
+
+    await dispatch([
+      importText({
+        text: `
+        - Morning
+          - =children
+            - =bullet
+              - Time
+                - 15min
+          - Standup
+          - Deep work
+            - =stepStart
+              - 1:30 pm
+      `,
+      }),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(getBulletByContext(['Morning', 'Standup']))
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await click('[aria-label="time picker"] [aria-label="step options"] [aria-label="1h"]')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - Morning
+    - =children
+      - =bullet
+        - Time
+          - 1h
+    - Standup
+    - Deep work
+      - =stepStart
+        - 1:30 pm`)
+  })
+
+  it('tapping a Time bullet during a multiselect toggles the selection instead of opening the time picker', async () => {
+    vi.setSystemTime(new Date(2026, 0, 1, 9, 47))
+
+    await dispatch([
+      importText({
+        text: `
+        - Morning
+          - =children
+            - =bullet
+              - Time
+          - Standup
+          - Deep work
+      `,
+      }),
+      addMulticursor(['Morning', 'Standup']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(getBulletByContext(['Morning', 'Deep work']))
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['Morning', 'Standup'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['Morning', 'Deep work'])).toHaveAttribute('data-highlighted', 'true')
+    expect(document.querySelector('[aria-label="time picker"]')).toBeNull()
   })
 })

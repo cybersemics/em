@@ -10,7 +10,7 @@ import isRoot from '../util/isRoot'
 const toggleBulletPickerCommand = {
   id: 'toggleBulletPicker',
   label: 'Bullet Style' as const,
-  description: 'Open a picker to set the bullet style of the current list: bullets, numbers, letters, or none.',
+  description: 'Open a picker to set the bullet style of the current list: bullets, numbers, letters, times, or none.',
   multicursor: false,
   hideFromHelp: true,
   hideFromDesktopCommandUniverse: true,

@@ -5,10 +5,17 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import reducerFlow from '../util/reducerFlow'
 import clearMulticursors from './clearMulticursors'
 
-type DropdownType = 'bulletPicker' | 'colorPicker' | 'letterCase' | 'sortPicker' | 'commandCenter' | 'undoSlider'
+type DropdownType =
+  'bulletPicker' | 'colorPicker' | 'letterCase' | 'sortPicker' | 'timePicker' | 'commandCenter' | 'undoSlider'
 
 type DropdownStateKeys =
-  'showBulletPicker' | 'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandCenter' | 'showUndoSlider'
+  | 'showBulletPicker'
+  | 'showColorPicker'
+  | 'showLetterCase'
+  | 'showSortPicker'
+  | 'showTimePicker'
+  | 'showCommandCenter'
+  | 'showUndoSlider'
 
 // Map dropdown types to their state keys
 const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
@@ -16,6 +23,7 @@ const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
   colorPicker: 'showColorPicker',
   letterCase: 'showLetterCase',
   sortPicker: 'showSortPicker',
+  timePicker: 'showTimePicker',
   commandCenter: 'showCommandCenter',
   undoSlider: 'showUndoSlider',
 }
@@ -24,7 +32,7 @@ const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
  * Toggle a specific dropdown and close all others.
  * If no dropdown type is provided, all dropdowns will be closed.
  * The commandCenter is not in a mutually exclusive relationship with the toolbar dropdowns
- * (colorPicker, letterCase, sortPicker, undoSlider); they can be open at the same time.
+ * (colorPicker, letterCase, sortPicker, timePicker, undoSlider); they can be open at the same time.
  */
 const toggleDropdown = (state: State, { dropDownType, value }: { dropDownType?: DropdownType; value?: boolean }) => {
   const dropdownStates = Object.fromEntries(

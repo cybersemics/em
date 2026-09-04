@@ -5,6 +5,7 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import findDescendant from '../selectors/findDescendant'
+import getBulletStyle from '../selectors/getBulletStyle'
 import { getAllChildren } from '../selectors/getChildren'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
@@ -33,11 +34,27 @@ const removeBulletStyle = (state: State, simplePath: SimplePath): State => {
  * Sets the bullet style applied to a context's children via `=children/=bullet`.
  * Passing `null` restores the default filled bullet by removing `=children/=bullet`.
  * Only the `=bullet` attribute is affected; other `=children` attributes are preserved.
+ * For `Time`, an optional step (5min, 15min, 30min, 1h) is written as the child of `Time`.
  */
-const setBulletStyle = (state: State, { simplePath, value }: { simplePath: SimplePath; value: BulletStyle }): State =>
-  value
-    ? setDescendant(state, { path: simplePath, values: ['=children', '=bullet', value] })
-    : removeBulletStyle(state, simplePath)
+const setBulletStyle = (
+  state: State,
+  { simplePath, value, step }: { simplePath: SimplePath; value: BulletStyle; step?: string },
+): State => {
+  if (!value) return removeBulletStyle(state, simplePath)
+
+  // A Time list starts at the created timestamp of the Time thought (see getBulletTime). Editing another style in
+  // place would keep that style's created timestamp, so replace the =bullet subtree instead. Once the list is already
+  // Time, only the step is rewritten so that the start time is preserved.
+  const stateReset =
+    value === 'Time' && getBulletStyle(state, head(simplePath)) !== 'Time'
+      ? removeBulletStyle(state, simplePath)
+      : state
+
+  return setDescendant(stateReset, {
+    path: simplePath,
+    values: ['=children', '=bullet', value, ...(value === 'Time' && step ? [step] : [])],
+  })
+}
 
 /** Action-creator for setBulletStyle. */
 export const setBulletStyleActionCreator =

@@ -10,10 +10,12 @@ interface PopoverProps {
   children: React.ReactNode
   show?: boolean
   size?: number
+  /** Overrides the toolbar-tuned offset, for a popover anchored to something other than a toolbar icon. */
+  style?: React.CSSProperties
 }
 
 /** A reusable popover component that handles positioning and styling for popup menus. */
-const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
+const Popover: FC<PopoverProps> = ({ children, show, size = 18, style }) => {
   const ref = useRef<HTMLDivElement>(null)
   const fontSize = useSelector(state => state.fontSize)
   const overflow = useWindowOverflow(ref)
@@ -35,6 +37,7 @@ const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
           // eyeballing it to get font sizes 14–24 to look right
           left: (size * (size + 90)) / 200 + 600 / (size * size),
           marginTop: size * 1.2 - 10,
+          ...style,
         }}
       >
         <div
