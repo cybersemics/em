@@ -73,6 +73,30 @@ What should happen instead. Write it as a condition that can be checked — a st
 
 State the goal, not the shape of the fix. What the fix looks like is the assignee's call, and writing it out for them in advance is work they will redo.
 
+#### In this case / In general
+
+Where the correct behaviour is a rule and the steps are one instance of it, split Expected Behavior into two `###` subheadings:
+
+```markdown
+## Expected Behavior
+
+### In this case
+
+...
+
+### In general
+
+...
+```
+
+**In this case** is the end state of the exact steps above, in their own terms — the same thoughts, settings, and values, named as the steps named them. It is what the reader checks after following the steps, and what the regression test asserts.
+
+**In general** is the rule the case is an instance of, stated for any input that reaches it: which thoughts it applies to, what is left unchanged, where it stops. It is what the assignee implements, and what stops the fix from being special-cased to the reproduction.
+
+[#5365](https://github.com/cybersemics/em/issues/5365) is a long press on non-leaf `a` during a multiselect started on `c`. In this case: `a` is expanded, `b` is revealed, and `a` is still unselected with `c` the only selected thought. In general: a long press on a non-leaf thought during a multiselect toggles its expansion, leaving selection and `=pin` unchanged, while a long press on a leaf toggles selection as it does now.
+
+Skip the split where it does not earn its place — where the case *is* the rule and the second heading would restate the first in the abstract, or where the correct behaviour is a single fixed state (a value, a label, a position) with no input to generalise over. One paragraph under the plain heading is right for those.
+
 ## Optional sections
 
 - **A short preamble above the first heading**, for what you are unsure about: which platform you tested, whether an unrelated setting seemed causal, what you could not rule out.
@@ -155,6 +179,7 @@ New issues often originate in a comment thread on another issue or PR.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
+- An Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
