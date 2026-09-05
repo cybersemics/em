@@ -9,13 +9,18 @@ import undoSteps from '../undoSteps'
 
 beforeEach(initStore)
 
-/** Returns the action types of each patch of each step. */
-const stepActions = () => undoSteps(store.getState()).steps.map(step => step.patches.map(patch => patch[0].actions))
+/** Returns the action or command id of each patch of each step. */
+const stepSources = () =>
+  undoSteps(store.getState()).steps.map(step =>
+    step.patches.map(patch =>
+      patch.metadata.source === 'command' ? patch.metadata.commandId : patch.metadata.actionType,
+    ),
+  )
 
 it('group a new thought with the edit that types its value', () => {
   store.dispatch([newThought({}), editThought([''], 'a')])
 
-  expect(stepActions()).toEqual([[['newThought'], ['editThought']]])
+  expect(stepSources()).toEqual([['newThought', 'editThought']])
   expect(undoSteps(store.getState()).position).toBe(0)
 })
 
@@ -32,15 +37,15 @@ it('group a cursor move with the edit before it', () => {
     setCursor(['b']),
   ])
 
-  expect(stepActions()).toEqual([[['editThought'], ['setCursor']], [['setCursor']]])
+  expect(stepSources()).toEqual([['editThought', 'setCursor'], ['setCursor']])
 })
 
 it('count the undone steps as the position', () => {
   store.dispatch([newThought({}), editThought([''], 'a'), newThought({}), editThought([''], 'b'), undo()])
 
-  expect(stepActions()).toEqual([
-    [['newThought'], ['editThought']],
-    [['newThought'], ['editThought']],
+  expect(stepSources()).toEqual([
+    ['newThought', 'editThought'],
+    ['newThought', 'editThought'],
   ])
   expect(undoSteps(store.getState()).position).toBe(1)
 })
@@ -48,6 +53,6 @@ it('count the undone steps as the position', () => {
 it('keep the current state on a step boundary', () => {
   store.dispatch([newThought({}), editThought([''], 'a'), undo({ count: 1 })])
 
-  expect(stepActions()).toEqual([[['editThought']], [['newThought']]])
+  expect(stepSources()).toEqual([['editThought'], ['newThought']])
   expect(undoSteps(store.getState()).position).toBe(1)
 })

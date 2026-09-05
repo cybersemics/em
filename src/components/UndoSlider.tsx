@@ -11,7 +11,6 @@ import { commandEmitter } from '../commands'
 import copy from '../device/copy'
 import stepsToReproduce from '../selectors/stepsToReproduce'
 import undoSteps, { UndoStep } from '../selectors/undoSteps'
-import { isNavigation } from '../util/actionMetadata.registry'
 import FadeTransition from './FadeTransition'
 import CopyClipboard from './icons/CopyClipboard'
 
@@ -25,10 +24,11 @@ interface Handles {
   start: number
 }
 
-/** The name of the action that a step applied, as it appears in the undo alert, e.g. "New Thought". A navigation action is skipped in favor of the change it accompanies. */
+/** The command or action label recorded on a step's primary patch, e.g. "New Thought". */
 const stepLabel = (step: UndoStep): string => {
-  const actions = step.patches.flatMap(patch => patch[0].actions)
-  return startCase(actions.find(action => !isNavigation(action)) ?? actions[0])
+  const patch = step.patches.find(patch => !patch.metadata.isNavigation) ?? step.patches[0]
+  const { metadata } = patch
+  return metadata.source === 'command' ? metadata.label : (metadata.label ?? startCase(metadata.actionType))
 }
 
 /** A slider with a start handle and an end handle over the undo history, plus a button that copies the steps to reproduce the actions between them. Dragging or tapping a handle moves the thoughtspace to the point in time under it. Both handles begin at the present with the start handle on top; dragging the start handle back reveals the end handle, which always stays at least one step after the start. */

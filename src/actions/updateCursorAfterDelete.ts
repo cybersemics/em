@@ -82,17 +82,17 @@ const updateCursorAfterDelete = (state: State, statePrev: State) => {
     if (!cursor) return null
 
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    const lastCursorOps = lastPatches?.filter(
-      patch => patch.actions[0] === 'newThought' && patch.path.startsWith('/cursor/'),
-    )
+    const source =
+      lastPatches?.metadata.source === 'command' ? lastPatches.metadata.commandId : lastPatches?.metadata.actionType
+    const lastCursorOps =
+      source === 'newThought' ? lastPatches?.ops.filter(operation => operation.path.startsWith('/cursor/')) : null
 
     if (!lastCursorOps || lastCursorOps.length === 0) return null
 
     // remove /cursor from the patch since we are applying it directly to cursor, not the full state
-    const revertCursorPatch = lastCursorOps.map(patch => ({
-      op: patch.op,
-      path: patch.path.replace('/cursor', ''),
-      value: patch.value,
+    const revertCursorPatch = lastCursorOps.map(operation => ({
+      ...operation,
+      path: operation.path.replace('/cursor', ''),
     }))
     // apply to the cursor prior to deleteThought, not state.cursor
     const cursorNew = applyPatch([...cursor], revertCursorPatch).newDocument as Path

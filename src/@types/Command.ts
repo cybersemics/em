@@ -24,7 +24,16 @@ interface Command {
     dispatch: Dispatch,
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
-    { type, keyboardIndex }: { type: CommandType; keyboardIndex?: number },
+    {
+      type,
+      keyboardIndex,
+      withCommandMetadata,
+    }: {
+      type: CommandType
+      keyboardIndex?: number
+      /** Runs completed asynchronous command work inside this command's patch-metadata transaction. The callback itself must be synchronous. */
+      withCommandMetadata?: <T>(operation: () => T) => T
+    },
   ) => void | Promise<void>
 
   /** Short label. */
@@ -39,7 +48,14 @@ interface Command {
     | boolean
     | {
         /** Optional override for executing the command for multiple cursors. */
-        execMulticursor?: (cursors: Path[], dispatch: Dispatch, getState: () => State) => void
+        execMulticursor?: (
+          cursors: Path[],
+          dispatch: Dispatch,
+          getState: () => State,
+          commandContext: {
+            withCommandMetadata: <T>(operation: () => T) => T
+          },
+        ) => void | Promise<void>
         /** A callback that is invoked when the command finishes executing for all filtered multicursors. */
         onComplete?: (filteredCursors: Path[], dispatch: Dispatch, getState: () => State) => void
         /** Prevent the cursor from being set back at the end of the command execution. */

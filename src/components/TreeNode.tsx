@@ -85,15 +85,19 @@ const TreeNode = ({
   // true if the last action is any of archive/delete/collapse
   const isLastActionDelete = useSelector(state => {
     const deleteActions: ActionType[] = ['archiveThought', 'uncategorize', 'deleteThought', 'deleteThoughtWithCursor']
-    const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    return lastPatches?.some(patch => deleteActions.includes(patch.actions[0]))
+    const lastPatch = state.undoPatches[state.undoPatches.length - 1]
+    const source =
+      lastPatch?.metadata.source === 'command' ? lastPatch.metadata.commandId : lastPatch?.metadata.actionType
+    return source === 'archive' || source === 'delete' || deleteActions.includes(source as ActionType)
   })
 
   // /** The transition animation for descendants of the context view after toggleContextView. Returns null otherwise. */
   const contextAnimation: 'disappearingLowerLeft' | 'disappearingUpperRight' | null = useSelector(state => {
-    const isLastActionContextView = state.undoPatches[state.undoPatches.length - 1]?.some(
-      patch => patch.actions[0] === 'toggleContextView',
-    )
+    const lastPatch = state.undoPatches[state.undoPatches.length - 1]
+    const isLastActionContextView =
+      lastPatch?.metadata.source === 'command'
+        ? lastPatch.metadata.commandId === 'toggleContextView'
+        : lastPatch?.metadata.actionType === 'toggleContextView'
     if (!isLastActionContextView) return null
 
     // Determine the animation direction for disappearing text

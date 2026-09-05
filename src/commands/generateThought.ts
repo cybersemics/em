@@ -87,7 +87,11 @@ const generatesWithAi = (state: State, path: Path) => {
  * responsibility, since they apply to a single thought and this may be one of many running concurrently.
  */
 const generateThoughtAtPathActionCreator =
-  (path: Path, sourceState?: State): Thunk<Promise<string | null>> =>
+  (
+    path: Path,
+    sourceState?: State,
+    withCommandMetadata: <T>(operation: () => T) => T = operation => operation(),
+  ): Thunk<Promise<string | null>> =>
   async (dispatch, getState) => {
     const state = sourceState ?? getState()
 
@@ -189,36 +193,38 @@ const generateThoughtAtPathActionCreator =
     // bail if the thought was deleted while its value was being generated
     if (!thoughtPending) return null
 
-    dispatch([
-      // Restore the original value before applying the generated one. updateThoughts is not undoable, so the pending
-      // value would otherwise become the state that undo reverts to, leaving the thought at "a..." rather than "a". It
-      // is also why editThought was previously given an oldValue whose Lexeme was never created. Both updates are
-      // dispatched in the same batch, so the restored value is never rendered.
-      updateThoughts({
-        thoughtIndexUpdates: {
-          [thought.id]: {
-            ...thoughtPending,
-            value: thought.value,
-            generating: false,
+    withCommandMetadata(() =>
+      dispatch([
+        // Restore the original value before applying the generated one. updateThoughts is not undoable, so the pending
+        // value would otherwise become the state that undo reverts to, leaving the thought at "a..." rather than "a". It
+        // is also why editThought was previously given an oldValue whose Lexeme was never created. Both updates are
+        // dispatched in the same batch, so the restored value is never rendered.
+        updateThoughts({
+          thoughtIndexUpdates: {
+            [thought.id]: {
+              ...thoughtPending,
+              value: thought.value,
+              generating: false,
+            },
           },
-        },
-        lexemeIndexUpdates: {},
-        local: false,
-        remote: false,
-        overwritePending: true,
-      }),
-      // editThought automatically sets Thought.generating to false
-      editThought({
-        cursorOffset: getState().isMulticursorExecuting ? undefined : valueNew.length,
-        force: true,
-        oldValue: thought.value,
-        newValue: valueNew,
-        path: simplePath,
-        // The generation completes whenever the request returns, not as part of a typing stream, so it must never
-        // merge with a user edit that happens to be contiguous in the same direction.
-        preventMerge: true,
-      }),
-    ])
+          lexemeIndexUpdates: {},
+          local: false,
+          remote: false,
+          overwritePending: true,
+        }),
+        // editThought automatically sets Thought.generating to false
+        editThought({
+          cursorOffset: getState().isMulticursorExecuting ? undefined : valueNew.length,
+          force: true,
+          oldValue: thought.value,
+          newValue: valueNew,
+          path: simplePath,
+          // The generation completes whenever the request returns, not as part of a typing stream, so it must never
+          // merge with a user edit that happens to be contiguous in the same direction.
+          preventMerge: true,
+        }),
+      ]),
+    )
 
     return valueNew
   }
@@ -235,8 +241,8 @@ const generateThought = {
   multicursor: {
     // preventSetCursor is not needed: execMulticursor never moves the cursor, so the restore at the end of the loop
     // sets it to the path it is already on.
-    execMulticursor: (cursors, dispatch, getState) => {
-      /** Generates a thought for every selected thought within a single undo bracket. */
+    execMulticursor: (cursors, dispatch, getState, commandContext) => {
+      /** Generates a thought for every selected thought within the command transaction. */
       const generateAll = async () => {
         // Yield before opening the undo bracket. executeCommandWithMulticursor is synchronous: it opens its own
         // bracket, calls execMulticursor, and closes the bracket again as soon as it returns — long before any
@@ -250,7 +256,17 @@ const generateThought = {
         // Generate concurrently, so that the selection takes one round trip rather than one per thought and every
         // selected thought shows its pending state immediately. allSettled rather than all, so that a rejected request
         // cannot skip the dispatch below and leave the bracket open over the remaining generations.
-        await Promise.allSettled(cursors.map(path => dispatch(generateThoughtAtPathActionCreator(path, sourceState))))
+        await Promise.allSettled(
+          cursors.map(path =>
+            dispatch(
+              generateThoughtAtPathActionCreator(
+                path,
+                sourceState,
+                commandContext.withCommandMetadata ?? (operation => operation()),
+              ),
+            ),
+          ),
+        )
 
         dispatch(setIsMulticursorExecuting({ value: false }))
       }
@@ -262,10 +278,10 @@ const generateThought = {
           dispatch(showModal({ id: 'aiDisclosure' }))
           return
         }
-        generateAll()
+        return generateAll()
       }
 
-      generateAllWithDisclosure()
+      return generateAllWithDisclosure()
     },
   },
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
@@ -289,7 +305,13 @@ const generateThought = {
     // flag that only applies to the thought being edited, so it is set here rather than in generateThoughtAtPath.
     dispatch(cursorCleared({ value: true }))
 
-    const valueNew = await dispatch(generateThoughtAtPathActionCreator(cursor))
+    const valueNew = await dispatch(
+      generateThoughtAtPathActionCreator(
+        cursor,
+        undefined,
+        commandContext.withCommandMetadata ?? (operation => operation()),
+      ),
+    )
 
     // editThought resets cursorCleared as part of the same reducer pass that updates the thought, which is what allows
     // the new value to reach the DOM. Resetting it here only has an effect when nothing was generated.

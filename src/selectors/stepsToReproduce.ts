@@ -6,8 +6,8 @@ import Patch from '../@types/Patch'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import { commandById, formatKeyboardShortcut, gestureString } from '../commands'
 import { HOME_TOKEN } from '../constants'
-import { isNavigation } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isAttribute from '../util/isAttribute'
@@ -58,7 +58,35 @@ const target = (state: State, path: Path | null): string => {
 
 /** The ids of the thoughts whose entries a patch touches, from its operation paths. */
 const touchedIds = (patch: Patch): ThoughtId[] =>
-  uniq(patch.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
+  uniq(patch.ops.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
+
+/** Returns the action or command id that produced a patch. */
+const patchSourceId = (patch: Patch): string =>
+  patch.metadata.source === 'command' ? patch.metadata.commandId : patch.metadata.actionType
+
+/** Describes how a command was invoked. */
+const describeCommandInvocation = (patch: Patch): string => {
+  if (patch.metadata.source !== 'command') return ''
+  const { commandId, keyboardIndex, type } = patch.metadata
+  const command = commandById(commandId)
+
+  switch (type) {
+    case 'keyboard': {
+      if (!command.keyboard) return `Run ${command.label}.`
+      const shortcuts = Array.isArray(command.keyboard) ? command.keyboard : [command.keyboard]
+      const shortcut = shortcuts[keyboardIndex ?? 0] ?? shortcuts[0]
+      return `Press \`${formatKeyboardShortcut(shortcut)}\`.`
+    }
+    case 'gesture':
+      return `Swipe \`${gestureString(command)}\`.`
+    case 'toolbar':
+      return `Tap the ${command.label} button.`
+    case 'commandCenter':
+      return `Tap ${command.label} in the Command Center.`
+    case 'desktopCommandUniverse':
+      return `Choose ${command.label} in the Command Universe.`
+  }
+}
 
 /** The ids of the thoughts that exist after a patch but not before it, i.e. that its actions created. */
 const createdIds = ({ patch, before, after }: Snapshot): ThoughtId[] =>
@@ -162,7 +190,7 @@ const placement = (state: State, id: ThoughtId): string => {
 /** Describes the creation of a thought by the command that creates it, e.g. "New Subthought `e`.". The value is read from the given state so that a value typed by a later patch of the same step can be used. */
 const describeNewThought = (snapshot: Snapshot, state: State): string => {
   const { before, after } = snapshot
-  const type = snapshot.patch[0].actions.find(action => !isNavigation(action)) ?? 'newThought'
+  const type = patchSourceId(snapshot.patch) ?? 'newThought'
   const [id] = topmost(after, createdIds(snapshot))
   if (!id) return `${startCase(type)}.`
 
@@ -293,17 +321,41 @@ const describers: Partial<Record<ActionType, Describer>> = {
   toggleAttribute: describeAttribute('Toggle Attribute'),
 }
 
+/** Describes the object/effect of a command from the patch operations and surrounding states. */
+const describeCommandEffect = (snapshot: Snapshot): string => {
+  const source = snapshot.patch.metadata
+  if (source.source !== 'command') return ''
+  const describe = describers[source.commandId as ActionType]
+  if (describe) return describe(snapshot)
+
+  const changes = attributeChanges(snapshot)
+  if (changes) return `This ${changes}.`
+
+  if (createdIds(snapshot).length) return describeNewThought(snapshot, snapshot.after)
+  if (deletedIds(snapshot).length) return describers.deleteThought!(snapshot)
+  if (movedId(snapshot)) return describers.moveThought!(snapshot)
+
+  const edited = touchedIds(snapshot.patch).some(id => {
+    const before = snapshot.before.thoughts.thoughtIndex[id]?.value
+    const after = snapshot.after.thoughts.thoughtIndex[id]?.value
+    return before !== undefined && after !== undefined && before !== after
+  })
+  return edited ? describeEdit(snapshot) : ''
+}
+
 /** Describes a patch from the types of the actions that produced it. Returns an empty string for a patch of navigation actions only, which is surfaced as a cursor move before the next step instead. */
 const describePatch = (snapshot: Snapshot): string => {
-  const { actions } = snapshot.patch[0]
+  const { metadata } = snapshot.patch
+  if (metadata.isNavigation) return ''
+  const type = patchSourceId(snapshot.patch)
 
-  // A multicursor command bundles every action it dispatched into one patch, whose first action is the command's undoLabel. The selection it acted on is surfaced as a step before it.
-  if (actions.includes('setIsMulticursorExecuting')) return `${startCase(actions[0] ?? 'multicursor command')}.`
+  if (metadata.source === 'command') {
+    const invocation = describeCommandInvocation(snapshot.patch)
+    const detail = describeCommandEffect(snapshot)
+    return detail && detail !== `${metadata.label}.` ? `${invocation} ${detail}` : invocation
+  }
 
-  const type = actions.find(action => !isNavigation(action))
-  if (!type) return ''
-
-  const describe = describers[type]
+  const describe = describers[type as ActionType]
   if (describe) return describe(snapshot)
   // an action dispatched without arguments is named as is, plus any meta attributes it set or removed, which tell toggles apart
   const changes = attributeChanges(snapshot)
@@ -314,7 +366,7 @@ const describePatch = (snapshot: Snapshot): string => {
 const describeStep = (snapshots: Snapshot[]): string => {
   const [created, typed] = snapshots
   // A new thought followed by typing its value reads as a single creation, e.g. "New Thought `c`."
-  return created.patch[0].actions[0] === 'newThought' && typed
+  return patchSourceId(created.patch) === 'newThought' && typed
     ? describeNewThought(created, typed.after)
     : snapshots.map(describePatch).filter(Boolean).join(' ')
 }
@@ -350,7 +402,7 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
     .flatMap(step => [...step.patches].reverse())
     .reduce<Snapshot[]>((snapshots, patch) => {
       const after = snapshots.at(-1)?.before ?? state
-      return [...snapshots, { patch, before: produce(after, draft => applyPatch(draft, patch).newDocument), after }]
+      return [...snapshots, { patch, before: produce(after, draft => applyPatch(draft, patch.ops).newDocument), after }]
     }, [])
   // The redo stack holds forward patches, applied oldest first to walk forward to the end.
   const redoSnapshots = steps
@@ -359,7 +411,10 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
     .flatMap(step => step.patches)
     .reduce<Snapshot[]>((snapshots, patch) => {
       const before = snapshots.at(-1)?.after ?? state
-      return [...snapshots, { patch, before, after: produce(before, draft => applyPatch(draft, patch).newDocument) }]
+      return [
+        ...snapshots,
+        { patch, before, after: produce(before, draft => applyPatch(draft, patch.ops).newDocument) },
+      ]
     }, [])
   const snapshots = new Map([...undoSnapshots, ...redoSnapshots].map(snapshot => [snapshot.patch, snapshot]))
 
@@ -376,7 +431,7 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
     .slice(end, start)
     .reverse()
     .map(step => step.patches.map(patch => snapshots.get(patch)!))
-    .filter(snapshots => snapshots.some(({ patch }) => patch[0].actions.some(action => !isNavigation(action))))
+    .filter(snapshots => snapshots.some(({ patch }) => !patch.metadata.isNavigation))
 
   // The steps act on the cursor and the selection, so a step whose cursor or selection differs from what the previous step left is preceded by the move or selection that gets there. Neither is known before the first step, so the steps always begin with the cursor, and with the selection if the first step is a multicursor command. The cursor a step leaves is read after its last non-navigation patch, so that a trailing cursor move surfaces before the next step.
   const { descriptions } = stepSnapshots.reduce<{
@@ -388,8 +443,9 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
       const { before } = snapshots[0]
       const cursorBefore = before.cursor ? head(before.cursor) : null
       const selectionBefore = selectionIds(before)
-      const multicursor = snapshots[0].patch[0].actions.includes('setIsMulticursorExecuting')
-      const primary = findLast(snapshots, ({ patch }) => patch[0].actions.some(action => !isNavigation(action)))!
+      const source = snapshots[0].patch.metadata
+      const multicursor = source.source === 'command' && !!commandById(source.commandId).multicursor
+      const primary = findLast(snapshots, ({ patch }) => !patch.metadata.isNavigation)!
       const description = describeStep(snapshots)
       return {
         descriptions: [

@@ -1,14 +1,37 @@
-import { GetOperation } from 'fast-json-patch'
+import { Operation } from 'fast-json-patch'
 import ActionType from './ActionType'
+import CommandId from './CommandId'
+import CommandType from './CommandType'
 
-// Extend fast-json-patch Operation type to include actions list
-// See fast-json-patch types: https://github.com/Starcounter-Jack/JSON-Patch/blob/89a09e94e0e6500115789e33586a75c8dd1aea13/module/core.d.ts
-// TODO: This should allow any Operation, not just GetOperation. But how to extend?
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface ExtendedOperation<T = any> extends GetOperation<T> {
-  actions: ActionType[]
+/** Metadata for a patch created by a user command. */
+export interface CommandPatchMetadata {
+  source: 'command'
+  commandId: CommandId
+  /** User-facing command label at the time the patch was created. */
+  label: string
+  type: CommandType
+  keyboardIndex?: number
+  /** True when every action captured by the command only navigates state. */
+  isNavigation: boolean
 }
 
-type Patch = ExtendedOperation[]
+/** Metadata for a patch created outside the command system, such as typing, paste, drag-and-drop, or replication. */
+export interface ActionPatchMetadata {
+  source: 'action'
+  actionType: ActionType
+  /** Optional user-facing label for a grouped non-command interaction. */
+  label?: string
+  /** True when every action captured by the patch only navigates state. */
+  isNavigation: boolean
+}
+
+export type PatchMetadata = CommandPatchMetadata | ActionPatchMetadata
+export type PatchMetadataInput = Omit<CommandPatchMetadata, 'isNavigation'> | Omit<ActionPatchMetadata, 'isNavigation'>
+
+/** An exact state diff and the user-level source that produced it. */
+interface Patch {
+  ops: Operation[]
+  metadata: PatchMetadata
+}
 
 export default Patch

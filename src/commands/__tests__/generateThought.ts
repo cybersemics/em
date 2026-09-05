@@ -553,6 +553,7 @@ test('preserve an edit made while the thought is generating as its own undo step
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
   - banan`)
+  expect(store.getState().alert?.value).toBe('Undo: Generate Thought')
 
   vi.unstubAllEnvs()
 })

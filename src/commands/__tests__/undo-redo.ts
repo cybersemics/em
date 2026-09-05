@@ -30,6 +30,7 @@ import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import archiveCommand from '../archive'
+import cursorDownCommand from '../cursorDown'
 import deleteCommand from '../delete'
 import indentCommand from '../indent'
 import moveCursorForward from '../moveCursorForward'
@@ -241,10 +242,10 @@ describe('undo', () => {
     const { undoPatches } = store.getState()
     const lastPatch = undoPatches[undoPatches.length - 1]
 
-    const thoughtsExists = lastPatch.some(({ path }) => path.includes('/thoughts'))
+    const thoughtsExists = lastPatch.ops.some(({ path }) => path.includes('/thoughts'))
     expect(thoughtsExists).toEqual(true)
 
-    const alertExists = lastPatch.some(({ path }) => path.includes('/alert'))
+    const alertExists = lastPatch.ops.some(({ path }) => path.includes('/alert'))
     expect(alertExists).toEqual(false)
   })
 
@@ -674,6 +675,24 @@ describe('redo', () => {
  ******************************************************************/
 
 describe('grouping', () => {
+  it('preserves consecutive navigation grouping across command transactions', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+        - b
+        - c`,
+      }),
+      setCursor(['a']),
+    ])
+
+    const patchCount = store.getState().undoPatches.length
+    executeCommandWithMulticursor(cursorDownCommand, { store })
+    executeCommandWithMulticursor(cursorDownCommand, { store })
+
+    expect(store.getState().undoPatches).toHaveLength(patchCount)
+  })
+
   it('group all navigation actions following an undoable(non-navigation) action and undo them together', () => {
     store.dispatch([
       importText({
