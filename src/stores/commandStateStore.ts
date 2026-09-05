@@ -7,6 +7,7 @@ import themeColors from '../selectors/themeColors'
 import getCommandState from '../util/getCommandState'
 import rgbToHex from '../util/rgbToHex'
 import store from './app'
+import pendingFormatStore from './pendingFormatStore'
 import reactMinistore from './react-ministore'
 
 /** A store that tracks the document's command state (e.g. bold, italic, underline, strikethrough). */
@@ -65,13 +66,23 @@ const getActiveEmptySelectionColors = (state: State): Partial<CommandState> => {
 export const updateCommandState = () => {
   const state = store.getState()
   if (!state.cursor) return
+  const thought = pathToThought(state, state.cursor)
+
+  // Formatting applied to an empty thought is held in pendingFormatStore until it is typed into, so the toolbar and
+  // the bullet report it from there rather than from the (necessarily empty) value (#3910).
+  const pendingFormat = pendingFormatStore.getState()
+  if (thought && thought.value.length === 0 && pendingFormat.id === thought.id) {
+    commandStateStore.update(getCommandState(pendingFormat.value))
+    return
+  }
+
   const selectionIsActiveThought = selection.isActive() && selection.isThought()
   const action = selectionIsActiveThought
     ? {
         ...getCommandState(selection.html() ?? ''),
         ...(!selection.text()?.length ? getActiveEmptySelectionColors(state) : {}),
       }
-    : getCommandState(pathToThought(state, state.cursor)?.value ?? '')
+    : getCommandState(thought?.value ?? '')
   commandStateStore.update(action)
 }
 
