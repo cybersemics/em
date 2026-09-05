@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import LetterCaseType from '../@types/LetterCaseType'
 import Thunk from '../@types/Thunk'
+import { commandEmitter } from '../commands'
 import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -18,6 +19,8 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 export const formatLetterCaseActionCreator =
   (command: LetterCaseType): Thunk =>
   (dispatch, getState) => {
+    // A picker swatch dispatches this directly rather than executing a command, so nothing else flushes for it (#4774).
+    commandEmitter.trigger('command')
     const state = getState()
     const cursor = state.cursor
     const isMulticursor = hasMulticursor(state)
