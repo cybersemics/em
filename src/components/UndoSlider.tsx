@@ -4,19 +4,18 @@ import 'rc-slider/assets/index.css'
 import { FC, cloneElement, useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import Patch from '../@types/Patch'
 import { alertActionCreator as alert } from '../actions/alert'
 import { redoActionCreator as redo } from '../actions/redo'
 import { undoActionCreator as undo } from '../actions/undo'
 import { commandEmitter } from '../commands'
 import copy from '../device/copy'
 import stepsToReproduce from '../selectors/stepsToReproduce'
-import undoHistory from '../selectors/undoHistory'
+import undoSteps, { UndoStep } from '../selectors/undoSteps'
 import FadeTransition from './FadeTransition'
 import CopyClipboard from './icons/CopyClipboard'
 
 /** The maximum number of steps the slider spans. */
-const MAX_STEPS = 10
+const MAX_STEPS = 20
 
 /** The positions of the end and start handles, counted in steps back from the present (0), and the length of the history they were set against. */
 interface Handles {
@@ -25,8 +24,9 @@ interface Handles {
   start: number
 }
 
-/** The command or action label recorded on a patch, e.g. "New Thought". */
-const stepLabel = (patch: Patch): string => {
+/** The command or action label recorded on a step's primary patch, e.g. "New Thought". */
+const stepLabel = (step: UndoStep): string => {
+  const patch = step.patches.find(patch => !patch.metadata.isNavigation) ?? step.patches[0]
   const { metadata } = patch
   return metadata.source === 'command' ? metadata.label : (metadata.label ?? startCase(metadata.actionType))
 }
@@ -37,20 +37,23 @@ const UndoRange: FC<{ handles: Handles | null; setHandles: (handles: { end: numb
   setHandles,
 }) => {
   const dispatch = useDispatch()
-  const { patches, position } = useSelector(undoHistory)
-  const max = Math.min(MAX_STEPS, patches.length)
-  // Both handles are at the current state until the user moves one. Clamp them when the available patch history shrinks.
+  const { steps, position } = useSelector(undoSteps)
+  const max = Math.min(MAX_STEPS, steps.length)
+  // Both handles are at the current state until the user moves one. They are clamped to the history, which can be regrouped
+  // into fewer steps while they are set.
   const end = Math.min(handles?.end ?? position, max)
   const start = Math.min(handles?.start ?? position, max)
 
-  /** Moves the thoughtspace to the point in time at the given position by undoing or redoing the intervening patches. */
+  /** Moves the thoughtspace to the point in time at the given position by undoing or redoing the exact patches of the steps in between. */
   const moveTo = (target: number) => {
     // Flush an edit typed since the slider was opened. It would otherwise be committed after the thoughtspace has already
     // moved, i.e. against a different state than it was typed into. See the flush when the slider opens.
     commandEmitter.trigger('command')
     dispatch((dispatch, getState) => {
-      const { position } = undoHistory(getState())
-      const count = Math.abs(target - position)
+      const { steps, position } = undoSteps(getState())
+      const count = steps
+        .slice(Math.min(target, position), Math.max(target, position))
+        .reduce((sum, step) => sum + step.patches.length, 0)
       if (count > 0) {
         dispatch(target > position ? undo({ count }) : redo({ count }))
       }
@@ -88,7 +91,7 @@ const UndoRange: FC<{ handles: Handles | null; setHandles: (handles: { end: numb
         // Render the name of the action under each handle. Handle 1 is the start handle, since range values are ascending.
         handleRender={(node, { index }) => {
           const value = index === 1 ? start : end
-          const patch = patches[value]
+          const step = steps[value]
           return cloneElement(
             node,
             {
@@ -97,7 +100,7 @@ const UndoRange: FC<{ handles: Handles | null; setHandles: (handles: { end: numb
               onMouseUp: () => moveTo(value),
               onTouchEnd: () => moveTo(value),
             },
-            patch ? (
+            step ? (
               <span
                 className={css({
                   position: 'absolute',
@@ -112,7 +115,7 @@ const UndoRange: FC<{ handles: Handles | null; setHandles: (handles: { end: numb
                   userSelect: 'none',
                 })}
               >
-                {stepLabel(patch)}
+                {stepLabel(step)}
               </span>
             ) : null,
           )

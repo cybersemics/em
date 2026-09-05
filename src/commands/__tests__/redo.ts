@@ -47,7 +47,7 @@ it('redo thought change', () => {
   expect(exportedAfterRedo).toEqual(expectedOutputAfterRedo)
 })
 
-it('redo one patch at a time when navigation surrounds a thought change', () => {
+it('group contiguous navigation actions preceding a thought change on redo', () => {
   store.dispatch([
     importText({
       text: `
@@ -69,17 +69,17 @@ it('redo one patch at a time when navigation surrounds a thought change', () => 
     cursorDown(),
     undo(),
     undo(),
-    // redo only the newest patch
+    // redo all actions preceding a thoughtchange as a single operation
     redo(),
   ])
 
   const cursorAfterFirstRedo = childIdsToThoughts(store.getState(), store.getState().cursor!)
-  expect(cursorAfterFirstRedo).toMatchObject([{ value: 'arizona' }, { value: 'boston' }])
+  expect(cursorAfterFirstRedo).toMatchObject([{ value: 'arizona', rank: 0 }])
 
   store.dispatch(redo())
   const state = store.getState()
   const cursorAfterSecondRedo = childIdsToThoughts(store.getState(), store.getState().cursor!)
-  expect(cursorAfterSecondRedo).toMatchObject([{ value: 'c' }])
+  expect(cursorAfterSecondRedo).toMatchObject([{ value: 'arizona' }, { value: 'boston' }])
 
   const exportedAfterRedo = exportContext(state, [HOME_TOKEN], 'text/plain')
   const expectedOutputAfterRedo = `- ${HOME_TOKEN}

@@ -2,7 +2,7 @@ import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getCaretOffset from '../helpers/getCaretOffset'
@@ -251,47 +251,49 @@ it('Native undo places the caret at the end of the restored thought', async () =
   expect(await getCaretOffset()).toBe('correct'.length)
 })
 
-// Exercise the gesture-level chain so the transaction boundary is verified at the same layer that combines the commands.
-it('Undo Select All + Categorize chained command in one step', async () => {
-  await emulate(KnownDevices['iPhone 15 Pro'])
+describe('mobile only', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
-  // create thoughts a, b, c
-  await gesture(newThoughtCommand)
-  await keyboard.type('a')
-  await gesture(newThoughtCommand)
-  await keyboard.type('b')
-  await gesture(newThoughtCommand)
-  await keyboard.type('c')
+  // Test the gesture-level chain because it is assembled above the individual command action-creators and shares one command transaction.
+  it('Undo Select All + Categorize chained command in one step', async () => {
+    // create thoughts a, b, c
+    await gesture(newThoughtCommand)
+    await keyboard.type('a')
+    await gesture(newThoughtCommand)
+    await keyboard.type('b')
+    await gesture(newThoughtCommand)
+    await keyboard.type('c')
 
-  // Select All + Categorize
-  await gesture('ldr' + 'lu')
+    // Select All + Categorize
+    await gesture('ldr' + 'lu')
 
-  // make sure multicursor is disabled after chained command
-  const highlightedCountAfterChain = await page.evaluate(
-    () => document.querySelectorAll('[data-highlighted=true]').length,
-  )
+    // make sure multicursor is disabled after chained command
+    const highlightedCountAfterChain = await page.evaluate(
+      () => document.querySelectorAll('[data-highlighted=true]').length,
+    )
 
-  expect(highlightedCountAfterChain).toBe(0)
+    expect(highlightedCountAfterChain).toBe(0)
 
-  const exported1 = await exportThoughts()
-  expect(exported1).toBe(`
+    const exported1 = await exportThoughts()
+    expect(exported1).toBe(`
 - 
   - a
   - b
   - c
 `)
 
-  await press('z', { meta: true })
+    await press('z', { meta: true })
 
-  const exported2 = await exportThoughts()
-  expect(exported2).toBe(`
+    const exported2 = await exportThoughts()
+    expect(exported2).toBe(`
 - a
 - b
 - c
 `)
 
-  // make sure multicursor is disabled after undo
-  const highlightedCount = await page.evaluate(() => document.querySelectorAll('[data-highlighted=true]').length)
+    // make sure multicursor is disabled after undo
+    const highlightedCount = await page.evaluate(() => document.querySelectorAll('[data-highlighted=true]').length)
 
-  expect(highlightedCount).toBe(0)
+    expect(highlightedCount).toBe(0)
+  })
 })

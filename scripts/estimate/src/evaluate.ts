@@ -147,8 +147,8 @@ const formatReport = (metrics: EvalMetrics): string => {
 
 /** Runs the leave-one-out evaluation over every labeled sample and prints the accuracy report. */
 const main = async () => {
-  const openaiApiKey = process.env.OPENAI_API_KEY
-  if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
+  const openaiApiKey = process.env.OPENAI_API_KEY_ESTIMATE || process.env.OPENAI_API_KEY
+  if (!openaiApiKey) throw new Error('OPENAI_API_KEY_ESTIMATE or OPENAI_API_KEY is required')
 
   // Resolve the repo root from this file's location (scripts/estimate/src/evaluate.ts → repo root)
   // so instructions/samples load correctly regardless of the current working directory.

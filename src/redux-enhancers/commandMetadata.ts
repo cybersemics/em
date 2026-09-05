@@ -19,4 +19,14 @@ const setCommandMetadata = (store: Store, value: CommandMetadata) => {
   handler(value)
 }
 
+/** Runs a synchronous operation inside a command transaction. Async commands use this only around the dispatches that apply their completed work, so unrelated user actions remain outside the transaction while a request is in flight. */
+export const withCommandMetadata = <T>(store: Store, value: Exclude<CommandMetadata, null>, operation: () => T): T => {
+  setCommandMetadata(store, value)
+  try {
+    return operation()
+  } finally {
+    setCommandMetadata(store, null)
+  }
+}
+
 export default setCommandMetadata

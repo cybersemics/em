@@ -53,7 +53,6 @@ import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import addEmojiSpace from '../util/addEmojiSpace'
-import containsURL from '../util/containsURL'
 import debugLog from '../util/debugLog'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -63,6 +62,8 @@ import head from '../util/head'
 import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
+import isFormattingElement from '../util/isFormattingElement'
+import lastURL from '../util/lastURL'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import stripTags from '../util/stripTags'
@@ -93,25 +94,32 @@ interface EditableProps {
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
 }
 
-/** If oldValue is wrapped in a formatting node, transfer that wrapper to the new value. */
-const applyOuterTag = (newValue: string, oldValue: string): string => {
+/** Descends a chain of formatting elements that each wrap the whole thought, returning the innermost one. */
+const innermostWrapper = (element: HTMLElement): HTMLElement =>
+  element.childNodes.length === 1 && isFormattingElement(element.firstChild)
+    ? innermostWrapper(element.firstChild)
+    : element
+
+/** If oldValue is wrapped in formatting nodes, transfer those wrappers to the new value. Every wrapper in the chain is
+ * preserved, so a thought formatted with several marks (e.g. bold + underline + text color) keeps all of them. */
+const applyOuterTags = (newValue: string, oldValue: string): string => {
   const div = document.createElement('div')
   div.innerHTML = oldValue
 
-  if (
-    div.childNodes.length > 1 ||
-    div.firstChild?.nodeType === Node.TEXT_NODE ||
-    !(div.firstChild instanceof HTMLElement)
-  )
-    return newValue
+  if (div.childNodes.length > 1 || !isFormattingElement(div.firstChild)) return newValue
 
-  div.firstChild.innerHTML = newValue
+  innermostWrapper(div.firstChild).innerHTML = newValue
 
   return div.firstChild.outerHTML
 }
 
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
+
+// Maximum time between a tap's touchend and the click that the browser synthesizes from it. Debug logs of taps on
+// iOS Safari put that delay at 1-64 ms, and the fastest measured double tap at 100 ms, so this is long enough to
+// catch the synthesized click and short enough that the next tap of a double tap is never mistaken for one.
+const TAP_CLICK_TIMEOUT = 100
 
 /**
  * An editable thought with throttled editing.
@@ -603,7 +611,7 @@ const Editable = ({
         // When the cursor is cleared, there may be an existing style that wraps the entire thought.
         // That style should be re-applied once they type something. (#3673)
 
-        const wrappedValue = state.cursorCleared ? applyOuterTag(e.target.value, oldValue) : e.target.value
+        const wrappedValue = state.cursorCleared ? applyOuterTags(e.target.value, oldValue) : e.target.value
         const trimmedWrappedValue = trimHtml(wrappedValue)
         const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
         const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
@@ -706,11 +714,11 @@ const Editable = ({
         }
 
         const newNumContext = getContexts(state, newValue).length
-        const isNewValueURL = containsURL(newValue)
+        const isNewValueURL = !!lastURL(newValue)
 
         const contextLengthChange =
           newNumContext > 0 || newNumContext !== getContexts(state, oldValueRef.current).length - 1
-        const urlChange = isNewValueURL || isNewValueURL !== containsURL(oldValueRef.current)
+        const urlChange = isNewValueURL || isNewValueURL !== !!lastURL(oldValueRef.current)
 
         // A formatting-only edit changes the markup but not the plain text (e.g. applying a font or background color).
         // Persist it immediately rather than through the edit throttle so that formatSelection's follow-up strip thunk
@@ -894,12 +902,12 @@ const Editable = ({
           const isDragging =
             state.longPress === LongPressState.DragHold || state.longPress === LongPressState.DragInProgress
           // A tap that moved the cursor without entering edit mode can likewise produce this focus despite
-          // preventDefault (see globals.suppressFocusAfterCursorMove). The !isKeyboardOpen check keeps
+          // preventDefault (see globals.suppressCursorAfterTouch). The !isKeyboardOpen check keeps
           // programmatic focus flows intact: commands that activate edit mode by side effect set
           // state.isKeyboardOpen before useEditMode focuses the editable.
-          const isSpuriousTapFocus = globals.suppressFocusAfterCursorMove && !state.isKeyboardOpen
+          const isSpuriousTapFocus = globals.suppressCursorAfterTouch && !state.isKeyboardOpen
           if (isSpuriousTapFocus) {
-            debugLog.log('guard', { step: 'suppressFocusAfterCursorMove' })
+            debugLog.log('guard', { step: 'suppressCursorAfterTouch' })
           }
           if (state.showCommandCenter || isDragging || isSpuriousTapFocus) {
             selection.clear()
@@ -924,11 +932,11 @@ const Editable = ({
         // would otherwise override the cursor that archiveThought placed on the previous sibling.
         // When hidden thoughts are shown, isVisible is true and the cursor can still be set. (#4077)
         // Do not activate edit mode when the focus is the tail of a tap that already moved the cursor
-        // without edit mode (see globals.suppressFocusAfterCursorMove); the block above dismissed it.
+        // without edit mode or a completed drag (see globals.suppressCursorAfterTouch); the block above dismissed it.
         if (
           state.longPress === LongPressState.Inactive &&
           isVisible &&
-          !(globals.suppressFocusAfterCursorMove && !state.isKeyboardOpen)
+          !(globals.suppressCursorAfterTouch && !state.isKeyboardOpen)
         ) {
           setCursorOnThought({ isKeyboardOpen: true })
         }
@@ -937,6 +945,16 @@ const Editable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [value, isVisible, setCursorOnThought],
   )
+
+  // Time of the last touchend that ran handleTapBehavior, used to ignore the click that the browser synthesizes
+  // from the same tap while a multiselect is active. The preventDefault called on touchend is not enough on its
+  // own: iOS Safari dispatches the synthesized click anyway when the press is held longer than a quick tap.
+  // handleTapBehavior would then run a second time and toggle the thought's selection off again right after
+  // selecting it. The tap's other behaviors are idempotent, so only the multiselect toggle needs the guard and
+  // the two-tap pattern that activates edit mode is left alone. A touchstart clears the time, since a new touch
+  // proves that a click that follows belongs to it rather than to the previous tap; this keeps the second tap of
+  // a fast double tap working even when its own touchend does not reach handleTapBehavior.
+  const tapTouchEndTimeRef = useRef(-Infinity)
 
   /**
    * Shared on tap logic dispatched after both click and touchend.
@@ -953,6 +971,13 @@ const Editable = ({
 
       dispatch((dispatch, getState) => {
         const state = getState()
+
+        // Ignore cursor-producing events that belong to a completed touch. Drag cleanup may finish before the browser
+        // emits its compatibility click, so longPress alone cannot identify the event as part of the drag release.
+        if (globals.suppressCursorAfterTouch) {
+          e.preventDefault()
+          return
+        }
 
         // Record the tap inputs that determine which branch runs. `cancelable: false` on a touchend means the
         // preventDefault below is a silent no-op and iOS Safari will still synthesize focus/mouse events for the tap.
@@ -988,7 +1013,7 @@ const Editable = ({
           // would treat them as a second tap and open the keyboard. Flag them for suppression until the next
           // touchstart proves the user actually tapped again.
           if (e.type === 'touchend' && isTouch && isSafari()) {
-            globals.suppressFocusAfterCursorMove = true
+            globals.suppressCursorAfterTouch = true
           }
 
           if (!isVisible) {
@@ -1014,13 +1039,18 @@ const Editable = ({
     [disabled, dispatch, editingOrOnCursor, isVisible, path, setCursorOnThought],
   )
 
-  /** Registers native event listeners for tap behavior (click and touchend). */
+  /** Registers native event listeners for tap behavior (touchstart, click, and touchend). */
   useEffect(() => {
     const editable = contentRef.current
     if (!editable) return
 
     /** Sets the cursor on the thought on click. Handles hidden elements, drags, and editing mode. */
     const onClick = (e: MouseEvent) => {
+      // Drop the click that the browser synthesizes from the tap that was just handled on touchend, otherwise
+      // handleTapBehavior toggles the multicursor twice for a single tap (see tapTouchEndTimeRef). Only a tap that
+      // toggles the selection needs this; while the multiselection is being edited a tap places the caret as usual.
+      if (hasMulticursor && !multiEditing && performance.now() - tapTouchEndTimeRef.current < TAP_CLICK_TIMEOUT) return
+
       // If CMD/CTRL is pressed, this is a multiselect click, so don't focus the editable.
       if (isCommandKey(e)) {
         e.preventDefault()
@@ -1030,20 +1060,29 @@ const Editable = ({
       handleTapBehavior(e)
     }
 
+    /** Forgets the last handled touchend, since a new touch proves that any click that follows belongs to it rather
+     * than to the previous tap. */
+    const onTouchStart = () => {
+      tapTouchEndTimeRef.current = -Infinity
+    }
+
     /** Handles touchend for haptics and tap behavior. */
     const onTouchEnd = (e: TouchEvent) => {
       haptics.light()
+      tapTouchEndTimeRef.current = performance.now()
       handleTapBehavior(e)
     }
 
+    editable.addEventListener('touchstart', onTouchStart)
     editable.addEventListener('click', onClick)
     editable.addEventListener('touchend', onTouchEnd, { passive: false })
 
     return () => {
+      editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('click', onClick)
       editable.removeEventListener('touchend', onTouchEnd)
     }
-  }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior])
+  }, [contentRef, editingOrOnCursor, hasMulticursor, handleTapBehavior, multiEditing])
 
   // The html that is rendered in the editable. Note that it is empty while the thought is cleared, even though the
   // thought still has its value, which is shown as a placeholder.

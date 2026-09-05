@@ -104,7 +104,7 @@ interface State {
   /**
    * History of edit points that can be navigated with the jump command.
    * New edit points are added to the beginning of the list.
-   * Cannot use undoHistory because it omits the cursor from some edits.
+   * Cannot use the undo history because it omits the cursor from some edits.
    * i.e. It causes the 'jump after new subthought' to fail.
    */
   jumpHistory: (Path | null)[]
@@ -139,7 +139,6 @@ interface State {
   /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]
   remoteSearch: boolean
-  resourceCache: Index<string>
   rootContext: Context
   search: string | null
   searchContexts: Index<Context> | null

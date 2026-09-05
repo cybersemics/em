@@ -38,7 +38,7 @@ it('report the thoughtspace at the start, the steps up to the end, and the thoug
   ])
 
   // start after b was created, end after c was indented
-  expect(stepsToReproduce(store.getState(), { start: 5, end: 2 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -46,9 +46,8 @@ it('report the thoughtspace at the start, the steps up to the end, and the thoug
 \`\`\`
 
 1. Set the cursor on \`b\`.
-2. New Thought.
-3. Edit the empty thought to \`c\`.
-4. Indent.
+2. New Thought \`c\`.
+3. Indent.
 
 ## Current Behavior
 
@@ -79,7 +78,7 @@ it('describe the same steps when the current state is between the start and the 
     undo(),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 5, end: 2 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -87,9 +86,8 @@ it('describe the same steps when the current state is between the start and the 
 \`\`\`
 
 1. Set the cursor on \`b\`.
-2. New Thought.
-3. Edit the empty thought to \`c\`.
-4. Indent.
+2. New Thought \`c\`.
+3. Indent.
 
 ## Current Behavior
 
@@ -159,7 +157,7 @@ it('name each action as dispatched, preceded by the cursor it acts on', () => {
     moveThoughtDown(),
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 7, end: 0 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 5, end: 0 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -738,7 +736,7 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
     },
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 5, end: 0 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 3, end: 0 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -885,13 +883,11 @@ it('place a subthought created above the existing subthoughts by the first of th
 it('omit the thoughtspace when it is empty', () => {
   store.dispatch([newThought({}), editThought([''], 'a'), newThought({}), editThought([''], 'b'), indent()])
 
-  expect(stepsToReproduce(store.getState(), { start: 5, end: 0 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 3, end: 0 })).toBe(`## Steps to Reproduce
 
-1. New Thought.
-2. Edit the empty thought to \`a\`.
-3. New Thought.
-4. Edit the empty thought to \`b\`.
-5. Indent.
+1. New Thought \`a\`.
+2. New Thought \`b\`.
+3. Indent.
 
 ## Current Behavior
 

@@ -28,6 +28,7 @@ import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
 import animateDroppedThought from '../util/animateDroppedThought'
 import appendToPath from '../util/appendToPath'
+import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
@@ -185,6 +186,15 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
       animateDroppedThought({ fromPath, toPath })
     }
   }
+
+  // Attribute the upcoming moveThought actions to a drag-and-drop drop, since drops have no `command` entry in the
+  // debug log (commands.ts only logs keyboard/gesture/toolbar commands).
+  debugLog.log('drop', {
+    zone: 'subthought',
+    targetId: head(props.path),
+    targetValue: getThoughtById(state, head(props.path))?.value,
+    items: draggedItems.length,
+  })
 
   store.dispatch((dispatch, getState) => {
     /** Returns true if the thought should be dropped at the top of a collapsed parent. */

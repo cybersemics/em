@@ -1,7 +1,7 @@
 import http from 'http'
 import https from 'https'
 import path from 'path'
-import { drainConsoleProxy, waitForConsoleProxy } from '../../../util/consoleProxy'
+import { CONSOLE_PROXY_STORAGE_KEY, type CapturedLog } from '../../../util/consoleProxy'
 import resetApp from '../helpers/resetApp'
 
 const LOCAL_URL = 'https://localhost:3000'
@@ -70,6 +70,45 @@ export const checkAppRunning = async (url: string = LOCAL_URL): Promise<void> =>
         ? 'Start the app locally (yarn start) before running tests.'
         : 'The origin is wrong or unreachable — check that the tunnel points at the protocol and port the app is served on.'),
   )
+}
+
+/**
+ * Atomically reads and clears the console proxy buffer for `key`. Runs IN THE REMOTE BROWSER:
+ * drainConsoleProxy ships this via browser.execute, which serializes the function source and drops
+ * all closure scope, so it must reference only its `key` param and browser globals (no module-scope
+ * helpers, no CONSOLE_PROXY_STORAGE_KEY capture). The buffer is written by the app side of the proxy,
+ * src/util/consoleProxy.ts, which owns the key and the record shape.
+ */
+const drainBuffer = (key: string): CapturedLog[] => {
+  try {
+    const logs = JSON.parse(sessionStorage.getItem(key) ?? '[]') as CapturedLog[]
+    sessionStorage.setItem(key, '[]')
+    return logs
+  } catch {
+    return []
+  }
+}
+
+/** Readiness probe for waitForConsoleProxy. Self-contained for the same browser.execute serialization reason as drainBuffer. The buffer key exists iff installConsoleProxy has run. */
+const isProxyInstalled = (key: string): boolean => sessionStorage.getItem(key) !== null
+
+/** Atomically reads and clears the console proxy buffer in the remote browser. Returns [] when capture is not enabled or nothing has been captured. */
+const drainConsoleProxy = async (): Promise<CapturedLog[]> => {
+  if (!process.env.VITE_BROWSER_CONSOLE_CAPTURE) return []
+  return browser.execute(drainBuffer, CONSOLE_PROXY_STORAGE_KEY)
+}
+
+/**
+ * Resolves once the console proxy has installed in the remote browser, or rejects after `timeout` ms.
+ *
+ * No-op when VITE_BROWSER_CONSOLE_CAPTURE is unset – this env var must be set both at build time (so the served bundle includes the proxy) and at runtime (so this helper waits for it).
+ */
+const waitForConsoleProxy = async (timeout = 30000): Promise<void> => {
+  if (!process.env.VITE_BROWSER_CONSOLE_CAPTURE) return
+  await browser.waitUntil(async () => browser.execute(isProxyInstalled, CONSOLE_PROXY_STORAGE_KEY), {
+    timeout,
+    timeoutMsg: `Console proxy did not install within ${timeout}ms — VITE_BROWSER_CONSOLE_CAPTURE is set on the WDIO process but the served bundle was likely built without it. Rebuild with \`VITE_BROWSER_CONSOLE_CAPTURE=1 yarn build\` and re-serve.`,
+  })
 }
 
 /**

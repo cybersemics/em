@@ -83,7 +83,7 @@ export interface EvalMetrics {
     /**
      * Left the milestone empty even though one was recorded — a miss, but a safe one. Named for the
      * absent milestone rather than for asking, because not every unassigned issue asks now: a pure
-     * refactor that fits no subsystem is labeled instead.
+     * refactor that fits no domain is labeled instead.
      */
     unassignedButFitted: number
     /** Left the milestone empty where that was the right answer. */
@@ -433,8 +433,8 @@ export const grade = async (
 
 /** Evaluates the classifier over every labeled sample and prints the accuracy report. */
 const main = async () => {
-  const openaiApiKey = process.env.OPENAI_API_KEY
-  if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
+  const openaiApiKey = process.env.OPENAI_API_KEY_ISSUE_CLASSIFIER || process.env.OPENAI_API_KEY
+  if (!openaiApiKey) throw new Error('OPENAI_API_KEY_ISSUE_CLASSIFIER or OPENAI_API_KEY is required')
 
   const minAccuracy = resolveMinAccuracy()
   const repo = process.env.GITHUB_REPOSITORY ?? process.env.ISSUE_CLASSIFIER_REPO ?? DEFAULT_REPO

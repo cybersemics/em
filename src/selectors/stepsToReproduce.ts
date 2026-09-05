@@ -18,7 +18,7 @@ import stripTags from '../util/stripTags'
 import documentSort from './documentSort'
 import exportContext from './exportContext'
 import { getChildrenRanked } from './getChildren'
-import undoHistory from './undoHistory'
+import undoSteps from './undoSteps'
 
 /** A patch with the states before and after it. */
 interface Snapshot {
@@ -387,24 +387,28 @@ const exportTree = (state: State): string =>
 
 /** Generates a bug report in markdown for the actions between two positions of the undo history: the steps to reproduce them, starting from the thoughtspace at the start position, followed by the thoughtspace at the end position as the current behavior and an empty heading for the expected behavior. Positions count steps back from the present, so start is at or before end. */
 const stepsToReproduce = (state: State, positions: { start: number; end: number }): string => {
-  const { patches, position } = undoHistory(state)
+  const { steps, position } = undoSteps(state)
 
   // Clamp the positions to the history, which may have changed since they were chosen. The undo slider keeps its handles as
   // long as the number of patches is unchanged, but the same number of patches can group into fewer steps, leaving a handle
   // past the end of the history.
-  const start = Math.min(Math.max(positions.start, 0), patches.length)
+  const start = Math.min(Math.max(positions.start, 0), steps.length)
   const end = Math.min(Math.max(positions.end, 0), start)
 
   // Reconstruct the state before and after each patch between the current state and the two positions.
   // The undo stack holds inverse patches, applied newest first to walk back to the start.
-  const undoSnapshots = patches.slice(position, start).reduce<Snapshot[]>((snapshots, patch) => {
-    const after = snapshots.at(-1)?.before ?? state
-    return [...snapshots, { patch, before: produce(after, draft => applyPatch(draft, patch.ops).newDocument), after }]
-  }, [])
+  const undoSnapshots = steps
+    .slice(position, start)
+    .flatMap(step => [...step.patches].reverse())
+    .reduce<Snapshot[]>((snapshots, patch) => {
+      const after = snapshots.at(-1)?.before ?? state
+      return [...snapshots, { patch, before: produce(after, draft => applyPatch(draft, patch.ops).newDocument), after }]
+    }, [])
   // The redo stack holds forward patches, applied oldest first to walk forward to the end.
-  const redoSnapshots = patches
+  const redoSnapshots = steps
     .slice(end, position)
     .reverse()
+    .flatMap(step => step.patches)
     .reduce<Snapshot[]>((snapshots, patch) => {
       const before = snapshots.at(-1)?.after ?? state
       return [
@@ -416,13 +420,17 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
 
   /** The state at a position: the current state, the state before the oldest patch of the step ahead of it, or the state after the newest patch of the step behind it. */
   const stateAt = (p: number): State =>
-    p === position ? state : p > position ? snapshots.get(patches[p - 1])!.before : snapshots.get(patches[p])!.after
+    p === position
+      ? state
+      : p > position
+        ? snapshots.get(steps[p - 1].patches[0])!.before
+        : snapshots.get(steps[p].patches.at(-1)!)!.after
 
   // The steps in chronological order, each as the snapshots of its patches. A step of navigation actions only is folded into the cursor move that precedes the next step.
-  const stepSnapshots = patches
+  const stepSnapshots = steps
     .slice(end, start)
     .reverse()
-    .map(patch => [snapshots.get(patch)!])
+    .map(step => step.patches.map(patch => snapshots.get(patch)!))
     .filter(snapshots => snapshots.some(({ patch }) => !patch.metadata.isNavigation))
 
   // The steps act on the cursor and the selection, so a step whose cursor or selection differs from what the previous step left is preceded by the move or selection that gets there. Neither is known before the first step, so the steps always begin with the cursor, and with the selection if the first step is a multicursor command. The cursor a step leaves is read after its last non-navigation patch, so that a trailing cursor move surfaces before the next step.

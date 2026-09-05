@@ -32,7 +32,7 @@ import openMobileCommandUniverseCommand from './commands/openMobileCommandUniver
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import globals from './globals'
-import setCommandMetadata from './redux-enhancers/commandMetadata'
+import setCommandMetadata, { withCommandMetadata as runWithCommandMetadata } from './redux-enhancers/commandMetadata'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
 import getThoughtById from './selectors/getThoughtById'
@@ -366,7 +366,7 @@ const keyboardIndexOf = (
  * The newest patch records the command directly, so no patch-identity comparison or action inference is needed.
  */
 const recordLastCommand = (command: Command, keyboardIndex: number | undefined, stateAfter: State) => {
-  const latest = stateAfter.undoPatches.at(-1)
+  const latest = [...stateAfter.undoPatches].reverse().find(patch => !patch.metadata.isNavigation)
   if (
     command.repeatable !== false &&
     latest?.metadata.source === 'command' &&
@@ -432,13 +432,23 @@ export const executeCommand = (
   let result: void | Promise<void>
   try {
     // execute single command
-    result = command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
+    result = command.exec(commandStore.dispatch, commandStore.getState, event, {
+      type,
+      keyboardIndex,
+      withCommandMetadata: operation => runWithCommandMetadata(commandStore, commandMetadata, operation),
+    })
   } catch (error) {
     if (manageCommandMetadata) setCommandMetadata(commandStore, null)
     throw error
   }
 
-  if (result instanceof Promise) return result.finally(complete)
+  if (result instanceof Promise) {
+    // A network-backed command must not leave global transaction metadata active while the request is in flight, since
+    // user input can continue in the meantime. The command scopes only its eventual state-changing dispatches through
+    // commandContext.withCommandMetadata, while Repeat is recorded after those dispatches have settled.
+    if (manageCommandMetadata) setCommandMetadata(commandStore, null)
+    return result.then(() => recordLastCommand(command, keyboardIndex, commandStore.getState()))
+  }
   complete()
 }
 
@@ -512,6 +522,9 @@ export const executeCommandWithMulticursor = (
   // Keep direct multicursor action-creators grouped while command metadata identifies this transaction.
   commandStore.dispatch(setIsMulticursorExecuting({ value: true }))
 
+  // The thoughts created by the executions, collected for selectNewCursors.
+  const newCursors: Path[] = []
+
   /** Restore selection state and close the command transaction after synchronous or asynchronous execution. */
   const completeMulticursorExecution = () => {
     // Restore the cursor to its original value if not prevented.
@@ -526,8 +539,25 @@ export const executeCommandWithMulticursor = (
       )
     }
 
-    // Restore multicursors
-    if (!multicursor.clearMulticursor) {
+    // Restore multicursors, or select the thoughts created by commands that opt into selectNewCursors.
+    if (multicursor.selectNewCursors) {
+      // Setting the cursor to each selected thought emptied the multicursors, so the thoughts that were created can
+      // simply be selected. A single new thought is not a selection, so clear it and end as the command does without a
+      // multiselect, with the caret in the new thought.
+      commandStore.dispatch(
+        newCursors.length < 2
+          ? clearMulticursors()
+          : [
+              ...newCursors.map(path => addMulticursor({ path })),
+              // state.expanded is recalculated on setCursor, so set the cursor to the last new thought to expand the
+              // ancestors of the new selection. The cursor is already there, so this does not move it.
+              // The new thoughts are selected rather than edited — there is no typing into several of them at once — so
+              // close the keyboard that each exec opened. Otherwise multicursorAlertMiddleware reads the selection as a
+              // multiselection being edited (Clear Thought) and leaves the Command Center closed over it on mobile.
+              setCursor({ path: newCursors[newCursors.length - 1], isKeyboardOpen: false, preserveMulticursor: true }),
+            ],
+      )
+    } else if (!multicursor.clearMulticursor) {
       commandStore.dispatch(
         paths.map(path => (dispatch, getState) => {
           const state = getState()
@@ -572,16 +602,19 @@ export const executeCommandWithMulticursor = (
     // execMulticursor bypasses executeCommand, which is what records the last command for the repeat command, so record it here. The patch is captured after setIsMulticursorExecuting, the same point the per-cursor loop below captures it from, so that both branches judge a change by the same measure.
     let result: void | Promise<void>
     try {
-      result = multicursor.execMulticursor(filteredPaths, commandStore.dispatch, commandStore.getState)
+      result = multicursor.execMulticursor(filteredPaths, commandStore.dispatch, commandStore.getState, {
+        withCommandMetadata: operation => runWithCommandMetadata(commandStore, commandMetadata, operation),
+      })
     } catch (error) {
       completeMulticursorExecution()
       throw error
     }
 
     if (result instanceof Promise) {
-      return result
-        .then(() => recordLastCommand(command, keyboardIndex, commandStore.getState()))
-        .finally(completeMulticursorExecution)
+      // Restore the selection and close the synchronous command bracket now. The custom command owns any asynchronous
+      // multicursor bracket and scopes its completed edits with the supplied command context.
+      completeMulticursorExecution()
+      return result.then(() => recordLastCommand(command, keyboardIndex, commandStore.getState()))
     }
 
     recordLastCommand(command, keyboardIndex, commandStore.getState())
@@ -601,6 +634,14 @@ export const executeCommandWithMulticursor = (
           commandMetadata,
           manageCommandMetadata: false,
         })
+
+        // The command sets the cursor to the thought it created, so a cursor on a different thought than the one that was
+        // just set is the new thought. A command that could not act on the selected thought leaves the cursor where it
+        // was and contributes nothing (e.g. newUncle on a thought at the root).
+        const cursorAfter = commandStore.getState().cursor
+        if (multicursor.selectNewCursors && cursorAfter && !equalPath(cursorAfter, recomputedPath)) {
+          newCursors.push(cursorAfter)
+        }
       }
     } catch (error) {
       completeMulticursorExecution()

@@ -54,7 +54,7 @@ interface Thought {
   childrenMap: Index<ThoughtId>
   created: Timestamp
   lastUpdated: Timestamp
-  /** Public key of the writer; SHA-256(accessToken). See data-providers/yjs/index.ts. */
+  /** Public key of the writer; SHA-256(accessToken). See data-providers/thoughtspaceSession.ts. */
   updatedBy: string
   /** Set when archived. Undefined for live thoughts. */
   archived?: Timestamp
@@ -67,7 +67,7 @@ interface Thought {
 }
 ```
 
-See [Thought.ts](../src/@types/Thought.ts). On disk thoughts are persisted as a separate `ThoughtDb` shape with single-letter keys for compactness — see [persistence.md](persistence.md).
+See [Thought.ts](../src/@types/Thought.ts). Only part of this shape is persisted: TreeCRDT stores a `ThoughtPayload` (`value`, `created`, `lastUpdated`, `updatedBy`, `archived`) on each node and derives `parentId`, `rank`, and `childrenMap` from the tree on read — see [persistence.md → Document model](persistence.md#document-model).
 
 #### rank
 
@@ -83,6 +83,8 @@ So `[1, 2, 5, 6]` becomes `[1, 2, 5, 5.5, 6]` when a thought is inserted between
 
 `importJSON` autoincrements ranks across all imported thoughts (for efficiency), so the absolute ranks may differ from what manual insertion would have produced — but sibling-relative ordering is preserved.
 
+Rank is an in-memory ordering only. TreeCRDT stores sibling order in the tree itself, so `rank` is not persisted: it is re-projected from the stored child order (0, 1, 2, …) every time a thought is read back. Reorders are sent to storage as explicit placements rather than as new rank numbers — see [persistence.md → Order and placement](persistence.md#order-and-placement).
+
 #### pending
 
 A thought with `pending: true` is known to exist (its `id` is in `thoughtIndex`) but its real data has not yet been pulled from local/remote storage. The UI renders pending thoughts with placeholders, and the pull queue ([`pullQueue.ts`](../src/redux-middleware/pullQueue.ts)) drives fetches based on visible pending IDs. See [persistence.md](persistence.md).
@@ -93,7 +95,7 @@ A thought with `pending: true` is known to exist (its `id` is in `thoughtIndex`)
 type ThoughtId = string & Brand<'ThoughtId'>
 ```
 
-A `ThoughtId` is a 21-char nanoid (e.g. `kv9a-vzva-ac4n` shown without dashes). Strings are nominally branded ([`Brand.ts`](../src/@types/Brand.ts)) so a raw string can't accidentally be passed where a `ThoughtId` is expected without an explicit cast.
+A `ThoughtId` is 32 lowercase hex characters — a random 128-bit value minted by [`createId`](../src/util/createId.ts), in the format TreeCRDT requires for a node id. Strings are nominally branded ([`Brand.ts`](../src/@types/Brand.ts)) so a raw string can't accidentally be passed where a `ThoughtId` is expected without an explicit cast.
 
 ### Context
 
@@ -302,7 +304,7 @@ There is no global or default sort preference: a context without `=sort` is sort
 - Thoughts created or edited afterwards are given a rank that keeps the context sorted, via [`getSortedRank`](../src/selectors/getSortedRank.ts) — a fractional rank between the neighbors the new value sorts between.
 - Toggling sort back off restores the pre-sort manual order from `state.manualSortMap`, which records each child's rank at the moment the context was first sorted.
 
-The comparator itself lives in [`getSortComparator`](../src/selectors/getChildren.ts) and is applied directly by [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts). Those are the selectors that compute the desired order (for `sort`, for insertion points, for sibling navigation); they agree with the rendered order only because the ranks are kept materialized.
+The comparator itself lives in [`getSortComparator`](../src/selectors/getChildren.ts) and is applied directly by [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts). Those are the selectors that compute the desired order (for `sort`, for insertion points, for sibling navigation); they agree with the rendered order only because the ranks are kept materialized. Thoughts whose sort keys and existing fallbacks are equal — duplicate values under Alphabetical sorting, or thoughts created at the same millisecond whose values also compare equal under Created sorting — are ordered by `rank`, the last fallback of every comparator. Without it their order would come from `childrenMap` insertion order, which can disagree with their rank order, so sibling navigation would move the cursor between duplicates in a different order than they appear on screen.
 
 Empty and emoji-only thoughts have no meaningful sort key, so they are sorted to their point of creation, i.e. by `rank`, in every sort preference. [`newThought`](../src/actions/newThought.ts) and [`editThought`](../src/actions/editThought.ts) leave their rank alone rather than calling [`getSortedRank`](../src/selectors/getSortedRank.ts) — a thought you have just created stays where you created it while you type into it — and [`getSortComparator`](../src/selectors/getChildren.ts) compares them by rank so that the sorted order matches the rendered order — the tree is always rendered in rank order via [`getChildrenRanked`](../src/selectors/getChildren.ts).
 

@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import moize from 'moize'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
@@ -8,14 +7,11 @@ import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
 import { initThoughtsActionCreator as initThoughts } from './actions/initThoughts'
-import { loadFromUrlActionCreator as loadFromUrl } from './actions/loadFromUrl'
-import { preloadSourcesActionCreator as preloadSources } from './actions/preloadSources'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
-import db, { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
-import * as selection from './device/selection'
+import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -27,6 +23,7 @@ import getThoughtById from './selectors/getThoughtById'
 import thoughtToContext from './selectors/thoughtToContext'
 import store from './stores/app'
 import offlineStatusStore, { init as initOfflineStatusStore } from './stores/offlineStatusStore'
+import storageStatusStore from './stores/storageStatus'
 import syncStatusStore from './stores/syncStatus'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
@@ -34,7 +31,6 @@ import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
 import owner from './util/owner'
-import urlDataSource from './util/urlDataSource'
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
@@ -64,7 +60,7 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   initOfflineStatusStore(/* websocket */)
   const eventHandlers = initEvents(store)
 
-  const { clientId } = await thoughtspaceRuntime.init({
+  const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
     storage,
     materialization: {
       getSnapshot: () => {
@@ -88,22 +84,21 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
     },
   })
 
-  // load local state unless loading a public context or source url
+  storageStatusStore.update(storageInUse)
+
+  // load local state unless loading a public context
   // await initDB()
 
-  const src = urlDataSource()
   const thoughtsLocalPromise =
     owner() === '~'
       ? // authenticated or offline user
-        Promise.resolve(store.dispatch(src ? loadFromUrl(src) : initThoughts(clientId)))
+        Promise.resolve(store.dispatch(initThoughts(clientId)))
       : // other user context
         Promise.resolve()
 
-  // load =preload sources
   thoughtsLocalPromise.then(() => {
     // extra delay for good measure to not block rendering
     setTimeout(() => {
-      store.dispatch(preloadSources)
       store.dispatch(importFiles({ resume: true }))
     }, 500)
   })
@@ -164,11 +159,7 @@ const testHelpers = {
   dropThoughtspace: thoughtspaceRuntime.drop,
   waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
-  setSelection: selection.set,
   importToContext: withDispatch(importToContext),
-  getLexemeFromThoughtspace: (value: string) => db.getLexemeById(hashThought(value)),
-  getState: store.getState,
-  _: _,
 }
 
 // add useful functions to window.em for debugging

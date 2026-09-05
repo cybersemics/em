@@ -26,7 +26,8 @@ yarn test:ios:browserstack  # BrowserStack credentials required
 yarn test:ios:local         # local Appium and iOS Simulator required
 ```
 
-See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
+> [!IMPORTANT]
+> See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
 
 ### Run a specific test
 
@@ -120,6 +121,7 @@ This rule is about waiting for real time to pass, not about safety limits or tim
 
 - Runner timeouts such as Vitest's `testTimeout` and WDIO's `waitforTimeout` are legitimate safety limits.
 - When elapsed time is the behavior under test (debounce, throttle, delayed UI, etc.), use fake timers and advance them explicitly instead of sleeping in real time.
+- In store and JSDOM tests, where `initStore` and `createTestApp` already enable fake timers, `vi.waitFor` is a sleep loop in disguise. Flush the timers instead — see [Fake timers: flush, don't poll](#fake-timers-flush-dont-poll).
 - Durations that are part of simulated input, such as how long a long press is held or how quickly a swipe moves, are action parameters rather than synchronization waits.
 
 ```ts
@@ -145,7 +147,7 @@ expect(exported).toBe(`
 `)
 ```
 
-If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
+If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
 
 The sanctioned `paste` and `setTheme` Puppeteer helpers still contain fixed sleeps. The iOS `showEditMenu` helper also has a documented WebKit settlement delay. These are known driver/synchronization debt, not general examples to copy. If one is changed, prefer replacing the delay with a named readiness condition when the platform exposes one.
 
@@ -342,7 +344,7 @@ The Puppeteer tests are run via Vitest using the `puppeteer-e2e` project defined
 
 High level helper functions are available for executing common user interactions: [/src/e2e/puppeteer/helpers](../src/e2e/puppeteer/helpers)
 
-Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer. Select the device at suite scope so that shared setup applies it before navigation; changing mobile or touch emulation after navigation may reload the page and restart app initialization.
+Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer. Select the device at suite scope so that shared setup applies it before navigation. This is the only supported way to emulate a device, because `page.emulate` reloads the page whenever mobile or touch emulation changes, restarting app initialization and discarding whatever the test had already set up. A test that needs a different viewport or orientation without changing touch support can call `page.setViewport`, which does not reload.
 
 ```ts
 deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
@@ -393,20 +395,27 @@ Start the app before either iOS suite:
 ```sh
 # terminal 1
 yarn start
-
 # terminal 2: choose one
 yarn test:ios:browserstack
 yarn test:ios:local
 ```
 
-For BrowserStack, put the credentials in `.env.test.local`:
+#### Setting up credentials for BrowserStack
+
+The BrowserStack configuration automatically starts and stops a temporary Cloudflare tunnel so the real device can reach the local HTTPS app.
+
+To test with BrowserStack, you need **credentials to access BrowserStack** and credentials to make the Cloudflare tunnel work.
+
+Put these credentials in `.env.test.local`. Contact the project maintainer for these:
+
 
 ```dotenv
 BROWSERSTACK_USERNAME=your_username
 BROWSERSTACK_ACCESS_KEY=your_access_key
-```
 
-The BrowserStack configuration starts and stops a temporary Cloudflare tunnel automatically so the real device can reach the local HTTPS app.
+# make sure to enclose with 'quotes'
+CLOUDFLARE_TUNNEL_POOL='[{"name":"…","hostname":"…","token":"…"}, …]'
+```
 
 Local Appium requires macOS with Xcode and an iOS Simulator, Appium, and the XCUITest driver:
 
@@ -423,6 +432,12 @@ WebdriverIO tests provide automated test coverage of actual iOS devices (among o
 `wdio` executes test suites with native `WebDriver` support via `@wdio/mocha-framework` and `@wdio/browserstack-service`, which is responsible for session and credential management. `wdio` also provides lifecycle hooks that are helpful for initiating a session efficiently.
 
 The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config). [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) contains common iOS Safari settings and lifecycle hooks. [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) loads credentials, starts the Cloudflare tunnel, and configures `@wdio/browserstack-service`. [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) configures local Appium and the iOS Simulator.
+
+#### TypeScript for the iOS tests
+
+The iOS tests are typechecked by their own [`src/e2e/iOS/tsconfig.json`](../src/e2e/iOS/tsconfig.json), which is the only program that declares WebdriverIO's globals — `browser`, `$`, `$$`, and `expect` from `@wdio/globals/types`, mocha's `describe`/`it` via `@wdio/mocha-framework`, and `@wdio/browserstack-service`'s global interfaces (`State`, `GRRUrls`, …). The root `tsconfig.json` excludes `src/e2e/iOS`, so none of those exist for app code: a file that forgets to import the app's own `State` fails to compile instead of silently binding to BrowserStack's. `yarn lint` runs both programs (`lint:tsc`), and editors pick the nearest `tsconfig.json`, so each file sees the globals of the runtime it targets.
+
+A module shared with the app is checked by both programs and therefore cannot reference `browser`. The console proxy is split along that line: [`src/util/consoleProxy.ts`](../src/util/consoleProxy.ts) is the app side and owns the storage key and record shape, while draining the buffer and waiting for the proxy to install live in [`wdio.base.conf.ts`](../src/e2e/iOS/config/wdio.base.conf.ts).
 
 #### Origin health check
 
@@ -449,7 +464,7 @@ We use a fixed-domain pool rather than the ephemeral `*.trycloudflare.com` quick
 
 ##### How a run claims a tunnel
 
-[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run `TUNNEL_TOKEN` (the Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts)).
+[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts). The gate only guards the tunnel's public hostnames; every other authority (localhost, a LAN IP, `bs-local.com`) cannot have come through the tunnel — Cloudflare routes to the tunnel by Host header — and passes ungated. `onPrepare` discovers the token by asking the dev server's off-tunnel-only `/__tunnel-token` route over localhost, so a local run needs no `TUNNEL_TOKEN`; CI generates one per run and exports it to both its server and the runner (env `TUNNEL_TOKEN` overrides generation), which is also why every server on the pool is gated — the claim probe below relies on foreign servers 403ing this run's token.
 
 The gate must see `?__token=` on the **document** request. Vite rewrites `Accept: text/html` navigations (Chrome, Safari, BrowserStack iOS) to `/index.html` and drops the query string; curl's default `Accept: */*` does not take that path. That is why curl can 200 while a browser shows the gate's `Forbidden` on the same URL. The middleware reads Connect's `originalUrl` so the token survives that rewrite. The device URL is always `https://<hostname>/?__token=…` (slash before the query). Concatenating onto `https://host` without that slash yields `https://host?__token=`, which iOS Safari does not load as `/` — the first WDIO session fails `before` while later `specFileRetries` can still pass.
 
@@ -478,18 +493,16 @@ Requires an **Account**-scoped Cloudflare permission grant including `Cloudflare
 3. The script writes `cloudflare-tunnel-pool.json` (gitignored — it contains live tokens). Set its contents as the GitHub Actions secret `CLOUDFLARE_TUNNEL_POOL`: `gh secret set CLOUDFLARE_TUNNEL_POOL < cloudflare-tunnel-pool.json`.
 4. Re-run the script (same or a larger `POOL_SIZE`) any time to top up the pool — it reuses tunnels that already exist rather than recreating them.
 
-##### If you're a developer who needs tunnel access
-
-If you're a developer or agent making changes to BrowserStack CI, you'll need access to a **separate tunnel pool used for the development environment**. Ask the project maintainer, who will be able to give you access to the values needed for the `CLOUDFLARE_TUNNEL_POOL` secret.
 
 Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
 ### Vitest configuration
 
-[`vitest.config.ts`](../vitest.config.ts) defines two projects, both extending [`vite.config.ts`](../vite.config.ts):
+[`vitest.config.ts`](../vitest.config.ts) defines three projects, all extending [`vite.config.ts`](../vite.config.ts):
 
-- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding `e2e/` and `.claude/`. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.ts`](../src/setupTests.ts). Used by `yarn test`.
+- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding `e2e/`, `evals/`, and `.claude/`. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.ts`](../src/setupTests.ts). Used by `yarn test`.
 - **`puppeteer-e2e`** — custom environment [`puppeteer-environment.ts`](../src/e2e/puppeteer-environment.ts), setup file [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), only includes `src/e2e/puppeteer/__tests__/*.ts`. The `vite-plugin-terminal` plugin pipes `console.log` from the page back to the terminal so Puppeteer test failures are debuggable. Used by `yarn test:puppeteer`; locally, [`test-puppeteer.sh`](../src/e2e/puppeteer/test-puppeteer.sh) also starts Browserless and a dedicated Vite dev server on port 2552.
+- **`eval`** — `node` environment and picks up live model evaluations under `packages/ai/src/evals/`. Its concurrent cases retry failures up to twice and allow 60 seconds per case. The directory is excluded from `unit` so `yarn test` remains deterministic and credential-free; run all evaluations explicitly with `yarn test:evals`, which loads `packages/ai/.env.local` before Vitest imports the AI client.
 
 Exceptions thrown inside a DOM event listener never propagate out of `dispatchEvent` — jsdom catches them and re-reports them as an `error` event on `window`. Vitest turns that event back into a run-failing unhandled error, but only while nothing else is listening for `error`, and [`initEvents.ts`](../src/util/initEvents.ts) registers a listener at module scope to drive the error banner, which suppresses that conversion in any test that imports app code. [`setupTests.ts`](../src/setupTests.ts) restores it by re-emitting trusted `error` events as `uncaughtException`, so a test that crashes on click fails the run instead of passing silently. Tests that dispatch a synthetic `ErrorEvent` to exercise the banner itself are unaffected, since events constructed in test code are not trusted.
 
@@ -522,7 +535,7 @@ Integration tests are blackbox, but named helpers may take shortcuts during arra
 | Visual snapshot stabilization | Arrange | [`hide`](../src/e2e/puppeteer/helpers/hide.ts), [`hideVisibility`](../src/e2e/puppeteer/helpers/hideVisibility.ts), [`hideHUD`](../src/e2e/puppeteer/helpers/hideHUD.ts), [`showMousePointer`](../src/e2e/puppeteer/helpers/showMousePointer.ts), [`screenshot`](../src/e2e/puppeteer/helpers/screenshot.ts) | DOM/style mutation is allowed only to remove irrelevant nondeterminism or expose input position in a visual test. Do not hide the subject of the snapshot. |
 | Test environment controls | Arrange | [`deviceEmulation`](../src/e2e/puppeteer/helpers/deviceEmulation.ts), [`setConnectionStatus`](../src/e2e/puppeteer/helpers/setConnectionStatus.ts), [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), the thoughtspace storage selection in [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable controls in the corresponding `afterEach` or `afterAll` hook unless per-test page isolation resets them. The control must not change the semantic outcome under test. |
 | Structural assertion | Assert | [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts) | Export the thought tree as plaintext. Do not make additional assertions on Redux state. |
-| Non-visual synchronization | Wait | [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts), [`waitForState`](../src/e2e/puppeteer/helpers/waitForState.ts) | Use only when persistence or another prerequisite has no immediate visual signal. This is synchronization, not the test's assertion; assert the final user-visible result separately. |
+| Non-visual synchronization | Wait | [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) | Use only when persistence or another prerequisite has no immediate visual signal. `waitForThoughtspaceIdle` waits for every queued persistence write to commit and rejects if one failed; call it only to synchronize before a reload or before asserting that a write landed. It is synchronization, not the test's assertion; assert the final user-visible result separately. |
 | Timing/environment spoofing | Arrange | [`reloadWithProductionTiming`](../src/e2e/puppeteer/helpers/reloadWithProductionTiming.ts) (spoofs `navigator.webdriver` to restore production animation timing) | Use only for a state that cannot exist under test timing (such as the loading phase). Justify in the helper's doc comment and state how the spoof is undone (per-test page isolation counts, but say so). Subsequent waits must still name conditions rather than replay production durations. |
 
 DOM reads are different from backdoors: inline `page.evaluate`/`browser.execute` may read user-visible DOM when no helper exists, though a repeated read should become a named helper. It may not dispatch actions, mutate app state, set test flags, or write to the DOM.
@@ -592,9 +605,9 @@ Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/hel
 | Long press | [`longPressThought`](../src/e2e/puppeteer/helpers/longPressThought.ts) | Holds a touch until the thought's bullet reports the long-press highlight, then releases. |
 | Drag and drop | [`dragAndDropThought`](../src/e2e/puppeteer/helpers/dragAndDropThought.ts), [`dragAndDropFavorite`](../src/e2e/puppeteer/helpers/dragAndDropFavorite.ts), [`dragAndDrop`](../src/e2e/puppeteer/helpers/dragAndDrop.ts) | Drives real mouse down/move/up input and waits for drag-specific visible conditions. |
 | Scroll | [`scroll`](../src/e2e/puppeteer/helpers/scroll.ts), [`scrollBy`](../src/e2e/puppeteer/helpers/scrollBy.ts), [`scrollIntoView`](../src/e2e/puppeteer/helpers/scrollIntoView.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts) | Scrolls the window or a named container; use the narrowest helper that expresses the intent. |
-| Emulate a mobile device | [`emulate`](../src/e2e/puppeteer/helpers/emulate.ts) | Applies a Puppeteer device profile before touch-specific input. |
+| Emulate a mobile device | [`deviceEmulation.useForSuite`](../src/e2e/puppeteer/helpers/deviceEmulation.ts) | Selects a Puppeteer device profile at suite scope, which `setup` applies before navigation. There is no mid-session equivalent; see the emulation note above. |
 
-Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), and [`waitForThoughtExistInDb`](../src/e2e/puppeteer/helpers/waitForThoughtExistInDb.ts). Every Puppeteer test should read as a sequence of these helpers.
+Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), [`waitForCommandCenterOpen`](../src/e2e/puppeteer/helpers/waitForCommandCenterOpen.ts), and [`waitForCommandCenterClosed`](../src/e2e/puppeteer/helpers/waitForCommandCenterClosed.ts). Persistence has no visual signal, so [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) waits for the thoughtspace to commit every queued write; [`refresh`](../src/e2e/puppeteer/helpers/refresh.ts) calls it before reloading, so a test that reloads right after a paste does not need to wait for persistence itself; typed text reaches the queue only when its edit throttle flushes, so run a command such as Escape before reloading to commit it. Every Puppeteer test should read as a sequence of these helpers.
 
 The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM.
 
@@ -602,7 +615,9 @@ The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exp
 
 The iOS suite has a separate driver vocabulary in [`../src/e2e/iOS/helpers/`](../src/e2e/iOS/helpers): [`tap`](../src/e2e/iOS/helpers/tap.ts) emits a W3C pointer action, [`keyboard.type`](../src/e2e/iOS/helpers/keyboard.ts) uses WDIO `sendKeys`, and [`gesture`](../src/e2e/iOS/helpers/gesture.ts) emits a touch pointer path. Helpers such as [`tapReturnKey`](../src/e2e/iOS/helpers/tapReturnKey.ts), [`hideKeyboardByTappingDone`](../src/e2e/iOS/helpers/hideKeyboardByTappingDone.ts), and [`showEditMenu`](../src/e2e/iOS/helpers/showEditMenu.ts) cross into native iOS UI when Web content APIs are insufficient.
 
-Tap toolbar buttons with [`tapToolbar`](../src/e2e/iOS/helpers/tapToolbar.ts), the iOS counterpart to Puppeteer's [`clickToolbar`](../src/e2e/puppeteer/helpers/clickToolbar.ts), rather than tapping the button element directly. Most of the toolbar's buttons sit outside a phone-width viewport until the horizontally scrolling toolbar is scrolled, and a tap aimed at an off-screen button hits nothing — silently, since the command simply never runs. `tapToolbar` centers the button first (the toolbar's edges are overlapped by opaque scroll arrows that swallow a tap on a button scrolled only just into view) and taps with a touch pointer, which [`ToolbarButton`](../src/components/ToolbarButton.tsx) requires on a touch device because it binds `onTouchStart`/`onTouchEnd` rather than `onMouseDown`/`onClick`.
+Tap toolbar buttons with [`tapToolbar`](../src/e2e/iOS/helpers/tapToolbar.ts), the iOS counterpart to Puppeteer's [`clickToolbar`](../src/e2e/puppeteer/helpers/clickToolbar.ts), rather than tapping the button element directly. Most of the toolbar's buttons sit outside a phone-width viewport until the horizontally scrolling toolbar is scrolled, and a tap aimed at an off-screen button hits nothing — silently, since the command simply never runs. `tapToolbar` centers the button first (the toolbar's edges are overlapped by opaque scroll arrows that swallow a tap on a button scrolled only just into view) and taps with a touch pointer, which [`ToolbarButton`](../src/components/ToolbarButton.tsx) requires on a touch device because it binds `onTouchStart`/`onTouchEnd` rather than `onMouseDown`/`onClick`. It aims at the button's icon rather than the center of its rect, since a picker is rendered inside the button that opens it and an open picker expands that rect down over the swatches. The touch pointer also preserves the caret: `ToolbarButton` preventDefaults `touchend` to suppress the blur, whereas a mouse tap blurs the editable — which for a note clears `noteFocus`, so the command applies to the thought instead.
+
+A second value in a dropdown that is already open is tapped directly, since calling `tapToolbar` again would tap its button and toggle the dropdown closed. Tap it with [`tap`](../src/e2e/iOS/helpers/tap.ts) and the `toolbarTapOptions` exported by `tapToolbar`, so it uses the same touch pointer and offset.
 
 Do not import Puppeteer helpers into iOS tests or assume identical driver behavior. Keep the test vocabulary parallel at the level of user intent, not implementation.
 
@@ -646,6 +661,12 @@ When the failure is wrong, fix the test—not the application—and rerun it aga
 
 The primary Test, Puppeteer, and BrowserStack workflows run on pushes to `main` and on pull requests (BrowserStack uses `pull_request_target`). The TDD workflow runs on pull requests that add tests. All four accept `workflow_dispatch` with an optional `rerun_id` so the `ghworkflow` shell function (see [Tips](#triggering-github-actions-workflows-manually)) can fan out manually triggered runs for flake hunting.
 
+Vercel Preview runs on pull requests separately from the test workflows. It deploys the pull request's `em-ai` service first, verifies its health route, then supplies that deployment's URL as `VITE_AI_URL` while building the matching `em` web preview. The GitHub `Preview` deployment links to the user-facing web app; the workflow summary includes the paired AI service URL for diagnostics. Both deploys run sequentially in one job so the GitHub deployment status represents the entire pair.
+
+Both it and [`Vercel Production`](../.github/workflows/vercel-production.yml) install the CLI once per run through [`.github/actions/vercel-cli`](../.github/actions/vercel-cli/action.yml) and call a plain `vercel` thereafter. The obvious `yarn dlx vercel` at each call site reinstalls it every time — six times in Preview, three in Production — and Yarn relinks and rebuilds on each one even with the download cached, so that costs about a minute and a half per preview run for a binary the run already has. Installing once also fixes one CLI version across every step of a run.
+
+The version is still whatever `latest` is when the run starts; the CLI is deliberately unpinned so deploys track Vercel's tooling. That leaves the install exposed to Vercel's own publish order: the CLI pins each of its workspace packages exactly, and if one is published *after* the CLI depending on it, `latest` is unresolvable until it lands and the install fails with `ETARGET` (`YN0082` under Yarn). It is rare — across the six releases before it the package reached npm 46 seconds to 4 minutes *ahead* of the CLI — but `vercel@59.11.0` inverted the order and left a seven-minute hole on 2026-09-01 that a preview run fell into, failing 26 seconds before the missing package was published. The install therefore retries for five minutes before giving up; the `pull`, `build`, and `deploy` steps that follow are left to fail fast on genuine errors.
+
 #### Path filtering
 
 Test, Puppeteer, BrowserStack, and Vercel Preview each carry the same `paths-ignore` filter, covering two groups:
@@ -653,7 +674,7 @@ Test, Puppeteer, BrowserStack, and Vercel Preview each carry the same `paths-ign
 - **Documentation and agent/editor configuration** — `**/*.md`, `docs/`, `.github/instructions/`, `.github/skills/`, `.claude/`, `.agents/`, `.vscode/`, `.hooks/`.
 - **Native platform projects** — `android/`, `ios/`, `desktop/`, and `assets/` (the icon and splash sources generated into the first two).
 
-A change set confined to those paths is almost always unable to affect what any of the four workflows tests: `yarn build` is web-only (`build:packages`, `build:styles`, `vite build`), and BrowserStack exercises mobile Safari over a tunnel rather than the Capacitor app. None of the native directories contains a JS or TS file, and the web favicons come from `public/`, not `assets/`. **If a Capacitor asset is ever wired into the Vite build, the native entries must be removed** — otherwise a real change would ship untested.
+A change set confined to those paths is almost always unable to affect what any of the workflows tests or deploys: the test workflows exercise the web app, while Vercel Preview builds the web app and `packages/ai`. None of the native directories contains a JS or TS file, and the web favicons come from `public/`, not `assets/`. **If a Capacitor asset is ever wired into the Vite build, the native entries must be removed** — otherwise a real change would ship untested.
 
 One narrow gap is worth knowing about. `yarn test` is `vitest --project unit`, whose `**/__tests__/**/*.ts` glob also collects the workspaces under `scripts/`, and the issue classifier's sample-integrity tests ([`scripts/issue-classifier/src/__tests__/samples.ts`](../scripts/issue-classifier/src/__tests__/samples.ts)) read the prompt and samples they guard as fixtures. Those assets live beside the code in `scripts/issue-classifier/`, so a sample edit is a `.jsonl` change that runs Test normally — but the prompt itself is `scripts/issue-classifier/instructions.md`, and `**/*.md` is filtered. A pull request that edits only the prompt therefore skips the checks on it, so run `yarn test` locally when editing it.
 
@@ -687,6 +708,7 @@ BrowserStack is the one exception: it queues rather than supersedes, for the rea
 | **Puppeteer** | [`.github/workflows/puppeteer.yml`](../.github/workflows/puppeteer.yml) | `yarn test:puppeteer` against a `browserless/chrome:latest` service container on port 7566. | On failure, image-snapshot diffs are uploaded in the `__diff_output__` artifact. |
 | **BrowserStack** | [`.github/workflows/ios.yml`](../.github/workflows/ios.yml) | `yarn test:ios` (an alias of `test:ios:browserstack`) against real iOS devices via BrowserStack. | Uses `pull_request_target` so credentials are available, guarded by `changed_files > 0` and `paths-ignore`, serialized repo-wide, and deduplicated per PR (see [Layered BrowserStack concurrency](#layered-browserstack-concurrency)). |
 | **TDD** | [`.github/workflows/tdd.yml`](../.github/workflows/tdd.yml) | Runs newly added unit, Puppeteer, and iOS tests against the selected pre-fix commit. | Expects the new regression test to fail before the fix. Pull requests only. |
+| **Vercel Preview** | [`.github/workflows/vercel-preview.yml`](../.github/workflows/vercel-preview.yml) | Deploys paired `em-ai` and `em` previews, with the AI preview URL compiled into the web app. | Uses `pull_request_target`, shares the standard `paths-ignore` filter, and reports the web URL through GitHub Deployments. |
 
 When a Puppeteer snapshot test fails on a pull request, the [`Puppeteer Diff Comment`](../.github/workflows/puppeteer-diff-comment.yml) workflow safely publishes the diff images to the `snapshot-diffs` branch and upserts a PR comment with the affected files and targeted `yarn test:puppeteer -u ...` command. The raw `__diff_output__` artifact is also available from the workflow run. Locally, the diff path is printed in the test runner output. See [Visual snapshot tests](#visual-snapshot-tests).
 
@@ -699,7 +721,37 @@ Concurrency only supersedes runs *within* an open pull request. Nothing in GitHu
 - **`pull_request_target`, not `pull_request`.** Cancelling needs `actions: write`, and a fork pull request's token is read-only under `pull_request`. The workflow checks out nothing and executes no pull request code, so the usual `pull_request_target` hazard does not arise. It also reads its own file from the base branch, so edits to it take effect only once merged.
 - **The `main` run is never swept up.** Runs are selected by head SHA, and merging always writes a new commit — merge, squash, and rebase alike — so the push run on `main` carries a different `head_sha` than the head it was merged from. The regression signal the sweep relies on cannot cancel itself.
 - **A merged pull request now shows `cancelled` checks.** Those runs genuinely did not finish, and reporting them as anything else would be false. Branch protection is unaffected: it evaluates the head commit's checks before the merge, and the sweep runs after.
-- **Auto-merge gives up the tail of the slow suites.** Lint is the only required check, so `gh pr merge --auto` ([`dependabot-automerge.yml`](../.github/workflows/dependabot-automerge.yml)) can merge while Test, Puppeteer, and BrowserStack are still running, and the sweep then cancels them. From that point the push run on `main` is what surfaces a regression.
+- **Auto-merge gives up the tail of the slow suites.** Lint is the only required check, so `gh pr merge --auto` ([`dependabot-automerge.yml`](../.github/workflows/dependabot-automerge.yml)) can merge while Test, Puppeteer, and BrowserStack are still running, and the sweep then cancels them. From that point the push run on `main` is what surfaces a regression. A bump whose checks fail never reaches any of that — see [Failing Dependabot pull requests](#failing-dependabot-pull-requests).
+
+#### Arming Dependabot auto-merge
+
+[`Auto-merge Dependabot`](../.github/workflows/dependabot-automerge.yml) approves a bump and runs `gh pr merge --auto --squash` on it, which is what lets it land unattended once Lint goes green. It is gated on the pull request's **author**, not on `github.actor` — on who opened the bump rather than on who last pushed to it.
+
+That distinction is the point. A `pull_request` workflow cannot run at all while a pull request is conflicting: GitHub declines to build `refs/pull/<n>/merge`, and with no merge ref there is no run — not this workflow, not Lint, nothing. A bump that is *born* conflicting therefore never gets its `opened` run, and Dependabot opens bumps in batches that merge into each other's lockfile. #5208 was created at 02:09:41, four seconds after #5201 merged the last of four bumps that had landed in the preceding two minutes. Its run list shows the signature exactly: `Vercel Preview` and `BrowserStack` ran against the head commit — they trigger on `pull_request_target`, which needs no merge ref — while Lint, Test, Puppeteer, TDD, Agent Scripts, and this workflow produced no run at all.
+
+The only recovery is the `synchronize` that fires when someone resolves the conflict, and that push is by definition not Dependabot's — it is [`Dependabot Fix`](#failing-dependabot-pull-requests)'s agent committing to the branch, or a human resolving it by hand. An actor check skips exactly that event. On #5208 the resolving merge landed a day and a half later, every `pull_request` check then ran and Lint passed — and `Auto-merge Dependabot` still reported `skipped`, leaving the bump `MERGEABLE` with `autoMergeRequest: null` and nothing left to arm it.
+
+Two guards replace what the actor check was doing, the same pair [`Dependabot Fix`](#failing-dependabot-pull-requests) uses: the head branch must live in this repository, and it must carry the `dependabot/` prefix. What they do not prevent — a collaborator pushing to an open Dependabot branch and having that commit auto-merged — is the intended behavior, not a hole: it is precisely what `Dependabot Fix` exists to do.
+
+- **Approval stays on the narrower actor check.** `main` requires 0 approving reviews, so the approval satisfies no gate and withholding it costs nothing; auto-merge arms either way. Were that count ever raised, an approval stamped on a commit an agent or a human wrote would be automation standing in for the review of hand-written code. Withholding it instead leaves auto-merge armed and waiting for a human — the safe direction to fail in.
+- **`DEPENDABOT_AUTOMERGE_TOKEN` must exist in both secret stores.** A Dependabot-triggered run reads Dependabot secrets (`Secret source: Dependabot` in the run log); every other run, including the `synchronize` this gate exists to catch, reads Actions secrets. Deleting either copy breaks one of the two paths silently, with an empty `GH_TOKEN` rather than a missing-secret error.
+- **A conflict resolved without a push is still stuck.** Nothing re-fires `pull_request` when `main` moves, so arming depends on a commit reaching the branch. Both realistic paths do that — Dependabot rebasing its own bump, or `Dependabot Fix` pushing to it.
+
+#### Failing Dependabot pull requests
+
+Auto-merge only lands a bump whose checks pass. One that fails stops dead and waits for a human, and the failures are usually small and mechanical — a renamed export, a tightened type, an assertion that moved. [`Dependabot Fix`](../.github/workflows/dependabot-fix.yml) puts an agent on one as soon as it happens: a GitHub Copilot cloud agent session started through the [agent tasks API](https://docs.github.com/en/rest/agent-tasks/agent-tasks) by [`scripts/ci/start-dependabot-fix-task.mjs`](../scripts/ci/start-dependabot-fix-task.mjs) — Opus 5 and the `worker-bee` agent, the same pair the [flaky-test detector](#automated-flaky-test-detection) uses. It commits to the pull request's own branch rather than opening a second one, which the agent tasks API arranges when it is given `head_ref` and `base_ref` for an open pull request. Dependabot stops rebasing a branch anyone else has pushed to, which is the intended outcome: from then on the fix and the bump travel together.
+
+**It triggers on every check completion, not on the failures.** A pull request's checks finish at different times and the last one to finish is often green — on #5203, Lint failed at 02:14 and BrowserStack at 02:29, with Test passing at 02:16 in between — so triggering on `failure` would fire while other checks were still running. Instead [`scripts/ci/collect-dependabot-failures.cjs`](../scripts/ci/collect-dependabot-failures.cjs) bails unless it is the last one out, which is also what keeps four failing checks from starting four sessions on one pull request. Being `workflow_run`-triggered, it reports no check of its own to the head commit and so never waits on itself.
+
+Five more guards decide whether a session is warranted, and each one is a reason nothing happens:
+
+- **The pull request must be open and authored by `dependabot[bot]`.** The `dependabot/` branch prefix alone is not proof of one, and a human pushing such a branch should not get a session aimed at their code.
+- **A failure that is also red on the base branch is not the bump's doing.** Those are annotated as such in the prompt, and when *every* failure is one of them no session starts at all — a broken `main` would otherwise put an agent on every open bump at once.
+- **One session per head commit.** The workflow keeps a single marked comment on the pull request carrying the commit it was started for, so a rebase gets a fresh session and a re-run of one check does not.
+- **`cancelled` is not a failure.** [Cancel PR Runs](#merged-and-closed-pull-requests) leaves cancelled checks behind on a merged pull request, and they mean nothing broke.
+- **Three sessions per pull request.** A session that pushes a fix moves the head commit, so without a cap a bump the agent cannot fix would start a fresh session on every attempt. The count lives in the same comment, which names the attempt it is on — the cap is visible before it is reached rather than as silence afterwards. A manual dispatch overrides both this and the per-commit dedupe.
+
+The session's prompt names each failing check and includes an excerpt of the first three failing jobs' logs, anchored on the runner's `##[error]` annotations — the tail of an Actions log is the same twenty lines of checkout cleanup every time, so a plain tail would say nothing. Like the flaky detector, this needs the `COPILOT_TASKS_TOKEN` repository secret; without it the workflow says so and does nothing. To start a session by hand, or to start a second one on the same commit: `gh workflow run dependabot-fix.yml -f pr=<number>`.
 
 #### Layered BrowserStack concurrency
 
@@ -988,9 +1040,9 @@ Test `enter` and `leave` on each of the following actions:
 
 ## Tips and Tricks
 
-### Database operations and fake timers
+### Fake timers: flush, don't poll
 
-`initStore` and `createTestApp` enable fake timers. When a test calls `initialize({ storage: 'memory' })` or performs database work directly, explicitly flush the resulting scheduled work before asserting:
+`initStore` and `createTestApp` enable fake timers. Under fake timers, nothing scheduled runs until the test advances the clock, so a test that triggers asynchronous work must flush it explicitly before asserting. When a test calls `initialize({ storage: 'memory' })` or performs database work directly:
 
 ```ts
 vi.useFakeTimers()
@@ -1003,6 +1055,29 @@ await vi.runAllTimersAsync()
 https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
+
+The same flush settles an asynchronous command. `generateThought` and `generateEmoji` each await a network request and, under multicursor, hold an undo bracket open across every selected thought. With `fetch` mocked, that whole run is timer- and microtask-bound, so one `vi.runAllTimersAsync()` after `executeCommandWithMulticursor` brings the store to its settled state, undo bracket closed included:
+
+```ts
+// ✅ Do: flush, then assert on the result
+await act(async () => {
+  executeCommandWithMulticursor(generateThought, { store })
+  await vi.runAllTimersAsync()
+})
+
+expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - one
+  - two`)
+```
+
+```ts
+// ❌ Don't: poll an internal flag until the command looks finished
+await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
+```
+
+`vi.waitFor` is the store-test form of the sleep loop that [Principle 3](#3-never-wait-for-wall-clock-time-wait-for-the-response) forbids. It only passes under fake timers because Vitest advances the clock by the polling interval on each retry, so it reaches the same settled state in fixed-size steps — and it does so by watching a flag that is not the result under test. The flush names the condition exactly (every scheduled callback has run), takes one line, and when the command does not settle, it fails at the assertion on the outline rather than as a polling timeout. Keep the assertion outside the waiter, so that the test reads as act → flush → assert.
+
+This is a workaround for the commands not being awaitable: `executeCommandWithMulticursor` discards the promise, so a test cannot `await` the command itself. [#5337](https://github.com/cybersemics/em/issues/5337) tracks returning it. ([#5338](https://github.com/cybersemics/em/pull/5338), [#5222](https://github.com/cybersemics/em/pull/5222))
 
 ### Automated flaky-test detection
 

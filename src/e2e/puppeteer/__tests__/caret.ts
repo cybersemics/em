@@ -7,7 +7,7 @@ import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
@@ -18,7 +18,6 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
@@ -291,9 +290,6 @@ describe('persistent storage', () => {
     // Set cursor to null
     await click('#content')
 
-    await waitForThoughtExistInDb('a')
-    await waitForThoughtExistInDb('b')
-
     await refresh()
 
     await waitForEditable('b')
@@ -321,9 +317,7 @@ it('clicking backspace when the caret is at the end of a thought should delete a
 })
 
 describe('mobile only', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 5000)
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   it('After categorize, the caret should be on the new thought', async () => {
     const importText = `

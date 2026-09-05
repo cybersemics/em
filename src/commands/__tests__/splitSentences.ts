@@ -1,13 +1,19 @@
+import { screen } from '@testing-library/react'
+import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
+import * as selection from '../../device/selection'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
+import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
+import selectRange from '../../test-helpers/selectRange'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import splitSentencesCommand from '../splitSentences'
 
@@ -392,6 +398,124 @@ describe('splitSentences', () => {
   - Three now.
   - Middle sentence.
   - Last one.`)
+    })
+  })
+
+  describe('caret', () => {
+    beforeEach(createTestApp)
+    afterEach(cleanupTestApp)
+
+    it('splits a thought with no delimiter at the caret into a main thought and a child', async () => {
+      act(() => {
+        store.dispatch([newThought({ value: 'Hello world' }), setCursor(['Hello world'])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('Hello world')
+      selectRange(thought!, 5, 5)
+
+      act(() => {
+        executeCommand(splitSentencesCommand, { store })
+      })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - Hello
+    - world`)
+    })
+
+    it('splits at a delimiter rather than at the caret when the thought has one', async () => {
+      act(() => {
+        store.dispatch([newThought({ value: 'one, two' }), setCursor(['one, two'])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('one, two')
+      selectRange(thought!, 2, 2)
+
+      act(() => {
+        executeCommand(splitSentencesCommand, { store })
+      })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+  - two`)
+    })
+
+    it('alerts that there is nothing to split when the caret is at the end of the thought', async () => {
+      act(() => {
+        store.dispatch([newThought({ value: 'Hello world' }), setCursor(['Hello world'])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('Hello world')
+      selection.set(thought, { end: true })
+
+      act(() => {
+        executeCommand(splitSentencesCommand, { store })
+      })
+
+      const alert = await screen.findByText('Nothing to split.')
+      expect(alert).toBeTruthy()
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - Hello world`)
+    })
+
+    it('does not split at the caret when a range of text is selected', async () => {
+      act(() => {
+        store.dispatch([newThought({ value: 'Hello world' }), setCursor(['Hello world'])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('Hello world')
+      selectRange(thought!, 2, 5)
+
+      act(() => {
+        executeCommand(splitSentencesCommand, { store })
+      })
+
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - Hello world`)
+    })
+
+    it('splits only the thought that has the caret when several thoughts are selected', async () => {
+      act(() => {
+        store.dispatch([
+          importText({
+            text: `
+              - Hello world
+              - Another thought
+            `,
+          }),
+          setCursor(['Hello world']),
+          addMulticursor(['Hello world']),
+          addMulticursor(['Another thought']),
+        ])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findThoughtByText('Hello world')
+      selectRange(thought!, 5, 5)
+
+      act(() => {
+        executeCommandWithMulticursor(splitSentencesCommand, { store })
+      })
+
+      // The caret belongs to the first thought alone. The second is not sliced at its offset.
+      const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+      expect(exported).toBe(`- ${HOME_TOKEN}
+  - Hello
+    - world
+  - Another thought`)
     })
   })
 })

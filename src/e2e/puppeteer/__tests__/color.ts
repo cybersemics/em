@@ -13,9 +13,12 @@ import keyboard from '../helpers/keyboard'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import scrollBy from '../helpers/scrollBy'
+import scrollIntoView from '../helpers/scrollIntoView'
 import setSelection from '../helpers/setSelection'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 /** Click the first note. Assumes that there will be only a single note. */
@@ -54,7 +57,103 @@ const setNoteCaret = (offset: number) =>
 /** Waits one frame for selectionchange-driven command state to propagate. */
 const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
+/** Returns the background that actually paints behind the code text of the thought being edited, i.e. the nearest
+ * self-or-ancestor of the code element that is not transparent. */
+const codeBackgroundColor = () =>
+  page.evaluate(() => {
+    const code = document.querySelector('[data-editing=true] [data-editable] code')
+    if (!code) throw new Error('No code element found in the editing thought')
+    for (let el: Element | null = code; el; el = el.parentElement) {
+      const backgroundColor = window.getComputedStyle(el).backgroundColor
+      if (backgroundColor && backgroundColor !== 'transparent' && !backgroundColor.startsWith('rgba(0, 0, 0, 0'))
+        return backgroundColor
+    }
+    return null
+  })
+
+/** Returns the horizontal geometry needed to verify Color Picker toolbar scrolling. */
+const getColorPickerGeometry = () =>
+  page.evaluate(() => {
+    const toolbar = document.querySelector('[data-testid="toolbar"]')
+    const swatchGroups = document.querySelectorAll(
+      '[aria-label="text color swatches"], [aria-label="background color swatches"]',
+    )
+    if (!toolbar || swatchGroups.length !== 2) throw new Error('Toolbar or Color Picker swatches not found.')
+
+    const toolbarRect = toolbar.getBoundingClientRect()
+    const swatchGroupRects = Array.from(swatchGroups).map(group => group.getBoundingClientRect())
+    const fontSize = parseFloat(window.getComputedStyle(swatchGroups[0]).fontSize)
+    return {
+      colorPickerLeft: Math.min(...swatchGroupRects.map(rect => rect.left)),
+      colorPickerRight: Math.max(...swatchGroupRects.map(rect => rect.right)),
+      edgeTolerance: fontSize / 2,
+      scrollLeft: toolbar.scrollLeft,
+      toolbarLeft: toolbarRect.left,
+      toolbarRight: toolbarRect.right,
+    }
+  })
+
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
+
+// https://github.com/cybersemics/em/issues/4604
+it('scrolls the Color Picker only as far as needed when opened with the keyboard shortcut', async () => {
+  await page.setViewport({ width: 640, height: 812 })
+  await paste('- One')
+  await clickThought('One')
+
+  await scrollIntoView('[data-testid="toolbar-icon"][aria-label="Text Color"]', {
+    block: 'nearest',
+    inline: 'center',
+  })
+  await scrollBy('[data-testid="toolbar"]', 20, 0)
+  const scrollLeftBeforeOpeningVisiblePicker = await page.$eval(
+    '[data-testid="toolbar"]',
+    toolbar => toolbar.scrollLeft,
+  )
+
+  await press('h', { meta: true, shift: true })
+  await waitForSelector('[aria-label="text color swatches"]')
+  await nextFrame()
+  await nextFrame()
+
+  const visiblePickerGeometry = await getColorPickerGeometry()
+  expect(visiblePickerGeometry.colorPickerLeft).toBeGreaterThanOrEqual(visiblePickerGeometry.toolbarLeft)
+  expect(visiblePickerGeometry.colorPickerRight).toBeLessThanOrEqual(visiblePickerGeometry.toolbarRight)
+  expect(visiblePickerGeometry.scrollLeft).toBe(scrollLeftBeforeOpeningVisiblePicker)
+
+  await press('h', { meta: true, shift: true })
+  await expect
+    .poll(() => page.evaluate(() => document.querySelector('[aria-label="text color swatches"]') === null))
+    .toBe(true)
+  await scrollBy('[data-testid="toolbar"]', -10000, 0)
+
+  const textColorIsOutsideToolbar = await page.evaluate(() => {
+    const toolbar = document.querySelector('[data-testid="toolbar"]')
+    const textColor = document.querySelector('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+    if (!toolbar || !textColor) throw new Error('Toolbar or Text Color button not found.')
+
+    return textColor.getBoundingClientRect().right > toolbar.getBoundingClientRect().right
+  })
+  expect(textColorIsOutsideToolbar).toBe(true)
+
+  await press('h', { meta: true, shift: true })
+  await waitForSelector('[aria-label="text color swatches"]')
+
+  await expect
+    .poll(async () => {
+      const geometry = await getColorPickerGeometry()
+      return {
+        leftEdgeVisible: geometry.colorPickerLeft >= geometry.toolbarLeft,
+        rightEdgeAligned: Math.abs(geometry.colorPickerRight - geometry.toolbarRight) < geometry.edgeTolerance,
+        rightEdgeVisible: geometry.colorPickerRight <= geometry.toolbarRight,
+      }
+    })
+    .toEqual({
+      leftEdgeVisible: true,
+      rightEdgeAligned: true,
+      rightEdgeVisible: true,
+    })
+})
 
 it('Set the text color of the text and bullet', async () => {
   const importText = `
@@ -570,4 +669,45 @@ it('Set background color with multicursor selection', async () => {
   const labradorText = await getEditingText()
   const labradorBgColor = extractColor(labradorText!)?.backgroundColor
   expect(labradorBgColor && rgbToHex(labradorBgColor)).toBe(rgbaToHex(colors.light.green))
+})
+
+// https://github.com/cybersemics/em/issues/4234
+it('Set the background color of text that is marked as code', async () => {
+  const importText = `
+  - Hello beautiful people`
+
+  await paste(importText)
+
+  await clickThought('Hello beautiful people')
+
+  await setSelection(6, 15)
+  await press('K', { meta: true })
+  await waitForEditable('Hello <code>beautiful</code> people')
+
+  await clickToolbar('Text Color', 'background color swatches', 'red')
+  await nextFrame()
+
+  const background = await codeBackgroundColor()
+  expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
+})
+
+// https://github.com/cybersemics/em/issues/4234
+it('Set the background color of text that is marked as code with the =style attribute', async () => {
+  const importText = `
+  - Hello beautiful people
+    - =style
+      - background-color
+        - red`
+
+  await paste(importText)
+
+  await clickThought('Hello beautiful people')
+
+  await setSelection(6, 15)
+  await press('K', { meta: true })
+  await waitForEditable('Hello <code>beautiful</code> people')
+  await nextFrame()
+
+  const background = await codeBackgroundColor()
+  expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
 })

@@ -24,7 +24,16 @@ interface Command {
     dispatch: Dispatch,
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
-    { type, keyboardIndex }: { type: CommandType; keyboardIndex?: number },
+    {
+      type,
+      keyboardIndex,
+      withCommandMetadata,
+    }: {
+      type: CommandType
+      keyboardIndex?: number
+      /** Runs completed asynchronous command work inside this command's patch-metadata transaction. The callback itself must be synchronous. */
+      withCommandMetadata?: <T>(operation: () => T) => T
+    },
   ) => void | Promise<void>
 
   /** Short label. */
@@ -39,7 +48,14 @@ interface Command {
     | boolean
     | {
         /** Optional override for executing the command for multiple cursors. */
-        execMulticursor?: (cursors: Path[], dispatch: Dispatch, getState: () => State) => void | Promise<void>
+        execMulticursor?: (
+          cursors: Path[],
+          dispatch: Dispatch,
+          getState: () => State,
+          commandContext: {
+            withCommandMetadata: <T>(operation: () => T) => T
+          },
+        ) => void | Promise<void>
         /** A callback that is invoked when the command finishes executing for all filtered multicursors. */
         onComplete?: (filteredCursors: Path[], dispatch: Dispatch, getState: () => State) => void
         /** Prevent the cursor from being set back at the end of the command execution. */
@@ -48,6 +64,8 @@ interface Command {
         reverse?: boolean
         /** Clear the multicursor after the command is executed. */
         clearMulticursor?: boolean
+        /** Replace the selection with the thoughts that the command moved the cursor to, i.e. the thoughts it created. Each execution that leaves the cursor on a different thought than the one it was given contributes one, so a selected thought that the command skipped contributes none. If fewer than two thoughts were created, the selection is cleared instead, so that the command ends the same way it does without a multiselect. */
+        selectNewCursors?: boolean
         /**
          * Filter the cursors before executing the command.
          *

@@ -71,9 +71,11 @@ function getNoteOffsetBeforeEdit(action: UnknownAction): number | null {
 /** Compare the text contents of the old and new values to determine the direction of the edit.
  * Returns None if the action is not an editThought action or if the text content length is the same.
  * Formatting edits (bold, italic, color) and case changes (HELLO → hello) preserve text length and return None.
+ * Edits marked preventMerge likewise return None, so a programmatic edit such as a generated thought is never
+ * merged with the user's typing stream on either side.
  */
 function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
-  if (!isEditThoughtAction(action)) return EditThoughtDirection.None
+  if (!isEditThoughtAction(action) || action.preventMerge) return EditThoughtDirection.None
 
   const oldText = getTextContent(action.oldValue)
   const newText = getTextContent(action.newValue)
@@ -238,6 +240,9 @@ const createPatch = (ops: Operation[], metadata: PatchMetadataInput, actionType:
 const getPatchAction = (patch: Patch): string =>
   patch.metadata.source === 'command' ? patch.metadata.commandId : patch.metadata.actionType
 
+/** Returns true when a patch represents an undoable change rather than navigation-only state. */
+const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch && !patch.metadata.isNavigation
+
 /** Actions that mutate state.multicursors. They are not undoable on their own, since selecting thoughts should not be an undo step, but they must be tracked while a multicursor command is executing. See the bail condition in the enhancer. */
 const multicursorActionTypes: Set<ActionType> = new Set(['addMulticursor', 'clearMulticursors', 'removeMulticursor'])
 
@@ -297,7 +302,7 @@ const cursorOffsetAtEnd = (state: State): State => ({
 })
 
 /**
- * Undoes one patch-level history step. With count, reverts exactly that many patches for the undo slider.
+ * Undoes one step of the undo history, which spans two patches when a navigation action follows an undoable action or an edit follows a newThought. With count, reverts exactly that many patches instead. The undo slider passes a count so that it can move through the history by whole steps in either direction (see selectors/undoSteps, which mirrors the grouping below).
  */
 const undoReducer = (
   state: State,
@@ -305,6 +310,8 @@ const undoReducer = (
   { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
 ): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
+  const penultimateUndoPatch = nthLast(undoPatches, 2)
+  const penultimateAction = penultimateUndoPatch && getPatchAction(penultimateUndoPatch)
   if (!undoPatches.length) return state
 
   // Infer whether the last patch is a formatting-only edit by examining the diff operations.
@@ -324,7 +331,10 @@ const undoReducer = (
     return restoredPlain === currentPlain || restoredPlain.toLowerCase() === currentPlain.toLowerCase()
   })
 
-  const undoCount = count ?? 1
+  const undoTwice = lastUndoPatch?.metadata.isNavigation
+    ? isPatchUndoable(penultimateUndoPatch)
+    : penultimateAction === 'newThought' && !lastPatchIsFormatting
+  const undoCount = count ?? (undoTwice ? 2 : 1)
 
   const poppedUndoPatches = undoPatches.slice(-undoCount)
 
@@ -349,16 +359,19 @@ const undoReducer = (
 }
 
 /**
- * Redoes one patch-level history step. With count, restores exactly that many patches for the undo slider.
+ * Redoes one step of the redo history, which spans two patches when the next patch is a navigation action or a newThought. With count, restores exactly that many patches instead (see undoReducer).
  */
 const redoReducer = (
   state: State,
   redoPatches: Patch[],
   { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
 ): State => {
+  const lastRedoPatch = nthLast(redoPatches, 1)
   if (!redoPatches.length) return state
 
-  const redoCount = count ?? 1
+  const redoTwice =
+    !!lastRedoPatch && (lastRedoPatch.metadata.isNavigation || getPatchAction(lastRedoPatch) === 'newThought')
+  const redoCount = count ?? (redoTwice ? 2 : 1)
 
   const poppedRedoPatches = redoPatches.slice(-redoCount)
 
@@ -472,14 +485,22 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         editThoughtDirection !== EditThoughtDirection.None && editThoughtDirection === lastEditThoughtDirection
 
       // Some actions are merged together into a single undo/redo patch.
-      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (None direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step.
+      // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
+      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (None direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step. Edits marked preventMerge (e.g. a generated thought) are likewise never merged on either side.
+      // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions within an explicit command transaction are merged under that command's metadata.
       // - Direct action batches guarded by isMulticursorExecuting are merged into one action patch.
-      if (
-        shouldMergeWithLastEditThought ||
-        (!!activeCommandMetadata && activeCommandHasPatch) ||
-        state.isMulticursorExecuting
-      ) {
+      const shouldMerge = activeCommandMetadata
+        ? activeCommandHasPatch ||
+          state.isMulticursorExecuting ||
+          (isNavigation(actionType) && isNavigation(lastAction?.type))
+        : (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
+          shouldMergeWithLastEditThought ||
+          actionType === 'closeAlert' ||
+          state.isMulticursorExecuting ||
+          (lastAction as UnknownAction)?.mergeNext
+
+      if (shouldMerge) {
         lastAction = action
         const lastUndoPatch = nthLast(state.undoPatches, 1)
         let lastState = state
@@ -542,7 +563,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       return undoPatch.length
         ? {
             ...newState,
-            lastUndoableActionType: actionType,
+            lastUndoableActionType: activeCommandMetadata?.commandId ?? actionType,
             redoPatches: [],
             undoPatches: [
               ...newState.undoPatches,
@@ -566,9 +587,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
     registerCommandMetadataStore(enhancedStore, value => {
       activeCommandMetadata = value
       activeCommandHasPatch = false
-      // Command boundaries must not inherit or leak direct text-edit coalescing. Otherwise the first edit in a
-      // command can absorb the preceding action patch, or typing after a command can absorb the command patch.
-      lastAction = undefined
+      // Command boundaries must not inherit or leak direct text-edit coalescing. Preserve lastAction so consecutive
+      // navigation commands retain their established grouping behavior.
       lastEditThoughtDirection = EditThoughtDirection.None
     })
     return enhancedStore

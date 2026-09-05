@@ -93,7 +93,7 @@ describe('tallyVotes', () => {
   })
 
   it('counts label votes across differing milestones, since the two are independent', () => {
-    // "This is a bug" is the same claim whichever subsystem the vote named.
+    // "This is a bug" is the same claim whichever domain the vote named.
     const result = tallyVotes(
       [
         vote('📐 Layout', 'high', { label: 'bug' }),

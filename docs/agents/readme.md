@@ -90,7 +90,8 @@ flowchart TD
     I --> E
     H -- yes --> J["<b>Exit gate</b> — end-session skill"]
     J --> J1["Nothing left untrue, nothing left behind,<br/>nothing claimed that was not observed"]
-    J1 --> K["Done"]
+    J1 --> J2["<b>PR Ready</b> — a workflow takes the<br/>pull request out of draft"]
+    J2 --> K["Done"]
 
     click C "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "The issue-repro skill"
     click C1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "How the browser is brought up"
@@ -103,6 +104,7 @@ flowchart TD
     click I "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "The test-diagnosis skill"
     click J "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The end-session skill"
     click J1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "The exit checklist, step by step"
+    click J2 "https://github.com/cybersemics/em/blob/HEAD/.github/workflows/pr-ready.yml" "The PR Ready workflow"
 ```
 
 Both gates exist to stop the same failure. An agent that starts reading source code before it has seen the bug happen will form a theory from the code and then go looking for evidence to support it. Making it reproduce the problem first means it has a real observation to work from. Making it write the plan against quoted, existing code means it extends what is there instead of building something new beside it.
@@ -150,6 +152,7 @@ end-session: escalating — checklist passed per .github/skills/end-session/SKIL
 │   └── unskip-added-tests/          Switches .skip tests back on — see tdd.md
 └── workflows/
     ├── copilot-setup-steps.yml      Builds the agent's environment
+    ├── pr-ready.yml                 Undrafts a finished PR whose checks passed
     └── tdd.yml                      Checks new tests genuinely fail first
 
 scripts/
@@ -172,10 +175,11 @@ CLAUDE.md            → AGENTS.md
 .claude/skills       → .agents/skills
 ```
 
-Two workflows are part of this system rather than ordinary CI:
+Three workflows are part of this system rather than ordinary CI:
 
 - **[`copilot-setup-steps.yml`](../../.github/workflows/copilot-setup-steps.yml)** builds the environment the agent wakes up in — the display, the browser, the dev server, credentials. It must be named exactly that, and its job must be called `copilot-setup-steps`, or Copilot ignores it. Covered in [Environment](environment.md#what-the-setup-step-builds).
 - **[`tdd.yml`](../../.github/workflows/tdd.yml)** independently verifies that any new test genuinely fails before the fix. Covered in [The TDD workflow](tdd.md#how-the-check-works).
+- **[`pr-ready.yml`](../../.github/workflows/pr-ready.yml)** takes a finished Copilot pull request out of draft once every check on it has passed. Copilot opens a draft and never leaves one — at the end of a session it requests a review and stops — so without this the pull request waits in draft until a human notices it, invisible to reviewers and ineligible for auto-merge. It fires on every check completion and [`scripts/ci/mark-copilot-pr-ready.cjs`](../../scripts/ci/mark-copilot-pr-ready.cjs) bails unless it is the last one out, the same arrangement [`Dependabot Fix`](../testing.md#failing-dependabot-pull-requests) uses. Three further guards decide the rest: the pull request must still be a draft authored by the agent, since a human's draft is deliberate and the `copilot/` branch prefix is not proof of authorship; its newest `copilot_work_*` timeline event must be `copilot_work_finished`, because the agent pushes several commits per session and each one runs the full suite, so green checks alone would undraft work still in progress; and no check may have failed, a draft being the correct state for a pull request that is red. Doing this from the prompt files instead was considered and rejected — the agent would have to run `gh pr ready` itself, no Copilot session in this repository has ever managed it, and an instruction that silently fails is worse than none.
 
 The rest (`test`, `lint`, `puppeteer`, `ios`, the Vercel and Tauri workflows) are normal project CI. The agent has to make them pass, but they were not built for it.
 
@@ -185,7 +189,7 @@ Worth knowing about, because nothing here will tell you when one of them breaks:
 
 - **[MCP server configuration](mcp.md).** An MCP server is an external tool the agent can call. Three matter here: [`chrome-devtools`](mcp.md#chrome-devtools) for driving Chrome, [`wdio`](mcp.md#wdio) for driving iOS, and [the GitHub server](mcp.md#the-github-server) for reading issues and CI runs. They are configured in Copilot's own settings, not in this repository. In particular, `chrome-devtools` must be given `--browser-url=http://127.0.0.1:9222` so that it joins the browser the setup step already started instead of launching a second one.
 - **The pre-built iOS app.** iOS work runs against an app binary uploaded to BrowserStack under the name `em-server-mode`. BrowserStack deletes uploads 30 days after they were last used, and if it lapses, iOS reproduction stops working until someone rebuilds it. Rebuilding is one command on a Mac with Xcode signing set up — `yarn build:ios:browserstack` — and nothing warns you before it expires.
-- **Secrets.** `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, and `OPENAI_API_KEY` are repository secrets.
+- **Secrets.** `BROWSERSTACK_USERNAME`, `BROWSERSTACK_ACCESS_KEY`, and `OPENAI_API_KEY` are repository secrets. `OPENAI_API_KEY_ISSUE_CLASSIFIER` and `OPENAI_API_KEY_ESTIMATE` are too: each script prefers its own key so that its spend is reported separately, and falls back to `OPENAI_API_KEY`.
 - **Network allowances.** The agent runs behind a firewall that blocks outbound traffic by default. Hosts it needs are listed in `COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS` in the setup workflow. A new external dependency needs adding there or it will fail in a way that looks like a hang.
 
 ## Changing any of this
@@ -205,4 +209,4 @@ A few habits that keep it coherent:
 Two Node programs under `scripts/` triage new issues rather than write code. **Neither is part of the coding agent, and neither prompt is read by Copilot.** Each loads its own prompt and calls OpenAI directly.
 
 - **[`scripts/estimate/`](../../scripts/estimate/README.md)** — guesses how long an issue will take, then syncs that to Everhour. Its prompt and 21 sample issues live under `.github/instructions/estimate/`, which is the only reason that folder appears in the tree above. Three workflows drive it: on issue open, on an `/estimate` comment, and a manual backfill.
-- **[`scripts/issue-classifier/`](../../scripts/issue-classifier/README.md)** — assigns the best-matching open milestone to a newly opened issue, treating each milestone as a subsystem, and labels what kind of work it is — one of `bug`, `feature`, `performance`, `refactor`, `test`, `documentation`, or `agent`. The two verdicts are independent, and a label a human already applied is never contradicted. One workflow drives it, on issue open or manual dispatch; it is silent when it succeeds and comments asking for a category only when the issue matches no existing milestone and is not a pure refactor, which belongs to no subsystem by definition. Its prompt and samples sit beside its code rather than under `.github/instructions/`, and the samples are deliberately kept out of the prompt so that `yarn evaluate` measures the prompt rather than recalling its own examples.
+- **[`scripts/issue-classifier/`](../../scripts/issue-classifier/README.md)** — assigns the best-matching open milestone to a newly opened issue, treating each milestone as a domain, and labels what kind of work it is — one of `bug`, `feature`, `performance`, `refactor`, `test`, `documentation`, or `agent`. The two verdicts are independent, and a label a human already applied is never contradicted. One workflow drives it, on issue open or manual dispatch; it is silent when it succeeds and comments asking for a category only when the issue matches no existing milestone and is not a pure refactor, which belongs to no domain by definition. Its prompt and samples sit beside its code rather than under `.github/instructions/`, and the samples are deliberately kept out of the prompt so that `yarn evaluate` measures the prompt rather than recalling its own examples.

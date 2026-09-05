@@ -1,5 +1,9 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "styled-system"],
+  // The iOS WebdriverIO tests are typechecked by src/e2e/iOS/tsconfig.json, the only program that declares
+  // WebdriverIO's globals. Excluding them here keeps browser, $, expect, and @wdio/browserstack-service's
+  // global interfaces (State, GRRUrls, …) out of app code.
+  "exclude": ["src/e2e/iOS"],
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
@@ -31,6 +35,6 @@
       "@treecrdt/wa-sqlite/client": ["./node_modules/@treecrdt/wa-sqlite/dist/client.d.ts"],
       "@treecrdt/wa-sqlite/vite-plugin": ["./node_modules/@treecrdt/wa-sqlite/dist/vite-plugin.d.ts"]
     },
-    "types": ["node", "vitest/globals", "@wdio/globals/types", "@wdio/mocha-framework", "@wdio/browserstack-service"]
+    "types": ["node", "vitest/globals"]
   }
 }
