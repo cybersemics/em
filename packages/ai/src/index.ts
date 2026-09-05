@@ -7,6 +7,7 @@ import { z, ZodError, ZodType } from 'zod'
 import defineTerm from './prompts/defineTerm'
 import generateEmoji from './prompts/generateEmoji'
 import generateThought from './prompts/generateThought'
+import organizeThought from './prompts/organizeThought'
 
 // express
 const app = express()
@@ -103,6 +104,18 @@ createPostRoute({
   handler: async (request) => {
     const thought = await generateThought(request.input)
     return { thought }
+  },
+})
+
+/** Reorganizes selected thoughts. */
+createPostRoute({
+  path: '/ai/organizeThought',
+  requestSchema: z.object({
+    outline: z.string().trim().min(1).describe('The numbered indented outline of thoughts to reorganize'),
+  }),
+  handler: async request => {
+    const outline = await organizeThought(request.outline)
+    return { outline }
   },
 })
 

@@ -10,6 +10,7 @@ It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](http
 - `POST /ai/defineTerm` - Writes a 10–20 word dictionary entry for each term in one LLM request. The request body is `{ "terms": ["..."] }`; the response is `{ "definitions": ["..."] }` in matching order on success or `{ "error": "..." }` on failure. The client appends `/defineTerm` to `VITE_AI_URL`.
 - `POST /ai/generateThought` - Generates a complete replacement for the target thought marked with `[x]` in the indented input outline; context thoughts are marked with `[]`. The request body is `{ "input": "..." }`; the response is `{ "thought": "..." }` on success or `{ "error": "..." }` on failure. The client appends `/generateThought` to `VITE_AI_URL`.
 - `POST /ai/generateEmoji` - Generates ten distinct, ordered emoji for a thought value. The request body is `{ "value": "..." }`; the response is `{ "emojis": ["...", "..."] }` on success or `{ "error": "..." }` on failure. The client appends `/generateEmoji` to `VITE_AI_URL`.
+- `POST /ai/organizeThought` - Reorganizes a numbered indented outline of thoughts. Lines marked `[n]` are reorganizable; `[]` lines are context-only siblings. The request body is `{ "outline": "..." }`; the response is `{ "outline": [{ "id": "1" | null, "text": "..." | null, "children": [] }] }` on success or `{ "error": "..." }` on failure. Existing thoughts keep their prompt `id`; new categories and split pieces use `id: null`. The client appends `/organizeThought` to `VITE_AI_URL`.
 
 ## Local development
 
@@ -99,6 +100,7 @@ Each service authenticates with its own OpenAI API key so that its usage and spe
 | Define Term      | `OPENAI_API_KEY_DEFINE_TERM`       |
 | Generate Emoji   | `OPENAI_API_KEY_GENERATE_EMOJI`   |
 | Generate Thought | `OPENAI_API_KEY_GENERATE_THOUGHT` |
+| Organize Thought | `OPENAI_API_KEY_ORGANIZE_THOUGHT` |
 
 Adding a service means adding a member to [`src/@types/Service.ts`](src/@types/Service.ts), passing it to
 `completeChat`, and creating a key of the same name in the OpenAI dashboard. The fallback keeps a deployment that sets
@@ -150,5 +152,6 @@ Function metrics (invocations, duration percentiles, error rate, cold starts, me
 - `OPENAI_API_KEY_DEFINE_TERM` — per-service key for Define Term in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_EMOJI` — per-service key for Generate Emoji in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_THOUGHT` — per-service key for Generate Thought in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
+- `OPENAI_API_KEY_ORGANIZE_THOUGHT` — per-service key for Organize Thought in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `PORT` — optional local server port. Defaults to `3111`.
 - `VITE_AI_URL` — public, build-time client base URL. Development uses `http://localhost:3111/ai`, production uses `https://ai.emthought.space/ai`, and pull request builds receive their matching `em-ai` preview URL from the workflow.

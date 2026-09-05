@@ -2,8 +2,10 @@ import { AddressInfo } from 'node:net'
 import { Server } from 'node:http'
 
 const defineTerm = vi.hoisted(() => vi.fn())
+const organizeThought = vi.hoisted(() => vi.fn())
 
 vi.mock('../prompts/defineTerm', () => ({ default: defineTerm }))
+vi.mock('../prompts/organizeThought', () => ({ default: organizeThought }))
 
 import app from '../index'
 
@@ -40,5 +42,22 @@ it('defines multiple terms through one service call', async () => {
   await expect(response.json()).resolves.toEqual({ definitions })
   expect(defineTerm).toHaveBeenCalledOnce()
   expect(defineTerm).toHaveBeenCalledWith(['chicken', 'apple'])
+  expect(response.status).toBe(200)
+})
+
+it('reorganizes thoughts through one service call', async () => {
+  const outline = [{ id: '1', text: null, children: [] }]
+  organizeThought.mockResolvedValueOnce(outline)
+  const { port } = server.address() as AddressInfo
+
+  const response = await fetch(`http://127.0.0.1:${port}/ai/organizeThought`, {
+    body: JSON.stringify({ outline: '[1] apples' }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  })
+
+  await expect(response.json()).resolves.toEqual({ outline })
+  expect(organizeThought).toHaveBeenCalledOnce()
+  expect(organizeThought).toHaveBeenCalledWith('[1] apples')
   expect(response.status).toBe(200)
 })

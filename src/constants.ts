@@ -541,6 +541,7 @@ export const COMMAND_GROUPS: {
       'defineTerm',
       'generateEmoji',
       'generateThought',
+      'organizeThought',
     ],
   },
   {

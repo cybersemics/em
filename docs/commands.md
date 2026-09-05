@@ -165,7 +165,7 @@ A command tapped in the Command Center is executed with `type: 'commandCenter'`,
 
 The flag is also what marks the traversal as bookkeeping rather than user intent, so that observers do not react to the transient state it passes through. Setting the cursor to each selected thought empties `state.multicursors` (the loop does not pass `preserveMulticursor`) and the restore then re-adds them one at a time, so the count falls to zero and climbs back mid-command; it would likewise reset `cursorCleared` on each hop. [`setCursor`](../src/actions/setCursor.ts) preserves `cursorCleared` while the flag is set, and [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) suspends the Command Center's show/hide reaction. Both settle on the closing `setIsMulticursorExecuting({ value: false })`, which the middleware evaluates against the final multicursors.
 
-The whole of `executeCommandWithMulticursor` is synchronous, including that bracket, so an **asynchronous** command gets no help from it: the bracket is opened and closed around the call, and anything dispatched after the first `await` lands outside it. [`generateThought`](../src/commands/generateThought.ts) and [`generateEmoji`](../src/commands/generateEmoji.ts) are the cases in point — their edits may only reach the thoughtspace once a network request has returned. Each defines an `execMulticursor` that yields once (so that the loop's own synchronous bracket has closed), opens a second bracket of its own, generates every selected thought, and closes it only after all of them have settled. A `multicursor: true` declaration would instead leave one undo step per generated thought, and per-cursor caret updates could land on whichever request happened to finish last.
+The whole of `executeCommandWithMulticursor` is synchronous, including that bracket, so an **asynchronous** command gets no help from it: the bracket is opened and closed around the call, and anything dispatched after the first `await` lands outside it. [`generateThought`](../src/commands/generateThought.ts), [`generateEmoji`](../src/commands/generateEmoji.ts), [`defineTerm`](../src/commands/defineTerm.ts), and [`organizeThought`](../src/commands/organizeThought.ts) are the cases in point — their edits may only reach the thoughtspace once a network request has returned. Each defines an `execMulticursor` that yields once (so that the loop's own synchronous bracket has closed), opens a second bracket of its own, generates or reorganizes, and closes it only after the request has settled. A `multicursor: true` declaration would instead leave one undo step per generated thought, and per-cursor caret updates could land on whichever request happened to finish last.
 
 ### Gating and defaults
 
@@ -455,6 +455,14 @@ Generates ten ordered emoji for the current thought using AI and prepends the be
 Generate Emoji uses the same blocking AI data disclosure, rate limiting, pending state, failure recovery, and `${VITE_AI_URL}` service as Generate Thought, calling `/generateEmoji` with the thought value. Multiple selected thoughts are generated concurrently and can be reverted together with one undo.
 
 Gesture: ↑ → ↓
+
+### Organize Thoughts
+
+Restructures the selected sibling thoughts and their descendants using AI. This may categorize them under new parent thoughts, split long thoughts into smaller ones, and reorder them more logically. Unselected siblings are sent as read-only context and are left in place. The command is disabled when the selection spans different parents, when a context view is active, or when any selected thought already has an AI request in progress.
+
+On first use, em shows the same blocking AI data disclosure as Generate Thought. The command sends a numbered indented outline of the selected thoughts (and their descendants) plus unselected siblings to `${VITE_AI_URL}/organizeThought` in one request. Existing thoughts keep their prompt ids so duplicate text is unambiguous; new categories and split pieces are created. A valid response is applied as one undo step; a failed or malformed result leaves the thoughts unchanged. If a selected thought is edited or deleted before the request finishes, the reorganization is discarded. Server errors are shown in the error banner, and rate limiting asks the user to try again later.
+
+Gesture: ↑ → ↑
 
 ### Delete
 

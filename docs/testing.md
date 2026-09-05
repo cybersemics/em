@@ -1056,7 +1056,7 @@ https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
 
-The same flush settles an asynchronous command. `generateThought` and `generateEmoji` each await a network request and, under multicursor, hold an undo bracket open across every selected thought. With `fetch` mocked, that whole run is timer- and microtask-bound, so one `vi.runAllTimersAsync()` after `executeCommandWithMulticursor` brings the store to its settled state, undo bracket closed included:
+The same flush settles an asynchronous command. `generateThought`, `generateEmoji`, `defineTerm`, and `organizeThought` each await a network request and, under multicursor, hold an undo bracket open across the selection. With `fetch` mocked, that whole run is timer- and microtask-bound, so one `vi.runAllTimersAsync()` after `executeCommandWithMulticursor` brings the store to its settled state, undo bracket closed included:
 
 ```ts
 // ✅ Do: flush, then assert on the result
