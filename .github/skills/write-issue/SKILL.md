@@ -61,6 +61,8 @@ Where the bug depends on a particular thought tree, give it as a fenced code blo
 2. Move Thought Down (Cmd + Shift + ArrowDown).
 ````
 
+Write a gesture as arrows, not as the letters the code uses: `←↓→`, not `ldr`. `l` → `←`, `r` → `→`, `u` → `↑`, `d` → `↓`. The reader is following the steps with a finger on a screen, and the arrows are the swipe; the letters are an implementation detail they have to translate first. Name the command alongside it where the gesture has one — "Swipe New Subthought (`→↓→`)".
+
 Include preconditions that are awkward but load-bearing — a specific device width, a wrapped line, a particular sort order — as steps rather than assuming they are obvious.
 
 ### Current Behavior
@@ -152,6 +154,7 @@ New issues often originate in a comment thread on another issue or PR.
 
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
+- A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
