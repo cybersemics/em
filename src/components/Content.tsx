@@ -72,7 +72,17 @@ const Content: FC = () => {
           // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
           if (!selection.isThought(e.target)) dispatch(clickOnEmptySpace)
         },
-        { enableHaptics: false },
+        {
+          enableHaptics: false,
+          // A tap outside a thought dismisses the keyboard by blurring the editable, but the browser keeps a native
+          // touch selection alive across the blur, leaving the selection handles and the text context menu on screen
+          // after the keyboard is gone (#4833). Collapsing the range on tap down dismisses them before the tap's own
+          // blur starts the keyboard animation, so the two teardowns do not overlap and the menu does not flash back.
+          // Only a range is collapsed: a caret is dismissed by the blur anyway.
+          tapDown: e => {
+            if (!selection.isThought(e.target)) selection.collapse()
+          },
+        },
       )}
     >
       <div

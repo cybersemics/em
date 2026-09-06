@@ -9,6 +9,7 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
+import storageStatusStore from '../../stores/storageStatus'
 import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 import debugLog from '../../util/debugLog'
 import fastClick from '../../util/fastClick'
@@ -116,37 +117,69 @@ const FontSize = () => {
   )
 }
 
-/** Controls for the persistent debug log: copy the captured entries to the clipboard or clear them. Only rendered when Debug Logging is enabled. */
-const DebugLog = () => {
-  const enabled = useSelector(getUserSetting(Settings.debugCrashLog))
+/** The Debug Logging setting together with the debug log copy/clear controls. On development and preview hosts (debugLog.autoEnabled), logging defaults to on and the checkbox controls a device-local opt-out instead of the synced user setting, so this device can be aligned with production (e.g. for performance testing) without enabling logging on the user's other devices. */
+const DebugLogging = () => {
+  const settingEnabled = useSelector(getUserSetting(Settings.debugCrashLog))
+  // the device-local state on auto-enabled hosts; the logger has already applied any persisted opt-out at module load
+  const [localEnabled, setLocalEnabled] = useState(debugLog.isEnabled)
+  const dispatch = useDispatch()
   const [status, setStatus] = useState<string | null>(null)
+  const enabled = debugLog.autoEnabled ? localEnabled : settingEnabled
 
-  if (!enabled) return null
+  const intro =
+    'Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes). Everything is stored locally on this device and nothing is transmitted. '
 
   return (
-    <div className={css({ marginTop: '1em' })}>
-      <a
-        {...fastClick(() => {
-          const text = debugLog.format()
-          copy(text)
-          setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
-        })}
-        className={extendTapRecipe()}
-      >
-        Copy debug log
-      </a>
-      <span className={css({ margin: '0 0.5em', color: 'dim' })}>·</span>
-      <a
-        {...fastClick(() => {
-          debugLog.clear()
-          setStatus('Cleared')
-        })}
-        className={extendTapRecipe()}
-      >
-        Clear debug log
-      </a>
-      {status ? <span className={css({ marginLeft: '0.5em', color: 'dim' })}> ({status})</span> : null}
-    </div>
+    <>
+      {debugLog.autoEnabled ? (
+        <Checkbox
+          checked={localEnabled}
+          title='Debug Logging'
+          onChange={() => {
+            debugLog.setAutoOptOut(localEnabled)
+            setLocalEnabled(!localEnabled)
+          }}
+        >
+          {intro}Debug Logging is on by default in this development or preview version of em. Turning it off aligns this
+          device with production (e.g. for performance testing) and does not affect other devices. Use “Copy debug log”
+          to share the captured log.
+        </Checkbox>
+      ) : (
+        <Setting settingsKey={Settings.debugCrashLog} title='Debug Logging'>
+          {intro}Leave this off unless a developer asks you to enable it. Use “Copy debug log” to share the captured
+          log.
+        </Setting>
+      )}
+      {enabled && (
+        <div className={css({ marginTop: '1em' })}>
+          <a
+            {...fastClick(() => {
+              // dispatch a thunk to read fresh state, so format() can append the state.thoughts dump that resolves
+              // the ids in the entries to values and shows current sibling order
+              dispatch((_, getState) => {
+                const text = debugLog.format(getState())
+                copy(text)
+                setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
+              })
+            })}
+            className={extendTapRecipe()}
+          >
+            Copy debug log
+          </a>
+          <span className={css({ margin: '0 0.5em', color: 'dim' })}>·</span>
+          <a
+            {...fastClick(() => {
+              debugLog.clear()
+              setStatus('Cleared')
+            })}
+            className={extendTapRecipe()}
+          >
+            Clear debug log
+          </a>
+          {status ? <span className={css({ marginLeft: '0.5em', color: 'dim' })}> ({status})</span> : null}
+        </div>
+      )}
+    </>
   )
 }
 
@@ -171,6 +204,71 @@ const AiAcknowledgement = () => {
       Allows AI features without asking each time on this device. Relevant thought content may be sent to an AI service
       when an AI feature is used.
     </Checkbox>
+  )
+}
+
+/** Reports whether this browser can persist thoughts. Private browsing modes vary: Safari disallows the Origin Private File System outright, so the thoughtspace silently falls back to in-memory storage, while Chrome incognito allows it and discards it when the session ends. The report names which case applies on a device whose console is not reachable. */
+const StorageDiagnostics = () => {
+  const clientStorage = storageStatusStore.useState()
+  const [report, setReport] = useState<string | null>(null)
+
+  /** Runs one probe, reporting a rejection as its message so that a single unsupported API does not abort the whole report. */
+  const probe = async (label: string, f: () => Promise<unknown>): Promise<string> =>
+    `${label}: ${await f().then(String, (e: Error) => `FAILED (${e.name}: ${e.message})`)}`
+
+  /** Probes browser storage and renders the report. */
+  const run = async () => {
+    setReport('Running...')
+    const results = await Promise.all([
+      probe('OPFS getDirectory', async () => {
+        await navigator.storage.getDirectory()
+        return 'ok'
+      }),
+      probe('OPFS write + read', async () => {
+        const root = await navigator.storage.getDirectory()
+        const fileHandle = await root.getFileHandle('em-storage-probe', { create: true })
+        const writable = await fileHandle.createWritable()
+        await writable.write('probe')
+        await writable.close()
+        const text = await (await fileHandle.getFile()).text()
+        await root.removeEntry('em-storage-probe')
+        return text === 'probe' ? 'ok' : `read back ${text}`
+      }),
+      probe('storage.persisted()', () => navigator.storage.persisted()),
+      probe('estimate().quota', async () => (await navigator.storage.estimate()).quota),
+    ])
+    setReport(
+      [`client.storage: ${clientStorage ?? 'not initialized'}`, ...results, `userAgent: ${navigator.userAgent}`].join(
+        '\n',
+      ),
+    )
+  }
+
+  return (
+    <div className={css({ marginTop: '2em' })}>
+      <a {...fastClick(run)} className={extendTapRecipe()}>
+        Test storage
+      </a>
+      {report ? (
+        <>
+          <span className={css({ margin: '0 0.5em', color: 'dim' })}>&middot;</span>
+          <a {...fastClick(() => copy(report))} className={extendTapRecipe()}>
+            Copy
+          </a>
+          <pre
+            className={css({
+              color: 'dim',
+              fontSize: 'sm',
+              marginTop: '0.5em',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+            })}
+          >
+            {report}
+          </pre>
+        </>
+      ) : null}
+    </div>
   )
 }
 
@@ -223,13 +321,9 @@ const ModalSettings = () => {
 
         <AiAcknowledgement />
 
-        <Setting settingsKey={Settings.debugCrashLog} title='Debug Logging'>
-          Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes).
-          Everything is stored locally on this device and nothing is transmitted. Leave this off unless a developer asks
-          you to enable it. Use “Copy debug log” to share the captured log.
-        </Setting>
+        <DebugLogging />
 
-        <DebugLog />
+        <StorageDiagnostics />
 
         <a
           className={css({ color: 'error' })}

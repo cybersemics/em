@@ -19,6 +19,7 @@ import store from '../stores/app'
 import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
+import BackgroundGlow from './BackgroundGlow'
 import CommandCenter from './CommandCenter/CommandCenter'
 import Content from './Content'
 import DesktopCommandUniverse from './DesktopCommandUniverse'
@@ -84,6 +85,8 @@ const shouldCancelGesture = (
   const distance = state.fontSize * 2
   return (
     isOnToolbar(x, y) ||
+    // Cancel when the touch starts on a range input (e.g. the background glow debug sliders). Otherwise the gesture disables scrolling by calling preventDefault on touchmove, which blocks the slider's native drag.
+    !!(x && y && document.elementFromPoint(x, y)?.closest('input[type="range"]')) ||
     (x && y && selection.isNear(x, y, distance)) ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
@@ -127,9 +130,11 @@ const AppComponent: FC = () => {
   const rootRef = useRef<HTMLDivElement>(null)
 
   // Mirror the Debug Logging setting into the persistent debug log. Kept here (a single always-mounted
-  // top-level effect) so the logger stays decoupled from the Redux store.
+  // top-level effect) so the logger stays decoupled from the Redux store. On development and preview
+  // hosts (debugLog.autoEnabled) logging defaults to on and follows the device-local opt-out instead of
+  // the synced setting, so this device can be aligned with production without affecting other devices.
   useEffect(() => {
-    debugLog.setEnabled(debugCrashLog)
+    debugLog.setEnabled(debugLog.autoEnabled ? !debugLog.isAutoOptOut() : debugCrashLog)
   }, [debugCrashLog])
 
   useEffect(() => {
@@ -189,6 +194,8 @@ const AppComponent: FC = () => {
       })}
       ref={rootRef}
     >
+      {/* Rendered first so that later positioned siblings (Content, Toolbar, Footer) paint above it. */}
+      <BackgroundGlow />
       <Alert />
       <Tips />
       {!isTouch && <DesktopCommandUniverse />}

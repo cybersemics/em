@@ -22,16 +22,16 @@ export default defineConfig({
           // .claude/worktrees holds agent worktrees, i.e. full checkouts of this repo. Without this the
           // unanchored include glob collects their __tests__ files too, which fail to resolve the gitignored
           // styled-system/ imports unless PandaCSS happens to have been run in that worktree.
-          exclude: ['node_modules/**', 'src/e2e/puppeteer/__tests__/**', 'src/e2e/iOS/__tests__/**', '.claude/**'],
+          exclude: ['node_modules/**', '**/e2e/**', '**/evals/**', '.claude/**'],
           environment: 'jsdom',
           mockReset: false,
           // vitest-localstorage-mock provides an in-test localStorage/sessionStorage mock. Note it does NOT
           // by itself prevent the intermittent `ReferenceError: localStorage is not defined` (#3345), which is
-          // a teardown race handled by the persistent global-prototype fallback installed in src/setupTests.js.
+          // a teardown race handled by the persistent global-prototype fallback installed in src/setupTests.ts.
           // Pre-resolve the bare specifier: vitest resolves setupFiles against the project root's *parent*
           // directory chain, so inside an agent worktree (.claude/worktrees/*) it finds the outer checkout's
           // copy first, which then fails vite's outside-root import check and breaks every unit test.
-          setupFiles: [require.resolve('vitest-localstorage-mock'), 'src/setupTests.js'],
+          setupFiles: [require.resolve('vitest-localstorage-mock'), 'src/setupTests.ts'],
         },
       },
       {
@@ -53,6 +53,18 @@ export default defineConfig({
             output: ['terminal', 'console'],
           }),
         ],
+      },
+      {
+        extends: './vite.config.ts',
+        plugins: [],
+        test: {
+          name: 'eval',
+          globals: true,
+          include: ['packages/ai/src/evals/**/*.ts'],
+          environment: 'node',
+          retry: 2,
+          testTimeout: 60_000,
+        },
       },
       // iOS tests are now run with WDIO test runner
       // Use: yarn test:ios:local (local Appium) or yarn test:ios:browserstack

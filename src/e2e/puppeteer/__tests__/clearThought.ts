@@ -1,7 +1,7 @@
 import { KnownDevices } from 'puppeteer'
 import clearThoughtCommand from '../../../commands/clearThought'
 import click from '../helpers/click'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import getSelection from '../helpers/getSelection'
 import longPressThought from '../helpers/longPressThought'
@@ -319,9 +319,10 @@ describe('clearThought', () => {
     await waitForFirstEditable('hello world')
 
     // Undo replaces the rendered text without a selectionchange or input event, so the faux carets must be re-measured
-    // rather than left at the offset of the text that was replaced.
+    // rather than left at the offset of the text that was replaced. Contiguous insertions merge into a single undo
+    // step, so the whole typed run is reverted and the first thought renders its original value again.
     await press('z', { meta: true })
-    await waitForFirstEditable('hello')
+    await waitForFirstEditable('a')
     await waitForCaretTextOffset(0)
 
     await nextFrame()
@@ -382,9 +383,7 @@ describe('clearThought', () => {
 })
 
 describe('mobile', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   // https://github.com/cybersemics/em/pull/4520
   it('dismisses the Command Center and mirrors typing when Clear Thought is performed on a multiselection', async () => {

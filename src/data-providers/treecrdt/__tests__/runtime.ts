@@ -193,6 +193,7 @@ it('discards a terminal client when drop reports an error', async () => {
 
   await expect(treecrdtThoughtspace.init({ storage: 'memory' })).resolves.toEqual({
     clientId: expect.any(String),
+    storage: 'memory',
   })
   await treecrdtThoughtspace.drop()
 })
