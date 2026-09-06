@@ -130,7 +130,9 @@ export const config: WebdriverIO.Config = {
     // the suite's glob — one entry for many files — so the whole suite runs and maxInstances applies.
     // (`config.spec` itself is only used as the flag: the launcher merges the CLI args into the
     // config twice, so that array lists every file twice and its length is not the file count.)
-    const specCount = config.spec?.length && config.specs?.length ? config.specs.length : Infinity
+    // WDIO's Testrunner type does not declare `spec`, which only ever arrives from the CLI.
+    const { spec: cliSpecs } = config as { spec?: string[] }
+    const specCount = cliSpecs?.length && config.specs?.length ? config.specs.length : Infinity
     const sessionsNeeded = Math.min(baseConfig.maxInstances, specCount)
 
     try {

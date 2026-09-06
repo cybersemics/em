@@ -1,3 +1,7 @@
+// Imported rather than taken from globals: this directory is typechecked by src/e2e/iOS/tsconfig.json,
+// whose ambient `it`/`expect` are WebdriverIO's and which has no `vi` at all. At runtime the file runs
+// under the Vitest `unit` project (see vitest.config.ts), where these are the same functions.
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import waitForBrowserStackSlots from '../waitForBrowserStackSlots'
 
 /** Builds a plan.json response with the given usage, as BrowserStack's Automate plan endpoint returns it. */
