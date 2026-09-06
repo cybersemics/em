@@ -12178,7 +12178,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     eslint-plugin-react-refresh: "npm:^0.5.6"
-    expect-webdriverio: "npm:^6.0.9"
+    expect-webdriverio: "npm:^6.0.10"
     fake-indexeddb: "npm:^6.2.5"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
@@ -13740,6 +13740,29 @@ __metadata:
   version: 1.2.2
   resolution: "expect-type@npm:1.2.2"
   checksum: 10c0/6019019566063bbc7a690d9281d920b1a91284a4a093c2d55d71ffade5ac890cf37a51e1da4602546c4b56569d2ad2fc175a2ccee77d1ae06cb3af91ef84f44b
+  languageName: node
+  linkType: hard
+
+"expect-webdriverio@npm:^6.0.10":
+  version: 6.0.10
+  resolution: "expect-webdriverio@npm:6.0.10"
+  dependencies:
+    "@vitest/snapshot": "npm:^4.1.10"
+    deep-eql: "npm:^5.0.2"
+    expect: "npm:^30.4.1"
+    jest-matcher-utils: "npm:^30.4.1"
+  peerDependencies:
+    "@wdio/globals": ^9.0.0
+    "@wdio/logger": ^9.0.0
+    webdriverio: ^9.28.0
+  peerDependenciesMeta:
+    "@wdio/globals":
+      optional: false
+    "@wdio/logger":
+      optional: false
+    webdriverio:
+      optional: false
+  checksum: 10c0/4c70362f50ece42832bd8b2333ad253af6f4521636f519931f75b09e30de43f0e2e186d018ea4ac6a100202eff474f1b6a671915e308ed3f9b73fd2d13f2a161
   languageName: node
   linkType: hard
 
