@@ -4,41 +4,8 @@ import ReasoningEffort from '../@types/ReasoningEffort'
 import Service from '../@types/Service'
 import completeChat from '../completeChat'
 
-/** A node in the reorganized thought outline returned by the LLM. */
-interface OutlineNode {
-  id: string | null
-  text: string | null
-  children: OutlineNode[]
-}
-
-const outlineNodeSchema: z.ZodType<OutlineNode> = z.lazy(() =>
-  z.object({
-    id: z
-      .string()
-      .nullable()
-      .describe('The prompt id of an existing thought from the input, or null for a new thought'),
-    text: z
-      .string()
-      .nullable()
-      .describe('Replacement or new thought text. Null keeps the existing thought text. Required when id is null.'),
-    children: z.array(outlineNodeSchema).describe('Nested thoughts in document order. Empty if the thought has none.'),
-  }),
-)
-
-/** Collects every existing-thought id from an outline tree, in document order. */
-const collectIds = (nodes: OutlineNode[]): string[] =>
-  nodes.flatMap(node => [...(node.id ? [node.id] : []), ...collectIds(node.children)])
-
-/** Extracts [n] ids from the numbered input outline. */
-const extractInputIds = (input: string): string[] => [...input.matchAll(/\[(\d+)\]/g)].map(match => match[1])
-
-/** Returns true when every outline node is a new thought or an existing thought, never an empty placeholder. */
-const isCompleteNode = (node: OutlineNode): boolean =>
-  (node.id !== null || !!node.text?.trim()) && node.children.every(isCompleteNode)
-
 /** Prompts the LLM to reorganize an indented outline of thoughts. */
-const organizeThought = async (input: string): Promise<OutlineNode[]> => {
-  const expectedIds = extractInputIds(input)
+const organizeThought = async (input: string): Promise<string> => {
   const { outline } = await completeChat({
     messages: [
       {
@@ -55,8 +22,10 @@ You may:
 - Reorder reorganizable thoughts, including alphabetically when a parent is labeled that way
 - Nest them under each other
 - Move a thought into an existing category when that category already fits
-- Create new category thoughts (nodes with id null and text set) only when no existing thought is a suitable parent
-- Split a long thought: keep the original id on one piece with new text, and add sibling nodes with id null for the extra pieces. Do not duplicate an item that already exists.
+- Create new category thoughts with [new] only when no existing thought is a suitable parent
+- Split a long thought: keep the original id on one piece with new text, and add sibling [new] thoughts for the extra pieces. Do not duplicate an item that already exists.
+
+Unless a thought explicitly calls for sorting, preserve the input order among thoughts placed under the same parent. Do not create a category for only one thought.
 
 You must not:
 - Omit or invent ids
@@ -66,12 +35,14 @@ You must not:
 
 Prefer moving items into existing matching categories over creating new ones. Keep a thought's existing children unless those children themselves belong under a different thought.
 
-Return the new structure as a forest of outline nodes. The roots replace the reorganizable siblings.
+Return the final structure as an indented outline in the same format as the input. The roots replace the reorganizable siblings.
 
-Each node:
-- id: the [n] of an existing thought, or null if this is a new thought
-- text: null to keep the existing text; a string to set or replace text (required when id is null)
-- children: nested reorganized thoughts, or an empty array
+Output format:
+- Start every existing thought with its original [n] id and its complete final text
+- Start every new thought with [new] and its text
+- Use exactly two spaces per indentation level
+- Begin every root at the start of the line
+- Do not include [] context thoughts or Markdown code fences
 
 Example 1 — split a compound thought into siblings. Milk already exists, so do not duplicate it, and do not invent a new category.
 
@@ -87,15 +58,13 @@ Input:
 
 Output:
 
-{
-  "outline": [
-    { "id": "1", "text": null, "children": [] },
-    { "id": "4", "text": "eggs", "children": [] },
-    { "id": null, "text": "bread", "children": [] },
-    { "id": "2", "text": null, "children": [] },
-    { "id": "3", "text": null, "children": [] }
-  ]
-}
+\`\`\`
+[1] milk
+[4] eggs
+[new] bread
+[2] apples
+[3] bananas
+\`\`\`
 
 Example 2 — create category thoughts when the list is mixed and has no existing categories.
 
@@ -115,36 +84,19 @@ Input:
 
 Output:
 
-{
-  "outline": [
-    {
-      "id": null,
-      "text": "Dairy",
-      "children": [
-        { "id": "1", "text": null, "children": [] },
-        { "id": "5", "text": null, "children": [] },
-        { "id": "6", "text": null, "children": [] }
-      ]
-    },
-    {
-      "id": null,
-      "text": "Fruit",
-      "children": [
-        { "id": "2", "text": null, "children": [] },
-        { "id": "3", "text": null, "children": [] },
-        { "id": "4", "text": null, "children": [] }
-      ]
-    },
-    {
-      "id": null,
-      "text": "Vegetables",
-      "children": [
-        { "id": "7", "text": null, "children": [] },
-        { "id": "8", "text": null, "children": [] }
-      ]
-    }
-  ]
-}
+\`\`\`
+[new] Dairy
+  [1] milk
+  [5] sour cream
+  [6] cheese
+[new] Fruit
+  [2] apples
+  [3] bananas
+  [4] watermelon
+[new] Vegetables
+  [7] carrots
+  [8] potatoes
+\`\`\`
 
 Example 3 — two existing categories are selected. Move misplaced items into the matching category and reorder to match the labels. Do not create a third category.
 
@@ -170,35 +122,23 @@ Input:
 
 Output:
 
-{
-  "outline": [
-    {
-      "id": "1",
-      "text": null,
-      "children": [
-        { "id": "11", "text": null, "children": [] },
-        { "id": "10", "text": null, "children": [] },
-        { "id": "5", "text": null, "children": [] },
-        { "id": "2", "text": null, "children": [] },
-        { "id": "3", "text": null, "children": [] },
-        { "id": "6", "text": null, "children": [] }
-      ]
-    },
-    {
-      "id": "7",
-      "text": null,
-      "children": [
-        { "id": "12", "text": null, "children": [] },
-        { "id": "13", "text": null, "children": [] },
-        { "id": "8", "text": null, "children": [] },
-        { "id": "4", "text": null, "children": [] },
-        { "id": "15", "text": null, "children": [] },
-        { "id": "14", "text": null, "children": [] },
-        { "id": "9", "text": null, "children": [] }
-      ]
-    }
-  ]
-}`,
+\`\`\`
+[1] Alphabetized states
+  [11] Alaska
+  [10] Arkansas
+  [5] California
+  [2] Hawaii
+  [3] New york
+  [6] Wisconsin
+[7] Alphabetized fruits
+  [12] apple
+  [13] banana
+  [8] grape
+  [4] lemon
+  [15] mango
+  [14] orange
+  [9] watermelon
+\`\`\``,
       },
       {
         role: 'user',
@@ -209,21 +149,16 @@ ${input}
       },
     ],
     model: Model.GPT_5_6_LUNA,
-    reasoningEffort: ReasoningEffort.NONE,
+    reasoningEffort: ReasoningEffort.LOW,
     service: Service.ORGANIZE_THOUGHT,
     schema: z.object({
-      outline: z.array(outlineNodeSchema).describe('The reorganized forest that replaces the reorganizable siblings'),
+      outline: z
+        .string()
+        .trim()
+        .min(1)
+        .describe('The final indented outline, with [n] for existing thoughts and [new] for new thoughts'),
     }),
   })
-
-  const outputIds = collectIds(outline)
-  if (
-    !outline.every(isCompleteNode) ||
-    outputIds.length !== expectedIds.length ||
-    expectedIds.some(id => outputIds.filter(outputId => outputId === id).length !== 1)
-  ) {
-    throw new Error('The LLM did not return a valid reorganization of the input thoughts')
-  }
 
   return outline
 }

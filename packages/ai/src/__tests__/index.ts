@@ -46,18 +46,52 @@ it('defines multiple terms through one service call', async () => {
 })
 
 it('reorganizes thoughts through one service call', async () => {
-  const outline = [{ id: '1', text: null, children: [] }]
-  organizeThought.mockResolvedValueOnce(outline)
+  const finalOutline = `[new] Fruit
+  [1] apples
+    [2] granny smith
+  [3] bananas`
+  const outline = [
+    {
+      id: null,
+      text: 'Fruit',
+      children: [
+        { id: '1', text: 'apples', children: [{ id: '2', text: 'granny smith', children: [] }] },
+        { id: '3', text: 'bananas', children: [] },
+      ],
+    },
+  ]
+  organizeThought.mockResolvedValueOnce(finalOutline)
   const { port } = server.address() as AddressInfo
 
   const response = await fetch(`http://127.0.0.1:${port}/ai/organizeThought`, {
-    body: JSON.stringify({ outline: '[1] apples' }),
+    body: JSON.stringify({ outline: '[1] apples\n  [2] granny smith\n[3] bananas' }),
     headers: { 'Content-Type': 'application/json' },
     method: 'POST',
   })
 
   await expect(response.json()).resolves.toEqual({ outline })
   expect(organizeThought).toHaveBeenCalledOnce()
-  expect(organizeThought).toHaveBeenCalledWith('[1] apples')
+  expect(organizeThought).toHaveBeenCalledWith('[1] apples\n  [2] granny smith\n[3] bananas')
   expect(response.status).toBe(200)
+})
+
+it.each([
+  ['omits an input id', '[1] apples'],
+  ['invents an id', '[1] apples\n[2] bananas\n[99] oranges'],
+  ['duplicates an id', '[1] apples\n[1] apples\n[2] bananas'],
+  ['includes a context marker', '[] context\n[1] apples\n[2] bananas'],
+  ['uses invalid indentation', '[1] apples\n   [2] bananas'],
+  ['creates a thought without text', '[1] apples\n[2] bananas\n[new]'],
+])('rejects an organized outline that %s', async (_, finalOutline) => {
+  organizeThought.mockResolvedValueOnce(finalOutline)
+  const { port } = server.address() as AddressInfo
+
+  const response = await fetch(`http://127.0.0.1:${port}/ai/organizeThought`, {
+    body: JSON.stringify({ outline: '[1] apples\n[2] bananas' }),
+    headers: { 'Content-Type': 'application/json' },
+    method: 'POST',
+  })
+
+  await expect(response.json()).resolves.toEqual({ error: 'Internal server error' })
+  expect(response.status).toBe(500)
 })
