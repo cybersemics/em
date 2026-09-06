@@ -29,6 +29,11 @@ it('returns the reorganized outline from one LLM request', async () => {
   completeChat.mockResolvedValueOnce({ outline })
 
   await expect(organizeThought(input)).resolves.toEqual(outline)
+  const systemContent = completeChat.mock.calls[0][0].messages[0].content
+  expect(systemContent).toContain('Example 1')
+  expect(systemContent).toContain('Example 2')
+  expect(systemContent).toContain('Example 3')
+  expect(systemContent).toContain('leftover buckets')
   expect(completeChat).toHaveBeenCalledWith(
     expect.objectContaining({
       messages: [
