@@ -19,6 +19,7 @@ import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
+import isRoot from '../util/isRoot'
 import keyValueBy from '../util/keyValueBy'
 import strip from '../util/strip'
 import { alertActionCreator as alert } from './alert'
@@ -100,9 +101,11 @@ const buildOutline = (
       { idMap: new Map<string, ThoughtId>(), lines: [] as string[], nextId: startId },
     )
 
+  const parent = getThoughtById(state, parentId)
+  const includeParent = !!parent && !isRoot([parentId])
   const numbered = visibleChildren(state, parentId).reduce(
     (accum, thought) => {
-      const nested = renderThoughts([thought], 0, selectedIds.has(thought.id), accum.nextId)
+      const nested = renderThoughts([thought], includeParent ? 1 : 0, selectedIds.has(thought.id), accum.nextId)
       return {
         idMap: new Map([...accum.idMap, ...nested.idMap]),
         lines: [...accum.lines, ...nested.lines],
@@ -112,7 +115,13 @@ const buildOutline = (
     { idMap: new Map<string, ThoughtId>(), lines: [] as string[], nextId: 1 },
   )
 
-  return { idMap: numbered.idMap, outline: numbered.lines.join('\n') }
+  const parentVisible = parent ? normalizeValue(parent.value) : ''
+  return {
+    idMap: numbered.idMap,
+    outline: includeParent
+      ? [`[]${parentVisible ? ` ${parentVisible}` : ''}`, ...numbered.lines].join('\n')
+      : numbered.lines.join('\n'),
+  }
 }
 
 /** Collects every existing-thought id from an outline tree. */

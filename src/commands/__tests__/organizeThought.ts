@@ -108,6 +108,56 @@ it('sends numbered selected thoughts and context-only unselected siblings', asyn
   })
 })
 
+it('sends the parent as read-only context when selected thoughts are nested', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () =>
+      Promise.resolve({
+        outline: [
+          { id: '3', text: null, children: [] },
+          { id: '1', text: null, children: [] },
+          { id: '2', text: null, children: [] },
+        ],
+      }),
+  })
+  await dispatch([
+    importText({
+      text: `
+        - Things in Alphabetical Order
+          - States in Alphabetical Order
+            - California
+            - Wisconsin
+            - Alaska
+      `,
+    }),
+    setCursor(['Things in Alphabetical Order', 'States in Alphabetical Order', 'California']),
+    addMulticursor(['Things in Alphabetical Order', 'States in Alphabetical Order', 'California']),
+    addMulticursor(['Things in Alphabetical Order', 'States in Alphabetical Order', 'Wisconsin']),
+    addMulticursor(['Things in Alphabetical Order', 'States in Alphabetical Order', 'Alaska']),
+  ])
+
+  executeCommandWithMulticursor(organizeThought, { store })
+  await vi.runAllTimersAsync()
+
+  expect(mockFetch).toHaveBeenCalledWith(
+    'http://test-ai-url/organizeThought',
+    expect.objectContaining({
+      body: JSON.stringify({
+        outline: `[] States in Alphabetical Order
+  [1] California
+  [2] Wisconsin
+  [3] Alaska`,
+      }),
+    }),
+  )
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Things in Alphabetical Order
+    - States in Alphabetical Order
+      - Alaska
+      - California
+      - Wisconsin`)
+})
+
 it('categorizes selected thoughts and leaves unselected siblings in place', async () => {
   acknowledgeAiDisclosure()
   mockFetch.mockResolvedValueOnce({ json: () => Promise.resolve({ outline: fruitOutline }) })

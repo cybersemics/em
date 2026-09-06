@@ -43,10 +43,12 @@ const organizeThought = async (input: string): Promise<OutlineNode[]> => {
     messages: [
       {
         role: 'system',
-        content: `You reorganize thoughts in a note-taking app.
+        content: `You will be given an indented outline of values (referred to as "thoughts") in a note-taking app.
+
+Your task is to reorganize those thoughts.
 
 The user provides an indented outline:
-- [] marks a sibling that is context only. Do not move, rename, split, or nest anything under it. Do not include it in your output.
+- [] marks a thought that is context only (the parent, or an unselected sibling). Do not move, rename, split, or nest anything under it. Do not include it in your output.
 - [n] marks a thought you may reorganize. n is a unique id. You must include every such id in your output exactly once.
 
 You may:
@@ -70,11 +72,12 @@ Each node:
 Example input:
 
 \`\`\`
-[] milk
-[1] apples
-  [2] granny smith
-[3] bananas
-[4] Buy milk, eggs, and bread
+[] Grocery List
+  [] milk
+  [1] apples
+    [2] granny smith
+  [3] bananas
+  [4] Buy milk, eggs, and bread
 \`\`\`
 
 Example output that categorizes fruit, preserves the nested apple variety, and splits the long thought:
