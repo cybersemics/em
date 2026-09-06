@@ -134,8 +134,9 @@ const baseConfig = {
   // (2) leave headroom in the shared BrowserStack parallel pool for other CI runs — one run at the
   // plan's full parallel cap (5) cannot overlap with anything, and several such runs starting together
   // overflow the separate session-create queue (BROWSERSTACK_QUEUE_SIZE_EXCEEDED).
-  // This is also the number of slots the BrowserStack config waits for in onPrepare
-  // (waitForBrowserStackSlots), so the pool (and its queue) is known to have room before any worker starts.
+  // This is also the most sessions the BrowserStack config waits for in onPrepare
+  // (waitForBrowserStackSlots) — fewer when --spec names fewer files — so the pool (and its queue) is
+  // known to have room before any worker starts.
   maxInstances: 2,
 
   // Base iOS Safari capabilities shared between local and browserStack configs. Individual configs can override or extend these.

@@ -1,8 +1,20 @@
 /** BrowserStack's Automate plan endpoint, which reports the account's parallel-session usage. */
 const PLAN_URL = 'https://api.browserstack.com/automate/plan.json'
 
-/** How long to keep waiting for the account's parallel-session pool to free up before giving up. Matched to the Cloudflare tunnel pool's ceiling (cloudflareTunnelPool.ts), since a run can be queued behind a full 18-20 min iOS suite more than once. */
-const WAIT_TIMEOUT_MS = 45 * 60 * 1000
+/**
+ * How long to keep waiting for the account's parallel-session pool to free up before giving up.
+ *
+ * This replaced a GitHub concurrency queue that was FIFO and never expired, so the ceiling has to
+ * cover the worst honest wait rather than a typical one. The waiters below poll independently with
+ * no ordering between them, so under load a run can keep losing the race to newer arrivals; the
+ * ceiling is what bounds that starvation. The sizing case is the `ghworkflow` flake hunt
+ * (docs/testing.md), which fans out 15 workflow_dispatch runs at once: at 2 sessions per run on a
+ * 5-parallel account, 2 runs proceed at a time, and a suite has historically taken up to 20 min,
+ * so a perfectly fair queue would admit the last run around 150 min. Three hours leaves room for
+ * unfairness on top of that while staying well inside the 6-hour GitHub Actions job limit, and a
+ * run waiting here holds no tunnel (see wdio.browserstack.conf.ts), only its runner.
+ */
+const WAIT_TIMEOUT_MS = 3 * 60 * 60 * 1000
 
 /** How long to pause between polls. Jitter is added per poll so simultaneous runs do not rescan (and then burst their session creations) in lockstep. */
 const POLL_INTERVAL_MS = 15000
@@ -113,8 +125,10 @@ const waitForBrowserStackSlots = async (needed: number): Promise<void> => {
 
     if (Date.now() - start >= WAIT_TIMEOUT_MS) {
       throw new Error(
-        `BrowserStack still had no room for ${needed} parallel sessions after waiting ` +
-          `${Math.round(WAIT_TIMEOUT_MS / 60000)} min: ${usageSummary}. Another CI run is holding the pool or its queue.`,
+        `This run was starved of BrowserStack sessions: it never found room for ${needed} parallel sessions in ` +
+          `${Math.round(WAIT_TIMEOUT_MS / 3600000)} h of waiting (last seen: ${usageSummary}). The account is not ` +
+          `broken — other runs kept winning the slots. Check for a fan-out of iOS runs, and if this recurs, reduce ` +
+          `the load or raise the account's parallel limit.`,
       )
     }
 

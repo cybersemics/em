@@ -65,12 +65,15 @@ it('waits when parallels are free but the session-create queue cannot take this 
   expect(fetchMock).toHaveBeenCalledTimes(2)
 })
 
-it('throws with the observed usage when the pool never frees up', async () => {
+it('throws as starvation, naming the observed usage, when the pool never frees up', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(planResponse(5)))
   vi.useFakeTimers()
 
-  const assertion = expect(waitForBrowserStackSlots(2)).rejects.toThrow('5/5 sessions running, 0/5 queued')
-  await vi.advanceTimersByTimeAsync(46 * 60 * 1000)
+  const assertion = expect(waitForBrowserStackSlots(2)).rejects.toThrow(
+    /starved of BrowserStack sessions.*5\/5 sessions running, 0\/5 queued/,
+  )
+  // The ceiling is three hours; a poll lands at most 20s after it, so 3h 1m is past the throw.
+  await vi.advanceTimersByTimeAsync(3 * 60 * 60 * 1000 + 60 * 1000)
   await assertion
 })
 
