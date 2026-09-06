@@ -17,17 +17,6 @@ const pathToId = (nodes: OutlineNode[], id: string): OutlineNode[] | null => {
   }, null)
 }
 
-/** Returns true when two ids share a parent node or one is nested under the other. */
-const areGrouped = (outline: OutlineNode[], a: string, b: string): boolean => {
-  const pathA = pathToId(outline, a)
-  const pathB = pathToId(outline, b)
-  if (!pathA || !pathB) return false
-  if (pathA.some(node => node.id === b) || pathB.some(node => node.id === a)) return true
-  const parentA = pathA.at(-2)
-  const parentB = pathB.at(-2)
-  return !!parentA && parentA === parentB
-}
-
 /** Reads prompt ids and their original thought text from the numbered outline. */
 const originalTexts = (input: string): Map<string, string> =>
   new Map([...input.matchAll(/\[(\d+)\]\s*(.*)$/gm)].map(match => [match[1], match[2].trim()]))
@@ -45,15 +34,25 @@ beforeAll(() => {
   }
 })
 
-it.concurrent('groups related fruits together', async () => {
-  const input = `[] picnic
+it.concurrent('creates separate semantic groups for fruit and tools', async () => {
+  const input = `[] things to put away
   [1] apples
-  [2] bananas
-  [3] lemonade
-  [4] cookies`
+  [2] hammer
+  [3] bananas
+  [4] screwdriver`
   const outline = await organizeThought(input)
+  const applePath = pathToId(outline, '1')
+  const hammerPath = pathToId(outline, '2')
+  const bananaPath = pathToId(outline, '3')
+  const screwdriverPath = pathToId(outline, '4')
+  const fruitParent = applePath?.at(-2)
+  const toolParent = hammerPath?.at(-2)
 
-  expect(areGrouped(outline, '1', '2'), dump(outline)).toBe(true)
+  expect(fruitParent, dump(outline)).toBeDefined()
+  expect(toolParent, dump(outline)).toBeDefined()
+  expect(bananaPath?.at(-2), dump(outline)).toBe(fruitParent)
+  expect(screwdriverPath?.at(-2), dump(outline)).toBe(toolParent)
+  expect(toolParent, dump(outline)).not.toBe(fruitParent)
 })
 
 it.concurrent('splits a compound shopping thought into separate items', async () => {
@@ -61,39 +60,42 @@ it.concurrent('splits a compound shopping thought into separate items', async ()
   [1] Buy milk, eggs, and bread`
   const originals = originalTexts(input)
   const outline = await organizeThought(input)
-  const texts = flatten(outline).map(node => displayText(node, originals))
+  const nodes = flatten(outline)
+  const items = ['milk', 'eggs', 'bread']
+  const itemNodes = items.map(item => nodes.find(node => displayText(node, originals).includes(item)))
 
+  expect(itemNodes.every(Boolean), dump(outline)).toBe(true)
+  expect(new Set(itemNodes).size, dump(outline)).toBe(items.length)
   expect(
-    ['milk', 'eggs', 'bread'].every(item => texts.some(text => text.includes(item))),
+    itemNodes.every(node => items.filter(item => displayText(node!, originals).includes(item)).length === 1),
     dump(outline),
   ).toBe(true)
-  expect(
-    flatten(outline).some(node => node.id === null),
-    dump(outline),
-  ).toBe(true)
+  expect(nodes.filter(node => node.id === null).length, dump(outline)).toBeGreaterThanOrEqual(2)
 })
 
-it.concurrent('keeps a nested variety under its parent thought', async () => {
-  const input = `[] orchard
-  [1] apples
-    [2] granny smith
-  [3] pears`
+it.concurrent('keeps a specific programming language under its category', async () => {
+  const input = `[] learning plan
+  [1] Programming languages
+    [2] TypeScript
+  [3] Vegetable gardening`
   const outline = await organizeThought(input)
   const path = pathToId(outline, '2')
 
   expect(path?.some(node => node.id === '1'), dump(outline)).toBe(true)
 })
 
-it.concurrent('omits context-only thoughts from the reorganized outline', async () => {
-  const input = `[] orange juice
+it.concurrent('does not copy a context-only marker into any output thought', async () => {
+  const input = `[] ZXQ-CONTEXT-ONLY-9173
 [1] apples
-[2] bananas`
+[2] hammer
+[3] bananas
+[4] screwdriver`
   const originals = originalTexts(input)
   const outline = await organizeThought(input)
   const texts = flatten(outline).map(node => displayText(node, originals))
 
   expect(
-    texts.some(text => text === 'orange juice'),
+    texts.some(text => text.includes('zxq-context-only-9173')),
     dump(outline),
   ).toBe(false)
 })
