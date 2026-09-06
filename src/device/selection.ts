@@ -102,6 +102,14 @@ export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 /** Returns true if there is an active selection. */
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
 
+/** Returns true if a non-collapsed selection is contained within the given element. */
+export const isSelectedWithin = (element: Element | null | undefined): boolean => {
+  if (!element) return false
+  const selection = window.getSelection()
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) return false
+  return element.contains(selection.getRangeAt(0).commonAncestorContainer)
+}
+
 /** Traverses a node's parents until it finds an element node that is not a formatting tag. Returns null if a suitable parent cannot be found. */
 const getEditableCandidate = (node?: EventTarget | null) => {
   if (!isHTMLElement(node)) return null
