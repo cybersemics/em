@@ -128,7 +128,8 @@ const baseConfig = {
   setupFiles: [path.resolve(process.cwd(), 'src/e2e/iOS/setup.ts')],
 
   // Capabilities
-  // Spec files run in parallel sessions, but cap at 2 (we have 5 specs) rather than opening all at once.
+  // Spec files run in parallel sessions, but cap at 2 (fewer than the number of spec files) rather than
+  // opening all at once.
   // Reasons: (1) bursting N simultaneous session-creations is what timed out the 3rd session on
   // BrowserStack (#0-2 "aborted due to timeout" on POST .../session); staggering avoids the spike.
   // (2) leave headroom in the shared BrowserStack parallel pool for other CI runs — one run at the
