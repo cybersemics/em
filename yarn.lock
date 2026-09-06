@@ -9292,7 +9292,7 @@ __metadata:
     cors: "npm:^2.8.6"
     emoji-regex: "npm:^10.6.0"
     express: "npm:^4.18.2"
-    openai: "npm:^7.7.0"
+    openai: "npm:^7.9.0"
     tsx: "npm:^4.23.13"
     typescript: "npm:^5.9.3"
     zod: "npm:^4.5.4"
@@ -12063,7 +12063,7 @@ __metadata:
   resolution: "em-estimate@workspace:scripts/estimate"
   dependencies:
     dotenv: "npm:^17.4.2"
-    openai: "npm:^7.7.0"
+    openai: "npm:^7.9.0"
     prettier: "npm:^3.9.6"
     typescript: "npm:5.9.3"
     zod: "npm:^4.5.4"
@@ -12202,7 +12202,7 @@ __metadata:
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^6.0.1"
     npm-run-all2: "npm:^9.0.3"
-    openai: "npm:^7.7.0"
+    openai: "npm:^7.9.0"
     page-lifecycle: "npm:^0.1.2"
     pluralize: "npm:^8.0.0"
     postinstall-postinstall: "npm:^2.1.0"
@@ -19356,15 +19356,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^7.7.0":
-  version: 7.7.0
-  resolution: "openai@npm:7.7.0"
+"openai@npm:^7.9.0":
+  version: 7.9.0
+  resolution: "openai@npm:7.9.0"
   peerDependencies:
     "@aws-sdk/credential-provider-node": ">=3.972.0 <4"
     "@smithy/hash-node": ">=4.3.0 <5"
     "@smithy/signature-v4": ">=5.4.0 <6"
     undici: ">=5 <9"
-    ws: ^8.18.0
+    ws: ^8.21.0
     zod: ^3.25 || ^4.0
   peerDependenciesMeta:
     "@aws-sdk/credential-provider-node":
@@ -19379,7 +19379,7 @@ __metadata:
       optional: true
     zod:
       optional: true
-  checksum: 10c0/6d84a98bcc0915d221d2837d9f4985d35ded6826785b4d6aab4be98819182618b7de68d1d8955138381674eb4d601ca01fb8359f1d0c0577cf994a8ded4a5ad6
+  checksum: 10c0/10edfdbfc690571adad4f331e0993a8da86bbe2a558376aec15519bb2eb709aeba2e58046f16d17271ac55ec503b5aa3eab6b7f44890afbc325b9944150b2517
   languageName: node
   linkType: hard
 
