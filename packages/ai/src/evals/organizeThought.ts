@@ -103,6 +103,7 @@ const matchNode = (
   return (
     idMatches &&
     textMatches(actualText, expected.text) &&
+    // eslint-disable-next-line @typescript-eslint/no-use-before-define
     matchForest(actual.children, expected.children, originals, options)
   )
 }
@@ -121,6 +122,7 @@ const matchForest = (
     return expected.every((node, index) => matchNode(actual[index], node, originals, options))
   }
 
+  /** Returns true when remaining expected siblings can be matched against unused actual siblings. */
   const matchFrom = (expectedIndex: number, used: number[]): boolean =>
     expectedIndex === expected.length
       ? true
