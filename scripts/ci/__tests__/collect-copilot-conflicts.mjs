@@ -136,4 +136,4 @@ const testExclusions = async () => {
 await testRetryPolicy()
 await testExclusions()
 
-console.log('collect-copilot-conflicts: passed')
+console.info('PASS: collect-copilot-conflicts')
