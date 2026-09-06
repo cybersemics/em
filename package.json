@@ -92,11 +92,11 @@
     "scripts/issue-classifier"
   ],
   "dependencies": {
-    "@capacitor/android": "^8.5.0",
+    "@capacitor/android": "^8.5.1",
     "@capacitor/clipboard": "^8.0.1",
-    "@capacitor/core": "^8.5.0",
+    "@capacitor/core": "^8.5.1",
     "@capacitor/haptics": "^8.0.2",
-    "@capacitor/ios": "^8.5.0",
+    "@capacitor/ios": "^8.5.1",
     "@capacitor/keyboard": "^8.0.5",
     "@capacitor/status-bar": "^8.0.3",
     "@emotion/react": "^11.14.0",
@@ -175,7 +175,7 @@
   "devDependencies": {
     "@babel/core": "^8.0.1",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@capacitor/cli": "^8.5.0",
+    "@capacitor/cli": "^8.5.1",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
     "@pandacss/dev": "^1.12.0",
     "@pandacss/eslint-plugin": "^0.3.2",
