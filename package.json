@@ -135,7 +135,7 @@
     "motion": "^13.1.1",
     "murmurhash3js": "^3.0.1",
     "nanoid": "^6.0.1",
-    "openai": "^7.7.0",
+    "openai": "^7.9.0",
     "page-lifecycle": "^0.1.2",
     "pluralize": "^8.0.0",
     "qrcode.react": "^4.2.0",
