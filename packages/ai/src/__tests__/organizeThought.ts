@@ -33,7 +33,7 @@ it('returns the reorganized outline from one LLM request', async () => {
     expect.objectContaining({
       messages: [
         expect.objectContaining({
-          content: expect.stringContaining('You reorganize thoughts in a note-taking app'),
+          content: expect.stringContaining('You will be given an indented outline of values'),
           role: 'system',
         }),
         expect.objectContaining({
