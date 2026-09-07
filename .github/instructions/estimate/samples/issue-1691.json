@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[iOS] setCursor is delayed when keyboard is up",
+    "body": "## Steps to Reproduce\r\n\r\n1. Create a few thoughts.\r\n2. Keep the keyboard up.\r\n3. Move the cursor around by tapping other thoughts. \r\n\r\n## Current Behavior\r\n\r\nThere is a delay after `touchend` before the cursor moves. This delay only exists when the keyboard is up (`state.editing`). \r\n\r\n## Expected Behavior\r\n\r\nOn `touchend`, the cursor should immediately move. \r\n\r\n(On `touchstart` the cursor cannot move immediately since we have to wait for drag-and-drop.)",
+    "labels": ["bug"]
+  },
+  "expected": "L",
+  "source": {
+    "type": "everhour",
+    "issue": 1691,
+    "hours": 16
+  }
+}

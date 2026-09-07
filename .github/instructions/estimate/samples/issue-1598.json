@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Merge two thoughts without intervening edit does not work",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- a\r\n- b\r\n- c\r\n```\r\n\r\n1. Set the caret at the beginning of `c` and hit Backspace\r\n2. Set the caret at the beginning of `bc` and hit Backspace\r\n\r\n## Current Behavior\r\n\r\nNothing happens\r\n\r\n## Expected Behavior\r\n\r\n`bc` should get merged into `a` to create `abc`",
+    "labels": ["bug"]
+  },
+  "expected": "M",
+  "source": {
+    "type": "everhour",
+    "issue": 1598,
+    "hours": 8
+  }
+}

@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /**
  * Click the note for the given note value. Waits for the note at the beginning in case it hasn't been rendered yet.

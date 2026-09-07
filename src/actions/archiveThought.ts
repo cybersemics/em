@@ -25,6 +25,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import equalThoughtValue from '../util/equalThoughtValue'
 import head from '../util/head'
+import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isThoughtArchived from '../util/isThoughtArchived'
 import parentOf from '../util/parentOf'
@@ -61,8 +62,9 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
   if (!path) return state
 
-  const showContexts = isContextViewActive(state, rootedParentOf(state, path))
   const contextChain = splitChain(state, path)
+  // Only rewrite the operation if the path actually crosses the context view. A SimplePath such as a/m/x is not rewritten even though a context view is active on its parent a/m, otherwise the rewrite would recurse infinitely on the same path.
+  const showContexts = contextChain.length > 1 && isContextViewActive(state, rootedParentOf(state, path))
   const simplePath = contextChain.length > 1 ? lastThoughtsFromContextChain(state, contextChain) : (path as SimplePath)
 
   // rewrite context view operaton in terms of normal view and update cursor
@@ -108,6 +110,12 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           : // Case IV: delete very last thought; remove cursor
             [null, undefined]
 
+  // Only relocate the cursor when it is on (or within) the thought being archived. When a
+  // different thought is archived (e.g. dragged to the DropGutter while the cursor is elsewhere),
+  // preserve the cursor's last known position rather than moving it to a sibling of the archived
+  // thought. (#4077)
+  const cursorOnArchived = isDescendantPath(state.cursor, path)
+
   return reducerFlow([
     ...(isDeletable
       ? [
@@ -147,11 +155,13 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
           },
         ]),
 
-    setCursor({
-      path: cursorNew,
-      isKeyboardOpen: state.isKeyboardOpen,
-      offset,
-    }),
+    cursorOnArchived
+      ? setCursor({
+          path: cursorNew,
+          isKeyboardOpen: state.isKeyboardOpen,
+          offset,
+        })
+      : null,
   ])(state)
 }
 

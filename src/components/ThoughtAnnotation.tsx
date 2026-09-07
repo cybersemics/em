@@ -26,6 +26,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isEmail from '../util/isEmail'
 import isVisibleContext from '../util/isVisibleContext'
+import lastURL from '../util/lastURL'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import resolveArray from '../util/resolveArray'
@@ -42,6 +43,7 @@ const urlLinkStyle = css({
   display: 'inline-block',
   overflow: 'hidden',
   position: 'relative',
+  top: '2px',
   zIndex: 'thoughtAnnotationLink',
   marginLeft: 3,
   textDecoration: 'none',
@@ -60,6 +62,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
   const dispatch = useDispatch()
   return (
     <a
+      aria-label='url-link'
       href={addMissingProtocol(url)}
       rel='noopener noreferrer'
       target='_blank'
@@ -86,7 +89,13 @@ UrlIconLink.displayName = 'UrlIconLink'
 
 /** Renders an email icon and adds mailto: to email addresses. */
 const EmailIconLink = React.memo(({ email }: { email: string }) => (
-  <a href={`mailto:${email}`} target='_blank' rel='noopener noreferrer' className={urlLinkStyle}>
+  <a
+    aria-label='email-link'
+    href={`mailto:${email}`}
+    target='_blank'
+    rel='noopener noreferrer'
+    className={urlLinkStyle}
+  >
     {' '}
     <EmailIcon />
   </a>
@@ -97,7 +106,6 @@ const ThoughtAnnotation = React.memo(
   ({
     email,
     isEditing,
-    multiline,
     ellipsizedUrl,
     numContexts,
     showSuperscript,
@@ -112,7 +120,6 @@ const ThoughtAnnotation = React.memo(
   }: {
     email?: string
     isEditing: boolean
-    multiline?: boolean
     ellipsizedUrl?: boolean
     numContexts: number
     showSuperscript?: boolean
@@ -151,7 +158,6 @@ const ThoughtAnnotation = React.memo(
       <ThoughtAnnotationWrapper
         isTableCol1={isTableCol1}
         ellipsizedUrl={ellipsizedUrl}
-        multiline={multiline}
         value={value}
         styleAnnotation={styleAnnotation}
         cssRaw={cssRaw}
@@ -261,16 +267,19 @@ const ThoughtAnnotationContainer = React.memo(
 
     const url = useSelector(state => {
       const childrenUrls = filterAllChildren(state, head(simplePath), child => containsURL(child.value))
-      const urlValue = containsURL(value)
-        ? value
-        : // if the only subthought is a url and the thought is not expanded, link the thought
-          !isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
-          ? childrenUrls[0].value
-          : null
-      return urlValue ? stripTags(urlValue) : urlValue
+      return (
+        // link the thought if it contains a url, e.g. "Deep work https://calnewport.com/deep-work is a great book"
+        lastURL(value) ??
+        // if the only subthought is a url and the thought is not expanded, link the thought
+        (!isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
+          ? stripTags(childrenUrls[0].value)
+          : null)
+      )
     })
 
-    const email = isEmail(value) ? value : undefined
+    // Strip formatting tags (e.g. the font/span tags added by foreColor and backColor) before testing for an email address, otherwise the annotation disappears as soon as the thought is colored.
+    const emailValue = stripTags(value)
+    const email = isEmail(emailValue) ? emailValue : undefined
 
     // if a thought has the same value as editValue, re-render its ThoughtAnnotation in order to get the correct number of contexts
     editingValueStore.useSelector((editingValue: string | null) => value === editingValue)

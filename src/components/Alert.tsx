@@ -49,7 +49,12 @@ const useDelayedEffect = (callback: () => void, delay: number | null | undefined
 const Alert: FC = () => {
   const alert = useSelector(state => state.alert)
   const alertStoreValue = alertStore.useState()
-  const value = strip(alertStoreValue ?? alert?.value ?? '')
+  const alertValue = alertStoreValue ?? alert?.value ?? null
+  const valueText = typeof alertValue === 'string' ? strip(alertValue) : null
+  const AlertValue = typeof alertValue === 'function' ? alertValue : null
+  const value = valueText ?? (AlertValue ? <AlertValue /> : null)
+  const transitionKey =
+    typeof alertValue === 'string' ? valueText || '' : AlertValue ? AlertValue.name || alert?.alertType || 'alert' : ''
   const iconSize = useSelector(state => 0.78 * state.fontSize)
   const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
   const dispatch = useDispatch()
@@ -66,7 +71,7 @@ const Alert: FC = () => {
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <Notification
-      transitionKey={value}
+      transitionKey={transitionKey}
       onClose={alert?.clearDelay != null ? onClose : undefined}
       value={alert ? value : null}
       icon={Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}

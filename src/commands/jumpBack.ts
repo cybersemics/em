@@ -2,9 +2,9 @@ import Command from '../@types/Command'
 import { jumpActionCreator as jump } from '../actions/jump'
 import JumpBackIcon from '../components/icons/JumpBackIcon'
 
-const jumpBackCommand: Command = {
+const jumpBackCommand = {
   id: 'jumpBack',
-  label: 'Jump Back',
+  label: 'Jump Back' as const,
   description: 'Move the cursor to the last thought that was edited.',
   keyboard: { key: 'j', meta: true },
   gesture: 'lul',
@@ -13,6 +13,6 @@ const jumpBackCommand: Command = {
   exec: dispatch => {
     dispatch(jump(-1))
   },
-}
+} satisfies Command
 
 export default jumpBackCommand

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useMemo } from 'react'
+import React, { FC, useEffect } from 'react'
 import { DragSourceMonitor, useDrag } from 'react-dnd'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
@@ -13,6 +13,7 @@ import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import { noop } from '../constants'
+import useGestureHighlight from '../hooks/useGestureHighlight'
 import useLottieIntervalAnimation from '../hooks/useLottieIntervalAnimation'
 import store from '../stores/app'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
@@ -26,11 +27,11 @@ import HighlightedText from './HighlightedText'
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showGestureCheatsheet)
+  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 const strokeWidth = 4
 
-/** Renders a command in a variety of contexts, including the Command Palette, Gesture Menu, Gesture Cheatsheet, and Help modal. */
+/** Renders a command in a variety of contexts, including the Desktop Command Universe, Gesture Menu, Mobile Command Universe, and Help modal. */
 const CommandItem: FC<{
   viewType?: CommandViewType
   search?: string
@@ -124,25 +125,7 @@ const CommandItem: FC<{
     }
   })
 
-  /** The first n segments of the gesture diagram to highlight. */
-  const gestureHighlight = useMemo(() => {
-    if (disabled || gestureInProgress === undefined) return undefined
-    if (command.id === 'openGestureCheatsheet') {
-      // For gesture cheatsheet command, find the longest matching end portion
-
-      const gestureCheatsheetGesture = gestureString(command)
-      return (
-        [...gestureCheatsheetGesture]
-          .map((_, i) => gestureCheatsheetGesture.length - i)
-          .find(len => gestureInProgress.endsWith(gestureCheatsheetGesture.slice(0, len))) ?? 0
-      )
-    }
-    // For other commands, use normal highlighting
-    if (command.id === 'cancel') {
-      return selected ? 1 : undefined
-    }
-    return gestureInProgress.length
-  }, [disabled, gestureInProgress, command, selected])
+  const gestureHighlight = useGestureHighlight({ command, gestureInProgress, selected, disabled })
 
   const Container = tableMode ? 'tr' : 'div'
   const Cell = tableMode ? 'td' : 'div'
@@ -188,7 +171,7 @@ const CommandItem: FC<{
         className={css(
           { boxSizing: 'border-box' },
           viewType === 'grid'
-            ? { minWidth: { base: '8.889rem', _mobile: 'auto' }, width: '100%' }
+            ? { minWidth: 0, width: '100%' }
             : {
                 display: 'flex',
                 justifyContent: 'center',
@@ -251,7 +234,8 @@ const CommandItem: FC<{
           className={css({
             minWidth: '4em',
             lineHeight: '1em',
-            whiteSpace: 'nowrap',
+            whiteSpace: viewType === 'grid' ? 'normal' : 'nowrap',
+            overflowWrap: viewType === 'grid' ? 'break-word' : undefined,
             fontSize: viewType === 'grid' ? '0.8rem' : '0.9em',
             color: disabled
               ? 'gray45'
@@ -328,7 +312,9 @@ const CommandItem: FC<{
             })}
           >
             <span className={css({ whiteSpace: 'nowrap' })}>
-              {command.keyboard && <CommandKeyboardShortcut keyboardOrString={command.keyboard} />}
+              {command.keyboard && (
+                <CommandKeyboardShortcut keyboardOrString={command.keyboardDisplay ?? command.keyboard} />
+              )}
             </span>
           </Cell>
         )

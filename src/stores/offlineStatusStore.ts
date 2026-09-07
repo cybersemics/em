@@ -30,7 +30,7 @@ const startConnecting = () => {
   }, offlineTimeout)
 }
 
-/** Initializes the yjs data provider. */
+/** Initializes offline / connection status (e.g. preconnect timer). */
 export const init = () => {
   // if (websocket.status === 'connected') {
   //   offlineStatusStore.update('connected')

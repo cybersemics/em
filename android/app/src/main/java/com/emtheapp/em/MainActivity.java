@@ -5,6 +5,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import com.getcapacitor.BridgeActivity;
+import com.emtheapp.em.BuildConfig;
 
 public class MainActivity extends BridgeActivity {
 
@@ -26,5 +27,12 @@ public class MainActivity extends BridgeActivity {
                 .setInsets(WindowInsetsCompat.Type.ime(), Insets.NONE)
                 .build()
         );
+
+        // For debug (development) builds, use a custom WebViewClient that ignores SSL errors
+        // so the app can connect to the local HTTPS dev server with vite's self-signed certificate.
+
+        if (BuildConfig.DEBUG) {
+            this.bridge.setWebViewClient(new DevServerWebViewClient(this.bridge));
+        }
     }
 }

@@ -1,8 +1,10 @@
 import { ElementHandle } from 'puppeteer'
 import { JSHandle } from 'puppeteer'
-import { page } from '../setup'
+import { page } from '../session'
 
 interface Options {
+  /** End the press with a touchcancel instead of a touchend, as iOS does when the system claims the touch, e.g. during the bottom-edge app switcher gesture. */
+  cancel?: boolean
   /** Click on the inside edge of the editable. Default: left. */
   edge?: 'left' | 'right'
   /** Number of pixels of x offset to add to the touch coordinates, which defaults to width/2 but can be set to the left or right edge. */
@@ -16,7 +18,7 @@ interface Options {
  */
 const longPressThought = async (
   nodeHandle: ElementHandle<Element> | JSHandle<undefined>,
-  { edge = 'left', x = 0, y = 0 }: Options = {},
+  { cancel, edge = 'left', x = 0, y = 0 }: Options = {},
 ) => {
   const boundingBox = await nodeHandle.asElement()?.boundingBox()
 
@@ -44,16 +46,30 @@ const longPressThought = async (
     y: boundingBox.y + boundingBox.height / 2 + y,
   }
 
-  await page.touchscreen.touchStart(coordinate.x, coordinate.y)
+  /** Waits for the bullet of the pressed thought to be highlighted, indicating that the long press has activated. */
+  const waitForHighlight = () =>
+    page.waitForFunction(
+      (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
+      { timeout: 5000 },
+      bulletElement,
+    )
 
-  // Wait for this specific bullet to be highlighted
-  await page.waitForFunction(
-    (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
-    { timeout: 5000 },
-    bulletElement,
-  )
-
-  await page.touchscreen.touchEnd()
+  if (cancel) {
+    // Touchscreen has no cancel method, and CDP touch state is per-session, so drive the whole touch
+    // sequence through a dedicated CDP session and end it with touchCancel.
+    const client = await page.createCDPSession()
+    try {
+      await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [coordinate] })
+      await waitForHighlight()
+      await client.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] })
+    } finally {
+      await client.detach()
+    }
+  } else {
+    await page.touchscreen.touchStart(coordinate.x, coordinate.y)
+    await waitForHighlight()
+    await page.touchscreen.touchEnd()
+  }
 }
 
 export default longPressThought
