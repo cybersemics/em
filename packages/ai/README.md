@@ -8,8 +8,8 @@ It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](http
 
 - `GET /` - Health check. Returns `Server is running`.
 - `POST /ai/defineTerm` - Writes a 10–20 word dictionary entry for each term in one LLM request. The request body is `{ "terms": ["..."] }`; the response is `{ "definitions": ["..."] }` in matching order on success or `{ "error": "..." }` on failure. The client appends `/defineTerm` to `VITE_AI_URL`.
-- `POST /ai/generateThought` - Generates a complete replacement for the target thought marked with `[x]` in the indented input outline; context thoughts are marked with `[]`. The request body is `{ "input": "..." }`; the response is `{ "thought": "..." }` on success or `{ "error": "..." }` on failure. The client appends `/generateThought` to `VITE_AI_URL`.
-- `POST /ai/generateEmoji` - Generates ten distinct, ordered emoji for a thought value. The request body is `{ "value": "..." }`; the response is `{ "emojis": ["...", "..."] }` on success or `{ "error": "..." }` on failure. The client appends `/generateEmoji` to `VITE_AI_URL`.
+- `POST /ai/generateThought` - Generates a complete replacement for the target thought marked with `[x]` in each indented input outline in one LLM request; context thoughts are marked with `[]`. The request body is `{ "inputs": ["..."] }`; the response is `{ "thoughts": ["..."] }` in matching order on success or `{ "error": "..." }` on failure. The client appends `/generateThought` to `VITE_AI_URL`.
+- `POST /ai/generateEmoji` - Generates ten distinct, ordered emoji for each thought value in one LLM request. The request body is `{ "values": ["..."] }`; the response is `{ "emojis": [["...", "..."]] }` with one list per value in matching order on success or `{ "error": "..." }` on failure. The client appends `/generateEmoji` to `VITE_AI_URL`.
 
 ## Local development
 
@@ -47,11 +47,11 @@ It should return `Server is running`. Then make a real OpenAI request:
 ```sh
 curl --request POST \
   --header 'Content-Type: application/json' \
-  --data '{"input":"Films/Watched/Carol/Starring:/"}' \
+  --data '{"inputs":["[] Films\n  [] Watched\n    [] Carol\n      [x] Starring:"]}' \
   http://localhost:3111/ai/generateThought
 ```
 
-The response should contain `{ "thought": "..." }`. To test Generate Thought in the app, leave the AI server running and start em from the repository root in a second terminal with `yarn start`.
+The response should contain `{ "thoughts": ["..."] }`. To test Generate Thought in the app, leave the AI server running and start em from the repository root in a second terminal with `yarn start`.
 
 Other scripts:
 
@@ -130,7 +130,7 @@ The Vercel Firewall is unavailable during local development, so local requests a
 curl https://ai.emthought.space/
 curl --request POST \
   --header 'Content-Type: application/json' \
-  --data '{"input":"Films/Watched/Carol/Starring:/"}' \
+  --data '{"inputs":["[] Films\n  [] Watched\n    [] Carol\n      [x] Starring:"]}' \
   https://ai.emthought.space/ai/generateThought
 curl --request POST \
   --header 'Content-Type: application/json' \
@@ -138,7 +138,7 @@ curl --request POST \
   https://ai.emthought.space/ai/defineTerm
 ```
 
-The first request must return `Server is running`; the second must return JSON containing `thought`; the third must return JSON containing two `definitions`. Smoke-test Generate Emoji with the same request shape documented under Routes and `/ai/generateEmoji`.
+The first request must return `Server is running`; the second must return JSON containing one `thoughts` entry; the third must return JSON containing two `definitions`. Smoke-test Generate Emoji with the same request shape documented under Routes and `/ai/generateEmoji`.
 
 ## Metrics
 

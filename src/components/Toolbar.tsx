@@ -192,7 +192,10 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           ? colorPickerRect.right - toolbarRect.right
           : 0
 
-    if (scrollOffset !== 0) toolbar.scrollBy({ behavior: 'smooth', left: scrollOffset })
+    // Scroll instantly under automation, as scrollTo and scrollCursorIntoView do. A smooth scroll keeps the swatches
+    // moving for ~200ms after they are visible, so a test that clicks one races the animation and hits its neighbor.
+    if (scrollOffset !== 0)
+      toolbar.scrollBy({ behavior: navigator.webdriver ? 'instant' : 'smooth', left: scrollOffset })
   }, [customize, showColorPicker])
 
   // disable pressing on drag

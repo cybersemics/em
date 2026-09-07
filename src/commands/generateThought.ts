@@ -1,6 +1,9 @@
 import Command from '../@types/Command'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
@@ -74,53 +77,79 @@ const generatesWithAi = (state: State, path: Path) => {
   return thought.value !== '' || !firstChild || !isURL(firstChild.value)
 }
 
+/** A thought whose value is being generated, captured from the pre-generation snapshot. */
+interface GenerationTarget {
+  simplePath: SimplePath
+  thought: Thought
+  /** The URL whose webpage title becomes the value, or null when the value is generated with AI. */
+  url: string | null
+}
+
+/** Builds the indented outline of a thought's ancestors and siblings that is sent to the AI service, marking the thought with [x] and its context with []. */
+const buildInput = (state: State, { simplePath, thought }: GenerationTarget): string => {
+  const ancestors = pathToContext(state, parentOf(simplePath))
+  const siblings = getChildrenRanked(state, head(parentOf(simplePath)) ?? HOME_TOKEN)
+  const ancestorLines = ancestors.map((ancestor, index) => `${'  '.repeat(index)}[]${ancestor ? ` ${ancestor}` : ''}`)
+  const siblingIndent = '  '.repeat(ancestors.length)
+  const siblingLines = siblings.map(
+    sibling => `${siblingIndent}${sibling.id === thought.id ? '[x]' : '[]'}${sibling.value ? ` ${sibling.value}` : ''}`,
+  )
+  return [...ancestorLines, ...siblingLines].join('\n')
+}
+
 /**
- * Generates a new value for the thought at the given path and applies it to the thought. If the thought is empty and
- * its first child is a URL, the title of the webpage is fetched; otherwise the value is generated with AI. The thought
- * is set to a pending value and marked as generating while the request is in flight. Returns the new value, or null if
- * no generation was performed.
+ * Generates a new value for the thought at each of the given paths and applies it to the thought. If a thought is
+ * empty and its first child is a URL, the title of the webpage is fetched; otherwise the value is generated with AI.
+ * Every thought that is generated with AI is sent in one request and one LLM completion, and every prompt is built
+ * from the same pre-generation snapshot. Each thought is set to a pending value and marked as generating while its
+ * request is in flight. Returns the new values in path order, or null for a thought that was not generated.
  *
- * Takes an explicit path instead of reading state.cursor so that it can be run for every thought of a multiselect.
- * An optional source state allows every thought in a multiselect to build its prompt from the same pre-generation
- * snapshot.
+ * Takes an explicit list of paths instead of reading state.cursor so that it can be run for every thought of a
+ * multiselect.
  * Cursor-specific side effects (cursorCleared and the caret at the end of the generated value) are the caller's
- * responsibility, since they apply to a single thought and this may be one of many running concurrently.
+ * responsibility, since they apply to a single thought and this may be one of many.
  */
-const generateThoughtAtPathActionCreator =
-  (path: Path, sourceState?: State): Thunk<Promise<string | null>> =>
+const generateThoughtAtPathsActionCreator =
+  (paths: Path[]): Thunk<Promise<(string | null)[]>> =>
   async (dispatch, getState) => {
-    const state = sourceState ?? getState()
+    const state = getState()
 
-    const simplePath = simplifyPath(state, path)
-    const thought = getThoughtById(state, head(simplePath))
-    if (!thought) return null
+    const targets = paths.map(path => {
+      const simplePath = simplifyPath(state, path)
+      const thought = getThoughtById(state, head(simplePath))
+      // Do nothing if a generation is already in progress for this thought. Two overlapping runs would each restore
+      // their own snapshot of the thought and race to edit it.
+      if (!thought || thought.generating) return null
+      const firstChild = getChildrenRanked(state, thought.id)[0]
+      // Fetch the webpage title when the thought is empty and its first child is a URL. Otherwise generate with AI.
+      const url = thought.value === '' && !!firstChild && isURL(firstChild.value) ? firstChild.value : null
+      return { simplePath, thought, url } satisfies GenerationTarget
+    })
+    const activeTargets = targets.filter(target => target !== null)
+    const titleTargets = activeTargets.filter(
+      (target): target is GenerationTarget & { url: string } => target.url !== null,
+    )
+    const aiTargets = activeTargets.filter(target => target.url === null)
 
-    // Do nothing if a generation is already in progress for this thought. Two overlapping runs would each restore their
-    // own snapshot of the thought and race to edit it.
-    const currentThought = getThoughtById(getState(), thought.id)
-    if (!currentThought || currentThought.generating) return null
-
-    const children = getChildrenRanked(state, thought.id)
-    const firstChild = children[0]
-    // Fetch the webpage title when the thought is empty and its first child is a URL. Otherwise generate with AI.
-    const shouldFetchTitle = thought.value === '' && !!firstChild && isURL(firstChild.value)
-
-    if (!shouldFetchTitle && !import.meta.env.VITE_AI_URL) {
+    if (aiTargets.length > 0 && !import.meta.env.VITE_AI_URL) {
       throw new Error('import.meta.env.VITE_AI_URL is not configured')
     }
 
-    const valuePending = `${thought.value}...`
+    if (activeTargets.length === 0) return targets.map(() => null)
 
-    // set to pending while the value is being generated
+    // set to pending while the values are being generated
     dispatch(
       updateThoughts({
-        thoughtIndexUpdates: {
-          [thought.id]: {
-            ...thought,
-            value: valuePending,
-            generating: true,
-          },
-        },
+        thoughtIndexUpdates: Object.fromEntries(
+          activeTargets.map(target => [
+            target.thought.id,
+            {
+              ...target.thought,
+              value: `${target.thought.value}...`,
+              generating: true,
+            },
+          ]),
+        ),
         lexemeIndexUpdates: {},
         local: false,
         remote: false,
@@ -128,42 +157,33 @@ const generateThoughtAtPathActionCreator =
       }),
     )
 
-    let valueNew = thought.value
-
-    if (shouldFetchTitle) {
+    /** Fetches the webpage title for a target, or an empty string when it cannot be fetched. */
+    const generateTitle = async (target: GenerationTarget & { url: string }): Promise<string> => {
       try {
-        const title = await fetchWebpageTitle(firstChild.value)
-        valueNew = title || ''
+        const title = await fetchWebpageTitle(target.url)
+        return title || ''
       } catch {
         dispatch(error({ value: 'Failed to fetch webpage title' }))
-        valueNew = ''
+        return ''
       }
-    } else {
-      // prompt with ancestors and siblings
-      const ancestors = pathToContext(state, parentOf(simplePath))
-      const siblings = getChildrenRanked(state, head(parentOf(simplePath)) ?? HOME_TOKEN)
-      const ancestorLines = ancestors.map(
-        (ancestor, index) => `${'  '.repeat(index)}[]${ancestor ? ` ${ancestor}` : ''}`,
-      )
-      const siblingIndent = '  '.repeat(ancestors.length)
-      const siblingLines = siblings.map(
-        sibling =>
-          `${siblingIndent}${sibling.id === thought.id ? '[x]' : '[]'}${sibling.value ? ` ${sibling.value}` : ''}`,
-      )
-      const input = [...ancestorLines, ...siblingLines].join('\n')
+    }
 
-      // generate thought
+    /** Generates every AI target in one request. Returns the original values when the request fails, so that the thoughts are restored. */
+    const generateWithAi = async (): Promise<string[]> => {
+      const originalValues = aiTargets.map(target => target.thought.value)
+      if (aiTargets.length === 0) return originalValues
+
       try {
         const res = await fetch(`${import.meta.env.VITE_AI_URL!}/generateThought`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input }),
+          body: JSON.stringify({ inputs: aiTargets.map(target => buildInput(state, target)) }),
         })
         const response: unknown = await res.json()
         if (!response || typeof response !== 'object') {
           throw new Error('Invalid AI response')
         }
-        const generatedThought = 'thought' in response ? response.thought : undefined
+        const generatedThoughts = 'thoughts' in response ? response.thoughts : undefined
         const errorMessage = 'error' in response ? response.error : undefined
         if (typeof errorMessage === 'string') {
           if (res.status === 429) {
@@ -171,56 +191,73 @@ const generateThoughtAtPathActionCreator =
           } else {
             dispatch(error({ value: errorMessage }))
           }
-        } else if (typeof generatedThought === 'string') {
-          const trimmedThought = generatedThought.trim()
-          if (!trimmedThought) {
-            throw new Error('Invalid AI response')
-          }
-          valueNew = trimmedThought
-        } else {
+          return originalValues
+        }
+
+        // The batch is applied all or nothing: a response that is missing a thought cannot be matched to the selection.
+        if (
+          !Array.isArray(generatedThoughts) ||
+          generatedThoughts.length !== aiTargets.length ||
+          generatedThoughts.some(thought => typeof thought !== 'string' || !thought.trim())
+        ) {
           throw new Error('Invalid AI response')
         }
+        return generatedThoughts.map(thought => (thought as string).trim())
       } catch {
         dispatch(error({ value: 'Failed to generate thought' }))
+        return originalValues
       }
     }
 
-    const thoughtPending = getThoughtById(getState(), thought.id)
-    // bail if the thought was deleted while its value was being generated
-    if (!thoughtPending) return null
-
-    dispatch([
-      // Restore the original value before applying the generated one. updateThoughts is not undoable, so the pending
-      // value would otherwise become the state that undo reverts to, leaving the thought at "a..." rather than "a". It
-      // is also why editThought was previously given an oldValue whose Lexeme was never created. Both updates are
-      // dispatched in the same batch, so the restored value is never rendered.
-      updateThoughts({
-        thoughtIndexUpdates: {
-          [thought.id]: {
-            ...thoughtPending,
-            value: thought.value,
-            generating: false,
-          },
-        },
-        lexemeIndexUpdates: {},
-        local: false,
-        remote: false,
-        overwritePending: true,
-      }),
-      // editThought automatically sets Thought.generating to false
-      editThought({
-        cursorOffset: getState().isMulticursorExecuting ? undefined : valueNew.length,
-        force: true,
-        oldValue: thought.value,
-        newValue: valueNew,
-        path: simplePath,
-        // The generation completes whenever the request returns, not as part of a typing stream, so it must never
-        // merge with a user edit that happens to be contiguous in the same direction.
-        preventMerge: true,
-      }),
+    // Fetch webpage titles concurrently with the single AI request, so that the selection takes one round trip.
+    const [titles, aiValues] = await Promise.all([Promise.all(titleTargets.map(generateTitle)), generateWithAi()])
+    const valuesNew = new Map<ThoughtId, string>([
+      ...titleTargets.map((target, index) => [target.thought.id, titles[index]] as const),
+      ...aiTargets.map((target, index) => [target.thought.id, aiValues[index]] as const),
     ])
 
-    return valueNew
+    return targets.map(target => {
+      if (!target) return null
+      const { simplePath, thought } = target
+      const valueNew = valuesNew.get(thought.id)!
+
+      const thoughtPending = getThoughtById(getState(), thought.id)
+      // bail if the thought was deleted while its value was being generated
+      if (!thoughtPending) return null
+
+      dispatch([
+        // Restore the original value before applying the generated one. updateThoughts is not undoable, so the pending
+        // value would otherwise become the state that undo reverts to, leaving the thought at "a..." rather than "a". It
+        // is also why editThought was previously given an oldValue whose Lexeme was never created. Both updates are
+        // dispatched in the same batch, so the restored value is never rendered.
+        updateThoughts({
+          thoughtIndexUpdates: {
+            [thought.id]: {
+              ...thoughtPending,
+              value: thought.value,
+              generating: false,
+            },
+          },
+          lexemeIndexUpdates: {},
+          local: false,
+          remote: false,
+          overwritePending: true,
+        }),
+        // editThought automatically sets Thought.generating to false
+        editThought({
+          cursorOffset: getState().isMulticursorExecuting ? undefined : valueNew.length,
+          force: true,
+          oldValue: thought.value,
+          newValue: valueNew,
+          path: simplePath,
+          // The generation completes whenever the request returns, not as part of a typing stream, so it must never
+          // merge with a user edit that happens to be contiguous in the same direction.
+          preventMerge: true,
+        }),
+      ])
+
+      return valueNew
+    })
   }
 
 /** Generate a thought using AI. */
@@ -236,7 +273,7 @@ const generateThought = {
     // preventSetCursor is not needed: execMulticursor never moves the cursor, so the restore at the end of the loop
     // sets it to the path it is already on.
     execMulticursor: (cursors, dispatch, getState) => {
-      /** Generates a thought for every selected thought within a single undo bracket. */
+      /** Generates a thought for every selected thought in one request within a single undo bracket. */
       const generateAll = async () => {
         // Yield before opening the undo bracket. executeCommandWithMulticursor is synchronous: it opens its own
         // bracket, calls execMulticursor, and closes the bracket again as soon as it returns — long before any
@@ -244,15 +281,15 @@ const generateThought = {
         // generated thought would land outside it and cost the user another undo.
         await Promise.resolve()
 
-        const sourceState = getState()
         dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'generateThought' }))
 
-        // Generate concurrently, so that the selection takes one round trip rather than one per thought and every
-        // selected thought shows its pending state immediately. allSettled rather than all, so that a rejected request
-        // cannot skip the dispatch below and leave the bracket open over the remaining generations.
-        await Promise.allSettled(cursors.map(path => dispatch(generateThoughtAtPathActionCreator(path, sourceState))))
-
-        dispatch(setIsMulticursorExecuting({ value: false }))
+        // finally rather than a bare await, so that a rejected request cannot skip the dispatch below and leave the
+        // bracket open over subsequent edits.
+        try {
+          await dispatch(generateThoughtAtPathsActionCreator(cursors))
+        } finally {
+          dispatch(setIsMulticursorExecuting({ value: false }))
+        }
       }
 
       /** Requests disclosure when any selected thought will use AI, then generates the full selection. */
@@ -286,10 +323,10 @@ const generateThought = {
     }
 
     // Render the cursor thought as an empty thought while its value is generated. cursorCleared is a single global
-    // flag that only applies to the thought being edited, so it is set here rather than in generateThoughtAtPath.
+    // flag that only applies to the thought being edited, so it is set here rather than in generateThoughtAtPaths.
     dispatch(cursorCleared({ value: true }))
 
-    const valueNew = await dispatch(generateThoughtAtPathActionCreator(cursor))
+    const [valueNew] = await dispatch(generateThoughtAtPathsActionCreator([cursor]))
 
     // editThought resets cursorCleared as part of the same reducer pass that updates the thought, which is what allows
     // the new value to reach the DOM. Resetting it here only has an effect when nothing was generated.

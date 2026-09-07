@@ -9,49 +9,59 @@ beforeAll(() => {
 
 it.concurrent('completes the next US state in an alphabetical list', async () => {
   await expect(
-    generateThought(`[] States in Alphabetical Order
+    generateThought([
+      `[] States in Alphabetical Order
   [] Arizona
   [] Arkansas
   [x]
-  [] Colorado`),
-  ).resolves.toBe('California')
+  [] Colorado`,
+    ]),
+  ).resolves.toEqual(['California'])
 })
 
 it.concurrent('corrects a misspelled grocery item', async () => {
   await expect(
-    generateThought(`[] Grocery List
+    generateThought([
+      `[] Grocery List
   [] Apples
   [x] Carrrots
-  [] Onions`),
-  ).resolves.toBe('Carrots')
+  [] Onions`,
+    ]),
+  ).resolves.toEqual(['Carrots'])
 })
 
 it.concurrent('completes an empty thought from parent and sibling context', async () => {
   await expect(
-    generateThought(`[] Days of the week
+    generateThought([
+      `[] Days of the week
   [] Monday
   [] Tuesday
   [x]
-  [] Thursday`),
-  ).resolves.toBe('Wednesday')
+  [] Thursday`,
+    ]),
+  ).resolves.toEqual(['Wednesday'])
 })
 
 it.concurrent('completes a partial thought', async () => {
   await expect(
-    generateThought(`[] States in Alphabetical Order
+    generateThought([
+      `[] States in Alphabetical Order
   [] Arizona
   [] Arkansas
   [x] Cal
-  [] Colorado`),
-  ).resolves.toBe('California')
+  [] Colorado`,
+    ]),
+  ).resolves.toEqual(['California'])
 })
 
 it.concurrent('does not copy a context-only marker into the output', async () => {
-  const thought = await generateThought(`[] ZXQ-CONTEXT-ONLY-9173
+  const [thought] = await generateThought([
+    `[] ZXQ-CONTEXT-ONLY-9173
   [] apple
   [] banana
   [x]
-  [] date`)
+  [] date`,
+  ])
 
   expect(thought.trim().length).toBeGreaterThan(0)
   expect(thought).not.toContain('ZXQ-CONTEXT-ONLY-9173')
@@ -60,26 +70,31 @@ it.concurrent('does not copy a context-only marker into the output', async () =>
 
 it.concurrent('completes an unseen alphabetical US state', async () => {
   await expect(
-    generateThought(`[] States in Alphabetical Order
+    generateThought([
+      `[] States in Alphabetical Order
   [] Florida
   [] Georgia
   [x]
-  [] Idaho`),
-  ).resolves.toBe('Hawaii')
+  [] Idaho`,
+    ]),
+  ).resolves.toEqual(['Hawaii'])
 })
 
 it.concurrent('corrects an unseen misspelled grocery item', async () => {
   await expect(
-    generateThought(`[] Grocery List
+    generateThought([
+      `[] Grocery List
   [] Apples
   [x] tommato
-  [] Onions`),
-  ).resolves.toBe('Tomato')
+  [] Onions`,
+    ]),
+  ).resolves.toEqual(['Tomato'])
 })
 
 it.concurrent('generates a nested state capital from sibling context', async () => {
   await expect(
-    generateThought(`[] US state capitals
+    generateThought([
+      `[] US state capitals
   [] California
     [] Sacramento
   [] Texas
@@ -89,27 +104,32 @@ it.concurrent('generates a nested state capital from sibling context', async () 
   [] Florida
     [] Tallahassee
   [] Washington
-    [] Olympia`),
-  ).resolves.toBe('Albany')
+    [] Olympia`,
+    ]),
+  ).resolves.toEqual(['Albany'])
 })
 
 it.concurrent('replaces a thought that does not belong in the sequence', async () => {
   await expect(
-    generateThought(`[] Days of the week
+    generateThought([
+      `[] Days of the week
   [] Monday
   [] Tuesday
   [x] banana
-  [] Thursday`),
-  ).resolves.toBe('Wednesday')
+  [] Thursday`,
+    ]),
+  ).resolves.toEqual(['Wednesday'])
 })
 
 it.concurrent('completes a top-level color sequence', async () => {
   await expect(
-    generateThought(`[] Red
+    generateThought([
+      `[] Red
 [] Orange
 [] Yellow
 [x]
 [] Blue
-[] Purple`),
-  ).resolves.toBe('Green')
+[] Purple`,
+    ]),
+  ).resolves.toEqual(['Green'])
 })
