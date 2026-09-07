@@ -127,7 +127,7 @@ The **Command Universe** is the searchable command palette. Two flavors:
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
 - **`MobileCommandUniverse`** — mobile drawer opened by `openMobileCommandUniverse`, also reachable by gesture.
 
-Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), which defines the order: Navigation → Creating thoughts → Deleting thoughts → Moving thoughts → Editing thoughts → Oops → Special Views → Visibility → Settings → Help → Cancel.
+Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), a two-level hierarchy of difficulty levels containing category groups, which defines the order: Beginner (Creating Thoughts → Navigation → Contexts) → Intermediate (Categorizing → Nudging → Deleting) → Advanced (Creating Thoughts II → Edit History → Notes → Views). `useCommandList` flattens the hierarchy into `{ title, level, commands }` groups, and `CommandTable` renders a difficulty heading above the first group of each level.
 
 Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
 
@@ -218,7 +218,7 @@ The copy button to the right of the slider copies a **bug report** for the actio
 3. Pick at least one activation surface:
    - `keyboard` — a `Key` object or string. The `index()` startup pass will warn if you collide with an existing shortcut.
    - `gesture` — a string of `l/r/u/d` characters (or array of strings).
-   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate group in `COMMAND_GROUPS` ([`constants.ts`](../src/constants.ts)).
+   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate category group of the appropriate difficulty level in `COMMAND_GROUPS` ([`constants.ts`](../src/constants.ts)).
 4. Decide multicursor behavior. If you skip this and set `multicursor: true`, consider whether `filter` or `execMulticursor` is more appropriate before merging.
 5. Add tests under `src/commands/__tests__/`.
 
