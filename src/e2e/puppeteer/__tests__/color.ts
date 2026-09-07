@@ -721,15 +721,15 @@ it('Removing the background color of an underlined thought works on repeated tog
   await clickThought('Hello')
 
   await clickToolbar('Text Color', 'background color swatches', 'red')
-  await clickToolbar('Underline')
+
+  // underline via the keyboard shortcut, since clicking a toolbar button would land on the open Color Picker that overlays it
+  await press('U', { meta: true })
 
   // toggle the background color off, on, and off again; the second removal is the bug case (#4050)
-  await clickToolbar('Text Color', 'background color swatches', 'red')
+  await click('[aria-label="background color swatches"] [aria-label="red"]')
   await click('[aria-label="background color swatches"] [aria-label="red"]')
   await click('[aria-label="background color swatches"] [aria-label="red"]')
 
   // the background color is removed and the underline is preserved
-  const result = await getEditingText()
-  expect(result).not.toContain('background-color')
-  expect(result).toContain('<u>')
+  expect(await getEditingText()).toBe('<u>Hello</u>')
 })
