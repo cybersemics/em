@@ -136,19 +136,21 @@ describe('command center', () => {
     await clickThought('a')
 
     await gesture(openCommandCenterCommand)
-    await waitForSelector('[data-testid=command-center-panel]')
+    await waitForSelector('[data-testid=command-menu-panel]')
 
-    // Clear Thought closes the Command Center and opens the keyboard to edit the cleared thought
+    // Clear Thought empties the thought for retyping and dismisses the sheet so the keyboard has the screen
     await gesture(clearThoughtCommand)
-    await waitUntil(() => !(window.em as WindowEm).testHelpers.getState().showCommandCenter)
+    await waitForEditable('')
+    await waitUntil(() => !document.querySelector('[data-testid=command-menu-panel]'))
 
     // dismiss the keyboard, as tapping a blank area does
     await closeKeyboard()
-    await waitUntil(() => !(window.em as WindowEm).testHelpers.getState().isKeyboardOpen)
 
-    const showCommandCenter = await page.evaluate(
-      () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
-    )
-    expect(showCommandCenter).toBeFalsy()
+    // the blur exits the cleared state, restoring the thought's value
+    await waitForEditable('a')
+
+    // the sheet stays dismissed and the thought is no longer selected
+    expect(await page.$('[data-testid=command-menu-panel]')).toBeNull()
+    expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(0)
   })
 })
