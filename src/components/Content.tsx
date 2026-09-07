@@ -59,6 +59,13 @@ const Content: FC = () => {
     // make sure that the click doesn't occur during a long press (#3120)
     if (state.longPress !== LongPressState.Inactive) return
 
+    // Dismiss a text selection left over from a thought that is no longer being edited. A tap on empty space blurs the
+    // editable without emptying the selection, leaving the document holding selected text that is not editable, which
+    // Chrome on Android paints its read-only text menu (Copy/Share/Select all) over until something clears the range.
+    // Guarded on the selection being non-collapsed so that a plain caret elsewhere, e.g. in the search input rendered
+    // within the content, is not blurred.
+    if (!selection.isCollapsed()) selection.clear()
+
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
     dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
   }

@@ -45,6 +45,8 @@ The `selection.ts` module groups its functions roughly into:
 
 `clear()` empties the selection *before* it blurs the editing host, and the order matters. It blurs at all so that `Editable`'s `onBlur` runs ([issue #1466](https://github.com/cybersemics/em/issues/1466)) — no blur handler reads the range, only `document.activeElement` — but blurring first leaves the document holding a selection that is no longer editable. Chrome on Android reports that intermediate state to its browser process as a selection update of its own and paints its read-only text menu (Copy/Share/Select all) over the editable one for a frame before the range removal takes both away, so dismissing the keyboard on a thought with selected text made a second menu blink ([issue #5259](https://github.com/cybersemics/em/issues/5259)).
 
+The same read-only menu appears whenever a selection outlives the editable it was made in, and a tap on empty space is the other way to produce one: the browser blurs the editable but leaves the range in place, and nothing on that path would otherwise remove it, so the menu stays up indefinitely rather than for a frame. [`Content`](../src/components/Content.tsx)'s `clickOnEmptySpace` therefore calls `clear()` when the selection is not collapsed. The guard matters because `clear()` also blurs `document.activeElement`, and the search input is rendered within the content — a plain caret elsewhere must not be blurred by a tap on the background.
+
 The two reads worth calling out:
 
 - **`isOnFirstLine()` / `isOnLastLine()`** — used by the `cursorUp` and `cursorDown` commands so that pressing arrow at the bounds of a multi-line thought moves to the next thought rather than re-positioning the caret within the same thought.

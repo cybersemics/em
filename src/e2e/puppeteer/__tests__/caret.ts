@@ -511,7 +511,7 @@ describe('mobile only', () => {
   })
 
   // https://github.com/cybersemics/em/pull/5268#issuecomment-5572390175
-  it.skip('tapping empty space dismisses the text selection', async () => {
+  it('tapping empty space dismisses the text selection', async () => {
     await paste(`
       - aaa
       - bbb
