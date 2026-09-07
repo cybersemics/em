@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import Path from '../@types/Path'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
@@ -52,7 +51,7 @@ const newSubthoughtCommand = {
   label: 'New Subthought' as const,
   description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
   gesture: 'rdr',
-  keyboard: { key: Key.Enter, meta: true },
+  keyboard: { key: 'Enter', meta: true },
   multicursor,
   svg: Icon,
   canExecute: () => isDocumentEditable(),

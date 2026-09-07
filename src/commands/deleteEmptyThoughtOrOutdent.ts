@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import State from '../@types/State'
 import { deleteEmptyThoughtActionCreator as deleteEmptyThought } from '../actions/deleteEmptyThought'
@@ -80,7 +79,7 @@ const exec: Command['exec'] = (dispatch, getState) => {
 const deleteEmptyThoughtOrOutdent = {
   id: 'deleteEmptyThoughtOrOutdent',
   label: 'Delete Empty Thought Or Outdent' as const,
-  keyboard: [{ key: Key.Backspace }, { key: Key.Backspace, shift: true }],
+  keyboard: [{ key: 'Backspace' }, { key: 'Backspace', shift: true }],
   hideFromHelp: true,
   multicursor: {
     preventSetCursor: true,
