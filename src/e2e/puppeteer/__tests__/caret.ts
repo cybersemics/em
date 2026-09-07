@@ -5,8 +5,9 @@ import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
@@ -17,9 +18,9 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -129,29 +130,6 @@ describe('all platforms', () => {
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(0)
-  })
-
-  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
-    const importText = `
-    - a
-    - b`
-
-    await paste(importText)
-    await clickThought('a')
-
-    // Set cursor to null
-    await click('#content')
-
-    await waitForThoughtExistInDb('a')
-    await waitForThoughtExistInDb('b')
-
-    await refresh()
-
-    await waitForEditable('b')
-    await clickThought('b')
-
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('b')
   })
 
   // https://github.com/cybersemics/em/issues/1568
@@ -298,6 +276,30 @@ describe('all platforms', () => {
   })
 })
 
+describe('persistent storage', () => {
+  usePersistentTreecrdtStorage()
+
+  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
+    const importText = `
+    - a
+    - b`
+
+    await paste(importText)
+    await clickThought('a')
+
+    // Set cursor to null
+    await click('#content')
+
+    await refresh()
+
+    await waitForEditable('b')
+    await clickThought('b')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('b')
+  })
+})
+
 it('clicking backspace when the caret is at the end of a thought should delete a character.', async () => {
   const importText = `
   - first
@@ -315,9 +317,7 @@ it('clicking backspace when the caret is at the end of a thought should delete a
 })
 
 describe('mobile only', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 5000)
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   it('After categorize, the caret should be on the new thought', async () => {
     const importText = `
@@ -492,7 +492,7 @@ describe('mobile only', () => {
     await waitUntil(() => !document.activeElement || document.activeElement === document.body)
 
     // Step 3: tap the Bold button on the toolbar
-    await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+    await clickToolbar('Bold')
 
     // the formatting should still be applied to the whole thought
     await waitUntil(() => !!document.querySelector('[data-editable] b'))

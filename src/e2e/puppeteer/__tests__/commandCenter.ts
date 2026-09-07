@@ -1,13 +1,15 @@
 import { KnownDevices } from 'puppeteer'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
-import { WindowEm } from '../../../initialize'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
+import waitForAlertContent from '../helpers/waitForAlertContent'
+import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
+import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import waitUntil from '../helpers/waitUntil'
@@ -15,11 +17,9 @@ import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
-describe('command center', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
+describe('command center', () => {
   // https://github.com/cybersemics/em/issues/3444
   it('creates a note when the Note command is tapped with a single thought selected', async () => {
     await paste('- Hello')
@@ -45,6 +45,27 @@ describe('command center', () => {
     await waitUntil(() => document.querySelector('[aria-label="note-editable"]')?.textContent === 'World')
   })
 
+  // https://github.com/cybersemics/em/issues/3445
+  it('stays open when the Delete command is tapped', async () => {
+    await paste(`
+        - a
+        - b
+        `)
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForSelector('[data-testid=command-center-panel]')
+
+    await click('[data-testid="command-center-panel"] [aria-label="Delete"]')
+
+    // wait for the thought to be deleted before asserting on the Command Center
+    await waitForAlertContent('Deleted 1 thought')
+
+    // The delete is what would dismiss the Command Center, and its alert renders in the same update, so a wrongly
+    // dismissed sheet is already sliding shut by now and never reports itself as open again.
+    await waitForCommandCenterOpen()
+  })
+
   // When the user swipes up from the bottom edge of the screen to switch apps on iOS, the page receives a
   // touchstart on whatever thought is under the finger but no touchmove, since the system claims the gesture.
   // The press outlasts the long press timer, and the touchcancel that follows must not activate multiselect,
@@ -58,17 +79,16 @@ describe('command center', () => {
     const a = await waitForEditable('a')
     await longPressThought(a, { cancel: true, edge: 'right' })
 
-    // wait for the long press to fully wind down before asserting
-    await waitUntil(() => (window.em as WindowEm).testHelpers.getState().longPress === 'Inactive')
+    // Wait for the long press to fully wind down before asserting. The body's data-drag-hold attribute mirrors the
+    // long press: it is 'true' while the thought is held and returns to 'false' when the press ends. The end of the
+    // press is also where a cancelled press would wrongly toggle the multiselect, in the same update, so once the
+    // attribute is back to 'false' the wrong selection, and the Command Center it opens, would already be rendered.
+    await waitUntil(() => document.body.getAttribute('data-drag-hold') === 'false')
 
     const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
     expect(highlightedBullets.length).toBe(0)
 
-    // the panel element stays mounted while closed, so check the state rather than the DOM
-    const showCommandCenter = await page.evaluate(
-      () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
-    )
-    expect(showCommandCenter).toBeFalsy()
+    await waitForCommandCenterClosed()
   })
 
   // The iOS app switcher swipe can also be delivered to the page as a complete touch sequence
@@ -97,13 +117,12 @@ describe('command center', () => {
     // swipe up starting at the very bottom of the viewport, as the app switcher swipe does
     await gesture('u', { xStart: innerWidth / 4, yStart: innerHeight - 5 })
 
-    const showCommandCenter = await page.evaluate(
-      () => (window.em as WindowEm).testHelpers.getState().showCommandCenter,
-    )
-    expect(showCommandCenter).toBeFalsy()
+    // A recognized swipe commits on touchend, which the gesture has already delivered, so a wrongly opened Command
+    // Center would already be rendered here.
+    await waitForCommandCenterClosed()
 
     // control: the same swipe starting above the system-gesture strip must still open the Command Center
     await gesture('u', { xStart: innerWidth / 4, yStart: innerHeight - 200 })
-    await waitUntil(() => (window.em as WindowEm).testHelpers.getState().showCommandCenter)
+    await waitForCommandCenterOpen()
   })
 })

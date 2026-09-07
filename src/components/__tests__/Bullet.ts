@@ -13,6 +13,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import findCursor from '../../test-helpers/queries/findCursor'
+import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
@@ -495,7 +496,7 @@ describe('expansion', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - c
@@ -522,7 +523,7 @@ describe('expansion', () => {
     await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - b
       - =pin
@@ -554,7 +555,7 @@ describe('expansion', () => {
     await act(() => vi.runAllTimersAsync())
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =children
       - =pin
@@ -565,6 +566,41 @@ describe('expansion', () => {
       - c
     - d
       - e`)
+  })
+
+  it('tapping on the bullet of a thought expanded by =descendants on an ancestor should unpin it', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =descendants
+            - =pin
+              - true
+          - b
+            - c
+              - d
+      `,
+      }),
+    ])
+
+    const bulletOfThoughtC = getBulletByContext(['a', 'b', 'c'])
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(bulletOfThoughtC)
+
+    await act(() => vi.runAllTimersAsync())
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exported).toEqual(`- ${HOME_TOKEN}
+  - a
+    - =descendants
+      - =pin
+        - true
+    - b
+      - c
+        - =pin
+          - false
+        - d`)
   })
 })
 
@@ -684,9 +720,74 @@ describe('multiselect', () => {
     await clickWithModifiers(getBulletByContext(['b']), { shiftKey: true })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toEqual(`- __ROOT__
+    expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
   - b
     - c`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3528
+  it('click on a bullet toggles the clicked thought while a multiselect is active, without expanding or collapsing it', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+          - c
+      `,
+      }),
+      setCursor(['b']),
+      addMulticursor(['a']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(getBulletByContext(['b']))
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'true')
+
+    // expansion is determined by the selected thoughts during a multiselect, so =pin is not set
+    const exportedAfterSelect = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedAfterSelect).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+    - c`)
+
+    await user.click(getBulletByContext(['b']))
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'false')
+  })
+
+  // https://github.com/cybersemics/em/issues/3528
+  it('click on a thought toggles the clicked thought while a multiselect is active', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+      `,
+      }),
+      addMulticursor(['a']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click((await findThoughtByText('b'))!)
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'true')
+
+    await user.click((await findThoughtByText('b'))!)
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'false')
   })
 })

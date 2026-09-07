@@ -22,9 +22,10 @@ import ThoughtId from '../../@types/ThoughtId'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
-import { isIOS, isMac, isTouch } from '../../browser'
+import { isIOS, isTouch } from '../../browser'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
+import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
@@ -42,6 +43,7 @@ import fastClick from '../../util/fastClick'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
+import isCommandKey from '../../util/isCommandKey'
 import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
 import throttleConcat from '../../util/throttleConcat'
@@ -144,20 +146,37 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
     () => {
       isMounted.current = true
 
-      const replications = simplePaths.map(simplePath => {
-        const id = head(simplePath)
+      /** Waits for pending local persistence before reading the selected subtrees for export. */
+      const startReplicationsAfterLocalWrites = async () => {
+        await thoughtspaceRuntime.waitForIdle()
+        if (!isMounted.current) return null
 
-        return replicateTree(id, {
-          // TODO: Warn the user if offline or not fully replicated
-          remote: false,
-          onThought: thought => {
-            if (!isMounted.current) return
-            setExportingThoughtsThrottled(thought)
-          },
+        const replications = simplePaths.map(simplePath => {
+          const id = head(simplePath)
+
+          return replicateTree(id, {
+            // TODO: Warn the user if offline or not fully replicated
+            remote: false,
+            onThought: thought => {
+              if (!isMounted.current) return
+              setExportingThoughtsThrottled(thought)
+            },
+          })
         })
-      })
 
-      Promise.all(replications.map(replication => replication.promise)).then(thoughtIndices => {
+        return {
+          replications,
+          thoughtIndicesPromise: Promise.all(replications.map(replication => replication.promise)),
+        }
+      }
+
+      const replicationsStartedPromise = startReplicationsAfterLocalWrites()
+
+      void (async () => {
+        const startedReplications = await replicationsStartedPromise
+        if (!startedReplications) return
+
+        const thoughtIndices = await startedReplications.thoughtIndicesPromise
         if (!isMounted.current) return
 
         setExportingThoughtsThrottled.flush()
@@ -173,11 +192,13 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
 
         setExportedState(exportedState)
         setIsPulling(false)
-      })
+      })()
 
       return () => {
         isMounted.current = false
-        replications.forEach(replication => replication.cancel())
+        void replicationsStartedPromise.then(startedReplications => {
+          startedReplications?.replications.forEach(replication => replication.cancel())
+        })
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -462,7 +483,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     (e: KeyboardEvent) => {
       if (
         e.key === 'c' &&
-        (isMac ? e.metaKey : e.ctrlKey) &&
+        isCommandKey(e) &&
         exportContent &&
         // do not override copy shortcut if user has text selected
         selection.isCollapsed() !== false &&
@@ -485,9 +506,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       window.removeEventListener('keydown', onKeyDown)
     }
   }, [onKeyDown])
-
-  // const [publishing, setPublishing] = useState(false)
-  // const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
 
   /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
@@ -520,42 +538,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
     dispatch(closeModal())
   }
-
-  /** Publishes the thoughts to IPFS. */
-  // const publish = async () => {
-  //   setPublishing(true)
-  //   setPublishedCIDs([])
-  //   const cids = []
-
-  //   const { default: IpfsHttpClient } = await import('ipfs-http-client')
-  //   const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
-
-  //   // export without =src content
-  //   const exported = exportContext(store.getState(), context, selected.type, {
-  //     excludeSrc: true,
-  //     excludeMeta: !shouldIncludeMetaAttributes,
-  //     excludeArchived: !shouldIncludeArchived,
-  //     excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
-  //     title: titleChild ? titleChild.value : undefined,
-  //   })
-
-  //   for await (const result of ipfs.add(exported)) {
-  //     if (result && result.path) {
-  //       const cid = result.path
-  //       // TODO: prependRevision is currently broken
-  //       // dispatch(prependRevision({ path: cursor, cid }))
-  //       cids.push(cid)
-  //       setPublishedCIDs(cids)
-  //     } else {
-  //       setPublishing(false)
-  //       setPublishedCIDs([])
-  //       dispatch(error({ value: 'Publish Error' }))
-  //       console.error('Publish Error', result)
-  //     }
-  //   }
-
-  //   setPublishing(false)
-  // }
 
   const [advancedSettings, setAdvancedSettings] = useState(false)
 
@@ -782,103 +764,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           ))}
         </div>
       )}
-
-      {/* Publish */}
-
-      {/* isDocumentEditable() && (
-        <>
-          <div className={css({
-            borderTop: "solid 1px {colors.modalExportUnused}",
-            marginTop: "30px",
-            marginBottom: "20px",
-            paddingTop: "40px",
-            textAlign: "center"
-          })}>
-            {publishedCIDs.length > 0 ? (
-              <div>
-                Published:{' '}
-                {publishedCIDs.map(cid => (
-                  <a
-                    key={cid}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    href={getPublishUrl(cid)}
-                    dangerouslySetInnerHTML={{ __html: titleMedium }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div>
-                <p>
-                  {publishing ? (
-                    'Publishing...'
-                  ) : (
-                    <span>
-                      Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />.
-                    </span>
-                  )}
-                </p>
-                <p className={css({color: 'dim'})}>
-                  <i>
-                    Note: These thoughts are published permanently. <br />
-                    This action cannot be undone.
-                  </i>
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className={css({
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            })}
-          >
-            <button
-              className={css({
-                fontFamily: 'Helvetica',
-                textAlign: 'center',
-                cursor: 'pointer',
-                outline: 'none',
-                padding: '2px 30px',
-                minWidth: '90px',
-                display: 'inline-block',
-                borderRadius: '99px',
-                margin: '0 5px 15px 5px',
-                whiteSpace: 'nowrap',
-                lineHeight: 2,
-                textDecoration: 'none',
-                border: 'none',
-              })}
-              disabled={!exportContent || publishing || publishedCIDs.length > 0}
-              {...fastClick(publish))}
-              style={{ color: colors.bg, backgroundColor: colors.fg }}
-            >
-              Publish
-            </button>
-
-            {(publishing || publishedCIDs.length > 0) && (
-              <button
-                className={css({
-                  cursor: "pointer",
-                  border: "none",
-                  outline: "none",
-                  background: "none"
-                })}
-                {...fastClick(()) => {
-                  dispatch([alert(null), closeModal()])
-                })}
-                style={{
-                  color: colors.fg,
-                  fontSize: '14px',
-                }}
-              >
-                Close
-              </button>
-            )}
-          </div>
-        </>
-      ) */}
     </ModalComponent>
   )
 }

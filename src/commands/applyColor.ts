@@ -21,9 +21,9 @@ const colorShortcuts: ColorShortcut[] = [
 ]
 
 /** Applies a text color or background color to the cursor thought or all selected thoughts via a keyboard shortcut, equivalent to tapping the corresponding swatch in the color picker. */
-const applyColor: Command = {
+const applyColor = {
   id: 'applyColor',
-  label: 'Apply Color',
+  label: 'Apply Color' as const,
   description: `Applies a text color to the cursor: ${swatchColors
     .map((color, i) => `${i} ${i === 0 ? 'default' : color}`)
     .join(', ')}. Use Option/Alt + the same number to apply a background color.`,
@@ -44,6 +44,6 @@ const applyColor: Command = {
     if (!shortcut) return
     dispatch(formatSelectionColor({ color: shortcut.color, backgroundColor: shortcut.backgroundColor }))
   },
-}
+} satisfies Command
 
 export default applyColor

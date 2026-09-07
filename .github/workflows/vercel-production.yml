@@ -58,11 +58,19 @@ jobs:
       - name: Install npm dependencies
         uses: ./.github/actions/install
 
+      # Installs the CLI once onto PATH, so the steps below invoke a plain `vercel` rather than
+      # reinstalling it per call. See .github/actions/vercel-cli/action.yml.
+      - name: Install Vercel CLI
+        uses: ./.github/actions/vercel-cli
+
       - name: Pull Vercel environment
-        run: yarn dlx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
 
       - name: Build
-        run: yarn dlx vercel build --prod --token="$VERCEL_TOKEN"
+        env:
+          # The AI service uses the unified backend builder so its TypeScript module graph is bundled.
+          VERCEL_EXPERIMENTAL_BACKENDS: ${{ matrix.project == 'em-ai' && '1' || '0' }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
 
       - name: Deploy
-        run: yarn dlx vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
