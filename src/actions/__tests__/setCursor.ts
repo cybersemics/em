@@ -1,6 +1,6 @@
 import importText from '../../actions/importText'
 import toggleContextView from '../../actions/toggleContextView'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -13,16 +13,9 @@ it('set the cursor to a SimplePath', () => {
 
   const steps = [importText({ text }), setCursor(['a', 'b', 'c']), toggleContextView]
 
-  const expectedCursor = [
-    { value: 'a', rank: 0 },
-    { value: 'b', rank: 0 },
-    { value: 'c', rank: 0 },
-  ]
-
   const stateNew = reducerFlow(steps)(initialState())
 
-  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-  expect(cursorThoughts).toMatchObject(expectedCursor)
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b', 'c'])
 })
 
 it('set the cursor to a Path across a context view', () => {
@@ -39,14 +32,5 @@ it('set the cursor to a Path across a context view', () => {
 
   const stateNew = reducerFlow(steps)(initialState())
 
-  const expectedCursor = [
-    { value: 'a', rank: 0 },
-    { value: 'm', rank: 0 },
-    { value: 'b', rank: 1 },
-    { value: 'y', rank: 0 },
-  ]
-
-  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(cursorThoughts).toMatchObject(expectedCursor)
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b', 'y'])
 })

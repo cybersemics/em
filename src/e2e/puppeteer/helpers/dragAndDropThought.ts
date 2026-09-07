@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 import getEditable from './getEditable'
 import hide from './hide'
 import showMousePointer from './showMousePointer'
@@ -63,10 +63,11 @@ const dragAndDropThought = async (
     y: dragStart.y + 1,
   }
 
-  // move the mouse to the drag target, then press
-  await page.mouse.move(dragPosition.x, dragPosition.y)
-
+  // Move the mouse to the drag target, then press.
+  // When continuing an existing drag (skipMouseDown), move directly to the drop target instead.
+  // Returning to the source would hover the source thought's own drop targets, which matters when testFlags.pinDropHovers is enabled.
   if (!skipMouseDown) {
+    await page.mouse.move(dragPosition.x, dragPosition.y)
     await page.mouse.down()
   }
 
@@ -90,7 +91,17 @@ const dragAndDropThought = async (
       y: dropUncle ? dragEnd.y + dragEnd.height : dragEnd.y + dragEnd.height / 2 + yOffset,
     }
 
+    // A single mousemove is not registered by react-dnd when continuing an existing drag (skipMouseDown), so issue a second move one pixel away first.
+    // Both events land on the drop target, so no other drop targets are hovered in between.
+    if (skipMouseDown) {
+      await page.mouse.move(dropPosition.x, dropPosition.y - 1)
+    }
     await page.mouse.move(dropPosition.x, dropPosition.y)
+  } else {
+    // Trigger drag state when no explicit drop target is provided.
+    // Without this move, drag-and-drop alert visibility is flaky in CI.
+    await page.mouse.move(dragPosition.x + 1, dragPosition.y)
+    await page.mouse.move(dragPosition.x, dragPosition.y)
   }
 
   await page.locator('[data-testid="alert-content"]').wait()

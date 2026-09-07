@@ -1,4 +1,4 @@
-import React, { ComponentProps, FC, ReactNode, useCallback, useState } from 'react'
+import React, { ComponentProps, FC, ReactNode, useCallback, useRef, useState } from 'react'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -19,6 +19,11 @@ const Notification: FC<
   } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave'>
 > = ({ icon, onClose, value, transitionKey, children, ...props }) => {
   const [isDismissed, setIsDismissed] = useState(false)
+  // Share this ref between FadeTransition and PopupBase so the fade opacity is applied directly to the
+  // positioned zIndex: 'popup' element rather than to an intermediate static <span>. Without a nodeRef,
+  // FadeTransition's span becomes a z-index: auto stacking context while opacity < 1, trapping the popup's
+  // z-index behind #content and causing the toast to fade in behind full-screen thoughts.
+  const popupRef = useRef<HTMLDivElement>(null)
 
   /** Dismiss the alert on close. */
   const handleClose = useCallback(() => {
@@ -31,13 +36,21 @@ const Notification: FC<
   return (
     <TransitionGroup
       data-testid='alert'
+      // Do not give this wrapper a positioning context. PopupBase switches to `position: absolute` on iOS Safari
+      // when the keyboard opens (see usePositionFixed), and computes its `top` in document coordinates
+      // (scrollTop-based). A positioned wrapper would become the absolute toast's containing block, which both
+      // shifts the coordinate origin and — because the wrapper collapses to ~0 height around the out-of-flow
+      // toast — triggers a WebKit paint/compositing failure that renders the panel background transparent while
+      // the keyboard is open. Leaving the wrapper static lets the toast resolve against the initial containing
+      // block (the document), matching usePositionFixed's math. The toast keeps its own zIndex: 'popup'.
       childFactory={(child: React.ReactElement<{ timeout: number }>) =>
         !isDismissed ? child : React.cloneElement(child, { timeout: 0 })
       }
     >
       {value ? (
-        <FadeTransition type='slow' onEntering={() => setIsDismissed(false)}>
+        <FadeTransition type='slow' nodeRef={popupRef} onEntering={() => setIsDismissed(false)}>
           <PopupBase
+            ref={popupRef}
             anchorFromBottom
             anchorOffset={36}
             key={transitionKey}

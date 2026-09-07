@@ -9,6 +9,7 @@ import contextToThoughtId from '../selectors/contextToThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMulticursorPath from '../selectors/isMulticursorPath'
 import simplifyPath from '../selectors/simplifyPath'
 import appendToPath from '../util/appendToPath'
 import containsURL from '../util/containsURL'
@@ -26,6 +27,7 @@ import childIdsToThoughts from './childIdsToThoughts'
 import { anyChild, getAllChildrenAsThoughts } from './getChildren'
 import getContexts from './getContexts'
 import pinned from './isPinned'
+import rootedParentOf from './rootedParentOf'
 
 /** Returns true if a thought is marked as done. */
 const isDone = (state: State, id: ThoughtId | null): boolean => {
@@ -57,8 +59,14 @@ const publishPinAll = (state: State, context: Context) => {
  *
  * @param expansionBasePath - The base path for the original, nonrecursive call to expandThoughts.
  * @param path - Current path.
+ * @param descendantsPinnedInherited - The effective =descendants/=pin state inherited from the nearest ancestor that sets it.
  */
-function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Path): Index<Path | Context> {
+function expandThoughtsRecursive(
+  state: State,
+  expansionBasePath: Path,
+  path: Path,
+  descendantsPinnedInherited: boolean | null = null,
+): Index<Path | Context> {
   if (
     // arbitrarily limit depth to prevent infinite context view expansion (i.e. cycles)
     path.length - expansionBasePath.length + 1 >
@@ -103,6 +111,10 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
         return !isAttribute(child.value) || isAncestor() || isExpansionBasePath()
       })
 
+  // the =descendants/=pin state that applies to this thought's children: the thought's own =descendants/=pin if set, otherwise the value inherited from the nearest ancestor that sets it
+  const descendantsPinned =
+    pinned(state, findDescendant(state, thoughtId, '=descendants')) ?? descendantsPinnedInherited
+
   // expand if child is an only child
   const grandchild = anyChild(state, visibleChildren[0]?.id)
   const hasOnlyChild =
@@ -117,7 +129,7 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     // do not expand if thought or parent's subthoughts have =pin/false or =done
     pinned(state, visibleChildren[0].id) !== false &&
     !isDone(state, visibleChildren[0].id) &&
-    childrenPinned(state, thoughtId) !== false
+    (childrenPinned(state, thoughtId) ?? descendantsPinned) !== false
 
   const childrenExpanded =
     isTable(state, thoughtId) || hasOnlyChild || publishPinAll(state, simplePath)
@@ -148,7 +160,9 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
             (!showContexts &&
               (stripTags(child.value).endsWith(EXPAND_THOUGHT_CHAR) ||
                 pinned(state, child.id) ||
-                (childrenPinned(state, thoughtId) && pinned(state, child.id) === null && !isDone(state, child.id))))
+                ((childrenPinned(state, thoughtId) ?? descendantsPinned) &&
+                  pinned(state, child.id) === null &&
+                  !isDone(state, child.id))))
           )
         })
 
@@ -162,7 +176,8 @@ function expandThoughtsRecursive(state: State, expansionBasePath: Path, path: Pa
     childrenExpanded,
     childOrContext => {
       const newPath = unroot([...path, showContexts ? childOrContext.parentId : childOrContext.id])
-      return expandThoughtsRecursive(state, expansionBasePath, newPath)
+      // do not propagate =descendants/=pin into the context view, since the contexts' subtrees are outside the pinned subtree
+      return expandThoughtsRecursive(state, expansionBasePath, newPath, showContexts ? null : descendantsPinned)
     },
     initialExpanded,
   )
@@ -185,8 +200,17 @@ function expandThoughts(state: State, path: Path | null): Index<Path | Context> 
     throw new Error(`Invalid path ${path}. No thought found with id ${head(path)}`)
   }
 
-  // Expand ancestors of the cursor path and all multicursor paths so that selected thoughts remain visible.
-  return [path || HOME_PATH, ...Object.values(state.multicursors)].reduce(
+  // A selected thought expands only its ancestors, never itself, so that it stays collapsed while
+  // remaining visible. This applies to the cursor too when it is part of the multicursor, which is the
+  // case while a multiselect is being extended with Shift+ArrowUp/ArrowDown. A cursor that is not
+  // selected expands normally.
+  // https://github.com/cybersemics/em/issues/4738
+  const cursorExpansionPath = path && isMulticursorPath(state, path) ? rootedParentOf(state, path) : path || HOME_PATH
+
+  return [
+    cursorExpansionPath,
+    ...Object.values(state.multicursors).map(multicursorPath => rootedParentOf(state, multicursorPath)),
+  ].reduce(
     (acc, expansionPath) => ({
       ...acc,
       ...expandThoughtsRecursive(state, expansionPath, HOME_PATH),

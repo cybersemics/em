@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Hides all DOM nodes that match the selector from the DOM by setting visibility: hidden. Do nothing if the selector is empty. */
 const hideVisibility = async (selector: string) => {

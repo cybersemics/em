@@ -4,9 +4,10 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000 })
+usePersistentTreecrdtStorage()
 
 // TODO: Fix thought buffering after switch to YJS
 it.skip('load a child after a parent is expanded', async () => {
@@ -24,11 +25,6 @@ it.skip('load a child after a parent is expanded', async () => {
   // no thoughts are pending after paste
   expect(await $('[data-pending=true]')).toBeFalsy()
 
-  await waitForThoughtExistInDb('a')
-  await waitForThoughtExistInDb('b')
-  await waitForThoughtExistInDb('c')
-  await waitForThoughtExistInDb('d')
-  await waitForThoughtExistInDb('e')
   await refresh()
 
   // wait for a re-render in case the lexeme was loaded after the parent
