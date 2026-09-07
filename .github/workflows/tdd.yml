@@ -21,8 +21,10 @@ on:
 # it, which would break the `ghworkflow` flake hunt (docs/testing.md § Triggering GitHub Actions
 # workflows manually) that fans out many runs on one ref.
 #
-# This group is separate from ios.yml's `browserstack` one, so the contention noted on the ios job
-# below is unchanged; cancelling a superseded run only ever reduces the draw on that shared pool.
+# This group is separate from ios.yml's per-PR one, so the two workflows never queue behind each
+# other; both wait in-process for real BrowserStack session headroom instead (see
+# waitForBrowserStackSlots.ts), and cancelling a superseded run only ever reduces the draw on that
+# shared pool.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
