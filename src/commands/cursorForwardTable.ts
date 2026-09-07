@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 import CursorForwardIcon from '../components/icons/CursorForwardIcon'
@@ -16,7 +15,7 @@ const cursorForwardTableCommand = {
   id: 'cursorForwardTable',
   label: 'Cursor Forward (Table Column)' as const,
   description: 'In table view, move the cursor from a column-one thought to its column-two child.',
-  keyboard: { key: Key.ArrowRight },
+  keyboard: { key: 'ArrowRight' },
   hideFromHelp: true,
   multicursor: false,
   svg: CursorForwardIcon,

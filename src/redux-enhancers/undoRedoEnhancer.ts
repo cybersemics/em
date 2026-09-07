@@ -70,9 +70,11 @@ function getNoteOffsetBeforeEdit(action: UnknownAction): number | null {
 /** Compare the text contents of the old and new values to determine the direction of the edit.
  * Returns None if the action is not an editThought action or if the text content length is the same.
  * Formatting edits (bold, italic, color) and case changes (HELLO → hello) preserve text length and return None.
+ * Edits marked preventMerge likewise return None, so a programmatic edit such as a generated thought is never
+ * merged with the user's typing stream on either side.
  */
 function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
-  if (!isEditThoughtAction(action)) return EditThoughtDirection.None
+  if (!isEditThoughtAction(action) || action.preventMerge) return EditThoughtDirection.None
 
   const oldText = getTextContent(action.oldValue)
   const newText = getTextContent(action.newValue)
@@ -470,7 +472,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
-      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (None direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step.
+      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (None direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step. Edits marked preventMerge (e.g. a generated thought) are likewise never merged on either side.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize

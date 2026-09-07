@@ -3,6 +3,7 @@ import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
+import { getChildren } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -40,7 +41,9 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   const simplePath = simplifyPath(state, multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
 
   // Check if all selected thoughts belong to the same parent
-  const allSameParent = multicursorPaths.every(path => equalPath(parentOf(path), parentOf(simplePath)))
+  const allSameParent = multicursorPaths.every(path =>
+    equalPath(parentOf(simplifyPath(state, path)), parentOf(simplePath)),
+  )
 
   // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
@@ -76,6 +79,24 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   const newThoughtId = createId()
   const isInContextView = isContextViewActive(state, parentOf(cursor))
 
+  // When every visible sibling is selected, the meta attributes that describe the parent's children — =view, =sort,
+  // and the =children, =grandchildren, and =descendants containers — follow the wrapped thoughts into the new
+  // category, each moving whole with everything it holds. The parent's own direct =pin stays, since it pins the
+  // parent itself rather than describing the wrapped children. A partial selection leaves everything on the parent,
+  // which keeps unselected children. An attribute that is itself selected (visible via showHiddenThoughts) is already
+  // moved by the selection.
+  const parentId = head(rootedParentOf(state, simplePath))
+  const selectedIds = new Set(multicursorPaths.map(path => head(simplifyPath(state, path))))
+  const allSelected =
+    multicursorPaths.length > 0 && getChildren(state, parentId).every(child => selectedIds.has(child.id))
+  const movedAttributes = allSelected
+    ? ['=view', '=sort', '=children', '=grandchildren', '=descendants'].flatMap(value => {
+        const id = findDescendant(state, parentId, value)
+        const thought = id && !selectedIds.has(id) ? getThoughtById(state, id) : null
+        return thought ? [thought] : []
+      })
+    : []
+
   return reducerFlow([
     createThought({
       path: rootedParentOf(state, simplePath),
@@ -106,6 +127,13 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
               newRank: getThoughtById(state, head(path))!.rank,
             }),
           )),
+    ...movedAttributes.map(attribute =>
+      moveThought({
+        oldPath: appendToPath(parentOf(simplePath), attribute.id),
+        newPath: appendToPath(parentOf(simplePath), newThoughtId, attribute.id),
+        newRank: attribute.rank,
+      }),
+    ),
     setCursor({
       path: appendToPath(cursorParent, newThoughtId),
       // Place the caret at the end of the category so the user can keep typing where its value leaves off. For the

@@ -24,6 +24,7 @@ import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -39,6 +40,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import appendToPath from '../util/appendToPath'
+import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
@@ -211,6 +213,16 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   )
     return
 
+  // Attribute the upcoming moveThought/createThought actions to a drag-and-drop drop, since drops have no `command`
+  // entry in the debug log (commands.ts only logs keyboard/gesture/toolbar commands).
+  debugLog.log('drop', {
+    zone: 'thought',
+    targetId: head(props.simplePath),
+    targetValue: pathToThought(state, props.simplePath)?.value,
+    items: draggedItems.length,
+    showContexts: !!props.showContexts,
+  })
+
   store.dispatch((dispatch, getState) => {
     // set multicursor executing to true if there are multiple thoughts being dragged
     if (draggedItems.length > 1) {
@@ -290,6 +302,11 @@ const endDrag = () => {
   // long-press start that blocks all scrolling; it is only removed on touchend, which does not fire after a drag (e.g. a
   // multiselect drop onto a subthought), leaving scrolling frozen until it is explicitly re-enabled here.
   allowTouchToScroll(true)
+
+  // A browser may dispatch the release's compatibility click or focus after drag cleanup. Keep only cursor events
+  // suppressed until the next real touchstart; do not hold longPress open and block unrelated gesture state.
+  if (isTouch) globals.suppressCursorAfterTouch = true
+
   store.dispatch([
     longPress({ value: LongPressState.Inactive }),
     (dispatch, getState) => {

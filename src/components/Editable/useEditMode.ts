@@ -4,7 +4,7 @@ import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
-import { isMac, isSafari, isTouch } from '../../browser'
+import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import getCaretOffset from '../../device/getCaretOffset'
@@ -17,6 +17,7 @@ import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
 import equalPath from '../../util/equalPath'
+import isCommandKey from '../../util/isCommandKey'
 
 // #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
 // two taps into a double-tap and emits a delayed, retargeted synthesized mousedown/click/dblclick on the
@@ -236,6 +237,7 @@ const useEditMode = ({
           state.isKeyboardOpen &&
           !equalPath(state.cursor, path) &&
           !hasMulticursor(state) &&
+          !globals.suppressCursorAfterTouch &&
           state.longPress === LongPressState.Inactive &&
           style?.visibility !== 'hidden'
         if (!move) return
@@ -269,9 +271,8 @@ const useEditMode = ({
      * Prevents default behavior and manages autoscroll for certain edge cases where browser selection would be incorrect.
      */
     const onMouseDown = (e: MouseEvent) => {
-      // If CMD/CTRL is pressed, don't focus the editable.
-      const isMultiselectClick = isMac ? e.metaKey : e.ctrlKey
-      if (isMultiselectClick) {
+      // If CMD/CTRL is pressed, this is a multiselect click, so don't focus the editable.
+      if (isCommandKey(e)) {
         e.preventDefault()
         return
       }
@@ -297,10 +298,10 @@ const useEditMode = ({
       const preserveMulticursor = multiEditing && isMulticursorPath(state, path)
 
       // Suppress the synthesized mousedown that iOS Safari can emit for a tap whose touchend already moved
-      // the cursor without entering edit mode (see globals.suppressFocusAfterCursorMove). The cursor move
+      // the cursor without entering edit mode or a completed drag (see globals.suppressCursorAfterTouch). The cursor move
       // re-rendered this thought with editingOrOnCursor true before the mousedown arrived, so the branch
       // below would place the caret and refocus the editable as if this were a second tap.
-      if (isTouch && isSafari() && globals.suppressFocusAfterCursorMove) {
+      if (isTouch && globals.suppressCursorAfterTouch) {
         e.preventDefault()
         return
       }

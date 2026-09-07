@@ -57,7 +57,9 @@ jobs:
         run: node scripts/estimate/src/backfill.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # OpenAI API key used for issue estimation inference (backfill.ts).
+          # OpenAI API key used for issue estimation inference (backfill.ts). The estimate key bills this
+          # workflow separately in the OpenAI dashboard; the shared key is the fallback.
+          OPENAI_API_KEY_ESTIMATE: ${{ secrets.OPENAI_API_KEY_ESTIMATE }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
           # An EVERHOUR_PROJECT_ID secret must be configured in repo settings.

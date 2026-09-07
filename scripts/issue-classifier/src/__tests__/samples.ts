@@ -18,6 +18,7 @@ describe('issue classifier instructions', () => {
 
   it('states the output contract the parser enforces', () => {
     expect(instructions).toContain('"confidence"')
+    expect(instructions).toContain('`label`')
     expect(instructions).toContain('`null`')
   })
 })

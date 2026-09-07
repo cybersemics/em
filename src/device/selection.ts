@@ -73,6 +73,21 @@ export const selectNode = (node: Node): void => {
   sel.addRange(range)
 }
 
+/**
+ * Collapses a selected range to a caret at its end, leaving focus and the keyboard alone.
+ *
+ * Android draws the text context menu for the range, so this dismisses the menu on its own. Unlike `clear`, it
+ * does not blur, which is what keeps the menu's dismissal from overlapping the keyboard's: tearing a range down
+ * while the keyboard is going away makes Android rebuild the menu, so it flashes back after it has already gone
+ * ([#4833](https://github.com/cybersemics/em/issues/4833)). Collapsing while the keyboard is still up lets the
+ * menu fade out in one pass, and the caret it leaves behind is dismissed by the blur that follows.
+ */
+export const collapse = (): void => {
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed) return
+  sel.collapseToEnd()
+}
+
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
 export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 
@@ -241,7 +256,11 @@ export const offsetFromNode = (node: Node): number | null => {
   return range.toString().length
 }
 
-/** Returns the character offset at the end of the selection. Returns null if there is no selection. */
+/** Returns the character offset at the end of the selection. Returns null if there is no selection.
+ *
+ * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
+ * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
+ */
 export const offsetEnd = (): number | null => {
   const selection = window.getSelection()
   if (!selection) return null
@@ -251,7 +270,11 @@ export const offsetEnd = (): number | null => {
   return selectionStart + selection.toString().length
 }
 
-/** Returns the character offset at the start of the selection. Returns null if there is no selection. */
+/** Returns the character offset at the start of the selection. Returns null if there is no selection.
+ *
+ * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
+ * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
+ */
 export const offsetStart = (): number | null => {
   const selection = window.getSelection()
   if (!selection) return null
@@ -273,6 +296,13 @@ export const offsetRange = (editable: HTMLElement): { start: number; end: number
   pre.setEnd(range.startContainer, range.startOffset)
   const start = pre.toString().length
   return { start, end: start + range.toString().length }
+}
+
+/** Returns the plain-text character offsets [start, end) of the current selection relative to the given thought's
+ * editable, or null if the thought is not rendered or the selection is not within it. */
+export const offsetRangeThought = (thoughtId: string): { start: number; end: number } | null => {
+  const editable = document.querySelector(`[aria-label="editable-${thoughtId}"]`)
+  return editable ? offsetRange(editable as HTMLElement) : null
 }
 
 /** Clamps a saved offset to what the node can currently address. The node's contents may have changed while the

@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import Dispatch from '../@types/Dispatch'
 import State from '../@types/State'
@@ -28,7 +27,7 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 const cursorDownCommand = {
   id: 'cursorDown',
   label: 'Cursor Down' as const,
-  keyboard: [{ key: Key.ArrowDown }, { key: Key.ArrowDown, shift: true }],
+  keyboard: [{ key: 'ArrowDown' }, { key: 'ArrowDown', shift: true }],
   hideFromHelp: true,
   multicursor: false,
   svg: CursorDownIcon,

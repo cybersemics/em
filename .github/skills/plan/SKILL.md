@@ -104,7 +104,7 @@ if all checks pass → record the plan, then proceed to implementation
 
 Record the final plan where the work will be reviewed:
 
-- If a PR exists or will exist, put the plan in the **PR description** (below the issue number).
+- If a PR exists or will exist, put the plan in the **PR description** (below the issue reference).
 - Otherwise, output it in full in your response before you write any code.
 
 ### Gate confirmation

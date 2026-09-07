@@ -1,5 +1,4 @@
 import { nanoid } from 'nanoid'
-import Index from '../@types/IndexType'
 import Routes from '../@types/Routes'
 import Share from '../@types/Share'
 import { alertActionCreator as alert } from '../actions/alert'
@@ -11,16 +10,13 @@ import { permissionsStore, persistPermissions } from './permissionsStore'
 import db from './thoughtspace'
 import { accessTokenLocal } from './thoughtspaceSession'
 
-/** Snapshot of device permissions keyed by access token. */
-const entries = (): Index<Share> => permissionsStore.getState().entries
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const permissionsModel: { [key in keyof Routes['share']]: any } = {
   add: ({ name, role }: Pick<Share, 'name' | 'role'>) => {
     const accessToken = nanoid()
     permissionsStore.update({
       entries: {
-        ...entries(),
+        ...permissionsStore.getState().entries,
         [accessToken]: {
           created: timestamp(),
           name: name || '',
@@ -33,7 +29,7 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
     return { accessToken }
   },
   delete: async (accessToken: string, { name }: { name?: string } = {}) => {
-    const prev = entries()
+    const prev = permissionsStore.getState().entries
     const next = { ...prev }
     delete next[accessToken]
     permissionsStore.update({ entries: next })
@@ -53,11 +49,11 @@ const permissionsModel: { [key in keyof Routes['share']]: any } = {
     }
   },
   update: (accessToken: string, { name, role }: Share) => {
-    const e = entries()
-    const permission = e[accessToken]!
+    const entries = permissionsStore.getState().entries
+    const permission = entries[accessToken]!
     permissionsStore.update({
       entries: {
-        ...e,
+        ...entries,
         [accessToken]: {
           ...(permission || null),
           created: timestamp(),

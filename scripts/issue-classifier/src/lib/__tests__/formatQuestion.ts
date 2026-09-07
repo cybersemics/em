@@ -10,7 +10,9 @@ const noFit: VoteResult = {
   totalVotes: 5,
   tied: false,
   confidence: 'high',
-  rationale: 'This is a repository process proposal, not work in an application subsystem.',
+  label: null,
+  labelVotes: 5,
+  rationale: 'This is a repository process proposal, not work in an application domain.',
   secondChoice: null,
 }
 
@@ -25,7 +27,7 @@ describe('formatQuestion', () => {
 
   it('quotes the rationale, which usually says what the issue is about', () => {
     expect(formatQuestion(noFit)).toContain(
-      '> This is a repository process proposal, not work in an application subsystem.',
+      '> This is a repository process proposal, not work in an application domain.',
     )
   })
 
