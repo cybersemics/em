@@ -1,9 +1,13 @@
 import { throttle } from 'lodash'
 import { useEffect, useRef } from 'react'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
+import testFlags from '../e2e/testFlags'
 import editingValueStore from '../stores/editingValue'
 
 const throttledScrollCursorIntoView = throttle((y: number, height: number) => scrollCursorIntoView(y, height), 400)
+
+// Expose the throttled function so that tests can cancel its pending trailing call before asserting on the scroll position.
+testFlags.throttledScrollCursorIntoView = throttledScrollCursorIntoView
 
 /** Call scrollCursorIntoView when the y position of its container changes, or when the editing value changes. */
 const useScrollCursorIntoView = (y: number, height: number) => {

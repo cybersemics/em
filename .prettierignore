@@ -3,3 +3,9 @@ docs
 LICENSE.md
 packages
 src/components/icons/animations
+desktop/target
+desktop/gen
+.yarn
+ios/App/App/Assets.xcassets
+.github/skills
+.claude/settings.local.json

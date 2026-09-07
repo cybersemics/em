@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "[iOS PWA] Selection goes invisible when switching apps",
+    "body": "iOS PWA only\n\n## Steps to Reproduce\r\n\r\n1. Create a thought\r\n2. Select some text in the thought\r\n3. Activate \"Look Up\" from the context menu. \r\n4. Close the context popup. \r\n\r\n## Current Behavior\r\n\r\nAfter closing the context popup, no selection is visible, but there is still an active focusNode. This prevents gestures from working.\r\n\r\n## Expected Behavior\r\n\r\nEither the selection should be visible, or it should be deselected. \r\n\r\nWe should not deselect the text when the user quickly switches away and back, as they should be able to resume where they left off. Ideally we find a way to detect when there is an invisible selection (maybe the thoughts are re-rendered but the selection doesn't update?).",
+    "labels": ["bug"]
+  },
+  "expected": "L",
+  "source": {
+    "type": "everhour",
+    "issue": 1680,
+    "hours": 16
+  }
+}

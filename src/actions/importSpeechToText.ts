@@ -38,14 +38,11 @@ const importSpeechToText = _.curryRight(
 
     if (lines.length === 0 || !thought) return state
 
-    const { rank } = thought
-
     reducerFlow([
       // edit original thought to first line
       editThought({
         oldValue: value,
         newValue: lines[0],
-        rankInContext: rank,
         path: simplePath,
       }),
       // insert remaining lines

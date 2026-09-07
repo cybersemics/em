@@ -1,0 +1,202 @@
+name: Vercel Preview
+
+run-name: Vercel Preview
+
+# pull_request_target runs in the base repo's context, so repo secrets are available even for fork
+# PRs. GitHub's "require approval for outside collaborators" setting is the trust gate, not a
+# sandbox: approving a run allows the checked-out PR code to execute with the secrets listed below.
+# Review fork changes for secret-exfiltration paths before approving them.
+#
+# The Vercel builds are the web app and AI service, so documentation, agent/editor configuration,
+# and the native platform projects cannot change the preview. A PR confined to them gets no
+# deployment and no preview comment, which is the intended outcome — there is nothing to look at.
+#
+# paths-ignore skips the workflow outright, which means NO check is reported. That is only correct
+# because Vercel Preview is no longer a required status check on main. If it is ever made required
+# again, filtered PRs will sit at "Expected — Waiting for status to be reported" and block.
+# (Lint is deliberately left unfiltered and required, so every PR still reports one check.)
+#
+# A run is skipped only when EVERY changed file matches, so a PR that also touches app code still
+# deploys a preview as usual.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      # Documentation and agent/editor configuration.
+      - '**/*.md'
+      - 'docs/**'
+      - '.github/instructions/**'
+      - '.github/skills/**'
+      - '.claude/**'
+      - '.agents/**'
+      - '.vscode/**'
+      - '.hooks/**'
+      # Native platform projects, and the icon/splash sources generated into them.
+      - 'android/**'
+      - 'ios/**'
+      - 'desktop/**'
+      - 'assets/**'
+
+# Rapidfire pushes to the same PR cancel the older preview build. Keyed on the PR number rather
+# than github.ref because pull_request_target sets github.ref to the *base* branch — every open PR
+# against main would otherwise share one group and cancel each other.
+concurrency:
+  group: vercel-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  # Skip Puppeteer's Chrome download on install — the Vercel build never uses the bundled
+  # browser, saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
+jobs:
+  preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.changed_files > 0
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # v6 (added in #4471) refuses to check out fork PR code from a
+          # pull_request_target workflow unless this is set. See the header comment
+          # for why running fork code in this context is intentionally gated.
+          # https://gh.io/securely-using-pull_request_target
+          allow-unsafe-pr-checkout: true
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      # Installs the CLI once onto PATH, so the steps below invoke a plain `vercel` rather than
+      # reinstalling it per call. See .github/actions/vercel-cli/action.yml.
+      - name: Install Vercel CLI
+        uses: ./.github/actions/vercel-cli
+
+      # Create a GitHub deployment so the preview URL appears in the PR's deployment
+      # box (and under repo Environments) rather than as a bot comment. Superseded
+      # deployments are automatically marked inactive, so stale preview URLs on older
+      # commits are visibly greyed out.
+      #
+      # Kept inline rather than extracted to scripts/ci/ like the other github-script bodies: this
+      # workflow is pull_request_target and checks out the PR head, so a workspace file would be
+      # fork-controlled code running against the base repo's write token.
+      - name: Create deployment
+        id: deployment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo
+            const { data } = await github.rest.repos.createDeployment({
+              owner,
+              repo,
+              ref: context.payload.pull_request.head.sha,
+              environment: 'Preview',
+              // Defaults to true, which makes GitHub merge the base branch into ref and
+              // return a merge result *instead of* creating a deployment.
+              auto_merge: false,
+              // Defaults to all existing commit statuses, which would fail creation while
+              // the other CI checks on this commit are still pending.
+              required_contexts: [],
+              // Marks the environment as temporary so GitHub deactivates it on merge/close.
+              transient_environment: true,
+              description: `PR #${context.payload.pull_request.number}`,
+            })
+            await github.rest.repos.createDeploymentStatus({
+              owner,
+              repo,
+              deployment_id: data.id,
+              state: 'in_progress',
+              log_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+            })
+            return data.id
+
+      # Deploy em-ai first so its unique URL can be compiled into the em preview. Both projects
+      # use the same checkout because they must represent the same pull request commit.
+      - name: Pull em-ai Vercel environment
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_AI }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Build em-ai
+        env:
+          # Bundle the TypeScript module graph so ordinary extensionless imports work at runtime.
+          VERCEL_EXPERIMENTAL_BACKENDS: '1'
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_AI }}
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy em-ai
+        id: deploy-ai
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_AI }}
+        run: |
+          url="$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
+          test -n "$url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "- em-ai preview: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check em-ai health
+        run: curl --fail --retry 5 --retry-all-errors --retry-delay 2 "${{ steps.deploy-ai.outputs.url }}/"
+
+      # vercel pull and build write project-specific metadata and output into .vercel. Remove the
+      # em-ai state before selecting em so the projects cannot cross-contaminate each other.
+      - name: Reset Vercel project state
+        run: rm -rf .vercel
+
+      - name: Pull em Vercel environment
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Build em
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
+          # Vite gives an existing process variable precedence over .env.production.
+          VITE_AI_URL: ${{ steps.deploy-ai.outputs.url }}/ai
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy em
+        id: deploy
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
+        run: |
+          url="$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
+          test -n "$url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      # always() so a failed build/deploy is reported as a failed deployment rather than
+      # leaving the PR showing "in_progress" forever. A run cancelled by the concurrency
+      # group was superseded by a newer push, not broken, so it reports "inactive" rather
+      # than the red "failure" a genuine build error gets.
+      - name: Update deployment status
+        if: always() && steps.deployment.outputs.result
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.deploy.outputs.url }}'
+            const cancelled = '${{ job.status }}' === 'cancelled'
+            const { owner, repo } = context.repo
+            await github.rest.repos.createDeploymentStatus({
+              owner,
+              repo,
+              deployment_id: ${{ steps.deployment.outputs.result }},
+              state: url ? 'success' : cancelled ? 'inactive' : 'failure',
+              environment_url: url || undefined,
+              log_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+            })

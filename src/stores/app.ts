@@ -14,6 +14,7 @@ import validateStateEnhancer from '../redux-enhancers/validateStateEnhancer'
 import clearSelection from '../redux-middleware/clearSelection'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
 import freeThoughts from '../redux-middleware/freeThoughts'
+import loggerMiddleware from '../redux-middleware/loggerMiddleware'
 import multi from '../redux-middleware/multi'
 import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
 import pullQueue from '../redux-middleware/pullQueue'
@@ -40,6 +41,7 @@ const middlewareEnhancer = applyMiddleware(
   updateEditingValue,
   updateUrlHistory,
   freeThoughts,
+  loggerMiddleware,
   multicursorAlertMiddleware,
 )
 

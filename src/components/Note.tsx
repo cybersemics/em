@@ -4,8 +4,11 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
+import { editNotePathActionCreator as editNotePath } from '../actions/editNotePath'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
@@ -14,14 +17,19 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import useFreshCallback from '../hooks/useFreshCallback'
+import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import noteValue from '../selectors/noteValue'
+import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
+import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
-import noteValue from '../util/noteValue'
 import strip from '../util/strip'
+import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
 
 /** Renders an editable note that modifies the content of the hidden =note attribute. */
@@ -39,14 +47,21 @@ const Note = React.memo(
     const fontSize = useSelector(state => state.fontSize)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
+    const [noteDraft, setNoteDraft] = useState<string | null>(null)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
-    const noteOffset = useSelector(state => state.noteOffset)
+    const editableNonce = useSelector(state => state.editableNonce)
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
       preventAutoscrollEnd(noteRef.current)
+      const state = store.getState()
+      const targetPath = resolveNotePath(state, path)
+      const { noteId } = resolveNoteKey(state, head(path))
+      if (targetPath && !noteId) {
+        setNoteDraft(noteValue(state, path) ?? '')
+      }
       dispatch(
         setCursor({
           path,
@@ -60,15 +75,26 @@ const Note = React.memo(
 
     // set the caret on the note if editing this thought and noteFocus is true
     useEffect(() => {
+      const { noteOffset } = store.getState()
       // cursor must be true if note is focused
       if (hasFocus && noteOffset !== null) {
         selection.set(noteRef.current!, { offset: noteOffset })
+        // Clear noteOffset after placing the caret so it acts as a one-shot request. Otherwise repeatedly
+        // restoring the caret to the same offset (e.g. applying a font color over a background color multiple
+        // times) would set noteOffset to an unchanged value, the effect would not re-run, and the caret would
+        // be left wherever the note's re-render dropped it instead of the requested offset (#4630).
+        dispatch(setNoteFocus({ value: true, offset: null }))
       }
-    }, [hasFocus, noteOffset])
+    }, [dispatch, editableNonce, hasFocus])
 
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
+        // Only unmodified keys are note navigation. A chord that includes a command modifier belongs to a command
+        // (e.g. Cmd + Shift + ArrowDown is Move Thought Down), so let it propagate to the global keyDown handler
+        // instead of swallowing it as Cursor Down or Toggle Note (#4954).
+        if (e.metaKey || e.ctrlKey || e.altKey) return
+
         // delete empty note
         const note = noteValue(store.getState(), path)
 
@@ -109,6 +135,8 @@ const Note = React.memo(
     /** Updates the =note attribute when the note text is edited. */
     const onChange = useCallback(
       (e: ContentEditableEvent) => {
+        if (globals.suppressChange) return
+
         // calculate pathToContext onChange not in render for performance
         const value = justPasted
           ? // if just pasted, strip all HTML from value
@@ -117,40 +145,83 @@ const Note = React.memo(
             // Strip <br> from beginning and end of text
             e.target.value.replace(/^<br>|<br>$/gi, '')
 
+        const noteOffset = noteRef.current ? selection.offsetFromNode(noteRef.current) : null
+
         // update the referenced thought directly if it exists
         dispatch((dispatch, getState) => {
           const state = getState()
 
-          const targetPath = resolveNotePath(state, path) ?? path
+          const resolvedTargetPath = resolveNotePath(state, path)
+          const targetPath = resolvedTargetPath ?? path
+          const { noteId } = resolveNoteKey(state, head(path))
 
-          dispatch(setDescendant({ path: targetPath, values: [value] }))
+          if (!noteId && resolvedTargetPath) {
+            const values = value.split(',').map(value => value.trim())
+
+            setNoteDraft(value)
+            dispatch(
+              editNotePath({
+                noteOffset: noteOffset ?? undefined,
+                path: targetPath,
+                values,
+              }),
+            )
+            return
+          }
+
+          const noteThought = firstVisibleChild(state, head(targetPath))
+
+          if (noteThought) {
+            dispatch(
+              editThought({
+                path: appendToPath(targetPath, noteThought.id) as SimplePath,
+                oldValue: noteThought.value,
+                newValue: value,
+                noteOffset: noteOffset ?? undefined,
+              }),
+            )
+          } else {
+            dispatch(
+              setDescendant({
+                path: targetPath,
+                values: [value],
+              }),
+            )
+          }
         })
       },
       [dispatch, path, justPasted],
     )
 
-    /** Set editing to false onBlur, if keyboard is closed. */
+    /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
     const onBlur = useCallback(
       (e: React.FocusEvent) => {
-        if (!(e.relatedTarget instanceof Element)) return
-
-        const isRelatedTargetNote = !!e.relatedTarget.matches('[aria-label="note-editable"]')
-
-        if (!isRelatedTargetNote) dispatch(setNoteFocus({ value: false }))
-
-        if (isTouch && !selection.isActive()) {
-          // if we know that the focus is changing to another editable or note then do not set editing to false
-          // (does not work when clicking a bullet as it is set to null)
-          const isRelatedTargetEditableOrNote =
-            e.relatedTarget && (e.relatedTarget.hasAttribute?.('data-editable') || isRelatedTargetNote)
-
-          if (!isRelatedTargetEditableOrNote) setTimeout(() => dispatch(keyboardOpen({ value: false })))
+        setNoteDraft(null)
+        if (!selection.isNote(e.relatedTarget)) {
+          dispatch(setNoteFocus({ value: false }))
+        }
+        if (isTouch && !selection.isThought()) {
+          dispatch(keyboardOpen({ value: false }))
         }
       },
       [dispatch],
     )
 
     const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
+
+    const onCopy = useCallback((e: React.ClipboardEvent) => {
+      const html = selection.html()
+      const text = selection.text()
+
+      if (!html || !text) return
+
+      e.clipboardData.setData('text/html', html)
+      e.clipboardData.setData('text/plain', text)
+      e.clipboardData.setData('text/em', 'true')
+      e.preventDefault()
+    }, [])
+
+    const onCut = useOnCut()
 
     if (note === null) return null
 
@@ -167,13 +238,6 @@ const Note = React.memo(
             position: 'relative',
             marginBottom: '2px',
             padding: '0 0 4px 0',
-            '@media (max-width: 1024px)': {
-              _android: {
-                position: 'relative',
-                marginBottom: '2px',
-                paddingBottom: '4px',
-              },
-            },
           }),
         )}
         style={{
@@ -185,9 +249,10 @@ const Note = React.memo(
           <FauxCaret caretType='noteStart' />
         </span>
         <ContentEditable
-          html={note || ''}
+          html={noteDraft ?? note ?? ''}
           innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
+          data-thought-id={head(path)}
           placeholder='Enter a note'
           className={css({
             display: 'inline-block',
@@ -202,6 +267,9 @@ const Note = React.memo(
           onDrop={isTouch ? (e: React.DragEvent) => e.preventDefault() : undefined}
           onKeyDown={onKeyDown}
           onChange={onChange}
+          // Text copied from a note and pasted on a thought should not bring along the note's default color and italicization. (#3779)
+          onCopy={onCopy}
+          onCut={onCut}
           onPaste={() => {
             // set justPasted so onChange can strip HTML from the new value
             // the default onPaste behavior is maintained for easier caret and selection management

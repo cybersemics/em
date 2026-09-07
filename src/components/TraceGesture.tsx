@@ -23,6 +23,7 @@ interface SignaturePadOverride {
   _handleTouchStart: (e: TouchEvent) => void
   _handleTouchMove: (e: TouchEvent) => void
   _handleTouchEnd: (e: TouchEvent) => void
+  _handlePointerMove: (e: PointerEvent) => void
   _ctx: CanvasRenderingContext2D
   addEventListener: (event: SignaturePadEventType, listener: (e: Event) => void) => void
   canvas: HTMLCanvasElement
@@ -30,14 +31,12 @@ interface SignaturePadOverride {
   removeEventListener: (event: SignaturePadEventType, listener: (e: Event) => void) => void
 }
 
-/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: CommandPaletteGesture which have different ways of showing a cancelled gesture. */
+/** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: DesktopCommandUniverseGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
-  const showGestureMenu = useSelector(state => state.showGestureMenu)
-
   const invalidGesture = gestureStore.useSelector(
     state =>
       state.gesture &&
-      showGestureMenu &&
+      state.gestureMenuAnimationState !== 'hidden' &&
       !globalCommands.some(command => !command.hideFromHelp && gestureString(command) === state.gesture),
   )
 
@@ -48,7 +47,9 @@ const useGestureCancelled = () => {
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
-  const show = gestureStore.useSelector(state => state.gesture.length > 0)
+  const show = gestureStore.useSelector(
+    state => state.gesture.length > 0 && state.gestureMenuAnimationState !== 'exiting',
+  )
   const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
@@ -81,6 +82,29 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.canvas.height = innerHeight
   }, [innerHeight, innerWidth])
 
+  /** Disable signaturePad’s preventDefault on move events since newer version of signaturePad breaks iOS native text-selection drag feature. See issue: https://github.com/cybersemics/em/issues/3483. */
+  useEffect(() => {
+    if (!signaturePadRef.current) return
+
+    const signaturePad = signaturePadRef.current['signaturePad'] as SignaturePadOverride
+
+    /** Neutralize the move handler to prevent the default behavior. */
+    const neutralizeMoveHandler =
+      <E extends Event>(handler: (e: E) => void) =>
+      (e: E) => {
+        const originalPreventDefault = e.preventDefault
+        e.preventDefault = noop
+        try {
+          handler(e)
+        } finally {
+          e.preventDefault = originalPreventDefault
+        }
+      }
+
+    signaturePad._handleTouchMove = neutralizeMoveHandler(signaturePad._handleTouchMove)
+    signaturePad._handlePointerMove = neutralizeMoveHandler(signaturePad._handlePointerMove)
+  }, [])
+
   useEffect(() => {
     if (!signaturePadRef.current) return
 
@@ -92,10 +116,6 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     signaturePad.canvas.width = signaturePad.canvas.offsetWidth
     signaturePad.canvas.height = signaturePad.canvas.offsetHeight
 
-    // Track if a touch has started in the gesture zone
-    // This allows the trace to draw immediately, not just when a gesture is detected
-    let touchStartedInGestureZone = false
-
     /** Forwards the touchstart event to the signaturePad if in the gesture zone. */
     const onTouchStart = (e: TouchEvent) => {
       // Make preventDefault a noop otherwise tap-to-edit is broken.
@@ -103,23 +123,17 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       e.preventDefault = noop
 
       const touch = e.touches[0]
-      if (touch && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
-        touchStartedInGestureZone = true
+      if (isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
         signaturePad._handleTouchStart(e)
-      } else {
-        touchStartedInGestureZone = false
       }
     }
 
     /** Forwards the touchmove event to the signaturePad if in the gesture zone. */
     const onTouchMove = (e: TouchEvent) => {
+      const isGestureInProgress = gestureStore.getState().gesture.length > 0
       const touch = e.touches[0]
-      if (!touch) return
 
-      // Forward touchmove if we're in the gesture zone and a touch has started
-      // This allows the trace to draw immediately, not just when a gesture is detected
-      // This is especially important on iOS where gesture detection might be delayed
-      if (touchStartedInGestureZone && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
+      if (isGestureInProgress && isInGestureZone(touch.clientX, touch.clientY, leftHanded)) {
         signaturePad._handleTouchMove(e)
       }
     }
@@ -131,10 +145,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
       const preventDefault = e.preventDefault
       e.preventDefault = noop
 
-      if (touchStartedInGestureZone) {
-        signaturePad._handleTouchEnd(e)
-      }
-      touchStartedInGestureZone = false
+      signaturePad._handleTouchEnd(e)
       e.preventDefault = preventDefault
     }
 
@@ -144,10 +155,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
      */
     const onTouchCancel = (e: TouchEvent) => {
       // singaturePad.clear() is insufficient since the stroke has already begun. We need to end the stroke so that the touchmove handlers within signaturePad that draw the signature are removed.
-      if (touchStartedInGestureZone) {
-        signaturePad._handleTouchEnd(e)
-      }
-      touchStartedInGestureZone = false
+      signaturePad._handleTouchEnd(e)
     }
 
     eventNode?.addEventListener('touchstart', onTouchStart)
@@ -167,6 +175,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   return (
     <div
+      data-testid='gesture-trace'
       className={css({
         zIndex: 'gestureTrace',
         position: 'fixed',
@@ -200,12 +209,11 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     </div>
   )
 }
-/** Renders the TraceGesture component as long as it is not disabled in the settings. */
+/** Renders the TraceGesture component unless a modal or the mobile command universe is shown. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
   const showModal = useSelector(state => state.showModal)
-  const showGestureCheatsheet = useSelector(state => state.showGestureCheatsheet)
-  const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
-  return <>{!disableGestureTracing && !showModal && !showGestureCheatsheet && <TraceGesture {...props} />}</>
+  const showMobileCommandUniverse = useSelector(state => state.showMobileCommandUniverse)
+  return <>{!showModal && !showMobileCommandUniverse && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper

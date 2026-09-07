@@ -40,14 +40,15 @@ const DragAndDropFavorite = ({
     simplePath,
     path: simplePath,
   })
-  const dragHoldResult = useDragHold({ isDragging, simplePath, sourceZone: DragThoughtZone.Favorites })
+  const dragHoldResult = useDragHold({ simplePath, sourceZone: DragThoughtZone.Favorites })
 
   return (
-    // Set overflow:auto so the drop target fully wraps its contents.
+    // Set display:flow-root to create a new block formatting context so the drop target fully wraps its contents.
     // Otherwise the context-breadcrumbs margin-top will leak out and create a dead zone where the favorite cannot be dropped.
+    // Note: overflow:auto also creates a BFC but causes a scrollbar on empty thoughts (#3817). overflow:hidden clips content.
     <div
       {...dragHoldResult.props}
-      className={css({ overflow: 'auto' })}
+      className={css({ display: 'flow-root' })}
       data-testid='drag-and-drop-favorite'
       ref={dndRef(node => dragSource(dropTarget(node)))}
     >
@@ -121,7 +122,7 @@ const FavoritesOptions = ({
         <span
           {...fastClick(() => setShowOptions(!showOptions))}
           className={css({
-            color: 'modalExportUnused',
+            color: 'fgOverlay30',
             cursor: 'pointer',
             fontSize: '0.7em',
             fontWeight: 'bold',
@@ -147,7 +148,13 @@ const FavoritesOptions = ({
         <SlideTransition duration='veryFast' in={showOptions} nodeRef={formRef} from='down' unmountOnExit>
           <form
             ref={formRef}
-            className={css({ fontSize: 'sm', backgroundColor: 'checkboxForm', borderRadius: '0.5em', padding: '1em' })}
+            className={css({
+              fontSize: 'sm',
+              backgroundColor: 'fgOverlay30',
+              mixBlendMode: 'overlay',
+              borderRadius: '0.5em',
+              padding: '1em',
+            })}
           >
             <Checkbox
               checked={!hideContexts}
@@ -183,19 +190,17 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   return (
     <div className='favorites' data-testid='favorites'>
       <div>
+        <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
         {simplePaths.length > 0 ? (
-          <div>
-            <FavoritesOptions setShowOptions={setShowOptions} showOptions={showOptions} />
-            <div className={css({ marginTop: '1em' })}>
-              {simplePaths.map(simplePath => (
-                <DragAndDropFavorite
-                  key={head(simplePath)}
-                  simplePath={simplePath}
-                  disableDragAndDrop={disableDragAndDrop}
-                  hideContext={hideContexts}
-                />
-              ))}
-            </div>
+          <div className={css({ marginTop: '1em' })}>
+            {simplePaths.map(simplePath => (
+              <DragAndDropFavorite
+                key={head(simplePath)}
+                simplePath={simplePath}
+                disableDragAndDrop={disableDragAndDrop}
+                hideContext={hideContexts}
+              />
+            ))}
           </div>
         ) : (
           <div className={css({ marginTop: '1em', maxWidth: 450 })}>

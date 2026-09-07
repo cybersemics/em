@@ -1,5 +1,9 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "styled-system"],
+  // The iOS WebdriverIO tests are typechecked by src/e2e/iOS/tsconfig.json, the only program that declares
+  // WebdriverIO's globals. Excluding them here keeps browser, $, expect, and @wdio/browserstack-service's
+  // global interfaces (State, GRRUrls, …) out of app code.
+  "exclude": ["src/e2e/iOS"],
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
@@ -10,7 +14,7 @@
     "jsx": "react-jsx",
     "lib": ["dom", "es2022"],
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
@@ -27,8 +31,10 @@
       // DefaultRootState was removed in v8 and thus cannot be augmented anymore.
       // https://stackoverflow.com/a/78550104/480608
       "react-redux-default": ["./node_modules/react-redux"],
-      "react-redux": ["./src/@types/react-redux.d.ts"]
+      "react-redux": ["./src/@types/react-redux.d.ts"],
+      "@treecrdt/wa-sqlite/client": ["./node_modules/@treecrdt/wa-sqlite/dist/client.d.ts"],
+      "@treecrdt/wa-sqlite/vite-plugin": ["./node_modules/@treecrdt/wa-sqlite/dist/vite-plugin.d.ts"]
     },
-    "types": ["vitest/globals", "@wdio/globals/types", "@wdio/mocha-framework", "@wdio/browserstack-service"]
+    "types": ["node", "vitest/globals"]
   }
 }

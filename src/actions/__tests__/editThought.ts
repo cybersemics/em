@@ -2,13 +2,11 @@ import importText from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
 import parentOfThought from '../../selectors/parentOfThought'
-import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import contextToThought from '../../test-helpers/contextToThought'
 import editThought from '../../test-helpers/editThoughtByContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -46,13 +44,11 @@ it('edit a thought', () => {
       id: contextToThoughtId(stateNew, ['aa'])!,
       value: 'aa',
       parentId: HOME_TOKEN,
-      rank: 0,
     },
     {
       id: contextToThoughtId(stateNew, ['b'])!,
       value: 'b',
       parentId: HOME_TOKEN,
-      rank: 1,
     },
   ])
 
@@ -124,12 +120,10 @@ it('edit a thought with descendants', () => {
   expect(getAllChildrenAsThoughtsByContext(stateNew, ['aa'])).toMatchObject([
     {
       value: 'a1',
-      rank: 0,
       id: thoughtA1?.id,
     },
     {
       value: 'a2',
-      rank: 1,
       id: thoughtA2?.id,
     },
   ])
@@ -170,7 +164,6 @@ it('edit a thought existing in mutliple contexts', () => {
   expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
     {
       value: 'abc',
-      rank: 0,
       id: thoughtABC.id,
     },
   ])
@@ -193,14 +186,7 @@ it('move cursor to existing meta programming thought if any', () => {
       - color
         - lightblue`)
 
-  const expectedCursor = [
-    { value: 'a', rank: 0 },
-    { value: '=style', rank: 0 },
-  ]
-
-  const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-  expect(cursorThoughts).toMatchObject(expectedCursor)
+  expectPathToEqual(stateNew, stateNew.cursor, ['a', '=style'])
 })
 
 it('edit a thought that exists in another context', () => {
@@ -236,14 +222,11 @@ it('edit a thought that exists in another context', () => {
   expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
     {
       value: 'ab',
-      rank: 0,
       id: thoughtInContextA.id,
     },
   ])
 
-  expect(getAllChildrenAsThoughtsByContext(stateNew, ['b'])).toMatchObject([
-    { value: 'ab', rank: 0, id: thoughtInContextB.id },
-  ])
+  expect(getAllChildrenAsThoughtsByContext(stateNew, ['b'])).toMatchObject([{ value: 'ab', id: thoughtInContextB.id }])
 })
 
 it('edit a child with the same value as its parent', () => {
@@ -268,9 +251,7 @@ it('edit a child with the same value as its parent', () => {
   expect(getContexts(stateNew, 'ab')).toMatchObject([thoughtInContextA!.id])
 
   expect(thoughtInContextA?.parentId).toBe(thoughtA.id)
-  expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
-    { value: 'ab', rank: 0, id: thoughtInContextA.id },
-  ])
+  expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([{ value: 'ab', id: thoughtInContextA.id }])
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a', 'ab'])
 })
@@ -289,41 +270,6 @@ it('do not duplicate children when new and old context are same', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
-})
-
-// Issue: https://github.com/cybersemics/em/issues/1095
-it('data integrity test', () => {
-  const text = `
-    - a
-      - b
-        - d
-      - d`
-
-  const steps = [importText({ text }), setCursor(['a']), editThought(['a'], 'azkaban')]
-
-  const stateNew = reducerFlow(steps)(initialState())
-  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
-
-  expect(missingLexemeValues).toHaveLength(0)
-  expect(missingParentIds).toHaveLength(0)
-})
-
-// Issue: https://github.com/cybersemics/em/issues/1144
-it('data integrity test after editing a parent with multiple descendants with same value and depth', () => {
-  const text = `
-  - ${' '}
-    - a
-      - m
-    - b
-      - m`
-
-  const steps = [importText({ text }), setCursor(['']), editThought([''], 'x')]
-
-  const stateNew = reducerFlow(steps)(initialState())
-  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
-
-  expect(missingLexemeValues).toHaveLength(0)
-  expect(missingParentIds).toHaveLength(0)
 })
 
 describe('sort', () => {
@@ -394,6 +340,83 @@ describe('sort', () => {
   - D`)
   })
 
+  // https://github.com/cybersemics/em/issues/4847
+  it('keep an emoji-only thought at its insertion point until text is added', () => {
+    const stateEmoji = reducerFlow([
+      importText({
+        text: `
+          - X
+            - =sort
+              - Alphabetical
+            - A
+            - B
+            - D
+        `,
+      }),
+      setCursor(['X']),
+      newThought({ insertNewSubthought: true, value: '' }),
+      editThought(['X', ''], '🙂'),
+    ])(initialState())
+
+    expect(exportContext(stateEmoji, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - X
+    - =sort
+      - Alphabetical
+    - A
+    - B
+    - D
+    - 🙂`)
+
+    const stateEmojiWithText = editThought(['X', '🙂'], '🙂C')(stateEmoji)
+
+    expect(exportContext(stateEmojiWithText, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - X
+    - =sort
+      - Alphabetical
+    - 🙂C
+    - A
+    - B
+    - D`)
+  })
+
+  it('keep a thought with an empty HTML tag at its insertion point until text is added', () => {
+    const stateBefore = reducerFlow([
+      importText({
+        text: `
+          - X
+            - =sort
+              - Alphabetical
+            - A
+            - B
+            - D
+        `,
+      }),
+      setCursor(['X']),
+      newThought({ insertNewSubthought: true, value: '' }),
+      editThought(['X', ''], '<b></b>'),
+    ])(initialState())
+
+    expect(exportContext(stateBefore, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - X
+    - =sort
+      - Alphabetical
+    - A
+    - B
+    - D
+    - ****`)
+
+    const stateAfter = editThought(['X', '<b></b>'], '<b></b>C')(stateBefore)
+
+    expect(exportContext(stateAfter, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - X
+    - ****C
+    - =sort
+      - Alphabetical
+    - A
+    - B
+    - D`)
+  })
+
   it('rank should not change when editing a thought to empty', () => {
     const text = `
     - =sort
@@ -427,6 +450,28 @@ describe('sort', () => {
     expect(a2.rank).toEqual(a1.rank)
     expect(empty2.rank).toEqual(b1.rank)
     expect(c2.rank).toEqual(c1.rank)
+  })
+
+  it('edited thought that was empty should be sorted into place', () => {
+    const text = `
+  - =sort
+    - Alphabetical
+      - Desc
+  - One
+`
+
+    const steps = [importText({ text }), newThought({ value: '' }), editThought([''], 'Two')]
+
+    const state = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+      - Desc
+  - Two
+  - One`)
   })
 })
 

@@ -50,7 +50,7 @@ const DropChild = ({ depth, path, simplePath, cliff, isLastVisible }: DropChildP
     <li className={css({ position: 'relative' })}>
       <span
         className={cx(
-          dropEndRecipe(),
+          dropEndRecipe({ type: 'dropChild' }),
           css({
             zIndex: 'dropEmpty',
             backgroundColor: testFlags.simulateDrop ? 'dropChildTarget' : undefined,

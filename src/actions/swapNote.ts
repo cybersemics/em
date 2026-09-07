@@ -3,8 +3,9 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import findDescendant from '../selectors/findDescendant'
-import { anyChild } from '../selectors/getChildren'
+import { anyChild, findAnyChild } from '../selectors/getChildren'
 import getRankAfter from '../selectors/getRankAfter'
+import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import simplifyPath from '../selectors/simplifyPath'
@@ -15,11 +16,13 @@ import head from '../util/head'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
 import newThought from './newThought'
 import setCursor from './setCursor'
+import uncategorize from './uncategorize'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
 const swapNote = (state: State): State => {
@@ -61,6 +64,10 @@ const swapNote = (state: State): State => {
     })
   }
 
+  // Capture the cursor thought's value before uncategorize may delete it (when it has children)
+  const value = headValue(state, cursor) ?? ''
+  const simplePath = simplifyPath(state, cursor)
+
   return reducerFlow(
     // if the cursor thought has a note, then convert the note to a thought
     noteId
@@ -68,7 +75,6 @@ const swapNote = (state: State): State => {
         [
           state => {
             const noteChildId = anyChild(state, noteId)!.id
-            const simplePath = simplifyPath(state, cursor)
             const oldPath = appendToPath(cursor, noteId, noteChildId)
             const newPath = appendToPath(cursor, noteChildId)
             const newRank = getRankAfter(state, appendToPath(simplePath, noteId))
@@ -82,7 +88,25 @@ const swapNote = (state: State): State => {
                     pathParent: cursor,
                     thoughtId: noteId,
                   }),
-                  setCursor({ offset: note.value.length, path: newPath }),
+                  // Set the cursor on the converted thought. If a sibling with the same value
+                  // already existed, moveThought merged the note child into it and noteChildId
+                  // no longer exists, so resolve the surviving thought by value to avoid an
+                  // "Invalid path... No thought found with id" error.
+                  state => {
+                    const resultChild = getThoughtById(state, noteChildId)
+                      ? getThoughtById(state, noteChildId)
+                      : findAnyChild(
+                          state,
+                          head(cursor),
+                          child => normalizeThought(child.value) === normalizeThought(note.value),
+                        )
+                    return resultChild
+                      ? setCursor(state, {
+                          offset: resultChild.value.length,
+                          path: appendToPath(cursor, resultChild.id),
+                        })
+                      : state
+                  },
                 ])(state)
               : null
           },
@@ -101,7 +125,6 @@ const swapNote = (state: State): State => {
             : null,
           // move the existing =note child into the parent if it exists
           state => {
-            const simplePath = simplifyPath(state, cursor)
             return parentNoteChildId
               ? moveThought(state, {
                   oldPath: appendToPath(
@@ -114,17 +137,25 @@ const swapNote = (state: State): State => {
                 })
               : null
           },
-          // move the cursor into =note
+          // use uncategorize to move the cursor's children to the parent
+          // uncategorize is a no-op when there are no children, so this is safe in all cases
+          uncategorize({ at: simplePath }),
+          // if the cursor thought still exists (had no children), move it into =note
+          // if uncategorize deleted it (had children), recreate it under =note with the original value
           state => {
-            return moveThought(state, {
-              oldPath: cursor,
-              newPath: appendToPath(
-                parentOf(cursor),
-                findDescendant(state, head(parentOf(cursor)), '=note')!,
-                thoughtId,
-              ),
-              newRank: 0,
-            })
+            const noteId = findDescendant(state, head(parentOf(cursor)), '=note')!
+            return getThoughtById(state, thoughtId)
+              ? moveThought(state, {
+                  oldPath: cursor,
+                  newPath: appendToPath(parentOf(cursor), noteId, thoughtId),
+                  newRank: 0,
+                })
+              : newThought(state, {
+                  at: appendToPath(parentOf(cursor), noteId),
+                  insertNewSubthought: true,
+                  preventSetCursor: true,
+                  value: value,
+                })
           },
           setCursor({ path: parentNoteChildId ? appendToPath(parentOf(cursor), parentNoteChildId) : parentOf(cursor) }),
         ],
