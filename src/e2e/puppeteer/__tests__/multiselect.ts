@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import { HOME_DISPLAY_VALUE } from '../../../constants'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
@@ -407,8 +408,9 @@ describe('multiselect', () => {
     await command('selectAll')
     await press('Backspace')
 
+    // an export with no thoughts left is just the root placeholder
     const exported = await exportThoughts()
-    expect(exported).toBe('')
+    expect(exported).toBe(`- ${HOME_DISPLAY_VALUE}`)
   })
 })
 
