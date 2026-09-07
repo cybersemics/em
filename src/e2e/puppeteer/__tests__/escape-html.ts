@@ -78,3 +78,20 @@ it('replaces the selected text in a thought containing an HTML entity', async ()
   await waitForEditingTextChange('Foo &amp; Bar')
   expect(await getEditingText()).toBe('Foo &amp; Baz')
 })
+
+// https://github.com/cybersemics/em/issues/5297
+it('cuts only the selected text from a thought containing an HTML entity', async () => {
+  await press('Enter')
+  await keyboard.type('Foo & BarBaz')
+  await waitForEditable('Foo &amp; BarBaz')
+
+  await setSelection('Foo & Bar'.length, 'Foo & BarBaz'.length)
+  await press('x', { ctrl: true })
+  await waitForEditingTextChange('Foo &amp; BarBaz')
+
+  await setSelection('Foo & '.length, 'Foo & Bar'.length)
+  await press('v', { ctrl: true })
+
+  await waitForEditingTextChange('Foo &amp; Bar')
+  expect(await getEditingText()).toBe('Foo &amp; Baz')
+})

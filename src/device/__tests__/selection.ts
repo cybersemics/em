@@ -104,4 +104,42 @@ describe('html', () => {
 
     document.body.removeChild(editable)
   })
+
+  /** Builds a contenteditable div and selects [start, end) of the text node at the given path of child indices. */
+  const selectRange = (innerHTML: string, start: number, end: number, childPath: number[] = [0]) => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.innerHTML = innerHTML
+    document.body.appendChild(editable)
+
+    const textNode = childPath.reduce<Node>((node, i) => node.childNodes[i], editable)
+    const range = document.createRange()
+    range.setStart(textNode, start)
+    range.setEnd(textNode, end)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    return () => document.body.removeChild(editable)
+  }
+
+  it('returns only the selected text', () => {
+    const cleanup = selectRange('Foo x BarBaz', 9, 12)
+    expect(html()).toBe('Baz')
+    cleanup()
+  })
+
+  // https://github.com/cybersemics/em/issues/5297
+  it('returns only the selected text when the value contains an HTML entity', () => {
+    const cleanup = selectRange('Foo &amp; BarBaz', 9, 12)
+    expect(html()).toBe('Baz')
+    cleanup()
+  })
+
+  // cloneContents drops an ancestor that wholly contains the range (#4229), so the formatting has to be re-applied.
+  it('retains the formatting the selection sits inside', () => {
+    const cleanup = selectRange('<b>apple</b>', 1, 4, [0, 0])
+    expect(html()).toBe('<b>ppl</b>')
+    cleanup()
+  })
 })
