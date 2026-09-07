@@ -58,9 +58,13 @@ const commentBody = state => {
     .join('\n')
 }
 
-/** Creates or updates the state comment, unless the scan is read-only. */
+/**
+ * Creates or updates the state comment, unless the scan is read-only. A pull request that has never
+ * conflicted gets no comment, so only pull requests the workflow has acted on are annotated.
+ */
 const upsertComment = async ({ github, owner, repo, pr, comment, state, dryRun }) => {
   if (dryRun) return comment
+  if (!comment && !state.firstConflictAt) return null
   const body = commentBody(state)
   if (comment) {
     await github.rest.issues.updateComment({ owner, repo, comment_id: comment.id, body })
