@@ -25,6 +25,12 @@ const clear = (
   const remote = !!options?.remote
 
   return reducerFlow([
+    // Clear navigation selection before deleting thoughts so updateThoughts does not expand stale paths.
+    state => ({
+      ...state,
+      cursor: null,
+      multicursors: {},
+    }),
     // delete all thoughts
     ...getAllChildren(state, HOME_TOKEN).map(childId =>
       deleteThought({ local: local, remote: remote, pathParent: HOME_PATH, thoughtId: childId }),

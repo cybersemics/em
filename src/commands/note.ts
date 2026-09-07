@@ -3,22 +3,23 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import PencilIcon from '../components/icons/PencilIcon'
 import { HOME_PATH } from '../constants'
 import asyncFocus from '../device/asyncFocus'
+import hasMulticursor from '../selectors/hasMulticursor'
 import noteValue from '../selectors/noteValue'
 import simplifyPath from '../selectors/simplifyPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const noteCommand: Command = {
+const noteCommand = {
   id: 'note',
-  label: 'Note',
+  label: 'Note' as const,
   description: 'Add a small note beneath a thought. Cute!',
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',
   multicursor: {
-    disallow: true,
-    error: 'Cannot create a note with multiple thoughts.',
+    // The end-of-run cursor restore dispatches setCursor, which resets noteFocus and would yank the caret out of the note that was just created. Instead, leave the cursor on the last selected thought with its note focused, ready to type.
+    preventSetCursor: true,
   },
   svg: PencilIcon,
-  canExecute: state => isDocumentEditable() && !!state.cursor,
+  canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
   exec: (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
@@ -34,6 +35,6 @@ const noteCommand: Command = {
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return noteValue(state, path) !== null
   },
-}
+} satisfies Command
 
 export default noteCommand

@@ -18,35 +18,34 @@ interface PanelCommandProps {
 }
 
 interface ActiveButtonGlowImageProps {
-  size?: 'small' | 'medium'
   isActive: boolean | undefined
-  type: 'luminosity' | 'saturation'
 }
 
-/** Glow image for active button state. */
-const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive, type }) => {
+/** Pre-blurred additive glow that avoids Android corruption from filtered HSL blend layers. */
+const ActiveButtonGlowImage: FC<ActiveButtonGlowImageProps> = ({ isActive }) => {
   const nodeRef = useRef<HTMLDivElement>(null)
   return (
     <FadeTransition
-      type={type === 'luminosity' ? 'activeButtonGlowLuminosity' : 'activeButtonGlowSaturation'}
+      type='activeButtonGlow'
       in={isActive}
       unmountOnExit
       nodeRef={nodeRef}
+      /**
+       * When `in={true}` on mount, we need appear={true} to trigger the enter transition.
+       * We need the enter transition, because the opacity is set inside the transition styles.
+       **/
+      appear
     >
       <div
         ref={nodeRef}
         className={css({
           gridArea: 'command',
-          objectFit: 'contain',
-          objectPosition: 'center',
-          backgroundGradient: 'activeGlow',
-          borderRadius: '0px',
+          margin: -40,
           pointerEvents: 'none',
-          mixBlendMode: type === 'luminosity' ? 'luminosity' : 'saturation',
-          filter: 'blur(23px)',
-          padding: 40 /* Expands the Paint Rect so it includes all of the blur. */,
-          margin: -40 /* Pulls it back so layout doesn't break. */,
-          backgroundClip: 'content-box' /* Ensures background doesn't fill the padding. */,
+          backgroundImage: 'url(/img/command-center/active-glow.png)',
+          backgroundSize: '100% 100%',
+          backgroundRepeat: 'no-repeat',
+          mixBlendMode: 'plus-lighter',
         })}
       />
     </FadeTransition>
@@ -90,9 +89,9 @@ const PanelCommand: FC<PanelCommandProps> = ({ command, size }) => {
           : { gridColumn: 'span 1', gridTemplateColumns: 'auto', gridTemplateAreas: `"command"` }),
       })}
     >
-      <ActiveButtonGlowImage isActive={isButtonActive} type='luminosity' />
-      <ActiveButtonGlowImage isActive={isButtonActive} type='saturation' />
+      <ActiveButtonGlowImage isActive={isButtonActive} />
       <div
+        aria-label={command.label}
         className={cx(
           panelCommandRecipe({
             isButtonExecutable,

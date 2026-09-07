@@ -15,6 +15,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 
 /** Toggles the given attribute value. If the attribute value exists, deletes the entire attribute. If value is not specified, toggles the attribute itself. */
 const toggleAttribute = (
@@ -30,8 +31,9 @@ const toggleAttribute = (
   const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
   const idNew = createId()
 
-  // base case: delete or overwrite the first subthought with the last value in the sequence
-  if (_values.length === 1) {
+  // base case: delete or overwrite the first subthought with the value slot
+  // A nullary attribute (e.g. =test) is a key, not a value, so it is handled below by its own existence rather than by overwriting an unrelated first child.
+  if (_values.length === 1 && !isAttribute(_values[0])) {
     const firstThought = getThoughtById(state, getAllChildren(state, thoughtId)[0])
 
     // Handle standalone attributes, e.g. =pin as opposed to =pin/true, skip deleting the attribute
@@ -48,6 +50,11 @@ const toggleAttribute = (
         })
   }
 
+  // toggle a nullary attribute off if it exists; otherwise it is created below
+  if (_values.length === 1 && firstSubthoughtId) {
+    return deleteThought(state, { pathParent: path, thoughtId: firstSubthoughtId })
+  }
+
   // otherwise, create the first subthought if it does not exist and recurse
   const stateWithFirstSubthought = firstSubthoughtId
     ? state
@@ -62,6 +69,7 @@ const toggleAttribute = (
       })
 
   // recursion
+  // When the sequence ends in an attribute key, the recursive call receives no values and returns the state unchanged.
   const stateNew = toggleAttribute(stateWithFirstSubthought, {
     path: appendToPath(path, firstSubthoughtId || idNew),
     values: _values.slice(1),
