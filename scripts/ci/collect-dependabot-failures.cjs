@@ -262,7 +262,6 @@ const collectDependabotFailures = async ({ github, context, core }) => {
         sessions,
         maxSessions: MAX_SESSIONS,
         commentId: existing ? existing.id : null,
-        runUrl: `${process.env.GITHUB_SERVER_URL}/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`,
       },
       null,
       2,

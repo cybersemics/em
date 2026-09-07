@@ -2,10 +2,12 @@
 /**
  * Starts Copilot sessions for due conflicting Copilot pull requests and records successful starts.
  * It re-checks the PR immediately before dispatch so a stale scanner cannot start unnecessary work.
+ * The comment it records them in is rendered by scripts/ci/copilot-conflicts-comment.cjs, which the
+ * scan rewrites from the same state — see that file for why neither side renders its own.
  */
 import { readFileSync } from 'node:fs'
+import { MARKER, MAX_ATTEMPTS, commentBody, parseState } from './copilot-conflicts-comment.cjs'
 
-const MARKER = '<!-- copilot-conflicts -->'
 const SKIP_LABEL = 'skip-auto-resolve-conflicts'
 const MODEL = 'claude-opus-5'
 const CUSTOM_AGENT = 'worker-bee'
@@ -23,30 +25,6 @@ if (!process.env.COPILOT_TASKS_TOKEN) {
 }
 
 const { tasks } = JSON.parse(readFileSync(reportFile, 'utf8'))
-
-/** Decodes a state record from the collector's marked comment. */
-const parseState = body => {
-  const match = /<!-- copilot-conflicts-state: ([A-Za-z0-9_-]+) -->/.exec(body || '')
-  if (!match) throw new Error('conflict state comment is missing or malformed')
-  const state = JSON.parse(Buffer.from(match[1], 'base64url').toString('utf8'))
-  return { ...state, history: Array.isArray(state.history) ? state.history : [] }
-}
-
-/** Renders the persisted state in the automation's single visible comment. */
-const commentBody = state => {
-  const encoded = Buffer.from(JSON.stringify(state)).toString('base64url')
-  const nextDelay = [3, 6, 12, 24, 48, 96][state.attempts]
-  return [
-    MARKER,
-    `<!-- copilot-conflicts-state: ${encoded} -->`,
-    '### Copilot conflict resolution',
-    '',
-    state.attempts >= 6
-      ? 'Automatic conflict resolution has reached its six-attempt lifetime limit.'
-      : `Copilot conflict-resolution task ${state.attempts} of 6 started. The next attempt is eligible after ${nextDelay} hours if this PR still conflicts.`,
-    `Latest task: ${state.lastTaskUrl}`,
-  ].join('\n')
-}
 
 /** Starts a Copilot task on the existing pull request branch. */
 const startTask = async task => {
@@ -113,16 +91,19 @@ const dispatchTask = async task => {
     attempts: state.attempts + 1,
     lastDispatchedAt: new Date().toISOString(),
     lastTaskUrl: session.html_url,
+    // Recorded rather than derived, so a later scan rewriting this comment still credits the run
+    // that started the attempt instead of itself.
+    lastRunUrl: process.env.RUN_URL || null,
     history: [...state.history, { startedAt: new Date().toISOString(), taskUrl: session.html_url }],
   }
   const update = await fetch(`${base}/issues/comments/${comment.id}`, {
     method: 'PATCH',
     headers,
-    body: JSON.stringify({ body: commentBody(updated) }),
+    body: JSON.stringify({ body: commentBody({ state: updated, number: task.number }) }),
   })
   if (!update.ok)
     throw new Error(`task started but could not update #${task.number}: ${update.status} ${update.statusText}`)
-  return `- [#${task.number}](${task.url}) — [Copilot task](${session.html_url}) started (attempt ${updated.attempts} of 6).`
+  return `- [#${task.number}](${task.url}) — [Copilot task](${session.html_url}) started (attempt ${updated.attempts} of ${MAX_ATTEMPTS}).`
 }
 
 const results = await Promise.allSettled(tasks.map(dispatchTask))
