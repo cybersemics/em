@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import Dispatch from '../@types/Dispatch'
 import State from '../@types/State'
@@ -24,10 +23,10 @@ import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorUpCommand: Command = {
+const cursorUpCommand = {
   id: 'cursorUp',
-  label: 'Cursor Up',
-  keyboard: [{ key: Key.ArrowUp }, { key: Key.ArrowUp, shift: true }],
+  label: 'Cursor Up' as const,
+  keyboard: [{ key: 'ArrowUp' }, { key: 'ArrowUp', shift: true }],
   hideFromHelp: true,
   multicursor: false,
   svg: CursorUpIcon,
@@ -124,6 +123,6 @@ const cursorUpCommand: Command = {
       dispatch(firstPath ? setCursor({ path: firstPath }) : cursorUp())
     }
   }),
-}
+} satisfies Command
 
 export default cursorUpCommand

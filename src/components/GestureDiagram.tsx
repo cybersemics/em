@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid'
 import React, { useState } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -5,7 +6,6 @@ import { SystemStyleObject } from '../../styled-system/types'
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
 import { GESTURE_GLOW_BLUR, GESTURE_GLOW_COLOR } from '../constants'
-import createId from '../util/createId'
 
 interface GestureDiagramProps {
   arrowSize?: number
@@ -366,7 +366,7 @@ const GestureDiagram = ({
   useGradient = true,
   highlightColor,
 }: GestureDiagramProps) => {
-  const [id] = useState(createId())
+  const [id] = useState(nanoid())
 
   // match signaturePad shadow in TraceGesture component
   // TODO: Why isn't this working?

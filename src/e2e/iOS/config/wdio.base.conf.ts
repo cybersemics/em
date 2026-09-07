@@ -1,7 +1,7 @@
 import http from 'http'
 import https from 'https'
 import path from 'path'
-import { drainConsoleProxy, waitForConsoleProxy } from '../../../util/consoleProxy'
+import { CONSOLE_PROXY_STORAGE_KEY, type CapturedLog } from '../../../util/consoleProxy'
 import resetApp from '../helpers/resetApp'
 
 const LOCAL_URL = 'https://localhost:3000'
@@ -10,7 +10,10 @@ const LOCAL_URL = 'https://localhost:3000'
 const APP_HTML_MARKER = 'data-app="em"'
 
 /** The URL the device loads: the public tunnel URL when one is set (BrowserStack), else the local dev server. */
-const appUrl = (): string => process.env.CLOUDFLARED_URL || LOCAL_URL
+const appUrl = (): string =>
+  // Inserts `/` before `?`. String concat on `https://host` yields `https://host?__token=`, which
+  // iOS Safari does not load as `/` — first session 403s, later spec retries can still pass.
+  new URL(process.env.CLOUDFLARED_URL || LOCAL_URL).href
 
 /**
  * Performs one GET against the app origin, resolving to its status code and (truncated) body, or
@@ -70,6 +73,45 @@ export const checkAppRunning = async (url: string = LOCAL_URL): Promise<void> =>
 }
 
 /**
+ * Atomically reads and clears the console proxy buffer for `key`. Runs IN THE REMOTE BROWSER:
+ * drainConsoleProxy ships this via browser.execute, which serializes the function source and drops
+ * all closure scope, so it must reference only its `key` param and browser globals (no module-scope
+ * helpers, no CONSOLE_PROXY_STORAGE_KEY capture). The buffer is written by the app side of the proxy,
+ * src/util/consoleProxy.ts, which owns the key and the record shape.
+ */
+const drainBuffer = (key: string): CapturedLog[] => {
+  try {
+    const logs = JSON.parse(sessionStorage.getItem(key) ?? '[]') as CapturedLog[]
+    sessionStorage.setItem(key, '[]')
+    return logs
+  } catch {
+    return []
+  }
+}
+
+/** Readiness probe for waitForConsoleProxy. Self-contained for the same browser.execute serialization reason as drainBuffer. The buffer key exists iff installConsoleProxy has run. */
+const isProxyInstalled = (key: string): boolean => sessionStorage.getItem(key) !== null
+
+/** Atomically reads and clears the console proxy buffer in the remote browser. Returns [] when capture is not enabled or nothing has been captured. */
+const drainConsoleProxy = async (): Promise<CapturedLog[]> => {
+  if (!process.env.VITE_BROWSER_CONSOLE_CAPTURE) return []
+  return browser.execute(drainBuffer, CONSOLE_PROXY_STORAGE_KEY)
+}
+
+/**
+ * Resolves once the console proxy has installed in the remote browser, or rejects after `timeout` ms.
+ *
+ * No-op when VITE_BROWSER_CONSOLE_CAPTURE is unset – this env var must be set both at build time (so the served bundle includes the proxy) and at runtime (so this helper waits for it).
+ */
+const waitForConsoleProxy = async (timeout = 30000): Promise<void> => {
+  if (!process.env.VITE_BROWSER_CONSOLE_CAPTURE) return
+  await browser.waitUntil(async () => browser.execute(isProxyInstalled, CONSOLE_PROXY_STORAGE_KEY), {
+    timeout,
+    timeoutMsg: `Console proxy did not install within ${timeout}ms — VITE_BROWSER_CONSOLE_CAPTURE is set on the WDIO process but the served bundle was likely built without it. Rebuild with \`VITE_BROWSER_CONSOLE_CAPTURE=1 yarn build\` and re-serve.`,
+  })
+}
+
+/**
  * Base WDIO configuration shared between local and BrowserStack configs.
  * This contains common settings for iOS Safari testing.
  */
@@ -86,10 +128,16 @@ const baseConfig = {
   setupFiles: [path.resolve(process.cwd(), 'src/e2e/iOS/setup.ts')],
 
   // Capabilities
-  // Spec files run in parallel sessions, but cap at 2 (we have 3 specs) rather than opening all at once.
+  // Spec files run in parallel sessions, but cap at 2 (fewer than the number of spec files) rather than
+  // opening all at once.
   // Reasons: (1) bursting N simultaneous session-creations is what timed out the 3rd session on
   // BrowserStack (#0-2 "aborted due to timeout" on POST .../session); staggering avoids the spike.
-  // (2) leave headroom in the shared BrowserStack parallel pool for agent-driven sessions and other CI runs.
+  // (2) leave headroom in the shared BrowserStack parallel pool for other CI runs — one run at the
+  // plan's full parallel cap (5) cannot overlap with anything, and several such runs starting together
+  // overflow the separate session-create queue (BROWSERSTACK_QUEUE_SIZE_EXCEEDED).
+  // This is also the most sessions the BrowserStack config waits for in onPrepare
+  // (waitForBrowserStackSlots) — fewer when --spec names fewer files — so the pool (and its queue) is
+  // known to have room before any worker starts.
   maxInstances: 2,
 
   // Base iOS Safari capabilities shared between local and browserStack configs. Individual configs can override or extend these.
@@ -112,9 +160,12 @@ const baseConfig = {
 
   // Retry a whole spec file on failure, including failures to acquire a BrowserStack session when the
   // account's parallel pool is exhausted by concurrent runs (the "WebDriverError: ... aborted due to
-  // timeout" on POST .../session). specFileRetriesDeferred re-queues the failed spec at the END, so it
-  // retries only after the other specs finish and free up sessions — i.e. it waits for a slot rather
-  // than failing. Also auto-heals home.ts, which is known to flake under parallel load (#1475, #1523).
+  // timeout" on POST .../session). onPrepare waits for real headroom before any worker starts, but that
+  // is a check-then-create wait rather than a reservation, so two runs can still claim the same slot;
+  // this remains the fallback for that race window. specFileRetriesDeferred re-queues the failed spec at
+  // the END, so it retries only after the other specs finish and free up sessions — i.e. it waits for a
+  // slot rather than failing. Also auto-heals home.ts, which is known to flake under parallel load
+  // (#1475, #1523).
   specFileRetries: 5,
   specFileRetriesDelay: 30,
   specFileRetriesDeferred: true,
@@ -170,7 +221,6 @@ const baseConfig = {
       )
     } catch {
       // Report what the device is actually looking at, plus what the runner sees at the same URL.
-      // Neither is fixable by retrying, so the message has to name the origin, not the symptom.
       const page = await browser
         .execute(() => ({
           url: location.href,
@@ -180,7 +230,7 @@ const baseConfig = {
         .catch(() => null)
       const fromRunner = describeResponse(await requestOrigin(baseUrl))
       throw new Error(
-        `em did not load at ${baseUrl} — the page is not the app, and no retry will change that.\n` +
+        `em did not load at ${baseUrl} — the page is not the app.\n` +
           `on device: ${page ? `${page.url} — title "${page.title}" — ${page.text || '(no text)'}` : 'page could not be inspected'}\n` +
           `from runner: ${fromRunner}`,
       )

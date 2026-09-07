@@ -26,6 +26,9 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
+      - scripts/ci/collect-copilot-conflicts.cjs
+      - scripts/ci/__tests__/collect-copilot-conflicts.mjs
+      - scripts/ci/start-copilot-conflict-task.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -42,6 +45,9 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
+      - scripts/ci/collect-copilot-conflicts.cjs
+      - scripts/ci/__tests__/collect-copilot-conflicts.mjs
+      - scripts/ci/start-copilot-conflict-task.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -99,3 +105,6 @@ jobs:
 
       - name: Run web bridge attach integration test
         run: npx tsx scripts/bridge-attach.test.ts
+
+      - name: Run Copilot conflict collector tests
+        run: node scripts/ci/__tests__/collect-copilot-conflicts.mjs

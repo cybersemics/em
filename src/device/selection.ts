@@ -19,8 +19,12 @@ export interface NodeOffset {
 
 /** A saved selection object that can restore the browser selection when passed to selection.restore. */
 export interface SavedSelection {
+  /** The focus end of the selection, i.e. the end that moves as the selection is extended. */
   node: Node
   offset: number
+  /** The anchor end, i.e. the end that stays put. Only present when the saved selection was a range; a collapsed
+   * caret has no second end to record. */
+  anchor?: { node: Node; offset: number }
 }
 
 /** Gets the padding of an element as an array of numbers [top, right, bottom, left]. */
@@ -67,6 +71,21 @@ export const selectNode = (node: Node): void => {
   range.selectNodeContents(node)
   sel.removeAllRanges()
   sel.addRange(range)
+}
+
+/**
+ * Collapses a selected range to a caret at its end, leaving focus and the keyboard alone.
+ *
+ * Android draws the text context menu for the range, so this dismisses the menu on its own. Unlike `clear`, it
+ * does not blur, which is what keeps the menu's dismissal from overlapping the keyboard's: tearing a range down
+ * while the keyboard is going away makes Android rebuild the menu, so it flashes back after it has already gone
+ * ([#4833](https://github.com/cybersemics/em/issues/4833)). Collapsing while the keyboard is still up lets the
+ * menu fade out in one pass, and the caret it leaves behind is dismissed by the blur that follows.
+ */
+export const collapse = (): void => {
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed) return
+  sel.collapseToEnd()
 }
 
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
@@ -237,7 +256,11 @@ export const offsetFromNode = (node: Node): number | null => {
   return range.toString().length
 }
 
-/** Returns the character offset at the end of the selection. Returns null if there is no selection. */
+/** Returns the character offset at the end of the selection. Returns null if there is no selection.
+ *
+ * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
+ * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
+ */
 export const offsetEnd = (): number | null => {
   const selection = window.getSelection()
   if (!selection) return null
@@ -247,7 +270,11 @@ export const offsetEnd = (): number | null => {
   return selectionStart + selection.toString().length
 }
 
-/** Returns the character offset at the start of the selection. Returns null if there is no selection. */
+/** Returns the character offset at the start of the selection. Returns null if there is no selection.
+ *
+ * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
+ * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
+ */
 export const offsetStart = (): number | null => {
   const selection = window.getSelection()
   if (!selection) return null
@@ -271,6 +298,25 @@ export const offsetRange = (editable: HTMLElement): { start: number; end: number
   return { start, end: start + range.toString().length }
 }
 
+/** Returns the plain-text character offsets [start, end) of the current selection relative to the given thought's
+ * editable, or null if the thought is not rendered or the selection is not within it. */
+export const offsetRangeThought = (thoughtId: string): { start: number; end: number } | null => {
+  const editable = document.querySelector(`[aria-label="editable-${thoughtId}"]`)
+  return editable ? offsetRange(editable as HTMLElement) : null
+}
+
+/** Clamps a saved offset to what the node can currently address. The node's contents may have changed while the
+ * selection was saved, and an out-of-bounds offset makes the Selection API throw. */
+const validOffset = (node: Node, offset: number): number =>
+  // If it's an element node, ensure offset doesn't exceed number of children
+  node.nodeType === Node.ELEMENT_NODE
+    ? Math.min(offset, node.childNodes.length)
+    : // If it's a text node, ensure offset doesn't exceed text length
+      node.nodeType === Node.TEXT_NODE && node.textContent
+      ? Math.min(offset, node.textContent.length)
+      : // Default to 0 if we can't determine a valid offset
+        0
+
 /** Restores the selection with the given restoration object (returned by selection.save). NOOP if the restoration object is null or undefined. */
 export const restore = (savedSelection: SavedSelection | null): void => {
   if (!savedSelection) return
@@ -280,22 +326,17 @@ export const restore = (savedSelection: SavedSelection | null): void => {
 
   sel.removeAllRanges()
 
-  // Validate the node and offset before attempting to collapse
-  const node = savedSelection.node
-  let offset = savedSelection.offset
+  const { node, anchor } = savedSelection
+  const offset = validOffset(node, savedSelection.offset)
 
-  // If it's an element node, ensure offset doesn't exceed number of children
-  if (node.nodeType === Node.ELEMENT_NODE) {
-    offset = Math.min(offset, node.childNodes.length)
+  // Restore both ends when a range was saved. Collapsing to the focus end instead would silently downgrade the user's
+  // selection to a caret, which matters wherever the selection is hijacked and handed back: the Command Universe
+  // takes focus for its search input, and copy stages rich content in a hidden contenteditable.
+  if (anchor) {
+    sel.setBaseAndExtent(anchor.node, validOffset(anchor.node, anchor.offset), node, offset)
+  } else {
+    sel.collapse(node, offset)
   }
-  // If it's a text node, ensure offset doesn't exceed text length
-  else if (node.nodeType === Node.TEXT_NODE && node.textContent) {
-    offset = Math.min(offset, node.textContent.length)
-  }
-  // Default to 0 if we can't determine a valid offset
-  else offset = 0
-
-  sel.collapse(node, offset)
 }
 
 /** Returns an object representing the current selection that can be passed to selection.restore to restore the selection. */
@@ -306,6 +347,8 @@ export const save = (): SavedSelection | null => {
     return {
       node: sel.focusNode,
       offset: sel.focusOffset,
+      // A collapsed selection's anchor is its focus, so recording it would be redundant.
+      ...(!sel.isCollapsed && sel.anchorNode ? { anchor: { node: sel.anchorNode, offset: sel.anchorOffset } } : null),
     }
   } else {
     return null
@@ -505,6 +548,49 @@ export const split = (el: HTMLElement): SplitResult | null => {
     left: leftDiv.innerHTML,
     right: rightDiv.innerHTML,
   }
+}
+
+/**
+ * Returns the position and height of the caret relative to the top left of the focused thought, or null if the caret is
+ * not in a thought. This is the real caret's own geometry, so a faux caret rendered at the same offsets within another
+ * thought is guaranteed to match it, no matter how the two thoughts' values differ (see MulticursorFauxCaret).
+ */
+export const caretRect = (): { x: number; y: number; height: number } | null => {
+  const editable = document.activeElement
+  if (!isHTMLElement(editable) || !isContentEditable(editable)) return null
+
+  const editableRect = editable.getBoundingClientRect()
+  const sel = window.getSelection()
+  const range = sel?.rangeCount ? sel.getRangeAt(0) : null
+  let rect = range?.getBoundingClientRect() ?? null
+
+  // A collapsed range on an element node has no client rect. That is where a tap on the very beginning or end of the
+  // text places the selection (see offsetFromClosestParent), so measure a range spanning the editable's content up to
+  // the caret instead and take the trailing edge of its last rect, which is where the caret is rendered. An empty
+  // range, i.e. a caret at the very beginning, has no rects either and falls through to the padding fallback below,
+  // which is the same position.
+  if (!rect?.height && range && editable.contains(range.startContainer)) {
+    const measured = document.createRange()
+    measured.setStart(editable, 0)
+    measured.setEnd(range.startContainer, range.startOffset)
+    const rects = measured.getClientRects()
+    const last = rects[rects.length - 1]
+    if (last?.height) rect = new DOMRect(last.right, last.y, 0, last.height)
+  }
+
+  // An empty thought, e.g. a cleared one, has no client rect, since the selection is on the element node rather than a
+  // text node. Fall back to the start of the editable's content box, where the caret is rendered. The height is a
+  // single line rather than the height of the editable, which spans several lines when a cleared thought's value is
+  // rendered as a multiline placeholder.
+  const [paddingTop, , paddingBottom, paddingLeft] = getElementPaddings(editable)
+  const lineHeight = parseFloat(window.getComputedStyle(editable).lineHeight)
+  return rect?.height
+    ? { x: rect.x - editableRect.x, y: rect.y - editableRect.y, height: rect.height }
+    : {
+        x: paddingLeft,
+        y: paddingTop,
+        height: lineHeight || editableRect.height - paddingTop - paddingBottom,
+      }
 }
 
 /** Returns the selection text, or null if there is no selection. */
