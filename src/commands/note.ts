@@ -8,9 +8,9 @@ import noteValue from '../selectors/noteValue'
 import simplifyPath from '../selectors/simplifyPath'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const noteCommand: Command = {
+const noteCommand = {
   id: 'note',
-  label: 'Note',
+  label: 'Note' as const,
   description: 'Add a small note beneath a thought. Cute!',
   keyboard: { key: 'n', alt: true, meta: true },
   gesture: 'rdlr',
@@ -35,6 +35,6 @@ const noteCommand: Command = {
     const path = cursor ? simplifyPath(state, cursor) : HOME_PATH
     return noteValue(state, path) !== null
   },
-}
+} satisfies Command
 
 export default noteCommand

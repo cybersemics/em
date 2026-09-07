@@ -65,7 +65,7 @@ const setCursor = (
     )
     return state
   }
-  // ✗ ["__ROOT__", ...]
+  // ✗ [HOME_TOKEN, ...]
   else if (path && path[0] === HOME_TOKEN) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
     console.error(
@@ -98,14 +98,6 @@ const setCursor = (
       }
     })
   }
-
-  // TODO
-  // load =src
-  // setTimeout(() => {
-  //   if (thoughtsResolved) {
-  //     dispatch(loadResource(thoughtsResolved))
-  //   }
-  // })
 
   // If expansion is suppressed, use existing expansion.
   // setCursor will be re-triggered after expansion is unsuppressed.
@@ -152,8 +144,11 @@ const setCursor = (
       : null),
     // this is needed in particular for creating a new note, otherwise the cursor will disappear
     isKeyboardOpen: isKeyboardOpen != null ? isKeyboardOpen : state.isKeyboardOpen,
-    // reset cursorCleared on navigate
-    cursorCleared: false,
+    // Reset cursorCleared on navigate, except while a multicursor command is executing, which sets the cursor to each
+    // selected thought in turn rather than navigating. The cleared state applies to the whole multiselection, so it
+    // must survive the traversal, e.g. so that Backspace deletes every cleared thought rather than merging the ones it
+    // no longer sees as cleared. It is reset when the command completes (see executeCommandWithMulticursor).
+    cursorCleared: state.isMulticursorExecuting ? state.cursorCleared : false,
     cursorOffset: updatedOffset,
     expanded,
     noteFocus,

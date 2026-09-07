@@ -15,7 +15,7 @@ vi.mock('../../browser', async importOriginal => {
 beforeEach(initStore)
 
 it('blurs the focused editable when a drag begins, so the virtual keyboard closes (#4683)', async () => {
-  await initialize()
+  await initialize({ storage: 'memory' })
 
   store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
 

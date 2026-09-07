@@ -175,27 +175,9 @@ See: https://panda-css.com/docs/concepts/writing-styles
 
 ## Custom Dependencies
 
-This project uses some custom dependencies that are overridden via `resolutions` in `package.json`. The actual versions used are specified in the `resolutions` section.
+Every dependency resolves to the npm registry, which `yarn lint:lockfile` enforces, so `yarn install` needs no other host. Two mechanisms in `package.json` customize what gets installed:
 
-### Tarball URL Format
+- `resolutions` overrides the version of a transitive dependency.
+- `yarn patch` applies the patches in [`.yarn/patches`](.yarn/patches) to a package after it is fetched. [`.yarn/patches/README.md`](.yarn/patches/README.md) describes each patch and how to add another.
 
-GitHub tarball URLs follow this format:
-
-```
-https://codeload.github.com/[owner]/[repo]/tar.gz/[commit-hash]
-```
-
-Example:
-
-- Repository: `https://github.com/magic-akari/page-lifecycle`
-- Commit hash: `50b50421bdeab3d211a57e81a277f699638373b0`
-- Tarball URL: `https://codeload.github.com/magic-akari/page-lifecycle/tar.gz/50b50421bdeab3d211a57e81a277f699638373b0`
-
-### Updating Dependencies
-
-To update these custom dependencies:
-
-1. Check the source repository for new commits
-2. Get the new commit hash
-3. Update the tarball URL in the `resolutions` section of `package.json`
-4. Test thoroughly as these are custom forks
+A package that ships without TypeScript types gets its declarations in [`src/@types`](src/@types), e.g. [`page-lifecycle.d.ts`](src/@types/page-lifecycle.d.ts), rather than being replaced by a typed fork.

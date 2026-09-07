@@ -6,9 +6,9 @@ import UndoIcon from '../components/UndoIcon'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import getLatestActionType from '../util/getLastActionType'
 
-const undoCommand: Command = {
+const undoCommand = {
   id: 'undo',
-  label: 'Undo',
+  label: 'Undo' as const,
   multicursor: false,
   description: state => {
     const lastActionType = getLatestActionType(state.undoPatches)
@@ -33,6 +33,6 @@ const undoCommand: Command = {
   longPress: dispatch => {
     dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))
   },
-}
+} satisfies Command
 
 export default undoCommand

@@ -7,6 +7,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { cursorDownActionCreator as cursorDown } from '../actions/cursorDown'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
+import { editNotePathActionCreator as editNotePath } from '../actions/editNotePath'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
@@ -21,6 +22,7 @@ import useFreshCallback from '../hooks/useFreshCallback'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
+import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
@@ -45,6 +47,7 @@ const Note = React.memo(
     const fontSize = useSelector(state => state.fontSize)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
+    const [noteDraft, setNoteDraft] = useState<string | null>(null)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
@@ -53,6 +56,12 @@ const Note = React.memo(
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
       preventAutoscrollEnd(noteRef.current)
+      const state = store.getState()
+      const targetPath = resolveNotePath(state, path)
+      const { noteId } = resolveNoteKey(state, head(path))
+      if (targetPath && !noteId) {
+        setNoteDraft(noteValue(state, path) ?? '')
+      }
       dispatch(
         setCursor({
           path,
@@ -81,6 +90,11 @@ const Note = React.memo(
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
+        // Only unmodified keys are note navigation. A chord that includes a command modifier belongs to a command
+        // (e.g. Cmd + Shift + ArrowDown is Move Thought Down), so let it propagate to the global keyDown handler
+        // instead of swallowing it as Cursor Down or Toggle Note (#4954).
+        if (e.metaKey || e.ctrlKey || e.altKey) return
+
         // delete empty note
         const note = noteValue(store.getState(), path)
 
@@ -137,7 +151,24 @@ const Note = React.memo(
         dispatch((dispatch, getState) => {
           const state = getState()
 
-          const targetPath = resolveNotePath(state, path) ?? path
+          const resolvedTargetPath = resolveNotePath(state, path)
+          const targetPath = resolvedTargetPath ?? path
+          const { noteId } = resolveNoteKey(state, head(path))
+
+          if (!noteId && resolvedTargetPath) {
+            const values = value.split(',').map(value => value.trim())
+
+            setNoteDraft(value)
+            dispatch(
+              editNotePath({
+                noteOffset: noteOffset ?? undefined,
+                path: targetPath,
+                values,
+              }),
+            )
+            return
+          }
+
           const noteThought = firstVisibleChild(state, head(targetPath))
 
           if (noteThought) {
@@ -165,6 +196,7 @@ const Note = React.memo(
     /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
     const onBlur = useCallback(
       (e: React.FocusEvent) => {
+        setNoteDraft(null)
         if (!selection.isNote(e.relatedTarget)) {
           dispatch(setNoteFocus({ value: false }))
         }
@@ -217,7 +249,7 @@ const Note = React.memo(
           <FauxCaret caretType='noteStart' />
         </span>
         <ContentEditable
-          html={note || ''}
+          html={noteDraft ?? note ?? ''}
           innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
           data-thought-id={head(path)}
