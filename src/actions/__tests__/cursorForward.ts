@@ -1,7 +1,12 @@
+import State from '../../@types/State'
 import importText from '../../actions/importText'
 import toggleContextView from '../../actions/toggleContextView'
+import childIdsToThoughts from '../../selectors/childIdsToThoughts'
+import contextToPath from '../../selectors/contextToPath'
+import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import categorize from '../categorize'
@@ -10,6 +15,10 @@ import cursorForward from '../cursorForward'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import uncategorize from '../uncategorize'
+
+/** Converts the multicursor set to a list of contexts in a readable way. */
+const multicursorContexts = (state: State): string[][] =>
+  Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value))
 
 describe('normal view', () => {
   it('reverse cursorBack', () => {
@@ -154,5 +163,112 @@ describe('context view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'a', 'x'])
+  })
+})
+
+// https://github.com/cybersemics/em/issues/3527
+describe('multicursor', () => {
+  it('select the visible children of the selected thoughts', () => {
+    const text = `
+      - x
+        - a
+          - =pin
+          - b
+          - c
+        - d
+          - e
+        - f
+          - g
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['x']),
+      addMulticursor(['x', 'a']),
+      addMulticursor(['x', 'd']),
+      cursorForward,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(multicursorContexts(stateNew)).toEqual([
+      ['x', 'a', 'b'],
+      ['x', 'a', 'c'],
+      ['x', 'd', 'e'],
+    ])
+  })
+
+  it('select the contexts of a selected thought whose context view is active', () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      addMulticursor(['a', 'm']),
+      cursorForward,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(multicursorContexts(stateNew)).toEqual([
+      ['a', 'm', 'a'],
+      ['a', 'm', 'b'],
+    ])
+  })
+
+  it('keep a selected thought selected when it is the child of another selected thought', () => {
+    const text = `
+      - a
+        - b
+          - c
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['a', 'b']),
+      cursorForward,
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(multicursorContexts(stateNew)).toEqual([
+      ['a', 'b'],
+      ['a', 'b', 'c'],
+    ])
+  })
+
+  it('do nothing if none of the selected thoughts have children', () => {
+    const text = `
+      - a
+      - b
+    `
+    const steps = [importText({ text }), setCursor(['a']), addMulticursor(['a']), addMulticursor(['b']), cursorForward]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(multicursorContexts(stateNew)).toEqual([['a'], ['b']])
+  })
+
+  it('expand the deselected parents so that the newly selected children are visible', () => {
+    // x needs a second child, otherwise a is already expanded by the only-child rule
+    const text = `
+      - x
+        - a
+          - b
+          - c
+        - d
+    `
+    const steps = [importText({ text }), setCursor(['x']), addMulticursor(['x', 'a']), cursorForward]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(stateNew.expanded[hashPath(contextToPath(stateNew, ['x', 'a'])!)]).toBeTruthy()
   })
 })

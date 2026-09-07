@@ -33,12 +33,10 @@ interface SignaturePadOverride {
 
 /** A hook that detects when there is a cancelled gesture in progress. Handles GestureHint and: DesktopCommandUniverseGesture which have different ways of showing a cancelled gesture. */
 const useGestureCancelled = () => {
-  const showGestureMenu = useSelector(state => state.showGestureMenu)
-
   const invalidGesture = gestureStore.useSelector(
     state =>
       state.gesture &&
-      showGestureMenu &&
+      state.gestureMenuAnimationState !== 'hidden' &&
       !globalCommands.some(command => !command.hideFromHelp && gestureString(command) === state.gesture),
   )
 
@@ -49,7 +47,9 @@ const useGestureCancelled = () => {
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
   const colors = useSelector(themeColors)
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
-  const show = gestureStore.useSelector(state => state.gesture.length > 0)
+  const show = gestureStore.useSelector(
+    state => state.gesture.length > 0 && state.gestureMenuAnimationState !== 'exiting',
+  )
   const cancelled = useGestureCancelled()
   const innerHeight = viewportStore.useSelector(state => state.innerHeight)
   const innerWidth = viewportStore.useSelector(state => state.innerWidth)
@@ -175,6 +175,7 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
 
   return (
     <div
+      data-testid='gesture-trace'
       className={css({
         zIndex: 'gestureTrace',
         position: 'fixed',
@@ -208,12 +209,11 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     </div>
   )
 }
-/** Renders the TraceGesture component as long as it is not disabled in the settings. */
+/** Renders the TraceGesture component unless a modal or the mobile command universe is shown. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
   const showModal = useSelector(state => state.showModal)
   const showMobileCommandUniverse = useSelector(state => state.showMobileCommandUniverse)
-  const disableGestureTracing = useSelector(getUserSetting(Settings.disableGestureTracing))
-  return <>{!disableGestureTracing && !showModal && !showMobileCommandUniverse && <TraceGesture {...props} />}</>
+  return <>{!showModal && !showMobileCommandUniverse && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper
