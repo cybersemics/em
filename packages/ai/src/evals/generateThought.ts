@@ -93,6 +93,16 @@ it.concurrent('generates a nested state capital from sibling context', async () 
   ).resolves.toBe('Albany')
 })
 
+it.concurrent('replaces a thought that does not belong in the sequence', async () => {
+  await expect(
+    generateThought(`[] Days of the week
+  [] Monday
+  [] Tuesday
+  [x] banana
+  [] Thursday`),
+  ).resolves.toBe('Wednesday')
+})
+
 it.concurrent('completes a top-level color sequence', async () => {
   await expect(
     generateThought(`[] Red
