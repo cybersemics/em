@@ -52,6 +52,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **contextChain** — A `Path` that crosses one or more context views, split into its `SimplePath` segments. `Path → SimplePath[]` via [`splitChain`](../src/selectors/splitChain.ts). See [data-model.md → contextChain](data-model.md#contextchain).
 
+**copula** — A finite form of "to be" (`is`, `are`, `was`, `were`) that Split Sentences treats as the boundary between a single sentence's subject and its predicate: the subject becomes the main thought and the predicate its child, with its leading article dropped. See [commands.md → Split Sentences](commands.md#split-sentences).
+
 **crossContextualKey** — `${contextChain.map(head).join('')}|${id}`. The React key for a thought that may appear at multiple positions when context views are active. Same `ThoughtId` produces different keys per occurrence. See [layout-rendering.md → Keys](layout-rendering.md#keys-crosscontextualkey).
 
 **cursor** — The active thought, stored as `state.cursor: Path | null`. Indicated by the gray bullet ring. Distinct from *caret*. Setting the cursor does not set the browser selection; see [cursor-and-caret.md](cursor-and-caret.md).

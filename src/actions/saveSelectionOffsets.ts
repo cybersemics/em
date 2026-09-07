@@ -20,15 +20,12 @@ export const saveSelectionOffsetsActionCreator = (): Thunk => (dispatch, getStat
   const thoughtId = state.cursor && head(state.cursor)
 
   // Only a selection on the cursor thought is worth recording, since that is the only thought the offsets index into.
-  // offsetStart and offsetEnd call getRangeAt(0), which throws when the document has no range at all.
-  const isOnCursorThought = !!thoughtId && selection.isActive() && selection.isOnEditable(thoughtId)
-  const start = isOnCursorThought ? selection.offsetStart() : null
-  const end = isOnCursorThought ? selection.offsetEnd() : null
+  const offsets = thoughtId ? selection.offsetRangeThought(thoughtId) : null
 
   // Clear the snapshot when there is no selection to record, so that a stale one is never mistaken for a current one.
   dispatch({
     type: 'saveSelectionOffsets',
-    selectionOffsets: thoughtId && start !== null && end !== null ? { thoughtId, start, end } : null,
+    selectionOffsets: thoughtId && offsets ? { thoughtId, ...offsets } : null,
   })
 }
 

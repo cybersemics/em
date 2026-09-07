@@ -84,7 +84,7 @@ const waitForStableIdle = async (): Promise<void> => {
 
 /** Creates an inert TreeCRDT client owner whose storage is selected during initialization. */
 const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
-  type InitResult = { clientId: string }
+  type InitResult = { clientId: string; storage: string }
 
   let client: TreecrdtClient | null = null
   let unsubscribeMaterialization: (() => void) | null = null
@@ -187,7 +187,7 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
           'Persistent thoughtspace storage is unavailable. em is using temporary in-memory storage; changes will be lost when this page reloads or closes.',
         )
       }
-      return { clientId }
+      return { clientId, storage: nextClient.storage }
     } catch (error) {
       provider.resetBinding(error)
       nextUnsubscribeMaterialization?.()

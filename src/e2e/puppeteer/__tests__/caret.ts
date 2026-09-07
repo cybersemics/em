@@ -18,7 +18,6 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
@@ -290,9 +289,6 @@ describe('persistent storage', () => {
 
     // Set cursor to null
     await click('#content')
-
-    await waitForThoughtExistInDb('a')
-    await waitForThoughtExistInDb('b')
 
     await refresh()
 

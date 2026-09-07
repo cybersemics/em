@@ -363,8 +363,9 @@ test('restore the original thought and allow retry when the AI request fails', a
 
   await act(async () => {
     executeCommand(generateThought)
-    await vi.waitFor(() => expect(store.getState().error).toBe('Failed to generate thought'))
+    await vi.runAllTimersAsync()
   })
+  expect(store.getState().error).toBe('Failed to generate thought')
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - original`)
@@ -376,11 +377,10 @@ test('restore the original thought and allow retry when the AI request fails', a
 
   await act(async () => {
     executeCommand(generateThought)
-    await vi.waitFor(() =>
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - replacement`),
-    )
+    await vi.runAllTimersAsync()
   })
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - replacement`)
 
   vi.unstubAllEnvs()
 })
@@ -396,8 +396,9 @@ test('preserve the original thought when the AI returns an empty replacement', a
 
   await act(async () => {
     executeCommand(generateThought)
-    await vi.waitFor(() => expect(store.getState().error).toBe('Failed to generate thought'))
+    await vi.runAllTimersAsync()
   })
+  expect(store.getState().error).toBe('Failed to generate thought')
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - original`)
@@ -734,11 +735,8 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    // Flush the mocked requests so that every generation has been applied and the undo bracket has closed.
+    await act(() => vi.runAllTimersAsync())
 
     expect(mockFetch).toHaveBeenNthCalledWith(1, 'http://test-ai-url/generateThought', {
       method: 'POST',
@@ -787,11 +785,8 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    // Flush the mocked requests so that every generation has been applied and the undo bracket has closed.
+    await act(() => vi.runAllTimersAsync())
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - one
@@ -832,11 +827,8 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    // Flush the mocked requests so that every generation has been applied and the undo bracket has closed.
+    await act(() => vi.runAllTimersAsync())
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
@@ -874,11 +866,8 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    // Flush the mocked requests so that every generation has been applied and the undo bracket has closed.
+    await act(() => vi.runAllTimersAsync())
 
     // Precondition: all three thoughts were generated, otherwise the undo below would have nothing to revert.
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
@@ -923,11 +912,8 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    // Flush the mocked requests so that every generation has been applied and the undo bracket has closed.
+    await act(() => vi.runAllTimersAsync())
 
     // Precondition: both thoughts were generated, otherwise there would be no completion that could have moved the
     // cursor.
@@ -965,11 +951,8 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    // Flush the mocked requests so that every generation has been applied and the undo bracket has closed.
+    await act(() => vi.runAllTimersAsync())
 
     // a is left at its original value, without the pending ellipsis, and b is generated as usual.
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
@@ -1009,11 +992,8 @@ describe('multicursor', () => {
       executeCommandWithMulticursor(generateThought, { store })
     })
 
-    // Wait for every generation to settle. execMulticursor holds the undo bracket open for the whole run, so the flag
-    // going false is exactly the condition that all of the requests have been applied.
-    await act(async () => {
-      await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(false))
-    })
+    // Flush the mocked requests so that every generation has been applied and the undo bracket has closed.
+    await act(() => vi.runAllTimersAsync())
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - one

@@ -18,7 +18,7 @@ export default defineConfig({
           // .claude/worktrees holds agent worktrees, i.e. full checkouts of this repo. Without this the
           // unanchored include glob collects their __tests__ files too, which fail to resolve the gitignored
           // styled-system/ imports unless PandaCSS happens to have been run in that worktree.
-          exclude: ['node_modules/**', '**/e2e/**', '.claude/**'],
+          exclude: ['node_modules/**', '**/e2e/**', '**/evals/**', '.claude/**'],
           environment: 'jsdom',
           mockReset: false,
           // vitest-localstorage-mock provides an in-test localStorage/sessionStorage mock. Note it does NOT
@@ -49,6 +49,18 @@ export default defineConfig({
             output: ['terminal', 'console'],
           }),
         ],
+      },
+      {
+        extends: './vite.config.ts',
+        plugins: [],
+        test: {
+          name: 'eval',
+          globals: true,
+          include: ['packages/ai/src/evals/**/*.ts'],
+          environment: 'node',
+          retry: 2,
+          testTimeout: 60_000,
+        },
       },
       // iOS tests are now run with WDIO test runner
       // Use: yarn test:ios:local (local Appium) or yarn test:ios:browserstack

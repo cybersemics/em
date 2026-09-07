@@ -4,6 +4,8 @@ import cors from 'cors'
 import { RateLimitError } from 'openai'
 import { checkRateLimit } from '@vercel/firewall'
 import { z, ZodError, ZodType } from 'zod'
+import defineTerm from './prompts/defineTerm'
+import generateEmoji from './prompts/generateEmoji'
 import generateThought from './prompts/generateThought'
 
 // express
@@ -66,6 +68,30 @@ const createPostRoute = <T>({
 
 app.get('/', async (req, res) => {
   res.type('text').send('Server is running')
+})
+
+/** Defines one or more terms. */
+createPostRoute({
+  path: '/ai/defineTerm',
+  requestSchema: z.object({
+    terms: z.array(z.string().trim().min(1)).min(1).describe('The terms to define'),
+  }),
+  handler: async request => {
+    const definitions = await defineTerm(request.terms)
+    return { definitions }
+  },
+})
+
+/** Generates emoji for a thought. */
+createPostRoute({
+  path: '/ai/generateEmoji',
+  requestSchema: z.object({
+    value: z.string().describe('The thought value to generate emoji for'),
+  }),
+  handler: async (request) => {
+    const emojis = await generateEmoji(request.value)
+    return { emojis }
+  },
 })
 
 /** Generates a thought. */
