@@ -1,7 +1,7 @@
 import Command from '../@types/Command'
 import { outdentActionCreator as outdent } from '../actions/outdent'
 import OutdentIcon from '../components/icons/OutdentIcon'
-import hasMulticursor from '../selectors/hasMulticursor'
+import selectedPaths from '../selectors/selectedPaths'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorBackward from './moveCursorBackward'
 
@@ -19,7 +19,10 @@ const outdentCommand = {
   },
   svg: OutdentIcon,
   canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    // outdent is a no-op on a top-level thought, since there is no grandparent to move it into
+    // descendants of another selected thought are outdented along with their ancestor, so they are excluded by the multicursor filter
+    const paths = selectedPaths(state, 'prefer-ancestor')
+    return isDocumentEditable() && paths.length > 0 && paths.every(path => path.length > 1)
   },
   exec: (dispatch, getState) => {
     const state = getState()

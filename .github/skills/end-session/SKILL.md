@@ -112,7 +112,7 @@ Use `ci-monitor`. Wait for every run on the branch to complete; do not report on
 ## Step 6: The pull request is in order
 
 - A draft PR exists for the branch. On Copilot, create it with the `runtime-tools-create_pull_request` tool — do not shell out to `git` or `gh` to open one. In a local harness, where that tool does not exist, `gh pr create --draft` is the equivalent.
-- Its description starts with the bare issue number (e.g. `#1234`), with the architectural plan from the `plan` skill below it.
+- Its description starts with the issue reference — `Fixes #1234` when merging the PR resolves the issue (GitHub links it in the sidebar's Development section and closes it on merge), or the bare `#1234` when the issue stays open — with the architectural plan from the `plan` skill below it.
 - Its title and summary describe what actually landed — not what you set out to do three fixes ago.
 - **Every section earns its place.** Say each thing once: a reviewer-notes section that restates the summary is noise, and so is a consequence the reader already drew — "no behaviour change" after you explained the code was unreachable, "no references in `docs/`" after you called it dead code. Cut the section rather than pad it.
 - **Never state that tests pass.** GitHub renders the CI status on the PR itself; asserting it in prose adds nothing and goes stale the next time you push.

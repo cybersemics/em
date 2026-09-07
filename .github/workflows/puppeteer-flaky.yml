@@ -14,12 +14,19 @@
 #
 # Reports:
 #   - Workflow summary
-#   - Optional Discord notification (flakes/infra failures only)
 #   - A tracking issue per intermittently failing test (labelled `test`),
 #     deduplicated against open issues by exact title match. Tests that fail
 #     every iteration are regressions, not flakes, and are not filed.
+#   - Optional Discord notification (flakes/infra failures only), linking each
+#     offender to its tracking issue — the one just filed, or the one already open.
+#
+# Follow-up:
+#   - A GitHub Copilot cloud agent task (Opus 5, the `worker-bee` agent) per issue
+#     just filed, so a new flake is being worked on before anyone reads the alert.
 #
 # To enable Discord notifications, add a `DISCORD_WEBHOOK_URL` repository secret.
+# To enable Copilot follow-up, add a `COPILOT_TASKS_TOKEN` repository secret — a
+# fine-grained PAT with the "Agent tasks" repository permission (read and write).
 
 name: Puppeteer Flaky
 
@@ -215,6 +222,20 @@ jobs:
           node scripts/ci/flaky-outputs.mjs flaky-results/flaky-summary.json >> "$GITHUB_OUTPUT"
           echo "aggregate_exit=$STATUS" >> "$GITHUB_OUTPUT"
 
+      # Runs before the Discord alert so it can link each offender to its tracking issue.
+      # See scripts/ci/file-flaky-issues.cjs for what gets filed and how it is deduplicated.
+      - name: File tracking issues
+        if: steps.aggregate.outputs.clean != 'true'
+        # The Discord alert is the signal humans act on; never suppress it because the Issues
+        # API failed. The run still fails below regardless.
+        continue-on-error: true
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            await require('./scripts/ci/file-flaky-issues.cjs')({ github, context, core })
+
       - name: Notify Discord
         if: steps.aggregate.outputs.clean != 'true'
         env:
@@ -229,7 +250,9 @@ jobs:
             exit 0
           fi
 
-          CONTENT=$(node scripts/ci/flaky-discord-payload.mjs flaky-results/flaky-summary.json)
+          CONTENT=$(node scripts/ci/flaky-discord-payload.mjs \
+            flaky-results/flaky-summary.json \
+            flaky-results/flaky-issues.json)
 
           curl -sS -f -X POST \
             -H 'Content-Type: application/json' \
@@ -237,15 +260,18 @@ jobs:
             "$DISCORD_WEBHOOK_URL"
           echo "Discord notification sent."
 
-      # See scripts/ci/file-flaky-issues.cjs for what gets filed and how it is deduplicated.
-      - name: File tracking issues
+      # Runs after the Discord alert so a human is told about the flake even if the dispatch fails.
+      # Uses a PAT, not GITHUB_TOKEN: the agent tasks API rejects app installation tokens.
+      - name: Start Copilot tasks
         if: steps.aggregate.outputs.clean != 'true'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        # A failed dispatch is worth seeing but must not change the job's result — the run already
+        # fails below on the flake itself.
+        continue-on-error: true
         env:
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        with:
-          script: |
-            await require('./scripts/ci/file-flaky-issues.cjs')({ github, context, core })
+          COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
+        run: |
+          set -euo pipefail
+          node scripts/ci/start-copilot-tasks.mjs flaky-results/flaky-issues.json | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Fail job when flakes or infra failures found
         if: steps.aggregate.outputs.clean != 'true'

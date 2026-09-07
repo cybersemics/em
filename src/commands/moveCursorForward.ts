@@ -1,5 +1,4 @@
 import { Dispatch } from 'redux'
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import MoveCursorForwardIcon from '../components/icons/MoveCursorForwardIcon'
 import attributeEquals from '../selectors/attributeEquals'
@@ -27,7 +26,7 @@ const moveCursorForward = {
   id: 'moveCursorForward',
   label: 'Move Cursor Forward' as const,
   description: 'Move the current thought to the end of the previous thought or to next column in table view.',
-  keyboard: { key: Key.Tab },
+  keyboard: { key: 'Tab' },
   multicursor: {
     filter: 'prefer-ancestor',
   },
