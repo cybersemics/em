@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Table: Col1 width changes if there is a thought after the table",
+    "body": "## Steps to Reproduce\r\n\r\n```\r\n- a\r\n  - =view\r\n    - Table\r\n  - =pin\r\n    - true\r\n  - b\r\n    - c\r\n  - d\r\n    - e\r\n```\r\n\r\n## Current Behavior\r\n\r\nThe width of col1 is a bit wide:\r\n<img width=\"400\" alt=\"image\" src=\"https://github.com/cybersemics/em/assets/750276/91f9b836-a092-42d1-bc77-208900acc197\">\r\n\r\nIf `x` is added after `a` and the page is refreshed, the width changes:\r\n<img width=\"400\" alt=\"image\" src=\"https://github.com/cybersemics/em/assets/750276/5d78217f-1b76-4ef6-bf37-dded87385935\">\r\n\r\n## Expected Behavior\r\n\r\nThe width of col1 should not change depending on whether or not there is a sibling after the table.\r\n\r\nThe width is better in the second screenshot, when the sibling follows.",
+    "labels": ["bug"]
+  },
+  "expected": "L",
+  "source": {
+    "type": "everhour",
+    "issue": 1888,
+    "hours": 16
+  }
+}

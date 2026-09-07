@@ -1,0 +1,175 @@
+import { importTextActionCreator as importText } from '../../actions/importText'
+import { executeCommand } from '../../commands'
+import contextToPath from '../../selectors/contextToPath'
+import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursorAtFirstMatch } from '../../test-helpers/addMulticursorAtFirstMatch'
+import initStore from '../../test-helpers/initStore'
+import multicursorValues from '../../test-helpers/multicursorValues'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
+import headValue from '../../util/headValue'
+import cursorDownCommand from '../cursorDown'
+
+// Disable animation frame throttling so each command executes synchronously and deterministically across tests.
+vi.mock('../../util/throttleByAnimationFrame', () => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  default: (f: (...args: any[]) => void) => f,
+}))
+
+beforeEach(initStore)
+
+/** Synthetic Shift+Down keyboard event. */
+const shiftDownEvent = { shiftKey: true, preventDefault: () => {} } as unknown as KeyboardEvent
+
+/** Synthetic Down keyboard event (no shift). */
+const downEvent = { shiftKey: false, preventDefault: () => {} } as unknown as KeyboardEvent
+
+describe('cursorDown Shift+Down multiselect in table view second column', () => {
+  it('extends the multiselect to the next col2 cell within the same cell', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =view
+              - Table
+            - r1
+              - b
+              - c
+            - r2
+              - d
+              - e
+            - r3
+              - f
+              - g
+        `,
+      }),
+      setCursor(['a', 'r2', 'd']),
+    ])
+
+    executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
+
+    expect(multicursorValues()).toEqual(['d', 'e'])
+  })
+
+  it('extends the multiselect to the first col2 cell of the next row (cousin) when at the last cell', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =view
+              - Table
+            - r1
+              - b
+              - c
+            - r2
+              - d
+              - e
+            - r3
+              - f
+              - g
+        `,
+      }),
+      setCursor(['a', 'r2', 'e']),
+    ])
+
+    executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
+
+    expect(multicursorValues()).toEqual(['e', 'f'])
+  })
+
+  it('does nothing at the last col2 cell of the last row', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =view
+              - Table
+            - r1
+              - b
+              - c
+            - r2
+              - d
+              - e
+            - r3
+              - f
+              - g
+        `,
+      }),
+      setCursor(['a', 'r3', 'g']),
+    ])
+
+    executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
+
+    expect(multicursorValues()).toEqual([])
+  })
+
+  it('extends the multiselect to the next sibling in normal list view (no regression)', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
+
+    expect(multicursorValues()).toEqual(['a', 'b'])
+  })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it('does not expand the thought the multiselect is extended onto', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+            - x
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
+    executeCommand(cursorDownCommand, { store, event: shiftDownEvent })
+
+    const state = store.getState()
+    const pathC = contextToPath(state, ['c'])!
+
+    expect(multicursorValues()).toEqual(['a', 'b', 'c'])
+    // c is selected, so its subthought x must stay collapsed
+    expect(state.expanded[hashPath(pathC)]).toBeUndefined()
+  })
+})
+
+describe('cursorDown Down (no shift) with an active multiselect', () => {
+  // https://github.com/cybersemics/em/issues/4741
+  it('collapses the multiselect and moves the cursor to the last selected thought in document order', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+          - c
+          - d
+          - e
+        `,
+      }),
+      // place the cursor away from the selection to prove the target is the last selected thought, not relative to the cursor
+      setCursor(['a']),
+      addMulticursorAtFirstMatch(['b']),
+      addMulticursorAtFirstMatch(['c']),
+      addMulticursorAtFirstMatch(['d']),
+    ])
+
+    executeCommand(cursorDownCommand, { store, event: downEvent })
+
+    const state = store.getState()
+    expect(state.cursor && headValue(state, state.cursor)).toBe('d')
+    expect(state.multicursors).toEqual({})
+  })
+})

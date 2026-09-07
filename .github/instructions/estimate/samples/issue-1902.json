@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Drag-and-drop snapshot tests",
+    "body": "Add puppeteer snapshot tests that cover the position of various drag and drop elements. There are two test flags that can be enabled to simulate a drag-and-drop. \r\n\r\n- `simulateDrag` - Simulates a drag in progress by rendering the blue lines that indicates where the thought will be inserted on drop (See: DropHover.tsx).\r\n- `simulateDrop` - Renders the valid areas that a thought can be dropped as color blocks (See: DropUncle.tsx, DropChild.tsx, DropEnd.tsx).\r\n\r\nFor example, with `simulateDrop` enabled:\r\n\r\n<img width=\"422\" alt=\"image\" src=\"https://github.com/cybersemics/em/assets/750276/e13870c6-8ffa-4636-9f5f-7d077dfbd5f3\">\r\n\r\nTest flags can be enabled in tests by setting `window.em.testFlags.simulateDrag` or `window.em.testFlags.simulateDrop` and triggering a re-render.\r\n\r\n## Subtasks\r\n\r\n- [x] a. Verify testFlags functionality in browser\r\n- [x] b. Verify puppeteer snapshot tests on local machine\r\n- [x] c. Add testHelpers method to force re-render from puppeteer test\r\n- Create drag tests:\r\n  - [x] d. [DragAndDropThought](https://github.com/cybersemics/em/blob/main/src/components/DragAndDropThought.tsx?rgh-link-date=2024-05-15T20%3A00%3A37Z).\r\n  - [x] e. [DropEnd](https://github.com/cybersemics/em/blob/main/src/components/DropEnd.tsx?rgh-link-date=2024-05-15T20%3A00%3A37Z)\r\n  - [x] f. [DropChild](https://github.com/cybersemics/em/blob/main/src/components/DropChild.tsx?rgh-link-date=2024-05-15T20%3A00%3A37Z)\r\n  - [x] g. [DropUncle](https://github.com/cybersemics/em/blob/main/src/components/DropUncle.tsx?rgh-link-date=2024-05-15T20%3A00%3A37Z)\r\n- Create drop tests:\r\n  - [x] h. [DragAndDropThought](https://github.com/cybersemics/em/blob/main/src/components/DragAndDropThought.tsx?rgh-link-date=2024-05-15T20%3A00%3A37Z).\r\n  - [x] i. [DropEnd](https://github.com/cybersemics/em/blob/main/src/components/DropEnd.tsx?rgh-link-date=2024-05-15T20%3A00%3A37Z)\r\n  - [x] j. [DropChild](https://github.com/cybersemics/em/blob/main/src/components/DropChild.tsx?rgh-link-date=2024-05-15T20%3A00%3A37Z)\r\n  - [x] k. [DropUncle](https://github.com/cybersemics/em/blob/main/src/components/DropUncle.tsx?rgh-link-date=2024-05-15T20%3A00%3A37Z)",
+    "labels": ["test"]
+  },
+  "expected": "XL",
+  "source": {
+    "type": "everhour",
+    "issue": 1902,
+    "hours": 24
+  }
+}
