@@ -102,6 +102,8 @@ jobs:
         env:
           COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The run the comment's footer credits with starting the session.
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
           node scripts/ci/start-dependabot-fix-task.mjs dependabot-fix/report.json | tee -a "$GITHUB_STEP_SUMMARY"

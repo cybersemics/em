@@ -22,7 +22,8 @@
  * Copilot plan that includes the cloud agent. The endpoint rejects the workflow's own GITHUB_TOKEN,
  * which is an app installation token. Without the secret this reports the omission and does
  * nothing, matching how puppeteer-flaky.yml treats the same secret. GH_TOKEN is the workflow's
- * ordinary token, used only for the comment.
+ * ordinary token, used only for the comment, and RUN_URL is the run that comment credits with
+ * starting the session.
  *
  * Writes a markdown summary of what was dispatched to stdout; diagnostics go to stderr. Exits
  * non-zero when the dispatch fails, leaving no comment behind so a re-run can try again, and also
@@ -30,6 +31,7 @@
  * the next check completion from starting a second one.
  */
 import { readFileSync } from 'node:fs'
+import attemptComment from './attempt-comment.cjs'
 
 /**
  * A dependency bump that broke a check is read-the-changelog work across an unfamiliar package, so
@@ -40,6 +42,10 @@ const MODEL = 'claude-opus-5'
 
 /** How that model is named to a human, as opposed to MODEL, which is what the API expects. */
 const MODEL_NAME = 'Opus 5'
+
+/** The workflow as the comment names it, and as `gh workflow run` takes it. */
+const WORKFLOW = 'Dependabot Fix'
+const WORKFLOW_FILE = 'dependabot-fix.yml'
 
 /** The repository's general-purpose coding agent, `.github/agents/worker-bee.agent.md`. */
 const CUSTOM_AGENT = 'worker-bee'
@@ -65,7 +71,7 @@ if (!token) {
   process.exit(0)
 }
 
-const { pr, failures, sessions, maxSessions, commentId, runUrl } = JSON.parse(readFileSync(reportFile, 'utf8'))
+const { pr, failures, sessions, maxSessions, commentId } = JSON.parse(readFileSync(reportFile, 'utf8'))
 
 /** Which attempt this is. The cap itself lives in collect-dependabot-failures.cjs, which enforces it. */
 const attempt = sessions + 1
@@ -141,22 +147,22 @@ const startSession = async () => {
  * tell a session it already started from one it has not, and to know when to stop.
  */
 const comment = async sessionUrl => {
-  const body = [
-    MARKER,
-    `<!-- head: ${pr.headSha} -->`,
-    `<!-- sessions: ${attempt} -->`,
-    `### 🤖 ${MODEL_NAME} session started`,
-    '',
-    `${failures.length === 1 ? 'A check' : `${failures.length} checks`} failed on \`${pr.headSha.slice(0, 7)}\`, so an agent session is fixing ${failures.length === 1 ? 'it' : 'them'} on this branch: [session](${sessionUrl}).`,
-    '',
-    ...failures.map(failureLine),
-    '',
-    `Attempt ${attempt} of ${maxSessions}.${
-      attempt >= maxSessions
-        ? ` No further session starts on its own after this one — if it needs another, run \`gh workflow run dependabot-fix.yml -f pr=${pr.number}\`.`
-        : ''
-    } Started by [Dependabot Fix](${runUrl}).`,
-  ].join('\n')
+  const body = attemptComment({
+    markers: [MARKER, `<!-- head: ${pr.headSha} -->`, `<!-- sessions: ${attempt} -->`],
+    heading: 'Dependabot fix',
+    body: [
+      `${failures.length === 1 ? 'A check' : `${failures.length} checks`} failed on \`${pr.headSha.slice(0, 7)}\`, so an ${MODEL_NAME} session is fixing ${failures.length === 1 ? 'it' : 'them'} on this branch: [session](${sessionUrl}).`,
+      '',
+      ...failures.map(failureLine),
+    ],
+    attempt,
+    maxAttempts: maxSessions,
+    next: null,
+    pr: pr.number,
+    runUrl: process.env.RUN_URL || null,
+    workflow: WORKFLOW,
+    workflowFile: WORKFLOW_FILE,
+  })
 
   const base = `https://api.github.com/repos/${process.env.GITHUB_REPOSITORY}`
   const response = await fetch(
