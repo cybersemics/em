@@ -407,6 +407,73 @@ test('preserve the original thought when the AI returns an empty replacement', a
   vi.unstubAllEnvs()
 })
 
+test('asks the user to retry after reaching the rate limit', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ error: 'Rate limit reached' }),
+    status: 429,
+  })
+
+  await dispatch([importText({ text: '- original' }), setCursor(['original'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+    await vi.runAllTimersAsync()
+  })
+  expect(store.getState().alert?.value).toBe('Rate limit reached. Please try again later.')
+  expect(store.getState().error).toBeNull()
+  expect(store.getState().cursorCleared).toBe(false)
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - original`)
+
+  vi.unstubAllEnvs()
+})
+
+test('surfaces an AI service error without changing the thought', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ error: 'Model unavailable' }),
+    status: 500,
+  })
+
+  await dispatch([importText({ text: '- original' }), setCursor(['original'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+    await vi.runAllTimersAsync()
+  })
+  expect(store.getState().error).toBe('Model unavailable')
+  expect(store.getState().cursorCleared).toBe(false)
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - original`)
+
+  vi.unstubAllEnvs()
+})
+
+test('trims generated thought content before replacing the original', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thoughts: ['  broccoli  '] }),
+  })
+
+  await dispatch([importText({ text: '- original' }), setCursor(['original'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+    await vi.runAllTimersAsync()
+  })
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - broccoli`)
+
+  vi.unstubAllEnvs()
+})
+
 test('show AI disclosure and avoid network request before acknowledgement', async () => {
   const text = `
       - 

@@ -2,6 +2,8 @@ const completeChat = vi.hoisted(() => vi.fn())
 
 vi.mock('../completeChat', () => ({ default: completeChat }))
 
+import Model from '../@types/Model'
+import ReasoningEffort from '../@types/ReasoningEffort'
 import Service from '../@types/Service'
 import generateThought from '../prompts/generateThought'
 
@@ -17,6 +19,9 @@ it('returns thoughts in outline order using one LLM request', async () => {
 
   await expect(generateThought([potatoOutline, carrotOutline])).resolves.toEqual(['Potatoes', 'Carrots'])
   expect(completeChat).toHaveBeenCalledTimes(1)
+  const systemContent = completeChat.mock.calls[0][0].messages[0].content
+  expect(systemContent).toContain('generate a complete replacement thought')
+  expect(systemContent).toContain('not only a suffix to append')
   expect(completeChat).toHaveBeenCalledWith(
     expect.objectContaining({
       messages: [
@@ -29,6 +34,8 @@ it('returns thoughts in outline order using one LLM request', async () => {
           role: 'user',
         },
       ],
+      model: Model.GPT_5_6_LUNA,
+      reasoningEffort: ReasoningEffort.NONE,
       service: Service.GENERATE_THOUGHT,
     }),
   )

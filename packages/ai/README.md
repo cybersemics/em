@@ -57,7 +57,7 @@ Other scripts:
 
 - `typecheck` - Type-check the source with `tsc` (no emit). Not used by Vercel, which builds the function from source.
 
-Live model evaluations live in `src/evals/` and run together from the repository root with `yarn test:evals`. The Generate Emoji evaluation requires at least two matches among the ten generated results for each semantic category from issue #4400 and retries failures up to twice to accommodate model nondeterminism. Evaluations require the corresponding service key or the shared fallback in `.env.local` and are intentionally excluded from the default deterministic test suite.
+Live model evaluations live in `src/evals/` and run together from the repository root with `yarn test:evals`. The Generate Emoji evaluation requires at least two matches among the ten generated results for each semantic category from issue #4400. The Generate Thought evaluation asserts against the model's complete replacement thought, covering alphabetical sequence completion, typo correction, parent and sibling context, nested capital generation, top-level sequences, partial fill-in, replacement of misplaced items, and omission of context-only text. Concurrent cases retry failures up to twice to accommodate model nondeterminism. Evaluations require the corresponding service key or the shared fallback in `.env.local` and are intentionally excluded from the default deterministic test suite.
 
 > **Note:** This package has no `build` script on purpose. A `build` script makes Vercel run a static build and then fail looking for an output directory; omitting it lets Vercel auto-detect the Express app and deploy it as a Function.
 
