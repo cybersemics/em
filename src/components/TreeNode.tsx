@@ -7,6 +7,7 @@ import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import testFlags from '../e2e/testFlags'
 import useFauxCaretNodeProvider from '../hooks/useFauxCaretCssVars'
 import isContextViewActive from '../selectors/isContextViewActive'
+import scrollTopStore from '../stores/scrollTop'
 import isDescendantPath from '../util/isDescendantPath'
 import DropCliff from './DropCliff'
 import FadeTransition from './FadeTransition'
@@ -20,8 +21,8 @@ const TreeNode = ({
   cliff,
   depth,
   env,
-  height,
   indexChild,
+  childIndexNonAttribute,
   indexDescendant,
   isCursor,
   isEmpty,
@@ -42,7 +43,8 @@ const TreeNode = ({
   x,
   y,
   index,
-  viewportBottom,
+  viewportHeight,
+  viewportBottomOffset,
   treeThoughtsPositioned,
   bulletWidth,
   cursorUncleId,
@@ -55,7 +57,9 @@ const TreeNode = ({
 }: TreeThoughtPositioned & {
   thoughtKey: string
   index: number
-  viewportBottom: number
+  viewportHeight: number
+  /** The hidden space and overscan added to the bottom of the viewport for list virtualization. */
+  viewportBottomOffset: number
   treeThoughtsPositioned: TreeThoughtPositioned[]
   bulletWidth: number
   cursorUncleId: string | null
@@ -118,12 +122,23 @@ const TreeNode = ({
 
   const onResize: OnResize = useCallback(props => setSize({ ...props, cliff }), [cliff, setSize])
 
+  // Subscribe to the virtualization result rather than scrollTop itself. Most scroll frames leave this boolean
+  // unchanged, so only thoughts that cross the viewport boundary rerender. Keeping the scroll subscription out of
+  // LayoutTree also avoids rerendering TransitionGroup and every TreeNode on each scroll frame.
+  const isBelowViewport = scrollTopStore.useSelector(
+    scrollTop =>
+      belowCursor &&
+      !isCursor &&
+      y > Math.max(scrollTop, 0) + viewportHeight + viewportBottomOffset + singleLineHeightWithCliff,
+  )
+
   // List Virtualization
   // Do not render thoughts that are below the viewport.
   // Exception: The cursor thought and its previous siblings may temporarily be out of the viewport, such as if when New Subthought is activated on a long context. In this case, the new thought will be created below the viewport and needs to be rendered in order for scrollCursorIntoView to be activated.
   // Render virtualized thoughts with their estimated height so that document height is relatively stable.
   // Perform this check here instead of in virtualThoughtsPositioned since it changes with the scroll position (though currently `sizes` will change as new thoughts are rendered, causing virtualThoughtsPositioned to re-render anyway).
-  if (belowCursor && !isCursor && y > viewportBottom + height) {
+  // Use the stable estimated height (singleLineHeightWithCliff) rather than the measured height. Otherwise the cutoff depends on whether the thought is currently mounted: a thought at the fold mounts with the estimate, measures a (smaller) height, flips the cutoff to unmount, which removes its measured size and restores the estimate, re-mounting it. That feedback loop runs entirely within passive effects and triggers "Maximum update depth exceeded" (React error #185). See: https://github.com/cybersemics/em/issues/4270.
+  if (isBelowViewport) {
     return null
   }
 
@@ -165,6 +180,7 @@ const TreeNode = ({
           <VirtualThought
             debugIndex={testFlags.simulateDrop ? indexChild : undefined}
             depth={depth}
+            childIndexNonAttribute={childIndexNonAttribute}
             dropUncle={thoughtId === cursorUncleId}
             env={env}
             indexDescendant={indexDescendant}
@@ -185,6 +201,12 @@ const TreeNode = ({
             prevCliff={treeThoughtsPositioned[index - 1]?.cliff}
             isLastVisible={isLastVisible}
             autofocus={autofocus}
+            // The width available to the thought before it wraps: for a table col1 cell this is its fixed
+            // width; for every other thought (including table col2 cells) the container extends to the right
+            // edge, so the wrap boundary is governed by x. Passing this lets VirtualThought re-measure its
+            // height when a thought enters or leaves a table column (e.g. toggling Table View), otherwise a
+            // stale wrapped height leaves a blank gap below the thought.
+            wrappingWidth={isTableCol1 ? width : x}
           />
         </div>
         {dragInProgress &&

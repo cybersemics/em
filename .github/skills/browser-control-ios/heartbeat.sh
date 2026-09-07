@@ -27,6 +27,15 @@
 # "no real activity" than a metadata GET. GET /url was the original choice
 # because it was small and W3C-standard, but the field evidence suggests at
 # least one timer on this stack ignores it.
+#
+# A 405 response counts as a SUCCESSFUL ping. In the NATIVE_APP context (before a
+# driver attaches and switches to the webview) XCUITest answers a plain-JS execute
+# with 405 "Method is not implemented" — the session answered, it just declined the
+# script. Soak-verified 2026-08-13: a session receiving only 405-answered pings
+# stayed alive past 1000s, so 405s do reset the idle timer. Treating them as
+# failures made the heartbeat give up ~270s into every session whose driver hadn't
+# attached yet, and the abandoned session then idled out (~505s) — the dominant
+# session-death signature before this fix.
 set -uo pipefail
 
 SESSION_ID="${1:?session id required}"
@@ -69,9 +78,9 @@ while true; do
     -H "Content-Type: application/json" \
     -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
     --data '{"script":"return 1","args":[]}' \
-    "https://hub.browserstack.com/wd/hub/session/$SESSION_ID/execute/sync" 2>/dev/null \
+    "https://hub-cloud.browserstack.com/wd/hub/session/$SESSION_ID/execute/sync" 2>/dev/null \
     || echo "000")
-  if [[ "$STATUS" =~ ^[23] ]]; then
+  if [[ "$STATUS" =~ ^[23] || "$STATUS" == "405" ]]; then
     echo "[$(ts)] ping ok status=$STATUS"
     FAILS=0
   else
@@ -82,10 +91,12 @@ while true; do
       # Fetch BrowserStack's post-mortem on the session so future debugging
       # has a concrete reason field instead of "the heartbeat noticed it was
       # gone." Best-effort; quietly skipped if the API is unreachable or the
-      # session is too young to have a record.
+      # session is too young to have a record. App Automate sessions live on
+      # api-cloud/app-automate (api.browserstack.com/automate is the desktop
+      # Automate product and 404s for these session ids).
       POSTMORTEM=$(curl -sS \
         -u "$BROWSERSTACK_USERNAME:$BROWSERSTACK_ACCESS_KEY" \
-        "https://api.browserstack.com/automate/sessions/$SESSION_ID.json" 2>/dev/null \
+        "https://api-cloud.browserstack.com/app-automate/sessions/$SESSION_ID.json" 2>/dev/null \
         || echo '{"error":"api fetch failed"}')
       echo "[$(ts)] browserstack session post-mortem: $POSTMORTEM"
       exit 0

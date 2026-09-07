@@ -10,9 +10,9 @@ import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const favorite: Command = {
+const favorite = {
   id: 'favorite',
-  label: 'Add to Favorites',
+  label: 'Add to Favorites' as const,
   labelInverse: 'Remove from Favorites',
   description: 'Add the current thought to your Favorites list.',
   descriptionInverse: 'Remove the current thought from your Favorites list.',
@@ -60,6 +60,6 @@ const favorite: Command = {
       ),
     ])
   },
-}
+} satisfies Command
 
 export default favorite

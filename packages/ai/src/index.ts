@@ -1,55 +1,66 @@
+import express from 'express'
 import bodyParser from 'body-parser'
 import cors from 'cors'
-import express, { Request, Response } from 'express'
-import basicAuth from 'express-basic-auth'
-import client, { register } from 'prom-client'
-import prompt from './prompt'
-import { observeNodeMetrics } from '../../../server/src/metrics'
-
-const port = process.env.PORT ? +process.env.PORT : 3001
+import { RateLimitError } from 'openai'
+import { checkRateLimit } from '@vercel/firewall'
+import { z, ZodError, ZodType } from 'zod'
+import defineTerm from './prompts/defineTerm'
+import generateEmoji from './prompts/generateEmoji'
+import generateThought from './prompts/generateThought'
 
 // express
 const app = express()
-app.use(bodyParser.text())
+app.use('/ai', cors())
+app.use('/ai', async (req, res, next) => {
+  if (process.env.NODE_ENV !== 'production') {
+    next()
+    return
+  }
 
-/***********************
- * Metrics
- ***********************/
-
-const METRICS_DISABLED_MESSAGE =
-  'The /metrics endpoint is disabled because METRICS_USERNAME and METRICS_PASSWORD environment variables are not set.'
-
-const hasGraphiteCredentials = !!(
-  process.env.GRAPHITE_URL &&
-  process.env.GRAPHITE_USERID &&
-  process.env.GRAPHITE_APIKEY
-)
-const hasMetricsCredentials = !!(process.env.METRICS_USERNAME && process.env.METRICS_PASSWORD)
-const nodeEnv = process.env.NODE_ENV?.toLowerCase() || 'development'
-
-client.collectDefaultMetrics()
-
-if (!hasMetricsCredentials && nodeEnv !== 'development') {
-  console.warn(METRICS_DISABLED_MESSAGE)
-}
-
-// Metrics are usually exposed on the /metrics route with basic auth.
-// We can also opt in to pushing them directly to the Graphite server on an interval.
-// This is useful for exposing metrics from a local development environment.
-if (hasGraphiteCredentials && process.env.METRICS_PUSH) {
-  console.info(`Pushing NodeJS metrics to ${process.env.GRAPHITE_URL}`)
-  observeNodeMetrics()
-}
-
-// basic auth middleware to protect the metrics endpoint
-const metricsAuthMiddleware = basicAuth({
-  users: {
-    ...(hasMetricsCredentials ? { [process.env.METRICS_USERNAME!]: process.env.METRICS_PASSWORD! } : null),
-  },
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  unauthorizedResponse: (req: any): string =>
-    !hasMetricsCredentials ? METRICS_DISABLED_MESSAGE : !req.auth ? 'Basic auth required' : 'Unauthorized',
+  try {
+    const { rateLimited } = await checkRateLimit('ai-api', {
+      headers: req.headers as Record<string, string | string[]>,
+    })
+    if (rateLimited) {
+      res.status(429).send({ error: 'Rate limit reached' })
+      return
+    }
+  } catch (error) {
+    // Allow requests if the rate-limit service is unavailable so an infrastructure failure does not disable the AI API.
+    console.error('Failed to check AI API rate limit', error)
+  }
+  next()
 })
+app.use(bodyParser.json())
+
+/** Creates a POST route at the given path, with the provided request schema validation and handler. */
+const createPostRoute = <T>({
+  path,
+  requestSchema,
+  handler,
+}: {
+  path: string
+  requestSchema: ZodType<T>
+  handler: (request: T) => Promise<unknown>
+}) => {
+  app.post(path, async (req, res) => {
+    try {
+      const body: unknown = req.body
+      const request = requestSchema.parse(body)
+      const response = await handler(request)
+      res.type('json').send(response)
+    } catch (error: unknown) {
+      if (error instanceof ZodError) {
+        res.status(400).send({ error: error.message })
+      } else if (error instanceof RateLimitError) {
+        res.status(429).send({ error: 'Rate limit reached' })
+      } else {
+        console.error(`Failed to handle request at ${path}`, error)
+        res.status(500).send({ error: 'Internal server error' })
+      }
+    }
+  })
+}
 
 /***********************
  * Routes
@@ -59,38 +70,42 @@ app.get('/', async (req, res) => {
   res.type('text').send('Server is running')
 })
 
-// prometheus metrics route
-app.get('/metrics', metricsAuthMiddleware, async (req, res) => {
-  res.contentType(register.contentType).send(await register.metrics())
-})
-
-app.post(
-  '/ai',
-  cors({
-    // TODO
-    // origin: /http:\/\/localhost:\d+/,
+/** Defines one or more terms. */
+createPostRoute({
+  path: '/ai/defineTerm',
+  requestSchema: z.object({
+    terms: z.array(z.string().trim().min(1)).min(1).describe('The terms to define'),
   }),
-  // TODO
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async (req: Request<any, any, string, any>, res: Response<any>) => {
-    if (!req.body) {
-      return res.status(400).send('Missing req.body')
-    }
-
-    const result = await prompt(req.body)
-
-    res
-      .type('json')
-      .status(result.err ? result.err.status : 200)
-      .send(result)
+  handler: async request => {
+    const definitions = await defineTerm(request.terms)
+    return { definitions }
   },
-)
-
-/***********************
- * Start server
- ***********************/
-
-app.listen(port, () => {
-  console.info(`App listening at http://localhost:${port}`)
-  process.send?.('ready')
 })
+
+/** Generates emoji for one or more thoughts. */
+createPostRoute({
+  path: '/ai/generateEmoji',
+  requestSchema: z.object({
+    values: z.array(z.string()).min(1).describe('The thought values to generate emoji for'),
+  }),
+  handler: async request => {
+    const emojis = await generateEmoji(request.values)
+    return { emojis }
+  },
+})
+
+/** Generates one or more thoughts. */
+createPostRoute({
+  path: '/ai/generateThought',
+  requestSchema: z.object({
+    inputs: z.array(z.string()).min(1).describe('The outlines to generate a thought for'),
+  }),
+  handler: async request => {
+    const thoughts = await generateThought(request.inputs)
+    return { thoughts }
+  },
+})
+
+// Export the Express app as the default export so it runs as a single Vercel Function.
+// https://vercel.com/docs/frameworks/backend/express
+export default app

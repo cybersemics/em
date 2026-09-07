@@ -9,6 +9,7 @@ import { gestureString } from '../commands'
 import store from '../stores/app'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
+import SettingsIcon from './icons/SettingsIcon'
 
 /** Returns true if the command can be executed in the current state. */
 const isExecutable = (state: State, command: Command) =>
@@ -21,7 +22,7 @@ interface CommandUniverseGridItemProps {
   search?: string
 }
 
-/** Renders a single command as a cell in CommandUniverseGrid. Browse-only — no selection, drag, or animation, since the Command Universe is for discovering commands rather than executing them. */
+/** Renders a single command as a cell in CommandUniverseGrid. */
 const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '' }) => {
   const isActive = command.isActive?.(store.getState())
   const disabled = useSelector(state => !isExecutable(state, command))
@@ -33,7 +34,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
       : descriptionStringOrFunction
   })
 
-  const Icon = command.svg
+  const Icon = command.svg ?? SettingsIcon
 
   return (
     <tr
@@ -45,42 +46,33 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         flexDirection: 'column',
         gap: '0.533rem',
         justifyContent: 'flex-start',
-        alignItems: 'center',
+        alignItems: 'flex-start',
+        marginInline: '0.2rem',
       })}
     >
-      <td
-        className={css({
-          boxSizing: 'border-box',
-          minWidth: 0,
-          width: '100%',
-        })}
-      >
-        {isTouch ? (
-          <div
-            className={css({
-              border: '1px solid {colors.fgOverlay50}',
-              borderRadius: '8px',
-              textAlign: { _mobile: 'center' },
+      {/* Gesture diagram container. */}
+      {isTouch ? (
+        <td
+          className={css({
+            boxSizing: 'border-box',
+            minWidth: 0,
+            width: '100%',
+            textAlign: 'center',
+          })}
+        >
+          <GestureDiagram
+            cssRaw={css.raw({
+              width: { sm: '80px', md: '130px' },
+              height: { sm: '80px', md: '130px' },
             })}
-          >
-            <GestureDiagram
-              cssRaw={css.raw({
-                width: { sm: '80px', md: '130px' },
-                height: { sm: '80px', md: '130px' },
-              })}
-              path={gestureString(command)}
-              size={130}
-              arrowSize={25}
-              strokeWidth={7.5}
-              arrowhead={'outlined'}
-            />
-          </div>
-        ) : Icon ? (
-          <Icon fill={token(disabled ? 'colors.gray50' : 'colors.fg')} />
-        ) : (
-          <div className={css({ width: 24, height: 24 })} />
-        )}
-      </td>
+            path={gestureString(command)}
+            size={130}
+            arrowSize={25}
+            strokeWidth={7.5}
+            arrowhead={'outlined'}
+          />
+        </td>
+      ) : null}
 
       <td
         className={css({
@@ -93,25 +85,47 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
           width: '100%',
         })}
       >
-        <b
+        {/* Command icon inline with the title. */}
+        <div
           className={css({
-            minWidth: '4em',
-            lineHeight: '1em',
-            whiteSpace: 'normal',
-            overflowWrap: 'break-word',
-            fontSize: '0.8rem',
-            color: disabled ? 'gray45' : 'fg',
-            fontWeight: 'normal',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            width: '100%',
+            gap: '0.75rem',
           })}
         >
-          <HighlightedText value={label} match={search} disabled={disabled} />
-        </b>
+          {/* `flex: none` overrides iconRecipe's `flex: 1` default so width/height set the size. */}
+          <div
+            className={css({ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' })}
+            style={{ width: 20, height: 20 }}
+          >
+            <Icon cssRaw={css.raw({ flex: 'none' })} size={20} fill={token(disabled ? 'colors.gray50' : 'colors.fg')} />
+          </div>
+          <b
+            className={css({
+              minWidth: '4em',
+              whiteSpace: 'normal',
+              overflowWrap: 'break-word',
+              color: disabled ? 'gray45' : 'fg',
+              fontSize: '0.75rem',
+              fontWeight: 500,
+              lineHeight: 1.35,
+            })}
+          >
+            <HighlightedText value={label} match={search} disabled={disabled} />
+          </b>
+        </div>
 
         <p
           className={css({
-            fontSize: '0.622rem',
+            color: 'fgOverlay75',
             marginTop: '0.267rem',
             marginBottom: '0.267rem',
+            fontSize: '0.6875rem',
+            opacity: 0.8,
+            marginLeft: '-0.2rem',
+            lineHeight: 1.3,
           })}
         >
           {description}

@@ -1,0 +1,23 @@
+{
+  "name": "em-icons",
+  "version": "0.0.0",
+  "description": "Icon generation toolchain, deliberately isolated from the root install. sharp is the only reason this is a separate project: installing it at the root made it a dependency of every CI job and every developer's first `yarn`, even though nothing here is imported by the app.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "generate:desktop": "node ./generate-desktop-icons.mjs",
+    "generate:native": "cd ../.. && capacitor-assets generate --ios --android",
+    "generate:web": "node ./generate-web-icons.mjs"
+  },
+  "dependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "sharp": "0.35.3"
+  },
+  "resolutions": {
+    "sharp": "0.35.3"
+  },
+  "packageManager": "yarn@4.17.0"
+}

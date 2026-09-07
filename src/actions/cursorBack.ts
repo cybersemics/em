@@ -1,16 +1,49 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import addMulticursor from '../actions/addMulticursor'
 import cursorHistory from '../actions/cursorHistory'
+import removeMulticursor from '../actions/removeMulticursor'
 import searchReducer from '../actions/search'
 import setCursor from '../actions/setCursor'
+import expandThoughts from '../selectors/expandThoughts'
+import hasMulticursor from '../selectors/hasMulticursor'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import isAbsolute from '../util/isAbsolute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import toggleAbsoluteContext from './toggleAbsoluteContext'
 
-/** Moves the cursor up one level. */
+/** Replaces the multiselect with the parents of each selected thought. Parents shared by multiple selected thoughts are selected once, since the multicursor set is keyed by path. */
+const multicursorBack = (state: State): State => {
+  const paths = Object.values(state.multicursors)
+
+  // Root-level thoughts contribute no parent, since the root cannot be selected.
+  const backPaths = paths.filter(path => path.length > 1).map(parentOf)
+
+  // do nothing if all selected thoughts are at the root level, so that an extra Back gesture does not destroy the selection
+  if (backPaths.length === 0) return state
+
+  const stateNew = reducerFlow([
+    // Deselecting before selecting is safe within a single action, since multicursorAlertMiddleware only sees the
+    // final state and thus never a momentarily empty multiselect (which would close the Command Center on mobile).
+    // A selected thought that is also the parent of another selected thought is deselected and reselected.
+    ...paths.map(path => removeMulticursor({ path })),
+    ...backPaths.map(path => addMulticursor({ path })),
+  ])(state)
+
+  return {
+    ...stateNew,
+    // Selected thoughts are kept collapsed by expandThoughts, so expansion must be recalculated for the newly
+    // selected parents to collapse the previously selected children.
+    // https://github.com/cybersemics/em/issues/4738
+    expanded: expandThoughts(stateNew, stateNew.cursor),
+  }
+}
+
+/** Moves the cursor up one level. When thoughts are selected, replaces the selection with their parents instead of moving the cursor. */
 const cursorBack = (state: State): State => {
+  if (hasMulticursor(state)) return multicursorBack(state)
+
   const { cursor: cursorOld, isKeyboardOpen, search, rootContext } = state
 
   const isAbsoluteRoot = isAbsolute(rootContext)

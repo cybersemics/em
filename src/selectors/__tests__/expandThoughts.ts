@@ -684,6 +684,227 @@ describe('=children/=pin', () => {
   })
 })
 
+describe('=descendants/=pin/true', () => {
+  it('all descendants are expanded when cursor is on the thought', () => {
+    const text = `
+      - a
+        - =descendants
+          - =pin
+            - true
+        - b
+          - c
+            - d
+              - e
+        - f
+          - g
+    `
+
+    const steps = [importText({ text }), setCursor(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'f'])).toBeTruthy()
+  })
+
+  it('all descendants are expanded when cursor is on a child of the thought', () => {
+    const text = `
+      - a
+        - =descendants
+          - =pin
+            - true
+        - b
+          - c
+            - d
+        - f
+    `
+
+    const steps = [importText({ text }), setCursor(['a', 'f'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
+  })
+
+  it('descendants are not expanded when the thought itself is collapsed', () => {
+    const text = `
+      - a
+        - =descendants
+          - =pin
+            - true
+        - b
+          - c
+      - x
+    `
+
+    const steps = [importText({ text }), setCursor(['x'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+  })
+
+  it('combined with =pin, the entire subtree stays expanded when cursor is elsewhere', () => {
+    const text = `
+      - a
+        - =pin
+          - true
+        - =descendants
+          - =pin
+            - true
+        - b
+          - c
+            - d
+      - x
+    `
+
+    const steps = [importText({ text }), setCursor(['x'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
+  })
+
+  it('descendant with =pin/false is not expanded', () => {
+    const text = `
+      - a
+        - =descendants
+          - =pin
+            - true
+        - b
+          - c
+            - =pin
+              - false
+            - d
+              - e
+    `
+
+    const steps = [importText({ text }), setCursor(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c', 'd'])).toBeFalsy()
+  })
+
+  it('=children/=pin/false on a descendant overrides =descendants/=pin/true from an ancestor', () => {
+    const text = `
+      - a
+        - =descendants
+          - =pin
+            - true
+        - b
+          - =children
+            - =pin
+              - false
+          - c
+            - d
+    `
+
+    const steps = [importText({ text }), setCursor(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
+  })
+
+  it('=descendants/=pin/false on a descendant stops deeper expansion', () => {
+    const text = `
+      - a
+        - =descendants
+          - =pin
+            - true
+        - b
+          - =descendants
+            - =pin
+              - false
+          - c
+            - d
+    `
+
+    const steps = [importText({ text }), setCursor(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
+  })
+
+  it('pinned descendants are not expanded in context view', () => {
+    const text = `
+      - a
+        - m
+          - =descendants
+            - =pin
+              - true
+          - x
+            - y
+      - b
+        - m
+          - z
+    `
+
+    const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'm', 'a'])).toBeFalsy()
+    expect(isContextExpanded(stateNew, ['a', 'm', 'b'])).toBeFalsy()
+  })
+})
+
+describe('=descendants/=pin', () => {
+  it('all descendants are expanded when cursor is on the thought', () => {
+    const text = `
+      - a
+        - =descendants
+          - =pin
+        - b
+          - c
+            - d
+    `
+
+    const steps = [importText({ text }), setCursor(['a'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
+  })
+})
+
+describe('=descendants/=pin/false', () => {
+  it('overrides expand only child at every level', () => {
+    const text = `
+      - a
+        - =descendants
+          - =pin
+            - false
+        - b
+          - c
+            - d
+    `
+
+    const stateNew = importText(initialState(), { text })
+
+    // not expanded when only child
+    expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
+
+    // expanded with cursor, but the only child below the cursor is still not expanded
+    const stateNew1 = setCursor(stateNew, ['a', 'b'])
+    expect(isContextExpanded(stateNew1, ['a', 'b'])).toBeTruthy()
+    expect(isContextExpanded(stateNew1, ['a', 'b', 'c'])).toBeFalsy()
+  })
+})
+
 describe('expand with : char', () => {
   it('thoughts end with ":" are expanded', () => {
     const text = `
@@ -877,7 +1098,8 @@ describe('multicursor', () => {
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
-    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
+    // the multicursor path itself is a selected thought, so it stays collapsed
+    expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
   })
 
   it('cursor ancestors are still expanded alongside multicursor ancestors', () => {
@@ -900,5 +1122,48 @@ describe('multicursor', () => {
     // multicursor ancestors
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
+  })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it('a multicursor thought does not expand its own children', () => {
+    const text = `
+      - a
+        - x
+      - b
+      - c
+    `
+
+    const steps = [
+      importText({ text }),
+      setCursor(['c']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // a is selected but none of its descendants are, so it must stay collapsed
+    expect(isContextExpanded(stateNew, ['a'])).toBeFalsy()
+  })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it('a cursor that is part of the multicursor does not expand its own children', () => {
+    const text = `
+      - a
+        - x
+      - b
+      - c
+    `
+
+    const steps = [importText({ text }), setCursor(['a']), addMulticursor(['a']), addMulticursor(['b'])]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // the cursor is selected, so it stays collapsed like any other selected thought
+    expect(isContextExpanded(stateNew, ['a'])).toBeFalsy()
+
+    // its ancestors are still expanded, so the selected thoughts remain visible
+    expect(isContextExpanded(stateNew, [HOME_TOKEN])).toBeTruthy()
   })
 })

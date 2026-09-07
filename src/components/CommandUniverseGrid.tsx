@@ -19,9 +19,9 @@ const CommandUniverseGrid = ({ commands, search }: CommandUniverseGridProps) => 
         className={css({
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
-          gap: '0.75rem',
+          gap: '0.5rem',
         })}
-        // anchor all `em` units used in children to `fontSize`
+        // anchor all `em` units used in children to `fontSize`.
         style={{ fontSize }}
       >
         {commands.filter(nonNull).map(command => (

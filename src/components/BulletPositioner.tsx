@@ -3,17 +3,20 @@ import { ConnectDragSource } from 'react-dnd'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cva, cx } from '../../styled-system/css'
 import { bulletRecipe } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { deleteAttributeActionCreator as deleteAttribute } from '../actions/deleteAttribute'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
-import { isMac, isSafari, isTouch, isiPhone } from '../browser'
+import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
+import { isSafari, isTouch, isiPhone } from '../browser'
 import { LongPressState } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
 import findDescendant from '../selectors/findDescendant'
 import getChildren from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import isPinned from '../selectors/isPinned'
@@ -22,6 +25,7 @@ import fastClick from '../util/fastClick'
 import getBulletWidth from '../util/getBulletWidth'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
+import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
 
@@ -31,24 +35,6 @@ const glyph = cva({
   base: {
     fill: 'bullet',
     position: 'relative',
-    '@media (max-width: 500px)': {
-      _android: {
-        position: 'relative',
-        marginLeft: '-16.8px',
-        marginRight: '-5px',
-        left: '3px',
-        fontSize: '16px',
-      },
-    },
-    '@media (min-width: 560px) and (max-width: 1024px)': {
-      _android: {
-        position: 'relative',
-        marginLeft: '-16.8px',
-        marginRight: '-5px',
-        left: '4px',
-        fontSize: '28px',
-      },
-    },
   },
   variants: {
     leaf: { true: {} },
@@ -58,20 +44,6 @@ const glyph = cva({
           fontSize: '80%',
           left: '-0.08em',
           top: '0.05em',
-        },
-        '@media (max-width: 500px)': {
-          _android: {
-            fontSize: '149%',
-            left: '2px',
-            top: '-5.1px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            fontSize: '149%',
-            left: '2px',
-            top: '-5.1px',
-          },
         },
       },
     },
@@ -88,22 +60,6 @@ const glyph = cva({
           top: '-0.1em',
           marginRight: '-0.1em',
         },
-        '@media (max-width: 500px)': {
-          _android: {
-            content: "'+'",
-            left: '0.05em',
-            top: '-0.1em',
-            marginRight: '-0.1em',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            content: "'+'",
-            left: '0.05em',
-            top: '-0.1em',
-            marginRight: '-0.1em',
-          },
-        },
       },
     },
   },
@@ -118,62 +74,6 @@ const glyph = cva({
           top: '0',
           left: '-0.3em',
           marginRight: 'calc(-0.48em - 5px)',
-        },
-        '@media (max-width: 500px)': {
-          _android: {
-            position: 'relative',
-            fontSize: '160%',
-            left: '1px',
-            top: '-8.1px',
-            marginRight: '-5px',
-            paddingRight: '10px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            position: 'relative',
-            fontSize: '171%',
-            left: '2px',
-            top: '-7.1px',
-            marginRight: '-5px',
-            paddingRight: '10px',
-          },
-        },
-      },
-    },
-    {
-      leaf: false,
-      isBulletExpanded: true,
-      css: {
-        '@media (max-width: 500px)': {
-          _android: {
-            left: '2px',
-            top: '-1.6px',
-            fontSize: '19px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {},
-        },
-      },
-    },
-    {
-      leaf: false,
-      showContexts: true,
-      isBulletExpanded: true,
-      css: {
-        '@media (max-width: 500px)': {
-          _android: {
-            left: '2px',
-            fontSize: '20px',
-            top: '-2.5px',
-          },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          _android: {
-            left: '3px',
-            top: '-5.1px',
-          },
         },
       },
     },
@@ -250,12 +150,25 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
         if (dragHold) return
 
         // short circuit if toggling multiselect
-        if (!isTouch && (isMac ? e.metaKey : e.ctrlKey)) {
+        // Shift + Click selects the thoughts in between, and Cmd/Ctrl + Click toggles the clicked thought (see Thought)
+        if (!isTouch && (e.shiftKey || isCommandKey(e))) {
           return
         }
 
         dispatch((dispatch, getState) => {
           const state = getState()
+
+          // While a multiselect is active, tapping the bullet toggles the thought's selection, the same as
+          // tapping the thought itself. Expansion is determined by the selected thoughts during a multiselect,
+          // so the =pin handling below is skipped.
+          if (hasMulticursor(state)) {
+            // A bullet is not an editable, so Content treats the tap as a click on empty space and closes all
+            // dropdowns, which clears the multiselect along with the Command Center (see toggleDropdown).
+            e.stopPropagation()
+            dispatch(toggleMulticursor({ path }))
+            return
+          }
+
           const isExpanded = state.expanded[hashPath(path)]
           const children = getChildren(state, head(path))
           const shouldCollapse = isExpanded && children.length > 0
@@ -268,7 +181,15 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
             ...(isExpanded &&
             (!pathParent ||
               parentChildren?.length === 1 ||
-              findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']))
+              findDescendant(state, pathParent && head(pathParent), ['=children', '=pin', 'true']) ||
+              // =descendants/=pin propagates from any ancestor; the nearest ancestor that sets it wins
+              parentOf(path)
+                .slice()
+                .reverse()
+                .reduce<boolean | null>(
+                  (accum, id) => accum ?? isPinned(state, findDescendant(state, id, '=descendants')),
+                  null,
+                ))
               ? [setDescendant({ path: simplePath, values: ['=pin', 'false'] })]
               : [deleteAttribute({ path: simplePath, value: '=pin' })]),
             // move cursor
@@ -283,7 +204,10 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
     const isThoughtPinned = useSelector(state => !!isPinned(state, thoughtId))
 
     const isExpanded = useSelector(state => !!state.expanded[hashPath(path)])
-    const isBulletExpanded = isCursorParent || isCursorGrandparent || isEditing || isExpanded
+    // A selected thought stays collapsed even when it is the cursor, so state.expanded alone determines
+    // whether its bullet points down.
+    // https://github.com/cybersemics/em/issues/4738
+    const isBulletExpanded = isExpanded || (!isMulticursor && (isCursorParent || isCursorGrandparent || isEditing))
 
     // offset margin with padding by equal amounts proportional to the font size to extend the click area
     const extendClickWidth = fontSize * 1.2
@@ -308,17 +232,6 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
             _mobile: {
               marginRight: showContexts ? '-1.5px' : undefined,
             },
-            '@media (min-width: 560px) and (max-width: 1024px)': {
-              _android: {
-                transition: `transform {durations.veryFast} ease-in-out`,
-                marginLeft: '-3px',
-              },
-            },
-            '@media (max-width: 500px)': {
-              _android: {
-                marginLeft: '-3px',
-              },
-            },
             display: bulletIsDivider ? 'none' : undefined,
             position: 'absolute',
             verticalAlign: 'top',
@@ -328,9 +241,9 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
         style={{
           top: -extendClickHeight,
           left: -extendClickWidth + marginLeft,
-          paddingTop: extendClickHeight,
+          paddingTop: `calc(${token('spacing.editablePaddingTop')} + ${extendClickHeight}px)`,
           paddingLeft: extendClickWidth,
-          paddingBottom: extendClickHeight + 2,
+          paddingBottom: `calc(${token('spacing.editablePaddingBottom')} + ${extendClickHeight + 2}px)`,
           width,
           /* Ensuring the cursor overlay will always show behind the original bullet component.
           We want to avoid a situation where the active thought can’t be dragged and dropped */
@@ -367,6 +280,10 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
             // required to make the distance between bullet and thought scale properly at all font sizes.
             left: lineHeight * 0.317,
             marginBottom: glyphBottomMargin,
+            // Allow multi-digit ordered-list numbers (=bullet/Ordered) to extend left into the indent gap
+            // instead of being clipped to the bullet's square viewport. Circle/triangle glyphs stay within
+            // the viewBox, so this does not affect normal bullets.
+            overflow: 'visible',
           }}
           ref={ref}
         >
