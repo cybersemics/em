@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs'
 
 const MARKER = '<!-- copilot-conflicts -->'
+const SKIP_LABEL = 'skip-auto-resolve-conflicts'
 const MODEL = 'claude-opus-5'
 const CUSTOM_AGENT = 'worker-bee'
 const API_VERSION = '2026-03-10'
@@ -91,6 +92,10 @@ const dispatchTask = async task => {
   const pr = await prResponse.json()
   if (pr.state !== 'open' || pr.mergeable !== false || pr.head.sha !== task.headSha || pr.base.sha !== task.baseSha) {
     return `- [#${task.number}](${task.url}) — skipped because its conflict state changed.`
+  }
+  // The label can be applied between the scan and this dispatch, so it is re-checked here too.
+  if ((pr.labels || []).some(label => label.name === SKIP_LABEL)) {
+    return `- [#${task.number}](${task.url}) — skipped by the \`${SKIP_LABEL}\` label.`
   }
   const commentsResponse = await fetch(`${base}/issues/${task.number}/comments`, { headers })
   if (!commentsResponse.ok)

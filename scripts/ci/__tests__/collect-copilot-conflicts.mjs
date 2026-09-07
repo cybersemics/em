@@ -15,9 +15,11 @@ const makePr = ({
   author = 'Copilot',
   type = 'Bot',
   sameRepository = true,
+  labels = [],
 }) => ({
   number,
   state: 'open',
+  labels: labels.map(name => ({ name })),
   base: { ref: 'main', sha: 'base' },
   head: {
     ref: `copilot/fix/${number}`,
@@ -133,6 +135,20 @@ const testExclusions = async () => {
   assert.deepEqual(report.tasks, [])
 }
 
+/** Verifies the skip label excludes a due PR entirely, leaving its comment untouched. */
+const testSkipLabel = async () => {
+  const skipped = makePr({
+    number: 15,
+    updatedAt: '2026-09-06T10:00:00Z',
+    state: dueState(2),
+    labels: ['skip-auto-resolve-conflicts'],
+  })
+  const before = skipped.comments[0].body
+  const report = await run([skipped])
+  assert.deepEqual(report.tasks, [])
+  assert.equal(skipped.comments[0].body, before)
+}
+
 /** Verifies a comment is posted only once a conflict exists, and is kept updated afterwards. */
 const testCommentOnConflictOnly = async () => {
   const clean = makePr({ number: 12, updatedAt: '2026-09-06T10:00:00Z', mergeable: true })
@@ -147,5 +163,6 @@ const testCommentOnConflictOnly = async () => {
 await testRetryPolicy()
 await testExclusions()
 await testCommentOnConflictOnly()
+await testSkipLabel()
 
 console.info('PASS: collect-copilot-conflicts')
