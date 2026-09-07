@@ -134,12 +134,12 @@ describe('command center', () => {
     await clickThought('a')
 
     await gesture(openCommandCenterCommand)
-    await waitForSelector('[data-testid=command-menu-panel]')
+    await waitForCommandCenterOpen()
 
     // Clear Thought empties the thought for retyping and dismisses the sheet so the keyboard has the screen
     await gesture(clearThoughtCommand)
     await waitForEditable('')
-    await waitUntil(() => !document.querySelector('[data-testid=command-menu-panel]'))
+    await waitForCommandCenterClosed()
 
     // dismiss the keyboard, as tapping a blank area does
     await closeKeyboard()
