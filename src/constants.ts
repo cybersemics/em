@@ -626,12 +626,7 @@ export const CONTENT_BOX_PADDING_RIGHT = 10
 export const CONTENT_BOX_PADDING_LEFT = 50
 
 type DropdownStateKeys =
-  | 'showBulletPicker'
-  | 'showColorPicker'
-  | 'showLetterCase'
-  | 'showSortPicker'
-  | 'showCommandCenter'
-  | 'showUndoSlider'
+  'showBulletPicker' | 'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandCenter' | 'showUndoSlider'
 
 /** Maps dropdown types to their corresponding State keys. */
 export const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
