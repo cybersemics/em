@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { isTouch } from '../browser'
+import globals from '../globals'
 
-interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
+interface ContentEditableProps extends Omit<React.HTMLProps<HTMLDivElement>, 'onChange'> {
   style?: React.CSSProperties
   html: string
   disabled?: boolean
@@ -18,7 +19,7 @@ interface ContentEditableProps extends React.HTMLProps<HTMLDivElement> {
  * Content Editable Component.
  */
 const ContentEditable = React.memo(
-  ({ style, html, disabled, innerRef, stopDragOver, ...props }: ContentEditableProps) => {
+  ({ style, html, disabled, innerRef, onChange, stopDragOver, ...props }: ContentEditableProps) => {
     const newContentRef = useRef<HTMLDivElement>(null)
     const contentRef = innerRef || newContentRef
     const prevHtmlRef = useRef<string>(html)
@@ -57,7 +58,7 @@ const ContentEditable = React.memo(
     }, [editableNonce])
 
     // eslint-disable-next-line jsdoc/require-jsdoc
-    const handleInput = (originalEvent: React.SyntheticEvent<HTMLInputElement>) => {
+    const handleInput = (originalEvent: React.SyntheticEvent<HTMLDivElement>) => {
       const innerHTML = contentRef!.current!.innerHTML
 
       // prevent innerHTML update when editing
@@ -69,7 +70,7 @@ const ContentEditable = React.memo(
         },
       })
 
-      props.onChange(event)
+      onChange(event)
     }
 
     return (
@@ -81,14 +82,21 @@ const ContentEditable = React.memo(
         }}
         ref={contentRef}
         contentEditable={!disabled}
+        // capitalize the first letter of each sentence to match the native on-screen keyboard behavior (e.g. iOS auto-capitalizes by default, but Android does not unless autocapitalize is set) (#3531)
+        autoCapitalize='sentences'
         // disable spellCheck when running in Puppeteer, otherwise red squiggly lines can break the snapshot tests
         spellCheck={!navigator.webdriver}
         style={style}
-        onBlur={(originalEvent: React.FocusEvent<HTMLInputElement>) => {
+        onBlur={(originalEvent: React.FocusEvent<HTMLDivElement>) => {
           const innerHTML = contentRef!.current!.innerHTML
 
           // allow innerHTML updates after blur
-          allowInnerHTMLChange.current = true
+          // The momentary blur of the iOS autocomplete focus retarget does not end editing — focus returns to the
+          // editable immediately — so keep innerHTML updates suppressed there, or a re-render can overwrite what the
+          // user is typing with the trimmed value from Redux (#4828).
+          if (!globals.suppressBlurSync) {
+            allowInnerHTMLChange.current = true
+          }
 
           const event = Object.assign({}, originalEvent, {
             target: {
@@ -113,7 +121,7 @@ const ContentEditable = React.memo(
 
 ContentEditable.displayName = 'ContentEditable'
 
-export declare type ContentEditableEvent = React.SyntheticEvent<HTMLInputElement, Event> & {
+export declare type ContentEditableEvent = React.SyntheticEvent<HTMLDivElement, Event> & {
   target: {
     value: string
   }

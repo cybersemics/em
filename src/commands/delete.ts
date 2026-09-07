@@ -1,5 +1,4 @@
 import pluralize from 'pluralize'
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../actions/deleteThoughtWithCursor'
@@ -52,9 +51,9 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
   }
 }
 
-const deleteCommand: Command = {
+const deleteCommand = {
   id: 'delete',
-  label: 'Delete',
+  label: 'Delete' as const,
   description: 'Say goodbye to the current thought. Hit undo if you are not ready to part ways.',
   gesture: 'ldldl',
   multicursor: {
@@ -65,12 +64,12 @@ const deleteCommand: Command = {
       dispatch(alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`))
     },
   },
-  keyboard: { key: Key.Backspace, alt: true, shift: true, meta: true },
+  keyboard: { key: 'Backspace', alt: true, shift: true, meta: true },
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec,
   svg: Icon,
-}
+} satisfies Command
 
 export default deleteCommand

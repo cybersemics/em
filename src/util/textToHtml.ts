@@ -52,7 +52,10 @@ const blocksToHtml = (parsedBlocks: Block[]): string =>
         ALLOWED_ATTR,
       })
       const childrenHtml = block.children.length > 0 ? `<ul>${blocksToHtml(block.children)}</ul>` : ''
-      return value || childrenHtml ? `<li>${value}${childrenHtml}</li>` : ''
+      // Preserve a bullet line whose value is empty (e.g. "- " within a copied series of thoughts) as an empty <li>.
+      // Whitespace-only artifacts from indented input (no bullet) are still dropped. See https://github.com/cybersemics/em/issues/4448.
+      const isBullet = REGEX_PLAINTEXT_BULLET.test(block.scope)
+      return value || childrenHtml || isBullet ? `<li>${value}${childrenHtml}</li>` : ''
     })
     .join('\n')
 

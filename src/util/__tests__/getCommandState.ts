@@ -122,6 +122,18 @@ it('text and background color on font tag', () => {
   })
 })
 
+it('color tag wrapping other formatting tags', () => {
+  expect(getCommandState('<font color="#ff573d"><strike><u><b>text</b></u></strike></font>')).toStrictEqual({
+    bold: true,
+    italic: false,
+    underline: true,
+    strikethrough: true,
+    code: false,
+    foreColor: '#ff573d',
+    backColor: undefined,
+  })
+})
+
 // NOT IMPLEMENTED
 it.skip('text and background color on span tag', () => {
   expect(getCommandState('<span style="color: #000000; background-color: rgb(0, 0, 255);">a</span>')).toStrictEqual({
@@ -132,6 +144,22 @@ it.skip('text and background color on span tag', () => {
     code: false,
     foreColor: '#000000',
     backColor: 'rgb(0, 0, 255)',
+  })
+})
+
+it('partially styled thought with color and background color', () => {
+  expect(
+    getCommandState(
+      '<b><i><u><strike><code><font color="#000000" style="background-color: rgb(0, 0, 255)">text</font> but only partly</code></strike></u></i></b>',
+    ),
+  ).toStrictEqual({
+    bold: true,
+    italic: true,
+    underline: true,
+    strikethrough: true,
+    code: true,
+    foreColor: undefined,
+    backColor: undefined,
   })
 })
 
@@ -163,6 +191,36 @@ it('fully styled thought without text content', () => {
     strikethrough: true,
     code: true,
     foreColor: 'rgb(255, 0, 0)',
+    backColor: 'rgb(0, 0, 255)',
+  })
+})
+
+it('nested colors should use the inner one', () => {
+  expect(getCommandState('<font color="rgb(255, 0, 0)"><font color="rgb(0, 0, 255)">text</font></font>')).toStrictEqual(
+    {
+      bold: false,
+      italic: false,
+      underline: false,
+      strikethrough: false,
+      code: false,
+      foreColor: 'rgb(0, 0, 255)',
+      backColor: undefined,
+    },
+  )
+})
+
+it('nested background colors should use the inner one', () => {
+  expect(
+    getCommandState(
+      '<span style="background-color: rgb(255, 0, 0)"><span style="background-color: rgb(0, 0, 255)">text</span></span>',
+    ),
+  ).toStrictEqual({
+    bold: false,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
+    foreColor: undefined,
     backColor: 'rgb(0, 0, 255)',
   })
 })

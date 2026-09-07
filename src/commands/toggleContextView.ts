@@ -3,9 +3,9 @@ import { toggleContextViewActionCreator as toggleContextView } from '../actions/
 import ContextViewIcon from '../components/icons/ContextViewIcon'
 import isContextViewActive from '../selectors/isContextViewActive'
 
-const toggleContextViewCommand: Command = {
+const toggleContextViewCommand = {
   id: 'toggleContextView',
-  label: 'Context View',
+  label: 'Context View' as const,
   description:
     'Opens the context view of the current thought. The context view shows all contexts throughout your thoughtspace in which the thought can be found. Use the same command to close the context view.',
   descriptionInverse:
@@ -19,6 +19,6 @@ const toggleContextViewCommand: Command = {
     return !!state.cursor && isContextViewActive(state, state.cursor)
   },
   exec: dispatch => dispatch(toggleContextView()),
-}
+} satisfies Command
 
 export default toggleContextViewCommand

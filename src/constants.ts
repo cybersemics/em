@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 /** Defines app-wide constants. */
 import CommandId from './@types/CommandId'
 import DropdownType from './@types/DropdownType'
@@ -7,15 +6,14 @@ import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
 import emojiRegex from './emojiRegex'
 
+export const TOOLBAR_HEIGHT = 50
+
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20
 
 // Number of ms to wait after hovering over a thought before expanding, during drag-and-drop. Overriden by testFlags.expandHoverDelay during drag-and-drop tests.
 export const EXPAND_HOVER_DELAY = 1000
-
-// threshold for keyboard visibility detection (percentage of height change)
-export const KEYBOARD_VISIBILITY_THRESHOLD = 0.15
 
 // ms on startup before offline mode is enabled
 // sufficient to avoid flash on login
@@ -99,30 +97,24 @@ export const TUTORIAL_CONTEXT2_PARENT = {
   [TUTORIAL_VERSION_BOOK]: 'Books',
 }
 
-// constants for different schema versions
-export const SCHEMA_INITIAL = 0 // DEPRECATED
-export const SCHEMA_CONTEXTCHILDREN = 1 // DEPRECATED
-export const SCHEMA_ROOT = 2 // change root → __ROOT__
-export const SCHEMA_HASHKEYS = 3 // hash lexemeIndex keys
-export const SCHEMA_META_SETTINGS = 4 // load settings from hidden thoughts via metaprogramming
-export const SCHEMA_UNIQUE_IDS = 5 // add unique ids to thoughts for independent editing (#1495)
-export const SCHEMA_CHILDREN_MAP = 6 // convert children array to childrenMap object (#1587)
-export const SCHEMA_THOUGHT_WITH_CHILDREN = 7 // store all children in the Thought Object to allow O(1) lookup (#1592)
-// 1. lexeme.lemma renamed to Lexeme.lemma
-// 2. Lexeme.contexts changed from array to object
-// 3. lexemeIndex re-keyed with new hashing function to differentiate =archive and =archive
-export const SCHEMA_LEMMA = 8
-export const SCHEMA_LATEST = 8
+export const GLOBAL_ROOT_TOKEN = '00000000000000000000000000000000' as ThoughtId
 
-// store the root string as a token that is not likely to be written by the user (bad things will happen)
-export const HOME_TOKEN = '__ROOT__' as ThoughtId
+export const ROOT_PARENT_ID = GLOBAL_ROOT_TOKEN
 
-export const ROOT_PARENT_ID = '__ROOT_PARENT_ID__' as ThoughtId
+export const HOME_TOKEN = '00000000000000000000000000000001' as ThoughtId
 
-// token for hidden system context
-export const EM_TOKEN = '__EM__' as ThoughtId
+// Display/export-only label for the fixed Home root. Do not store this as the root thought value.
+export const HOME_DISPLAY_VALUE = '__ROOT__'
 
-export const ABSOLUTE_TOKEN = '__ABSOLUTE__' as ThoughtId
+export const EM_TOKEN = '00000000000000000000000000000002' as ThoughtId
+
+export const ABSOLUTE_TOKEN = '00000000000000000000000000000003' as ThoughtId
+
+// Fixed /EM/Settings identity used by system thought bootstrap and the TreeCRDT-backed thoughtspace.
+export const SETTINGS_TOKEN = '00000000000000000000000000000004' as ThoughtId
+export const SETTINGS_VALUE = 'Settings'
+
+export const TRANSIENT_THOUGHT_ID = '00000000000000000000000000ffffff' as ThoughtId
 
 export const ROOT_CONTEXTS = [HOME_TOKEN, ABSOLUTE_TOKEN]
 
@@ -140,6 +132,9 @@ export const AUTO_PROSE_VIEW_MIN_CHARS = 200
 /** The left and right padding of each toolbar button (px). */
 export const TOOLBAR_BUTTON_PADDING = 8
 
+/** The minimum horizontal finger travel (px) that distinguishes a toolbar swipe from a button tap. Used to suppress the button command when the user swipes even at a scroll boundary, where the toolbar cannot scroll and scrollLeft therefore cannot change. */
+export const TOOLBAR_SWIPE_THRESHOLD = 10
+
 // Used for scaling the size of icons according to the font size
 export const ICON_SCALING_FACTOR = 1.37
 
@@ -154,7 +149,7 @@ export const FONT_SCALE_INCREMENT = 1
 // to detect if field has multiline
 export const MIN_LINE_HEIGHT = 26
 
-// delay after gesture hint is activated before command palette appears
+// delay after gesture hint is activated before desktop command universe appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
 // delay to show executed command after gesture is completed
@@ -187,11 +182,13 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'pinAll',
   'toggleTableView',
   'toggleSortPicker',
+  'toggleBulletPicker',
   'toggleDone',
   'bold',
   'italic',
   'underline',
   'strikethrough',
+  'code',
   'textColor',
   'letterCase',
   'toggleContextView',
@@ -217,7 +214,8 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'cursorUp',
   // 'deleteEmptyThoughtOrOutdent',
   // 'deleteThoughtWithCursor',
-  // 'extractThought',
+  // 'extractCategory',
+  // 'extractSubthought',
   // 'help',
   // 'home',
   // 'join',
@@ -257,8 +255,6 @@ export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
 // starts with '-', '—' (emdash), ▪, ◦, •, or '*'' (excluding whitespace)
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 export const REGEX_PLAINTEXT_BULLET = /^\s*(?:[-—▪◦•]|\*\s)/m
-
-export const IPFS_GATEWAY = 'ipfs.infura.io'
 
 // delay before long press is activated
 // also used for react-dnd's delayTouchStart
@@ -350,10 +346,6 @@ export const META_PROGRAMMING_HELP = [
   {
     code: 'readonly',
     description: 'The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.',
-  },
-  {
-    code: 'src',
-    description: 'Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.',
   },
   {
     code: 'style',
@@ -481,7 +473,7 @@ export enum LongPressState {
 // User settings that can be saved to /EM/Settings/
 // See Settings modal for full descriptions.
 export enum Settings {
-  disableGestureTracing = 'disableGestureTracing',
+  debugCrashLog = 'debugCrashLog',
   experienceMode = 'experienceMode',
   hideScrollZone = 'hideScrollZone',
   leftHanded = 'leftHanded',
@@ -526,7 +518,9 @@ export const COMMAND_GROUPS: {
       'jumpForward',
       'moveCursorBackward',
       'moveCursorForward',
-      'commandPalette',
+      'navigateBack',
+      'navigateForward',
+      'openDesktopCommandUniverse',
       'home',
       'search',
       'selectAll',
@@ -543,7 +537,10 @@ export const COMMAND_GROUPS: {
       'newSubthoughtTop',
       'newUncle',
       'newGrandChild',
-      'extractThought',
+      'extractSubthought',
+      'extractCategory',
+      'defineTerm',
+      'generateEmoji',
       'generateThought',
     ],
   },
@@ -553,12 +550,21 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Moving thoughts',
-    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp', 'swapParent'],
+    commands: [
+      'indent',
+      'outdent',
+      'bumpThoughtDown',
+      'moveThoughtDown',
+      'moveThoughtUp',
+      'swapParent',
+      'swapGrandparent',
+    ],
   },
   {
     title: 'Editing thoughts',
     commands: [
       'join',
+      'mergeDuplicates',
       'splitSentences',
       'bold',
       'italic',
@@ -569,11 +575,13 @@ export const COMMAND_GROUPS: {
       'closeCommandCenter',
       'openCommandCenter',
       'removeFormat',
+      'textColor',
+      'applyColor',
     ],
   },
   {
     title: 'Oops',
-    commands: ['undo', 'redo'],
+    commands: ['undo', 'redo', 'repeat'],
   },
   {
     title: 'Special Views',
@@ -594,15 +602,15 @@ export const COMMAND_GROUPS: {
   },
   {
     title: 'Visibility',
-    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
+    commands: ['pin', 'pinAll', 'pinDescendants', 'toggleDone', 'toggleHiddenThoughts'],
   },
   {
     title: 'Settings',
-    commands: ['customizeToolbar'],
+    commands: ['settings', 'customizeToolbar'],
   },
   {
     title: 'Help',
-    commands: ['help', 'openGestureCheatsheet'],
+    commands: ['help', 'openMobileCommandUniverse'],
   },
   {
     title: 'Cancel',
@@ -618,6 +626,7 @@ export const CONTENT_BOX_PADDING_RIGHT = 10
 export const CONTENT_BOX_PADDING_LEFT = 50
 
 type DropdownStateKeys =
+  | 'showBulletPicker'
   | 'showColorPicker'
   | 'showLetterCase'
   | 'showSortPicker'
@@ -626,6 +635,7 @@ type DropdownStateKeys =
 
 /** Maps dropdown types to their corresponding State keys. */
 export const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
+  bulletPicker: 'showBulletPicker',
   colorPicker: 'showColorPicker',
   letterCase: 'showLetterCase',
   sortPicker: 'showSortPicker',
