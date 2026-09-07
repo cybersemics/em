@@ -3,12 +3,15 @@ import { toggleContextViewActionCreator as toggleContextView } from '../../actio
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
+import isMulticursorPath from '../../selectors/isMulticursorPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThoughtByContext } from '../../test-helpers/editThoughtByContext'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import { acceptAiDisclosure, acknowledgeAiDisclosure, clearAiDisclosureAcknowledgement } from '../../util/aiDisclosure'
@@ -156,6 +159,44 @@ it('sends the parent as read-only context when selected thoughts are nested', as
       - Alaska
       - California
       - Wisconsin`)
+})
+
+// https://github.com/cybersemics/em/pull/5377#issuecomment-5570203182
+it('keeps originally selected thoughts selected after they are recategorized', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({ json: () => Promise.resolve({ outline: fruitOutline }) })
+  await dispatch([
+    importText({
+      text: `
+        - milk
+        - apples
+          - granny smith
+        - bananas
+      `,
+    }),
+    setCursor(['apples']),
+    addMulticursor(['apples']),
+    addMulticursor(['bananas']),
+  ])
+
+  executeCommandWithMulticursor(organizeThought, { store })
+  await vi.runAllTimersAsync()
+
+  const state = store.getState()
+  const applesPath = contextToPath(state, ['Fruit', 'apples'])
+  const bananasPath = contextToPath(state, ['Fruit', 'bananas'])
+  const fruitPath = contextToPath(state, ['Fruit'])
+  const milkPath = contextToPath(state, ['milk'])
+  expect(applesPath).not.toBeNull()
+  expect(bananasPath).not.toBeNull()
+  expect(fruitPath).not.toBeNull()
+  expect(milkPath).not.toBeNull()
+  expect(isMulticursorPath(state, applesPath!)).toBe(true)
+  expect(isMulticursorPath(state, bananasPath!)).toBe(true)
+  expect(isMulticursorPath(state, fruitPath!)).toBe(false)
+  expect(isMulticursorPath(state, milkPath!)).toBe(false)
+  expect(Object.keys(state.multicursors)).toHaveLength(2)
+  expectPathToEqual(state, state.cursor, ['Fruit', 'apples'])
 })
 
 it('categorizes selected thoughts and leaves unselected siblings in place', async () => {
@@ -378,6 +419,15 @@ it('reverts the reorganization with one undo', async () => {
     - granny smith
   - bananas`)
   expect(store.getState().alert?.value).toBe('Undo: Organize Thought')
+
+  const state = store.getState()
+  const applesPath = contextToPath(state, ['apples'])
+  const bananasPath = contextToPath(state, ['bananas'])
+  expect(applesPath).not.toBeNull()
+  expect(bananasPath).not.toBeNull()
+  expect(isMulticursorPath(state, applesPath!)).toBe(true)
+  expect(isMulticursorPath(state, bananasPath!)).toBe(true)
+  expect(Object.keys(state.multicursors)).toHaveLength(2)
 })
 
 it('continues the current request after allowing AI once', async () => {

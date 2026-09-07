@@ -4,6 +4,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
+import { HOME_PATH } from '../constants'
 import canOrganizeThought from '../selectors/canOrganizeThought'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
@@ -17,17 +18,21 @@ import someDescendants from '../selectors/someDescendants'
 import thoughtToPath from '../selectors/thoughtToPath'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
+import equalPath from '../util/equalPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isRoot from '../util/isRoot'
 import keyValueBy from '../util/keyValueBy'
 import strip from '../util/strip'
+import { addMulticursorActionCreator as addMulticursor } from './addMulticursor'
 import { alertActionCreator as alert } from './alert'
+import { clearMulticursorsActionCreator as clearMulticursors } from './clearMulticursors'
 import { createThoughtActionCreator as createThought } from './createThought'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { errorActionCreator as error } from './error'
 import { moveThoughtActionCreator as moveThought } from './moveThought'
 import { pullActionCreator as pull } from './pull'
+import { setCursorActionCreator as setCursor } from './setCursor'
 import { updateThoughtsActionCreator as updateThoughts } from './updateThoughts'
 
 /** A node in the reorganized outline returned by the AI service. */
@@ -159,6 +164,36 @@ const isValidOutline = (nodes: OutlineNode[], expectedIds: Set<string>): boolean
     expectedIds.size === new Set(outputIds).size
   )
 }
+
+/**
+ * Restores the multicursor selection to the current paths of the given thoughts after they have been moved.
+ * The command loop restores the selection before an async command returns, so those paths still point at the old
+ * parents. Recomputing them keeps the bullet indicators, desktop alert, and Command Center in sync.
+ */
+const restoreMulticursors =
+  (thoughtIds: ThoughtId[]): Thunk =>
+  (dispatch, getState) => {
+    const state = getState()
+    if (Object.keys(state.multicursors).length === 0) return
+
+    const restoredPaths = thoughtIds.flatMap(thoughtId => {
+      if (!getThoughtById(state, thoughtId)) return []
+      const recomputed = thoughtToPath(state, thoughtId)
+      return equalPath(recomputed, HOME_PATH) ? [] : [recomputed]
+    })
+    if (restoredPaths.length === 0) return
+
+    const cursorId = state.cursor && head(state.cursor)
+    const cursorPath = cursorId && getThoughtById(state, cursorId) ? thoughtToPath(state, cursorId) : null
+    const restoredCursorPath =
+      (cursorPath && !equalPath(cursorPath, HOME_PATH) ? cursorPath : restoredPaths.at(-1)) ?? null
+
+    dispatch([
+      clearMulticursors(),
+      ...restoredPaths.map(path => addMulticursor({ path })),
+      setCursor({ path: restoredCursorPath, preserveMulticursor: true }),
+    ])
+  }
 
 /** Sets or clears Thought.generating on the given thoughts without creating undo history. */
 const setGenerating =
@@ -412,6 +447,7 @@ const organizeThought =
           resolved: resolveNodes(nodes as OutlineNode[]),
         }),
       )
+      dispatch(restoreMulticursors(thoughtIds))
     } catch {
       dispatch(error({ value: 'Failed to organize thoughts' }))
     } finally {
