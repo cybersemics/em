@@ -11,7 +11,7 @@ import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
-import pendingFormatStore from '../stores/pendingFormatStore'
+import { clearPendingFormat, getPendingFormat, setPendingFormat } from '../stores/pendingFormatStore'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
@@ -119,11 +119,10 @@ export const formatSelectionActionCreator =
     // on a placeholder character so that further commands compose exactly as they do on a real value.
     if (value.length === 0) {
       if (state.noteFocus) return
-      const pending = pendingFormatStore.getState()
-      const pendingValue = pending.id === thought.id ? pending.value : PENDING_FORMAT_PLACEHOLDER
-      pendingFormatStore.update({
-        id: thought.id,
-        value: formatSelectionHtml(pendingValue, {
+      const pendingValue = getPendingFormat(thought.id) ?? PENDING_FORMAT_PLACEHOLDER
+      setPendingFormat(
+        thought.id,
+        formatSelectionHtml(pendingValue, {
           start: 0,
           end: PENDING_FORMAT_PLACEHOLDER.length,
           command,
@@ -131,13 +130,13 @@ export const formatSelectionActionCreator =
           defaultColor: colors.fg,
           defaultBackgroundColor: colors.bg,
         }),
-      })
+      )
       updateCommandState()
       return
     }
 
     // Formatting a thought that has text supersedes any formatting held for it while it was empty.
-    if (pendingFormatStore.getState().id === thought.id) pendingFormatStore.update({ id: null, value: '' })
+    clearPendingFormat(thought.id)
 
     // Compute the plain-text character offsets [start, end) of the selection relative to the editable.
     const plainLength = contentEditable.textContent?.length ?? 0

@@ -438,6 +438,26 @@ describe('formatSelection color', () => {
     expect(cursorValue()).toBe('<font color="#00d688">H</font>')
   })
 
+  // #3910: the formatting held for an empty thought is keyed by thought id, so formatting a second empty thought does
+  // not discard the first thought's formatting.
+  it('holds a color for each empty thought independently (#3910)', async () => {
+    await dispatch([newThought({ value: 'a' }), newThought({ value: '' })])
+    const emptyPath = store.getState().cursor!
+
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    await dispatch(newThought({ value: '' }))
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    await dispatch(setCursorPath({ path: emptyPath }))
+
+    const user = userEvent.setup({ delay: null })
+    await user.type(getEditable(), 'H')
+    await act(vi.runAllTimersAsync)
+
+    expect(cursorValue()).toBe('<font color="#00d688">H</font>')
+  })
+
   // #3901: applying the default background color to a thought that has no custom background is a no-op.
   it('does not add markup when applying the default background to a thought with no background (#3901)', async () => {
     await dispatch([newThought({ value: 'Hello' })])

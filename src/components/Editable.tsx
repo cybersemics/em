@@ -51,7 +51,7 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import caretRectStore from '../stores/caretRectStore'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
-import pendingFormatStore from '../stores/pendingFormatStore'
+import pendingFormatStore, { clearPendingFormat, getPendingFormat } from '../stores/pendingFormatStore'
 import storageModel from '../stores/storageModel'
 import addEmojiSpace from '../util/addEmojiSpace'
 import debugLog from '../util/debugLog'
@@ -172,9 +172,7 @@ const Editable = ({
 
   // Formatting applied to the thought while it was empty is held in pendingFormatStore until the user types (#3910).
   // Style the placeholder with it so that the empty thought previews the formatting the typed text will take.
-  const pendingFormatValue = pendingFormatStore.useSelector(pendingFormat =>
-    pendingFormat.id === thoughtId ? pendingFormat.value : '',
-  )
+  const pendingFormatValue = pendingFormatStore.useSelector(({ formats }) => formats[thoughtId] ?? '')
   const placeholderCommandState = useMemo(
     () => (isCursorCleared ? getCommandState(value) : pendingFormatValue ? getCommandState(pendingFormatValue) : null),
     [isCursorCleared, pendingFormatValue, value],
@@ -621,15 +619,14 @@ const Editable = ({
         // value has no text to wrap. Transfer it onto the first text typed into the thought and consume it (#3910).
         // The wrapped value takes the immediate, forced branch below, which re-renders the editable with the
         // formatting so that the browser carries it through the rest of the typing.
-        const pendingFormat = pendingFormatStore.getState()
-        const isPendingFormat =
-          pendingFormat.id === head(simplePath) && oldValue.length === 0 && e.target.value.length > 0
-        if (isPendingFormat) pendingFormatStore.update({ id: null, value: '' })
+        const pendingFormat = getPendingFormat(head(simplePath))
+        const isPendingFormat = pendingFormat !== undefined && oldValue.length === 0 && e.target.value.length > 0
+        if (isPendingFormat) clearPendingFormat(head(simplePath))
 
         const wrappedValue = state.cursorCleared
           ? applyOuterTags(e.target.value, oldValue)
           : isPendingFormat
-            ? applyOuterTags(e.target.value, pendingFormat.value)
+            ? applyOuterTags(e.target.value, pendingFormat)
             : e.target.value
         const trimmedWrappedValue = trimHtml(wrappedValue)
         const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
