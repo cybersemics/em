@@ -9,6 +9,7 @@ const REPORT_FILE = `${REPORT_DIR}/report.json`
 const MARKER = '<!-- copilot-conflicts -->'
 const COPILOT = 'Copilot'
 const BASE_BRANCH = 'main'
+const SKIP_LABEL = 'skip-auto-resolve-conflicts'
 const MAX_DISPATCHES = 5
 const MAX_ATTEMPTS = 6
 const DELAYS_HOURS = [3, 6, 12, 24, 48, 96]
@@ -83,9 +84,14 @@ const getMergeability = async ({ github, owner, repo, prNumber }) => {
   return null
 }
 
-/** Returns whether a pull request is an in-repository Copilot PR targeting main. */
+/**
+ * Returns whether a pull request is an in-repository Copilot PR targeting main that has not opted
+ * out. The skip label excludes the pull request from the scan entirely, so no comment is written or
+ * updated and its retry state stays frozen until the label is removed.
+ */
 const isEligible = ({ pr, repository }) =>
   pr.state === 'open' &&
+  !(pr.labels || []).some(label => label.name === SKIP_LABEL) &&
   pr.base.ref === BASE_BRANCH &&
   pr.user.login === COPILOT &&
   pr.user.type === 'Bot' &&
