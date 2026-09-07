@@ -1,0 +1,60 @@
+name: Copilot Conflict Resolution
+
+# Scans Copilot PRs after main changes. It runs only trusted code from main and never checks out
+# or executes a pull request's head branch.
+on:
+  push:
+    branches: [main]
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Optional Copilot PR number to inspect'
+        required: false
+        type: string
+      dry_run:
+        description: 'Report eligibility without changing comments or starting Copilot'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: copilot-conflicts
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  resolve:
+    name: Scan conflicting Copilot PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Collect due conflicts
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          PR_NUMBER: ${{ inputs.pr }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        with:
+          script: |
+            await require('./scripts/ci/collect-copilot-conflicts.cjs')({ github, context, core })
+
+      - name: Start Copilot conflict-resolution tasks
+        if: inputs.dry_run != true
+        env:
+          COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Recorded in the comment's state, so a later scan rewriting it still credits the run that
+          # started the attempt.
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          node scripts/ci/start-copilot-conflict-task.mjs copilot-conflicts/report.json | tee -a "$GITHUB_STEP_SUMMARY"

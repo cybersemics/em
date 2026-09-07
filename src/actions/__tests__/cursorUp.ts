@@ -1,22 +1,25 @@
 import { act } from 'react-dom/test-utils'
+import State from '../../@types/State'
 import cursorUp from '../../actions/cursorUp'
 import importText from '../../actions/importText'
 import { importTextActionCreator as importTextAction } from '../../actions/importText'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
+import setCursorReducer from '../../actions/setCursor'
 import toggleContextView from '../../actions/toggleContextView'
 import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
 import { executeCommand } from '../../commands'
 import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
-import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import prevThought from '../../selectors/prevThought'
 import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
+import appendToPath from '../../util/appendToPath'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -54,12 +57,7 @@ describe('normal view', () => {
 
     const stateNew = reducerFlow(steps)(initialState())
 
-    const thoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
-
-    expect(thoughts).toMatchObject([
-      { value: 'a', rank: 0 },
-      { value: '=test', rank: 1 },
-    ])
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', '=test'])
   })
 
   it('move cursor from first child to parent', () => {
@@ -173,8 +171,8 @@ describe('normal view', () => {
     expectPathToEqual(state, prevThought(state, state.cursor!), ['a'])
   })
 
-  it('move cursor from empty thought to previous thought in context sorted in descending order', () => {
-    initStore()
+  it('move cursor from empty thought to previous thought in context sorted in descending order', async () => {
+    await initStore()
 
     act(() => {
       store.dispatch([
@@ -194,6 +192,44 @@ describe('normal view', () => {
     act(() => executeCommand(newSubthoughtTopCommand, { store }))
     const stateNew = cursorUp(store.getState())
     expectPathToEqual(stateNew, stateNew.cursor, ['x'])
+  })
+
+  // https://github.com/cybersemics/em/issues/5156
+  it('move cursor from the first of two duplicate thoughts in a sorted context to the parent', () => {
+    const text = `
+      - x
+        - =sort
+          - Alphabetical
+            - Asc
+        - a
+        - b
+        - c
+    `
+    const state = reducerFlow([importText({ text }), setCursor(['x', 'a']), newThought({ value: 'a' })])(initialState())
+
+    // the duplicate `a` is rendered above the original, so the cursor is set to the first `a` in rank order
+    const firstA = getChildrenRankedByContext(state, ['x']).find(child => child.value === 'a')!
+    const stateNew = reducerFlow([
+      (state: State) => setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, firstA.id) }),
+      cursorUp,
+    ])(state)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['x'])
+  })
+
+  // https://github.com/cybersemics/em/issues/4951
+  it('move cursor from a new empty thought to the last thought in an ascending sorted context', () => {
+    const text = `
+      - a
+        - =sort
+          - Alphabetical
+            - Asc
+        - b
+        - c
+    `
+    const steps = [importText({ text }), setCursor(['a', 'c']), newThought(''), cursorUp]
+    const state = reducerFlow(steps)(initialState())
+    expectPathToEqual(state, state.cursor, ['a', 'c'])
   })
 
   it('should move to the last visible thought of pinned thought', () => {

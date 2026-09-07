@@ -10,27 +10,33 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 
-/** Sets a sequence of values as descendants. Preserves existing descendants and unrelated siblings, except for the last value, which always gets replaced by the given value. */
-const setDescendant = (
-  state: State,
-  { path, value, values }: { path: Path; value?: string; values?: string[] },
-): State => {
+interface setDescendantPayload {
+  path: Path
+  value?: string
+  values?: string[]
+}
+
+/** Sets a sequence of values as descendants. Attribute keys (e.g. =pin) are found or created, preserving existing descendants and unrelated siblings. A non-attribute last value is the attribute's value slot, and replaces the existing first subthought. */
+const setDescendant = (state: State, { path, value, values }: setDescendantPayload): State => {
   // normalize values to array
   const _values = values || [value!]
   if (!value && (!values || values.length === 0)) return state
 
   const thoughtId = head(path)
-  const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
-  const idNew = createId()
 
-  // base case: overwrite the first subthought with the last value in the sequence
-  if (_values.length === 1) {
+  // base case: overwrite the first subthought with the value slot
+  // A nullary attribute (e.g. =heading1) is a key, not a value, so it falls through to find-or-create below rather than overwriting an unrelated first child.
+  if (_values.length === 1 && !isAttribute(_values[0])) {
     return setFirstSubthought(state, {
       path: path,
       value: _values[0],
     })
   }
+
+  const firstSubthoughtId = findDescendant(state, thoughtId, _values[0])
+  const idNew = createId()
 
   // otherwise, create the first subthought if it does not exist and recurse
   const stateWithFirstSubthought = firstSubthoughtId
@@ -43,6 +49,7 @@ const setDescendant = (
       })
 
   // recursion
+  // When the sequence ends in an attribute key, the recursive call receives no values and returns the state unchanged.
   return setDescendant(stateWithFirstSubthought, {
     path: appendToPath(path, firstSubthoughtId || idNew),
     values: _values.slice(1),

@@ -53,7 +53,7 @@ it('toggle on table view of parent of cursor (initial state =view attribute set 
   expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Table')
 })
 
-it('toggle on table view of parent of cursor (initial state without =view attribute)', () => {
+it('toggle off table view of parent of cursor', () => {
   // import thoughts
   store.dispatch([
     importText({
@@ -77,7 +77,98 @@ it('toggle on table view of parent of cursor (initial state without =view attrib
 })
 
 describe('multicursor', () => {
-  it('toggles table view on for multiple thoughts', async () => {
+  it('toggles table view once when multiple selected thoughts share a parent', () => {
+    store.dispatch([
+      importText({
+        text: `
+            - a
+              - b
+                - c
+              - d
+                - e
+          `,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['a', 'd']),
+    ])
+
+    executeCommandWithMulticursor(toggleTableViewCommand, { store })
+
+    expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Table')
+  })
+
+  it('toggles table view off once when multiple selected thoughts share a parent', () => {
+    store.dispatch([
+      importText({
+        text: `
+            - a
+              - =view
+                - Table
+              - b
+                - c
+              - d
+                - e
+          `,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['a', 'd']),
+    ])
+
+    executeCommandWithMulticursor(toggleTableViewCommand, { store })
+
+    expect(attributeByContext(store.getState(), ['a'], '=view')).toBe(null)
+  })
+
+  it('toggles table view once for each parent with multiple selected children', () => {
+    store.dispatch([
+      importText({
+        text: `
+            - a
+              - a1
+              - a2
+            - b
+              - b1
+              - b2
+          `,
+      }),
+      setCursor(['a', 'a1']),
+      addMulticursor(['a', 'a1']),
+      addMulticursor(['a', 'a2']),
+      addMulticursor(['b', 'b1']),
+      addMulticursor(['b', 'b2']),
+    ])
+
+    executeCommandWithMulticursor(toggleTableViewCommand, { store })
+
+    expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Table')
+    expect(attributeByContext(store.getState(), ['b'], '=view')).toBe('Table')
+  })
+
+  it('toggles table view for selections at different depths', () => {
+    store.dispatch([
+      importText({
+        text: `
+            - a
+              - b
+                - c
+              - d
+                - e
+          `,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['a', 'd', 'e']),
+    ])
+
+    executeCommandWithMulticursor(toggleTableViewCommand, { store })
+
+    expect(attributeByContext(store.getState(), ['a'], '=view')).toBe('Table')
+    expect(attributeByContext(store.getState(), ['a', 'd'], '=view')).toBe('Table')
+  })
+
+  it('toggles table view on for multiple thoughts', () => {
     store.dispatch([
       importText({
         text: `
@@ -101,7 +192,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(toggleTableViewCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =view
       - Table
@@ -119,7 +210,7 @@ describe('multicursor', () => {
     - c2`)
   })
 
-  it('handles mixed scenarios with table view on and off', async () => {
+  it('handles mixed scenarios with table view on and off', () => {
     store.dispatch([
       importText({
         text: `
@@ -147,7 +238,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(toggleTableViewCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - a1
     - a2
@@ -163,7 +254,7 @@ describe('multicursor', () => {
     - c2`)
   })
 
-  it('toggles table view on nested thoughts', async () => {
+  it('toggles table view on nested thoughts', () => {
     store.dispatch([
       importText({
         text: `
@@ -184,7 +275,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(toggleTableViewCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - =view
