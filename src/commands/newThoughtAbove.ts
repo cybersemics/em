@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { isTouch } from '../browser'
@@ -15,7 +14,7 @@ const newThoughtAboveCommand = {
     preventSetCursor: true,
     selectNewCursors: true,
   },
-  ...(!isTouch ? { keyboard: { key: Key.Enter, shift: true } } : null),
+  ...(!isTouch ? { keyboard: { key: 'Enter', shift: true } } : null),
   svg: NewThoughtAboveIcon,
   canExecute: () => isDocumentEditable(),
   exec: newThought({ insertBefore: true }),
