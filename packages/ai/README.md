@@ -7,8 +7,9 @@ It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](http
 ## Routes
 
 - `GET /` - Health check. Returns `Server is running`.
-- `POST /ai/generateThought` - Generates a complete replacement for the target thought marked with `[x]` in the indented input outline; context thoughts are marked with `[]`. The request body is `{ "input": "..." }`; the response is `{ "thought": "..." }` on success or `{ "error": "..." }` on failure. The client appends `/generateThought` to `VITE_AI_URL`.
-- `POST /ai/generateEmoji` - Generates ten distinct, ordered emoji for a thought value. The request body is `{ "value": "..." }`; the response is `{ "emojis": ["...", "..."] }` on success or `{ "error": "..." }` on failure. The client appends `/generateEmoji` to `VITE_AI_URL`.
+- `POST /ai/defineTerm` - Writes a 10–20 word dictionary entry for each term in one LLM request. The request body is `{ "terms": ["..."] }`; the response is `{ "definitions": ["..."] }` in matching order on success or `{ "error": "..." }` on failure. The client appends `/defineTerm` to `VITE_AI_URL`.
+- `POST /ai/generateThought` - Generates a complete replacement for the target thought marked with `[x]` in each indented input outline in one LLM request; context thoughts are marked with `[]`. The request body is `{ "inputs": ["..."] }`; the response is `{ "thoughts": ["..."] }` in matching order on success or `{ "error": "..." }` on failure. The client appends `/generateThought` to `VITE_AI_URL`.
+- `POST /ai/generateEmoji` - Generates ten distinct, ordered emoji for each thought value in one LLM request. The request body is `{ "values": ["..."] }`; the response is `{ "emojis": [["...", "..."]] }` with one list per value in matching order on success or `{ "error": "..." }` on failure. The client appends `/generateEmoji` to `VITE_AI_URL`.
 
 ## Local development
 
@@ -46,17 +47,17 @@ It should return `Server is running`. Then make a real OpenAI request:
 ```sh
 curl --request POST \
   --header 'Content-Type: application/json' \
-  --data '{"input":"Films/Watched/Carol/Starring:/"}' \
+  --data '{"inputs":["[] Films\n  [] Watched\n    [] Carol\n      [x] Starring:"]}' \
   http://localhost:3111/ai/generateThought
 ```
 
-The response should contain `{ "thought": "..." }`. To test Generate Thought in the app, leave the AI server running and start em from the repository root in a second terminal with `yarn start`.
+The response should contain `{ "thoughts": ["..."] }`. To test Generate Thought in the app, leave the AI server running and start em from the repository root in a second terminal with `yarn start`.
 
 Other scripts:
 
 - `typecheck` - Type-check the source with `tsc` (no emit). Not used by Vercel, which builds the function from source.
 
-Live model evaluations live in `src/evals/` and run together from the repository root with `yarn test:evals`. The Generate Emoji evaluation requires at least two matches among the ten generated results for each semantic category from issue #4400 and retries failures up to twice to accommodate model nondeterminism. Evaluations require the corresponding service key or the shared fallback in `.env.local` and are intentionally excluded from the default deterministic test suite.
+Live model evaluations live in `src/evals/` and run together from the repository root with `yarn test:evals`. The Generate Emoji evaluation requires at least two matches among the ten generated results for each semantic category from issue #4400. The Generate Thought evaluation asserts against the model's complete replacement thought, covering alphabetical sequence completion, typo correction, parent and sibling context, nested capital generation, top-level sequences, partial fill-in, replacement of misplaced items, and omission of context-only text. Concurrent cases retry failures up to twice to accommodate model nondeterminism. Evaluations require the corresponding service key or the shared fallback in `.env.local` and are intentionally excluded from the default deterministic test suite.
 
 > **Note:** This package has no `build` script on purpose. A `build` script makes Vercel run a static build and then fail looking for an output directory; omitting it lets Vercel auto-detect the Express app and deploy it as a Function.
 
@@ -95,6 +96,7 @@ Each service authenticates with its own OpenAI API key so that its usage and spe
 
 | Service          | Environment variable              |
 | ---------------- | --------------------------------- |
+| Define Term      | `OPENAI_API_KEY_DEFINE_TERM`       |
 | Generate Emoji   | `OPENAI_API_KEY_GENERATE_EMOJI`   |
 | Generate Thought | `OPENAI_API_KEY_GENERATE_THOUGHT` |
 
@@ -128,11 +130,15 @@ The Vercel Firewall is unavailable during local development, so local requests a
 curl https://ai.emthought.space/
 curl --request POST \
   --header 'Content-Type: application/json' \
-  --data '{"input":"Films/Watched/Carol/Starring:/"}' \
+  --data '{"inputs":["[] Films\n  [] Watched\n    [] Carol\n      [x] Starring:"]}' \
   https://ai.emthought.space/ai/generateThought
+curl --request POST \
+  --header 'Content-Type: application/json' \
+  --data '{"terms":["Dog","Apple"]}' \
+  https://ai.emthought.space/ai/defineTerm
 ```
 
-The first request must return `Server is running`; the second must return JSON containing `thought`. Smoke-test Generate Emoji with the same request shape documented under Routes and `/ai/generateEmoji`.
+The first request must return `Server is running`; the second must return JSON containing one `thoughts` entry; the third must return JSON containing two `definitions`. Smoke-test Generate Emoji with the same request shape documented under Routes and `/ai/generateEmoji`.
 
 ## Metrics
 
@@ -141,6 +147,7 @@ Function metrics (invocations, duration percentiles, error rate, cold starts, me
 ## Environment variables
 
 - `OPENAI_API_KEY` — fallback OpenAI API key for any service that has no key of its own.
+- `OPENAI_API_KEY_DEFINE_TERM` — per-service key for Define Term in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_EMOJI` — per-service key for Generate Emoji in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_THOUGHT` — per-service key for Generate Thought in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `PORT` — optional local server port. Defaults to `3111`.

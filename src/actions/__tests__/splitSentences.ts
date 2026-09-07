@@ -17,7 +17,7 @@ import importText from '../importText'
  * @returns The thought string after being split.
  */
 function splitThought(value: string, format: MimeType = 'text/plain') {
-  const steps = [newThought(value), splitSentences()]
+  const steps = [newThought(value), splitSentences({})]
 
   const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], format)
@@ -119,7 +119,7 @@ describe('simple split', () => {
       newThought('One. Two. Three.'),
       newThought('b'),
       setCursor(['One. Two. Three.']),
-      splitSentences(),
+      splitSentences({}),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -686,7 +686,7 @@ describe('parenthetical content', () => {
         - B
         - C
     `
-    const steps = [importText({ text }), setCursor(['One two (three four)']), splitSentences(), cursorForward]
+    const steps = [importText({ text }), setCursor(['One two (three four)']), splitSentences({}), cursorForward]
 
     const stateNew = reducerFlow(steps)(initialState())
 
@@ -761,6 +761,61 @@ describe('dash splitting', () => {
   - potatoes`)
   })
 
+  it('splits by a symbol rather than by a dash without surrounding whitespace', () => {
+    const value = 'Jeff Koons → Jean-Michel Basquiat → Cindy Sherman'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Jeff Koons
+  - Jean-Michel Basquiat
+  - Cindy Sherman`)
+  })
+
+  it('splits by "and" rather than by a dash without surrounding whitespace', () => {
+    const value = 'Jean-Michel and Basquiat'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Jean-Michel
+  - Basquiat`)
+  })
+
+  it('splits by slash rather than by a dash without surrounding whitespace', () => {
+    const value = 'front-end/back-end'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - front-end
+    - back-end`)
+  })
+
+  it('splits by colon rather than by a dash without surrounding whitespace', () => {
+    const value = 'Co-author: Jean-Michel'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Co-author
+    - Jean-Michel`)
+  })
+
+  it('splits by a copula rather than by a dash without surrounding whitespace', () => {
+    const value = 'Jean-Michel is a painter'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Jean-Michel
+    - Painter`)
+  })
+
+  it('splits by a dash without surrounding whitespace when there is no other delimiter', () => {
+    const value = 'one-1'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+    - 1`)
+  })
+
   it('preserves formatting on each comma-delimited segment after a dash split', () => {
     const value = '<b>Shopping list - apples, bananas</b>'
     const exported = splitThought(value)
@@ -814,6 +869,86 @@ describe('dash splitting', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - one
     - 1.`)
+  })
+})
+
+describe('hyphenated "and" compound', () => {
+  // https://github.com/cybersemics/em/issues/5215
+  it('splits the words before a hyphenated "and" compound into the main thought and the compound words into its children', () => {
+    const value = 'Implies set-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Implies
+    - set
+    - forget`)
+  })
+
+  it('splits a hyphenated "and" compound with no words before it into siblings', () => {
+    const value = 'set-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - set
+  - forget`)
+  })
+
+  it('splits every word of a hyphenated "and" compound with more than two words into its own child', () => {
+    const value = 'Implies wait-and-see-and-act'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Implies
+    - wait
+    - see
+    - act`)
+  })
+
+  it('keeps the trailing period on the last compound word', () => {
+    const value = 'Implies set-and-forget.'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Implies
+    - set
+    - forget.`)
+  })
+
+  it('preserves formatting on the main thought and on each compound word', () => {
+    const value = '<b>Implies set-and-forget</b>'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - **Implies**
+    - **set**
+    - **forget**`)
+  })
+
+  it('splits by a dash surrounded by whitespace rather than by a hyphenated "and" compound', () => {
+    const value = 'Notes - set-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Notes
+    - set-and-forget`)
+  })
+
+  it('splits by comma rather than by a hyphenated "and" compound', () => {
+    const value = 'set-and-forget, fire-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - set-and-forget
+  - fire-and-forget`)
+  })
+
+  it('splits by a symbol rather than by a hyphenated "and" compound', () => {
+    const value = 'a → set-and-forget'
+    const exported = splitThought(value)
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - set-and-forget`)
   })
 })
 
@@ -1190,6 +1325,92 @@ describe('formatting', () => {
       <li><font color="#ff573d">Hello</font></li>
       <li><font color="#ff573d">beautiful</font></li>
       <li><font color="#ff573d">people.</font></li>
+    </ul>
+  </li>
+</ul>`)
+  })
+})
+
+describe('caret', () => {
+  it('splits a thought with no delimiter at the caret into a main thought and a child', () => {
+    const steps = [newThought('Hello world'), splitSentences({ caretOffset: 5 })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Hello
+    - world`)
+  })
+
+  it('keeps the cursor on the main thought', () => {
+    const steps = [newThought('Hello world'), splitSentences({ caretOffset: 5 })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['Hello'])
+  })
+
+  it('keeps the formatting of both halves', () => {
+    const steps = [newThought('<b>Hello world</b>'), splitSentences({ caretOffset: 5 })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
+
+    expect(exported).toBe(`<ul>
+  <li>${HOME_TOKEN}  
+    <ul>
+      <li><b>Hello</b>      
+        <ul>
+          <li><b>world</b></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>`)
+  })
+
+  it('splits at a delimiter rather than at the caret when the thought has one', () => {
+    const steps = [newThought('one, two'), splitSentences({ caretOffset: 2 })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - one
+  - two`)
+  })
+
+  it('does not split at a caret at the start of the thought', () => {
+    const steps = [newThought('Hello world'), splitSentences({ caretOffset: 0 })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Hello world`)
+  })
+
+  it('does not split at a caret at the end of the thought', () => {
+    const steps = [newThought('Hello world'), splitSentences({ caretOffset: 11 })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - Hello world`)
+  })
+
+  it('does not split at a caret that would leave a blank main thought', () => {
+    const steps = [newThought('<b> </b>Hello'), splitSentences({ caretOffset: 1 })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
+
+    expect(exported).toBe(`<ul>
+  <li>${HOME_TOKEN}  
+    <ul>
+      <li><b> </b>Hello</li>
     </ul>
   </li>
 </ul>`)

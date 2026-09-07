@@ -7,13 +7,14 @@ import FadeTransition from './FadeTransition'
 import TriangleDown from './TriangleDown'
 
 interface PopoverProps {
+  ariaLabel?: string
   children: React.ReactNode
   show?: boolean
   size?: number
 }
 
 /** A reusable popover component that handles positioning and styling for popup menus. */
-const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
+const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => {
   const ref = useRef<HTMLDivElement>(null)
   const fontSize = useSelector(state => state.fontSize)
   const overflow = useWindowOverflow(ref)
@@ -38,6 +39,7 @@ const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
         }}
       >
         <div
+          aria-label={ariaLabel}
           className={css({
             backgroundColor: 'pickerBg',
             borderRadius: '3',

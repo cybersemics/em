@@ -4,6 +4,7 @@
  * `OPENAI_API_KEY_{SERVICE}` environment variable.
  */
 enum Service {
+  DEFINE_TERM = 'DEFINE_TERM',
   GENERATE_EMOJI = 'GENERATE_EMOJI',
   GENERATE_THOUGHT = 'GENERATE_THOUGHT',
 }

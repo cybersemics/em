@@ -7,7 +7,7 @@ const semanticCases: Record<string, string> = {
   Books: '📚📖📘📕📗📙📓📔📒🔖',
   Cosmos: '🌌🪐✨🌠🌍🌎🌏☄️🌙⭐',
   Discourse: '💬🗨️📣🗣️🧠📢📝📰🎙️📖',
-  Dog: '🐕🐶🦮🐾🦴🐕‍🦺🐩🐺🏠🦴',
+  Dog: '🐕🐶🦮🐾🦴🐕‍🦺🐩🐺🏠🦊',
   Email: '📧💌✉️📨📩📬📪📫🗳️📝',
   Events: '🎟️🎤🎪🎬🎉🎭🎫🎙️🎼📅',
   Film: '🎬🎥📽️🎞️🍿🎦🎭📺🎟️📹',
@@ -17,7 +17,7 @@ const semanticCases: Record<string, string> = {
   Home: '🏡🏠🛋️🛏️🚪🪴🪑🛁🖼️🔑',
   Irritable: '🌵🦔🐡🦂🐝🐍🦀🌶️🦨🐗',
   Mind: '🧠💭🧩🔍🌀💡🪞📖🧘🎓',
-  Peace: '☮️🕊️🪷🌿🕯️🤝🌈🫂🕊☀️',
+  Peace: '☮️🕊️🪷🌿🕯️🤝🌈🫂🫒☀️',
   Question: '❓🤔⁉️🧠💬❔🔍🧐💭🗨️',
   Work: '🛠️🔨🔧🧰⚙️🏭🚜🪚⛏️🧱',
 }
@@ -42,7 +42,7 @@ it.concurrent.each(Object.entries(semanticCases))(
     const expected = [
       ...new Set(Array.from(segmenter.segment(expectedValue), part => normalizeEmoji(part.segment))),
     ]
-    const actual = (await generateEmoji(category)).map(normalizeEmoji)
+    const [actual] = (await generateEmoji([category])).map(emojis => emojis.map(normalizeEmoji))
     const matches = actual.filter(emoji => expected.includes(emoji))
 
     expect(

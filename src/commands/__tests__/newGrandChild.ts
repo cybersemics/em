@@ -33,6 +33,69 @@ describe('canExecute', () => {
 
     expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
   })
+
+  it('can execute on a selected thought with a visible child when the cursor is on a thought with none', () => {
+    // The selected thought is not necessarily the cursor, e.g. when a thought is long pressed while the cursor is elsewhere.
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+            - c
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
+  })
+
+  it('requires the root to have a visible child when there is no cursor', () => {
+    store.dispatch(setCursor(null))
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(false)
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(null),
+    ])
+
+    expect(newGrandChildCommand.canExecute(store.getState())).toBe(true)
+  })
+})
+
+describe('no cursor', () => {
+  it('creates a new empty thought in the first visible child of the root', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - x
+          - b
+        `,
+      }),
+      setCursor(null),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    const state = store.getState()
+
+    expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - x
+    - ${''}
+  - b`)
+
+    // the cursor must end in the new empty thought, ready to type
+    expectPathToEqual(state, state.cursor, ['a', ''])
+  })
 })
 
 describe('multicursor', () => {

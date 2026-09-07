@@ -4,6 +4,7 @@ import http, { type IncomingMessage } from 'http'
 import https from 'https'
 import path from 'path'
 import { findFirstAvailableTunnel, parseTunnelPool } from './cloudflareTunnelPool'
+import waitForBrowserStackSlots from './waitForBrowserStackSlots'
 import baseConfig from './wdio.base.conf.js'
 
 // Load .env.test.local before checking env vars since this file is imported
@@ -121,7 +122,19 @@ export const config: WebdriverIO.Config = {
     ],
   ],
 
-  onPrepare: async function () {
+  onPrepare: async function (config) {
+    // How many BrowserStack sessions this run will open at once: one per worker, and WDIO starts no
+    // more workers than there are spec files. When --spec was passed (tdd.yml runs one or two changed
+    // files that way), WDIO has already resolved `config.specs` to exactly the matching files, one
+    // entry per worker, so its length is the worker count. Without --spec, `config.specs` is still
+    // the suite's glob — one entry for many files — so the whole suite runs and maxInstances applies.
+    // (`config.spec` itself is only used as the flag: the launcher merges the CLI args into the
+    // config twice, so that array lists every file twice and its length is not the file count.)
+    // WDIO's Testrunner type does not declare `spec`, which only ever arrives from the CLI.
+    const { spec: cliSpecs } = config as { spec?: string[] }
+    const specCount = cliSpecs?.length && config.specs?.length ? config.specs.length : Infinity
+    const sessionsNeeded = Math.min(baseConfig.maxInstances, specCount)
+
     try {
       // Claim a tunnel from the pool if not already set (e.g. by a CI workflow step)
       if (!process.env.CLOUDFLARED_URL) {
@@ -155,6 +168,14 @@ export const config: WebdriverIO.Config = {
           )
         }
 
+        // Wait for BrowserStack sessions BEFORE claiming a tunnel. Sessions are the scarcer
+        // resource — a run takes 2 of the account's 5 but only 1 of the 5 pool tunnels — and this
+        // wait can last hours under a fan-out, so a run that claimed first would sit on a tunnel
+        // the whole time and starve runs that do have sessions of a tunnel. Waiting here holds
+        // nothing but the runner; the dev-server probe above already ruled out a misconfigured run,
+        // so the wait cannot mask one.
+        await waitForBrowserStackSlots(sessionsNeeded)
+
         const pool = parseTunnelPool(process.env.CLOUDFLARE_TUNNEL_POOL)
         const claimed = await findFirstAvailableTunnel(pool, process.env.TUNNEL_TOKEN)
         tunnelProcess = claimed.process
@@ -170,6 +191,16 @@ export const config: WebdriverIO.Config = {
         origin.searchParams.set('__token', process.env.TUNNEL_TOKEN)
         process.env.CLOUDFLARED_URL = origin.href
       }
+
+      // Confirm the shared BrowserStack account still has room for this run's workers, right before
+      // any session is created, rather than discovering an exhausted pool as a session-creation
+      // timeout mid-suite. This is what lets concurrent runs overlap instead of queueing repo-wide
+      // on GitHub — see .github/workflows/ios.yml. On the tunnel-claiming path above this is a
+      // recheck: the claim can take up to 45 min when the pool is busy, long enough for another run
+      // to have taken the sessions seen free before it. Normally it returns at once; when it does
+      // have to wait it holds the claimed tunnel, which beats the alternative of opening sessions
+      // into a full pool and burning spec retries.
+      await waitForBrowserStackSlots(sessionsNeeded)
 
       await baseConfig.onPrepare()
     } catch (err) {
