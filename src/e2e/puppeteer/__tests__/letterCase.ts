@@ -1,3 +1,4 @@
+import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
 import getEditingText from '../helpers/getEditingText'
@@ -87,7 +88,9 @@ it('flushes pending edits before applying letter case from the picker', async ()
   await clickThought('a')
   await clickToolbar('Letter Case')
   await keyboard.type('b')
-  await clickToolbar('Letter Case', 'UpperCase')
+
+  // dropdown is already open, so directly click the UpperCase swatch rather than using the two-click clickToolbar
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
 
   await waitForEditable('AB')
 
