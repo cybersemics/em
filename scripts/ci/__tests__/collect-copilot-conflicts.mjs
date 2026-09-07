@@ -133,7 +133,19 @@ const testExclusions = async () => {
   assert.deepEqual(report.tasks, [])
 }
 
+/** Verifies a comment is posted only once a conflict exists, and is kept updated afterwards. */
+const testCommentOnConflictOnly = async () => {
+  const clean = makePr({ number: 12, updatedAt: '2026-09-06T10:00:00Z', mergeable: true })
+  const conflicting = makePr({ number: 13, updatedAt: '2026-09-06T10:00:00Z' })
+  const resolved = makePr({ number: 14, updatedAt: '2026-09-06T10:00:00Z', mergeable: true, state: dueState(1) })
+  await run([clean, conflicting, resolved])
+  assert.deepEqual(clean.comments, [])
+  assert.ok(conflicting.comments[0].body.includes('A merge conflict is detected'))
+  assert.ok(resolved.comments[0].body.includes('No merge conflict is currently detected'))
+}
+
 await testRetryPolicy()
 await testExclusions()
+await testCommentOnConflictOnly()
 
 console.info('PASS: collect-copilot-conflicts')
