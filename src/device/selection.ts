@@ -597,19 +597,14 @@ export const removeCurrentSelection = () => {
   if (selection && selection.rangeCount > 0) document.execCommand('delete')
 }
 
-/** Returns the html of a range that lies within a single text node, with the formatting ancestors it sits inside re-applied. Cloning the range contents alone returns bare text, dropping the tags that wholly contain the range (#4229). */
-const htmlWithinTextNode = (range: Range): string => {
-  const div = document.createElement('div')
-  div.appendChild(range.cloneContents())
-
+/** Wraps a container's contents in shallow clones of the formatting elements the given node sits inside. Cloning a range's contents returns bare text, dropping the tags that wholly contain it (#4229). */
+const wrapInFormattingAncestors = (container: HTMLElement, node: Node) => {
   // wrap outward from the innermost ancestor; the editable itself is not a formatting element, so the walk stops there
-  for (let node = range.startContainer.parentElement; isFormattingElement(node); node = node.parentElement) {
-    const wrapper = node.cloneNode(false) as HTMLElement
-    while (div.firstChild) wrapper.appendChild(div.firstChild)
-    div.appendChild(wrapper)
+  for (let ancestor = node.parentElement; isFormattingElement(ancestor); ancestor = ancestor.parentElement) {
+    const wrapper = ancestor.cloneNode(false) as HTMLElement
+    while (container.firstChild) wrapper.appendChild(container.firstChild)
+    container.appendChild(wrapper)
   }
-
-  return div.innerHTML
 }
 
 /** Removes all text from an element, leaving its formatting elements behind as empty shells. */
@@ -624,38 +619,27 @@ const stripText = (element: Element) => {
 export const html = () => {
   const selection = document?.getSelection()
   if (!selection || selection.rangeCount === 0) return null
-  const range = selection?.getRangeAt(0)
+  const range = selection.getRangeAt(0)
+  const node = range.startContainer
+  const div = document.createElement('div')
 
-  // Identity, not isEqualNode: two distinct nodes that happen to hold the same content are a multi-node range, and
-  // re-applying the start node's ancestors to it would wrap content that already carries its own.
-  if (range.startContainer === range.endContainer) {
-    const node = range.startContainer
-
-    if (node instanceof Element) {
-      if (!range.collapsed) {
-        const div = document.createElement('div')
-        div.appendChild(range.cloneContents())
-        return div.innerHTML
-      }
-
-      // A collapsed caret on the editable itself (e.g. after tapping a thought's bullet) selects no text, so report the
-      // formatting it sits in as empty shells — commandStateStore reads this to light the toolbar buttons. Return the
-      // editable's contents rather than its outerHTML so the wrapper's attributes, such as a placeholder whose value
-      // contains raw HTML, are excluded (#3912).
-      const clone = node.cloneNode(true) as Element
-      stripText(clone)
-      return node.getAttribute('contenteditable') === 'true' ? clone.innerHTML : clone.outerHTML
-    }
-
-    if (node instanceof CharacterData) return htmlWithinTextNode(range)
-
-    return null
+  if (range.collapsed && node instanceof Element) {
+    // A collapsed caret on the editable itself (e.g. after tapping a thought's bullet) selects no text, so report the
+    // formatting it sits in as empty shells — commandStateStore reads this to light the toolbar buttons. Take the
+    // editable's children rather than the element itself, so the wrapper's attributes, such as a placeholder whose
+    // value contains raw HTML, are excluded (#3912).
+    const clone = node.cloneNode(true) as Element
+    const isEditable = node.getAttribute('contenteditable') === 'true'
+    div.append(...(isEditable ? Array.from(clone.childNodes) : [clone]))
+    stripText(div)
+  } else {
+    div.appendChild(range.cloneContents())
+    // Identity, not isEqualNode: two distinct nodes that happen to hold the same content span a multi-node range, whose
+    // clone already carries its own formatting, so re-applying the start node's ancestors would wrap it twice.
+    if (node === range.endContainer && node instanceof CharacterData) wrapInFormattingAncestors(div, node)
   }
 
-  const div = document.createElement('div')
-  div.appendChild(range.cloneContents())
-  const currentHtml = div.innerHTML
-  return currentHtml
+  return div.innerHTML
 }
 
 /** Returns the bounding rectangle for the current browser selection. */

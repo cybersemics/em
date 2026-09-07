@@ -142,4 +142,40 @@ describe('html', () => {
     expect(html()).toBe('<b>ppl</b>')
     cleanup()
   })
+
+  it('returns the selected children when the range spans whole elements', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.innerHTML = '<b>one</b><i>two</i>'
+    document.body.appendChild(editable)
+
+    const range = document.createRange()
+    range.setStart(editable, 0)
+    range.setEnd(editable, 1)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    expect(html()).toBe('<b>one</b>')
+
+    document.body.removeChild(editable)
+  })
+
+  it('returns the enclosing formatting element for a collapsed caret on a formatting element', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.innerHTML = '<b>One</b>'
+    document.body.appendChild(editable)
+
+    const range = document.createRange()
+    range.setStart(editable.firstChild!, 0)
+    range.collapse(true)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    expect(html()).toBe('<b></b>')
+
+    document.body.removeChild(editable)
+  })
 })
