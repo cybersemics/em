@@ -1,3 +1,4 @@
+import { Keyboard } from '@capacitor/keyboard'
 import ClipboardJS from 'clipboard'
 import React, {
   FC,
@@ -21,14 +22,16 @@ import ThoughtId from '../../@types/ThoughtId'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
-import { isMac, isTouch } from '../../browser'
+import { isIOS, isTouch } from '../../browser'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
+import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import globals from '../../globals'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import simplifyPath from '../../selectors/simplifyPath'
@@ -40,6 +43,7 @@ import fastClick from '../../util/fastClick'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
+import isCommandKey from '../../util/isCommandKey'
 import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
 import throttleConcat from '../../util/throttleConcat'
@@ -142,20 +146,37 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
     () => {
       isMounted.current = true
 
-      const replications = simplePaths.map(simplePath => {
-        const id = head(simplePath)
+      /** Waits for pending local persistence before reading the selected subtrees for export. */
+      const startReplicationsAfterLocalWrites = async () => {
+        await thoughtspaceRuntime.waitForIdle()
+        if (!isMounted.current) return null
 
-        return replicateTree(id, {
-          // TODO: Warn the user if offline or not fully replicated
-          remote: false,
-          onThought: thought => {
-            if (!isMounted.current) return
-            setExportingThoughtsThrottled(thought)
-          },
+        const replications = simplePaths.map(simplePath => {
+          const id = head(simplePath)
+
+          return replicateTree(id, {
+            // TODO: Warn the user if offline or not fully replicated
+            remote: false,
+            onThought: thought => {
+              if (!isMounted.current) return
+              setExportingThoughtsThrottled(thought)
+            },
+          })
         })
-      })
 
-      Promise.all(replications.map(replication => replication.promise)).then(thoughtIndices => {
+        return {
+          replications,
+          thoughtIndicesPromise: Promise.all(replications.map(replication => replication.promise)),
+        }
+      }
+
+      const replicationsStartedPromise = startReplicationsAfterLocalWrites()
+
+      void (async () => {
+        const startedReplications = await replicationsStartedPromise
+        if (!startedReplications) return
+
+        const thoughtIndices = await startedReplications.thoughtIndicesPromise
         if (!isMounted.current) return
 
         setExportingThoughtsThrottled.flush()
@@ -171,11 +192,13 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
 
         setExportedState(exportedState)
         setIsPulling(false)
-      })
+      })()
 
       return () => {
         isMounted.current = false
-        replications.forEach(replication => replication.cancel())
+        void replicationsStartedPromise.then(startedReplications => {
+          startedReplications?.replications.forEach(replication => replication.cancel())
+        })
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -295,6 +318,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(false)
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(false)
   const [shouldIncludeMarkdownFormatting, setShouldIncludeMarkdownFormatting] = useState(true)
+  const [shouldExportFirstThought, setShouldExportFirstThought] = useState(true)
+  const [shouldExportSubthoughts, setShouldExportSubthoughts] = useState(true)
   const [selected, setSelected] = useState(exportOptions[0])
   const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
 
@@ -347,12 +372,20 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       // Sort in document order. At this point, all thoughts are pulled and in state.
       const sortedPaths = documentSort(exportedState, simplePaths)
 
-      const exported = sortedPaths
-        .map(simplePath =>
-          exportContext(exportedState, head(simplePath), selected.type, {
+      // When shouldExportFirstThought is false, expand each selected path to its children's IDs.
+      // For single selection this skips the root thought; for multiple selection it skips the entire first level.
+      const exportIds = !shouldExportFirstThought
+        ? sortedPaths.flatMap(simplePath => getChildrenRanked(exportedState, head(simplePath)).map(child => child.id))
+        : sortedPaths.map(simplePath => head(simplePath))
+
+      const exported = exportIds
+        .map(thoughtId =>
+          exportContext(exportedState, thoughtId, selected.type, {
             excludeArchived: !shouldIncludeArchived,
             excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
             excludeMeta: !shouldIncludeMetaAttributes,
+            // maxDepth 0 means only the thought itself with no children
+            maxDepth: !shouldExportSubthoughts ? 0 : undefined,
           }),
         )
         .join('\n')
@@ -395,15 +428,17 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
       // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
       if (selected.type === 'text/html' && exportedState) {
-        setNumDescendantsInState(
-          getDescendantThoughtIds(exportedState, id, {
-            filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
-            filterFunction: exportFilter({
-              excludeArchived: !shouldIncludeArchived,
-              excludeMeta: !shouldIncludeMetaAttributes,
-            }),
-          }).length,
-        )
+        // When subthoughts are excluded, there are no descendants by definition.
+        const numDescendants = !shouldExportSubthoughts
+          ? 0
+          : getDescendantThoughtIds(exportedState, id, {
+              filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
+              filterFunction: exportFilter({
+                excludeArchived: !shouldIncludeArchived,
+                excludeMeta: !shouldIncludeMetaAttributes,
+              }),
+            }).length
+        setNumDescendantsInState(numDescendants)
       }
 
       if (!isPulling) {
@@ -411,7 +446,14 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [selected, shouldIncludeMetaAttributes, shouldIncludeArchived, shouldIncludeMarkdownFormatting],
+    [
+      selected,
+      shouldIncludeMetaAttributes,
+      shouldIncludeArchived,
+      shouldIncludeMarkdownFormatting,
+      shouldExportFirstThought,
+      shouldExportSubthoughts,
+    ],
   )
 
   useEffect(
@@ -441,7 +483,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     (e: KeyboardEvent) => {
       if (
         e.key === 'c' &&
-        (isMac ? e.metaKey : e.ctrlKey) &&
+        isCommandKey(e) &&
         exportContent &&
         // do not override copy shortcut if user has text selected
         selection.isCollapsed() !== false &&
@@ -465,11 +507,17 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     }
   }, [onKeyDown])
 
-  // const [publishing, setPublishing] = useState(false)
-  // const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
-
   /** Shares or downloads when the export button is clicked. */
   const onExportClick = () => {
+    // On the iOS Capacitor app, the native share sheet can open while the software keyboard is
+    // still visible, causing the two to overlap (#4294). Blur the focused editable and dismiss
+    // the keyboard before presenting the share sheet. This is done synchronously (no await) so
+    // that the user-activation context required by navigator.share() is preserved.
+    if (isIOS) {
+      selection.clear()
+      Keyboard.hide()
+    }
+
     // use mobile share if it is available
     if (navigator.share) {
       navigator.share({
@@ -491,42 +539,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     dispatch(closeModal())
   }
 
-  /** Publishes the thoughts to IPFS. */
-  // const publish = async () => {
-  //   setPublishing(true)
-  //   setPublishedCIDs([])
-  //   const cids = []
-
-  //   const { default: IpfsHttpClient } = await import('ipfs-http-client')
-  //   const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
-
-  //   // export without =src content
-  //   const exported = exportContext(store.getState(), context, selected.type, {
-  //     excludeSrc: true,
-  //     excludeMeta: !shouldIncludeMetaAttributes,
-  //     excludeArchived: !shouldIncludeArchived,
-  //     excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
-  //     title: titleChild ? titleChild.value : undefined,
-  //   })
-
-  //   for await (const result of ipfs.add(exported)) {
-  //     if (result && result.path) {
-  //       const cid = result.path
-  //       // TODO: prependRevision is currently broken
-  //       // dispatch(prependRevision({ path: cursor, cid }))
-  //       cids.push(cid)
-  //       setPublishedCIDs(cids)
-  //     } else {
-  //       setPublishing(false)
-  //       setPublishedCIDs([])
-  //       dispatch(error({ value: 'Publish Error' }))
-  //       console.error('Publish Error', result)
-  //     }
-  //   }
-
-  //   setPublishing(false)
-  // }
-
   const [advancedSettings, setAdvancedSettings] = useState(false)
 
   /** Toggles advanced setting when Advanced CTA is clicked. */
@@ -541,9 +553,31 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   /** Updates archived checkbox value when clicked and set the appropriate value in the selected option. */
   const onChangeFormattingCheckbox = () => setShouldIncludeMarkdownFormatting(!shouldIncludeMarkdownFormatting)
 
+  /** Toggles whether the first (top-level) thought is included in the export. */
+  const onChangeExportFirstThoughtCheckbox = () => setShouldExportFirstThought(!shouldExportFirstThought)
+
+  /** Toggles whether subthoughts (descendants) are included in the export. */
+  const onChangeExportSubthoughtsCheckbox = () => setShouldExportSubthoughts(!shouldExportSubthoughts)
+
   /** Created an array of objects so that we can just add object here to get multiple checkbox options created. */
   const advancedSettingsArray: AdvancedSetting[] = useMemo(
     () => [
+      {
+        id: 'exportFirstThought',
+        onChange: onChangeExportFirstThoughtCheckbox,
+        checked: shouldExportFirstThought,
+        title: 'Export first thought',
+        description:
+          'When checked, the top-level thought is included in the export. When unchecked, the first thought is skipped and only its descendants are exported. When multiple thoughts are selected, the entire first level is skipped.',
+      },
+      {
+        id: 'exportSubthoughts',
+        onChange: onChangeExportSubthoughtsCheckbox,
+        checked: shouldExportSubthoughts,
+        title: 'Export subthoughts',
+        description:
+          'When checked, all subthoughts are included in the export. When unchecked, only the top-level thoughts are exported without any descendants.',
+      },
       {
         id: 'meta',
         onChange: onChangeMetaCheckbox,
@@ -573,7 +607,13 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     ],
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [shouldIncludeArchived, shouldIncludeMetaAttributes, shouldIncludeMarkdownFormatting],
+    [
+      shouldIncludeArchived,
+      shouldIncludeMetaAttributes,
+      shouldIncludeMarkdownFormatting,
+      shouldExportFirstThought,
+      shouldExportSubthoughts,
+    ],
   )
 
   return (
@@ -724,103 +764,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           ))}
         </div>
       )}
-
-      {/* Publish */}
-
-      {/* isDocumentEditable() && (
-        <>
-          <div className={css({
-            borderTop: "solid 1px {colors.modalExportUnused}",
-            marginTop: "30px",
-            marginBottom: "20px",
-            paddingTop: "40px",
-            textAlign: "center"
-          })}>
-            {publishedCIDs.length > 0 ? (
-              <div>
-                Published:{' '}
-                {publishedCIDs.map(cid => (
-                  <a
-                    key={cid}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    href={getPublishUrl(cid)}
-                    dangerouslySetInnerHTML={{ __html: titleMedium }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div>
-                <p>
-                  {publishing ? (
-                    'Publishing...'
-                  ) : (
-                    <span>
-                      Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />.
-                    </span>
-                  )}
-                </p>
-                <p className={css({color: 'dim'})}>
-                  <i>
-                    Note: These thoughts are published permanently. <br />
-                    This action cannot be undone.
-                  </i>
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className={css({
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            })}
-          >
-            <button
-              className={css({
-                fontFamily: 'Helvetica',
-                textAlign: 'center',
-                cursor: 'pointer',
-                outline: 'none',
-                padding: '2px 30px',
-                minWidth: '90px',
-                display: 'inline-block',
-                borderRadius: '99px',
-                margin: '0 5px 15px 5px',
-                whiteSpace: 'nowrap',
-                lineHeight: 2,
-                textDecoration: 'none',
-                border: 'none',
-              })}
-              disabled={!exportContent || publishing || publishedCIDs.length > 0}
-              {...fastClick(publish))}
-              style={{ color: colors.bg, backgroundColor: colors.fg }}
-            >
-              Publish
-            </button>
-
-            {(publishing || publishedCIDs.length > 0) && (
-              <button
-                className={css({
-                  cursor: "pointer",
-                  border: "none",
-                  outline: "none",
-                  background: "none"
-                })}
-                {...fastClick(()) => {
-                  dispatch([alert(null), closeModal()])
-                })}
-                style={{
-                  color: colors.fg,
-                  fontSize: '14px',
-                }}
-              >
-                Close
-              </button>
-            )}
-          </div>
-        </>
-      ) */}
     </ModalComponent>
   )
 }

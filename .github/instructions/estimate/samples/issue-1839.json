@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Upgrade react-dnd to hooks",
+    "body": "The current usage of react-dnd is through a legacy Higher Order Component. \r\n\r\nUpgrade react-dnd to the latest version and switch to hooks.\r\n\r\n1. Convert HOC to hooks one component at a time (at v11).\r\n   - [x] [DragAndDropThought](https://github.com/cybersemics/em/pull/2203)\r\n   - [x] [DragAndDropSubThought](https://github.com/cybersemics/em/pull/2220)\r\n   - [x] DragAndDropToolbarButton\r\n   - [x] Favorites\r\n   - [x] ShortcutRow\r\n   - [x] QuickDropIcon\r\n1. Upgrade one major version at a time until v16.\r\n1. Refactor component hierarchy to better reflect new hook usage.\r\n1. Switch enum DragAndDropType back to PascalCase.",
+    "labels": ["refactor"]
+  },
+  "expected": "XXL",
+  "source": {
+    "type": "everhour",
+    "issue": 1839,
+    "hours": 40
+  }
+}

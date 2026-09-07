@@ -2,21 +2,19 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import addMulticursor, { addMulticursorActionCreator } from '../actions/addMulticursor'
-import contextToPath from '../selectors/contextToPath'
+import contextToPathOrThrow from './contextToPathOrThrow'
 
-/** A reducer that adds a multicursor at the first match of the given unranked path. Uses contextToPath. */
-const addMulticursorAtFirstMatch = (state: State, pathUnranked: string[] | null): State => {
-  const path = pathUnranked ? contextToPath(state, pathUnranked) : null
-  return path ? addMulticursor(state, { path }) : state
-}
+/** A reducer that adds a multicursor at the first match of the given unranked path. Throws if the path does not resolve. */
+const addMulticursorAtFirstMatch = (state: State, pathUnranked: string[]): State =>
+  addMulticursor(state, { path: contextToPathOrThrow(state, pathUnranked, 'addMulticursorAtFirstMatch') })
 
-/** A Thunk that adds a multicursor at the first match of the given unranked path. */
+/** A Thunk that adds a multicursor at the first match of the given unranked path. Throws if the path does not resolve. */
 export const addMulticursorAtFirstMatchActionCreator =
-  (pathUnranked: string[] | null): Thunk =>
+  (pathUnranked: string[]): Thunk =>
   (dispatch, getState) => {
-    const path = pathUnranked ? contextToPath(getState(), pathUnranked!) : null
+    const path = contextToPathOrThrow(getState(), pathUnranked, 'addMulticursorAtFirstMatch')
 
-    if (path) dispatch(addMulticursorActionCreator({ path }))
+    dispatch(addMulticursorActionCreator({ path }))
   }
 
 export default _.curryRight(addMulticursorAtFirstMatch)

@@ -1,6 +1,6 @@
 import { FC, PropsWithChildren } from 'react'
 import { css, cx } from '../../styled-system/css'
-import { multilineRecipe } from '../../styled-system/recipes'
+import { editableRecipe } from '../../styled-system/recipes'
 import { SystemStyleObject } from '../../styled-system/types'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import isAttribute from '../util/isAttribute'
@@ -27,7 +27,6 @@ const ThoughtAnnotationWrapper: FC<
 > = ({
   cursorOverlay,
   ellipsizedUrl,
-  multiline,
   value,
   styleAnnotation,
   cssRaw,
@@ -53,20 +52,12 @@ const ThoughtAnnotationWrapper: FC<
         whiteSpace: 'pre-wrap',
         /* override editable-annotation's single line to have same width with .editable. 100% - 1em since .editable has padding-right 1em */
         maxWidth: ellipsizedUrl ? 'calc(100% - 2em)' : '100%',
-        '@media (max-width: 500px)': {
-          marginTop: { _android: '-2.1px' },
-          marginLeft: { _android: '0.5em' },
-        },
-        '@media (min-width: 560px) and (max-width: 1024px)': {
-          marginTop: { _android: '-0.1px' },
-          marginLeft: { _android: '0.5em' },
-        },
       })}
     >
       <div
         className={
           cx(
-            multiline ? multilineRecipe() : null,
+            editableRecipe(),
             css({
               ...(value &&
                 isAttribute(value) && {
@@ -75,16 +66,9 @@ const ThoughtAnnotationWrapper: FC<
                 }),
               display: 'inline-block',
               maxWidth: '100%',
-              paddingLeft: '0.333em',
               boxSizing: 'border-box',
               whiteSpace: ellipsizedUrl ? 'nowrap' : undefined,
-              /*
-                  Since .editable-annotation-text is display: inline the margin only gets applied to its first line, and not later lines.
-                  To make sure all lines are aligned need to apply the margin here, and remove margin from the .editable-annotation-text.
-                  This margin should match the margin set in editableRecipe (#3353).
-                */
-              margin: '-0.5px calc(18px - 1em) 0 calc(1em - 18px)',
-              paddingRight: multiline ? '1em' : '0.333em',
+              paddingRight: ellipsizedUrl || isTableCol1 ? '0.333em' : '1em',
               textAlign: isTableCol1 ? 'right' : 'left',
             }),
           )

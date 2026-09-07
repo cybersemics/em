@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import ministore from '../../stores/ministore'
+import ministore, { resetStores } from '../../stores/ministore'
 
 it('getState', () => {
   const store = ministore(1)
@@ -16,6 +16,59 @@ it('update partial', () => {
   const store = ministore({ a: 1, b: 2 })
   store.update({ a: 3 })
   expect(store.getState()).toEqual({ a: 3, b: 2 })
+})
+
+describe('reset', () => {
+  it('restore the initial state', () => {
+    const store = ministore({ a: 1, b: 2 })
+    store.update({ a: 3 })
+    store.reset()
+    expect(store.getState()).toEqual({ a: 1, b: 2 })
+  })
+
+  it('trigger subscribers', () => {
+    let counter = 0
+    const store = ministore(0)
+    store.update(1)
+    store.subscribe(() => counter++)
+    store.reset()
+    expect(counter).toBe(1)
+    expect(store.getState()).toBe(0)
+  })
+
+  it('only trigger if state has changed', () => {
+    let counter = 0
+    const store = ministore(0)
+    store.subscribe(() => counter++)
+    store.reset()
+    expect(counter).toBe(0)
+  })
+})
+
+describe('resetStores', () => {
+  it('reset every store', () => {
+    const storeA = ministore(1)
+    const storeB = ministore({ a: 1, b: 2 })
+    storeA.update(2)
+    storeB.update({ a: 3 })
+
+    resetStores()
+
+    expect(storeA.getState()).toBe(1)
+    expect(storeB.getState()).toEqual({ a: 1, b: 2 })
+  })
+
+  it('recompute a composed store when its sources are reset', () => {
+    const storeA = ministore(1)
+    const storeB = ministore(2)
+    const composite = ministore.compose((state1: number, state2: number) => 10 * state1 + state2, [storeA, storeB])
+    storeA.update(3)
+    expect(composite.getState()).toBe(32)
+
+    resetStores()
+
+    expect(composite.getState()).toBe(12)
+  })
 })
 
 describe('subscribe', () => {

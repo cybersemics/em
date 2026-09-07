@@ -85,7 +85,7 @@ const FauxCaret = ({
     }
   }, [caretType, isEditingCursor, isTableCol1, path, wrapperElement])
 
-  if (!isTouch || !isSafari()) return null
+  if ((!isTouch || !isSafari()) && caretType !== 'multicursorStart') return null
   return (
     <span
       className={css({
@@ -97,6 +97,7 @@ const FauxCaret = ({
       style={{
         opacity: {
           none: '',
+          multicursorStart: '1',
           noteEnd: 'var(--faux-caret-note-line-end-opacity)',
           noteStart: 'var(--faux-caret-note-line-start-opacity)',
           positioned: 'var(--faux-caret-opacity)',

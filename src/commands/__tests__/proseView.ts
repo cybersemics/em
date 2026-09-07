@@ -25,7 +25,7 @@ it('toggle on prose view of parent of cursor (initial state without =view attrib
   executeCommand(proseViewCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toBe(`- __ROOT__
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =view
       - Prose
@@ -50,7 +50,7 @@ it('toggle on prose view of parent of cursor (initial state with =view attribute
   executeCommand(proseViewCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toBe(`- __ROOT__
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =view
       - Prose
@@ -75,7 +75,7 @@ it('toggle off prose view of parent of cursor', () => {
   executeCommand(proseViewCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toBe(`- __ROOT__
+  expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - c`)
@@ -106,7 +106,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(proseViewCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =view
       - Prose
@@ -152,7 +152,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(proseViewCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - a1
     - a2
@@ -194,7 +194,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(proseViewCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =view
       - Prose

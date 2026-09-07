@@ -3,7 +3,7 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import findDescendant from '../selectors/findDescendant'
-import { anyChild } from '../selectors/getChildren'
+import { anyChild, findAnyChild } from '../selectors/getChildren'
 import getRankAfter from '../selectors/getRankAfter'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -16,6 +16,7 @@ import head from '../util/head'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
+import normalizeThought from '../util/normalizeThought'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
@@ -87,7 +88,25 @@ const swapNote = (state: State): State => {
                     pathParent: cursor,
                     thoughtId: noteId,
                   }),
-                  setCursor({ offset: note.value.length, path: newPath }),
+                  // Set the cursor on the converted thought. If a sibling with the same value
+                  // already existed, moveThought merged the note child into it and noteChildId
+                  // no longer exists, so resolve the surviving thought by value to avoid an
+                  // "Invalid path... No thought found with id" error.
+                  state => {
+                    const resultChild = getThoughtById(state, noteChildId)
+                      ? getThoughtById(state, noteChildId)
+                      : findAnyChild(
+                          state,
+                          head(cursor),
+                          child => normalizeThought(child.value) === normalizeThought(note.value),
+                        )
+                    return resultChild
+                      ? setCursor(state, {
+                          offset: resultChild.value.length,
+                          path: appendToPath(cursor, resultChild.id),
+                        })
+                      : state
+                  },
                 ])(state)
               : null
           },

@@ -1,0 +1,63 @@
+# This workflow runs when a new issue is opened. It assigns the best-matching open milestone, and
+# stays silent when it succeeds. It also labels what kind of work the issue is — bug, feature,
+# performance, refactor, test, documentation, or agent — independently of the milestone. When no
+# milestone fits and the issue is not a pure refactor, it posts a comment asking the maintainer for a
+# category instead, which is a normal outcome and not a failure. It can also be
+# dispatched manually against any issue number, with an optional dry run that performs the inference
+# and prints the decision without writing anything.
+name: Issue Classifier
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: 'Issue number to classify'
+        required: true
+      dry:
+        description: 'Dry run: decide and print it, but do not assign, label, or comment'
+        type: boolean
+        default: false
+
+permissions:
+  # To assign the milestone, to add the kind label, and to post the question when no milestone fits.
+  issues: write
+  # To read the prompt from scripts/issue-classifier/instructions.md. The corpus is not read here:
+  # nothing on the classification path loads it, and only the evaluation harnesses do.
+  contents: read
+
+env:
+  # Skip Puppeteer's Chrome download on install — the issue-classifier workspace never uses a browser,
+  # saving ~20s per install.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      # Corepack activates the Yarn 4 pinned in package.json's packageManager field. Without it the
+      # runner's preinstalled Yarn 1 handles `yarn install`, which does not understand --immutable.
+      - name: Enable Corepack
+        run: corepack enable
+      - uses: actions/setup-node@v6
+        with:
+          # Node 24 strips TypeScript types natively, so src/*.ts runs with no build step or tsx.
+          node-version: 24
+          cache: 'yarn'
+      - run: yarn install --immutable
+      - name: Build issue-classifier workspace
+        run: yarn workspace em-issue-classifier build
+      - name: Classify issue
+        # `dry` is a declared boolean, so it can only ever expand to the literal --dry or to nothing —
+        # there is no string from a dispatcher to interpolate into the command. On the issues.opened
+        # event there are no inputs at all, which is falsy, so a real issue is never previewed away.
+        run: node scripts/issue-classifier/src/issue.ts ${{ inputs.dry && '--dry' || '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # OpenAI API key used for the milestone selection inference call (issue.ts). The classifier key
+          # bills this workflow separately in the OpenAI dashboard; the shared key is the fallback.
+          OPENAI_API_KEY_ISSUE_CLASSIFIER: ${{ secrets.OPENAI_API_KEY_ISSUE_CLASSIFIER }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # Empty for the issues event, where the issue number comes from the event payload instead.
+          ISSUE_NUMBER: ${{ inputs.issue }}
