@@ -27,6 +27,7 @@ import Thought from './Thought'
 const Subthought = ({
   autofocus,
   debugIndex,
+  childIndexNonAttribute,
   depth,
   env,
   isMultiColumnTable,
@@ -37,10 +38,10 @@ const Subthought = ({
   showContexts,
   simplePath,
   style,
-  zoomCursor,
 }: {
   autofocus: Autofocus
   debugIndex?: number
+  childIndexNonAttribute: number
   depth: number
   dropUncle?: boolean
   env?: LazyEnv
@@ -53,7 +54,6 @@ const Subthought = ({
   showContexts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
-  zoomCursor?: boolean
 }) => {
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
@@ -64,7 +64,7 @@ const Subthought = ({
     state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
   )
   const grandparentId = simplePath[simplePath.length - 3]
-  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
+  const isVisible = autofocus === 'show' || autofocus === 'dim'
   const autofocusChanged = useChangeRef(autofocus)
 
   const childrenAttributeId = useSelector(
@@ -150,6 +150,7 @@ const Subthought = ({
       >
         <Thought
           debugIndex={debugIndex}
+          childIndexNonAttribute={childIndexNonAttribute}
           depth={depth + 1}
           env={env}
           hideBullet={hideBullet}

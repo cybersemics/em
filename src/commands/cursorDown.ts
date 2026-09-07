@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import Dispatch from '../@types/Dispatch'
 import State from '../@types/State'
@@ -10,10 +9,13 @@ import CursorDownIcon from '../components/icons/CursorDownIcon'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import attributeEquals from '../selectors/attributeEquals'
+import documentSort from '../selectors/documentSort'
 import { getChildrenSorted } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isMulticursorPath from '../selectors/isMulticursorPath'
+import isTableCol2 from '../selectors/isTableCol2'
 import nextSibling from '../selectors/nextSibling'
+import nextTableCousin from '../selectors/nextTableCousin'
 import nextThought from '../selectors/nextThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
@@ -22,10 +24,10 @@ import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorDownCommand: Command = {
+const cursorDownCommand = {
   id: 'cursorDown',
-  label: 'Cursor Down',
-  keyboard: [{ key: Key.ArrowDown }, { key: Key.ArrowDown, shift: true }],
+  label: 'Cursor Down' as const,
+  keyboard: [{ key: 'ArrowDown' }, { key: 'ArrowDown', shift: true }],
   hideFromHelp: true,
   multicursor: false,
   svg: CursorDownIcon,
@@ -59,10 +61,14 @@ const cursorDownCommand: Command = {
         : // otherwise, get the first thought in the home context
           getChildrenSorted(state, HOME_TOKEN)[0]
 
-      const nextPath = nextSiblingThought
-        ? // non-first child path
-          appendToPath(parentOf(path), nextSiblingThought.id)
-        : nextThought(state)
+      const nextPath =
+        // in the second column of a table view, extend to the next thought at the same depth (the next cousin), crossing col1 row boundaries instead of falling through to the next col1 row (uncle)
+        cursor && isTableCol2(state, cursor)
+          ? nextTableCousin(state, cursor)
+          : nextSiblingThought
+            ? // non-first child path
+              appendToPath(parentOf(path), nextSiblingThought.id)
+            : nextThought(state)
 
       // if there is no next path, do nothing
       if (!nextPath) return
@@ -70,7 +76,9 @@ const cursorDownCommand: Command = {
       const isNextPathMulticursor = nextPath && isMulticursorPath(state, nextPath)
 
       dispatch([
-        setCursor({ path: nextPath, preserveMulticursor: true }),
+        // Update the multicursor before moving the cursor, since setCursor computes state.expanded and a
+        // selected thought must not expand its own children.
+        // https://github.com/cybersemics/em/issues/4738
         dispatch => {
           // New multicursor set
           if (isMulticursorEmpty) {
@@ -99,13 +107,21 @@ const cursorDownCommand: Command = {
             return
           }
         },
+        setCursor({ path: nextPath, preserveMulticursor: true }),
       ])
 
       requestAnimationFrame(() => {
         selection.clear()
       })
-    } else dispatch(cursorDown())
+    } else {
+      const state = getState()
+      const sortedPaths = hasMulticursor(state) ? documentSort(state, Object.values(state.multicursors)) : []
+      const lastPath = sortedPaths[sortedPaths.length - 1]
+
+      // when a multiselect is active, collapse it and move the cursor to the last selected thought in document order
+      dispatch(lastPath ? setCursor({ path: lastPath }) : cursorDown())
+    }
   }),
-}
+} satisfies Command
 
 export default cursorDownCommand

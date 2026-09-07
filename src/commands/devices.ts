@@ -2,14 +2,14 @@ import Command from '../@types/Command'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import DeviceIcon from '../components/icons/DeviceIcon'
 
-const command: Command = {
+const command = {
   id: 'devices',
-  label: 'Device Management',
+  label: 'Device Management' as const,
   description: 'Add or remove devices that can access and edit this thoughtspace.',
   multicursor: false,
   svg: DeviceIcon,
   exec: dispatch => dispatch(showModal({ id: 'devices' })),
   allowExecuteFromModal: true,
-}
+} satisfies Command
 
 export default command

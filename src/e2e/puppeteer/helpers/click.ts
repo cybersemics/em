@@ -1,5 +1,5 @@
 import { JSHandle } from 'puppeteer'
-import { page } from '../setup'
+import { page } from '../session'
 import waitForSelector from './waitForSelector'
 
 interface Options {

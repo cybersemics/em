@@ -13,7 +13,7 @@ const editThought = async (value: string) => {
   for (const char of value) {
     await browser.keys(char)
   }
-  return await waitForEditable(value)
+  return waitForEditable(value)
 }
 
 export default editThought

@@ -1,89 +1,31 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import rgbToHex from '../util/rgbToHex'
 import getThoughtById from './getThoughtById'
 
-/** Matches a color or background defined in a style attribute. */
-const REGEX_STYLE_COLOR = /style="[^"]*(background-)?color:\s*([^;"'>]+)[^"]*"/i
-
-/** Matches a color defined in a font tag. */
-const REGEX_FONT_COLOR = /color="([^"]*)"/
-
-/** Matches opening and closing tags in an HTML string. */
-const REGEX_TAG_START = /<\/?[a-z]+/g
-
-/** Matches whitespace and closing brackets in an HTML string. */
-const REGEX_TAG_END = /[\s>]/
-
-/**
- * Checks if a string is wrapped in a single HTML tag (specifically font or span).
- * @param str - The string of html content to check.
- * @returns The boolean indicating if the string is wrapped in a single font or span tag.
- */
-const isWrappedInSingleTag = (str: string): boolean => {
-  // Check if there's any text before the first tag or after the last tag
-  const firstTagIndex = str.indexOf('<')
-  const lastTagIndex = str.lastIndexOf('>')
-
-  if (firstTagIndex > 0 || lastTagIndex < str.length - 1) {
-    return false
-  }
-
-  const tagStack: string[] = []
-  let currentPos = 0
-
-  while (currentPos < str.length) {
-    // Find next tag
-    const openIndex = str.indexOf('<', currentPos)
-    if (openIndex === -1) break
-
-    const closeIndex = str.indexOf('>', openIndex)
-    if (closeIndex === -1) return false
-
-    const tag = str.substring(openIndex, closeIndex + 1)
-    currentPos = closeIndex + 1
-
-    if (tag.startsWith('</')) {
-      // Closing tag
-      const tagName = tag.slice(2, -1).toLowerCase()
-      // If stack is empty or last opening tag doesn't match, return false
-      if (tagStack.length === 0 || tagStack[tagStack.length - 1] !== tagName) {
-        return false
-      }
-
-      // Remove matching opening tag
-      tagStack.pop()
-
-      // If stack is empty before end of string, only valid if this is the last tag
-      if (tagStack.length === 0 && currentPos <= str.length) {
-        const remainingTags = str.slice(currentPos).match(REGEX_TAG_START)
-        return !remainingTags
-      }
-    } else if (!tag.endsWith('/>')) {
-      // Opening tag (excluding self-closing tags)
-      const tagName = tag.slice(1).split(REGEX_TAG_END)[0].toLowerCase()
-      tagStack.push(tagName)
-    }
-  }
-
-  // Valid if exactly one tag remains in stack (the outer tag)
-  return tagStack.length === 1 && (tagStack[0] === 'font' || tagStack[0] === 'span')
+interface InheritedColors {
+  backgroundColor?: string
+  color?: string
 }
 
-/**
- * Extracts color from style and font color attributes in an HTML string.
- * @param value - The HTML string to check for color attributes.
- * @returns The color value or undefined if not found.
- */
-const extractColor = (value: string): string | undefined => {
-  // Check for background-color and color in style attribute
-  const styleMatch = value.match(REGEX_STYLE_COLOR)
-  if (styleMatch) return styleMatch[2]
+/** Normalizes a color enough for equality checks while preserving the original value for rendering. */
+const colorKey = (color: string): string => {
+  try {
+    return rgbToHex(color).toLowerCase()
+  } catch {
+    return color.trim().toLowerCase().replace(/\s+/g, '')
+  }
+}
 
-  // If no background-color, check for font color
-  const fontColorMatch = value.match(REGEX_FONT_COLOR)
-  if (fontColorMatch) return fontColorMatch[1]
+/** Gets the fill color that should represent a text node. Background color takes precedence over text color. */
+const fillFromColors = ({ backgroundColor, color }: InheritedColors) => backgroundColor || color
 
-  return undefined
+/** Gets the colors that apply to an element's descendants. */
+const getInheritedColors = (element: HTMLElement, inherited: InheritedColors): InheritedColors => {
+  const backgroundColor = element.style.backgroundColor || inherited.backgroundColor
+  const color = element.style.color || element.getAttribute('color') || inherited.color
+
+  return { backgroundColor, color }
 }
 
 /**
@@ -96,7 +38,46 @@ const getThoughtFill = (state: State, thoughtId: ThoughtId): string | undefined 
   const thought = getThoughtById(state, thoughtId)
   if (!thought) return undefined
 
-  return isWrappedInSingleTag(thought.value) ? extractColor(thought.value) : undefined
+  if (typeof DOMParser === 'undefined') return undefined
+
+  const doc = new DOMParser().parseFromString(thought.value, 'text/html')
+  let fill: string | undefined
+  let hasVisibleText = false
+  let mixedOrPartialColor = false
+
+  /** Visits each node and records whether every visible text node resolves to the same fill. */
+  const visit = (node: ChildNode, inherited: InheritedColors) => {
+    if (mixedOrPartialColor) return
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (!node.textContent?.trim()) return
+
+      const nodeFill = fillFromColors(inherited)
+      if (!nodeFill) {
+        mixedOrPartialColor = true
+        return
+      }
+
+      hasVisibleText = true
+
+      if (!fill) {
+        fill = nodeFill
+      } else if (colorKey(fill) !== colorKey(nodeFill)) {
+        mixedOrPartialColor = true
+      }
+
+      return
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) return
+
+    const nextInherited = getInheritedColors(node as HTMLElement, inherited)
+    node.childNodes.forEach(child => visit(child, nextInherited))
+  }
+
+  doc.body.childNodes.forEach(child => visit(child, {}))
+
+  return hasVisibleText && !mixedOrPartialColor ? fill : undefined
 }
 
 export default getThoughtFill

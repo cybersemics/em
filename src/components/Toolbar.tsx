@@ -102,6 +102,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
+  const showColorPicker = useSelector(state => state.showColorPicker)
   const showDropdown = useSelector(state => state.showColorPicker || state.showLetterCase)
   const positionFixedStyles = usePositionFixed()
 
@@ -173,6 +174,30 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
     }
   }, [updateArrows])
 
+  // A keyboard shortcut can open the Color Picker outside the toolbar viewport. Scroll only by the clipped
+  // distance after the picker renders, including when the toolbar remounts after distraction-free typing.
+  useEffect(() => {
+    if (customize || !showColorPicker) return
+
+    const toolbar = toolbarRef.current
+    const colorPicker = toolbar?.querySelector<HTMLElement>('[aria-label="Color Picker"]')
+    if (!toolbar || !colorPicker) return
+
+    const toolbarRect = toolbar.getBoundingClientRect()
+    const colorPickerRect = colorPicker.getBoundingClientRect()
+    const scrollOffset =
+      colorPickerRect.left < toolbarRect.left
+        ? colorPickerRect.left - toolbarRect.left
+        : colorPickerRect.right > toolbarRect.right
+          ? colorPickerRect.right - toolbarRect.right
+          : 0
+
+    // Scroll instantly under automation, as scrollTo and scrollCursorIntoView do. A smooth scroll keeps the swatches
+    // moving for ~200ms after they are visible, so a test that clicks one races the animation and hits its neighbor.
+    if (scrollOffset !== 0)
+      toolbar.scrollBy({ behavior: navigator.webdriver ? 'instant' : 'smooth', left: scrollOffset })
+  }, [customize, showColorPicker])
+
   // disable pressing on drag
   useEffect(() => {
     if (isDraggingAny) {
@@ -207,7 +232,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   )
 
   return (
-    <FadeTransition in={!distractionFreeTyping} type='distractionFreeTyping' unmountOnExit>
+    <FadeTransition in={!distractionFreeTyping || showDropdown} type='distractionFreeTyping' unmountOnExit>
       <div
         aria-label='toolbar'
         className={cx(
@@ -275,7 +300,12 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
             className={css({
               maxWidth: '100%',
               position: 'relative',
-              touchAction: 'inherit',
+              // Constrain the horizontally-scrolling toolbar to horizontal panning only. Without this, a diagonal
+              // (~45°) or vertical drag beginning on the toolbar is treated as a vertical pan and scrolls/overscrolls
+              // the page; because the toolbar is position: fixed (usePositionFixed), that overscroll visually drags
+              // the toolbar downward on iOS. pan-x preserves horizontal scrolling while blocking the vertical drag.
+              // Keep inherit in customize mode so react-dnd TouchBackend button reordering is unaffected.
+              touchAction: customize ? 'inherit' : 'pan-x',
               display: 'inline-flex',
               overflowX: 'scroll',
               zIndex: 'toolbar',

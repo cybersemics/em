@@ -48,8 +48,9 @@ const TreeNodePositioner = ({
   const isSwap = useSelector(
     state =>
       state.lastUndoableActionType === 'swapParent' &&
+      !!state.cursor &&
       // path is involved in the swap if it is the cursor or the parent of the cursor
-      (equalPath(state.cursor, path) || equalPath(parentOf(state.cursor!), path)),
+      (equalPath(state.cursor, path) || equalPath(parentOf(state.cursor), path)),
   )
 
   /** The direction of the curved animation in swapParent. If the child (cursor) thought value is greater than the parent thought value, rotate clockwise, otherwise rotate counterclockwise. This ensures that the parent and child curve in opposite directions, and activating swapParent twice will appear as a reversal instead of another rotation in the same direction. Returns null if the last action is not swapParent. */

@@ -1,5 +1,5 @@
 import { ScreenshotOptions } from 'puppeteer'
-import { page } from '../setup'
+import { page } from '../session'
 
 // Constants for the style element
 const ANTIALIASING_DISABLER_ID = 'screenshot-antialiasing-disable'
