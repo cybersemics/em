@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 /**
- * Starts a GitHub Copilot cloud agent session against a Dependabot pull request whose checks
+ * Starts a GitHub Copilot cloud agent task against a Dependabot pull request whose checks
  * failed, then records it in a single comment on that pull request.
- * Used by the `Start Opus 5 session` step of .github/workflows/dependabot-fix.yml.
+ * Used by the `Start Opus 5 task` step of .github/workflows/dependabot-fix.yml.
  *
  * ```sh
  * node scripts/ci/start-dependabot-fix-task.mjs <report.json>
  * ```
  *
  * The report is written by scripts/ci/collect-dependabot-failures.cjs, which has already decided
- * that a session is warranted — every guard against starting a duplicate one lives there, so this
+ * that a task is warranted — every guard against starting a duplicate one lives there, so this
  * dispatches whatever it is handed.
  *
- * The session commits to the pull request's own branch rather than opening a second pull request:
+ * The task commits to the pull request's own branch rather than opening a second pull request:
  * the agent tasks API resolves `head_ref` + `base_ref` to the open pull request between them and
  * pushes there. Note that a push by anyone other than Dependabot makes Dependabot stop rebasing the
  * branch, which is the intended outcome — from that point the fix and the bump travel together.
@@ -23,11 +23,11 @@
  * which is an app installation token. Without the secret this reports the omission and does
  * nothing, matching how puppeteer-flaky.yml treats the same secret. GH_TOKEN is the workflow's
  * ordinary token, used only for the comment, and RUN_URL is the run that comment credits with
- * starting the session.
+ * starting the task.
  *
  * Writes a markdown summary of what was dispatched to stdout; diagnostics go to stderr. Exits
  * non-zero when the dispatch fails, leaving no comment behind so a re-run can try again, and also
- * when only the comment fails — the session is running either way, but the comment is what stops
+ * when only the comment fails — the task is running either way, but the comment is what stops
  * the next check completion from starting a second one.
  */
 import { readFileSync } from 'node:fs'
@@ -35,7 +35,7 @@ import attemptComment from './attempt-comment.cjs'
 
 /**
  * A dependency bump that broke a check is read-the-changelog work across an unfamiliar package, so
- * these sessions pin the strongest model rather than leaving Copilot to auto-select one. Same
+ * these tasks pin the strongest model rather than leaving Copilot to auto-select one. Same
  * reasoning, and the same model, as scripts/ci/start-copilot-tasks.mjs.
  */
 const MODEL = 'claude-opus-5'
@@ -54,7 +54,7 @@ const CUSTOM_AGENT = 'worker-bee'
 const API_VERSION = '2026-03-10'
 
 /**
- * Marker identifying the single session comment this workflow maintains on a pull request. Must
+ * Marker identifying the single task comment this workflow maintains on a pull request. Must
  * match the one in scripts/ci/collect-dependabot-failures.cjs, which reads it to dedupe.
  */
 const MARKER = '<!-- dependabot-fix -->'
@@ -67,14 +67,14 @@ if (!reportFile) {
 
 const token = process.env.COPILOT_TASKS_TOKEN
 if (!token) {
-  console.error('COPILOT_TASKS_TOKEN secret not set; skipping Copilot session dispatch.')
+  console.error('COPILOT_TASKS_TOKEN secret not set; skipping Copilot task dispatch.')
   process.exit(0)
 }
 
-const { pr, failures, sessions, maxSessions, commentId } = JSON.parse(readFileSync(reportFile, 'utf8'))
+const { pr, failures, tasks, maxTasks, commentId } = JSON.parse(readFileSync(reportFile, 'utf8'))
 
 /** Which attempt this is. The cap itself lives in collect-dependabot-failures.cjs, which enforces it. */
-const attempt = sessions + 1
+const attempt = tasks + 1
 
 /** One line per failing check, naming the workflow it belongs to when that is not obvious. */
 const failureLine = failure => {
@@ -95,7 +95,7 @@ const failureLog = failure =>
     '</details>',
   ].join('\n')
 
-/** The prompt the session starts from: which checks failed, what they said, and how to treat them. */
+/** The prompt the task starts from: which checks failed, what they said, and how to treat them. */
 const prompt = [
   `The Dependabot pull request #${pr.number} (${pr.url}) — ${pr.title} — has failing checks. Fix them on its branch \`${pr.headRef}\` so the bump can merge. Commit there; do not open a second pull request.`,
   '',
@@ -112,8 +112,8 @@ const prompt = [
   'If a check turns out to be failing for a reason unrelated to the dependency, leave it alone and say so on the pull request instead of fixing an unrelated bug here.',
 ].join('\n')
 
-/** Starts the Copilot cloud agent session on the pull request's branch, and returns it. */
-const startSession = async () => {
+/** Starts the Copilot cloud agent task on the pull request's branch, and returns it. */
+const startTask = async () => {
   const response = await fetch(`https://api.github.com/agents/repos/${process.env.GITHUB_REPOSITORY}/tasks`, {
     method: 'POST',
     headers: {
@@ -142,21 +142,21 @@ const startSession = async () => {
 }
 
 /**
- * Creates or updates the single marked session comment on the pull request. It carries the head
- * SHA and the number of sessions so far, which is what collect-dependabot-failures.cjs reads to
- * tell a session it already started from one it has not, and to know when to stop.
+ * Creates or updates the single marked task comment on the pull request. It carries the head SHA
+ * and the number of tasks so far, which is what collect-dependabot-failures.cjs reads to tell a
+ * task it already started from one it has not, and to know when to stop.
  */
-const comment = async sessionUrl => {
+const comment = async taskUrl => {
   const body = attemptComment({
-    markers: [MARKER, `<!-- head: ${pr.headSha} -->`, `<!-- sessions: ${attempt} -->`],
+    markers: [MARKER, `<!-- head: ${pr.headSha} -->`, `<!-- tasks: ${attempt} -->`],
     heading: 'Dependabot fix',
     body: [
-      `${failures.length === 1 ? 'A check' : `${failures.length} checks`} failed on \`${pr.headSha.slice(0, 7)}\`, so an ${MODEL_NAME} session is fixing ${failures.length === 1 ? 'it' : 'them'} on this branch: [session](${sessionUrl}).`,
+      `${failures.length === 1 ? 'A check' : `${failures.length} checks`} failed on \`${pr.headSha.slice(0, 7)}\`, so an ${MODEL_NAME} task is fixing ${failures.length === 1 ? 'it' : 'them'} on this branch: [task](${taskUrl}).`,
       '',
       ...failures.map(failureLine),
     ],
     attempt,
-    maxAttempts: maxSessions,
+    maxAttempts: maxTasks,
     next: null,
     pr: pr.number,
     runUrl: process.env.RUN_URL || null,
@@ -181,25 +181,25 @@ const comment = async sessionUrl => {
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`)
 }
 
-const session = await startSession()
-console.error(`Started ${MODEL} session for #${pr.number}: ${session.html_url}`)
+const task = await startTask()
+console.error(`Started ${MODEL} task for #${pr.number}: ${task.html_url}`)
 
 process.stdout.write(
   [
-    '## Dependabot fix session',
+    '## Dependabot fix task',
     '',
-    `- [#${pr.number}](${pr.url}) \`${pr.headRef}\` — [${MODEL_NAME} session](${session.html_url}) (attempt ${attempt} of ${maxSessions})`,
+    `- [#${pr.number}](${pr.url}) \`${pr.headRef}\` — [${MODEL_NAME} task](${task.html_url}) (attempt ${attempt} of ${maxTasks})`,
     ...failures.map(failureLine),
     '',
   ].join('\n'),
 )
 
-// Last, so a failed dispatch leaves no comment claiming a session exists, and a failed comment
-// still reports the session that did start. The comment is the dedupe record, so losing it is
-// worth a red step even though the session itself is running fine.
+// Last, so a failed dispatch leaves no comment claiming a task exists, and a failed comment still
+// reports the task that did start. The comment is the dedupe record, so losing it is worth a red
+// step even though the task itself is running fine.
 try {
-  await comment(session.html_url)
+  await comment(task.html_url)
 } catch (e) {
-  console.error(`Started the session, but could not comment on #${pr.number}: ${e.message}`)
+  console.error(`Started the task, but could not comment on #${pr.number}: ${e.message}`)
   process.exit(1)
 }
