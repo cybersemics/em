@@ -19,12 +19,17 @@ const useLayoutAnimationFrameEffect = (
   useLayoutEffect(
     () => {
       const destroyCallbackRef: { current: void | (() => void) } = { current: undefined }
+      // The frame is stored so that cleanup can cancel it while it is still queued. callback is itself a
+      // dependency and is usually re-created on every render, so this effect re-runs constantly; without the
+      // cancel, each render leaves another frame queued and they pile up until they all fire at once, each
+      // measuring a thought that has since re-rendered or unmounted.
+      const frameRef: { current: number } = { current: 0 }
 
       // Wait for next frame to ensure layout is complete
-      requestAnimationFrame(() => {
+      frameRef.current = requestAnimationFrame(() => {
         // For iOS Safari first render of element, wait one more frame
         if (isTouch && isSafari()) {
-          requestAnimationFrame(() => {
+          frameRef.current = requestAnimationFrame(() => {
             destroyCallbackRef.current = callback()
           })
         } else {
@@ -33,6 +38,7 @@ const useLayoutAnimationFrameEffect = (
       })
 
       return () => {
+        cancelAnimationFrame(frameRef.current)
         if (destroyCallbackRef.current) {
           destroyCallbackRef.current()
           destroyCallbackRef.current = undefined

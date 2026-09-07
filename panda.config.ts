@@ -17,7 +17,6 @@ import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
-import multilineRecipe from './src/recipes/multiline'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
@@ -349,6 +348,13 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'codeBg',
     fontFamily: 'monospace',
   },
+  /** Lets an explicitly applied background show through the code background, which is only a default and would
+   * otherwise paint over it. The background is carried either by the color wrapper that formatting nests outside the
+   * code element, or by the thought's container when it comes from =style (#4234). */
+  'font[style*="background-color"] code, span[style*="background-color"] code, [aria-label="child"][style*="background-color"] code':
+    {
+      backgroundColor: 'transparent',
+    },
   kbd: {
     fontFamily: 'inherit',
   },
@@ -366,21 +372,37 @@ const globalCss = defineGlobalStyles({
   /* :empty does not work because thought may contain <br> */
   '[placeholder]:empty::before': {
     fontStyle: 'italic',
-    color: 'dim',
+    color: 'var(--placeholder-color, {colors.dim})',
+    backgroundColor: 'var(--placeholder-background-color, transparent)',
     content: 'attr(placeholder)',
     cursor: 'text',
   },
-  // PandaCSS does not directly support fallbacks: https://github.com/chakra-ui/panda/discussions/846
-  ':root': {
-    '--active-glow-gradient':
-      'linear-gradient(180deg, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
-    '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
+  '[placeholder][data-placeholder-cleared]:empty::before': {
+    color: 'var(--placeholder-color, currentColor)',
+    // Safari does not fade color emoji with opacity on a pseudo-element, so filter the rendered content instead.
+    filter: 'opacity(0.5)',
   },
-  '@supports (background-image: linear-gradient(180deg in oklch, #000))': {
-    ':root': {
-      '--active-glow-gradient':
-        'linear-gradient(180deg in oklch, {colors.commandCenterBlue} 0%, {colors.commandCenterPurple} 100%)',
-    },
+  '[placeholder][data-placeholder-bold]:empty::before': {
+    fontWeight: 700,
+  },
+  '[placeholder][data-placeholder-italic]:empty::before': {
+    fontStyle: 'italic',
+  },
+  '[placeholder][data-placeholder-underline]:empty::before': {
+    textDecorationLine: 'underline',
+  },
+  '[placeholder][data-placeholder-strikethrough]:empty::before': {
+    textDecorationLine: 'line-through',
+  },
+  '[placeholder][data-placeholder-underline][data-placeholder-strikethrough]:empty::before': {
+    textDecorationLine: 'underline line-through',
+  },
+  '[placeholder][data-placeholder-code]:empty::before': {
+    backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
+    fontFamily: 'monospace',
+  },
+  ':root': {
+    '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
   },
 })
 
@@ -404,8 +426,8 @@ export default defineConfig({
       breakpoints: {
         sm: '320px', // approx size of iPhone SE
         md: '400px', // approx size of iPhone 12 Pro
-        lg: '600px', // approx size of iPad
-        xl: '768px', // approx size of landscape tablet or laptop
+        lg: '600px', // landscape mobile devices and larger
+        xl: '800px', // approx size of a laptop
         '2xl': '1000px', // approx size of a desktop
         '3xl': '1200px', // approx size of a large desktop
       },
@@ -433,6 +455,9 @@ export default defineConfig({
             value: 'cubic-bezier(0.8,0.2,0.8,1)',
           },
         },
+        fonts: {
+          radioCanada: { value: "'Radio Canada Big', sans-serif" },
+        },
         fontSizes: {
           sm: { value: '80%' },
           md: { value: '90%' },
@@ -443,6 +468,8 @@ export default defineConfig({
         },
         spacing: {
           modalPadding: { value: '8%' },
+          editablePaddingTop: { value: '0.375em' },
+          editablePaddingBottom: { value: '0.25em' },
           safeAreaTop: { value: 'env(safe-area-inset-top)' },
           safeAreaRight: { value: 'env(safe-area-inset-right)' },
           safeAreaBottom: { value: 'env(safe-area-inset-bottom)' },
@@ -459,6 +486,7 @@ export default defineConfig({
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
+            'gestureContentBlur',
             'hamburgerMenu',
             'sidebar',
             'modal',
@@ -470,6 +498,7 @@ export default defineConfig({
             'toolbarArrow',
             'toolbar',
             'navbar',
+            'backgroundGlowFalloff',
             'latestCommands',
             'tutorialTraceGesture',
             'dropEmpty',
@@ -496,7 +525,6 @@ export default defineConfig({
         thoughtRecipe,
         editableRecipe,
         textNoteRecipe,
-        multilineRecipe,
         modalActionLinkRecipe,
         toolbarPointerEventsRecipe,
         tutorialBulletRecipe,
@@ -521,11 +549,6 @@ export default defineConfig({
           },
         },
         durations,
-        gradients: {
-          activeGlow: {
-            value: 'var(--active-glow-gradient)',
-          },
-        },
       },
     },
   },

@@ -4,13 +4,18 @@ import { Capacitor } from '@capacitor/core'
 
 export const isIOS = Capacitor.getPlatform() === 'ios'
 
+export const isBrowser = typeof window !== 'undefined' && Capacitor.getPlatform() === 'web'
+
 /** Returns true if the user's device is touch screen. The use of matchMedia('pointer: coarse') did not work for Android webviews, so checking if it is Android Webview using capacitor. */
 export const isTouch =
   typeof window !== 'undefined' &&
   (window.matchMedia?.('(pointer: coarse)').matches || Capacitor.getPlatform() === 'android')
 
-/** Returns true if the navigator platform contains 'Linux armv71'. */
-export const isAndroid = typeof navigator !== 'undefined' && navigator.platform === 'Linux armv7l'
+/** Returns true on Android, whether running as a native Capacitor app or in an Android browser or
+ * WebView. The old check tested navigator.platform === 'Linux armv7l' (32-bit ARM only), which is
+ * false on modern 64-bit Android, so data-platform and every _android: condition silently broke. */
+export const isAndroid =
+  Capacitor.getPlatform() === 'android' || (typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent))
 
 /** Returns true if the navigator platform contains 'MacIntel'. */
 export const isMac = typeof navigator !== 'undefined' && navigator.platform === 'MacIntel'

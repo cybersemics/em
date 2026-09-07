@@ -1,7 +1,7 @@
 import _ from 'lodash'
-import { motion, useTransform } from 'motion/react'
+import { motion, useMotionTemplate, useTransform } from 'motion/react'
 import pluralize from 'pluralize'
-import { FC, useCallback, useRef } from 'react'
+import { FC, useCallback, useEffect, useRef, useState } from 'react'
 import { Sheet, SheetRef } from 'react-modal-sheet'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
@@ -19,6 +19,7 @@ import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
 import isTutorial from '../../selectors/isTutorial'
+import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import PanelCommand from './PanelCommand'
@@ -85,6 +86,19 @@ const HiddenOverlay = () => {
  * Custom hook that returns reactive transforms for a draggable sheet.
  */
 const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
+  /*
+   * Force a re-render once the Sheet ref is attached so that the motion transforms below re-run
+   * their compute functions while ref.current is set, allowing them to subscribe to the sheet's
+   * motion values (e.g. yInverted). On the first render after the Command Center (re)mounts,
+   * ref.current is still null, so the compute functions read no motion values and the overlay
+   * opacity stays stuck at 0 (transparent). This is most visible when the Command Center remounts
+   * after a modal (Export/Share, Devices, Settings) is closed while it is still open.
+   */
+  const [, setSheetReady] = useState(false)
+  useEffect(() => {
+    if (ref.current) setSheetReady(true)
+  }, [ref])
+
   const height = useTransform(() => {
     return ref.current?.yInverted.get() ?? 0
   })
@@ -110,9 +124,14 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
 const CommandCenter = () => {
   const dispatch = useDispatch()
   const showCommandCenter = useSelector(state => state.showCommandCenter)
+  const showSidebar = useSelector(state => state.showSidebar)
   const isTutorialOn = useSelector(isTutorial)
   const sheetRef = useRef<SheetRef>(null)
   const { height, opacity, blurHeight } = useSheetTransforms(sheetRef)
+  const backgroundGlow = backgroundGlowStore.useState()
+
+  // Reveals the glow-mode falloff only within the sheet area, with the same soft 2.5rem top edge as the plain falloff gradient. Anchored to the bottom of the viewport since the sheet is bottom-anchored.
+  const backgroundGlowMask = useMotionTemplate`linear-gradient(to top, black calc(${height}px - 2.5rem), transparent ${height}px)`
 
   /** Prevent native page scroll when dragging the sheet. The page body is scrollable, and without this the browser scrolls the body on touchmove, stealing touch from the sheet's drag handler. React touch handlers are passive so we need a non-passive listener via addEventListener. */
   const preventTouchMoveRef = useCallback((el: HTMLDivElement | null) => {
@@ -126,10 +145,16 @@ const CommandCenter = () => {
     dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
   }, [dispatch])
 
+  useEffect(() => {
+    if (isTouch && showCommandCenter && showSidebar) onClose()
+  }, [onClose, showCommandCenter, showSidebar])
+
+  const isOpen = showCommandCenter && !showSidebar
+
   if (isTouch && !isTutorialOn) {
     return (
       <>
-        {showCommandCenter && (
+        {isOpen && (
           <motion.div
             /*
              * Progressive blur effect. Must be placed outside the Sheet to avoid separation
@@ -153,13 +178,13 @@ const CommandCenter = () => {
         <Sheet
           data-testid='command-center-panel'
           ref={sheetRef}
-          isOpen={showCommandCenter}
+          isOpen={isOpen}
           onClose={onClose}
           detent='content'
           unstyled
           tweenConfig={{
             duration: durations.get('commandCenter') / 1000,
-            ease: showCommandCenter ? easeOpen : easeClose,
+            ease: isOpen ? easeOpen : easeClose,
           }}
           style={{
             /** Override default Sheet zIndex. */
@@ -168,19 +193,49 @@ const CommandCenter = () => {
           /** Fixes sheet shifting up on ios when it opens. */
           disableScrollLocking
         >
-          <motion.div
-            /** Falloff. */
-            className={css({
-              pointerEvents: 'none',
-              position: 'absolute',
-              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
-              paddingTop: '0.711rem',
-              bottom: 0,
-              width: '100%',
-              height: '100%',
-            })}
-            style={{ height }}
-          />
+          {backgroundGlow.image ? (
+            <motion.div
+              /** Falloff when a BackgroundGlow image is active. An exact copy of the app background (glow image at its opacity over the opaque background color), masked to the sheet area with a soft top edge. Because the layer is identical to the background behind the content, the masked blend is a pure crossfade: the thoughts fade out over the mask ramp while the glow brightness stays constant, with no dark seam. The fixed position and identical background sizing keep the image pixel-aligned with the BackgroundGlow layer behind the content. */
+              className={css({
+                position: 'fixed',
+                inset: 0,
+                pointerEvents: 'none',
+                backgroundColor: 'bg',
+              })}
+              style={{
+                maskImage: backgroundGlowMask,
+                WebkitMaskImage: backgroundGlowMask,
+              }}
+            >
+              <div
+                className={css({
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'bottom center',
+                  backgroundRepeat: 'no-repeat',
+                })}
+                style={{
+                  backgroundImage: `url(/img/glow/${backgroundGlow.image})`,
+                  opacity: backgroundGlow.opacity,
+                }}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              /** Falloff. Softly cuts off the content behind the sheet by fading to the opaque background color. */
+              className={css({
+                pointerEvents: 'none',
+                position: 'absolute',
+                background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 2.5rem)',
+                paddingTop: '0.711rem',
+                bottom: 0,
+                width: '100%',
+                height: '100%',
+              })}
+              style={{ height }}
+            />
+          )}
           <motion.div
             className={css({
               position: 'fixed',

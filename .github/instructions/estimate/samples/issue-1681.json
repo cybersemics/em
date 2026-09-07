@@ -1,0 +1,13 @@
+{
+  "input": {
+    "title": "Drag-and-drop dead zone between thoughts",
+    "body": "## Steps to Reproduce\r\n\r\nDrag a thought slowly across a context with several thoughts. \r\n\r\n## Current Behavior\r\n\r\nWhen dragging directly over a thought, there is a small zone where the drop-hover disappears.  \r\n\r\nhttps://user-images.githubusercontent.com/750276/212223261-20884f28-07cc-4184-abf6-693ad4ceb678.MOV\r\n\r\n## Expected Behavior\r\n\r\nThere should be no gaps between the drop zones.\r\n\r\nTest across large and small font sizes.",
+    "labels": ["bug"]
+  },
+  "expected": "S",
+  "source": {
+    "type": "everhour",
+    "issue": 1681,
+    "hours": 4
+  }
+}

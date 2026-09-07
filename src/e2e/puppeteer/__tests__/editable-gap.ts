@@ -3,7 +3,7 @@ import getEditable from '../helpers/getEditable'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
-import { page } from '../setup'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 

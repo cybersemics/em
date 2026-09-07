@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import State from '../@types/State'
 import { deleteEmptyThoughtActionCreator as deleteEmptyThought } from '../actions/deleteEmptyThought'
@@ -8,6 +7,7 @@ import * as selection from '../device/selection'
 import { getChildren, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtBefore from '../selectors/getThoughtBefore'
 import hasMulticursor from '../selectors/hasMulticursor'
+import isMultiEditing from '../selectors/isMultiEditing'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
@@ -56,7 +56,13 @@ const canExecuteOutdent = (state: State): boolean => {
 
 /** A selector that returns true if either the cursor is on an empty thought that can be deleted, or is on an only child that can be outdented. */
 const canExecute = (state: State): boolean =>
-  canExecuteOutdent(state) || canExecuteDeleteEmptyThought(state) || hasMulticursor(state)
+  canExecuteOutdent(state) ||
+  canExecuteDeleteEmptyThought(state) ||
+  // While a multiselection is being edited (clearThought keeps the multicursors alive so that typed edits mirror across
+  // the selected thoughts), Backspace within the text must delete a character rather than the thoughts, so defer to
+  // canExecuteDeleteEmptyThought above, which only allows the deletion at the start of the thought. The deletion is
+  // then propagated to the other selected thoughts by the multicursor execution. (#4519)
+  (hasMulticursor(state) && !isMultiEditing(state))
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {
@@ -70,10 +76,10 @@ const exec: Command['exec'] = (dispatch, getState) => {
   }
 }
 
-const deleteEmptyThoughtOrOutdent: Command = {
+const deleteEmptyThoughtOrOutdent = {
   id: 'deleteEmptyThoughtOrOutdent',
-  label: 'Delete Empty Thought Or Outdent',
-  keyboard: [{ key: Key.Backspace }, { key: Key.Backspace, shift: true }],
+  label: 'Delete Empty Thought Or Outdent' as const,
+  keyboard: [{ key: 'Backspace' }, { key: 'Backspace', shift: true }],
   hideFromHelp: true,
   multicursor: {
     preventSetCursor: true,
@@ -82,6 +88,6 @@ const deleteEmptyThoughtOrOutdent: Command = {
   svg: DeleteEmptyThoughtIcon,
   canExecute,
   exec,
-}
+} satisfies Command
 
 export default deleteEmptyThoughtOrOutdent

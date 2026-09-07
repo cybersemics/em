@@ -16,20 +16,21 @@ import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
+import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
+import BackgroundGlow from './BackgroundGlow'
 import CommandCenter from './CommandCenter/CommandCenter'
 import Content from './Content'
 import DesktopCommandUniverse from './DesktopCommandUniverse'
 import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
-import GestureMenu from './GestureMenu'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
-import Sidebar from './Sidebar'
+import Sidebar from './Sidebar/Sidebar'
 import Tips from './Tips/Tips'
 import Toolbar from './Toolbar'
 import Tutorial from './Tutorial'
@@ -64,7 +65,16 @@ const useBodyAttributeSelector = <T,>(name: string, selector: (state: State) => 
 //   )
 // }
 
-/** Cancel gesture if there is an active text selection, drag, modal, or sidebar. */
+/** Returns true if the given touch point is within the toolbar's bounds. Used to prevent a swipe on the toolbar from being captured as a thoughtspace gesture (which disables scroll), so the toolbar can scroll horizontally. The toolbar can render below the static TOOLBAR_HEIGHT that isInGestureZone excludes (e.g. pushed down by the iOS safe-area inset), so its actual bounds are checked here. */
+const isOnToolbar = (x?: number, y?: number): boolean => {
+  if (x == null || y == null || typeof document === 'undefined') return false
+  const toolbar = document.getElementById('toolbar')
+  if (!toolbar) return false
+  const rect = toolbar.getBoundingClientRect()
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+}
+
+/** Cancel gesture if the touch is on the toolbar, or if there is an active text selection, drag, modal, or sidebar. */
 const shouldCancelGesture = (
   /** The x coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
   x?: number,
@@ -74,6 +84,9 @@ const shouldCancelGesture = (
   const state = store.getState()
   const distance = state.fontSize * 2
   return (
+    isOnToolbar(x, y) ||
+    // Cancel when the touch starts on a range input (e.g. the background glow debug sliders). Otherwise the gesture disables scrolling by calling preventDefault on touchmove, which blocks the slider's native drag.
+    !!(x && y && document.elementFromPoint(x, y)?.closest('input[type="range"]')) ||
     (x && y && selection.isNear(x, y, distance)) ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
@@ -113,7 +126,16 @@ const AppComponent: FC = () => {
   const fontSize = useSelector(state => state.fontSize)
   const showModal = useSelector(state => state.showModal)
   const tutorial = useSelector(isTutorial)
+  const debugCrashLog = useSelector(getUserSetting(Settings.debugCrashLog))
   const rootRef = useRef<HTMLDivElement>(null)
+
+  // Mirror the Debug Logging setting into the persistent debug log. Kept here (a single always-mounted
+  // top-level effect) so the logger stays decoupled from the Redux store. On development and preview
+  // hosts (debugLog.autoEnabled) logging defaults to on and follows the device-local opt-out instead of
+  // the synced setting, so this device can be aligned with production without affecting other devices.
+  useEffect(() => {
+    debugLog.setEnabled(debugLog.autoEnabled ? !debugLog.isAutoOptOut() : debugCrashLog)
+  }, [debugCrashLog])
 
   useEffect(() => {
     WebviewBackground.changeBackgroundColor({ color: colors.bg })
@@ -172,10 +194,11 @@ const AppComponent: FC = () => {
       })}
       ref={rootRef}
     >
+      {/* Rendered first so that later positioned siblings (Content, Toolbar, Footer) paint above it. */}
+      <BackgroundGlow />
       <Alert />
       <Tips />
       {!isTouch && <DesktopCommandUniverse />}
-      {isTouch && <GestureMenu />}
       <ErrorMessage />
       {enableLatestCommandsDiagram && <LatestCommandsDiagram position='bottom' />}
       <MobileCommandUniverse />

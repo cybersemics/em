@@ -7,14 +7,18 @@ import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { editThoughtPayload } from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import updateThoughts from '../actions/updateThoughts'
+import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
+import equalArrays from '../util/equalArrays'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
+import stripTags from '../util/stripTags'
 
 /** Track a stream of editThought actions so that they can be merged,
  * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters. */
@@ -40,26 +44,130 @@ function isEditThoughtAction(action: UnknownAction): action is UnknownAction & e
   return action.type === 'editThought'
 }
 
+/** Returns true when a restored note offset is being cleared after the caret has been placed. */
+function isClearNoteOffsetAction(action: UnknownAction): boolean {
+  return action.type === 'setNoteFocus' && action.value === true && action.offset === null
+}
+
+/** Gets plain text from html. */
+function getTextContent(value: string): string {
+  const element = document.createElement('div')
+  element.innerHTML = value
+  return element.textContent || ''
+}
+
+/** Infers the note caret offset before an edit from its post-edit offset and plain-text length delta. */
+function getNoteOffsetBeforeEdit(action: UnknownAction): number | null {
+  if (!isEditThoughtAction(action) || action.noteOffset == null) return null
+
+  const oldTextLength = getTextContent(action.oldValue).length
+  const newTextLength = getTextContent(action.newValue).length
+  const noteOffsetBeforeEdit = action.noteOffset + oldTextLength - newTextLength
+
+  return Math.max(0, Math.min(oldTextLength, noteOffsetBeforeEdit))
+}
+
 /** Compare the text contents of the old and new values to determine the direction of the edit.
  * Returns None if the action is not an editThought action or if the text content length is the same.
+ * Formatting edits (bold, italic, color) and case changes (HELLO → hello) preserve text length and return None.
+ * Edits marked preventMerge likewise return None, so a programmatic edit such as a generated thought is never
+ * merged with the user's typing stream on either side.
  */
 function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
-  if (!isEditThoughtAction(action)) return EditThoughtDirection.None
+  if (!isEditThoughtAction(action) || action.preventMerge) return EditThoughtDirection.None
 
-  const oldElement = document.createElement('div')
-  const newElement = document.createElement('div')
-  oldElement.innerHTML = action.oldValue
-  newElement.innerHTML = action.newValue
+  const oldText = getTextContent(action.oldValue)
+  const newText = getTextContent(action.newValue)
 
-  return newElement.textContent.length === oldElement.textContent.length
+  return newText.length === oldText.length
     ? EditThoughtDirection.None
-    : newElement.textContent.length > oldElement.textContent.length
+    : newText.length > oldText.length
       ? EditThoughtDirection.Longer
       : EditThoughtDirection.Shorter
 }
 
-/** Properties that are ignored when generating state patches. */
-const statePropertiesToOmit: (keyof State)[] = ['alert', 'cursorCleared', 'editableNonce', 'pushQueue']
+/** Properties that are ignored when generating state patches.
+ * The editableNonce is a transient re-render trigger (incremented by editableRender and by force edits), not real state.
+ * It must be excluded from patches, otherwise undoing a force edit reverts the nonce and editableRender re-increments
+ * it to the same value, resulting in no net change. The ContentEditable then fails to update its innerHTML while
+ * editing (allowInnerHTMLChange is false), so undoing a formatting/letter-case edit appears to do nothing.
+ * The isKeyboardOpen flag is likewise device state, not document state: it reflects whether the virtual keyboard is
+ * currently up. Actions that open it as a side effect (newThought, setCursor) would otherwise record the transition in
+ * their patch, so undoing them silently closes edit mode. That desyncs the flag from the real keyboard mid-reducer and
+ * drives the dismissal machinery (clearSelection -> selection.clear -> Keyboard.hide), which then fights the next
+ * thought's attempt to raise the keyboard (#4692). Undo/redo must never move the keyboard; only the blur and
+ * dismissKeyboard paths may.
+ * The selectionOffsets snapshot is likewise device state: it records where the browser selection was before a UI took
+ * the focus, so restoring the one that happened to be current when an action was undone would resurrect a selection
+ * the user has long since moved on from. */
+const statePropertiesToOmit: (keyof State)[] = [
+  'alert',
+  'cursorCleared',
+  'editableNonce',
+  'isKeyboardOpen',
+  'pushQueue',
+  'selectionOffsets',
+]
+
+/** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. */
+const restoreMoveUpdatesFromThoughtUpdates = (
+  state: State,
+  oldState: State,
+  thoughtIndexUpdates: Index<Thought | null>,
+): {
+  thoughtIndexUpdates: Index<Thought | null>
+  movePlacements: Index<ThoughtId | null>
+} => {
+  const touchedParentIds = Object.entries(thoughtIndexUpdates).reduce<Set<ThoughtId>>((acc, [id, thought]) => {
+    const thoughtId = id as ThoughtId
+    if (!thought) return acc
+
+    const oldThought = getThoughtById(oldState, thoughtId)
+    const moved = oldThought && (oldThought.parentId !== thought.parentId || oldThought.rank !== thought.rank)
+    if (!moved) return acc
+
+    acc.add(oldThought.parentId)
+    acc.add(thought.parentId)
+    return acc
+  }, new Set())
+
+  const { thoughtIndexUpdates: moveThoughtIndexUpdates, movePlacements } = [...touchedParentIds].reduce<{
+    thoughtIndexUpdates: Index<Thought | null>
+    movePlacements: Index<ThoughtId | null>
+  }>(
+    (acc, parentId) => {
+      const oldChildren = getChildrenRanked(oldState, parentId).map(child => child.id)
+      const children = getChildrenRanked(state, parentId)
+      const childIds = children.map(child => child.id)
+      if (equalArrays(oldChildren, childIds)) return acc
+
+      children.forEach((child, i) => {
+        const childThought = getThoughtById(state, child.id)
+        if (!childThought) return
+
+        acc.thoughtIndexUpdates[child.id] = childThought
+        acc.movePlacements[child.id] = i === 0 ? null : childIds[i - 1]
+      })
+
+      return acc
+    },
+    { thoughtIndexUpdates: {}, movePlacements: {} },
+  )
+
+  const moveThoughtIds = new Set(Object.keys(movePlacements))
+  const nonMoveThoughtIndexUpdates = Object.entries(thoughtIndexUpdates).reduce<Index<Thought | null>>(
+    (acc, [id, thought]) => (moveThoughtIds.has(id) ? acc : { ...acc, [id]: thought }),
+    {},
+  )
+
+  return {
+    thoughtIndexUpdates: {
+      ...nonMoveThoughtIndexUpdates,
+      ...moveThoughtIndexUpdates,
+    },
+    movePlacements,
+  }
+}
 
 /**
  * Manually recreate the pushQueue for thought and thought index updates from patches.
@@ -68,14 +176,15 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
   const lexemeIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/lexemeIndex/'))
   const thoughtIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/thoughtIndex/'))
 
-  const lexemeIndexUpdates = lexemeIndexChanges.reduce<Index<Lexeme | null>>((acc, op) => {
-    const lexemeKey = op.path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
+  const lexemeIndexUpdates = lexemeIndexChanges.reduce<Index<Lexeme | null>>((acc, { path }) => {
+    const lexemeKey = path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
     return {
       ...acc,
-      [lexemeKey]: op.value || null,
+      // Patch paths may target nested lexeme properties such as contexts. Persist the full lexeme.
+      [lexemeKey]: state.thoughts.lexemeIndex[lexemeKey] || null,
     }
   }, {})
-  const thoughtIndexUpdates = thoughtIndexChanges.reduce((acc, { path }) => {
+  const thoughtIndexUpdates = thoughtIndexChanges.reduce<Index<Thought | null>>((acc, { path }) => {
     const id = path.slice('/thoughts/thoughtIndex/'.length).split('/')[0]
     return {
       ...acc,
@@ -95,10 +204,15 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
     cursor: state.cursor,
     editingValue: state.cursor ? headValue(state, state.cursor) : null,
   }
+  const moveUpdates = restoreMoveUpdatesFromThoughtUpdates(state, oldState, thoughtIndexUpdates)
 
   return {
     ...state,
-    pushQueue: updateThoughts({ lexemeIndexUpdates, thoughtIndexUpdates })(oldStateWithUpdatedCursor).pushQueue,
+    pushQueue: updateThoughts({
+      lexemeIndexUpdates,
+      thoughtIndexUpdates: moveUpdates.thoughtIndexUpdates,
+      ...(Object.keys(moveUpdates.movePlacements).length > 0 ? { movePlacements: moveUpdates.movePlacements } : null),
+    })(oldStateWithUpdatedCursor).pushQueue,
   }
 }
 
@@ -121,6 +235,14 @@ const addActionsToPatch = (patch: Operation[], actions: ActionType[]): Patch =>
 const getPatchAction = (patch: Patch): ActionType => patch[0]?.actions[0]
 
 /**
+ * Returns true if a patch represents an undoable action. A patch's first action may be a non-action label (e.g. a multicursor command's undoLabel), so check all actions in the patch rather than only the first.
+ */
+const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch?.[0]?.actions.some(isUndoable)
+
+/** Actions that mutate state.multicursors. They are not undoable on their own, since selecting thoughts should not be an undo step, but they must be tracked while a multicursor command is executing. See the bail condition in the enhancer. */
+const multicursorActionTypes: Set<ActionType> = new Set(['addMulticursor', 'clearMulticursors', 'removeMulticursor'])
+
+/**
  * Gets the nth item from the end of an array.
  */
 const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
@@ -133,10 +255,17 @@ const undoOneReducer = (state: State): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastUndoPatch[0]?.actions])
+  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [
+    ...(lastUndoPatch[0]?.actions ?? []),
+  ])
   return {
     ...newState,
-    redoPatches: [...redoPatches, correspondingRedoPatch],
+    // Do not push an empty patch. A patch that a non-undoable action has already reverted applies as a no-op, so the patch
+    // computed to redo it is empty. (The Note command is the reachable case: it is not undoable and writes back the noteFocus
+    // and noteOffset that the undoable setNoteFocus recorded.) An empty patch carries no actions, so it disables undo
+    // (getLastActionType returns undefined) and throws on the spread above the next time it is reached. Drop it instead, as
+    // both patch-creating branches of the reducer below already do; the patch restored nothing, so nothing is lost.
+    redoPatches: correspondingRedoPatch.length ? [...redoPatches, correspondingRedoPatch] : redoPatches,
     undoPatches: undoPatches.slice(0, -1),
     cursorCleared: false,
     lastUndoableActionType: lastUndoPatch[0]?.actions[0],
@@ -151,20 +280,33 @@ const redoOneReducer = (state: State): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
   const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
-  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [...lastRedoPatch[0]?.actions])
+  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [
+    ...(lastRedoPatch[0]?.actions ?? []),
+  ])
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
-    undoPatches: [...undoPatches, correspondingUndoPatch],
+    // Do not push an empty patch. See undoOneReducer.
+    undoPatches: correspondingUndoPatch.length ? [...undoPatches, correspondingUndoPatch] : undoPatches,
     cursorCleared: false,
     lastUndoableActionType: lastRedoPatch[0]?.actions[0],
   }
 }
 
+/** Moves the caret to the end of the cursor thought. Undo/redo otherwise restores the cursorOffset captured before the undone action, which can be anywhere in the thought (the tap position on iOS, or 0), leaving the caret away from the word that was just restored. */
+const cursorOffsetAtEnd = (state: State): State => ({
+  ...state,
+  cursorOffset: state.cursor ? stripTags(headValue(state, state.cursor) ?? '').length : null,
+})
+
 /**
- * Controls the number of undo operations based on the undo history.
+ * Undoes one step of the undo history, which spans two patches when a navigation action follows an undoable action or an edit follows a newThought. With count, reverts exactly that many patches instead. The undo slider passes a count so that it can move through the history by whole steps in either direction (see selectors/undoSteps, which mirrors the grouping below).
  */
-const undoReducer = (state: State, undoPatches: Patch[]): State => {
+const undoReducer = (
+  state: State,
+  undoPatches: Patch[],
+  { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
+): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
   const penultimateUndoPatch = nthLast(undoPatches, 2)
@@ -172,35 +314,67 @@ const undoReducer = (state: State, undoPatches: Patch[]): State => {
 
   if (!undoPatches.length) return state
 
-  const undoTwice = isNavigation(lastAction) ? isUndoable(penultimateAction) : penultimateAction === 'newThought'
+  // Infer whether the last patch is a formatting-only edit by examining the diff operations.
+  // A formatting patch changes a thought's value without changing its plain text content.
+  // This is detected by finding an operation that restores a thoughtIndex value where
+  // stripTags(restored_value) === stripTags(current_value) — same plain text, different HTML.
+  // Letter case changes (e.g. "hello" → "HELLO") are also treated as formatting since they do not
+  // add or remove content, only change its presentation.
+  const lastPatchIsFormatting = !!lastUndoPatch?.some(op => {
+    const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)\/value$/)
+    if (!match) return false
+    const id = match[1]
+    const currentValue = state.thoughts.thoughtIndex[id]?.value
+    if (currentValue === undefined || op.value === undefined) return false
+    const restoredPlain = stripTags(op.value as string)
+    const currentPlain = stripTags(currentValue)
+    return restoredPlain === currentPlain || restoredPlain.toLowerCase() === currentPlain.toLowerCase()
+  })
 
-  const poppedUndoPatches = undoTwice ? [penultimateUndoPatch, lastUndoPatch] : [lastUndoPatch]
+  const undoTwice = isNavigation(lastAction)
+    ? isPatchUndoable(penultimateUndoPatch)
+    : penultimateAction === 'newThought' && !lastPatchIsFormatting
+  const undoCount = count ?? (undoTwice ? 2 : 1)
+
+  const poppedUndoPatches = undoPatches.slice(-undoCount)
+
+  // Capture the current cursor offset before applying the undo patch.
+  // When undoing a formatting-only edit (no undoTwice), we preserve this offset
+  // so the caret stays where it was at the time of undo, instead of jumping to
+  // the pre-formatting position that was stored in the patch.
+  const priorCursorOffset = state.cursorOffset
 
   return reducerFlow([
-    undoOneReducer,
-    undoTwice ? undoOneReducer : null,
+    ...Array.from({ length: undoCount }, () => undoOneReducer),
     newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
+    undoCount === 1 && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
+    cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
 
 /**
- * Controls the number of redo operations based on the patch history.
+ * Redoes one step of the redo history, which spans two patches when the next patch is a navigation action or a newThought. With count, restores exactly that many patches instead (see undoReducer).
  */
-const redoReducer = (state: State, redoPatches: Patch[]): State => {
+const redoReducer = (
+  state: State,
+  redoPatches: Patch[],
+  { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
+): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
 
   if (!redoPatches.length) return state
 
   const redoTwice = lastAction && (isNavigation(lastAction) || lastAction === 'newThought')
+  const redoCount = count ?? (redoTwice ? 2 : 1)
 
-  const poppedRedoPatches = redoTwice ? [nthLast(redoPatches, 2), lastRedoPatch] : [lastRedoPatch]
+  const poppedRedoPatches = redoPatches.slice(-redoCount)
 
   return reducerFlow([
-    redoTwice ? redoOneReducer : null,
-    redoOneReducer,
+    ...Array.from({ length: redoCount }, () => redoOneReducer),
     newState => restorePushQueueFromPatches(newState, state, poppedRedoPatches.flat()),
+    cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
@@ -237,11 +411,21 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // Handle undo and redo.
       // They are defined in the redux enhancer rather than in /actions.
       if (actionType === 'undo' || actionType === 'redo') {
+        // Reset the edit-direction tracking so the next action after an undo/redo does not
+        // accidentally merge with whatever patch happens to be at the top of the stack.
+        lastAction = undefined
+        lastEditThoughtDirection = EditThoughtDirection.None
+
+        // Native undo/redo (iOS three-finger swipe, shake-to-undo) sets cursorAtEnd to place the caret at the end of the restored thought.
+        const cursorAtEnd = !!(action as UnknownAction).cursorAtEnd
+        // The undo slider passes the exact number of patches to revert or restore.
+        const count = (action as UnknownAction).count as number | undefined
+
         const undoOrRedoState =
           actionType === 'undo'
-            ? undoReducer(state, undoPatches)
+            ? undoReducer(state, undoPatches, { cursorAtEnd, count })
             : actionType === 'redo'
-              ? redoReducer(state, redoPatches)
+              ? redoReducer(state, redoPatches, { cursorAtEnd, count })
               : null
 
         // do not omit pushQueue because that includes updates added by updateThoughts
@@ -260,8 +444,17 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (
         // bail if state has not changed
         state === newState ||
-        // bail if the action is not undoable
-        !isUndoable(actionType) ||
+        // Clearing a one-shot note offset after restoring the caret is ephemeral. Recording it as a navigation
+        // action would clear the redo stack immediately after undo.
+        isClearNoteOffsetAction(action) ||
+        // bail if the action is not undoable.
+        // Exception: multicursor actions dispatched while a multicursor command is executing belong to the command's
+        // single undo entry, e.g. the addMulticursor calls that restore the multiselect at the end of
+        // executeCommandWithMulticursor. Skipping them would bake their changes into the merge baseline reconstructed
+        // below, so undo would restore the original multiselect without removing the restored one, leaving both
+        // selected (#4728). Other non-undoable actions are still skipped so that transient ui state (e.g. the
+        // Command Center opened by the multicursor alert middleware) is not restored by undo.
+        (!isUndoable(actionType) && !(state.isMulticursorExecuting && multicursorActionTypes.has(actionType))) ||
         // ignore the first importText since it is part of app initialization and should not be undoable
         // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
         // See: https://github.com/cybersemics/em/issues/1494
@@ -270,7 +463,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return newState
       }
 
-      // Determine if an edit is an addition or a deletion
+      // Determine if an edit is an addition or a deletion.
+      // Formatting edits (bold, italic, color) and case changes preserve text length and return None, so they never merge with content edits.
       const editThoughtDirection = getEditThoughtDirection(action)
 
       const shouldMergeWithLastEditThought =
@@ -278,7 +472,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // Some actions are merged together into a single undo/redo patch.
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
-      // - Contiguous edits are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step.
+      // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (None direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step. Edits marked preventMerge (e.g. a generated thought) are likewise never merged on either side.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
       // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
@@ -287,8 +481,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         shouldMergeWithLastEditThought ||
         actionType === 'closeAlert' ||
         state.isMulticursorExecuting ||
-        (lastAction as UnknownAction)?.mergeNext ||
-        (action as UnknownAction)?.mergePrev
+        (lastAction as UnknownAction)?.mergeNext
       ) {
         lastAction = action
         const lastUndoPatch = nthLast(state.undoPatches, 1)
@@ -311,12 +504,19 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         return {
           ...newState,
           lastUndoableActionType: actionType,
+          // Guard against pushing an empty patch when the merged actions net to no change (e.g. a multicursor command that reduces to a no-op).
+          // An empty patch has no actions, which would disable undo (getLastActionType returns undefined) and crash undoOneReducer/redoOneReducer when spreading patch[0]?.actions.
+          // Instead, drop the now-superseded last patch, mirroring the non-merge branch's `undoPatch.length` guard below.
           undoPatches: [
             ...newState.undoPatches.slice(0, -1),
-            addActionsToPatch(combinedUndoPatch, [
-              ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
-              actionType,
-            ]),
+            ...(combinedUndoPatch.length
+              ? [
+                  addActionsToPatch(combinedUndoPatch, [
+                    ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
+                    actionType,
+                  ]),
+                ]
+              : []),
           ],
         }
       }
@@ -325,7 +525,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       lastEditThoughtDirection = editThoughtDirection
 
       // add a new undo patch
-      const undoPatch = diffState(newState as Index, state)
+      // Note focus intentionally does not dispatch on every caret movement. For the first note edit after focus,
+      // infer the pre-edit caret so the inverse patch can restore it instead of leaving the caret at the end.
+      const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
+      const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
+      const undoPatch = diffState(newState as Index, stateBeforeAction)
       return undoPatch.length
         ? {
             ...newState,

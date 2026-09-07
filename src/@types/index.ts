@@ -1,5 +1,13 @@
 import { UnknownAction } from 'redux'
+import type { WindowEm } from '../initialize'
 import Thunk from './Thunk'
+
+/** Explicit pre-initialization view of window for preload scripts. */
+export type PreloadedEmWindow = {
+  em?: {
+    testFlags?: Partial<WindowEm['testFlags']>
+  }
+}
 
 declare global {
   interface Document {
@@ -8,10 +16,26 @@ declare global {
   }
 
   interface Window {
-    em: unknown
+    /** Fully initialized application namespace. Preload writers use {@link PreloadedEmWindow}. */
+    em: WindowEm
     debug: (message: string) => void
     // FIX: Used only in puppeteer test environment. So need way to switch global context based on environment.
     delay: (ms: number) => Promise<boolean>
+    /**
+     * The Navigation API, used by the Navigate Back/Forward commands. Not yet included in the TypeScript DOM lib, so a minimal subset is declared here. Optional because it is unsupported in some browsers (e.g. older Safari).
+     *
+     * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigation
+     */
+    navigation?: {
+      /** True if there is a previous entry in the history that can be navigated to. */
+      readonly canGoBack: boolean
+      /** True if there is a next entry in the history that can be navigated to. */
+      readonly canGoForward: boolean
+      /** Navigates to the previous entry in the history. */
+      back: () => void
+      /** Navigates to the next entry in the history. */
+      forward: () => void
+    }
   }
 
   interface Navigator {

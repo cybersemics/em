@@ -2,6 +2,7 @@ import click from '../helpers/click'
 import getSelection from '../helpers/getSelection'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -120,6 +121,10 @@ describe('all platforms', () => {
     await click(editableNodeHandle, { edge: 'left' })
 
     await press('ArrowDown')
+
+    // Wait for the first press to land before pressing again. cursorDown's exec is throttled to one execution per animation frame, so a second keydown that arrives in the same frame is dropped and the cursor silently stops short.
+    await waitForCursor(multiLineCursor)
+
     await press('ArrowDown')
 
     // the focus must be in the middle of the multi-line thought after cursor down

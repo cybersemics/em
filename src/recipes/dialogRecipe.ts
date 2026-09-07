@@ -1,10 +1,11 @@
 import { defineSlotRecipe } from '@pandacss/dev'
 
 /**
- * Slot recipe for the liminal-glass Dialog. Owns every style for the dialog tree
- * (Dialog.tsx, DialogTitle.tsx, DialogContent.tsx) so coupled values — radii, paddings,
- * the scroll-fade mask — sit next to each other rather than being kept in sync across
- * files.
+ * Slot recipe for the liminal-glass Dialog shell. Owns the glass sheet, its decorative
+ * highlight/rainbow/stroke layers, and the scrollable content region (Dialog.tsx,
+ * DialogContent.tsx) so coupled values — radii, paddings, the scroll-fade mask — sit next
+ * to each other rather than being kept in sync across files. The header row and its buttons
+ * (DialogHeader.tsx, CircleButton.tsx) style themselves inline with `css()`.
  */
 const dialogRecipe = defineSlotRecipe({
   className: 'dialog',
@@ -26,8 +27,6 @@ const dialogRecipe = defineSlotRecipe({
     'content',
     'contentInner',
     'scrollbarThumb',
-    'titleContainer',
-    'titleText',
   ],
   base: {
     /** Full-viewport backdrop — transparent fill plus the backdrop blur that softens whatever's behind the dialog. */
@@ -41,7 +40,7 @@ const dialogRecipe = defineSlotRecipe({
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: 'transparent',
-      backdropFilter: 'blur(10px)',
+      backdropFilter: 'blur(10px) brightness(0.75) saturate(0.60) contrast(1.0)',
       zIndex: 'dialogContainer',
       overflow: 'hidden',
       touchAction: 'none',
@@ -127,16 +126,17 @@ const dialogRecipe = defineSlotRecipe({
       mixBlendMode: 'screen',
       pointerEvents: 'none',
     },
-    /** The glass sheet itself — rounded translucent panel that hosts the dialog content and decorative layers. */
+    /** The glass sheet itself — rounded translucent panel that hosts the dialog content and decorative layers. Lays out its in-flow content as a flex column so the scrollable region (`content`) can shrink to fill whatever space the header and search row leave, rather than overflowing this 80dvh budget and being clipped by `overflow: hidden`. Decorative layers are absolutely positioned and so sit outside this flex flow. */
     glassSheet: {
       color: 'fg',
-      paddingTop: '0.75rem',
       borderRadius: '32px',
       width: '100%',
       boxSizing: 'border-box',
       overflow: 'hidden',
       position: 'relative',
       maxHeight: '80dvh',
+      display: 'flex',
+      flexDirection: 'column',
     },
     /** Muted-purple radial fill concentrated near the top of the glass and fading toward the bottom. */
     containerBackground: {
@@ -180,19 +180,27 @@ const dialogRecipe = defineSlotRecipe({
       mask: 'linear-gradient(white 0 0) padding-box, linear-gradient(white 0 0)',
       maskComposite: 'exclude',
     },
-    /** Wrapper around the dialog children (title + body) — establishes its own stacking context so content paints above the decorative layers. */
+    /** Wrapper around the dialog children (title + body) — establishes its own stacking context so content paints above the decorative layers. Flex column with `minHeight: 0` so it can shrink within `glassSheet`'s 80dvh cap and hand the leftover space to `contentWrapper`/`content`. */
     contentLayer: {
       position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: 0,
     },
-    /** Positioning context for the scrollable `content` and its custom scrollbar thumb overlay. The thumb is an absolutely-positioned sibling of `content` (not a child) so it does not scroll with the content. */
+    /** Positioning context for the scrollable `content` and its custom scrollbar thumb overlay. The thumb is an absolutely-positioned sibling of `content` (not a child) so it does not scroll with the content. Takes the remaining column space after the header and search row (`flex: 1` + `minHeight: 0`) so `content` can fill it and scroll internally. */
     contentWrapper: {
       position: 'relative',
+      flex: 1,
+      minHeight: 0,
+      display: 'flex',
+      flexDirection: 'column',
     },
-    /** Scrollable content region — owns the scroll behavior and the responsive font size. `dvh` (rather than `vh`) on the max-height matches the `glassSheet` parent's unit so the two heights track the same viewport when the iOS address bar shows/hides; otherwise `70vh` can resolve larger than `glassSheet`'s `80dvh` budget allows, and the bottom of `content` (where the mask fade lives) gets clipped off by `glassSheet`'s `overflow: hidden`. */
+    /** Scrollable content region — owns the scroll behavior and the responsive font size. Fills the column space `contentWrapper` hands down (`flex: 1` + `minHeight: 0`) instead of carrying its own viewport-relative max-height. This way the header and search row claim their natural height first and `content` takes whatever is left of `glassSheet`'s 80dvh budget — so the three never sum past 80dvh and the bottom of the scroll region (where the mask fade lives) is never clipped off by `glassSheet`'s `overflow: hidden`. */
     content: {
       fontSize: '1.125rem',
       color: 'fg',
-      maxHeight: '70dvh',
+      flex: 1,
+      minHeight: 0,
       overflowX: 'hidden',
       overflowY: 'auto',
       // Horizontal text padding lives on contentInner; this paddingRight gives the scrollbar breathing room from the modal edge.
@@ -255,30 +263,12 @@ const dialogRecipe = defineSlotRecipe({
     },
     /** Inner wrapper inside `content` that carries the horizontal text inset. Kept separate from `content` so the scrollbar gutter doesn't push text in further. */
     contentInner: {
-      // Left matches titleContainer.paddingInline so title and content text share a consistent inset; right is reduced because the scrollbar gutter consumes the rest.
-      paddingLeft: '1.25rem',
-      paddingRight: '0.75rem',
+      // 1rem matches the rest of the dialog inset (the header row in DialogHeader and the search row in MobileCommandUniverse).
+      // 0.5rem right padding gives the scrollbar some breathing room from the panel's content and the edge of the panel.
+      paddingLeft: '1rem',
+      paddingRight: '0.5rem',
       // Add bottom padding to the inner content wrapper, so the mask doesn't fade out the last bit of content.
       paddingBottom: '2rem',
-    },
-    /** Header row — flex row that lays out the title text and the close button. */
-    titleContainer: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      // Matches contentInner.paddingLeft so the title shares a consistent inset with the content text.
-      paddingInline: '1.25rem',
-    },
-    /** The title heading itself — bold, with a responsive size bump on larger screens. */
-    titleText: {
-      fontWeight: '700',
-      color: 'fg',
-      borderBottom: 'none',
-      fontSize: '1.25rem',
-      margin: '0.625rem 0',
-      '@media (min-width: 1200px)': {
-        fontSize: '1.75rem',
-      },
     },
   },
 })

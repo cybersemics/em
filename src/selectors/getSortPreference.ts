@@ -4,7 +4,9 @@ import ThoughtId from '../@types/ThoughtId'
 import findDescendant from '../selectors/findDescendant'
 import parseSortDirection from '../util/parseSortDirection'
 import { getAllChildrenAsThoughts } from './getChildren'
-import getGlobalSortPreference from './getGlobalSortPreference'
+
+// use a global instance for the unsorted preference so the object reference doesn't change
+const NO_SORT: SortPreference = { type: 'None', direction: null }
 
 /**
  * Get sort direction if given sort type is not 'None'.
@@ -16,7 +18,7 @@ const getSortDirection = (sortType: string, state: State, id: ThoughtId) => {
   return childrenSortDirection.length > 0 ? parseSortDirection(childrenSortDirection[0].value) : 'Asc'
 }
 
-/** Get the sort setting from the given context meta or, if not provided, the global sort. */
+/** Get the sort setting from the given context meta. Returns None if the context has no =sort attribute, i.e. it is sorted manually by rank. */
 const getSortPreference = (state: State, id: ThoughtId): SortPreference => {
   const sortId = findDescendant(state, id, ['=sort'])
   const childrenSort = sortId ? getAllChildrenAsThoughts(state, sortId) : []
@@ -25,7 +27,7 @@ const getSortPreference = (state: State, id: ThoughtId): SortPreference => {
         type: childrenSort[0].value,
         direction: getSortDirection(childrenSort[0].value, state, id),
       }
-    : getGlobalSortPreference(state)
+    : NO_SORT
 }
 
 export default getSortPreference

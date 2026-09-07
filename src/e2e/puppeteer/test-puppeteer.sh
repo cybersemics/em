@@ -32,6 +32,9 @@ stop_dev_server() {
         # Otherwise, the process can exit here and stop_docker_container will never be called, and the next run will fail because the port is already in use.
         kill $DEV_SERVER_PID || true
     fi
+    if [ -n "$DEV_SERVER_LOG" ]; then
+        rm -f "$DEV_SERVER_LOG"
+    fi
 }
 
 cleanup() {
@@ -54,10 +57,29 @@ if [ -z "$GITHUB_ACTIONS" ]; then
         sleep 0.1
     done
 
+    # Fail fast if the port is already occupied (e.g. an orphaned Vite server from a previous run).
+    # Without this, Vite would silently move to another port and Puppeteer (hard-coded to :2552)
+    # would test a stale app. See https://github.com/cybersemics/em/issues/4672.
+    if lsof -tiTCP:2552 -sTCP:LISTEN >/dev/null 2>&1; then
+        echo "Error: port 2552 is already in use (likely an orphaned dev server)." >&2
+        echo "Kill it with: kill \$(lsof -tiTCP:2552 -sTCP:LISTEN)" >&2
+        exit 1
+    fi
+
     echo "Starting separate dev server..."
-    PUPPETEER=1 yarn vite --host --port 2552 >/dev/null 2>&1 &
+    # Launch the Vite binary directly (not via `yarn vite`) so DEV_SERVER_PID is the actual server
+    # process and cleanup can reliably kill it. Otherwise `yarn vite` spawns Vite as a child and $!
+    # captures the yarn wrapper, leaving Vite orphaned. --strictPort makes Vite fail rather than
+    # silently move ports. Capture output so startup errors can be surfaced on failure.
+    DEV_SERVER_LOG=$(mktemp)
+    PUPPETEER=1 ./node_modules/.bin/vite --host --port 2552 --strictPort >"$DEV_SERVER_LOG" 2>&1 &
     DEV_SERVER_PID=$!
     while ! nc -z localhost 2552; do
+        if ! kill -0 "$DEV_SERVER_PID" 2>/dev/null; then
+            echo "Error: dev server failed to start." >&2
+            cat "$DEV_SERVER_LOG" >&2
+            exit 1
+        fi
         sleep 0.1
     done
     echo "Server is ready."
