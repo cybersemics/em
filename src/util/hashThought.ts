@@ -13,7 +13,6 @@ import normalizeThought from './normalizeThought'
  * - murmurhash.
  *
  * Stored keys MUST match the current hashing algorithm.
- * Use schemaVersion to manage migrations.
  */
 const hashThought: (s: string) => ThoughtHash = moize(
   (value: string) => murmurHash3.x64.hash128(normalizeThought(value)) as ThoughtHash,

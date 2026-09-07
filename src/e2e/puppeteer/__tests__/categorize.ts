@@ -4,7 +4,7 @@ import clickThought from '../helpers/clickThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
-import { page } from '../setup'
+import { page } from '../session'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -32,23 +32,23 @@ describe('categorize', () => {
     await clickThought(topParagraphText)
 
     // Perform 1st categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('1')
 
     // Perform 2nd categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('2')
 
     // Perform 3rd categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('3')
 
     // Perform 4th categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('4')
 
     // Perform 5th categorization
-    await press(']', { meta: true })
+    await press('o', { meta: true, alt: true })
     await press('5')
 
     const imageCategorized = await screenshot()

@@ -1,14 +1,25 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
+import expandThoughts from '../selectors/expandThoughts'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Clears all multicursors. */
 const clearMulticursors = (state: State): State => {
-  return {
+  const stateNew = {
     ...state,
     ...(state.alert?.alertType === AlertType.ScrollZoneHelp ? { alert: null } : null),
+    multicursorAnchor: null,
+    multicursorRange: {},
     multicursors: {},
+  }
+
+  return {
+    ...stateNew,
+    // Selected thoughts are kept collapsed by expandThoughts, so expansion must be recalculated when the
+    // selection is cleared, otherwise a deselected cursor stays collapsed.
+    // https://github.com/cybersemics/em/issues/4738
+    expanded: expandThoughts(stateNew, stateNew.cursor),
   }
 }
 

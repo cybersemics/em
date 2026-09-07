@@ -106,6 +106,12 @@ const Metaprogramming = () => {
         Applies a meta attribute to all children of a thought.
       </p>
 
+      <code>=descendants</code>
+      <p>
+        <Options options={['=pin']} />
+        Applies a meta attribute to all descendants of a thought.
+      </p>
+
       <code>=drop</code>
       <p>
         <Options options={['top', 'bottom']} />
@@ -162,9 +168,6 @@ const Metaprogramming = () => {
 
       <code>=readonly</code>
       <p>The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.</p>
-
-      {/* <code>=src</code>
-      <p>Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.</p> */}
 
       <code>=style</code>
       <p>

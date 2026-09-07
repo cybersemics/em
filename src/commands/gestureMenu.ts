@@ -1,17 +1,17 @@
 import Command from '../@types/Command'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
-import CommandPaletteIcon from '../components/icons/CommandPaletteIcon'
+import CommandUniverseIcon from '../components/icons/CommandUniverseIcon'
 
-const gestureMenuCommand: Command = {
+const gestureMenuCommand = {
   id: 'gestureMenu',
-  label: 'Gesture Menu',
+  label: 'Gesture Menu' as const,
   description: 'Opens the gesture menu where commands can be executed by gesture.',
-  hideFromCommandPalette: true,
+  hideFromDesktopCommandUniverse: true,
   hideFromGestureMenu: true,
   multicursor: false,
-  svg: CommandPaletteIcon,
+  svg: CommandUniverseIcon,
   exec: dispatch => dispatch(gestureMenu()),
   allowExecuteFromModal: true,
-}
+} satisfies Command
 
 export default gestureMenuCommand

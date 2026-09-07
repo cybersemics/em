@@ -5,12 +5,13 @@ See: https://github.com/raineorshine/npm-check-updates
 Dependency notes:
   - html-escaper     Replace 'he' with 'html-escaper' due to bundle size.
                      Other small HTML entity encoder/decoders: entities, html-entities
-  - page-lifecycle   Use https://github.com/magic-akari/page-lifecycle/tree/feat/add-types
-                     to get Typescript types.
+  - page-lifecycle   The npm package ships no TypeScript types. They are declared locally in
+                     src/@types/page-lifecycle.d.ts, so check that the declaration still matches
+                     the library's API after upgrading.
 
 */
 
-module.exports = {
+export default {
   reject: [
     // TypeError: TextDecoder is not a constructor
     // TextDecoder is not exposed by jsdom v16

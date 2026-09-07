@@ -46,6 +46,7 @@ import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 import headValue from '../util/headValue'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import isRoot from '../util/isRoot'
 import once from '../util/once'
 import parentOf from '../util/parentOf'
@@ -135,20 +136,25 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     return lastChild ? appendToPath(simplePath, lastChild.id) : null
   })
 
+  // if the sort preference is Created, then the current timestamp will be used to sort the new thought into place (#3782)
+  const created = Date.now()
+  const sortPreference = getSortPreference(state, insertId)
+  const isValueEmptyOrEmojiOnly = isEmptyOrEmojiOnly(value)
+
   // if meta key is pressed, add a child instead of a sibling of the current thought
   // if shift key is pressed, insert the child before the current thought
   const newRank = insertContext
     ? getNextRank(state, ABSOLUTE_TOKEN)
-    : value !== '' && getSortPreference(state, insertId).type === 'Alphabetical'
-      ? getSortedRank(state, insertId, value)
+    : sortPreference.type === 'Created' || (!isValueEmptyOrEmojiOnly && sortPreference.type === 'Alphabetical')
+      ? getSortedRank(state, insertId, value, { created })
       : insertBefore
         ? insertNewSubthought || !simplePath || isRoot(simplePath)
           ? getPrevRank(state, insertId, { aboveMeta })
           : getRankBefore(state, simplePath)
         : insertNewSubthought || !simplePath
-          ? // if inserting an empty thought into a sorted context via insertNewSubthought, get the rank after the last sorted child rather than incrementing the highest rank
-            // otherwise the empty thought will not be correctly sorted by resortEmptyInPlace
-            value === '' && getSortPreference(state, insertId).type === 'Alphabetical' && getLastSortedChildPath()
+          ? // if inserting an empty or emoji-only thought into a sorted context via insertNewSubthought, get the rank after the last sorted child rather than incrementing the highest rank
+            // otherwise it will not retain its point of creation
+            isValueEmptyOrEmojiOnly && sortPreference.type === 'Alphabetical' && getLastSortedChildPath()
             ? getRankAfter(state, getLastSortedChildPath()!)
             : getNextRank(state, insertId)
           : getRankAfter(state, simplePath)

@@ -14,6 +14,7 @@ import PushBatch from './PushBatch'
 import RecentlyEditedTree from './RecentlyEditedTree'
 import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
+import ThoughtId from './ThoughtId'
 import ThoughtIndices from './ThoughtIndices'
 import Timestamp from './Timestamp'
 import Tip from './TipId'
@@ -45,8 +46,9 @@ interface State {
   cursorInitialized: boolean
   /**
    * The offset of the caret within the cursor, relative to the start of the thought.
-   * Currently only 0 and n are used, where n is the length of the thought.
    * A value of null means that the caret is not forcefully set on re-render, allowing the device to set it, e.g. on click.
+   * This is a request to place the caret, not a record of where it is: useEditMode reads it non-reactively and collapses
+   * the selection onto it. To record where a selection was, see selectionOffsets.
    */
   cursorOffset: number | null
   /** SimplePath of thought with drag hold activated. */
@@ -118,6 +120,10 @@ interface State {
   /** When a context is sorted, the manual sort order is saved so that it can be recovered when they cycle back through the sort options. If new thoughts have been added, their order relative to the original thoughts will be indeterminate, but both the old thoughts and the new thoughts will be sorted relative to themselves. The outer Index is keyed by parent ThoughtId, and the inner Index stores the manual ranks of each child at the time the context is sorted. This is stored in memory only and is lost when the app refreshes. */
   manualSortMap: Index<Index<number>>
   modals: Index<{ complete?: boolean }>
+  /** The fixed endpoint of an adjustable Select Between range. */
+  multicursorAnchor: Path | null
+  /** Thoughts added by the active adjustable Select Between range, keyed by hashPath(path). */
+  multicursorRange: Index<Path>
   multicursors: Index<Path>
   /** NoteFocus is true if the caret is on the note. */
   noteFocus: boolean
@@ -125,7 +131,7 @@ interface State {
   noteOffset: number | null
   /**
    * Temporarily stores updates that need to be persisted.
-   * Passed to Yjs and cleared on every action.
+   * Passed to the data provider and cleared on every action.
    * See: /redux-enhancers/pushQueue.ts.
    */
   pushQueue: PushBatch[]
@@ -133,18 +139,27 @@ interface State {
   /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]
   remoteSearch: boolean
-  resourceCache: Index<string>
   rootContext: Context
-  schemaVersion: number
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
-  showColorPicker?: boolean
-  showLetterCase?: boolean
-  showCommandPalette: boolean
+  /**
+   * A snapshot of the browser text selection within a thought, taken at the moment a UI is about to take the focus away
+   * from the editable that owns it. The document has exactly one selection, so a UI with an input of its own (the
+   * Command Universe search box) destroys the only record of what the user had selected; commands that operate on the
+   * selected text read this back instead. See selectors/selectionOffsets.
+   *
+   * Never updated in real time. Nothing subscribes to it reactively, and it is written only when a Command Universe
+   * opens, so it does not participate in the render cycle.
+   */
+  selectionOffsets: { thoughtId: ThoughtId; start: number; end: number } | null
+  showBulletPicker: boolean
+  showColorPicker: boolean
+  showLetterCase: boolean
+  showDesktopCommandUniverse: boolean
   showGestureMenu: boolean
   showHiddenThoughts: boolean
-  showSortPicker?: boolean
+  showSortPicker: boolean
   showCommandCenter: boolean
   /**
    * The currently shown modal dialog box.
@@ -153,8 +168,8 @@ interface State {
    */
   showModal?: Modal | null
   showSidebar: boolean
-  showGestureCheatsheet?: boolean
-  showUndoSlider?: boolean
+  showMobileCommandUniverse?: boolean
+  showUndoSlider: boolean
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.
