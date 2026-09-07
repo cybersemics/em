@@ -12296,7 +12296,7 @@ __metadata:
     text-block-parser: "npm:^1.1.2"
     title-case: "npm:^4.3.2"
     truncate-html: "npm:^1.2.2"
-    ts-key-enum: "npm:^2.0.12"
+    ts-key-enum: "npm:^3.0.13"
     typescript: "npm:5.9.3"
     undici: "npm:^8.10.2"
     vi-canvas-mock: "npm:^1.0.0"
@@ -23599,10 +23599,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-key-enum@npm:^2.0.12":
-  version: 2.0.13
-  resolution: "ts-key-enum@npm:2.0.13"
-  checksum: 10c0/29f6520aa9f98d114154de9c23c8144a6ba3d6c9f426159c64e070036ab2165975060611cc033249fdded0e5f670f9e1501fd6b2ad2b2cb5408d99a68bc206d4
+"ts-key-enum@npm:^3.0.13":
+  version: 3.0.13
+  resolution: "ts-key-enum@npm:3.0.13"
+  checksum: 10c0/904006b051016186431624587bbf318f96f33a791cecd36f4170932dc52921b064dac8070e1ccaa63e3553647ff2c2b0227f26e64eb8cf253b9bb75f8313d4a6
   languageName: node
   linkType: hard
 
