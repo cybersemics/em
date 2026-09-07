@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Starts Copilot sessions for due conflicting Copilot pull requests and records successful starts.
+ * Starts Copilot tasks for due conflicting Copilot pull requests and records successful starts.
  * It re-checks the PR immediately before dispatch so a stale scanner cannot start unnecessary work.
  * The comment it records them in is rendered by scripts/ci/copilot-conflicts-comment.cjs, which the
  * scan rewrites from the same state — see that file for why neither side renders its own.
@@ -84,17 +84,17 @@ const dispatchTask = async task => {
   const comment = comments.find(candidate => candidate.body && candidate.body.includes(MARKER))
   if (!comment) throw new Error(`#${task.number} no longer has a conflict state comment`)
 
-  const session = await startTask(task)
+  const { html_url: taskUrl } = await startTask(task)
   const state = parseState(comment.body)
   const updated = {
     ...state,
     attempts: state.attempts + 1,
     lastDispatchedAt: new Date().toISOString(),
-    lastTaskUrl: session.html_url,
+    lastTaskUrl: taskUrl,
     // Recorded rather than derived, so a later scan rewriting this comment still credits the run
     // that started the attempt instead of itself.
     lastRunUrl: process.env.RUN_URL || null,
-    history: [...state.history, { startedAt: new Date().toISOString(), taskUrl: session.html_url }],
+    history: [...state.history, { startedAt: new Date().toISOString(), taskUrl }],
   }
   const update = await fetch(`${base}/issues/comments/${comment.id}`, {
     method: 'PATCH',
@@ -103,7 +103,7 @@ const dispatchTask = async task => {
   })
   if (!update.ok)
     throw new Error(`task started but could not update #${task.number}: ${update.status} ${update.statusText}`)
-  return `- [#${task.number}](${task.url}) — [Copilot task](${session.html_url}) started (attempt ${updated.attempts} of ${MAX_ATTEMPTS}).`
+  return `- [#${task.number}](${task.url}) — [Copilot task](${taskUrl}) started (attempt ${updated.attempts} of ${MAX_ATTEMPTS}).`
 }
 
 const results = await Promise.allSettled(tasks.map(dispatchTask))
