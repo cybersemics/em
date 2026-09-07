@@ -58,6 +58,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **cursor** — The active thought, stored as `state.cursor: Path | null`. Indicated by the gray bullet ring. Distinct from *caret*. Setting the cursor does not set the browser selection; see [cursor-and-caret.md](cursor-and-caret.md).
 
+**cyclic context** — In the context view, the context that is the *nominal context*'s own parent, so navigating into it returns to where the context view was opened, e.g. `a` under `a/m~`. Descending into it produces a circular `Path` (`a/m~/a/x`), which the app tolerates. Everything else listed is a *tangential context*. See [data-model.md → Context view recursion](data-model.md#context-view-recursion).
+
 ## D
 
 **DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. The active implementation is exported through [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts).
@@ -128,6 +130,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## N
 
+**nominal context** — The thought whose context view is open, i.e. the thought whose contexts are listed in place of its children. `m` in `a/m~`.
+
 **=note** — Meta-attribute that displays a smaller-text note under a thought.
 
 ## P
@@ -178,7 +182,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## T
 
-**tangential context** — A context that hasn't been pulled directly through the cursor's ancestor chain but is referenced from elsewhere — via a Lexeme's `contexts`, or by the context view. `fetchDescendants` enqueues the parent of any thought whose parent isn't loaded, so the ancestor chain resolves. See the comment "load ancestors of tangential contexts" in [`fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts).
+**tangential context** — In the context view, a context from a different part of the tree than the one the view was opened in — every context listed except the *cyclic context*, e.g. `b` under `a/m~`. Since a tangential context has not been pulled through the cursor's ancestor chain, it is also the loading case `fetchDescendants` handles: it enqueues the parent of any thought whose parent isn't loaded, so the ancestor chain resolves. See the comment "load ancestors of tangential contexts" in [`fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts).
 
 **Thought** — In-memory record under `state.thoughts.thoughtIndex`. Only part of it is persisted: TreeCRDT stores a *ThoughtPayload* per node and derives `parentId`, `rank`, and `childrenMap` from the tree on read. See [data-model.md → Thought](data-model.md#thought) and [persistence.md → Document model](persistence.md#document-model).
 
