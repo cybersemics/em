@@ -84,6 +84,11 @@ jobs:
       - name: Install npm dependencies
         uses: ./.github/actions/install
 
+      # Installs the CLI once onto PATH, so the steps below invoke a plain `vercel` rather than
+      # reinstalling it per call. See .github/actions/vercel-cli/action.yml.
+      - name: Install Vercel CLI
+        uses: ./.github/actions/vercel-cli
+
       # Create a GitHub deployment so the preview URL appears in the PR's deployment
       # box (and under repo Environments) rather than as a bot comment. Superseded
       # deployments are automatically marked inactive, so stale preview URLs on older
@@ -127,21 +132,21 @@ jobs:
       - name: Pull em-ai Vercel environment
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_AI }}
-        run: yarn dlx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
 
       - name: Build em-ai
         env:
           # Bundle the TypeScript module graph so ordinary extensionless imports work at runtime.
           VERCEL_EXPERIMENTAL_BACKENDS: '1'
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_AI }}
-        run: yarn dlx vercel build --token="$VERCEL_TOKEN"
+        run: vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy em-ai
         id: deploy-ai
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_AI }}
         run: |
-          url="$(yarn dlx vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
+          url="$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
           test -n "$url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "- em-ai preview: $url" >> "$GITHUB_STEP_SUMMARY"
@@ -157,21 +162,21 @@ jobs:
       - name: Pull em Vercel environment
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
-        run: yarn dlx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
 
       - name: Build em
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
           # Vite gives an existing process variable precedence over .env.production.
           VITE_AI_URL: ${{ steps.deploy-ai.outputs.url }}/ai
-        run: yarn dlx vercel build --token="$VERCEL_TOKEN"
+        run: vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy em
         id: deploy
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
         run: |
-          url="$(yarn dlx vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
+          url="$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
           test -n "$url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 

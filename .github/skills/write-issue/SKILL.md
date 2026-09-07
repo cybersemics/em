@@ -8,6 +8,21 @@ allowed-tools:
 
 Issues reporting broken behaviour in this repo follow a fixed format.
 
+## Ask before posting
+
+The issue is read by someone who cannot ask you anything. Every gap in it becomes a question in a comment thread, or a guess by whoever picks it up.
+
+So put your open questions to the reporter first, and post once the answers are in. Ask about anything whose answer changes what the issue says:
+
+- A step you would otherwise have to guess at — which setting, which value, which platform, what the thought tree was.
+- Whether what you are describing is one bug or two.
+- Expected Behavior, where the correct behaviour is a decision rather than an observation.
+- Evidence you believe exists and do not have — a screenshot, a video, a debug log.
+
+Ask them in one pass rather than one at a time, and only where the answer is the reporter's to give: a question you can settle by reproducing the bug or by reading the code is yours to settle.
+
+What you post is then succinct and free of loose ends — no "possibly", no "I think this is related to", no alternative left unruled-out. Where an answer genuinely cannot be had, name it as a known unknown in the preamble rather than leaving it implied.
+
 ## The template
 
 Exactly these headings, at `##`, in this order:
@@ -57,6 +72,42 @@ What happens, as an observation, with the evidence: a screenshot, a video, or a 
 What should happen instead. Write it as a condition that can be checked — a state the app is or is not in — since it is what a regression test will assert. Where the correct state is visible elsewhere in the app, a screenshot of that is useful alongside the screenshot of the bug.
 
 State the goal, not the shape of the fix. What the fix looks like is the assignee's call, and writing it out for them in advance is work they will redo.
+
+#### In this case / In general
+
+Where the correct behaviour is a rule and the steps are one instance of it, split Expected Behavior into two `###` subheadings:
+
+```markdown
+## Expected Behavior
+
+### In this case
+
+...
+
+### In general
+
+...
+```
+
+**In this case** is the end state of the exact steps above, in their own terms — the same thoughts, settings, and values, named as the steps named them. It is what the reader checks after following the steps, and what the regression test asserts.
+
+**In general** is the rule the case is an instance of, stated for any input that reaches it: what it applies to, what is left unchanged, where it stops. It is what the assignee implements, and what stops the fix from being special-cased to the reproduction.
+
+For a Gesture Diagram misaligned after the app font size is increased to 32:
+
+```markdown
+### In this case
+
+At app font size 32, the arrow in the Question Mark gesture diagram is centered in its box, as it is at the default font size.
+
+### In general
+
+Gesture diagram arrows stay centered at every app font size, wherever a diagram is rendered.
+```
+
+The first is checkable by following the steps; the second is what keeps the fix from being a special case at 32.
+
+Skip the split where it does not earn its place — where the case *is* the rule and the second heading would restate the first in the abstract, or where the correct behaviour is a single fixed state (a value, a label, a position) with no input to generalise over. One paragraph under the plain heading is right for those.
 
 ## Optional sections
 
@@ -140,12 +191,14 @@ New issues often originate in a comment thread on another issue or PR.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
+- An Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
+- A loose end left for the reader — an unruled-out alternative, a missing value, an unnamed platform — that the reporter could have answered before posting.
 
 ## When something is unknown
 
-State the uncertainty in the preamble rather than omitting the issue.
+Ask, as above. State whatever survives the answers in the preamble rather than omitting the issue.
 
 Do not guess Expected Behavior. Apply `design-needed` and leave the decision to a maintainer, since a guess there becomes a regression test asserting behaviour nobody chose.

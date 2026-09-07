@@ -215,6 +215,21 @@ export default [
       },
     },
   },
+  // The iOS WebdriverIO tests are typechecked by their own tsconfig, the only program that declares
+  // WebdriverIO's globals (browser, $, expect) and @wdio/browserstack-service's global interfaces. The root
+  // tsconfig excludes src/e2e/iOS, so type-aware linting of those files has to use theirs.
+  {
+    files: ['./src/e2e/iOS/**/*.ts'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        ecmaVersion: 2018,
+        sourceType: 'module',
+        project: './src/e2e/iOS/tsconfig.json',
+      },
+    },
+  },
   {
     files: ['./src/e2e/**/*.ts'],
     rules: {

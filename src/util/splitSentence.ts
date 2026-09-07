@@ -208,10 +208,120 @@ function splitFormattedHtmlBySubSentence(htmlValue: string, plainValue: string):
   }, [])
 }
 
+/** Matches a copula, that is a finite form of "to be", surrounded by whitespace. The form "am" is excluded since it is usually a time, e.g. "10 am", and the non-finite forms "be", "been", and "being" do not separate a subject from a predicate, e.g. "It will be a good day". */
+const copulaRegex = /\s+(?:is|are|was|were)\s+/i
+
+/** Matches a sentence with a copula, capturing the subject before it and the predicate after it. */
+const copulaSplitRegex = new RegExp(`^(.+?)${copulaRegex.source}(.+)$`, 'i')
+
+/** Matches a subject that is a bare pronoun, which would make a meaningless thought on its own, e.g. "This is a single sentence" or "There is a problem". */
+const pronounRegex = /^(?:i|you|he|she|it|we|they|this|that|these|those|there|here|who|what|which|where|when|why|how)$/i
+
+/**
+ * Formats the predicate of a copula split as a thought of its own: drops a leading article and, when the subject is capitalized, capitalizes the first letter, e.g. "the most valuable resource" -> "Most valuable resource".
+ *
+ * @param htmlValue The trimmed predicate HTML.
+ * @param subject The plain text subject.
+ */
+function formatPredicate(htmlValue: string, subject: string): string {
+  const plainValue = getTextContentFromHTML(htmlValue)
+  // an article is only dropped when something follows it
+  const article = plainValue.match(/^(?:a|an|the)\s+(?=\S)/i)
+  const withoutArticle = article
+    ? trimHtml(sliceHtmlByTextOffsets(htmlValue, article[0].length, plainValue.length))
+    : htmlValue
+  // trimHtml leaves leading tags in place, so the first letter follows them, e.g. "<b>m</b>ost"
+  return /^\s*\p{Lu}/u.test(subject)
+    ? withoutArticle.replace(/^((?:<[^>]*>)*)(\S)/, (match, tags, char) => tags + char.toUpperCase())
+    : withoutArticle
+}
+
+/**
+ * Splits a value into a main thought and a child at the first delimiter matched by the given regex, e.g. "one - 1" -> "- one   - 1". The right side of the delimiter is split by comma so that each item becomes its own child, e.g. "Shopping list - apples, bananas" -> "- Shopping list   - apples   - bananas". Returns null when the delimiter does not match or either side is empty.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param plainValue The plain text thought value.
+ * @param delimiterRegex Matches the delimiter, capturing the text before it and the text after it.
+ */
+function splitIntoChild(htmlValue: string, plainValue: string, delimiterRegex: RegExp): SplitResult[] | null {
+  const match = plainValue.match(delimiterRegex)
+  if (!match) return null
+
+  const [, leftPart, rightPart] = match
+  // Only split if both parts have content
+  if (!leftPart.trim() || !rightPart.trim()) return null
+
+  const rightPartStart = plainValue.lastIndexOf(rightPart)
+  const leftHtml = sliceHtmlByTextOffsets(htmlValue, 0, leftPart.length)
+  const rightHtml = sliceHtmlByTextOffsets(htmlValue, rightPartStart, plainValue.length)
+  const rightValues = rightPart.includes(',')
+    ? splitFormattedHtmlBySubSentence(rightHtml, rightPart)
+    : [trimHtml(rightHtml)]
+
+  return [
+    { value: trimHtml(leftHtml) },
+    // only the first item becomes a child of the left side; the rest are its siblings
+    ...rightValues.map((value, i) => ({ value, ...(i === 0 ? { insertNewSubThought: true } : null) })),
+  ]
+}
+
+/**
+ * Splits a value that ends with a hyphenated "and" compound into the words before the compound as the main thought and the compound's words as its children, e.g. "Implies set-and-forget" -> "- Implies   - set   - forget". A compound with no words before it splits into siblings, e.g. "set-and-forget" -> "- set   - forget". Returns null when the value does not end with such a compound.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param plainValue The plain text thought value.
+ */
+function splitHyphenatedAndCompound(htmlValue: string, plainValue: string): SplitResult[] | null {
+  const match = plainValue.match(/^(.*?)\s*(\S+(?:-and-\S+)+)\s*$/i)
+  if (!match) return null
+
+  const [, leadIn, compound] = match
+  // the compound is the last word of the value, so it starts where it last occurs
+  const compoundStart = plainValue.lastIndexOf(compound)
+  const words = compound.split(/-and-/i)
+  const wordValues = words.map((word, i) => {
+    // each word starts after the words before it and the "-and-" that joins each of them to the next
+    const start =
+      compoundStart +
+      words.slice(0, i).reduce((length, previousWord) => length + previousWord.length + '-and-'.length, 0)
+    return trimHtml(sliceHtmlByTextOffsets(htmlValue, start, start + word.length))
+  })
+
+  return leadIn.trim()
+    ? [
+        { value: trimHtml(sliceHtmlByTextOffsets(htmlValue, 0, leadIn.length)) },
+        // only the first word becomes a child of the main thought; the rest are its siblings
+        ...wordValues.map((value, i) => ({ value, ...(i === 0 ? { insertNewSubThought: true } : null) })),
+      ]
+    : wordValues.map(value => ({ value }))
+}
+
+/**
+ * Splits a value at a caret offset into the text before the caret as the main thought and the text after it as a child, e.g. "Hello wo|rld" -> "- Hello wo   - rld". Returns null when the caret is not strictly inside the text or either side is blank, e.g. a caret at the end of the value or just before a trailing space.
+ *
+ * @param htmlValue The original HTML thought value.
+ * @param caretOffset The plain text offset of the caret.
+ */
+function splitAtCaret(htmlValue: string, caretOffset: number): SplitResult[] | null {
+  const plainValue = getTextContentFromHTML(htmlValue)
+  if (caretOffset <= 0 || caretOffset >= plainValue.length) return null
+
+  // An unformatted value is sliced directly, avoiding the DOM. A formatted one is split as HTML so that its tags are re-balanced onto each half.
+  const halves =
+    plainValue === htmlValue
+      ? { left: htmlValue.slice(0, caretOffset), right: htmlValue.slice(caretOffset) }
+      : splitHtmlAtTextOffset(htmlValue, caretOffset)
+  const left = trimHtml(halves.left)
+  const right = trimHtml(halves.right)
+  if (!getTextContentFromHTML(left).trim() || !getTextContentFromHTML(right).trim()) return null
+
+  return [{ value: left }, { value: right, insertNewSubThought: true }]
+}
+
 /**
  * Splits given value by special characters.
  */
-const splitSentence = (value: string): SplitResult[] => {
+const splitSentenceByDelimiters = (value: string): SplitResult[] => {
   const plainValue = getTextContentFromHTML(value)
 
   // Check for parenthetical content at the end of the thought first
@@ -242,39 +352,33 @@ const splitSentence = (value: string): SplitResult[] => {
    */
   const hasOnlyPeriodAtEnd = once(() => /^[^.;!?]*\.$[^.;!?]*/.test(plainValue.trim()))
 
-  // if we're sub-sentence or in one sentence territory, check for child splitting first
-  // e.g. "one - 1" -> "- one   - 1" (as child)
-  // e.g. "Start: 1" -> "- Start   - 1" (as child)
+  // if we're sub-sentence or in one sentence territory, try the delimiters in order of precedence:
+  // 1. a dash surrounded by whitespace or a colon splits into a child, e.g. "one - 1" -> "- one   - 1", "Start: 1" -> "- Start   - 1"
+  // 2. a copula splits into a subject and its predicate as a child, e.g. "Attention is the most valuable resource" -> "- Attention   - Most valuable resource"
+  // 3. a slash splits into a chain of descendants, e.g. "one/two/three" -> "- one   - two   - three"
+  // 4. a comma or one of the symbols ↑↓←→+ splits into siblings, e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
+  // 5. a hyphenated "and" compound at the end of the value splits into a child per word, e.g. "Implies set-and-forget" -> "- Implies   - set   - forget"
+  // 6. the word "and" splits into siblings, e.g. "Alice and the Lion" -> "- Alice - the Lion"
+  // 7. a dash without surrounding whitespace splits into a child, e.g. "one-1" -> "- one   - 1"
+  // A dash without surrounding whitespace is usually part of a compound word, e.g. "Jean-Michel", so it has the lowest precedence of all: it only splits when the value contains no other delimiter (#3525).
+  // e.g. "Jeff Koons, Jean-Michel Basquiat" splits at the comma and "a → b-c" splits at the arrow.
   if (!sentenceSplitters || hasOnlyPeriodAtEnd()) {
-    // Check for a dash (-, –, or —) or a colon and split into child if found
-    // This handles Case 1: Split into child when there's only one sentence
-    // Match the first delimiter that has content on both sides. A colon must be followed by whitespace so that it does not split a time, e.g. "10:30".
-    // A dash surrounded by whitespace is a delimiter and takes priority over commas, e.g. "Shopping list - apples, bananas".
-    // A dash without surrounding whitespace may be part of a hyphenated word, so commas take priority, e.g. "Jeff Koons, Jean-Michel Basquiat" (#3525).
-    const isCommaList = plainValue.split(',').filter(s => s.trim()).length > 1
-    const childMatch = plainValue.match(
-      isCommaList ? /^(.+?)(?:\s+[-–—]\s+|\s*:\s+)(.+)$/ : /^(.+?)\s*(?:[-–—]\s*|:\s+)(.+)$/,
-    )
-    if (childMatch) {
-      const [_, leftPart, rightPart] = childMatch
-      const trimmedLeft = leftPart.trim()
-      const trimmedRight = rightPart.trim()
-      // Only split if both parts have content
-      if (trimmedLeft && trimmedRight) {
-        const rightPartStart = plainValue.lastIndexOf(rightPart)
-        const leftHtml = sliceHtmlByTextOffsets(value, 0, leftPart.length)
-        const rightHtml = sliceHtmlByTextOffsets(value, rightPartStart, plainValue.length)
-        // the right side of the dash is split by comma so that each item becomes its own child
-        // e.g. "Shopping list - apples, bananas" -> "- Shopping list   - apples   - bananas"
-        const rightValues = rightPart.includes(',')
-          ? splitFormattedHtmlBySubSentence(rightHtml, rightPart)
-          : [trimHtml(rightHtml)]
-        return [
-          { value: trimHtml(leftHtml) },
-          // only the first item becomes a child of the left side; the rest are its siblings
-          ...rightValues.map((value, i) => ({ value, ...(i === 0 ? { insertNewSubThought: true } : null) })),
-        ]
-      }
+    // A colon must be followed by whitespace so that it does not split a time, e.g. "10:30".
+    const childValues = splitIntoChild(value, plainValue, /^(.+?)(?:\s+[-–—]\s+|\s*:\s+)(.+)$/)
+    if (childValues) return childValues
+
+    // Only a sentence with exactly one copula is split: "The sky is blue and the grass is green" is two clauses rather than a subject and a predicate, so it is left to the sibling delimiters below.
+    // A subject that is a bare pronoun is not split off either, e.g. "There is a problem".
+    const clauses = plainValue.split(copulaRegex)
+    const copulaValues =
+      clauses.length === 2 && !pronounRegex.test(clauses[0].trim())
+        ? splitIntoChild(value, plainValue, copulaSplitRegex)
+        : null
+    if (copulaValues) {
+      // the predicate of a copula becomes a thought of its own, so it is formatted as one
+      return copulaValues.map((result, i) =>
+        i === 0 ? result : { ...result, value: formatPredicate(result.value, clauses[0]) },
+      )
     }
 
     // Check for slash and split into a chain of descendants, each part a child of the previous
@@ -296,7 +400,13 @@ const splitSentence = (value: string): SplitResult[] => {
       }
     }
 
-    // if we're sub-sentence or in one sentence territory, split by comma, or by the word "and" if there is no comma
+    // A hyphenated "and" compound at the end of the value, e.g. "set-and-forget", is a list of single words rather than a sentence joined by "and", so it is split before the word "and" is. A comma or a symbol still takes priority, e.g. "set-and-forget, fire-and-forget" splits at the comma (#5215).
+    const compoundValues = punctuationSubSentenceDelimiter(plainValue)
+      ? null
+      : splitHyphenatedAndCompound(value, plainValue)
+    if (compoundValues) return compoundValues
+
+    // split by comma, or by the symbols ↑↓←→+ if there is no comma, or by the word "and" if there is neither
     // e.g. "john, johnson, john doe" -> "- john - johnson - john doe"
     // e.g. "Alice and the Lion" -> "- Alice - the Lion"
     const splitValues = plainValue
@@ -304,7 +414,11 @@ const splitSentence = (value: string): SplitResult[] => {
       .map(s => s.trim())
       .filter(s => s !== '')
     const values = plainValue !== value ? splitFormattedHtmlBySubSentence(value, plainValue) : splitValues
-    return values.map(value => ({ value }))
+    if (values.length > 1) return values.map(value => ({ value }))
+
+    // nothing else splits the value, so a dash without surrounding whitespace is the delimiter of last resort
+    // e.g. "one-1" -> "- one   - 1"
+    return splitIntoChild(value, plainValue, /^(.+?)[-–—](.+)$/) ?? values.map(value => ({ value }))
   }
 
   /**
@@ -380,6 +494,18 @@ const splitSentence = (value: string): SplitResult[] => {
     splitValues.length > 1 && plainValue !== value ? splitFormattedHtmlByPlainValues(value, splitValues) : splitValues
 
   return values.map(value => ({ value }))
+}
+
+/**
+ * Splits given value by special characters. A value that none of the delimiters split is split at the caret instead, when one is given, into the text before the caret as the main thought and the text after it as a child.
+ *
+ * @param value The HTML thought value.
+ * @param caretOffset The plain text offset of a collapsed selection within the value, if any.
+ */
+const splitSentence = (value: string, caretOffset?: number | null): SplitResult[] => {
+  const results = splitSentenceByDelimiters(value)
+  if (results.length > 1 || caretOffset == null) return results
+  return splitAtCaret(value, caretOffset) ?? results
 }
 
 export default splitSentence

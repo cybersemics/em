@@ -1,5 +1,4 @@
 import path from 'path'
-import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
@@ -133,15 +132,18 @@ describe('drag', () => {
     // release on the same drop target
     await dragAndDropThought('aaa', 'aaa', { position: 'after', skipMouseDown: true })
 
-    // moveThought throws "afterId must be null or a child of the destination context" if the no-op drop is not cancelled
-    expect(await page.evaluate(() => (window.em as WindowEm).testHelpers.getState().error)).toBeNull()
-
     const exported = await exportThoughts()
     expect(exported).toBe(`
 - aaa
 - bbb
 - ccc
 `)
+
+    // moveThought throws "afterId must be null or a child of the destination context" if the no-op drop is not
+    // cancelled. The error escapes to the window and is shown in the error banner, and the outline above is unchanged
+    // either way, so also check that no banner is showing now that the drop has been processed.
+    const errorBanner = await page.evaluate(() => document.querySelector('[role="alert"]')?.textContent ?? null)
+    expect(errorBanner).toBeNull()
   })
 
   it('DropChild', async () => {
