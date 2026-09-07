@@ -40,12 +40,19 @@ const getMergeability = async ({ github, owner, repo, prNumber }) => {
 }
 
 /**
- * Returns whether a pull request is an in-repository Copilot PR targeting main that has not opted
- * out. The skip label excludes the pull request from the scan entirely, so no comment is written or
- * updated and its retry state stays frozen until the label is removed.
+ * Returns whether a pull request is a ready, in-repository Copilot PR targeting main that has not
+ * opted out. A draft and the skip label each exclude the pull request from the scan entirely, so no
+ * comment is written or updated and its retry state stays frozen until it is ready, or until the
+ * label is removed.
+ *
+ * Copilot opens every pull request as a draft and `pr-ready.yml` takes it out of one once its
+ * session has finished and its checks are green, so a draft here is a pull request the agent may
+ * still be pushing to. Resolving conflicts underneath a running session would race it, and the
+ * conflict is the session's to hit anyway once it merges the base branch.
  */
 const isEligible = ({ pr, repository }) =>
   pr.state === 'open' &&
+  !pr.draft &&
   !(pr.labels || []).some(label => label.name === SKIP_LABEL) &&
   pr.base.ref === BASE_BRANCH &&
   pr.user.login === COPILOT &&

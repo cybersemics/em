@@ -16,9 +16,11 @@ const makePr = ({
   type = 'Bot',
   sameRepository = true,
   labels = [],
+  draft = false,
 }) => ({
   number,
   state: 'open',
+  draft,
   labels: labels.map(name => ({ name })),
   base: { ref: 'main', sha: 'base' },
   head: {
@@ -151,6 +153,15 @@ const testSkipLabel = async () => {
   assert.equal(skipped.comments[0].body, before)
 }
 
+/** Verifies a draft excludes a due PR entirely, leaving its comment untouched. */
+const testDraft = async () => {
+  const drafted = makePr({ number: 21, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), draft: true })
+  const before = drafted.comments[0].body
+  const report = await run([drafted])
+  assert.deepEqual(report.tasks, [])
+  assert.equal(drafted.comments[0].body, before)
+}
+
 /** Verifies a comment is posted only once a conflict exists, and is kept updated afterwards. */
 const testCommentOnConflictOnly = async () => {
   const clean = makePr({ number: 12, updatedAt: '2026-09-06T10:00:00Z', mergeable: true })
@@ -226,6 +237,7 @@ await testRetryPolicy()
 await testExclusions()
 await testCommentOnConflictOnly()
 await testSkipLabel()
+await testDraft()
 await testAttemptFooter()
 await testCapNotice()
 await testScheduleBeforeFirstAttempt()

@@ -148,6 +148,13 @@ const collectDependabotFailures = async ({ github, context, core }) => {
     core.info(`#${pr.number} is authored by ${pr.user.login}, not ${DEPENDABOT}; skipping.`)
     return
   }
+  // Dependabot does not open drafts, so one was converted by hand — which is how a human parks a
+  // bump. A manual dispatch does not override this: a draft says the pull request is off limits,
+  // not that its next attempt is not due yet.
+  if (pr.draft) {
+    core.info(`#${pr.number} is a draft; leaving it to whoever put it in one.`)
+    return
+  }
 
   const headSha = pr.head.sha
 
