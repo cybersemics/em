@@ -1,15 +1,15 @@
 ---
 name: test-diagnosis
-description: Use this skill when CI checks have failed. It analyzes the failure logs, identifies the specific failing test or build step, categorizes the failure type, and provides guidance on how to fix it. Use in combination with the CI Monitor skill.
+description: Use this skill when a test run has failed — a CI check, or a suite run locally. It analyzes the failure output, identifies the specific failing test or build step, categorizes the failure type, and provides guidance on how to fix it. In CI, use in combination with the CI Monitor skill.
 allowed-tools:
   - bash
 ---
 
 ## Diagnosing Failures
 
-When a CI run fails:
+When a run fails:
 
-1. Pull the logs for the failed step.
+1. Get the failure output. In CI, pull the logs for the failed step — `ci-monitor` reports which one. Running locally, read the runner output directly.
 2. Identify the specific failure: which test, what assertion, what error message.
 3. Categorize the failure as one of:
    - **Build error** — compilation or bundling failed.

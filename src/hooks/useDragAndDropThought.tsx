@@ -19,26 +19,28 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { isTouch } from '../browser'
+import MoveThoughtAlert from '../components/MoveThoughtAlert'
 import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
 import getRankAfter from '../selectors/getRankAfter'
 import getRankBefore from '../selectors/getRankBefore'
-import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
+import prevSibling from '../selectors/prevSibling'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import appendToPath from '../util/appendToPath'
-import ellipsize from '../util/ellipsize'
+import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import head from '../util/head'
@@ -49,6 +51,7 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import throttleByMousePosition from '../util/throttleByMousePosition'
+import usePinDropHover from './usePinDropHover'
 
 export type DropValidationResult = {
   isValid: boolean
@@ -210,6 +213,16 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
   )
     return
 
+  // Attribute the upcoming moveThought/createThought actions to a drag-and-drop drop, since drops have no `command`
+  // entry in the debug log (commands.ts only logs keyboard/gesture/toolbar commands).
+  debugLog.log('drop', {
+    zone: 'thought',
+    targetId: head(props.simplePath),
+    targetValue: pathToThought(state, props.simplePath)?.value,
+    items: draggedItems.length,
+    showContexts: !!props.showContexts,
+  })
+
   store.dispatch((dispatch, getState) => {
     // set multicursor executing to true if there are multiple thoughts being dragged
     if (draggedItems.length > 1) {
@@ -242,6 +255,11 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
             oldPath: thoughtFrom,
             newPath,
             newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
+            // props.simplePath is a SimplePath, so its previous sibling must always be resolved in normal view.
+            // See the note in DropHover on why the context view would otherwise be inferred for a cyclic context.
+            afterId: prevPath
+              ? head(prevPath)
+              : (prevSibling(state, props.simplePath, { showContexts: false })?.id ?? null),
           }),
         )
       }
@@ -265,17 +283,14 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
       // wait until after MultiGesture has cleared the error so this alert does not get cleared
       setTimeout(() => {
         const state = getState()
-        const parentThought = getThoughtById(state, head(parentOf(props.simplePath)))
-        if (!parentThought) return
-
         const firstFromThought = pathToThought(state, draggedItems[0].simplePath)
         if (!firstFromThought) return
 
-        const numThoughts = draggedItems.length
-        const alertFrom = numThoughts === 1 ? `"${ellipsize(firstFromThought.value)}"` : `${numThoughts} thoughts`
-        const alertTo = isRoot([parentThought.id]) ? 'home' : `"${ellipsize(parentThought.value)}"`
-
-        dispatch(alert(`${alertFrom} moved to ${alertTo} context.`))
+        dispatch(
+          alert(() => (
+            <MoveThoughtAlert from={firstFromThought.value} numThoughts={draggedItems.length} toPath={parent} />
+          )),
+        )
       }, 100)
     }
   })
@@ -287,6 +302,11 @@ const endDrag = () => {
   // long-press start that blocks all scrolling; it is only removed on touchend, which does not fire after a drag (e.g. a
   // multiselect drop onto a subthought), leaving scrolling frozen until it is explicitly re-enabled here.
   allowTouchToScroll(true)
+
+  // A browser may dispatch the release's compatibility click or focus after drag cleanup. Keep only cursor events
+  // suppressed until the next real touchstart; do not hold longPress open and block unrelated gesture state.
+  if (isTouch) globals.suppressCursorAfterTouch = true
+
   store.dispatch([
     longPress({ value: LongPressState.Inactive }),
     (dispatch, getState) => {
@@ -369,12 +389,14 @@ const useDragAndDropThought = (props: Partial<ThoughtContainerProps> & { hoverZo
     return state.draggingThoughts.some(draggedPath => equalPath(draggedPath, propsTypes.simplePath))
   })
 
+  const isHoveringPinned = usePinDropHover(isHovering)
+
   return {
     isDragging: isDraggingBullet || isDraggingEditable || isDraggingMultiple, // Combine both drag states: either this is the primary drag source OR it's part of multiselect drag
     dragSourceBullet,
     dragSourceEditable,
     dragPreview,
-    isHovering,
+    isHovering: isHoveringPinned,
     isDeepHovering,
     canDropThought,
     dropTarget,

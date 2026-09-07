@@ -52,7 +52,8 @@
     <title>em</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- data-app="em" identifies this document as em's own HTML to the iOS origin health check. See: src/e2e/iOS/config/wdio.base.conf.ts -->
+    <div id="root" data-app="em"></div>
 
     <script>
       // Prevent the React DevTools advertisement in Puppeteer tests and development mode.

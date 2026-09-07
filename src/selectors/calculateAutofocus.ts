@@ -7,6 +7,7 @@ import isDescendantPath from '../util/isDescendantPath'
 import isRoot from '../util/isRoot'
 import { hasChildren } from './getChildren'
 import rootedParentOf from './rootedParentOf'
+import zoomPath from './zoomPath'
 
 /** Calculates whether a thought is shown, hidden, or dimmed based on the position of the cursor. */
 const calculateAutofocus = (state: State, path: Path) => {
@@ -26,6 +27,13 @@ const calculateAutofocus = (state: State, path: Path) => {
   */
 
   if (!state.cursor || isRoot(path)) return 'show'
+
+  // =focus/Zoom gives the zoomed thought the full screen by hiding everything outside its subtree, i.e. its parent, its siblings, and their descendants.
+  const zoom = zoomPath(state)
+  if (zoom && !isDescendantPath(path, zoom)) {
+    // Ancestors of the cursor use 'hide-parent' so that they fade rather than snap in when navigating back up. See: VirtualThought.
+    return isDescendantPath(state.cursor, path) ? 'hide-parent' : 'hide'
+  }
 
   const cursorParent = rootedParentOf(state, state.cursor!)
   const cursorGrandparent = rootedParentOf(state, cursorParent)

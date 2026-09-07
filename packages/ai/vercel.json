@@ -1,9 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "express",
   "git": {
     "deploymentEnabled": {
       "**": false,
-      "main": true
+      "main": false
     }
   }
 }

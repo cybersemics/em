@@ -1,18 +1,20 @@
-import React, { FC, PropsWithChildren, useEffect, useRef } from 'react'
+import React, { FC, PropsWithChildren, useEffect, useId, useRef, useState } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import pkg from '../../package.json'
 import { css, cx } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
+import { token } from '../../styled-system/tokens'
 import Modal from '../@types/Modal'
 import { alertActionCreator as alert } from '../actions/alert'
 import fontSizeDown from '../actions/fontSizeDown'
 import fontSizeUp from '../actions/fontSizeUp'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
-import { tsid } from '../data-providers/yjs'
+import { tsid } from '../data-providers/thoughtspaceSession'
 import scrollTo from '../device/scrollTo'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
+import backgroundGlowStore from '../stores/backgroundGlowStore'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
@@ -116,6 +118,125 @@ const liClass = css({
   },
 })
 
+/** Background glow images available in the debug picker, served from public/img/glow as glow-<name>.avif. */
+const glowImages = ['3a', '3b', '3c', '11']
+
+const glowSwatchClass = css({
+  display: 'inline-block',
+  textDecoration: 'none',
+  width: '3em',
+  height: '3em',
+  borderRadius: '4px',
+  border: 'solid 2px {colors.gray50}',
+  backgroundColor: 'bg',
+  backgroundSize: 'cover',
+  backgroundPosition: 'bottom center',
+  cursor: 'pointer',
+  lineHeight: '2.8em',
+  textAlign: 'center',
+  userSelect: 'none',
+})
+
+/** A sparkle button that opens a popup for choosing a background glow image (or none) and its opacity. A debug interface persisted to local storage. */
+const BackgroundGlowPicker = () => {
+  const [showPicker, setShowPicker] = useState(false)
+  const { image, opacity } = backgroundGlowStore.useState()
+  const opacityId = useId()
+
+  return (
+    <div className={css({ display: 'inline-block', position: 'relative' })}>
+      <a
+        data-testid='background-glow'
+        title='Background Glow'
+        {...fastClick(() => setShowPicker(show => !show))}
+        className={css({
+          display: 'inline-block',
+          paddingTop: '10px',
+          paddingBottom: '10px',
+          paddingLeft: '12px',
+          paddingRight: '12px',
+          userSelect: 'none',
+        })}
+      >
+        <svg
+          width='1.3em'
+          height='1.3em'
+          viewBox='0 0 24 24'
+          fill='currentColor'
+          className={css({ verticalAlign: '-0.3em' })}
+        >
+          <path d='M11 2c.44 5.24 3.36 8.16 8.6 8.6-5.24.44-8.16 3.36-8.6 8.6-.44-5.24-3.36-8.16-8.6-8.6C7.64 10.16 10.56 7.24 11 2Z' />
+          <path d='M18.5 15c.24 2.86 1.84 4.46 4.7 4.7-2.86.24-4.46 1.84-4.7 4.7-.24-2.86-1.84-4.46-4.7-4.7 2.86-.24 4.46-1.84 4.7-4.7Z' />
+        </svg>
+      </a>
+      {showPicker && (
+        <div
+          className={css({
+            position: 'absolute',
+            bottom: '2.8em',
+            left: '-10px',
+            zIndex: 'stack',
+            backgroundColor: 'pickerBg',
+            borderRadius: '8px',
+            padding: '0.75em',
+            width: 'max-content',
+            textAlign: 'left',
+          })}
+        >
+          <div className={css({ display: 'flex', gap: '0.5em' })}>
+            <a
+              title='None'
+              {...fastClick(() => backgroundGlowStore.update({ image: null }))}
+              className={glowSwatchClass}
+              style={{ borderColor: image === null ? token('colors.fg') : undefined }}
+            >
+              ✕
+            </a>
+            {glowImages.map(name => {
+              const glowImage = `glow-${name}.avif`
+              return (
+                <a
+                  key={name}
+                  title={glowImage}
+                  {...fastClick(() => backgroundGlowStore.update({ image: glowImage }))}
+                  className={glowSwatchClass}
+                  style={{
+                    backgroundImage: `url(/img/glow/${glowImage})`,
+                    borderColor: image === glowImage ? token('colors.fg') : undefined,
+                  }}
+                >
+                  {/* The images are dark in both themes, so the watermark uses a theme-invariant light color, further dimmed by opacity. */}
+                  <span className={css({ color: 'gestureMenuLabel', opacity: 0.6, fontSize: '0.85em' })}>{name}</span>
+                </a>
+              )
+            })}
+          </div>
+          <div className={css({ display: 'flex', alignItems: 'center', gap: '0.5em', marginTop: '0.75em' })}>
+            <label htmlFor={opacityId} className={css({ color: 'dim' })}>
+              Opacity
+            </label>
+            <input
+              id={opacityId}
+              type='range'
+              min={0}
+              max={1}
+              step={0.01}
+              value={opacity}
+              onChange={e => backgroundGlowStore.update({ opacity: +e.target.value })}
+              // prevent the browser from scrolling the page while dragging the slider handle
+              className={css({ flexGrow: 1, touchAction: 'none' })}
+            />
+            {/* The exact value, so the opacity that looks best on a device can be read off and hard-coded as the default. Two decimals and tabular digits keep the label a fixed width, so the slider does not shift under the finger while it is dragged. */}
+            <output htmlFor={opacityId} className={css({ fontVariantNumeric: 'tabular-nums' })}>
+              {opacity.toFixed(2)}
+            </output>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** A footer component with some useful links. */
 const Footer = () => {
   const dispatch = useDispatch()
@@ -193,6 +314,7 @@ const Footer = () => {
           >
             A
           </a>
+          <BackgroundGlowPicker />
         </div>
 
         <div className={css({ lineHeight: 2, margin: '-0.5em 0' })}>
@@ -216,6 +338,10 @@ const Footer = () => {
       <li className={liClass}>
         <span className={css({ color: 'dim' })}>App Version: </span>
         {pkg.version}
+      </li>
+      <li className={liClass}>
+        <span className={css({ color: 'dim' })}>Commit: </span>
+        <span className={css({ fontStyle: 'monospace' })}>{__COMMIT_HASH__}</span>
       </li>
     </ul>
   )

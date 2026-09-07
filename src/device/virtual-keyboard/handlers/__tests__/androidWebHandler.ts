@@ -48,3 +48,18 @@ it('exits edit mode when the virtual keyboard hides (e.g. Android Down Arrow)', 
   // edit mode should be exited now that the keyboard is closed
   expect(store.getState().isKeyboardOpen).toBe(false)
 })
+
+// https://github.com/cybersemics/em/issues/4686
+it('focuses the editable so that Chromium raises the virtual keyboard', () => {
+  const editable = document.createElement('div')
+  editable.setAttribute('contenteditable', 'true')
+  document.body.appendChild(editable)
+
+  expect(document.activeElement).not.toBe(editable)
+
+  androidWebHandler.show!(editable)
+
+  // Chromium only raises the keyboard for a script-initiated focus, not for the implicit focus that setting
+  // the browser selection performs
+  expect(document.activeElement).toBe(editable)
+})

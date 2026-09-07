@@ -28,7 +28,13 @@ const resetApp = async (): Promise<void> => {
         return !!document.querySelector('[aria-label="empty-thoughtspace"]')
       }, RESET_SENTINEL),
     {
-      timeout: 90000,
+      // Must stay strictly below mochaOpts.timeout (90s, src/e2e/iOS/config/wdio.base.conf.ts) — do not
+      // "tidy" the two back into agreement. beforeTest runs inside the test's runnable budget, so mocha's
+      // timer is already running when this starts; at equal values mocha always fires first and reports a
+      // generic "Timeout of 90000ms exceeded" while timeoutMsg below — the message that names the real
+      // cause — arrives after the test is already marked failed. The gap also leaves room for the
+      // waitForConsoleProxy() the hook awaits next (30s), so the whole hook fits inside mocha's budget.
+      timeout: 45000,
       interval: 500,
       timeoutMsg: 'tutorial was not dismissed / empty thoughtspace did not appear after reset',
     },

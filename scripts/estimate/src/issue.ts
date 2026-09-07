@@ -1,6 +1,6 @@
 /**
  * Estimates a newly opened GitHub issue and writes the result to Everhour.
- * Triggered by: .github/workflows/estimate-issue-opened.yml
+ * Triggered by the .github/workflows/estimate-issue-opened.yml workflow.
  */
 import 'dotenv/config'
 import * as fs from 'fs'
@@ -18,7 +18,7 @@ interface IssuePayload {
   number: number
   title: string
   body: string | null
-  labels: Array<{ name: string }>
+  labels: { name: string }[]
 }
 
 /** Main entry point for the issue-opened estimation workflow. */
@@ -26,8 +26,8 @@ const main = async () => {
   const githubToken = process.env.GITHUB_TOKEN
   if (!githubToken) throw new Error('GITHUB_TOKEN is required')
 
-  const openaiApiKey = process.env.OPENAI_API_KEY
-  if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
+  const openaiApiKey = process.env.OPENAI_API_KEY_ESTIMATE || process.env.OPENAI_API_KEY
+  if (!openaiApiKey) throw new Error('OPENAI_API_KEY_ESTIMATE or OPENAI_API_KEY is required')
 
   const everhourApiKey = process.env.EVERHOUR_API_KEY
   if (!everhourApiKey) throw new Error('EVERHOUR_API_KEY is required')
@@ -82,7 +82,7 @@ const main = async () => {
     taskId: task.id,
   })
   if (!estimate) return
-  const { category, hours } = estimate
+  const { category, hours, confidence, agreement } = estimate
 
   // Get prompt version
   const promptVersion = getPromptVersion(repoRoot)
@@ -94,7 +94,7 @@ const main = async () => {
   )
 
   // Leave an audit comment. Best-effort: a comment failure must not discard the estimate already recorded.
-  const commentBody = `Estimate: ${category} / ${hours}h\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}`
+  const commentBody = `Estimate: ${category} / ${hours}h\nConfidence: ${confidence} (agreement ${Math.round(agreement * 100)}%)\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}`
 
   try {
     const commentResp = await fetch(

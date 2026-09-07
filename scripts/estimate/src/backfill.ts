@@ -1,6 +1,6 @@
 /**
  * Backfills Everhour estimates for GitHub issues that have no estimate yet.
- * Run manually: node scripts/estimate/src/backfill.ts
+ * Run manually with `node scripts/estimate/src/backfill.ts`.
  *
  * Traverses all Everhour project tasks → filters to those missing estimates →
  * fetches the corresponding GitHub issue → runs AI inference → writes the
@@ -24,7 +24,7 @@ interface GitHubIssue {
   title: string
   body: string | null
   state: string
-  labels: Array<{ name: string }>
+  labels: { name: string }[]
   /** Present (non-null) only when the number actually refers to a pull request. */
   pull_request?: unknown
 }
@@ -56,7 +56,7 @@ const findIssueByTitle = async (
   })
   if (!resp.ok) return null
   const data = (await resp.json()) as {
-    items: Array<{ number: number; title: string; pull_request?: unknown }>
+    items: { number: number; title: string; pull_request?: unknown }[]
   }
   const exactMatches = data.items.filter(item => item.title === title)
   const issueMatch = exactMatches.find(item => !isPullRequest(item))
@@ -116,7 +116,7 @@ const processTask = async ({
   // write was dry-run — a dry Everhour run must not post a comment claiming an estimate was recorded.
   if (!estimate || dryRunEverhour) return
 
-  const { category, hours } = estimate
+  const { category, hours, confidence, agreement } = estimate
 
   // Log the estimate first: it has already been written to Everhour by estimateIssue, so it must be
   // reported even if the best-effort audit comment below fails. Logging after the POST risked losing
@@ -127,7 +127,7 @@ const processTask = async ({
 
   // Leave an audit comment on the GitHub issue. Best-effort: a comment failure must not abort the
   // backfill run or discard the estimate already recorded, so failures are warned, not thrown.
-  const commentBody = `Everhour estimate: ${category} / ${hours}h\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}\nSource: backfill`
+  const commentBody = `Everhour estimate: ${category} / ${hours}h\nConfidence: ${confidence} (agreement ${Math.round(agreement * 100)}%)\nPrompt version: ${promptVersionLink(owner, repoName, promptVersion)}\nSource: backfill`
   try {
     const commentResp = await fetch(
       `https://api.github.com/repos/${owner}/${repoName}/issues/${issue.number}/comments`,
@@ -147,12 +147,13 @@ const processTask = async ({
   }
 }
 
+/** Backfills estimates for every Everhour task that is missing one. */
 const main = async () => {
   const githubToken = process.env.GITHUB_TOKEN
   if (!githubToken) throw new Error('GITHUB_TOKEN is required')
 
-  const openaiApiKey = process.env.OPENAI_API_KEY
-  if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
+  const openaiApiKey = process.env.OPENAI_API_KEY_ESTIMATE || process.env.OPENAI_API_KEY
+  if (!openaiApiKey) throw new Error('OPENAI_API_KEY_ESTIMATE or OPENAI_API_KEY is required')
 
   const everhourApiKey = process.env.EVERHOUR_API_KEY
   if (!everhourApiKey) throw new Error('EVERHOUR_API_KEY is required')
@@ -314,3 +315,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exitCode = 1
   })
 }
+
+export default main

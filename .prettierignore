@@ -3,5 +3,9 @@ docs
 LICENSE.md
 packages
 src/components/icons/animations
-src-tauri/target
-src-tauri/gen
+desktop/target
+desktop/gen
+.yarn
+ios/App/App/Assets.xcassets
+.github/skills
+.claude/settings.local.json

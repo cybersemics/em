@@ -5,7 +5,6 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 import getSortPreference from '../selectors/getSortPreference'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
@@ -38,7 +37,6 @@ const setSortPreference = (
 ): State => {
   const id = head(simplePath)
   const currentSortPreference = getSortPreference(state, id)
-  const globalSortPreference = getGlobalSortPreference(state)
 
   return reducerFlow([
     // alert
@@ -52,8 +50,8 @@ const setSortPreference = (
         })
       : null,
 
-    // If new sort preference equals global sort preference, delete the sort attribute
-    globalSortPreference.type === sortPreference.type && globalSortPreference.direction === sortPreference.direction
+    // Setting the sort preference to None removes the sort attribute and restores the manual sort order.
+    sortPreference.type === 'None'
       ? // Toggle off
         reducerFlow([
           deleteAttribute({
@@ -97,7 +95,7 @@ const setSortPreference = (
             : null,
 
           // Set the =sort attribute with the new type
-          sortPreference.type !== currentSortPreference.type || sortPreference.type === globalSortPreference.type
+          sortPreference.type !== currentSortPreference.type
             ? reducerFlow([
                 // toggleAttribute only overrides the existing attribute if the value is different. If the value is the same, it will remove the entire attribute.
                 // So we delete the attribute first to avoid this behavior.
@@ -119,10 +117,7 @@ const setSortPreference = (
 
             const pathSort = unroot(appendToPath(simplePath, sortId))
 
-            if (sortPreference.type === 'None') {
-              // No direction for None
-              return state
-            } else if (!sortPreference.direction) {
+            if (!sortPreference.direction) {
               // Remove direction if it's null
               return toggleAttribute(state, {
                 path: pathSort,
