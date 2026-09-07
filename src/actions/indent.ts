@@ -1,9 +1,11 @@
+import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
+import { getChildrenRanked } from '../selectors/getChildren'
 import getNextRank from '../selectors/getNextRank'
 import isContextViewActive from '../selectors/isContextViewActive'
 import prevSibling from '../selectors/prevSibling'
@@ -16,8 +18,13 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 
+export interface indentPayload {
+  /** The caret offset within the cursor thought, read from the document before the move. Null when the caret is not in the thought's text, in which case state.cursorOffset is used instead. */
+  selectionOffset?: number | null
+}
+
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
-const indent = (state: State): State => {
+const indent = (state: State, { selectionOffset }: indentPayload = {}): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -51,21 +58,34 @@ const indent = (state: State): State => {
     })
   }
 
-  // calculate offset value based upon selection node before moveThought is dispatched
-  const offset = (selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0
+  const offset = (selectionOffset ?? state.cursorOffset) || 0
 
   const cursorNew = appendToPath(parentOf(cursor), prev.id, head(cursor))
+
+  // For treecrdt: afterId must be a sibling (child of new parent), not the parent.
+  // Tab indent should place as last child of prev, so use last child of prev; undefined if prev has no children.
+  const prevChildren = getChildrenRanked(state, prev.id)
+  const lastChildOfPrev = _.last(prevChildren)
 
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
     ...(offset != null ? { offset } : null),
     newRank: getNextRank(state, prev.id),
+    afterId: lastChildOfPrev?.id ?? null,
   })
 }
 
-/** Action-creator for indent. */
-export const indentActionCreator = (): Thunk => dispatch => dispatch({ type: 'indent' })
+/**
+ * Action-creator for indent. Reads the caret offset from the document, which the reducer cannot do itself without
+ * reaching outside of state. It must be read before the move, since moveThought re-renders the editable.
+ */
+export const indentActionCreator = (): Thunk => (dispatch, getState) => {
+  const { cursor } = getState()
+  const selectionOffset =
+    cursor && selection.isOnEditable(head(cursor)) && selection.isText() ? (selection.offset() ?? 0) : null
+  dispatch({ type: 'indent', selectionOffset })
+}
 
 export default indent
 

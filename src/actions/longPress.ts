@@ -6,7 +6,9 @@ import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
+import { isTouch } from '../browser'
 import { AlertText, AlertType, LongPressState } from '../constants'
+import * as selection from '../device/selection'
 import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
@@ -142,6 +144,17 @@ export const longPressActionCreator =
     }
 
     dispatch({ type: 'longPress', ...payload })
+
+    // Close the keyboard when a drag gesture begins on touch. The editable stays focused when a long
+    // press activates the drag (DragHold, fired when the user holds without moving) or escalates into a
+    // drag (DragInProgress), so no blur event fires to dismiss the keyboard on its own. selection.clear()
+    // blurs the editable (which resets isKeyboardOpen via Editable's onBlur) and hides the native iOS
+    // keyboard. useEditMode bails while a drag is active, so it does not re-focus and reopen the keyboard.
+    const enteringDrag =
+      (value === LongPressState.DragHold || value === LongPressState.DragInProgress) && previousValue !== value
+    if (isTouch && enteringDrag) {
+      selection.clear()
+    }
 
     if (value === LongPressState.DragInProgress) {
       const { hoveringPath } = payload

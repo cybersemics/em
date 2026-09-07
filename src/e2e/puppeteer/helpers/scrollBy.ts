@@ -1,4 +1,4 @@
-import { page } from '../setup'
+import { page } from '../session'
 
 /** Scroll a parent container by a specified x and y offset using its selector. */
 const scrollBy = async (selector: string, x: number, y: number) => {

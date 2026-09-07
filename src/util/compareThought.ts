@@ -10,6 +10,7 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
 import lower from './lower'
+import stripTags from './stripTags'
 
 const STARTS_WITH_EMOJI_REGEX = new RegExp(`^${EMOJI_REGEX.source}`)
 const IGNORED_PREFIXES = ['the ']
@@ -33,12 +34,8 @@ const FORMATTING_TAG_PRIORITY: Record<string, number> = {
   span: 7,
 }
 
-const FORMATTING_PRIORITY_TAG_NAMES = Object.keys(FORMATTING_TAG_PRIORITY)
-
-/** Matches the outermost formatting tag of a string for priority ordering. Includes all tags in FORMATTING_TAG_PRIORITY (e.g. s as an alias for strike). */
-const REGEX_FORMATTING_PRIORITY = new RegExp(
-  `^<(${FORMATTING_PRIORITY_TAG_NAMES.join('|')})[^>]*>(.*?)<\\s*/\\s*(${FORMATTING_PRIORITY_TAG_NAMES.join('|')})>`,
-)
+/** Matches a single opening HTML tag anchored at the start of a string, capturing its tag name. Used to collect the formatting tags that enclose a thought's first character (#3977). */
+const REGEX_LEADING_TAG = /^<([a-zA-Z0-9]+)[^>]*>/
 
 // Date pattern regex constants for performance optimization
 // Month names for reuse across date patterns (pipe-separated for regex)
@@ -89,8 +86,10 @@ const removeEmojisAndSpaces = (s: string) => s.replace(REGEX_EMOJI_GLOBAL, '').t
 /** Remove ignored prefixes from comparator inputs. */
 const removeIgnoredPrefixes = (s: string) => s.replace(REGEX_IGNORED_PREFIXES, '$2')
 
-/** Removes emojis, spaces, and prefix 'the' to make a string comparable.  */
-const normalizeCharacters = _.flow(removeEmojisAndSpaces, removeIgnoredPrefixes, removeDiacritics)
+/** Strips HTML formatting tags, emojis, spaces, and prefix 'the' to make a string comparable.
+ * Tags are stripped so that the lexicographic comparison sorts by the visible text rather than the markup (e.g. so that <i><b>D</b></i> compares as "D", not "<i><b>D...").
+ * Formatting priority is handled separately by compareFormattingTagPriority, so removing tags here does not affect formatting-based ordering (#3977). */
+const normalizeCharacters = _.flow(stripTags, removeEmojisAndSpaces, removeIgnoredPrefixes, removeDiacritics)
 
 /** Parse a date string and handle M/d (e.g. "2/1") and written formats (e.g. "March 3") for Safari. */
 const parseDate = (s: string): number => {
@@ -180,17 +179,38 @@ export const compareFormatting = <T, U>(a: T, b: U): ComparatorValue => {
   return aStartsWithHtml && !bStartsWithHtml ? -1 : bStartsWithHtml && !aStartsWithHtml ? 1 : 0
 }
 
-/** Extracts the priority of the outermost formatting tag from an HTML string, or undefined if the string is not a recognized formatting tag. */
-const getFormattingTagPriority = (html: string): number | undefined => {
-  const match = REGEX_FORMATTING_PRIORITY.exec(html)
-  return match ? FORMATTING_TAG_PRIORITY[match[1]] : undefined
+/** Returns the set of formatting tag priorities that enclose the first character of an HTML string (#3977).
+ * Empty formatting tags are filtered out before sorting, no formatting tag closes before the first character.
+ * Returns an empty set if the first character is unformatted.
+ * Aliased tags (e.g. b/strong, i/em, strike/s) share a priority, so applying more than one of them counts as a single type. */
+const getFirstCharacterFormattingPriorities = (html: string): Set<number> => {
+  const priorities = new Set<number>()
+  let rest = html
+  let match: RegExpExecArray | null
+  // collect the leading run of opening tags; a non-tag character marks the thought's first character
+  while ((match = REGEX_LEADING_TAG.exec(rest)) !== null) {
+    const tagName = match[1].toLowerCase()
+    if (tagName in FORMATTING_TAG_PRIORITY) priorities.add(FORMATTING_TAG_PRIORITY[tagName])
+    rest = rest.slice(match[0].length)
+  }
+  return priorities
 }
 
-/** A comparator that sorts formatted strings by their formatting tag priority (bold < italic < underline < strikethrough). Returns 0 if either string is not a recognized formatting tag. */
+/** A comparator that sorts formatted strings by the formatting tag priority of their first character. A thought whose
+ * first character is formatted sorts above one whose first character is not. Among thoughts whose first character is
+ * formatted, those with more distinct types of formatting are given greater priority (sorted first); ties are broken by
+ * the highest-priority tag (bold < italic < underline < strikethrough). Formatting of characters other than the first is
+ * ignored (#3977). Returns 0 only when neither string's first character is formatted. */
 export const compareFormattingTagPriority: ComparatorFunction<string> = (a: string, b: string): ComparatorValue => {
-  const aPriority = getFormattingTagPriority(a)
-  const bPriority = getFormattingTagPriority(b)
-  return aPriority !== undefined && bPriority !== undefined ? compare(aPriority, bPriority) : 0
+  const aPriorities = getFirstCharacterFormattingPriorities(a)
+  const bPriorities = getFirstCharacterFormattingPriorities(b)
+  // a formatted first character sorts above an unformatted one; two unformatted first characters sort equally
+  if (aPriorities.size === 0 || bPriorities.size === 0) {
+    return aPriorities.size === bPriorities.size ? 0 : aPriorities.size === 0 ? 1 : -1
+  }
+  // more distinct formatting types on the first character = greater priority = sorted first
+  const typeCountComparison = compare(bPriorities.size, aPriorities.size)
+  return typeCountComparison || compare(Math.min(...aPriorities), Math.min(...bPriorities))
 }
 
 /** A comparison function that sorts date strings. Only handles date vs date comparisons. */

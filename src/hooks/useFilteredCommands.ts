@@ -5,13 +5,13 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
-import { chainCommand, gestureString, globalCommands } from '../commands'
+import { chainCommand, gestureString, globalCommands, hashCommand, parseCommandShortcut } from '../commands'
 import gestureStore from '../stores/gesture'
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>
   (!command.canExecute || command.canExecute(state)) &&
-  (command.allowExecuteFromModal || !state.showModal || !state.showGestureCheatsheet)
+  (command.allowExecuteFromModal || !state.showModal || !state.showMobileCommandUniverse)
 
 /** A hook that filters and sorts commands based on a search or the current gesture or keyboard input. */
 const useFilteredCommands = (
@@ -36,6 +36,10 @@ const useFilteredCommands = (
   const store = useStore()
 
   const possibleCommandsSorted = useMemo(() => {
+    // if the search query looks like a keyboard shortcut (e.g. "cmd option k"), match commands by their shortcut
+    // instead of by label. null means the query is a normal label search.
+    const shortcutHash = search ? parseCommandShortcut(search) : null
+
     // if a chainable command is in progress, extend the command list with chained commands (first command + second command)
     const visibleCommandsChained = [
       ...globalCommands,
@@ -51,7 +55,7 @@ const useFilteredCommands = (
 
     const possibleCommands = visibleCommandsChained.filter(command => {
       // Always include help command in gesture mode
-      if (isTouch && command.id === 'openGestureCheatsheet') return true
+      if (isTouch && command.id === 'openMobileCommandUniverse') return true
       // Show cancel command on touch devices when a gesture is in progress
       if (isTouch && command.id === 'cancel' && gestureInProgress) return true
 
@@ -60,21 +64,21 @@ const useFilteredCommands = (
         if (command.hideFromGestureMenu) return false
 
         const commandGesture = gestureString(command)
-        // collapse duplicate swipes when the command starts with the same character that the chainable gesture ends with
-        const chainedGesture = commandGesture.slice(
-          chainableCommandInProgressInclusive &&
-            gestureString(chainableCommandInProgressInclusive).endsWith(commandGesture[0])
-            ? 1
-            : 0,
-        )
-        return (!platformCommandsOnly || command.gesture) && chainedGesture.startsWith(gestureInProgress)
+        return (!platformCommandsOnly || command.gesture) && commandGesture.startsWith(gestureInProgress)
       }
       // keyboard
       else {
-        if (command.hideFromHelp || command.hideFromCommandPalette) return false
+        if (command.hideFromHelp || command.hideFromDesktopCommandUniverse) return false
 
         // only commands with keyboard shortcuts are visible
         if (platformCommandsOnly && !command.keyboard) return false
+
+        // if the query is a recognized keyboard shortcut, match by shortcut instead of label
+        if (shortcutHash) {
+          if (!command.keyboard) return false
+          const keyboardShortcuts = Array.isArray(command.keyboard) ? command.keyboard : [command.keyboard]
+          return keyboardShortcuts.some(shortcut => hashCommand(shortcut) === shortcutHash)
+        }
 
         // if no query is entered, all commands with keyboard shortcuts are visible
         if (!search) return true
@@ -102,7 +106,7 @@ const useFilteredCommands = (
       ).toLowerCase()
 
       // In gesture mode, help command should always be at the end
-      if (isTouch && (command.id === 'openGestureCheatsheet' || command.id === 'cancel')) return '\x99'
+      if (isTouch && (command.id === 'openMobileCommandUniverse' || command.id === 'cancel')) return '\x99'
       // always sort exact match to top
       if (gestureInProgress === command.gesture || search.trim().toLowerCase() === label) return '\x00'
       // sort inactive commands to the bottom alphabetically
