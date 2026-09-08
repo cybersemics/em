@@ -41,19 +41,15 @@ const multiselectCursorMiddleware: ThunkMiddleware<State> = ({ getState, dispatc
 
     if (paths.length > 1) {
       const ancestor = commonAncestor(paths)
-      // Take the cursor only when there is one to restore. With no cursor nothing is dimmed in the first place, so
-      // parking would move the view for nothing.
-      if (!parked) {
-        if (state.cursor && !equalPath(state.cursor, ancestor)) {
-          parked = { cursor: state.cursor, parkedAt: ancestor }
-          dispatch(setCursor({ path: ancestor, preserveMulticursor: true }))
-        }
-      }
-      // Re-park when the selection grows into another subtree or is replaced wholesale (cursorBack/cursorForward), so
-      // that the cursor is an ancestor of every selected thought. Only while the cursor is still where it was parked;
-      // if something else moved it (Clear Thought sets it to the first selected thought) it is no longer ours to move.
-      else if (equalPath(state.cursor, parked.parkedAt) && !equalPath(state.cursor, ancestor)) {
-        parked = { ...parked, parkedAt: ancestor }
+      // The cursor is ours to move if we parked it and it is still there; if something else moved it in the meantime
+      // (Clear Thought sets it to the first selected thought in order to edit the selection) it is no longer ours.
+      // Otherwise take it, but only when there is one to displace, since with no cursor nothing is dimmed in the first
+      // place and parking would move the view for nothing.
+      const displaced = parked ? (equalPath(state.cursor, parked.parkedAt) ? parked.cursor : null) : state.cursor
+      // Re-parking is what keeps the cursor an ancestor of every selected thought when the selection is extended into
+      // another subtree, or replaced wholesale by cursorBack/cursorForward.
+      if (displaced && !equalPath(state.cursor, ancestor)) {
+        parked = { cursor: displaced, parkedAt: ancestor }
         dispatch(setCursor({ path: ancestor, preserveMulticursor: true }))
       }
     }
