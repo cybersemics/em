@@ -3,6 +3,7 @@ import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
 import $ from '../helpers/$'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture, { startGesture } from '../helpers/gesture'
@@ -10,10 +11,12 @@ import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import scrollTo from '../helpers/scrollTo'
 import setConnectionStatus from '../helpers/setConnectionStatus'
+import setSelection from '../helpers/setSelection'
 import waitForAlertContent from '../helpers/waitForAlertContent'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -306,5 +309,41 @@ describe('drag to Home with duplicate thought', () => {
 - B
 - C
 `)
+  })
+})
+
+describe('gesture menu', () => {
+  // The native iOS text-selection callout (Cut | Copy | Paste) overlaps the gesture menu. Hide the
+  // selection while the gesture menu is onscreen, then restore it when the menu is dismissed so that a
+  // cancelled gesture leaves the editor exactly as it was. See #3745.
+  it('hides the text selection while the gesture menu is shown and restores it when dismissed', async () => {
+    await paste('Hello world')
+    await clickThought('Hello world')
+
+    // Focus the editable before selecting, otherwise the browser discards the selection on a
+    // non-focused contenteditable under mobile emulation.
+    await page.evaluate(() =>
+      (document.querySelector('[data-editing=true] [data-editable]') as HTMLElement | null)?.focus(),
+    )
+
+    // select the word "Hello"
+    await setSelection(0, 5)
+    await waitUntil(() => window.getSelection()?.toString() === 'Hello')
+
+    // open the gesture menu
+    await command('gestureMenu')
+    await waitForSelector('[data-testid=popup-value]')
+
+    // the selection is hidden (its ranges removed) while the gesture menu is onscreen
+    await waitUntil(() => window.getSelection()?.rangeCount === 0)
+
+    // dismiss the gesture menu
+    await command('gestureMenu')
+    await waitForSelector('[data-testid=popup-value]', { hidden: true })
+
+    // the selection is restored exactly as it was when the gesture menu is dismissed
+    await waitUntil(() => window.getSelection()?.toString() === 'Hello')
+    const selected = await page.evaluate(() => window.getSelection()?.toString())
+    expect(selected).toBe('Hello')
   })
 })

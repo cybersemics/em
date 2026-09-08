@@ -58,8 +58,10 @@ Where the bug depends on a particular thought tree, give it as a fenced code blo
 ```
 
 1. Set the caret on note `test`.
-2. Move Thought Down (Cmd + Shift + ArrowDown).
+2. Move Thought Down (<kbd>Cmd</kbd><kbd>Shift</kbd><kbd>ArrowDown</kbd>).
 ````
+
+Write a keyboard shortcut as `<kbd>` elements, one per key, with no separator between them: `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>`, not `(Shift + Alt + S)`. GitHub renders them as keys, which is what the reader is looking for while scanning the steps. Name the command alongside it — "Move Thought Down (<kbd>Cmd</kbd><kbd>Shift</kbd><kbd>ArrowDown</kbd>)".
 
 Write a gesture as arrows, not as the letters the code uses: `←↓→`, not `ldr`. `l` → `←`, `r` → `→`, `u` → `↑`, `d` → `↓`. The reader is following the steps with a finger on a screen, and the arrows are the swipe; the letters are an implementation detail they have to translate first. Name the command alongside it where the gesture has one — "Swipe New Subthought (`→↓→`)".
 
@@ -191,6 +193,7 @@ New issues often originate in a comment thread on another issue or PR.
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
+- A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.

@@ -7,11 +7,23 @@
  * scan rewrites whatever the dispatch left behind, so the two have to render a given state
  * identically. Rendering it in one place is what makes that true; while each had its own copy they
  * disagreed on the wording, and each carried its own copy of the delays and the cap.
+ *
+ * The opt-out labels live here for the same reason: the scan decides against them and the dispatch
+ * rechecks the same decision, so a label honored by one and not the other would be a hole.
  */
 const attemptComment = require('./attempt-comment.cjs')
 
 /** Marker identifying the comment this workflow maintains on a pull request. */
 const MARKER = '<!-- copilot-conflicts -->'
+
+/**
+ * Labels that opt a pull request out of conflict resolution. `skip-auto-resolve-conflicts` is this
+ * workflow's own opt-out; `hold` pauses development on the pull request generally, and a pull
+ * request nobody intends to advance is not worth spending an attempt on. Either one excludes the
+ * pull request from the scan entirely, so no comment is written or updated and its retry state
+ * stays frozen until the label is removed.
+ */
+const SKIP_LABELS = ['skip-auto-resolve-conflicts', 'hold']
 
 /** The state record hidden in that comment, as base64url-encoded JSON. */
 const STATE_PATTERN = /<!-- copilot-conflicts-state: ([A-Za-z0-9_-]+) -->/
@@ -54,7 +66,28 @@ const parseState = body => {
 /** Renders the visible comment for a state, and the machine-readable copy of that state inside it. */
 const commentBody = ({ state, number }) => {
   const encoded = Buffer.from(JSON.stringify(state)).toString('base64url')
-  const status = state.firstConflictAt ? 'A merge conflict is detected.' : 'No merge conflict is currently detected.'
+  // The agent run working the conflict, which is the only view from the pull request into what the
+  // attempt is actually doing.
+  const task = state.lastTaskUrl && `[task](${state.lastTaskUrl})`
+  // What is being done about the conflict, claimed as ongoing only while it is: at the cap nothing
+  // further starts on its own, so there the task is named in the past tense the footer's cap notice
+  // follows from.
+  const resolving =
+    state.firstConflictAt && state.attempts < MAX_ATTEMPTS
+      ? task
+        ? `Copilot is resolving it on this branch: ${task}.`
+        : 'Copilot will resolve it on this branch.'
+      : null
+  // What was seen, and what is being done about it — a reader given only the observation cannot tell
+  // whether a resolution is coming, underway, or theirs to do. The comment exists only once a
+  // conflict has been seen, so a cleared one is a resolution rather than an absence; by whom is not
+  // knowable here, as an author can merge as readily as an attempt can.
+  const status = [
+    state.firstConflictAt ? 'A merge conflict is detected.' : 'Merge conflicts resolved.',
+    resolving || (task && `The last attempt was this ${task}.`),
+  ]
+    .filter(Boolean)
+    .join(' ')
   // Measured from the same instant getDueAt measures from, so it stays true however long the
   // comment sits there. Nothing is scheduled while the pull request merges cleanly, and nothing is
   // scheduled past the cap — where the footer prints the cap notice in place of this.
@@ -67,11 +100,8 @@ const commentBody = ({ state, number }) => {
   return attemptComment({
     markers: [MARKER, `<!-- copilot-conflicts-state: ${encoded} -->`],
     heading: 'Copilot conflict resolution',
-    body: [
-      // Until the first attempt there is no footer to carry the schedule, so it rides in the body.
-      state.attempts ? status : [status, next].filter(Boolean).join(' '),
-      state.lastTaskUrl && `Latest task: ${state.lastTaskUrl}`,
-    ].filter(Boolean),
+    // Until the first attempt there is no footer to carry the schedule, so it rides in the body.
+    body: [state.attempts ? status : [status, next].filter(Boolean).join(' ')],
     attempt: state.attempts,
     maxAttempts: MAX_ATTEMPTS,
     next,
@@ -84,4 +114,4 @@ const commentBody = ({ state, number }) => {
   })
 }
 
-module.exports = { DELAYS_HOURS, MARKER, MAX_ATTEMPTS, commentBody, parseState }
+module.exports = { DELAYS_HOURS, MARKER, MAX_ATTEMPTS, SKIP_LABELS, commentBody, parseState }
