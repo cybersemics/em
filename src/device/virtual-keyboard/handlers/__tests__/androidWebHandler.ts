@@ -32,7 +32,7 @@ beforeAll(() => {
 
 beforeEach(initStore)
 
-it('exits edit mode when the virtual keyboard hides (e.g. Android Down Arrow)', () => {
+it('exits edit mode when the virtual keyboard hides (e.g. Android Down Arrow)', async () => {
   // put the cursor on a thought with the keyboard open
   store.dispatch([importText({ text: '- a' }), setCursor(['a']), keyboardOpen({ value: true })])
   expect(store.getState().isKeyboardOpen).toBe(true)
@@ -48,7 +48,7 @@ it('exits edit mode when the virtual keyboard hides (e.g. Android Down Arrow)', 
   geometryChangeListeners.forEach(listener => listener())
 
   // edit mode should be exited now that the keyboard is closed
-  expect(store.getState().isKeyboardOpen).toBe(false)
+  await vi.waitFor(() => expect(store.getState().isKeyboardOpen).toBe(false))
 })
 
 // https://github.com/cybersemics/em/issues/4686
@@ -70,7 +70,7 @@ it('focuses the editable so that Chromium raises the virtual keyboard', () => {
 // animating away. Blurring in the same beat makes Android rebuild the text context menu around the teardown, so a
 // second menu flashes back after everything has already gone.
 // https://github.com/cybersemics/em/issues/5259
-it.skip('collapses a selected range before blurring when the virtual keyboard hides', async () => {
+it('collapses a selected range before blurring when the virtual keyboard hides', async () => {
   store.dispatch([
     importText({ text: '- Cybersemics Institute' }),
     setCursor(['Cybersemics Institute']),

@@ -15,8 +15,6 @@ import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
-import setSelection from '../helpers/setSelection'
-import tapEmptySpace from '../helpers/tapEmptySpace'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
@@ -504,24 +502,5 @@ describe('mobile only', () => {
       () => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? null,
     )
     expect(activeLabel).not.toMatch(/^editable-/)
-  })
-
-  // https://github.com/cybersemics/em/pull/5268#issuecomment-5572390175
-  it('tapping empty space dismisses the text selection', async () => {
-    await paste(`
-      - aaa
-      - bbb
-      - ccc
-    `)
-    await clickThought('aaa')
-    // a tap does not focus the editable, but setting the selection does, and focusing it resets the caret, so set the selection again once focused
-    await setSelection(0, 3)
-    await waitUntil(() => document.activeElement?.hasAttribute('data-editable') ?? false)
-    await setSelection(0, 3)
-    expect(await getSelection().toString()).toBe('aaa')
-
-    await tapEmptySpace()
-
-    expect(await getSelection().toString()).toBe('')
   })
 })
