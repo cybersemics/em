@@ -646,13 +646,14 @@ describe('compareThoughtByCreated', () => {
     expect(compareThoughtByCreated(older, { ...older })).toBe(0)
   })
 
-  it('falls back to compareReasonable when created timestamps are equal', () => {
+  it('falls back to rank when created timestamps are equal', () => {
     const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), created: ts }
-    const b = { ...thought('b'), created: ts }
-    expect(compareThoughtByCreated(a, b)).toBe(-1)
-    expect(compareThoughtByCreated(b, a)).toBe(1)
-    expect(compareThoughtByCreated(a, { ...a })).toBe(0)
+    // 'b' is ranked before 'a' so that a fallback to the value rather than the rank would reverse the order
+    const first = { ...thought('b'), created: ts, rank: 0 }
+    const second = { ...thought('a'), created: ts, rank: 1 }
+    expect(compareThoughtByCreated(first, second)).toBe(-1)
+    expect(compareThoughtByCreated(second, first)).toBe(1)
+    expect(compareThoughtByCreated(first, { ...first })).toBe(0)
   })
 })
 
@@ -665,12 +666,13 @@ describe('compareThoughtByCreatedDescending', () => {
     expect(compareThoughtByCreatedDescending(newer, { ...newer })).toBe(0)
   })
 
-  it('falls back to compareReasonable when created timestamps are equal', () => {
+  it('falls back to rank when created timestamps are equal', () => {
     const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), created: ts }
-    const b = { ...thought('b'), created: ts }
-    expect(compareThoughtByCreatedDescending(a, b)).toBe(-1)
-    expect(compareThoughtByCreatedDescending(b, a)).toBe(1)
+    // 'b' is ranked before 'a' so that a fallback to the value rather than the rank would reverse the order
+    const first = { ...thought('b'), created: ts, rank: 0 }
+    const second = { ...thought('a'), created: ts, rank: 1 }
+    expect(compareThoughtByCreatedDescending(first, second)).toBe(-1)
+    expect(compareThoughtByCreatedDescending(second, first)).toBe(1)
   })
 })
 
@@ -683,12 +685,13 @@ describe('compareThoughtByUpdated', () => {
     expect(compareThoughtByUpdated(older, { ...older })).toBe(0)
   })
 
-  it('falls back to compareReasonable when lastUpdated timestamps are equal', () => {
+  it('falls back to rank when lastUpdated timestamps are equal', () => {
     const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), lastUpdated: ts }
-    const b = { ...thought('b'), lastUpdated: ts }
-    expect(compareThoughtByUpdated(a, b)).toBe(-1)
-    expect(compareThoughtByUpdated(b, a)).toBe(1)
+    // 'b' is ranked before 'a' so that a fallback to the value rather than the rank would reverse the order
+    const first = { ...thought('b'), lastUpdated: ts, rank: 0 }
+    const second = { ...thought('a'), lastUpdated: ts, rank: 1 }
+    expect(compareThoughtByUpdated(first, second)).toBe(-1)
+    expect(compareThoughtByUpdated(second, first)).toBe(1)
   })
 })
 
@@ -701,12 +704,13 @@ describe('compareThoughtByUpdatedDescending', () => {
     expect(compareThoughtByUpdatedDescending(newer, { ...newer })).toBe(0)
   })
 
-  it('falls back to compareReasonable when lastUpdated timestamps are equal', () => {
+  it('falls back to rank when lastUpdated timestamps are equal', () => {
     const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), lastUpdated: ts }
-    const b = { ...thought('b'), lastUpdated: ts }
-    expect(compareThoughtByUpdatedDescending(a, b)).toBe(-1)
-    expect(compareThoughtByUpdatedDescending(b, a)).toBe(1)
+    // 'b' is ranked before 'a' so that a fallback to the value rather than the rank would reverse the order
+    const first = { ...thought('b'), lastUpdated: ts, rank: 0 }
+    const second = { ...thought('a'), lastUpdated: ts, rank: 1 }
+    expect(compareThoughtByUpdatedDescending(first, second)).toBe(-1)
+    expect(compareThoughtByUpdatedDescending(second, first)).toBe(1)
   })
 })
 
