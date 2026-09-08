@@ -113,8 +113,8 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
       })}
       style={{ transform, width: scrollZoneWidth }}
     >
-      {/* The pulsing highlight is a separate overlay so that it can fade out when the help alert is dismissed rather than disappearing abruptly. Fades at the same rate as the alert itself. */}
-      <FadeTransition type='slow' in={showScrollZoneHelpAlert} nodeRef={highlightRef} unmountOnExit>
+      {/* The pulsing highlight is a separate overlay so that it can fade out when the help alert is dismissed rather than disappearing abruptly. */}
+      <FadeTransition type='medium' in={showScrollZoneHelpAlert} nodeRef={highlightRef} unmountOnExit>
         <div
           ref={highlightRef}
           className={css({
