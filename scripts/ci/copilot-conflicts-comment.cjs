@@ -66,7 +66,28 @@ const parseState = body => {
 /** Renders the visible comment for a state, and the machine-readable copy of that state inside it. */
 const commentBody = ({ state, number }) => {
   const encoded = Buffer.from(JSON.stringify(state)).toString('base64url')
-  const status = state.firstConflictAt ? 'A merge conflict is detected.' : 'No merge conflict is currently detected.'
+  // The agent run working the conflict, which is the only view from the pull request into what the
+  // attempt is actually doing.
+  const task = state.lastTaskUrl && `[task](${state.lastTaskUrl})`
+  // What is being done about the conflict, claimed as ongoing only while it is: at the cap nothing
+  // further starts on its own, so there the task is named in the past tense the footer's cap notice
+  // follows from.
+  const resolving =
+    state.firstConflictAt && state.attempts < MAX_ATTEMPTS
+      ? task
+        ? `Copilot is resolving it on this branch: ${task}.`
+        : 'Copilot will resolve it on this branch.'
+      : null
+  // What was seen, and what is being done about it — a reader given only the observation cannot tell
+  // whether a resolution is coming, underway, or theirs to do. The comment exists only once a
+  // conflict has been seen, so a cleared one is a resolution rather than an absence; by whom is not
+  // knowable here, as an author can merge as readily as an attempt can.
+  const status = [
+    state.firstConflictAt ? 'A merge conflict is detected.' : 'Merge conflicts resolved.',
+    resolving || (task && `The last attempt was this ${task}.`),
+  ]
+    .filter(Boolean)
+    .join(' ')
   // Measured from the same instant getDueAt measures from, so it stays true however long the
   // comment sits there. Nothing is scheduled while the pull request merges cleanly, and nothing is
   // scheduled past the cap — where the footer prints the cap notice in place of this.
@@ -79,11 +100,8 @@ const commentBody = ({ state, number }) => {
   return attemptComment({
     markers: [MARKER, `<!-- copilot-conflicts-state: ${encoded} -->`],
     heading: 'Copilot conflict resolution',
-    body: [
-      // Until the first attempt there is no footer to carry the schedule, so it rides in the body.
-      state.attempts ? status : [status, next].filter(Boolean).join(' '),
-      state.lastTaskUrl && `Latest task: ${state.lastTaskUrl}`,
-    ].filter(Boolean),
+    // Until the first attempt there is no footer to carry the schedule, so it rides in the body.
+    body: [state.attempts ? status : [status, next].filter(Boolean).join(' ')],
     attempt: state.attempts,
     maxAttempts: MAX_ATTEMPTS,
     next,
