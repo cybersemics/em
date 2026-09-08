@@ -137,18 +137,24 @@ const testExclusions = async () => {
   assert.deepEqual(report.tasks, [])
 }
 
-/** Verifies the skip label excludes a due PR entirely, leaving its comment untouched. */
-const testSkipLabel = async () => {
-  const skipped = makePr({
-    number: 15,
-    updatedAt: '2026-09-06T10:00:00Z',
-    state: dueState(2),
-    labels: ['skip-auto-resolve-conflicts'],
-  })
-  const before = skipped.comments[0].body
-  const report = await run([skipped])
-  assert.deepEqual(report.tasks, [])
-  assert.equal(skipped.comments[0].body, before)
+/** Verifies each opt-out label excludes a due PR entirely, leaving its comment untouched. */
+const testSkipLabels = async () => {
+  for (const [number, label] of [
+    [15, 'skip-auto-resolve-conflicts'],
+    [21, 'hold'],
+  ]) {
+    const skipped = makePr({ number, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), labels: [label] })
+    const before = skipped.comments[0].body
+    const report = await run([skipped])
+    assert.deepEqual(report.tasks, [])
+    assert.equal(skipped.comments[0].body, before)
+  }
+}
+
+/** Verifies an opt-out label outranks a dispatch that names the pull request. */
+const testSkipLabelOverridesNamedDispatch = async () => {
+  const held = makePr({ number: 22, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), labels: ['hold'] })
+  assert.deepEqual((await run([held], 22)).tasks, [])
 }
 
 /** Verifies a comment is posted only once a conflict exists, and is kept updated afterwards. */
@@ -225,7 +231,8 @@ const testNamedDispatchOverridesWaitAndCap = async () => {
 await testRetryPolicy()
 await testExclusions()
 await testCommentOnConflictOnly()
-await testSkipLabel()
+await testSkipLabels()
+await testSkipLabelOverridesNamedDispatch()
 await testAttemptFooter()
 await testCapNotice()
 await testScheduleBeforeFirstAttempt()

@@ -7,11 +7,23 @@
  * scan rewrites whatever the dispatch left behind, so the two have to render a given state
  * identically. Rendering it in one place is what makes that true; while each had its own copy they
  * disagreed on the wording, and each carried its own copy of the delays and the cap.
+ *
+ * The opt-out labels live here for the same reason: the scan decides against them and the dispatch
+ * rechecks the same decision, so a label honored by one and not the other would be a hole.
  */
 const attemptComment = require('./attempt-comment.cjs')
 
 /** Marker identifying the comment this workflow maintains on a pull request. */
 const MARKER = '<!-- copilot-conflicts -->'
+
+/**
+ * Labels that opt a pull request out of conflict resolution. `skip-auto-resolve-conflicts` is this
+ * workflow's own opt-out; `hold` pauses development on the pull request generally, and a pull
+ * request nobody intends to advance is not worth spending an attempt on. Either one excludes the
+ * pull request from the scan entirely, so no comment is written or updated and its retry state
+ * stays frozen until the label is removed.
+ */
+const SKIP_LABELS = ['skip-auto-resolve-conflicts', 'hold']
 
 /** The state record hidden in that comment, as base64url-encoded JSON. */
 const STATE_PATTERN = /<!-- copilot-conflicts-state: ([A-Za-z0-9_-]+) -->/
@@ -84,4 +96,4 @@ const commentBody = ({ state, number }) => {
   })
 }
 
-module.exports = { DELAYS_HOURS, MARKER, MAX_ATTEMPTS, commentBody, parseState }
+module.exports = { DELAYS_HOURS, MARKER, MAX_ATTEMPTS, SKIP_LABELS, commentBody, parseState }
