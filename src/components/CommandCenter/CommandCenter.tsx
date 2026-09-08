@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { MotionValue, PanInfo, motion, useTransform } from 'motion/react'
+import { MotionValue, motion, useTransform } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Sheet, SheetRef, useScrollPosition } from 'react-modal-sheet'
@@ -212,44 +212,16 @@ const CommandCenter = () => {
   /** Only let a downward drag collapse the drawer when the command list is scrolled to the top, so the gesture does not conflict with scrolling the list. */
   const isDragDisabled = scrollPosition !== undefined && scrollPosition !== 'top'
 
-  /** The full-width strip at the bottom of the standard stage that the expand chevron sits in. */
-  const chevronBandRef = useRef<HTMLDivElement>(null)
-  /** True while a drag is in progress that began outside the chevron band at the standard stage, and so may not cross into the expanded stage. */
-  const isExpandBlockedRef = useRef(false)
   /** True while a drag is in progress that began at the expanded stage. Such a drag collapses to the standard stage however far or fast it is thrown, so that leaving the Command Center always takes a second, deliberate swipe from the standard stage. */
   const [isDismissBlocked, setIsDismissBlocked] = useState(false)
 
   /** The y the sheet rests at in the standard stage, i.e. the whole travel between the two stages. */
   const getStandardY = useCallback(() => sheetRef.current?.snapPoints[SNAP_STANDARD]?.snapValueY ?? 0, [])
 
-  /** Classifies the gesture by where it starts, since both restrictions below depend on the stage the drag began at and the region it began in, rather than on where it ends up. */
-  const onDragStart = useCallback(
-    (event: MouseEvent | TouchEvent | PointerEvent) => {
-      const startedExpanded = (sheetRef.current?.y.get() ?? Infinity) < getStandardY() / 2
-      setIsDismissBlocked(startedExpanded)
-      const target = event.target
-      isExpandBlockedRef.current =
-        !startedExpanded && !(target instanceof Node && !!chevronBandRef.current?.contains(target))
-    },
-    [getStandardY],
-  )
-
-  /**
-   * Holds the drawer at the standard stage for the rest of a drag that did not begin in the chevron band,
-   * so that only a swipe starting near the arrow can cross into the expanded stage. Downward drags are
-   * untouched, so dragging the drawer body down still closes it. The Sheet calls this before writing
-   * `y + delta` itself, so the ceiling is applied by pre-adjusting `y` such that the Sheet's own write
-   * lands exactly on the standard snap.
-   */
-  const onDrag = useCallback(
-    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-      if (!isExpandBlockedRef.current) return
-      const y = sheetRef.current?.y
-      const standardY = getStandardY()
-      if (y && y.get() + info.delta.y < standardY) y.set(standardY - info.delta.y)
-    },
-    [getStandardY],
-  )
+  /** Classifies the gesture by the stage it starts at, since the collapse-only restriction depends on where the drag began rather than on where it ends up. */
+  const onDragStart = useCallback(() => {
+    setIsDismissBlocked((sheetRef.current?.y.get() ?? Infinity) < getStandardY() / 2)
+  }, [getStandardY])
 
   /** Prevent native page scroll when dragging the sheet. The page body is scrollable, and without this the browser scrolls the body on touchmove, stealing touch from the sheet's drag handler. React touch handlers are passive so we need a non-passive listener via addEventListener. */
   const preventTouchMoveRef = useCallback((el: HTMLDivElement | null) => {
@@ -343,7 +315,6 @@ const CommandCenter = () => {
           onOpenEnd={onOpenEnd}
           onCloseEnd={onCloseEnd}
           onDragStart={onDragStart}
-          onDrag={onDrag}
           /** A drag that begins at the expanded stage may only collapse to the standard stage; closing the Command Center always takes a second swipe from there. */
           disableDismiss={isDismissBlocked}
           /** The expanded stage's search field would otherwise auto-snap the sheet and disable dragging while the keyboard is open. Em manages the virtual keyboard itself. */
@@ -571,8 +542,7 @@ const CommandCenter = () => {
                   </motion.div>
                 </div>
                 <motion.div
-                  ref={chevronBandRef}
-                  /** The chevron band: the full-width strip at the bottom edge of the standard stage, just above the safe area inset. It is full width rather than just the button because it doubles as the only region a drag may start in and still expand the drawer, and a thumb swipe that lands beside the arrow should still count. */
+                  /** The chevron band: the full-width strip at the bottom edge of the standard stage, just above the safe area inset. It is full width rather than just the button so that a thumb swipe landing beside the arrow still falls on the band, which is where the expand affordance reads as being. */
                   className={css({
                     position: 'absolute',
                     left: 0,
