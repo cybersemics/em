@@ -129,6 +129,11 @@ Say the thing and stop. An issue is a report, not a write-up — the reader need
 
 Word count is not the measure — a bug needing eight steps gets eight steps. What gets cut is the writing that is about your investigation rather than about the bug.
 
+## Words
+
+- **No em dashes in prose.** This applies to what you post: the issue body, the title, and comments on it.
+- **No semicolons in prose.** Two sentences, or a comma and a conjunction.
+
 ## Title
 
 Describe the symptom rather than the suspected cause: `Gesture Diagrams misaligned at larger font sizes`, not `GestureDiagram flex-align bug`.

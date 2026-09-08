@@ -104,6 +104,7 @@ Close with what is **out of scope**, as bare bullets: issues split out, preexist
 ## Words
 
 - **No em dashes in prose.**
+- **No semicolons in prose.** Two sentences, or a comma and a conjunction.
 - **No invented terms.** Every one of these was rewritten: "re-announce" became "open another one", "the recorded value" became "the patch should store undefined", "pinned by #5433" became "now covered by #5433". If a phrase is not in [`docs/glossary.md`](../../../docs/glossary.md) or plain English, it is jargon.
 - **Use the project's vocabulary.** em has thoughts and a thoughtspace. It has no documents. Resolve an unfamiliar term in the glossary before using it, including in a review.
 
