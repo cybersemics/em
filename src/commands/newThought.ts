@@ -1,5 +1,4 @@
 import { head } from 'lodash'
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import SplitResult from '../@types/SplitResult'
 import State from '../@types/State'
@@ -72,7 +71,7 @@ const newThoughtCommand = {
   description: 'Create a shiny new thought.',
   // Support multiple keyboard shortcuts
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
-  keyboard: [{ key: Key.Enter }, ...(isTouch ? [{ key: Key.Enter, shift: true }] : [])],
+  keyboard: [{ key: 'Enter' }, ...(isTouch ? [{ key: 'Enter', shift: true }] : [])],
   gesture: 'rd',
   multicursor,
   // Preventing default on keydown is undesirable because it disables auto-capitalization on iOS Safari. (#3707)

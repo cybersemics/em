@@ -9,7 +9,7 @@
  * ```
  *
  * Only entries this run opened — filed, or reopened after the flake came back — are dispatched,
- * because starting a fresh session against an issue somebody is already working on would pile up
+ * because starting a fresh task against an issue somebody is already working on would pile up
  * duplicate branches on it. Nothing here picks up an issue filed by hand, or one filed before this
  * existed — those are assigned by hand.
  *

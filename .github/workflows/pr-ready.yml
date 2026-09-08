@@ -1,7 +1,7 @@
 # Takes a finished Copilot pull request out of draft once every check on it has passed.
 #
-# Copilot opens its pull requests as a draft and never takes them out of one: when a session ends
-# it requests a review and stops. Nothing else moves it either, so the pull request sits in draft
+# Copilot opens its pull requests as a draft and never takes them out of one: when a task ends it
+# requests a review and stops. Nothing else moves it either, so the pull request sits in draft
 # — invisible to reviewers, ineligible for auto-merge — until someone notices. Every non-draft
 # Copilot pull request in this repository was undrafted by hand.
 #
@@ -15,8 +15,8 @@
 # dependabot-fix.yml uses, and for the same reason.
 #
 # Why not an instruction in the prompt files. The agent would have to run `gh pr ready` itself, and
-# its token cannot be relied on to carry `contents: write` — no Copilot session in this repository
-# has ever undrafted its own pull request. An instruction that silently fails is worse than none.
+# its token cannot be relied on to carry `contents: write` — no Copilot task in this repository has
+# ever undrafted its own pull request. An instruction that silently fails is worse than none.
 # Here the permission is declared below and the trigger is a signal this repository owns outright.
 #
 # GITHUB_TOKEN is sufficient; no PAT is involved. `markPullRequestReadyForReview` needs
@@ -56,7 +56,7 @@ jobs:
     name: Mark ready for review
     runs-on: ubuntu-latest
     # Cheap gate so the six other completions on a normal pull request cost nothing. Author,
-    # draft status, session state, and the checks themselves are verified in the step below.
+    # draft status, task state, and the checks themselves are verified in the step below.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (startsWith(github.event.workflow_run.head_branch, 'copilot/') &&
