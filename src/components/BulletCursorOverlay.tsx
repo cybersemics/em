@@ -119,7 +119,11 @@ export default function BulletCursorOverlay({
       (value !== '=style' && findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) || null,
   )
 
+  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
+
   const hideBulletProp = useSelector(state => {
+    // A context view entry is rendered in place of its context, so the =children/=bullet of its real parent must not hide its bullet.
+    if (isInContextView) return false
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
     if (hideBulletsChildren) return true
     const hideBulletsGrandchildren =
@@ -133,8 +137,6 @@ export default function BulletCursorOverlay({
     // only compare id, value, and rank for re-renders
     equalChildren,
   )
-
-  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
 
   const hideBullet = useHideBullet({
     children,
