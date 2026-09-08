@@ -132,6 +132,7 @@ Word count is not the measure — a bug needing eight steps gets eight steps. Wh
 ## Words
 
 - **No em dashes in prose.** This applies to what you post: the issue body, the title, and comments on it.
+- **No semicolons in prose.** Two sentences, or a comma and a conjunction.
 
 ## Title
 
