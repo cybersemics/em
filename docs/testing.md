@@ -137,6 +137,19 @@ const childCount = await page.evaluate(async () => {
 ```
 
 ```ts
+// ❌ Don't: poll an export until the thought tree looks the way you expect
+await page.waitForFunction(
+  (before: number) => {
+    const em = window.em as WindowEm
+    const exported = em.exportContext([HOME_TOKEN], 'text/plain')
+    return exported.split('\n').filter(line => /^\s*- /.test(line)).length > before
+  },
+  {},
+  before,
+)
+```
+
+```ts
 // ✅ Do: wait for the user-visible result, then assert
 await waitForEditable('hello world')
 
@@ -146,6 +159,8 @@ expect(exported).toBe(`
   - hello world
 `)
 ```
+
+A wait names a condition the user could see — [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForSelector`](../src/e2e/puppeteer/helpers/waitForSelector.ts), [`waitForAlert`](../src/e2e/puppeteer/helpers/waitForAlert.ts), or a new named waiter modelled on those. A serialization of the whole thought tree is not one. [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), and the `exportContext` backdoor it wraps, belong in the assert phase — called once, against an exact expected outline — never inside `page.waitForFunction`, `waitUntil`, or `vi.waitFor`. Polling an export re-serializes every thought on every tick, and, more importantly, it puts a proxy where the real condition belongs: the test stops saying what it is waiting for, so a wrong wait fails as an opaque timeout instead of a behavioral assertion. The poll above could never terminate — [`HOME_TOKEN`](../src/constants.ts) is `00000000000000000000000000000001`, not `'__ROOT__'`, so the export was always the single line `- __ROOT__` and its count could never exceed the baseline. It timed out on every run, saying nothing about the drag and drop it was written to guard; waiting for `waitForCursor('')` — the empty thought New Thought creates — and exporting once made the behavior visible. ([#4045](https://github.com/cybersemics/em/pull/4045))
 
 If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
 
@@ -554,7 +569,7 @@ The scope of a review is everything the tests depend on to mean something: the t
 2. **Reachable arrange** — Could normal application behavior create the arranged state? Are essential preconditions present and non-contradictory?
 3. **Act** — Is the behavior under test triggered through a real user entry point (Puppeteer/iOS), `userEvent`/`fireEvent` (JSDOM), or the public interface (unit/store)?
 4. **Backdoors** — Are internals touched only via the [sanctioned helpers](#sanctioned-backdoors), and only in arrange/assert/wait — never in the act?
-5. **Waiting and flakes** — No wall-clock sleeps or hand-rolled polling loops? Does each wait name a condition? Are non-visual state/DB waiters only prerequisites to a visible assertion? Was the controlling condition investigated before adding a retry or workaround?
+5. **Waiting and flakes** — No wall-clock sleeps or hand-rolled polling loops? Does each wait name a user-visible condition rather than a proxy such as an exported outline? Are non-visual state/DB waiters only prerequisites to a visible assertion? Was the controlling condition investigated before adding a retry or workaround?
 6. **Helper contracts** — Is the test composed from narrow, intent-named helpers? Are expectations visible in the test, unrelated waits absent from action helpers, and missing required targets reported as errors?
 7. **Selectors** — Do DOM locators identify meaning (role/name, label, semantic value, or test id) rather than style, ancestry, index, or render order?
 8. **Assertions** — Do assertions read exact user-visible output rather than Redux state, truthiness, or a proxy that plausible wrong behavior could satisfy? Is every negative assertion evaluated while the wrong behavior could still manifest, or superseded by a positive assertion that excludes it?
@@ -607,9 +622,9 @@ Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/hel
 | Scroll | [`scroll`](../src/e2e/puppeteer/helpers/scroll.ts), [`scrollBy`](../src/e2e/puppeteer/helpers/scrollBy.ts), [`scrollIntoView`](../src/e2e/puppeteer/helpers/scrollIntoView.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts) | Scrolls the window or a named container; use the narrowest helper that expresses the intent. |
 | Emulate a mobile device | [`deviceEmulation.useForSuite`](../src/e2e/puppeteer/helpers/deviceEmulation.ts) | Selects a Puppeteer device profile at suite scope, which `setup` applies before navigation. There is no mid-session equivalent; see the emulation note above. |
 
-Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), [`waitForCommandCenterOpen`](../src/e2e/puppeteer/helpers/waitForCommandCenterOpen.ts), and [`waitForCommandCenterClosed`](../src/e2e/puppeteer/helpers/waitForCommandCenterClosed.ts). Persistence has no visual signal, so [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) waits for the thoughtspace to commit every queued write; [`refresh`](../src/e2e/puppeteer/helpers/refresh.ts) calls it before reloading, so a test that reloads right after a paste does not need to wait for persistence itself; typed text reaches the queue only when its edit throttle flushes, so run a command such as Escape before reloading to commit it. Every Puppeteer test should read as a sequence of these helpers.
+Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlert`](../src/e2e/puppeteer/helpers/waitForAlert.ts), [`waitForCommandCenterOpen`](../src/e2e/puppeteer/helpers/waitForCommandCenterOpen.ts), and [`waitForCommandCenterClosed`](../src/e2e/puppeteer/helpers/waitForCommandCenterClosed.ts). Persistence has no visual signal, so [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) waits for the thoughtspace to commit every queued write; [`refresh`](../src/e2e/puppeteer/helpers/refresh.ts) calls it before reloading, so a test that reloads right after a paste does not need to wait for persistence itself; typed text reaches the queue only when its edit throttle flushes, so run a command such as Escape before reloading to commit it. Every Puppeteer test should read as a sequence of these helpers.
 
-The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM.
+The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM. It is an assertion, not a waiter: call it once against an exact expected outline, and never poll it — or `exportContext` directly — in place of the user-visible condition a wait should name ([Principle 3](#3-never-wait-for-wall-clock-time-wait-for-the-response)).
 
 ### `src/e2e/iOS/helpers/` — for WebdriverIO tests
 
