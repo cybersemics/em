@@ -31,7 +31,7 @@
  * the next check completion from starting a second one.
  */
 import { readFileSync } from 'node:fs'
-import attemptComment from './attempt-comment.cjs'
+import taskComment from './task-comment.cjs'
 
 /**
  * A dependency bump that broke a check is read-the-changelog work across an unfamiliar package, so
@@ -73,8 +73,8 @@ if (!token) {
 
 const { pr, failures, tasks, maxTasks, commentId } = JSON.parse(readFileSync(reportFile, 'utf8'))
 
-/** Which attempt this is. The cap itself lives in collect-dependabot-failures.cjs, which enforces it. */
-const attempt = tasks + 1
+/** Which task this is. The cap itself lives in collect-dependabot-failures.cjs, which enforces it. */
+const taskNumber = tasks + 1
 
 /** One line per failing check, naming the workflow it belongs to when that is not obvious. */
 const failureLine = failure => {
@@ -147,16 +147,16 @@ const startTask = async () => {
  * task it already started from one it has not, and to know when to stop.
  */
 const comment = async taskUrl => {
-  const body = attemptComment({
-    markers: [MARKER, `<!-- head: ${pr.headSha} -->`, `<!-- tasks: ${attempt} -->`],
+  const body = taskComment({
+    markers: [MARKER, `<!-- head: ${pr.headSha} -->`, `<!-- tasks: ${taskNumber} -->`],
     heading: 'Dependabot fix',
     body: [
       `${failures.length === 1 ? 'A check' : `${failures.length} checks`} failed on \`${pr.headSha.slice(0, 7)}\`, so an ${MODEL_NAME} task is fixing ${failures.length === 1 ? 'it' : 'them'} on this branch: [task](${taskUrl}).`,
       '',
       ...failures.map(failureLine),
     ],
-    attempt,
-    maxAttempts: maxTasks,
+    taskNumber,
+    maxTasks,
     next: null,
     pr: pr.number,
     runUrl: process.env.RUN_URL || null,
@@ -188,7 +188,7 @@ process.stdout.write(
   [
     '## Dependabot fix task',
     '',
-    `- [#${pr.number}](${pr.url}) \`${pr.headRef}\` — [${MODEL_NAME} task](${task.html_url}) (attempt ${attempt} of ${maxTasks})`,
+    `- [#${pr.number}](${pr.url}) \`${pr.headRef}\` — [${MODEL_NAME} task](${task.html_url}) (task ${taskNumber} of ${maxTasks})`,
     ...failures.map(failureLine),
     '',
   ].join('\n'),

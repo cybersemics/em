@@ -6,7 +6,7 @@
  * scan rewrites from the same state — see that file for why neither side renders its own.
  */
 import { readFileSync } from 'node:fs'
-import { MARKER, MAX_ATTEMPTS, SKIP_LABELS, commentBody, parseState } from './copilot-conflicts-comment.cjs'
+import { MARKER, MAX_TASKS, SKIP_LABELS, commentBody, parseState } from './copilot-conflicts-comment.cjs'
 
 const MODEL = 'claude-opus-5'
 const CUSTOM_AGENT = 'worker-bee'
@@ -88,11 +88,11 @@ const dispatchTask = async task => {
   const state = parseState(comment.body)
   const updated = {
     ...state,
-    attempts: state.attempts + 1,
+    tasks: state.tasks + 1,
     lastDispatchedAt: new Date().toISOString(),
     lastTaskUrl: taskUrl,
     // Recorded rather than derived, so a later scan rewriting this comment still credits the run
-    // that started the attempt instead of itself.
+    // that started the task instead of itself.
     lastRunUrl: process.env.RUN_URL || null,
     history: [...state.history, { startedAt: new Date().toISOString(), taskUrl }],
   }
@@ -103,7 +103,7 @@ const dispatchTask = async task => {
   })
   if (!update.ok)
     throw new Error(`task started but could not update #${task.number}: ${update.status} ${update.statusText}`)
-  return `- [#${task.number}](${task.url}) — [Copilot task](${taskUrl}) started (attempt ${updated.attempts} of ${MAX_ATTEMPTS}).`
+  return `- [#${task.number}](${task.url}) — [Copilot task](${taskUrl}) started (task ${updated.tasks} of ${MAX_TASKS}).`
 }
 
 const results = await Promise.allSettled(tasks.map(dispatchTask))

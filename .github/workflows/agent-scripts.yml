@@ -29,8 +29,8 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
-      - scripts/ci/attempt-comment.cjs
-      - scripts/ci/__tests__/attempt-comment.mjs
+      - scripts/ci/task-comment.cjs
+      - scripts/ci/__tests__/task-comment.mjs
       - scripts/ci/collect-copilot-conflicts.cjs
       - scripts/ci/__tests__/collect-copilot-conflicts.mjs
       - scripts/ci/copilot-conflicts-comment.cjs
@@ -52,8 +52,8 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
-      - scripts/ci/attempt-comment.cjs
-      - scripts/ci/__tests__/attempt-comment.mjs
+      - scripts/ci/task-comment.cjs
+      - scripts/ci/__tests__/task-comment.mjs
       - scripts/ci/collect-copilot-conflicts.cjs
       - scripts/ci/__tests__/collect-copilot-conflicts.mjs
       - scripts/ci/copilot-conflicts-comment.cjs
@@ -117,8 +117,8 @@ jobs:
       - name: Run web bridge attach integration test
         run: npx tsx scripts/bridge-attach.test.ts
 
-      - name: Run attempt comment tests
-        run: node scripts/ci/__tests__/attempt-comment.mjs
+      - name: Run task comment tests
+        run: node scripts/ci/__tests__/task-comment.mjs
 
       - name: Run Copilot conflict collector tests
         run: node scripts/ci/__tests__/collect-copilot-conflicts.mjs
