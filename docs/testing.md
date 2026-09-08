@@ -822,6 +822,8 @@ Use a skip label only when the test intentionally covers behavior that already w
 
 Test-only coverage pull requests with no application-code changes are skipped automatically. When a label is needed, it documents why a red pre-fix run is not expected; it must not be used merely to bypass a surprising failure.
 
+Correcting a test that asserts the wrong thing needs a label for the same reason, and is easy to mistake for a bypass. Renaming an existing `it(...)` reads to the workflow as an added test, and a corrected assertion passes on the control commit precisely because the implementation there was already right — it was the assertion that was wrong. Say which in the pull request description, so the label is read as the explanation it is.
+
 ## Reporting Bugs
 
 ### Issue Titles
