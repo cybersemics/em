@@ -147,6 +147,30 @@ expect(exported).toBe(`
 `)
 ```
 
+Wait **in the page**, never from node. `page.waitForFunction` compiles the predicate into the page and runs it there on every animation frame, so a wait of any length costs the same handful of protocol messages. Vitest's `expect.poll` runs its callback in node instead, making every attempt a devtools round trip on an interval — it is banned by an eslint rule for that reason, and the rule's message names the replacement. The same goes for any hand-rolled loop that re-reads the page from node.
+
+That leaves the one thing `expect.poll` was good at: a wait that times out reports only `waiting failed: Nms exceeded`, while an assertion reports the value it actually saw. Keep both by catching the wait and reading the value once, which costs nothing while the wait is succeeding:
+
+```ts
+// ✅ Do: poll in the page, and pay for the value only when it fails
+const waitForHighlightedBullets = async (n: number) => {
+  try {
+    await page.waitForFunction(
+      (n: number) => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === n,
+      { timeout: 6000 },
+      n,
+    )
+  } catch {
+    const highlighted = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets => bullets.length)
+    throw new Error(`Expected ${n} highlighted bullets, but ${highlighted} were highlighted.`)
+  }
+}
+```
+
+The `catch` must always throw. Swallowing the timeout to let the test carry on is the [false-positive](#7-make-false-positives-difficult) it looks like.
+
+This is worth doing wherever the wait *is* the assertion — nothing follows it, and the test passes precisely because the condition became true. It is not worth doing for a wait that only arranges the state a later assertion is about; there, a bare `waitForEditable` is the whole point, and its callers never read the message.
+
 If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
 
 The sanctioned `paste` and `setTheme` Puppeteer helpers still contain fixed sleeps. The iOS `showEditMenu` helper also has a documented WebKit settlement delay. These are known driver/synchronization debt, not general examples to copy. If one is changed, prefer replacing the delay with a named readiness condition when the platform exposes one.

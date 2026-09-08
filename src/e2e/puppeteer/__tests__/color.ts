@@ -122,9 +122,7 @@ it('scrolls the Color Picker only as far as needed when opened with the keyboard
   expect(visiblePickerGeometry.scrollLeft).toBe(scrollLeftBeforeOpeningVisiblePicker)
 
   await press('h', { meta: true, shift: true })
-  await expect
-    .poll(() => page.evaluate(() => document.querySelector('[aria-label="text color swatches"]') === null))
-    .toBe(true)
+  await waitForSelector('[aria-label="text color swatches"]', { hidden: true })
   await scrollBy('[data-testid="toolbar"]', -10000, 0)
 
   const textColorIsOutsideToolbar = await page.evaluate(() => {
@@ -139,20 +137,38 @@ it('scrolls the Color Picker only as far as needed when opened with the keyboard
   await press('h', { meta: true, shift: true })
   await waitForSelector('[aria-label="text color swatches"]')
 
-  await expect
-    .poll(async () => {
-      const geometry = await getColorPickerGeometry()
-      return {
-        leftEdgeVisible: geometry.colorPickerLeft >= geometry.toolbarLeft,
-        rightEdgeAligned: Math.abs(geometry.colorPickerRight - geometry.toolbarRight) < geometry.edgeTolerance,
-        rightEdgeVisible: geometry.colorPickerRight <= geometry.toolbarRight,
-      }
-    })
-    .toEqual({
-      leftEdgeVisible: true,
-      rightEdgeAligned: true,
-      rightEdgeVisible: true,
-    })
+  // The picker is scrolled into view after it opens, so wait in the page for it to come to rest against the toolbar's
+  // right edge. The wait is the assertion; catching it reports the geometry that was actually rendered, which a bare
+  // timeout would not.
+  try {
+    await page.waitForFunction(
+      () => {
+        const toolbar = document.querySelector('[data-testid="toolbar"]')
+        const swatchGroups = document.querySelectorAll(
+          '[aria-label="text color swatches"], [aria-label="background color swatches"]',
+        )
+        if (!toolbar || swatchGroups.length !== 2) return false
+
+        const toolbarRect = toolbar.getBoundingClientRect()
+        const swatchGroupRects = Array.from(swatchGroups).map(group => group.getBoundingClientRect())
+        const colorPickerLeft = Math.min(...swatchGroupRects.map(rect => rect.left))
+        const colorPickerRight = Math.max(...swatchGroupRects.map(rect => rect.right))
+        const edgeTolerance = parseFloat(window.getComputedStyle(swatchGroups[0]).fontSize) / 2
+
+        return (
+          colorPickerLeft >= toolbarRect.left &&
+          colorPickerRight <= toolbarRect.right &&
+          Math.abs(colorPickerRight - toolbarRect.right) < edgeTolerance
+        )
+      },
+      { timeout: 6000 },
+    )
+  } catch {
+    const geometry = await getColorPickerGeometry()
+    throw new Error(
+      `Expected the Color Picker to come to rest against the right edge of the toolbar, but it spans ${geometry.colorPickerLeft}-${geometry.colorPickerRight} within a toolbar spanning ${geometry.toolbarLeft}-${geometry.toolbarRight} (tolerance ${geometry.edgeTolerance}).`,
+    )
+  }
 })
 
 it('Set the text color of the text and bullet', async () => {
