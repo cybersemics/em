@@ -17,18 +17,18 @@ const isSingleEmoji = (value: string): boolean => {
   return graphemes.length === 1 && matches?.length === 1 && matches[0] === value
 }
 
-/** Generates ten ordered emoji that represent a thought value. The LLM returns 15 candidates, and we filter out duplicates and invalid emoji to return ten. */
-const generateEmoji = async (value: string): Promise<string[]> => {
-  const { emojis } = await completeChat({
+/** Generates ten ordered emoji for each thought value in one request. The LLM returns 15 candidates per value, and we filter out duplicates and invalid emoji to return ten for each. Returns the lists in value order. */
+const generateEmoji = async (values: string[]): Promise<string[][]> => {
+  const candidates = await completeChat({
     messages: [
       {
         role: 'system',
-        content: `Choose fifteen distinct emoji that best represent the given concept.
+        content: `Choose fifteen distinct emoji that best represent each of the given concepts. The concepts are numbered, and you will respond with one field per concept, numbered to match.
 
 Hard requirements:
-- Return exactly fifteen *UNIQUE* candidates.
+- Return exactly fifteen *UNIQUE* candidates for each concept.
 - Every candidate must be a single emoji grapheme.
-- You *MUST* not return the same emoji more than once.
+- You *MUST* not return the same emoji more than once within a concept's candidates.
 
 Prioritize:
 - concrete, self-contained subjects whose inherent physical form embodies the concept
@@ -47,30 +47,38 @@ Avoid:
 
 Order them from most to least semantically precise and culturally recognizable.`,
       },
-      { role: 'user', content: value },
+      { role: 'user', content: values.map((value, index) => `Concept ${index}: ${value}`).join('\n') },
     ],
     model: Model.GPT_5_6_LUNA,
     reasoningEffort: ReasoningEffort.NONE,
     service: Service.GENERATE_EMOJI,
-    schema: z.object({
-      emojis: z
-        .array(z.string())
-        .length(15)
-        .describe(
-          'Exactly fifteen distinct emoji graphemes ordered from most to least semantically precise and culturally recognizable.',
-        ),
-    }),
+    schema: z.object(
+      Object.fromEntries(
+        values.map((value, index) => [
+          `emojis_${index}`,
+          z
+            .array(z.string())
+            .length(15)
+            .describe(
+              `Exactly fifteen distinct emoji graphemes ordered from most to least semantically precise and culturally recognizable for concept ${index}: ${value}`,
+            ),
+        ]),
+      ),
+    ),
   })
 
-  const uniqueEmojis = emojis.filter(
-    (emoji, index) => isSingleEmoji(emoji) && emojis.findIndex(candidate => candidate === emoji) === index,
-  )
+  return values.map((_, index) => {
+    const emojis = candidates[`emojis_${index}`]
+    const uniqueEmojis = emojis.filter(
+      (emoji, i) => isSingleEmoji(emoji) && emojis.findIndex(candidate => candidate === emoji) === i,
+    )
 
-  if (uniqueEmojis.length < 10) {
-    throw new Error(`The LLM did not return 10 unique emoji: ${JSON.stringify(emojis)}`)
-  }
+    if (uniqueEmojis.length < 10) {
+      throw new Error(`The LLM did not return 10 unique emoji: ${JSON.stringify(emojis)}`)
+    }
 
-  return uniqueEmojis.slice(0, 10)
+    return uniqueEmojis.slice(0, 10)
+  })
 }
 
 export default generateEmoji

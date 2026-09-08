@@ -61,6 +61,8 @@ Where the bug depends on a particular thought tree, give it as a fenced code blo
 2. Move Thought Down (Cmd + Shift + ArrowDown).
 ````
 
+Write a gesture as arrows, not as the letters the code uses: `←↓→`, not `ldr`. `l` → `←`, `r` → `→`, `u` → `↑`, `d` → `↓`. The reader is following the steps with a finger on a screen, and the arrows are the swipe; the letters are an implementation detail they have to translate first. Name the command alongside it where the gesture has one — "Swipe New Subthought (`→↓→`)".
+
 Include preconditions that are awkward but load-bearing — a specific device width, a wrapped line, a particular sort order — as steps rather than assuming they are obvious.
 
 ### Current Behavior
@@ -72,6 +74,42 @@ What happens, as an observation, with the evidence: a screenshot, a video, or a 
 What should happen instead. Write it as a condition that can be checked — a state the app is or is not in — since it is what a regression test will assert. Where the correct state is visible elsewhere in the app, a screenshot of that is useful alongside the screenshot of the bug.
 
 State the goal, not the shape of the fix. What the fix looks like is the assignee's call, and writing it out for them in advance is work they will redo.
+
+#### In this case / In general
+
+Where the correct behaviour is a rule and the steps are one instance of it, split Expected Behavior into two `###` subheadings:
+
+```markdown
+## Expected Behavior
+
+### In this case
+
+...
+
+### In general
+
+...
+```
+
+**In this case** is the end state of the exact steps above, in their own terms — the same thoughts, settings, and values, named as the steps named them. It is what the reader checks after following the steps, and what the regression test asserts.
+
+**In general** is the rule the case is an instance of, stated for any input that reaches it: what it applies to, what is left unchanged, where it stops. It is what the assignee implements, and what stops the fix from being special-cased to the reproduction.
+
+For a Gesture Diagram misaligned after the app font size is increased to 32:
+
+```markdown
+### In this case
+
+At app font size 32, the arrow in the Question Mark gesture diagram is centered in its box, as it is at the default font size.
+
+### In general
+
+Gesture diagram arrows stay centered at every app font size, wherever a diagram is rendered.
+```
+
+The first is checkable by following the steps; the second is what keeps the fix from being a special case at 32.
+
+Skip the split where it does not earn its place — where the case *is* the rule and the second heading would restate the first in the abstract, or where the correct behaviour is a single fixed state (a value, a label, a position) with no input to generalise over. One paragraph under the plain heading is right for those.
 
 ## Optional sections
 
@@ -152,9 +190,11 @@ New issues often originate in a comment thread on another issue or PR.
 
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
+- A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
+- An Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
 - A `Blocked by` line in the body with no relationship configured on GitHub.

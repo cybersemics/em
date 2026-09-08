@@ -82,27 +82,27 @@ createPostRoute({
   },
 })
 
-/** Generates emoji for a thought. */
+/** Generates emoji for one or more thoughts. */
 createPostRoute({
   path: '/ai/generateEmoji',
   requestSchema: z.object({
-    value: z.string().describe('The thought value to generate emoji for'),
+    values: z.array(z.string()).min(1).describe('The thought values to generate emoji for'),
   }),
-  handler: async (request) => {
-    const emojis = await generateEmoji(request.value)
+  handler: async request => {
+    const emojis = await generateEmoji(request.values)
     return { emojis }
   },
 })
 
-/** Generates a thought. */
+/** Generates one or more thoughts. */
 createPostRoute({
   path: '/ai/generateThought',
   requestSchema: z.object({
-    input: z.string().describe('The input to generate a thought for'),
+    inputs: z.array(z.string()).min(1).describe('The outlines to generate a thought for'),
   }),
-  handler: async (request) => {
-    const thought = await generateThought(request.input)
-    return { thought }
+  handler: async request => {
+    const thoughts = await generateThought(request.inputs)
+    return { thoughts }
   },
 })
 

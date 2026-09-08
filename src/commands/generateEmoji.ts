@@ -1,5 +1,5 @@
 import Command from '../@types/Command'
-import generateEmojiAtPath from '../actions/generateEmoji'
+import generateEmojiAtPaths from '../actions/generateEmoji'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../actions/setIsMulticursorExecuting'
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
@@ -15,16 +15,19 @@ const generateEmoji = {
   gesture: 'urd',
   svg: GenerateThoughtIcon,
   multicursor: {
-    /** Generates or cycles emoji for every selected thought within one undo bracket. */
+    /** Generates or cycles emoji for every selected thought in one request within one undo bracket. */
     execMulticursor: (cursors, dispatch) => {
-      /** Waits for all inference requests before closing the multicursor undo bracket. */
+      /** Waits for the inference request before closing the multicursor undo bracket. */
       const generateAll = async () => {
         // The command framework's synchronous bracket closes before inference resolves, so open an async bracket after
         // yielding and keep it open until every selected thought has settled.
         await Promise.resolve()
         dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'generateEmoji' }))
-        await Promise.allSettled(cursors.map(path => dispatch(generateEmojiAtPath(path))))
-        dispatch(setIsMulticursorExecuting({ value: false }))
+        try {
+          await dispatch(generateEmojiAtPaths(cursors))
+        } finally {
+          dispatch(setIsMulticursorExecuting({ value: false }))
+        }
       }
 
       /** Requests disclosure before generating emoji for the full selection. */
@@ -49,7 +52,7 @@ const generateEmoji = {
       return
     }
 
-    await dispatch(generateEmojiAtPath(cursor))
+    await dispatch(generateEmojiAtPaths([cursor]))
   },
 } satisfies Command
 
