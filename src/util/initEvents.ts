@@ -320,14 +320,19 @@ const initEvents = (store: Store<State, any>) => {
   const onSafariGesture = (e: Event) => e.preventDefault()
 
   /**
-   * Prevents native behavior during a multi-touch gesture (e.g. two-finger tracing or pinch). While the
+   * Prevents native behavior during a two-finger gesture (e.g. two-finger tracing or pinch). While the
    * multitouch latch is set, this preventDefaults touchmove so the browser does not move the contentEditable
    * caret / extend the text selection to follow the fingers (observed on iOS Safari) or scroll the page. It is
    * a no-op for single-finger interactions (the latch is only set once a second finger is down), so normal
    * scrolling and text selection are unaffected. Registered non-passively so preventDefault is honored. See #4233.
+   *
+   * Three or more fingers are left alone, since gestures of that size belong to the OS rather than to em —
+   * notably the iOS three-finger swipe that drives undo and redo. Suppressing the default there would fight the
+   * system gesture recognizer for touches em has no use for anyway. The latch still covers the tail of a
+   * two-finger gesture, when one finger has lifted and the caret would otherwise follow the remaining one.
    */
   const onMultitouchMove = (e: TouchEvent) => {
-    if (multitouchStore.getState() && e.cancelable) e.preventDefault()
+    if (multitouchStore.getState() && e.touches.length < 3 && e.cancelable) e.preventDefault()
   }
 
   /** Handle a page lifecycle state change, i.e. switching apps. */

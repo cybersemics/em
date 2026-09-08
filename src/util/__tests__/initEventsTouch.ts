@@ -29,14 +29,24 @@ it('prevents native pinch-to-zoom gestures (iOS Safari)', () => {
 
 // While the multitouch latch is set, touchmove is prevented so the native caret/text selection does not follow
 // the fingers and the page does not scroll. See #4233.
-it('blocks touchmove while multitouch is latched, but not otherwise', () => {
-  const single = new Event('touchmove', { cancelable: true })
+it('blocks touchmove while two fingers are down, but not otherwise', () => {
+  const single = Object.assign(new Event('touchmove', { cancelable: true }), { touches: { length: 1 } })
   window.dispatchEvent(single)
   expect(single.defaultPrevented).toBe(false)
 
   updateMultitouch({ type: 'touchstart', touches: { length: 2 } } as TouchEvent)
 
-  const multi = new Event('touchmove', { cancelable: true })
-  window.dispatchEvent(multi)
-  expect(multi.defaultPrevented).toBe(true)
+  const double = Object.assign(new Event('touchmove', { cancelable: true }), { touches: { length: 2 } })
+  window.dispatchEvent(double)
+  expect(double.defaultPrevented).toBe(true)
+})
+
+// Gestures of three or more fingers belong to the OS — notably the iOS three-finger swipe that drives undo and
+// redo — so their default is not suppressed even though the multitouch latch is set. See #4233.
+it('does not block touchmove for three or more fingers', () => {
+  updateMultitouch({ type: 'touchstart', touches: { length: 3 } } as TouchEvent)
+
+  const triple = Object.assign(new Event('touchmove', { cancelable: true }), { touches: { length: 3 } })
+  window.dispatchEvent(triple)
+  expect(triple.defaultPrevented).toBe(false)
 })
