@@ -8,7 +8,7 @@
 
 ## Quick Start
 
-The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests.
+The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests. A fresh checkout — including every agent worktree under `.claude/worktrees/` — needs its own `yarn install`: the local Capacitor plugins in `packages/` are linked as workspace dependencies and are only compiled by the `postinstall` → `build:packages` step, so without it any test that reaches production code importing one fails to collect with `Failed to resolve import "webview-background" from "src/device/nativeHistory.ts"`. Run `yarn` (or just `yarn build:packages` if the rest of `node_modules` is already present) and re-run the tests.
 
 ```sh
 yarn test            # unit and jsdom tests
