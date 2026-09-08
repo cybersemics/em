@@ -42,7 +42,11 @@ describe('command center', () => {
 
     // the caret is placed in the new note, so typing goes into the note rather than back into the thought
     await keyboard.type('World')
-    await waitUntil(() => document.querySelector('[aria-label="note-editable"]')?.textContent === 'World')
+    await expect
+      .poll(() => page.evaluate(() => document.querySelector('[aria-label="note-editable"]')?.textContent ?? null), {
+        timeout: 6000,
+      })
+      .toBe('World')
   })
 
   // https://github.com/cybersemics/em/issues/3445

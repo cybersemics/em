@@ -25,9 +25,6 @@ const editableValues = () => page.$$eval('[data-editable]', els => els.map(el =>
 const waitForFirstEditable = (value: string) =>
   page.waitForFunction(value => document.querySelector('[data-editable]')?.innerHTML === value, {}, value)
 
-/** Waits until no thoughts are rendered. */
-const waitForNoEditables = () => page.waitForFunction(() => !document.querySelector('[data-editable]'))
-
 /** Returns the index of the thought that holds the real caret, or -1 if no thought is being edited. */
 const editingIndex = () =>
   page.evaluate(() => {
@@ -252,7 +249,7 @@ describe('clearThought', () => {
 
     // The second Escape clears the multiselection.
     await press('Escape')
-    await page.waitForFunction(() => !document.querySelector('[aria-label="bullet"][data-highlighted="true"]'))
+    await expect.poll(multiselectSize, { timeout: 6000 }).toBe(0)
   })
 
   // https://github.com/cybersemics/em/pull/4520#issuecomment-5186050473
@@ -289,7 +286,7 @@ describe('clearThought', () => {
 
     // The second Escape clears the multiselection.
     await press('Escape')
-    await page.waitForFunction(() => !document.querySelector('[aria-label="bullet"][data-highlighted="true"]'))
+    await expect.poll(multiselectSize, { timeout: 6000 }).toBe(0)
   })
 
   // https://github.com/cybersemics/em/pull/4520#issuecomment-5255961961
@@ -378,7 +375,7 @@ describe('clearThought', () => {
     // Backspace on the cleared thoughts deletes every selected thought, rather than merging them or deleting only the
     // one that holds the caret.
     await press('Backspace')
-    await waitForNoEditables()
+    await expect.poll(editableValues, { timeout: 6000 }).toEqual([])
   })
 })
 

@@ -25,20 +25,15 @@ const shiftClickThought = async (value: string) => {
   }
 }
 
-/** Waits for the given number of bullets to be highlighted by the multiselect. Reports the number that are
- * actually highlighted on timeout, since the alternative — puppeteer's own 30 s default, which outlives the
- * test timeout — fails the test without saying which step never arrived. */
+/** Asserts that the given number of bullets are highlighted by the multiselect, polling until they are. Reports the
+ * number that are actually highlighted on timeout, since the alternative — a bare wait — fails the test without
+ * saying which step never arrived. */
 const waitForHighlightedBullets = async (n: number) => {
-  try {
-    await page.waitForFunction(
-      (n: number) => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === n,
-      { timeout: 10000 },
-      n,
-    )
-  } catch {
-    const highlighted = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets => bullets.length)
-    throw new Error(`Expected ${n} highlighted bullets, but ${highlighted} were highlighted.`)
-  }
+  await expect
+    .poll(() => page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets => bullets.length), {
+      timeout: 10000,
+    })
+    .toBe(n)
 }
 
 /** Waits a single animation frame, i.e. long enough for React to commit the render that follows a command. */

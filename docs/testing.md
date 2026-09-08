@@ -147,6 +147,13 @@ expect(exported).toBe(`
 `)
 ```
 
+A wait and an assertion are not interchangeable, and which one to reach for depends on what the line is *for*:
+
+- **Wait for a precondition.** When the line brings the app to the state a later assertion is about — the app settling, a thought rendering, a modal opening — use `waitForEditable`, `waitForCursor`, `waitUntil`, or `page.waitForFunction`. The predicate is evaluated in the page, which is cheaper, and a timeout there means the arrange never completed.
+- **Poll an assertion.** When the wait *is* the assertion — nothing follows it, and the test passes precisely because the condition became true — use Vitest's `expect.poll(fn, { timeout }).toBe(...)`. A `waitFor*` that times out reports only `waiting failed: Nms exceeded`; `expect.poll` reports the last observed value against the expected one, which is the whole diagnosis. Pass an explicit `timeout` — the default is 1 s, far shorter than the Puppeteer waiters.
+
+Do not hand-roll the value reporting by catching a wait's timeout and re-reading the DOM to build a message; that is what `expect.poll` already does.
+
 If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
 
 The sanctioned `paste` and `setTheme` Puppeteer helpers still contain fixed sleeps. The iOS `showEditMenu` helper also has a documented WebKit settlement delay. These are known driver/synchronization debt, not general examples to copy. If one is changed, prefer replacing the delay with a named readiness condition when the platform exposes one.
