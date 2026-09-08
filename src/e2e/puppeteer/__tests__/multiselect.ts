@@ -1,9 +1,11 @@
 import { KnownDevices } from 'puppeteer'
+import { HOME_DISPLAY_VALUE } from '../../../constants'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
@@ -12,6 +14,7 @@ import press from '../helpers/press'
 import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -390,6 +393,26 @@ describe('multiselect', () => {
 
     // a click moves the caret as it does when a single thought is being edited
     expect(await textCursors()).toEqual(['auto', 'auto'])
+  })
+
+  it('should delete all selected thoughts when Backspace is pressed with Select All active', async () => {
+    await paste(`
+        - A
+        - B
+        - C
+        `)
+
+    // Place caret at the beginning of C (as specified in the Steps to Reproduce)
+    const editableC = await waitForEditable('C')
+    await click(editableC, { edge: 'left' })
+    await waitUntil(() => window.getSelection()?.focusOffset === 0)
+
+    await command('selectAll')
+    await press('Backspace')
+
+    // an export with no thoughts left is just the root placeholder
+    const exported = await exportThoughts()
+    expect(exported).toBe(`- ${HOME_DISPLAY_VALUE}`)
   })
 })
 
