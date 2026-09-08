@@ -12,6 +12,10 @@ EVERHOUR_PROJECT_ID=
 OPENAI_API_KEY=
 ```
 
+Every script here reads `OPENAI_API_KEY_ESTIMATE` first and falls back to `OPENAI_API_KEY`. The separate
+name is what lets estimation spend be read on its own in the OpenAI dashboard, which reports by API key;
+one shared key in `.env` is all a local run needs.
+
 ## Usage
 
 ```bash
@@ -45,7 +49,7 @@ Valid estimate values: `1h` (XXS), `2h` (XS), `4h` (S), `8h` (M), `16h` (L), `24
 
 ## Workflows
 
-Three GitHub Action workflows in `.github/workflows/` drive the estimation scripts. All require the `EVERHOUR_API_KEY` and `EVERHOUR_PROJECT_ID` secrets to be configured in the repository settings. The Issue Opened and Backfill workflows additionally require an `OPENAI_API_KEY` secret for the estimation inference call.
+Three GitHub Action workflows in `.github/workflows/` drive the estimation scripts. All require the `EVERHOUR_API_KEY` and `EVERHOUR_PROJECT_ID` secrets to be configured in the repository settings. The Issue Opened and Backfill workflows additionally require an `OPENAI_API_KEY_ESTIMATE` secret for the estimation inference call, or `OPENAI_API_KEY` as the fallback.
 
 | Workflow                                                                     | Script            | Trigger                                  | Description                                                                                                                                     |
 | ---------------------------------------------------------------------------- | ----------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -103,9 +103,12 @@ const useLongPress = (
 
       // This gives other components a chance to short circuit.
       // We can't stop propagation here without messing up other components like Bullet.
+      // Do not clear the timer here. setPressing(false) above already clears the timer of the press that is
+      // ending, via the arming effect's cleanup. By the time this deferred callback runs, the only timer that
+      // could be pending belongs to a *subsequent* press, and clearing it would silently cancel that long
+      // press. This is not hypothetical: the callback is deferred by a timer, so a congested main thread can
+      // delay it past the next mousedown, which the browser prioritizes over an overdue timer.
       setTimeout(() => {
-        clearTimeout(timerIdRef.current)
-        timerIdRef.current = 0
         onLongPressEnd?.(e)
       }, 10)
     },

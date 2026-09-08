@@ -20,6 +20,7 @@ import multitouchStore from '../stores/multitouchStore'
 import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
+import BackgroundGlow from './BackgroundGlow'
 import CommandCenter from './CommandCenter/CommandCenter'
 import Content from './Content'
 import DesktopCommandUniverse from './DesktopCommandUniverse'
@@ -89,6 +90,8 @@ const shouldCancelGesture = (
     // cancels it (the touchstart guard in MultiGesture is skipped once a gesture is in progress). See #4233.
     multitouchStore.getState() ||
     isOnToolbar(x, y) ||
+    // Cancel when the touch starts on a range input (e.g. the background glow debug sliders). Otherwise the gesture disables scrolling by calling preventDefault on touchmove, which blocks the slider's native drag.
+    !!(x && y && document.elementFromPoint(x, y)?.closest('input[type="range"]')) ||
     (x && y && selection.isNear(x, y, distance)) ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
@@ -196,6 +199,8 @@ const AppComponent: FC = () => {
       })}
       ref={rootRef}
     >
+      {/* Rendered first so that later positioned siblings (Content, Toolbar, Footer) paint above it. */}
+      <BackgroundGlow />
       <Alert />
       <Tips />
       {!isTouch && <DesktopCommandUniverse />}

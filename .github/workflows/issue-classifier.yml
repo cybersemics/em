@@ -55,7 +55,9 @@ jobs:
         run: node scripts/issue-classifier/src/issue.ts ${{ inputs.dry && '--dry' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # OpenAI API key used for the milestone selection inference call (issue.ts).
+          # OpenAI API key used for the milestone selection inference call (issue.ts). The classifier key
+          # bills this workflow separately in the OpenAI dashboard; the shared key is the fallback.
+          OPENAI_API_KEY_ISSUE_CLASSIFIER: ${{ secrets.OPENAI_API_KEY_ISSUE_CLASSIFIER }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           # Empty for the issues event, where the issue number comes from the event payload instead.
           ISSUE_NUMBER: ${{ inputs.issue }}

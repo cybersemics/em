@@ -19,4 +19,12 @@ export const dismissKeyboardActionCreator = (): Thunk => (dispatch, getState) =>
     selection.clear()
     dispatch(keyboardOpen({ value: false }))
   }
+  // Edit mode may already have ended by the time the platform reports the keyboard hiding — a tap outside the thought
+  // blurs the editable first, and a long press that selects a word ends it via onFocus — but the browser keeps a
+  // native touch selection alive through both, leaving the selection handles and the text context menu on screen after
+  // the keyboard is gone (#4833). The keyboard hiding is the authoritative signal that the user is done editing, so
+  // take the selection with it no matter what state edit mode is in.
+  else if (!selection.isCollapsed()) {
+    selection.clear()
+  }
 }

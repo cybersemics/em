@@ -2,7 +2,7 @@ import { KnownDevices } from 'puppeteer'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
@@ -391,9 +391,7 @@ describe('multiselect', () => {
 })
 
 describe('mobile only', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   it('should multiselect two thoughts at once', async () => {
     await paste(`
