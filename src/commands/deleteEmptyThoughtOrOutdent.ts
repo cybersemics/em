@@ -70,12 +70,13 @@ const canExecute = (state: State): boolean =>
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {
   const state = getState()
-  if (state.isMulticursorExecuting) {
-    dispatch(deleteThoughtWithCursor())
-  } else if (state.cursorCleared) {
-    dispatch(deleteEmptyThought)
-  } else if (canExecuteOutdent(state)) {
+  // Outdenting an only child takes precedence over the multicursor deletion below, which would otherwise delete the
+  // thought outright and defeat the outdent. cursorCleared still wins over the outdent, so that Backspace after
+  // clearThought deletes the thought.
+  if (!state.cursorCleared && canExecuteOutdent(state)) {
     dispatch(outdent())
+  } else if (state.isMulticursorExecuting && !state.cursorCleared) {
+    dispatch(deleteThoughtWithCursor())
   } else {
     dispatch(deleteEmptyThought)
   }
