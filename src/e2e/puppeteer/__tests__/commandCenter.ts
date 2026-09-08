@@ -43,7 +43,7 @@ describe('command center', () => {
     // the caret is placed in the new note, so typing goes into the note rather than back into the thought
     await keyboard.type('World')
     await expect
-      .poll(() => page.evaluate(() => document.querySelector('[aria-label="note-editable"]')?.textContent ?? null), {
+      .poll(() => page.$$eval('[aria-label="note-editable"]', notes => notes[0]?.textContent ?? null), {
         timeout: 6000,
       })
       .toBe('World')

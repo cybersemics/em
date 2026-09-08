@@ -7,9 +7,9 @@ const waitForCommandCenterOpen = async () => {
   await expect
     .poll(
       () =>
-        page.evaluate(
-          () =>
-            document.querySelector('[data-testid="command-center-panel"]')?.getAttribute('data-sheet-state') ?? null,
+        page.$$eval(
+          '[data-testid="command-center-panel"]',
+          sheets => sheets[0]?.getAttribute('data-sheet-state') ?? null,
         ),
       { timeout: 6000 },
     )

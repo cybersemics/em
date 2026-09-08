@@ -11,9 +11,7 @@ interface Options {
  */
 const waitForAlertContent = async (text: string, { timeout }: Options = { timeout: 6000 }) => {
   await expect
-    .poll(() => page.evaluate(() => document.querySelector('[data-testid="alert-content"]')?.textContent ?? null), {
-      timeout,
-    })
+    .poll(() => page.$$eval('[data-testid="alert-content"]', alerts => alerts[0]?.textContent ?? null), { timeout })
     .toEqual(expect.stringContaining(text))
 }
 
