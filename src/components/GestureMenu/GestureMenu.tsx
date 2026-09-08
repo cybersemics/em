@@ -203,6 +203,23 @@ function Overlay() {
   )
 }
 
+/** Hides the native text selection (and the iOS selection callout / edit menu) while the gesture menu is onscreen, then restores it when the menu is dismissed. The range is removed rather than cleared so that focus and the editor state (e.g. the mobile keyboard) are preserved, and saved so a cancelled gesture leaves the selection exactly as it was. */
+const useHideSelection = (hide: boolean) => {
+  // Holds the text selection range while the gesture menu is open so it can be restored when the menu is dismissed.
+  const savedRangeRef = useRef<selection.SavedRange | null>(null)
+
+  useEffect(() => {
+    if (hide) {
+      // Only a non-collapsed selection renders the callout. Removing a collapsed caret would disturb the editor mid-gesture, which on iOS aborts the gesture before its command executes.
+      savedRangeRef.current = selection.isCollapsed() ? null : selection.saveRange()
+      if (savedRangeRef.current) selection.removeRanges()
+    } else if (savedRangeRef.current) {
+      selection.restoreRange(savedRangeRef.current)
+      savedRangeRef.current = null
+    }
+  }, [hide])
+}
+
 /** A GestureMenu component that fades in and out based on state.showGestureMenu. */
 const GestureMenuWithTransition: FC = () => {
   const popupRef = useRef<HTMLDivElement>(null)
@@ -220,20 +237,7 @@ const GestureMenuWithTransition: FC = () => {
 
   const [isGlowBackgroundLoaded, setIsGlowBackgroundLoaded] = useState(false)
 
-  // Holds the text selection range while the gesture menu is open so it can be restored when the menu is dismissed.
-  const savedRangeRef = useRef<selection.SavedRange | null>(null)
-
-  // Hide the native text selection (and the iOS selection callout / edit menu) while the gesture menu is onscreen, then restore it when the menu is dismissed. The range is removed rather than cleared so that focus and the editor state (e.g. the mobile keyboard) are preserved, and saved so a cancelled gesture leaves the selection exactly as it was.
-  useEffect(() => {
-    if (showGestureMenu) {
-      // Only a non-collapsed selection renders the callout. Removing a collapsed caret would disturb the editor mid-gesture, which on iOS aborts the gesture before its command executes.
-      savedRangeRef.current = selection.isCollapsed() ? null : selection.saveRange()
-      if (savedRangeRef.current) selection.removeRanges()
-    } else if (savedRangeRef.current) {
-      selection.restoreRange(savedRangeRef.current)
-      savedRangeRef.current = null
-    }
-  }, [showGestureMenu])
+  useHideSelection(showGestureMenu)
 
   // Sync Redux showGestureMenu to gestureStore animation state
   useEffect(() => {
