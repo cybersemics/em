@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import NewSubthoughtNextIcon from '../components/icons/NewSubthoughtNextIcon'
@@ -12,12 +11,12 @@ const newUncleCommand = {
   label: 'New Subthought (next)' as const,
   description: 'Add a new thought one level up. Same as creating a new thought and then outdenting it.',
   gesture: 'dl',
-  keyboard: { key: Key.Enter, meta: true, alt: true },
+  keyboard: { key: 'Enter', meta: true, alt: true },
   multicursor: {
     // The cursor restore at the end of the multicursor loop would pull the caret off the empty thought created for the last selected thought. The newThought action places the cursor on each thought it creates, so preventing the restore leaves the caret there, ready to type — the same postcondition as a single-cursor invocation.
     preventSetCursor: true,
-    // After execution the selection is stale — the user's next act is typing into the new empty thought. Clearing matches the single-cursor behavior, where the newThought action's own setCursor clears the selection.
-    clearMulticursor: true,
+    // The original selection is stale once the new thoughts exist, so select the new thoughts instead. A selected root thought is skipped by the per-iteration canExecute check and contributes none.
+    selectNewCursors: true,
   },
   svg: NewSubthoughtNextIcon,
   canExecute: state => {

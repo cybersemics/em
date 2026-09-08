@@ -4,10 +4,7 @@ import { zodResponseFormat } from 'openai/helpers/zod'
 import { ZodType } from 'zod'
 import Model from './@types/Model'
 import ReasoningEffort from './@types/ReasoningEffort'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+import Service from './@types/Service'
 
 /** Completes a chat and parses its structured response. */
 const completeChat = async <T>({
@@ -15,12 +12,22 @@ const completeChat = async <T>({
   model,
   reasoningEffort,
   schema,
+  service,
 }: {
   messages: ChatCompletionMessageParam[]
   model: Model
   schema: ZodType<T>
   reasoningEffort: ReasoningEffort
+  service: Service
 }): Promise<T> => {
+  // Authenticate as the service so that the OpenAI dashboard and the Usage and Costs APIs can group tokens and spend by
+  // API key. Fall back to the shared key for local development or a missing service-specific key.
+  const apiKey = process.env[`OPENAI_API_KEY_${service}`] || process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    throw new Error(`Missing OPENAI_API_KEY_${service} and OPENAI_API_KEY`)
+  }
+  const openai = new OpenAI({ apiKey })
+
   const response = await openai.chat.completions.parse({
     messages,
     model,

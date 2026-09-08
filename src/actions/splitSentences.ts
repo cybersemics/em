@@ -14,15 +14,20 @@ import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import splitSentence from '../util/splitSentence'
 
+export interface splitSentencesPayload {
+  /** The plain text offset of a collapsed selection within the cursor thought's value. A thought that none of the delimiters split is split at this offset into a main thought and a child instead. Null or undefined when there is no collapsed selection in the thought. */
+  caretOffset?: number | null
+}
+
 /** Split thought by sentences. Create new thought for each sentence. Thought value, on which cursor is on, replace with first sentence. */
-const splitSentences = (state: State): State => {
+const splitSentences = (state: State, { caretOffset }: splitSentencesPayload): State => {
   const { cursor } = state
   if (!cursor) return state
   const cursorThought = getThoughtById(state, head(cursor))
   if (!cursorThought) return state
   const { value } = cursorThought
 
-  const sentences = splitSentence(value)
+  const sentences = splitSentence(value, caretOffset)
 
   if (sentences.length <= 1) {
     return state
@@ -60,9 +65,12 @@ const splitSentences = (state: State): State => {
 }
 
 /** Action-creator for splitSentences. */
-export const splitSentencesActionCreator = (): Thunk => dispatch => dispatch({ type: 'splitSentences' })
+export const splitSentencesActionCreator =
+  (payload: splitSentencesPayload = {}): Thunk =>
+  dispatch =>
+    dispatch({ type: 'splitSentences', ...payload })
 
-export default _.curryRight(splitSentences)
+export default _.curryRight(splitSentences, 2)
 
 // Register this action's metadata
 registerActionMetadata('splitSentences', {
