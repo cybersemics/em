@@ -501,7 +501,7 @@ describe('mobile only', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3557
-  it.skip('moves the cursor to the parent while more than one thought is selected, and restores it when the Command Center closes', async () => {
+  it('moves the cursor to the parent while more than one thought is selected, and restores it when the Command Center closes', async () => {
     await paste(`
         - x
           - a

@@ -17,6 +17,7 @@ import freeThoughts from '../redux-middleware/freeThoughts'
 import loggerMiddleware from '../redux-middleware/loggerMiddleware'
 import multi from '../redux-middleware/multi'
 import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
+import multiselectCursorMiddleware from '../redux-middleware/multiselectCursorMiddleware'
 import pullQueue from '../redux-middleware/pullQueue'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
@@ -43,6 +44,7 @@ const middlewareEnhancer = applyMiddleware(
   freeThoughts,
   loggerMiddleware,
   multicursorAlertMiddleware,
+  multiselectCursorMiddleware,
 )
 
 // only validate Redux state in dev and test environments
