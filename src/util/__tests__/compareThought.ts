@@ -646,10 +646,10 @@ describe('compareThoughtByCreated', () => {
     expect(compareThoughtByCreated(older, { ...older })).toBe(0)
   })
 
-  it('falls back to compareReasonable when created timestamps are equal', () => {
+  it('falls back to rank when created timestamps are equal', () => {
     const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), created: ts }
-    const b = { ...thought('b'), created: ts }
+    const a = { ...thought('a'), created: ts, rank: 0 }
+    const b = { ...thought('b'), created: ts, rank: 1 }
     expect(compareThoughtByCreated(a, b)).toBe(-1)
     expect(compareThoughtByCreated(b, a)).toBe(1)
     expect(compareThoughtByCreated(a, { ...a })).toBe(0)
@@ -665,12 +665,13 @@ describe('compareThoughtByCreatedDescending', () => {
     expect(compareThoughtByCreatedDescending(newer, { ...newer })).toBe(0)
   })
 
-  it('falls back to compareReasonable when created timestamps are equal', () => {
+  it('falls back to rank when created timestamps are equal', () => {
     const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), created: ts }
-    const b = { ...thought('b'), created: ts }
+    const a = { ...thought('a'), created: ts, rank: 0 }
+    const b = { ...thought('b'), created: ts, rank: 1 }
     expect(compareThoughtByCreatedDescending(a, b)).toBe(-1)
     expect(compareThoughtByCreatedDescending(b, a)).toBe(1)
+    expect(compareThoughtByCreatedDescending(a, { ...a })).toBe(0)
   })
 })
 
@@ -683,12 +684,13 @@ describe('compareThoughtByUpdated', () => {
     expect(compareThoughtByUpdated(older, { ...older })).toBe(0)
   })
 
-  it('falls back to compareReasonable when lastUpdated timestamps are equal', () => {
+  it('falls back to rank when lastUpdated timestamps are equal', () => {
     const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), lastUpdated: ts }
-    const b = { ...thought('b'), lastUpdated: ts }
+    const a = { ...thought('a'), lastUpdated: ts, rank: 0 }
+    const b = { ...thought('b'), lastUpdated: ts, rank: 1 }
     expect(compareThoughtByUpdated(a, b)).toBe(-1)
     expect(compareThoughtByUpdated(b, a)).toBe(1)
+    expect(compareThoughtByUpdated(a, { ...a })).toBe(0)
   })
 })
 
@@ -701,12 +703,13 @@ describe('compareThoughtByUpdatedDescending', () => {
     expect(compareThoughtByUpdatedDescending(newer, { ...newer })).toBe(0)
   })
 
-  it('falls back to compareReasonable when lastUpdated timestamps are equal', () => {
+  it('falls back to rank when lastUpdated timestamps are equal', () => {
     const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), lastUpdated: ts }
-    const b = { ...thought('b'), lastUpdated: ts }
+    const a = { ...thought('a'), lastUpdated: ts, rank: 0 }
+    const b = { ...thought('b'), lastUpdated: ts, rank: 1 }
     expect(compareThoughtByUpdatedDescending(a, b)).toBe(-1)
     expect(compareThoughtByUpdatedDescending(b, a)).toBe(1)
+    expect(compareThoughtByUpdatedDescending(a, { ...a })).toBe(0)
   })
 })
 
