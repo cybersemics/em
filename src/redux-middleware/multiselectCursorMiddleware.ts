@@ -4,13 +4,14 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isTouch } from '../browser'
+import documentSort from '../selectors/documentSort'
 import getThoughtById from '../selectors/getThoughtById'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 
-/** The cursor that was displaced when the multiselection grew past one thought, and the path it was parked at, or null if the cursor is not parked. Module state rather than Redux state, since this middleware is its only consumer and a park never outlives the multiselection that started it. */
-let parked: { cursor: Path; parkedAt: Path } | null = null
+/** The path the cursor was parked at when the multiselection grew past one thought, and the selection as it stood after the last action, or null if the cursor is not parked. Module state rather than Redux state, since this middleware is its only consumer and a park never outlives the multiselection that started it. */
+let parked: { parkedAt: Path; selection: Path[] } | null = null
 
 /** Returns the nearest common ancestor of the given thoughts, i.e. the longest path that is a strict ancestor of every one of them. Null when that ancestor is the root, which has no Path of its own. */
 const commonAncestor = (paths: Path[]): Path | null => {
@@ -21,7 +22,7 @@ const commonAncestor = (paths: Path[]): Path | null => {
   return ancestor.length > 0 ? (ancestor as Path) : null
 }
 
-/** A middleware that parks the cursor at the selected thoughts' nearest common ancestor while more than one thought is selected, and restores it when the selection ends. Otherwise the cursor stays on whichever thought it was on, dimming every other selected thought and expanding its own children, so that selected thoughts render differently from one another (#3557). Parking is done here rather than in the multicursor reducers so that it happens regardless of which action the multiselect is triggered from, and so that a reducer that replaces the whole selection within a single action (e.g. cursorBack) is seen only in its settled state. */
+/** A middleware that parks the cursor at the selected thoughts' nearest common ancestor while more than one thought is selected, and moves it to the first selected thought when the selection ends. Otherwise the cursor stays on whichever thought it was on, dimming every other selected thought and expanding its own children, so that selected thoughts render differently from one another (#3557). Parking is done here rather than in the multicursor reducers so that it happens regardless of which action the multiselect is triggered from, and so that a reducer that replaces the whole selection within a single action (e.g. cursorBack) is seen only in its settled state. */
 const multiselectCursorMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => {
   return next => action => {
     next(action)
@@ -39,33 +40,44 @@ const multiselectCursorMiddleware: ThunkMiddleware<State> = ({ getState, dispatc
 
     const paths = Object.values(state.multicursors)
 
-    if (paths.length > 1) {
+    if (paths.length > 0) {
+      // Track the selection while it is non-empty, since the action that ends the multiselect is also the one that
+      // empties it, leaving nothing to land the cursor on by the time the restore below runs.
+      if (parked) parked.selection = paths
+      if (paths.length < 2) return
+
       const ancestor = commonAncestor(paths)
       // The cursor is ours to move if we parked it and it is still there; if something else moved it in the meantime
       // (Clear Thought sets it to the first selected thought in order to edit the selection) it is no longer ours.
       // Otherwise take it, but only when there is one to displace, since with no cursor nothing is dimmed in the first
       // place and parking would move the view for nothing.
-      const displaced = parked ? (equalPath(state.cursor, parked.parkedAt) ? parked.cursor : null) : state.cursor
+      const parkable = parked ? equalPath(state.cursor, parked.parkedAt) : !!state.cursor
       // Thoughts selected at the root level have no ancestor to park at. Leave the cursor on one of them rather than
       // clearing it, since a command that acts on the selection still reads it — categorize refuses to run without a
       // cursor even though it takes its thoughts from the multiselection.
       // Re-parking is what keeps the cursor an ancestor of every selected thought when the selection is extended into
       // another subtree, or replaced wholesale by cursorBack/cursorForward.
-      if (ancestor && displaced && !equalPath(state.cursor, ancestor)) {
-        parked = { cursor: displaced, parkedAt: ancestor }
+      if (ancestor && parkable && !equalPath(state.cursor, ancestor)) {
+        parked = { parkedAt: ancestor, selection: paths }
         dispatch(setCursor({ path: ancestor, preserveMulticursor: true }))
       }
     }
-    // Restore the displaced cursor when the selection ends, e.g. when the Command Center is closed. A selection of one
-    // thought is not restored, since the multiselect is still active and the user may extend it again.
-    else if (paths.length === 0 && parked) {
-      const { cursor, parkedAt } = parked
+    // Land the cursor on the first of the thoughts that were selected when the selection ends, e.g. when the Command
+    // Center is closed, so that it comes back inside the thoughts the user was just working with rather than wherever
+    // it happened to be beforehand.
+    else if (parked) {
+      const { parkedAt, selection } = parked
       parked = null
-      // Only restore the cursor if it is still parked. If the multiselection was ended by something that moved the
+      // Only move the cursor if it is still parked. If the multiselection was ended by something that moved the
       // cursor itself — a command that deletes the selected thoughts, or the blur that ends multi edit mode — that
-      // cursor is the user's and must not be yanked back.
-      if (equalPath(state.cursor, parkedAt) && getThoughtById(state, head(cursor))) {
-        dispatch(setCursor({ path: cursor }))
+      // cursor is the user's and must not be yanked away.
+      if (!equalPath(state.cursor, parkedAt)) return
+      const first = documentSort(
+        state,
+        selection.filter(path => getThoughtById(state, head(path))),
+      )[0]
+      if (first) {
+        dispatch(setCursor({ path: first }))
       }
     }
   }

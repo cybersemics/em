@@ -498,7 +498,7 @@ describe('mobile only', () => {
   })
 
   // https://github.com/cybersemics/em/issues/3557
-  it('moves the cursor to the parent while more than one thought is selected, and restores it when the Command Center closes', async () => {
+  it('moves the cursor to the parent while more than one thought is selected, and to the first selected thought when the Command Center closes', async () => {
     await paste(`
         - x
           - a
@@ -507,8 +507,8 @@ describe('mobile only', () => {
             - b1
         `)
 
-    await clickThought('a')
-    await expect.poll(getEditingText, { timeout: 5000 }).toBe('a')
+    await clickThought('b')
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('b')
 
     await longPressThought(await waitForEditable('a'), { edge: 'right' })
     await longPressThought(await waitForEditable('b'), { edge: 'right' })
@@ -516,13 +516,14 @@ describe('mobile only', () => {
     // with both a and b selected, the cursor moves to their parent so that neither is dimmed or expanded
     await expect.poll(getEditingText, { timeout: 5000 }).toBe('x')
 
-    // deselecting and reselecting a thought must not lose the cursor that will be restored
+    // deselecting and reselecting a thought must not lose the selection the cursor will land in
     await longPressThought(await waitForEditable('a'), { edge: 'right' })
     await longPressThought(await waitForEditable('a'), { edge: 'right' })
 
     await click('[data-testid="command-center-done"]')
     await waitForCommandCenterClosed()
 
+    // the cursor lands on the first selected thought, not on b where it started
     await expect.poll(getEditingText, { timeout: 5000 }).toBe('a')
   })
 })
