@@ -1,14 +1,20 @@
 import { KnownDevices } from 'puppeteer'
+import { HOME_DISPLAY_VALUE } from '../../../constants'
+import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
+import getEditingText from '../helpers/getEditingText'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -388,6 +394,26 @@ describe('multiselect', () => {
     // a click moves the caret as it does when a single thought is being edited
     expect(await textCursors()).toEqual(['auto', 'auto'])
   })
+
+  it('should delete all selected thoughts when Backspace is pressed with Select All active', async () => {
+    await paste(`
+        - A
+        - B
+        - C
+        `)
+
+    // Place caret at the beginning of C (as specified in the Steps to Reproduce)
+    const editableC = await waitForEditable('C')
+    await click(editableC, { edge: 'left' })
+    await waitUntil(() => window.getSelection()?.focusOffset === 0)
+
+    await command('selectAll')
+    await press('Backspace')
+
+    // an export with no thoughts left is just the root placeholder
+    const exported = await exportThoughts()
+    expect(exported).toBe(`- ${HOME_DISPLAY_VALUE}`)
+  })
 })
 
 describe('mobile only', () => {
@@ -492,5 +518,35 @@ describe('mobile only', () => {
         ),
       )
       .toEqual(['a'])
+  })
+
+  // https://github.com/cybersemics/em/issues/3557
+  it('moves the cursor to the parent while more than one thought is selected, and to the first selected thought when the Command Center closes', async () => {
+    await paste(`
+        - x
+          - a
+            - a1
+          - b
+            - b1
+        `)
+
+    await clickThought('b')
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('b')
+
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('b'), { edge: 'right' })
+
+    // with both a and b selected, the cursor moves to their parent so that neither is dimmed or expanded
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('x')
+
+    // deselecting and reselecting a thought must not lose the selection the cursor will land in
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+
+    await click('[data-testid="command-center-done"]')
+    await waitForCommandCenterClosed()
+
+    // the cursor lands on the first selected thought, not on b where it started
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('a')
   })
 })

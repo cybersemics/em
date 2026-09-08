@@ -1,63 +1,24 @@
 /**
  * Finds conflicting Copilot pull requests that are due for a resolution attempt.
  * State is retained in one marked PR comment so later push-triggered scans resume safely.
+ * A scan that names one pull request through the workflow's `pr` input is due whatever its state
+ * says, since a human asked for it; every other scan waits out the delays and stops at the cap.
  */
 const fs = require('node:fs')
+const {
+  DELAYS_HOURS,
+  MARKER,
+  MAX_ATTEMPTS,
+  SKIP_LABELS,
+  commentBody,
+  parseState,
+} = require('./copilot-conflicts-comment.cjs')
 
 const REPORT_DIR = 'copilot-conflicts'
 const REPORT_FILE = `${REPORT_DIR}/report.json`
-const MARKER = '<!-- copilot-conflicts -->'
 const COPILOT = 'Copilot'
 const BASE_BRANCH = 'main'
-const SKIP_LABEL = 'skip-auto-resolve-conflicts'
 const MAX_DISPATCHES = 5
-const MAX_ATTEMPTS = 6
-const DELAYS_HOURS = [3, 6, 12, 24, 48, 96]
-
-/** Returns the initial schema-versioned state stored in a PR comment. */
-const initialState = () => ({
-  version: 1,
-  firstConflictAt: null,
-  attempts: 0,
-  lastDispatchedAt: null,
-  lastTaskUrl: null,
-  history: [],
-})
-
-/** Decodes the state payload from a previously written comment. */
-const parseState = body => {
-  const match = /<!-- copilot-conflicts-state: ([A-Za-z0-9_-]+) -->/.exec(body || '')
-  if (!match) return initialState()
-  try {
-    const state = JSON.parse(Buffer.from(match[1], 'base64url').toString('utf8'))
-    return state.version === 1
-      ? { ...initialState(), ...state, history: Array.isArray(state.history) ? state.history : [] }
-      : initialState()
-  } catch {
-    return initialState()
-  }
-}
-
-/** Renders the visible sticky comment and its machine-readable state. */
-const commentBody = state => {
-  const encoded = Buffer.from(JSON.stringify(state)).toString('base64url')
-  const delay = state.attempts < MAX_ATTEMPTS ? DELAYS_HOURS[state.attempts] : null
-  const status = state.firstConflictAt
-    ? state.attempts >= MAX_ATTEMPTS
-      ? 'Automatic conflict resolution has reached its six-attempt lifetime limit.'
-      : `A merge conflict is detected. Attempt ${state.attempts + 1} is eligible after ${delay} hours.`
-    : 'No merge conflict is currently detected.'
-  return [
-    MARKER,
-    `<!-- copilot-conflicts-state: ${encoded} -->`,
-    '### Copilot conflict resolution',
-    '',
-    status,
-    state.lastTaskUrl && `Latest task: ${state.lastTaskUrl}`,
-  ]
-    .filter(Boolean)
-    .join('\n')
-}
 
 /**
  * Creates or updates the state comment, unless the scan is read-only. A pull request that has never
@@ -66,7 +27,7 @@ const commentBody = state => {
 const upsertComment = async ({ github, owner, repo, pr, comment, state, dryRun }) => {
   if (dryRun) return comment
   if (!comment && !state.firstConflictAt) return null
-  const body = commentBody(state)
+  const body = commentBody({ state, number: pr.number })
   if (comment) {
     await github.rest.issues.updateComment({ owner, repo, comment_id: comment.id, body })
     return { ...comment, body }
@@ -86,19 +47,19 @@ const getMergeability = async ({ github, owner, repo, prNumber }) => {
 
 /**
  * Returns whether a pull request is an in-repository Copilot PR targeting main that has not opted
- * out. The skip label excludes the pull request from the scan entirely, so no comment is written or
+ * out. A skip label excludes the pull request from the scan entirely, so no comment is written or
  * updated and its retry state stays frozen until the label is removed.
  */
 const isEligible = ({ pr, repository }) =>
   pr.state === 'open' &&
-  !(pr.labels || []).some(label => label.name === SKIP_LABEL) &&
+  !(pr.labels || []).some(label => SKIP_LABELS.includes(label.name)) &&
   pr.base.ref === BASE_BRANCH &&
   pr.user.login === COPILOT &&
   pr.user.type === 'Bot' &&
   pr.head.repo &&
   pr.head.repo.full_name === repository
 
-/** Returns when the next resolution attempt becomes eligible. */
+/** Returns when the next resolution attempt becomes eligible, or null once the cap is reached. */
 const getDueAt = state => {
   if (!state.firstConflictAt || state.attempts >= MAX_ATTEMPTS) return null
   const previousAttempt = state.lastDispatchedAt || state.firstConflictAt
@@ -147,8 +108,11 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
       observedBaseSha: pr.base.sha,
     }
     const savedComment = await upsertComment({ github, owner, repo, pr, comment, state, dryRun })
+    // A dispatch that names a pull request is a human asking for an attempt on it now, so it
+    // overrides both the wait and the lifetime cap — the same override dependabot-fix.yml's `pr`
+    // input has. `dry_run` remains the way to look at one without spending an attempt.
     const dueAt = getDueAt(state)
-    if (conflicting && dueAt && dueAt <= now) {
+    if (conflicting && (requestedPr || (dueAt && dueAt <= now))) {
       due.push({
         number: pr.number,
         url: pr.html_url,

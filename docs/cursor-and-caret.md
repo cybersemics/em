@@ -36,12 +36,10 @@ All access to the browser selection API goes through [`device/selection.ts`](../
 
 The `selection.ts` module groups its functions roughly into:
 
-- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetFromNode()`, `offsetStart()`, `offsetEnd()`, `offsetRange(editable)`, `offsetRangeThought(thoughtId)`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`, `isCaretNear(x, y)`.
-
-`offsetStart` and `offsetEnd` are the exception to the plain-text rule: they return an offset relative to the node the selection starts in, which matches the thought's plain-text offset only when the value has a single text node. `importData` is their last caller ([issue #5154](https://github.com/cybersemics/em/issues/5154)); everything else measures with `offsetRange` or `offsetRangeThought`.
+- **Reads:** `isActive()`, `isCollapsed()`, `isText()`, `isThought()`, `isNote()`, `isOnFirstLine()`, `isOnLastLine()`, `isStartOfElementNode()`, `isEndOfElementNode()`, `offset()`, `offsetThought()`, `offsetFromNode()`, `offsetRange(editable)`, `offsetRangeThought(thoughtId)`, `text()`, `html()`, `getBoundingClientRect()`, `isNear(x, y, distance)`, `isCaretNear(x, y)`.
 - **Writes:** `set(node, { offset?, end? })`, `setRange(node, { start, end })`, `clear()`, `collapse()`, `select(el)`, `removeCurrentSelection()`.
 - **Save/restore:** `save()` returns a `SavedSelection` opaque object; `restore(saved)` puts it back. Used when an action that re-renders the DOM, or a surface that takes focus, needs to hand the selection back afterwards. A range is restored as a range — `save` records the anchor end alongside the focus end whenever the selection is not collapsed — so a highlighted span survives the round-trip instead of coming back as a caret. This is what keeps a sub-range formatting command working when its picker is opened from the Command Universe, whose search input takes focus, and what keeps the user's selection intact across a Copy that stages rich content in a hidden contenteditable.
-- **Split helpers:** `split(el)` and `splitNode(root, range)` return the HTML before/after the caret with formatting tags re-balanced. Used by the Split Sentences command and the Extract Subthought command.
+- **Split helpers:** `split(el)` and `splitNode(root, range)` return the HTML before/after the caret with formatting tags re-balanced. Used by the Split Sentences command, the Extract Subthought command, and by paste to cut out the text a selection replaces.
 
 `clear` and `collapse` differ in what happens to focus. `clear` blurs the editable, which ends edit mode and takes the keyboard with it; `collapse` reduces a range to a caret and leaves focus and the keyboard alone. Reach for `collapse` when something else is already dismissing the keyboard and the range merely has to go first — see [Mobile](#mobile) for why that ordering matters on Android.
 
@@ -75,7 +73,7 @@ The two-tap pattern:
 - By default, edit mode is off. Tapping a non-cursor thought moves the cursor but does **not** open the keyboard.
 - Tapping the cursor thought a second time activates edit mode and opens the keyboard.
 - Closing the keyboard (or navigating to the root) exits edit mode.
-- While a multiselect is active, a tap on a thought or on its bullet toggles that thought's selection instead of moving the cursor. Deselecting the last selected thought ends the multiselect and restores the normal tap behavior. See [Multicursor](commands.md#multicursor).
+- While a multiselect is active, a tap on a thought or on its bullet toggles that thought's selection instead of moving the cursor. Once more than one thought is selected, the cursor is moved out of the selection entirely so that the selected thoughts are all shown alike, and lands on the first selected thought when the selection ends. Deselecting the last selected thought ends the multiselect and restores the normal tap behavior. See [Multicursor](commands.md#multicursor).
 
 Closing the keyboard comes in two flavors, and neither may leave a text selection behind. Dismissing it with the Down Arrow button or the Android back button does not blur the editable, so no blur fires to take the caret with it; the platform's [virtual keyboard handler](../src/device/virtual-keyboard/index.ts) reports the hide and [`dismissKeyboard`](../src/actions/dismissKeyboard.ts) clears the browser selection and exits edit mode in its place ([#3958](https://github.com/cybersemics/em/issues/3958)). Dismissing it by tapping outside the thought does blur the editable, which exits edit mode on its own — but the browser keeps a native touch selection alive across the blur, so the selection handles and the text context menu would sit over the thoughtspace after the keyboard is gone ([#4833](https://github.com/cybersemics/em/issues/4833)).
 
@@ -181,7 +179,7 @@ The main consumer is [`useDragAndDropThought`](../src/hooks/useDragAndDropThough
 
 The collapsed case cannot be expressed by this store, because whether a press belongs to the caret depends on *where* the finger landed, which is only known at touchstart. [`selection.isCaretNear(x, y)`](../src/device/selection.ts) answers that: true when the point is within `DEFAULT_FONT_SIZE` of a collapsed caret **and** inside the editable that holds it. It shares its rect-padding comparison with `isNear` and measures the caret with the same viewport geometry that backs [`caretRect`](#caretrectstore), so a caret at the start or end of the text — where the browser puts the selection on the element node and there is no client rect — is located correctly rather than treated as absent.
 
-Three call sites consume it, and all three are needed because they guard independent subsystems ([issue #3763](https://github.com/cybersemics/em/issues/3763)):
+Three gates depend on this, though only two of them call `isCaretNear` directly, and all three are needed because they guard independent subsystems ([issue #3763](https://github.com/cybersemics/em/issues/3763)):
 
 - [`useLongPress`](../src/hooks/useLongPress.ts) does not mark a press that lands on the caret, so no `DragHold`.
 - `canDrag` requires `DragHold` on touch, so react-dnd's own timer cannot start a drag behind `useLongPress`'s back.

@@ -5,7 +5,7 @@
  * actions/github-script. Reads HEAD_BRANCH (or PR_NUMBER on a manual dispatch) from the
  * environment.
  *
- * Copilot opens its pull requests as a draft and never takes them out of one: when a session ends
+ * Copilot opens its pull requests as a draft and never takes them out of one: when a task ends
  * it requests a review and stops. Nothing else moves it either, so the pull request sits in draft
  * — invisible to reviewers, ineligible for auto-merge — until someone notices. Every non-draft
  * Copilot pull request in this repository was undrafted by hand. The instruction files are the
@@ -33,7 +33,7 @@ const COPILOT = 'Copilot'
  */
 const FAILED_CONCLUSIONS = new Set(['failure', 'timed_out', 'action_required'])
 
-/** The timeline events that bracket an agent session, newest of which says whether one is running. */
+/** The timeline events that bracket an agent task, newest of which says whether one is running. */
 const WORK_EVENTS = new Set(['copilot_work_started', 'copilot_work_finished'])
 
 /** Takes a finished Copilot pull request out of draft once its checks are green. */
@@ -84,10 +84,10 @@ const markCopilotPrReady = async ({ github, context, core }) => {
     return
   }
 
-  // The agent pushes several commits over a session and each one runs the full suite, so green
-  // checks alone would undraft a pull request the agent is still working on. `copilot_work_started`
-  // and `copilot_work_finished` bracket each session: the newest of the two says whether one is
-  // running right now, which a plain "has it ever finished" test would miss on a second session.
+  // The agent pushes several commits over a task and each one runs the full suite, so green checks
+  // alone would undraft a pull request the agent is still working on. `copilot_work_started` and
+  // `copilot_work_finished` bracket each task: the newest of the two says whether one is running
+  // right now, which a plain "has it ever finished" test would miss on a second task.
   const timeline = await github.paginate(github.rest.issues.listEventsForTimeline, {
     owner,
     repo,
@@ -97,7 +97,7 @@ const markCopilotPrReady = async ({ github, context, core }) => {
   const work = timeline.filter(event => WORK_EVENTS.has(event.event))
   const latest = work[work.length - 1]
   if (!latest || latest.event !== 'copilot_work_finished') {
-    core.info(`#${pr.number}: the agent is still working (${latest ? latest.event : 'no session recorded'}).`)
+    core.info(`#${pr.number}: the agent is still working (${latest ? latest.event : 'no task recorded'}).`)
     return
   }
 
