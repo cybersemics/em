@@ -8,7 +8,14 @@
 
 ## Quick Start
 
-The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests. A fresh checkout — including every agent worktree under `.claude/worktrees/` — needs its own `yarn install`: the local Capacitor plugins in `packages/` are linked as workspace dependencies and are only compiled by the `postinstall` → `build:packages` step, so without it any test that reaches production code importing one fails to collect with `Failed to resolve import "webview-background" from "src/device/nativeHistory.ts"`. Run `yarn` (or just `yarn build:packages` if the rest of `node_modules` is already present) and re-run the tests.
+The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests. A fresh checkout — including every agent worktree under `.claude/worktrees/` — needs its own `yarn install`: the local Capacitor plugins in `packages/` are linked as workspace dependencies and are only compiled by the `postinstall` → `build:packages` step, so without it any test that reaches production code importing one fails to collect with `Failed to resolve import "webview-background" from "src/device/nativeHistory.ts"`. The generated Panda CSS output is the same story one step earlier, failing to collect with `Failed to resolve import '../../../styled-system/css'`.
+
+```sh
+yarn build:styles    # styled-system/
+yarn build:packages  # packages/webview — or just `yarn`, whose postinstall runs it
+```
+
+Import-resolution failures across many test files at once mean that generated output is missing or stale, not that the code is broken.
 
 ```sh
 yarn test            # unit and jsdom tests
@@ -30,6 +37,8 @@ yarn test:ios:local         # local Appium and iOS Simulator required
 > See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
 
 ### Run a specific test
+
+A full unit run is 263 files and takes several minutes, so run it once to survey, fix the environment from that single output, then iterate file-scoped and save the next full run for the end.
 
 Prefer a focused test while developing:
 
