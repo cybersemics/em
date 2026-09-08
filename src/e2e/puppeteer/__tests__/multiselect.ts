@@ -1,12 +1,15 @@
 import { KnownDevices } from 'puppeteer'
+import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
+import getEditingText from '../helpers/getEditingText'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
@@ -487,5 +490,35 @@ describe('mobile only', () => {
         ),
       )
       .toEqual(['a'])
+  })
+
+  // https://github.com/cybersemics/em/issues/3557
+  it('moves the cursor to the parent while more than one thought is selected, and to the first selected thought when the Command Center closes', async () => {
+    await paste(`
+        - x
+          - a
+            - a1
+          - b
+            - b1
+        `)
+
+    await clickThought('b')
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('b')
+
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('b'), { edge: 'right' })
+
+    // with both a and b selected, the cursor moves to their parent so that neither is dimmed or expanded
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('x')
+
+    // deselecting and reselecting a thought must not lose the selection the cursor will land in
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+
+    await click('[data-testid="command-center-done"]')
+    await waitForCommandCenterClosed()
+
+    // the cursor lands on the first selected thought, not on b where it started
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('a')
   })
 })
