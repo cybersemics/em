@@ -12,7 +12,7 @@ import paste from '../helpers/paste'
 import scrollTo from '../helpers/scrollTo'
 import setConnectionStatus from '../helpers/setConnectionStatus'
 import setSelection from '../helpers/setSelection'
-import waitForAlertContent from '../helpers/waitForAlertContent'
+import waitForAlert from '../helpers/waitForAlert'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
@@ -286,13 +286,13 @@ describe('drag to Home with duplicate thought', () => {
       await page.touchscreen.touchMove(startX + ((endX - startX) * i) / steps, startY + ((endY - startY) * i) / steps)
     }
 
-    await waitForAlertContent('Drag and drop')
+    await waitForAlert('Drag and drop')
     await page.touchscreen.touchEnd()
 
     // The move alert replaces the drag alert once the drop has been applied. It only reports that a
     // move happened — the destination is left to the outline assertion below, because the alert
     // misnames the root as "" (parentOf a root thought's simplePath is an empty path).
-    await waitForAlertContent('moved to')
+    await waitForAlert('moved to')
 
     // Draw New Thought without moving the cursor first. Moving it is the workaround the issue
     // reports, so the gesture has to be drawn straight after the drop for this to prove anything.
