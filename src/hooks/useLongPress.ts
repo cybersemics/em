@@ -7,7 +7,7 @@ import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
-import multitouchStore from '../stores/multitouch'
+import multitouchStore from '../stores/multitouchStore'
 import haptics from '../util/haptics'
 
 export interface LongPressProps {

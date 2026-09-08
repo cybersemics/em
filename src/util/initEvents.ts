@@ -22,7 +22,7 @@ import store from '../stores/app'
 import { updateCaretRect } from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
-import multitouchStore, { updateMultitouch } from '../stores/multitouch'
+import multitouchStore, { updateMultitouch } from '../stores/multitouchStore'
 import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
@@ -315,8 +315,7 @@ const initEvents = (store: Store<State, any>) => {
    * Prevents native pinch-to-zoom on iOS Safari. Safari ignores the viewport `user-scalable=no` /
    * `maximum-scale=1` settings and still allows pinch-to-zoom and two-finger panning of the page,
    * both of which should be inert in the app. `gesturestart`/`gesturechange`/`gestureend` are
-   * Safari-only events fired for multi-finger gestures; other browsers never fire them, so this is a
-   * no-op elsewhere. See #4233.
+   * Safari-only events fired for multi-finger gestures. See #4233.
    */
   const onSafariGesture = (e: Event) => e.preventDefault()
 
@@ -429,20 +428,21 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchstart', updateMultitouch, { capture: true })
   window.addEventListener('touchend', updateMultitouch)
   window.addEventListener('touchcancel', updateMultitouch)
-  // prevent the native caret / text selection and scrolling from following the fingers during a multi-touch
-  // gesture (non-passive so preventDefault is honored). See #4233.
-  //
-  // Only registered on touch devices. A non-passive (blocking) touchmove listener on window marks the entire
-  // viewport as a blocking touch-handler region, which changes how Chrome composites the page and shifts the
-  // subpixel anti-aliasing of composited elements such as the NavBar home icon. That is invisible to the user
-  // but breaks the render-thoughts image snapshots on desktop, where the listener can never fire anyway.
+  // Multi-touch suppression is registered on touch devices only. macOS Safari fires the same gesture* events for
+  // a trackpad pinch, where zooming the page is legitimate browser behavior that must not be blocked. And a
+  // non-passive (blocking) touchmove listener on window marks the entire viewport as a blocking touch-handler
+  // region, which changes how Chrome composites the page and shifts the subpixel anti-aliasing of composited
+  // elements such as the NavBar home icon; that is invisible to the user, but it breaks the render-thoughts
+  // image snapshots on desktop, where the listener can never fire anyway. See #4233.
   if (isTouch) {
+    // prevent the native caret / text selection and scrolling from following the fingers during a multi-touch
+    // gesture (non-passive so preventDefault is honored)
     window.addEventListener('touchmove', onMultitouchMove, { passive: false })
+    // disable native pinch-to-zoom / two-finger page panning on iOS Safari
+    document.addEventListener('gesturestart', onSafariGesture)
+    document.addEventListener('gesturechange', onSafariGesture)
+    document.addEventListener('gestureend', onSafariGesture)
   }
-  // disable native pinch-to-zoom / two-finger page panning on iOS Safari (#4233)
-  document.addEventListener('gesturestart', onSafariGesture)
-  document.addEventListener('gesturechange', onSafariGesture)
-  document.addEventListener('gestureend', onSafariGesture)
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)

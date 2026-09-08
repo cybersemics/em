@@ -1,6 +1,6 @@
 import { errorActionCreator as error } from '../../actions/error'
 import store from '../../stores/app'
-import { updateMultitouch } from '../../stores/multitouch'
+import { updateMultitouch } from '../../stores/multitouchStore'
 // Importing initEvents registers the global window 'error' listener as a side effect.
 import initEvents from '../initEvents'
 
@@ -22,16 +22,18 @@ it('ignores opaque cross-origin "Script error." events', () => {
 })
 
 // iOS Safari ignores the viewport user-scalable=no / maximum-scale=1 settings and still allows native
-// pinch-to-zoom and two-finger page panning, which should be inert in the app. initEvents prevents this
-// by calling preventDefault on the Safari-only gesturestart/gesturechange/gestureend events. See #4233.
-it('prevents native pinch-to-zoom gestures (iOS Safari)', () => {
+// pinch-to-zoom and two-finger page panning, which should be inert in the app. initEvents prevents this by
+// calling preventDefault on the Safari-only gesturestart/gesturechange/gestureend events — but only on a touch
+// device. macOS Safari fires the same events for a trackpad pinch, where zooming the page is legitimate browser
+// behavior. See #4233.
+it('does not prevent pinch-to-zoom gestures on a non-touch device', () => {
   initEvents(store)
 
   const gestureNames = ['gesturestart', 'gesturechange', 'gestureend']
   gestureNames.forEach(name => {
     const e = new Event(name, { cancelable: true })
     document.dispatchEvent(e)
-    expect(e.defaultPrevented).toBe(true)
+    expect(e.defaultPrevented).toBe(false)
   })
 })
 

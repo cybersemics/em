@@ -1,4 +1,4 @@
-import multitouchStore, { updateMultitouch } from '../multitouch'
+import multitouchStore, { updateMultitouch } from '../multitouchStore'
 
 /** Builds a minimal TouchEvent-like object with the given number of active touches and event type. */
 const touchEvent = (numTouches: number, type: 'touchstart' | 'touchend' | 'touchcancel' = 'touchstart') =>

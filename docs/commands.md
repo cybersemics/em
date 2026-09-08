@@ -101,7 +101,7 @@ In the iOS Capacitor app the same gesture arrives by a second route, `nativeHist
 
 A gesture is a string of swipe directions, where each character is one of `'l'`, `'r'`, `'u'`, `'d'` (left/right/up/down). For example, `'rdru'` is right → down → right → up. Multiple sequences can map to the same command — the first one is the canonical gesture shown in the UI.
 
-A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Touches that start outside the zone scroll the page as usual.
+A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Single-finger touches that start outside the zone scroll the page as usual; multi-finger touches are inert everywhere (see [Multi-touch rejection](#multi-touch-rejection)).
 
 `handleGestureSegment` is called incrementally as the user swipes; it triggers a haptic for each new segment and, after `COMMAND_PALETTE_TIMEOUT`, opens the gesture menu so the user can see all commands reachable from the current sequence.
 
@@ -111,6 +111,20 @@ A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/u
 - **Chained commands.** If the sequence *starts* with a gesture for an `isChainable` command and continues with another command's gesture, the two are chained and executed together. The canonical example: `selectAll` is chainable, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Chained gestures are dispatched with `type: 'chainedGesture'` so undo coalesces correctly.
 
 After execution, an alert briefly confirms the command's `label` (in training mode), unless the command has `hideAlert: true`.
+
+### Multi-touch rejection
+
+Gestures are single-finger input. Two-finger tracing and pinch-to-zoom are inert: they draw no trace, open no gesture menu, execute no command, begin no drag, do not move the cursor, and neither zoom nor pan the page ([issue #4233](https://github.com/cybersemics/em/issues/4233)).
+
+Multi-touch is tracked by [`multitouchStore`](../src/stores/multitouchStore.ts), a latch set as soon as a second finger touches down and reset only by the `touchstart` of the next single-finger interaction. It is wired to the window touch events in [`initEvents`](../src/util/initEvents.ts), in the capture phase so that it is set before any subsystem reads it. A latch rather than a live touch count is essential: during a two-finger trace one finger routinely lifts before the other, so a count would momentarily drop to 1 and let the remaining finger begin a drag; and the terminating tap of a multi-touch gesture must still read as multi-touch so that it does not move the cursor.
+
+Each subsystem rejects multi-touch at its own entry point, since they do not share one:
+
+- [`MultiGesture`](../src/components/MultiGesture.tsx) abandons the sequence when a second finger touches down before a gesture has begun. `shouldCancelGesture` in [`AppComponent`](../src/components/AppComponent.tsx) covers the other direction — a second finger joining after a single-finger gesture is already in progress — by cancelling while the latch is set.
+- Drag-and-drop rejects it in `canDrag` and again in `useLongPress`; see [Drag and Drop](drag-and-drop.md#usedraganddropthought).
+- Tap handling and caret placement ignore it; see [Cursor and Caret](cursor-and-caret.md#mobile).
+
+Native browser behavior is suppressed in `initEvents`. While the latch is set, `touchmove` is preventDefaulted so the native caret and text selection do not follow the fingers and the page does not scroll; and the Safari-only `gesturestart`/`gesturechange`/`gestureend` events are preventDefaulted, because iOS Safari ignores the viewport `user-scalable=no` / `maximum-scale=1` settings and would otherwise pinch-zoom or pan the page. Both are registered on touch devices only. macOS Safari fires the same gesture events for a trackpad pinch, where zooming the page is legitimate browser behavior; and a non-passive `touchmove` listener on `window` marks the whole viewport as a blocking touch-handler region, which changes how Chrome composites the page — invisible to the user, but enough to shift the subpixel anti-aliasing that the Puppeteer image snapshots compare.
 
 ### Toolbar and Command Universe
 

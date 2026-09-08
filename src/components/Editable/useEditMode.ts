@@ -16,7 +16,7 @@ import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
-import multitouchStore from '../../stores/multitouch'
+import multitouchStore from '../../stores/multitouchStore'
 import equalPath from '../../util/equalPath'
 import isCommandKey from '../../util/isCommandKey'
 
