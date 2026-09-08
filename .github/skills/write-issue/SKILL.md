@@ -75,6 +75,8 @@ What happens, as an observation, with the evidence: a screenshot, a video, or a 
 
 What should happen instead. Write it as a condition that can be checked — a state the app is or is not in — since it is what a regression test will assert. Where the correct state is visible elsewhere in the app, a screenshot of that is useful alongside the screenshot of the bug.
 
+Phrase it with "should" — "At Font Size 12, the alert should read...", not "At Font Size 12, the alert reads...". The bare present tense reads as a description of what the app already does, which is Current Behavior; "should" marks it as the behaviour being asked for.
+
 State the goal, not the shape of the fix. What the fix looks like is the assignee's call, and writing it out for them in advance is work they will redo.
 
 #### In this case / In general
@@ -102,11 +104,11 @@ For a Gesture Diagram misaligned after the app font size is increased to 32:
 ```markdown
 ### In this case
 
-At app font size 32, the arrow in the Question Mark gesture diagram is centered in its box, as it is at the default font size.
+At app font size 32, the arrow in the Question Mark gesture diagram should be centered in its box, as it is at the default font size.
 
 ### In general
 
-Gesture diagram arrows stay centered at every app font size, wherever a diagram is rendered.
+Gesture diagram arrows should stay centered at every app font size, wherever a diagram is rendered.
 ```
 
 The first is checkable by following the steps; the second is what keeps the fix from being a special case at 32.
