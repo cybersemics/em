@@ -4,6 +4,7 @@ import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
+import getEditingText from '../helpers/getEditingText'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
@@ -48,10 +49,6 @@ const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
 /** Reads the CSS cursor rendered over the text of every thought. */
 const textCursors = () => page.$$eval('[data-editable]', editables => editables.map(el => getComputedStyle(el).cursor))
-
-/** Reads the value of the thought the cursor is on, or null if there is no cursor. */
-const cursorValue = () =>
-  page.evaluate(() => document.querySelector('[data-editing=true] [data-editable]')?.textContent ?? null)
 
 describe('multiselect', () => {
   // https://github.com/cybersemics/em/issues/4740
@@ -511,13 +508,13 @@ describe('mobile only', () => {
         `)
 
     await clickThought('a')
-    await expect.poll(cursorValue, { timeout: 5000 }).toBe('a')
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('a')
 
     await longPressThought(await waitForEditable('a'), { edge: 'right' })
     await longPressThought(await waitForEditable('b'), { edge: 'right' })
 
     // with both a and b selected, the cursor moves to their parent so that neither is dimmed or expanded
-    await expect.poll(cursorValue, { timeout: 5000 }).toBe('x')
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('x')
 
     // deselecting and reselecting a thought must not lose the cursor that will be restored
     await longPressThought(await waitForEditable('a'), { edge: 'right' })
@@ -526,6 +523,6 @@ describe('mobile only', () => {
     await click('[data-testid="command-center-done"]')
     await waitForCommandCenterClosed()
 
-    await expect.poll(cursorValue, { timeout: 5000 }).toBe('a')
+    await expect.poll(getEditingText, { timeout: 5000 }).toBe('a')
   })
 })
