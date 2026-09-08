@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
@@ -7,6 +8,7 @@ import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
@@ -46,6 +48,10 @@ const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
 /** Reads the CSS cursor rendered over the text of every thought. */
 const textCursors = () => page.$$eval('[data-editable]', editables => editables.map(el => getComputedStyle(el).cursor))
+
+/** Reads the value of the thought the cursor is on, or null if there is no cursor. */
+const cursorValue = () =>
+  page.evaluate(() => document.querySelector('[data-editing=true] [data-editable]')?.textContent ?? null)
 
 describe('multiselect', () => {
   // https://github.com/cybersemics/em/issues/4740
@@ -492,5 +498,34 @@ describe('mobile only', () => {
         ),
       )
       .toEqual(['a'])
+  })
+
+  // https://github.com/cybersemics/em/issues/3557
+  it.skip('moves the cursor to the parent while more than one thought is selected, and restores it when the Command Center closes', async () => {
+    await paste(`
+        - x
+          - a
+            - a1
+          - b
+            - b1
+        `)
+
+    await clickThought('a')
+    await expect.poll(cursorValue, { timeout: 5000 }).toBe('a')
+
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('b'), { edge: 'right' })
+
+    // with both a and b selected, the cursor moves to their parent so that neither is dimmed or expanded
+    await expect.poll(cursorValue, { timeout: 5000 }).toBe('x')
+
+    // deselecting and reselecting a thought must not lose the cursor that will be restored
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+
+    await click('[data-testid="command-center-done"]')
+    await waitForCommandCenterClosed()
+
+    await expect.poll(cursorValue, { timeout: 5000 }).toBe('a')
   })
 })
