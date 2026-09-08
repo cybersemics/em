@@ -17,13 +17,19 @@ strip() {
 
 # Display a notification
 notify() {
-  # read back in the lint errors
+  # Read back the lint errors, dropping blank lines and any package manager preamble so
+  # that the first real errors are what get shown. Done in one awk pass rather than piping
+  # into head, which can leave the pipeline with a SIGPIPE status under pipefail.
   local ERRORS
-  ERRORS=$(sed 1,4d "${LINT_LOG}")
+  ERRORS=$(awk '/^[[:space:]]*$/ || /^yarn run v/ || /^\$ / { next } { print; if (++n == 4) exit }' "${LINT_LOG}")
 
   # macOS via osascript, Linux via notify-send; do nothing if neither exists
   if [[ -x /usr/bin/osascript ]]; then
-    /usr/bin/osascript -e "display notification \"${ERRORS}\" with title \"$*\""
+    # A backslash or double quote in a lint message is a syntax error in AppleScript, so
+    # escape both before interpolating. eslint emits them, e.g. react/no-unescaped-entities.
+    local ESCAPED=${ERRORS//\\/\\\\}
+    ESCAPED=${ESCAPED//\"/\\\"}
+    /usr/bin/osascript -e "display notification \"${ESCAPED}\" with title \"$*\""
   elif command -v notify-send >/dev/null; then
     notify-send "$*" "${ERRORS}"
   fi
