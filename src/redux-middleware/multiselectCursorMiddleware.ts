@@ -10,9 +10,9 @@ import head from '../util/head'
 import parentOf from '../util/parentOf'
 
 /** The cursor that was displaced when the multiselection grew past one thought, and the path it was parked at, or null if the cursor is not parked. Module state rather than Redux state, since this middleware is its only consumer and a park never outlives the multiselection that started it. */
-let parked: { cursor: Path; parkedAt: Path | null } | null = null
+let parked: { cursor: Path; parkedAt: Path } | null = null
 
-/** Returns the nearest common ancestor of the given thoughts, i.e. the longest path that is a strict ancestor of every one of them. Null for the root, which is how setCursor represents it. */
+/** Returns the nearest common ancestor of the given thoughts, i.e. the longest path that is a strict ancestor of every one of them. Null when that ancestor is the root, which has no Path of its own. */
 const commonAncestor = (paths: Path[]): Path | null => {
   const ancestor = (paths.map(parentOf) as ThoughtId[][]).reduce((a, b) => {
     const divergence = a.findIndex((id, i) => id !== b[i])
@@ -46,9 +46,12 @@ const multiselectCursorMiddleware: ThunkMiddleware<State> = ({ getState, dispatc
       // Otherwise take it, but only when there is one to displace, since with no cursor nothing is dimmed in the first
       // place and parking would move the view for nothing.
       const displaced = parked ? (equalPath(state.cursor, parked.parkedAt) ? parked.cursor : null) : state.cursor
+      // Thoughts selected at the root level have no ancestor to park at. Leave the cursor on one of them rather than
+      // clearing it, since a command that acts on the selection still reads it — categorize refuses to run without a
+      // cursor even though it takes its thoughts from the multiselection.
       // Re-parking is what keeps the cursor an ancestor of every selected thought when the selection is extended into
       // another subtree, or replaced wholesale by cursorBack/cursorForward.
-      if (displaced && !equalPath(state.cursor, ancestor)) {
+      if (ancestor && displaced && !equalPath(state.cursor, ancestor)) {
         parked = { cursor: displaced, parkedAt: ancestor }
         dispatch(setCursor({ path: ancestor, preserveMulticursor: true }))
       }
