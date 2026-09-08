@@ -7,7 +7,7 @@ import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
-import waitForAlertContent from '../helpers/waitForAlertContent'
+import waitForAlert from '../helpers/waitForAlert'
 import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForEditable from '../helpers/waitForEditable'
@@ -63,7 +63,7 @@ describe('command center', () => {
     await click('[data-testid="command-center-panel"] [aria-label="Delete"]')
 
     // wait for the thought to be deleted before asserting on the Command Center
-    await waitForAlertContent('Deleted 1 thought')
+    await waitForAlert('Deleted 1 thought')
 
     // The delete is what would dismiss the Command Center, and its alert renders in the same update, so a wrongly
     // dismissed sheet is already sliding shut by now and never reports itself as open again.

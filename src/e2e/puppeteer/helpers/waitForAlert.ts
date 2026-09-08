@@ -9,10 +9,10 @@ interface Options {
  * distinguishes an alert that never rendered (null) from the wrong alert rendering in its place. Times out after 6
  * seconds.
  */
-const waitForAlertContent = async (text: string, { timeout }: Options = { timeout: 6000 }) => {
+const waitForAlert = async (text: string, { timeout }: Options = { timeout: 6000 }) => {
   await expect
     .poll(() => page.$$eval('[data-testid="alert-content"]', alerts => alerts[0]?.textContent ?? null), { timeout })
     .toEqual(expect.stringContaining(text))
 }
 
-export default waitForAlertContent
+export default waitForAlert
