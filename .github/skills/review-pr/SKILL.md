@@ -34,7 +34,7 @@ State the action in the imperative: *Skip it like the others*, *Use `generateTho
 
 Everything that is about your investigation rather than about the code.
 
-- **Evidence.** You ran the probe, you measured the dispatches, you re-ran it on both branches. None of that goes in. A number survives only when the number *is* the finding: "boundaries are around 40% of dispatches during a multiselect command".
+- **Evidence.** You ran the probe, you measured the dispatches, you re-ran it on both branches. None of that goes in the prose. It goes in a details block below it, or nowhere. A number stays in the prose only when the number *is* the finding: "boundaries are around 40% of dispatches during a multiselect command".
 - **Mechanism you traced but the author already knows.** They wrote the code.
 - **Hedges and preambles.** "For what it's worth", "Note that", "It's worth flagging".
 - **Restating the consequence twice**, once concretely and once as a principle.
@@ -47,7 +47,39 @@ became
 
 > `hasPatch` is covered by `continuesCommand`, so you should be able to remove the `hasPatch`.
 
-114 words to 14. Nothing actionable was lost.
+114 words to 14. Nothing actionable was lost, and the 100 words that were cut are what the details block is for.
+
+## The details block
+
+GitHub renders `<details>` in every comment, so the evidence can be there without being read. The finding stays one or two sentences; everything you would have had to delete goes underneath it, collapsed.
+
+```markdown
+<details>
+<summary>Evidence</summary>
+
+20k randomized sequences through the enhancer: `hasPatch && !continuesCommand` came up zero
+times. A variant with the field and both reset loops removed produces byte-identical stacks
+and passes the suite.
+
+</details>
+```
+
+The blank line after `</summary>` is required, or a fenced block or list inside will not render.
+
+Put it at the end of the comment, after the finding and any recommended action. One block per comment, headed `Evidence`. What earns a place in it:
+
+- **Measurements.** Counts, timings, sample sizes, the numbers you compared.
+- **Reproduction.** The command, the sequence of steps, the branch each was run on.
+- **The reasoning that ruled out the alternative.** Why it is not the other thing you suspected first.
+- **Raw output** where the shape of it is the point: a stack, a diff, a failing assertion.
+
+What still gets deleted rather than collapsed, because collapsing it only moves the cost:
+
+- Hedges, preambles, and restatements of the consequence.
+- Mechanism the author already knows.
+- The narrative of how you got there. Present the evidence as findings, not as a chronology of what you tried.
+
+A finding whose whole support is "I read the code and it looks subsumed" has no block. An empty or padded `Evidence` teaches the author to stop opening them.
 
 ## The summary comment
 
@@ -97,7 +129,7 @@ Not every verified finding earns a place. Rank them, and drop the tail. Ten comm
 
 - A comment that explains the problem and never says what should happen instead.
 - A paragraph where a sentence does.
-- Evidence from your investigation left in.
+- Evidence from your investigation left in the prose instead of collapsed below it.
 - A reply thread clarifying a comment that should have been edited.
 - An invented term, or a term the glossary does not define.
 - Justification stacked three deep for a one-line change.
