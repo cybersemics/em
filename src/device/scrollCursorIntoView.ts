@@ -4,12 +4,6 @@ import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import viewportStore from '../stores/viewport'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
-/** Height in CSS pixels of the iOS QuickType predictive/suggestion bar that sits above the keyboard.
- * The native keyboardHeight reported by the Capacitor Keyboard plugin does not include this bar, so it must be
- * added to the keyboard obstruction to keep the cursor above the suggestion bar rather than behind it. It is a
- * near-constant in logical pixels across iPhone models (#4326). */
-const IOS_SUGGESTION_BAR_HEIGHT = 45
-
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // preventAutoscroll works by briefly increasing the element's height, which breaks isElementInViewport.
@@ -39,8 +33,12 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // iOSCapacitorHandler normalizes virtualKeyboardHeight by subtracting the safe-area-bottom inset, because element
   // positioning elsewhere always re-adds that inset. scrollCursorIntoView, however, works in raw viewport coordinates
   // (getBoundingClientRect / window.scrollY) and adds no inset, so we must add the safe-area-bottom back to recover the
-  // keyboard's true height. The raw keyboard height also includes the QuickType predictive/suggestion bar, so this keeps
-  // the cursor above the suggestion bar rather than behind it. (#4326)
+  // keyboard's true height.
+  //
+  // That raw height is UIKeyboardFrameEndUserInfoKey reported verbatim by the Capacitor Keyboard plugin, i.e. the whole
+  // input view including the QuickType predictive/suggestion bar. No separate allowance for the bar is needed, and none
+  // should be added: the reported height already shrinks by the bar's height when the user turns off
+  // Settings > General > Keyboard > Predictive. (#4326)
   const isIOSCapacitor = isIOS && isCapacitor()
   const keyboardOpen = virtualKeyboardStore.getState().open
   const rawKeyboardHeight = viewport.virtualKeyboardHeight + getSafeAreaBottom()
@@ -58,13 +56,11 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
 
   // The y position (in viewport coordinates) below which content is obstructed.
-  // On iOS Capacitor with the keyboard open, the obstruction is the keyboard plus the QuickType suggestion bar that
-  // sits above it; the bottom navbar is hidden behind the keyboard, so it is not subtracted. On all other platforms
-  // the obstruction is the bottom navbar within the (already keyboard-aware) visual viewport. (#4326)
-  const bottomBoundary =
-    isIOSCapacitor && keyboardOpen
-      ? viewport.innerHeight - rawKeyboardHeight - IOS_SUGGESTION_BAR_HEIGHT
-      : effectiveViewportHeight - (navbarRect?.height ?? 0)
+  // On iOS Capacitor with the keyboard open the bottom navbar is hidden behind the keyboard, so the keyboard is the
+  // only obstruction. On all other platforms the obstruction is the bottom navbar within the (already keyboard-aware)
+  // visual viewport. (#4326)
+  const navbarObstruction = isIOSCapacitor && keyboardOpen ? 0 : (navbarRect?.height ?? 0)
+  const bottomBoundary = effectiveViewportHeight - navbarObstruction
 
   const isAboveViewport = yViewport < toolbarBottom
   const isBelowViewport = yViewport + height > bottomBoundary
