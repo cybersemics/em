@@ -94,4 +94,39 @@ describe('toggleSortPicker error', () => {
 
     expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
+
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after Split Sentences in a context sorted by Created %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One. Two. Three. Four. Five. Six.
+          `,
+        }),
+        setCursor(['One. Two. Three. Four. Five. Six.']),
+      ])
+
+      // Advance the clock between each step so that the thought, the sort preference, and the split thoughts all have
+      // distinct created timestamps, as they do when a user sorts a context and splits a thought in it some time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Created', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      // Split Sentences creates every thought within the same millisecond, so they tie on the sort condition and are
+      // ordered by rank. Allocating those ranks against the timestamp alone inverted them against the sort condition
+      // and turned the Sort icon red (#4085).
+      executeCommand(splitSentencesCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
 })
