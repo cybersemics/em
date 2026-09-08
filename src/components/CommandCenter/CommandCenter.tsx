@@ -242,7 +242,7 @@ const CommandCenter = () => {
    * lands exactly on the standard snap.
    */
   const onDrag = useCallback(
-    (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
       if (!isExpandBlockedRef.current) return
       const y = sheetRef.current?.y
       const standardY = getStandardY()
@@ -295,13 +295,10 @@ const CommandCenter = () => {
 
   /* Every stage animation below is a different mapping of the same stageProgress, so they cannot
    * drift apart: there is one number driving all of them, and that number is the finger. */
-  const doneOpacity = useTransform(stageProgress, [0, 0.5], [1, 0])
-  const gridOpacity = useTransform(stageProgress, [0, 0.6], [1, 0])
-  const gridY = useTransform(stageProgress, [0, 1], [0, -fontSize * GRID_SLIDE_REM])
-  const tableOpacity = useTransform(stageProgress, [0.3, 1], [0, 1])
-  const tableY = useTransform(stageProgress, [0, 1], [fontSize * TABLE_SLIDE_REM, 0])
-  const expandOpacity = useTransform(stageProgress, [0, 0.4], [1, 0])
-  const collapseOpacity = useTransform(stageProgress, [0.6, 1], [0, 1])
+  const standardViewOpacity = useTransform(stageProgress, [0, 0.9], [1, 0])
+  const extendedViewOpacity = useTransform(stageProgress, [0.3, 1], [0, 1])
+  const standardViewY = useTransform(stageProgress, [0, 1], [0, -fontSize * GRID_SLIDE_REM])
+  const extendedViewY = useTransform(stageProgress, [0, 1], [fontSize * TABLE_SLIDE_REM, 0])
   const standardPointerEvents = useTransform(stageProgress, p => (p > 0.5 ? 'none' : 'auto')) as MotionValue<
     'none' | 'auto'
   >
@@ -440,7 +437,7 @@ const CommandCenter = () => {
                   display: 'flex',
                   justifyContent: 'center',
                 })}
-                style={{ opacity: collapseOpacity, pointerEvents: expandedPointerEvents }}
+                style={{ opacity: extendedViewOpacity, pointerEvents: expandedPointerEvents }}
               >
                 <button
                   {...fastClick(() => sheetRef.current?.snapTo(SNAP_STANDARD))}
@@ -488,7 +485,7 @@ const CommandCenter = () => {
                     padding: '8px 16px',
                     background: 'commandCenterDoneButton',
                   })}
-                  style={{ opacity: doneOpacity, pointerEvents: standardPointerEvents }}
+                  style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
                 >
                   Done
                 </motion.button>
@@ -530,7 +527,7 @@ const CommandCenter = () => {
                       gap: '0.622rem',
                       gridRowGap: '0.889rem',
                     })}
-                    style={{ opacity: gridOpacity, y: gridY, pointerEvents: standardPointerEvents }}
+                    style={{ opacity: standardViewOpacity, y: standardViewY, pointerEvents: standardPointerEvents }}
                   >
                     <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
                     <PanelCommand command={note} size='small' />
@@ -556,7 +553,7 @@ const CommandCenter = () => {
                       flexDirection: 'column',
                       minHeight: 0,
                     })}
-                    style={{ opacity: tableOpacity, y: tableY, pointerEvents: expandedPointerEvents }}
+                    style={{ opacity: extendedViewOpacity, y: extendedViewY, pointerEvents: expandedPointerEvents }}
                   >
                     <div
                       ref={setScrollerRef}
@@ -585,7 +582,7 @@ const CommandCenter = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                   })}
-                  style={{ opacity: expandOpacity, pointerEvents: standardPointerEvents }}
+                  style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
                 >
                   <button
                     {...fastClick(() => sheetRef.current?.snapTo(SNAP_EXPANDED))}
