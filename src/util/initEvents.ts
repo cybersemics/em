@@ -335,6 +335,19 @@ const initEvents = (store: Store<State, any>) => {
     if (multitouchStore.getState() && e.touches.length < 3 && e.cancelable) e.preventDefault()
   }
 
+  /**
+   * Clears the multitouch latch when a mouse or pen interaction begins, since neither can be part of a
+   * multi-touch gesture. Without this the latch, which is otherwise only reset by a fresh single-finger
+   * touchstart, would survive indefinitely on a device that has both a touchscreen and a pointer (e.g. a
+   * touchscreen laptop or an iPad with a trackpad): after a two-finger touch every subsequent click would be
+   * rejected by the tap and mousedown handlers and the cursor could no longer be moved. The terminating
+   * tap/click of a multi-touch gesture is unaffected, because the compatibility mousedown/click a touch
+   * synthesizes is dispatched without a preceding pointerdown of type mouse. See #4233.
+   */
+  const onPointerDown = (e: PointerEvent) => {
+    if (e.pointerType !== 'touch') multitouchStore.update(false)
+  }
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
@@ -433,6 +446,9 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchstart', updateMultitouch, { capture: true })
   window.addEventListener('touchend', updateMultitouch)
   window.addEventListener('touchcancel', updateMultitouch)
+  // Registered in the capture phase so that the latch is cleared before the gesture, drag, and cursor-set
+  // subsystems read it in the same interaction.
+  window.addEventListener('pointerdown', onPointerDown, { capture: true })
   // Multi-touch suppression is registered on touch devices only. macOS Safari fires the same gesture* events for
   // a trackpad pinch, where zooming the page is legitimate browser behavior that must not be blocked. And a
   // non-passive (blocking) touchmove listener on window marks the entire viewport as a blocking touch-handler
@@ -485,6 +501,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('touchstart', updateMultitouch, { capture: true })
     window.removeEventListener('touchend', updateMultitouch)
     window.removeEventListener('touchcancel', updateMultitouch)
+    window.removeEventListener('pointerdown', onPointerDown, { capture: true })
     window.removeEventListener('touchmove', onMultitouchMove)
     document.removeEventListener('gesturestart', onSafariGesture)
     document.removeEventListener('gesturechange', onSafariGesture)

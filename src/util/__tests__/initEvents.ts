@@ -1,6 +1,6 @@
 import { errorActionCreator as error } from '../../actions/error'
 import store from '../../stores/app'
-import { updateMultitouch } from '../../stores/multitouchStore'
+import multitouchStore, { updateMultitouch } from '../../stores/multitouchStore'
 // Importing initEvents registers the global window 'error' listener as a side effect.
 import initEvents from '../initEvents'
 
@@ -51,6 +51,33 @@ it('does not block touchmove on a non-touch device', () => {
   const e = new Event('touchmove', { cancelable: true })
   window.dispatchEvent(e)
   expect(e.defaultPrevented).toBe(false)
+
+  // reset the latch with a fresh single-finger touchstart
+  updateMultitouch({ type: 'touchstart', touches: { length: 1 } } as TouchEvent)
+})
+
+// The multitouch latch is otherwise only reset by a fresh single-finger touchstart, so on a device that has
+// both a touchscreen and a pointer it would survive a two-finger touch indefinitely and every subsequent click
+// would be rejected by the tap and mousedown handlers, leaving the cursor unmovable. See #4233.
+it('clears the multitouch latch on a mouse pointerdown', () => {
+  initEvents(store)
+
+  updateMultitouch({ type: 'touchstart', touches: { length: 2 } } as TouchEvent)
+  expect(multitouchStore.getState()).toBe(true)
+
+  window.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'mouse' }))
+  expect(multitouchStore.getState()).toBe(false)
+})
+
+// The compatibility mousedown/click that terminates a touch gesture must still read the latch as set, so a
+// pointerdown from a finger must not clear it. See #4233.
+it('does not clear the multitouch latch on a touch pointerdown', () => {
+  initEvents(store)
+
+  updateMultitouch({ type: 'touchstart', touches: { length: 2 } } as TouchEvent)
+
+  window.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch' }))
+  expect(multitouchStore.getState()).toBe(true)
 
   // reset the latch with a fresh single-finger touchstart
   updateMultitouch({ type: 'touchstart', touches: { length: 1 } } as TouchEvent)

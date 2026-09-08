@@ -10,8 +10,8 @@ import ministore from './ministore'
  * drop to 1 and let react-dnd's TouchBackend begin a drag from the remaining finger; (2) a second finger can
  * join *after* a single-finger gesture has begun, and the gesture must then be abandoned; (3) the terminating
  * tap/click of a multi-touch gesture must still read `true` so it does not move the cursor. The latch is only
- * reset when the first finger of a brand-new interaction touches down. Consumed by the drag, gesture, and
- * cursor-set subsystems. See #4233.
+ * reset when a brand-new interaction begins: the first finger of a fresh touch, or a mouse or pen, neither of
+ * which can be part of a multi-touch gesture. Consumed by the drag, gesture, and cursor-set subsystems. See #4233.
  */
 const multitouchStore = ministore(false)
 
