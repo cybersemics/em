@@ -49,6 +49,11 @@ export default defineConfig({
           exclude: ['node_modules/**'],
           environment: './src/e2e/puppeteer-environment.ts',
           setupFiles: ['./src/e2e/puppeteer/setup.ts'],
+          // expect.poll runs its function in node rather than in the page, so it re-reads over the devtools protocol
+          // at this interval instead of on every animation frame like page.waitForFunction. 16 ms restores that
+          // granularity; the messages ride along with the wait rather than adding to it. The 1 s default timeout is
+          // far too short for a browser under parallel load, and applies to any poll that does not pass its own.
+          expect: { poll: { interval: 16, timeout: 6000 } },
           // Browserless runs all Puppeteer files in one Chrome service. Unbounded file parallelism overloads
           // touch/focus handling and OPFS cleanup, so keep bounded parallelism instead of serializing the suite.
           maxWorkers: puppeteerMaxWorkers,
