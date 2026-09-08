@@ -6,11 +6,12 @@ import * as selection from '../../selection'
 /**
  * Collapses a selected range and exits edit mode when the virtual keyboard hides (its occluded height collapses to 0).
  *
- * The two steps are deliberately a paint apart. geometrychange is the only hide signal mobile web gets, and unlike the
- * Capacitor app's keyboardWillHide it does not arrive until the keyboard has finished animating away, so both the
- * range and the focus would otherwise be torn down in the same beat — which makes Android rebuild the text context
- * menu and flash a second, read-only one back after everything has already gone (#5259). Collapsing first dismisses
- * the menu on its own, and letting that reach the compositor before the blur keeps the two teardowns apart.
+ * The two steps are deliberately a paint apart. The `geometrychange` event is the only hide signal mobile web gets,
+ * and unlike the Capacitor app's `keyboardWillHide` it does not arrive until the keyboard has finished animating
+ * away, so both the range and the focus would otherwise be torn down in the same beat — which makes Android rebuild
+ * the text context menu and flash a second, read-only one back after everything has already gone (#5259). Collapsing
+ * first dismisses the menu on its own, and letting that reach the compositor before the blur keeps the two teardowns
+ * apart.
  */
 const onGeometryChange = () => {
   if (navigator.virtualKeyboard.boundingRect.height !== 0) return
