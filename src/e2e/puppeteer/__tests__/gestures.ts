@@ -1,8 +1,8 @@
 import { type ConsoleMessage, ElementHandle, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
-import { WindowEm } from '../../../initialize'
 import $ from '../helpers/$'
+import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture, { startGesture } from '../helpers/gesture'
@@ -11,6 +11,7 @@ import paste from '../helpers/paste'
 import scrollTo from '../helpers/scrollTo'
 import setConnectionStatus from '../helpers/setConnectionStatus'
 import waitForAlertContent from '../helpers/waitForAlertContent'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
@@ -220,21 +221,12 @@ describe('chaining commands', () => {
 })
 
 describe('drag to Home with duplicate thought', () => {
-  /** Counts the number of thoughts in an exported text string. */
-  const countThoughts = (exported: string) => exported.split('\n').filter(line => /^\s*- /.test(line)).length
-
-  /**
-   * Regression test for: [Mobile] Unable to draw tracing after moving a duplicate thought to Home (root).
-   *
-   * When subthought C (under B) is dragged to root level where C already exists, the drag-and-drop
-   * handler in useDragAndDropThought exits early without clearing the longPress DragInProgress state.
-   * This leaves shouldCancelGesture returning true, blocking all subsequent gesture tracing.
-   *
-   * Root cause: parentOf(rootThought.simplePath) is an empty array, so head([]) is undefined,
-   * getThoughtById returns undefined, and the early `if (!parentThought) return` skips the alert
-   * dispatch that would have been the only code path to clean up the stuck state.
-   */
-  it('should allow gestures after moving a duplicate thought above the existing copy to Home', async () => {
+  // https://github.com/cybersemics/em/issues/4044
+  // Dragging a subthought to the root next to a copy of itself once left longPress stuck at
+  // DragInProgress, so shouldCancelGesture abandoned every later swipe until the cursor was moved by
+  // hand. The endDrag reset added in #4374 clears longPress however the drag concludes, and this
+  // holds that line for the duplicate case.
+  it('should draw a gesture after a duplicate subthought is dragged to Home above the existing copy', async () => {
     await paste(`
       - A
       - B
@@ -242,83 +234,77 @@ describe('drag to Home with duplicate thought', () => {
       - C
     `)
 
-    // Get the first C in document order — the subthought C under B (drag source)
+    // Put the cursor on the subthought C, as the reported steps do. B has to be expanded first: a
+    // collapsed thought renders no children at all, so without this the drag would grab the
+    // root-level C, which reproduces nothing.
+    await clickThought('B')
+    await waitForCursor('B')
+    await clickThought('C')
+    await waitForCursor('C')
+
+    // waitForEditable returns the first match in document order, which is now the subthought.
     const subthoughtC = await waitForEditable('C')
-    const subthoughtCBox = await subthoughtC.asElement()?.boundingBox()
-    if (!subthoughtCBox) throw new Error('Bounding box not found for subthought C')
+    const source = await subthoughtC.asElement()?.boundingBox()
+    if (!source) throw new Error('Bounding box not found for subthought C')
 
-    // Get thought B — touching its drop zone causes C to be dropped before B at root level
-    const thoughtBEditable = await waitForEditable('B')
-    const thoughtBBox = await thoughtBEditable.asElement()?.boundingBox()
-    if (!thoughtBBox) throw new Error('Bounding box not found for thought B')
+    const thoughtB = await waitForEditable('B')
+    const destination = await thoughtB.asElement()?.boundingBox()
+    if (!destination) throw new Error('Bounding box not found for thought B')
 
-    // Find the bullet element for subthought C to detect when the drag hold is activated
-    const bulletElement = await page.evaluateHandle(editableNode => {
-      if (!editableNode) throw new Error('editableNode not found')
-      const thoughtContainer = editableNode.closest('[aria-label="thought-container"]')
-      if (!thoughtContainer) throw new Error('Thought container not found')
-      const bullet = thoughtContainer.querySelector('[aria-label="bullet"]')
-      if (!bullet) throw new Error('Bullet not found')
-      return bullet
+    // The bullet is highlighted when the long press activates, which is the point at which react-dnd
+    // TouchBackend has begun the drag.
+    const bullet = await page.evaluateHandle(editable => {
+      if (!editable) throw new Error('Editable not found for subthought C')
+      const thoughtContainer = editable.closest('[aria-label="thought-container"]')
+      if (!thoughtContainer) throw new Error('Thought container not found for subthought C')
+      const bulletElement = thoughtContainer.querySelector('[aria-label="bullet"]')
+      if (!bulletElement) throw new Error('Bullet not found for subthought C')
+      return bulletElement
     }, subthoughtC)
+    if (!(bullet instanceof ElementHandle)) throw new Error('Bullet element not found for subthought C')
 
-    if (!(bulletElement instanceof ElementHandle)) throw new Error('Bullet element not found')
+    const startX = source.x + 1
+    const startY = source.y + source.height / 2
 
-    const startX = subthoughtCBox.x + 1
-    const startY = subthoughtCBox.y + subthoughtCBox.height / 2
+    // Drop above B at the root. These are the coordinates dragAndDropThought uses for position
+    // 'before', which land on B's own drop target rather than a neighbour's.
+    const endX = destination.x + destination.width / 1.25
+    const endY = destination.y
 
-    // Initiate long press to start the drag
     await page.touchscreen.touchStart(startX, startY)
-
-    // Wait for the bullet to be highlighted — this confirms React DnD's TouchBackend has fired
-    // the dragStart event and DragInProgress state has been entered
     await page.waitForFunction(
-      (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
+      (bulletElement: Element) => bulletElement.getAttribute('data-highlighted') === 'true',
       { timeout: 5000 },
-      bulletElement,
+      bullet,
     )
 
-    // Target: center of thought B's editable, which lies within B's aria-label="child" drop zone.
-    // Dropping on a root-level thought triggers the buggy useDragAndDropThought drop handler.
-    const targetX = thoughtBBox.x + thoughtBBox.width / 2
-    const targetY = thoughtBBox.y + thoughtBBox.height / 2
-
-    // Drag from subthought C up to thought B
     const steps = 20
     for (let i = 1; i <= steps; i++) {
-      const curX = startX + ((targetX - startX) * i) / steps
-      const curY = startY + ((targetY - startY) * i) / steps
-      await page.touchscreen.touchMove(curX, curY)
+      await page.touchscreen.touchMove(startX + ((endX - startX) * i) / steps, startY + ((endY - startY) * i) / steps)
     }
 
-    // Wait for the drag-and-drop alert to confirm the drag is in progress and DnD is active
     await waitForAlertContent('Drag and drop')
-
-    // Release — React DnD fires drop() for the target under the touch point.
-    // With the bug: DnD prevents onTouchEnd from reaching React handlers, so longPress stays
-    // as DragInProgress and shouldCancelGesture() returns true, blocking gesture tracing.
     await page.touchscreen.touchEnd()
 
-    // Capture the thought count before attempting a gesture
-    const beforeCount = countThoughts(await exportThoughts())
+    // The move alert replaces the drag alert once the drop has been applied. It only reports that a
+    // move happened — the destination is left to the outline assertion below, because the alert
+    // misnames the root as "" (parentOf a root thought's simplePath is an empty path).
+    await waitForAlertContent('moved to')
 
-    // Attempt a gesture to create a new thought.
-    // With the bug present, shouldCancelGesture() returns true (longPress !== Inactive),
-    // MultiGesture abandons the gesture, and no new thought is created.
+    // Draw New Thought without moving the cursor first. Moving it is the workaround the issue
+    // reports, so the gesture has to be drawn straight after the drop for this to prove anything.
     await gesture(newThoughtCommand)
 
-    // Poll for a new thought to appear — this times out and fails when the bug is present
-    await page.waitForFunction(
-      (beforeCount: number) => {
-        const em = window.em as WindowEm
-        const exported = em.exportContext(['__ROOT__'], 'text/plain')
-        return exported.split('\n').filter((line: string) => /^\s*- /.test(line)).length > beforeCount
-      },
-      { timeout: 5000 },
-      beforeCount,
-    )
+    // New Thought creates an empty thought and puts the cursor on it. A stuck longPress makes
+    // shouldCancelGesture abandon the swipe instead, leaving the cursor where the drop left it.
+    await waitForCursor('')
 
-    const afterCount = countThoughts(await exportThoughts())
-    expect(afterCount).toBeGreaterThan(beforeCount)
+    expect(await exportThoughts()).toBe(`
+- A
+- C
+- 
+- B
+- C
+`)
   })
 })
