@@ -122,10 +122,25 @@ it('text and background color on font tag', () => {
   })
 })
 
-// https://github.com/cybersemics/em/issues/3928
-it('bold thought nested in a background color font tag', () => {
+// A background color wraps the whole thought in a <font> carrying both the background and a contrasting text color, so a
+// whole-thought format applied before it nests inside the font, and one applied after it nests outside (#3928).
+it('bold thought inside a background color font tag', () => {
   expect(
     getCommandState('<font color="#000000" style="background-color: rgb(255, 87, 61);"><b>text</b></font>'),
+  ).toStrictEqual({
+    bold: true,
+    italic: false,
+    underline: false,
+    strikethrough: false,
+    code: false,
+    foreColor: '#000000',
+    backColor: 'rgb(255, 87, 61)',
+  })
+})
+
+it('background color font tag inside a bold thought', () => {
+  expect(
+    getCommandState('<b><font color="#000000" style="background-color: rgb(255, 87, 61);">text</font></b>'),
   ).toStrictEqual({
     bold: true,
     italic: false,
