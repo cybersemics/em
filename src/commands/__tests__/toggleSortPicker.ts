@@ -2,11 +2,13 @@ import State from '../../@types/State'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
+import { executeCommand } from '../../commands'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
 beforeEach(initStore)
@@ -71,4 +73,39 @@ describe('toggleSortPicker error', () => {
 
     expect(sortPickerError(store.getState())).toBeNull()
   })
+
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after Split Sentences in a context sorted by Created %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One. Two. Three. Four. Five. Six.
+          `,
+        }),
+        setCursor(['One. Two. Three. Four. Five. Six.']),
+      ])
+
+      // Advance the clock between each step so that the thought, the sort preference, and the split thoughts all have
+      // distinct created timestamps, as they do when a user sorts a context and splits a thought in it some time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Created', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      // Split Sentences creates every thought within the same millisecond, so they tie on the sort condition and are
+      // ordered by rank. Allocating those ranks against the timestamp alone inverted them against the sort condition
+      // and turned the Sort icon red (#4085).
+      executeCommand(splitSentencesCommand, { store })
+
+      expect(sortPickerError(store.getState())).toBeNull()
+    },
+  )
 })

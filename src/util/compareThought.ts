@@ -316,21 +316,21 @@ export const compareThought: ComparatorFunction<Thought> = (a: Thought, b: Thoug
 export const compareThoughtDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
   compareReasonableDescending(a.value, b.value)
 
-/** Compare two thoughts by their created timestamp in ascending order (oldest first). Fall back to compareReasonable if created at thn same time. */
+/** Compare two thoughts by their created timestamp in ascending order (oldest first). Thoughts created in the same millisecond are left equal so that the caller's rank tie-breaker keeps them in the order they were created (#4085). */
 export const compareThoughtByCreated: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compare(a.created, b.created) || compareReasonable(a.value, b.value)
+  compare(a.created, b.created)
 
-/** Compare two thoughts by their created timestamp in descending order (newest first). Fall back to compareReasonable if created at the same time. */
+/** Compare two thoughts by their created timestamp in descending order (newest first). Thoughts created in the same millisecond are left equal so that the caller's rank tie-breaker keeps them in the order they were created (#4085). */
 export const compareThoughtByCreatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compare(b.created, a.created) || compareReasonable(a.value, b.value)
+  compare(b.created, a.created)
 
-/** Compare two thoughts by their lastUpdated timestamp in ascending order (oldest first). Fall back to compareReasonable if created at the same time. */
+/** Compare two thoughts by their lastUpdated timestamp in ascending order (oldest first). Thoughts updated in the same millisecond are left equal so that the caller's rank tie-breaker keeps them in the order they were updated (#4085). */
 export const compareThoughtByUpdated: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compare(a.lastUpdated, b.lastUpdated) || compareReasonable(a.value, b.value)
+  compare(a.lastUpdated, b.lastUpdated)
 
-/** Compare two thoughts by their lastUpdated timestamp in descending order (newest first). Fall back to compareReasonable if created at the same time. */
+/** Compare two thoughts by their lastUpdated timestamp in descending order (newest first). Thoughts updated in the same millisecond are left equal so that the caller's rank tie-breaker keeps them in the order they were updated (#4085). */
 export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compare(b.lastUpdated, a.lastUpdated) || compareReasonable(a.value, b.value)
+  compare(b.lastUpdated, a.lastUpdated)
 
 /** Makes a comparator function that compares two thoughts by their note value. */
 const makeCompareThoughtByNote =
