@@ -71,7 +71,13 @@ const canExecute = (state: State): boolean =>
 const exec: Command['exec'] = (dispatch, getState) => {
   const state = getState()
   if (state.isMulticursorExecuting) {
-    dispatch(deleteThoughtWithCursor())
+    // Outdent an only child rather than deleting it, but only when it has somewhere to go. A thought at the root has
+    // no parent to outdent out of, so it must be deleted for Select All + Backspace to clear the thoughtspace (#4008).
+    if (state.cursor && state.cursor.length > 1 && canExecuteOutdent(state)) {
+      dispatch(outdent())
+    } else {
+      dispatch(deleteThoughtWithCursor())
+    }
   } else if (state.cursorCleared) {
     dispatch(deleteEmptyThought)
   } else if (canExecuteOutdent(state)) {
