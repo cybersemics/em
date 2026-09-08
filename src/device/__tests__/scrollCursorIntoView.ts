@@ -1,4 +1,5 @@
 import viewportStore from '../../stores/viewport'
+import virtualKeyboardStore from '../../stores/virtualKeyboardStore'
 import scrollCursorIntoView from '../scrollCursorIntoView'
 
 vi.mock('../../browser', async importOriginal => {
@@ -34,6 +35,7 @@ beforeEach(() => {
     layoutTreeTop: 0,
     virtualKeyboardHeight: 0,
   })
+  virtualKeyboardStore.update({ open: false, height: 0, ...{ targetHeight: 0 } })
 
   const toolbar = document.createElement('div')
   toolbar.id = 'toolbar'
@@ -89,4 +91,14 @@ it('preserves the existing instant behavior for a target more than one visible v
   scrollCursorIntoView(1800, 30)
 
   expect(window.scrollTo).toHaveBeenCalledWith({ top: 1095, behavior: 'auto' })
+})
+
+// https://github.com/cybersemics/em/issues/3765
+it('scrolls the cursor above the Capacitor keyboard when visualViewport does not resize', () => {
+  // The spread keeps this regression test source-compatible with the pre-fix VirtualKeyboardState.
+  virtualKeyboardStore.update({ open: true, height: 300, ...{ targetHeight: 300 } })
+
+  scrollCursorIntoView(600, 30)
+
+  expect(window.scrollTo).toHaveBeenCalledWith({ top: 195, behavior: 'smooth' })
 })

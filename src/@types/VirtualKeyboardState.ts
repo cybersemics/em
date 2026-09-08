@@ -4,4 +4,6 @@ export default interface VirtualKeyboardState {
   open: boolean
   /** The height of the virtual keyboard in pixels. */
   height: number
+  /** The final height that the virtual keyboard is animating toward. */
+  targetHeight: number
 }
