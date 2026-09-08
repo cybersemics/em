@@ -5,10 +5,12 @@ import waitForElement from './waitForElement.js'
 /** Options shared by the button tap and the dropdown value tap.
  *
  * ToolbarButton binds onTouchStart/onTouchEnd when isTouch and onMouseDown/onClick otherwise, so the toolbar is only
- * reachable with a touch pointer on a device; tap's 'mouse' default never fires the command. The y offset is the
- * Safari chrome offset used throughout this suite, since tap reads page coordinates but taps in screen coordinates.
+ * reachable with a touch pointer on a device; tap's 'mouse' default never fires the command. A touch pointer also keeps
+ * the caret where it is, since ToolbarButton preventDefaults touchend to suppress the blur (a mouse tap blurs the
+ * editable, which for a note clears `noteFocus` before the command runs). The y offset is the Safari chrome offset used
+ * throughout this suite, since tap reads page coordinates but taps in screen coordinates.
  */
-const tapOptions = { y: 60, pointerType: 'touch' } as const
+export const toolbarTapOptions = { y: 60, pointerType: 'touch' } as const
 
 /**
  * Tap a toolbar button by its label, and optionally a value in the dropdown that it opens, e.g. `tapToolbar('Bold')` or `tapToolbar('Text Color', 'background color swatches', 'blue')`.
@@ -17,7 +19,7 @@ const tapOptions = { y: 60, pointerType: 'touch' } as const
  */
 const tapToolbar = async (label: CommandLabel, ...values: string[]) => {
   const toolbarSelector = `[data-testid="toolbar-icon"][aria-label="${label}"]`
-  const button = await waitForElement(toolbarSelector)
+  await waitForElement(toolbarSelector)
 
   // The toolbar scrolls horizontally and most of its buttons start off-screen, so tapping the button's reported rect
   // would land outside the viewport and silently do nothing. Center it rather than scrolling it just far enough,
@@ -30,7 +32,12 @@ const tapToolbar = async (label: CommandLabel, ...values: string[]) => {
     document.querySelector(selector)!.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' })
   }, toolbarSelector)
 
-  await tap(button, tapOptions)
+  // A picker is rendered inside the button that opens it, so an open picker expands the button's rect down over the
+  // swatches and a tap aimed at the button's center lands on a swatch instead. Aim at the button's icon, which is its
+  // first svg in document order for both a plain icon and an icon wrapped alongside a picker.
+  const icon = await waitForElement(`${toolbarSelector} svg`)
+
+  await tap(icon, toolbarTapOptions)
 
   if (values.length === 0) return
 
@@ -52,7 +59,7 @@ const tapToolbar = async (label: CommandLabel, ...values: string[]) => {
     )
   }
 
-  await tap(valueElement, tapOptions)
+  await tap(valueElement, toolbarTapOptions)
 }
 
 export default tapToolbar

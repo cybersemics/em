@@ -27,6 +27,14 @@ export interface SavedSelection {
   anchor?: { node: Node; offset: number }
 }
 
+/** A saved range selection (anchor and focus) that can restore a non-collapsed browser selection when passed to selection.restoreRange. Unlike SavedSelection, it preserves the selected range rather than collapsing to the caret. */
+export interface SavedRange {
+  anchorNode: Node
+  anchorOffset: number
+  focusNode: Node
+  focusOffset: number
+}
+
 /** Gets the padding of an element as an array of numbers [top, right, bottom, left]. */
 const getElementPaddings = (element: HTMLElement): [number, number, number, number] => {
   const paddings = window.getComputedStyle(element, null).getPropertyValue('padding').split('px').map(Number)
@@ -71,6 +79,21 @@ export const selectNode = (node: Node): void => {
   range.selectNodeContents(node)
   sel.removeAllRanges()
   sel.addRange(range)
+}
+
+/**
+ * Collapses a selected range to a caret at its end, leaving focus and the keyboard alone.
+ *
+ * Android draws the text context menu for the range, so this dismisses the menu on its own. Unlike `clear`, it
+ * does not blur, which is what keeps the menu's dismissal from overlapping the keyboard's: tearing a range down
+ * while the keyboard is going away makes Android rebuild the menu, so it flashes back after it has already gone
+ * ([#4833](https://github.com/cybersemics/em/issues/4833)). Collapsing while the keyboard is still up lets the
+ * menu fade out in one pass, and the caret it leaves behind is dismissed by the blur that follows.
+ */
+export const collapse = (): void => {
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed) return
+  sel.collapseToEnd()
 }
 
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
@@ -241,33 +264,6 @@ export const offsetFromNode = (node: Node): number | null => {
   return range.toString().length
 }
 
-/** Returns the character offset at the end of the selection. Returns null if there is no selection.
- *
- * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
- * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
- */
-export const offsetEnd = (): number | null => {
-  const selection = window.getSelection()
-  if (!selection) return null
-  const range = selection.getRangeAt(0)
-  if (!range) return null
-  const selectionStart = range.startOffset || 0
-  return selectionStart + selection.toString().length
-}
-
-/** Returns the character offset at the start of the selection. Returns null if there is no selection.
- *
- * The offset is relative to the node the selection starts in, so it only matches the thought's plain-text offset when
- * the value has a single text node. Prefer offsetRange or offsetRangeThought. See #5154.
- */
-export const offsetStart = (): number | null => {
-  const selection = window.getSelection()
-  if (!selection) return null
-  const range = selection.getRangeAt(0)
-  if (!range) return null
-  return range.startOffset || 0
-}
-
 /** Returns the plain-text character offsets [start, end) of the current selection relative to the given editable
  * element (ignoring nested HTML), or null if there is no selection within it. Used to apply formatting to an
  * arbitrary sub-range synchronously (#4637). */
@@ -338,6 +334,43 @@ export const save = (): SavedSelection | null => {
   } else {
     return null
   }
+}
+
+/** Removes all selection ranges without blurring the focused element. Unlike clear, this preserves focus (and the mobile keyboard) and does not trigger onBlur. Used to hide the native selection (and the iOS selection callout / edit menu) while preserving the editor state. */
+export const removeRanges = (): void => {
+  window.getSelection()?.removeAllRanges()
+}
+
+/** Saves the full selection range (anchor and focus) so that a non-collapsed selection can be restored later with selection.restoreRange. Returns null if there is no selection range. Unlike save, this preserves the selected range rather than collapsing to the focus. */
+export const saveRange = (): SavedRange | null => {
+  const sel = window.getSelection()
+
+  if (sel && sel.rangeCount > 0 && sel.anchorNode && sel.focusNode) {
+    return {
+      anchorNode: sel.anchorNode,
+      anchorOffset: sel.anchorOffset,
+      focusNode: sel.focusNode,
+      focusOffset: sel.focusOffset,
+    }
+  } else {
+    return null
+  }
+}
+
+/** Restores a selection range saved by selection.saveRange. NOOP if the saved range is null, if its nodes are no longer connected to the document (e.g. the thought was edited or deleted), or if a selection is already active (so a selection set in the meantime is not clobbered). */
+export const restoreRange = (savedRange: SavedRange | null): void => {
+  if (!savedRange) return
+
+  const { anchorNode, anchorOffset, focusNode, focusOffset } = savedRange
+  if (!anchorNode.isConnected || !focusNode.isConnected) return
+
+  const sel = window.getSelection()
+  if (!sel) return
+
+  // Do not overwrite a selection that was set after the range was saved (e.g. by a command that executed while the gesture menu was open).
+  if (sel.rangeCount > 0 && !sel.isCollapsed) return
+
+  sel.setBaseAndExtent(anchorNode, anchorOffset, focusNode, focusOffset)
 }
 
 /**

@@ -1,5 +1,4 @@
 import { head } from 'lodash'
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import SplitResult from '../@types/SplitResult'
 import State from '../@types/State'
@@ -60,10 +59,10 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }: { type: string }
   }
 }
 
-// Create a new empty thought after each selected thought. Each newThought in the multicursor loop sets the cursor to the thought it creates, so preventSetCursor keeps the cursor on the last created thought instead of restoring the pre-command cursor, and clearMulticursor drops the stale selection — leaving the user ready to type into the new thought.
+// Create a new empty thought after each selected thought. Each newThought in the multicursor loop sets the cursor to the thought it creates, so preventSetCursor keeps the cursor on the last created thought instead of restoring the pre-command cursor, and selectNewCursors moves the selection from the original thoughts onto the new ones — leaving the user ready to type into the last of them or to run the next command on all of them.
 const multicursor: Command['multicursor'] = {
-  clearMulticursor: true,
   preventSetCursor: true,
+  selectNewCursors: true,
 }
 
 const newThoughtCommand = {
@@ -72,7 +71,7 @@ const newThoughtCommand = {
   description: 'Create a shiny new thought.',
   // Support multiple keyboard shortcuts
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
-  keyboard: [{ key: Key.Enter }, ...(isTouch ? [{ key: Key.Enter, shift: true }] : [])],
+  keyboard: [{ key: 'Enter' }, ...(isTouch ? [{ key: 'Enter', shift: true }] : [])],
   gesture: 'rd',
   multicursor,
   // Preventing default on keydown is undesirable because it disables auto-capitalization on iOS Safari. (#3707)

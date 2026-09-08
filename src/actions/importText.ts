@@ -24,9 +24,11 @@ import importJson from '../util/importJson'
 import isMarkdown from '../util/isMarkdown'
 import isRoot from '../util/isRoot'
 import markdownToText from '../util/markdownToText'
+import mergeAdjacentTags from '../util/mergeAdjacentTags'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
+import splitHtmlAtTextOffset from '../util/splitHtmlAtTextOffset'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
@@ -123,19 +125,23 @@ const importText = (
     // insert the text into the destValue in the correct place
     // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
 
-    // Convert text offsets to HTML offsets since destValue may contain formatting tags.
-    const htmlCaretPosition = textOffsetToHtmlOffset(destValue, caretPosition)
-    const htmlReplaceStart = replaceStart != null ? textOffsetToHtmlOffset(destValue, replaceStart) : undefined
-    const htmlReplaceEnd = replaceEnd != null ? textOffsetToHtmlOffset(destValue, replaceEnd) : undefined
-
+    // Remove the replaced range by splitting at the plain text offsets. Slicing at the equivalent HTML indices cuts
+    // between two different tag contexts, leaving a tag unclosed (#5154). Insertion is still a slice, since a converted
+    // offset always lands on a text character and so inherits the formatting there.
     const replacedDestValue = state.cursorCleared
       ? ''
-      : destValue.slice(0, htmlReplaceStart || 0) + destValue.slice(htmlReplaceEnd || 0)
+      : replaceStart != null && replaceEnd != null
+        ? mergeAdjacentTags(
+            `${splitHtmlAtTextOffset(destValue, replaceStart).left}${splitHtmlAtTextOffset(destValue, replaceEnd).right}`,
+          )
+        : destValue
 
-    const insertPosition = htmlReplaceStart || htmlCaretPosition
+    const insertOffset = replaceStart ?? caretPosition
+    const insertPosition = textOffsetToHtmlOffset(replacedDestValue, insertOffset)
     const combinedValue = `${replacedDestValue.slice(0, insertPosition)}${text}${replacedDestValue.slice(insertPosition)}`
     const newValue = addEmojiSpace(combinedValue)
-    const offsetBeforeEmojiSpace = caretPosition + getTextContentFromHTML(text).length
+    // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
+    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(text).length
     const emojiSpaceInsertionOffset = newValue === combinedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
     const offset =
       emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset

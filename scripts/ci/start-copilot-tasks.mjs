@@ -8,7 +8,7 @@
  * node scripts/ci/start-copilot-tasks.mjs <flaky-issues.json>
  * ```
  *
- * Only entries this run created are dispatched, because starting a fresh session against the same
+ * Only entries this run created are dispatched, because starting a fresh task against the same
  * flake every night would pile up duplicate branches on it. Nothing here picks up an issue filed by
  * hand, or one filed before this existed — those are assigned by hand.
  *

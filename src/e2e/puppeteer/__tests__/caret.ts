@@ -4,6 +4,7 @@ import newThoughtCommand from '../../../commands/newThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
+import clickNote from '../helpers/clickNote'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
@@ -18,7 +19,6 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
@@ -220,6 +220,32 @@ describe('all platforms', () => {
     // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
   })
 
+  // https://github.com/cybersemics/em/issues/3956
+  it('clicking a thought after editing a note should move the caret to the clicked thought', async () => {
+    const importText = `
+    - One
+    - Two
+      - =note
+        - Note`
+
+    await paste(importText)
+
+    // click Two first so its note becomes active/enabled
+    await clickThought('Two')
+
+    // click the note to set the caret there
+    await clickNote('Note')
+
+    // click thought "One"
+    await clickThought('One')
+
+    // caret should be on "One", not "Two"
+    await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'One')
+
+    const textContent = await getSelection().focusNode?.textContent
+    expect(textContent).toBe('One')
+  })
+
   // https://github.com/cybersemics/em/issues/4426
   it('clicking the end of a wrapped line whose next line begins with formatted text keeps the caret on that line', async () => {
     // Inline formatting splits the editable into sibling text nodes. The unformatted prefix fills the line and
@@ -290,9 +316,6 @@ describe('persistent storage', () => {
 
     // Set cursor to null
     await click('#content')
-
-    await waitForThoughtExistInDb('a')
-    await waitForThoughtExistInDb('b')
 
     await refresh()
 
