@@ -72,6 +72,15 @@ const moveSelectionTo = async (editable: HTMLElement) => {
   await act(vi.runAllTimersAsync)
 }
 
+/** Selects the whole text of an editable, as the trackpad does when it extends a range from the caret. */
+const selectAllOf = async (editable: HTMLElement) => {
+  act(() => {
+    selection.setRange(editable, { start: 0, end: editable.textContent!.length })
+    document.dispatchEvent(new Event('selectionchange'))
+  })
+  await act(vi.runAllTimersAsync)
+}
+
 it('restores the caret to the cursor thought when the selection is dragged out of it', async () => {
   store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a']), keyboardOpen({ value: true })])
 
@@ -155,4 +164,68 @@ it('restores the caret to the end of a note when the selection is dragged out of
   // a one-character note is short enough that the trackpad escapes it with no drag at all, and it only escapes
   // from the end, where the note abuts the parent thought
   expect(selection.offsetFromNode(note)).toBe(1)
+})
+
+it('collapses a range the trackpad extends from the caret it just restored', async () => {
+  store.dispatch([importText({ text: '- ab\n- c' }), setCursor(['ab']), keyboardOpen({ value: true })])
+
+  const cursorId = head(store.getState().cursor!)
+  const editable = createEditable(cursorId, 'ab')
+  const other = createEditable('other-id', 'c')
+
+  mountEditMode(editable)
+  act(() => editable.focus())
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  // the drag escapes the thought and is pulled back, which is what marks the drag as underway
+  await moveSelectionTo(other)
+
+  // the drag is still running, and extends from the restored caret back toward the finger
+  await selectAllOf(editable)
+
+  expect(selection.isCollapsed()).toBe(true)
+  expect(selection.offsetThought()).toBe(0)
+})
+
+it('leaves a range alone when no trackpad drag preceded it', async () => {
+  store.dispatch([importText({ text: '- ab\n- c' }), setCursor(['ab']), keyboardOpen({ value: true })])
+
+  const cursorId = head(store.getState().cursor!)
+  const editable = createEditable(cursorId, 'ab')
+
+  mountEditMode(editable)
+  act(() => editable.focus())
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  // Select All from the edit menu produces a range with no touch and no escaped caret, and must survive
+  await selectAllOf(editable)
+
+  expect(selection.isCollapsed()).toBe(false)
+  expect(selection.text()).toBe('ab')
+})
+
+it('stops collapsing ranges once a finger returns to the page', async () => {
+  store.dispatch([importText({ text: '- ab\n- c' }), setCursor(['ab']), keyboardOpen({ value: true })])
+
+  const cursorId = head(store.getState().cursor!)
+  const editable = createEditable(cursorId, 'ab')
+  const other = createEditable('other-id', 'c')
+
+  mountEditMode(editable)
+  act(() => editable.focus())
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  await moveSelectionTo(other)
+
+  // the trackpad session ends when the user touches the page again; dragging a selection handle afterwards is
+  // the user's own range, even though the handles are native UI that may never touch the editable
+  act(() => {
+    editable.dispatchEvent(new TouchEvent('touchstart', { bubbles: true }))
+    editable.dispatchEvent(new TouchEvent('touchend', { bubbles: true, changedTouches: [] }))
+  })
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  await selectAllOf(editable)
+
+  expect(selection.isCollapsed()).toBe(false)
 })

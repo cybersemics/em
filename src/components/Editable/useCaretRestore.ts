@@ -23,33 +23,44 @@ const useCaretRestore = ({
   end?: boolean
 }) => {
   const pressingRef = useRef(false)
+  const scrubbingRef = useRef(false)
 
   useEffect(() => {
     const editable = editableRef.current
     if (!editable || !enabled || !isTouch || !isSafari()) return
 
     /** Marks the beginning of a touch so that a finger-driven selection drag can be told from the trackpad. */
-    const onTouchStart = () => (pressingRef.current = true)
+    const onTouchStart = () => {
+      pressingRef.current = true
+      // A finger back on the page ends the trackpad session, so any range from here is the user's own.
+      scrubbingRef.current = false
+    }
 
     /** Marks the end of a touch. */
     const onTouchEnd = () => (pressingRef.current = false)
 
+    /** Puts the caret back and remembers that a trackpad drag is underway. */
+    const restore = () => {
+      // selectionchange is queued rather than dispatched synchronously, so this cannot recurse; and a set that
+      // the browser declines fires no event at all, so it cannot spin either.
+      selection.set(editable, { end })
+      scrubbingRef.current = true
+    }
+
     /** Pulls the selection back into the editable when the trackpad has dragged it out. */
     const onSelectionChange = () => {
       if (document.activeElement !== editable) return
-
       // The trackpad moves the selection without generating a single touch event in the page, so anything the
       // user did with a finger is not this. A press still in progress is a long press dragging a selection
       // within this editable; a recently ended one is a tap, which may deliberately have moved the selection to
       // a thought that is about to become the cursor.
       if (pressingRef.current || lastTouch.isRecent()) return
-
       // offsetFromNode is null when the selection is no longer inside the editable, or is gone entirely.
-      if (selection.offsetFromNode(editable) !== null) return
-
-      // selectionchange is queued rather than dispatched synchronously, so this cannot recurse; and a set that
-      // the browser declines fires no event at all, so it cannot spin either.
-      selection.set(editable, { end })
+      if (selection.offsetFromNode(editable) === null) return restore()
+      // The caret we just restored becomes the anchor the still-running drag extends from, selecting everything
+      // between it and the finger. Only a drag we have already pulled back once can do this, so the latch keeps
+      // Select All and the drag handles — neither of which is collapsed either — out of it.
+      if (scrubbingRef.current && !selection.isCollapsed()) restore()
     }
 
     editable.addEventListener('touchstart', onTouchStart)
@@ -58,6 +69,7 @@ const useCaretRestore = ({
     document.addEventListener('selectionchange', onSelectionChange)
 
     return () => {
+      scrubbingRef.current = false
       editable.removeEventListener('touchstart', onTouchStart)
       editable.removeEventListener('touchend', onTouchEnd)
       editable.removeEventListener('touchcancel', onTouchEnd)
