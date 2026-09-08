@@ -1,4 +1,3 @@
-import State from '../../@types/State'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
@@ -12,9 +11,6 @@ import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
 beforeEach(initStore)
-
-/** Returns the error string reported by the Sort Picker command for the current state. */
-const sortPickerError = (state: State) => toggleSortPickerCommand.error?.(state)
 
 describe('toggleSortPicker error', () => {
   it('does not report an error when a duplicate thought is created under alphabetical sort', () => {
@@ -39,7 +35,7 @@ describe('toggleSortPicker error', () => {
     // Create a duplicate thought with the same value.
     store.dispatch(newThought({ value: 'One' }))
 
-    expect(sortPickerError(store.getState())).toBeNull()
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
 
   it('does not report an error when duplicate thoughts are created among other thoughts under alphabetical sort', () => {
@@ -71,7 +67,7 @@ describe('toggleSortPicker error', () => {
       newThought({ value: 'b' }),
     ])
 
-    expect(sortPickerError(store.getState())).toBeNull()
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
 
   // https://github.com/cybersemics/em/issues/4084
@@ -96,6 +92,6 @@ describe('toggleSortPicker error', () => {
 
     executeCommand(splitSentencesCommand, { store })
 
-    expect(sortPickerError(store.getState())).toBeNull()
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
 })
