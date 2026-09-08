@@ -44,4 +44,8 @@ fi
 # Lint in the background, not blocking the terminal and piping all output to a file.
 # If the lint fails, trigger a notification (on supported platforms) with at least the first error shown.
 # We pipe output so that the terminal (tmux, vim, emacs etc.) isn't borked by stray output.
-(yarn lint:src 2>&1 | strip >"${LINT_LOG}" 2>&1 || notify "Lint Error"; rm -f -- "${LINT_LOG}") &
+# The EXIT trap removes the log even when notify fails, which set -e would otherwise skip.
+(
+  trap 'rm -f -- "${LINT_LOG}"' EXIT
+  yarn lint:src 2>&1 | strip >"${LINT_LOG}" 2>&1 || notify "Lint Error"
+) &
