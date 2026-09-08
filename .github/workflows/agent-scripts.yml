@@ -13,6 +13,9 @@ name: Agent Scripts
 #   - scripts/mcp-session-proxy.test.mjs runs the real scripts/mcp-session-proxy.mjs against a
 #     local stub upstream and asserts session adoption, DELETE swallowing, and clean forwarding —
 #     no BrowserStack credentials involved.
+#   - scripts/ci/__tests__/ covers the comment the fix automations keep on a pull request — the
+#     shared renderer, and the Copilot conflict scan that decides what goes in it — which nothing
+#     else exercises until one of them writes on a real pull request.
 #
 # `paths` means a non-matching PR reports no check at all — not a skipped one — so this workflow
 # must never be made a required status check on main (see § Path filtering in docs/testing.md).
@@ -26,9 +29,13 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
+      - scripts/ci/task-comment.cjs
+      - scripts/ci/__tests__/task-comment.mjs
       - scripts/ci/collect-copilot-conflicts.cjs
       - scripts/ci/__tests__/collect-copilot-conflicts.mjs
+      - scripts/ci/copilot-conflicts-comment.cjs
       - scripts/ci/start-copilot-conflict-task.mjs
+      - scripts/ci/start-dependabot-fix-task.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -45,9 +52,13 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
+      - scripts/ci/task-comment.cjs
+      - scripts/ci/__tests__/task-comment.mjs
       - scripts/ci/collect-copilot-conflicts.cjs
       - scripts/ci/__tests__/collect-copilot-conflicts.mjs
+      - scripts/ci/copilot-conflicts-comment.cjs
       - scripts/ci/start-copilot-conflict-task.mjs
+      - scripts/ci/start-dependabot-fix-task.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -105,6 +116,9 @@ jobs:
 
       - name: Run web bridge attach integration test
         run: npx tsx scripts/bridge-attach.test.ts
+
+      - name: Run task comment tests
+        run: node scripts/ci/__tests__/task-comment.mjs
 
       - name: Run Copilot conflict collector tests
         run: node scripts/ci/__tests__/collect-copilot-conflicts.mjs

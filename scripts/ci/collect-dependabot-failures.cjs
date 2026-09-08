@@ -1,6 +1,6 @@
 /**
  * Collects the failing checks on a Dependabot pull request and decides whether they warrant an
- * agent session, writing what it found to dependabot-fix/report.json for the step that starts one.
+ * agent task, writing what it found to dependabot-fix/report.json for the step that starts one.
  *
  * Loaded by the `Collect failing checks` step of .github/workflows/dependabot-fix.yml through
  * actions/github-script. Reads HEAD_BRANCH (or PR_NUMBER on a manual dispatch) and GH_TOKEN from
@@ -8,7 +8,7 @@
  *
  * The workflow fires on every check completion, so most calls here end at one of the guards below.
  * Only the run that sees the *last* check complete goes on to report, which is what keeps four
- * failing checks from starting four sessions on one pull request. This workflow is
+ * failing checks from starting four tasks on one pull request. This workflow is
  * `workflow_run`-triggered and so posts no check run of its own to the pull request head, and does
  * not have to exclude itself from that count.
  */
@@ -17,7 +17,7 @@ const fs = require('node:fs')
 /** Directory the report is written to, shared with start-dependabot-fix-task.mjs. */
 const REPORT_DIR = 'dependabot-fix'
 
-/** Report consumed by the step that starts the session. */
+/** Report consumed by the step that starts the task. */
 const REPORT_FILE = `${REPORT_DIR}/report.json`
 
 /** The only pull request author this acts on; the branch prefix alone is not proof of one. */
@@ -31,17 +31,17 @@ const DEPENDABOT = 'dependabot[bot]'
 const FAILED_CONCLUSIONS = new Set(['failure', 'timed_out', 'action_required'])
 
 /**
- * Marker identifying the single session comment this workflow maintains on a pull request. Must
+ * Marker identifying the single task comment this workflow maintains on a pull request. Must
  * match the one in scripts/ci/start-dependabot-fix-task.mjs, which writes it.
  */
 const MARKER = '<!-- dependabot-fix -->'
 
 /**
- * Sessions started per pull request before this gives up on it. A bump the agent cannot fix in
- * three attempts is not one more attempt away from being fixed, and each attempt moves the head
- * commit, which is what the per-commit dedupe keys on.
+ * Tasks started per pull request before this gives up on it. A bump the agent cannot fix in
+ * three tasks is not one more task away from being fixed, and each task moves the head commit,
+ * which is what the per-commit dedupe keys on.
  */
-const MAX_SESSIONS = 3
+const MAX_TASKS = 3
 
 /** Failing jobs to pull a log excerpt from, in the order the checks API returned them. */
 const MAX_LOG_JOBS = 3
@@ -89,7 +89,7 @@ const excerpt = lines => {
 /**
  * Fetches one job's log, or null when it cannot be read. The logs endpoint answers a redirect to
  * blob storage that rejects the Authorization header, so the redirect is followed by hand rather
- * than through octokit. A missing or expired log is not worth failing the run over — the session
+ * than through octokit. A missing or expired log is not worth failing the run over — the task
  * still gets the check names and links.
  */
 const jobLog = async ({ owner, repo, jobId, core }) => {
@@ -115,7 +115,7 @@ const parseDetailsUrl = url => {
   return match ? { runId: match[1], jobId: match[2] } : null
 }
 
-/** Collects the failing checks on a Dependabot pull request and reports whether to start a session. */
+/** Collects the failing checks on a Dependabot pull request and reports whether to start a task. */
 const collectDependabotFailures = async ({ github, context, core }) => {
   const { owner, repo } = context.repo
   // A manual dispatch names the pull request; the automatic trigger names its branch.
@@ -172,9 +172,9 @@ const collectDependabotFailures = async ({ github, context, core }) => {
     return
   }
 
-  // A check that is red on the base branch too is someone else's bug, and a session on this pull
+  // A check that is red on the base branch too is someone else's bug, and a task on this pull
   // request would chase it in the wrong place. When *every* failure is one of those, the bump is
-  // not implicated at all and no session is started.
+  // not implicated at all and no task is started.
   let failingOnBase = new Set()
   try {
     const baseChecks = await github.paginate(github.rest.checks.listForRef, {
@@ -195,7 +195,7 @@ const collectDependabotFailures = async ({ github, context, core }) => {
     return
   }
 
-  // Dedupe. The comment carries the head SHA it was written for, so a session is started once per
+  // Dedupe. The comment carries the head SHA it was written for, so a task is started once per
   // commit: a rebase, or a fix Dependabot itself pushes, gets a fresh one; a second check finishing
   // on the same commit does not. A manual dispatch overrides this, since someone asked for it.
   const comments = await github.paginate(github.rest.issues.listComments, {
@@ -206,18 +206,20 @@ const collectDependabotFailures = async ({ github, context, core }) => {
   })
   const existing = comments.find(comment => comment.body && comment.body.includes(MARKER))
   if (existing && existing.body.includes(headSha) && !prNumber) {
-    core.info(`#${pr.number}: a session was already started for ${headSha.slice(0, 7)}.`)
+    core.info(`#${pr.number}: a task was already started for ${headSha.slice(0, 7)}.`)
     return
   }
 
-  // A session that pushes a fix moves the head, and the checks that run on it are a fresh commit as
-  // far as the dedupe above is concerned — so a session that cannot fix the bump would start another
-  // one every time it tried. The count is kept in the comment, and the comment says which attempt it
-  // is, so the cap is visible before it is reached rather than as silence afterwards.
-  const sessions = Number((/<!-- sessions: (\d+) -->/.exec(existing ? existing.body : '') || [])[1] || '0')
-  if (sessions >= MAX_SESSIONS && !prNumber) {
+  // A task that pushes a fix moves the head, and the checks that run on it are a fresh commit as
+  // far as the dedupe above is concerned — so a task that cannot fix the bump would start another
+  // one every time it tried. The count is kept in the comment, and the comment says which task it
+  // is, so the cap is visible before it is reached rather than as silence afterwards. The `sessions`
+  // spelling is what comments written before the rename carry, and can go once no open Dependabot
+  // pull request still has one.
+  const tasks = Number((/<!-- (?:tasks|sessions): (\d+) -->/.exec(existing ? existing.body : '') || [])[1] || '0')
+  if (tasks >= MAX_TASKS && !prNumber) {
     core.warning(
-      `#${pr.number}: ${sessions} sessions have already run without fixing the checks. Not starting another — ` +
+      `#${pr.number}: ${tasks} tasks have already run without fixing the checks. Not starting another — ` +
         'this one needs a human, or a manual dispatch.',
     )
     return
@@ -259,10 +261,9 @@ const collectDependabotFailures = async ({ github, context, core }) => {
           baseRef: pr.base.ref,
         },
         failures,
-        sessions,
-        maxSessions: MAX_SESSIONS,
+        tasks,
+        maxTasks: MAX_TASKS,
         commentId: existing ? existing.id : null,
-        runUrl: `${process.env.GITHUB_SERVER_URL}/${owner}/${repo}/actions/runs/${process.env.GITHUB_RUN_ID}`,
       },
       null,
       2,
