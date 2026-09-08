@@ -5,18 +5,16 @@ interface Options {
 }
 
 /**
- * Wait for alert content that includes the given text.
+ * Wait for alert content that includes the given text. Reports the alert's actual text if it never arrives, which
+ * distinguishes an alert that never rendered (null) from the wrong alert rendering in its place. Times out after 6
+ * seconds.
  */
-const waitForAlertContent = async (text: string, { timeout }: Options = { timeout: 6000 }) =>
-  page.waitForFunction(
-    (text: string) => {
-      const alertElement = document.querySelector('[data-testid="alert-content"]')
-      return alertElement?.textContent?.includes(text)
-    },
-    {
+const waitForAlertContent = async (text: string, { timeout }: Options = { timeout: 6000 }) => {
+  await expect
+    .poll(() => page.evaluate(() => document.querySelector('[data-testid="alert-content"]')?.textContent ?? null), {
       timeout,
-    },
-    text,
-  )
+    })
+    .toEqual(expect.stringContaining(text))
+}
 
 export default waitForAlertContent
