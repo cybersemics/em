@@ -1,18 +1,16 @@
-import State from '../../@types/State'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
+import { executeCommand } from '../../commands'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
 beforeEach(initStore)
-
-/** Returns the error string reported by the Sort Picker command for the current state. */
-const sortPickerError = (state: State) => toggleSortPickerCommand.error?.(state)
 
 describe('toggleSortPicker error', () => {
   it('does not report an error when a duplicate thought is created under alphabetical sort', () => {
@@ -37,7 +35,7 @@ describe('toggleSortPicker error', () => {
     // Create a duplicate thought with the same value.
     store.dispatch(newThought({ value: 'One' }))
 
-    expect(sortPickerError(store.getState())).toBeNull()
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
 
   it('does not report an error when duplicate thoughts are created among other thoughts under alphabetical sort', () => {
@@ -69,6 +67,31 @@ describe('toggleSortPicker error', () => {
       newThought({ value: 'b' }),
     ])
 
-    expect(sortPickerError(store.getState())).toBeNull()
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
+
+  // https://github.com/cybersemics/em/issues/4084
+  it('does not report an error when a thought is split into sentences under updated sort', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - One. Two. Three.
+        `,
+      }),
+      setCursor(['One. Two. Three.']),
+    ])
+
+    const state = store.getState()
+    // Enable updated ascending sort on the home context.
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Updated', direction: 'Asc' },
+      }),
+    )
+
+    executeCommand(splitSentencesCommand, { store })
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
 })
