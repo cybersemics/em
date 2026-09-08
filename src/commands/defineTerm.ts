@@ -45,7 +45,7 @@ const canDefineTermAtPath = (state: State, path: Path): boolean => {
 
 /** Defines all thoughts at the given paths in one API request and adds each definition as the first subthought of its unchanged source thought. */
 const defineTermAtPaths =
-  (paths: Path[], withCommandMetadata: <T>(operation: () => T) => T = operation => operation()): Thunk<Promise<void>> =>
+  (paths: Path[]): Thunk<Promise<void>> =>
   async (dispatch, getState) => {
     const state = getState()
     const requests = paths
@@ -118,31 +118,29 @@ const defineTermAtPaths =
         throw new Error('Invalid AI response')
       }
 
-      withCommandMetadata(() =>
-        requests.forEach((request, index) => {
-          const currentState = getState()
-          const currentThought = getThoughtById(currentState, request.thought.id)
-          if (
-            !currentThought ||
-            currentThought.value !== request.originalValue ||
-            !currentThought.generating ||
-            pendingDefinitions.get(request.thought.id) !== request.requestId
-          )
-            return
+      requests.forEach((request, index) => {
+        const currentState = getState()
+        const currentThought = getThoughtById(currentState, request.thought.id)
+        if (
+          !currentThought ||
+          currentThought.value !== request.originalValue ||
+          !currentThought.generating ||
+          pendingDefinitions.get(request.thought.id) !== request.requestId
+        )
+          return
 
-          const currentPath = thoughtToPath(currentState, request.thought.id)
-          if (!currentPath) return
-          const definition = (definitions[index] as string).trim().replace(/\s+/g, ' ')
+        const currentPath = thoughtToPath(currentState, request.thought.id)
+        if (!currentPath) return
+        const definition = (definitions[index] as string).trim().replace(/\s+/g, ' ')
 
-          dispatch(
-            createThought({
-              path: simplifyPath(currentState, currentPath),
-              rank: getPrevRank(currentState, request.thought.id),
-              value: escapeHtml(definition),
-            }),
-          )
-        }),
-      )
+        dispatch(
+          createThought({
+            path: simplifyPath(currentState, currentPath),
+            rank: getPrevRank(currentState, request.thought.id),
+            value: escapeHtml(definition),
+          }),
+        )
+      })
     } catch {
       dispatch(error({ value: 'Failed to define term' }))
     } finally {
@@ -184,13 +182,13 @@ const defineTerm = {
   svg: GenerateThoughtIcon,
   multicursor: {
     /** Defines all selected thoughts in one request within one undo bracket. */
-    execMulticursor: (cursors, dispatch, _getState, commandContext) => {
+    execMulticursor: (cursors, dispatch) => {
       /** Waits for the definition request before closing the multicursor undo bracket. */
       const defineAll = async () => {
         await Promise.resolve()
         dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'defineTerm' }))
         try {
-          await dispatch(defineTermAtPaths(cursors, commandContext.withCommandMetadata))
+          await dispatch(defineTermAtPaths(cursors))
         } finally {
           dispatch(setIsMulticursorExecuting({ value: false }))
         }
@@ -221,7 +219,7 @@ const defineTerm = {
       return
     }
 
-    await dispatch(defineTermAtPaths([cursor], commandContext.withCommandMetadata ?? (operation => operation())))
+    await dispatch(defineTermAtPaths([cursor]))
   },
 } satisfies Command
 

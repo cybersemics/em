@@ -28,7 +28,7 @@ interface Handles {
 const stepLabel = (step: UndoStep): string => {
   const patch = step.patches.find(patch => !patch.metadata.isNavigation) ?? step.patches[0]
   const { metadata } = patch
-  return metadata.source === 'command' ? metadata.label : (metadata.label ?? startCase(metadata.actionType))
+  return metadata.source === 'command' ? metadata.label : (metadata.label ?? startCase(metadata.actionTypes[0]))
 }
 
 /** A slider with a start handle and an end handle over the undo history, plus a button that copies the steps to reproduce the actions between them. Dragging or tapping a handle moves the thoughtspace to the point in time under it. Both handles begin at the present with the start handle on top; dragging the start handle back reveals the end handle, which always stays at least one step after the start. */

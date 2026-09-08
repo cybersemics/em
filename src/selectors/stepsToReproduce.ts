@@ -60,10 +60,6 @@ const target = (state: State, path: Path | null): string => {
 const touchedIds = (patch: Patch): ThoughtId[] =>
   uniq(patch.ops.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
 
-/** Returns the action or command id that produced a patch. */
-const patchSourceId = (patch: Patch): string =>
-  patch.metadata.source === 'command' ? patch.metadata.commandId : patch.metadata.actionType
-
 /** Describes how a command was invoked. */
 const describeCommandInvocation = (patch: Patch): string => {
   if (patch.metadata.source !== 'command') return ''
@@ -190,7 +186,8 @@ const placement = (state: State, id: ThoughtId): string => {
 /** Describes the creation of a thought by the command that creates it, e.g. "New Subthought `e`.". The value is read from the given state so that a value typed by a later patch of the same step can be used. */
 const describeNewThought = (snapshot: Snapshot, state: State): string => {
   const { before, after } = snapshot
-  const type = patchSourceId(snapshot.patch) ?? 'newThought'
+  const { metadata } = snapshot.patch
+  const type = metadata.source === 'command' ? metadata.commandId : metadata.actionTypes[0]
   const [id] = topmost(after, createdIds(snapshot))
   if (!id) return `${startCase(type)}.`
 
@@ -325,7 +322,7 @@ const describers: Partial<Record<ActionType, Describer>> = {
 const describeCommandEffect = (snapshot: Snapshot): string => {
   const source = snapshot.patch.metadata
   if (source.source !== 'command') return ''
-  const describe = describers[source.commandId as ActionType]
+  const describe = describers[source.actionTypes[0]]
   if (describe) return describe(snapshot)
 
   const changes = attributeChanges(snapshot)
@@ -347,7 +344,7 @@ const describeCommandEffect = (snapshot: Snapshot): string => {
 const describePatch = (snapshot: Snapshot): string => {
   const { metadata } = snapshot.patch
   if (metadata.isNavigation) return ''
-  const type = patchSourceId(snapshot.patch)
+  const type = snapshot.patch.metadata.actionTypes[0]
 
   if (metadata.source === 'command') {
     const invocation = describeCommandInvocation(snapshot.patch)
@@ -355,7 +352,7 @@ const describePatch = (snapshot: Snapshot): string => {
     return detail && detail !== `${metadata.label}.` ? `${invocation} ${detail}` : invocation
   }
 
-  const describe = describers[type as ActionType]
+  const describe = describers[type]
   if (describe) return describe(snapshot)
   // an action dispatched without arguments is named as is, plus any meta attributes it set or removed, which tell toggles apart
   const changes = attributeChanges(snapshot)
@@ -366,7 +363,7 @@ const describePatch = (snapshot: Snapshot): string => {
 const describeStep = (snapshots: Snapshot[]): string => {
   const [created, typed] = snapshots
   // A new thought followed by typing its value reads as a single creation, e.g. "New Thought `c`."
-  return patchSourceId(created.patch) === 'newThought' && typed
+  return created.patch.metadata.actionTypes[0] === 'newThought' && typed
     ? describeNewThought(created, typed.after)
     : snapshots.map(describePatch).filter(Boolean).join(' ')
 }

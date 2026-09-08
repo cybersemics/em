@@ -9,7 +9,7 @@ const getLatestActionType = (patchArr: Patch[], n = 1): string | undefined => {
   if (patch.metadata.isNavigation) return getLatestActionType(patchArr, n + 1)
   return patch.metadata.source === 'command'
     ? patch.metadata.label
-    : (patch.metadata.label ?? patch.metadata.actionType)
+    : (patch.metadata.label ?? patch.metadata.actionTypes[0])
 }
 
 export default getLatestActionType

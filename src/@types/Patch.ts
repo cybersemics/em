@@ -6,27 +6,29 @@ import CommandType from './CommandType'
 /** Metadata for a patch created by a user command. */
 export interface CommandPatchMetadata {
   source: 'command'
+  /** Identifies this execution, including its asynchronous continuations, without implying an undo group. */
+  invocationId: string
   commandId: CommandId
   /** User-facing command label at the time the patch was created. */
   label: string
   type: CommandType
   keyboardIndex?: number
-  /** True when every action captured by the command only navigates state. */
-  isNavigation: boolean
 }
 
 /** Metadata for a patch created outside the command system, such as typing, paste, drag-and-drop, or replication. */
 export interface ActionPatchMetadata {
   source: 'action'
-  actionType: ActionType
   /** Optional user-facing label for a grouped non-command interaction. */
   label?: string
-  /** True when every action captured by the patch only navigates state. */
-  isNavigation: boolean
 }
 
-export type PatchMetadata = CommandPatchMetadata | ActionPatchMetadata
-export type PatchMetadataInput = Omit<CommandPatchMetadata, 'isNavigation'> | Omit<ActionPatchMetadata, 'isNavigation'>
+export type PatchMetadataInput = CommandPatchMetadata | ActionPatchMetadata
+export type PatchMetadata = PatchMetadataInput & {
+  /** The underlying action types, in first-occurrence order, independently of the command that produced them. */
+  actionTypes: [ActionType, ...ActionType[]]
+  /** True when every recorded action only navigates state. */
+  isNavigation: boolean
+}
 
 /** An exact state diff and the user-level source that produced it. */
 interface Patch {

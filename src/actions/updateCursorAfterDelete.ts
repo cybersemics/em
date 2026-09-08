@@ -82,10 +82,10 @@ const updateCursorAfterDelete = (state: State, statePrev: State) => {
     if (!cursor) return null
 
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    const source =
-      lastPatches?.metadata.source === 'command' ? lastPatches.metadata.commandId : lastPatches?.metadata.actionType
     const lastCursorOps =
-      source === 'newThought' ? lastPatches?.ops.filter(operation => operation.path.startsWith('/cursor/')) : null
+      lastPatches?.metadata.actionTypes[0] === 'newThought'
+        ? lastPatches?.ops.filter(operation => operation.path.startsWith('/cursor/'))
+        : null
 
     if (!lastCursorOps || lastCursorOps.length === 0) return null
 

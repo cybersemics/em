@@ -112,8 +112,8 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
-  /** The action or command source of the last undoable patch. On undo this is the source of the corresponding redo patch. Used by special-case animations that also run when a change is reversed. */
-  lastUndoableActionType?: ActionType | CommandId
+  /** The underlying action type of the last undoable change. On undo this is the first action type of the corresponding redo patch. Used by special-case animations that also run when a change is reversed. */
+  lastUndoableActionType?: ActionType
   latestCommands: Command[]
   /** Tracks the state of long press and drag-and-drop. */
   longPress: LongPressState

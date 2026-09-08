@@ -27,10 +27,7 @@ const addEmojiPrefix = (emoji: string, value: string): string => `${emoji}${valu
  * source thought rather than its temporary ellipsis state.
  */
 const generateEmoji =
-  (
-    path: Path,
-    withCommandMetadata: <T>(operation: () => T) => T = operation => operation(),
-  ): Thunk<Promise<GeneratedEmojiResult | null>> =>
+  (path: Path): Thunk<Promise<GeneratedEmojiResult | null>> =>
   async (dispatch, getState) => {
     const state = getState()
     const simplePath = simplifyPath(state, path)
@@ -45,19 +42,17 @@ const generateEmoji =
       const value = addEmojiPrefix(cache.emojis[index], cache.baseValue)
       const cursorOffsetDelta = cache.emojis[index].length - cache.emojis[cache.index].length
 
-      withCommandMetadata(() =>
-        dispatch(
-          editThought({
-            ...(isCursor && !state.isMulticursorExecuting && state.cursorOffset != null
-              ? { cursorOffset: Math.max(0, state.cursorOffset + cursorOffsetDelta) }
-              : null),
-            force: true,
-            newValue: value,
-            oldValue: thought.value,
-            path: simplePath,
-            preventMerge: true,
-          }),
-        ),
+      dispatch(
+        editThought({
+          ...(isCursor && !state.isMulticursorExecuting && state.cursorOffset != null
+            ? { cursorOffset: Math.max(0, state.cursorOffset + cursorOffsetDelta) }
+            : null),
+          force: true,
+          newValue: value,
+          oldValue: thought.value,
+          path: simplePath,
+          preventMerge: true,
+        }),
       )
       generatedEmojiStore.update(state => ({
         entries: {
@@ -162,37 +157,35 @@ const generateEmoji =
     const newPrefixLength = emoji ? emoji.length + (baseValue ? 1 : 0) : 0
     const cursorOffsetDelta = emoji ? newPrefixLength - cachedPrefix.length : 0
 
-    withCommandMetadata(() =>
-      dispatch([
-        updateThoughts({
-          thoughtIndexUpdates: {
-            [thought.id]: {
-              ...thoughtPending,
-              generating: false,
-              value: thought.value,
-            },
+    dispatch([
+      updateThoughts({
+        thoughtIndexUpdates: {
+          [thought.id]: {
+            ...thoughtPending,
+            generating: false,
+            value: thought.value,
           },
-          lexemeIndexUpdates: {},
-          local: false,
-          overwritePending: true,
-          remote: false,
-        }),
-        ...(emoji
-          ? [
-              editThought({
-                ...(isCursor && !getState().isMulticursorExecuting && state.cursorOffset != null
-                  ? { cursorOffset: Math.max(0, state.cursorOffset + cursorOffsetDelta) }
-                  : null),
-                force: true,
-                newValue: value,
-                oldValue: thought.value,
-                path: simplePath,
-                preventMerge: true,
-              }),
-            ]
-          : []),
-      ]),
-    )
+        },
+        lexemeIndexUpdates: {},
+        local: false,
+        overwritePending: true,
+        remote: false,
+      }),
+      ...(emoji
+        ? [
+            editThought({
+              ...(isCursor && !getState().isMulticursorExecuting && state.cursorOffset != null
+                ? { cursorOffset: Math.max(0, state.cursorOffset + cursorOffsetDelta) }
+                : null),
+              force: true,
+              newValue: value,
+              oldValue: thought.value,
+              path: simplePath,
+              preventMerge: true,
+            }),
+          ]
+        : []),
+    ])
 
     if (!emoji || !emojis) return null
 

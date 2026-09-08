@@ -13,7 +13,7 @@ beforeEach(initStore)
 const stepSources = () =>
   undoSteps(store.getState()).steps.map(step =>
     step.patches.map(patch =>
-      patch.metadata.source === 'command' ? patch.metadata.commandId : patch.metadata.actionType,
+      patch.metadata.source === 'command' ? patch.metadata.commandId : patch.metadata.actionTypes[0],
     ),
   )
 

@@ -108,11 +108,7 @@ const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string):
   const stackAfter = actionType === 'undo' ? stateAfter.undoPatches : stateAfter.redoPatches
   const popped = stackBefore.slice(stackAfter.length)
   if (popped.length === 0) return
-  const actions = [
-    ...new Set(
-      popped.map(patch => (patch.metadata.source === 'command' ? patch.metadata.commandId : patch.metadata.actionType)),
-    ),
-  ]
+  const actions = [...new Set(popped.flatMap(patch => patch.metadata.actionTypes))]
   debugLog.log(actionType, { steps: popped.length, actions })
 }
 
