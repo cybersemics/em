@@ -59,7 +59,8 @@ it('suppress the synthesized mousedown of a tap that already moved the cursor wi
   expect(mousedown.defaultPrevented).toBe(true)
 })
 
-it('allow mousedown on the cursor thought when no cursor-moving tap preceded it', () => {
+// https://github.com/cybersemics/em/issues/3765
+it('blocks native focus before placing the caret on the cursor thought', () => {
   store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
 
   const editable = document.createElement('div')
@@ -83,5 +84,39 @@ it('allow mousedown on the cursor thought when no cursor-moving tap preceded it'
     editable.dispatchEvent(mousedown)
   })
 
-  expect(mousedown.defaultPrevented).toBe(false)
+  expect(mousedown.defaultPrevented).toBe(true)
+  expect(document.activeElement).toBe(editable)
+  expect(store.getState().cursorOffset).toBe(0)
+})
+
+// https://github.com/cybersemics/em/issues/3765
+it('focuses a keyboard-closed cursor during touchend before blocking the synthesized mousedown', () => {
+  store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+
+  const editable = document.createElement('div')
+  editable.setAttribute('contenteditable', 'true')
+  editable.textContent = 'a'
+  document.body.appendChild(editable)
+  const focus = vi.spyOn(editable, 'focus')
+
+  renderHook(
+    () =>
+      useEditMode({
+        contentRef: { current: editable as unknown as HTMLInputElement },
+        isEditing: true,
+        path: store.getState().cursor!,
+        style: undefined,
+        transient: undefined,
+      }),
+    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+  )
+
+  const touchend = new Event('touchend', { bubbles: true, cancelable: true }) as TouchEvent
+  Object.defineProperty(touchend, 'changedTouches', { value: [{ clientX: 0, clientY: 0 }] })
+
+  act(() => {
+    editable.dispatchEvent(touchend)
+  })
+
+  expect(focus).toHaveBeenCalledWith({ preventScroll: true })
 })
