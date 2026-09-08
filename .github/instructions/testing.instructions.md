@@ -3,7 +3,7 @@
 - Tests are located in `**/__tests__/*`.
 - Testing guidelines are described in `docs/testing.md`. Be sure to read this file in full before writing tests.
 - Run linter with `yarn lint`.
-- Run unit tests with `yarn test`.
+- Run unit tests with `yarn test`. In a fresh worktree or after dependency changes, run `yarn build:styles` and `yarn build:packages` first — mass import-resolution failures mean stale generated output, not broken code. The full suite takes minutes: run it once to survey, then iterate file-scoped with `npx vitest run --project unit <path>`, and save a second full run for the end.
 - Run Puppeteer tests with `yarn test:puppeteer`.
 - Ensure linter, unit tests, and puppeteer tests all pass before requesting a review.
 - Cover each behavior at exactly one level. If a unit, store, or JSDOM test already proves the behavior, do not add a redundant Puppeteer or iOS test for it; higher-level tests are slow and are justified only by a distinct risk the lower-level test cannot cover, such as real browser or device behavior, input mapping, or a visual regression. See [test levels](../../docs/testing.md#test-levels).

@@ -10,6 +10,15 @@
 
 The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests.
 
+In a fresh worktree, or after dependency changes, generate the build output the tests import before running them:
+
+```sh
+yarn build:styles    # styled-system/
+yarn build:packages  # packages/webview
+```
+
+Import-resolution failures across many test files at once — `Failed to resolve import '../../../styled-system/css'`, `Failed to resolve import 'webview-background'` — mean that output is missing or stale, not that the code is broken.
+
 ```sh
 yarn test            # unit and jsdom tests
 yarn test:puppeteer  # puppeteer (Docker required; starts its own local Vite server)
@@ -30,6 +39,8 @@ yarn test:ios:local         # local Appium and iOS Simulator required
 > See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
 
 ### Run a specific test
+
+A full unit run is 263 files and takes several minutes, so run it once to survey, fix the environment from that single output, then iterate file-scoped and save the next full run for the end.
 
 Prefer a focused test while developing:
 
