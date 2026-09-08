@@ -393,6 +393,26 @@ describe('drag', () => {
     expect(await getEditingText()).toBe('a')
   })
 
+  it('renders home as the destination when a thought is moved to the root', async () => {
+    await paste(`
+      - a
+        - b
+      - c
+    `)
+
+    await clickThought('a')
+
+    await dragAndDropThought('b', 'c', {
+      position: 'before',
+      showAlert: true,
+    })
+
+    await waitForAlertContent('moved to')
+
+    const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
+    expect(alertText).toBe('"b" moved to home.')
+  })
+
   it('should allow dropping before first thought in table row', async () => {
     await paste(`
       - x

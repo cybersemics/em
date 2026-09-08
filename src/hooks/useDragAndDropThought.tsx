@@ -36,6 +36,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
 import prevSibling from '../selectors/prevSibling'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
@@ -288,7 +289,13 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
         dispatch(
           alert(() => (
-            <MoveThoughtAlert from={firstFromThought.value} numThoughts={draggedItems.length} toPath={parent} />
+            <MoveThoughtAlert
+              from={firstFromThought.value}
+              numThoughts={draggedItems.length}
+              // parent is empty when the drop target is a root child, which MoveThoughtAlert cannot render as a
+              // destination. Root the path so the alert says "moved to home" instead of quoting an empty value.
+              toPath={rootedParentOf(state, props.simplePath)}
+            />
           )),
         )
       }, 100)
