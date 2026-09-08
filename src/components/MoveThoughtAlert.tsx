@@ -14,7 +14,7 @@ interface MoveThoughtAlertProps {
   from: string
   /** Total number of moved thoughts. Defaults to one. */
   numThoughts?: number
-  /** Destination context path. Root destinations render as home; other destinations render as a clickable thought link. */
+  /** Destination context path. Root destinations, including the empty path that `parentOf` returns for a root child, render as home; other destinations render as a clickable thought link. */
   toPath: SimplePath
   /** True when the thought was moved to the top of the destination context. */
   top?: boolean
@@ -24,7 +24,9 @@ interface MoveThoughtAlertProps {
 
 /** Alert shown after drag-and-drop moves a thought to another context. */
 const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numThoughts = 1, toPath, top }) => {
-  const isRootPath = isRoot(toPath)
+  // parentOf returns an empty path for a root child, which isRoot does not match since it only recognizes an
+  // explicit root context. Treat it as a root destination so it renders as home rather than an empty quoted value.
+  const isRootPath = toPath.length === 0 || isRoot(toPath)
   const to = useSelector(state => (isRootPath ? 'home' : getThoughtById(state, head(toPath))?.value || ''))
   const context = useSelector(state => (contextPath ? headValue(state, contextPath) : null))
   const alertFrom = numThoughts === 1 ? `"${ellipsize(from)}"` : `${numThoughts} thoughts`
