@@ -165,7 +165,7 @@ const testCommentOnConflictOnly = async () => {
   await run([clean, conflicting, resolved])
   assert.deepEqual(clean.comments, [])
   assert.ok(conflicting.comments[0].body.includes('A merge conflict is detected'))
-  assert.ok(resolved.comments[0].body.includes('No merge conflict is currently detected'))
+  assert.ok(resolved.comments[0].body.includes('Merge conflicts resolved.'))
 }
 
 /** Verifies the comment ends on the shared attempt footer once an attempt has been started. */
@@ -191,12 +191,23 @@ const testCapNotice = async () => {
   const pr = makePr({
     number: 17,
     updatedAt: '2026-09-06T10:00:00Z',
-    state: { ...dueState(0), attempts: 6, lastRunUrl: 'https://example.test/run/99' },
+    state: {
+      ...dueState(0),
+      attempts: 6,
+      lastTaskUrl: 'https://example.test/task/6',
+      lastRunUrl: 'https://example.test/run/99',
+    },
   })
   await run([pr])
   assert.equal(
     pr.comments[0].body.split('\n').pop(),
     'Attempt 6 of 6. No further attempt starts on its own — run `gh workflow run copilot-conflicts.yml -f pr=17` if it needs another. Started by [Copilot Conflict Resolution](https://example.test/run/99).',
+  )
+  // Nothing further starts on its own at the cap, so no resolution may be claimed as ongoing.
+  assert.ok(
+    pr.comments[0].body.includes(
+      'A merge conflict is detected. The last attempt was this [task](https://example.test/task/6).',
+    ),
   )
 }
 
@@ -206,7 +217,33 @@ const testScheduleBeforeFirstAttempt = async () => {
   await run([pr])
   assert.equal(
     pr.comments[0].body.split('\n').pop(),
-    'A merge conflict is detected. The next attempt is eligible 3 hours after the conflict was first seen, if the pull request still conflicts.',
+    'A merge conflict is detected. Copilot will resolve it on this branch. The next attempt is eligible 3 hours after the conflict was first seen, if the pull request still conflicts.',
+  )
+}
+
+/** Verifies a started attempt says the conflict is being resolved and links the task doing it. */
+const testTaskLink = async () => {
+  const conflicting = makePr({
+    number: 19,
+    updatedAt: '2026-09-06T10:00:00Z',
+    state: { ...dueState(2), lastTaskUrl: 'https://example.test/task/2' },
+  })
+  const resolved = makePr({
+    number: 20,
+    updatedAt: '2026-09-06T10:00:00Z',
+    mergeable: true,
+    state: { ...dueState(2), lastTaskUrl: 'https://example.test/task/2' },
+  })
+  await run([conflicting, resolved])
+  assert.ok(
+    conflicting.comments[0].body.includes(
+      'A merge conflict is detected. Copilot is resolving it on this branch: [task](https://example.test/task/2).',
+    ),
+  )
+  assert.ok(
+    resolved.comments[0].body.includes(
+      'Merge conflicts resolved. The last attempt was this [task](https://example.test/task/2).',
+    ),
   )
 }
 
@@ -236,6 +273,7 @@ await testSkipLabelOverridesNamedDispatch()
 await testAttemptFooter()
 await testCapNotice()
 await testScheduleBeforeFirstAttempt()
+await testTaskLink()
 await testNamedDispatchOverridesWaitAndCap()
 
 console.info('PASS: collect-copilot-conflicts')
