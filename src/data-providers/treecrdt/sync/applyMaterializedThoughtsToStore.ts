@@ -5,8 +5,13 @@ import type Index from '../../../@types/IndexType'
 import type Thought from '../../../@types/Thought'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
 import { refreshAttributeChildrenFromChanges } from '../attributeChildren'
-import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
-import { enqueueMaterializedThoughtsToStoreWork } from './materializationQueue'
+import {
+  getTreecrdtWriteBarrierVersion,
+  getTreecrdtWriteFailureVersion,
+  waitForTreecrdtWriteBarrier,
+  withTreecrdtWriteBarrier,
+} from '../writeBarrier'
+import { enqueueMaterializedThoughtsToStoreWork, getMaterializedThoughtsToStoreVersion } from './materializationQueue'
 import { type MaterializationStore, refreshThoughtsFromMaterializationChanges } from './materializationThoughtUpdates'
 
 /** Dependencies captured when a client registers its materialization listener. */
@@ -14,6 +19,7 @@ type MaterializationContext = Readonly<{
   bridge: ThoughtspaceMaterializationBridge
   client: TreecrdtClient
   db: MaterializationStore
+  writeFailureVersion: number
 }>
 
 /**
@@ -22,52 +28,63 @@ type MaterializationContext = Readonly<{
  */
 export async function applyMaterializedThoughtsToStore(
   event: MaterializationEvent,
-  { bridge, client, db }: MaterializationContext,
+  { bridge, client, db, writeFailureVersion }: MaterializationContext,
 ): Promise<void> {
   if (event.changes.length === 0) return
 
-  // Local writes and materialization callbacks can race. Wait for queued em -> TreeCRDT writes before reading
-  // SQLite back into app state, otherwise a remote refresh can reapply stale rows over newer optimistic state.
-  await waitForTreecrdtWriteBarrier()
+  let applied = false
+  while (!applied) {
+    // Surface failed local persistence rather than replacing an unsaved optimistic edit with stored rows.
+    await waitForTreecrdtWriteBarrier()
+    applied = await withTreecrdtWriteBarrier(async writeVersion => {
+      // Writes queued behind this attempt must finish before we can read an authoritative snapshot.
+      if (writeVersion !== getTreecrdtWriteBarrierVersion()) return false
+      // Reporting a save error does not make stored rows authoritative again. Suspend this binding's
+      // materialization rather than discard unsaved edits; an unrelated successful write cannot repair them.
+      if (writeFailureVersion !== getTreecrdtWriteFailureVersion()) {
+        throw new Error('TreeCRDT materialization suspended after a persistence failure.')
+      }
+      const materializationVersion = getMaterializedThoughtsToStoreVersion()
+      const snapshot = bridge.getSnapshot()
 
-  await refreshAttributeChildrenFromChanges(client, event.changes)
+      await refreshAttributeChildrenFromChanges(client, event.changes)
+      const { deletedIds, thoughts, lexemeIndexUpdates } = await refreshThoughtsFromMaterializationChanges(
+        event.changes,
+        db,
+        snapshot,
+      )
 
-  const snapshot = bridge.getSnapshot()
-  const { deletedIds, thoughts, lexemeIndexUpdates } = await refreshThoughtsFromMaterializationChanges(
-    event.changes,
-    db,
-    snapshot,
-  )
+      const current = bridge.getSnapshot()
+      if (
+        writeVersion !== getTreecrdtWriteBarrierVersion() ||
+        materializationVersion !== getMaterializedThoughtsToStoreVersion() ||
+        current.thoughtIndex !== snapshot.thoughtIndex ||
+        current.lexemeIndex !== snapshot.lexemeIndex
+      ) {
+        return false
+      }
 
-  if (Object.keys(lexemeIndexUpdates).length > 0) {
-    await db.updateThoughts({
-      thoughtIndexUpdates: {},
-      lexemeIndexUpdates,
-      lexemeIndexUpdatesOld: {},
+      const thoughtIndexUpdates: Index<Thought | null> = {}
+      for (const id of deletedIds) {
+        thoughtIndexUpdates[id] = null
+      }
+      for (const latest of thoughts) {
+        // Pending is UI state, not part of the TreeCRDT payload.
+        const pending = snapshot.thoughtIndex[latest.id]?.pending || snapshot.thoughtIndex[latest.parentId]?.pending
+        thoughtIndexUpdates[latest.id] = { ...latest, ...(pending ? { pending } : null) }
+      }
+
+      if (Object.keys(thoughtIndexUpdates).length > 0 || Object.keys(lexemeIndexUpdates).length > 0) {
+        // Publish without yielding after validation. A local edit during the following cache write must see
+        // these values, so its queued persistence removes the correct previous lexeme membership.
+        bridge.apply({ thoughtIndex: thoughtIndexUpdates, lexemeIndex: lexemeIndexUpdates })
+      }
+      if (Object.keys(lexemeIndexUpdates).length > 0) {
+        await db.updateThoughts({ thoughtIndexUpdates: {}, lexemeIndexUpdates, lexemeIndexUpdatesOld: {} })
+      }
+      return true
     })
-  }
-
-  const thoughtIndexUpdates: Index<Thought | null> = {}
-
-  for (const id of deletedIds) {
-    thoughtIndexUpdates[id] = null
-  }
-
-  for (const latest of thoughts) {
-    const thoughtInState = snapshot.thoughtIndex[latest.id]
-    const parentInState = snapshot.thoughtIndex[latest.parentId]
-    // Pending is not part of the TreeCRDT payload. Preserve the local UI flag until auth/sync handling owns it.
-    const pending = thoughtInState?.pending || parentInState?.pending
-    const latestWithPending = {
-      ...latest,
-      ...(pending ? { pending } : null),
-    }
-
-    thoughtIndexUpdates[latest.id] = latestWithPending
-  }
-
-  if (Object.keys(thoughtIndexUpdates).length > 0 || Object.keys(lexemeIndexUpdates).length > 0) {
-    await bridge.apply({ thoughtIndex: thoughtIndexUpdates, lexemeIndex: lexemeIndexUpdates })
+    // Retry outside the write barrier, allowing any intervening local writes to persist first.
   }
 }
 

@@ -135,7 +135,7 @@ export async function refreshThoughtsFromMaterializationChanges(
         orderParents.add(ch.parentAfter as ThoughtId)
         break
       case 'delete':
-        deleted.add(ch.node as ThoughtId)
+        touched.add(ch.node as ThoughtId)
         if (ch.parentBefore) {
           touched.add(ch.parentBefore as ThoughtId)
           orderParents.add(ch.parentBefore as ThoughtId)
@@ -154,20 +154,21 @@ export async function refreshThoughtsFromMaterializationChanges(
     }
   }
 
-  for (const id of deleted) {
-    touched.delete(id)
-  }
-
   const thoughts: Thought[] = []
   const thoughtIndexUpdates: Index<Thought> = {}
   const lexemeIndexUpdates: Index<Lexeme | null> = {}
 
   for (const id of touched) {
+    const previous = snapshot.thoughtIndex[id]
+    if (previous) orderParents.add(previous.parentId)
     const thought = await db.getThoughtById(id)
-    if (!thought) continue
+    // Events are invalidation hints: a delete may have been restored, or a touched node deleted, before this read.
+    if (!thought) {
+      deleted.add(id)
+      continue
+    }
     thoughtIndexUpdates[thought.id] = thought
     orderParents.add(thought.parentId)
-    const previous = snapshot.thoughtIndex[id]
     if (previous && previous.value !== thought.value) {
       await removeLexemeContext(lexemeIndexUpdates, snapshot, db, previous)
     }
