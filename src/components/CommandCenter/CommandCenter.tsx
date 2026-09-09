@@ -223,16 +223,42 @@ const CommandCenter = () => {
     setIsDismissBlocked((sheetRef.current?.y.get() ?? Infinity) < getStandardY() / 2)
   }, [getStandardY])
 
+  /** Where the current touch started, and whether the command list was at its top at that moment. Both are read at touchstart because the browser decides whether to claim the gesture as a scroll on the very first touchmove, by which point the list may already have moved. */
+  const touchStartYRef = useRef(0)
+  const isListAtTopRef = useRef(false)
+
   /** Prevent native page scroll when dragging the sheet. The page body is scrollable, and without this the browser scrolls the body on touchmove, stealing touch from the sheet's drag handler. React touch handlers are passive so we need a non-passive listener via addEventListener. */
   const preventTouchMoveRef = useCallback((el: HTMLDivElement | null) => {
     if (!el) return
+
+    /** Records where the touch began and whether the command list was at its top, for onTouchMove to classify the gesture from. */
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartYRef.current = e.touches[0]?.clientY ?? 0
+      isListAtTopRef.current = (scrollerRef.current?.scrollTop ?? 0) <= 0
+    }
+
     /** Prevent native page scroll on touchmove, except inside the expanded stage's scroll container, which needs the browser to scroll it. Its overscroll-behavior keeps that scroll from chaining to the body. */
-    const handler: EventListenerOrEventListenerObject = e => {
-      if (e.target instanceof Node && scrollerRef.current?.contains(e.target)) return
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.target instanceof Node && scrollerRef.current?.contains(e.target)) {
+        /*
+         * At the top of the command list a downward swipe must collapse the drawer rather than scroll.
+         * The list is still scrollable there, so the compositor claims the swipe as an overscroll and
+         * fires pointercancel, which kills the sheet's drag about 20px in. preventDefault is the only
+         * lever that stops it: touch-action cannot express "downward to the drag handler, upward to the
+         * browser", because every value permitting vertical scrolling also permits that claim.
+         */
+        const isMovingDown = (e.touches[0]?.clientY ?? 0) > touchStartYRef.current
+        if (!isListAtTopRef.current || !isMovingDown) return
+      }
       e.preventDefault()
     }
-    el.addEventListener('touchmove', handler, { passive: false })
-    return () => el.removeEventListener('touchmove', handler)
+
+    el.addEventListener('touchstart', onTouchStart, { passive: true })
+    el.addEventListener('touchmove', onTouchMove, { passive: false })
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart)
+      el.removeEventListener('touchmove', onTouchMove)
+    }
   }, [])
 
   const onClose = useCallback(() => {
