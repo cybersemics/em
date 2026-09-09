@@ -1,7 +1,9 @@
 import { type ConsoleMessage, ElementHandle, KnownDevices } from 'puppeteer'
+import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
 import $ from '../helpers/$'
+import captureGestureDiagnostics from '../helpers/captureGestureDiagnostics'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
@@ -22,6 +24,25 @@ import { page } from '../session'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+// Temporary #5305 investigation. Keep diagnostics outside the gesture's actions and assertions.
+let diagnostics: Awaited<ReturnType<typeof captureGestureDiagnostics>> | undefined
+beforeAll(async () => {
+  if (process.env.EM_GESTURE_DIAGNOSTICS === '1') diagnostics = await captureGestureDiagnostics()
+})
+beforeEach(async ({ task }) => {
+  if (task.name === 'releases a gesture whose touch target unmounts mid-gesture') await diagnostics?.startPage()
+})
+afterEach(async ({ task }) => {
+  if (task.name !== 'releases a gesture whose touch target unmounts mid-gesture') return
+  const capture = diagnostics
+  diagnostics = undefined
+  await capture?.finish(task.result?.state ?? 'unknown')
+})
+afterAll(async () => {
+  // Preserve a trace if a fixture failure prevented the selected test from reaching its hooks.
+  await diagnostics?.finish('not-run')
+})
 
 /**
  * Test suite for gesture alert behavior.

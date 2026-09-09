@@ -12,6 +12,7 @@ const PuppeteerEnvironment: Environment = {
     const args = [
       '--deterministic-fetch',
       '--disable-dev-shm-usage',
+      '--disable-http2',
       '--disable-setuid-sandbox',
       '--no-first-run',
       '--no-sandbox',
@@ -19,8 +20,14 @@ const PuppeteerEnvironment: Environment = {
       '--ignore-certificate-errors',
     ]
 
+    const launch = Buffer.from(
+      JSON.stringify({
+        args,
+      }),
+    ).toString('base64')
+
     const browser = await puppeteer
-      .connect({ browserWSEndpoint: `ws://localhost:7566?${args.join('&')}` })
+      .connect({ browserWSEndpoint: `ws://localhost:7566/chromium?launch=${encodeURIComponent(launch)}` })
       // catch and log a launch error, otherwise it will not appear in the CI logs
       .catch((err: Error) => {
         // using `console.log` here to avoid errors or logs being swallowed by vitest

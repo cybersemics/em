@@ -11,7 +11,7 @@ The agent wakes up in a machine that has already been prepared for it. Understan
 | Install dependencies | So the agent does not spend its first minutes on `yarn` |
 | Install and start a virtual display | The machine has no screen, and Chrome needs one to run |
 | Write BrowserStack credentials to a local env file | So the iOS test runner finds them; the file is git-ignored |
-| Pre-pull the browserless Docker image | Downloading it later would happen inside the agent's run instead |
+| Pre-pull the pinned Browserless v2 Docker image | Downloading it later would happen inside the agent's run instead |
 | Start a shared Chrome with debugging on port 9222 | See below — this is the important one |
 | Start the Vite dev server on port 3000 | So the app is already there to be driven |
 
@@ -159,7 +159,7 @@ The skills draw a hard line between **driving the live app** and **running a tes
 
 Reproduction drives the live app: the shared Chrome, the dev server on port 3000, the interactive tooling. Exploratory and messy by design.
 
-Running a test uses the real test harness instead, which starts its own browser in Docker on port 7566 and its own server on port 2552. It handles launching the app and resetting state between tests. **Do not point it at the exploration setup** — it manages its own.
+Running a test uses the real test harness instead, which starts its own pinned Browserless v2 container on port 7566, installs Microsoft Core Fonts so Helvetica resolves to Arial, and starts its own server on port 2552. Test Chrome keeps HTTPS and secure-context behavior enabled but disables HTTP/2 to avoid Chromium aborting Vite's module graph with `ERR_CERT_VERIFIER_CHANGED`. The harness handles launching the app and resetting state between tests. **Do not point it at the exploration setup** — it manages its own.
 
 One wrinkle worth knowing, because it produces a baffling error otherwise. The puppeteer script only starts Docker and its own server when it thinks it is not in CI. The agent's machine claims to be CI but does not provide those services, so the test tries to connect to a browser that was never started. Clearing the variable for that one command fixes it:
 
