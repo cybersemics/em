@@ -246,6 +246,57 @@ describe('formatSelection color', () => {
     expect(cursorValue()).toBe('X<font color="#00c7e6"><b>ab</b></font>Y')
   })
 
+  // https://github.com/cybersemics/em/pull/4032#pullrequestreview-5149433775
+  // The color must stay outside the decoration so that <u>/<strike> inherit it and draw their line in it, since
+  // text-decoration-color resolves to the currentColor of the decorating element rather than of its children.
+  it('nests underline inside the color when the text color was applied first', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+    await dispatch(formatSelection('underline'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6"><u>One</u></font>')
+    expect(getCommandState(cursorValue())).toMatchObject({ underline: true, foreColor: '#00c7e6' })
+  })
+
+  it('nests strikethrough inside the color when the text color was applied first', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+    await dispatch(formatSelection('strikethrough'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6"><strike>One</strike></font>')
+  })
+
+  // the reverse order, which applyColor already wrapped correctly
+  it('keeps the color outside the decoration when the underline was applied first', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('underline'))
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6"><u>One</u></font>')
+  })
+
+  it('nests underline inside the color when the background color was applied first', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('backColor', 'blue'))
+    await dispatch(formatSelection('underline'))
+
+    expect(cursorValue()).toBe('<font color="#000000" style="background-color: rgb(0, 199, 230);"><u>One</u></font>')
+  })
+
+  it('removes the underline from inside the color when toggled off', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+    await dispatch(formatSelection('underline'))
+    await dispatch(formatSelection('underline'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6">One</font>')
+  })
+
   // color.ts > "remove all formatting from the thought"
   it('removes all formatting from the thought', async () => {
     await dispatch([newThought({ value: 'Labrador' })])
