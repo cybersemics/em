@@ -15,7 +15,6 @@ import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import scrollTo from '../helpers/scrollTo'
 import setTheme from '../helpers/setTheme'
-import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import { page } from '../session'
 
 expect.extend({
@@ -94,9 +93,6 @@ const testSuite = () => {
 
     // set the cursor to null
     await press('Escape')
-
-    // Let input-deferred cursor-scroll timers run before scrollTo cancels their trailing throttle.
-    await waitForBrowserSettled()
 
     // scroll to top
     await scrollTo(0, 0)
