@@ -1,22 +1,6 @@
-import CommandId from './CommandId'
+import type CommandDifficulty from './CommandDifficulty'
 
-/** A category of commands in the static command hierarchy. */
-interface CommandGroup {
-  /** Stable identity, independent of the display title and containing difficulty. Do not rename when changing either. */
-  id:
-    | 'creatingThoughts'
-    | 'navigation'
-    | 'contexts'
-    | 'categorizing'
-    | 'nudging'
-    | 'deleting'
-    | 'creatingThoughtsII'
-    | 'editHistory'
-    | 'notes'
-    | 'views'
-  title: string
-  /** Command IDs in presentation order. */
-  commands: CommandId[]
-}
+/** A configured command category, including its stable ID, inferred from the command hierarchy. */
+type CommandGroup = CommandDifficulty['groups'][number]
 
 export default CommandGroup

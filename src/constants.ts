@@ -1,5 +1,4 @@
 /** Defines app-wide constants. */
-import CommandDifficulty from './@types/CommandDifficulty'
 import CommandId from './@types/CommandId'
 import DropdownType from './@types/DropdownType'
 import SimplePath from './@types/SimplePath'
@@ -504,7 +503,7 @@ export const GESTURE_GLOW_BLUR = 10
 export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
 
 /** Defines command difficulties and categories in presentation order. IDs remain stable when titles or positions change. */
-export const COMMAND_DIFFICULTIES: CommandDifficulty[] = [
+export const COMMAND_DIFFICULTIES = [
   {
     id: 'beginner',
     title: 'Beginner',
@@ -638,7 +637,15 @@ export const COMMAND_DIFFICULTIES: CommandDifficulty[] = [
       },
     ],
   },
-]
+] as const satisfies readonly {
+  id: string
+  title: string
+  groups: readonly {
+    id: string
+    title: string
+    commands: readonly CommandId[]
+  }[]
+}[]
 
 /** The duration of the haptics vibrate on delete or archive non-empty thought. */
 export const DELETE_VIBRATE_DURATION = 80

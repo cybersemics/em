@@ -1,11 +1,6 @@
-import CommandGroup from './CommandGroup'
+import type { COMMAND_DIFFICULTIES } from '../constants'
 
-/** A difficulty level containing ordered command categories. */
-interface CommandDifficulty {
-  /** Stable identity, independent of the display title and position. Do not rename when changing either. */
-  id: 'beginner' | 'intermediate' | 'advanced'
-  title: string
-  groups: CommandGroup[]
-}
+/** A configured difficulty level, inferred from the single source of truth for the command hierarchy. */
+type CommandDifficulty = (typeof COMMAND_DIFFICULTIES)[number]
 
 export default CommandDifficulty
