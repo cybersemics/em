@@ -181,11 +181,24 @@ const pullDuplicateDescendants =
     }
   }
 
-/** Resolves a descendant Path by walking the given values down from a base Path. Returns null if any value has no matching child. Unlike contextToPath, the ids of the base Path are preserved, which is essential when there are duplicate thoughts, as a Context resolves a value to the first matching thought. */
-const descendantPath = (state: State, basePath: Path, values: string[]): Path | null =>
-  values.reduce<Path | null>((accum, value) => {
-    const child = accum ? findAnyChild(state, head(accum), child => child.value === value) : null
-    return accum && child ? appendToPath(accum, child.id) : null
+/** A Block with the id that its imported thought will be created with. */
+interface IdentifiedBlock extends Block {
+  children: IdentifiedBlock[]
+  id: ThoughtId
+}
+
+/** Recursively assigns an id to each Block in a tree. Generating the ids up front means that the Path of an imported thought is known before it is created, which contextToPath cannot provide since it resolves a value to the first matching thought and thus lands on a pre-existing duplicate sibling rather than the imported thought. */
+const identifyBlocks = (blocks: Block[]): IdentifiedBlock[] =>
+  blocks.map(block => ({ ...block, children: identifyBlocks(block.children), id: createId() }))
+
+/** Resolves the Path of an imported block's parent by walking its ancestors down from a base Path. Each ancestor is located by its assigned id, falling back to its value for ancestors that were not created with that id: those merged into a pre-existing duplicate, and those imported by a previous resume session, which re-parses the file and thus assigns new ids. The fallback is unambiguous, as only metaprogramming attributes auto-merge and those cannot have duplicate siblings. Returns null if any ancestor is missing. */
+const importedPath = (state: State, basePath: Path, ancestors: IdentifiedBlock[]): Path | null =>
+  ancestors.reduce<Path | null>((accum, ancestor) => {
+    if (!accum) return null
+    const id = getThoughtById(state, ancestor.id)
+      ? ancestor.id
+      : findAnyChild(state, head(accum), child => child.value === ancestor.scope)?.id
+    return id ? appendToPath(accum, id) : null
   }, basePath)
 
 /** Action-creator for importFiles. */
@@ -233,14 +246,9 @@ export const importFilesActionCreator =
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
-      // flattenTree hands the same Block objects as ancestors, so the Path of each imported thought
-      // can be looked up by object identity. Walking by value (descendantPath) cannot tell two
-      // siblings with the same value apart, and would put later descendants on the first match.
-      const importedPathByBlock = new Map<Block, Path>()
-
       /** An action-creator that imports a block. */
       const importBlock =
-        ({ block, ancestors, i }: { block: Block; ancestors: Block[]; i: number }) =>
+        ({ block, ancestors, i }: { block: IdentifiedBlock; ancestors: IdentifiedBlock[]; i: number }) =>
         (dispatch: Dispatch, getState: () => State) =>
         async (): Promise<void> => {
           /** Updates importProgress alert and resumeImports. */
@@ -258,7 +266,7 @@ export const importFilesActionCreator =
               }),
             )
 
-            const resumePath = i === 0 ? appendToPath(parentPath!, duplicate ? duplicate.id : idNew) : file.path
+            const resumePath = i === 0 ? appendToPath(parentPath!, duplicate ? duplicate.id : block.id) : file.path
             await manager.update(resumePath, i + 1)
           }
 
@@ -278,13 +286,7 @@ export const importFilesActionCreator =
           const baseContext = pathToContext(stateAfterPull, basePath)
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
-          // Prefer the Path recorded when this block's parent was imported. descendantPath walks by
-          // value and so lands on the first matching sibling when the import contains duplicates.
-          // Fall back to descendantPath when the parent was imported in a previous resume session
-          // and is therefore missing from the map.
-          const ancestorPath =
-            ancestors.length === 0 ? undefined : importedPathByBlock.get(ancestors[ancestors.length - 1])
-          const parentPath = ancestorPath ?? descendantPath(stateAfterPull, basePath, relativeAncestorContext)
+          const parentPath = importedPath(stateAfterPull, basePath, ancestors)
 
           // validate parentPath
           if (!parentPath) {
@@ -323,12 +325,6 @@ export const importFilesActionCreator =
               : undefined
           const lexeme = getLexeme(stateAfterPull, block.scope)
           const hasContext = !!lexeme?.contexts.includes(id)
-
-          // Generate the id of the imported thought in advance so that the cursor can be set on the thought that is
-          // actually created. contextToPath cannot be used, as it resolves a value to the first matching thought and
-          // thus lands on a pre-existing duplicate sibling rather than the imported thought.
-          const idNew = createId()
-          importedPathByBlock.set(block, appendToPath(parentPath, duplicate ? duplicate.id : idNew))
 
           return new Promise<void>(resolve => {
             /** Updates the progress and resolves the task. */
@@ -369,7 +365,7 @@ export const importFilesActionCreator =
                   // Any missing children from previously interrupted imports are cleaned up in createThought.
                   newThought({
                     at: importThoughtPath,
-                    id: idNew,
+                    id: block.id,
                     insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,
                     insertBefore: ancestors.length === 0 && insertBeforeNew,
                     preventSetCursor: true,
@@ -389,7 +385,7 @@ export const importFilesActionCreator =
                   if (isThoughtVisible) {
                     dispatch(
                       setCursor({
-                        path: appendToPath(parentPath, duplicate ? duplicate.id : idNew),
+                        path: appendToPath(parentPath, duplicate ? duplicate.id : block.id),
                         // Preserve the keyboard state rather than closing it. Closing it makes the imported thought's
                         // Editable fire a focus event when the caret is set, which sets the cursor again with no
                         // offset and thus moves the caret back to the beginning of the thought.
@@ -437,7 +433,7 @@ export const importFilesActionCreator =
       )
 
       const importTasks = flattenTree(
-        json,
+        identifyBlocks(json),
         // cannot properly short circuit flattenTree, so just discontinue all remaining iterations
         (block, ancestors, i) => (abort ? null : dispatch(importBlock({ block, ancestors, i }))),
         { start: file.thoughtsImported },
