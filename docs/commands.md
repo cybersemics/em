@@ -342,6 +342,10 @@ https://github.com/user-attachments/assets/5466ad2a-6b7c-4869-a23c-03d9d752dc9b
 
 Opens a special keyboard which contains commands that can be executed on the cursor thought. Opening it selects the cursor thought as a multicursor, so every command tapped there runs through `executeCommandWithMulticursor` on a selection of exactly one thought. A `disallow` command is therefore still executable from the Command Center; it only alerts once a second thought is selected.
 
+Both [`openCommandCenter`](../src/commands/openCommandCenter.ts) and [`closeCommandCenter`](../src/commands/closeCommandCenter.ts) set `showCommandCenter` themselves rather than leaving [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) to derive it from the selection they changed. The middleware governs multiselection changes, and it deliberately ignores them in states where the Command Center is hidden with the selection intact — over an edit ([Clear Thought](cursor-and-caret.md#multi-edit-mode)), under the Undo Slider, and while `isMulticursorExecuting` is set. In each of those the user can see the panel's actual state, so an explicit gesture must move it rather than be filtered out: swiping up over a hidden panel re-opens it (the selection is already there, so there is nothing for `addMulticursor` to add), and swiping down over a visible one closes it outright instead of clearing the selection and waiting for the middleware to notice. Deciding on `showCommandCenter` rather than on `hasMulticursor` is what keeps the panel from getting stuck open or stuck closed with its own gesture inert.
+
+Swiping up with no cursor and nothing selected cannot open the Command Center, and swiping up while it is already open is more likely to be an attempt to scroll; both show the scroll zone help alert on the second attempt within ten seconds.
+
 ### Close Command Center
 
 Closes the command center if it's open. You can also just tap on the empty space.
