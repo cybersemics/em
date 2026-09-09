@@ -502,9 +502,9 @@ const CommandCenter = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   margin: '0 1.333rem',
-                  /** The stage offset is what makes the drawer taller than the standard stage needs; at the standard stage it hangs below the screen and is clipped. */
+                  /** The stage offset is what makes the drawer taller than the standard stage needs; at the standard stage it hangs below the screen and is clipped. The `max()` mirrors the one on the chevron band below, so the drawer grows by however much the band rises and the gap above the chevron is preserved. */
                   paddingBottom:
-                    'calc(1.333rem + {spacing.safeAreaBottom} + var(--command-center-chevron-band) + var(--command-center-stage-offset))',
+                    'calc(1.333rem + max({spacing.safeAreaBottom}, 0.889rem) + var(--command-center-chevron-band) + var(--command-center-stage-offset))',
                   gap: '0.889rem',
                 })}
                 style={
@@ -573,7 +573,8 @@ const CommandCenter = () => {
                     position: 'absolute',
                     left: 0,
                     right: 0,
-                    bottom: 'calc(var(--command-center-stage-offset) + {spacing.safeAreaBottom})',
+                    /** `max()` gives the chevron a 0.889rem floor beneath it where there is no safe-area inset — a browser, or a device without one — while leaving it where it is on iOS, whose home indicator already claims more than that. */
+                    bottom: 'calc(var(--command-center-stage-offset) + max({spacing.safeAreaBottom}, 0.889rem))',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
