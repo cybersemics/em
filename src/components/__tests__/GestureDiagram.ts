@@ -1,3 +1,4 @@
+import { cleanup, render as renderDOM } from '@testing-library/react'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import GestureDiagram from '../GestureDiagram'
@@ -220,5 +221,37 @@ describe('fill-container framing', () => {
 
     expect(markup).toContain('transform="scale(')
     expect(renderedStrokeWidth).toBeCloseTo((12 * 1.5) / (150 / 76))
+  })
+})
+
+describe('automatic viewBox', () => {
+  const getBBox = vi.fn()
+  const originalGetBBox = Object.getOwnPropertyDescriptor(SVGElement.prototype, 'getBBox')
+
+  beforeEach(() => {
+    // JSDOM has no SVG layout; supply bounds while testing React's ref lifecycle.
+    Object.defineProperty(SVGElement.prototype, 'getBBox', { configurable: true, value: getBBox })
+  })
+
+  afterEach(() => {
+    cleanup()
+    getBBox.mockReset()
+    if (originalGetBBox) Object.defineProperty(SVGElement.prototype, 'getBBox', originalGetBBox)
+    else Reflect.deleteProperty(SVGElement.prototype, 'getBBox')
+  })
+
+  // https://github.com/cybersemics/em/pull/5319
+  it('remeasures the viewBox when the gesture path changes', () => {
+    getBBox.mockReturnValue({ x: 0, y: 0, width: 50, height: 0 })
+    const props = { arrowhead: 'none' as const, strokeWidth: 2, useGradient: false as const }
+    const { container, rerender } = renderDOM(createElement(GestureDiagram, { ...props, path: 'r' }))
+    const svg = container.querySelector('svg')!
+
+    expect(svg.getAttribute('viewBox')).toBe('-1 -1 52 2')
+
+    getBBox.mockReturnValue({ x: 0, y: 0, width: 0, height: 50 })
+    rerender(createElement(GestureDiagram, { ...props, path: 'd' }))
+
+    expect(svg.getAttribute('viewBox')).toBe('-1 -1 2 52')
   })
 })
