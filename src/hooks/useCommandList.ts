@@ -1,5 +1,5 @@
 /**
- * This hook supplies the command groups rendered by CommandTable.
+ * This hook supplies the command sections rendered by CommandTable and MobileCommandUniverse.
  * It centralizes three pieces of command-browsing logic:
  *
  * 1. Search and sort state
@@ -8,13 +8,13 @@
  * 2. Render decision tree
  * The hook unifies the logic for what to render, given the current search and sort state.
  * When a search query is active, it always overrides sort and collapses results into a single "Results"
- * group of fuzzy matches across all commands.
+ * section of fuzzy matches across all commands.
  * When there is no search query, `sortOrder` determines whether to render commands grouped by type
  * (the multi-section COMMAND_DIFFICULTIES layout) or as a single alphabetical list.
  *
  * 3. Rendered output shape
- * The hook exposes the commands to render as an array of `{ id, title, commands, difficulty? }` groups.
- * This uniform shape allows consumers' render logic to map over `groups` without special cases for different display modes.
+ * The hook exposes the commands to render as an array of `{ id, title, commands, difficulty? }` sections.
+ * This uniform shape allows consumers' render logic to map over `sections` without special cases for different display modes.
  *
  */
 import { useMemo, useState } from 'react'
@@ -49,11 +49,11 @@ if (commandsUngrouped.length > 0) {
 }
 
 /**
- * Commands organized into individual arrays based on their "type", tagged with the difficulty level they belong to.
- * Groups are kept in difficulty order, so consumers can render a level heading whenever the difficulty ID changes.
+ * Display sections for command categories, tagged with their difficulty.
+ * Sections are kept in difficulty order, so consumers can render a level heading whenever the difficulty ID changes.
  * Only commands executable on the current platform are included.
  */
-const commandsGroupedByType: CommandListGroup[] = COMMAND_DIFFICULTIES.flatMap(level =>
+const commandSectionsByCategory: CommandSection[] = COMMAND_DIFFICULTIES.flatMap(level =>
   level.groups
     .map(group => ({
       id: group.id,
@@ -61,7 +61,7 @@ const commandsGroupedByType: CommandListGroup[] = COMMAND_DIFFICULTIES.flatMap(l
       difficulty: { id: level.id, title: level.title },
       commands: group.commands.map(commandById).filter(command => (isTouch ? command.gesture : command.keyboard)),
     }))
-    .filter(group => group.commands.length > 0),
+    .filter(section => section.commands.length > 0),
 )
 
 /**
@@ -75,20 +75,20 @@ const commandsSortedByLabel: Command[] = COMMAND_DIFFICULTIES.flatMap(level =>
   .filter(command => (isTouch ? command.gesture : command.keyboard))
   .sort((a, b) => a.label.localeCompare(b.label))
 
-/** A group of commands in an array, with a title. Consumers should iterate over `commands` to render each command. */
-interface CommandListGroup {
+/** A titled display section containing a category, search results, or the alphabetical command list. */
+interface CommandSection {
   id: CommandGroup['id'] | 'results' | 'allCommands'
   title: string
   commands: Command[]
-  /** The difficulty level that the group belongs to, e.g. Beginner. Only defined when the commands are grouped by type. */
+  /** The difficulty of the category represented by this section. Only defined when commands are grouped by type. */
   difficulty?: Pick<CommandDifficulty, 'id' | 'title'>
 }
 
 export interface UseCommandListReturn {
-  /** The current search query. If populated, `groups` will contain a single `CommandListGroup` titled "Results" with fuzzy matched search results. */
+  /** The current search query. If populated, `sections` will contain a single `CommandSection` titled "Results" with fuzzy matched search results. */
   search: string
 
-  /** Sets the current search query. It also updates the filtered `groups`. */
+  /** Sets the current search query. It also updates the filtered `sections`. */
   setSearch: (value: string) => void
 
   /** The current sort mode. Only consulted when `search` is empty. */
@@ -97,8 +97,8 @@ export interface UseCommandListReturn {
   /** Sets the current sort mode. The selected sort mode is only consulted when `search` is empty. */
   setSortOrder: (value: CommandSortType) => void
 
-  /** The commands to render, organized into groups with titles. The shape of this data depends on the current `search` and `sortOrder` state. */
-  groups: CommandListGroup[]
+  /** The commands to render, organized into titled sections. The shape of this data depends on the current `search` and `sortOrder` state. */
+  sections: CommandSection[]
 }
 
 /** A hook that allows consumers to access, search and sort a list of commands. */
@@ -107,13 +107,13 @@ const useCommandList = (): UseCommandListReturn => {
   const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
   const filteredCommands = useFilteredCommands(search, { platformCommandsOnly: true })
 
-  const groups = useMemo<CommandListGroup[]>(() => {
+  const sections = useMemo<CommandSection[]>(() => {
     if (search) return [{ id: 'results', title: 'Results', commands: filteredCommands }]
-    if (sortOrder === 'type') return commandsGroupedByType
+    if (sortOrder === 'type') return commandSectionsByCategory
     return [{ id: 'allCommands', title: 'All Commands', commands: commandsSortedByLabel }]
   }, [search, sortOrder, filteredCommands])
 
-  return { search, setSearch, sortOrder, setSortOrder, groups }
+  return { search, setSearch, sortOrder, setSortOrder, sections }
 }
 
 export default useCommandList

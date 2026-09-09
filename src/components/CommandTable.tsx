@@ -5,7 +5,7 @@ import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
 import { isTouch } from '../browser'
 import useCommandList from '../hooks/useCommandList'
-import CommandsGroup from './CommandsGroup'
+import CommandTableSection from './CommandTableSection'
 import FadeTransition from './FadeTransition'
 import SearchCommands from './SearchCommands'
 import SortButton from './SortButton'
@@ -76,7 +76,7 @@ const CommandDifficultyHeading = ({ title }: { title: string }) => {
 
 /** Renders a table of commands with a fade-in animation when sorting changes. */
 const CommandTable = ({ customize, onSelect, selectedCommand }: CommandTableProps) => {
-  const { search, setSearch, sortOrder, setSortOrder, groups } = useCommandList()
+  const { search, setSearch, sortOrder, setSortOrder, sections } = useCommandList()
   const [isMobileGestures, setIsMobileGestures] = useState(isTouch)
 
   return (
@@ -99,15 +99,15 @@ const CommandTable = ({ customize, onSelect, selectedCommand }: CommandTableProp
       <SwitchTransition>
         <FadeTransition key={`${sortOrder}-${search}`} in={true} type='medium' unmountOnExit>
           <div>
-            {groups.map((group, i) => (
-              <div key={group.id}>
-                {/* Render the difficulty level heading above the first group of each level. */}
-                {group.difficulty && group.difficulty.id !== groups[i - 1]?.difficulty?.id && (
-                  <CommandDifficultyHeading title={group.difficulty.title} />
+            {sections.map((section, i) => (
+              <div key={section.id}>
+                {/* Render the difficulty level heading above the first section of each level. */}
+                {section.difficulty && section.difficulty.id !== sections[i - 1]?.difficulty?.id && (
+                  <CommandDifficultyHeading title={section.difficulty.title} />
                 )}
-                <CommandsGroup
-                  title={group.title}
-                  commands={group.commands}
+                <CommandTableSection
+                  title={section.title}
+                  commands={section.commands}
                   customize={customize}
                   onSelect={onSelect}
                   selectedCommand={selectedCommand}
