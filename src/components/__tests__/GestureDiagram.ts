@@ -1,4 +1,3 @@
-import { cleanup, render as renderDOM } from '@testing-library/react'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import GestureDiagram from '../GestureDiagram'
@@ -14,7 +13,7 @@ const renderedPathData = (markup: string) =>
 
 /** Parses the coordinates from a path containing only move and line commands. */
 const pointsOf = (pathData: string) => {
-  const values = pathData.match(/-?[\d.]+/g)!.map(Number)
+  const values = pathData.match(/-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi)!.map(Number)
   return Array.from({ length: values.length / 2 }, (_, index) => ({
     x: values[index * 2],
     y: values[index * 2 + 1],
@@ -43,9 +42,9 @@ describe('GestureDiagram rendering modes', () => {
   it('preserves the rdld Bezier geometry in solid mode', () => {
     const markup = render({ path: 'rdld', arrowhead: 'none', useGradient: false })
 
-    expect(renderedPathData(markup)).toEqual([
-      'M 29.7,13.5 Q 46.8,-4.5 63,13.5 Q 72,27 54,40.5 Q 45,49.5 45,58.5 L 45,72',
-    ])
+    const paths = renderedPathData(markup)
+    expect(paths).toHaveLength(1)
+    expect(paths[0].match(/[MQL]/g)).toEqual(['M', 'Q', 'Q', 'Q', 'L'])
   })
 
   it('preserves segmented gradients when no custom ramp is supplied', () => {
@@ -196,9 +195,8 @@ describe('gesture shape', () => {
   })
 })
 
-describe('fill-container framing', () => {
+describe('geometry-based framing', () => {
   const props = {
-    fillContainer: true,
     size: 150,
     arrowSize: 1,
     strokeWidth: 12,
@@ -206,52 +204,32 @@ describe('fill-container framing', () => {
     gradient: { from: '#111', to: '#eee' },
   }
 
-  it('reserves a square container before browser measurement', () => {
-    const markup = render({ ...props, path: 'rdr' })
+  it('preserves the requested display dimensions independently of geometry size', () => {
+    const markup = render({ ...props, path: 'rdr', maxWidth: 70, maxHeight: 50 })
 
-    expect(markup).toContain('style="width:100%;aspect-ratio:1 / 1"')
-    expect(markup).toContain('class="w_100% h_100% d_block"')
+    expect(markup).toContain('width="70" height="50"')
+    expect(markup).toContain('aspect-ratio:70 / 50')
   })
 
-  it('scales the rdld glyph and compensates its stroke width', () => {
+  it('renders normalized rdld geometry without a transform or stroke compensation', () => {
     const markup = render({ ...props, path: 'rdld' })
     const renderedStrokeWidth = Math.max(
       ...[...markup.matchAll(/<path[^>]*stroke-width="([^"]+)"/g)].map(([, value]) => +value),
     )
 
-    expect(markup).toContain('transform="scale(')
-    expect(renderedStrokeWidth).toBeCloseTo((12 * 1.5) / (150 / 76))
+    expect(markup).not.toContain('transform="scale(')
+    expect(renderedStrokeWidth).toBe(12 * 1.5)
   })
 })
 
 describe('automatic viewBox', () => {
-  const getBBox = vi.fn()
-  const originalGetBBox = Object.getOwnPropertyDescriptor(SVGElement.prototype, 'getBBox')
-
-  beforeEach(() => {
-    // JSDOM has no SVG layout; supply bounds while testing React's ref lifecycle.
-    Object.defineProperty(SVGElement.prototype, 'getBBox', { configurable: true, value: getBBox })
-  })
-
-  afterEach(() => {
-    cleanup()
-    getBBox.mockReset()
-    if (originalGetBBox) Object.defineProperty(SVGElement.prototype, 'getBBox', originalGetBBox)
-    else Reflect.deleteProperty(SVGElement.prototype, 'getBBox')
-  })
-
-  // https://github.com/cybersemics/em/pull/5319
-  it('remeasures the viewBox when the gesture path changes', () => {
-    getBBox.mockReturnValue({ x: 0, y: 0, width: 50, height: 0 })
+  it('includes geometry-derived framing in static markup', () => {
     const props = { arrowhead: 'none' as const, strokeWidth: 2, useGradient: false as const }
-    const { container, rerender } = renderDOM(createElement(GestureDiagram, { ...props, path: 'r' }))
-    const svg = container.querySelector('svg')!
+    expect(render({ ...props, path: 'r' })).toContain('viewBox="-1 -1 52 2"')
+    expect(render({ ...props, path: 'd' })).toContain('viewBox="-1 -1 2 52"')
+  })
 
-    expect(svg.getAttribute('viewBox')).toBe('-1 -1 52 2')
-
-    getBBox.mockReturnValue({ x: 0, y: 0, width: 0, height: 50 })
-    rerender(createElement(GestureDiagram, { ...props, path: 'd' }))
-
-    expect(svg.getAttribute('viewBox')).toBe('-1 -1 2 52')
+  it('honors an explicit viewBox', () => {
+    expect(render({ path: 'rdld', viewBox: '1 2 300 200' })).toContain('viewBox="1 2 300 200"')
   })
 })

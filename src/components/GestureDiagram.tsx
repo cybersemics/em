@@ -10,9 +10,9 @@ import ContinuousGradientGestureRenderer from './GestureDiagram/ContinuousGradie
 import SegmentedGradientGestureRenderer from './GestureDiagram/SegmentedGradientGestureRenderer'
 import SolidGestureRenderer from './GestureDiagram/SolidGestureRenderer'
 import getGestureGeometry from './GestureDiagram/getGestureGeometry'
+import getGestureViewBox from './GestureDiagram/getGestureViewBox'
 import GestureArrowhead from './GestureDiagram/types/GestureArrowhead'
 import GestureGradient from './GestureDiagram/types/GestureGradient'
-import useGestureViewBox from './GestureDiagram/useGestureViewBox'
 
 interface GestureDiagramBaseProps {
   /** Length of the SVG arrowhead marker. */
@@ -33,7 +33,7 @@ interface GestureDiagramBaseProps {
   strokeWidth?: number
   /** Runtime styles applied to the SVG element. */
   style?: React.CSSProperties
-  /** Explicit SVG viewBox; when omitted, the rendered gesture is measured automatically. */
+  /** Explicit SVG viewBox. When omitted, framing is calculated from the gesture geometry. */
   viewBox?: `${number} ${number} ${number} ${number}`
   /** Maximum rendered width in pixels. */
   maxWidth?: number
@@ -55,8 +55,6 @@ interface GestureDiagramBaseProps {
   chevronApexAngle?: number
   /** Chevron half-span as a multiple of the rendered stroke width. Default 2.2. */
   chevronSize?: number
-  /** Sizes the diagram to its parent and frames it with a square viewBox. */
-  fillContainer?: boolean
   /** Stroke color for highlighted directions. Default: token('colors.vividHighlight'). */
   highlightColor?: string
 }
@@ -107,7 +105,6 @@ const GestureDiagram = ({
   cornerRadius = 0,
   chevronApexAngle = 80,
   chevronSize = 2.2,
-  fillContainer = false,
   highlightColor,
 }: GestureDiagramProps) => {
   // One stable prefix keeps this diagram's marker, masks, and gradients unique in the document.
@@ -122,7 +119,6 @@ const GestureDiagram = ({
   arrowSize = arrowSize ? +arrowSize : strokeWidth * 5
   reversalOffset = reversalOffset ? +reversalOffset : size * 0.3
 
-  const geometrySize = fillContainer && rounded ? size / 0.8 : size
   const geometry = useMemo(
     () =>
       path === null
@@ -135,14 +131,14 @@ const GestureDiagram = ({
             cornerRadius: gradient ? cornerRadius : 0,
             reversalOffset: reversalOffset!,
             rounded,
-            size: geometrySize,
+            size,
           }),
     [
       arrowhead,
       chevronApexAngle,
       chevronSize,
       cornerRadius,
-      geometrySize,
+      size,
       path,
       reversalOffset,
       rounded,
@@ -150,15 +146,6 @@ const GestureDiagram = ({
       strokeWidth,
     ],
   )
-  const glyphScale = fillContainer && path === 'rdld' ? size / 76 : 1
-  const onRef = useGestureViewBox({
-    arrowSize: arrowSize!,
-    arrowhead,
-    fillContainer,
-    size,
-    strokeWidth,
-    viewBox,
-  })
 
   // If path is null, render a cancel gesture svg
   if (path === null) {
@@ -194,74 +181,65 @@ const GestureDiagram = ({
   }
 
   return (
-    <span
-      className={css({ display: fillContainer ? 'block' : 'inline-block' }, cssRaw)}
-      style={
-        fillContainer
-          ? { width: '100%', aspectRatio: '1 / 1' }
-          : { width: `${maxWidth ?? size}px`, height: `${maxHeight ?? size}px` }
-      }
+    <svg
+      width={maxWidth ?? size}
+      height={maxHeight ?? size}
+      className={css(
+        { display: 'inline-block', maxWidth: '100%', height: 'auto' },
+        inGestureContainer && { position: 'relative', top: '10px' },
+        cssRaw,
+      )}
+      style={{ aspectRatio: `${maxWidth ?? size} / ${maxHeight ?? size}`, ...style }}
+      viewBox={viewBox ?? getGestureViewBox(geometry!, { arrowSize: arrowSize!, arrowhead, strokeWidth })}
     >
-      <svg
-        className={css(
-          inGestureContainer && { position: 'relative', top: '10px' },
-          fillContainer ? { width: '100%', height: '100%', display: 'block' } : { width: '100%', height: '100%' },
-        )}
-        style={style}
-        ref={onRef}
-        viewBox={viewBox}
-      >
-        <defs>
-          <ArrowheadMarker
-            arrowSize={arrowSize!}
-            color={color}
-            dropShadow={dropShadow}
-            highlightColor={highlightColor}
-            highlighted={highlight != null && highlight >= path.length}
-            instanceId={instanceId}
-            kind={geometry!.chevron ? 'none' : arrowhead}
-            rounded={rounded}
-            strokeWidth={strokeWidth}
-          />
-        </defs>
+      <defs>
+        <ArrowheadMarker
+          arrowSize={arrowSize!}
+          color={color}
+          dropShadow={dropShadow}
+          highlightColor={highlightColor}
+          highlighted={highlight != null && highlight >= path.length}
+          instanceId={instanceId}
+          kind={geometry!.chevron ? 'none' : arrowhead}
+          rounded={rounded}
+          strokeWidth={strokeWidth}
+        />
+      </defs>
 
-        <g transform={glyphScale === 1 ? undefined : `scale(${glyphScale})`}>
-          {gradient ? (
-            <ContinuousGradientGestureRenderer
-              arrowhead={arrowhead}
-              dropShadow={dropShadow}
-              geometry={geometry!}
-              gradient={gradient}
-              highlight={highlight}
-              highlightColor={highlightColor}
-              instanceId={instanceId}
-              strokeWidth={strokeWidth / glyphScale}
-            />
-          ) : useGradient ? (
-            <SegmentedGradientGestureRenderer
-              arrowhead={arrowhead}
-              color={color}
-              dropShadow={dropShadow}
-              geometry={geometry!}
-              highlight={highlight}
-              instanceId={instanceId}
-              strokeWidth={strokeWidth / glyphScale}
-            />
-          ) : (
-            <SolidGestureRenderer
-              arrowhead={arrowhead}
-              color={color}
-              dropShadow={dropShadow}
-              geometry={geometry!}
-              highlight={highlight}
-              highlightColor={highlightColor}
-              instanceId={instanceId}
-              strokeWidth={strokeWidth / glyphScale}
-            />
-          )}
-        </g>
-      </svg>
-    </span>
+      {gradient ? (
+        <ContinuousGradientGestureRenderer
+          arrowhead={arrowhead}
+          dropShadow={dropShadow}
+          geometry={geometry!}
+          gradient={gradient}
+          highlight={highlight}
+          highlightColor={highlightColor}
+          instanceId={instanceId}
+          strokeWidth={strokeWidth}
+        />
+      ) : useGradient ? (
+        <SegmentedGradientGestureRenderer
+          arrowhead={arrowhead}
+          color={color}
+          dropShadow={dropShadow}
+          geometry={geometry!}
+          highlight={highlight}
+          instanceId={instanceId}
+          strokeWidth={strokeWidth}
+        />
+      ) : (
+        <SolidGestureRenderer
+          arrowhead={arrowhead}
+          color={color}
+          dropShadow={dropShadow}
+          geometry={geometry!}
+          highlight={highlight}
+          highlightColor={highlightColor}
+          instanceId={instanceId}
+          strokeWidth={strokeWidth}
+        />
+      )}
+    </svg>
   )
 }
 
