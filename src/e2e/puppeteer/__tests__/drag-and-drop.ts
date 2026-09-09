@@ -426,10 +426,11 @@ describe('drag', () => {
 
     await page.mouse.move(boundingBox.x + boundingBox.width / 2, boundingBox.y + boundingBox.height / 2)
     await page.mouse.down()
-    const highlighted = await page
-      .waitForFunction((el: Element) => el.getAttribute('data-highlighted') === 'true', { timeout: 5000 }, bullet)
-      .then(() => true)
-      .catch(() => false)
+    const highlighted = await page.waitForFunction(
+      (el: Element) => el.getAttribute('data-highlighted') === 'true',
+      { timeout: 5000 },
+      bullet,
+    )
     await page.mouse.up()
 
     expect(highlighted).toBe(true)
