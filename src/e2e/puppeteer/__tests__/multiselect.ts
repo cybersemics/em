@@ -1,5 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import { HOME_DISPLAY_VALUE } from '../../../constants'
+import acknowledgeAiDisclosure from '../helpers/acknowledgeAiDisclosure'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
@@ -422,6 +423,32 @@ describe('multiselect', () => {
 
     // a click moves the caret as it does when a single thought is being edited
     expect(await textCursors()).toEqual(['auto', 'auto'])
+  })
+
+  // https://github.com/cybersemics/em/issues/5405
+  it.skip('does not render a faux caret when Define Term is run on a multiselection from the Command Universe', async () => {
+    await paste(`
+        - Novel
+        - Dictionary
+        - Notebook
+        `)
+
+    await acknowledgeAiDisclosure()
+
+    // the click leaves the real caret in Novel, which the multiselect then includes
+    await clickThought('Novel')
+    await multiselectThoughts(['Novel', 'Dictionary'])
+    await waitForHighlightedBullets(2)
+
+    await command('Define Term', { inputType: 'commandPalette' })
+
+    // the Command Universe restores the browser selection it saved when it opened, so the faux carets would be
+    // rendered on the frame after it unmounts
+    await page.waitForSelector('[data-testid=desktop-command-universe]', { hidden: true })
+    await nextFrame()
+    await nextFrame()
+
+    expect(await page.$$('[data-testid="faux-caret-multicursor"]')).toHaveLength(0)
   })
 
   it('should delete all selected thoughts when Backspace is pressed with Select All active', async () => {
