@@ -45,6 +45,11 @@ let suppressBlurSync = false
  * touchstart, which clears the flag first. */
 let suppressCursorAfterTouch = false
 
+/** Set when the current press landed on the caret, i.e. the user is reaching for the iOS magnifier rather than
+ * starting a drag. Read by useDragAndDropThought's canDrag, because react-dnd's own timer can begin a drag without
+ * going through the long press state machine. Every press resets it, so it always describes the press in hand. */
+let pressOnCaret = false
+
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -56,6 +61,7 @@ const globals = {
   suppressChange,
   suppressBlurSync,
   suppressCursorAfterTouch,
+  pressOnCaret,
   arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }

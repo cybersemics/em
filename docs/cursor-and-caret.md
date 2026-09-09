@@ -181,8 +181,8 @@ The collapsed case cannot be expressed by this store, because whether a press be
 
 Three gates depend on this, though only two of them call `isCaretNear` directly, and all three are needed because they guard independent subsystems ([issue #3763](https://github.com/cybersemics/em/issues/3763)):
 
-- [`useLongPress`](../src/hooks/useLongPress.ts) does not mark a press that lands on the caret, so no `DragHold`.
-- `canDrag` requires `DragHold` on touch, so react-dnd's own timer cannot start a drag behind `useLongPress`'s back.
+- [`useLongPress`](../src/hooks/useLongPress.ts) does not mark a press that lands on the caret, so no `DragHold`. It records the fact in [`globals.pressOnCaret`](../src/globals.ts) as it does so.
+- `canDrag` reads `globals.pressOnCaret`, so react-dnd's own timer cannot start a drag behind `useLongPress`'s back. It reads the flag rather than `state.longPress` because react-dnd is not part of the long press state machine and can reach `DragInProgress` from `Inactive`, which the reducer explicitly permits.
 - `shouldCancelGesture` in [`AppComponent`](../src/components/AppComponent.tsx) abandons a gesture that starts on the caret. Without it, suppressing `DragHold` would *un*-cancel gestures during magnifier use: a gesture is abandoned at touchstart or when `state.longPress` leaves `Inactive`, and the latter is what used to fire.
 
 ### `caretRectStore`

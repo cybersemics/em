@@ -67,10 +67,10 @@ const canDrag = (props: ThoughtContainerProps) => {
 
   const state = store.getState()
 
-  // Every touch drag is preceded by a long press that sets DragHold, so a press that never reached it did not start a
-  // drag. That is how a press on the caret, which useLongPress leaves unmarked, is kept from becoming one once it moves
-  // past the touch slop (#3763).
-  if (isTouch && state.longPress !== LongPressState.DragHold) return false
+  // A press that landed on the caret belongs to the iOS magnifier, so it must not become a drag when it moves past the
+  // touch slop (#3763). This reads the flag useLongPress sets at touchstart rather than state.longPress, because
+  // react-dnd's timer can begin a drag before DragHold is dispatched (see the longPress reducer).
+  if (globals.pressOnCaret) return false
 
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))

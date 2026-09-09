@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import globals from '../globals'
 import haptics from '../util/haptics'
 
 export interface LongPressProps {
@@ -78,12 +79,18 @@ const useLongPress = (
    * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      globals.pressOnCaret = false
+
       if (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2) return
 
       // A press that lands on the caret is the user reaching for the iOS magnifier, not the start of a drag. Never
       // marking the press keeps the rest of the chain — haptics, the scroll lock, DragHold — from running (#3763).
+      // canDrag reads the flag rather than the long press state, which react-dnd can outrun (see the longPress reducer).
       const touch = 'touches' in e.nativeEvent ? e.nativeEvent.touches[0] : null
-      if (touch && selection.isCaretNear(touch.clientX, touch.clientY)) return
+      if (touch && selection.isCaretNear(touch.clientX, touch.clientY)) {
+        globals.pressOnCaret = true
+        return
+      }
 
       setPressing(true)
     },
