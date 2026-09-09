@@ -1,4 +1,5 @@
 /** Defines app-wide constants. */
+import CommandDifficulty from './@types/CommandDifficulty'
 import CommandId from './@types/CommandId'
 import DropdownType from './@types/DropdownType'
 import SimplePath from './@types/SimplePath'
@@ -502,22 +503,19 @@ export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 export const GESTURE_GLOW_BLUR = 10
 export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
 
-// define the grouping and ordering of commands
-export const COMMAND_GROUPS: {
-  title: string
-  groups: {
-    title: string
-    commands: CommandId[]
-  }[]
-}[] = [
+/** Defines command difficulties and categories in presentation order. IDs remain stable when titles or positions change. */
+export const COMMAND_DIFFICULTIES: CommandDifficulty[] = [
   {
+    id: 'beginner',
     title: 'Beginner',
     groups: [
       {
+        id: 'creatingThoughts',
         title: 'Creating Thoughts',
         commands: ['newThought', 'newThoughtAbove', 'newSubthought', 'newSubthoughtTop'],
       },
       {
+        id: 'navigation',
         title: 'Navigation',
         commands: [
           'cursorBack',
@@ -543,19 +541,23 @@ export const COMMAND_GROUPS: {
         ],
       },
       {
+        id: 'contexts',
         title: 'Contexts',
         commands: ['toggleContextView'],
       },
     ],
   },
   {
+    id: 'intermediate',
     title: 'Intermediate',
     groups: [
       {
+        id: 'categorizing',
         title: 'Categorizing',
         commands: ['categorize', 'uncategorize', 'extractSubthought', 'extractCategory'],
       },
       {
+        id: 'nudging',
         title: 'Nudging',
         commands: [
           'indent',
@@ -568,15 +570,18 @@ export const COMMAND_GROUPS: {
         ],
       },
       {
+        id: 'deleting',
         title: 'Deleting',
         commands: ['delete', 'archive', 'clearThought'],
       },
     ],
   },
   {
+    id: 'advanced',
     title: 'Advanced',
     groups: [
       {
+        id: 'creatingThoughtsII',
         title: 'Creating Thoughts II',
         commands: [
           'newUncle',
@@ -600,14 +605,17 @@ export const COMMAND_GROUPS: {
         ],
       },
       {
+        id: 'editHistory',
         title: 'Edit History',
         commands: ['undo', 'redo', 'repeat'],
       },
       {
+        id: 'notes',
         title: 'Notes',
         commands: ['note', 'swapNote'],
       },
       {
+        id: 'views',
         title: 'Views',
         commands: [
           'proseView',

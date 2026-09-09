@@ -127,7 +127,13 @@ The **Command Universe** is the searchable command palette. Two flavors:
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
 - **`MobileCommandUniverse`** — mobile drawer opened by `openMobileCommandUniverse`, also reachable by gesture.
 
-Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), a two-level hierarchy of difficulty levels containing category groups, which defines the order: Beginner (Creating Thoughts → Navigation → Contexts) → Intermediate (Categorizing → Nudging → Deleting) → Advanced (Creating Thoughts II → Edit History → Notes → Views). `useCommandList` flattens the hierarchy into `{ title, level, commands }` groups, and `CommandTable` renders a difficulty heading above the first group of each level.
+Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
+
+Help and Customize Toolbar present commands grouped by `COMMAND_DIFFICULTIES` (in [`constants.ts`](../src/constants.ts)), a two-level hierarchy of difficulty levels containing category groups, which defines the order: Beginner (Creating Thoughts → Navigation → Contexts) → Intermediate (Categorizing → Nudging → Deleting) → Advanced (Creating Thoughts II → Edit History → Notes → Views).
+
+`CommandDifficulty` and `CommandGroup` (in [`src/@types`](../src/@types)) define the hierarchy, with explicit ID unions separate from display titles. Difficulty IDs and globally unique group IDs stay unchanged when titles, ordering, or group placement change; features referencing the hierarchy use `CommandDifficulty['id']` and `CommandGroup['id']`. The constant stores command IDs and presentation order; user learning progress belongs separately.
+
+`useCommandList` resolves command IDs into `Command[]` and returns display-only `CommandListGroup` objects with `{ id, title, difficulty?, commands }`. Search results and the alphabetical list have their own IDs and no difficulty. `CommandTable` keys groups and detects difficulty boundaries by ID, rendering each difficulty title above its first visible group.
 
 Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
 
@@ -222,7 +228,7 @@ The copy button to the right of the slider copies a **bug report** for the actio
 3. Pick at least one activation surface:
    - `keyboard` — a `Key` object or string. The `index()` startup pass will warn if you collide with an existing shortcut.
    - `gesture` — a string of `l/r/u/d` characters (or array of strings).
-   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate category group of the appropriate difficulty level in `COMMAND_GROUPS` ([`constants.ts`](../src/constants.ts)).
+   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate category group of the appropriate difficulty level in `COMMAND_DIFFICULTIES` ([`constants.ts`](../src/constants.ts)).
 4. Decide multicursor behavior. If you skip this and set `multicursor: true`, consider whether `filter` or `execMulticursor` is more appropriate before merging.
 5. Add tests under `src/commands/__tests__/`.
 

@@ -100,10 +100,10 @@ const CommandTable = ({ customize, onSelect, selectedCommand }: CommandTableProp
         <FadeTransition key={`${sortOrder}-${search}`} in={true} type='medium' unmountOnExit>
           <div>
             {groups.map((group, i) => (
-              <div key={group.title}>
+              <div key={group.id}>
                 {/* Render the difficulty level heading above the first group of each level. */}
-                {group.level && group.level !== groups[i - 1]?.level && (
-                  <CommandDifficultyHeading title={group.level} />
+                {group.difficulty && group.difficulty.id !== groups[i - 1]?.difficulty?.id && (
+                  <CommandDifficultyHeading title={group.difficulty.title} />
                 )}
                 <CommandsGroup
                   title={group.title}
