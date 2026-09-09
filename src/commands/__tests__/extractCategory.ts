@@ -8,13 +8,18 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
+import findCursor from '../../test-helpers/queries/findCursor'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
+import selectRange from '../../test-helpers/selectRange'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import extractCategoryCommand from '../extractCategory'
 
 /**
@@ -284,6 +289,34 @@ describe('Extract category', () => {
       expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - alpha bravo
   - charlie`)
+    })
+  })
+
+  describe('formatting', () => {
+    // https://github.com/cybersemics/em/issues/5267
+    it('extracts the selection with its formatting intact', async () => {
+      // seeded with newThought because importText rewrites the font tag that applyColor produces into a span
+      const value = '<font color="#ff573d">Lorem ipsum dolor</font>'
+      act(() => {
+        store.dispatch([newThought({ value }), setCursor([value])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      selectRange(thought!, 0, 11)
+
+      act(() => {
+        store.dispatch(extractCategory())
+      })
+
+      const state = store.getState()
+      const categoryValue = '<font color="#ff573d">Lorem ipsum</font>'
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe(categoryValue)
+      expect(getAllChildrenAsThoughtsByContext(state, [categoryValue]).map(child => child.value)).toEqual([
+        '<font color="#ff573d">dolor</font>',
+      ])
     })
   })
 

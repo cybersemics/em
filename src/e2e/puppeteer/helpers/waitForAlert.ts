@@ -7,7 +7,7 @@ interface Options {
 /**
  * Wait for alert content that includes the given text.
  */
-const waitForAlertContent = async (text: string, { timeout }: Options = { timeout: 6000 }) =>
+const waitForAlert = async (text: string, { timeout }: Options = { timeout: 6000 }) =>
   page.waitForFunction(
     (text: string) => {
       const alertElement = document.querySelector('[data-testid="alert-content"]')
@@ -19,4 +19,4 @@ const waitForAlertContent = async (text: string, { timeout }: Options = { timeou
     text,
   )
 
-export default waitForAlertContent
+export default waitForAlert

@@ -53,7 +53,7 @@ jobs:
           COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Recorded in the comment's state, so a later scan rewriting it still credits the run that
-          # started the attempt.
+          # started the task.
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail

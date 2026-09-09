@@ -12,10 +12,14 @@ import getElementRectByScreen from '../helpers/getElementRectByScreen'
 import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
+import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
+import scrubSpaceBar from '../helpers/scrubSpaceBar'
+import setFontSize from '../helpers/setFontSize'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -116,6 +120,76 @@ describe('Caret', () => {
     await waitUntil(async () => (await getEditingText()) === 'd')
     const selectionTextContent = await getSelection().focusNode?.textContent
     expect(selectionTextContent).toBe('d')
+  })
+
+  // #3276: The virtual keyboard's trackpad (long press the space bar) moves the caret by hit-testing a point
+  // that follows the finger across the whole document, not by walking the focused editing host, so any thought
+  // that is an editing host can capture the caret mid-drag. Does not reproduce in the Simulator, which keeps
+  // the caret in its editing host; a real device drags it out on the pinned iOS as readily as on a current one.
+  it('a caret scrubbed past the left edge stays in the cursor thought (#3276)', async () => {
+    await newThought()
+    await paste(
+      [''],
+      `
+    - a
+      - b
+        - c
+          - d
+        - e`,
+    )
+
+    // the issue reports a smaller font makes it easier to trigger, the rows sitting closer together
+    await setFontSize(16)
+
+    // the cursor must be deep enough that moving it up collapses a subtree, which is what moves the thoughts
+    // under the finger and lets the caret keep walking
+    await clickThought('a')
+    await clickThought('b')
+    await clickThought('c')
+
+    // y:60 compensates for the offset between web and screen coordinates
+    const editable = await waitForEditable('d')
+    await tap(editable, { y: 60 })
+    await tap(editable, { y: 60 })
+    await waitUntil(isKeyboardShown)
+
+    await scrubSpaceBar(-6)
+
+    // unfixed, the cursor walks to an ancestor, the selection is left nowhere, and the keyboard stays up over
+    // a thought that can no longer be typed into
+    expect(await getEditingText()).toBe('d')
+    expect(await getSelection().focusNode?.textContent).toBe('d')
+    expect(await isKeyboardShown()).toBeTruthy()
+
+    await keyboard.type('123')
+    // The caret was restored at the start of the thought
+    expect(await getEditingText()).toBe('123d')
+  })
+
+  // The same hit test escapes a note without any drag: a note is short enough that the point lands outside it
+  // as soon as the space bar is held, and it leaves from the end, where the note abuts the parent thought.
+  it('a caret scrubbed in a note stays in the note (#3276)', async () => {
+    await newThought()
+    await paste(
+      [''],
+      `
+    - a
+      - =note
+        - A`,
+    )
+
+    // y:60 compensates for the offset between web and screen coordinates
+    const note = await waitForElement('[aria-label="note-editable"]')
+    await tap(note, { y: 60 })
+    await waitUntil(isKeyboardShown)
+
+    // zero steps: holding the space bar is the whole gesture
+    await scrubSpaceBar(0)
+
+    // unfixed, the selection is left nowhere with the keyboard still up
+    expect(await getSelection().focusNode?.textContent).toBe('A')
+    expect(await getSelection().focusOffset).toBe(1)
+    expect(await isKeyboardShown()).toBeTruthy()
   })
 
   it.skip('Tap empty content while keyboard up', async () => {
