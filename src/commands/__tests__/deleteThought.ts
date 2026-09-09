@@ -1,20 +1,16 @@
 import { act } from 'react'
-import { clearActionCreator as clear } from '../../actions/clear'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../../actions/deleteThoughtWithCursor'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
-import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
+import dispatch from '../../test-helpers/dispatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import testTimer from '../../test-helpers/testTimer'
 import keyValueBy from '../../util/keyValueBy'
-
-const timer = testTimer()
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -58,25 +54,22 @@ describe('mount', () => {
   })
 })
 
-// TODO: Fix test
-it.skip('delete pending descendants', async () => {
-  timer.useFakeTimer()
-  initialize({ storage: 'memory' })
-  await timer.runAllAsync()
-
-  // c will be pending after refresh
-  const text = `
+it('delete pending descendants', async () => {
+  await dispatch(
+    importText({
+      text: `
   - a
     - b
-      -c
+      - c
         - d
           - e
             - one
             - two
-    - x`
+    - x`,
+    }),
+  )
 
-  store.dispatch(importText({ text }))
-  await timer.runAllAsync()
+  await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
 
@@ -107,44 +100,37 @@ it.skip('delete pending descendants', async () => {
     x: true,
   })
 
-  timer.useFakeTimer()
+  // clear and initialize again to reload from local db (simulating page refresh)
+  await refreshTestApp()
 
-  // clear and call initialize again to reload from local db (simulating page refresh)
-  store.dispatch(clear())
-  initialize({ storage: 'memory' })
-  await timer.runAllAsync()
+  await dispatch(setCursor(['a']))
 
-  store.dispatch([setCursor(['a'])])
-
-  // wait for pullBeforeMove middleware to execute
-  await timer.runAllAsync()
+  // wait for the pull queue to load the thoughts within the buffer depth
+  await act(vi.runOnlyPendingTimersAsync)
 
   const stateAfterRefresh = store.getState()
 
-  // Create a map of { [text]: !!thought } for readable test output
-  const thoughtsAfterRefresh = keyValueBy(thoughts, (text, thought) => ({
-    [text]: !!getThoughtById(stateAfterRefresh, thought.id),
-  }))
-
-  expect(thoughtsAfterRefresh).toEqual({
-    a: true,
-    b: true,
-    c: true,
-    x: true,
-    // pending
-    d: false,
-    e: false,
-    one: false,
-    two: false,
+  // Create a map of { [text]: 'loaded' | 'pending' | 'missing' } for readable test output
+  const thoughtsAfterRefresh = keyValueBy(thoughts, (text, thought) => {
+    const thoughtAfterRefresh = getThoughtById(stateAfterRefresh, thought.id)
+    return { [text]: !thoughtAfterRefresh ? 'missing' : thoughtAfterRefresh.pending ? 'pending' : 'loaded' }
   })
 
-  timer.useFakeTimer()
+  // Only the thoughts within the pull queue's buffer depth are loaded. d is a pending placeholder, and its descendants have not been loaded at all.
+  expect(thoughtsAfterRefresh).toEqual({
+    a: 'loaded',
+    b: 'loaded',
+    c: 'loaded',
+    x: 'loaded',
+    d: 'pending',
+    e: 'missing',
+    one: 'missing',
+    two: 'missing',
+  })
 
-  store.dispatch([deleteThoughtWithCursor])
+  await dispatch(deleteThoughtWithCursor())
 
-  await timer.runAllAsync()
-
-  timer.useRealTimer()
+  await act(vi.runOnlyPendingTimersAsync)
 
   const stateNew = store.getState()
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -182,12 +168,7 @@ it.skip('delete pending descendants', async () => {
   })
 })
 
-// TODO: IndexedDB in tests is disabled where it breaks fake-indexeddb
-it.skip('delete many pending descendants', async () => {
-  timer.useFakeTimer()
-  initialize({ storage: 'memory' })
-  await timer.runAllAsync()
-
+it('delete many pending descendants', async () => {
   const text = `
     - Cybersemics
       - Team
@@ -232,8 +213,9 @@ it.skip('delete many pending descendants', async () => {
               - Are we meeting
       `
 
-  store.dispatch(importText({ text }))
-  await timer.runAllAsync()
+  await dispatch(importText({ text }))
+
+  await act(vi.runOnlyPendingTimersAsync)
 
   const state = store.getState()
 
@@ -264,25 +246,42 @@ it.skip('delete many pending descendants', async () => {
     Import: contextToThought(state, ['Cybersemics', 'Team', 'Work', 'Adoption Infrastructure', 'Import'])!,
   }
 
-  timer.useFakeTimer()
+  // clear and initialize again to reload from local db (simulating page refresh)
+  await refreshTestApp()
 
-  // clear and call initialize again to reload from local db (simulating page refresh)
-  store.dispatch(clear())
-  initialize({ storage: 'memory' })
-  await timer.runAllAsync()
+  await dispatch(setCursor(['Cybersemics']))
 
-  store.dispatch([setCursor(['Cybersemics'])])
+  // wait for the pull queue to load the thoughts within the buffer depth
+  await act(vi.runOnlyPendingTimersAsync)
 
-  // wait for pullBeforeMove middleware to execute
-  await timer.runAllAsync()
+  const stateAfterRefresh = store.getState()
 
-  timer.useFakeTimer()
+  // Create a map of { [text]: 'loaded' | 'pending' | 'missing' } for readable test output
+  const thoughtsAfterRefresh = keyValueBy(thoughts, (text, thought) => {
+    const thoughtAfterRefresh = getThoughtById(stateAfterRefresh, thought.id)
+    return { [text]: !thoughtAfterRefresh ? 'missing' : thoughtAfterRefresh.pending ? 'pending' : 'loaded' }
+  })
 
-  store.dispatch([deleteThoughtWithCursor])
+  // Only the thoughts within the pull queue's buffer depth are loaded, leaving several pending placeholders whose own descendants have not been loaded at all.
+  expect(thoughtsAfterRefresh).toEqual({
+    Cybersemics: 'loaded',
+    Team: 'loaded',
+    Work: 'loaded',
+    Structures: 'loaded',
+    Agenda: 'loaded',
+    HowMuch: 'pending',
+    ProductionViability: 'pending',
+    CommunityBuilding: 'pending',
+    AdoptionInfrastructure: 'pending',
+    71719: 'pending',
+    ProductionPerformance: 'missing',
+    SocialMedia: 'missing',
+    Import: 'missing',
+  })
 
-  await timer.runAllAsync()
+  await dispatch(deleteThoughtWithCursor())
 
-  timer.useRealTimer()
+  await act(vi.runOnlyPendingTimersAsync)
 
   const stateNew = store.getState()
 

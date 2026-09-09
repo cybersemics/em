@@ -2,7 +2,6 @@ import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
-import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -17,7 +16,6 @@ import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import hashPath from '../util/hashPath'
 import hashThought from '../util/hashThought'
@@ -41,7 +39,6 @@ interface ThoughtUpdates {
   path: Path
   thoughtIndex: Index<Thought | null>
   lexemeIndex: Index<Lexeme | null>
-  pendingDeletes?: PushBatch['pendingDeletes']
 }
 
 /** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions. */
@@ -147,18 +144,19 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
           delete lexemeIndexNew[hashedKey]
         }
 
-        // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
+        // A pending thought's own descendants are not in state, so there is nothing to recurse into. Delete the pending thought itself; the data provider deletes the whole subtree from the db.
         if (child.pending) {
-          const thoughtUpdate: ThoughtUpdates = {
+          return {
             ...accum,
-            // do not delete the pending thought yet since the second call to deleteThought needs a starting point
-            pendingDeletes: [
-              ...(accumRecursive.pendingDeletes || []),
-              { path: appendToPath(pathParent, thought.id, child.id), siblingIds: children.map(child => child.id) },
-            ],
+            lexemeIndex: {
+              ...accum.lexemeIndex,
+              [hashedKey]: lexemeChildNew,
+            },
+            thoughtIndex: {
+              ...accum.thoughtIndex,
+              [child.id]: null,
+            },
           }
-
-          return thoughtUpdate
         }
 
         delete contextViewsNew[hashPath(accum.path)]
@@ -169,11 +167,6 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
         return {
           ...accum,
           path: [...accum.path, child.id],
-          pendingDeletes: _.uniq([
-            ...(accum.pendingDeletes || []),
-            ...(accumRecursive.pendingDeletes || []),
-            ...(recursiveResults.pendingDeletes || []),
-          ]),
           lexemeIndex: {
             ...accum.lexemeIndex,
             ...recursiveResults.lexemeIndex,
@@ -248,7 +241,6 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
       thoughtIndexUpdates,
       lexemeIndexUpdates,
       // recentlyEdited,
-      pendingDeletes: descendantUpdatesResult.pendingDeletes,
       local,
       remote,
       overwritePending: !persist,
