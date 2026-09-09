@@ -426,7 +426,7 @@ describe('multiselect', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5405
-  it.skip('does not render a faux caret when Define Term is run on a multiselection from the Command Universe', async () => {
+  it('does not render a faux caret when Define Term is run on a multiselection from the Command Universe', async () => {
     await paste(`
         - Novel
         - Dictionary
