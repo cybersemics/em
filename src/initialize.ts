@@ -78,6 +78,7 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
             local: false,
             remote: false,
             repairCursor: true,
+            materialized: true,
           }),
         )
       },

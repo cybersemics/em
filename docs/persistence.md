@@ -67,7 +67,7 @@ Two app-owned tables live alongside the CRDT tables in the same SQLite database.
 
 `getThoughtByIdFromClient` assembles a `Thought` from the tree plus the attribute index:
 
-- `value` / `created` / `lastUpdated` / `updatedBy` / `archived` come from the decoded payload.
+- Deleted or missing nodes return no thought, even when TreeCRDT retains their payload in history. `value` / `created` / `lastUpdated` / `updatedBy` / `archived` come from the decoded payload.
 - `parentId` is the tree parent, falling back to `ROOT_PARENT_ID` when the tree reports none.
 - `rank` is the node's **index among its siblings** (`0` when it has no parent). It is a projection of the tree's order, computed per read, not a persisted field.
 - `childrenMap` is built by `createIndexedChildrenMap`: attribute children are keyed by their value (via `childrenMapKey`, which disambiguates duplicates), all other children by their `ThoughtId`. Insertion order follows `client.tree.children`, so `Object.values(childrenMap)` is the authoritative sibling order.
@@ -111,12 +111,14 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
 
-1. Waits for the write barrier.
-2. Refreshes `em_attribute_children` from the change list.
+1. Checks for failed local writes, then serializes its read/apply attempt with local persistence through the write barrier.
+2. Refreshes `em_attribute_children` from current tree state. Events identify affected nodes, not necessarily their latest values or deletion status.
 3. Runs [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts), which loads the affected thoughts fresh from the provider, derives Lexeme updates (every touched thought adds itself to its value's Lexeme; deletions and value changes remove the stale context; a Lexeme left with no contexts is deleted), and re-projects TreeCRDT sibling order onto `rank` for every parent whose children changed — so the render path, which still sorts by rank, reflects remote reorders.
-4. Persists the derived Lexeme updates, then applies the whole batch through the *materialization bridge*.
+4. Retries if a local write, another materialization, or either Redux index changed during the reads. Otherwise it synchronously applies the whole batch through the *materialization bridge*, then persists the derived Lexemes before releasing the write barrier. Local edits during that persistence see the published values and queue behind it.
 
-The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
+The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true, materialized: true`. The validated snapshot bypasses ordinary pulls' payload-timestamp guard, since timestamps do not determine CRDT winners or sibling order. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
+
+A barrier failure suspends materialization for that client binding, even after its error is reported. Stored rows cannot safely replace unsaved optimistic edits. This is conservative protection, not automatic save recovery; unrelated successful writes do not clear it.
 
 ### Memory management
 
@@ -181,6 +183,8 @@ When the cursor moves, the previous pull's `cancelRef.canceled` is set to `true`
 ### `fetchDescendants` (the actual pull engine)
 
 [`data-providers/data-helpers/fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts) is an async iterable that does breadth-first traversal of thought IDs and yields `{ thoughtIndex, lexemeIndex }` chunks. The `pull` thunk dispatches each chunk into Redux via `updateThoughts` so the UI can paint partial results as the pull progresses.
+
+Pulls wait for materialization and persistence to settle before reading, and restart if either changes during the read. This prevents an older pull from overwriting a newly materialized CRDT winner or its derived Lexeme memberships. Ordinary pulls retain their timestamp guard against stale intermediate local snapshots.
 
 Notable behavior:
 

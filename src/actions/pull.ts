@@ -9,19 +9,17 @@ import { updateThoughtsActionCreator as updateThoughts } from '../actions/update
 import { HOME_TOKEN } from '../constants'
 import fetchDescendants from '../data-providers/data-helpers/fetchDescendants'
 import db from '../data-providers/thoughtspace'
+import {
+  getMaterializedThoughtsToStoreVersion,
+  waitForMaterializedThoughtsToStore,
+} from '../data-providers/treecrdt/sync/materializationQueue'
+import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier } from '../data-providers/treecrdt/writeBarrier'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
 import mergeThoughts from '../util/mergeThoughts'
 
 const BUFFER_DEPTH = 2
-
-/** Iterate through an async iterable and invoke a callback on each yield. */
-async function itForEach<T>(it: AsyncIterable<T>, callback: (value: T) => void) {
-  for await (const item of it) {
-    callback(item)
-  }
-}
 
 /** Filters a list of ids to only missing or pending thoughts. */
 const filterPending = (state: State, thoughtIds: ThoughtId[]): ThoughtId[] =>
@@ -79,13 +77,26 @@ export const pullActionCreator =
     if (filteredThoughtIds.length === 0) return []
 
     const thoughtChunks: ThoughtIndices[] = []
+    const materializationVersion = getMaterializedThoughtsToStoreVersion()
+    const writeVersion = getTreecrdtWriteBarrierVersion()
+    // Read the derived lexeme cache only after any published materialization and local writes are persisted.
+    await waitForMaterializedThoughtsToStore()
+    await waitForTreecrdtWriteBarrier()
 
     const thoughtsIterable = fetchDescendants(db, filteredThoughtIds, getState, {
       cancelRef,
       maxDepth: maxDepth ?? BUFFER_DEPTH,
     })
 
-    await itForEach(thoughtsIterable, (thoughtsChunk: ThoughtIndices) => {
+    for await (const thoughtsChunk of thoughtsIterable) {
+      // A CRDT winner may have an older payload timestamp. Never let a pre-materialization read restore
+      // the previous value just because its wall clock was greater. Restart from current storage instead.
+      if (
+        materializationVersion !== getMaterializedThoughtsToStoreVersion() ||
+        writeVersion !== getTreecrdtWriteBarrierVersion()
+      ) {
+        return dispatch(pullActionCreator(filteredThoughtIds, { cancelRef, force: true, maxDepth }))
+      }
       thoughtChunks.push(thoughtsChunk)
 
       // mergeUpdates will prevent overwriting non-pending thoughtsChunk with pending thoughtsChunk
@@ -98,7 +109,7 @@ export const pullActionCreator =
           remote: false,
         }),
       )
-    })
+    }
 
     // get remote thoughts
     const status = getState().status

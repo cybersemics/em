@@ -30,7 +30,11 @@ import {
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { enqueueMaterializedThoughtsToStore } from './sync'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
-import { createTreecrdtLocalWriteOptions, isTreecrdtLocalMaterialization } from './writeBarrier'
+import {
+  createTreecrdtLocalWriteOptions,
+  getTreecrdtWriteFailureVersion,
+  isTreecrdtLocalMaterialization,
+} from './writeBarrier'
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
 
@@ -82,8 +86,9 @@ const waitForTestReplicationDelay = async (): Promise<void> => {
 
 /** Fetches a thought by ID from the given TreeCRDT client. */
 const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): Promise<Thought | undefined> => {
-  const payloadBytes = await client.tree.getPayload(id)
-  if (payloadBytes === null) return undefined
+  const [exists, payloadBytes] = await Promise.all([client.tree.exists(id), client.tree.getPayload(id)])
+  // Deleted nodes can retain their payload for CRDT history, but are not visible thoughts.
+  if (!exists || payloadBytes === null) return undefined
 
   const payload = decodeThoughtPayload(payloadBytes)
 
@@ -412,7 +417,9 @@ const createTreecrdtDataProvider = () => {
     await initializeThoughtspaceStorage(client, replicaId)
 
     const clientDb = createClientDataProvider({ client, replicaId })
-    const materializationContext = materialization ? { bridge: materialization, client, db: clientDb } : null
+    const materializationContext = materialization
+      ? { bridge: materialization, client, db: clientDb, writeFailureVersion: getTreecrdtWriteFailureVersion() }
+      : null
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
       // Local writes are already reflected optimistically. Other materialization uses the exact provider and client

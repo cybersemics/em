@@ -3,6 +3,7 @@ import type { LocalWriteOptions, MaterializationEvent } from '@treecrdt/interfac
 let pendingTreecrdtWrite = Promise.resolve()
 let pendingTreecrdtWriteError: unknown = null
 let pendingTreecrdtWriteVersion = 0
+let treecrdtWriteFailureVersion = 0
 let localWriteCounter = 0
 
 const localWriteSourceId =
@@ -16,13 +17,17 @@ const localWriteIdPrefix = `em-local:${localWriteSourceId}:`
  * Queues em -> TreeCRDT persistence work and exposes an idle barrier for materialization refreshes.
  * This is a local ordering guard, not a CRDT requirement; it keeps app-state refreshes from racing local persistence.
  */
-export function withTreecrdtWriteBarrier<T>(work: () => Promise<T>): Promise<T> {
-  pendingTreecrdtWriteVersion += 1
-  const run = pendingTreecrdtWrite.then(work, work)
+export function withTreecrdtWriteBarrier<T>(work: (version: number) => Promise<T>): Promise<T> {
+  const version = ++pendingTreecrdtWriteVersion
+  const run = pendingTreecrdtWrite.then(
+    () => work(version),
+    () => work(version),
+  )
   pendingTreecrdtWrite = run.then(
     () => undefined,
     err => {
       pendingTreecrdtWriteError = err
+      treecrdtWriteFailureVersion += 1
     },
   )
   return run
@@ -30,6 +35,9 @@ export function withTreecrdtWriteBarrier<T>(work: () => Promise<T>): Promise<T> 
 
 /** Monotonically increases whenever TreeCRDT persistence work is queued. */
 export const getTreecrdtWriteBarrierVersion = (): number => pendingTreecrdtWriteVersion
+
+/** Records failed work independently of whether an idle waiter already reported the error. */
+export const getTreecrdtWriteFailureVersion = (): number => treecrdtWriteFailureVersion
 
 /** Waits until TreeCRDT persistence is idle, including work queued while waiting. */
 export async function waitForTreecrdtWriteBarrier(): Promise<void> {
@@ -66,6 +74,7 @@ export const isTreecrdtLocalMaterialization = (event: MaterializationEvent): boo
 export default {
   createTreecrdtLocalWriteOptions,
   getTreecrdtWriteBarrierVersion,
+  getTreecrdtWriteFailureVersion,
   isTreecrdtLocalMaterialization,
   waitForTreecrdtWriteBarrier,
   withTreecrdtWriteBarrier,

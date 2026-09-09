@@ -30,6 +30,8 @@ export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdatesOld'> & {
   preventExpandThoughts?: boolean
   /** Allow non-pending thoughts to become pending. This is mainly used by freeThoughts. */
   overwritePending?: boolean
+  /** Accept a TreeCRDT snapshot validated under the write barrier before synchronous dispatch. */
+  materialized?: boolean
   /**
    * If true, check if the cursor is valid, and if not, move it to the closest valid ancestor.
    * This should only be used when the updates are coming from another device. For local updates, updateThoughts is typically called within a higher level reducer (e.g. moveThought) which handles all cursor updates. There would be false positives during local updates since the cursor is updated after updateThoughts.
@@ -95,6 +97,7 @@ const updateThoughts = (
     idbSynced,
     isLoading,
     overwritePending,
+    materialized,
     repairCursor,
   }: UpdateThoughtsOptions,
 ) => {
@@ -104,9 +107,9 @@ const updateThoughts = (
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
   const lexemeIndexUpdatesOld = keyValueBy(lexemeIndexUpdates, key => ({ [key]: lexemeIndexOld[key] }))
 
-  // Last-write-wins guard for reconcile updates (local === false), e.g. a forced pull (RecentlyEdited's
-  // pullJumpHistory) or a cross-device onThoughtChange. The pulled snapshot is read asynchronously from
-  // the data provider and may predate a local edit that landed in the meantime; if it overwrote the newer
+  // Last-write-wins guard for ordinary pulls (local === false), e.g. RecentlyEdited's pullJumpHistory.
+  // Materialization checks snapshot freshness separately: payload timestamps do not order CRDT structure.
+  // The pulled snapshot is read asynchronously from the data provider and may predate a local edit; if it overwrote the newer
   // in-memory thought it would corrupt parent/child links (e.g. after Swap Parent, producing a parent-chain
   // cycle and hanging the app). Drop any incoming thought that is no newer than the existing non-pending
   // thought.
@@ -118,13 +121,12 @@ const updateThoughts = (
   // forced pull that reads that intermediate snapshot re-dispatches it with a lastUpdated equal to the
   // final state's, so a strict `<` would let it through and clobber the correct result (planting a child in
   // two contexts → cycle → hang, https://github.com/cybersemics/em/issues/3948). Because the final state is
-  // emitted last, its lastUpdated is always >= any intermediate, so `<=` reliably discards the stale echo
-  // while genuinely newer cross-device edits (strictly greater) still win.
+  // emitted last, its lastUpdated is always >= any intermediate, so `<=` discards the stale local echo.
   //
   // Skip when overwritePending is set (freeThoughts/deleteThought/generateThought intentionally overwrite)
   // and keep deletions (null) and missing/pending thoughts so pulls still load them.
   const thoughtIndexUpdatesFresh =
-    local || overwritePending
+    local || overwritePending || materialized
       ? thoughtIndexUpdates
       : keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {
           const thoughtOld = thoughtIndexOld[id]

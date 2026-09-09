@@ -19,7 +19,8 @@ export type ThoughtspaceMaterializationSnapshot = {
 
 export type ThoughtspaceMaterializationBridge = {
   getSnapshot: () => ThoughtspaceMaterializationSnapshot
-  apply: (updates: ThoughtUpdates) => void | Promise<void>
+  /** Publishes synchronously so no local edit can interleave after snapshot validation. */
+  apply: (updates: ThoughtUpdates) => void
 }
 
 export type ThoughtspaceRuntimeInitOptions = {
