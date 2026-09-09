@@ -722,7 +722,9 @@ it('Set the background color of text that is marked as code with the =style attr
   expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
 })
 
-it('applying text color after underline should produce correct HTML structure', async () => {
+// The painted decoration color is the user-visible symptom and can only be observed in a real browser; the markup that
+// produces it is asserted at the action level in src/actions/__tests__/formatSelection.ts.
+it('a text color applied after underline draws the line in that color', async () => {
   await paste(`
     - One
   `)
@@ -731,46 +733,11 @@ it('applying text color after underline should produce correct HTML structure', 
   await clickToolbar('Underline')
   await clickToolbar('Text Color', 'text color swatches', 'red')
 
-  const result = await getEditingText()
-  // The color tag must wrap the decoration tag (not the other way around), otherwise <u> inherits the theme's text
-  // color and draws a white underline in dark mode instead of a red one.
-  expect(result).toBe(`<font color="${rgbaToHex(colors.light.red)}"><u>One</u></font>`)
-})
-
-it('applying background color after underline should produce correct HTML structure', async () => {
-  await paste(`
-    - Two
-  `)
-
-  await clickThought('Two')
-  await clickToolbar('Underline')
-  await clickToolbar('Text Color', 'background color swatches', 'red')
-
-  const result = await getEditingText()
-  // A background color also sets a contrasting black text color, which the <u> must inherit in order to draw a black
-  // underline rather than a white one.
-  const style = extractColor(result!)
-  expect(style?.color).toBe('#000000')
-  expect(style?.backgroundColor && rgbToHex(style.backgroundColor)).toBe(rgbaToHex(colors.light.red))
-  expect(result).toContain('<u>Two</u>')
-})
-
-it('applying text color after strikethrough should produce correct HTML structure', async () => {
-  await paste(`
-    - Three
-  `)
-
-  await clickThought('Three')
-  await clickToolbar('Strikethrough')
-  await clickToolbar('Text Color', 'text color swatches', 'red')
-
-  const result = await getEditingText()
-  // As with underline, the color tag must wrap <strike> so the line through the text is drawn in the applied color.
-  expect(result).toBe(`<font color="${rgbaToHex(colors.light.red)}"><strike>Three</strike></font>`)
+  expect(rgbToHex(await decorationColor())).toBe(rgbaToHex(colors.light.red))
 })
 
 // https://github.com/cybersemics/em/pull/4032#pullrequestreview-5149433775
-it.skip('underline applied after a text color draws its line in that color', async () => {
+it('underline applied after a text color draws its line in that color', async () => {
   await paste(`
     - One
   `)
