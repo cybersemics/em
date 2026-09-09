@@ -58,8 +58,10 @@ Where the bug depends on a particular thought tree, give it as a fenced code blo
 ```
 
 1. Set the caret on note `test`.
-2. Move Thought Down (Cmd + Shift + ArrowDown).
+2. Move Thought Down (<kbd>Cmd</kbd><kbd>Shift</kbd><kbd>ArrowDown</kbd>).
 ````
+
+Write a keyboard shortcut as `<kbd>` elements, one per key, with no separator between them: `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>`, not `(Shift + Alt + S)`. GitHub renders them as keys, which is what the reader is looking for while scanning the steps. Name the command alongside it — "Move Thought Down (<kbd>Cmd</kbd><kbd>Shift</kbd><kbd>ArrowDown</kbd>)".
 
 Write a gesture as arrows, not as the letters the code uses: `←↓→`, not `ldr`. `l` → `←`, `r` → `→`, `u` → `↑`, `d` → `↓`. The reader is following the steps with a finger on a screen, and the arrows are the swipe; the letters are an implementation detail they have to translate first. Name the command alongside it where the gesture has one — "Swipe New Subthought (`→↓→`)".
 
@@ -72,6 +74,8 @@ What happens, as an observation, with the evidence: a screenshot, a video, or a 
 ### Expected Behavior
 
 What should happen instead. Write it as a condition that can be checked — a state the app is or is not in — since it is what a regression test will assert. Where the correct state is visible elsewhere in the app, a screenshot of that is useful alongside the screenshot of the bug.
+
+Phrase it with "should" — "At Font Size 12, the alert should read...", not "At Font Size 12, the alert reads...". The bare present tense reads as a description of what the app already does, which is Current Behavior; "should" marks it as the behaviour being asked for.
 
 State the goal, not the shape of the fix. What the fix looks like is the assignee's call, and writing it out for them in advance is work they will redo.
 
@@ -100,11 +104,11 @@ For a Gesture Diagram misaligned after the app font size is increased to 32:
 ```markdown
 ### In this case
 
-At app font size 32, the arrow in the Question Mark gesture diagram is centered in its box, as it is at the default font size.
+At app font size 32, the arrow in the Question Mark gesture diagram should be centered in its box, as it is at the default font size.
 
 ### In general
 
-Gesture diagram arrows stay centered at every app font size, wherever a diagram is rendered.
+Gesture diagram arrows should stay centered at every app font size, wherever a diagram is rendered.
 ```
 
 The first is checkable by following the steps; the second is what keeps the fix from being a special case at 32.
@@ -124,6 +128,11 @@ One issue per reproduction. Where two failures share a cause and a fix, a single
 Say the thing and stop. An issue is a report, not a write-up — the reader needs to know what is broken and what should happen instead, and every sentence past that is one they read before they can start.
 
 Word count is not the measure — a bug needing eight steps gets eight steps. What gets cut is the writing that is about your investigation rather than about the bug.
+
+## Words
+
+- **No em dashes in prose.** This applies to what you post: the issue body, the title, and comments on it.
+- **No semicolons in prose.** Two sentences, or a comma and a conjunction.
 
 ## Title
 
@@ -191,6 +200,7 @@ New issues often originate in a comment thread on another issue or PR.
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
+- A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.

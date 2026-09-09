@@ -1,14 +1,20 @@
 import { KnownDevices } from 'puppeteer'
+import { HOME_DISPLAY_VALUE } from '../../../constants'
+import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -38,6 +44,35 @@ const waitForHighlightedBullets = async (n: number) => {
   } catch {
     const highlighted = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets => bullets.length)
     throw new Error(`Expected ${n} highlighted bullets, but ${highlighted} were highlighted.`)
+  }
+}
+
+/** Waits for exactly the given thoughts to be highlighted by the multiselect, in document order. Reports the thoughts
+ * that are actually highlighted on timeout, since a bare wait would not say which selection was rendered instead. */
+const waitForMultiselect = async (values: string[]) => {
+  /** Reads the value of every thought whose bullet is highlighted. Defined here so that the wait and the failure
+   * message read the page the same way. */
+  const highlightedValues = () =>
+    page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+  try {
+    await page.waitForFunction(
+      (values: string[]) =>
+        JSON.stringify(
+          Array.from(document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]')).map(
+            bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+          ),
+        ) === JSON.stringify(values),
+      { timeout: 6000 },
+      values,
+    )
+  } catch {
+    throw new Error(
+      `Expected ${JSON.stringify(values)} to be selected, but ${JSON.stringify(await highlightedValues())} was.`,
+    )
   }
 }
 
@@ -388,6 +423,26 @@ describe('multiselect', () => {
     // a click moves the caret as it does when a single thought is being edited
     expect(await textCursors()).toEqual(['auto', 'auto'])
   })
+
+  it('should delete all selected thoughts when Backspace is pressed with Select All active', async () => {
+    await paste(`
+        - A
+        - B
+        - C
+        `)
+
+    // Place caret at the beginning of C (as specified in the Steps to Reproduce)
+    const editableC = await waitForEditable('C')
+    await click(editableC, { edge: 'left' })
+    await waitUntil(() => window.getSelection()?.focusOffset === 0)
+
+    await command('selectAll')
+    await press('Backspace')
+
+    // an export with no thoughts left is just the root placeholder
+    const exported = await exportThoughts()
+    expect(exported).toBe(`- ${HOME_DISPLAY_VALUE}`)
+  })
 })
 
 describe('mobile only', () => {
@@ -434,27 +489,11 @@ describe('mobile only', () => {
 
     await clickThought('b')
 
-    await expect
-      .poll(() =>
-        page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
-          bullets.map(
-            bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
-          ),
-        ),
-      )
-      .toEqual(['a', 'b'])
+    await waitForMultiselect(['a', 'b'])
 
     await clickThought('b')
 
-    await expect
-      .poll(() =>
-        page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
-          bullets.map(
-            bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
-          ),
-        ),
-      )
-      .toEqual(['a'])
+    await waitForMultiselect(['a'])
   })
 
   // https://github.com/cybersemics/em/issues/3528
@@ -471,26 +510,40 @@ describe('mobile only', () => {
 
     await clickBullet('b')
 
-    await expect
-      .poll(() =>
-        page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
-          bullets.map(
-            bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
-          ),
-        ),
-      )
-      .toEqual(['a', 'b'])
+    await waitForMultiselect(['a', 'b'])
 
     await clickBullet('b')
 
-    await expect
-      .poll(() =>
-        page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
-          bullets.map(
-            bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
-          ),
-        ),
-      )
-      .toEqual(['a'])
+    await waitForMultiselect(['a'])
+  })
+
+  // https://github.com/cybersemics/em/issues/3557
+  it('moves the cursor to the parent while more than one thought is selected, and to the first selected thought when the Command Center closes', async () => {
+    await paste(`
+        - x
+          - a
+            - a1
+          - b
+            - b1
+        `)
+
+    await clickThought('b')
+    await waitForCursor('b')
+
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('b'), { edge: 'right' })
+
+    // with both a and b selected, the cursor moves to their parent so that neither is dimmed or expanded
+    await waitForCursor('x')
+
+    // deselecting and reselecting a thought must not lose the selection the cursor will land in
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+
+    await click('[data-testid="command-center-done"]')
+    await waitForCommandCenterClosed()
+
+    // the cursor lands on the first selected thought, not on b where it started
+    await waitForCursor('a')
   })
 })

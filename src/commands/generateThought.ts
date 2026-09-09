@@ -21,6 +21,7 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import simplifyPath from '../selectors/simplifyPath'
 import requestAiDisclosure from '../util/aiDisclosure'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import isDocumentEditable from '../util/isDocumentEditable'
 import isURL from '../util/isURL'
 import parentOf from '../util/parentOf'
@@ -85,10 +86,16 @@ interface GenerationTarget {
   url: string | null
 }
 
-/** Builds the indented outline of a thought's ancestors and siblings that is sent to the AI service, marking the thought with [x] and its context with []. */
+/** Builds the indented outline of a thought's ancestors and siblings that is sent to the AI service, marking the thought with [x] and its context with []. Metaprogramming attributes are omitted from the siblings, since they configure the app rather than describe the user's thoughts. */
 const buildInput = (state: State, { simplePath, thought }: GenerationTarget): string => {
   const ancestors = pathToContext(state, parentOf(simplePath))
-  const siblings = getChildrenRanked(state, head(parentOf(simplePath)) ?? HOME_TOKEN)
+  // Sibling attributes are omitted regardless of showHiddenThoughts, so that a view toggle cannot change what leaves
+  // the device. The target is kept even when it is an attribute, otherwise the outline would have no [x] to replace.
+  // Ancestors are not filtered: an attribute in the path to the target is the context the target actually lives in,
+  // and dropping it would place the target under a parent that is not its own.
+  const siblings = getChildrenRanked(state, head(parentOf(simplePath)) ?? HOME_TOKEN).filter(
+    sibling => sibling.id === thought.id || !isAttribute(sibling.value),
+  )
   const ancestorLines = ancestors.map((ancestor, index) => `${'  '.repeat(index)}[]${ancestor ? ` ${ancestor}` : ''}`)
   const siblingIndent = '  '.repeat(ancestors.length)
   const siblingLines = siblings.map(

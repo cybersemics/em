@@ -8,7 +8,14 @@
 
 ## Quick Start
 
-The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests.
+The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests. A fresh checkout — including every agent worktree under `.claude/worktrees/` — needs its own `yarn install`: the local Capacitor plugins in `packages/` are linked as workspace dependencies and are only compiled by the `postinstall` → `build:packages` step, so without it any test that reaches production code importing one fails to collect with `Failed to resolve import "webview-background" from "src/device/nativeHistory.ts"`. The generated Panda CSS output is the same story one step earlier, failing to collect with `Failed to resolve import '../../../styled-system/css'`.
+
+```sh
+yarn build:styles    # styled-system/
+yarn build:packages  # packages/webview — or just `yarn`, whose postinstall runs it
+```
+
+Import-resolution failures across many test files at once mean that generated output is missing or stale, not that the code is broken.
 
 ```sh
 yarn test            # unit and jsdom tests
@@ -30,6 +37,8 @@ yarn test:ios:local         # local Appium and iOS Simulator required
 > See [WebdriverIO tests](#5-webdriverio-tests) for the full BrowserStack and local Appium prerequisites.
 
 ### Run a specific test
+
+A full unit run is 263 files and takes several minutes, so run it once to survey, fix the environment from that single output, then iterate file-scoped and save the next full run for the end.
 
 Prefer a focused test while developing:
 
@@ -137,6 +146,19 @@ const childCount = await page.evaluate(async () => {
 ```
 
 ```ts
+// ❌ Don't: poll an export until the thought tree looks the way you expect
+await page.waitForFunction(
+  (before: number) => {
+    const em = window.em as WindowEm
+    const exported = em.exportContext([HOME_TOKEN], 'text/plain')
+    return exported.split('\n').filter(line => /^\s*- /.test(line)).length > before
+  },
+  {},
+  before,
+)
+```
+
+```ts
 // ✅ Do: wait for the user-visible result, then assert
 await waitForEditable('hello world')
 
@@ -146,6 +168,32 @@ expect(exported).toBe(`
   - hello world
 `)
 ```
+
+A wait names a condition the user could see — [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForSelector`](../src/e2e/puppeteer/helpers/waitForSelector.ts), [`waitForAlert`](../src/e2e/puppeteer/helpers/waitForAlert.ts), or a new named waiter modelled on those. A serialization of the whole thought tree is not one. [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), and the `exportContext` backdoor it wraps, belong in the assert phase — called once, against an exact expected outline — never inside `page.waitForFunction`, `waitUntil`, or `vi.waitFor`. Polling an export re-serializes every thought on every tick, and, more importantly, it puts a proxy where the real condition belongs: the test stops saying what it is waiting for, so a wrong wait fails as an opaque timeout instead of a behavioral assertion. The poll above could never terminate — [`HOME_TOKEN`](../src/constants.ts) is `00000000000000000000000000000001`, not `'__ROOT__'`, so the export was always the single line `- __ROOT__` and its count could never exceed the baseline. It timed out on every run, saying nothing about the drag and drop it was written to guard; waiting for `waitForCursor('')` — the empty thought New Thought creates — and exporting once made the behavior visible. ([#4045](https://github.com/cybersemics/em/pull/4045))
+
+Wait **in the page**, never from node. `page.waitForFunction` compiles the predicate into the page and runs it there on every animation frame, so a wait of any length costs the same handful of protocol messages. Vitest's `expect.poll` runs its callback in node instead, making every attempt a devtools round trip on an interval — it is banned by an eslint rule for that reason, and the rule's message names the replacement. The same goes for any hand-rolled loop that re-reads the page from node.
+
+That leaves the one thing `expect.poll` was good at: a wait that times out reports only `waiting failed: Nms exceeded`, while an assertion reports the value it actually saw. Keep both by catching the wait and reading the value once, which costs nothing while the wait is succeeding:
+
+```ts
+// ✅ Do: poll in the page, and pay for the value only when it fails
+const waitForHighlightedBullets = async (n: number) => {
+  try {
+    await page.waitForFunction(
+      (n: number) => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === n,
+      { timeout: 6000 },
+      n,
+    )
+  } catch {
+    const highlighted = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets => bullets.length)
+    throw new Error(`Expected ${n} highlighted bullets, but ${highlighted} were highlighted.`)
+  }
+}
+```
+
+The `catch` must always throw. Swallowing the timeout to let the test carry on is the [false-positive](#7-make-false-positives-difficult) it looks like.
+
+This is worth doing wherever the wait *is* the assertion — nothing follows it, and the test passes precisely because the condition became true. It is not worth doing for a wait that only arranges the state a later assertion is about; there, a bare `waitForEditable` is the whole point, and its callers never read the message.
 
 If no waiter exists for your condition, the escape hatch is a **new waiter helper** (model it on [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts) or [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts)) — never a sleep. ([#3163 review comment](https://github.com/cybersemics/em/pull/3163#discussion_r2261698577))
 
@@ -554,7 +602,7 @@ The scope of a review is everything the tests depend on to mean something: the t
 2. **Reachable arrange** — Could normal application behavior create the arranged state? Are essential preconditions present and non-contradictory?
 3. **Act** — Is the behavior under test triggered through a real user entry point (Puppeteer/iOS), `userEvent`/`fireEvent` (JSDOM), or the public interface (unit/store)?
 4. **Backdoors** — Are internals touched only via the [sanctioned helpers](#sanctioned-backdoors), and only in arrange/assert/wait — never in the act?
-5. **Waiting and flakes** — No wall-clock sleeps or hand-rolled polling loops? Does each wait name a condition? Are non-visual state/DB waiters only prerequisites to a visible assertion? Was the controlling condition investigated before adding a retry or workaround?
+5. **Waiting and flakes** — No wall-clock sleeps or hand-rolled polling loops? Does each wait name a user-visible condition rather than a proxy such as an exported outline? Are non-visual state/DB waiters only prerequisites to a visible assertion? Was the controlling condition investigated before adding a retry or workaround?
 6. **Helper contracts** — Is the test composed from narrow, intent-named helpers? Are expectations visible in the test, unrelated waits absent from action helpers, and missing required targets reported as errors?
 7. **Selectors** — Do DOM locators identify meaning (role/name, label, semantic value, or test id) rather than style, ancestry, index, or render order?
 8. **Assertions** — Do assertions read exact user-visible output rather than Redux state, truthiness, or a proxy that plausible wrong behavior could satisfy? Is every negative assertion evaluated while the wrong behavior could still manifest, or superseded by a positive assertion that excludes it?
@@ -607,9 +655,9 @@ Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/hel
 | Scroll | [`scroll`](../src/e2e/puppeteer/helpers/scroll.ts), [`scrollBy`](../src/e2e/puppeteer/helpers/scrollBy.ts), [`scrollIntoView`](../src/e2e/puppeteer/helpers/scrollIntoView.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts) | Scrolls the window or a named container; use the narrowest helper that expresses the intent. |
 | Emulate a mobile device | [`deviceEmulation.useForSuite`](../src/e2e/puppeteer/helpers/deviceEmulation.ts) | Selects a Puppeteer device profile at suite scope, which `setup` applies before navigation. There is no mid-session equivalent; see the emulation note above. |
 
-Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlertContent`](../src/e2e/puppeteer/helpers/waitForAlertContent.ts), [`waitForCommandCenterOpen`](../src/e2e/puppeteer/helpers/waitForCommandCenterOpen.ts), and [`waitForCommandCenterClosed`](../src/e2e/puppeteer/helpers/waitForCommandCenterClosed.ts). Persistence has no visual signal, so [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) waits for the thoughtspace to commit every queued write; [`refresh`](../src/e2e/puppeteer/helpers/refresh.ts) calls it before reloading, so a test that reloads right after a paste does not need to wait for persistence itself; typed text reaches the queue only when its edit throttle flushes, so run a command such as Escape before reloading to commit it. Every Puppeteer test should read as a sequence of these helpers.
+Per-feature waiters include [`waitForEditable`](../src/e2e/puppeteer/helpers/waitForEditable.ts), [`waitForCursor`](../src/e2e/puppeteer/helpers/waitForCursor.ts), [`waitForAlert`](../src/e2e/puppeteer/helpers/waitForAlert.ts), [`waitForCommandCenterOpen`](../src/e2e/puppeteer/helpers/waitForCommandCenterOpen.ts), and [`waitForCommandCenterClosed`](../src/e2e/puppeteer/helpers/waitForCommandCenterClosed.ts). Persistence has no visual signal, so [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) waits for the thoughtspace to commit every queued write; [`refresh`](../src/e2e/puppeteer/helpers/refresh.ts) calls it before reloading, so a test that reloads right after a paste does not need to wait for persistence itself; typed text reaches the queue only when its edit throttle flushes, so run a command such as Escape before reloading to commit it. Every Puppeteer test should read as a sequence of these helpers.
 
-The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM.
+The most important helper is [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts), which hits a backdoor on `window.em` to pull the entire current thought tree as the same outline format `importToContext` accepts. Asserting against the exported text is far faster, more readable, and more stable than parsing the DOM. It is an assertion, not a waiter: call it once against an exact expected outline, and never poll it — or `exportContext` directly — in place of the user-visible condition a wait should name ([Principle 3](#3-never-wait-for-wall-clock-time-wait-for-the-response)).
 
 ### `src/e2e/iOS/helpers/` — for WebdriverIO tests
 
@@ -749,23 +797,23 @@ Five more guards decide whether a task is warranted, and each one is a reason no
 - **A failure that is also red on the base branch is not the bump's doing.** Those are annotated as such in the prompt, and when *every* failure is one of them no task starts at all — a broken `main` would otherwise put an agent on every open bump at once.
 - **One task per head commit.** The workflow keeps a single marked comment on the pull request carrying the commit it was started for, so a rebase gets a fresh task and a re-run of one check does not.
 - **`cancelled` is not a failure.** [Cancel PR Runs](#merged-and-closed-pull-requests) leaves cancelled checks behind on a merged pull request, and they mean nothing broke.
-- **Three tasks per pull request.** A task that pushes a fix moves the head commit, so without a cap a bump the agent cannot fix would start a fresh task on every attempt. The count lives in the same comment, which names the attempt it is on — the cap is visible before it is reached rather than as silence afterwards. A manual dispatch overrides both this and the per-commit dedupe.
+- **Three tasks per pull request.** A task that pushes a fix moves the head commit, so without a cap a bump the agent cannot fix would start a fresh task every time. The count lives in the same comment, which names the task it is on — the cap is visible before it is reached rather than as silence afterwards. A manual dispatch overrides both this and the per-commit dedupe.
 
 The task's prompt names each failing check and includes an excerpt of the first three failing jobs' logs, anchored on the runner's `##[error]` annotations — the tail of an Actions log is the same twenty lines of checkout cleanup every time, so a plain tail would say nothing. Like the flaky detector, this needs the `COPILOT_TASKS_TOKEN` repository secret; without it the workflow says so and does nothing. To start a task by hand, or to start a second one on the same commit: `gh workflow run dependabot-fix.yml -f pr=<number>`.
 
-The comment it leaves is rendered by [`scripts/ci/attempt-comment.cjs`](../scripts/ci/attempt-comment.cjs), shared with [Copilot pull-request conflicts](#copilot-pull-request-conflicts) — the same heading, and the same closing line naming the attempt, what follows it, and the run that started it. That footer is where the cap becomes visible: at the last attempt it says so, and names the dispatch that asks for one more.
+The comment it leaves is rendered by [`scripts/ci/task-comment.cjs`](../scripts/ci/task-comment.cjs), shared with [Copilot pull-request conflicts](#copilot-pull-request-conflicts) — the same heading, and the same closing line naming the task, what follows it, and the run that started it. That footer is where the cap becomes visible: at the last task it says so, and names the dispatch that asks for one more.
 
 #### Copilot pull-request conflicts
 
 [`Copilot Conflict Resolution`](../.github/workflows/copilot-conflicts.yml) keeps Copilot-created pull requests from remaining conflicted after `main` advances. A normal `pull_request` workflow cannot observe that state because GitHub does not create its merge ref while the pull request conflicts. Instead, this workflow runs trusted code from `main` on every push to `main` and on pull-request open/reopen/synchronize events. It never checks out or runs pull-request code.
 
-Only an open pull request targeting `main`, authored by the `Copilot` bot, with its head branch in this repository is eligible. A `skip-auto-resolve-conflicts` label opts a pull request out: it is excluded from the scan entirely, so no comment is written or updated and its retry state stays frozen until the label is removed. The task runner re-checks the label immediately before dispatch, covering a label added after the scan. The collector retries GitHub's temporary `mergeable: null` response briefly, leaves its previous state untouched if the value stays unknown, and writes the current result to one `<!-- copilot-conflicts -->` comment. The comment appears only once a conflict has been seen, so a pull request that has never conflicted is left unannotated; afterwards it stays updated, including when the conflict clears. That comment holds schema-versioned state rather than inferring prior work from merge commits: the first detected conflict, lifetime attempt count, task URL, the run that started the last attempt, observed head and base SHAs, and attempt history. When the pull request becomes mergeable its active conflict timestamp clears, but its six-attempt lifetime cap does not; a later conflict therefore waits three hours before a new first attempt instead of immediately spending another task.
+Only an open pull request targeting `main`, authored by the `Copilot` bot, with its head branch in this repository is eligible. A `skip-auto-resolve-conflicts` or `hold` label opts a pull request out — the first is this workflow's own opt-out, the second pauses development on the pull request generally, and a pull request nobody intends to advance is not worth spending a task on. Either one excludes the pull request from the scan entirely, so no comment is written or updated and its retry state stays frozen until the label is removed. The task runner re-checks both labels immediately before dispatch, covering one added after the scan. The collector retries GitHub's temporary `mergeable: null` response briefly, leaves its previous state untouched if the value stays unknown, and writes the current result to one `<!-- copilot-conflicts -->` comment. The comment appears only once a conflict has been seen, so a pull request that has never conflicted is left unannotated; afterwards it stays updated, including when the conflict clears. That comment holds schema-versioned state rather than inferring prior work from merge commits: the first detected conflict, lifetime task count, task URL, the run that started the last task, observed head and base SHAs, and task history. A payload from an older schema version is discarded rather than migrated, so a pull request carrying one starts its count over — cheaper than a compatibility branch kept alive for the few open pull requests that have one. When the pull request becomes mergeable its active conflict timestamp clears, but its six-task lifetime cap does not; a later conflict therefore waits three hours before a new first task instead of immediately spending another one.
 
-The waits before attempts one through six are 3, 6, 12, 24, 48, and 96 hours. Due pull requests are ordered by most recently updated and at most five tasks begin in one scan. Before dispatch, the task runner re-reads the PR and requires that its head/base SHAs and conflicting state still match the scan. It then starts the existing-PR Agent Task with `worker-bee`, which commits the resolution to that same branch; a dispatch failure does not consume an attempt.
+The waits before tasks one through six are 3, 6, 12, 24, 48, and 96 hours. Due pull requests are ordered by most recently updated and at most five tasks begin in one scan. Before dispatch, the task runner re-reads the PR and requires that its head/base SHAs and conflicting state still match the scan. It then starts the existing-PR Agent Task with `worker-bee`, which commits the resolution to that same branch; a dispatch failure does not consume a task.
 
-**A scan that names a pull request overrides both the wait and the cap.** `gh workflow run copilot-conflicts.yml -f pr=<number>` is a human asking for an attempt on that pull request now, so it starts one whatever the schedule says and whatever the lifetime count has reached — the same override `dependabot-fix.yml`'s `pr` input has. Add `-f dry_run=true` to inspect a pull request instead, which changes no comment and starts nothing. A scan with no `pr` input still waits out the delays and stops at the cap.
+**A scan that names a pull request overrides both the wait and the cap.** `gh workflow run copilot-conflicts.yml -f pr=<number>` is a human asking for a task on that pull request now, so it starts one whatever the schedule says and whatever the lifetime count has reached — the same override `dependabot-fix.yml`'s `pr` input has. Add `-f dry_run=true` to inspect a pull request instead, which changes no comment and starts nothing. A scan with no `pr` input still waits out the delays and stops at the cap. The opt-out labels are the one thing the override does not reach: a labeled pull request never enters the scan, so remove the label to have a task started on it.
 
-Both steps write the comment, and the scan rewrites whatever the dispatch left, so neither renders its own: [`scripts/ci/copilot-conflicts-comment.cjs`](../scripts/ci/copilot-conflicts-comment.cjs) renders it for both from the state, over the shape in [`scripts/ci/attempt-comment.cjs`](../scripts/ci/attempt-comment.cjs) that [Dependabot Fix](#failing-dependabot-pull-requests) also uses. The closing line names the attempt, what follows it, and the run that started it — read back from the state rather than from the environment, so a later scan credits the run that started the attempt instead of itself. Before the first attempt there is no such line, and the schedule sits in the body instead.
+Both steps write the comment, and the scan rewrites whatever the dispatch left, so neither renders its own: [`scripts/ci/copilot-conflicts-comment.cjs`](../scripts/ci/copilot-conflicts-comment.cjs) renders it for both from the state, over the shape in [`scripts/ci/task-comment.cjs`](../scripts/ci/task-comment.cjs) that [Dependabot Fix](#failing-dependabot-pull-requests) also uses. **The comment says what is being done about the conflict, not only that one exists**, and links the task doing it — an observation on its own leaves a reader unable to tell whether a resolution is coming, underway, or theirs to do. A resolution is claimed as ongoing only while one is: at the cap nothing further starts on its own, so the task is named there in the past tense the cap notice follows from. The comment exists only once a conflict has been seen, so a cleared one reports the conflicts resolved rather than absent — by whom it does not say, since an author can merge as readily as a task can. **The footer counts tasks, not attempts**, in both automations: neither ever learns how a task ended, and each starts another because the pull request is still broken — a check still red, a conflict still there — which is not the same as the last one having failed. That closing line names the task, what follows it, and the run that started it — read back from the state rather than from the environment, so a later scan credits the run that started the task instead of itself. Before the first task there is no such line, and the schedule sits in the body instead.
 
 #### Layered BrowserStack concurrency
 
@@ -1099,9 +1147,9 @@ This is a workaround for the commands not being awaitable: `executeCommandWithMu
 
 ### Automated flaky-test detection
 
-The `Puppeteer Flaky` workflow (`.github/workflows/puppeteer-flaky.yml`) stress-runs the full Puppeteer suite nightly on `main` (15 iterations by default; `gh workflow run puppeteer-flaky.yml -f iterations=5` to run manually). `scripts/flaky-report.mjs` aggregates the Vitest JSON reports into a workflow summary that distinguishes intermittent failures (likely flakes) from consistent ones (likely regressions). When failures are found, the workflow files a tracking issue for each **intermittently** failing test — titled `Flaky test: <file> > <full name>`, labelled `test`, and deduplicated by exact title match against open issues, so a test that is already tracked is not re-filed. A test that fails every iteration is a consistent failure rather than a flake; it appears in the summary and the Discord alert but is not filed as an issue. It then sends a Discord notification (if the `DISCORD_WEBHOOK_URL` repository secret is set) listing the top offenders, each linked to its tracking issue — the one just filed, or the one that was already open, including for a consistent failure that a previous run already filed. Issues are filed first so those links exist; the notification is sent even if filing fails, in which case the offenders are listed without links.
+The `Puppeteer Flaky` workflow (`.github/workflows/puppeteer-flaky.yml`) stress-runs the full Puppeteer suite nightly on `main` (15 iterations by default; `gh workflow run puppeteer-flaky.yml -f iterations=5` to run manually). `scripts/flaky-report.mjs` aggregates the Vitest JSON reports into a workflow summary that distinguishes intermittent failures (likely flakes) from consistent ones (likely regressions). When failures are found, the workflow files a tracking issue for each **intermittently** failing test — titled `Flaky test: <file> > <full name>`, labelled `test`, and deduplicated by exact title match against open issues, so a test that is already tracked is not re-filed. The same title match runs against **closed** issues carrying the `test` label, and a match there is **reopened** with a comment recording the new run rather than filed a second time: a flake that was fixed and has come back keeps every occurrence, and every attempted fix, on one issue. A test that fails every iteration is a consistent failure rather than a flake; it appears in the summary and the Discord alert but is neither filed nor reopened. It then sends a Discord notification (if the `DISCORD_WEBHOOK_URL` repository secret is set) listing the top offenders, each linked to its tracking issue — the one just filed or reopened, or the one that was already open, including for a consistent failure that a previous run already filed. Issues are filed first so those links exist; the notification is sent even if filing fails, in which case the offenders are listed without links.
 
-Each issue the run **just filed** then gets a GitHub Copilot cloud agent working on it, started through the [agent tasks API](https://docs.github.com/en/rest/agent-tasks/agent-tasks) by `scripts/ci/start-copilot-tasks.mjs` — Opus 5 (a flake is diagnosis-heavy, so it gets the strongest model), the `worker-bee` agent, and a pull request opened up front against the branch the run tested. An issue that was already open is left alone, since starting another task against the same flake every night would pile up duplicate branches on it — so a flake filed by hand, or one that predates this, never gets a task automatically. At most three tasks start per run — a run that files more than that is usually reporting something systemic, so the rest are named in the workflow summary for a human to assign by hand. This needs a `COPILOT_TASKS_TOKEN` repository secret: a fine-grained PAT with the **Agent tasks** repository permission set to read and write, since the endpoint rejects the workflow's own `GITHUB_TOKEN`. Without the secret the step says so and does nothing. It runs after the Discord alert, so a failed dispatch never costs anyone the notification.
+Each issue the run **just opened** — filed, or reopened because the flake came back — then gets a GitHub Copilot cloud agent working on it, started through the [agent tasks API](https://docs.github.com/en/rest/agent-tasks/agent-tasks) by `scripts/ci/start-copilot-tasks.mjs` — Opus 5 (a flake is diagnosis-heavy, so it gets the strongest model), the `worker-bee` agent, and a pull request opened up front against the branch the run tested. An issue that was already open is left alone, since starting another task against a flake somebody is already working on would pile up duplicate branches on it — so a flake filed by hand, or one that predates this, never gets a task automatically. A reopened issue is dispatched because nobody is working on it: its last task ended when the issue was closed. Its prompt says as much, and points the agent at the pull request that closed it — whatever that removed was either not the condition that matters or has come back. The prompt also decides how the pull request refers to the issue, the agent tasks API taking no title or body for it: the description must begin with `Fixes #<issue>`, which puts the issue number at the top of the pull request, links the two in the Development sidebar, and closes the issue on merge. At most three tasks start per run — a run that opens more than that is usually reporting something systemic, so the rest are named in the workflow summary for a human to assign by hand. This needs a `COPILOT_TASKS_TOKEN` repository secret: a fine-grained PAT with the **Agent tasks** repository permission set to read and write, since the endpoint rejects the workflow's own `GITHUB_TOKEN`. Without the secret the step says so and does nothing. It runs after the Discord alert, so a failed dispatch never costs anyone the notification.
 
 ### Triggering GitHub Actions workflows manually
 

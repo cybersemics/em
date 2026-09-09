@@ -15,14 +15,19 @@
 # Reports:
 #   - Workflow summary
 #   - A tracking issue per intermittently failing test (labelled `test`),
-#     deduplicated against open issues by exact title match. Tests that fail
-#     every iteration are regressions, not flakes, and are not filed.
+#     deduplicated against open issues by exact title match. A matching issue that
+#     was closed is reopened rather than filed again, so a flake that has come back
+#     keeps its history. Tests that fail every iteration are regressions, not
+#     flakes, and are neither filed nor reopened.
 #   - Optional Discord notification (flakes/infra failures only), linking each
-#     offender to its tracking issue — the one just filed, or the one already open.
+#     offender to its tracking issue — the one just filed or reopened, or the one
+#     already open.
 #
 # Follow-up:
 #   - A GitHub Copilot cloud agent task (Opus 5, the `worker-bee` agent) per issue
-#     just filed, so a new flake is being worked on before anyone reads the alert.
+#     just filed or reopened, so a new flake is being worked on before anyone reads
+#     the alert. Its pull request opens with `Fixes #<issue>`, which puts the issue
+#     number at the top of the pull request and links the two.
 #
 # To enable Discord notifications, add a `DISCORD_WEBHOOK_URL` repository secret.
 # To enable Copilot follow-up, add a `COPILOT_TASKS_TOKEN` repository secret — a
@@ -223,7 +228,8 @@ jobs:
           echo "aggregate_exit=$STATUS" >> "$GITHUB_OUTPUT"
 
       # Runs before the Discord alert so it can link each offender to its tracking issue.
-      # See scripts/ci/file-flaky-issues.cjs for what gets filed and how it is deduplicated.
+      # See scripts/ci/file-flaky-issues.cjs for what gets filed, what gets reopened, and how both
+      # are deduplicated.
       - name: File tracking issues
         if: steps.aggregate.outputs.clean != 'true'
         # The Discord alert is the signal humans act on; never suppress it because the Issues

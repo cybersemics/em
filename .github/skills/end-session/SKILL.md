@@ -121,7 +121,7 @@ Use `ci-monitor`. Wait for every run on the branch to complete; do not report on
 
 ## Step 7: Report
 
-Your final message is the entire record for whoever picks this up. It must contain:
+Your final message is the entire record for whoever picks this up. Write it **in the turn that did the work**, before you yield — never on a later wake, which may arrive hours after the fact or not at all. It must contain:
 
 - **What you did**, step by step — branch created, commits made, PR opened, CI status, fixes applied.
 - **The PR URL and its status.**
@@ -129,6 +129,17 @@ Your final message is the entire record for whoever picks this up. It must conta
 - **A concise diagnosis of any CI failure** you hit along the way, and what you did about it.
 - **What you did not do.** Anything out of scope, deferred, or left broken. A test still skipped, a file you left alone in Step 2, a second reproduction path you did not get to. Silence here reads as "everything is handled."
 - **If escalating:** what you tried, what you observed each time, and the specific question or decision you need from the user. "It didn't work" is not an escalation.
+
+---
+
+## Step 8: How to wait for whatever comes next
+
+A cloud session's runner is reclaimed once it goes idle, and that is the correct end state rather than a failure: an idle session costs nothing, while every wake costs a full turn — a fresh runner, and the whole conversation re-read. So end deliberately instead of leaving the session alive to watch.
+
+- **Subscribe; do not poll.** A pull request subscription delivers CI results, review comments, and the merge itself as events, and costs nothing in between. Ending your turn *is* how you wait for them.
+- **Do not put a timer on top of it.** A scheduled check-in fires whether or not anything happened, re-provisions the runner that was correctly reclaimed, and spends a turn reporting that nothing changed. Left overnight on a quiet pull request, that is one wake an hour for no information.
+- **Never wake to narrate a finished outcome.** A merged pull request needs nothing further, so the wake that announces it is pure cost — and it is the report you owed in Step 7 arriving late. Report the merge in the turn that performed it, and let the session go.
+- The one thing a subscription genuinely misses is a conflict created when the base branch advances, which GitHub emits no webhook for. That belongs in CI, not in a timer: [`copilot-conflicts.yml`](../../workflows/copilot-conflicts.yml) already scans for it on every push to `main`.
 
 ---
 
@@ -154,3 +165,5 @@ Unlike the `issue-repro` and `plan` gate lines, this one **is** a stopping point
 - **Cleaning the tree by deleting.** `git checkout .` makes Step 3's command print nothing and destroys the session's work doing it. Account for files; never discard them.
 - **Escalating without pushing.** The most expensive ending available: the investigation is gone and the user restarts from zero. Escalation runs the full checklist.
 - **Reporting CI you did not watch.** Ending while runs are in flight and describing the ones that happened to finish.
+- **Yielding first and reporting on the next wake.** Finishing a merge or a green run, ending the turn silently, and planning to summarise when something wakes you. The runner is reclaimed in the meantime, so the report arrives hours later from a fresh one — or never, because nothing wakes a session whose work is already done. The report belongs in the turn that did the work.
+- **Keeping the session alive to watch.** Scheduling a check-in so the session stays warm. The subscription already covers every event worth waking for, and the timer only pays to rebuild what idling correctly tore down.
