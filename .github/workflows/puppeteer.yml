@@ -126,6 +126,17 @@ jobs:
 
       - name: Test
         run: yarn test:puppeteer
+        env:
+          EM_GESTURE_DIAGNOSTICS: '1'
+
+      - name: Upload temporary gesture diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gesture-unmount-diagnostics
+          path: ${{ runner.temp }}/em-gesture-diagnostics/
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: Upload snapshot diff artifact
         if: failure()
