@@ -194,7 +194,6 @@ const ContinuousGradientGestureRenderer = ({
           key={index}
           d={serializePiece(piece.points)}
           stroke={`url(#${instanceId}-piece-${index}-${form})`}
-          markerEnd={form === 'color' && index === pieces.length - 1 ? markerEnd : undefined}
           {...pathProps}
         />
       ))}
@@ -227,6 +226,8 @@ const ContinuousGradientGestureRenderer = ({
       {highlightPath && (
         <path d={highlightPath} stroke={highlightColor ?? token('colors.vividHighlight')} {...pathProps} />
       )}
+      {/* Conventional markers have their own color and must not be clipped by the shaft's alpha mask. */}
+      {markerEnd && <path d={serializePiece(pieces.at(-1)!.points)} fill='none' stroke='none' markerEnd={markerEnd} />}
     </g>
   )
 }
