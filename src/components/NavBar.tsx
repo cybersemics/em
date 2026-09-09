@@ -5,6 +5,7 @@ import Path from '../@types/Path'
 import { isTouch } from '../browser'
 import { BASE_FONT_SIZE } from '../constants'
 import isTutorial from '../selectors/isTutorial'
+import backgroundGlowStore from '../stores/backgroundGlowStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
@@ -50,6 +51,8 @@ const NavBar = ({ position }: { position: string }) => {
 
   const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
   const isCursor = useSelector(state => !!state.cursor && state.cursor.length > 0)
+  // While a background glow image is selected, the blackout is disabled entirely; the glow falloff in BackgroundGlow fades the content out above the nav bar instead.
+  const glowImage = backgroundGlowStore.useSelector(state => state.image)
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
 
@@ -76,8 +79,8 @@ const NavBar = ({ position }: { position: string }) => {
             zIndex: 'stack',
             padding: '0 15px 0 10px',
             bottom: '0',
-            backgroundColor: isCursor ? 'bg' : undefined,
-            boxShadow: isCursor ? `0 20px 15px 25px {colors.bg}` : undefined,
+            backgroundColor: isCursor && !glowImage ? 'bg' : undefined,
+            boxShadow: isCursor && !glowImage ? `0 20px 15px 25px {colors.bg}` : undefined,
             ...(position === 'top' ? { top: 0 } : position === 'bottom' ? { padding: '0 15px' } : {}),
           })}
         >

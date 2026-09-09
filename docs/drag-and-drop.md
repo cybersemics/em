@@ -23,6 +23,14 @@ Both backends are configured with:
 
 The values come from [`constants.ts`](../src/constants.ts).
 
+#### Tauri desktop shell
+
+The desktop app runs the same web build inside a Tauri (wry) webview, so it selects `HTML5Backend` like any other desktop browser. That only works because [`desktop/tauri.conf.json`](../desktop/tauri.conf.json) sets `dragDropEnabled: false` on the window.
+
+Left at its default of `true`, Tauri installs a native drag-and-drop handler on the webview so it can surface OS file drops as `tauri://drag-*` events. On macOS that handler overrides the webview's `NSDraggingDestination` methods (`draggingEntered:`, `draggingUpdated:`, `performDragOperation:`, `draggingExited:`) and unconditionally reports every drag as consumed, so the `WKWebView` superclass implementation never runs and WebKit never dispatches the corresponding DOM `dragenter` / `dragover` / `drop` events. Only the destination side is intercepted — `dragstart` still fires, so `beginDrag` runs and the drag appears to start, but nothing can ever be hovered or dropped. Windows (WebView2) and Linux (WebKitGTK) intercept drops the same way.
+
+Disabling it removes that handler, so drag events reach the page normally. Nothing is lost: em never listened for the `tauri://drag-*` events, and OS file drops go back to arriving as react-dnd's `NativeTypes.FILE`, which is what the app already handles.
+
 ### State machine: `state.longPress`
 
 The whole subsystem is orchestrated by a single Redux state field, [`state.longPress`](../src/@types/State.ts), which is a `LongPressState` enum with these values (see [`constants.ts`](../src/constants.ts)):
@@ -88,10 +96,11 @@ Notable behavior in [`useDragAndDropThought.tsx`](../src/hooks/useDragAndDropTho
 - **`canDrop`** rejects the drop if `state.longPress !== DragInProgress` (so it short-circuits when the drag has been canceled), if the parent path has the context view active (you can't drop into a context view), or if the destination is a descendant of any dragged thought (use of [`canDropPath`](../src/hooks/useDragAndDropThought.tsx), a [moize](https://github.com/planttheidea/moize)-cached helper with `maxSize: 50`, since `canDrop` runs every frame during hover).
 - **`drop`** validates each item separately (root/EM contexts can't move out of their root; can't drop on self), animates the dragged thought's flight to a collapsed destination via [`animateDroppedThought`](../src/util/animateDroppedThought.ts), and then dispatches either `moveThought` (default) or `createThought` (when in the context view, dropping creates a new entry under the dragged context). Wraps multicursor drops in `setIsMulticursorExecuting` so undo coalesces them.
 - **`hover`** is throttled by mouse position via [`throttleByMousePosition`](../src/util/throttleByMousePosition.ts) to update `state.hoveringPath` and `state.hoverZone` only when the cursor actually moves.
+- **`endDrag`** restores scrolling and clears the drag hint synchronously, then resets `state.longPress` on the next task. Keeping the existing drag protections active through the current task prevents a click synthesized from the drag's release from moving the cursor to the dragged thought; a separate user click occurs later and is handled normally.
 
 ### `useDragAndDropSubThought`
 
-Used by `DropChild` and `DropEnd`. Drop-only — there is no drag source. See [`useDragAndDropSubThought.ts`](../src/hooks/useDragAndDropSubThought.ts).
+Used by `DropChild` and `DropEnd`. Drop-only — there is no drag source. See [`useDragAndDropSubThought.tsx`](../src/hooks/useDragAndDropSubThought.tsx).
 
 Distinguishing rules from `useDragAndDropThought`:
 
@@ -121,11 +130,13 @@ On desktop, `useLongPress` runs its own `setTimeout(delay)` because the HTML5 ba
 
 `useLongPress` also calls [`allowTouchToScroll(false)`](../src/device/allowTouchToScroll.ts) on long-press start to prevent iOS Safari from initiating a scroll before drag-and-drop kicks in (see [issue #3141](https://github.com/cybersemics/em/issues/3141)).
 
-When the press ends, `useLongPress` defers `onLongPressEnd` by 10 ms so that the browser's click event fires first. This lets click handlers short circuit while `state.longPress` is still `DragHold` — [`BulletPositioner`](../src/components/BulletPositioner.tsx) uses this to avoid collapsing a thought that was only being held. The ending event is forwarded to `onLongPressEnd`, so handlers can also inspect the modifier keys that were held. `useDragHold` uses it for the reverse case: with `toggleMulticursorOnLongPress` (set by [`Thought`](../src/components/Thought.tsx)) a long press ending in `DragHold` toggles the multicursor, except when Shift or Cmd (Ctrl on non-Mac) was held, since `Thought`'s click handler has already updated the multiselect and a second toggle would deselect the thought.
+When the press ends, `useLongPress` defers `onLongPressEnd` by 10 ms so that the browser's click event fires first. This lets click handlers short circuit while `state.longPress` is still `DragHold` — [`BulletPositioner`](../src/components/BulletPositioner.tsx) uses this to avoid collapsing a thought that was only being held. The ending event is forwarded to `onLongPressEnd`, so handlers can also inspect the modifier keys that were held and the event type. `useDragHold` uses it for the reverse case: with `toggleMulticursorOnLongPress` (set by [`Thought`](../src/components/Thought.tsx)) a long press ending in `DragHold` toggles the multicursor, except in two cases: when Shift or Cmd (Ctrl on non-Mac) was held, since `Thought`'s click handler has already updated the multiselect and a second toggle would deselect the thought; and when the press ended in `touchcancel` rather than `touchend`, since a cancelled touch means the system claimed the gesture — e.g. the iOS bottom-edge app switcher swipe, which delivers a `touchstart` with no `touchmove` and would otherwise falsely activate multiselect (and with it the Command Center) right before the app suspends.
 
 ### `useDragLeave`
 
 [`useDragLeave`](../src/hooks/useDragLeave.ts) tracks how many drop targets are currently being deep-hovered (a module-level `hoverCount`). When the count drops to zero, it debounces a 50 ms clear of `state.hoveringPath`. This prevents flicker when the cursor briefly leaves one drop zone before entering an adjacent one.
+
+Because `hoverCount` is shared across every drop target, only a change in `isDeepHovering` may adjust it. The hook's effect also re-runs on mount and when `canDropThought` or `hoverZone` change, and treating those as hover transitions would let a thought mounting mid-drag decrement the count to zero and blank the drop indicator while a target is still hovered. A separate unmount-only effect releases a target's contribution to the count, so a thought the layout unmounts mid-drag doesn't leak one.
 
 ### `useDropHoverColor`
 
@@ -177,6 +188,7 @@ The previous `QuickDropIcon` / `DeleteDrop` / `CopyOneDrop` / `ExportDrop` icon 
 - [`DragAndDropContext`](../src/components/DragAndDropContext.tsx) — `DndProvider` wrapping the app; selects backend by `isTouch`.
 - [`DragOnly`](../src/components/DragOnly.tsx) — a fragment that only renders its children when `state.longPress === DragInProgress` (or a test flag is set). Used to skip mounting drop targets and overlays when not dragging.
 - [`DropHover`](../src/components/DropHover.tsx) — the blue-bar visual indicator. Subscribes to `state.hoveringPath` and `state.hoverZone` and decides whether *this* particular drop target should render the bar. For sorted contexts, additionally compares the dragging value's `compareReasonable` order against neighbors to choose which gap to highlight.
+- [`usePinDropHover`](../src/hooks/usePinDropHover.ts) — test-only latch used by `DropHover`, `DropEnd`, `DropChild`, and `DropUncle`. When `testFlags.pinDropHovers` is set, a drop hover that has been shown during the current drag stays visible until the drag ends, so e2e snapshot tests can compare multiple drop hovers in a single screenshot (see [Testing](testing.md#drag-and-drop-visualization)).
 
 ## Multicursor drag
 
@@ -202,7 +214,7 @@ Drag-and-drop runs hot — `canDrop` and `hover` fire many times per second duri
 
 ## react-dnd patches
 
-Four patches live under [`.yarn/patches/`](../.yarn/patches), three for the touch backend and one for the HTML5 backend. Patches stack: each patch is applied on top of the previous one's output. To create a new touch-backend patch, you must specify the correct candidate package (because there are already two layered patches):
+Five patches live under [`.yarn/patches/`](../.yarn/patches), four for the touch backend and one for the HTML5 backend. Patches stack: each patch is applied on top of the previous one's output. To create a new touch-backend patch, you must specify the correct candidate package (because there are already several layered patches):
 
 ```
 $ yarn patch -u react-dnd-touch-backend
@@ -234,7 +246,7 @@ From [em PR #3138](https://github.com/cybersemics/em/pull/3138) — fixes anothe
 
 ### `react-dnd-touch-backend-patch-2c3a2052b6.patch`
 
-The third (most recent) layered touch-backend patch. It adds **scroll-to-cancel**: if a `scroll` event fires before the drag has started, cancel the pending drag; if scroll fires *during* a drag, end the drag. Specifically:
+The third layered touch-backend patch. It adds **scroll-to-cancel**: if a `scroll` event fires before the drag has started, cancel the pending drag; if scroll fires *during* a drag, end the drag. Specifically:
 
 - Adds a `handleScroll` arrow-method to `TouchBackendImpl` that clears the pending-drag timer (or calls `endDrag` if a drag is already live), then unbinds itself.
 - Registers `handleScroll` on `window` from `handleTopMoveStartDelay` (the backend's "you started touching, here comes the long-press timer" handler) so the scroll listener is only active during the relevant window.
@@ -242,6 +254,16 @@ The third (most recent) layered touch-backend patch. It adds **scroll-to-cancel*
 - Cleans up `this.timeout = 0` after the timer fires and at touchSlop, so the scroll handler can distinguish "drag pending" from "drag started".
 
 This addresses the iOS Safari edge case where a vertical scroll begins before `touchSlop` is exceeded — once Safari starts scrolling, it can't be cancelled programmatically, so the drag has to bow out.
+
+### `react-dnd-touch-backend-patch-03e51a5757.patch`
+
+The fourth layered touch-backend patch registers capture-phase `pointerup` and `pointercancel` fallbacks for iOS WKWebView. A dragged source can be removed before its terminating `touchend` reaches the document, so these pointer events ensure the backend still drops and ends the drag instead of leaving `state.longPress` stuck at `DragInProgress`.
+
+### `react-dnd-touch-backend-patch-3f966b38ad.patch`
+
+The fifth layered touch-backend patch coordinates the `pointerup` fallback with the canonical `touchend` handler. `pointerup` prevents its default action immediately but defers drag completion to the next task. If `touchend` arrives normally, it cancels the fallback and ends the drag while the app's drag protections are still active; if `touchend` is missing, the fallback ends the drag on the next task. `pointercancel` continues to end immediately. The pending fallback is also canceled during backend teardown.
+
+When a touch drag ends, application cleanup returns `state.longPress` to `Inactive` immediately so scrolling, gestures, alerts, and multicursor cleanup are restored without a timer. Before that transition, `useDragAndDropThought` sets `globals.suppressCursorAfterTouch`. `Editable` ignores cursor-producing compatibility events while the flag is set, and the next capture-phase `touchstart` clears it. This ties suppression to the completed touch gesture rather than assuming that the browser will dispatch its trailing click or focus before a zero-delay timer.
 
 ### `react-dnd-html5-backend-npm-16.0.1-754940d855.patch`
 

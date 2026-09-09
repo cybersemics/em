@@ -36,7 +36,7 @@ describe('DOM', () => {
 
     // This ensures that the thought b exists so we can confirm later that it is deleted.
     const initialExportedData = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(initialExportedData).toBe(`- __ROOT__
+    expect(initialExportedData).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
 
@@ -49,7 +49,7 @@ describe('DOM', () => {
 
     // This ensures that the thought b doesn't exist now.
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a`)
   })
 })
@@ -195,12 +195,12 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    // c1 is not an only child, so it is deleted rather than outdented (#4008).
     const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b
   - b1
   - c
-    - c1
     - c2`
 
     expect(exported).toEqual(expectedOutput)

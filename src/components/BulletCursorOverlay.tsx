@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux'
+import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -119,7 +119,11 @@ export default function BulletCursorOverlay({
       (value !== '=style' && findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) || null,
   )
 
+  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
+
   const hideBulletProp = useSelector(state => {
+    // A context view entry is rendered in place of its context, so the =children/=bullet of its real parent must not hide its bullet.
+    if (isInContextView) return false
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
     if (hideBulletsChildren) return true
     const hideBulletsGrandchildren =
@@ -134,8 +138,6 @@ export default function BulletCursorOverlay({
     equalChildren,
   )
 
-  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
-
   const hideBullet = useHideBullet({
     children,
     env: {},
@@ -147,11 +149,8 @@ export default function BulletCursorOverlay({
     thoughtId: head(simplePath),
   })
 
-  const homeContext = useSelector(state => {
-    const pathParent = rootedParentOf(state, path)
-    const showContexts = isContextViewActive(state, path)
-    return showContexts && isRoot(pathParent)
-  })
+  // Must match the breadcrumbs rendered by Thought so that the cursor overlay is aligned with the thought.
+  const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
   useScrollCursorIntoView(y, height)
 
@@ -167,7 +166,7 @@ export default function BulletCursorOverlay({
       path={path}
       isMounted
     >
-      {showContexts && simplePath?.length > 1 && (
+      {showContexts && !isRoot(simplePath) && (
         <div
           className={css({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
@@ -179,7 +178,7 @@ export default function BulletCursorOverlay({
             marginTop: '0.462rem',
           })}
         >
-          <ContextBreadcrumbs hidden path={parentOf(simplePath)} homeContext={homeContext} />
+          <ContextBreadcrumbs hidden path={contextBreadcrumbsAncestors} />
         </div>
       )}
       <ThoughtPositioner path={path} hideBullet={hideBullet} cursorOverlay>

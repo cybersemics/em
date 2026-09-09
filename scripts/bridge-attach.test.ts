@@ -6,7 +6,9 @@
  * (docs/agents/environment.md), and it shares shared-chrome's regression vector: a puppeteer API
  * change arriving with a version bump (#4848). Run by .github/workflows/agent-scripts.yml.
  *
- *   npx tsx scripts/bridge-attach.test.ts
+ * ```sh
+ * npx tsx scripts/bridge-attach.test.ts
+ * ```
  *
  * `npx tsx` is deliberately the runner: it is exactly how the browser-control-chrome skill has
  * agents invoke the bridge, so this test breaks when that documented flow breaks. As with
@@ -20,6 +22,7 @@ const port = '9222'
 const timeoutMs = 60_000
 const pollMs = 250
 
+/** Runs the bridge attach test: launch the shared Chrome, attach through the real module, and assert it binds the live tab. */
 const main = async () => {
   let output = ''
   /** Set by the exit handler so the poll loop can fail fast instead of sleeping out the timeout. */
@@ -37,6 +40,7 @@ const main = async () => {
     exited = { code, signal }
   })
 
+  /** Kills the shared Chrome child process and clears the timers, so the test never leaves a browser running. */
   const cleanup = () => {
     if (child.pid && !exited) {
       try {

@@ -3,11 +3,12 @@ import Command from '../@types/Command'
 import { redoActionCreator as redo } from '../actions/redo'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import RedoIcon from '../components/RedoIcon'
+import isRedoEnabled from '../selectors/isRedoEnabled'
 import getLatestActionType from '../util/getLastActionType'
 
-const redoCommand: Command = {
+const redoCommand = {
   id: 'redo',
-  label: 'Redo',
+  label: 'Redo' as const,
   multicursor: false,
   description: state => {
     const lastActionType = getLatestActionType(state.redoPatches)
@@ -19,14 +20,16 @@ const redoCommand: Command = {
     return 'Redo'
   },
   keyboard: { key: 'z', meta: true, shift: true },
+  // Redo moves through the undo history rather than making a new undoable change, so Repeat should skip it and repeat the last edit instead.
+  repeatable: false,
   svg: RedoIcon,
   exec: dispatch => {
     dispatch(redo())
   },
-  canExecute: state => state.redoPatches.length > 0,
+  canExecute: state => isRedoEnabled(state),
   longPress: dispatch => {
     dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))
   },
-}
+} satisfies Command
 
 export default redoCommand

@@ -50,8 +50,11 @@ const useHideBullet = ({
       thought.value !== '=grandchildren' && attributeEquals(state, head(simplePath), '=bullet', 'None')
 
     /** Returns true if the bullet should be hidden because the thought value is an ellipsis. */
-    const hideBulletEllipsis = () =>
-      stripTags(thought.value) === '...' && !findDescendant(state, head(simplePath), '=bullet')
+    const hideBulletEllipsis = () => {
+      const valuePlainText = stripTags(thought.value)
+      const isEllipsis = valuePlainText === '...' || valuePlainText === '…'
+      return isEllipsis && !findDescendant(state, head(simplePath), '=bullet')
+    }
 
     /** Returns true if the bullet should be hidden because it is in table column 1 and is neither the cursor nor a multicursor. The selection is indicated by the bullet, so hiding it would make the selection invisible. */
     const hideBulletTable = () => {

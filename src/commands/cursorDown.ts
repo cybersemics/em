@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import Dispatch from '../@types/Dispatch'
 import State from '../@types/State'
@@ -25,10 +24,10 @@ import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorDownCommand: Command = {
+const cursorDownCommand = {
   id: 'cursorDown',
-  label: 'Cursor Down',
-  keyboard: [{ key: Key.ArrowDown }, { key: Key.ArrowDown, shift: true }],
+  label: 'Cursor Down' as const,
+  keyboard: [{ key: 'ArrowDown' }, { key: 'ArrowDown', shift: true }],
   hideFromHelp: true,
   multicursor: false,
   svg: CursorDownIcon,
@@ -77,7 +76,9 @@ const cursorDownCommand: Command = {
       const isNextPathMulticursor = nextPath && isMulticursorPath(state, nextPath)
 
       dispatch([
-        setCursor({ path: nextPath, preserveMulticursor: true }),
+        // Update the multicursor before moving the cursor, since setCursor computes state.expanded and a
+        // selected thought must not expand its own children.
+        // https://github.com/cybersemics/em/issues/4738
         dispatch => {
           // New multicursor set
           if (isMulticursorEmpty) {
@@ -106,6 +107,7 @@ const cursorDownCommand: Command = {
             return
           }
         },
+        setCursor({ path: nextPath, preserveMulticursor: true }),
       ])
 
       requestAnimationFrame(() => {
@@ -120,6 +122,6 @@ const cursorDownCommand: Command = {
       dispatch(lastPath ? setCursor({ path: lastPath }) : cursorDown())
     }
   }),
-}
+} satisfies Command
 
 export default cursorDownCommand

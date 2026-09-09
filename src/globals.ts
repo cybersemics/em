@@ -39,6 +39,12 @@ let suppressChange = false
  * editable is momentarily blurred and refocused to retarget focus after iOS autocomplete, which does not end editing. */
 let suppressBlurSync = false
 
+/** Set when a completed touch has already handled its intended cursor behavior, and cleared on the next touchstart.
+ * While set, cursor-producing events on an editable belong to the completed touch: browsers can synthesize them after
+ * touchend called preventDefault, or after drag cleanup has finished. A legitimate tap always begins with a new
+ * touchstart, which clears the flag first. */
+let suppressCursorAfterTouch = false
+
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -49,6 +55,7 @@ const globals = {
   suppressExpansion,
   suppressChange,
   suppressBlurSync,
+  suppressCursorAfterTouch,
   arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }

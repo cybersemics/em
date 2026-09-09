@@ -26,6 +26,14 @@ const rules = {
         "Use the storage abstraction (import storage from '../util/storage') instead of accessing localStorage directly. This ensures cross-platform compatibility.",
     },
   ],
+  'no-restricted-syntax': [
+    2,
+    {
+      selector: 'MemberExpression[object.name="expect"][property.name="poll"]',
+      message:
+        'expect.poll runs its callback in node, so every attempt is a devtools round trip on an interval. Wait in the page with page.waitForFunction (or a waitFor* helper) instead, which polls on every animation frame for a fixed handful of protocol messages. To report the value that was actually rendered, catch the wait and read it once — see docs/testing.md § Never wait for wall-clock time.',
+    },
+  ],
   'no-restricted-properties': [
     2,
     {
@@ -105,7 +113,7 @@ export default [
       '**/build/*',
       '**/docs/*',
       '**/functions/*',
-      '**/scripts/*',
+      'public/wa-sqlite/**',
     ],
   },
   {
@@ -215,6 +223,21 @@ export default [
       },
     },
   },
+  // The iOS WebdriverIO tests are typechecked by their own tsconfig, the only program that declares
+  // WebdriverIO's globals (browser, $, expect) and @wdio/browserstack-service's global interfaces. The root
+  // tsconfig excludes src/e2e/iOS, so type-aware linting of those files has to use theirs.
+  {
+    files: ['./src/e2e/iOS/**/*.ts'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        ecmaVersion: 2018,
+        sourceType: 'module',
+        project: './src/e2e/iOS/tsconfig.json',
+      },
+    },
+  },
   {
     files: ['./src/e2e/**/*.ts'],
     rules: {
@@ -226,6 +249,31 @@ export default [
     files: ['./src/util/storage.ts'],
     rules: {
       'no-restricted-globals': 0,
+    },
+  },
+  // actions/github-script evaluates its `script:` body in a CommonJS context and resolves relative
+  // require() paths against the workspace, so the scripts it loads must be CommonJS. package.json
+  // sets "type": "module", hence the .cjs extension.
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'writable',
+        process: 'readonly',
+        require: 'readonly',
+      },
+    },
+  },
+  // A constants module is a collection of peer values with no primary export, so there is no
+  // meaningful default export to prefer. Named exports keep them individually tree-shakeable and
+  // importable by name.
+  {
+    files: ['**/constants.ts'],
+    rules: {
+      'import/prefer-default-export': 0,
     },
   },
 ]

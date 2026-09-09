@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
 import { outdentActionCreator as outdent } from '../actions/outdent'
@@ -11,11 +10,11 @@ import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import parentOf from '../util/parentOf'
 
-const moveCursorBackward: Command = {
+const moveCursorBackward = {
   id: 'moveCursorBackward',
-  label: 'Move Cursor Backward',
+  label: 'Move Cursor Backward' as const,
   description: 'Move the current thought to the next sibling of its context or to previous column in table view.',
-  keyboard: { key: Key.Tab, shift: true },
+  keyboard: { key: 'Tab', shift: true },
   multicursor: {
     filter: 'prefer-ancestor',
     reverse: true,
@@ -37,6 +36,6 @@ const moveCursorBackward: Command = {
 
     dispatch(isTable ? cursorBack() : outdent())
   },
-}
+} satisfies Command
 
 export default moveCursorBackward

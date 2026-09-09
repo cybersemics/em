@@ -10,14 +10,14 @@ import Index from '../../@types/IndexType'
 import Role from '../../@types/Role'
 import Share from '../../@types/Share'
 import { alertActionCreator as alert } from '../../actions/alert'
-import { isMac } from '../../browser'
-import { accessToken as accessTokenCurrent, permissionsClientDoc, tsid } from '../../data-providers/yjs'
-import permissionsModel from '../../data-providers/yjs/permissionsModel'
+import permissionsModel from '../../data-providers/permissionsModel'
+import { permissionsStore } from '../../data-providers/permissionsStore'
+import { accessToken as accessTokenCurrent, tsid } from '../../data-providers/thoughtspaceSession'
 import * as selection from '../../device/selection'
-import useSharedType from '../../hooks/useSharedType'
 import useStatus from '../../hooks/useStatus'
 import modalDescriptionClass from '../../recipes/modalDescriptionClass'
 import fastClick from '../../util/fastClick'
+import isCommandKey from '../../util/isCommandKey'
 import strip from '../../util/strip'
 import FadeTransition from '../FadeTransition'
 import ActionButton from './../ActionButton'
@@ -26,8 +26,8 @@ import CopyClipboard from './../icons/CopyClipboard'
 import PencilIcon from './../icons/PencilIcon'
 import ModalComponent from './ModalComponent'
 
-/** A hook that subscribes to the permissionsClientDoc. */
-const usePermissions = (): Index<Share> => useSharedType(permissionsClientDoc.getMap<Share>())
+/** A hook that subscribes to persisted device permissions. */
+const usePermissions = (): Index<Share> => permissionsStore.useSelector(s => s.entries)
 
 /** Gets the next available device name for a new device. Autoincrements by 1. */
 const getNextDeviceName = (permissions: Index<Share>, start?: number): string => {
@@ -385,7 +385,7 @@ const ShareDetail = React.memo(
         (e: KeyboardEvent) => {
           if (
             e.key === 'c' &&
-            (isMac ? e.metaKey : e.ctrlKey) &&
+            isCommandKey(e) &&
             // do not override copy shortcut if user has text selected
             selection.isCollapsed() !== false &&
             // input selection is not reflected in window.getSelection()

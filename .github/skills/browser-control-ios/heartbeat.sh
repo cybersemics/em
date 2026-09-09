@@ -27,6 +27,15 @@
 # "no real activity" than a metadata GET. GET /url was the original choice
 # because it was small and W3C-standard, but the field evidence suggests at
 # least one timer on this stack ignores it.
+#
+# A 405 response counts as a SUCCESSFUL ping. In the NATIVE_APP context (before a
+# driver attaches and switches to the webview) XCUITest answers a plain-JS execute
+# with 405 "Method is not implemented" — the session answered, it just declined the
+# script. Soak-verified 2026-08-13: a session receiving only 405-answered pings
+# stayed alive past 1000s, so 405s do reset the idle timer. Treating them as
+# failures made the heartbeat give up ~270s into every session whose driver hadn't
+# attached yet, and the abandoned session then idled out (~505s) — the dominant
+# session-death signature before this fix.
 set -uo pipefail
 
 SESSION_ID="${1:?session id required}"
@@ -71,7 +80,7 @@ while true; do
     --data '{"script":"return 1","args":[]}' \
     "https://hub-cloud.browserstack.com/wd/hub/session/$SESSION_ID/execute/sync" 2>/dev/null \
     || echo "000")
-  if [[ "$STATUS" =~ ^[23] ]]; then
+  if [[ "$STATUS" =~ ^[23] || "$STATUS" == "405" ]]; then
     echo "[$(ts)] ping ok status=$STATUS"
     FAILS=0
   else

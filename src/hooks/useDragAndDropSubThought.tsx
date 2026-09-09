@@ -28,6 +28,7 @@ import visibleDistanceAboveCursor from '../selectors/visibleDistanceAboveCursor'
 import store from '../stores/app'
 import animateDroppedThought from '../util/animateDroppedThought'
 import appendToPath from '../util/appendToPath'
+import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
 import haptics from '../util/haptics'
 import hashPath from '../util/hashPath'
@@ -40,6 +41,7 @@ import isRoot from '../util/isRoot'
 import throttleByMousePosition from '../util/throttleByMousePosition'
 import { DropValidationResult } from './useDragAndDropThought'
 import useDragLeave from './useDragLeave'
+import usePinDropHover from './usePinDropHover'
 
 interface DroppableSubthoughts {
   path: Path
@@ -185,6 +187,15 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
     }
   }
 
+  // Attribute the upcoming moveThought actions to a drag-and-drop drop, since drops have no `command` entry in the
+  // debug log (commands.ts only logs keyboard/gesture/toolbar commands).
+  debugLog.log('drop', {
+    zone: 'subthought',
+    targetId: head(props.path),
+    targetValue: getThoughtById(state, head(props.path))?.value,
+    items: draggedItems.length,
+  })
+
   store.dispatch((dispatch, getState) => {
     /** Returns true if the thought should be dropped at the top of a collapsed parent. */
     const shouldDropAtTop = (pathTo: Path) => {
@@ -314,7 +325,9 @@ const useDragAndDropSubThought = (props: DroppableSubthoughts) => {
 
   useDragLeave({ isDeepHovering, canDropThought })
 
-  return { isHovering, isDeepHovering, dropTarget }
+  const isHoveringPinned = usePinDropHover(isHovering)
+
+  return { isHovering: isHoveringPinned, isDeepHovering, dropTarget }
 }
 
 export default useDragAndDropSubThought

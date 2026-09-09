@@ -6,7 +6,9 @@
  * header). No BrowserStack credentials or device needed: the script's documented EM_UPSTREAM_*
  * seams point it at the stub over plain HTTP. Run by .github/workflows/agent-scripts.yml.
  *
- *   node scripts/mcp-session-proxy.test.mjs
+ * ```sh
+ * node scripts/mcp-session-proxy.test.mjs
+ * ```
  */
 import { spawn } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
@@ -73,6 +75,7 @@ child.on('exit', (code, signal) => {
   exited = { code, signal }
 })
 
+/** Shuts down the stub upstream and the proxy child process. */
 const cleanup = () => {
   upstream.close()
   if (!exited) child.kill('SIGTERM')
@@ -141,11 +144,14 @@ if (upstreamRequests.length !== 1)
 const forwarded = upstreamRequests[0]
 if (forwarded.method !== 'POST' || forwarded.url !== `/wd/hub/session/${sessionId}/url`)
   fail(`forwarded request was ${forwarded.method} ${forwarded.url}, expected POST /wd/hub/session/${sessionId}/url`)
-if (forwarded.body !== commandBody) fail(`forwarded body was ${JSON.stringify(forwarded.body)}, expected ${commandBody}`)
+if (forwarded.body !== commandBody)
+  fail(`forwarded body was ${JSON.stringify(forwarded.body)}, expected ${commandBody}`)
 const expectedAuth = 'Basic ' + Buffer.from(`${username}:${accessKey}`).toString('base64')
 const authIndex = forwarded.rawHeaders.findIndex(h => h.toLowerCase() === 'authorization')
 if (authIndex === -1 || forwarded.rawHeaders[authIndex + 1] !== expectedAuth)
-  fail(`forwarded Authorization was ${JSON.stringify(forwarded.rawHeaders[authIndex + 1])}, expected injected Basic auth`)
+  fail(
+    `forwarded Authorization was ${JSON.stringify(forwarded.rawHeaders[authIndex + 1])}, expected injected Basic auth`,
+  )
 const contentLengths = forwarded.rawHeaders.filter((h, i) => i % 2 === 0 && h.toLowerCase() === 'content-length')
 if (contentLengths.length !== 1 || contentLengths[0] !== 'Content-Length')
   fail(

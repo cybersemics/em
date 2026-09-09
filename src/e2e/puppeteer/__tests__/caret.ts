@@ -4,9 +4,11 @@ import newThoughtCommand from '../../../commands/newThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
+import clickNote from '../helpers/clickNote'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
@@ -17,9 +19,9 @@ import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForHiddenEditable from '../helpers/waitForHiddenEditable'
 import waitForSelector from '../helpers/waitForSelector'
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
+import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
@@ -131,29 +133,6 @@ describe('all platforms', () => {
     expect(offset).toBe(0)
   })
 
-  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
-    const importText = `
-    - a
-    - b`
-
-    await paste(importText)
-    await clickThought('a')
-
-    // Set cursor to null
-    await click('#content')
-
-    await waitForThoughtExistInDb('a')
-    await waitForThoughtExistInDb('b')
-
-    await refresh()
-
-    await waitForEditable('b')
-    await clickThought('b')
-
-    const textContext = await getSelection().focusNode?.textContent
-    expect(textContext).toBe('b')
-  })
-
   // https://github.com/cybersemics/em/issues/1568
   it('caret at the end of a thought should be preserved on indent and outdent', async () => {
     const importText = `
@@ -241,6 +220,32 @@ describe('all platforms', () => {
     // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
   })
 
+  // https://github.com/cybersemics/em/issues/3956
+  it('clicking a thought after editing a note should move the caret to the clicked thought', async () => {
+    const importText = `
+    - One
+    - Two
+      - =note
+        - Note`
+
+    await paste(importText)
+
+    // click Two first so its note becomes active/enabled
+    await clickThought('Two')
+
+    // click the note to set the caret there
+    await clickNote('Note')
+
+    // click thought "One"
+    await clickThought('One')
+
+    // caret should be on "One", not "Two"
+    await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'One')
+
+    const textContent = await getSelection().focusNode?.textContent
+    expect(textContent).toBe('One')
+  })
+
   // https://github.com/cybersemics/em/issues/4426
   it('clicking the end of a wrapped line whose next line begins with formatted text keeps the caret on that line', async () => {
     // Inline formatting splits the editable into sibling text nodes. The unformatted prefix fills the line and
@@ -298,6 +303,30 @@ describe('all platforms', () => {
   })
 })
 
+describe('persistent storage', () => {
+  usePersistentTreecrdtStorage()
+
+  it('when cursor is null, clicking on a thought after refreshing page, caret should be set on first click', async () => {
+    const importText = `
+    - a
+    - b`
+
+    await paste(importText)
+    await clickThought('a')
+
+    // Set cursor to null
+    await click('#content')
+
+    await refresh()
+
+    await waitForEditable('b')
+    await clickThought('b')
+
+    const textContext = await getSelection().focusNode?.textContent
+    expect(textContext).toBe('b')
+  })
+})
+
 it('clicking backspace when the caret is at the end of a thought should delete a character.', async () => {
   const importText = `
   - first
@@ -315,9 +344,7 @@ it('clicking backspace when the caret is at the end of a thought should delete a
 })
 
 describe('mobile only', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 5000)
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   it('After categorize, the caret should be on the new thought', async () => {
     const importText = `
@@ -492,7 +519,7 @@ describe('mobile only', () => {
     await waitUntil(() => !document.activeElement || document.activeElement === document.body)
 
     // Step 3: tap the Bold button on the toolbar
-    await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+    await clickToolbar('Bold')
 
     // the formatting should still be applied to the whole thought
     await waitUntil(() => !!document.querySelector('[data-editable] b'))

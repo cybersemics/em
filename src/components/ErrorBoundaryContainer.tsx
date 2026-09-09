@@ -1,5 +1,5 @@
 import { FC, PropsWithChildren, useState } from 'react'
-import { ErrorBoundary } from 'react-error-boundary'
+import { ErrorBoundary, FallbackProps, getErrorMessage } from 'react-error-boundary'
 import { css, cx } from '../../styled-system/css'
 import { anchorButtonRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -39,20 +39,18 @@ const Toggle: FC<{ expand?: boolean; title?: string } & PropsWithChildren> = ({ 
 }
 
 /** A fallback component for a global error boundary that the main App component is wrapped in. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ErrorFallback = ({ error, componentStack }: { error?: Error; componentStack?: any }) => (
+const ErrorFallback: FC<FallbackProps> = ({ error }) => (
   <div className={css({ margin: 50 })}>
     <p>Oops, there was an error.</p>
     <div className={css({ fontSize: 14 })}>
-      {error && <pre className={invalidOptionRecipe()}>{error.message || 'Error'}</pre>}
-      {error && (
+      {!!error && <pre className={invalidOptionRecipe()}>{getErrorMessage(error) || 'Error'}</pre>}
+      {error instanceof Error && (
         <div>
           <Toggle title='Details:'>
             <pre className={css({ color: 'gray66' })}>{error.stack}</pre>
           </Toggle>
         </div>
       )}
-      <pre className={css({ whiteSpace: 'normal' })}>{componentStack}</pre>
       <a {...fastClick(() => window.location.reload())} className={cx(anchorButtonRecipe(), css({ minWidth: 0 }))}>
         Refresh
       </a>

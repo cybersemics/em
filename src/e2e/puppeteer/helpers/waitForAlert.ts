@@ -1,0 +1,22 @@
+import { page } from '../session'
+
+interface Options {
+  timeout?: number
+}
+
+/**
+ * Wait for alert content that includes the given text.
+ */
+const waitForAlert = async (text: string, { timeout }: Options = { timeout: 6000 }) =>
+  page.waitForFunction(
+    (text: string) => {
+      const alertElement = document.querySelector('[data-testid="alert-content"]')
+      return alertElement?.textContent?.includes(text)
+    },
+    {
+      timeout,
+    },
+    text,
+  )
+
+export default waitForAlert

@@ -1,17 +1,131 @@
 import { KnownDevices } from 'puppeteer'
+import { HOME_DISPLAY_VALUE } from '../../../constants'
+import click from '../helpers/click'
+import clickBullet from '../helpers/clickBullet'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
+/** Shift + Click the bullet of the given thought to select all thoughts between it and the previously selected thought. */
+const shiftClickThought = async (value: string) => {
+  await waitForEditable(value)
+
+  await page.keyboard.down('Shift')
+  try {
+    await clickBullet(value)
+  } finally {
+    await page.keyboard.up('Shift')
+  }
+}
+
+/** Waits for the given number of bullets to be highlighted by the multiselect. Reports the number that are
+ * actually highlighted on timeout, since the alternative — puppeteer's own 30 s default, which outlives the
+ * test timeout — fails the test without saying which step never arrived. */
+const waitForHighlightedBullets = async (n: number) => {
+  try {
+    await page.waitForFunction(
+      (n: number) => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length === n,
+      { timeout: 10000 },
+      n,
+    )
+  } catch {
+    const highlighted = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets => bullets.length)
+    throw new Error(`Expected ${n} highlighted bullets, but ${highlighted} were highlighted.`)
+  }
+}
+
+/** Waits for exactly the given thoughts to be highlighted by the multiselect, in document order. Reports the thoughts
+ * that are actually highlighted on timeout, since a bare wait would not say which selection was rendered instead. */
+const waitForMultiselect = async (values: string[]) => {
+  /** Reads the value of every thought whose bullet is highlighted. Defined here so that the wait and the failure
+   * message read the page the same way. */
+  const highlightedValues = () =>
+    page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+  try {
+    await page.waitForFunction(
+      (values: string[]) =>
+        JSON.stringify(
+          Array.from(document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]')).map(
+            bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+          ),
+        ) === JSON.stringify(values),
+      { timeout: 6000 },
+      values,
+    )
+  } catch {
+    throw new Error(
+      `Expected ${JSON.stringify(values)} to be selected, but ${JSON.stringify(await highlightedValues())} was.`,
+    )
+  }
+}
+
+/** Waits a single animation frame, i.e. long enough for React to commit the render that follows a command. */
+const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
+
+/** Reads the CSS cursor rendered over the text of every thought. */
+const textCursors = () => page.$$eval('[data-editable]', editables => editables.map(el => getComputedStyle(el).cursor))
+
 describe('multiselect', () => {
+  // https://github.com/cybersemics/em/issues/4740
+  it('starts multiselect at the Shift-clicked thought when there is no selection', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('a')
+    await shiftClickThought('c')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues).toEqual(['c'])
+  })
+
+  it('adjusts a Shift-click range from its original anchor', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        - d
+        - e
+        - f
+        `)
+
+    await multiselectThoughts('a')
+    await shiftClickThought('e')
+    await shiftClickThought('c')
+
+    const highlightedValues = await page.$$eval('[aria-label="bullet"][data-highlighted="true"]', bullets =>
+      bullets.map(
+        bullet => bullet.closest('[aria-label="tree-node"]')?.querySelector('[data-editable]')?.textContent ?? null,
+      ),
+    )
+
+    expect(highlightedValues.sort()).toEqual(['a', 'b', 'c'])
+  })
+
   it('should multiselect two thoughts at once', async () => {
     await paste(`
         - a
@@ -104,6 +218,113 @@ describe('multiselect', () => {
     expect(copied['text/html']).toContain('c')
   })
 
+  // https://github.com/cybersemics/em/issues/5108
+  it('does not enter edit mode when the multiselection is copied', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('b')
+    await command('selectAll')
+    await waitForHighlightedBullets(3)
+
+    await press('c', { meta: true })
+
+    // Copy leaves the thoughts selected but not edited, so no faux caret is rendered on them (Clear Thought is
+    // what puts a multiselection into edit mode). Wait a frame first, since the faux carets would be rendered
+    // on the frame after the copy completes.
+    await nextFrame()
+    await nextFrame()
+    expect(await page.$$('[data-testid="faux-caret-multicursor"]')).toHaveLength(0)
+    await waitForHighlightedBullets(3)
+  })
+
+  // https://github.com/cybersemics/em/issues/5108
+  it('keeps multiselect edit mode active when Select All runs while multiselect is being edited', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    await clickThought('b')
+    await command('selectAll')
+    await waitForHighlightedBullets(3)
+
+    // Enter multiselect edit mode via Clear Thought.
+    await press('c', { alt: true, shift: true, meta: true })
+    await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
+
+    await command('selectAll')
+
+    // Select All should preserve edit mode in this branch, keeping the faux carets rendered.
+    await page.waitForSelector('[data-testid="faux-caret-multicursor"]')
+    await waitForHighlightedBullets(3)
+  })
+
+  // https://github.com/cybersemics/em/issues/4738
+  it('does not expand a thought that the multiselect is extended onto', async () => {
+    await paste(`
+        - a
+          - x
+        - b
+        - c
+        `)
+
+    await clickThought('c')
+
+    await press('ArrowUp', { shift: true })
+    await waitForHighlightedBullets(2)
+
+    await press('ArrowUp', { shift: true })
+    await waitForHighlightedBullets(3)
+
+    const visibleThoughts = await page.$$eval('[data-editable]', elements => elements.map(el => el.innerHTML))
+
+    // a is selected, so its subthought x must stay collapsed
+    expect(visibleThoughts).toEqual(['a', 'b', 'c'])
+  })
+
+  // https://github.com/cybersemics/em/pull/4750
+  it('points the bullet of a selected thought to the right, and expands it when the multiselect is cancelled', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+          - y
+        `)
+
+    await clickThought('a')
+
+    await press('ArrowDown', { shift: true })
+    await waitForHighlightedBullets(2)
+
+    await press('ArrowDown', { shift: true })
+    await waitForHighlightedBullets(3)
+
+    /** Returns the rotation of the given thought's bullet. The triangle is rotated a quarter turn to point down when the thought is expanded, and is unrotated to point right when it is collapsed. */
+    const bulletRotation = (value: string) =>
+      page.evaluate((value: string) => {
+        const editable = Array.from(document.querySelectorAll('[data-editable]')).find(
+          element => element.textContent === value,
+        )
+        const bullet = editable!.closest('[aria-label="thought-container"]')!.querySelector('[data-bullet="parent"]')
+        return getComputedStyle(bullet!).transform
+      }, value)
+
+    // c is selected, so it stays collapsed and its bullet must point right
+    expect(await bulletRotation('c')).toBe('none')
+
+    await press('Escape')
+    await waitForHighlightedBullets(0)
+
+    // the cursor is still on c, which expands once it is no longer selected
+    await waitForEditable('y')
+    expect(await bulletRotation('c')).not.toBe('none')
+  })
+
   // https://github.com/cybersemics/em/issues/4728
   it('shows the multiselect highlight on table column 1 thoughts', async () => {
     await paste(`
@@ -163,12 +384,69 @@ describe('multiselect', () => {
 
     expect(highlightedValues.sort()).toEqual(['c', 'e'])
   })
+
+  it('shows a pointer cursor on the thought text while a multiselect is active', async () => {
+    await paste(`
+        - a
+        - b
+        `)
+
+    await waitForEditable('b')
+
+    expect(await textCursors()).toEqual(['auto', 'auto'])
+
+    await multiselectThoughts('b')
+    await waitForHighlightedBullets(1)
+
+    // a click on any thought now toggles its selection rather than moving the caret into its text
+    expect(await textCursors()).toEqual(['pointer', 'pointer'])
+  })
+
+  it('shows the text cursor on the thought text while the multiselection is being edited', async () => {
+    await paste(`
+        - a
+        - b
+        `)
+
+    await waitForEditable('b')
+
+    await multiselectThoughts(['a', 'b'])
+    await waitForHighlightedBullets(2)
+
+    // Clear Thought, with its keyboard shortcut rather than the command helper, which executes the command directly
+    // and would bypass the multicursor execution that clears both thoughts.
+    await press('c', { alt: true, shift: true, meta: true })
+
+    // the faux caret is rendered on b once the real caret has landed in a, i.e. once the multiselection is being edited
+    await waitForSelector('[data-testid=faux-caret-multicursor]')
+
+    // a click moves the caret as it does when a single thought is being edited
+    expect(await textCursors()).toEqual(['auto', 'auto'])
+  })
+
+  it('should delete all selected thoughts when Backspace is pressed with Select All active', async () => {
+    await paste(`
+        - A
+        - B
+        - C
+        `)
+
+    // Place caret at the beginning of C (as specified in the Steps to Reproduce)
+    const editableC = await waitForEditable('C')
+    await click(editableC, { edge: 'left' })
+    await waitUntil(() => window.getSelection()?.focusOffset === 0)
+
+    await command('selectAll')
+    await press('Backspace')
+
+    // an export with no thoughts left is just the root placeholder
+    const exported = await exportThoughts()
+    expect(exported).toBe(`- ${HOME_DISPLAY_VALUE}`)
+  })
 })
 
 describe('mobile only', () => {
-  beforeEach(async () => {
-    await emulate(KnownDevices['iPhone 15 Pro'])
-  }, 10000)
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   it('should multiselect two thoughts at once', async () => {
     await paste(`
@@ -196,5 +474,76 @@ describe('mobile only', () => {
     const highlightedBullets = await page.$$('[aria-label="bullet"][data-highlighted="true"]')
 
     expect(highlightedBullets.length).toBe(2)
+  })
+
+  // https://github.com/cybersemics/em/issues/3528
+  it('single tap adds a thought to the multiselect, and a second tap removes it', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    const a = await waitForEditable('a')
+    await longPressThought(a, { edge: 'right' })
+
+    await clickThought('b')
+
+    await waitForMultiselect(['a', 'b'])
+
+    await clickThought('b')
+
+    await waitForMultiselect(['a'])
+  })
+
+  // https://github.com/cybersemics/em/issues/3528
+  it('single tap on a bullet adds a thought to the multiselect, and a second tap removes it', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    const a = await waitForEditable('a')
+    await waitForEditable('b')
+    await longPressThought(a, { edge: 'right' })
+
+    await clickBullet('b')
+
+    await waitForMultiselect(['a', 'b'])
+
+    await clickBullet('b')
+
+    await waitForMultiselect(['a'])
+  })
+
+  // https://github.com/cybersemics/em/issues/3557
+  it('moves the cursor to the parent while more than one thought is selected, and to the first selected thought when the Command Center closes', async () => {
+    await paste(`
+        - x
+          - a
+            - a1
+          - b
+            - b1
+        `)
+
+    await clickThought('b')
+    await waitForCursor('b')
+
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('b'), { edge: 'right' })
+
+    // with both a and b selected, the cursor moves to their parent so that neither is dimmed or expanded
+    await waitForCursor('x')
+
+    // deselecting and reselecting a thought must not lose the selection the cursor will land in
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+    await longPressThought(await waitForEditable('a'), { edge: 'right' })
+
+    await click('[data-testid="command-center-done"]')
+    await waitForCommandCenterClosed()
+
+    // the cursor lands on the first selected thought, not on b where it started
+    await waitForCursor('a')
   })
 })

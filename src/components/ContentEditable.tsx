@@ -60,7 +60,7 @@ const ContentEditable = React.memo(
         pendingHtmlRef.current = null
         deferredHtml.clear(editable)
         if (editable.innerHTML !== pendingHtml) editable.innerHTML = pendingHtml
-        if (range) selection.setRange(editable, range.start, range.end)
+        if (range) selection.setRange(editable, range)
       },
       [contentRef],
     )

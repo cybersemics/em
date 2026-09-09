@@ -2,6 +2,7 @@ import _ from 'lodash'
 import MimeType from '../../@types/MimeType'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
+import cursorCleared from '../../actions/cursorCleared'
 import importText, { ImportTextPayload } from '../../actions/importText'
 import newThought from '../../actions/newThought'
 import { ABSOLUTE_TOKEN, EMPTY_SPACE, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
@@ -452,7 +453,7 @@ it.skip('should strip tags whose font weight is less than or equal to 400', () =
   const paste = `<span style="font-weight:400;">Hello world. </span> <span style="font-weight:100;">This is a test </span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>Hello world.  This is a test</li>
     </ul>
@@ -465,7 +466,7 @@ it('should convert font weight to 700 if the font weight in a tag is greater tha
   const paste = `<span style="font-weight: 500;">Hello world. </span><span style="font-weight: 800;">This is a test</span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="font-weight: 700;">Hello world. </span><span style="font-weight: 700;">This is a test</span></li>
     </ul>
@@ -478,7 +479,7 @@ it('should not strip whole tag unless other style apart from font-weight should 
   const paste = `<span style="font-weight: 400; font-style: italic;">a</span>`
   const actual = importExport(paste, 'text/html')
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="font-style: italic;">a</span></li>
     </ul>
@@ -500,7 +501,7 @@ it('allow formatting tags', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   const expectedOutput = `<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li>guardians <b>of the </b><b>galaxy </b></li>
       <li>guardians <i>of the </i><i>universe </i></li>
@@ -630,7 +631,7 @@ it('import single line with style attributes', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="color: rgb(255, 255, 255);font-weight: bold;background-color: rgb(0, 0, 0);">Atonement</span></li>
     </ul>
@@ -645,7 +646,7 @@ it('import single line with style attributes and a single br tag', () => {
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
-  <li>__ROOT__${EMPTY_SPACE}
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
     <ul>
       <li><span style="color: pink;">Marcel Duchamp: The Art of the Possible</span></li>
     </ul>
@@ -812,7 +813,7 @@ it('import multiple empty thoughts within a series into a non-leaf destination',
   expect(values).toEqual(['y', 'A', '', 'B', '', 'C'])
 })
 
-it('set cursor correctly after duplicate merge', () => {
+it('importing a normal thought that duplicates a sibling keeps both (no merge)', () => {
   const text = '- a\n  - b'
 
   const stateNew = reducerFlow([
@@ -828,6 +829,26 @@ it('set cursor correctly after duplicate merge', () => {
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
+  - a
+    - b`)
+})
+
+it('importing a metaprogramming attribute that duplicates a sibling merges hierarchically', () => {
+  const text = '- =a\n  - b'
+
+  const stateNew = reducerFlow([
+    newThought('=a'),
+    newThought(''),
+    importTextAtFirstMatch({
+      at: [''],
+      text,
+    }),
+  ])(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - =a
     - b`)
 })
 
@@ -986,4 +1007,83 @@ it('set cursor on last thought after importing multiple thoughts in non-empty cu
     - b
       - x
       - y`)
+})
+
+describe('single-line paste into a thought', () => {
+  it('inserts into an empty thought', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: '' }),
+      importTextAtFirstMatch({ at: [''], text: 'abc', caretPosition: 0 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['abc'])!)!.value).toBe('abc')
+  })
+
+  it('appends when the caret offset is past the end of the value', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'ab' }),
+      importTextAtFirstMatch({ at: ['ab'], text: 'cd', caretPosition: 10 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['abcd'])!)!.value).toBe('abcd')
+  })
+
+  it('inserts at the caret without disturbing the surrounding formatting', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'X', caretPosition: 5 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['one <b>tXwo</b> three'])!)!.value).toBe(
+      'one <b>tXwo</b> three',
+    )
+  })
+
+  it('replaces a range that starts at the beginning of the value', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      importTextAtFirstMatch({
+        at: ['one <b>two</b> three'],
+        text: 'ONE',
+        caretPosition: 3,
+        replaceStart: 0,
+        replaceEnd: 3,
+      }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['ONE <b>two</b> three'])!)!.value).toBe(
+      'ONE <b>two</b> three',
+    )
+  })
+
+  it('replaces a range that falls inside a formatting tag', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      // the "w" of the bold "two"
+      importTextAtFirstMatch({
+        at: ['one <b>two</b> three'],
+        text: 'X',
+        caretPosition: 6,
+        replaceStart: 5,
+        replaceEnd: 6,
+      }),
+    ])(initialState())
+
+    // Composing the halves as left + text + right would leave the text between them, outside the <b> that both carry,
+    // splitting the bold run in two.
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['one <b>tXo</b> three'])!)!.value).toBe(
+      'one <b>tXo</b> three',
+    )
+  })
+
+  it('replaces the whole value when the thought is cleared', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      // cursorCleared is not curried, so unlike its neighbors it cannot compose point-free
+      state => cursorCleared(state, { value: true }),
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 0 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')
+  })
 })

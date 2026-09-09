@@ -26,6 +26,7 @@ import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isEmail from '../util/isEmail'
 import isVisibleContext from '../util/isVisibleContext'
+import lastURL from '../util/lastURL'
 import parentOf from '../util/parentOf'
 import publishMode from '../util/publishMode'
 import resolveArray from '../util/resolveArray'
@@ -61,6 +62,7 @@ const UrlIconLink = React.memo(({ url }: { url: string }) => {
   const dispatch = useDispatch()
   return (
     <a
+      aria-label='url-link'
       href={addMissingProtocol(url)}
       rel='noopener noreferrer'
       target='_blank'
@@ -265,13 +267,14 @@ const ThoughtAnnotationContainer = React.memo(
 
     const url = useSelector(state => {
       const childrenUrls = filterAllChildren(state, head(simplePath), child => containsURL(child.value))
-      const urlValue = containsURL(value)
-        ? value
-        : // if the only subthought is a url and the thought is not expanded, link the thought
-          !isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
-          ? childrenUrls[0].value
-          : null
-      return urlValue ? stripTags(urlValue) : urlValue
+      return (
+        // link the thought if it contains a url, e.g. "Deep work https://calnewport.com/deep-work is a great book"
+        lastURL(value) ??
+        // if the only subthought is a url and the thought is not expanded, link the thought
+        (!isExpanded && childrenUrls.length === 1 && (!state.cursor || !equalPath(simplePath, parentOf(state.cursor)))
+          ? stripTags(childrenUrls[0].value)
+          : null)
+      )
     })
 
     // Strip formatting tags (e.g. the font/span tags added by foreColor and backColor) before testing for an email address, otherwise the annotation disappears as soon as the thought is colored.

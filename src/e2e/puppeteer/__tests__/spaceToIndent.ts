@@ -1,7 +1,8 @@
-import { WindowEm } from '../../../initialize'
+import exportThoughts from '../helpers/exportThoughts'
 import newThought from '../helpers/newThought'
 import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -23,16 +24,16 @@ describe('space-to-indent', () => {
       )
     })
 
+    // The indent lands asynchronously, and both thoughts are leaves until it does. A parent bullet appearing
+    // is the visible signal that A gained a child.
+    await waitUntil(() => !!document.querySelector('[data-bullet="parent"]'), { timeout: 6000 })
+
     // the empty thought should be indented as a subthought of A (its previous sibling), not left as a
     // sibling containing a literal space
-    const childCount = await page.evaluate(async () => {
-      const em = window.em as WindowEm
-      for (let i = 0; i < 20; i++) {
-        if (em.getAllChildrenAsThoughts(['A']).length > 0) break
-        await new Promise(resolve => setTimeout(resolve, 50))
-      }
-      return em.getAllChildrenAsThoughts(['A']).length
-    })
-    expect(childCount).toBe(1)
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- A
+  - 
+`)
   })
 })

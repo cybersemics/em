@@ -1,17 +1,19 @@
 import path from 'path'
-import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
-import waitForAlertContent from '../helpers/waitForAlertContent'
+import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
@@ -108,6 +110,40 @@ describe('drag', () => {
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
+  })
+
+  // https://github.com/cybersemics/em/issues/5229
+  it('cancels a drop on the dragged thought own position', async () => {
+    await paste(`
+      - aaa
+      - bbb
+      - ccc
+    `)
+
+    await clickThought('aaa')
+
+    // hover the drop target directly below aaa, i.e. aaa's own position
+    await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
+
+    // the drop hover is still shown at the thought's own position; only the drop is cancelled
+    // (.drop-hover is the class that dropHoverRecipe gives every drop hover bar)
+    await waitUntil(() => !!document.querySelector('.drop-hover'), { timeout: 6000 })
+
+    // release on the same drop target
+    await dragAndDropThought('aaa', 'aaa', { position: 'after', skipMouseDown: true })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- aaa
+- bbb
+- ccc
+`)
+
+    // moveThought throws "afterId must be null or a child of the destination context" if the no-op drop is not
+    // cancelled. The error escapes to the window and is shown in the error banner, and the outline above is unchanged
+    // either way, so also check that no banner is showing now that the drop has been processed.
+    const errorBanner = await page.evaluate(() => document.querySelector('[role="alert"]')?.textContent ?? null)
+    expect(errorBanner).toBeNull()
   })
 
   it('DropChild', async () => {
@@ -341,7 +377,7 @@ describe('drag', () => {
       showAlert: true,
     })
 
-    await waitForAlertContent('"d" moved to "a"')
+    await waitForAlert('"d" moved to "a"')
 
     const destinationLinkText = await page.$eval(
       '[data-testid=alert-content] [data-thought-link]',
@@ -449,6 +485,94 @@ describe('drop', () => {
       })
     })
   })
+
+  // https://github.com/cybersemics/em/issues/5089
+  it('drops a thought dragged out of a cyclic context', async () => {
+    await paste(`
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `)
+
+    await clickThought('a')
+    await clickThought('m')
+    await command('toggleContextView')
+    // move the cursor to the cyclic context a/m~/a so that x is rendered
+    await press('ArrowDown')
+    await waitForEditable('x')
+
+    await dragAndDropThought('x', 'm', { position: 'before' })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+  - x
+  - m
+- b
+  - m
+    - y
+`)
+  })
+})
+
+/* Multiple drop hovers pinned in a single snapshot for comparison of their relative position and width.
+   testFlags.pinDropHovers keeps each drop hover visible after it has been hovered during a drag, so a
+   single screenshot can capture more than one. The drop hover colors alternate by depth, which visually
+   distinguishes the pinned bars. See: https://github.com/cybersemics/em/issues/3115. */
+describe('pinned drop hovers', () => {
+  beforeEach(hideHUD)
+
+  it('DropChild of d and DropEnd after d', async () => {
+    await paste(`
+      - x
+      - a
+        - b
+        - c
+        - d
+    `)
+
+    await simulateDragAndDrop({ pinDropHovers: true })
+
+    await clickThought('a')
+
+    // hover the DropChild of the leaf thought d (drop as a child of d)
+    await dragAndDropThought('x', 'd', { hold: true, position: 'child' })
+
+    // then hover the DropEnd at the end of a's children (drop as a sibling after d)
+    await dragAndDropThought('x', 'd', { hold: true, position: 'after', skipMouseDown: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
+
+  it('cliff DropEnd and root sibling ThoughtDrop', async () => {
+    // pin a and b open so that c is visible without the cursor, creating a multi-level cliff below c
+    await paste(`
+      - x
+      - a
+        - =pin
+          - true
+        - b
+          - =pin
+            - true
+          - c
+      - d
+    `)
+
+    await simulateDragAndDrop({ pinDropHovers: true })
+
+    // hover the cliff DropEnd below the deepest thought c
+    await dragAndDropThought('x', 'c', { hold: true, position: 'after' })
+
+    // then hover the ThoughtDrop before the root thought d
+    await dragAndDropThought('x', 'd', { hold: true, position: 'before', skipMouseDown: true })
+
+    const image = await screenshot()
+    expect(image).toMatchImageSnapshot()
+  })
 })
 
 describe('hover expansion', () => {
@@ -456,9 +580,8 @@ describe('hover expansion', () => {
     await hideHUD()
 
     // inject MOCK_EXPAND_HOVER_DELAY
-    const em = window.em as WindowEm
     await page.evaluate(value => {
-      em.testFlags.expandHoverDelay = value
+      window.em.testFlags.expandHoverDelay = value
     }, MOCK_EXPAND_HOVER_DELAY)
   })
 
