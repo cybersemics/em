@@ -126,6 +126,17 @@ Both cases return early, before any of the end-of-editing resets (`editingValueS
 
 There is also a small effect that re-focuses the editable when the sidebar closes on desktop, so editing resumes seamlessly.
 
+### `deadKey`: a keystroke that edits nothing
+
+On iOS Safari the editable can stop accepting edits while still looking and behaving like a focused, editable thought: `keydown` fires on it, but no `beforeinput` follows and nothing changes. Every key is affected, not just deletion, and the state persists across backgrounding the app. Two causes produce that same signature, and neither leaves any other trace:
+
+- **The caret has nowhere editable to act on**, e.g. the selection is in a different thought's editable than the focus, or the editable has no layout box.
+- **iOS's native text-input layer has wedged**, the freeze that the deferred autocomplete retarget in `Editable` guards against ([issue #4607](https://github.com/cybersemics/em/issues/4607)).
+
+The Safari-only debug effect in [`Editable`](../src/components/Editable.tsx) records both the caret state on every `keydown` and a `deadKey` entry when a key that should have edited the text produced no `beforeinput` by the next animation frame. Keys the command layer claims are excluded by checking `defaultPrevented`, so `deadKey` marks a real failure rather than a handled command. The layout reads that separate the two causes are deferred to the failure case, so a healthy session pays nothing for them.
+
+`focus` and `blur` entries record the `aria-label` of the active element (`editable-<thoughtId>`) alongside the label of the editable whose listener fired. Thought editables are otherwise indistinguishable in the log — every one is a bare `DIV` with no `data-testid` — so without the labels a focus retargeted onto a neighbouring thought reads exactly like the focus staying put.
+
 **Prefer `useEditMode` over manually calling `selection.set`.** The hook handles ordering, edge cases, and platform quirks; manual calls tend to introduce subtle inconsistencies. There are still cases where manual selection is unavoidable (e.g. after a programmatic content edit), but those are minimized.
 
 ## Philosophy

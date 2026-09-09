@@ -500,13 +500,73 @@ const Editable = ({
     // platforms. Each is a no-op when debug logging is disabled. They capture the raw event stream around autocomplete,
     // which React's synthetic onChange does not fully expose (e.g. beforeinput, composition, and focus retargeting).
 
-    /** Logs the key sequence leading into an autocomplete freeze. */
-    const onEditableKeyDown = (e: KeyboardEvent) => debugLog.log('keydown', { key: e.key, isComposing: e.isComposing })
+    // Counts beforeinput events on this editable so that a keystroke can be checked against it a frame later. A
+    // keystroke that leaves this unchanged produced no mutation attempt at all (see onEditableKeyDown).
+    let beforeInputCount = 0
+
+    /** Returns true if the key is one that must produce a beforeinput when it reaches a healthy editable: a printable
+     * character, or a deletion or newline key. Modifier chords are excluded, since they invoke commands rather than
+     * editing the text. */
+    const isMutatingKey = (e: KeyboardEvent) =>
+      !e.metaKey &&
+      !e.ctrlKey &&
+      !e.altKey &&
+      (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Enter')
+
+    /** Describes where the browser thinks the caret is relative to this editable, which is what determines whether a
+     * keystroke can mutate anything. Reads no layout, so it is cheap enough to record on every keystroke. */
+    const describeCaret = () => {
+      // Read the thought id back off the editable rather than closing over the path, which is not a dependency of this
+      // effect and so could be stale by the time a key is pressed.
+      const thoughtId = editable.getAttribute('aria-label')?.replace(/^editable-/, '') ?? ''
+      return {
+        isActiveElement: document.activeElement === editable,
+        isContentEditable: editable.isContentEditable,
+        selInEditable: selection.isOnEditable(thoughtId),
+        selActive: selection.isActive(),
+        selIsText: selection.isText(),
+        selCollapsed: selection.isCollapsed(),
+        offset: selection.offset(),
+      }
+    }
+
+    /** Logs the key sequence leading into an autocomplete freeze, along with the caret state that determines whether
+     * the key can edit anything, and flags a key that silently did nothing (see below). */
+    const onEditableKeyDown = (e: KeyboardEvent) => {
+      // Guard on isEnabled so that the DOM reads below, and the animation frame scheduled per keystroke, do not run at
+      // all in a normal session. debugLog.log is already a no-op when disabled, but its arguments are not.
+      if (!debugLog.isEnabled()) return
+
+      debugLog.log('keydown', { key: e.key, isComposing: e.isComposing, ...describeCaret() })
+
+      /* A key that should edit the text, that em did not claim as a command, must reach the editable as a beforeinput.
+         When none arrives by the next frame, no mutation was even attempted: the caret has nowhere editable to act on,
+         or iOS's native text-input layer has stopped accepting edits altogether (the freeze described in #4607).
+         Either way the failure is completely silent — the log otherwise shows a keydown and nothing after it — so
+         record the caret state at the moment the key died, which is what distinguishes the two causes. */
+      if (!isMutatingKey(e)) return
+      const beforeInputCountAtKeyDown = beforeInputCount
+      requestAnimationFrame(() => {
+        // The command layer calls preventDefault when it handles the key (see keyDown in commands.ts), in which case
+        // the absence of a beforeinput is expected rather than a failure.
+        if (beforeInputCount !== beforeInputCountAtKeyDown || e.defaultPrevented) return
+        debugLog.log('deadKey', {
+          key: e.key,
+          ...describeCaret(),
+          // Layout reads, deferred to the failure case: an editable with no layout box accepts no input, which is the
+          // one condition that reproduces this signature outside of a native freeze.
+          rects: editable.getClientRects().length,
+          height: Math.round(editable.getBoundingClientRect().height),
+        })
+      })
+    }
 
     /** Logs beforeinput, which precedes each mutation and reveals intent (e.g. insertReplacementText) even if input never fires. */
-    const onEditableBeforeInput = (e: Event) =>
-      e instanceof InputEvent &&
+    const onEditableBeforeInput = (e: Event) => {
+      if (!(e instanceof InputEvent)) return
+      beforeInputCount++
       debugLog.log('beforeinput', { inputType: e.inputType, data: e.data, isComposing: e.isComposing })
+    }
 
     /** Logs IME composition boundaries; iOS autocorrect runs inside a composition and a hang may straddle these. */
     const onEditableCompositionStart = () => debugLog.log('composition', { phase: 'start' })
@@ -514,10 +574,19 @@ const Editable = ({
     const onEditableCompositionEnd = (e: CompositionEvent) =>
       debugLog.log('composition', { phase: 'end', data: e.data })
 
-    /** Describes the currently focused element (tag + data-testid) so focus retargeting during autocomplete can be traced. */
+    /** Describes the currently focused element so focus retargeting during autocomplete can be traced. Every thought
+     * editable is a bare DIV with no data-testid, so the aria-label (`editable-<thoughtId>`) is what identifies which
+     * thought the focus landed on. Without it a retarget onto a neighbouring thought is indistinguishable from the
+     * focus staying put. */
     const describeActiveElement = () => {
       const el = document.activeElement
-      return { tag: el?.tagName ?? null, testid: el?.getAttribute?.('data-testid') ?? null }
+      return {
+        tag: el?.tagName ?? null,
+        testid: el?.getAttribute?.('data-testid') ?? null,
+        label: el?.getAttribute?.('aria-label') ?? null,
+        // The editable whose listener fired, which is not necessarily the one that is now active.
+        editable: editable.getAttribute('aria-label'),
+      }
     }
     /** Logs when the editable gains focus, recording which element is now active. */
     const onEditableFocus = () => debugLog.log('focus', describeActiveElement())
