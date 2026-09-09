@@ -1,11 +1,10 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import PushBatch from '../@types/PushBatch'
-import SimplePath from '../@types/SimplePath'
+import RecentlyEditedTree from '../@types/RecentlyEditedTree'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
-import { editThoughtPayload } from '../actions/editThought'
 import { HOME_TOKEN } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
 import getSetting from '../selectors/getSetting'
@@ -19,13 +18,12 @@ import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
 import reducerFlow from '../util/reducerFlow'
 
-export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdatesOld'> & {
-  contextChain?: SimplePath[]
+export type UpdateThoughtsOptions = PushBatch & {
   cursorOffset?: number
   // callback for when the updates have been synced with IDB
   idbSynced?: () => void
   isLoading?: boolean
-  pendingEdits?: editThoughtPayload[]
+  recentlyEdited?: RecentlyEditedTree
   /** By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought. */
   preventExpandThoughts?: boolean
   /** Allow non-pending thoughts to become pending. This is mainly used by freeThoughts. */
@@ -86,7 +84,6 @@ const updateThoughts = (
     lexemeIndexUpdates,
     thoughtIndexUpdates,
     recentlyEdited,
-    updates,
     pendingDeletes,
     preventExpandThoughts,
     movePlacements,
@@ -102,7 +99,6 @@ const updateThoughts = (
 
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
   const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
-  const lexemeIndexUpdatesOld = keyValueBy(lexemeIndexUpdates, key => ({ [key]: lexemeIndexOld[key] }))
 
   // Last-write-wins guard for reconcile updates (local === false), e.g. a forced pull (RecentlyEdited's
   // pullJumpHistory) or a cross-device onThoughtChange. The pulled snapshot is read asynchronously from
@@ -146,14 +142,11 @@ const updateThoughts = (
   const batch: PushBatch = {
     idbSynced,
     lexemeIndexUpdates,
-    lexemeIndexUpdatesOld,
     local,
     movePlacements,
     pendingDeletes,
-    recentlyEdited: recentlyEditedNew,
     remote,
     thoughtIndexUpdates: thoughtIndexUpdatesFresh,
-    updates,
   }
 
   /** Returns true if the thoughtspace is still loading because root thought is missing or pending and the tutorial is not running. */
