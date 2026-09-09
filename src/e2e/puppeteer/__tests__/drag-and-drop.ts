@@ -426,14 +426,16 @@ describe('drag', () => {
 
     await page.mouse.move(boundingBox.x + boundingBox.width / 2, boundingBox.y + boundingBox.height / 2)
     await page.mouse.down()
+    // waitForFunction resolves to a JSHandle, so collapse it to a boolean rather than asserting on the handle
     const highlighted = await page.waitForFunction(
       (el: Element) => el.getAttribute('data-highlighted') === 'true',
       { timeout: 5000 },
       bullet,
     )
+
     await page.mouse.up()
 
-    expect(highlighted).toBe(true)
+    expect(highlighted).toBeTruthy()
   })
 })
 
