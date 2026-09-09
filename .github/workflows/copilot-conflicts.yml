@@ -1,7 +1,9 @@
 name: Copilot Conflict Resolution
 
-# Scans Copilot PRs after main changes. It runs only trusted code from main and never checks out
-# or executes a pull request's head branch.
+# Scans ready-for-review Copilot PRs after main changes. It runs only trusted code from main and
+# never checks out or executes a pull request's head branch. Drafts are skipped: pr-ready.yml
+# undrafts a finished Copilot PR once its checks are green, so one still in draft is one nobody has
+# advanced — the same reason the `hold` label opts a PR out.
 on:
   push:
     branches: [main]
