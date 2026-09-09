@@ -1,5 +1,6 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import getLexemeFromProvider from '../../data-providers/data-helpers/getLexeme'
 import db from '../../data-providers/thoughtspace'
 import getLexemeFromState from '../../selectors/getLexeme'
@@ -8,6 +9,7 @@ import contextToThought from '../../test-helpers/contextToThought'
 import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -58,5 +60,51 @@ it.skip('editing a thought should load the lexeme and merge contexts', async () 
   const thoughtContextsDb = (await getLexemeFromProvider(db, 'f'))?.contexts
   expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
 
+  expect(thoughtContextsState).toHaveLength(2)
+})
+
+// Current functionality is broken in main and won't be fixed soon so this test is skipped.
+it.skip('a new thought should merge into an unloaded lexeme and persist both contexts across a refresh', async () => {
+  // Related issue: https://github.com/cybersemics/em/issues/5426
+  await dispatch(
+    importText({
+      text: `
+      - a
+      - b
+        - c
+          - d
+            - e
+              - f`,
+    }),
+  )
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const thoughtF = contextToThought(store.getState(), ['b', 'c', 'd', 'e', 'f'])
+
+  await refreshTestApp()
+
+  // lexeme for 'f' should not be loaded into the state yet.
+  expect(getLexemeFromState(store.getState(), 'f')).toBeFalsy()
+
+  // create a new thought after 'a' and edit it to 'f'
+  await dispatch([setCursorFirstMatch(['a']), newThought({ value: 'f' })])
+
+  await act(vi.runAllTimersAsync)
+
+  const thoughtFRoot = contextToThought(store.getState(), ['f'])
+
+  await refreshTestApp()
+
+  // the merged Lexeme should have been persisted, so both contexts are still there after the refresh
+
+  // check that db has the correct contexts, ignoring order and ids
+  const thoughtContextsDb = (await getLexemeFromProvider(db, 'f'))?.contexts
+  expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtF?.id, thoughtFRoot?.id]))
+  expect(thoughtContextsDb).toHaveLength(2)
+
+  // check that state has the correct contexts, ignoring order and ids
+  const thoughtContextsState = getLexemeFromState(store.getState(), 'f')?.contexts
+  expect(thoughtContextsState).toEqual(expect.arrayContaining([thoughtF?.id, thoughtFRoot?.id]))
   expect(thoughtContextsState).toHaveLength(2)
 })
