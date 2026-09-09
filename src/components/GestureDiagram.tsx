@@ -48,6 +48,12 @@ interface GestureDiagramBaseProps {
   arrowhead?: GestureArrowhead
   /** When true, renders a drop-shadow glow filter on all path segments. Default: true. */
   glow?: boolean
+  /** Radius used to soften corners in line-based gradient gestures. */
+  cornerRadius?: number
+  /** Interior angle of the geometry-based wide chevron. Default 80. */
+  chevronApexAngle?: number
+  /** Chevron half-span as a multiple of the rendered stroke width. Default 2.2. */
+  chevronSize?: number
   /** Stroke color for highlighted directions. Default: token('colors.vividHighlight'). */
   highlightColor?: string
 }
@@ -95,6 +101,9 @@ const GestureDiagram = ({
   glow = true,
   useGradient = true,
   gradient,
+  cornerRadius = 0,
+  chevronApexAngle = 80,
+  chevronSize = 2.2,
   highlightColor,
 }: GestureDiagramProps) => {
   // One stable prefix keeps this diagram's marker, masks, and gradients unique in the document.
@@ -114,11 +123,27 @@ const GestureDiagram = ({
       path === null
         ? null
         : getGestureGeometry(path, {
+            chevron:
+              gradient && arrowhead === 'outlined-wide'
+                ? { apexAngle: chevronApexAngle, halfSpan: strokeWidth * 1.5 * chevronSize }
+                : undefined,
+            cornerRadius: gradient ? cornerRadius : 0,
             reversalOffset: reversalOffset!,
             rounded,
             size,
           }),
-    [path, reversalOffset, rounded, size],
+    [
+      arrowhead,
+      chevronApexAngle,
+      chevronSize,
+      cornerRadius,
+      path,
+      reversalOffset,
+      rounded,
+      size,
+      gradient,
+      strokeWidth,
+    ],
   )
 
   // If path is null, render a cancel gesture svg
@@ -200,7 +225,7 @@ const GestureDiagram = ({
             highlightColor={highlightColor}
             highlighted={highlight != null && highlight >= path.length}
             instanceId={instanceId}
-            kind={arrowhead}
+            kind={geometry!.chevron ? 'none' : arrowhead}
             rounded={rounded}
             strokeWidth={strokeWidth}
           />

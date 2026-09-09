@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import GestureDiagram from '../GestureDiagram'
+import getGestureGeometry from '../GestureDiagram/getGestureGeometry'
 
 /** Renders a gesture diagram to static SVG markup. */
 const render = (props: Parameters<typeof GestureDiagram>[0]) =>
@@ -9,6 +10,15 @@ const render = (props: Parameters<typeof GestureDiagram>[0]) =>
 /** Returns the path data rendered outside the defs block. */
 const renderedPathData = (markup: string) =>
   [...markup.replace(/<defs>.*?<\/defs>/gs, '').matchAll(/ d="([^"]+)"/g)].map(([, pathData]) => pathData)
+
+/** Parses the coordinates from a path containing only move and line commands. */
+const pointsOf = (pathData: string) => {
+  const values = pathData.match(/-?[\d.]+/g)!.map(Number)
+  return Array.from({ length: values.length / 2 }, (_, index) => ({
+    x: values[index * 2],
+    y: values[index * 2 + 1],
+  }))
+}
 
 describe('GestureDiagram rendering modes', () => {
   it('renders a solid gesture as one combined path', () => {
@@ -106,5 +116,81 @@ describe('continuous path-length gradient', () => {
 
     expect(roundedStops.length).toBeGreaterThan(20)
     expect(glyphStops.length).toBeGreaterThan(20)
+  })
+
+  // https://github.com/cybersemics/em/pull/5318
+  it('matches the circular shaft and chevron colors where they join', () => {
+    const markup = render({ ...props, path: 'rul', rounded: true, arrowhead: 'outlined-wide', gradient })
+    const arcEnd = getGestureGeometry('rul', { rounded: true, size: props.size, reversalOffset: 45 }).segments.at(
+      -1,
+    )!.to
+    const shaftPaths = renderedPathData(markup).slice(0, -1)
+    const joinIndex = shaftPaths.findIndex(pathData => {
+      const end = pointsOf(pathData).at(-1)!
+      return Math.hypot(end.x - arcEnd.x, end.y - arcEnd.y) < 1e-6
+    })
+    const document = new DOMParser().parseFromString(markup, 'text/html')
+    const chevronStops = Array.from(document.querySelectorAll('linearGradient[id$="-chevron-color"] stop')).map(stop =>
+      mixOf(stop.getAttribute('style')!),
+    )
+    const shaftStops = gradientStops(markup)
+
+    expect(joinIndex).toBeGreaterThanOrEqual(0)
+    expect(chevronStops).toHaveLength(2)
+    // The original arc endpoint is halfway between the chevron's mouth and apex.
+    expect(mixOf(shaftStops[joinIndex].end)).toBeCloseTo((chevronStops[0] + chevronStops[1]) / 2, 1)
+    expect(mixOf(shaftStops.at(-1)!.end)).toBe(100)
+  })
+})
+
+describe('gesture shape', () => {
+  const gradient = { from: '#111', to: '#eee' }
+
+  it('samples softened corners into additional gradient pieces', () => {
+    const sharp = render({ path: 'rdr', gradient, arrowhead: 'none' })
+    const soft = render({ path: 'rdr', gradient, arrowhead: 'none', cornerRadius: 5 })
+
+    expect(soft.match(/-piece-\d+-color/g)!.length).toBeGreaterThan(sharp.match(/-piece-\d+-color/g)!.length)
+  })
+
+  it('draws an outlined-wide chevron at the requested apex angle', () => {
+    const markup = render({
+      path: 'rdr',
+      gradient,
+      arrowhead: 'outlined-wide',
+      chevronApexAngle: 60,
+      chevronSize: 2.2,
+    })
+    const chevron = pointsOf(renderedPathData(markup).at(-1)!)
+    const [leg1, apex, leg2] = chevron
+    const a = { x: leg1.x - apex.x, y: leg1.y - apex.y }
+    const b = { x: leg2.x - apex.x, y: leg2.y - apex.y }
+    const cosine = (a.x * b.x + a.y * b.y) / (Math.hypot(a.x, a.y) * Math.hypot(b.x, b.y))
+
+    expect(markup).not.toContain('marker-end')
+    expect((Math.acos(cosine) * 180) / Math.PI).toBeCloseTo(60)
+  })
+
+  it('keeps the rdld glyph arrowhead-free', () => {
+    const markup = render({ path: 'rdld', gradient, arrowhead: 'outlined-wide' })
+    const gradientPieceCount = [...markup.matchAll(/<linearGradient id="[^"]+-piece-\d+-color"/g)].length
+
+    expect(markup).not.toContain('marker-end')
+    expect(renderedPathData(markup)).toHaveLength(gradientPieceCount)
+  })
+
+  // https://github.com/cybersemics/em/pull/5318
+  it('preserves circular arcs and connects their endpoint to the chevron apex', () => {
+    const options = { rounded: true, size: 150, reversalOffset: 45 }
+    const circular = getGestureGeometry('rul', options)
+    const geometry = getGestureGeometry('rul', { ...options, chevron: { apexAngle: 80, halfSpan: 39.6 } })
+
+    expect(geometry.segments.slice(0, -1)).toEqual(circular.segments)
+    expect(geometry.segments.at(-1)).toEqual({
+      kind: 'line',
+      from: circular.segments.at(-1)!.to,
+      to: geometry.chevron![1],
+      gestureIndex: 2,
+    })
   })
 })
