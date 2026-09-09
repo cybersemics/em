@@ -90,14 +90,12 @@ const run = async (prs, requestedPr) => {
 }
 
 const now = Date.now()
-/** Creates state that has waited past the specified retry delay. */
-const dueState = attempt => ({
-  version: 1,
+/** Creates state that has waited past the delay before the task after the specified count. */
+const dueState = tasks => ({
+  version: 2,
   firstConflictAt: new Date(now - 200 * 60 * 60 * 1000).toISOString(),
-  attempts: attempt,
-  lastDispatchedAt: attempt
-    ? new Date(now - ([3, 6, 12, 24, 48, 96][attempt] + 1) * 60 * 60 * 1000).toISOString()
-    : null,
+  tasks,
+  lastDispatchedAt: tasks ? new Date(now - ([3, 6, 12, 24, 48, 96][tasks] + 1) * 60 * 60 * 1000).toISOString() : null,
   history: [],
 })
 
@@ -123,7 +121,7 @@ const testExclusions = async () => {
     makePr({
       number: 7,
       updatedAt: '2026-09-06T10:00:00Z',
-      state: { ...dueState(0), attempts: 6, lastDispatchedAt: new Date(now - 100 * 60 * 60 * 1000).toISOString() },
+      state: { ...dueState(0), tasks: 6, lastDispatchedAt: new Date(now - 100 * 60 * 60 * 1000).toISOString() },
     }),
     makePr({
       number: 8,
@@ -137,18 +135,24 @@ const testExclusions = async () => {
   assert.deepEqual(report.tasks, [])
 }
 
-/** Verifies the skip label excludes a due PR entirely, leaving its comment untouched. */
-const testSkipLabel = async () => {
-  const skipped = makePr({
-    number: 15,
-    updatedAt: '2026-09-06T10:00:00Z',
-    state: dueState(2),
-    labels: ['skip-auto-resolve-conflicts'],
-  })
-  const before = skipped.comments[0].body
-  const report = await run([skipped])
-  assert.deepEqual(report.tasks, [])
-  assert.equal(skipped.comments[0].body, before)
+/** Verifies each opt-out label excludes a due PR entirely, leaving its comment untouched. */
+const testSkipLabels = async () => {
+  for (const [number, label] of [
+    [15, 'skip-auto-resolve-conflicts'],
+    [21, 'hold'],
+  ]) {
+    const skipped = makePr({ number, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), labels: [label] })
+    const before = skipped.comments[0].body
+    const report = await run([skipped])
+    assert.deepEqual(report.tasks, [])
+    assert.equal(skipped.comments[0].body, before)
+  }
+}
+
+/** Verifies an opt-out label outranks a dispatch that names the pull request. */
+const testSkipLabelOverridesNamedDispatch = async () => {
+  const held = makePr({ number: 22, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), labels: ['hold'] })
+  assert.deepEqual((await run([held], 22)).tasks, [])
 }
 
 /** Verifies a comment is posted only once a conflict exists, and is kept updated afterwards. */
@@ -159,11 +163,11 @@ const testCommentOnConflictOnly = async () => {
   await run([clean, conflicting, resolved])
   assert.deepEqual(clean.comments, [])
   assert.ok(conflicting.comments[0].body.includes('A merge conflict is detected'))
-  assert.ok(resolved.comments[0].body.includes('No merge conflict is currently detected'))
+  assert.ok(resolved.comments[0].body.includes('Merge conflicts resolved.'))
 }
 
-/** Verifies the comment ends on the shared attempt footer once an attempt has been started. */
-const testAttemptFooter = async () => {
+/** Verifies the comment ends on the shared task footer once a task has been started. */
+const testTaskFooter = async () => {
   const pr = makePr({
     number: 16,
     updatedAt: '2026-09-06T10:00:00Z',
@@ -176,31 +180,68 @@ const testAttemptFooter = async () => {
   await run([pr])
   assert.equal(
     pr.comments[0].body.split('\n').pop(),
-    'Attempt 2 of 6. The next attempt is eligible 12 hours after this one, if the pull request still conflicts. Started by [Copilot Conflict Resolution](https://example.test/run/99).',
+    'Task 2 of 6. The next task is eligible 12 hours after this one, if the pull request still conflicts. Started by [Copilot Conflict Resolution](https://example.test/run/99).',
   )
 }
 
-/** Verifies the last attempt names the dispatch that asks for one more, rather than a dead end. */
+/** Verifies the last task names the dispatch that asks for one more, rather than a dead end. */
 const testCapNotice = async () => {
   const pr = makePr({
     number: 17,
     updatedAt: '2026-09-06T10:00:00Z',
-    state: { ...dueState(0), attempts: 6, lastRunUrl: 'https://example.test/run/99' },
+    state: {
+      ...dueState(0),
+      tasks: 6,
+      lastTaskUrl: 'https://example.test/task/6',
+      lastRunUrl: 'https://example.test/run/99',
+    },
   })
   await run([pr])
   assert.equal(
     pr.comments[0].body.split('\n').pop(),
-    'Attempt 6 of 6. No further attempt starts on its own — run `gh workflow run copilot-conflicts.yml -f pr=17` if it needs another. Started by [Copilot Conflict Resolution](https://example.test/run/99).',
+    'Task 6 of 6. No further task starts on its own — run `gh workflow run copilot-conflicts.yml -f pr=17` if it needs another. Started by [Copilot Conflict Resolution](https://example.test/run/99).',
+  )
+  // Nothing further starts on its own at the cap, so no resolution may be claimed as ongoing.
+  assert.ok(
+    pr.comments[0].body.includes(
+      'A merge conflict is detected. The most recent task was [this one](https://example.test/task/6).',
+    ),
   )
 }
 
-/** Verifies the schedule rides in the body until there is an attempt for a footer to count. */
-const testScheduleBeforeFirstAttempt = async () => {
+/** Verifies the schedule rides in the body until there is a task for a footer to count. */
+const testScheduleBeforeFirstTask = async () => {
   const pr = makePr({ number: 18, updatedAt: '2026-09-06T10:00:00Z' })
   await run([pr])
   assert.equal(
     pr.comments[0].body.split('\n').pop(),
-    'A merge conflict is detected. The next attempt is eligible 3 hours after the conflict was first seen, if the pull request still conflicts.',
+    'A merge conflict is detected. Copilot will resolve it on this branch. The next task is eligible 3 hours after the conflict was first seen, if the pull request still conflicts.',
+  )
+}
+
+/** Verifies a started task says the conflict is being resolved and links the task doing it. */
+const testTaskLink = async () => {
+  const conflicting = makePr({
+    number: 19,
+    updatedAt: '2026-09-06T10:00:00Z',
+    state: { ...dueState(2), lastTaskUrl: 'https://example.test/task/2' },
+  })
+  const resolved = makePr({
+    number: 20,
+    updatedAt: '2026-09-06T10:00:00Z',
+    mergeable: true,
+    state: { ...dueState(2), lastTaskUrl: 'https://example.test/task/2' },
+  })
+  await run([conflicting, resolved])
+  assert.ok(
+    conflicting.comments[0].body.includes(
+      'A merge conflict is detected. Copilot is resolving it on this branch: [task](https://example.test/task/2).',
+    ),
+  )
+  assert.ok(
+    resolved.comments[0].body.includes(
+      'Merge conflicts resolved. The most recent task was [this one](https://example.test/task/2).',
+    ),
   )
 }
 
@@ -211,7 +252,7 @@ const testNamedDispatchOverridesWaitAndCap = async () => {
     updatedAt: '2026-09-06T10:00:00Z',
     state: { ...dueState(2), lastDispatchedAt: new Date(now - 60 * 60 * 1000).toISOString() },
   })
-  const capped = makePr({ number: 20, updatedAt: '2026-09-06T10:00:00Z', state: { ...dueState(0), attempts: 6 } })
+  const capped = makePr({ number: 20, updatedAt: '2026-09-06T10:00:00Z', state: { ...dueState(0), tasks: 6 } })
   assert.deepEqual(
     (await run([waiting], 19)).tasks.map(task => task.number),
     [19],
@@ -225,10 +266,12 @@ const testNamedDispatchOverridesWaitAndCap = async () => {
 await testRetryPolicy()
 await testExclusions()
 await testCommentOnConflictOnly()
-await testSkipLabel()
-await testAttemptFooter()
+await testSkipLabels()
+await testSkipLabelOverridesNamedDispatch()
+await testTaskFooter()
 await testCapNotice()
-await testScheduleBeforeFirstAttempt()
+await testScheduleBeforeFirstTask()
+await testTaskLink()
 await testNamedDispatchOverridesWaitAndCap()
 
 console.info('PASS: collect-copilot-conflicts')

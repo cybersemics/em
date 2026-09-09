@@ -7,6 +7,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import TutorialChoice from '../@types/TutorialChoice'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
+import { closeDropdownsActionCreator as closeDropdowns } from '../actions/closeDropdowns'
 import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
@@ -16,7 +17,6 @@ import { setInvalidStateActionCreator as setInvalidState } from '../actions/inva
 import { keyboardOpenActionCreator } from '../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
 import { isSafari, isTouch } from '../browser'
@@ -857,21 +857,25 @@ const Editable = ({
       if (isTouch) {
         editingValueStore.update(null)
       }
-      // temporary states such as duplicate error states and cursorCleared are reset on blur
-      dispatch(cursorCleared({ value: false }))
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        // Blurring the thought that holds the caret ends an edited multiselection (Clear Thought), so end the
+        // multiselection too. Otherwise the multicursors survive the blur and re-open the Command Center as soon as
+        // the keyboard closes (see multicursorAlertMiddleware). (#4519)
+        // Not when the Command Center is open, since then the blur was caused by the Command Center opening over the
+        // thought (see onFocus), rather than by the user dismissing the keyboard.
+        // Must be dispatched before cursorCleared, which closes the keyboard as well as exiting the cleared state.
+        // Otherwise the middleware sees the multicursors with the keyboard already closed and re-opens the Command
+        // Center mid-blur, and the guard above then reads that freshly opened Command Center as the asyncFocus case
+        // and spares the multiselection, leaving the Command Center open over a selection the user cannot dismiss
+        // (#5260).
+        if (isTouch && !state.showCommandCenter && isMulticursorPath(state, path)) dispatch(clearMulticursors())
 
-      if (isTouch) {
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          // Blurring the thought that holds the caret ends an edited multiselection (Clear Thought), so end the
-          // multiselection too. Otherwise the multicursors survive the blur and re-open the Command Center as soon as
-          // the keyboard closes (see multicursorAlertMiddleware). (#4519)
-          // Not when the Command Center is open, since then the blur was caused by the Command Center opening over the
-          // thought (see onFocus), rather than by the user dismissing the keyboard.
-          if (!state.showCommandCenter && isMulticursorPath(state, path)) dispatch(clearMulticursors())
-          dispatch(keyboardOpenActionCreator({ value: false }))
-        })
-      }
+        // temporary states such as duplicate error states and cursorCleared are reset on blur
+        dispatch(cursorCleared({ value: false }))
+
+        if (isTouch) dispatch(keyboardOpenActionCreator({ value: false }))
+      })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [simplePath, path],
@@ -1020,7 +1024,7 @@ const Editable = ({
             selection.clear()
 
             // close all popups when clicking on a thought
-            dispatch(toggleDropdown())
+            dispatch(closeDropdowns())
           }
           // While a multiselect is active, a tap toggles the thought's selection rather than moving the cursor.
           // On mobile this is the only way to add a thought to the multiselect apart from long pressing it, and on
