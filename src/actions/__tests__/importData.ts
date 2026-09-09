@@ -484,6 +484,17 @@ it.skip('multiple duplicates', async () => {
   expect(exported.trim()).toBe(expectedExport.trim())
 })
 
+// https://github.com/cybersemics/em/pull/4539#pullrequestreview-4919104066
+it('keeps children under each duplicate ancestor', async () => {
+  const actual = await importExport(`<ul><li>foo<ul><li>bar</li></ul></li><li>foo<ul><li>baz</li></ul></li></ul>`)
+  expect(actual).toBe(`
+- foo
+  - bar
+- foo
+  - baz
+`)
+})
+
 it('two root thoughts', async () => {
   const text = `- a
   - b

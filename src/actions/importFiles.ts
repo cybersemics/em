@@ -233,6 +233,11 @@ export const importFilesActionCreator =
 
     // import one file at a time
     const fileTasks = resumableFiles.map((file, i) => async () => {
+      // flattenTree hands the same Block objects as ancestors, so the Path of each imported thought
+      // can be looked up by object identity. Walking by value (descendantPath) cannot tell two
+      // siblings with the same value apart, and would put later descendants on the first match.
+      const importedPathByBlock = new Map<Block, Path>()
+
       /** An action-creator that imports a block. */
       const importBlock =
         ({ block, ancestors, i }: { block: Block; ancestors: Block[]; i: number }) =>
@@ -273,10 +278,13 @@ export const importFilesActionCreator =
           const baseContext = pathToContext(stateAfterPull, basePath)
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
-          // Resolve the destination Path from the ids of the destination Path rather than from parentContext.
-          // A Context resolves a value to the first matching thought, so it lands the import on a pre-existing
-          // duplicate sibling rather than on the thought that was actually dropped on or pasted into.
-          const parentPath = descendantPath(stateAfterPull, basePath, relativeAncestorContext)
+          // Prefer the Path recorded when this block's parent was imported. descendantPath walks by
+          // value and so lands on the first matching sibling when the import contains duplicates.
+          // Fall back to descendantPath when the parent was imported in a previous resume session
+          // and is therefore missing from the map.
+          const ancestorPath =
+            ancestors.length === 0 ? undefined : importedPathByBlock.get(ancestors[ancestors.length - 1])
+          const parentPath = ancestorPath ?? descendantPath(stateAfterPull, basePath, relativeAncestorContext)
 
           // validate parentPath
           if (!parentPath) {
@@ -320,6 +328,7 @@ export const importFilesActionCreator =
           // actually created. contextToPath cannot be used, as it resolves a value to the first matching thought and
           // thus lands on a pre-existing duplicate sibling rather than the imported thought.
           const idNew = createId()
+          importedPathByBlock.set(block, appendToPath(parentPath, duplicate ? duplicate.id : idNew))
 
           return new Promise<void>(resolve => {
             /** Updates the progress and resolves the task. */
