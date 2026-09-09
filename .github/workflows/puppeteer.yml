@@ -82,7 +82,7 @@ env:
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
   # Skip Puppeteer's Chrome download on install — none of this workflow's jobs uses the bundled
-  # browser (Puppeteer tests attach to the browserless/chrome service via CDP; only
+  # browser (Puppeteer tests attach to the Browserless Chromium service via CDP; only
   # agent-scripts.yml launches the bundled browser), saving ~20s per install.
   PUPPETEER_SKIP_DOWNLOAD: true
 
@@ -93,15 +93,18 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0
     services:
       browserless:
-        image: browserless/chrome:latest
+        image: ghcr.io/browserless/chromium:v2.56.2
         ports:
           - 7566:3000
         env:
-          CONNECTION_TIMEOUT: -1
+          TIMEOUT: 0
 
     steps:
       - name: Clone repository
         uses: actions/checkout@v6
+
+      - name: Install Microsoft Core Fonts
+        run: ./src/e2e/puppeteer/install-browserless-fonts.sh '${{ job.services.browserless.id }}'
 
       - name: Enable Corepack
         run: corepack enable
