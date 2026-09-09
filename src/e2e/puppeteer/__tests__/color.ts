@@ -349,8 +349,7 @@ it('Selection remains active after applying a font color to part of the text', a
 
   await clickThought('Golden Retriever')
   await setSelection(0, 6)
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
 
   expect(await getSelection().toString()).toBe('Golden')
   expect(extractColor((await getEditingText())!).backgroundColor).toBe(null)
@@ -363,8 +362,7 @@ it('Selection remains active when applying a font color after a background elsew
 
   await clickThought('Golden Retriever')
   await setSelection(0, 6)
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="green"]')
+  await clickToolbar('Text Color', 'background color swatches', 'green')
 
   await setSelection(7, 16)
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
@@ -393,8 +391,7 @@ describe('Android partial colors', () => {
 
     await clickThought('Golden Retriever')
     await setSelection(0, 6)
-    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+    await clickToolbar('Text Color', 'text color swatches', 'blue')
 
     expect(await getSelection().toString()).toBe('Golden')
     await press('Escape')
@@ -407,8 +404,7 @@ describe('Android partial colors', () => {
 
     await clickThought('Golden Retriever')
     await setSelection(0, 6)
-    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-    await click('[aria-label="background color swatches"] [aria-label="green"]')
+    await clickToolbar('Text Color', 'background color swatches', 'green')
     expect(await getSelection().toString()).toBe('Golden')
 
     await click('[aria-label="text color swatches"] [aria-label="blue"]')
@@ -424,8 +420,7 @@ describe('Android partial colors', () => {
 
     await clickThought('Golden Retriever')
     await setSelection(0, 6)
-    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+    await clickToolbar('Text Color', 'text color swatches', 'blue')
 
     await keyboard.type('Silver')
     await waitForEditable('Silver Retriever')
@@ -437,8 +432,7 @@ describe('Android partial colors', () => {
 
     await clickThought('Golden Retriever')
     await setSelection(0, 6)
-    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+    await clickToolbar('Text Color', 'text color swatches', 'blue')
     expect(await getSelection().toString()).toBe('Golden')
 
     const html = await page.evaluate(() => {
@@ -459,8 +453,7 @@ describe('Android partial colors', () => {
 
     await clickThought('Golden Retriever')
     await setSelection(0, 6)
-    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+    await clickToolbar('Text Color', 'text color swatches', 'blue')
     expect(await getSelection().toString()).toBe('Golden')
 
     await press('Escape')
