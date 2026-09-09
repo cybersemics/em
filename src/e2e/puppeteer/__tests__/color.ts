@@ -71,6 +71,16 @@ const codeBackgroundColor = () =>
     return null
   })
 
+/** Returns the color that the underline or strikethrough line of the thought being edited is actually painted in.
+ * Since the decoration color defaults to `currentColor`, this is the computed color of the decorating element itself,
+ * not of the text it contains. */
+const decorationColor = () =>
+  page.evaluate(() => {
+    const decoration = document.querySelector('[data-editing=true] [data-editable] :is(u, strike)')
+    if (!decoration) throw new Error('No underline or strikethrough element found in the editing thought')
+    return window.getComputedStyle(decoration).textDecorationColor
+  })
+
 /** Returns the horizontal geometry needed to verify Color Picker toolbar scrolling. */
 const getColorPickerGeometry = () =>
   page.evaluate(() => {
@@ -757,4 +767,17 @@ it('applying text color after strikethrough should produce correct HTML structur
   const result = await getEditingText()
   // As with underline, the color tag must wrap <strike> so the line through the text is drawn in the applied color.
   expect(result).toBe(`<font color="${rgbaToHex(colors.light.red)}"><strike>Three</strike></font>`)
+})
+
+// https://github.com/cybersemics/em/pull/4032#pullrequestreview-5149433775
+it.skip('underline applied after a text color draws its line in that color', async () => {
+  await paste(`
+    - One
+  `)
+
+  await clickThought('One')
+  await clickToolbar('Text Color', 'text color swatches', 'red')
+  await clickToolbar('Underline')
+
+  expect(rgbToHex(await decorationColor())).toBe(rgbaToHex(colors.light.red))
 })
