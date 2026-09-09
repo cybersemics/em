@@ -297,8 +297,15 @@ const getGestureGeometry = (
   const chevronPoints = getChevron(finalSegment.to, getEndTangent(finalSegment), chevron)
   return {
     ...geometry,
-    // Extending the centerline to the apex lets the gradient finish at the gesture's visual tip.
-    segments: [...geometry.segments.slice(0, -1), { ...finalSegment, to: chevronPoints[1] }] as GestureSegment[],
+    // An arc's endpoint is fixed by its circle and angles. Add a tangent line so the
+    // centerline and its gradient reach the apex without changing the circular shape.
+    segments:
+      finalSegment.kind === 'arc'
+        ? [
+            ...geometry.segments,
+            { kind: 'line', from: finalSegment.to, to: chevronPoints[1], gestureIndex: finalSegment.gestureIndex },
+          ]
+        : [...geometry.segments.slice(0, -1), { ...finalSegment, to: chevronPoints[1] }],
     chevron: chevronPoints,
   }
 }
