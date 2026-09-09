@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { css, cx } from '../../styled-system/css'
+import { delay } from 'motion'
+import { motion } from 'motion/react'
+import { PropsWithChildren, useEffect, useRef, useState } from 'react'
+import { css } from '../../styled-system/css'
+import { token } from '../../styled-system/tokens'
 import CommandSortType from '../@types/CommandSortType'
 import useOnClickOutside from '../hooks/useOnClickOutside'
-import FadeTransition from './FadeTransition'
-import SortOption from './SortOption'
+import durations from '../util/durations'
 import AToZIcon from './icons/AToZIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
 
@@ -11,129 +13,209 @@ interface CommandUniverseSortButtonProps {
   onSortChange: (sortOrder: CommandSortType) => void
 }
 
-/**
- * Group/sort button used by the Mobile Command Universe dialog. Flush styling (no
- * border or background) with the new 24×24 list glyph.
- *
- * Distinct from SortButton (used by Help / CustomizeToolbar via CommandTable),
- * which keeps the legacy bordered look.
- */
-const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonProps) => {
-  const [isDropdownOpen, setDropdownOpen] = useState(false)
+/** Toggles the sort order and coordinates its tooltip with a mask over the adjacent search input. */
+const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren<CommandUniverseSortButtonProps>) => {
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
+  const [tooltipVisible, setTooltipVisible] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
-  const closeDropdown = useCallback(() => setDropdownOpen(false), [])
 
-  useOnClickOutside(buttonRef, closeDropdown)
-
-  /** Closes the sort dropdown when the user scrolls. */
-  const handleScroll = () => {
-    setDropdownOpen(false)
-  }
+  useOnClickOutside(buttonRef, () => setTooltipVisible(false))
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll, true)
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true)
-    }
-  }, [])
+    if (!tooltipVisible) return
+    return delay(() => setTooltipVisible(false), durations.get('sortTooltipHold') / 1000)
+  }, [tooltipVisible, selectedSort])
 
-  /** Selects a sort order, propagates the change, and closes the dropdown. */
-  const handleSortChange = (sortOrder: CommandSortType) => {
-    setSelectedSort(sortOrder)
-    onSortChange(sortOrder)
-    setDropdownOpen(false)
+  /** Updates the list immediately and restarts the tooltip timeout on each tap. */
+  const toggleSort = () => {
+    const next = selectedSort === 'type' ? 'alphabetical' : 'type'
+    setSelectedSort(next)
+    setTooltipVisible(true)
+    onSortChange(next)
   }
 
+  const enter = { duration: durations.get('medium') / 1000, ease: [0.4, 0, 0.2, 1] as const }
+  const exit = { duration: durations.get('medium') / 1000, ease: [0.16, 1, 0.3, 1] as const }
+  const crossfade = { duration: durations.get('medium') / 1000, ease: 'easeInOut' as const }
+  const glowFade = { duration: durations.get(tooltipVisible ? 'fast' : 'medium') / 1000, ease: 'easeOut' as const }
+  const valueLayer = css({ position: 'absolute', inset: 0, textAlign: 'right' })
+  const iconLayer = css({
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    // Override the shared icon recipe so Motion owns the color animation and sizing stays fixed.
+    '& > svg': { flex: 'none', transition: 'none' },
+  })
+
   return (
-    <button
-      ref={buttonRef}
-      type='button'
-      aria-label='Group commands'
-      onClick={() => setDropdownOpen(!isDropdownOpen)}
+    <motion.div
+      initial={false}
+      animate={tooltipVisible ? 'visible' : 'hidden'}
       className={css({
-        border: 'none',
-        background: 'transparent',
-        padding: 0,
-        cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        // Keep the button (and the dropdown that fades in within it) above the gesture/text layer.
-        zIndex: 'dialog',
-        color: 'fg',
-        flex: 'none',
-        width: '28px',
-        height: '28px',
+        justifyContent: 'space-between',
+        gap: '0.5rem',
+        paddingInline: '1rem',
+        paddingBlock: '0.5rem',
       })}
     >
-      {/*
-       * `flex: none` cancels iconRecipe's base `flex: 1`, which would otherwise let the
-       * glyph grow or shrink to whatever size the flex parent gives it. The wrapping div
-       * has explicit size so the icon always renders at its declared size.
-       */}
-      <div
-        className={css({
-          flex: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '28px',
-          height: '28px',
-          opacity: 0.5,
-          // Same plus-lighter blend as the search icon and gradient text so the row
-          // reads as one continuous luminous element.
-          mixBlendMode: 'plus-lighter',
-        })}
+      {/* Motion interpolates the gradient stops without rerendering the command list each frame. */}
+      <motion.div
+        className={css({ flex: '1 1 auto', minWidth: 0, display: 'flex', alignItems: 'center' })}
+        variants={{
+          hidden: {
+            maskImage: 'linear-gradient(to right, black calc(100% - 1.5rem), transparent calc(100% - 0rem))',
+          },
+          visible: {
+            maskImage: 'linear-gradient(to right, black calc(100% - 10rem), transparent calc(100% - 5rem))',
+          },
+        }}
+        transition={glowFade}
       >
-        {/* Reflect the active sort mode: A→Z glyph for alphabetical, list/group glyph for type. */}
-        {selectedSort === 'alphabetical' ? (
-          <AToZIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
-        ) : (
-          <CommandsListIcon size={28} fill='#D9D3D5' strokeWidth={0} cssRaw={css.raw({ flex: 'none' })} />
-        )}
-      </div>
-      <FadeTransition in={isDropdownOpen} type='fast' unmountOnExit>
-        <div
-          className={cx(
-            css({
-              position: 'absolute',
-              top: '100%',
-              marginTop: '0.444rem',
-              right: 0,
-              backgroundColor: 'darkgray',
-              border: 'solid 1px {colors.gray50}',
-              borderRadius: '8px',
-              zIndex: 'dialog',
-              padding: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.444rem',
-            }),
-          )}
+        {children}
+      </motion.div>
+      <div className={css({ position: 'relative', flex: 'none', width: '28px', height: '28px' })}>
+        {/* Keep the glow outside the text's blending group so it blends with the dialog. */}
+        <motion.div
+          aria-hidden
+          data-testid='sort-toggle-glow'
+          className={css({
+            position: 'absolute',
+            top: '50%',
+            right: '100%',
+            marginRight: '0.5rem',
+            width: '21.25rem',
+            height: '8.25rem',
+            backgroundImage: 'url(/img/dialog/toggle-option-glow.avif)',
+            backgroundSize: '100% 100%',
+            backgroundRepeat: 'no-repeat',
+            pointerEvents: 'none',
+            mixBlendMode: 'hard-light',
+            transformOrigin: 'right center',
+            maskImage: 'linear-gradient(to right, transparent 0, black 3.25rem, black 100%)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent 0, black 3.25rem, black 100%)',
+          })}
+          style={{ y: '-50%' }}
+          variants={{
+            hidden: { opacity: 0, x: '4.725rem', scale: 0.9, transition: { ...exit, opacity: glowFade } },
+            visible: { opacity: 1, x: '5.25rem', scale: 1, transition: { ...enter, opacity: glowFade } },
+          }}
+        />
+        <motion.div
+          aria-hidden
+          className={css({
+            position: 'absolute',
+            right: '100%',
+            top: '50%',
+            marginRight: '0.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            whiteSpace: 'nowrap',
+            mixBlendMode: 'plus-lighter',
+            fontFamily: '"Radio Canada Big", sans-serif',
+            transformOrigin: 'right center',
+            userSelect: 'none',
+          })}
+          style={{ y: '-50%', pointerEvents: tooltipVisible ? 'auto' : 'none' }}
+          variants={{ hidden: { scale: 0.9, transition: exit }, visible: { scale: 1, transition: enter } }}
         >
-          <h2
+          <motion.span
             className={css({
-              color: 'gray50',
-              borderBottom: 'none',
-              textAlign: 'left',
-              fontSize: '0.8rem',
-              margin: '0',
+              color: 'white',
+              fontSize: '0.65rem',
+              lineHeight: 1.25,
+              fontWeight: 400,
+              letterSpacing: '0.02em',
             })}
+            variants={{ hidden: { opacity: 0 }, visible: { opacity: 0.5 } }}
+            transition={enter}
           >
-            Sort by:
-          </h2>
-          <SortOption
-            sort={'alphabetical'}
-            label='Alphabetical'
-            selectedSort={selectedSort}
-            handleSortChange={handleSortChange}
-          />
-          <SortOption sort={'type'} label='Type' selectedSort={selectedSort} handleSortChange={handleSortChange} />
-        </div>
-      </FadeTransition>
-    </button>
+            Sort by
+          </motion.span>
+          <motion.span
+            className={css({
+              position: 'relative',
+              display: 'inline-block',
+              color: 'white',
+              fontSize: '0.8rem',
+              lineHeight: 1.2,
+              fontWeight: 500,
+              letterSpacing: '-0.004em',
+            })}
+            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+            transition={crossfade}
+          >
+            {/* Reserve the longer label's width so switching does not move the tooltip. */}
+            <span className={css({ visibility: 'hidden' })}>Alphabetical</span>
+            <motion.span
+              initial={false}
+              animate={{ opacity: selectedSort === 'type' ? 1 : 0 }}
+              transition={crossfade}
+              className={valueLayer}
+            >
+              Type
+            </motion.span>
+            <motion.span
+              initial={false}
+              animate={{ opacity: selectedSort === 'alphabetical' ? 1 : 0 }}
+              transition={crossfade}
+              className={valueLayer}
+            >
+              Alphabetical
+            </motion.span>
+          </motion.span>
+        </motion.div>
+        <motion.button
+          ref={buttonRef}
+          type='button'
+          aria-label={`Sort commands by ${selectedSort}. Tap to toggle.`}
+          onClick={toggleSort}
+          variants={{
+            hidden: { opacity: 0.5, color: token('colors.dialogSortIcon'), transition: exit },
+            visible: { opacity: 1, color: token('colors.white'), transition: enter },
+          }}
+          className={css({
+            position: 'relative',
+            border: 'none',
+            background: 'transparent',
+            padding: 0,
+            cursor: 'pointer',
+            width: '28px',
+            height: '28px',
+            mixBlendMode: 'plus-lighter',
+            // Avoid native iOS press flashes showing through the blend.
+            WebkitTapHighlightColor: 'transparent',
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
+            WebkitTouchCallout: 'none',
+            WebkitAppearance: 'none',
+            appearance: 'none',
+            _active: { background: 'transparent' },
+          })}
+        >
+          <motion.span
+            initial={false}
+            animate={{ opacity: selectedSort === 'type' ? 1 : 0 }}
+            transition={crossfade}
+            className={iconLayer}
+          >
+            <CommandsListIcon size={28} fill='currentColor' strokeWidth={0} />
+          </motion.span>
+          <motion.span
+            initial={false}
+            animate={{ opacity: selectedSort === 'alphabetical' ? 1 : 0 }}
+            transition={crossfade}
+            className={iconLayer}
+          >
+            <AToZIcon size={28} fill='currentColor' strokeWidth={0} />
+          </motion.span>
+        </motion.button>
+      </div>
+    </motion.div>
   )
 }
 

@@ -19,6 +19,8 @@ const durationsConfig = {
   mediumPulse: 300,
 
   /* SPECIFIC ANIMATIONS */
+  /** How long the sort tooltip stays visible after the most recent toggle. */
+  sortTooltipHold: 2500,
   /** The time it takes the HUD to fade out when the user starts typing on desktop. */
   distractionFreeTyping: 600,
   distractionFreeTypingThrottle: 100,

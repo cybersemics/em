@@ -1,9 +1,11 @@
+import { AnimatePresence, motion } from 'motion/react'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { SwitchTransition } from 'react-transition-group'
 import { css } from '../../../styled-system/css'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
 import useCommandList from '../../hooks/useCommandList'
+import usePrefetchImages from '../../hooks/usePrefetchImages'
+import durations from '../../util/durations'
 import CommandUniverseGrid from '../CommandUniverseGrid'
 import CommandUniverseSearch from '../CommandUniverseSearch'
 import CommandUniverseSortButton from '../CommandUniverseSortButton'
@@ -12,16 +14,12 @@ import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogHeader from './DialogHeader'
 
-/**
- * Pre-rendered hidden divs that force the browser to fetch the dialog's decorative AVIFs ahead of time, so they are cached when the dialog opens. Same workaround pattern used by CommandCenter's HiddenOverlay. Always mounted because the parent is rendered at the AppComponent level.
- */
-const HiddenDialogAssets = () => (
-  <>
-    <div className={css({ backgroundImage: 'url(/img/dialog/dialog-background-glow.avif)', visibility: 'hidden' })} />
-    <div className={css({ backgroundImage: 'url(/img/dialog/dialog-highlight.avif)', visibility: 'hidden' })} />
-    <div className={css({ backgroundImage: 'url(/img/dialog/dialog-highlight-rainbow.avif)', visibility: 'hidden' })} />
-  </>
-)
+const DIALOG_IMAGES = [
+  '/img/dialog/dialog-background-glow.avif',
+  '/img/dialog/dialog-highlight.avif',
+  '/img/dialog/dialog-highlight-rainbow.avif',
+  '/img/dialog/toggle-option-glow.avif',
+]
 
 /**
  * Body of the dialog. Split out from MobileCommandUniverse so that useCommandList only runs while the dialog is open.
@@ -39,99 +37,83 @@ const MobileCommandUniverseContent = () => {
   // the scroll position to the top as results crossfade.
   const scrollRef = React.useRef<HTMLDivElement>(null)
 
-  // This ref is used to animate a block <div>, rather than the default inline <span> used by FadeTransition.
-  // This fixes a bug where the crossfade between results when searching/sorting did not play on WebKit/Safari.
-  const fadeRef = React.useRef<HTMLDivElement>(null)
-
   return (
     <>
-      {/* Search row that lives between the header and the scrollable content. Sits outside the scroll
-          container so it stays put as the command list scrolls. Left padding matches contentInner so the
-          search glyph aligns with the section headers and command list down the left edge of the panel. */}
-      <div
-        className={css({
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '0.5rem',
-          paddingInline: '1rem',
-          paddingBlock: '0.5rem',
-        })}
-      >
+      <CommandUniverseSortButton onSortChange={setSortOrder}>
         <CommandUniverseSearch onInput={setSearch} />
-        <CommandUniverseSortButton onSortChange={setSortOrder} />
-      </div>
+      </CommandUniverseSortButton>
 
       <DialogContent scrollRef={scrollRef}>
-        <SwitchTransition>
-          {/* Use a key here composed of the sort order and search query to crossfade when search results change. */}
-          <FadeTransition
+        <AnimatePresence initial={false} mode='wait'>
+          <motion.div
             key={`${sortOrder}-${search}`}
-            in={true}
-            type='medium'
-            unmountOnExit
-            nodeRef={fadeRef}
-            onEnter={() => scrollRef.current?.scrollTo({ top: 0 })}
+            role='region'
+            aria-label='Command results'
+            initial='hidden'
+            animate='visible'
+            exit='hidden'
+            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+            transition={{ duration: durations.get('medium') / 1000, ease: 'easeInOut' }}
+            onAnimationStart={animation => {
+              if (animation === 'visible') scrollRef.current?.scrollTo({ top: 0 })
+            }}
           >
-            <div ref={fadeRef}>
-              {groups.map((group, index) => (
+            {groups.map((group, index) => (
+              <div
+                key={group.title}
+                className={css({
+                  position: 'relative',
+                  contain: 'layout paint',
+                })}
+              >
+                {/* Section header row — centered title flanked by gradient hairlines that fade outward to delimit each command group. */}
                 <div
-                  key={group.title}
                   className={css({
-                    position: 'relative',
-                    contain: 'layout paint',
+                    display: 'flex',
+                    alignItems: 'center',
+                    // 1rem horizontal gap between the title text and the gradient hairlines.
+                    gap: '1rem',
+                    paddingBlock: '1.25rem',
                   })}
+                  // First group sits flush against the search row — skip its top padding so it doesn't double up.
+                  style={index === 0 ? { paddingTop: 0 } : undefined}
                 >
-                  {/* Section header row — centered title flanked by gradient hairlines that fade outward to delimit each command group. */}
+                  {/* Left hairline: transparent at the panel edge, solid near the title. */}
                   <div
                     className={css({
-                      display: 'flex',
-                      alignItems: 'center',
-                      // 1rem horizontal gap between the title text and the gradient hairlines.
-                      gap: '1rem',
-                      paddingBlock: '1.25rem',
+                      flexGrow: 1,
+                      height: '1px',
+                      background:
+                        'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
                     })}
-                    // First group sits flush against the search row — skip its top padding so it doesn't double up.
-                    style={index === 0 ? { paddingTop: 0 } : undefined}
+                  />
+                  <h2
+                    className={css({
+                      fontSize: '1rem',
+                      fontWeight: 500,
+                      color: 'fg',
+                      borderBottom: 'none',
+                      margin: 0,
+                      whiteSpace: 'nowrap',
+                    })}
                   >
-                    {/* Left hairline: transparent at the panel edge, solid near the title. */}
-                    <div
-                      className={css({
-                        flexGrow: 1,
-                        height: '1px',
-                        background:
-                          'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
-                      })}
-                    />
-                    <h2
-                      className={css({
-                        fontSize: '1rem',
-                        fontWeight: 500,
-                        color: 'fg',
-                        borderBottom: 'none',
-                        margin: 0,
-                        whiteSpace: 'nowrap',
-                      })}
-                    >
-                      {group.title}
-                    </h2>
-                    {/* Right hairline: solid near the title, fading to transparent at the panel edge. */}
-                    <div
-                      className={css({
-                        flexGrow: 1,
-                        height: '1px',
-                        background:
-                          'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
-                      })}
-                    />
-                  </div>
-                  <CommandUniverseGrid commands={group.commands} search={search} />
+                    {group.title}
+                  </h2>
+                  {/* Right hairline: solid near the title, fading to transparent at the panel edge. */}
+                  <div
+                    className={css({
+                      flexGrow: 1,
+                      height: '1px',
+                      background:
+                        'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
+                    })}
+                  />
                 </div>
-              ))}
-            </div>
-          </FadeTransition>
-        </SwitchTransition>
+                <CommandUniverseGrid commands={group.commands} search={search} />
+              </div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </DialogContent>
     </>
   )
@@ -141,6 +123,7 @@ const MobileCommandUniverseContent = () => {
  * Mobile Command Universe component.
  */
 const MobileCommandUniverse: React.FC = () => {
+  usePrefetchImages(DIALOG_IMAGES)
   const dispatch = useDispatch()
   const isOpen = useSelector(state => state.showMobileCommandUniverse)
   const nodeRef = React.useRef<HTMLDivElement>(null)
@@ -154,7 +137,6 @@ const MobileCommandUniverse: React.FC = () => {
 
   return (
     <>
-      <HiddenDialogAssets />
       <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
         <Dialog onClose={handleClose} nodeRef={nodeRef}>
           <DialogHeader onClose={handleClose}>Commands</DialogHeader>
