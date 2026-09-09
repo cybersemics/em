@@ -41,11 +41,6 @@ const STAGE_OFFSET_REM = 2.778
 /** Height of the band at the bottom of the drawer reserved for the expand chevron, as a multiple of the font size. ~28px at the default font size. */
 const CHEVRON_BAND_REM = 1.556
 
-/** How far the command grid slides up as it fades out, as a multiple of the font size. */
-const GRID_SLIDE_REM = 0.889
-/** How far the CommandTable slides up as it fades in, as a multiple of the font size. */
-const TABLE_SLIDE_REM = 1.333
-
 /** Dimensions of the chevron path, in px, matching the Command Center design. These are the path's own bounds, as reported by Figma; the centre-aligned stroke adds half its width beyond them on every side, so the svg box is larger by CHEVRON_STROKE in each axis. */
 const CHEVRON_WIDTH = 25
 const CHEVRON_HEIGHT = 7
@@ -292,11 +287,15 @@ const CommandCenter = () => {
   const isOpen = showCommandCenter && !showSidebar
 
   /* Every stage animation below is a different mapping of the same stageProgress, so they cannot
-   * drift apart: there is one number driving all of them, and that number is the finger. */
+   * drift apart: there is one number driving all of them, and that number is the finger.
+   *
+   * None of them translates its view. The grid and the CommandTable stay anchored to the drawer and
+   * cross-fade in place, so the only thing that moves them is the drawer's own rise into the expanded
+   * stage. Sliding them as they crossed over was tried and removed: the two are deliberately
+   * superimposed for the middle of the gesture, and superimposed layers travelling at different rates
+   * read as the command list scrolling rather than as one view replacing the other. */
   const standardViewOpacity = useTransform(stageProgress, [0, 0.9], [1, 0])
   const extendedViewOpacity = useTransform(stageProgress, [0.3, 1], [0, 1])
-  const standardViewY = useTransform(stageProgress, [0, 1], [0, -fontSize * GRID_SLIDE_REM])
-  const extendedViewY = useTransform(stageProgress, [0, 1], [fontSize * TABLE_SLIDE_REM, 0])
   const standardPointerEvents = useTransform(stageProgress, p => (p > 0.5 ? 'none' : 'auto')) as MotionValue<
     'none' | 'auto'
   >
@@ -524,7 +523,7 @@ const CommandCenter = () => {
                       gap: '0.622rem',
                       gridRowGap: '0.889rem',
                     })}
-                    style={{ opacity: standardViewOpacity, y: standardViewY, pointerEvents: standardPointerEvents }}
+                    style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
                   >
                     <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
                     <PanelCommand command={note} size='small' />
@@ -550,7 +549,7 @@ const CommandCenter = () => {
                       flexDirection: 'column',
                       minHeight: 0,
                     })}
-                    style={{ opacity: extendedViewOpacity, y: extendedViewY, pointerEvents: expandedPointerEvents }}
+                    style={{ opacity: extendedViewOpacity, pointerEvents: expandedPointerEvents }}
                   >
                     <div
                       ref={setScrollerRef}
