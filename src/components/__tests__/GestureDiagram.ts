@@ -23,6 +23,12 @@ describe('GestureDiagram rendering modes', () => {
     expect(renderedPathData(markup)).toEqual(['M 0 0 L 50 0', 'M 50 0 L 50 50 L 100 50'])
   })
 
+  it('keeps synthetic geometry with the semantic direction it extends', () => {
+    const markup = render({ path: 'rdl', size: 100, arrowhead: 'none', useGradient: false, highlight: 2 })
+
+    expect(renderedPathData(markup)).toEqual(['M 0 0 L 50 0 L 50 50 L 50 100', 'M 50 100 L 0 100'])
+  })
+
   it('preserves the rdld Bezier geometry in solid mode', () => {
     const markup = render({ path: 'rdld', arrowhead: 'none', useGradient: false })
 
