@@ -51,6 +51,15 @@ export default {
         await page.evaluateOnNewDocument(advanced => {
           const records = []
           window.__desktopDiagnostics = records
+          const captureStack = () => {
+            const previous = Error.stackTraceLimit
+            try {
+              Error.stackTraceLimit = 80
+              return new Error().stack
+            } finally {
+              Error.stackTraceLimit = previous
+            }
+          }
           let observedStore = false
           const observeStore = () => {
             const store = window.em?.store
@@ -73,7 +82,7 @@ export default {
                   time: performance.now(),
                   state,
                   url: location.href,
-                  stack: new Error().stack,
+                  stack: captureStack(),
                 })
               }
             })
