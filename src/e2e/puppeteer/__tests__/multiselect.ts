@@ -1,4 +1,5 @@
 import { KnownDevices } from 'puppeteer'
+import clearThoughtCommand from '../../../commands/clearThought'
 import { HOME_DISPLAY_VALUE } from '../../../constants'
 import acknowledgeAiDisclosure from '../helpers/acknowledgeAiDisclosure'
 import click from '../helpers/click'
@@ -7,10 +8,12 @@ import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
+import gesture from '../helpers/gesture'
 import longPressThought from '../helpers/longPressThought'
 import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForAlert from '../helpers/waitForAlert'
 import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
@@ -542,6 +545,41 @@ describe('mobile only', () => {
     await clickBullet('b')
 
     await waitForMultiselect(['a'])
+  })
+
+  // https://github.com/cybersemics/em/issues/5269
+  it.skip('does not add the thought a gesture is drawn on to the multiselect', async () => {
+    await paste(`
+        - a
+        - b
+        - c
+        `)
+
+    const a = await waitForEditable('a')
+    const c = await waitForEditable('c')
+
+    await longPressThought(a, { edge: 'right' })
+    await waitForMultiselect(['a'])
+
+    const boundingBox = await c.asElement()?.boundingBox()
+    if (!boundingBox) throw new Error('Bounding box of "c" not found.')
+
+    await gesture(clearThoughtCommand, {
+      xStart: boundingBox.x + boundingBox.width / 2,
+      yStart: boundingBox.y + boundingBox.height / 2,
+    })
+    await waitForAlert(clearThoughtCommand.label)
+
+    // Clear Thought empties the text of the selected thoughts, so the thought the gesture was drawn on is identified by
+    // the element captured before the gesture rather than by its value.
+    const isGestureThoughtSelected = await page.evaluate(editable => {
+      if (!editable) throw new Error('Thought "c" not found.')
+      const bullet = editable.closest('[aria-label="tree-node"]')?.querySelector('[aria-label="bullet"]')
+      if (!bullet) throw new Error('Bullet of thought "c" not found.')
+      return bullet.getAttribute('data-highlighted') === 'true'
+    }, c)
+
+    expect(isGestureThoughtSelected).toBe(false)
   })
 
   // https://github.com/cybersemics/em/issues/3557
