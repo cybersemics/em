@@ -10,17 +10,22 @@ import AToZIcon from './icons/AToZIcon'
 import CommandsListIcon from './icons/CommandsListIcon'
 
 interface CommandUniverseSortButtonProps {
+  /** Updates the command list on the same tap that starts the tooltip animation. */
   onSortChange: (sortOrder: CommandSortType) => void
 }
 
 /** Toggles the sort order and coordinates its tooltip with a mask over the adjacent search input. */
 const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren<CommandUniverseSortButtonProps>) => {
+  // The selected order persists when the tooltip hides; hiding it must not reset the sort.
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('group')
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   useOnClickOutside(buttonRef, () => setTooltipVisible(false))
 
+  // Changing the selection restarts the hold even when the tooltip is already visible.
+  // Motion's delay takes seconds and returns the cleanup, cancelling the previous hold
+  // on another tap, outside dismissal, or unmount. The app's duration values are milliseconds.
   useEffect(() => {
     if (!tooltipVisible) return
     return delay(() => setTooltipVisible(false), durations.get('sortTooltipHold') / 1000)
@@ -34,6 +39,9 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
     onSortChange(next)
   }
 
+  // Geometry and icon color use distinct enter/exit easing. The glow and search mask
+  // lead on entry (200ms) and settle with the text on exit (400ms).
+  // The Group/Alphabetical crossfade is independent of whether the tooltip is visible.
   const enter = { duration: durations.get('medium') / 1000, ease: [0.4, 0, 0.2, 1] as const }
   const exit = { duration: durations.get('medium') / 1000, ease: [0.16, 1, 0.3, 1] as const }
   const crossfade = { duration: durations.get('medium') / 1000, ease: 'easeInOut' as const }
@@ -49,6 +57,9 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
     '& > svg': { flex: 'none', transition: 'none' },
   })
 
+  // One variant label drives the search mask, glow, tooltip, and button highlight.
+  // Descendants inherit it unless they supply their own animate prop, as the label
+  // and icon crossfades do. initial=false avoids animating the hidden tooltip on mount.
   return (
     <motion.div
       initial={false}
@@ -62,7 +73,8 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
         paddingBlock: '0.5rem',
       })}
     >
-      {/* Motion interpolates the gradient stops without rerendering the command list each frame. */}
+      {/* children is the search-input slot: masking its wrapper keeps the input itself
+          unaware of sorting. Motion interpolates the stops without React updates each frame. */}
       <motion.div
         className={css({ flex: '1 1 auto', minWidth: 0, display: 'flex', alignItems: 'center' })}
         variants={{
@@ -149,7 +161,8 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
             variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
             transition={crossfade}
           >
-            {/* Reserve the longer label's width so switching does not move the tooltip. */}
+            {/* Both labels stay mounted so rapid reversals continue from their current
+                opacity. Reserve the longer label's width to keep the tooltip anchored. */}
             <span className={css({ visibility: 'hidden' })}>Alphabetical</span>
             <motion.span
               initial={false}

@@ -14,6 +14,7 @@ import Dialog from './Dialog'
 import DialogContent from './DialogContent'
 import DialogHeader from './DialogHeader'
 
+/** Stable array identity lets usePrefetchImages decode the assets once when this component mounts. */
 const DIALOG_IMAGES = [
   '/img/dialog/dialog-background-glow.avif',
   '/img/dialog/dialog-highlight.avif',
@@ -44,6 +45,8 @@ const MobileCommandUniverseContent = () => {
       </CommandUniverseSortButton>
 
       <DialogContent scrollRef={scrollRef}>
+        {/* Keep outgoing results through their exit before mounting the latest requested
+            sort/search results. The first list uses the dialog's own entry fade instead. */}
         <AnimatePresence initial={false} mode='wait'>
           <motion.div
             key={`${sortOrder}-${search}`}
@@ -55,6 +58,7 @@ const MobileCommandUniverseContent = () => {
             variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
             transition={{ duration: durations.get('medium') / 1000, ease: 'easeInOut' }}
             onAnimationStart={animation => {
+              // Reset only for incoming results; scrolling the outgoing list would visibly jump.
               if (animation === 'visible') scrollRef.current?.scrollTo({ top: 0 })
             }}
           >
