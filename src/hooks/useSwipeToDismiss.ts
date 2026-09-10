@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { isTouch } from '../browser'
 
+/** The maximum distance in px the touch may travel and still be treated as a tap rather than a swipe. */
+const TAP_TOLERANCE = 10
+
 const defaultOptions = {
   dismissThreshold: '50%',
   dx: 0,
@@ -70,10 +73,13 @@ const useSwipeToDismiss = (
 
   const stop = useCallback(
     (e: React.TouchEvent) => {
-      // preventDefault on touchEnd to prevent ToolbarIcon click
+      // preventDefault on touchEnd to prevent ToolbarIcon click.
+      // Only do so when the touch actually swiped. preventDefault on touchEnd suppresses the click that the
+      // browser synthesizes from the touch, so applying it to a stationary touch swallows taps on links and
+      // buttons inside the popup, such as the thought link in the "moved to" alert.
       const target = e.target as HTMLElement
-      const selector = '[aria-label="no-swipe-to-dismiss"'
-      if (!target.matches(selector) && !target.querySelector(selector)) {
+      const selector = '[aria-label="no-swipe-to-dismiss"]'
+      if (Math.abs(dy) > TAP_TOLERANCE && !target.matches(selector) && !target.querySelector(selector)) {
         e.preventDefault()
       }
 
