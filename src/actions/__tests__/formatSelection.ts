@@ -418,6 +418,31 @@ describe('formatSelection color', () => {
     )
   })
 
+  // https://github.com/cybersemics/em/issues/4052
+  it.skip('removes only the background color surrounding the caret', async () => {
+    await dispatch([newThought({ value: 'hello there world' })])
+
+    // green background on "hello"
+    selectRange(0, 'hello'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+
+    // green background on "world"
+    selectRange('hello there '.length, 'hello there world'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+    expect(cursorValue()).toBe(
+      '<font color="#000000" style="background-color: rgb(0, 214, 136);">hello</font> there <font color="#000000" style="background-color: rgb(0, 214, 136);">world</font>',
+    )
+
+    // place a collapsed caret inside "hello" and toggle the background color off
+    selectRange(2, 2)
+    await dispatch(formatSelection('backColor', 'bg'))
+
+    // only the background surrounding the caret is removed; "world" keeps its background
+    expect(cursorValue()).toBe(
+      'hello there <font color="#000000" style="background-color: rgb(0, 214, 136);">world</font>',
+    )
+  })
+
   // a background color applied over a bold thought must keep both the <b> and the color <font>
   it('preserves bold when applying a background color to the whole thought', async () => {
     await dispatch([newThought({ value: 'One' })])
