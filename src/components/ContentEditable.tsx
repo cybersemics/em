@@ -29,7 +29,7 @@ const ContentEditable = React.memo(
 
     useEffect(
       () => {
-        if (contentRef.current) {
+        if (contentRef.current && contentRef.current.innerHTML !== html) {
           contentRef.current.innerHTML = html
         }
       },
@@ -45,7 +45,10 @@ const ContentEditable = React.memo(
           editableNonceRef.current !== editableNonce ||
           (prevHtmlRef.current !== html && allowInnerHTMLChange.current)
         ) {
-          contentRef.current!.innerHTML = html
+          // Skip a no-op assignment so a range restored by formatSelection is not destroyed by the React effect.
+          if (contentRef.current!.innerHTML !== html) {
+            contentRef.current!.innerHTML = html
+          }
           prevHtmlRef.current = html
         }
       },

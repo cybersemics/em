@@ -54,7 +54,8 @@ const registerNativeUndoStep = (html: string): void => {
 }
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline, code, color, or removeFormat.
- * Computes the new HTML synchronously with the DOM (no document.execCommand) and dispatches a single editThought/setDescendant (#4637). */
+ * Computes the new HTML synchronously and dispatches a single editThought/setDescendant (#4275, #4637).
+ */
 export const formatSelectionActionCreator =
   (command: FormatCommand, color?: ColorToken): Thunk =>
   (dispatch, getState) => {
@@ -138,6 +139,8 @@ export const formatSelectionActionCreator =
 
     if (newValue === value || !path) return
 
+    const partialThought = !whole && !state.noteFocus
+
     // Capture the caret's plain-text offset within the note before overwriting its value. Overwriting
     // re-renders the note's ContentEditable, which drops the caret; restoring the offset via setNoteFocus
     // places it back where the user left off instead of jumping to the start/end of the note (#4630).
@@ -147,6 +150,13 @@ export const formatSelectionActionCreator =
     // Only call document.execCommand when the keyboard is open and the caret is on a thought.
     // This avoids messy and buggy focus-management logic.
     if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
+
+    // Keep partial thought formatting synchronous with the live editable. Restoring the range immediately after the
+    // write preserves the logical selection.
+    if (partialThought) {
+      contentEditable.innerHTML = newValue
+      selection.setRange(contentEditable, { start, end })
+    }
 
     dispatch(
       state.noteFocus
@@ -163,8 +173,9 @@ export const formatSelectionActionCreator =
               oldValue: value,
               newValue,
               path: simplifyPath(state, path),
-              // force the ContentEditable to update
-              force: true,
+              // Force the ContentEditable to update when formatting the whole thought. Partial thought formatting is
+              // applied to the live DOM above without a forced render.
+              force: whole,
             }),
           ],
     )
