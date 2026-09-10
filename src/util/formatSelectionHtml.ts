@@ -201,6 +201,23 @@ const resolveColors = (
   return { color: CONTRAST_COLOR, background: colorValue ?? null }
 }
 
+/** Expands the range outward over every formatting element whose entire text it already covers, so that the element
+ * travels with the extracted content instead of being left behind empty. Without this, coloring text that fills a
+ * formatting element strips that formatting whenever the range sits wholly within one text node — which is what happens
+ * when the formatted text starts at the beginning of the thought (#5507). Expanding also puts the color outside the
+ * element rather than inside it, which <u> and <strike> require in order to draw their line in it. */
+const expandOverCoveredFormatting = (container: HTMLElement, range: Range) => {
+  const { commonAncestorContainer } = range
+  let el: Node | null =
+    commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+      ? commonAncestorContainer
+      : commonAncestorContainer.parentNode
+  while (el && el !== container && isFormattingElement(el) && range.toString() === (el.textContent ?? '')) {
+    range.selectNode(el)
+    el = el.parentNode
+  }
+}
+
 /** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
  * single <font> element that carries both the color attribute and the background-color style. The color command fully
  * redetermines both properties (see resolveColors), so existing color/background wrappers within the range are stripped
@@ -213,6 +230,8 @@ const applyColor = (
   defaultColor: string | undefined,
   defaultBackgroundColor: string | undefined,
 ) => {
+  expandOverCoveredFormatting(container, range)
+
   // extract the range into a temp container so existing color/background wrappers can be stripped
   const temp = document.createElement('div')
   temp.appendChild(range.extractContents())

@@ -247,7 +247,7 @@ describe('formatSelection color', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5507
-  it.skip('keeps the formatting of a colored substring at the start of a thought', async () => {
+  it('keeps the formatting of a colored substring at the start of a thought', async () => {
     await dispatch([newThought({ value: '<b>ab</b>c' })])
 
     selectRange(0, 2)
