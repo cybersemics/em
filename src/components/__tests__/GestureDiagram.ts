@@ -211,7 +211,7 @@ describe('geometry-based framing', () => {
     expect(markup).toContain('aspect-ratio:70 / 50')
   })
 
-  it('renders normalized rdld geometry without a transform or stroke compensation', () => {
+  it('renders rdld geometry without a transform or stroke compensation', () => {
     const markup = render({ ...props, path: 'rdld' })
     const renderedStrokeWidth = Math.max(
       ...[...markup.matchAll(/<path[^>]*stroke-width="([^"]+)"/g)].map(([, value]) => +value),

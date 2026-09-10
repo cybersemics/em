@@ -24,50 +24,26 @@ interface SegmentedGradientGestureRendererProps {
 }
 
 /** Defines the four historical gradients used by the rdld question-mark glyph. */
-const MobileCommandUniverseGradients = ({ geometry }: { geometry: GestureGeometry }) => {
-  const [first, , third, last] = geometry.segments
-  const firstRadius = first.to.x - first.from.x
-  return (
-    <>
-      <radialGradient
-        cx={first.from.x}
-        cy={first.from.y}
-        r={firstRadius}
-        id='rdld-gradient-0'
-        gradientUnits='userSpaceOnUse'
-      >
-        <stop offset='0%' className='rdld-gradient-0-start' />
-        <stop offset='100%' className='rdld-gradient-0-stop' />
-      </radialGradient>
-      <linearGradient id='rdld-gradient-1' gradientUnits='userSpaceOnUse'>
-        <stop offset='0%' className='rdld-gradient-1-start' />
-        <stop offset='100%' className='rdld-gradient-1-stop' />
-      </linearGradient>
-      {/* Preserve the two historical radial falloffs as the glyph's coordinates are normalized. */}
-      <radialGradient
-        cx={third.from.x}
-        cy={third.from.y}
-        r={(firstRadius * 18.5) / 33.3}
-        id='rdld-gradient-2'
-        gradientUnits='userSpaceOnUse'
-      >
-        <stop offset='0%' className='rdld-gradient-2-start' />
-        <stop offset='100%' className='rdld-gradient-2-stop' />
-      </radialGradient>
-      <linearGradient
-        x1={last.from.x}
-        y1={last.from.y}
-        x2={last.to.x}
-        y2={last.to.y}
-        id='rdld-gradient-3'
-        gradientUnits='userSpaceOnUse'
-      >
-        <stop offset='0%' className='rdld-gradient-3-start' />
-        <stop offset='100%' className='rdld-gradient-3-stop' />
-      </linearGradient>
-    </>
-  )
-}
+const MobileCommandUniverseGradients = () => (
+  <>
+    <radialGradient cx={29.7} cy={13.5} r={33.3} id='rdld-gradient-0' gradientUnits='userSpaceOnUse'>
+      <stop offset='0%' className='rdld-gradient-0-start' />
+      <stop offset='100%' className='rdld-gradient-0-stop' />
+    </radialGradient>
+    <linearGradient id='rdld-gradient-1' gradientUnits='userSpaceOnUse'>
+      <stop offset='0%' className='rdld-gradient-1-start' />
+      <stop offset='100%' className='rdld-gradient-1-stop' />
+    </linearGradient>
+    <radialGradient cx={54} cy={40.5} r={18.5} id='rdld-gradient-2' gradientUnits='userSpaceOnUse'>
+      <stop offset='0%' className='rdld-gradient-2-start' />
+      <stop offset='100%' className='rdld-gradient-2-stop' />
+    </radialGradient>
+    <linearGradient x1={45} y1={58.5} x2={45} y2={72} id='rdld-gradient-3' gradientUnits='userSpaceOnUse'>
+      <stop offset='0%' className='rdld-gradient-3-start' />
+      <stop offset='100%' className='rdld-gradient-3-stop' />
+    </linearGradient>
+  </>
+)
 
 /** Defines the historical radial gradient used for one rounded arc. */
 const ArcGradient = ({
@@ -172,7 +148,7 @@ const SegmentedGradientGestureRenderer = ({
     <>
       <defs>
         {extendedPath === 'rdld' ? (
-          <MobileCommandUniverseGradients geometry={geometry} />
+          <MobileCommandUniverseGradients />
         ) : (
           segments.map((segment, index) =>
             segment.kind === 'arc' ? (
