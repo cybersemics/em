@@ -9,9 +9,7 @@ import FadeTransition from '../FadeTransition'
 import Dialog from './Dialog'
 import DialogHeader from './DialogHeader'
 
-/**
- * Pre-rendered hidden divs that force the browser to fetch the dialog's decorative AVIFs ahead of time, so they are cached when the dialog opens. Same workaround pattern used by CommandCenter's HiddenOverlay. Always mounted because the parent is rendered at the AppComponent level.
- */
+/** Preloads the decorative dialog images before the user opens Commands. */
 const HiddenDialogAssets = () => (
   <>
     <div className={css({ backgroundImage: 'url(/img/dialog/dialog-background-glow.avif)', visibility: 'hidden' })} />
@@ -20,7 +18,7 @@ const HiddenDialogAssets = () => (
   </>
 )
 
-/** Composes the Commands dialog without owning history mechanics. */
+/** Composes the Commands dialog without owning history or animation mechanics. */
 const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
   const dispatch = useDispatch()
   const nodeRef = useRef<HTMLDivElement>(null)

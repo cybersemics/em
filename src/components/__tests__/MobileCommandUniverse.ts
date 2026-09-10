@@ -6,23 +6,21 @@ import indentCommand from '../../commands/indent'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 
+// These tests cover navigation and focus, not elapsed motion time. Use real Motion with zero-duration settings.
+vi.mock('../CommandUniverse/commandUniverseMotion', () => ({ default: { duration: 0, ease: 'linear' } }))
+
 beforeEach(createTestApp)
 afterEach(async () => {
+  // Motion schedules cleanup on its shared frame loop. Unmount before flushing/resetting the fake clock.
   cleanup()
   await cleanupTestApp()
 })
 
-/** Opens the Commands dialog and settles its lazy imports. */
-const openCommandUniverse = async () => {
+it('opens command details even when the command cannot execute in the current context', async () => {
   await act(async () => {
     store.dispatch(toggleMobileCommandUniverse({ value: true }))
-    await vi.dynamicImportSettled()
     await vi.runAllTimersAsync()
   })
-}
-
-it('opens command details even when the command cannot execute in the current context', async () => {
-  await openCommandUniverse()
   expect(indentCommand.canExecute(store.getState())).toBe(false)
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   await user.click(screen.getByRole('button', { name: 'Indent' }))
@@ -32,7 +30,10 @@ it('opens command details even when the command cannot execute in the current co
 })
 
 it.each(['{Enter}', ' '])('opens a detail page with %s and restores focus after Back', async key => {
-  await openCommandUniverse()
+  await act(async () => {
+    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    await vi.runAllTimersAsync()
+  })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
   const cell = screen.getByRole('button', { name: 'New Thought' })
   // Focus is the keyboard user's starting position. Activation still goes through the real key event.
