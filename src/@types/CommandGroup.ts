@@ -1,6 +1,6 @@
 import type CommandDifficulty from './CommandDifficulty'
 
-/** A configured command category, including its stable ID, inferred from the command hierarchy. */
+/** Contains a group of commands, organized by their purpose. */
 type CommandGroup = CommandDifficulty['groups'][number]
 
 export default CommandGroup
