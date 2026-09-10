@@ -396,6 +396,8 @@ That branch's manual workflow accepts `diagnostic_browser` (`v1` or `v2`) and `f
 
 `compare_scheduler` instead runs two full v2 suites on the same runner/build: default scheduling and only `DeferRendererTasksAfterInput` disabled. `scheduler_order` reverses the phase order. Both outcomes are retained; either failure fails the job. The observer forwards FileReader/IndexedDB calls unchanged while recording completion and captures native scheduler traces for the three suspect cases. This feature switch is a diagnostic control, not a proposed production/test-environment workaround.
 
+`compare_transport` selects a separate job that checks out pre-migration main at `2d98cbf2e5812f4a5ca946b757c73be47164652d` and uses its original v1 environment, application, tests, and snapshots. It runs the full suite twice against the same build, with no diagnostic observers: original launch flags and only `--disable-http2` added. `transport_order` reverses the order. Both JSON summaries are retained; an independent post-suite page records the browser version, arguments, and negotiated protocol without instrumenting test pages. This job does not use the migration checkout or regenerate baselines.
+
 Both paths install Microsoft Core Fonts, which packages non-free fonts used in snapshots.
 
 Browserless Chromium runs with HTTP/2 disabled because current Chromium can reset its certificate verifier while Vite's large module graph is loading, aborting the shared HTTP/2 session with `ERR_CERT_VERIFIER_CHANGED`; HTTPS, secure-context APIs, and WebSockets remain enabled.

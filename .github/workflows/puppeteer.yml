@@ -74,6 +74,15 @@ on:
         type: choice
         default: default-first
         options: [default-first, disabled-first]
+      compare_transport:
+        description: 'Run pre-migration main without observers, changing only HTTP/2'
+        type: boolean
+        default: false
+      transport_order:
+        description: 'Order of the pre-migration transport phases'
+        type: choice
+        default: original-first
+        options: [original-first, http1-first]
 
 # Supersede the in-progress run when a pull request is pushed again; its result is about to be
 # replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
@@ -108,7 +117,7 @@ jobs:
   run:
     name: Puppeteer
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0
+    if: ${{ !inputs.compare_transport && (github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0) }}
     services:
       browserless:
         image: ${{ inputs.diagnostic_browser == 'v1' && 'browserless/chrome:latest' || 'ghcr.io/browserless/chromium:v2.56.2' }}
@@ -208,4 +217,116 @@ jobs:
         with:
           name: pr-number
           path: pr-number.txt
+          if-no-files-found: ignore
+
+  transport:
+    name: Pre-migration transport control
+    if: github.event_name == 'workflow_dispatch' && inputs.compare_transport
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      browserless:
+        image: browserless/chrome:latest
+        ports:
+          - 7566:3000
+        env:
+          CONNECTION_TIMEOUT: -1
+    steps:
+      - name: Check out exact pre-migration main
+        uses: actions/checkout@v6
+        with:
+          ref: 2d98cbf2e5812f4a5ca946b757c73be47164652d
+
+      - name: Record baseline identity
+        run: |
+          git rev-parse HEAD
+          git status --porcelain
+          docker inspect '${{ job.services.browserless.id }}' --format '{{.Image}}'
+          docker image inspect browserless/chrome:latest --format '{{json .RepoDigests}}'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      - name: Build
+        run: yarn build
+
+      - name: Serve
+        uses: ./.github/actions/serve
+
+      - name: Compare original and HTTP/1-only transport without observers
+        env:
+          TRANSPORT_ORDER: ${{ inputs.transport_order }}
+        run: |
+          phases=(original http1)
+          if [ "$TRANSPORT_ORDER" = "http1-first" ]; then phases=(http1 original); fi
+          failed=0
+          for phase in "${phases[@]}"; do
+            export TRANSPORT_PHASE="$phase"
+            node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          import { execFileSync } from 'node:child_process'
+          const path = 'src/e2e/puppeteer-environment.ts'
+          const original = execFileSync('git', ['show', `HEAD:${path}`], { encoding: 'utf8' })
+          const marker = "      '--ignore-certificate-errors',"
+          if (original.split(marker).length !== 2 || original.includes('--disable-http2')) {
+            throw new Error('Unexpected baseline environment; refusing to modify it.')
+          }
+          fs.writeFileSync(path, process.env.TRANSPORT_PHASE === 'http1'
+            ? original.replace(marker, `${marker}\n      '--disable-http2',`)
+            : original)
+          NODE
+            git diff -- src/e2e/puppeteer-environment.ts
+            code=0
+            yarn test:puppeteer --run --reporter=default --reporter=json --outputFile="/tmp/em-transport-$phase.json" || code=$?
+            echo "TRANSPORT_PHASE_RESULT $phase $code"
+            if [ "$code" != "0" ]; then failed=1; fi
+            # Probe a separate page after the suite, never instrument the test pages.
+            node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          import puppeteer from 'puppeteer-core'
+          const source = fs.readFileSync('src/e2e/puppeteer-environment.ts', 'utf8')
+          const args = [...source.matchAll(/'(--[^']+)'/g)].map(match => match[1])
+          const browser = await puppeteer.connect({ browserWSEndpoint: `ws://localhost:7566?${args.join('&')}` })
+          try {
+            const context = await browser.createBrowserContext()
+            const page = await context.newPage()
+            await page.goto('https://172.17.0.1:3000/favicon.ico')
+            const protocol = await page.evaluate(() => performance.getEntriesByType('navigation')[0].nextHopProtocol)
+            const session = await browser.target().createCDPSession()
+            const commandLine = await session.send('Browser.getBrowserCommandLine')
+            const result = { phase: process.env.TRANSPORT_PHASE, version: await browser.version(), protocol, commandLine }
+            fs.writeFileSync(`/tmp/em-transport-${process.env.TRANSPORT_PHASE}-browser.json`, JSON.stringify(result, null, 2))
+            console.log(JSON.stringify(result))
+            await context.close()
+          } finally {
+            await browser.disconnect()
+          }
+          NODE
+          done
+          exit "$failed"
+
+      - name: Upload transport results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: transport-control
+          path: /tmp/em-transport-*.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload snapshot differences
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: __diff_output__
+          path: src/e2e/puppeteer/__tests__/__image_snapshots__/**/__diff_output__/
           if-no-files-found: ignore
