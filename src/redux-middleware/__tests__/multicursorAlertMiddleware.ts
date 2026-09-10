@@ -101,8 +101,9 @@ it('does not re-open the Command Center over an edited multiselection when the m
   expect(store.getState().showCommandCenter).toBe(false)
 
   // The multicursor count fluctuating while the multiselection is already being edited (e.g. a stray add/remove) is
-  // not the same event as starting a new multiselection with Open Command Center (which only ever runs from no
-  // multiselection, see openCommandCenter.ts), so it must not re-open the Command Center over the editing session.
+  // not the same event as starting a new multiselection, so it must not re-open the Command Center over the editing
+  // session. An explicit Open Command Center gesture still re-opens it, since that command sets showCommandCenter
+  // itself rather than going through this middleware (see openCommandCenter.ts).
   const pathB = contextToPath(store.getState(), ['b'])!
   store.dispatch(removeMulticursor({ path: pathB }))
   expect(store.getState().showCommandCenter).toBe(false)

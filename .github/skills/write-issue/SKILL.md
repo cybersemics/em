@@ -146,13 +146,45 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 
 `bug` for broken behaviour, `feature` for a request, `refactor` for a behaviour-preserving cleanup, `test` for test and CI work, `agent` for agent configuration and ops.
 
-Add `design-needed` when the correct behaviour has not been decided.
-
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
+
+## Sub-issues
+
+Work that only makes sense as part of a larger piece belongs to that piece as a sub-issue, not beside it as a sibling with a reference in the body. GitHub tracks the hierarchy: the parent shows its children and a completion count, closing a child advances it, and the children stay findable from the parent long after the thread that created them has scrolled away.
+
+Use it where one issue is a part of another — a feature broken into the pieces that build it, as [#5481](https://github.com/cybersemics/em/issues/5481) is by #5482 through #5488. Do not use it for two issues that merely touch the same code.
+
+Sub-issues and `Blocked by` are different relationships, and an issue can have both. Sub-issue is composition: this is *part of* that. `Blocked by` is sequencing: this cannot start until that is done. Siblings under one parent are frequently also blocked by each other, and that ordering has to be set separately.
+
+Set the relationship from the parent, with the child's numeric database id rather than its issue number:
+
+```bash
+gh api repos/cybersemics/em/issues/5482 --jq .id
+```
+
+```bash
+gh api --method POST repos/cybersemics/em/issues/5481/sub_issues -f sub_issue_id=<id>
+```
+
+`gh` may also expose this as a flag on `gh issue edit` depending on the version installed — check `gh issue edit --help` before falling back to the endpoint.
+
+Verify it landed, since a body reference and a relationship look alike once rendered:
+
+```bash
+gh issue view 5481 --repo cybersemics/em --json subIssuesSummary
+```
+
+A parent holds up to 100 sub-issues and the hierarchy nests up to 8 levels, neither of which any issue here is close to.
+
+The relationship is also what makes the backlog readable. `no:parent-issue` filters an issue list down to top-level work, and `parent-issue:cybersemics/em#5481` gives one feature's pieces:
+
+```bash
+gh issue list --repo cybersemics/em --search "is:open no:parent-issue"
+```
 
 ## Blocked by
 
-"Blocked by" is a GitHub relationship, not a line of body text. `Blocked by #5228` in the body renders as a plain reference: the issue is not marked blocked, it does not show as blocked in issue lists or projects, and #5228 does not show what it is holding up.
+"Blocked by" is a GitHub relationship, not a line of body text, and it is not the sub-issue relationship above — it orders two issues rather than nesting one inside the other. `Blocked by #5228` in the body renders as a plain reference: the issue is not marked blocked, it does not show as blocked in issue lists or projects, and #5228 does not show what it is holding up.
 
 Set the relationship with `gh`, at creation or after:
 
@@ -208,10 +240,13 @@ New issues often originate in a comment thread on another issue or PR.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
+- A piece of a larger feature opened as a sibling with `Part of #5481` in the body, where a sub-issue relationship is what tracks it.
 - A loose end left for the reader — an unruled-out alternative, a missing value, an unnamed platform — that the reporter could have answered before posting.
 
 ## When something is unknown
 
 Ask, as above. State whatever survives the answers in the preamble rather than omitting the issue.
 
-Do not guess Expected Behavior. Apply `design-needed` and leave the decision to a maintainer, since a guess there becomes a regression test asserting behaviour nobody chose.
+Do not guess Expected Behavior, since a guess there becomes a regression test asserting behaviour nobody chose.
+
+- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, break it down and ask more questions with the ask tool.

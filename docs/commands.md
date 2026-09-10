@@ -127,7 +127,13 @@ The **Command Universe** is the searchable command palette. Two flavors:
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
 - **`MobileCommandUniverse`** — mobile drawer opened by `openMobileCommandUniverse`, also reachable by gesture.
 
-Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), which defines the order: Navigation → Creating thoughts → Deleting thoughts → Moving thoughts → Editing thoughts → Oops → Special Views → Visibility → Settings → Help → Cancel.
+Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
+
+Help and Customize Toolbar present commands grouped by `COMMAND_DIFFICULTIES` (in [`constants.ts`](../src/constants.ts)), a two-level hierarchy of difficulty levels containing category groups, which defines the order: Beginner (Creating Thoughts → Navigation → Contexts) → Intermediate (Categorizing → Nudging → Deleting) → Advanced (Creating Thoughts II → Edit History → Notes → Views).
+
+`COMMAND_DIFFICULTIES` is the single source of truth for the hierarchy. `as const` preserves its literal IDs, and `satisfies` validates the structure and command references. `CommandDifficulty` and `CommandGroup` (in [`src/@types`](../src/@types)) are inferred from that readonly configuration, so their ID unions update automatically when entries are added or removed. Difficulty IDs and globally unique group IDs stay unchanged when titles, ordering, or group placement change; features referencing the hierarchy use `CommandDifficulty['id']` and `CommandGroup['id']`. The constant stores command IDs and presentation order; user learning progress belongs separately.
+
+`useCommandList` resolves command IDs into `Command[]` and returns `sections`: display-only `CommandSection` objects with `{ id, title, difficulty?, commands }`. Search results and the alphabetical list have their own IDs and no difficulty. `CommandTable` and `MobileCommandUniverse` render those sections using their stable IDs as React keys. `CommandTable` detects difficulty boundaries by ID and renders each difficulty title above its first visible section; `CommandTableSection` renders the titled command table within each section. Configuration groups remain categories, while display sections can also represent search results or the alphabetical list.
 
 Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
 
@@ -222,7 +228,7 @@ The copy button to the right of the slider copies a **bug report** for the actio
 3. Pick at least one activation surface:
    - `keyboard` — a `Key` object or string. The `index()` startup pass will warn if you collide with an existing shortcut.
    - `gesture` — a string of `l/r/u/d` characters (or array of strings).
-   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate group in `COMMAND_GROUPS` ([`constants.ts`](../src/constants.ts)).
+   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate category group of the appropriate difficulty level in `COMMAND_DIFFICULTIES` ([`constants.ts`](../src/constants.ts)).
 4. Decide multicursor behavior. If you skip this and set `multicursor: true`, consider whether `filter` or `execMulticursor` is more appropriate before merging.
 5. Add tests under `src/commands/__tests__/`.
 
@@ -343,6 +349,10 @@ https://github.com/user-attachments/assets/5466ad2a-6b7c-4869-a23c-03d9d752dc9b
 ### Open Command Center
 
 Opens a special keyboard which contains commands that can be executed on the cursor thought. Opening it selects the cursor thought as a multicursor, so every command tapped there runs through `executeCommandWithMulticursor` on a selection of exactly one thought. A `disallow` command is therefore still executable from the Command Center; it only alerts once a second thought is selected.
+
+Both [`openCommandCenter`](../src/commands/openCommandCenter.ts) and [`closeCommandCenter`](../src/commands/closeCommandCenter.ts) set `showCommandCenter` themselves rather than leaving [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) to derive it from the selection they changed. The middleware governs multiselection changes, and it deliberately ignores them in states where the Command Center is hidden with the selection intact — over an edit ([Clear Thought](cursor-and-caret.md#multi-edit-mode)), under the Undo Slider, and while `isMulticursorExecuting` is set. In each of those the user can see the panel's actual state, so an explicit gesture must move it rather than be filtered out: swiping up over a hidden panel re-opens it (the selection is already there, so there is nothing for `addMulticursor` to add), and swiping down over a visible one closes it outright instead of clearing the selection and waiting for the middleware to notice. Deciding on `showCommandCenter` rather than on `hasMulticursor` is what keeps the panel from getting stuck open or stuck closed with its own gesture inert.
+
+Swiping up with no cursor and nothing selected cannot open the Command Center, and swiping up while it is already open is more likely to be an attempt to scroll; both show the scroll zone help alert on the second attempt within ten seconds.
 
 ### Close Command Center
 
