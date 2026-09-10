@@ -36,12 +36,13 @@ const SNAP_STANDARD = 1
 /** Snap index of the expanded stage. */
 const SNAP_EXPANDED = 2
 
-/** How much taller the drawer is in its expanded stage than in its standard stage, as a multiple of the font size. ~50px at the default font size. */
-const STAGE_OFFSET_REM = 2.778
-/** Height of the band at the bottom of the drawer reserved for the expand chevron, as a multiple of the font size. ~28px at the default font size. */
-const CHEVRON_BAND_REM = 1.556
+/** The offset in rem between the standard and expanded stages. */
+const STAGE_OFFSET_REM = 2.78
 
-/** Dimensions of the chevron path, in px, matching the Command Center design. These are the path's own bounds, as reported by Figma; the centre-aligned stroke adds half its width beyond them on every side, so the svg box is larger by CHEVRON_STROKE in each axis. */
+/** Height of the chevron area at the bottom of the drawer reserved for the expand chevron. */
+const CHEVRON_BAND_REM = 1.56
+
+/** Dimensions of the chevron path in px. */
 const CHEVRON_WIDTH = 25
 const CHEVRON_HEIGHT = 7
 const CHEVRON_STROKE = 5
@@ -179,7 +180,6 @@ const CommandCenter = () => {
    * the content root below, because `css()` is extracted at build time and cannot read runtime values.
    */
   const stageOffset = Math.round(fontSize * STAGE_OFFSET_REM)
-  const chevronBand = Math.round(fontSize * CHEVRON_BAND_REM)
 
   /* Negative snap points are measured from the top of the sheet, so this resolves to
    * [closed, sheetHeight - stageOffset, sheetHeight] — i.e. the standard stage leaves the bottom
@@ -501,17 +501,12 @@ const CommandCenter = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   margin: '0 1.333rem',
-                  /** The stage offset is what makes the drawer taller than the standard stage needs; at the standard stage it hangs below the screen and is clipped. The `max()` mirrors the one on the chevron band below, so the drawer grows by however much the band rises and the gap above the chevron is preserved. */
-                  paddingBottom:
-                    'calc(1.333rem + max({spacing.safeAreaBottom}, 0.889rem) + var(--command-center-chevron-band) + var(--command-center-stage-offset))',
                   gap: '0.889rem',
                 })}
-                style={
-                  {
-                    '--command-center-stage-offset': `${stageOffset}px`,
-                    '--command-center-chevron-band': `${chevronBand}px`,
-                  } as React.CSSProperties
-                }
+                style={{
+                  /** The `max()` mirrors the one on the chevron band below, so the drawer grows by however much the band rises and the gap above the chevron is preserved. The stage offset is not here: it is the spacer element at the end of this container. */
+                  paddingBottom: `calc(1.333rem + max(${token('spacing.safeAreaBottom')}, 0.889rem) + ${CHEVRON_BAND_REM}rem)`,
+                }}
               >
                 <div className={css({ position: 'relative' })}>
                   <motion.div
@@ -544,12 +539,14 @@ const CommandCenter = () => {
                       top: 0,
                       left: 0,
                       right: 0,
-                      bottom: 'calc(-1 * (var(--command-center-chevron-band) + var(--command-center-stage-offset)))',
                       display: 'flex',
-                      flexDirection: 'column',
                       minHeight: 0,
                     })}
-                    style={{ opacity: extendedViewOpacity, pointerEvents: expandedPointerEvents }}
+                    style={{
+                      opacity: extendedViewOpacity,
+                      pointerEvents: expandedPointerEvents,
+                      bottom: `calc(-1 * (${CHEVRON_BAND_REM}rem + ${STAGE_OFFSET_REM}rem))`,
+                    }}
                   >
                     <div
                       ref={setScrollerRef}
@@ -569,11 +566,6 @@ const CommandCenter = () => {
                 <motion.div
                   /** The chevron band: the full-width strip at the bottom edge of the standard stage, just above the safe area inset. It is full width rather than just the button so that a thumb swipe landing beside the arrow still falls on the band, which is where the expand affordance reads as being. */
                   className={css({
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    /** `max()` gives the chevron a 0.889rem floor beneath it where there is no safe-area inset — a browser, or a device without one — while leaving it where it is on iOS, whose home indicator already claims more than that. */
-                    bottom: 'calc(var(--command-center-stage-offset) + max({spacing.safeAreaBottom}, 0.889rem))',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
