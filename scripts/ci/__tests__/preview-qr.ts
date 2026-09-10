@@ -10,7 +10,7 @@ import {
   QR_FILE,
   START,
   decide,
-  formatDate,
+  formatTimestamp,
   parseBody,
   renderBlock,
   repairAfterAttach,
@@ -28,35 +28,42 @@ const pendingB = { sha: shaB, createdAt: '2026-09-04T12:30:00Z' }
 const bodyWith = (state: Parameters<typeof renderBlock>[0]) =>
   spliceBody('## Summary\n\nHuman-written description.', renderBlock(state))
 
-describe('formatDate', () => {
-  it('formats the deployment timestamp as a short UTC date', () => {
-    expect(formatDate('2026-09-04T23:59:59Z')).toBe('Sep 4, 2026')
-    expect(formatDate('2026-12-31T23:59:59Z')).toBe('Dec 31, 2026')
+describe('formatTimestamp', () => {
+  it('formats the deployment timestamp as a short UTC date and time', () => {
+    expect(formatTimestamp('2026-09-04T23:59:59Z')).toBe('Sep 4, 2026, 11:59 PM UTC')
+    expect(formatTimestamp('2026-12-31T09:05:00Z')).toBe('Dec 31, 2026, 9:05 AM UTC')
   })
 })
 
 describe('renderBlock', () => {
-  it('renders the stable state collapsed, with the date and short sha in the summary', () => {
+  it('renders the stable state collapsed, with the timestamp and short sha in the summary', () => {
     const block = renderBlock({ stable: stableA, pending: null })!
     expect(block.startsWith(START)).toBe(true)
     expect(block.endsWith(END)).toBe(true)
-    expect(block).toContain('<details>\n<summary>Preview · Sep 4, 2026 · <code>a1b2c3d</code></summary>\n\n')
+    expect(block).toContain(
+      '<details>\n<summary>Preview Deployment · Sep 4, 2026, 10:00 AM UTC · a1b2c3d</summary>\n\n',
+    )
     expect(block).not.toContain('<details open')
-    expect(block).toContain(`[![Preview deployment](${imageA})](${stableA.url})`)
-    expect(block).toContain(`[Open preview](${stableA.url})`)
+    expect(block).toContain(
+      `<a href="${stableA.url}" target="_blank" rel="noopener noreferrer">![Preview deployment](${imageA})</a>`,
+    )
+    expect(block).not.toContain('Open preview')
     expect(block).not.toContain('Generating')
   })
 
   it('renders the generating state over the previous QR with the incoming metadata in the summary', () => {
     const block = renderBlock({ stable: stableA, pending: pendingB })!
-    expect(block).toContain('<summary>Preview · Generating new QR code… · Sep 4, 2026 · <code>d4e5f6a</code></summary>')
-    expect(block).toContain(`[![Preview deployment](${imageA})](${stableA.url})`)
-    expect(block).toContain(`[Open current preview](${stableA.url})`)
+    expect(block).toContain(
+      '<summary>Preview Deployment · Generating new QR code… · Sep 4, 2026, 12:30 PM UTC · d4e5f6a</summary>',
+    )
+    expect(block).toContain(
+      `<a href="${stableA.url}" target="_blank" rel="noopener noreferrer">![Preview deployment](${imageA})</a>`,
+    )
   })
 
   it('renders the first generating state without any QR', () => {
     const block = renderBlock({ stable: null, pending: pendingB })!
-    expect(block).toContain('Generating new QR code… · Sep 4, 2026 · <code>d4e5f6a</code>')
+    expect(block).toContain('Generating new QR code… · Sep 4, 2026, 12:30 PM UTC · d4e5f6a')
     expect(block).toContain('Preview deployment is being generated.')
     expect(block).not.toContain('![')
   })
@@ -77,7 +84,7 @@ describe('renderBlock', () => {
 
   it('separates the image from the HTML tags with blank lines so GitHub renders it', () => {
     const block = renderBlock({ stable: stableA, pending: null })!
-    expect(block).toMatch(/<\/summary>\n\n\[!\[/)
+    expect(block).toMatch(/<\/summary>\n\n<a href="[^"]+" target="_blank" rel="noopener noreferrer">!\[/)
     expect(block).toMatch(/\n\n<\/details>\n/)
   })
 })
@@ -265,7 +272,9 @@ describe('repairAfterAttach', () => {
   it('moves an appended attachment into the block and removes the local path', () => {
     const repaired = repairAfterAttach({ before: sent, after: `${sent}\n\n![${QR_FILE}](${imageB})`, state: target })!
     expect(repaired).not.toContain(QR_FILE)
-    expect(repaired).toContain(`[![Preview deployment](${imageB})](https://em-b.vercel.app)`)
+    expect(repaired).toContain(
+      `<a href="https://em-b.vercel.app" target="_blank" rel="noopener noreferrer">![Preview deployment](${imageB})</a>`,
+    )
     expect(repaired.endsWith(END)).toBe(true)
     expect(repaired.split('![Preview deployment]')).toHaveLength(2)
     expect(repaired.split(imageB)).toHaveLength(2)
@@ -277,6 +286,6 @@ describe('repairAfterAttach', () => {
     expect(repairAfterAttach({ before, after: before, state: target })).toBeNull()
     const repaired = repairAfterAttach({ before, after: `${before}\n\n![${QR_FILE}](${imageB})`, state: target })!
     expect(repaired).toContain(authored)
-    expect(repaired).toContain(`[![Preview deployment](${imageB})]`)
+    expect(repaired).toContain(`![Preview deployment](${imageB})</a>`)
   })
 })
