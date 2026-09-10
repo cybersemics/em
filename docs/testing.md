@@ -398,6 +398,8 @@ That branch's manual workflow accepts `diagnostic_browser` (`v1` or `v2`) and `f
 
 `compare_transport` selects a separate job that checks out pre-migration main at `2d98cbf2e5812f4a5ca946b757c73be47164652d` and uses its original v1 environment, application, tests, and snapshots. It runs the full suite twice against the same build, with no diagnostic observers: original launch flags and only `--disable-http2` added. `transport_order` reverses the order. Both JSON summaries are retained; an independent post-suite page records the browser version, arguments, and negotiated protocol without instrumenting test pages. This job does not use the migration checkout or regenerate baselines.
 
+`compare_nodelay` checks out the exact migration test revision `7f2592741f845fb640337d89f9b40a652b15d6c0` and runs three uninstrumented full Chrome 151 suites against one build. HTTP/2 remains disabled. Each phase starts a fresh Vite preview server; the intervention only sets `TCP_NODELAY` on accepted TLS sockets. `nodelay_order` chooses default–nodelay–default or its reverse. All phase results are retained. Separate post-suite pages verify HTTP/1.1 and record SQLite module delivery times, without observing or waiting for app initialization in test pages. This is a causal diagnostic control, not an application fix.
+
 Both paths install Microsoft Core Fonts, which packages non-free fonts used in snapshots.
 
 Browserless Chromium runs with HTTP/2 disabled because current Chromium can reset its certificate verifier while Vite's large module graph is loading, aborting the shared HTTP/2 session with `ERR_CERT_VERIFIER_CHANGED`; HTTPS, secure-context APIs, and WebSockets remain enabled.

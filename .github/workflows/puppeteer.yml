@@ -83,6 +83,15 @@ on:
         type: choice
         default: original-first
         options: [original-first, http1-first]
+      compare_nodelay:
+        description: 'Three-phase Chrome 151 control changing only server TCP_NODELAY'
+        type: boolean
+        default: false
+      nodelay_order:
+        description: 'Reverse the three-phase packet-delay control'
+        type: choice
+        default: default-first
+        options: [default-first, nodelay-first]
 
 # Supersede the in-progress run when a pull request is pushed again; its result is about to be
 # replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
@@ -117,7 +126,7 @@ jobs:
   run:
     name: Puppeteer
     runs-on: ubuntu-latest
-    if: ${{ !inputs.compare_transport && (github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0) }}
+    if: ${{ !inputs.compare_transport && !inputs.compare_nodelay && (github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0) }}
     services:
       browserless:
         image: ${{ inputs.diagnostic_browser == 'v1' && 'browserless/chrome:latest' || 'ghcr.io/browserless/chromium:v2.56.2' }}
@@ -221,7 +230,7 @@ jobs:
 
   transport:
     name: Pre-migration transport control
-    if: github.event_name == 'workflow_dispatch' && inputs.compare_transport
+    if: github.event_name == 'workflow_dispatch' && inputs.compare_transport && !inputs.compare_nodelay
     runs-on: ubuntu-latest
     timeout-minutes: 30
     services:
@@ -320,6 +329,141 @@ jobs:
         with:
           name: transport-control
           path: /tmp/em-transport-*.json
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload snapshot differences
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: __diff_output__
+          path: src/e2e/puppeteer/__tests__/__image_snapshots__/**/__diff_output__/
+          if-no-files-found: ignore
+
+  nodelay:
+    name: Chrome 151 packet-delay control
+    if: github.event_name == 'workflow_dispatch' && inputs.compare_nodelay
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      browserless:
+        image: ghcr.io/browserless/chromium:v2.56.2
+        ports:
+          - 7566:3000
+        env:
+          TIMEOUT: 0
+    steps:
+      - name: Check out exact migration test revision
+        uses: actions/checkout@v6
+        with:
+          ref: 7f2592741f845fb640337d89f9b40a652b15d6c0
+
+      - name: Record identity and install original test fonts
+        run: |
+          git rev-parse HEAD
+          docker inspect '${{ job.services.browserless.id }}' --format '{{.Image}}'
+          docker image inspect ghcr.io/browserless/chromium:v2.56.2 --format '{{json .RepoDigests}}'
+          ./src/e2e/puppeteer/install-browserless-fonts.sh '${{ job.services.browserless.id }}'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set Node.js version
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        uses: ./.github/actions/install
+
+      - name: Build once for all three phases
+        run: yarn build
+
+      - name: Compare packet delay without test observers
+        env:
+          NODELAY_ORDER: ${{ inputs.nodelay_order }}
+        run: |
+          phases=(default nodelay default)
+          if [ "$NODELAY_ORDER" = "nodelay-first" ]; then phases=(nodelay default nodelay); fi
+          failed=0
+          preview_pid=''
+          trap 'if [ -n "$preview_pid" ]; then kill "$preview_pid" 2>/dev/null || true; fi' EXIT
+          for index in 0 1 2; do
+            export NODELAY_PHASE="$index-${phases[$index]}"
+            export NODELAY_ENABLED="${phases[$index]}"
+            # Same Vite config/build as `vite preview --port 3000 --host`.
+            # Start a fresh server in EVERY phase, not only the intervention.
+            node --input-type=module <<'NODE' &
+          import { preview } from 'vite'
+          const server = await preview({ preview: { host: true, port: 3000, strictPort: true } })
+          if (process.env.NODELAY_ENABLED === 'nodelay') {
+            server.httpServer.on('secureConnection', socket => socket.setNoDelay(true))
+          }
+          console.log('PACKET_CONTROL_SERVER', process.env.NODELAY_PHASE, process.version)
+          NODE
+            preview_pid=$!
+            ready=false
+            for attempt in {1..30}; do
+              if ! kill -0 "$preview_pid" 2>/dev/null; then echo 'Preview exited unexpectedly'; exit 2; fi
+              status=$(curl -s -o /dev/null -w '%{http_code}' -k https://localhost:3000 || true)
+              if [ "$status" = '200' ]; then ready=true; break; fi
+              sleep 1
+            done
+            if [ "$ready" != true ]; then echo 'Preview did not become ready'; exit 2; fi
+            git diff --exit-code -- src package.json yarn.lock vite.config.ts vitest.config.ts
+            code=0
+            yarn test:puppeteer --run --reporter=default --reporter=json --outputFile="/tmp/em-nodelay-$NODELAY_PHASE.json" || code=$?
+            echo "NODELAY_PHASE_RESULT $NODELAY_PHASE $code"
+            if [ "$code" != 0 ]; then failed=1; fi
+            # Only this separate post-suite page collects timing; test pages are untouched.
+            node --input-type=module <<'NODE' || failed=1
+          import fs from 'node:fs'
+          import puppeteer from 'puppeteer-core'
+          const source = fs.readFileSync('src/e2e/puppeteer-environment.ts', 'utf8')
+          const args = [...source.matchAll(/'(--[^']+)'/g)].map(match => match[1])
+          const launch = Buffer.from(JSON.stringify({ args, defaultViewport: null })).toString('base64')
+          const browser = await puppeteer.connect({ browserWSEndpoint: `ws://localhost:7566/chromium?launch=${encodeURIComponent(launch)}` })
+          try {
+            const context = await browser.createBrowserContext()
+            const page = await context.newPage()
+            await page.goto('https://172.17.0.1:3000/favicon.ico')
+            const timing = await page.evaluate(async () => {
+              performance.clearResourceTimings()
+              for (let i = 0; i < 3; i++) {
+                for (const file of ['wa-sqlite.mjs', 'sqlite-api.js', 'sqlite-constants.js']) {
+                  const response = await fetch('/wa-sqlite/' + file, { cache: 'no-store' })
+                  if (!response.ok) throw new Error('Resource probe failed: ' + response.status)
+                  await response.arrayBuffer()
+                }
+              }
+              return performance.getEntriesByType('resource').map(entry => entry.toJSON())
+            })
+            const session = await browser.target().createCDPSession()
+            const commandLine = await session.send('Browser.getBrowserCommandLine')
+            const result = { phase: process.env.NODELAY_PHASE, version: await browser.version(), commandLine, timing }
+            fs.writeFileSync(`/tmp/em-nodelay-${process.env.NODELAY_PHASE}-browser.json`, JSON.stringify(result, null, 2))
+            console.log(JSON.stringify(result))
+            if (timing.length !== 9 || timing.some(entry => entry.nextHopProtocol !== 'http/1.1')) {
+              throw new Error('Invalid control: expected nine HTTP/1.1 module downloads.')
+            }
+            await context.close()
+          } finally {
+            await browser.disconnect()
+          }
+          NODE
+            kill "$preview_pid"
+            wait "$preview_pid" || true
+            preview_pid=''
+          done
+          exit "$failed"
+
+      - name: Upload packet-delay results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: packet-delay-control
+          path: /tmp/em-nodelay-*.json
           if-no-files-found: error
           retention-days: 7
 
