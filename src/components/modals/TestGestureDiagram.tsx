@@ -48,7 +48,6 @@ const ModalTestGestureDiagram = () => {
       <GestureDiagram
         path='rdr'
         size={48}
-        sizing='uniform'
         arrowSize={4}
         strokeWidth={4}
         arrowhead='outlined-wide'
@@ -59,7 +58,6 @@ const ModalTestGestureDiagram = () => {
       <GestureDiagram
         path='lurd'
         size={48}
-        sizing='uniform'
         arrowSize={4}
         strokeWidth={4}
         rounded
@@ -70,7 +68,6 @@ const ModalTestGestureDiagram = () => {
       <GestureDiagram
         path='rdld'
         size={48}
-        sizing='uniform'
         arrowSize={4}
         strokeWidth={4}
         gradient={COMMAND_UNIVERSE_GRADIENT}
@@ -82,7 +79,6 @@ const ModalTestGestureDiagram = () => {
           path='rdrd'
           cssRaw={css.raw({ display: 'block' })}
           size={48}
-          sizing='uniform'
           arrowSize={4}
           strokeWidth={4}
           arrowhead='outlined-wide'

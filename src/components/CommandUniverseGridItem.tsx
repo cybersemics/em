@@ -77,7 +77,6 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
               path={gestureString(command)}
               cssRaw={css.raw({ display: 'block' })}
               size={150}
-              sizing='uniform'
               arrowSize={1}
               strokeWidth={12}
               arrowhead='outlined-wide'
