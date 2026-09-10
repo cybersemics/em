@@ -23,6 +23,9 @@ const PuppeteerEnvironment: Environment = {
     const launch = Buffer.from(
       JSON.stringify({
         args,
+        // Only our test client should set the viewport. Browserless's own Page otherwise saves
+        // competing desktop metrics that Chromium's RenderDocument can reapply on navigation.
+        defaultViewport: null,
       }),
     ).toString('base64')
 

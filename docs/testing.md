@@ -388,6 +388,8 @@ Related tests: [/src/e2e/puppeteer](../src/e2e/puppeteer)
 
 The Puppeteer tests are run via Vitest using the `puppeteer-e2e` project defined in [vitest.config.ts](../vitest.config.ts), which uses a custom [puppeteer-environment.ts](../src/e2e/puppeteer-environment.ts). Locally, the runner script at [src/e2e/puppeteer/test-puppeteer.sh](../src/e2e/puppeteer/test-puppeteer.sh) starts the pinned Browserless v2 container and a dedicated Vite dev server on port 2552. In CI, the workflow supplies the same Browserless service and the built app server.
 
+The test client is the sole viewport owner: Browserless's server launch options set `defaultViewport: null`, while the client's desktop default and explicit mobile device emulation remain enabled. Browserless initializes its own Puppeteer Page; allowing it to save a competing viewport lets Chromium's RenderDocument reapply conflicting metrics during navigation, potentially leaving the DOM layout and compositor surface at different sizes. Keep this option on the server launch object, not the client's `puppeteer.connect` options.
+
 Both paths install Microsoft Core Fonts, which packages non-free fonts used in snapshots.
 
 Browserless Chromium runs with HTTP/2 disabled because current Chromium can reset its certificate verifier while Vite's large module graph is loading, aborting the shared HTTP/2 session with `ERR_CERT_VERIFIER_CHANGED`; HTTPS, secure-context APIs, and WebSockets remain enabled.
