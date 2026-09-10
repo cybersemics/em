@@ -14,7 +14,7 @@ interface CommandUniverseSortButtonProps {
   onSortChange: (sortOrder: CommandSortType) => void
 }
 
-/** Toggles the sort order and coordinates its tooltip with a mask over the adjacent search input. */
+/** Toggles the sort order for the Command Universe. Briefly shows a tooltip indicating the current sort order with a Liminal UI light effect. */
 const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren<CommandUniverseSortButtonProps>) => {
   // The selected order persists when the tooltip hides; hiding it must not reset the sort.
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('group')
