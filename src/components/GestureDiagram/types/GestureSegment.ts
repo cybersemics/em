@@ -21,9 +21,9 @@ interface ArcGestureSegment extends GestureSegmentBase {
   center: GesturePoint
   /** Radius of the source circle. */
   radius: number
-  /** Unwrapped starting angle in degrees. */
+  /** Start position around the circle: 0 degrees points right and 90 degrees points down. */
   startAngle: number
-  /** Unwrapped ending angle in degrees. Its difference from startAngle defines the signed sweep. */
+  /** End position in degrees. Values may exceed 360 or be negative to preserve travel direction. */
   endAngle: number
   /** SVG direction flag for the arc. */
   sweepFlag: 0 | 1

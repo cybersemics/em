@@ -225,8 +225,8 @@ describe('geometry-based framing', () => {
 describe('automatic viewBox', () => {
   it('includes geometry-derived framing in static markup', () => {
     const props = { arrowhead: 'none' as const, strokeWidth: 2, useGradient: false as const }
-    expect(render({ ...props, path: 'r' })).toContain('viewBox="-1 -1 52 2"')
-    expect(render({ ...props, path: 'd' })).toContain('viewBox="-1 -1 2 52"')
+    expect(render({ ...props, path: 'r' })).toContain('viewBox="-1.5 -26.5 53 53"')
+    expect(render({ ...props, path: 'd' })).toContain('viewBox="-26.5 -1.5 53 53"')
   })
 
   it('honors an explicit viewBox', () => {
@@ -234,8 +234,8 @@ describe('automatic viewBox', () => {
   })
 })
 
-it('applies uniform geometry and framing independently of the paint renderer', () => {
-  const props = { path: 'rdld' as const, size: 150, strokeWidth: 12, arrowSize: 1, sizing: 'uniform' as const }
+it('applies the same geometry and framing independently of the paint renderer', () => {
+  const props = { path: 'rdld' as const, size: 150, strokeWidth: 12, arrowSize: 1 }
   const markups = [
     render({ ...props, useGradient: false }),
     render(props),
@@ -247,7 +247,7 @@ it('applies uniform geometry and framing independently of the paint renderer', (
       .match(/viewBox="([^"]+)"/)![1]
       .split(' ')
       .map(Number)
-    expect(viewBox[0]).toBeCloseTo((36.3 / 67.5) * 75 - 124)
-    expect(viewBox.slice(1)).toEqual([-49, 248, 248])
+    expect(viewBox[0]).toBeCloseTo(((29.7 + 36.3 / 2) / 67.5) * 150 - 124)
+    expect(viewBox.slice(1)).toEqual([-39, 248, 248])
   })
 })

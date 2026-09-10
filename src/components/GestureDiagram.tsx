@@ -13,7 +13,6 @@ import getGestureGeometry from './GestureDiagram/getGestureGeometry'
 import getGestureViewBox from './GestureDiagram/getGestureViewBox'
 import GestureArrowhead from './GestureDiagram/types/GestureArrowhead'
 import GestureGradient from './GestureDiagram/types/GestureGradient'
-import GestureSizing from './GestureDiagram/types/GestureSizing'
 
 interface GestureDiagramBaseProps {
   /** Length of the SVG arrowhead marker. */
@@ -28,10 +27,8 @@ interface GestureDiagramBaseProps {
   path: Gesture | null
   /** Orthogonal offset used to separate reversing directions. */
   reversalOffset?: number
-  /** Nominal gesture extent in SVG user units. */
+  /** Longest centerline dimension before corner rounding and arrowheads, in SVG units. */
   size?: number
-  /** Preserves legacy dimensions by default; uniform normalizes curves and centers square framing. */
-  sizing?: GestureSizing
   /** Base gesture stroke width. */
   strokeWidth?: number
   /** Runtime styles applied to the SVG element. */
@@ -81,7 +78,7 @@ type GestureDiagramProps = GestureDiagramBaseProps &
 /** Renders an SVG representation of a gesture.
  *
  * @param path Any combination of l/r/u/d,or null for a cancel gesture (X).
- * @param size The length of each segment of the gesture.
+ * @param size The longest centerline dimension before corner rounding and arrowheads.
  * @param arrowSize The length of the arrow marker.
  * @param reversalOffset The amount of orthogonal distance to offset a vertex when there is a reversal of direction to avoid segment overlap.
  */
@@ -93,7 +90,6 @@ const GestureDiagram = ({
   path,
   reversalOffset,
   size = 50,
-  sizing = 'legacy',
   strokeWidth = 1.5,
   style,
   viewBox,
@@ -136,7 +132,6 @@ const GestureDiagram = ({
             reversalOffset: reversalOffset!,
             rounded,
             size,
-            sizing,
           }),
     [
       arrowhead,
@@ -144,7 +139,6 @@ const GestureDiagram = ({
       chevronSize,
       cornerRadius,
       size,
-      sizing,
       path,
       reversalOffset,
       rounded,
@@ -196,7 +190,17 @@ const GestureDiagram = ({
         cssRaw,
       )}
       style={{ aspectRatio: `${maxWidth ?? size} / ${maxHeight ?? size}`, ...style }}
-      viewBox={viewBox ?? getGestureViewBox(geometry!, { arrowSize: arrowSize!, arrowhead, strokeWidth, size, sizing })}
+      viewBox={
+        viewBox ??
+        getGestureViewBox(geometry!, {
+          arrowSize: arrowSize!,
+          arrowhead,
+          strokeWidth,
+          size,
+          chevronSize,
+          chevronApexAngle,
+        })
+      }
     >
       <defs>
         <ArrowheadMarker
