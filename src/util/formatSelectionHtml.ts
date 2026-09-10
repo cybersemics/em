@@ -152,18 +152,22 @@ const removeEmptyFormatting = (container: HTMLElement) => {
   }
 }
 
-/** The wrappers a color command consolidates into, and therefore the ones it strips from its range. */
-const COLOR_WRAPPER_SELECTOR = 'font, span'
-
-/** Returns the outermost color wrapper between node and container (exclusive), or null. The outermost is the one that
- * matters: splitting a nested wrapper still leaves the range inside the one enclosing it. */
-const outermostColorWrapper = (node: Node, container: Node): HTMLElement | null => {
-  let wrapper: HTMLElement | null = null
+/** Returns the nearest ancestor element within container that carries a text color or background color and contains the
+ * node, or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
+ * style, as in getCommandState's extractColors. Color formatting is not nested, so the nearest such ancestor covers the
+ * whole colored chunk. */
+const enclosingColorElement = (node: Node, container: Node): HTMLElement | null => {
   for (let n: Node | null = node; n && n !== container; n = n.parentNode) {
-    if (n.nodeType === Node.ELEMENT_NODE && (n as HTMLElement).matches(COLOR_WRAPPER_SELECTOR))
-      wrapper = n as HTMLElement
+    if (
+      n.nodeType === Node.ELEMENT_NODE &&
+      ((n as HTMLElement).getAttribute('color') ||
+        (n as HTMLElement).style.color ||
+        (n as HTMLElement).style.backgroundColor)
+    ) {
+      return n as HTMLElement
+    }
   }
-  return wrapper
+  return null
 }
 
 /** Moves whatever of el follows the collapsed range into a copy of el placed directly after it, so that the range
@@ -179,18 +183,18 @@ const splitAtRange = (el: HTMLElement, range: Range) => {
   el.after(clone)
 }
 
-/** Inserts a node at the (collapsed) range, lifting it out of any color wrapper enclosing the insertion point and of any
+/** Inserts a node at the (collapsed) range, lifting it out of any color element enclosing the insertion point and of any
  * empty formatting ancestors that extractContents left behind. Without this, re-coloring content that already fills a
  * single wrapper (e.g. the second dispatch of a foreColor + backColor pair) would nest the new <font> inside the emptied
  * one instead of replacing it, and a sub-range of a colored thought would go back inside the color it was extracted
  * from, leaving the old color in force (#5505). */
 const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
-  // A color command redetermines the color of its entire range, so the range must not come to rest inside a wrapper
-  // still carrying the old one. Split that wrapper at the insertion point and insert between the two halves.
-  const wrapper = outermostColorWrapper(range.startContainer, container)
-  if (wrapper) {
-    splitAtRange(wrapper, range)
-    wrapper.after(node)
+  // A color command redetermines the color of its entire range, so the range must not come to rest inside an element
+  // still carrying the old one. Split that element at the insertion point and insert between the two halves.
+  const colorElement = enclosingColorElement(range.startContainer, container)
+  if (colorElement) {
+    splitAtRange(colorElement, range)
+    colorElement.after(node)
     return
   }
 
@@ -239,24 +243,6 @@ const resolveColors = (
   return { color: CONTRAST_COLOR, background: colorValue ?? null }
 }
 
-/** Returns the nearest ancestor element within container that carries a text color or background color and contains the
- * node, or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
- * style, as in getCommandState's extractColors. Color formatting is not nested, so the nearest such ancestor covers the
- * whole colored chunk. */
-const enclosingColorElement = (node: Node, container: Node): HTMLElement | null => {
-  for (let n: Node | null = node; n && n !== container; n = n.parentNode) {
-    if (
-      n.nodeType === Node.ELEMENT_NODE &&
-      ((n as HTMLElement).getAttribute('color') ||
-        (n as HTMLElement).style.color ||
-        (n as HTMLElement).style.backgroundColor)
-    ) {
-      return n as HTMLElement
-    }
-  }
-  return null
-}
-
 /** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
  * single <font> element that carries both the color attribute and the background-color style. The color command fully
  * redetermines both properties (see resolveColors), so existing color/background wrappers within the range are stripped
@@ -269,7 +255,7 @@ const applyColor = (
   // extract the range into a temp container so existing color/background wrappers can be stripped
   const temp = document.createElement('div')
   temp.appendChild(range.extractContents())
-  unwrapAll(temp, COLOR_WRAPPER_SELECTOR)
+  unwrapAll(temp, 'font, span')
   temp.normalize()
 
   // move the (color-stripped) content into a fragment, wrapping it in a single <font> when a color/background applies
