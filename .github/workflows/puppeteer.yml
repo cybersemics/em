@@ -441,7 +441,10 @@ jobs:
                   await response.arrayBuffer()
                 }
               }
-              return performance.getEntriesByType('resource').map(entry => entry.toJSON())
+              // Chrome may request a favicon after clearResourceTimings; count only our fetches.
+              return performance.getEntriesByType('resource')
+                .filter(entry => entry.initiatorType === 'fetch' && entry.name.includes('/wa-sqlite/'))
+                .map(entry => entry.toJSON())
             })
             const session = await browser.target().createCDPSession()
             const commandLine = await session.send('Browser.getBrowserCommandLine')
