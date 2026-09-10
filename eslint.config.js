@@ -33,6 +33,11 @@ const rules = {
       message:
         'expect.poll runs its callback in node, so every attempt is a devtools round trip on an interval. Wait in the page with page.waitForFunction (or a waitFor* helper) instead, which polls on every animation frame for a fixed handful of protocol messages. To report the value that was actually rendered, catch the wait and read it once — see docs/testing.md § Never wait for wall-clock time.',
     },
+    {
+      selector: 'MemberExpression[object.name="vi"][property.name=/^(waitFor|waitUntil)$/]',
+      message:
+        'vi.waitFor polls on a real-time interval. In store and JSDOM tests, initStore and createTestApp already enable fake timers, so flush them instead — await vi.runAllTimersAsync() (wrapped in act when it causes React updates), then assert — which settles the work in one step and fails immediately rather than after the poll timeout. In Puppeteer, wait in the page with page.waitForFunction or a waitFor* helper. See docs/testing.md § Never wait for wall-clock time.',
+    },
   ],
   'no-restricted-properties': [
     2,
