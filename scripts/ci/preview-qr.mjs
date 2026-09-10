@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Maintains a collapsed "Preview" disclosure at the bottom of a pull request description holding a
+ * Maintains a collapsed "Preview Deployment" disclosure at the bottom of a pull request description holding a
  * QR code of its latest successful Vercel preview. Run by .github/workflows/preview-qr.yml as
  * `node scripts/ci/preview-qr.mjs <head-sha>`, or with `--pr <number>` in place of the commit to
  * reconcile that pull request's current head, which is what the workflow's manual dispatch does.
@@ -66,13 +66,19 @@ const PREVIEW_WORKFLOW = '.github/workflows/vercel-preview.yml'
 const PREVIEW_ENVIRONMENT = 'Preview'
 
 /**
- * Formats a deployment timestamp for the disclosure summary in UTC, as `Sep 4, 2026`. UTC so two
- * runs never disagree about the date of one deployment.
+ * Formats a deployment timestamp for the disclosure summary in UTC, as `Sep 4, 2026, 10:00 AM UTC`.
+ * UTC so two runs never disagree about the moment of one deployment.
  */
-export const formatDate = iso =>
-  new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(
-    new Date(iso),
-  )
+export const formatTimestamp = iso =>
+  new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'UTC',
+    timeZoneName: 'short',
+  }).format(new Date(iso))
 
 /**
  * Splits a pull request body into the text outside the managed block and the block's parsed
@@ -94,7 +100,7 @@ export const parseBody = body => {
   if (!match) return { outside, state: null }
   try {
     const { stable, pending } = JSON.parse(match[1])
-    const image = block.match(/\[!\[Preview deployment\]\(([^)\s]+)\)\]\(/)?.[1]
+    const image = block.match(/!\[Preview deployment\]\(([^)\s]+)\)/)?.[1]
     return {
       outside,
       state: {
@@ -114,18 +120,20 @@ export const parseBody = body => {
  * The blank lines around the image are load-bearing twice over: GitHub only renders markdown
  * inside a `<details>` HTML block when a blank line ends the block's raw-HTML run, and gh's
  * `--attach` rewrite only sees the image reference if the markdown parser produced a node for it.
+ *
+ * The link around the image is a raw `<a>` rather than a markdown link so it can ask for a new tab;
+ * the image stays markdown inside it, which is what keeps `--attach` able to rewrite the reference.
+ * The tag opens a paragraph rather than an HTML block because it is not alone on its line, so the
+ * image is still parsed as markdown. GitHub may strip `target`, in which case this degrades to an
+ * ordinary link.
  */
 export const renderBlock = ({ stable, pending }) => {
   if (!stable && !pending) return null
   const summary = pending
-    ? `Preview · Generating new QR code… · ${formatDate(pending.createdAt)} · <code>${pending.sha.slice(0, 7)}</code>`
-    : `Preview · ${formatDate(stable.createdAt)} · <code>${stable.sha.slice(0, 7)}</code>`
+    ? `Preview Deployment · Generating new QR code… · ${formatTimestamp(pending.createdAt)} · ${pending.sha.slice(0, 7)}`
+    : `Preview Deployment · ${formatTimestamp(stable.createdAt)} · ${stable.sha.slice(0, 7)}`
   const content = stable
-    ? [
-        `[![Preview deployment](${stable.image})](${stable.url})`,
-        '',
-        `[${pending ? 'Open current preview' : 'Open preview'}](${stable.url})`,
-      ]
+    ? [`<a href="${stable.url}" target="_blank" rel="noopener noreferrer">![Preview deployment](${stable.image})</a>`]
     : ['Preview deployment is being generated.']
   const state = {
     stable: stable ? { sha: stable.sha, createdAt: stable.createdAt, url: stable.url } : null,
