@@ -22,7 +22,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **attribute-child index** — `em_attribute_children`, an app-owned SQLite table mapping each `=attribute` child to its parent and value. It restores the value-keying half of *childrenMap*, which TreeCRDT itself does not store. Rebuilt from the tree when its version changes, then maintained on every write. See [persistence.md → Derived tables](persistence.md#derived-tables).
 
-**autocrop** — Vertical: hides the empty space above a deep cursor by translating the layout container upward and counter-scrolling to keep visible thoughts stable. Horizontal: see *indent*. See [layout-rendering.md → useAutocrop](layout-rendering.md#useautocrop-vertical-autocrop).
+**autocrop** — Horizontal: see *indent*. Vertical layout uses the *scroll clamp* instead of cropping hidden thought space.
 
 **autofocus** — Per-thought visibility classification (`show | dim | hide | hide-parent`) computed from depth relative to the cursor. The closer to the cursor, the more visible. `=focus/Zoom` overrides this by hiding everything outside the zoomed thought's subtree. See [`Autofocus.ts`](../src/@types/Autofocus.ts) and [`calculateAutofocus.ts`](../src/selectors/calculateAutofocus.ts).
 
@@ -171,6 +171,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 **ROOT_PARENT_ID** — Sentinel `ThoughtId` for the parent of the root thoughts. An alias for `GLOBAL_ROOT_TOKEN`, the TreeCRDT tree root. Distinct from `HOME_TOKEN` / `ABSOLUTE_TOKEN`, which are the root *thoughts*; `ROOT_PARENT_ID` is their *parent*. `getThoughtById` reports it as the `parentId` of any thought whose TreeCRDT parent is the tree root.
 
 ## S
+
+**scroll clamp** — The logical `window.scrollY` range that keeps at least 1vh of the visible thought cluster onscreen while leaving hidden thought space and document height unchanged. Touches beyond a clamp edge receive resisted elastic movement and spring back on release. See [layout-rendering.md → useScrollClamp](layout-rendering.md#usescrollclamp-vertical-scroll-clamp).
 
 **session lock** — Exclusive Web Lock named `em-treecrdt-session:${tsid}`, held for the lifetime of the page so only one tab opens a thoughtspace at a time. A second tab renders [`ThoughtspaceInUse`](../src/components/ThoughtspaceInUse.tsx) instead of the app. See [persistence.md → Single-tab access](persistence.md#single-tab-access).
 

@@ -1,5 +1,8 @@
+import { KnownDevices } from 'puppeteer'
 import type { PreloadedEmWindow } from '../../../@types'
 import clickThought from '../helpers/clickThought'
+import deviceEmulation from '../helpers/deviceEmulation'
+import { startGesture } from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -14,17 +17,22 @@ import { usePersistentTreecrdtStorage } from '../setup'
 
 const MOCK_REPLICATION_DELAY = 100
 
-/** Gets the y position of a thought relative to the viewport. Throws if the thought is not rendered. */
-const getThoughtTop = async (value: string): Promise<number> => {
-  const top = await page.evaluate(value => {
+/** Gets the viewport rect of a thought. Throws if the thought is not rendered. */
+const getThoughtRect = async (value: string): Promise<{ top: number; bottom: number }> => {
+  const rect = await page.evaluate(value => {
     const thought = Array.from(document.querySelectorAll('[data-editable]')).find(
       element => element.innerHTML === value,
     )
-    return thought ? thought.getBoundingClientRect().top : null
+    if (!thought) return null
+    const { top, bottom } = thought.getBoundingClientRect()
+    return { top, bottom }
   }, value)
-  if (top === null) throw new Error(`Thought "${value}" is not rendered.`)
-  return top
+  if (rect === null) throw new Error(`Thought "${value}" is not rendered.`)
+  return rect
 }
+
+/** Gets the y position of a thought relative to the viewport. Throws if the thought is not rendered. */
+const getThoughtTop = async (value: string): Promise<number> => (await getThoughtRect(value)).top
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 usePersistentTreecrdtStorage()
@@ -113,8 +121,8 @@ describe('scrollCursorIntoView', () => {
   })
 })
 
-describe('autocrop', () => {
-  it('preserve thought positions relative to viewport when navigating deeper', async () => {
+describe('scroll clamp', () => {
+  it('preserves thought positions relative to viewport when navigating deeper and back up', async () => {
     const importText = `
       - a
       - b
@@ -161,7 +169,7 @@ describe('autocrop', () => {
     // get the y position of thought z relative to the viewport before moving the cursor down to 1
     const topBefore = await getThoughtTop('z')
 
-    // navigate deeper to z's child, which crops the space above the cursor
+    // navigate deeper to z's child, which hides more thoughts above the cursor
     await press('ArrowDown')
     await waitForCursor('1')
     await waitForBrowserSettled()
@@ -169,7 +177,153 @@ describe('autocrop', () => {
     // get the y position of thought z relative to the viewport after moving the cursor down to 1
     const topAfter = await getThoughtTop('z')
 
-    // TODO: We should expect 0 scroll. Why does it scroll by 0.25px?
     expect(Math.abs(topAfter - topBefore)).toBeLessThan(1)
+
+    const topBeforeUp = await getThoughtTop('z')
+    await press('ArrowUp')
+    await waitForCursor('z')
+    await waitForBrowserSettled()
+    const topAfterUp = await getThoughtTop('z')
+    expect(Math.abs(topAfterUp - topBeforeUp)).toBeLessThan(1)
+  })
+
+  // https://github.com/cybersemics/em/issues/4735
+  it('keeps the visible cluster onscreen when scrolling above hidden ancestor siblings', async () => {
+    const siblings = Array.from({ length: 80 }, (_, index) => `- sibling ${index + 1}`).join('\n')
+    await paste(`
+${siblings}
+  - child
+    - grandchild
+    `)
+
+    await clickThought('grandchild')
+    await waitForCursor('grandchild')
+    await waitForBrowserSettled()
+
+    await scrollTo(0, 0)
+    await waitForBrowserSettled()
+
+    const rect = await getThoughtRect('sibling 80')
+    const { innerHeight, scrollY } = await page.evaluate(() => ({
+      innerHeight: window.innerHeight,
+      scrollY: window.scrollY,
+    }))
+
+    expect(scrollY).toBeGreaterThan(0)
+    expect(rect.top).toBeLessThan(innerHeight)
+    expect(rect.bottom).toBeGreaterThan(innerHeight * 0.99)
+  })
+
+  // https://github.com/cybersemics/em/issues/4735
+  it('preserves document height when ancestor siblings become hidden', async () => {
+    const siblings = Array.from({ length: 80 }, (_, index) => `- sibling ${index + 1}`).join('\n')
+    await paste(`
+${siblings}
+  - child
+    - grandchild
+    `)
+
+    await clickThought('sibling 1')
+    await waitForCursor('sibling 1')
+    await waitForBrowserSettled()
+    const scrollHeightBefore = await page.evaluate(() => document.documentElement.scrollHeight)
+
+    await clickThought('grandchild')
+    await waitForCursor('grandchild')
+    await waitForBrowserSettled()
+
+    const { innerHeight, scrollHeightAfter } = await page.evaluate(() => ({
+      innerHeight: window.innerHeight,
+      scrollHeightAfter: document.documentElement.scrollHeight,
+    }))
+
+    expect(scrollHeightAfter).toBe(scrollHeightBefore)
+    expect(scrollHeightAfter).toBeGreaterThan(innerHeight * 4)
+  })
+
+  // https://github.com/cybersemics/em/issues/4735
+  it('keeps the last visible thought onscreen when scrolling below the visible cluster', async () => {
+    const siblings = Array.from({ length: 80 }, (_, index) => `- sibling ${index + 1}`).join('\n')
+    await paste(`
+${siblings}
+  - child
+    - grandchild
+    `)
+
+    await clickThought('grandchild')
+    await waitForCursor('grandchild')
+    await waitForBrowserSettled()
+
+    await scrollTo(0, 99999)
+    await waitForBrowserSettled()
+
+    const rect = await getThoughtRect('grandchild')
+    const { documentMaxScroll, innerHeight, scrollY } = await page.evaluate(() => ({
+      documentMaxScroll: document.documentElement.scrollHeight - window.innerHeight,
+      innerHeight: window.innerHeight,
+      scrollY: window.scrollY,
+    }))
+
+    expect(scrollY).toBeLessThan(documentMaxScroll)
+    expect(rect.top).toBeLessThan(innerHeight)
+    expect(rect.bottom).toBeGreaterThan(0)
+  })
+
+  // https://github.com/cybersemics/em/issues/4735
+  it('still scrolls through a long list of visible root thoughts', async () => {
+    await paste(Array.from({ length: 40 }, (_, index) => `- thought ${index + 1}`).join('\n'))
+
+    await clickThought('thought 40')
+    await waitForCursor('thought 40')
+    await waitForBrowserSettled()
+
+    const rect = await getThoughtRect('thought 40')
+    const innerHeight = await page.evaluate(() => window.innerHeight)
+    expect(rect.top).toBeLessThan(innerHeight)
+    expect(rect.bottom).toBeGreaterThan(0)
+  })
+})
+
+describe('scroll clamp elastic overscroll', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  // https://github.com/cybersemics/em/issues/4735
+  it('resists a touch beyond the upper clamp and springs back', async () => {
+    const siblings = Array.from({ length: 80 }, (_, index) => `- sibling ${index + 1}`).join('\n')
+    await paste(`
+${siblings}
+  - child
+    - grandchild
+    `)
+
+    await clickThought('grandchild')
+    await waitForCursor('grandchild')
+    await waitForBrowserSettled()
+    await scrollTo(0, 0)
+    await waitForBrowserSettled()
+
+    const topBefore = await getThoughtTop('grandchild')
+    const viewport = page.viewport()
+    if (!viewport) throw new Error('Expected an emulated mobile viewport.')
+
+    const touch = await startGesture({
+      xStart: viewport.width - 10,
+      yStart: viewport.height / 2,
+    })
+    await touch.move('d')
+    const topDuring = await getThoughtTop('grandchild')
+    expect(topDuring).toBeGreaterThan(topBefore)
+
+    await touch.end()
+    await page.waitForFunction(
+      ({ topBefore, value }) => {
+        const thought = Array.from(document.querySelectorAll('[data-editable]')).find(
+          element => element.innerHTML === value,
+        )
+        return thought ? Math.abs(thought.getBoundingClientRect().top - topBefore) < 1 : false
+      },
+      {},
+      { topBefore, value: 'grandchild' },
+    )
   })
 })
