@@ -201,11 +201,11 @@ const resolveColors = (
   return { color: CONTRAST_COLOR, background: colorValue ?? null }
 }
 
-/** Returns the outermost element within container that carries a text color or background color and contains the node,
- * or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
- * style, as in getCommandState's extractColors. */
+/** Returns the nearest ancestor element within container that carries a text color or background color and contains the
+ * node, or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
+ * style, as in getCommandState's extractColors. Color formatting is not nested, so the nearest such ancestor covers the
+ * whole colored chunk. */
 const enclosingColorElement = (node: Node, container: Node): HTMLElement | null => {
-  let colorElement: HTMLElement | null = null
   for (let n: Node | null = node; n && n !== container; n = n.parentNode) {
     if (
       n.nodeType === Node.ELEMENT_NODE &&
@@ -213,10 +213,10 @@ const enclosingColorElement = (node: Node, container: Node): HTMLElement | null 
         (n as HTMLElement).style.color ||
         (n as HTMLElement).style.backgroundColor)
     ) {
-      colorElement = n as HTMLElement
+      return n as HTMLElement
     }
   }
-  return colorElement
+  return null
 }
 
 /** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
@@ -260,8 +260,8 @@ interface FormatOptions {
   end?: number
   /** The formatting command to apply. */
   command: FormatCommand
-  /** Plain-text offset of a collapsed caret, if the range was widened from one. Clearing a color at a caret that sits
-   * inside a colored chunk removes only that chunk. */
+  /** Plain-text offset of a collapsed caret, if the range was widened from one. A command that would remove the
+   * formatting already surrounding the caret removes only that chunk rather than reformatting the whole thought. */
   caret?: number
   /** The resolved color value (hex) for foreColor/backColor. */
   colorValue?: string
@@ -296,8 +296,14 @@ const formatSelectionHtml = (
   const tag = tagForCommand(command)
   const plainLength = container.textContent?.length ?? 0
 
-  const start = startOption ?? 0
-  const end = endOption ?? plainLength
+  // A tag command whose caret sits inside an element of that tag toggles off only that element, rather than formatting
+  // the whole thought the caret was widened to — otherwise a thought with two bold chunks becomes entirely bold on the
+  // first tap (#4052). Repeated taps still clear the thought a chunk at a time.
+  const caretTagElement =
+    tag && caret !== undefined ? closestTag(positionAtOffset(container, caret).node, container, tag) : null
+
+  const start = caretTagElement ? plainOffsetOf(container, caretTagElement) : (startOption ?? 0)
+  const end = caretTagElement ? start + (caretTagElement.textContent?.length ?? 0) : (endOption ?? plainLength)
 
   // The caller normalizes a collapsed caret or full selection to [0, plainLength], so this is a whole-thought command.
   const whole = start === 0 && end === plainLength

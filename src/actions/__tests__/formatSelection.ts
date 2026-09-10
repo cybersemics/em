@@ -187,6 +187,25 @@ describe('formatSelection', () => {
     expect(cursorValue()).toBe('Hello <b>W</b>orl<b>d</b>')
   })
 
+  // the tag equivalent of "removes only the background color surrounding the caret" (#4052), which takes the
+  // toggle-off branch rather than the color branch: without the caret the partially bold thought would be bolded whole
+  it('removes only the bold surrounding the caret', async () => {
+    await dispatch([newThought({ value: 'hello there world' })])
+
+    selectRange(0, 'hello'.length)
+    await dispatch(formatSelection('bold'))
+
+    selectRange('hello there '.length, 'hello there world'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('<b>hello</b> there <b>world</b>')
+
+    // place a collapsed caret inside "hello" and toggle bold off
+    selectRange(2, 2)
+    await dispatch(formatSelection('bold'))
+
+    expect(cursorValue()).toBe('hello there <b>world</b>')
+  })
+
   it('bolds a whole thought whose leading text is italic, wrapping the outer tag', async () => {
     await dispatch([newThought({ value: '<i>Hello</i> World' })])
 
