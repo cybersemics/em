@@ -75,7 +75,7 @@ env:
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
   # Skip Puppeteer's Chrome download on install — none of this workflow's jobs uses the bundled
-  # browser (Puppeteer tests attach to the browserless/chrome service via CDP; only
+  # browser (Puppeteer tests attach to the browserless/chromium service via CDP; only
   # agent-scripts.yml launches the bundled browser), saving ~20s per install.
   PUPPETEER_SKIP_DOWNLOAD: true
 
