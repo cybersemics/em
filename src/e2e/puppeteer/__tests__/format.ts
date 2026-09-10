@@ -1,9 +1,14 @@
+import { KnownDevices } from 'puppeteer'
+import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
+import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
+import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
@@ -178,4 +183,48 @@ it('Clear Thought dims emoji in the placeholder (#4671)', async () => {
   expect(placeholderStyle.content).toContain('👋 Hello')
   expect(placeholderStyle.filter).toBe('opacity(0.5)')
   expect(placeholderStyle.opacity).toBe('1')
+})
+
+describe('mobile', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  /** Returns whether each of the text formatting toolbar buttons is rendered in its active state. */
+  const formattingButtonStates = () =>
+    page.evaluate(() =>
+      Object.fromEntries(
+        ['Bold', 'Italic', 'Underline', 'Strikethrough'].map(label => [
+          label,
+          document.querySelector(`[data-testid="toolbar-icon"][aria-label="${label}"]`)?.getAttribute('data-active') ===
+            'true',
+        ]),
+      ),
+    )
+
+  // https://github.com/cybersemics/em/issues/5286
+  it.skip('formatting buttons reflect a long-pressed thought rather than a previously formatted thought', async () => {
+    await paste(`
+      - aaa
+      - bbb
+      - ccc
+    `)
+
+    await clickThought('aaa')
+    await clickToolbar('Bold')
+    await clickToolbar('Italic')
+    await clickToolbar('Underline')
+    await clickToolbar('Strikethrough')
+    await waitForEditable('<strike><u><i><b>aaa</b></i></u></strike>')
+
+    await click('[data-testid="home"] a')
+
+    await longPressThought(await waitForEditable('ccc'))
+    await waitForCommandCenterOpen()
+
+    expect(await formattingButtonStates()).toEqual({
+      Bold: false,
+      Italic: false,
+      Underline: false,
+      Strikethrough: false,
+    })
+  })
 })
