@@ -389,19 +389,23 @@ jobs:
           failed=0
           preview_pid=''
           trap 'if [ -n "$preview_pid" ]; then kill "$preview_pid" 2>/dev/null || true; fi' EXIT
-          for index in 0 1 2; do
-            export NODELAY_PHASE="$index-${phases[$index]}"
-            export NODELAY_ENABLED="${phases[$index]}"
-            # Same Vite config/build as `vite preview --port 3000 --host`.
-            # Start a fresh server in EVERY phase, not only the intervention.
-            node --input-type=module <<'NODE' &
+          # A real module file avoids stdin/execArgv incompatibilities in Vite plugins/workers.
+          node <<'NODE'
+          require('node:fs').writeFileSync('.packet-preview.mjs', `
           import { preview } from 'vite'
           const server = await preview({ preview: { host: true, port: 3000, strictPort: true } })
           if (process.env.NODELAY_ENABLED === 'nodelay') {
             server.httpServer.on('secureConnection', socket => socket.setNoDelay(true))
           }
           console.log('PACKET_CONTROL_SERVER', process.env.NODELAY_PHASE, process.version)
+          `)
           NODE
+          for index in 0 1 2; do
+            export NODELAY_PHASE="$index-${phases[$index]}"
+            export NODELAY_ENABLED="${phases[$index]}"
+            # Same Vite config/build as `vite preview --port 3000 --host`.
+            # Start a fresh server in EVERY phase, not only the intervention.
+            node .packet-preview.mjs &
             preview_pid=$!
             ready=false
             for attempt in {1..30}; do
