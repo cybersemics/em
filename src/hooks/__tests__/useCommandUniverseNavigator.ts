@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { PropsWithChildren, createElement } from 'react'
 import { expectTypeOf } from 'vitest'
+import Command from '../../@types/Command'
 import CommandUniversePage from '../../@types/CommandUniversePage'
 import CommandUniversePageNavigator from '../../@types/CommandUniversePageNavigator'
 import CommandUniverseProvider from '../../components/CommandUniverse/CommandUniverseProvider'
@@ -12,9 +13,11 @@ const OpenProvider = ({ children }: PropsWithChildren) =>
 
 it('derives page ids and their required props from the registered components', () => {
   type OpenArguments = Parameters<CommandUniversePageNavigator['open']>
-  expectTypeOf<'grid'>().toMatchTypeOf<CommandUniversePage['pageId']>()
+  expectTypeOf<'grid' | 'detail'>().toMatchTypeOf<CommandUniversePage['pageId']>()
   expectTypeOf<['grid', Record<string, never>]>().toMatchTypeOf<OpenArguments>()
-  expectTypeOf<['grid', { unregistered: true }]>().not.toMatchTypeOf<OpenArguments>()
+  expectTypeOf<['detail', { command: Command }]>().toMatchTypeOf<OpenArguments>()
+  expectTypeOf<['detail', Record<string, never>]>().not.toMatchTypeOf<OpenArguments>()
+  expectTypeOf<['grid', { command: Command }]>().not.toMatchTypeOf<OpenArguments>()
   expectTypeOf<['missing', Record<string, never>]>().not.toMatchTypeOf<OpenArguments>()
 })
 
