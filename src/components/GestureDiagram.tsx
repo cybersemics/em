@@ -13,6 +13,7 @@ import getGestureGeometry from './GestureDiagram/getGestureGeometry'
 import getGestureViewBox from './GestureDiagram/getGestureViewBox'
 import GestureArrowhead from './GestureDiagram/types/GestureArrowhead'
 import GestureGradient from './GestureDiagram/types/GestureGradient'
+import GestureSizing from './GestureDiagram/types/GestureSizing'
 
 interface GestureDiagramBaseProps {
   /** Length of the SVG arrowhead marker. */
@@ -29,6 +30,8 @@ interface GestureDiagramBaseProps {
   reversalOffset?: number
   /** Nominal gesture extent in SVG user units. */
   size?: number
+  /** Preserves legacy dimensions by default; uniform normalizes curves and centers square framing. */
+  sizing?: GestureSizing
   /** Base gesture stroke width. */
   strokeWidth?: number
   /** Runtime styles applied to the SVG element. */
@@ -90,6 +93,7 @@ const GestureDiagram = ({
   path,
   reversalOffset,
   size = 50,
+  sizing = 'legacy',
   strokeWidth = 1.5,
   style,
   viewBox,
@@ -132,6 +136,7 @@ const GestureDiagram = ({
             reversalOffset: reversalOffset!,
             rounded,
             size,
+            sizing,
           }),
     [
       arrowhead,
@@ -139,6 +144,7 @@ const GestureDiagram = ({
       chevronSize,
       cornerRadius,
       size,
+      sizing,
       path,
       reversalOffset,
       rounded,
@@ -190,7 +196,7 @@ const GestureDiagram = ({
         cssRaw,
       )}
       style={{ aspectRatio: `${maxWidth ?? size} / ${maxHeight ?? size}`, ...style }}
-      viewBox={viewBox ?? getGestureViewBox(geometry!, { arrowSize: arrowSize!, arrowhead, strokeWidth })}
+      viewBox={viewBox ?? getGestureViewBox(geometry!, { arrowSize: arrowSize!, arrowhead, strokeWidth, size, sizing })}
     >
       <defs>
         <ArrowheadMarker

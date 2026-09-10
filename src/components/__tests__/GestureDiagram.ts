@@ -233,3 +233,21 @@ describe('automatic viewBox', () => {
     expect(render({ path: 'rdld', viewBox: '1 2 300 200' })).toContain('viewBox="1 2 300 200"')
   })
 })
+
+it('applies uniform geometry and framing independently of the paint renderer', () => {
+  const props = { path: 'rdld' as const, size: 150, strokeWidth: 12, arrowSize: 1, sizing: 'uniform' as const }
+  const markups = [
+    render({ ...props, useGradient: false }),
+    render(props),
+    render({ ...props, gradient: { from: '#000', to: '#fff' } }),
+  ]
+
+  markups.forEach(markup => {
+    const viewBox = markup
+      .match(/viewBox="([^"]+)"/)![1]
+      .split(' ')
+      .map(Number)
+    expect(viewBox[0]).toBeCloseTo((36.3 / 67.5) * 75 - 124)
+    expect(viewBox.slice(1)).toEqual([-49, 248, 248])
+  })
+})

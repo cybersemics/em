@@ -46,3 +46,18 @@ it('applies corner softening in the authored coordinate space', () => {
     gestureIndex: 0,
   })
 })
+
+it('normalizes curves to the requested extent only when uniform sizing is selected', () => {
+  const options = { size: 150, reversalOffset: 45, sizing: 'uniform' as const }
+  const circular = getGestureBounds(getGestureGeometry('rul', { ...options, rounded: true }))
+  const glyph = getGestureBounds(getGestureGeometry('rdld', options))
+
+  expect(circular.x).toBeCloseTo(0)
+  expect(circular.y).toBeCloseTo(0)
+  expect(circular.width).toBeCloseTo(75)
+  expect(circular.height).toBeCloseTo(150)
+  expect(glyph.x).toBeCloseTo(0)
+  expect(glyph.y).toBeCloseTo(0)
+  expect(glyph.width).toBeCloseTo((36.3 / 67.5) * 150)
+  expect(glyph.height).toBeCloseTo(150)
+})
