@@ -1,14 +1,15 @@
 /**
- * Finds conflicting Copilot pull requests that are due for a resolution attempt.
+ * Finds conflicting Copilot pull requests that are due for a resolution task.
  * State is retained in one marked PR comment so later push-triggered scans resume safely.
  * A scan that names one pull request through the workflow's `pr` input is due whatever its state
- * says, since a human asked for it; every other scan waits out the delays and stops at the cap.
+ * says, since a human asked for it; every other scan waits out the delays, stops at the cap, and
+ * leaves drafts and opted-out pull requests alone.
  */
 const fs = require('node:fs')
 const {
   DELAYS_HOURS,
   MARKER,
-  MAX_ATTEMPTS,
+  MAX_TASKS,
   SKIP_LABELS,
   commentBody,
   parseState,
@@ -47,23 +48,30 @@ const getMergeability = async ({ github, owner, repo, prNumber }) => {
 
 /**
  * Returns whether a pull request is an in-repository Copilot PR targeting main that has not opted
- * out. A skip label excludes the pull request from the scan entirely, so no comment is written or
- * updated and its retry state stays frozen until the label is removed.
+ * out. A skip label or a draft excludes the pull request from the scan entirely, so no comment is
+ * written or updated and its retry state stays frozen until the label is removed or the pull
+ * request is taken out of draft. Draft is where Copilot leaves a pull request it has not finished,
+ * and pr-ready.yml takes a finished one out once its checks are green — so a draft here is one
+ * nobody has advanced, which is the same reason the `hold` label opts a pull request out.
+ *
+ * A dispatch that names the pull request reaches both opt-outs, since each stands for nobody having
+ * asked for the pull request to advance and the dispatch is a human asking. The rest of eligibility
+ * is not overridable: those conditions say the workflow cannot help the pull request at all.
  */
-const isEligible = ({ pr, repository }) =>
+const isEligible = ({ pr, repository, requested }) =>
   pr.state === 'open' &&
-  !(pr.labels || []).some(label => SKIP_LABELS.includes(label.name)) &&
+  (requested || (!pr.draft && !(pr.labels || []).some(label => SKIP_LABELS.includes(label.name)))) &&
   pr.base.ref === BASE_BRANCH &&
   pr.user.login === COPILOT &&
   pr.user.type === 'Bot' &&
   pr.head.repo &&
   pr.head.repo.full_name === repository
 
-/** Returns when the next resolution attempt becomes eligible, or null once the cap is reached. */
+/** Returns when the next resolution task becomes eligible, or null once the cap is reached. */
 const getDueAt = state => {
-  if (!state.firstConflictAt || state.attempts >= MAX_ATTEMPTS) return null
-  const previousAttempt = state.lastDispatchedAt || state.firstConflictAt
-  return new Date(new Date(previousAttempt).getTime() + DELAYS_HOURS[state.attempts] * 60 * 60 * 1000)
+  if (!state.firstConflictAt || state.tasks >= MAX_TASKS) return null
+  const previousTask = state.lastDispatchedAt || state.firstConflictAt
+  return new Date(new Date(previousTask).getTime() + DELAYS_HOURS[state.tasks] * 60 * 60 * 1000)
 }
 
 /** Produces the dispatcher report while keeping conflict state synchronized with GitHub. */
@@ -86,7 +94,7 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
       })
   const due = []
 
-  for (const listedPr of listed.filter(pr => isEligible({ pr, repository }))) {
+  for (const listedPr of listed.filter(pr => isEligible({ pr, repository, requested: Boolean(requestedPr) }))) {
     const pr = await getMergeability({ github, owner, repo, prNumber: listedPr.number })
     if (!pr) {
       core.warning(`#${listedPr.number}: mergeability is still unknown; leaving state unchanged.`)
@@ -108,9 +116,10 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
       observedBaseSha: pr.base.sha,
     }
     const savedComment = await upsertComment({ github, owner, repo, pr, comment, state, dryRun })
-    // A dispatch that names a pull request is a human asking for an attempt on it now, so it
-    // overrides both the wait and the lifetime cap — the same override dependabot-fix.yml's `pr`
-    // input has. `dry_run` remains the way to look at one without spending an attempt.
+    // A dispatch that names a pull request is a human asking for a task on it now, so it
+    // overrides the wait, the lifetime cap, and the opt-outs above — the same override
+    // dependabot-fix.yml's `pr` input has. `dry_run` remains the way to look at one without
+    // spending a task.
     const dueAt = getDueAt(state)
     if (conflicting && (requestedPr || (dueAt && dueAt <= now))) {
       due.push({
@@ -129,7 +138,12 @@ const collectCopilotConflicts = async ({ github, context, core }) => {
 
   const tasks = due.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, MAX_DISPATCHES)
   fs.mkdirSync(REPORT_DIR, { recursive: true })
-  fs.writeFileSync(REPORT_FILE, JSON.stringify({ generatedAt: now.toISOString(), dryRun, tasks }, null, 2))
+  // `requested` travels with the report so the dispatch step, which re-checks the opt-outs against
+  // a pull request that may have changed since the scan, honors the same override the scan did.
+  fs.writeFileSync(
+    REPORT_FILE,
+    JSON.stringify({ generatedAt: now.toISOString(), dryRun, requested: Boolean(requestedPr), tasks }, null, 2),
+  )
   await core.summary
     .addHeading('Copilot conflict resolution')
     .addRaw(`Due: ${due.length}; selected: ${tasks.length}.`)

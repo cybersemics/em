@@ -857,21 +857,25 @@ const Editable = ({
       if (isTouch) {
         editingValueStore.update(null)
       }
-      // temporary states such as duplicate error states and cursorCleared are reset on blur
-      dispatch(cursorCleared({ value: false }))
+      dispatch((dispatch, getState) => {
+        const state = getState()
+        // Blurring the thought that holds the caret ends an edited multiselection (Clear Thought), so end the
+        // multiselection too. Otherwise the multicursors survive the blur and re-open the Command Center as soon as
+        // the keyboard closes (see multicursorAlertMiddleware). (#4519)
+        // Not when the Command Center is open, since then the blur was caused by the Command Center opening over the
+        // thought (see onFocus), rather than by the user dismissing the keyboard.
+        // Must be dispatched before cursorCleared, which closes the keyboard as well as exiting the cleared state.
+        // Otherwise the middleware sees the multicursors with the keyboard already closed and re-opens the Command
+        // Center mid-blur, and the guard above then reads that freshly opened Command Center as the asyncFocus case
+        // and spares the multiselection, leaving the Command Center open over a selection the user cannot dismiss
+        // (#5260).
+        if (isTouch && !state.showCommandCenter && isMulticursorPath(state, path)) dispatch(clearMulticursors())
 
-      if (isTouch) {
-        dispatch((dispatch, getState) => {
-          const state = getState()
-          // Blurring the thought that holds the caret ends an edited multiselection (Clear Thought), so end the
-          // multiselection too. Otherwise the multicursors survive the blur and re-open the Command Center as soon as
-          // the keyboard closes (see multicursorAlertMiddleware). (#4519)
-          // Not when the Command Center is open, since then the blur was caused by the Command Center opening over the
-          // thought (see onFocus), rather than by the user dismissing the keyboard.
-          if (!state.showCommandCenter && isMulticursorPath(state, path)) dispatch(clearMulticursors())
-          dispatch(keyboardOpenActionCreator({ value: false }))
-        })
-      }
+        // temporary states such as duplicate error states and cursorCleared are reset on blur
+        dispatch(cursorCleared({ value: false }))
+
+        if (isTouch) dispatch(keyboardOpenActionCreator({ value: false }))
+      })
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [simplePath, path],

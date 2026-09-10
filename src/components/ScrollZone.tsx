@@ -7,6 +7,7 @@ import useScrollTop from '../hooks/useScrollTop'
 import getUserSetting from '../selectors/getUserSetting'
 import viewportStore from '../stores/viewport'
 import haptics from '../util/haptics'
+import FadeTransition from './FadeTransition'
 
 /** True if the browser supports the ScrollTimeline Web Animations API. */
 const supportsScrollTimeline = 'ScrollTimeline' in window
@@ -85,6 +86,7 @@ const useScrollParallax = ({
 /** An overlay for the scroll zone that blocks pointer events. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const scrollZoneRef = useRef<HTMLDivElement>(null)
+  const highlightRef = useRef<HTMLDivElement>(null)
   const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   const showScrollZoneHelpAlert = useSelector(state => state.alert?.alertType === AlertType.ScrollZoneHelp)
@@ -108,12 +110,22 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
         // height must exceed all possible scroll heights
         height: '999999px',
         pointerEvents: 'none',
-        animation: showScrollZoneHelpAlert
-          ? 'pulseBackgroundHighlight 1s cubic-bezier(0, 0.2, 0.8, 1) infinite alternate'
-          : undefined,
       })}
       style={{ transform, width: scrollZoneWidth }}
-    ></div>
+    >
+      {/* The pulsing highlight is a separate overlay so that it can fade out when the help alert is dismissed rather than disappearing abruptly. */}
+      <FadeTransition type='medium' in={showScrollZoneHelpAlert} nodeRef={highlightRef} unmountOnExit>
+        <div
+          ref={highlightRef}
+          className={css({
+            position: 'absolute',
+            inset: 0,
+            pointerEvents: 'none',
+            animation: 'pulseBackgroundHighlight 1s cubic-bezier(0, 0.2, 0.8, 1) infinite alternate',
+          })}
+        />
+      </FadeTransition>
+    </div>
   )
 }
 

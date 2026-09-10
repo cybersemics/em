@@ -1,8 +1,14 @@
 name: Test
 
-# `yarn test` is `vitest --project unit`, which only ever reads src/. Documentation, agent/editor
-# configuration, and the native platform projects are invisible to it, so a change set confined to
-# them has nothing to test.
+# `yarn test` is `vitest --project unit`. Its include glob, `**/__tests__/**/*.ts`, is unanchored:
+# it collects the workspaces under packages/ and scripts/ as well as src/, so neither may be
+# filtered here even though Puppeteer and BrowserStack filter both. What Test never does is build
+# the web app — hence public/, index.html, and the e2e spec directories, which are build-only or
+# excluded by vitest.config.ts, are filtered here and nowhere else.
+#
+# Documentation, agent/editor configuration, repository tooling, the native platform projects, and
+# unrelated workflow files are all invisible to a unit run, so a change set confined to them has
+# nothing to test.
 #
 # paths-ignore skips the workflow outright, which means NO check is reported — not a "skipped"
 # check, and not a synthetic pass from a job-level `if`. That is only correct because Test is no
@@ -13,6 +19,8 @@ name: Test
 # A run is skipped only when EVERY changed file matches, so any PR that also touches app or test
 # code still runs in full. `**/*.md` is safe because nothing under src/ imports markdown, and none
 # of the native directories contains a JS or TS file.
+#
+# See docs/testing.md § Path filtering for what each group rests on and how the three lists differ.
 on:
   push:
     branches:
@@ -23,6 +31,7 @@ on:
       - 'docs/**'
       - '.github/instructions/**'
       - '.github/skills/**'
+      - '.github/agents/**'
       - '.claude/**'
       - '.agents/**'
       - '.vscode/**'
@@ -32,6 +41,51 @@ on:
       - 'ios/**'
       - 'desktop/**'
       - 'assets/**'
+      # Repository tooling no run here reads: formatter, linter, and dependency-checker config, the
+      # Capacitor and Vercel manifests, the standalone icon generator (its own Yarn project, not a
+      # root workspace), and the TDD annotator script.
+      - '.editorconfig'
+      - '.gitattributes'
+      - '.gitignore'
+      - '.prettierignore'
+      - '.prettierrc.json'
+      - '.ncurc.js'
+      - '.depcheckrc.json'
+      - 'eslint.config.js'
+      - 'tsconfig.eslint.json'
+      - 'capacitor.config.ts'
+      - 'vercel.json'
+      - 'scripts/icons/**'
+      - '.github/scripts/**'
+      - '.github/dependabot.yml'
+      # Workflows that cannot change this one's result. Named individually rather than as
+      # '.github/workflows/**' so that editing THIS file still runs it: paths-ignore has no
+      # exception syntax, and `!` works only in `paths`, which would invert the safe default to
+      # "never runs". A workflow added later is simply not on this list, so it runs — wasteful,
+      # never wrong.
+      - '.github/workflows/agent-scripts.yml'
+      - '.github/workflows/cancel-pr-runs.yml'
+      - '.github/workflows/copilot-*.yml'
+      - '.github/workflows/dependabot-*.yml'
+      - '.github/workflows/docs.yml'
+      - '.github/workflows/estimate-*.yml'
+      - '.github/workflows/issue-classifier.yml'
+      - '.github/workflows/lint.yml'
+      - '.github/workflows/pr-ready.yml'
+      - '.github/workflows/preview-qr.yml'
+      - '.github/workflows/tauri-release-*.yml'
+      - '.github/workflows/tdd.yml'
+      - '.github/workflows/update-browserslist.yml'
+      - '.github/workflows/vercel-*.yml'
+      # Build-only inputs. Test never runs `yarn build`, so nothing that only reaches the app
+      # through Vite can change its result.
+      - 'public/**'
+      - 'index.html'
+      # Spec directories the unit project excludes outright (vitest.config.ts), plus the iOS
+      # helpers only those specs import. NOT all of src/e2e/iOS: config/__tests__ is a unit test.
+      - 'src/e2e/puppeteer/**'
+      - 'src/e2e/iOS/__tests__/**'
+      - 'src/e2e/iOS/helpers/**'
   pull_request:
     branches:
       - '**'
@@ -41,6 +95,7 @@ on:
       - 'docs/**'
       - '.github/instructions/**'
       - '.github/skills/**'
+      - '.github/agents/**'
       - '.claude/**'
       - '.agents/**'
       - '.vscode/**'
@@ -49,6 +104,39 @@ on:
       - 'ios/**'
       - 'desktop/**'
       - 'assets/**'
+      - '.editorconfig'
+      - '.gitattributes'
+      - '.gitignore'
+      - '.prettierignore'
+      - '.prettierrc.json'
+      - '.ncurc.js'
+      - '.depcheckrc.json'
+      - 'eslint.config.js'
+      - 'tsconfig.eslint.json'
+      - 'capacitor.config.ts'
+      - 'vercel.json'
+      - 'scripts/icons/**'
+      - '.github/scripts/**'
+      - '.github/dependabot.yml'
+      - '.github/workflows/agent-scripts.yml'
+      - '.github/workflows/cancel-pr-runs.yml'
+      - '.github/workflows/copilot-*.yml'
+      - '.github/workflows/dependabot-*.yml'
+      - '.github/workflows/docs.yml'
+      - '.github/workflows/estimate-*.yml'
+      - '.github/workflows/issue-classifier.yml'
+      - '.github/workflows/lint.yml'
+      - '.github/workflows/pr-ready.yml'
+      - '.github/workflows/preview-qr.yml'
+      - '.github/workflows/tauri-release-*.yml'
+      - '.github/workflows/tdd.yml'
+      - '.github/workflows/update-browserslist.yml'
+      - '.github/workflows/vercel-*.yml'
+      - 'public/**'
+      - 'index.html'
+      - 'src/e2e/puppeteer/**'
+      - 'src/e2e/iOS/__tests__/**'
+      - 'src/e2e/iOS/helpers/**'
   workflow_dispatch:
     inputs:
       rerun_id:

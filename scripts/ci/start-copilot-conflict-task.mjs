@@ -6,7 +6,7 @@
  * scan rewrites from the same state — see that file for why neither side renders its own.
  */
 import { readFileSync } from 'node:fs'
-import { MARKER, MAX_ATTEMPTS, SKIP_LABELS, commentBody, parseState } from './copilot-conflicts-comment.cjs'
+import { MARKER, MAX_TASKS, SKIP_LABELS, commentBody, parseState } from './copilot-conflicts-comment.cjs'
 
 const MODEL = 'claude-opus-5'
 const CUSTOM_AGENT = 'worker-bee'
@@ -23,7 +23,7 @@ if (!process.env.COPILOT_TASKS_TOKEN) {
   process.exit(0)
 }
 
-const { tasks } = JSON.parse(readFileSync(reportFile, 'utf8'))
+const { tasks, requested } = JSON.parse(readFileSync(reportFile, 'utf8'))
 
 /** Starts a Copilot task on the existing pull request branch. */
 const startTask = async task => {
@@ -70,10 +70,15 @@ const dispatchTask = async task => {
   if (pr.state !== 'open' || pr.mergeable !== false || pr.head.sha !== task.headSha || pr.base.sha !== task.baseSha) {
     return `- [#${task.number}](${task.url}) — skipped because its conflict state changed.`
   }
-  // A label can be applied between the scan and this dispatch, so they are re-checked here too.
+  // A label can be applied, and a pull request put back into draft, between the scan and this
+  // dispatch, so both opt-outs are re-checked here too. A dispatch naming the pull request
+  // overrides them, as it does the wait and the cap.
   const skipLabel = (pr.labels || []).find(label => SKIP_LABELS.includes(label.name))
-  if (skipLabel) {
+  if (!requested && skipLabel) {
     return `- [#${task.number}](${task.url}) — skipped by the \`${skipLabel.name}\` label.`
+  }
+  if (!requested && pr.draft) {
+    return `- [#${task.number}](${task.url}) — skipped because it is a draft.`
   }
   const commentsResponse = await fetch(`${base}/issues/${task.number}/comments`, { headers })
   if (!commentsResponse.ok)
@@ -88,11 +93,11 @@ const dispatchTask = async task => {
   const state = parseState(comment.body)
   const updated = {
     ...state,
-    attempts: state.attempts + 1,
+    tasks: state.tasks + 1,
     lastDispatchedAt: new Date().toISOString(),
     lastTaskUrl: taskUrl,
     // Recorded rather than derived, so a later scan rewriting this comment still credits the run
-    // that started the attempt instead of itself.
+    // that started the task instead of itself.
     lastRunUrl: process.env.RUN_URL || null,
     history: [...state.history, { startedAt: new Date().toISOString(), taskUrl }],
   }
@@ -103,7 +108,7 @@ const dispatchTask = async task => {
   })
   if (!update.ok)
     throw new Error(`task started but could not update #${task.number}: ${update.status} ${update.statusText}`)
-  return `- [#${task.number}](${task.url}) — [Copilot task](${taskUrl}) started (attempt ${updated.attempts} of ${MAX_ATTEMPTS}).`
+  return `- [#${task.number}](${task.url}) — [Copilot task](${taskUrl}) started (task ${updated.tasks} of ${MAX_TASKS}).`
 }
 
 const results = await Promise.allSettled(tasks.map(dispatchTask))

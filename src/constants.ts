@@ -502,121 +502,150 @@ export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 export const GESTURE_GLOW_BLUR = 10
 export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
 
-// define the grouping and ordering of commands
-export const COMMAND_GROUPS: {
+/** Defines command difficulties and categories in presentation order. IDs remain stable when titles or positions change. */
+export const COMMAND_DIFFICULTIES = [
+  {
+    id: 'beginner',
+    title: 'Beginner',
+    groups: [
+      {
+        id: 'creatingThoughts',
+        title: 'Creating Thoughts',
+        commands: ['newThought', 'newThoughtAbove', 'newSubthought', 'newSubthoughtTop'],
+      },
+      {
+        id: 'navigation',
+        title: 'Navigation',
+        commands: [
+          'cursorBack',
+          'cursorForward',
+          'cursorNext',
+          'cursorPrev',
+          'jumpBack',
+          'jumpForward',
+          'moveCursorBackward',
+          'moveCursorForward',
+          'navigateBack',
+          'navigateForward',
+          'openDesktopCommandUniverse',
+          'home',
+          'search',
+          'selectAll',
+          'selectBetween',
+          'closeCommandCenter',
+          'openCommandCenter',
+          'help',
+          'openMobileCommandUniverse',
+          'cancel',
+        ],
+      },
+      {
+        id: 'contexts',
+        title: 'Contexts',
+        commands: ['toggleContextView'],
+      },
+    ],
+  },
+  {
+    id: 'intermediate',
+    title: 'Intermediate',
+    groups: [
+      {
+        id: 'categorizing',
+        title: 'Categorizing',
+        commands: ['categorize', 'uncategorize', 'extractSubthought', 'extractCategory'],
+      },
+      {
+        id: 'nudging',
+        title: 'Nudging',
+        commands: [
+          'indent',
+          'outdent',
+          'bumpThoughtDown',
+          'moveThoughtDown',
+          'moveThoughtUp',
+          'swapParent',
+          'swapGrandparent',
+        ],
+      },
+      {
+        id: 'deleting',
+        title: 'Deleting',
+        commands: ['delete', 'archive', 'clearThought'],
+      },
+    ],
+  },
+  {
+    id: 'advanced',
+    title: 'Advanced',
+    groups: [
+      {
+        id: 'creatingThoughtsII',
+        title: 'Creating Thoughts II',
+        commands: [
+          'newUncle',
+          'newGrandChild',
+          'defineTerm',
+          'generateEmoji',
+          'generateThought',
+          'organizeThought',
+          'join',
+          'mergeDuplicates',
+          'splitSentences',
+          'bold',
+          'italic',
+          'strikethrough',
+          'underline',
+          'code',
+          'copyCursor',
+          'removeFormat',
+          'textColor',
+          'applyColor',
+        ],
+      },
+      {
+        id: 'editHistory',
+        title: 'Edit History',
+        commands: ['undo', 'redo', 'repeat'],
+      },
+      {
+        id: 'notes',
+        title: 'Notes',
+        commands: ['note', 'swapNote'],
+      },
+      {
+        id: 'views',
+        title: 'Views',
+        commands: [
+          'proseView',
+          'toggleTableView',
+          'toggleSort',
+          'heading0',
+          'heading1',
+          'heading2',
+          'heading3',
+          'heading4',
+          'heading5',
+          'pin',
+          'pinAll',
+          'pinDescendants',
+          'toggleDone',
+          'toggleHiddenThoughts',
+          'settings',
+          'customizeToolbar',
+        ],
+      },
+    ],
+  },
+] as const satisfies readonly {
+  id: string
   title: string
-  commands: CommandId[]
-}[] = [
-  {
-    title: 'Navigation',
-    commands: [
-      'cursorBack',
-      'cursorForward',
-      'cursorNext',
-      'cursorPrev',
-      'jumpBack',
-      'jumpForward',
-      'moveCursorBackward',
-      'moveCursorForward',
-      'navigateBack',
-      'navigateForward',
-      'openDesktopCommandUniverse',
-      'home',
-      'search',
-      'selectAll',
-      'selectBetween',
-    ],
-  },
-  {
-    title: 'Creating thoughts',
-    commands: [
-      'categorize',
-      'newThought',
-      'newThoughtAbove',
-      'newSubthought',
-      'newSubthoughtTop',
-      'newUncle',
-      'newGrandChild',
-      'extractSubthought',
-      'extractCategory',
-      'defineTerm',
-      'generateEmoji',
-      'generateThought',
-    ],
-  },
-  {
-    title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'uncategorize', 'clearThought'],
-  },
-  {
-    title: 'Moving thoughts',
-    commands: [
-      'indent',
-      'outdent',
-      'bumpThoughtDown',
-      'moveThoughtDown',
-      'moveThoughtUp',
-      'swapParent',
-      'swapGrandparent',
-    ],
-  },
-  {
-    title: 'Editing thoughts',
-    commands: [
-      'join',
-      'mergeDuplicates',
-      'splitSentences',
-      'bold',
-      'italic',
-      'strikethrough',
-      'underline',
-      'code',
-      'copyCursor',
-      'closeCommandCenter',
-      'openCommandCenter',
-      'removeFormat',
-      'textColor',
-      'applyColor',
-    ],
-  },
-  {
-    title: 'Oops',
-    commands: ['undo', 'redo', 'repeat'],
-  },
-  {
-    title: 'Special Views',
-    commands: [
-      'note',
-      'swapNote',
-      'toggleContextView',
-      'proseView',
-      'toggleTableView',
-      'toggleSort',
-      'heading0',
-      'heading1',
-      'heading2',
-      'heading3',
-      'heading4',
-      'heading5',
-    ],
-  },
-  {
-    title: 'Visibility',
-    commands: ['pin', 'pinAll', 'pinDescendants', 'toggleDone', 'toggleHiddenThoughts'],
-  },
-  {
-    title: 'Settings',
-    commands: ['settings', 'customizeToolbar'],
-  },
-  {
-    title: 'Help',
-    commands: ['help', 'openMobileCommandUniverse'],
-  },
-  {
-    title: 'Cancel',
-    commands: ['cancel'],
-  },
-]
+  groups: readonly {
+    id: string
+    title: string
+    commands: readonly CommandId[]
+  }[]
+}[]
 
 /** The duration of the haptics vibrate on delete or archive non-empty thought. */
 export const DELETE_VIBRATE_DURATION = 80
