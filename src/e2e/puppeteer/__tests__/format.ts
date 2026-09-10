@@ -201,7 +201,7 @@ describe('mobile', () => {
     )
 
   // https://github.com/cybersemics/em/issues/5286
-  it.skip('formatting buttons reflect a long-pressed thought rather than a previously formatted thought', async () => {
+  it('formatting buttons reflect a long-pressed thought rather than a previously formatted thought', async () => {
     await paste(`
       - aaa
       - bbb
