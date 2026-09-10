@@ -432,7 +432,7 @@ describe('mobile', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5288
-  it.skip('mirrors typing across the multiselection after the selected thoughts are indented', async () => {
+  it('mirrors typing across the multiselection after the selected thoughts are indented', async () => {
     await paste(`
       - aaa
       - bbb

@@ -196,6 +196,11 @@ const Editable = ({
   const multiEditing = caretRectStore.useSelector(caretRect => caretRect.x !== null)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
+  // onChangeHandler is memoized on [readonly, uneditable] so that ContentEditable is not re-rendered while the user is
+  // typing, which freezes the path it closes over at the render that created it. Track the current path separately so
+  // that multicursor mirroring still recognizes the thought as selected after a command has moved it, e.g. indenting a
+  // multiselection that is then cleared and typed into. (#5288)
+  const pathRef = useRef(path)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -242,6 +247,10 @@ const Editable = ({
     if (!contentRef.current) return
     contentRef.current.classList[value ? 'add' : 'remove'](invalidOptionRecipe())
   }
+
+  useEffect(() => {
+    pathRef.current = path
+  }, [path])
 
   // side effect to set old value ref to head value from updated simplePath. Also update editing value, if it is different from current value.
   useEffect(
@@ -739,10 +748,13 @@ const Editable = ({
         // thoughts stay in sync with the thought being typed into keystroke by keystroke. Each thought's current value
         // is read fresh from state to use as the correct oldValue. Keyed off the multicursors rather than cursorCleared,
         // which is reset after the first edit. (#4519)
-        if (isMulticursorPath(state, path)) {
+        // The multicursors are keyed by path, so the thought's current path is read from pathRef rather than from this
+        // handler's frozen closure, which still points at the thought's location before a command moved it. (#5288)
+        const currentPath = pathRef.current
+        if (isMulticursorPath(state, currentPath)) {
           dispatch(
             Object.values(state.multicursors)
-              .filter(multicursorPath => !equalPath(multicursorPath, path))
+              .filter(multicursorPath => !equalPath(multicursorPath, currentPath))
               .flatMap(multicursorPath => {
                 const thought = getThoughtById(state, head(multicursorPath))
                 return !thought || thought.value === newValue
