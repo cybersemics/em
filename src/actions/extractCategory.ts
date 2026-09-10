@@ -1,12 +1,14 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import getThoughtById from '../selectors/getThoughtById'
 import selectionOffsets from '../selectors/selectionOffsets'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
+import splitFormattedValue from '../util/splitFormattedValue'
 import alert from './alert'
 import categorize from './categorize'
 import editThought from './editThought'
@@ -35,13 +37,21 @@ const extractCategory = (state: State, { selectionStart, selectionEnd }: extract
   }
 
   const { value } = cursorThought
-  const newValue = `${value.slice(0, selectionStart)}${value.slice(selectionEnd, value.length)}`.trim()
-  const categoryValue = value.slice(selectionStart, selectionEnd)
+  const plainValue = getTextContentFromHTML(value)
+
+  // A formatted value cannot be sliced by the selection offsets, since they are plain text offsets that do not line up with the indices of the markup, causing the slice to land in the middle of a tag (#5267). Split it as HTML instead. An unformatted value takes the fast path, avoiding the DOM entirely.
+  const { remainingValue, extractedValue } =
+    plainValue === value
+      ? {
+          remainingValue: `${value.slice(0, selectionStart)}${value.slice(selectionEnd, value.length)}`.trim(),
+          extractedValue: value.slice(selectionStart, selectionEnd),
+        }
+      : splitFormattedValue(value, selectionStart, selectionEnd)
 
   // Categorize before editing. categorize refuses to categorize in some contexts (a direct child of the home or em
   // context, a read-only or unextendable parent, thoughts from different parents), alerting instead. Stripping the
   // selection first would drop the extracted text into a category that was never created.
-  const stateCategorized = categorize(state, { value: categoryValue })
+  const stateCategorized = categorize(state, { value: extractedValue })
 
   // categorize signals success by moving the cursor onto the category it created, so an unmoved cursor means it
   // refused and the thought must keep its full value.
@@ -49,7 +59,7 @@ const extractCategory = (state: State, { selectionStart, selectionEnd }: extract
 
   return editThought(stateCategorized, {
     oldValue: value,
-    newValue,
+    newValue: remainingValue,
     // The thought has been moved under the new category, so its path is no longer the cursor's. Its id is unchanged.
     path: thoughtToPath(stateCategorized, head(cursor)),
     force: true,

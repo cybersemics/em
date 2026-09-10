@@ -1,0 +1,150 @@
+name: Preview QR
+
+# Keeps a collapsed "Preview" disclosure at the bottom of every pull request description, holding a
+# QR code of the latest successful Vercel preview so the preview can be opened on a phone straight
+# off the screen. scripts/ci/preview-qr.mjs does the work; this file decides when it runs and with
+# what.
+#
+# Trigger. Vercel's Git integration is off (vercel.json), so previews come from vercel-preview.yml,
+# which creates a GitHub deployment in the `Preview` environment with its own GITHUB_TOKEN and
+# reports `in_progress`, then `success` (with the URL), `failure`, or `inactive` for a superseded
+# run. Events raised with GITHUB_TOKEN never start workflows, so `deployment` and
+# `deployment_status` cannot be the trigger here; the Vercel Preview *run* is the observable
+# lifecycle instead. `in_progress` is the moment the preview starts building, `completed` with
+# `conclusion: success` the moment it is live, and any other conclusion — `failure`, `cancelled`
+# from a newer push, a startup failure — the moment it is not coming. Queued runs (awaiting
+# approval for a first-time contributor) are not yet building and leave the description alone.
+#
+# Ordering. Events can arrive late or out of order, so the script does not act on the event that
+# woke it. It resolves the pull request from the commit, exits if the pull request's head has
+# moved on, and reconciles the description to the *newest* Vercel Preview run for that head as the
+# API reports it now — so commit A's late success cannot overwrite commit B, and an `in_progress`
+# delivered after its own `completed` finds the run finished and renders the finished state.
+# Immediately before writing it re-reads the pull request, so a human edit to the description
+# during the run is kept and a push during it aborts the write.
+#
+# SECURITY: this is the privileged half of a two-workflow pair. Vercel Preview runs fork code
+# under pull_request_target with the deployment secrets; this workflow runs in the base
+# repository with a write token and must therefore never touch that code. It checks out only the
+# default branch — `workflow_run` resolves `github.ref` there — installs nothing from the pull
+# request, and works from GitHub API metadata alone. The one pull-request-derived value it handles
+# is the preview URL the trusted Vercel Preview run recorded on the deployment, which it encodes
+# into a PNG and places in a markdown link. Fork pull requests get exactly the same treatment as
+# same-repository ones: the pull request is found by commit, never by branch name.
+#
+# Tokens. Reads and plain description updates use the workflow's GITHUB_TOKEN. Uploading the QR
+# uses `gh pr edit --attach`, which puts the PNG in GitHub's attachment storage and rewrites the
+# description in one mutation — but gh refuses to upload with an app installation token, which is
+# what GITHUB_TOKEN is. That single step therefore authenticates with `PREVIEW_QR_TOKEN`, a
+# fine-grained personal access token for this repository with "Contents" and "Pull requests" set
+# to read and write, belonging to someone with push access. Without the secret the workflow says
+# so and does nothing, the same way dependabot-fix.yml treats COPILOT_TASKS_TOKEN.
+#
+# `--attach` shipped in gh 2.99.0 (2026-09-01). The runner image lags releases, so a pinned gh is
+# downloaded when the preinstalled one predates it.
+#
+# Runs:
+#   - Automatically, when a Vercel Preview run starts or finishes
+#   - Manually: `gh workflow run preview-qr.yml -f pr=5296`, which reconciles that pull request
+#
+# `workflow_run` reads this file from the default branch, so edits here have no effect until they
+# are merged to main.
+
+on:
+  workflow_run:
+    workflows: ['Vercel Preview']
+    types: [in_progress, completed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Pull request number whose preview disclosure to reconcile'
+        required: true
+        type: string
+
+# Serialize per pull request where the event names it (same-repository branches) and per commit
+# otherwise (forks, whose pull requests the event does not list). Never cancel: the newest queued
+# run is the one that sees the run's final state. GitHub drops an older *pending* run when a newer
+# one queues behind it, which is safe here because every run reconciles to the newest state
+# regardless of which event woke it.
+concurrency:
+  group: preview-qr-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha || inputs.pr }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read # list the Vercel Preview runs for the pull request head
+  contents: read # check out scripts/ci from the default branch
+  deployments: read # read the preview URL and creation time off the deployment
+  pull-requests: write # read and rewrite the pull request description
+
+jobs:
+  update:
+    name: Update preview disclosure
+    runs-on: ubuntu-latest
+    # Only pull-request previews; the production deploy is a different workflow and never matches.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.event == 'pull_request_target'
+
+    steps:
+      - name: Check for the upload token
+        id: token
+        env:
+          PREVIEW_QR_TOKEN: ${{ secrets.PREVIEW_QR_TOKEN }}
+        run: |
+          if [ -z "$PREVIEW_QR_TOKEN" ]; then
+            echo "PREVIEW_QR_TOKEN secret not set; the preview disclosure is not maintained." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # `workflow_run` resolves `github.ref` to the default branch, so this checks out the base
+      # repo's own code — never the pull request's — solely to make scripts/ci/ available below.
+      - name: Clone repository
+        if: steps.token.outputs.present == 'true'
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # The QR is generated locally, so no third-party service ever sees the preview URL.
+      - name: Install qrencode
+        if: steps.token.outputs.present == 'true'
+        run: |
+          sudo apt-get install -y --no-install-recommends qrencode ||
+            (sudo apt-get update && sudo apt-get install -y --no-install-recommends qrencode)
+
+      # Verified against the release's own checksum file, so a truncated download cannot be run.
+      - name: Ensure gh supports --attach
+        if: steps.token.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_VERSION: 2.100.0
+        run: |
+          set -euo pipefail
+          if gh pr edit --help | grep -q -- '--attach'; then
+            echo "Preinstalled $(gh --version | head -n 1) supports --attach."
+            exit 0
+          fi
+          archive="gh_${GH_VERSION}_linux_amd64.tar.gz"
+          cd "$RUNNER_TEMP"
+          gh release download "v$GH_VERSION" --repo cli/cli --pattern "$archive" --pattern "gh_${GH_VERSION}_checksums.txt"
+          sha256sum --check --ignore-missing "gh_${GH_VERSION}_checksums.txt"
+          tar -xzf "$archive"
+          echo "$RUNNER_TEMP/gh_${GH_VERSION}_linux_amd64/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/gh_${GH_VERSION}_linux_amd64/bin/gh" --version
+
+      - name: Update the pull request description
+        if: steps.token.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_QR_TOKEN: ${{ secrets.PREVIEW_QR_TOKEN }}
+          # Empty on workflow_dispatch, where PR_NUMBER identifies the pull request instead.
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PR_NUMBER: ${{ inputs.pr }}
+        run: |
+          set -euo pipefail
+          if [ -n "$PR_NUMBER" ]; then
+            node scripts/ci/preview-qr.mjs --pr "$PR_NUMBER"
+          else
+            node scripts/ci/preview-qr.mjs "$HEAD_SHA"
+          fi

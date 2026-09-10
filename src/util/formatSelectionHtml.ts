@@ -34,13 +34,28 @@ const unwrapAll = (root: Element | DocumentFragment, selector: string) => {
 }
 
 /** Wraps an extracted fragment in the command's tag, first unwrapping any nested instances of the same tag so the
- * result doesn't nest redundantly (e.g. bolding a whole thought that already has a bold substring). */
+ * result doesn't nest redundantly (e.g. bolding a whole thought that already has a bold substring). When the whole
+ * fragment is already wrapped in a color element, the tag is nested inside that element rather than around it, so
+ * that a `<u>`/`<strike>` inherits the color and draws its line in it: text-decoration-color resolves to the
+ * currentColor of the decorating element, not of its children, so a decoration on the outside would draw in the
+ * theme's default color (white in dark mode). This is also the markup applyColor produces when the color is applied
+ * last, so the result no longer depends on the order the user formatted in. */
 const wrapWithTag = (fragment: DocumentFragment, command: FormatCommand): HTMLElement => {
   unwrapAll(fragment, tagForCommand(command)!)
   const wrapper = createWrapper(command)
-  wrapper.appendChild(fragment)
+
+  // The fragment's sole child when it is an element that sets a text color, i.e. the whole range is colored. A color
+  // is carried by a <font color> or an inline color style, as in getCommandState's extractColors.
+  const onlyChild = fragment.childNodes.length === 1 ? (fragment.firstElementChild as HTMLElement | null) : null
+  const colorElement = onlyChild && (onlyChild.style.color || onlyChild.getAttribute('color')) ? onlyChild : null
+
+  wrapper.append(...Array.from(colorElement ? colorElement.childNodes : fragment.childNodes))
   wrapper.normalize()
-  return wrapper
+
+  if (!colorElement) return wrapper
+
+  colorElement.appendChild(wrapper)
+  return colorElement
 }
 
 /** A { node, offset } position on a text node, as resolved from a plain-text offset. */

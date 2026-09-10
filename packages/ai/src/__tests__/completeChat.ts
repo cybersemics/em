@@ -37,6 +37,7 @@ it.each([
   [Service.DEFINE_TERM, 'OPENAI_API_KEY_DEFINE_TERM', 'define-term-key'],
   [Service.GENERATE_EMOJI, 'OPENAI_API_KEY_GENERATE_EMOJI', 'generate-emoji-key'],
   [Service.GENERATE_THOUGHT, 'OPENAI_API_KEY_GENERATE_THOUGHT', 'generate-thought-key'],
+  [Service.ORGANIZE_THOUGHT, 'OPENAI_API_KEY_ORGANIZE_THOUGHT', 'organize-thought-key'],
 ] as const)('authenticates %s with its service key', async (service, environmentVariable, apiKey) => {
   vi.stubEnv(environmentVariable, apiKey)
   vi.stubEnv('OPENAI_API_KEY', 'shared-key')
