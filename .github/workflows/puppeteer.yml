@@ -125,7 +125,20 @@ jobs:
         uses: ./.github/actions/serve
 
       - name: Test
-        run: yarn test:puppeteer
+        run: yarn test:puppeteer --run --config .desktop-diagnostic-vitest.ts
+        env:
+          DIAG_BROWSER: v2
+          DIAG_CAPTURE: '2'
+          DIAG_RUN: ci
+
+      - name: Upload desktop input diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: desktop-input-diagnostics
+          path: /tmp/em-desktop-v2-ci-*.json
+          retention-days: 7
+          if-no-files-found: error
 
       - name: Upload snapshot diff artifact
         if: failure()
