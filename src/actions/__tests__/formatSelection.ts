@@ -378,7 +378,7 @@ describe('formatSelection color', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5505
-  it.skip('clears the color of a selected substring inside a colored thought', async () => {
+  it('clears the color of a selected substring inside a colored thought', async () => {
     await dispatch([newThought({ value: 'as' })])
 
     await dispatch(formatSelection('foreColor', 'blue'))
@@ -387,6 +387,17 @@ describe('formatSelection color', () => {
     await dispatch(formatSelection('foreColor', 'fg'))
 
     expect(cursorValue()).toBe('<font color="#00c7e6">a</font>s')
+  })
+
+  it('recolors a selected substring inside a colored thought without nesting', async () => {
+    await dispatch([newThought({ value: 'as' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    selectRange(1, 2)
+    await dispatch(formatSelection('foreColor', 'red'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6">a</font><font color="#ff573d">s</font>')
   })
 
   // color.ts > "Can change the color of a thought that already has the same color applied to part of its text"
