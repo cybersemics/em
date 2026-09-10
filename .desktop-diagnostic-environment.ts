@@ -51,6 +51,44 @@ export default {
         await page.evaluateOnNewDocument(advanced => {
           const records = []
           window.__desktopDiagnostics = records
+          let observedStore = false
+          const observeStore = () => {
+            const store = window.em?.store
+            if (!advanced || observedStore || !store) return
+            observedStore = true
+            const select = state => ({
+              cursor: state.cursor,
+              multicursors: Object.keys(state.multicursors),
+              noteFocus: state.noteFocus,
+              cursorOffset: state.cursorOffset,
+            })
+            let previous = JSON.stringify(select(store.getState()))
+            store.subscribe(() => {
+              const state = select(store.getState())
+              const current = JSON.stringify(state)
+              if (current !== previous) {
+                previous = current
+                records.push({
+                  type: 'cursor-state',
+                  time: performance.now(),
+                  state,
+                  url: location.href,
+                  stack: new Error().stack,
+                })
+              }
+            })
+            // Observe completion only; do not gate input or test execution on this promise.
+            window.em.testHelpers.waitForInitialized().then(
+              () =>
+                records.push({
+                  type: 'initialized',
+                  time: performance.now(),
+                  url: location.href,
+                  state: select(store.getState()),
+                }),
+              error => records.push({ type: 'initialization-error', time: performance.now(), error: String(error) }),
+            )
+          }
           const identify = node => {
             const el = node?.nodeType === 1 ? node : node?.parentElement
             return el
@@ -78,6 +116,7 @@ export default {
             document.addEventListener(
               type,
               event => {
+                observeStore()
                 const selection = window.getSelection()
                 const state = advanced ? window.em?.store?.getState() : undefined
                 records.push({
@@ -111,6 +150,7 @@ export default {
           }
           if (advanced) {
             new MutationObserver(changes => {
+              observeStore()
               for (const change of changes) {
                 const el = change.target.nodeType === 1 ? change.target : change.target.parentElement
                 const editable = el?.closest?.('[data-editable], [aria-label="note-editable"]')
