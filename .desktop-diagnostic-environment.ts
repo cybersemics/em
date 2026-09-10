@@ -12,7 +12,7 @@ export default {
       if (process.env.DIAG_BROWSER !== 'v1') return originalConnect(connectOptions)
       const source = new URL(connectOptions.browserWSEndpoint!)
       const launch = JSON.parse(Buffer.from(source.searchParams.get('launch')!, 'base64').toString())
-      const target = new URL('ws://localhost:7579')
+      const target = new URL(`ws://localhost:${process.env.DIAG_V1_PORT || '7579'}`)
       for (const arg of launch.args) {
         const [key, value = 'true'] = arg.split('=')
         target.searchParams.set(key, value)
@@ -180,6 +180,10 @@ export default {
             const result = await page.evaluate(() => ({
               url: location.href,
               timeOrigin: performance.timeOrigin,
+              resources: performance
+                .getEntriesByType('resource')
+                .filter(entry => /worker-|\.wasm|glow\.avif/.test(entry.name))
+                .map(entry => entry.toJSON()),
               viewport: { width: innerWidth, height: innerHeight, dpr: devicePixelRatio },
               editables: Array.from(document.querySelectorAll('[data-editable]')).map(el => ({
                 value: el.innerHTML,

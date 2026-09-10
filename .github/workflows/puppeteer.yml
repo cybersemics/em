@@ -56,6 +56,15 @@ on:
       rerun_id:
         description: 'Optional ID for tracking repeated runs'
         required: false
+      diagnostic_browser:
+        description: 'Browserless version for the standalone diagnostic branch'
+        type: choice
+        default: v2
+        options: [v1, v2]
+      focus_startup:
+        description: 'Run only the three startup-sensitive test cases'
+        type: boolean
+        default: false
 
 # Supersede the in-progress run when a pull request is pushed again; its result is about to be
 # replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
@@ -93,17 +102,19 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0
     services:
       browserless:
-        image: ghcr.io/browserless/chromium:v2.56.2
+        image: ${{ inputs.diagnostic_browser == 'v1' && 'browserless/chrome:latest' || 'ghcr.io/browserless/chromium:v2.56.2' }}
         ports:
           - 7566:3000
         env:
           TIMEOUT: 0
+          CONNECTION_TIMEOUT: -1
 
     steps:
       - name: Clone repository
         uses: actions/checkout@v6
 
       - name: Install Microsoft Core Fonts
+        if: inputs.diagnostic_browser != 'v1'
         run: ./src/e2e/puppeteer/install-browserless-fonts.sh '${{ job.services.browserless.id }}'
 
       - name: Enable Corepack
@@ -125,18 +136,25 @@ jobs:
         uses: ./.github/actions/serve
 
       - name: Test
-        run: yarn test:puppeteer --run --config .desktop-diagnostic-vitest.ts
+        run: |
+          if [ "$FOCUS_STARTUP" = "true" ]; then
+            yarn test:puppeteer --run --config .desktop-diagnostic-vitest.ts undo drag-and-drop-multiselect render-thoughts -t 'Font Size: 18.*long list of siblings|undoes and redoes contiguous note typing with its caret|should drop multiple thoughts as siblings before target'
+          else
+            yarn test:puppeteer --run --config .desktop-diagnostic-vitest.ts
+          fi
         env:
-          DIAG_BROWSER: v2
+          DIAG_BROWSER: ${{ inputs.diagnostic_browser || 'v2' }}
+          DIAG_V1_PORT: '7566'
           DIAG_CAPTURE: '2'
           DIAG_RUN: ci
+          FOCUS_STARTUP: ${{ inputs.focus_startup }}
 
       - name: Upload desktop input diagnostics
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: desktop-input-diagnostics
-          path: /tmp/em-desktop-v2-ci-*.json
+          path: /tmp/em-desktop-*-ci-*.json
           retention-days: 7
           if-no-files-found: error
 

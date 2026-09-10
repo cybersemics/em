@@ -392,6 +392,8 @@ The test client is the sole viewport owner: Browserless's server launch options 
 
 On the standalone `diagnostics/5298-desktop-input` branch only, the Puppeteer workflow selects `.desktop-diagnostic-vitest.ts` and its observer environment. With `DIAG_CAPTURE=2`, it records input/focus/selection events, editable DOM mutations, limited read-only cursor state, cursor-change stacks, startup completion, and command timestamps, then uploads `desktop-input-diagnostics` after tests. It observes startup completion without waiting for it before input. It does not move focus, change selection, dispatch extra application actions, or alter assertions. Capture overhead can affect timing; passing captures are controls, not evidence of a fix. This branch is for manual investigation, must not be merged, and has no associated pull request.
 
+That branch's manual workflow accepts `diagnostic_browser` (`v1` or `v2`) and `focus_startup` to compare the three startup-sensitive cases without artificial delay. Each job runs one browser service on port 7566. V1 retains its bundled fonts; its expected differences from v2 snapshot baselines are separate from input/content failures. Captures include main-document worker/WASM resource timing entries where the browser exposes them.
+
 Both paths install Microsoft Core Fonts, which packages non-free fonts used in snapshots.
 
 Browserless Chromium runs with HTTP/2 disabled because current Chromium can reset its certificate verifier while Vite's large module graph is loading, aborting the shared HTTP/2 session with `ERR_CERT_VERIFIER_CHANGED`; HTTPS, secure-context APIs, and WebSockets remain enabled.
