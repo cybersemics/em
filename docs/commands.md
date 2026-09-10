@@ -125,15 +125,18 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 The **Command Universe** is the searchable command palette. Two flavors:
 
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
-- **`MobileCommandUniverse`** — mobile drawer opened by `openMobileCommandUniverse`, also reachable by gesture.
+- **`MobileCommandUniverse`** — dialog opened by `openMobileCommandUniverse`, also reachable by gesture. Clicking a grid cell opens its command detail page, including when the command cannot currently execute. Cells are native buttons, so Enter and Space also open details. Back/Forward in `DialogHeader` navigate the dialog history. Search stays above the grid scroller, and changing search or sort resets the results to the top.
 
 The Command Universe has one session owner and separate routing and presentation layers:
 
 - [`CommandUniverseProvider`](../src/components/CommandUniverse/CommandUniverseProvider.tsx) owns one [`CommandUniversePageNavigator`](../src/@types/CommandUniversePageNavigator.ts), keeping its reducer and lifecycle logic inside the provider. Consumers read that same instance through [`useCommandUniverseNavigator`](../src/hooks/useCommandUniverseNavigator.ts). The consumer hook never creates a second history and throws when no provider is present. The provider sits outside the modal's fade/unmount boundary. Its `isOpen` describes the entire Command Universe session, not whether one particular presentation is visible.
 - [`commandUniversePages`](../src/components/CommandUniverse/commandUniversePages.ts) maps page ids to components. [`CommandUniversePage`](../src/@types/CommandUniversePage.ts) derives both the ids and the corresponding props from that registry. A history entry wraps a page with its own `entryId`, so two visits to the same page remain distinct. The navigator stores opaque page props and has no command-specific fields.
 - [`CommandUniversePageRouter`](../src/components/CommandUniverse/CommandUniversePageRouter.tsx) selects the registered component and forwards its props. It does not own history, read command data, or size the dialog. The modal composition sizes the outer non-scrolling viewport. Each page uses [`DialogContent`](../src/components/dialog/DialogContent.tsx) for its independent scroller, padding, and custom scrollbar.
+- [`CommandUniversePageTransitions`](../src/components/CommandUniverse/CommandUniversePageTransitions.tsx) coordinates the retained page surfaces. Inactive pages are inert and hidden by whole-page opacity, which also hides descendants that override visibility themselves. After navigation, the view restores the destination's last focused element or focuses its designated heading without changing scroll position.
 
-Starting a new branch discards its abandoned redo entries. Closing and reopening starts a fresh session. This history is independent of browser history and the editor's undo/redo.
+Reachable history entries remain mounted with their independent scroll positions. Starting a new branch discards its abandoned redo pages. Closing and reopening starts a fresh session. This history is independent of browser history and the editor's undo/redo.
+
+For a future docked presentation, keep the provider and the router's rendered page tree mounted in the same React position while changing the shell's layout. Keep `isOpen` true when docking. Sharing the provider preserves history, but replacing the router subtree would still remount page-local state and scroll containers. The current app renders the modal presentation; docking controls are separate work.
 
 #### Adding a Command Universe page
 
