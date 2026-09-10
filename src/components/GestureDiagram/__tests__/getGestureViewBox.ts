@@ -20,7 +20,7 @@ it('preserves the arrowhead-free padding rule', () => {
   expect(getGestureViewBox(geometry, { arrowSize: 10, arrowhead: 'none', strokeWidth: 2 })).toBe('-6 1 52 2')
 })
 
-it('pads the completed wide-chevron geometry uniformly', () => {
+it('includes the chevron while preserving default outlined-marker padding', () => {
   expect(
     getGestureViewBox(
       {
@@ -33,5 +33,5 @@ it('pads the completed wide-chevron geometry uniformly', () => {
       },
       { arrowSize: 10, arrowhead: 'outlined-wide', strokeWidth: 2 },
     ),
-  ).toBe('-23 -26 96 56')
+  ).toBe('-23 -22 96 48')
 })

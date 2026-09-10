@@ -1,6 +1,5 @@
 import Direction from '../../@types/Direction'
 import Gesture from '../../@types/Gesture'
-import getGestureBounds from './getGestureBounds'
 import GestureGeometry from './types/GestureGeometry'
 import GesturePoint from './types/GesturePoint'
 import GestureSegment from './types/GestureSegment'
@@ -27,9 +26,9 @@ const oppositeDirection = (dir: Direction) =>
   })[dir]
 
 /** Calculates the coordinates for a curved segment that can be consumed by other functions. */
-const generateArcCoordinates = (index: number, pathDirs: Direction[]) => {
-  const radius = 1
-  const center = { x: 0, y: 0 }
+const generateArcCoordinates = (index: number, pathDirs: Direction[], size: number) => {
+  const radius = size * 0.4
+  const center = { x: 50, y: 50 }
 
   /** Determine base angle based on first direction and second direction. */
   const getBaseAngle = (first: Direction, second: Direction): number => {
@@ -111,6 +110,7 @@ const getBaseGestureGeometry = (
       const { startX, startY, radius, sweepFlag, endX, endY, startAngle, endAngle, center } = generateArcCoordinates(
         gestureIndex,
         directions,
+        size,
       )
       return {
         kind: 'arc',
@@ -186,35 +186,6 @@ const getBaseGestureGeometry = (
     gestureIndex: gestureIndexes[i],
   }))
   return { path, extendedPath, segments }
-}
-
-/** Places the shape at the origin and scales authored curves to size, preserving existing line sizing. */
-const normalizeGeometry = (geometry: BaseGestureGeometry, size: number): BaseGestureGeometry => {
-  const bounds = getGestureBounds({ ...geometry, chevron: null })
-  const extent = Math.max(bounds.width, bounds.height)
-  if (extent === 0) return geometry
-
-  // Line construction already applies its direction/reversal sizing rules. Its bounds can
-  // exceed size for multi-turn paths, and rescaling those paths would change existing diagrams.
-  const scale = geometry.segments[0].kind === 'line' ? 1 : size / extent
-  /** Converts a point from the authored coordinate system to the requested gesture extent. */
-  const normalizePoint = (point: GesturePoint): GesturePoint => ({
-    x: (point.x - bounds.x) * scale,
-    y: (point.y - bounds.y) * scale,
-  })
-
-  return {
-    ...geometry,
-    segments: geometry.segments.map<GestureSegment>(segment => {
-      const from = normalizePoint(segment.from)
-      const to = normalizePoint(segment.to)
-      return segment.kind === 'arc'
-        ? { ...segment, from, to, center: normalizePoint(segment.center), radius: segment.radius * scale }
-        : segment.kind === 'quadratic'
-          ? { ...segment, from, to, control: normalizePoint(segment.control) }
-          : { ...segment, from, to }
-    }),
-  }
 }
 
 /** Returns a point a limited distance from the first point toward the second. */
@@ -319,10 +290,7 @@ const getGestureGeometry = (
     size: number
   },
 ): GestureGeometry => {
-  const geometry = softenCorners(
-    normalizeGeometry(getBaseGestureGeometry(path, { reversalOffset, rounded, size }), size),
-    cornerRadius,
-  )
+  const geometry = softenCorners(getBaseGestureGeometry(path, { reversalOffset, rounded, size }), cornerRadius)
   if (!chevron || path === 'rdld') return { ...geometry, chevron: null }
 
   const finalSegment = geometry.segments.at(-1)!
