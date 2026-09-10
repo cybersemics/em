@@ -5,7 +5,6 @@ import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
-import deferredHtml from './deferredHtml'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -102,14 +101,6 @@ export const isCollapsed = (): boolean => !!window.getSelection()?.isCollapsed
 
 /** Returns true if there is an active selection. */
 export const isActive = (): boolean => !!window.getSelection()?.focusNode
-
-/** Returns true when the active selection belongs to an editable whose canonical HTML reconciliation is deferred. */
-export const hasDeferredHtml = (): boolean => {
-  const focusNode = window.getSelection()?.focusNode
-  const focusElement = focusNode instanceof Element ? focusNode : focusNode?.parentElement
-  const editable = focusElement?.closest('[contenteditable="true"]')
-  return editable instanceof HTMLElement && deferredHtml.has(editable)
-}
 
 /** Traverses a node's parents until it finds an element node that is not a formatting tag. Returns null if a suitable parent cannot be found. */
 const getEditableCandidate = (node?: EventTarget | null) => {

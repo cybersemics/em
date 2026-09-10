@@ -1,8 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
-import { isAndroidWebView, isSafari, isTouch } from '../browser'
+import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
-import deferredHtml from '../device/deferredHtml'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -11,9 +10,8 @@ import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
-import commandStateStore, { updateCommandState } from '../stores/commandStateStore'
+import { updateCommandState } from '../stores/commandStateStore'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
-import resolveSelectionColors from '../util/resolveSelectionColors'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
@@ -128,28 +126,20 @@ export const formatSelectionActionCreator =
       end = plainLength
     }
 
-    const colorValue = color ? colors[color] : undefined
-    const defaultColor = state.noteFocus ? colors.fgNote : colors.fg
-    const formattedValue = formatSelectionHtml(value, {
+    const newValue = formatSelectionHtml(value, {
       start,
       end,
       command,
-      colorValue,
-      defaultColor,
+      colorValue: color ? colors[color] : undefined,
+      defaultColor: state.noteFocus ? colors.fgNote : colors.fg,
       defaultBackgroundColor: colors.bg,
     })
 
     const path = state.noteFocus ? resolveNotePath(state, state.cursor) : state.cursor
 
-    if (formattedValue === value || !path) return
+    if (newValue === value || !path) return
 
     const partialThought = !whole && !state.noteFocus
-    const deferredAndroidColor =
-      partialThought && isAndroidWebView() && (command === 'foreColor' || command === 'backColor')
-    const newValue = formattedValue
-
-    if (newValue === value) return
-    if (deferredAndroidColor) deferredHtml.mark(contentEditable)
 
     // Capture the caret's plain-text offset within the note before overwriting its value. Overwriting
     // re-renders the note's ContentEditable, which drops the caret; restoring the offset via setNoteFocus
@@ -162,8 +152,8 @@ export const formatSelectionActionCreator =
     if (state.isKeyboardOpen) registerNativeUndoStep(newValue)
 
     // Keep partial thought formatting synchronous with the live editable. Restoring the range immediately after the
-    // write preserves the logical selection on normal platforms without a deferred callback.
-    if (partialThought && !deferredAndroidColor) {
+    // write preserves the logical selection.
+    if (partialThought) {
       contentEditable.innerHTML = newValue
       selection.setRange(contentEditable, { start, end })
     }
@@ -190,15 +180,6 @@ export const formatSelectionActionCreator =
           ],
     )
 
-    // Android keeps the live DOM untouched while Chromium owns the native selection UI, so derive the selected swatch
-    // from the same canonical color resolution as formatSelectionHtml instead of reparsing the temporarily stale DOM.
-    if (deferredAndroidColor) {
-      const resolved = resolveSelectionColors(command, colorValue, defaultColor, colors.bg)
-      commandStateStore.update({
-        foreColor: resolved.color ?? undefined,
-        backColor: resolved.background ?? undefined,
-      })
-    }
     // Update the toolbar command state when formatting a sub-range (the whole-thought state is derived from the caret).
-    else if (!whole || !state.isKeyboardOpen) updateCommandState()
+    if (!whole || !state.isKeyboardOpen) updateCommandState()
   }
