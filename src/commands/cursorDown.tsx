@@ -27,6 +27,13 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 const cursorDownCommand = {
   id: 'cursorDown',
   label: 'Cursor Down' as const,
+  longDescription: (
+    <>
+      <p>Move the cursor to the next thought at the same level.</p>
+      <p>Use Cursor Down to step through siblings in order — the natural way to read or process a list.</p>
+      <p>Hold shift while pressing Down to extend the selection across the thoughts you pass over.</p>
+    </>
+  ),
   keyboard: [{ key: 'ArrowDown' }, { key: 'ArrowDown', shift: true }],
   hideFromHelp: true,
   multicursor: false,
