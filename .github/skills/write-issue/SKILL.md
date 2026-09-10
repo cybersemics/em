@@ -146,8 +146,6 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 
 `bug` for broken behaviour, `feature` for a request, `refactor` for a behaviour-preserving cleanup, `test` for test and CI work, `agent` for agent configuration and ops.
 
-Add `design-needed` when the correct behaviour has not been decided.
-
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
 ## Sub-issues
@@ -249,4 +247,6 @@ New issues often originate in a comment thread on another issue or PR.
 
 Ask, as above. State whatever survives the answers in the preamble rather than omitting the issue.
 
-Do not guess Expected Behavior. Apply `design-needed` and leave the decision to a maintainer, since a guess there becomes a regression test asserting behaviour nobody chose.
+Do not guess Expected Behavior, since a guess there becomes a regression test asserting behaviour nobody chose.
+
+- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, break it down and ask more questions with the ask tool.
