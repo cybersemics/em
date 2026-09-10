@@ -110,7 +110,7 @@ const importText = (
     // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
 
     // Both halves of the edit are addressed by plain text offset and resolved through the DOM. Indexing into the markup
-    // instead cuts between two tag contexts, leaving a tag unclosed (#5154), and counts an entity as as many characters
+    // instead cuts between two tag contexts, leaving a tag unclosed (#5154), and considers an entity to have as many characters
     // as its markup is long (#5297).
     const replacedDestValue = state.cursorCleared
       ? ''
