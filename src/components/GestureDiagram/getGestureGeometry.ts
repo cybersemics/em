@@ -4,7 +4,6 @@ import getGestureBounds from './getGestureBounds'
 import GestureGeometry from './types/GestureGeometry'
 import GesturePoint from './types/GesturePoint'
 import GestureSegment from './types/GestureSegment'
-import GestureSizing from './types/GestureSizing'
 
 type LineGestureSegment = Extract<GestureSegment, { kind: 'line' }>
 type ArcGestureSegment = Extract<GestureSegment, { kind: 'arc' }>
@@ -28,9 +27,9 @@ const oppositeDirection = (dir: Direction) =>
   })[dir]
 
 /** Calculates the coordinates for a curved segment that can be consumed by other functions. */
-const generateArcCoordinates = (index: number, pathDirs: Direction[], size: number) => {
-  const radius = size * 0.4
-  const center = { x: 50, y: 50 }
+const generateArcCoordinates = (index: number, pathDirs: Direction[]) => {
+  const radius = 1
+  const center = { x: 0, y: 0 }
 
   /** Determine base angle based on first direction and second direction. */
   const getBaseAngle = (first: Direction, second: Direction): number => {
@@ -63,7 +62,7 @@ const generateArcCoordinates = (index: number, pathDirs: Direction[], size: numb
   }
 }
 
-// The 4 custom segments for the rdld (Command Universe) question-mark gesture.
+// Question-mark template, scaled to the requested size by the same rule as other gestures.
 const RDLD_SEGMENTS: readonly GestureSegment[] = [
   {
     kind: 'quadratic',
@@ -91,17 +90,16 @@ const RDLD_SEGMENTS: readonly GestureSegment[] = [
 
 type BaseGestureGeometry = Omit<GestureGeometry, 'chevron'>
 
-/** Converts a gesture into its unadorned line, arc, or quadratic segments. */
+/** Builds an unscaled line, circular-arc or question-mark template. */
 const getBaseGestureGeometry = (
   path: Gesture,
   {
-    reversalOffset,
+    reversalRatio,
     rounded,
-    size,
   }: {
-    reversalOffset: number
+    /** Reversal offset as a fraction of the requested gesture size. */
+    reversalRatio: number
     rounded?: boolean
-    size: number
   },
 ): BaseGestureGeometry => {
   if (path === 'rdld') return { path, extendedPath: path, segments: RDLD_SEGMENTS }
@@ -112,7 +110,6 @@ const getBaseGestureGeometry = (
       const { startX, startY, radius, sweepFlag, endX, endY, startAngle, endAngle, center } = generateArcCoordinates(
         gestureIndex,
         directions,
-        size,
       )
       return {
         kind: 'arc',
@@ -134,7 +131,7 @@ const getBaseGestureGeometry = (
   const gestureIndexes =
     path === 'rdl' || path === 'ldr' ? [0, 1, 1, 2] : directions.map((_, gestureIndex) => gestureIndex)
 
-  /** Calculates one pre-scale displacement using the existing reversal rules. */
+  /** Calculates a unit-template displacement using the existing reversal rules. */
   const getDelta = (dir: Direction, i: number) => {
     const beforePrev = directions[i - 2]
     const prev = directions[i - 1]
@@ -148,26 +145,21 @@ const getBaseGestureGeometry = (
     const shorten =
       (i > 1 && prev === oppositeDirection(beforePrev)) ||
       (i < directions.length - 2 && next === oppositeDirection(afterNext))
-        ? reversalOffset
+        ? reversalRatio
         : 0
     const flipOffset =
       (i < directions.length - 2 && !negative === clockwiseAfterNext) || (i > 0 && !negative === clockwisePrev)
     return {
-      dx: horizontal ? (size - shorten) * (negative ? -1 : 1) : (reversal ? reversalOffset : 0) * (flipOffset ? -1 : 1),
-      dy: !horizontal
-        ? (size - shorten) * (!negative ? -1 : 1)
-        : (reversal ? reversalOffset : 0) * (flipOffset ? -1 : 1),
+      dx: horizontal ? (1 - shorten) * (negative ? -1 : 1) : (reversal ? reversalRatio : 0) * (flipOffset ? -1 : 1),
+      dy: !horizontal ? (1 - shorten) * (!negative ? -1 : 1) : (reversal ? reversalRatio : 0) * (flipOffset ? -1 : 1),
     }
   }
 
   const deltas = directions.map(getDelta)
-  const sumWidth = Math.abs(deltas.reduce((sum, delta) => sum + delta.dx, 0))
-  const sumHeight = Math.abs(deltas.reduce((sum, delta) => sum + delta.dy, 0))
-  const scale = size / Math.max(size, sumWidth, sumHeight)
   const points = deltas.reduce<GesturePoint[]>(
     (positions, delta) => {
       const previous = positions[positions.length - 1]
-      return [...positions, { x: previous.x + delta.dx * scale, y: previous.y + delta.dy * scale }]
+      return [...positions, { x: previous.x + delta.dx, y: previous.y + delta.dy }]
     },
     [{ x: 0, y: 0 }],
   )
@@ -190,28 +182,28 @@ const getBaseGestureGeometry = (
   return { path, extendedPath, segments }
 }
 
-/** Places the shape at the origin and scales authored curves to size, preserving existing line sizing. */
-const normalizeGeometry = (geometry: BaseGestureGeometry, size: number): BaseGestureGeometry => {
+/** Scales any path template so its longest dimension equals size, before corners, arrowheads or strokes. */
+const scaleGeometryToSize = (geometry: BaseGestureGeometry, size: number): BaseGestureGeometry => {
   const bounds = getGestureBounds({ ...geometry, chevron: null })
   const extent = Math.max(bounds.width, bounds.height)
-  if (extent === 0 || geometry.segments[0].kind === 'line') return geometry
+  if (extent === 0) return geometry
 
   const scale = size / extent
-  /** Converts a point from the authored coordinate system to the requested gesture extent. */
-  const normalizePoint = (point: GesturePoint): GesturePoint => ({
-    x: (point.x - bounds.x) * scale,
-    y: (point.y - bounds.y) * scale,
+  /** Scales a template point to the requested gesture size. */
+  const scalePoint = (point: GesturePoint): GesturePoint => ({
+    x: point.x * scale,
+    y: point.y * scale,
   })
 
   return {
     ...geometry,
     segments: geometry.segments.map<GestureSegment>(segment => {
-      const from = normalizePoint(segment.from)
-      const to = normalizePoint(segment.to)
+      const from = scalePoint(segment.from)
+      const to = scalePoint(segment.to)
       return segment.kind === 'arc'
-        ? { ...segment, from, to, center: normalizePoint(segment.center), radius: segment.radius * scale }
+        ? { ...segment, from, to, center: scalePoint(segment.center), radius: segment.radius * scale }
         : segment.kind === 'quadratic'
-          ? { ...segment, from, to, control: normalizePoint(segment.control) }
+          ? { ...segment, from, to, control: scalePoint(segment.control) }
           : { ...segment, from, to }
     }),
   }
@@ -303,7 +295,6 @@ const getGestureGeometry = (
   {
     chevron,
     cornerRadius = 0,
-    sizing = 'legacy',
     reversalOffset,
     rounded,
     size,
@@ -314,16 +305,14 @@ const getGestureGeometry = (
     cornerRadius?: number
     /** Orthogonal offset used to separate reversing directions. */
     reversalOffset: number
-    /** Whether to construct the legacy circular-arc topology. */
+    /** Whether to construct circular arcs instead of straight segments. */
     rounded?: boolean
-    /** Whether to preserve authored dimensions or normalize curves to size. */
-    sizing?: GestureSizing
-    /** Nominal gesture extent in SVG user units. */
+    /** Longest centerline dimension before corner rounding and arrowheads, in SVG units. */
     size: number
   },
 ): GestureGeometry => {
-  const base = getBaseGestureGeometry(path, { reversalOffset, rounded, size })
-  const geometry = softenCorners(sizing === 'uniform' ? normalizeGeometry(base, size) : base, cornerRadius)
+  const base = getBaseGestureGeometry(path, { reversalRatio: size === 0 ? 0 : reversalOffset / size, rounded })
+  const geometry = softenCorners(scaleGeometryToSize(base, size), cornerRadius)
   if (!chevron || path === 'rdld') return { ...geometry, chevron: null }
 
   const finalSegment = geometry.segments.at(-1)!

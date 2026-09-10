@@ -1,9 +1,8 @@
 import getGestureBounds from './getGestureBounds'
 import GestureArrowhead from './types/GestureArrowhead'
 import GestureGeometry from './types/GestureGeometry'
-import GestureSizing from './types/GestureSizing'
 
-/** Frames completed geometry without measuring the rendered SVG. */
+/** Centers the completed gesture at a scale determined by size and arrow settings, never by the path. */
 const getGestureViewBox = (
   geometry: GestureGeometry,
   {
@@ -11,39 +10,35 @@ const getGestureViewBox = (
     arrowhead,
     strokeWidth,
     size,
-    sizing = 'legacy',
+    chevronSize = 2.2,
+    chevronApexAngle = 80,
   }: {
-    /** Length of the conventional SVG marker, also used in framing padding. */
+    /** Length of the conventional SVG marker. */
     arrowSize: number
-    /** Arrowhead presentation used to select padding. */
+    /** Requested arrowhead style, including for glyphs that omit their arrowhead. */
     arrowhead: GestureArrowhead
-    /** Base gesture stroke width. */
+    /** Base gesture stroke width. The renderers draw at 1.5 times this value. */
     strokeWidth: number
-    /** Minimum centerline extent in uniform framing. */
+    /** Longest centerline dimension before corners and arrowheads. */
     size: number
-    /** Whether to use legacy padding or centered square framing. */
-    sizing?: GestureSizing
+    /** Chevron half-span as a multiple of the rendered stroke width. */
+    chevronSize?: number
+    /** Interior angle at the chevron apex, in degrees. */
+    chevronApexAngle?: number
   },
 ): `${number} ${number} ${number} ${number}` => {
+  const strokeRadius = (strokeWidth * 1.5) / 2
+  // Retain the conventional-marker allowance. Arrowhead-free diagrams need only stroke padding.
+  const markerPadding = arrowhead === 'none' ? strokeRadius : arrowSize + strokeWidth * 4
+  const halfSpan = strokeWidth * 1.5 * chevronSize
+  // getChevron places each leg half the depth behind the centerline endpoint.
+  const halfDepth = halfSpan / (2 * Math.max(Math.tan((chevronApexAngle * Math.PI) / 360), 0.01))
+  const chevronPadding = arrowhead === 'outlined-wide' ? Math.hypot(halfSpan, halfDepth) + strokeRadius : 0
+  const side = size + 2 * Math.max(markerPadding, chevronPadding)
   const bounds = getGestureBounds(geometry)
-  if (sizing === 'uniform') {
-    const pad = arrowSize + strokeWidth * 4
-    const side = Math.max(bounds.width, bounds.height, size) + pad * 2
-    const centerX = bounds.x + bounds.width / 2
-    const centerY = bounds.y + bounds.height / 2
-    return `${centerX - side / 2} ${centerY - side / 2} ${side} ${side}`
-  }
-
-  if (arrowhead === 'none') {
-    const pad = strokeWidth / 2
-    return `${bounds.x - pad} ${bounds.y - pad} ${bounds.width + pad * 2} ${bounds.height + pad * 2}`
-  }
-
-  // Preserve the existing conventional-marker allowance, which is outside the centerline bounds.
-  const outlined = arrowhead === 'outlined' || arrowhead === 'outlined-wide'
-  return `${bounds.x - arrowSize - strokeWidth * 4} ${bounds.y - arrowSize - strokeWidth * 2} ${
-    bounds.width + arrowSize * (outlined ? 2 : 5) + strokeWidth * 8
-  } ${bounds.height + arrowSize * 2 + strokeWidth * 4}`
+  const centerX = bounds.x + bounds.width / 2
+  const centerY = bounds.y + bounds.height / 2
+  return `${centerX - side / 2} ${centerY - side / 2} ${side} ${side}`
 }
 
 export default getGestureViewBox
