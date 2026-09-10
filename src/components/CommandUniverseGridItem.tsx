@@ -49,7 +49,9 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         <button
           type='button'
           aria-label={label}
-          onClick={() => navigator.open('detail', { command })}
+          onClick={event =>
+            navigator.open('detail', { command }, { origin: event.currentTarget.getBoundingClientRect() })
+          }
           className={css({
             position: 'relative',
             cursor: 'pointer',

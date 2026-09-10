@@ -39,6 +39,8 @@ const durationsConfig = {
   disappearingLowerLeft: 500,
   activeButtonGlow: 400,
   commandCenter: 320,
+  /* Duration of the Mobile Command Universe zoom transition between levels (e.g. Level 2 grid ↔ Level 1 detail). */
+  commandUniverseZoom: 1250,
 } as const
 
 export default durationsConfig
