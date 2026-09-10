@@ -205,7 +205,7 @@ const resolveColors = (
  * travels with the extracted content instead of being left behind empty. Without this, coloring text that fills a
  * formatting element strips that formatting whenever the range sits wholly within one text node — which is what happens
  * when the formatted text starts at the beginning of the thought (#5507). Expanding also puts the color outside the
- * element rather than inside it, which <u> and <strike> require in order to draw their line in it. */
+ * element rather than inside it, which <u> and <strike> require in order to draw their line in it (#4018). */
 const expandOverCoveredFormatting = (container: HTMLElement, range: Range) => {
   const { commonAncestorContainer } = range
   let el: Node | null =
