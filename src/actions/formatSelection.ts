@@ -91,6 +91,12 @@ export const formatSelectionActionCreator =
 
         setIsMulticursorExecuting({ value: false }),
       ])
+
+      // Refresh the command state from the edited thoughts so that the swatch reflects the color that was just applied,
+      // as the single thought path below does. The url history middleware only refreshes it on a cursor change, which
+      // never happens for a multiselection that has no cursor.
+      updateCommandState()
+
       return
     }
 

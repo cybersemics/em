@@ -13,7 +13,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 // https://github.com/cybersemics/em/issues/5285
-it.skip('Set the text color with a multicursor selection that has no cursor', async () => {
+it('Set the text color with a multicursor selection that has no cursor', async () => {
   await dispatch([newThought({ value: 'foo' }), home(), addMulticursorAtFirstMatch(['foo'])])
 
   expect(store.getState().cursor).toBeNull()
