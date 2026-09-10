@@ -16,9 +16,11 @@ const makePr = ({
   type = 'Bot',
   sameRepository = true,
   labels = [],
+  draft = false,
 }) => ({
   number,
   state: 'open',
+  draft,
   labels: labels.map(name => ({ name })),
   base: { ref: 'main', sha: 'base' },
   head: {
@@ -155,6 +157,16 @@ const testSkipLabelOverridesNamedDispatch = async () => {
   assert.deepEqual((await run([held], 22)).tasks, [])
 }
 
+/** Verifies a draft is excluded entirely, comment untouched, even when the dispatch names it. */
+const testDraft = async () => {
+  const draft = makePr({ number: 23, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), draft: true })
+  const before = draft.comments[0].body
+  assert.deepEqual((await run([draft])).tasks, [])
+  assert.equal(draft.comments[0].body, before)
+  assert.deepEqual((await run([draft], 23)).tasks, [])
+  assert.equal(draft.comments[0].body, before)
+}
+
 /** Verifies a comment is posted only once a conflict exists, and is kept updated afterwards. */
 const testCommentOnConflictOnly = async () => {
   const clean = makePr({ number: 12, updatedAt: '2026-09-06T10:00:00Z', mergeable: true })
@@ -268,6 +280,7 @@ await testExclusions()
 await testCommentOnConflictOnly()
 await testSkipLabels()
 await testSkipLabelOverridesNamedDispatch()
+await testDraft()
 await testTaskFooter()
 await testCapNotice()
 await testScheduleBeforeFirstTask()

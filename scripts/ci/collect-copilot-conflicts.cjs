@@ -46,12 +46,16 @@ const getMergeability = async ({ github, owner, repo, prNumber }) => {
 }
 
 /**
- * Returns whether a pull request is an in-repository Copilot PR targeting main that has not opted
- * out. A skip label excludes the pull request from the scan entirely, so no comment is written or
- * updated and its retry state stays frozen until the label is removed.
+ * Returns whether a pull request is a ready-for-review in-repository Copilot PR targeting main that
+ * has not opted out. A skip label or a draft excludes the pull request from the scan entirely, so
+ * no comment is written or updated and its retry state stays frozen until the label is removed or
+ * the pull request is taken out of draft. Draft is where Copilot leaves a pull request it has not
+ * finished, and pr-ready.yml takes a finished one out once its checks are green — so a draft here
+ * is one nobody has advanced, which is the same reason the `hold` label opts a pull request out.
  */
 const isEligible = ({ pr, repository }) =>
   pr.state === 'open' &&
+  !pr.draft &&
   !(pr.labels || []).some(label => SKIP_LABELS.includes(label.name)) &&
   pr.base.ref === BASE_BRANCH &&
   pr.user.login === COPILOT &&

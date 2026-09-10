@@ -70,10 +70,14 @@ const dispatchTask = async task => {
   if (pr.state !== 'open' || pr.mergeable !== false || pr.head.sha !== task.headSha || pr.base.sha !== task.baseSha) {
     return `- [#${task.number}](${task.url}) — skipped because its conflict state changed.`
   }
-  // A label can be applied between the scan and this dispatch, so they are re-checked here too.
+  // A label can be applied, and a pull request put back into draft, between the scan and this
+  // dispatch, so both opt-outs are re-checked here too.
   const skipLabel = (pr.labels || []).find(label => SKIP_LABELS.includes(label.name))
   if (skipLabel) {
     return `- [#${task.number}](${task.url}) — skipped by the \`${skipLabel.name}\` label.`
+  }
+  if (pr.draft) {
+    return `- [#${task.number}](${task.url}) — skipped because it is a draft.`
   }
   const commentsResponse = await fetch(`${base}/issues/${task.number}/comments`, { headers })
   if (!commentsResponse.ok)
