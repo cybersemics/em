@@ -23,7 +23,7 @@ if (!process.env.COPILOT_TASKS_TOKEN) {
   process.exit(0)
 }
 
-const { tasks } = JSON.parse(readFileSync(reportFile, 'utf8'))
+const { tasks, requested } = JSON.parse(readFileSync(reportFile, 'utf8'))
 
 /** Starts a Copilot task on the existing pull request branch. */
 const startTask = async task => {
@@ -71,12 +71,13 @@ const dispatchTask = async task => {
     return `- [#${task.number}](${task.url}) — skipped because its conflict state changed.`
   }
   // A label can be applied, and a pull request put back into draft, between the scan and this
-  // dispatch, so both opt-outs are re-checked here too.
+  // dispatch, so both opt-outs are re-checked here too. A dispatch naming the pull request
+  // overrides them, as it does the wait and the cap.
   const skipLabel = (pr.labels || []).find(label => SKIP_LABELS.includes(label.name))
-  if (skipLabel) {
+  if (!requested && skipLabel) {
     return `- [#${task.number}](${task.url}) — skipped by the \`${skipLabel.name}\` label.`
   }
-  if (pr.draft) {
+  if (!requested && pr.draft) {
     return `- [#${task.number}](${task.url}) — skipped because it is a draft.`
   }
   const commentsResponse = await fetch(`${base}/issues/${task.number}/comments`, { headers })

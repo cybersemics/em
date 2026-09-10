@@ -3,7 +3,8 @@ name: Copilot Conflict Resolution
 # Scans ready-for-review Copilot PRs after main changes. It runs only trusted code from main and
 # never checks out or executes a pull request's head branch. Drafts are skipped: pr-ready.yml
 # undrafts a finished Copilot PR once its checks are green, so one still in draft is one nobody has
-# advanced — the same reason the `hold` label opts a PR out.
+# advanced — the same reason the `hold` label opts a PR out. A dispatch naming a PR overrides both,
+# along with the wait and the lifetime cap, because it is a human asking.
 on:
   push:
     branches: [main]
@@ -12,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       pr:
-        description: 'Optional Copilot PR number to inspect'
+        description: 'Optional Copilot PR number to inspect, overriding the wait, the cap, and the opt-outs'
         required: false
         type: string
       dry_run:

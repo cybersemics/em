@@ -151,20 +151,34 @@ const testSkipLabels = async () => {
   }
 }
 
-/** Verifies an opt-out label outranks a dispatch that names the pull request. */
-const testSkipLabelOverridesNamedDispatch = async () => {
-  const held = makePr({ number: 22, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), labels: ['hold'] })
-  assert.deepEqual((await run([held], 22)).tasks, [])
-}
-
-/** Verifies a draft is excluded entirely, comment untouched, even when the dispatch names it. */
+/** Verifies a draft is excluded entirely from an unnamed scan, its comment left untouched. */
 const testDraft = async () => {
   const draft = makePr({ number: 23, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), draft: true })
   const before = draft.comments[0].body
   assert.deepEqual((await run([draft])).tasks, [])
   assert.equal(draft.comments[0].body, before)
-  assert.deepEqual((await run([draft], 23)).tasks, [])
-  assert.equal(draft.comments[0].body, before)
+}
+
+/** Verifies a dispatch that names a pull request overrides the opt-out labels and draft status. */
+const testNamedDispatchOverridesOptOuts = async () => {
+  for (const pr of [
+    makePr({ number: 22, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), labels: ['hold'] }),
+    makePr({
+      number: 24,
+      updatedAt: '2026-09-06T10:00:00Z',
+      state: dueState(2),
+      labels: ['skip-auto-resolve-conflicts'],
+    }),
+    makePr({ number: 25, updatedAt: '2026-09-06T10:00:00Z', state: dueState(2), draft: true }),
+  ]) {
+    const report = await run([pr], pr.number)
+    assert.deepEqual(
+      report.tasks.map(task => task.number),
+      [pr.number],
+    )
+    // The dispatch step re-checks the opt-outs, so it has to see the same override the scan applied.
+    assert.equal(report.requested, true)
+  }
 }
 
 /** Verifies a comment is posted only once a conflict exists, and is kept updated afterwards. */
@@ -273,14 +287,16 @@ const testNamedDispatchOverridesWaitAndCap = async () => {
     (await run([capped], 20)).tasks.map(task => task.number),
     [20],
   )
+  // A scan nobody named leaves the report unmarked, so the dispatch step re-checks the opt-outs.
+  assert.equal((await run([waiting])).requested, false)
 }
 
 await testRetryPolicy()
 await testExclusions()
 await testCommentOnConflictOnly()
 await testSkipLabels()
-await testSkipLabelOverridesNamedDispatch()
 await testDraft()
+await testNamedDispatchOverridesOptOuts()
 await testTaskFooter()
 await testCapNotice()
 await testScheduleBeforeFirstTask()
