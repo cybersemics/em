@@ -548,7 +548,7 @@ describe('mobile only', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5269
-  it.skip('does not add the thought a gesture is drawn on to the multiselect', async () => {
+  it('does not add the thought a gesture is drawn on to the multiselect', async () => {
     await paste(`
         - a
         - b

@@ -25,6 +25,7 @@ import {
   EDIT_THROTTLE,
   EM_TOKEN,
   LongPressState,
+  TOUCH_SLOP,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
   TUTORIAL2_STEP_CONTEXT2,
@@ -960,6 +961,16 @@ const Editable = ({
   // a fast double tap working even when its own touchend does not reach handleTapBehavior.
   const tapTouchEndTimeRef = useRef(-Infinity)
 
+  // The position of the touchstart that began on this editable, used with tapTouchMovedRef to tell a tap from a touch
+  // that moved. Null when no touch is in progress.
+  const tapTouchStartRef = useRef<{ x: number; y: number } | null>(null)
+
+  // Tracks whether the finger has traveled more than TOUCH_SLOP from where the touch began. Set during touchmove
+  // rather than measured at touchend, since a gesture ends where it began whenever it doubles back, e.g. →←.
+  // TOUCH_SLOP is also the distance at which MultiGesture recognizes a swipe, so a touch that moved farther than a tap
+  // tolerates is exactly a touch that drew a gesture or scrolled the page.
+  const tapTouchMovedRef = useRef(false)
+
   /**
    * Shared on tap logic dispatched after both click and touchend.
    * Checks long-press, multicursor, disabled, and visibility to decide whether to set the cursor.
@@ -992,6 +1003,7 @@ const Editable = ({
           editingOrOnCursor,
           isVisible,
           longPress: state.longPress,
+          touchMoved: tapTouchMovedRef.current,
         })
 
         // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.
@@ -999,6 +1011,12 @@ const Editable = ({
           e.preventDefault()
           return
         }
+
+        // While a multiselect is active every touch that ends on the thought toggles its selection below, so a gesture
+        // drawn on top of a thought would add it to the multiselect (#5269). Only a tap may toggle it. The cursor
+        // branches below need no such guard, as globals.touching already excludes a touch that moved. While the
+        // multiselection is being edited a touch that moved is a caret or text selection drag, which is left alone.
+        if (tapTouchMovedRef.current && hasMulticursorSelector(state) && !isMultiEditing(state)) return
 
         if (
           // disable editing when multicursor is enabled, unless the multiselection is being edited (Clear Thought), in
@@ -1065,9 +1083,21 @@ const Editable = ({
     }
 
     /** Forgets the last handled touchend, since a new touch proves that any click that follows belongs to it rather
-     * than to the previous tap. */
-    const onTouchStart = () => {
+     * than to the previous tap, and starts tracking the new touch's movement. */
+    const onTouchStart = (e: TouchEvent) => {
       tapTouchEndTimeRef.current = -Infinity
+      const touch = e.touches[0]
+      tapTouchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null
+      tapTouchMovedRef.current = false
+    }
+
+    /** Flags the touch as moved once the finger has traveled past the tap tolerance, which disqualifies the touch from
+     * toggling the multiselect in handleTapBehavior. */
+    const onTouchMove = (e: TouchEvent) => {
+      const touchStart = tapTouchStartRef.current
+      if (tapTouchMovedRef.current || !touchStart || e.touches.length === 0) return
+      tapTouchMovedRef.current =
+        Math.hypot(e.touches[0].clientX - touchStart.x, e.touches[0].clientY - touchStart.y) > TOUCH_SLOP
     }
 
     /** Handles touchend for haptics and tap behavior. */
@@ -1078,11 +1108,13 @@ const Editable = ({
     }
 
     editable.addEventListener('touchstart', onTouchStart)
+    editable.addEventListener('touchmove', onTouchMove, { passive: true })
     editable.addEventListener('click', onClick)
     editable.addEventListener('touchend', onTouchEnd, { passive: false })
 
     return () => {
       editable.removeEventListener('touchstart', onTouchStart)
+      editable.removeEventListener('touchmove', onTouchMove)
       editable.removeEventListener('click', onClick)
       editable.removeEventListener('touchend', onTouchEnd)
     }
