@@ -104,6 +104,7 @@ const colors = {
     dialogHeaderButtonIcon: '#CECAED', // dialog circle button – icon fill
     dialogHeaderButtonShadow: 'rgba(179, 164, 255, 0.05)', // dialog circle button – soft lavender outer glow (box-shadow)
     dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)', // dialog header – inner-edge color of the left/right fade-to-transparent dividers in the header row
+    dialogSortIcon: '#D9D3D5',
     dialogSearchAccent: '#E3BECD', // Command Universe search – glyph fill, caret, and bright (left) stop of the input text gradient
     dialogSearchAccentFade: 'rgba(217, 211, 213, 0.50)', // Command Universe search – faded (right) stop of the input text gradient
     gestureMenuLabel: 'rgba(255, 255, 255, 0.7)', // gesture menu – "Gestures" header label (always renders on the dark glow overlay, so it doesn't flip with theme)
@@ -214,6 +215,7 @@ const colors = {
     dialogHeaderButtonIcon: '#CECAED',
     dialogHeaderButtonShadow: 'rgba(179, 164, 255, 0.05)',
     dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)',
+    dialogSortIcon: '#D9D3D5',
     dialogSearchAccent: '#E3BECD',
     dialogSearchAccentFade: 'rgba(217, 211, 213, 0.50)',
     gestureMenuLabel: 'rgba(255, 255, 255, 0.7)',

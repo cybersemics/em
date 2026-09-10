@@ -1,4 +1,4 @@
 /** How commands are ordered in the CommandTable. */
-type CommandSortType = 'alphabetical' | 'type'
+type CommandSortType = 'alphabetical' | 'group'
 
 export default CommandSortType
