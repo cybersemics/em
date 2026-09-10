@@ -201,6 +201,24 @@ const resolveColors = (
   return { color: CONTRAST_COLOR, background: colorValue ?? null }
 }
 
+/** Returns the outermost element within container that carries a text color or background color and contains the node,
+ * or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
+ * style, as in getCommandState's extractColors. */
+const enclosingColorElement = (node: Node, container: Node): HTMLElement | null => {
+  let colorElement: HTMLElement | null = null
+  for (let n: Node | null = node; n && n !== container; n = n.parentNode) {
+    if (
+      n.nodeType === Node.ELEMENT_NODE &&
+      ((n as HTMLElement).getAttribute('color') ||
+        (n as HTMLElement).style.color ||
+        (n as HTMLElement).style.backgroundColor)
+    ) {
+      colorElement = n as HTMLElement
+    }
+  }
+  return colorElement
+}
+
 /** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
  * single <font> element that carries both the color attribute and the background-color style. The color command fully
  * redetermines both properties (see resolveColors), so existing color/background wrappers within the range are stripped
@@ -208,18 +226,13 @@ const resolveColors = (
 const applyColor = (
   container: HTMLElement,
   range: Range,
-  command: 'foreColor' | 'backColor',
-  colorValue: string | undefined,
-  defaultColor: string | undefined,
-  defaultBackgroundColor: string | undefined,
+  { color, background }: { color: string | null; background: string | null },
 ) => {
   // extract the range into a temp container so existing color/background wrappers can be stripped
   const temp = document.createElement('div')
   temp.appendChild(range.extractContents())
   unwrapAll(temp, 'font, span')
   temp.normalize()
-
-  const { color, background } = resolveColors(command, colorValue, defaultColor, defaultBackgroundColor)
 
   // move the (color-stripped) content into a fragment, wrapping it in a single <font> when a color/background applies
   const content = document.createDocumentFragment()
@@ -247,6 +260,9 @@ interface FormatOptions {
   end?: number
   /** The formatting command to apply. */
   command: FormatCommand
+  /** Plain-text offset of a collapsed caret, if the range was widened from one. Clearing a color at a caret that sits
+   * inside a colored chunk removes only that chunk. */
+  caret?: number
   /** The resolved color value (hex) for foreColor/backColor. */
   colorValue?: string
   /** The theme's default text color (hex); color/background matching this is stripped after a color command. */
@@ -264,7 +280,15 @@ interface FormatOptions {
  */
 const formatSelectionHtml = (
   html: string,
-  { start: startOption, end: endOption, command, colorValue, defaultColor, defaultBackgroundColor }: FormatOptions,
+  {
+    start: startOption,
+    end: endOption,
+    command,
+    caret,
+    colorValue,
+    defaultColor,
+    defaultBackgroundColor,
+  }: FormatOptions,
 ): string => {
   const container = document.createElement('div')
   container.innerHTML = html
@@ -319,14 +343,23 @@ const formatSelectionHtml = (
     removeEmptyFormatting(container)
   } else {
     // color: consolidate the range's foreColor/backColor into a single <font>, preserving non-color tags (b/i/u)
-    applyColor(
-      container,
-      makeRange(),
-      command as 'foreColor' | 'backColor',
-      colorValue,
-      defaultColor,
-      defaultBackgroundColor,
-    )
+    const colors = resolveColors(command as 'foreColor' | 'backColor', colorValue, defaultColor, defaultBackgroundColor)
+
+    // A command that clears the color at a collapsed caret removes only the colored chunk that surrounds the caret,
+    // rather than every chunk in the thought that happens to share the color (#4052). The user can still clear the
+    // whole thought with additional taps, since each one removes the chunk the caret is now in.
+    const colorElement =
+      !colors.color && !colors.background && caret !== undefined
+        ? enclosingColorElement(positionAtOffset(container, caret).node, container)
+        : null
+
+    const range = makeRange()
+    if (colorElement) {
+      range.setStartBefore(colorElement)
+      range.setEndAfter(colorElement)
+    }
+
+    applyColor(container, range, colors)
   }
 
   container.normalize()

@@ -419,7 +419,7 @@ describe('formatSelection color', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4052
-  it.skip('removes only the background color surrounding the caret', async () => {
+  it('removes only the background color surrounding the caret', async () => {
     await dispatch([newThought({ value: 'hello there world' })])
 
     // green background on "hello"
