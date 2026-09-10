@@ -9,15 +9,19 @@ const geometry: GestureGeometry = {
 }
 
 it('preserves the conventional filled-marker padding rule', () => {
-  expect(getGestureViewBox(geometry, { arrowSize: 10, arrowhead: 'filled', strokeWidth: 2 })).toBe('-23 -12 116 28')
+  expect(getGestureViewBox(geometry, { arrowSize: 10, arrowhead: 'filled', strokeWidth: 2, size: 50 })).toBe(
+    '-23 -12 116 28',
+  )
 })
 
 it('preserves the conventional outlined-marker padding rule', () => {
-  expect(getGestureViewBox(geometry, { arrowSize: 10, arrowhead: 'outlined', strokeWidth: 2 })).toBe('-23 -12 86 28')
+  expect(getGestureViewBox(geometry, { arrowSize: 10, arrowhead: 'outlined', strokeWidth: 2, size: 50 })).toBe(
+    '-23 -12 86 28',
+  )
 })
 
 it('preserves the arrowhead-free padding rule', () => {
-  expect(getGestureViewBox(geometry, { arrowSize: 10, arrowhead: 'none', strokeWidth: 2 })).toBe('-6 1 52 2')
+  expect(getGestureViewBox(geometry, { arrowSize: 10, arrowhead: 'none', strokeWidth: 2, size: 50 })).toBe('-6 1 52 2')
 })
 
 it('includes the chevron while preserving default outlined-marker padding', () => {
@@ -31,7 +35,35 @@ it('includes the chevron while preserving default outlined-marker padding', () =
           { x: 40, y: 12 },
         ],
       },
-      { arrowSize: 10, arrowhead: 'outlined-wide', strokeWidth: 2 },
+      { arrowSize: 10, arrowhead: 'outlined-wide', strokeWidth: 2, size: 50 },
     ),
   ).toBe('-23 -22 96 48')
+})
+
+it('centers uniform framing in a square with a common minimum extent', () => {
+  const options = { arrowSize: 10, arrowhead: 'none' as const, strokeWidth: 2, size: 150, sizing: 'uniform' as const }
+  expect(getGestureViewBox(geometry, options)).toBe('-73 -91 186 186')
+})
+
+it('expands uniform framing when completed geometry exceeds the minimum extent', () => {
+  const options = {
+    arrowSize: 10,
+    arrowhead: 'outlined-wide' as const,
+    strokeWidth: 2,
+    size: 50,
+    sizing: 'uniform' as const,
+  }
+  expect(
+    getGestureViewBox(
+      {
+        ...geometry,
+        chevron: [
+          { x: 70, y: -8 },
+          { x: 80, y: 2 },
+          { x: 70, y: 12 },
+        ],
+      },
+      options,
+    ),
+  ).toBe('-23 -58.5 121 121')
 })
