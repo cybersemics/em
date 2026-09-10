@@ -18,7 +18,7 @@ interface SortButtonProps {
 const SortButton = ({ onSortChange }: SortButtonProps) => {
   const isLightTheme = useSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
-  const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
+  const [selectedSort, setSelectedSort] = useState<CommandSortType>('group')
   const buttonRef = useRef<HTMLButtonElement>(null)
   const closeDropdown = useCallback(() => setDropdownOpen(false), [])
 
@@ -108,7 +108,7 @@ const SortButton = ({ onSortChange }: SortButtonProps) => {
             selectedSort={selectedSort}
             handleSortChange={handleSortChange}
           />
-          <SortOption sort={'type'} label='Type' selectedSort={selectedSort} handleSortChange={handleSortChange} />
+          <SortOption sort={'group'} label='Group' selectedSort={selectedSort} handleSortChange={handleSortChange} />
         </div>
       </FadeTransition>
     </button>

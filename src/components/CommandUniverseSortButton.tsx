@@ -15,7 +15,7 @@ interface CommandUniverseSortButtonProps {
 
 /** Toggles the sort order and coordinates its tooltip with a mask over the adjacent search input. */
 const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren<CommandUniverseSortButtonProps>) => {
-  const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
+  const [selectedSort, setSelectedSort] = useState<CommandSortType>('group')
   const [tooltipVisible, setTooltipVisible] = useState(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
 
@@ -28,7 +28,7 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
 
   /** Updates the list immediately and restarts the tooltip timeout on each tap. */
   const toggleSort = () => {
-    const next = selectedSort === 'type' ? 'alphabetical' : 'type'
+    const next = selectedSort === 'group' ? 'alphabetical' : 'group'
     setSelectedSort(next)
     setTooltipVisible(true)
     onSortChange(next)
@@ -153,11 +153,11 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
             <span className={css({ visibility: 'hidden' })}>Alphabetical</span>
             <motion.span
               initial={false}
-              animate={{ opacity: selectedSort === 'type' ? 1 : 0 }}
+              animate={{ opacity: selectedSort === 'group' ? 1 : 0 }}
               transition={crossfade}
               className={valueLayer}
             >
-              Type
+              Group
             </motion.span>
             <motion.span
               initial={false}
@@ -199,7 +199,7 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
         >
           <motion.span
             initial={false}
-            animate={{ opacity: selectedSort === 'type' ? 1 : 0 }}
+            animate={{ opacity: selectedSort === 'group' ? 1 : 0 }}
             transition={crossfade}
             className={iconLayer}
           >

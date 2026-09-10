@@ -9,7 +9,7 @@
  * The hook unifies the logic for what to render, given the current search and sort state.
  * When a search query is active, it always overrides sort and collapses results into a single "Results"
  * group of fuzzy matches across all commands.
- * When there is no search query, `sortOrder` determines whether to render commands grouped by type
+ * When there is no search query, `sortOrder` determines whether to render commands in named groups
  * (the multi-section COMMAND_GROUPS layout) or as a single alphabetical list.
  *
  * 3. Rendered output shape
@@ -47,10 +47,10 @@ if (commandsUngrouped.length > 0) {
 }
 
 /**
- * Commands organized into individual arrays based on their "type".
+ * Commands organized into named command groups.
  * Only commands executable on the current platform are included.
  */
-const commandsGroupedByType: { title: string; commands: Command[] }[] = COMMAND_GROUPS.map(group => ({
+const commandGroups: { title: string; commands: Command[] }[] = COMMAND_GROUPS.map(group => ({
   title: group.title,
   commands: group.commands.map(commandById).filter(command => (isTouch ? command.gesture : command.keyboard)),
 })).filter(group => group.commands.length > 0)
@@ -90,12 +90,12 @@ export interface UseCommandListReturn {
 /** A hook that allows consumers to access, search and sort a list of commands. */
 const useCommandList = (): UseCommandListReturn => {
   const [search, setSearch] = useState('')
-  const [sortOrder, setSortOrder] = useState<CommandSortType>('type')
+  const [sortOrder, setSortOrder] = useState<CommandSortType>('group')
   const filteredCommands = useFilteredCommands(search, { platformCommandsOnly: true })
 
   const groups = useMemo<CommandGroup[]>(() => {
     if (search) return [{ title: 'Results', commands: filteredCommands }]
-    if (sortOrder === 'type') return commandsGroupedByType
+    if (sortOrder === 'group') return commandGroups
     return [{ title: 'All Commands', commands: commandsSortedByLabel }]
   }, [search, sortOrder, filteredCommands])
 
