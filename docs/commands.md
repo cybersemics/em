@@ -127,6 +127,21 @@ The **Command Universe** is the searchable command palette. Two flavors:
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
 - **`MobileCommandUniverse`** — mobile drawer opened by `openMobileCommandUniverse`, also reachable by gesture.
 
+The Command Universe has one session owner and separate routing and presentation layers:
+
+- [`CommandUniverseProvider`](../src/components/CommandUniverse/CommandUniverseProvider.tsx) owns one [`CommandUniversePageNavigator`](../src/@types/CommandUniversePageNavigator.ts), keeping its reducer and lifecycle logic inside the provider. Consumers read that same instance through [`useCommandUniverseNavigator`](../src/hooks/useCommandUniverseNavigator.ts). The consumer hook never creates a second history and throws when no provider is present. The provider sits outside the modal's fade/unmount boundary. Its `isOpen` describes the entire Command Universe session, not whether one particular presentation is visible.
+- [`commandUniversePages`](../src/components/CommandUniverse/commandUniversePages.ts) maps page ids to components. [`CommandUniversePage`](../src/@types/CommandUniversePage.ts) derives both the ids and the corresponding props from that registry. A history entry wraps a page with its own `entryId`, so two visits to the same page remain distinct. The navigator stores opaque page props and has no command-specific fields.
+- [`CommandUniversePageRouter`](../src/components/CommandUniverse/CommandUniversePageRouter.tsx) selects the registered component and forwards its props. It does not own history, read command data, or size the dialog. The modal composition sizes the outer non-scrolling viewport. Each page uses [`DialogContent`](../src/components/dialog/DialogContent.tsx) for its independent scroller, padding, and custom scrollbar.
+
+Starting a new branch discards its abandoned redo entries. Closing and reopening starts a fresh session. This history is independent of browser history and the editor's undo/redo.
+
+#### Adding a Command Universe page
+
+1. Create a page component under `src/components/CommandUniverse/`. Its props are its navigation parameters. Read the shared navigator with `useCommandUniverseNavigator` when needed, and use `DialogContent` if the page scrolls.
+2. Import it into `commandUniversePages.ts` and add its page id as a registry key.
+
+The router and route types update from the registry. No separate id union, props union, or routing switch needs editing. Navigation calls are checked against the registered component's props. Add tests for the new page's behavior.
+
 Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), which defines the order: Navigation → Creating thoughts → Deleting thoughts → Moving thoughts → Editing thoughts → Oops → Special Views → Visibility → Settings → Help → Cancel.
 
 Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
