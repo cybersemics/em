@@ -147,6 +147,13 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
     // The value changes without a selection change when a formatting edit is undone or redone with the keyboard down, which would otherwise leave a color swatch or formatting command selected for formatting the thought no longer has (#5107).
     // The multicursors are watched as well as the cursor, since a thought can be selected while there is no cursor at all, e.g. by long pressing it after the Home button has dismissed the cursor (#5286).
     const state = getState()
+
+    // Multicursor commands restore the multiselection one thought at a time, so wait until the batch is complete, as
+    // multiselectCursorMiddleware and multicursorAlertMiddleware do. Otherwise the command state would be recomputed
+    // for every thought that is restored, re-parsing the whole growing selection each time. The previous values are
+    // left untouched so that the change is still detected on the action that clears the flag.
+    if (state.isMulticursorExecuting) return
+
     const cursor = state.cursor
     const cursorThoughtValue = cursor ? (getThoughtById(state, head(cursor))?.value ?? null) : null
     if (

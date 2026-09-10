@@ -91,6 +91,12 @@ export const formatSelectionActionCreator =
 
         setIsMulticursorExecuting({ value: false }),
       ])
+
+      // The edits change neither the cursor nor the multicursors, so updateUrlHistoryMiddleware does not detect them.
+      // Update the command state directly, otherwise the swatch of the color that was just applied would not be
+      // selected and tapping it again would not toggle the color off.
+      updateCommandState()
+
       return
     }
 
