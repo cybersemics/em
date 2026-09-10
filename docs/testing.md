@@ -394,6 +394,8 @@ On the standalone `diagnostics/5298-desktop-input` branch only, the Puppeteer wo
 
 That branch's manual workflow accepts `diagnostic_browser` (`v1` or `v2`) and `focus_startup` to compare the three startup-sensitive cases without artificial delay. Each job runs one browser service on port 7566. V1 retains its bundled fonts; its expected differences from v2 snapshot baselines are separate from input/content failures. Captures include main-document worker/WASM resource timing entries where the browser exposes them.
 
+`compare_scheduler` instead runs two full v2 suites on the same runner/build: default scheduling and only `DeferRendererTasksAfterInput` disabled. `scheduler_order` reverses the phase order. Both outcomes are retained; either failure fails the job. The observer forwards FileReader/IndexedDB calls unchanged while recording completion and captures native scheduler traces for the three suspect cases. This feature switch is a diagnostic control, not a proposed production/test-environment workaround.
+
 Both paths install Microsoft Core Fonts, which packages non-free fonts used in snapshots.
 
 Browserless Chromium runs with HTTP/2 disabled because current Chromium can reset its certificate verifier while Vite's large module graph is loading, aborting the shared HTTP/2 session with `ERR_CERT_VERIFIER_CHANGED`; HTTPS, secure-context APIs, and WebSockets remain enabled.

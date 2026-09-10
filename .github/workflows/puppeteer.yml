@@ -65,6 +65,15 @@ on:
         description: 'Run only the three startup-sensitive test cases'
         type: boolean
         default: false
+      compare_scheduler:
+        description: 'Run full Chrome 151 suites with default scheduling and deferral disabled on the same runner'
+        type: boolean
+        default: false
+      scheduler_order:
+        description: 'Order of the two scheduler-control phases'
+        type: choice
+        default: default-first
+        options: [default-first, disabled-first]
 
 # Supersede the in-progress run when a pull request is pushed again; its result is about to be
 # replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
@@ -137,7 +146,24 @@ jobs:
 
       - name: Test
         run: |
-          if [ "$FOCUS_STARTUP" = "true" ]; then
+          if [ "$COMPARE_SCHEDULER" = "true" ]; then
+            if [ "$DIAG_BROWSER" != "v2" ]; then
+              echo 'Scheduler comparison requires v2.' >&2
+              exit 2
+            fi
+            phases=(default disabled)
+            if [ "$SCHEDULER_ORDER" = "disabled-first" ]; then phases=(disabled default); fi
+            failed=0
+            for phase in "${phases[@]}"; do
+              disabled=false
+              if [ "$phase" = "disabled" ]; then disabled=true; fi
+              code=0
+              DIAG_DISABLE_DEFER="$disabled" DIAG_RUN="ci-$phase" yarn test:puppeteer --run --config .desktop-diagnostic-vitest.ts --reporter=default --reporter=json --outputFile="/tmp/em-desktop-summary-ci-$phase.json" || code=$?
+              echo "SCHEDULER_PHASE_RESULT $phase $code"
+              if [ "$code" != "0" ]; then failed=1; fi
+            done
+            exit "$failed"
+          elif [ "$FOCUS_STARTUP" = "true" ]; then
             yarn test:puppeteer --run --config .desktop-diagnostic-vitest.ts undo drag-and-drop-multiselect render-thoughts -t 'Font Size: 18.*long list of siblings|undoes and redoes contiguous note typing with its caret|should drop multiple thoughts as siblings before target'
           else
             yarn test:puppeteer --run --config .desktop-diagnostic-vitest.ts
@@ -148,6 +174,9 @@ jobs:
           DIAG_CAPTURE: '2'
           DIAG_RUN: ci
           FOCUS_STARTUP: ${{ inputs.focus_startup }}
+          COMPARE_SCHEDULER: ${{ inputs.compare_scheduler }}
+          SCHEDULER_ORDER: ${{ inputs.scheduler_order }}
+          DIAG_TRACE: ${{ inputs.compare_scheduler && '1' || '0' }}
 
       - name: Upload desktop input diagnostics
         if: always()
