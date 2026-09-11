@@ -6,7 +6,7 @@
 
 **1. Reproduce before theorising.** If you are fixing reported behaviour, try observing the failure yourself before making assumptions. An agent that starts from the code builds a theory and then finds evidence for it; one that has watched the thing fail is working from an observation.
 
-**2. Use `write-issue` when you file one.** Issues reporting broken behaviour here follow a fixed format — "Steps to Reproduce", "Current Behavior", "Expected Behavior". The skill has the template and the conventions around it; run it whenever you create an issue, split one out of a comment thread, or add steps to one that lacks them.
+**2. Use `create-issue` when you file one.** Issues reporting broken behaviour here follow a fixed format — "Steps to Reproduce", "Current Behavior", "Expected Behavior". The skill has the template and the conventions around it; run it whenever you create an issue, split one out of a comment thread, or add steps to one that lacks them.
 
 **3. Suggest `end-session` when the work is wrapping up.** As the user starts to finish — pushing, opening a pull request, handing the change on — offer executing `end-session` to the user. It checks that documentation still describes reality, that nothing is uncommitted or unpushed, that no test was left switched off, and that anything claimed was actually observed.
 

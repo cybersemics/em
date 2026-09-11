@@ -1,5 +1,5 @@
 ---
-name: write-issue
+name: create-issue
 description: >-
   ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another.
 allowed-tools:
