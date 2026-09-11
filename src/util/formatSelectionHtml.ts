@@ -266,7 +266,8 @@ const formatSelectionHtml = (
 
   // A tag command whose caret sits inside an element of that tag toggles off only that element, rather than formatting
   // the whole thought the caret was widened to — otherwise a thought with two bold chunks becomes entirely bold on the
-  // first tap (#4052). Repeated taps still clear the thought a chunk at a time.
+  // first tap (#4052). The caret is then no longer inside a tag element, so a second tap formats the whole thought and
+  // a third clears it.
   const caretTagElement =
     tag && caret !== undefined ? closestTag(positionAtOffset(container, caret).node, container, tag) : null
 
@@ -325,8 +326,8 @@ const formatSelectionHtml = (
     )
 
     // A command that clears the color at a collapsed caret removes only the colored chunk that surrounds the caret,
-    // rather than every chunk in the thought that happens to share the color (#4052). The user can still clear the
-    // whole thought with additional taps, since each one removes the chunk the caret is now in.
+    // rather than every chunk in the thought that happens to share the color (#4052). The caret is then no longer
+    // inside a colored element, so a second tap colors the whole thought and a third clears it.
     const colorElement =
       !colors.color && !colors.background && caret !== undefined
         ? enclosingColorElement(positionAtOffset(container, caret).node, container)

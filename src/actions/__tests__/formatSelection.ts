@@ -205,6 +205,11 @@ describe('formatSelection', () => {
     await dispatch(formatSelection('bold'))
 
     expect(cursorValue()).toBe('hello there <b>world</b>')
+
+    // the caret is no longer inside a <b>, so tapping again bolds the whole thought rather than the next chunk
+    selectRange(2, 2)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('<b>hello there world</b>')
   })
 
   it('bolds a whole thought whose leading text is italic, wrapping the outer tag', async () => {
