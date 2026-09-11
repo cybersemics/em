@@ -92,6 +92,9 @@ const fadeTransitionRecipe = defineSlotRecipe({
         },
       },
       // Context view fades in from upper right.
+      // Enter and exit are eased differently on purpose, here and in disappearingLowerLeft below: text that is
+      // arriving should start resolving right after the toggle and then decelerate into place (easeOutSmooth),
+      // while text that is leaving has no such requirement and keeps the symmetric ease.
       disappearingUpperRight: {
         enter: {
           transform: 'skew(-100deg) translateX(10%) translateY(-100%)',
@@ -104,7 +107,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
           filter: 'blur(0px)',
-          transition: `opacity {durations.disappearingUpperRight} {easings.easeInSmooth}, transform {durations.disappearingUpperRight} {easings.easeInSmooth}, filter {durations.disappearingUpperRight} {easings.easeInSmooth}`,
+          transition: `opacity {durations.disappearingUpperRight} {easings.easeOutSmooth}, transform {durations.disappearingUpperRight} {easings.easeOutSmooth}, filter {durations.disappearingUpperRight} {easings.easeOutSmooth}`,
           // See: Safari skew note above
           _safari: {
             transform: 'skew(0) translateX(0) translateY(0)',
@@ -136,7 +139,7 @@ const fadeTransitionRecipe = defineSlotRecipe({
         enterActive: {
           transform: 'skew(0) translateX(0) translateY(0)',
           filter: 'blur(0px)',
-          transition: `opacity {durations.disappearingLowerLeft} {easings.easeInSmooth}, transform {durations.disappearingLowerLeft} {easings.easeInSmooth}, filter {durations.disappearingLowerLeft} {easings.easeInSmooth}`,
+          transition: `opacity {durations.disappearingLowerLeft} {easings.easeOutSmooth}, transform {durations.disappearingLowerLeft} {easings.easeOutSmooth}, filter {durations.disappearingLowerLeft} {easings.easeOutSmooth}`,
           // See: Safari skew note above
           _safari: {
             transform: 'skew(0) translateX(0) translateY(0)',
