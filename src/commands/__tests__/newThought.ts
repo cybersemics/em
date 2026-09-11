@@ -196,3 +196,16 @@ describe('multicursor', () => {
     expect(Object.values(state.multicursors).map(head)).toEqual(newThoughts.map(child => child.id))
   })
 })
+
+describe('tutorial', () => {
+  beforeEach(() => initStore({ allowTutorial: true }))
+
+  // https://github.com/cybersemics/em/issues/5530
+  it.skip('does not create a thought on the welcome step', () => {
+    executeCommandWithMulticursor(newThoughtCommand, { store })
+
+    const state = store.getState()
+    expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}`)
+    expect(state.cursor).toBeNull()
+  })
+})

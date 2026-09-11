@@ -366,3 +366,28 @@ describe('multicursor', () => {
     expect(state.expanded[hashPath(contextToPath(state, ['c', 'd'])!)]).toBeTruthy()
   })
 })
+
+describe('tutorial', () => {
+  beforeEach(() => initStore({ allowTutorial: true }))
+
+  // https://github.com/cybersemics/em/issues/5530
+  it.skip('does not create a grandchild on the welcome step', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+        `,
+      }),
+      setCursor(['a']),
+    ])
+
+    executeCommandWithMulticursor(newGrandChildCommand, { store })
+
+    const state = store.getState()
+    expect(exportContext(state, [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+    - b`)
+    expectPathToEqual(state, state.cursor, ['a'])
+  })
+})
