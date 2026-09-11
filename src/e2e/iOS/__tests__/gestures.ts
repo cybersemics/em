@@ -2,12 +2,14 @@
 import gestures from '../../../test-helpers/gestures'
 import $ from '../helpers/$'
 import gesture from '../helpers/gesture'
+import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import getSelectionEndHandlePosition from '../helpers/getSelectionEndHandlePosition'
 import keyboard from '../helpers/keyboard'
 import newThought from '../helpers/newThought'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 
 /** Pixels the Safari chrome offsets the page by: `getBoundingClientRect` reports page coordinates while
  * `performActions` delivers touches in screen coordinates. This is the same offset that `tap` callers pass, measured
@@ -74,5 +76,24 @@ describe('Gestures', () => {
 
     // A press on the caret belongs to the magnifier, so the swipe must not be read as New Thought.
     expect(await thoughtCount()).toBe(1)
+  })
+
+  // https://github.com/cybersemics/em/issues/3763
+  it('runs a command when a gesture passes through the caret without starting on it', async () => {
+    const text = 'one two three four five six seven eight'
+    await newThought()
+    await keyboard.type(text)
+    await waitForEditable(text)
+    expect(await setSelection(12, 12)).toMatchObject({ type: 'Caret' })
+    expect(await getEditingText()).toBe(text)
+
+    // Start clear of the caret's zone and swipe right through it. Only the touch that *starts* on the caret belongs to
+    // the magnifier; one that merely crosses it is an ordinary gesture.
+    const caret = await getCaretPosition()
+    await gesture('r', { xStart: caret.x - 40, yStart: caret.y, segmentLength: 80 })
+
+    // Back clears the cursor when the thoughtspace holds a single thought, so no thought is being edited afterwards.
+    const cursorCleared = await waitUntil(async () => (await getEditingText()) === undefined).catch(() => false)
+    expect(cursorCleared).toBeTruthy()
   })
 })
