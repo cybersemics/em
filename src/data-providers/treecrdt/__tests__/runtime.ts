@@ -131,18 +131,22 @@ it('serializes an in-flight init, drop, and following init', async () => {
   await treecrdtThoughtspace.drop()
 })
 
-it('rejects queued startup writes when initialization fails and uses a fresh gate on retry', async () => {
+it('rejects queued startup reads and writes when initialization fails and uses a fresh gate on retry', async () => {
   const initError = new Error('client initialization failed')
   mockCreateTreecrdtClient.mockRejectedValueOnce(initError)
 
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
   const queuedWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
   const queuedWriteExpectation = expect(queuedWrite).rejects.toBe(initError)
+  const queuedReadExpectation = expect(treecrdtThoughtspace.db.getThoughtById(EM_TOKEN)).rejects.toBe(initError)
 
   await expect(treecrdtThoughtspace.init({ storage: 'memory' })).rejects.toBe(initError)
   await queuedWriteExpectation
+  await queuedReadExpectation
 
+  const retriedRead = treecrdtThoughtspace.db.getThoughtById(EM_TOKEN)
   await treecrdtThoughtspace.init({ storage: 'memory' })
+  await expect(retriedRead).resolves.toMatchObject({ id: EM_TOKEN })
   await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
   await treecrdtThoughtspace.drop()
 })
@@ -185,14 +189,13 @@ it('discards a terminal client when drop reports an error', async () => {
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
   await treecrdtThoughtspace.init({ storage: 'memory' })
   await expect(treecrdtThoughtspace.drop()).rejects.toBe(dropError)
-  expect(() => treecrdtThoughtspace.db.getThoughtById('missing' as never)).toThrow(
-    'TreeCRDT DataProvider: init not called',
-  )
+  const nextRead = treecrdtThoughtspace.db.getThoughtById(EM_TOKEN)
   expect(close).not.toHaveBeenCalled()
 
   await expect(treecrdtThoughtspace.init({ storage: 'memory' })).resolves.toEqual({
     clientId: expect.any(String),
     storage: 'memory',
   })
+  await expect(nextRead).resolves.toMatchObject({ id: EM_TOKEN })
   await treecrdtThoughtspace.drop()
 })
