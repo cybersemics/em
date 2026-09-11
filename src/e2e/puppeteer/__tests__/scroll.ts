@@ -8,7 +8,6 @@ import scrollTo from '../helpers/scrollTo'
 import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
@@ -63,8 +62,6 @@ describe('scrollCursorIntoView', () => {
     await paste(importText)
 
     await clickThought('t')
-
-    await waitForThoughtExistInDb('t')
 
     // Simulate slow TreeCRDT reads during app startup after refresh.
     await page.evaluateOnNewDocument(value => {

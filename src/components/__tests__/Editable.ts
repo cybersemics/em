@@ -10,6 +10,7 @@ import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursorAtFirstMatch } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
@@ -149,4 +150,57 @@ it('inserts emoji spacing immediately before colored text', async () => {
 
   expect(editable.textContent).toBe('👋 Hello')
   expect(editable.innerHTML).toBe('👋 <font color="#ff0000">Hello</font>')
+})
+
+// A press that is longer than a quick tap but shorter than a long press ("mid press") gets its synthesized click
+// from the browser even though the touchend called preventDefault, which used to toggle the multicursor a second
+// time so that the selection flashed on and off again.
+it('toggles the multicursor once when a mid press dispatches both touchend and a synthesized click', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    addMulticursorAtFirstMatch(['a']),
+  ])
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const editable = (await findThoughtByText('b'))!
+
+  act(() => {
+    fireEvent.touchEnd(editable)
+    fireEvent.click(editable)
+  })
+
+  expect(Object.keys(store.getState().multicursors)).toHaveLength(2)
+})
+
+// A tap whose touchend does not reach the tap handler (e.g. its editable was re-rendered mid-tap) is carried by its
+// synthesized click alone. The touchstart clears the previous tap's touchend time so that this click is not mistaken
+// for the previous tap's synthesized click and dropped, which would lose the second tap of a fast double tap.
+it('toggles the multicursor on a click that follows a new touchstart', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - a
+        - b
+      `,
+    }),
+    addMulticursorAtFirstMatch(['a']),
+  ])
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const editable = (await findThoughtByText('b'))!
+
+  act(() => {
+    fireEvent.touchStart(editable)
+    fireEvent.touchEnd(editable)
+    fireEvent.touchStart(editable)
+    fireEvent.click(editable)
+  })
+
+  // the first tap selected b, the second deselected it
+  expect(Object.keys(store.getState().multicursors)).toHaveLength(1)
 })

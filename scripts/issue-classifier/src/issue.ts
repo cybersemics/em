@@ -47,8 +47,8 @@ const resolveIssueNumber = (): number => {
 const main = async () => {
   const dryRun = process.argv.includes('--dry')
 
-  const openaiApiKey = process.env.OPENAI_API_KEY
-  if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
+  const openaiApiKey = process.env.OPENAI_API_KEY_ISSUE_CLASSIFIER || process.env.OPENAI_API_KEY
+  if (!openaiApiKey) throw new Error('OPENAI_API_KEY_ISSUE_CLASSIFIER or OPENAI_API_KEY is required')
 
   // Reads work unauthenticated against a public repository, so only a run that actually writes
   // needs a token. That is what lets --dry be exercised locally with nothing but an OpenAI key.

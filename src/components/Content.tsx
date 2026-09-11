@@ -4,8 +4,8 @@ import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import { Thunk } from '../@types/Thunk'
+import { closeDropdownsActionCreator as closeDropdowns } from '../actions/closeDropdowns'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
-import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import {
   ABSOLUTE_PATH,
@@ -60,7 +60,7 @@ const Content: FC = () => {
     if (state.longPress !== LongPressState.Inactive) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
+    dispatch([state.showModal ? closeModal() : null, closeDropdowns()])
   }
 
   return (
@@ -72,7 +72,17 @@ const Content: FC = () => {
           // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
           if (!selection.isThought(e.target)) dispatch(clickOnEmptySpace)
         },
-        { enableHaptics: false },
+        {
+          enableHaptics: false,
+          // A tap outside a thought dismisses the keyboard by blurring the editable, but the browser keeps a native
+          // touch selection alive across the blur, leaving the selection handles and the text context menu on screen
+          // after the keyboard is gone (#4833). Collapsing the range on tap down dismisses them before the tap's own
+          // blur starts the keyboard animation, so the two teardowns do not overlap and the menu does not flash back.
+          // Only a range is collapsed: a caret is dismissed by the blur anyway.
+          tapDown: e => {
+            if (!selection.isThought(e.target)) selection.collapse()
+          },
+        },
       )}
     >
       <div

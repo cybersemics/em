@@ -20,7 +20,7 @@ const pullJumpHistory = (): Thunk<Promise<void>> => async (dispatch, getState) =
       try {
         await dispatch(pullAncestors(path, { force: true, maxDepth: 0 }))
       } catch (e) {
-        // TODO: Missing docKey error
+        // Swallow per-path failures so that one unpullable path does not reject Promise.all and leave the list stuck in its loading state.
         console.warn(e)
       }
     }),
@@ -54,8 +54,7 @@ const RecentlyEdited = () => {
   }, [
     flushReady,
     dispatch,
-    // Due to thn missing docKey error, the entire jump history may not be pulled in one go.
-    // Re-triggering pullJumpHistory when the jump history changes should ensure that all thoughts are pulled.
+    // Re-pull when the jump history changes so that newly added paths are fetched.
     jumpHistory,
   ])
 

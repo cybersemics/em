@@ -12,6 +12,8 @@
 
 **4. Attribute agent-authored commits consistently.** End every commit an agent authors with exactly one trailer in this form: `Co-Authored-By: {agent} {model} <{vendor-noreply-email}>`. Codex uses `Codex` and `noreply@openai.com`; Claude Code uses `Claude` and `noreply@anthropic.com`; GitHub Copilot CLI uses `GitHub Copilot CLI` and `223556219+Copilot@users.noreply.github.com`; Cursor uses `Cursor` and `cursoragent@cursor.com`; OpenCode uses `OpenCode` and `noreply@opencode.ai`; Pi uses `Pi` and `noreply@pi.dev`; other harnesses use their documented identity. Take the model's canonical display name from the active harness, and use the literal value `unknown` if the harness does not expose it rather than guessing. Preserve an automatically supplied trailer instead of adding a duplicate, and never add one to a human-authored commit.
 
+**5. Leave commit hashes bare on GitHub.** In issues, comments, and pull request descriptions, write a commit hash as plain text — no backticks and no code block. GitHub autolinks a bare hash to the commit; wrapping it in code formatting suppresses the link.
+
 ## Accessing documentation
 
 - `docs/` contains comprehensive documentation on the codebase. Start from [`docs/readme.md`](docs/readme.md), which indexes every subsystem doc.

@@ -226,11 +226,23 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
 
       const isPathInCursor = isDescendantPath(state.cursor, oldPath)
       const isCursorAtOldPath = state.cursor.length === oldPath.length
+
+      // In the context view the cursor is on the nominal context (the m of a/m~), while the dragged context row is
+      // the deeper Path a/m~/a that resolves to the same thought. oldPath is then not an ancestor of the cursor even
+      // though the moved thought is, so the cursor has to be rebased onto the thought's new location. Otherwise it
+      // keeps naming a parent that no longer contains the thought: expandThoughts can no longer reach the cursor,
+      // freeThoughts deallocates it as no longer visible, and the next expandThoughts throws "Invalid path".
+      // Skipped when the thought no longer exists, i.e. it was merged into a duplicate in the destination.
+      const isMovedThoughtInCursor =
+        !isPathInCursor && isDescendantPath(state.cursor, oldPathSimple) && !!getThoughtById(state, sourceThought.id)
+
       const newCursorPath = isPathInCursor
         ? isCursorAtOldPath
           ? newPath
           : ([...newPath, ...state.cursor.slice(newPath.length)] as Path)
-        : state.cursor
+        : isMovedThoughtInCursor
+          ? ([...destinationThoughtPath, sourceThought.id, ...state.cursor.slice(oldPathSimple.length)] as Path)
+          : state.cursor
 
       return {
         ...state,

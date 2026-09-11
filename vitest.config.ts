@@ -15,10 +15,20 @@ export default defineConfig({
           name: 'unit',
           globals: true,
           include: ['**/__tests__/**/*.ts'],
+          // The two e2e spec directories run in their own runners (Puppeteer below, WebdriverIO via
+          // yarn test:ios), so they are excluded here — but only those two directories, not all of
+          // src/e2e: the e2e harness itself has plain unit tests (src/e2e/iOS/config/__tests__, the
+          // BrowserStack slot waiter's mocked-fetch tests), which no other runner would collect.
           // .claude/worktrees holds agent worktrees, i.e. full checkouts of this repo. Without this the
           // unanchored include glob collects their __tests__ files too, which fail to resolve the gitignored
           // styled-system/ imports unless PandaCSS happens to have been run in that worktree.
-          exclude: ['node_modules/**', '**/e2e/**', '.claude/**'],
+          exclude: [
+            'node_modules/**',
+            'src/e2e/puppeteer/__tests__/**',
+            'src/e2e/iOS/__tests__/**',
+            '**/evals/**',
+            '.claude/**',
+          ],
           environment: 'jsdom',
           mockReset: false,
           // vitest-localstorage-mock provides an in-test localStorage/sessionStorage mock. Note it does NOT
@@ -49,6 +59,18 @@ export default defineConfig({
             output: ['terminal', 'console'],
           }),
         ],
+      },
+      {
+        extends: './vite.config.ts',
+        plugins: [],
+        test: {
+          name: 'eval',
+          globals: true,
+          include: ['packages/ai/src/evals/**/*.ts'],
+          environment: 'node',
+          retry: 2,
+          testTimeout: 60_000,
+        },
       },
       // iOS tests are now run with WDIO test runner
       // Use: yarn test:ios:local (local Appium) or yarn test:ios:browserstack

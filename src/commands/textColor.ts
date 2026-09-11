@@ -12,6 +12,7 @@ const textColor = {
   keyboard: { key: 'h', meta: true, shift: true },
   svg: TextColorWithColorPicker,
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
+  preventDefault: true,
   multicursor: false,
   exec: (dispatch, _) => {
     dispatch(toggleDropdown({ dropDownType: 'colorPicker' }))

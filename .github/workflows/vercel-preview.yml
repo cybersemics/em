@@ -1,12 +1,15 @@
 name: Vercel Preview
 
-# pull_request_target runs in the base repo's context, so repo secrets are
-# available even for fork PRs. Untrusted fork code is gated by GitHub's
-# "require approval for outside collaborators" setting before it runs.
+run-name: Vercel Preview
+
+# pull_request_target runs in the base repo's context, so repo secrets are available even for fork
+# PRs. GitHub's "require approval for outside collaborators" setting is the trust gate, not a
+# sandbox: approving a run allows the checked-out PR code to execute with the secrets listed below.
+# Review fork changes for secret-exfiltration paths before approving them.
 #
-# The Vercel build is the web app, so documentation, agent/editor configuration, and the native
-# platform projects cannot change the preview. A PR confined to them gets no deployment and no
-# preview comment, which is the intended outcome — there is nothing to look at.
+# The Vercel builds are the web app and AI service, so documentation, agent/editor configuration,
+# and the native platform projects cannot change the preview. A PR confined to them gets no
+# deployment and no preview comment, which is the intended outcome — there is nothing to look at.
 #
 # paths-ignore skips the workflow outright, which means NO check is reported. That is only correct
 # because Vercel Preview is no longer a required status check on main. If it is ever made required
@@ -48,7 +51,6 @@ permissions:
 env:
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
   # Skip Puppeteer's Chrome download on install — the Vercel build never uses the bundled
   # browser, saving ~20s per install.
   PUPPETEER_SKIP_DOWNLOAD: true
@@ -81,6 +83,11 @@ jobs:
 
       - name: Install npm dependencies
         uses: ./.github/actions/install
+
+      # Installs the CLI once onto PATH, so the steps below invoke a plain `vercel` rather than
+      # reinstalling it per call. See .github/actions/vercel-cli/action.yml.
+      - name: Install Vercel CLI
+        uses: ./.github/actions/vercel-cli
 
       # Create a GitHub deployment so the preview URL appears in the PR's deployment
       # box (and under repo Environments) rather than as a bot comment. Superseded
@@ -120,16 +127,56 @@ jobs:
             })
             return data.id
 
-      - name: Pull Vercel environment
-        run: yarn dlx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+      # Deploy em-ai first so its unique URL can be compiled into the em preview. Both projects
+      # use the same checkout because they must represent the same pull request commit.
+      - name: Pull em-ai Vercel environment
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_AI }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
 
-      - name: Build
-        run: yarn dlx vercel build --token="$VERCEL_TOKEN"
+      - name: Build em-ai
+        env:
+          # Bundle the TypeScript module graph so ordinary extensionless imports work at runtime.
+          VERCEL_EXPERIMENTAL_BACKENDS: '1'
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_AI }}
+        run: vercel build --token="$VERCEL_TOKEN"
 
-      - name: Deploy
-        id: deploy
+      - name: Deploy em-ai
+        id: deploy-ai
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM_AI }}
         run: |
-          url="$(yarn dlx vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
+          url="$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
+          test -n "$url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "- em-ai preview: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Check em-ai health
+        run: curl --fail --retry 5 --retry-all-errors --retry-delay 2 "${{ steps.deploy-ai.outputs.url }}/"
+
+      # vercel pull and build write project-specific metadata and output into .vercel. Remove the
+      # em-ai state before selecting em so the projects cannot cross-contaminate each other.
+      - name: Reset Vercel project state
+        run: rm -rf .vercel
+
+      - name: Pull em Vercel environment
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Build em
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
+          # Vite gives an existing process variable precedence over .env.production.
+          VITE_AI_URL: ${{ steps.deploy-ai.outputs.url }}/ai
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy em
+        id: deploy
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_EM }}
+        run: |
+          url="$(vercel deploy --prebuilt --token="$VERCEL_TOKEN" | grep -Eo 'https://[^[:space:]]+' | tail -n 1)"
           test -n "$url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
 

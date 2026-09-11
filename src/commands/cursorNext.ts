@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { cursorNextActionCreator as cursorNext } from '../actions/cursorNext'
 import NextIcon from '../components/icons/NextIcon'
@@ -9,7 +8,7 @@ const cursorNextCommand = {
   label: 'Next Thought' as const,
   description: 'Move the cursor to the next thought, skipping expanded children.',
   multicursor: false,
-  keyboard: { key: Key.ArrowDown, meta: true },
+  keyboard: { key: 'ArrowDown', meta: true },
   svg: NextIcon,
   exec: throttleByAnimationFrame(dispatch => dispatch(cursorNext())),
 } satisfies Command

@@ -1,12 +1,27 @@
 ---
 name: write-issue
 description: >-
-  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, or adding reproduction steps to an issue that lacks them.
+  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another.
 allowed-tools:
   - bash
 ---
 
 Issues reporting broken behaviour in this repo follow a fixed format.
+
+## Ask before posting
+
+The issue is read by someone who cannot ask you anything. Every gap in it becomes a question in a comment thread, or a guess by whoever picks it up.
+
+So put your open questions to the reporter first, and post once the answers are in. Ask about anything whose answer changes what the issue says:
+
+- A step you would otherwise have to guess at — which setting, which value, which platform, what the thought tree was.
+- Whether what you are describing is one bug or two.
+- Expected Behavior, where the correct behaviour is a decision rather than an observation.
+- Evidence you believe exists and do not have — a screenshot, a video, a debug log.
+
+Ask them in one pass rather than one at a time, and only where the answer is the reporter's to give: a question you can settle by reproducing the bug or by reading the code is yours to settle.
+
+What you post is then succinct and free of loose ends — no "possibly", no "I think this is related to", no alternative left unruled-out. Where an answer genuinely cannot be had, name it as a known unknown in the preamble rather than leaving it implied.
 
 ## The template
 
@@ -43,8 +58,12 @@ Where the bug depends on a particular thought tree, give it as a fenced code blo
 ```
 
 1. Set the caret on note `test`.
-2. Move Thought Down (Cmd + Shift + ArrowDown).
+2. Move Thought Down (<kbd>Cmd</kbd><kbd>Shift</kbd><kbd>ArrowDown</kbd>).
 ````
+
+Write a keyboard shortcut as `<kbd>` elements, one per key, with no separator between them: `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>`, not `(Shift + Alt + S)`. GitHub renders them as keys, which is what the reader is looking for while scanning the steps. Name the command alongside it — "Move Thought Down (<kbd>Cmd</kbd><kbd>Shift</kbd><kbd>ArrowDown</kbd>)".
+
+Write a gesture as arrows, not as the letters the code uses: `←↓→`, not `ldr`. `l` → `←`, `r` → `→`, `u` → `↑`, `d` → `↓`. The reader is following the steps with a finger on a screen, and the arrows are the swipe; the letters are an implementation detail they have to translate first. Name the command alongside it where the gesture has one — "Swipe New Subthought (`→↓→`)".
 
 Include preconditions that are awkward but load-bearing — a specific device width, a wrapped line, a particular sort order — as steps rather than assuming they are obvious.
 
@@ -52,11 +71,51 @@ Include preconditions that are awkward but load-bearing — a specific device wi
 
 What happens, as an observation, with the evidence: a screenshot, a video, or a debug log. Not the cause, and not a proposed fix. Quote a one-line error inline rather than in a fenced block; keep fences for output that actually spans lines.
 
+It is exclusively the outcome of the steps above. A qualifier about what the failure did not need — "No drag is needed", "this happens even without the Context View open" — is a condition of the reproduction rather than a result of it, and belongs in Steps to Reproduce. Either the steps already exclude what it rules out, and it says nothing, or they do not, and the steps are what is wrong: cut the unnecessary step so the steps produce the failure on their own.
+
 ### Expected Behavior
 
 What should happen instead. Write it as a condition that can be checked — a state the app is or is not in — since it is what a regression test will assert. Where the correct state is visible elsewhere in the app, a screenshot of that is useful alongside the screenshot of the bug.
 
+Phrase it with "should" — "At Font Size 12, the alert should read...", not "At Font Size 12, the alert reads...". The bare present tense reads as a description of what the app already does, which is Current Behavior; "should" marks it as the behaviour being asked for.
+
 State the goal, not the shape of the fix. What the fix looks like is the assignee's call, and writing it out for them in advance is work they will redo.
+
+#### In this case / In general
+
+Where the correct behaviour is a rule and the steps are one instance of it, split Expected Behavior into two `###` subheadings:
+
+```markdown
+## Expected Behavior
+
+### In this case
+
+...
+
+### In general
+
+...
+```
+
+**In this case** is the end state of the exact steps above, in their own terms — the same thoughts, settings, and values, named as the steps named them. It is what the reader checks after following the steps, and what the regression test asserts.
+
+**In general** is the rule the case is an instance of, stated for any input that reaches it: what it applies to, what is left unchanged, where it stops. It is what the assignee implements, and what stops the fix from being special-cased to the reproduction.
+
+For a Gesture Diagram misaligned after the app font size is increased to 32:
+
+```markdown
+### In this case
+
+At app font size 32, the arrow in the Question Mark gesture diagram should be centered in its box, as it is at the default font size.
+
+### In general
+
+Gesture diagram arrows should stay centered at every app font size, wherever a diagram is rendered.
+```
+
+The first is checkable by following the steps; the second is what keeps the fix from being a special case at 32.
+
+Skip the split where it does not earn its place — where the case *is* the rule and the second heading would restate the first in the abstract, or where the correct behaviour is a single fixed state (a value, a label, a position) with no input to generalise over. One paragraph under the plain heading is right for those.
 
 ## Optional sections
 
@@ -72,6 +131,11 @@ Say the thing and stop. An issue is a report, not a write-up — the reader need
 
 Word count is not the measure — a bug needing eight steps gets eight steps. What gets cut is the writing that is about your investigation rather than about the bug.
 
+## Words
+
+- **No em dashes in prose.** This applies to what you post: the issue body, the title, and comments on it.
+- **No semicolons in prose.** Two sentences, or a comma and a conjunction.
+
 ## Title
 
 Describe the symptom rather than the suspected cause: `Gesture Diagrams misaligned at larger font sizes`, not `GestureDiagram flex-align bug`.
@@ -84,9 +148,73 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 
 `bug` for broken behaviour, `feature` for a request, `refactor` for a behaviour-preserving cleanup, `test` for test and CI work, `agent` for agent configuration and ops.
 
-Add `design-needed` when the correct behaviour has not been decided.
-
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
+
+## Sub-issues
+
+Work that only makes sense as part of a larger piece belongs to that piece as a sub-issue, not beside it as a sibling with a reference in the body. GitHub tracks the hierarchy: the parent shows its children and a completion count, closing a child advances it, and the children stay findable from the parent long after the thread that created them has scrolled away.
+
+Use it where one issue is a part of another — a feature broken into the pieces that build it, as [#5481](https://github.com/cybersemics/em/issues/5481) is by #5482 through #5488. Do not use it for two issues that merely touch the same code.
+
+Sub-issues and `Blocked by` are different relationships, and an issue can have both. Sub-issue is composition: this is *part of* that. `Blocked by` is sequencing: this cannot start until that is done. Siblings under one parent are frequently also blocked by each other, and that ordering has to be set separately.
+
+Set the relationship from the parent, with the child's numeric database id rather than its issue number:
+
+```bash
+gh api repos/cybersemics/em/issues/5482 --jq .id
+```
+
+```bash
+gh api --method POST repos/cybersemics/em/issues/5481/sub_issues -f sub_issue_id=<id>
+```
+
+`gh` may also expose this as a flag on `gh issue edit` depending on the version installed — check `gh issue edit --help` before falling back to the endpoint.
+
+Verify it landed, since a body reference and a relationship look alike once rendered:
+
+```bash
+gh issue view 5481 --repo cybersemics/em --json subIssuesSummary
+```
+
+A parent holds up to 100 sub-issues and the hierarchy nests up to 8 levels, neither of which any issue here is close to.
+
+The relationship is also what makes the backlog readable. `no:parent-issue` filters an issue list down to top-level work, and `parent-issue:cybersemics/em#5481` gives one feature's pieces:
+
+```bash
+gh issue list --repo cybersemics/em --search "is:open no:parent-issue"
+```
+
+## Blocked by
+
+"Blocked by" is a GitHub relationship, not a line of body text, and it is not the sub-issue relationship above — it orders two issues rather than nesting one inside the other. `Blocked by #5228` in the body renders as a plain reference: the issue is not marked blocked, it does not show as blocked in issue lists or projects, and #5228 does not show what it is holding up.
+
+Set the relationship with `gh`, at creation or after:
+
+```bash
+gh issue create --title "..." --body-file body.md --blocked-by 5228
+```
+
+```bash
+gh issue edit 5226 --add-blocked-by 5228
+```
+
+Both take a comma-separated list of issue numbers or issue URLs; `--remove-blocked-by` undoes it. Configure it from the blocked issue only — GitHub records the inverse itself, and #5228 lists #5226 under Blocking. Where the new issue is the prerequisite rather than the dependent, `--blocking` and `--add-blocking` are the same thing pointed the other way.
+
+The blocker must be an issue. A pull request number is refused: `gh` cannot resolve it — `Could not resolve to an Issue with the number of 5085` — and the REST endpoint refuses the pull request's own database id with `Target issue may only be an issue`. Where the prerequisite is a pull request, block on the issue that pull request implements and name the pull request in the `## Notes` bullet, as [#5236](https://github.com/cybersemics/em/issues/5236) does with #4400 and #5085. If no such issue exists, open one for what the pull request delivers, let the pull request close it, and block on that.
+
+Verify it landed, since a body reference and a relationship look alike once rendered:
+
+```bash
+gh issue view 5226 --repo cybersemics/em --json blockedBy
+```
+
+Prefer `gh` to the REST endpoint, `POST /repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by`, which takes `issue_id` — the blocker's numeric database id, from `gh api repos/cybersemics/em/issues/5228 --jq .id` — rather than its issue number.
+
+Keep a `## Notes` bullet beside the relationship where the reason is not obvious from the two titles. The relationship carries the fact; only the note carries the why. [#5226](https://github.com/cybersemics/em/issues/5226):
+
+> Blocked by #5228, which makes Select All toggle to Deselect All on desktop as well as touch. The third step is that toggle, so it has to exist first.
+
+`- [ ] Blocked by #5228` is not a substitute. Nothing tracks a checkbox.
 
 ## Evidence
 
@@ -101,18 +229,33 @@ New issues often originate in a comment thread on another issue or PR.
 3. Link forward, from the new issue to its origin: `Split out from #2968, which covered the Question Mark icon specifically.`
 4. Link back, with a comment on the source issue naming the new number: `Opened #5092 to track the general misalignment of Gesture Diagrams at different font sizes.`
 
+## After posting
+
+**Do not summarize the issue.** It is written, and the link opens it. Restating the steps, the current behaviour, and the expected behaviour puts a second copy of the issue in the turn, which the reader has to read through to discover it says nothing the issue does not. Report only what is not in the issue — a relationship configured, a comment left on a source issue, a question the answers did not settle.
+
+**Put the link last.** The link to the issue goes after everything else written in the turn, not at the top of it. It is where the reader leaves for, so whatever they need before they go has to come above it. A link at the beginning is followed before the rest is read.
+
 ## Common defects
 
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
+- A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
+- A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
+- A Current Behavior carrying a qualifier about the reproduction — "No drag is needed" — where the condition belongs in the steps.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
+- An Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
+- A `Blocked by` line in the body with no relationship configured on GitHub.
+- A piece of a larger feature opened as a sibling with `Part of #5481` in the body, where a sub-issue relationship is what tracks it.
+- A loose end left for the reader — an unruled-out alternative, a missing value, an unnamed platform — that the reporter could have answered before posting.
 
 ## When something is unknown
 
-State the uncertainty in the preamble rather than omitting the issue.
+Ask, as above. State whatever survives the answers in the preamble rather than omitting the issue.
 
-Do not guess Expected Behavior. Apply `design-needed` and leave the decision to a maintainer, since a guess there becomes a regression test asserting behaviour nobody chose.
+Do not guess Expected Behavior, since a guess there becomes a regression test asserting behaviour nobody chose.
+
+- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, break it down and ask more questions with the ask tool.

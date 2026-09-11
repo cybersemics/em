@@ -151,10 +151,12 @@ const editThought = (
   const thoughtNew: Thought = {
     ...editedThought,
     ...(editedThought.generating ? { generating: false } : null),
+    // Editing a value does not change the thought's created timestamp, so under a Created sort its rank already
+    // reflects its sort key and must be preserved. Re-ranking it would move it past siblings created in the same
+    // millisecond, which sort by rank (#4085).
     rank:
-      !isValueEmptyOrEmojiOnly && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
+      !isValueEmptyOrEmojiOnly && (sortType === 'Alphabetical' || sortType === 'Updated')
         ? getSortedRank(state, editedThought.parentId, newValue, {
-            created: editedThought.created,
             staleId: editedThought.id,
           })
         : editedThought.rank,
@@ -241,7 +243,7 @@ const editThought = (
     cursorOffset,
     lexemeIndexUpdates,
     thoughtIndexUpdates,
-    ...(Object.keys(movePlacements).length > 0 ? { movePlacements } : null),
+    movePlacements,
     // recentlyEdited,
   })
 

@@ -57,9 +57,12 @@ const getSortedRank = (
   const { created } = options
 
   // Handle Created sorting (#3782)
+  // A thought created now is newer than every sibling created in the same millisecond, so under an ascending sort it
+  // belongs after them rather than before. Splitting a thought creates all of the resulting siblings within a single
+  // millisecond, so inserting each one ahead of its tied siblings would reverse them (#4085).
   if (created && sortPreference.type === 'Created') {
     const index = children.findIndex(child =>
-      isDescending ? compare(created, child.created) !== -1 : compare(child.created, created) !== -1,
+      isDescending ? compare(created, child.created) !== -1 : compare(child.created, created) === 1,
     )
     return calculateRank(children, index)
   }

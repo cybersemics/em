@@ -48,6 +48,8 @@ interface Command {
         reverse?: boolean
         /** Clear the multicursor after the command is executed. */
         clearMulticursor?: boolean
+        /** Replace the selection with the thoughts that the command moved the cursor to, i.e. the thoughts it created. Each execution that leaves the cursor on a different thought than the one it was given contributes one, so a selected thought that the command skipped contributes none. If fewer than two thoughts were created, the selection is cleared instead, so that the command ends the same way it does without a multiselect. */
+        selectNewCursors?: boolean
         /**
          * Filter the cursors before executing the command.
          *

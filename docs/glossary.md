@@ -12,6 +12,10 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **action** — A Redux state-mutating function under [`/src/actions`](../src/actions). Reducers are preferred over thunks; thunks only when a side effect is needed. Compose with [`util/reducerFlow`](../src/util/reducerFlow.ts).
 
+**agent session** — One execution of a Copilot cloud agent: an ephemeral, isolated environment with its own workspace, prompt, model, and history, destroyed when it ends. A pair of `copilot_work_started` / `copilot_work_finished` timeline events brackets one, and an *agent task* can run several — a follow-up prompt on the pull request starts another. This is the sense the automations use for the agent *working*: [`pr-ready.yml`](../.github/workflows/pr-ready.yml) reads the newest of those two events to tell work in progress from work that finished, and [`copilot-setup-steps.yml`](../.github/workflows/copilot-setup-steps.yml) builds the environment one wakes up in. Distinct from *session lock*, and from a local Claude Code or Codex session.
+
+**agent task** — The work item handed to a Copilot cloud agent, created by `POST /agents/repos/{owner}/{repo}/tasks` — the [agent tasks API](https://docs.github.com/en/rest/agent-tasks/agent-tasks). The task is the durable parent: its REST representation carries a `session_count` and a `sessions` array, so one task holds one or more *agent sessions*. This is the sense the automations count and cap: [`Dependabot Fix`](testing.md#failing-dependabot-pull-requests) and [Copilot pull-request conflicts](testing.md#copilot-pull-request-conflicts) each start one task per dispatch, cap the tasks per pull request, and number them in their sticky comment via [`task-comment.cjs`](../scripts/ci/task-comment.cjs).
+
 **archived** — Soft-deletion timestamp on `Thought`. Distinct from `=archive`, the meta-attribute parent under which archived thoughts are nested.
 
 **attribute / meta-attribute** — A child thought whose value starts with `=` (e.g. `=pin`, `=style`, `=view`). Meta-attributes change app behaviour for their parent (or, with `=children`/`=grandchildren`, for descendants). Stored under their value in `childrenMap` for `O(1)` lookup. See [metaprogramming.md](metaprogramming.md).
@@ -52,9 +56,13 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **contextChain** — A `Path` that crosses one or more context views, split into its `SimplePath` segments. `Path → SimplePath[]` via [`splitChain`](../src/selectors/splitChain.ts). See [data-model.md → contextChain](data-model.md#contextchain).
 
+**copula** — A finite form of "to be" (`is`, `are`, `was`, `were`) that Split Sentences treats as the boundary between a single sentence's subject and its predicate: the subject becomes the main thought and the predicate its child, with its leading article dropped. See [commands.md → Split Sentences](commands.md#split-sentences).
+
 **crossContextualKey** — `${contextChain.map(head).join('')}|${id}`. The React key for a thought that may appear at multiple positions when context views are active. Same `ThoughtId` produces different keys per occurrence. See [layout-rendering.md → Keys](layout-rendering.md#keys-crosscontextualkey).
 
 **cursor** — The active thought, stored as `state.cursor: Path | null`. Indicated by the gray bullet ring. Distinct from *caret*. Setting the cursor does not set the browser selection; see [cursor-and-caret.md](cursor-and-caret.md).
+
+**cyclic context** — In the context view, the context that is the *nominal context*'s own parent, so navigating into it returns to where the context view was opened, e.g. `a` under `a/m~`. Descending into it produces a circular `Path` (`a/m~/a/x`), which the app tolerates. Everything else listed is a *tangential context*. See [data-model.md → Context view recursion](data-model.md#context-view-recursion).
 
 ## D
 
@@ -126,6 +134,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## N
 
+**nominal context** — The thought whose context view is open, i.e. the thought whose contexts are listed in place of its children. `m` in `a/m~`.
+
 **=note** — Meta-attribute that displays a smaller-text note under a thought.
 
 ## P
@@ -176,7 +186,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## T
 
-**tangential context** — A context that hasn't been pulled directly through the cursor's ancestor chain but is referenced from elsewhere — via a Lexeme's `contexts`, or by the context view. `fetchDescendants` enqueues the parent of any thought whose parent isn't loaded, so the ancestor chain resolves. See the comment "load ancestors of tangential contexts" in [`fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts).
+**tangential context** — In the context view, a context from a different part of the tree than the one the view was opened in — every context listed except the *cyclic context*, e.g. `b` under `a/m~`. Since a tangential context has not been pulled through the cursor's ancestor chain, it is also the loading case `fetchDescendants` handles: it enqueues the parent of any thought whose parent isn't loaded, so the ancestor chain resolves. See the comment "load ancestors of tangential contexts" in [`fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts).
 
 **Thought** — In-memory record under `state.thoughts.thoughtIndex`. Only part of it is persisted: TreeCRDT stores a *ThoughtPayload* per node and derives `parentId`, `rank`, and `childrenMap` from the tree on read. See [data-model.md → Thought](data-model.md#thought) and [persistence.md → Document model](persistence.md#document-model).
 

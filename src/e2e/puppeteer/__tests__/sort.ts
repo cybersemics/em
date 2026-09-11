@@ -7,7 +7,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForThoughtExistInDb from '../helpers/waitForThoughtExistInDb'
+import waitForThoughtspaceIdle from '../helpers/waitForThoughtspaceIdle'
 import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
@@ -76,7 +76,7 @@ describe('persistent storage', () => {
     await waitForEditable('')
     await keyboard.type('b')
     await waitForEditable('b')
-    await waitForThoughtExistInDb('b')
+    await waitForThoughtspaceIdle()
 
     await refresh()
 

@@ -28,7 +28,9 @@ import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
+import share from '../../device/share'
 import globals from '../../globals'
+import useOnClickOutside from '../../hooks/useOnClickOutside'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
 import { getChildrenRanked } from '../../selectors/getChildren'
@@ -266,20 +268,8 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
 
-  // Close the dropdown when clicking outside of it. Inlined from the unmaintained use-onclickoutside package.
-  useEffect(() => {
-    /** Closes the dropdown on mousedown/touchstart outside the dropdown element. */
-    const listener = (e: MouseEvent | TouchEvent) => {
-      if (!dropDownRef.current || dropDownRef.current.contains(e.target as Node)) return
-      closeDropdown()
-    }
-    document.addEventListener('mousedown', listener)
-    document.addEventListener('touchstart', listener, { passive: true })
-    return () => {
-      document.removeEventListener('mousedown', listener)
-      document.removeEventListener('touchstart', listener)
-    }
-  }, [closeDropdown])
+  // Close the dropdown when clicking outside of it.
+  useOnClickOutside(dropDownRef, closeDropdown)
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
@@ -508,7 +498,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   }, [onKeyDown])
 
   /** Shares or downloads when the export button is clicked. */
-  const onExportClick = () => {
+  const onExportClick = async () => {
     // On the iOS Capacitor app, the native share sheet can open while the software keyboard is
     // still visible, causing the two to overlap (#4294). Blur the focused editable and dismiss
     // the keyboard before presenting the share sheet. This is done synchronously (no await) so
@@ -518,15 +508,14 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       Keyboard.hide()
     }
 
-    // use mobile share if it is available
-    if (navigator.share) {
-      navigator.share({
-        text: exportContent!,
-        title: titleShort,
-      })
-    }
+    // use the native or mobile share dialog if it is available
+    const shared = await share({
+      text: exportContent!,
+      title: titleShort,
+    })
+
     // otherwise download the data with createObjectURL
-    else {
+    if (!shared) {
       try {
         download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
       } catch (err) {

@@ -100,7 +100,7 @@ const ColorPicker: FC<{ size?: number }> = ({ size }) => {
   const showColorPicker = useSelector(state => state.showColorPicker)
 
   return (
-    <Popover show={showColorPicker} size={size}>
+    <Popover ariaLabel='Color Picker' show={showColorPicker} size={size}>
       {/* Text Color */}
       <div aria-label='text color swatches' className={css({ whiteSpace: 'nowrap' })}>
         <ColorSwatch color='fg' label='default' />

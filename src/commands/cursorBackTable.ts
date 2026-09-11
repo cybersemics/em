@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import BackIcon from '../components/icons/BackIcon'
@@ -13,7 +12,7 @@ const cursorBackTableCommand = {
   id: 'cursorBackTable',
   label: 'Cursor Back (Table Column)' as const,
   description: 'In table view, move the cursor from a column-two thought back to its column-one parent.',
-  keyboard: { key: Key.ArrowLeft },
+  keyboard: { key: 'ArrowLeft' },
   hideFromHelp: true,
   multicursor: false,
   svg: BackIcon,
