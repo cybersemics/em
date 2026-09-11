@@ -71,6 +71,8 @@ Include preconditions that are awkward but load-bearing — a specific device wi
 
 What happens, as an observation, with the evidence: a screenshot, a video, or a debug log. Not the cause, and not a proposed fix. Quote a one-line error inline rather than in a fenced block; keep fences for output that actually spans lines.
 
+It is exclusively the outcome of the steps above. A qualifier about what the failure did not need — "No drag is needed", "this happens even without the Context View open" — is a condition of the reproduction rather than a result of it, and belongs in Steps to Reproduce. Either the steps already exclude what it rules out, and it says nothing, or they do not, and the steps are what is wrong: cut the unnecessary step so the steps produce the failure on their own.
+
 ### Expected Behavior
 
 What should happen instead. Write it as a condition that can be checked — a state the app is or is not in — since it is what a regression test will assert. Where the correct state is visible elsewhere in the app, a screenshot of that is useful alongside the screenshot of the bug.
@@ -227,12 +229,19 @@ New issues often originate in a comment thread on another issue or PR.
 3. Link forward, from the new issue to its origin: `Split out from #2968, which covered the Question Mark icon specifically.`
 4. Link back, with a comment on the source issue naming the new number: `Opened #5092 to track the general misalignment of Gesture Diagrams at different font sizes.`
 
+## After posting
+
+**Do not summarize the issue.** It is written, and the link opens it. Restating the steps, the current behaviour, and the expected behaviour puts a second copy of the issue in the turn, which the reader has to read through to discover it says nothing the issue does not. Report only what is not in the issue — a relationship configured, a comment left on a source issue, a question the answers did not settle.
+
+**Put the link last.** The link to the issue goes after everything else written in the turn, not at the top of it. It is where the reader leaves for, so whatever they need before they go has to come above it. A link at the beginning is followed before the rest is read.
+
 ## Common defects
 
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
+- A Current Behavior carrying a qualifier about the reproduction — "No drag is needed" — where the condition belongs in the steps.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
