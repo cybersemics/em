@@ -222,11 +222,15 @@ describe('Color Theme', () => {
 
     await clickThought('Golden Retriever')
     await clickToolbar('Text Color', 'background color swatches', 'green')
+    await waitForEditable('<font color="#000000" style="background-color: rgb(0, 214, 136);">Golden Retriever</font>')
 
     await clickThought('Labrador')
     await click('[aria-label="text color swatches"] [aria-label="purple"]')
+    await waitForEditable('<font color="#aa80ff">Labrador</font>')
 
     await hideHUD()
+    // Keep the snapshot focused on color changes rather than the timing of the toolbar's pending viewport scroll.
+    await scrollTo(0, 1)
 
     expect(await screenshot()).toMatchImageSnapshot()
   })
