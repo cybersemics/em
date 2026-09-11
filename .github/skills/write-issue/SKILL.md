@@ -19,9 +19,19 @@ So put your open questions to the reporter first, and post once the answers are 
 - Expected Behavior, where the correct behaviour is a decision rather than an observation.
 - Evidence you believe exists and do not have — a screenshot, a video, a debug log.
 
-Ask them in one pass rather than one at a time, and only where the answer is the reporter's to give: a question you can settle by reproducing the bug or by reading the code is yours to settle.
+Ask everything you can ask now in one pass rather than one at a time, and only where the answer is the reporter's to give: a question you can settle by reproducing the bug or by reading the code is yours to settle.
 
 What you post is then succinct and free of loose ends — no "possibly", no "I think this is related to", no alternative left unruled-out. Where an answer genuinely cannot be had, name it as a known unknown in the preamble rather than leaving it implied.
+
+### More than one round
+
+A pass is a round, not your one chance. An answer often decides something that was undecidable before it, and the questions that decision raises could not have been asked earlier: settling that a behaviour should be configurable makes its default askable, settling that this is two bugs makes the scope of the second one askable, settling Expected Behavior makes its boundary askable.
+
+So read each round of answers for what it opened, and put those questions to the reporter in another round. Keep going until a round opens nothing new, then post. There is no limit on rounds, only on asking the same thing twice.
+
+Every round follows the rule the first one did: everything askable now goes in it, nothing an earlier answer already settled, nothing you can settle yourself. A round that would only restate the last one in different words is the signal to stop asking and post.
+
+The rounds are cheap next to what they prevent — a question the reporter would have answered in a second breath, left instead as a guess in the issue or as a decision the assignee makes alone.
 
 ## The template
 
@@ -242,6 +252,7 @@ New issues often originate in a comment thread on another issue or PR.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
 - A piece of a larger feature opened as a sibling with `Part of #5481` in the body, where a sub-issue relationship is what tracks it.
 - A loose end left for the reader — an unruled-out alternative, a missing value, an unnamed platform — that the reporter could have answered before posting.
+- An issue posted after one round of questions, with a detail the answers themselves left undecided and nobody went back to ask about.
 
 ## When something is unknown
 
@@ -249,4 +260,4 @@ Ask, as above. State whatever survives the answers in the preamble rather than o
 
 Do not guess Expected Behavior, since a guess there becomes a regression test asserting behaviour nobody chose.
 
-- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, break it down and ask more questions with the ask tool.
+- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.
