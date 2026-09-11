@@ -3,7 +3,7 @@ name: browser-control
 description: >-
   ALWAYS USE THIS SKILL to bring up a browser/app environment for a given target
   platform (web, android, or ios) before driving the em app. The caller (e.g.
-  issue-repro) decides the platform and passes it in; this skill is a routing hub
+  the reproduce skill) decides the platform and passes it in; this skill is a routing hub
   that delegates to the right platform sub-skill (browser-control-chrome or
   browser-control-ios).
 allowed-tools:
@@ -24,7 +24,7 @@ Use this skill **before any browser/app interaction** (navigation, evaluate, cli
 
 ## Inputs
 
-The caller must supply the target platform — one of `web`, `android`, or `ios`. This skill does **not** infer the platform from issues, tags, or body text; that is the caller's responsibility (see `issue-repro`).
+The caller must supply the target platform — one of `web`, `android`, or `ios`. This skill does **not** infer the platform from issues, tags, or body text; that is the caller's responsibility (see `reproduce`).
 
 If the caller has not stated a platform, stop and ask before doing anything. Picking a default would silently load the app under the wrong profile.
 

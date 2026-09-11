@@ -17,16 +17,16 @@ In general, if you want to add an additional capability to the agent, you should
 flowchart TD
     START(["Agent working an issue"])
 
-    START --> IR["<b>issue-repro</b><br/>reproduce the bug first"]
+    START --> REP["<b>reproduce</b><br/>see the bug happen first"]
     START --> PL["<b>plan</b><br/>plan before writing code"]
     START --> CM["<b>ci-monitor</b><br/>watch CI to completion"]
 
-    IR --> BC["<b>browser-control</b><br/>picks the platform"]
+    REP --> BC["<b>browser-control</b><br/>picks the platform"]
     BC --> BCC["<b>browser-control-chrome</b><br/>web · Android"]
     BC --> BCI["<b>browser-control-ios</b><br/>real iPhone"]
-    IR --> TDD["<b>tdd-write-failing-test</b><br/>turn the repro into a test"]
+    REP --> TDD["<b>tdd-write-failing-test</b><br/>turn the repro into a test"]
     TDD --> RT["<b>run-test</b><br/>run one test for real"]
-    IR --> RT
+    REP --> RT
 
     CM --> TD["<b>test-diagnosis</b><br/>what kind of failure is this?"]
     TD --> PUS["<b>puppeteer-update-snapshots</b><br/>regenerate screenshots"]
@@ -34,11 +34,11 @@ flowchart TD
     CM --> ES["<b>end-session</b><br/>checklist before stopping"]
     ES --> DS["<b>docs-sync</b><br/>make docs true again"]
 
-    style IR fill:#2d4a2d,color:#fff
+    style REP fill:#2d4a2d,color:#fff
     style PL fill:#2d4a2d,color:#fff
     style ES fill:#4a2d2d,color:#fff
 
-    click IR "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "issue-repro — reproduce before investigating"
+    click REP "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#reproduce" "reproduce — see the failure before investigating"
     click PL "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "plan — plan and critique before implementing"
     click ES "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "end-session — the exit checklist"
     click DS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#docs-sync" "docs-sync — keep documentation true"
@@ -56,7 +56,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 
 | Skill | What it does | Source |
 | --- | --- | --- |
-| [`issue-repro`](#issue-repro) | Reproduce a reported bug for real, then capture it in a test, before touching the cause | [SKILL.md](../../.github/skills/issue-repro/SKILL.md) |
+| [`reproduce`](#reproduce) | Reproduce a reported bug for real, then capture it in a test, before touching the cause | [SKILL.md](../../.github/skills/reproduce/SKILL.md) |
 | [`plan`](#plan) | Write an architectural plan grounded in existing code, then attack it | [SKILL.md](../../.github/skills/plan/SKILL.md) |
 | [`browser-control`](#browser-control) | Bring up a browser or device for a given platform | [SKILL.md](../../.github/skills/browser-control/SKILL.md) |
 | [`browser-control-chrome`](#browser-control-chrome) | The web and Android half of that | [SKILL.md](../../.github/skills/browser-control-chrome/SKILL.md) |
@@ -72,9 +72,9 @@ The two green boxes are the gates — the agent must run them before it is allow
 
 ## The gates
 
-### issue-repro
+### reproduce
 
-**Source: [`.github/skills/issue-repro/SKILL.md`](../../.github/skills/issue-repro/SKILL.md)**
+**Source: [`.github/skills/reproduce/SKILL.md`](../../.github/skills/reproduce/SKILL.md)**
 
 Runs when an issue contains a "Steps to Reproduce" section, or something close to it like "How to reproduce".
 
@@ -223,7 +223,7 @@ For suspected flakiness it checks the project's open issues labelled "test" for 
 
 **Source: [`.github/skills/end-session/SKILL.md`](../../.github/skills/end-session/SKILL.md)**
 
-The exit gate. [`issue-repro`](#issue-repro) and [`plan`](#plan) control the way into implementation; this one controls the way out, and it runs before every ending — work finished, escalation, or a turn the agent believes changed nothing.
+The exit gate. [`reproduce`](#reproduce) and [`plan`](#plan) control the way into implementation; this one controls the way out, and it runs before every ending — work finished, escalation, or a turn the agent believes changed nothing.
 
 It exists because the last action of a run is the one nobody supervises, and its two worst failures are silent ones. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it: the runner is disposable, so the branch looks untouched and the effort is gone. A session that ends while CI is still running has reported a result it never watched. Both read as success from inside the transcript, which is why this is a checklist rather than a principle.
 

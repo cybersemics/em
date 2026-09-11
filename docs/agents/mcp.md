@@ -8,7 +8,7 @@ Three of them matter here.
 | --- | --- | --- |
 | [`chrome-devtools`](#chrome-devtools) | Driving Chrome — navigate, inspect, screenshot, emulate a phone | [`browser-control-chrome`](skills.md#browser-control-chrome) |
 | [`wdio`](#wdio) | Driving a real iPhone through BrowserStack | [`browser-control-ios`](skills.md#browser-control-ios) |
-| [GitHub](#the-github-server) | Reading issues, listing CI runs | [`issue-repro`](skills.md#issue-repro), [`ci-monitor`](skills.md#ci-monitor) |
+| [GitHub](#the-github-server) | Reading issues, listing CI runs | [`reproduce`](skills.md#reproduce), [`ci-monitor`](skills.md#ci-monitor) |
 
 ```mermaid
 flowchart LR
@@ -119,7 +119,7 @@ If a call comes back with an HTML `400 Bad Request` page, the shim's forwarding 
 
 Used in two places:
 
-- [`issue-repro`](skills.md#issue-repro) calls `get_issue` to read the full body and comments of the issue being worked on.
+- [`reproduce`](skills.md#reproduce) calls `get_issue` to read the full body and comments of the issue being worked on.
 - [`ci-monitor`](skills.md#ci-monitor) lists workflow runs for the current branch, through the **actions** tool with `method: "list_workflow_runs"`. A standalone `list_workflow_runs` tool used to exist and no longer does — a good example of an external tool surface changing underneath the skills that call it.
 
 Opening the pull request is *not* done through this server. Both prompt files and [`end-session`](skills.md#end-session) specify the `runtime-tools-create_pull_request` tool, which Copilot provides directly, and explicitly forbid shelling out to `git` or `gh` to open one.
@@ -133,7 +133,7 @@ Every skill declares what it is allowed to use in its `allowed-tools` frontmatte
 | [`browser-control`](skills.md#browser-control) | ✓ | ✓ | ✓ |
 | [`browser-control-chrome`](skills.md#browser-control-chrome) | ✓ | ✓ | ✓ |
 | [`browser-control-ios`](skills.md#browser-control-ios) | ✓ | | ✓ |
-| [`issue-repro`](skills.md#issue-repro) | ✓ | ✓ | ✓ |
+| [`reproduce`](skills.md#reproduce) | ✓ | ✓ | ✓ |
 | [`plan`](skills.md#plan) | ✓ | | |
 | [`tdd-write-failing-test`](skills.md#tdd-write-failing-test) | ✓ | | |
 | [`run-test`](skills.md#run-test) | ✓ | | |
@@ -143,7 +143,7 @@ Every skill declares what it is allowed to use in its `allowed-tools` frontmatte
 | [`end-session`](skills.md#end-session) | ✓ | | |
 | [`docs-sync`](skills.md#docs-sync) | ✓ | | |
 
-[`browser-control`](skills.md#browser-control) and [`issue-repro`](skills.md#issue-repro) list both browser servers because they route to either platform without knowing in advance which it will be.
+[`browser-control`](skills.md#browser-control) and [`reproduce`](skills.md#reproduce) list both browser servers because they route to either platform without knowing in advance which it will be.
 
 ## When to use a server, and when to use the bridge
 
