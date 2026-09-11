@@ -46,9 +46,9 @@ let suppressBlurSync = false
 let suppressCursorAfterTouch = false
 
 /** Set when the current press landed on the caret, i.e. the user is reaching for native caret repositioning (the iOS
- * magnifier, the Android caret handle) rather than starting a drag or a gesture. Latched by the capture-phase
- * touchstart listener in initEvents, so its lifetime is the touch, and read by useLongPress and canDrag — react-dnd's
- * own timer can begin a drag without going through the long press state machine. */
+ * magnifier, the Android caret handle) rather than starting a drag or a gesture. Set by the capture-phase touchstart
+ * listener in initEvents and cleared on touchend, so its lifetime is the press. Read by useLongPress, canDrag, and
+ * shouldCancelGesture — react-dnd's own timer can begin a drag without going through the long press state machine. */
 let pressOnCaret = false
 
 // check duplicate ranks within the same context for debugging

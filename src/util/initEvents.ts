@@ -298,18 +298,21 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
-  /** Stops the scroll-at-edge when dragging stops. */
+  /** Stops the scroll-at-edge when dragging stops, and clears the caret latch. Every reader of pressOnCaret runs
+   * during a touch that has just set it, so clearing here changes nothing today; it keeps the flag's value honest
+   * once the press is over, rather than leaving a stale true for whatever reads it next. */
   const onTouchEnd = () => {
     scrollAtEdge.stop()
+    globals.pressOnCaret = false
   }
 
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
    * the completed touch. Also latches whether the touch landed on the caret, i.e. whether the user is reaching for
    * native caret repositioning (the iOS magnifier, the Android caret handle) rather than starting a drag or a gesture
-   * (#3763). Latching here rather than in each reader ties the
-   * flag's lifetime to the touch, measures the caret once per touch, and covers touches that never reach an element
-   * that mounts useLongPress. Registered in the capture phase because touchstart propagation is unreliable in the
-   * bubble phase (see the note on the touchmove listener below); capture also puts it ahead of both readers. */
+   * (#3763). Latching here rather than in each reader gives the flag a single writer per touch, measures the caret
+   * once, and covers touches that never reach an element that mounts useLongPress. Registered in the capture phase
+   * because touchstart propagation is unreliable in the bubble phase (see the note on the touchmove listener below);
+   * capture also puts it ahead of every reader. */
   const onTouchStart = (e: TouchEvent) => {
     globals.suppressCursorAfterTouch = false
     // changedTouches is the finger that just landed; touches[0] is the first one still down, which a second finger
