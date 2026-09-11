@@ -223,7 +223,7 @@ For suspected flakiness it checks the project's open issues labelled "test" for 
 
 **Source: [`.github/skills/end-session/SKILL.md`](../../.github/skills/end-session/SKILL.md)**
 
-The exit gate. [`reproduce`](#reproduce) and [`plan`](#plan) control the way into implementation; this one controls the way out, and it runs before every ending — work finished, escalation, or a turn the agent believes changed nothing.
+The exit gate. The [`reproduce`](#reproduce) and [`plan`](#plan) skills control the way into implementation; this one controls the way out, and it runs before every ending — work finished, escalation, or a turn the agent believes changed nothing.
 
 It exists because the last action of a run is the one nobody supervises, and its two worst failures are silent ones. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it: the runner is disposable, so the branch looks untouched and the effort is gone. A session that ends while CI is still running has reported a result it never watched. Both read as success from inside the transcript, which is why this is a checklist rather than a principle.
 

@@ -24,7 +24,7 @@ Use this skill **before any browser/app interaction** (navigation, evaluate, cli
 
 ## Inputs
 
-The caller must supply the target platform — one of `web`, `android`, or `ios`. This skill does **not** infer the platform from issues, tags, or body text; that is the caller's responsibility (see `reproduce`).
+The caller must supply the target platform — one of `web`, `android`, or `ios`. This skill does **not** infer the platform from issues, tags, or body text; that is the caller's responsibility (see the `reproduce` skill).
 
 If the caller has not stated a platform, stop and ask before doing anything. Picking a default would silently load the app under the wrong profile.
 

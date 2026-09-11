@@ -16,7 +16,7 @@ Follow these instructions **directly**, while observing the methodology describe
 
 ## When this skill runs
 
-- **For an issue with "Steps to Reproduce":** run this skill **after** `reproduce` has confirmed the failure, and **before** you write the fix. You cannot honestly judge adjacent-behaviour impact until you have seen the real failure mode. Reproduction first, plan second, implementation third.
+- **For an issue with "Steps to Reproduce":** run this skill **after** the `reproduce` skill has confirmed the failure, and **before** you write the fix. You cannot honestly judge adjacent-behaviour impact until you have seen the real failure mode. Reproduction first, plan second, implementation third.
 - **For any other non-trivial change** (feature, refactor, behaviour change): run this skill before creating a branch or editing any file.
 - **Trivial changes** (a typo, a copy tweak, a version bump) do not need a full plan. If you are unsure whether a change is trivial, it is not — run the skill.
 

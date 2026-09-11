@@ -143,7 +143,7 @@ Every skill declares what it is allowed to use in its `allowed-tools` frontmatte
 | [`end-session`](skills.md#end-session) | ✓ | | |
 | [`docs-sync`](skills.md#docs-sync) | ✓ | | |
 
-[`browser-control`](skills.md#browser-control) and [`reproduce`](skills.md#reproduce) list both browser servers because they route to either platform without knowing in advance which it will be.
+The [`browser-control`](skills.md#browser-control) and [`reproduce`](skills.md#reproduce) skills list both browser servers because they route to either platform without knowing in advance which it will be.
 
 ## When to use a server, and when to use the bridge
 

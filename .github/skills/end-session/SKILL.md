@@ -9,7 +9,7 @@ allowed-tools:
   - bash
 ---
 
-This is the **End Session** skill. It runs at the other end of the work from `reproduce` and `plan`: those two gate you *into* implementation, this one gates you *out* of the session. Work through it step by step, in order, every time you are about to stop — whether you are stopping because the work is done or because you are escalating.
+This is the **End Session** skill. It runs at the other end of the work from the `reproduce` and `plan` skills: those two gate you *into* implementation, this one gates you *out* of the session. Work through it step by step, in order, every time you are about to stop — whether you are stopping because the work is done or because you are escalating.
 
 The reason this skill exists: an agent's last action is the one no one supervises. A session that ends with an uncommitted fix on a disposable runner has destroyed the work, not delivered it — the branch looks untouched and the effort is unrecoverable. A session that ends while CI is still running has reported a result it never observed. Both look like success from inside the transcript. This checklist is the thing that makes the ending honest.
 
@@ -30,7 +30,7 @@ There is no human waiting to unblock you mid-task — stopping to ask for permis
 
 1. The work is complete and every CI check is green.
 2. You have hit a documented limit — 5 fix-push cycles, or 5 fix-validate attempts — and are escalating.
-3. You cannot reproduce the issue (`reproduce` Step 3), and are escalating.
+3. You cannot reproduce the issue (the `reproduce` skill, Step 3), and are escalating.
 4. The correct path is genuinely ambiguous and proceeding either way risks the wrong outcome.
 
 Endings 2–4 still run the whole checklist below. **An escalation is an ending, not an exemption** — that is precisely when unpushed work is most likely to be lost, because you are stopping in the middle rather than at a natural finish.
@@ -93,7 +93,7 @@ A regression test committed `it.skip` is a transient safety marker, not a delive
 git diff origin/main...HEAD -- '*.ts' '*.tsx' | grep -nE '^\+.*\b(it|describe)\.skip\b'
 ```
 
-Any hit is a test **this branch** added or left skipped. If it is the regression test from `reproduce` Step 4 and the fix is in, remove the `.skip`, re-run it via `run-test` to confirm it now passes, and commit that with the fix (back to Step 3).
+Any hit is a test **this branch** added or left skipped. If it is the regression test from the `reproduce` skill's Step 4 and the fix is in, remove the `.skip`, re-run it via `run-test` to confirm it now passes, and commit that with the fix (back to Step 3).
 
 The one legitimate exit with a `.skip` still present is an escalation where the fix was never implemented — the skipped test is the useful artifact of a failed session. Say so explicitly in your report.
 

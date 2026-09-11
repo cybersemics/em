@@ -4,7 +4,7 @@ description: >-
   ALWAYS USE THIS SKILL immediately after reproducing a bug that has documented
   Steps to Reproduce, and before fixing it. Turns the reproduction into a permanent
   automated regression test and proves it fails for the right reason. Invoked by
-  reproduce after its Reproduce stage.
+  the reproduce skill after its Reproduce stage.
 allowed-tools:
   - bash
 ---

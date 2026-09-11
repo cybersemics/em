@@ -4,7 +4,7 @@ description: >-
   ALWAYS USE THIS SKILL to run a single e2e test in the real test harness for a
   given target platform — web/android (Vitest + puppeteer) or iOS (WDIO + Appium +
   simulator) — and report pass/fail with the failing assertion. Invoked by
-  tdd-write-failing-test and by reproduce's validation step.
+  tdd-write-failing-test and by the reproduce skill's validation step.
 allowed-tools:
   - bash
 ---
