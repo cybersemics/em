@@ -179,7 +179,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
           path: [ABSOLUTE_TOKEN, newThoughtId] as unknown as SimplePath,
           rank: 0,
           value: headValue(state, insertNewSubthought ? path : parentOf(path)) ?? '',
-          splitSource,
         })
       : null,
 
