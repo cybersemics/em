@@ -172,7 +172,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## S
 
-**scroll clamp** — The logical `window.scrollY` range that keeps at least 1vh of the visible thought cluster onscreen while leaving hidden thought space and document height unchanged. Touches beyond a clamp edge receive resisted elastic movement and spring back on release. See [layout-rendering.md → useScrollClamp](layout-rendering.md#usescrollclamp-vertical-scroll-clamp).
+**scroll clamp** — The logical `window.scrollY` range that keeps at least 1vh of the visible thought cluster onscreen while leaving hidden thought space and document height unchanged. Scrolling far enough to reveal the footer remains allowed. Touches beyond a clamp edge receive resisted elastic movement and spring back on release. See [layout-rendering.md → useScrollClamp](layout-rendering.md#usescrollclamp-vertical-scroll-clamp).
 
 **session lock** — Exclusive Web Lock named `em-treecrdt-session:${tsid}`, held for the lifetime of the page so only one tab opens a thoughtspace at a time. A second tab renders [`ThoughtspaceInUse`](../src/components/ThoughtspaceInUse.tsx) instead of the app. See [persistence.md → Single-tab access](persistence.md#single-tab-access).
 

@@ -82,10 +82,10 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const aboveOffset = isIOSCapacitor ? toolbarBottom : (toolbarRect?.height ?? 0)
   const scrollYNew = isAboveViewport ? yDocument - aboveOffset - height / 2 : yDocument - bottomBoundary + height * 1.5
 
-  // scroll to 1 instead of 0
+  // scroll to 1 instead of 0 on touch Safari
   // otherwise Mobile Safari scrolls to the top after MultiGesture
   // See: touchmove in MultiGesture.tsx
-  const top = Math.max(1, scrollYNew)
+  const top = Math.max(isTouch && isSafari() ? 1 : 0, scrollYNew)
 
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
   const behavior: ScrollBehavior = scrollDistance < visualViewportHeight ? 'smooth' : 'auto'

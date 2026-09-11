@@ -1,5 +1,4 @@
 import { isEqual, throttle } from 'lodash'
-import { motion, useMotionTemplate } from 'motion/react'
 import { RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
@@ -226,8 +225,8 @@ const LayoutTree = () => {
     visibleTop: visibleBounds.top,
     visibleBottom: visibleBounds.bottom,
     viewportHeight,
+    enabled: spaceAbove > 0,
   })
-  const elasticTransform = useMotionTemplate`translateY(${elasticOffset}px)`
 
   useLayoutTreeTop(ref)
 
@@ -246,14 +245,14 @@ const LayoutTree = () => {
   )
 
   return (
-    <motion.div
+    <div
       className={cx(
         css({
           marginTop: '0.501rem',
         }),
         fauxCaretTreeProvider(indent),
       )}
-      style={{ transform: elasticTransform }}
+      style={{ transform: `translateY(${elasticOffset.get()}px)` }}
       ref={ref}
     >
       <HoverArrow
@@ -313,7 +312,7 @@ const LayoutTree = () => {
           ))}
         </TransitionGroup>
       </div>
-    </motion.div>
+    </div>
   )
 }
 

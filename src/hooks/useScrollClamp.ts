@@ -14,6 +14,7 @@ const useScrollClamp = ({
   visibleTop,
   visibleBottom,
   viewportHeight,
+  enabled,
 }: {
   /** Layout tree element whose offset anchors positioned thought y values in the document. */
   layoutRef: RefObject<HTMLElement | null>
@@ -23,16 +24,35 @@ const useScrollClamp = ({
   visibleBottom: number
   /** Viewport height in pixels. */
   viewportHeight: number
+  /** Whether autofocus has left hidden ancestor space that needs a logical clamp. */
+  enabled: boolean
 }): MotionValue<number> => {
   const elasticOffset = useMotionValue(0)
-  const rangeRef = useRef({ minScroll: 0, maxScroll: Infinity })
+  const rangeRef = useRef({ minScroll: -Infinity, maxScroll: Infinity })
   const touchActiveRef = useRef(false)
   const rejectedDistanceRef = useRef(0)
   const correctionTargetRef = useRef<number | null>(null)
   const springRef = useRef<ReturnType<typeof animate> | null>(null)
 
+  useEffect(
+    () =>
+      elasticOffset.on('change', value => {
+        if (layoutRef.current) layoutRef.current.style.transform = `translateY(${value}px)`
+      }),
+    [elasticOffset, layoutRef],
+  )
+
   // The full document must remain laid out before its physical scroll range and the layout origin can be measured.
   useLayoutEffect(() => {
+    if (!enabled) {
+      rangeRef.current = { minScroll: -Infinity, maxScroll: Infinity }
+      correctionTargetRef.current = null
+      rejectedDistanceRef.current = 0
+      springRef.current?.stop()
+      if (elasticOffset.get() !== 0) elasticOffset.set(0)
+      return
+    }
+
     const originY = layoutRef.current?.offsetTop
     if (originY == null) return
 
@@ -53,6 +73,7 @@ const useScrollClamp = ({
     const releaseElasticOffset = () => {
       touchActiveRef.current = false
       rejectedDistanceRef.current = 0
+      if (elasticOffset.get() === 0) return
       springRef.current?.stop()
       springRef.current = animate(elasticOffset, 0, {
         type: 'spring',
@@ -65,8 +86,10 @@ const useScrollClamp = ({
     const onTouchStart = () => {
       touchActiveRef.current = true
       rejectedDistanceRef.current = 0
-      springRef.current?.stop()
-      elasticOffset.set(0)
+      if (elasticOffset.get() !== 0) {
+        springRef.current?.stop()
+        elasticOffset.set(0)
+      }
     }
 
     /** Constrains the native scroll position and adds resistance while a touch presses against an edge. */
@@ -81,8 +104,10 @@ const useScrollClamp = ({
       correctionTargetRef.current = null
 
       const scrollYClamped = Math.min(maxScroll, Math.max(minScroll, scrollY))
+      const footerTop = document.querySelector('[aria-label="footer"]')?.getBoundingClientRect().top
+      const scrollingToFooter = scrollY > maxScroll && footerTop != null && footerTop < viewportHeight
 
-      if (scrollYClamped === scrollY) {
+      if (scrollYClamped === scrollY || scrollingToFooter) {
         if (touchActiveRef.current && rejectedDistanceRef.current !== 0) {
           rejectedDistanceRef.current = 0
           elasticOffset.set(0)
@@ -111,7 +136,7 @@ const useScrollClamp = ({
       window.removeEventListener('touchcancel', releaseElasticOffset)
       window.removeEventListener('scroll', onScroll)
     }
-  }, [elasticOffset])
+  }, [elasticOffset, viewportHeight])
 
   return elasticOffset
 }

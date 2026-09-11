@@ -223,8 +223,8 @@ ${siblings}
     - grandchild
     `)
 
-    await clickThought('sibling 1')
-    await waitForCursor('sibling 1')
+    await clickThought('sibling 80')
+    await waitForCursor('sibling 80')
     await waitForBrowserSettled()
     const scrollHeightBefore = await page.evaluate(() => document.documentElement.scrollHeight)
 
@@ -258,13 +258,10 @@ ${siblings}
     await waitForBrowserSettled()
 
     const rect = await getThoughtRect('grandchild')
-    const { documentMaxScroll, innerHeight, scrollY } = await page.evaluate(() => ({
-      documentMaxScroll: document.documentElement.scrollHeight - window.innerHeight,
+    const { innerHeight } = await page.evaluate(() => ({
       innerHeight: window.innerHeight,
-      scrollY: window.scrollY,
     }))
 
-    expect(scrollY).toBeLessThan(documentMaxScroll)
     expect(rect.top).toBeLessThan(innerHeight)
     expect(rect.bottom).toBeGreaterThan(0)
   })

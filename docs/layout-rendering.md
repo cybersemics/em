@@ -99,11 +99,11 @@ After the loop:
 
 When the cursor is deep, many ancestors and ancestor-siblings are hidden by autofocus. Their hidden heights still occupy the document's y-coordinate space, leaving a tall blank region above the cursor. If you scroll up, the entire viewport is empty.
 
-The hidden space remains in the layout. [`useScrollClamp`](../src/hooks/useScrollClamp.ts) restricts native window scrolling to the visible thought cluster without changing thought positions or document height:
+The hidden space remains in the layout. When `spaceAbove > 0`, [`useScrollClamp`](../src/hooks/useScrollClamp.ts) restricts native window scrolling to the visible thought cluster without changing thought positions or document height. With no hidden ancestor space, the clamp is disabled so ordinary document scrolling, footer access, and physical-edge overscroll remain native:
 
 1. `LayoutTree` finds the top and bottom of every `show` or `dim` thought in `treeThoughtsPositioned`.
 2. [`visibleScrollRange`](../src/util/visibleScrollRange.ts) converts those bounds to document coordinates and calculates the permitted `window.scrollY` range. At least 1vh of the first visible thought remains at the viewport bottom when scrolling upward, and at least 1vh of the last remains below the toolbar when scrolling downward. The existing `spaceBelow` remains part of the unchanged physical document for keyboard and footer stability.
-3. A raw window `scroll` listener moves an out-of-range scroll immediately to the nearest bound. Updating the bounds does not itself scroll, so navigating deeper leaves thoughts at the same viewport y.
+3. A raw window `scroll` listener moves an out-of-range scroll immediately to the nearest bound. Scrolling down far enough to reveal the footer is exempt so every footer control remains reachable. Updating the bounds does not itself scroll, so navigating deeper leaves thoughts at the same viewport y.
 4. During a touch, rejected distance beyond a logical edge becomes a resisted `translateY` on the outer layout tree. Releasing or cancelling the touch springs that visual offset back to zero with Motion. Wheel and programmatic scrolling clamp without elasticity.
 
 Net effect: hidden thoughts keep their normal flat-list space, but normal scrolling cannot leave all visible thoughts offscreen. There is no translate-and-counter-scroll timing dependency, and touch devices still get an elastic edge response.
@@ -164,7 +164,7 @@ Two details:
 ## Render tree
 
 ```
-motion.div                                       (outer; temporary translateY for elastic overscroll)
+div                                              (outer; temporary translateY for elastic overscroll)
   HoverArrow                                     (drop arrow when dragging into a sorted context off-screen)
   div                                            (inner; translateX for indent, slow CSS transition)
     BulletCursorOverlay                          (rendered separately so cursor moves don't re-render every thought)
@@ -213,6 +213,8 @@ A small effect writes the LayoutTree's document y into `viewportStore.layoutTree
 
 [`scrollCursorIntoView`](../src/device/scrollCursorIntoView.ts) scrolls the minimum amount needed to clear the toolbar above and the navbar (or virtual keyboard) below. [`useScrollCursorIntoView`](../src/hooks/useScrollCursorIntoView.ts) calls it two ways: directly when the cursor's `y` or `height` changes, and through [`scheduleScrollCursorIntoView`](../src/device/scheduleScrollCursorIntoView.ts) when the editing value changes — the cursor's rank can move as it is edited, e.g. toggling bold in a long, sorted context.
 
+Touch Safari keeps a 1px minimum scroll position to prevent MultiGesture from snapping the page to the top; other platforms may rest at the physical 0px edge.
+
 The scheduled path defers to the next tick before reading the cursor's size, because `editingValueStore` subscribers run synchronously and would otherwise close over a size from before the render ([#3083](https://github.com/cybersemics/em/issues/3083)), and then throttles to 400 ms. A cursor scroll can therefore be waiting in three places at once: the tick before it reaches the throttle, the throttle's trailing call, and the 10 ms retry that `scrollIntoViewIfNeeded` arms while `preventAutoscroll` is in progress (see [cursor-and-caret.md → `preventAutoscroll.ts`](cursor-and-caret.md#preventautoscrollts)). `scheduleScrollCursorIntoView.cancel()` clears all three; cancelling the throttle alone leaves a timer that has not fired yet free to re-arm it.
 
-[`scrollTo`](../src/device/scrollTo.ts) cancels before it scrolls. Its callers — Escape, Home, opening a modal, the footer, the tutorial's scroll-up button — are all deliberate moves of the viewport, so a cursor scroll queued before one of them is stale; without the cancel it lands up to 400 ms later and undoes the scroll that was just asked for. Escape and Home are the sharp cases, since clearing the cursor is itself what schedules the pending scroll. New code that repositions the viewport on purpose should go through `scrollTo` for the same reason. The vertical scroll clamp applies afterward and limits any requested position to the current visible-thought range.
+[`scrollTo`](../src/device/scrollTo.ts) cancels before it scrolls. Its callers — Escape, Home, opening a modal, the footer, the tutorial's scroll-up button — are all deliberate moves of the viewport, so a cursor scroll queued before one of them is stale; without the cancel it lands up to 400 ms later and undoes the scroll that was just asked for. Escape and Home are the sharp cases, since clearing the cursor is itself what schedules the pending scroll. New code that repositions the viewport on purpose should go through `scrollTo` for the same reason. When autofocus has left hidden ancestor space, the vertical scroll clamp applies afterward and limits any requested position to the current visible-thought range.
