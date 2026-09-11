@@ -58,10 +58,12 @@ Each node carries a payload: a JSON-encoded `ThoughtPayload` ([`payload.ts`](../
 
 ### Derived tables
 
-Two app-owned tables live alongside the CRDT tables in the same SQLite database. Neither is part of the CRDT, so neither replicates; both are rebuilt or maintained locally.
+Two app-owned indexes live alongside the CRDT tables in the same SQLite database. Neither is part of the CRDT, so neither replicates; both are rebuilt or maintained locally.
 
-- **`em_lexemes`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — `id` (the `hashThought(value)` key) → `payload_json` (a serialized `Lexeme`). Lexemes are written by the push queue and refreshed from materialization events.
+- **`em_lexeme_memberships`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — one row per live thought, keyed by thought ID and indexed by `hashThought(value)`. Reads assemble `Lexeme.contexts` from these rows; Redux's potentially incomplete context arrays never replace stored membership. System root nodes are excluded. Lexeme metadata is derived from live members: earliest creation and latest update/writer, with contexts ordered by creation then thought ID.
 - **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id. A companion `em_attribute_children_meta` table records the index version; when it doesn't match `INDEX_VERSION`, `ensureAttributeChildrenIndexReady` rebuilds the index by walking the materialized tree once from the global root. After that it's maintained incrementally on every write and on every materialization batch.
+
+`em_lexeme_memberships_meta` records the materialization frontier only after successful index updates. On startup, a missing or stale frontier causes a rebuild from TreeCRDT, repairing incomplete old indexes without rewriting thought payloads or operations. An indexing failure rejects subsequent reads/writes until reopening repairs it; later events cannot checkpoint over the failure. The index has its own serialized queue, independent of UI refreshes, so persistence never waits on a UI task that is itself waiting for persistence.
 
 ### Reading a thought
 
@@ -78,13 +80,13 @@ Two app-owned tables live alongside the CRDT tables in the same SQLite database.
 
 `updateThoughtsForClient` applies one push-queue batch:
 
-1. **Lexemes first.** Each entry in `lexemeIndexUpdates` is upserted into `em_lexemes`, or deleted when `null`.
-2. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`, and the thought's row is dropped from the attribute index.
-3. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations. The attribute index is updated whenever a thought's parent or value changed.
+1. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`, and the thought's row is dropped from the attribute index.
+2. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations. The attribute index is updated whenever a thought's parent or value changed.
+3. **Memberships.** The bound provider waits for indexing triggered by materialization. `lexemeIndexUpdates` remains part of the app's optimistic batch but is not a persistence input: memberships come from the stored nodes, including unloaded occurrences.
 
 The function returns the `readonly Operation[]` it minted. That array is what the runtime forwards to remote sync.
 
-`DataProvider.updateThoughts` is the public persistence entry point for push-queue thought and lexeme batches. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
+`DataProvider.updateThoughts` is the public persistence entry point for push-queue batches. Reads and writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
 
 #### Order and placement
 
@@ -103,18 +105,19 @@ The rank fallback is a compatibility bridge while the app still treats `rank` as
 
 [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts) serializes em → TreeCRDT persistence and exposes an idle barrier. It is a local ordering guard, not a CRDT requirement: it keeps app-state refreshes from racing local persistence, so a materialization refresh can't reapply stale rows over newer optimistic state.
 
-It also stamps every local write with a `writeId` of the form `em-local:${sourceId}:${n}`, where `sourceId` is unique per page load. `isTreecrdtLocalMaterialization` recognizes this tab's own writes by that prefix, so the materialization path can skip events the app already applied optimistically.
+It also stamps every local write with a `writeId` of the form `em-local:${sourceId}:${n}`, where `sourceId` is unique per page load. `isTreecrdtLocalMaterialization` recognizes this tab's own writes by that prefix, so the materialization path refreshes their lexemes without reapplying optimistic thought state.
 
 ### Change observation (materialization)
 
-`client.onMaterialized` fires after operations are materialized into SQLite — for remote ops arriving over sync as well as for local writes. Events whose changes all carry this tab's own `writeId` prefix are ignored, because the app already applied them optimistically. Everything else is handed to `enqueueMaterializedThoughtsToStore`, which serializes refreshes through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts) so overlapping async events cannot apply out of order.
+`client.onMaterialized` fires after operations are materialized into SQLite — for remote ops arriving over sync as well as for local writes. Every event updates the membership index from current node state. The previous hash is looked up by thought ID, so rename/delete also work when the old thought was never loaded into Redux. Indexing runs even without a UI bridge.
+
+When a bridge is attached, `enqueueMaterializedThoughtsToStore` serializes UI refreshes through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts).
 
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
 
-1. Waits for the write barrier.
-2. Refreshes `em_attribute_children` from the change list.
-3. Runs [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts), which loads the affected thoughts fresh from the provider, derives Lexeme updates (every touched thought adds itself to its value's Lexeme; deletions and value changes remove the stale context; a Lexeme left with no contexts is deleted), and re-projects TreeCRDT sibling order onto `rank` for every parent whose children changed — so the render path, which still sorts by rank, reflects remote reorders.
-4. Persists the derived Lexeme updates, then applies the whole batch through the *materialization bridge*.
+1. Waits for membership indexing and the write barrier.
+2. For non-local events, refreshes attributes and runs [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts) to load affected thoughts and re-project sibling order onto `rank`.
+3. Loads complete lexemes for the affected old/new hashes. If an optimistic edit or materialization arrived during the read, retries before applying through the bridge. Unchanged lexemes are not republished. Local events refresh only lexemes, leaving synchronous thought edits alone.
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
 

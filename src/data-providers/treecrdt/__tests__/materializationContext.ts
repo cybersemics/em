@@ -72,15 +72,18 @@ it('retains the originating materialization context after rebinding the provider
     await provider.bindClient(clientTwo, new Uint8Array(32).fill(2), bridgeTwo)
     await persistThought(provider.db, 'client two')
 
+    enqueueMaterializedThoughtsToStore.mockClear()
+
     onMaterializedOne?.({
       headSeq: 1,
       changes: [{ kind: 'payload', node: THOUGHT_ID, payload: null }],
     })
 
     expect(enqueueMaterializedThoughtsToStore).toHaveBeenCalledTimes(1)
-    const [, context] = enqueueMaterializedThoughtsToStore.mock.calls[0] as unknown as Parameters<
+    const [, context, indexedKeys] = enqueueMaterializedThoughtsToStore.mock.calls[0] as unknown as Parameters<
       typeof EnqueueMaterializedThoughtsToStore
     >
+    await indexedKeys
 
     expect(context.bridge).toBe(bridgeOne)
     expect(context.client).toBe(clientOne)

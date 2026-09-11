@@ -122,7 +122,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## M
 
-**materialization** — TreeCRDT applying operations to its SQLite read model, after which `client.onMaterialized` fires. em ignores events produced by its own writes (identified by *writeId*) and refreshes Redux from the rest. See [persistence.md → Change observation](persistence.md#change-observation-materialization).
+**materialization** — TreeCRDT applying operations to its SQLite read model, after which `client.onMaterialized` fires. em indexes memberships for every event. Events from its own writes (identified by *writeId*) refresh only Redux lexemes; other events refresh thoughts too. See [persistence.md → Change observation](persistence.md#change-observation-materialization).
 
 **meta-attribute** — See *attribute*.
 
