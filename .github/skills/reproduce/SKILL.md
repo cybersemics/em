@@ -1,5 +1,5 @@
 ---
-name: issue-repro
+name: reproduce
 description: >-
   ALWAYS USE THIS SKILL when working on an issue that has "Steps to Reproduce".
 allowed-tools:
@@ -72,7 +72,7 @@ If desktop-only language is used ("click", "hover", "right-click", no mobile hin
 
 If you cannot determine the target after this — for example, an issue mentioning both iOS and Android — stop and ask the user which platform to reproduce on. Do not guess: an iOS-only bug will not reproduce under Android emulation and vice-versa.
 
-State the chosen target out loud before continuing — and for an ambiguous-mobile default, note the iOS fallback, e.g. `issue-repro: target = android (issue tagged [Mobile], body mentions "swipe"); iOS fallback if mobile-Chrome repro fails.`
+State the chosen target out loud before continuing — and for an ambiguous-mobile default, note the iOS fallback, e.g. `reproduce: target = android (issue tagged [Mobile], body mentions "swipe"); iOS fallback if mobile-Chrome repro fails.`
 
 ---
 

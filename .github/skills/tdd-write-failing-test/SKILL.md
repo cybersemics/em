@@ -4,12 +4,12 @@ description: >-
   ALWAYS USE THIS SKILL immediately after reproducing a bug that has documented
   Steps to Reproduce, and before fixing it. Turns the reproduction into a permanent
   automated regression test and proves it fails for the right reason. Invoked by
-  issue-repro after its Reproduce stage.
+  the reproduce skill after its Reproduce stage.
 allowed-tools:
   - bash
 ---
 
-You have just reproduced a bug by driving em's e2e helpers through the executor bridge (issue-repro → `browser-control`). Now turn that reproduction into a permanent **automated test**, *before* fixing the bug.
+You have just reproduced a bug by driving em's e2e helpers through the executor bridge (`reproduce` → `browser-control`). Now turn that reproduction into a permanent **automated test**, *before* fixing the bug.
 
 Follow the canonical [Regression Tests](../../../docs/testing.md#regression-tests) guidance. This skill adds the project-specific bridge handoff, transient-skip, and validation workflow.
 

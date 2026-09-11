@@ -12,11 +12,11 @@ This is the **Plan** skill. Before you create a branch, edit a file, or write a 
 
 The reason this skill exists: agents solve problems locally. They default to writing new code instead of extending what is there, duplicate logic that already exists, and rationalise whatever they slapped together after the fact. Every one of those failures is the same root cause — **not looking at and understanding what already exists before writing new code.** This skill forces the reconnaissance first, and makes you defend it before you are allowed to build.
 
-Follow these instructions **directly**, while observing the methodology described to you (the issue-repro gate, and the use of `ci-monitor`, `test-diagnosis`, and `puppeteer-update-snapshots` skills where appropriate). DO NOT deviate from this process, skip stages, or begin implementation before the Critique stage passes.
+Follow these instructions **directly**, while observing the methodology described to you (the reproduce gate, and the use of `ci-monitor`, `test-diagnosis`, and `puppeteer-update-snapshots` skills where appropriate). DO NOT deviate from this process, skip stages, or begin implementation before the Critique stage passes.
 
 ## When this skill runs
 
-- **For an issue with "Steps to Reproduce":** run this skill **after** `issue-repro` has reproduced the failure, and **before** you write the fix. You cannot honestly judge adjacent-behaviour impact until you have seen the real failure mode. Reproduction first, plan second, implementation third.
+- **For an issue with "Steps to Reproduce":** run this skill **after** the `reproduce` skill has confirmed the failure, and **before** you write the fix. You cannot honestly judge adjacent-behaviour impact until you have seen the real failure mode. Reproduction first, plan second, implementation third.
 - **For any other non-trivial change** (feature, refactor, behaviour change): run this skill before creating a branch or editing any file.
 - **Trivial changes** (a typo, a copy tweak, a version bump) do not need a full plan. If you are unsure whether a change is trivial, it is not — run the skill.
 
