@@ -1,12 +1,15 @@
 import { FC, PropsWithChildren, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { css } from '../../../styled-system/css'
+import { css, cx } from '../../../styled-system/css'
 import { extendTapRecipe } from '../../../styled-system/recipes'
 import { fontSizeActionCreator } from '../../actions/fontSize'
 import { showModalActionCreator as showModal } from '../../actions/showModal'
 import { toggleUserSettingActionCreator as toggleUserSetting } from '../../actions/toggleUserSetting'
+import { isCapacitor } from '../../browser'
 import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../../constants'
 import copy from '../../device/copy'
+import download from '../../device/download'
+import share from '../../device/share'
 import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
 import storageStatusStore from '../../stores/storageStatus'
@@ -15,6 +18,7 @@ import debugLog from '../../util/debugLog'
 import fastClick from '../../util/fastClick'
 import haptics from '../../util/haptics'
 import storage from '../../util/storage'
+import timestamp from '../../util/timestamp'
 import ThemeSwitch from '../ThemeSwitch'
 import ActionButton from './../ActionButton'
 import Checkbox from './../Checkbox'
@@ -117,7 +121,7 @@ const FontSize = () => {
   )
 }
 
-/** The Debug Logging setting together with the debug log copy/clear controls. On development and preview hosts (debugLog.autoEnabled), logging defaults to on and the checkbox controls a device-local opt-out instead of the synced user setting, so this device can be aligned with production (e.g. for performance testing) without enabling logging on the user's other devices. */
+/** The Debug Logging setting together with the debug log save/copy/clear controls. On development and preview hosts (debugLog.autoEnabled), logging defaults to on and the checkbox controls a device-local opt-out instead of the synced user setting, so this device can be aligned with production (e.g. for performance testing) without enabling logging on the user's other devices. */
 const DebugLogging = () => {
   const settingEnabled = useSelector(getUserSetting(Settings.debugCrashLog))
   // the device-local state on auto-enabled hosts; the logger has already applied any persisted opt-out at module load
@@ -128,6 +132,12 @@ const DebugLogging = () => {
 
   const intro =
     'Records a rolling log of app events to help diagnose rare, hard-to-reproduce bugs (such as freezes). Everything is stored locally on this device and nothing is transmitted. '
+
+  // A native WebView has no download manager, so the anchor click that download() performs is silently ignored in
+  // the iOS and Android apps. There the native share sheet is the only way off the device, as in the Export modal.
+  // Mobile browsers are unaffected: iOS Safari and Android Chrome both save the blob to Files/Downloads.
+  const isNative = isCapacitor()
+  const saveLabel = isNative ? 'Share debug log' : 'Download debug log'
 
   return (
     <>
@@ -141,28 +151,48 @@ const DebugLogging = () => {
           }}
         >
           {intro}Debug Logging is on by default in this development or preview version of em. Turning it off aligns this
-          device with production (e.g. for performance testing) and does not affect other devices. Use “Copy debug log”
-          to share the captured log.
+          device with production (e.g. for performance testing) and does not affect other devices. Use “{saveLabel}” or
+          “Copy debug log” to share the captured log.
         </Checkbox>
       ) : (
         <Setting settingsKey={Settings.debugCrashLog} title='Debug Logging'>
-          {intro}Leave this off unless a developer asks you to enable it. Use “Copy debug log” to share the captured
-          log.
+          {intro}Leave this off unless a developer asks you to enable it. Use “{saveLabel}” or “Copy debug log” to share
+          the captured log.
         </Setting>
       )}
       {enabled && (
-        <div className={css({ marginTop: '1em' })}>
+        // a flex row of nowrap links, so that a narrow screen breaks between the links rather than mid-label
+        <div className={css({ alignItems: 'baseline', display: 'flex', flexWrap: 'wrap', marginTop: '1em' })}>
           <a
             {...fastClick(() => {
               // dispatch a thunk to read fresh state, so format() can append the state.thoughts dump that resolves
               // the ids in the entries to values and shows current sibling order
               dispatch((_, getState) => {
                 const text = debugLog.format(getState())
+                const filename = `em-debug-log-${timestamp()}.txt`
+                if (isNative) {
+                  share({ text, title: filename })
+                } else {
+                  download(text, filename)
+                }
+                setStatus(`${isNative ? 'Shared' : 'Downloaded'} ${debugLog.read().length} entries`)
+              })
+            })}
+            className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
+          >
+            {saveLabel}
+          </a>
+          <span className={css({ margin: '0 0.5em', color: 'dim' })}>·</span>
+          <a
+            {...fastClick(() => {
+              // read fresh state for the state.thoughts dump, as above
+              dispatch((_, getState) => {
+                const text = debugLog.format(getState())
                 copy(text)
                 setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
               })
             })}
-            className={extendTapRecipe()}
+            className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
           >
             Copy debug log
           </a>
@@ -172,7 +202,7 @@ const DebugLogging = () => {
               debugLog.clear()
               setStatus('Cleared')
             })}
-            className={extendTapRecipe()}
+            className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
           >
             Clear debug log
           </a>
