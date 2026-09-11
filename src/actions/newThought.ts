@@ -159,9 +159,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
             : getNextRank(state, insertId)
           : getRankAfter(state, simplePath)
 
-  // when creating a new context in a context view, newThoughtId is the new empty thought (a/~m/_), and newContextId is the newly added Lexeme context (/ABS/_/m)
+  // when creating a new context in a context view, newThoughtId is the new empty thought (a/~m/_)
   const newThoughtId = createId()
-  const newContextId = insertContext ? createId() : null
 
   const reducers = [
     // createThought
@@ -180,7 +179,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
           path: [ABSOLUTE_TOKEN, newThoughtId] as unknown as SimplePath,
           rank: 0,
           value: headValue(state, insertNewSubthought ? path : parentOf(path)) ?? '',
-          id: newContextId!,
           splitSource,
         })
       : null,
