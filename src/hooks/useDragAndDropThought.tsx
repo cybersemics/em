@@ -67,7 +67,8 @@ const canDrag = (props: ThoughtContainerProps) => {
 
   const state = store.getState()
 
-  // A press that landed on the caret belongs to the iOS magnifier, so it must not become a drag when it moves past the
+  // A press that landed on the caret belongs to native caret repositioning, so it must not become a drag when it moves
+  // past the
   // touch slop (#3763). This reads the flag useLongPress sets at touchstart rather than state.longPress, because
   // react-dnd's timer can begin a drag before DragHold is dispatched (see the longPress reducer).
   if (globals.pressOnCaret) return false

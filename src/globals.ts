@@ -45,9 +45,10 @@ let suppressBlurSync = false
  * touchstart, which clears the flag first. */
 let suppressCursorAfterTouch = false
 
-/** Set when the current press landed on the caret, i.e. the user is reaching for the iOS magnifier rather than
- * starting a drag. Read by useDragAndDropThought's canDrag, because react-dnd's own timer can begin a drag without
- * going through the long press state machine. Every press resets it, so it always describes the press in hand. */
+/** Set when the current press landed on the caret, i.e. the user is reaching for native caret repositioning (the iOS
+ * magnifier, the Android caret handle) rather than starting a drag or a gesture. Latched by the capture-phase
+ * touchstart listener in initEvents, so its lifetime is the touch, and read by useLongPress and canDrag — react-dnd's
+ * own timer can begin a drag without going through the long press state machine. */
 let pressOnCaret = false
 
 // check duplicate ranks within the same context for debugging

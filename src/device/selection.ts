@@ -569,10 +569,11 @@ export const split = (el: HTMLElement): SplitResult | null => {
 }
 
 /**
- * Returns the caret's geometry in viewport coordinates, along with the editable that holds it, or null if the caret is
- * not in a thought.
+ * Returns the caret's geometry in viewport coordinates, along with the rect of the editable that holds it, or null if
+ * the caret is not in a thought. The editable's rect is returned rather than the element so that callers needing it
+ * do not measure it again.
  */
-const caretRectViewport = (): { editable: HTMLElement; x: number; y: number; height: number } | null => {
+const caretRectViewport = (): { editableRect: DOMRect; x: number; y: number; height: number } | null => {
   const editable = document.activeElement
   if (!isHTMLElement(editable) || !isContentEditable(editable)) return null
 
@@ -602,9 +603,9 @@ const caretRectViewport = (): { editable: HTMLElement; x: number; y: number; hei
   const [paddingTop, , paddingBottom, paddingLeft] = getElementPaddings(editable)
   const lineHeight = parseFloat(window.getComputedStyle(editable).lineHeight)
   return rect?.height
-    ? { editable, x: rect.x, y: rect.y, height: rect.height }
+    ? { editableRect, x: rect.x, y: rect.y, height: rect.height }
     : {
-        editable,
+        editableRect,
         x: editableRect.x + paddingLeft,
         y: editableRect.y + paddingTop,
         height: lineHeight || editableRect.height - paddingTop - paddingBottom,
@@ -619,8 +620,7 @@ const caretRectViewport = (): { editable: HTMLElement; x: number; y: number; hei
 export const caretRect = (): { x: number; y: number; height: number } | null => {
   const caret = caretRectViewport()
   if (!caret) return null
-  const editableRect = caret.editable.getBoundingClientRect()
-  return { x: caret.x - editableRect.x, y: caret.y - editableRect.y, height: caret.height }
+  return { x: caret.x - caret.editableRect.x, y: caret.y - caret.editableRect.y, height: caret.height }
 }
 
 /** Returns the selection text, or null if there is no selection. */
@@ -746,7 +746,7 @@ export const isCaretNear = (x: number, y: number): boolean => {
   const caret = caretRectViewport()
   if (!caret) return false
 
-  if (!isNearBounds(x, y, caret.editable.getBoundingClientRect(), 0)) return false
+  if (!isNearBounds(x, y, caret.editableRect, 0)) return false
 
   return isNearBounds(
     x,

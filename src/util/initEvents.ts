@@ -304,10 +304,18 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
-   * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
-   * phase (see the note on the touchmove listener below). */
-  const onTouchStart = () => {
+   * the completed touch. Also latches whether the touch landed on the caret, i.e. whether the user is reaching for
+   * native caret repositioning (the iOS magnifier, the Android caret handle) rather than starting a drag or a gesture
+   * (#3763). Latching here rather than in each reader ties the
+   * flag's lifetime to the touch, measures the caret once per touch, and covers touches that never reach an element
+   * that mounts useLongPress. Registered in the capture phase because touchstart propagation is unreliable in the
+   * bubble phase (see the note on the touchmove listener below); capture also puts it ahead of both readers. */
+  const onTouchStart = (e: TouchEvent) => {
     globals.suppressCursorAfterTouch = false
+    // changedTouches is the finger that just landed; touches[0] is the first one still down, which a second finger
+    // arriving mid-edit would measure instead.
+    const touch = e.changedTouches[0]
+    globals.pressOnCaret = !!touch && selection.isCaretNear(touch.clientX, touch.clientY)
   }
 
   /** Handle a page lifecycle state change, i.e. switching apps. */
