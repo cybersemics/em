@@ -163,6 +163,11 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const newThoughtId = createId()
   const newContextId = insertContext ? createId() : null
 
+  // setCursor below recalculates state.expanded for the new cursor, so the recalculation that updateThoughts would
+  // otherwise do for the old cursor after each createThought is skipped. When preventSetCursor is set, no setCursor
+  // runs and the createThought reducers must recalculate expansion themselves.
+  const preventExpandThoughts = !preventSetCursor
+
   const reducers = [
     // createThought
     createThought({
@@ -171,6 +176,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       value,
       id: newThoughtId,
       idbSynced,
+      preventExpandThoughts,
       splitSource,
     }),
 
@@ -181,6 +187,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
           rank: 0,
           value: headValue(state, insertNewSubthought ? path : parentOf(path)) ?? '',
           id: newContextId!,
+          preventExpandThoughts,
           splitSource,
         })
       : null,
