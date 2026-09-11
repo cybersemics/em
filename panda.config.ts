@@ -439,8 +439,11 @@ export default defineConfig({
           easeInSlow: {
             value: 'cubic-bezier(.84, 0, 1, 1)',
           },
-          easeInSmooth: {
-            value: 'cubic-bezier(0.75, 0.00, 0.75, 0.90)',
+          // Rises out of the gate after only a brief shoulder, then decelerates into a long, flat landing.
+          // Used by the context view's appearing text animation: the short onset keeps the contexts from lagging
+          // behind the gesture that summoned them, while the long tail lets them settle into place rather than snap.
+          easeOutSmooth: {
+            value: 'cubic-bezier(0.35, 0.15, 0.2, 1)',
           },
           nodeCurveXLayer: {
             value: 'cubic-bezier(0.8,0,0.2,0.2)',
