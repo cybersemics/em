@@ -17,7 +17,7 @@ The single point of integration with persistence is the [`DataProvider`](../src/
 
 Thoughts live in `state.thoughts.thoughtIndex` (keyed by `ThoughtId`) and `state.thoughts.lexemeIndex` (keyed by hashed value). Only thoughts that are *visible* — the cursor, its ancestors, `state.expanded` paths, and any context-view contexts and their ancestors — are held in memory. Everything else has either never been pulled or was freed after going off-screen.
 
-Thoughts that are known to exist but haven't been loaded yet are flagged with `pending: true` so the UI can render placeholder rows while the pull queue fetches them.
+Thoughts that are known to exist but haven't been loaded yet are flagged with `pending: true` so the UI can render placeholder rows while the pull queue fetches them. So is a loaded thought whose `childrenMap` names children that are not in memory — cut off at the buffer depth by `fetchDescendants`, or freed by `freeThoughts` — and the map keeps naming them so that the pull queue can bring them back (see [data-model.md → pending](data-model.md#pending)).
 
 ## Local persistence (TreeCRDT + SQLite)
 

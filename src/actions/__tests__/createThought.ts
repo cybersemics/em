@@ -10,7 +10,7 @@ import reducerFlow from '../../util/reducerFlow'
 import deleteThought from '../deleteThought'
 
 // https://github.com/cybersemics/em/issues/5531
-it.skip('new subthought under a pending parent keeps its deallocated sibling in the childrenMap', () => {
+it('new subthought under a pending parent keeps its deallocated sibling in the childrenMap', () => {
   const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
   const state = importText(initialState(), {
