@@ -30,8 +30,9 @@ interface Payload {
 /**
  * Creates a new thought with a known context and rank. Does not update the cursor. Use the newThought reducer for a higher level function.
  */
-const createThought = (state: State, { path, value, rank, id, idbSynced, splitSource }: Payload) => {
-  id = id || createId()
+const createThought = (state: State, payload: Payload) => {
+  const { path, value, rank, idbSynced, splitSource } = payload
+  const id = payload.id || createId()
   const lexemeOld = getLexeme(state, value)
 
   // create Lexeme if it does not exist
@@ -48,7 +49,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, splitSo
   const parent = getThoughtById(state, parentId)
 
   if (!parent) {
-    console.error({ path, value, rank, id, idbSynced, splitSource })
+    console.error(payload)
     throw new Error(`createThought: Parent thought with id ${parentId} not found`)
   }
 
