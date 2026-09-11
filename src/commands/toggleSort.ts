@@ -8,9 +8,9 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const toggleSortCommand: Command = {
+const toggleSortCommand = {
   id: 'toggleSort',
-  label: 'Sort',
+  label: 'Sort' as const,
   description:
     'Change the sorting option for the current context. Rotates through manual, alphabetical, and reverse alphabetical.',
   gesture: 'lurd',
@@ -47,6 +47,6 @@ const toggleSortCommand: Command = {
   // Show an error if the ranks do not match the sort condition.
   // This is only needed for migrating to permasort, and can be removed after the migration is complete.
   rounded: true,
-}
+} satisfies Command
 
 export default toggleSortCommand

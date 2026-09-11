@@ -69,7 +69,6 @@ const VirtualThought = ({
   singleLineHeight,
   style,
   crossContextualKey,
-  zoomCursor,
   cliff,
   prevCliff,
   isLastVisible,
@@ -95,7 +94,6 @@ const VirtualThought = ({
   style?: React.CSSProperties
   /** A key that uniquely identifies the thought across context views. */
   crossContextualKey: string
-  zoomCursor?: boolean
   cliff?: number
   prevCliff?: number
   isLastVisible?: boolean
@@ -124,7 +122,7 @@ const VirtualThought = ({
   // Hidden thoughts can be removed completely as long as the container preserves its height (to avoid breaking the scroll position).
   // Wait until the fade out animation has completed before removing.
   // Only shim 'hide', not 'hide-parent', thoughts, otherwise hidden parents snap in instead of fading in when moving up the tree.
-  const isVisible = zoomCursor || autofocus === 'show' || autofocus === 'dim'
+  const isVisible = autofocus === 'show' || autofocus === 'dim'
   const shimHiddenThought = useDelayedAutofocus(autofocus, {
     delay: durations.get('layoutSlowShift'),
     selector: autofocusNew => autofocus === 'hide' && autofocusNew === 'hide' && !!height,
@@ -138,7 +136,6 @@ const VirtualThought = ({
   //   index,
   //   isHeader,
   //   isMultiColumnTable,
-  //   zoomCursor,
   //   path,
   //   prevChildId,
   //   shimHiddenThought
@@ -270,7 +267,6 @@ const VirtualThought = ({
           showContexts={showContexts}
           simplePath={simplePath}
           style={style}
-          zoomCursor={zoomCursor}
         />
       )}
 

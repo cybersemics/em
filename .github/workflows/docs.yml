@@ -27,6 +27,9 @@ jobs:
           # For GitHub Pages deployment, persist-credentials: false is often required.
           persist-credentials: false
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Install npm dependencies 🛠
         uses: ./.github/actions/install
 

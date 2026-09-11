@@ -29,6 +29,7 @@ import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
+import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
 
@@ -52,6 +53,11 @@ const Note = React.memo(
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
     const editableNonce = useSelector(state => state.editableNonce)
+
+    // A note is short enough that the trackpad's hit test lands outside it from the moment the space bar is
+    // pressed, so the caret escapes without any drag at all. It only escapes from the end, where the note abuts
+    // the parent thought, so that is where it belongs when restored. (#3276)
+    useCaretRestore({ editableRef: noteRef, enabled: !!hasFocus, end: true })
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
@@ -90,6 +96,11 @@ const Note = React.memo(
     /** Handles note keyboard shortcuts. */
     const onKeyDown = useCallback(
       (e: React.KeyboardEvent) => {
+        // Only unmodified keys are note navigation. A chord that includes a command modifier belongs to a command
+        // (e.g. Cmd + Shift + ArrowDown is Move Thought Down), so let it propagate to the global keyDown handler
+        // instead of swallowing it as Cursor Down or Toggle Note (#4954).
+        if (e.metaKey || e.ctrlKey || e.altKey) return
+
         // delete empty note
         const note = noteValue(store.getState(), path)
 

@@ -13,6 +13,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import findCursor from '../../test-helpers/queries/findCursor'
+import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
@@ -306,6 +307,62 @@ describe('render', () => {
     // the lettered children should not render a leaf bullet glyph
     const leaves = document.querySelectorAll('[data-bullet="leaf"]')
     expect(leaves.length).toBe(0)
+  })
+
+  // https://github.com/cybersemics/em/issues/4956
+  it('do not apply =children/=bullet to context view entries', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - =children
+            - =bullet
+              - Ordered
+          - c
+            - m
+              - y
+      `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // c is a context of m, so b's =children/=bullet/Ordered should not number it
+    const ordered = document.querySelectorAll('[data-bullet="ordered"]')
+    expect(ordered.length).toBe(0)
+  })
+
+  // https://github.com/cybersemics/em/issues/4956
+  it('do not apply =children/=bullet/None to context view entries', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - m
+            - x
+        - b
+          - =children
+            - =bullet
+              - None
+          - c
+            - m
+              - y
+      `,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView(),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // c is a context of m, so b's =children/=bullet/None should not hide its bullet
+    const path = hashPath(contextToPath(store.getState(), ['a', 'm', 'c']))
+    expect(document.querySelector(`[data-testid="bullet-${path}"]`)).toBeInTheDocument()
   })
 })
 
@@ -667,5 +724,70 @@ describe('multiselect', () => {
   - a
   - b
     - c`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3528
+  it('click on a bullet toggles the clicked thought while a multiselect is active, without expanding or collapsing it', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+          - c
+      `,
+      }),
+      setCursor(['b']),
+      addMulticursor(['a']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click(getBulletByContext(['b']))
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'true')
+
+    // expansion is determined by the selected thoughts during a multiselect, so =pin is not set
+    const exportedAfterSelect = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    expect(exportedAfterSelect).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b
+    - c`)
+
+    await user.click(getBulletByContext(['b']))
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'false')
+  })
+
+  // https://github.com/cybersemics/em/issues/3528
+  it('click on a thought toggles the clicked thought while a multiselect is active', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+        - b
+      `,
+      }),
+      addMulticursor(['a']),
+    ])
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const user = userEvent.setup({ delay: null })
+    await user.click((await findThoughtByText('b'))!)
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'true')
+
+    await user.click((await findThoughtByText('b'))!)
+    await act(() => vi.runAllTimersAsync())
+
+    expect(getBulletByContext(['a'])).toHaveAttribute('data-highlighted', 'true')
+    expect(getBulletByContext(['b'])).toHaveAttribute('data-highlighted', 'false')
   })
 })

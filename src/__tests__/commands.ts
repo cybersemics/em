@@ -65,7 +65,7 @@ describe('parseCommandShortcut', () => {
   })
 
   it('finds a command by typing the shortcut exactly as it is displayed', () => {
-    // extractThought is bound to { key: 'e', control: true, meta: true }, i.e. Command + Control + e on Mac and
+    // extractSubthought is bound to { key: 'e', control: true, meta: true }, i.e. Command + Control + e on Mac and
     // Ctrl + Shift + e elsewhere, since Ctrl is already the meta modifier on non-Mac platforms
     const extractKeyboard = { key: 'e', control: true, meta: true }
     expect(parseCommandShortcut(formatKeyboardShortcut(extractKeyboard))).toBe(hashCommand(extractKeyboard))

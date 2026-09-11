@@ -3,11 +3,14 @@ import type { Element } from 'webdriverio'
 // import getNativeElementRect from './getNativeElementRect'
 
 interface Options {
-  // Where in the horizontal line (inside) of the target node should be tapped
-  horizontalTapLine?: 'left' | 'right'
+  // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
+  // matches how a person taps: told to tap a button, they aim for the middle, not the exact edge. Adjacent
+  // toolbar buttons are inline-block with no margin, so their padding boxes touch and an edge tap is half a
+  // pixel of rounding away from landing on the neighboring command.
+  horizontalTapLine?: 'left' | 'center' | 'right'
   // Pointer type to use for the tap action. Defaults to 'mouse'.
   pointerType?: 'mouse' | 'touch'
-  // Specify specific node on editable to tap. Overrides horizontalClickLine
+  // Specify specific node on editable to tap. Overrides horizontalTapLine
   offset?: number
   // Number of pixels of x offset to add to the tap coordinates
   x?: number
@@ -23,7 +26,7 @@ interface Options {
  */
 const tap = async (
   nodeHandle: Element,
-  { horizontalTapLine = 'left', offset, x = 0, y = 0, pointerType = 'mouse', releaseDelayMs = 100 }: Options = {},
+  { horizontalTapLine = 'center', offset, x = 0, y = 0, pointerType = 'mouse', releaseDelayMs = 100 }: Options = {},
 ) => {
   // Ensure element exists and has an elementId
   const exists = await nodeHandle.isExisting()
@@ -68,7 +71,7 @@ const tap = async (
         x:
           boundingBox.x +
           (horizontalTapLine === 'left'
-            ? 0
+            ? 1
             : horizontalTapLine === 'right'
               ? boundingBox.width - 1
               : boundingBox.width / 2),

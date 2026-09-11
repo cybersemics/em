@@ -1,6 +1,6 @@
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
-import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import HelpIcon from '../components/icons/HelpIcon'
 import { AlertType } from '../constants'
 import * as selection from '../device/selection'
@@ -11,9 +11,9 @@ import scrollZoneHelpMessage from '../selectors/scrollZoneHelpMessage'
 let scrollZoneHelpAlertTimeout = 0
 let showScrollZoneHelpAlert = false
 
-const closeCommandCenterCommand: Command = {
+const closeCommandCenterCommand = {
   id: 'closeCommandCenter',
-  label: 'Close Command Center',
+  label: 'Close Command Center' as const,
   description: `Closes the command center if it's open. You can also just tap on the empty space.`,
   gesture: 'd',
   hideAlert: true,
@@ -27,9 +27,13 @@ const closeCommandCenterCommand: Command = {
     // Otherwise quickly closing and opening the Command Center will inadvertently trigger the special alert.
     clearTimeout(scrollZoneHelpAlertTimeout)
 
-    // Command Center is open
-    if (hasMulticursor(state)) {
-      dispatch(clearMulticursors())
+    // Command Center is open, or a multiselection is active while it is hidden (Clear Thought, Undo Slider).
+    // Close it outright rather than only clearing the multiselection and leaving multicursorAlertMiddleware to notice:
+    // the middleware ignores the change while a multicursor command is executing, which strands the Command Center on
+    // screen with a multiselection of zero, where this gesture would then have nothing left to clear. toggleDropdown
+    // clears the multicursors as it closes.
+    if (state.showCommandCenter || hasMulticursor(state)) {
+      dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
 
       showScrollZoneHelpAlert = false
     }
@@ -53,6 +57,6 @@ const closeCommandCenterCommand: Command = {
       }
     }
   },
-}
+} satisfies Command
 
 export default closeCommandCenterCommand

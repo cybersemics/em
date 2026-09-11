@@ -1,25 +1,74 @@
 import { z } from 'zod'
+import { ESTIMATE_CATEGORIES } from '../everhour/estimates.ts'
 
-/** Valid estimate categories. */
-export const EstimateCategorySchema = z.enum(['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL'])
+/** Valid estimate categories, derived from the canonical scale so the two lists cannot drift apart. */
+export const EstimateCategorySchema = z.enum(ESTIMATE_CATEGORIES)
 
-/** Self-reported confidence level accompanying an estimate. */
-export const ConfidenceSchema = z.enum(['high', 'medium', 'low'])
+/** Self-reported confidence levels accompanying an estimate. */
+export const CONFIDENCE_LEVELS = ['high', 'medium', 'low'] as const
+
+/** Schema for the self-reported confidence accompanying an estimate. */
+export const ConfidenceSchema = z.enum(CONFIDENCE_LEVELS)
 
 /**
- * Schema for the model response. `estimate` is required; the richer fields are optional and
- * defaulted so a minimal `{ "estimate": "M" }` still validates (resilience against a model that
- * omits them). `rationale` is requested first in the prompt so the model reasons before committing
- * to a bucket, but it is not required for a response to be usable.
+ * Schema for the model response.
+ *
+ * The request constrains the model with the strict JSON schema in RESPONSE_FORMAT below, so a
+ * conforming reply always carries every field with a valid value and this schema accepts it as a
+ * strict subset. The leniencies here are the backstop for the replies the guarantee does not cover
+ * — a reply truncated at the token limit parses as no JSON at all, and a model that does not
+ * support structured outputs fails the request rather than degrading — and they are deliberate: a
+ * minimal `{ "estimate": "M" }` still validates, so the wire contract can weaken without votes
+ * being thrown away for omissions that have a safe reading. `rationale` is requested first in the
+ * prompt so the model reasons before committing to a bucket, but it is not required for a response
+ * to be usable.
+ * `secondChoice` accepts null as well as absence, because the strict schema requires every property
+ * and null is the only way a conforming reply can decline to give one.
  */
 export const EstimateResponseSchema = z.object({
   rationale: z.string().default(''),
   estimate: EstimateCategorySchema,
   confidence: ConfidenceSchema.default('medium'),
-  secondChoice: EstimateCategorySchema.optional(),
+  secondChoice: EstimateCategorySchema.nullish(),
 })
 
 export type EstimateResponse = z.infer<typeof EstimateResponseSchema>
+
+/**
+ * The response properties offered to the model, declared separately so `required` can be derived:
+ * strict mode rejects a schema whose required list does not name every property, and deriving the
+ * list makes that rejection unrepresentable rather than a runtime error waiting on the next added
+ * field. Property order is meaningful: a strict schema emits keys in the order declared here, which
+ * is what keeps `rationale` first so the model reasons before committing to a bucket.
+ */
+const properties = {
+  rationale: { type: 'string' },
+  estimate: { type: 'string', enum: [...ESTIMATE_CATEGORIES] },
+  confidence: { type: 'string', enum: [...CONFIDENCE_LEVELS] },
+  secondChoice: { type: ['string', 'null'], enum: [...ESTIMATE_CATEGORIES, null] },
+}
+
+/**
+ * The Chat Completions `response_format` that constrains every sample to the response schema
+ * (OpenAI Structured Outputs, `strict: true`). The JSON-object shape the prompt already requests
+ * becomes something the model cannot disobey, so a vote can no longer be lost to a hallucinated
+ * category or a missing field. Behind it, the lenient parsing in parseEstimate remains as the
+ * backstop rather than as the front line. A constant rather than built per run, unlike the issue
+ * classifier's buildResponseFormat, because the category scale is fixed — nothing in the schema
+ * varies between requests.
+ *
+ * Strict mode requires every property to be listed in `required`, so "no second choice" is
+ * expressed as a nullable type — null in the enum plus a `["string", "null"]` type — never as an
+ * absent field.
+ */
+export const RESPONSE_FORMAT = {
+  type: 'json_schema' as const,
+  json_schema: {
+    name: 'issue_estimate',
+    strict: true,
+    schema: { type: 'object', properties, required: Object.keys(properties), additionalProperties: false },
+  },
+}
 
 const MAX_VALIDATION_ATTEMPTS = 3
 

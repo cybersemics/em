@@ -5,7 +5,6 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
-import getGlobalSortPreference from '../selectors/getGlobalSortPreference'
 import getSortPreference from '../selectors/getSortPreference'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
@@ -62,7 +61,6 @@ const toggleSort = (
   const id = head(simplePath)
   const currentSortPreference = getSortPreference(state, id)
   const nextSortPreference = decideNextSortPreference(currentSortPreference)
-  const globalSortPreference = getGlobalSortPreference(state)
 
   return reducerFlow([
     // alert
@@ -76,9 +74,8 @@ const toggleSort = (
         })
       : null,
 
-    // If next sort preference equals to global sort preference then the delete sort attribute.
-    globalSortPreference.type === nextSortPreference.type &&
-    globalSortPreference.direction === nextSortPreference.direction
+    // Cycling back to None removes the sort attribute and restores the manual sort order.
+    nextSortPreference.type === 'None'
       ? // Toggle off
         reducerFlow([
           deleteAttribute({
@@ -122,46 +119,23 @@ const toggleSort = (
             : null,
 
           // If next sort preference type does not equal to current sort then set =sort attribute.
-          nextSortPreference.type !== currentSortPreference.type ||
-          nextSortPreference.type === globalSortPreference.type
+          nextSortPreference.type !== currentSortPreference.type
             ? toggleAttribute({
                 path: simplePath,
                 values: ['=sort', nextSortPreference.type],
               })
             : null,
 
-          // If next preference type is not equal to current preference type, toggle new sort type.
-          // We need to have this control to not remove the sort type when switching between Alphabetical/Asc and Alphabetical/Desc
-          // if next sort preference direction is null, toggle off sort direction
-          !nextSortPreference.direction && currentSortPreference.direction
-            ? state => {
-                const sortId = findDescendant(state, id, '=sort')
-                const pathSort = unroot(appendToPath(simplePath, sortId!))
-                return toggleAttribute(state, {
-                  path: pathSort,
-                  values: [
-                    currentSortPreference.type,
-                    ...(currentSortPreference.direction ? [currentSortPreference.direction] : []),
-                  ],
-                })
-              }
-            : null,
-
-          // if next sort preference direction is not null, toggle direction
-          nextSortPreference.direction
-            ? state => {
-                // use fresh state to pick up new =sort (if statement above)
-                const sortId = findDescendant(state, id, '=sort')
-                const pathSort = unroot(appendToPath(simplePath, sortId!))
-                return toggleAttribute(state, {
-                  path: pathSort,
-                  values: [
-                    nextSortPreference.type,
-                    ...(nextSortPreference.direction ? [nextSortPreference.direction] : []),
-                  ],
-                })
-              }
-            : null,
+          // Toggle the direction. The next sort preference always has a direction here, since a null direction only occurs with type None, which is handled by the toggle off branch above.
+          state => {
+            // use fresh state to pick up new =sort (if statement above)
+            const sortId = findDescendant(state, id, '=sort')
+            const pathSort = unroot(appendToPath(simplePath, sortId!))
+            return toggleAttribute(state, {
+              path: pathSort,
+              values: [nextSortPreference.type, nextSortPreference.direction!],
+            })
+          },
           sort(id),
         ]),
   ])(state)

@@ -278,7 +278,7 @@ const importJson = (
   // If the destination is empty though, we must set the cursor, since the prevous cursor will be destroyed on import.
   const metaOnly = !destEmpty && blocksNormalized.every(block => isAttribute(block.scope))
 
-  // there may be no last child even if there are imported blocks, i.e. a lone __ROOT__
+  // there may be no last child even if there are imported blocks, i.e. a lone HOME_TOKEN
   const lastImported = lastChildFirstLevel && !metaOnly ? appendToPath(importPath, lastChildFirstLevel) : null
 
   return {

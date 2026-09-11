@@ -1,9 +1,9 @@
 import Command from '../@types/Command'
 import ArrowRightIcon from '../components/icons/ArrowRightIcon'
 
-const navigateForwardCommand: Command = {
+const navigateForwardCommand = {
   id: 'navigateForward',
-  label: 'Navigate Forward',
+  label: 'Navigate Forward' as const,
   description: 'Navigate to the next page in the browser history.',
   keyboard: { key: ']', meta: true },
   multicursor: false,
@@ -11,6 +11,6 @@ const navigateForwardCommand: Command = {
   // Prefer the Navigation API's canGoForward when available; otherwise fall back to the history length as a rough approximation of whether there is anywhere to go forward to.
   canExecute: () => (window.navigation ? window.navigation.canGoForward : window.history.length > 1),
   exec: () => (window.navigation ? window.navigation.forward() : window.history.forward()),
-}
+} satisfies Command
 
 export default navigateForwardCommand

@@ -2,13 +2,15 @@ import Command from '../@types/Command'
 import { indentActionCreator as indent } from '../actions/indent'
 import { isTouch } from '../browser'
 import IndentIcon from '../components/icons/IndentIcon'
+import prevSibling from '../selectors/prevSibling'
+import selectedPaths from '../selectors/selectedPaths'
 import editingValueStore from '../stores/editingValue'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
-const indentCommand: Command = {
+const indentCommand = {
   id: 'indent',
-  label: 'Indent',
+  label: 'Indent' as const,
   description: 'Indent the current thought one level deeper.',
   overlay: {
     keyboard: moveCursorForward.keyboard,
@@ -24,7 +26,10 @@ const indentCommand: Command = {
   permitDefault: true,
   svg: IndentIcon,
   canExecute: state => {
-    return isDocumentEditable() && !!state.cursor
+    // indent is a no-op on the first thought in a context, so the command is only executable if every selected thought has a previous sibling to be indented into
+    // descendants of another selected thought are indented along with their ancestor, so they are excluded by the multicursor filter
+    const paths = selectedPaths(state, 'prefer-ancestor')
+    return isDocumentEditable() && paths.length > 0 && paths.every(path => !!prevSibling(state, path))
   },
   exec: (dispatch, getState, e, { type }) => {
     // Allow space-to-indent on empty thought.
@@ -40,6 +45,6 @@ const indentCommand: Command = {
     dispatch(indent())
   },
   hideTitleInPanels: true,
-}
+} satisfies Command
 
 export default indentCommand

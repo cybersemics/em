@@ -31,6 +31,11 @@ export default defineRecipe({
     justifyContent: 'center',
     gap: '8px',
 
+    // The icon and label are dimmed individually when the command is not executable, so they need their own transition.
+    '& > *': {
+      transition: 'opacity {durations.medium} ease',
+    },
+
     _after: {
       content: '""',
       position: 'absolute',
@@ -87,7 +92,10 @@ export default defineRecipe({
         cursor: 'pointer',
       },
       false: {
-        opacity: 0.25,
+        // Dim only the icon and label. Dimming the button itself would fade the ::after border gradient with it, and the border glow should remain at full strength when the command is disabled.
+        '& > *': {
+          opacity: 0.25,
+        },
       },
     },
   },

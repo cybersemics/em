@@ -100,6 +100,11 @@ const linearizeTree = (
   const styleChildren = getStyle(state, childrenAttributeId)
   const style = safeRefMerge(styleAccum, styleChildren, styleFromGrandparent)
 
+  // =let definitions on this thought are added to the env inherited from ancestors and passed to all descendants.
+  // If there are no =let definitions, the inherited env is passed through unchanged to preserve its object reference, otherwise a new reference on every render would defeat the memoization of TreeNode and its descendants.
+  const envParsed = parseLet(state, path)
+  const envNew = Object.keys(envParsed).length > 0 ? { ...env, ...envParsed } : env
+
   // 0-based ordinal of each visible non-attribute child, used to number =bullet/Ordered lists without re-sorting siblings in each Bullet.
   // Attributes (e.g. =children when showHiddenThoughts is enabled) occupy a slot in filteredChildren but are skipped in the numbering (-1).
   const childIndexNonAttribute = filteredChildren.reduce<number[]>(
@@ -117,9 +122,6 @@ const linearizeTree = (
     const childPath = appendToPathMemo(path, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0
     const virtualIndexNew = indexDescendant + lastVirtualIndex + (depth === 0 && i === 0 ? 0 : 1)
-    const envParsed = parseLet(state, path)
-    const envNew =
-      env && Object.keys(env).length > 0 && Object.keys(envParsed).length > 0 ? { ...env, ...envParsed } : undefined
 
     // As soon as the cursor is found, set belowCursor to true. It will be propagated to every subsequent thought.
     // See: TreeThought.belowCursor
@@ -139,7 +141,7 @@ const linearizeTree = (
     const node: TreeThought = {
       belowCursor: !!belowCursor,
       depth,
-      env: envNew || undefined,
+      env: envNew,
       indexChild: i,
       childIndexNonAttribute: childIndexNonAttribute[i],
       indexDescendant: virtualIndexNew,

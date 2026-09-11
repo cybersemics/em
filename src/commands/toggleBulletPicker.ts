@@ -7,9 +7,9 @@ import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 
-const toggleBulletPickerCommand: Command = {
+const toggleBulletPickerCommand = {
   id: 'toggleBulletPicker',
-  label: 'Bullet Style',
+  label: 'Bullet Style' as const,
   description: 'Open a picker to set the bullet style of the current list: bullets, numbers, letters, or none.',
   multicursor: false,
   hideFromHelp: true,
@@ -28,6 +28,6 @@ const toggleBulletPickerCommand: Command = {
     return getBulletStyle(state, head(simplePath)) !== null
   },
   isDropdownOpen: state => !!state.showBulletPicker,
-}
+} satisfies Command
 
 export default toggleBulletPickerCommand

@@ -1,4 +1,3 @@
-import { DebouncedFunc } from 'lodash'
 import type Command from '../@types/Command'
 import type { ThoughtspaceStorage } from '../data-providers/thoughtspace'
 
@@ -23,8 +22,8 @@ type TestFlags = {
   simulateDrop: boolean
   /** Commands that replace the real commands in the Desktop Command Universe, so that its snapshot only covers the appearance of the command list and does not change whenever a command is added, removed, or edited. */
   commandUniverseCommands: Command[] | null
-  /** The throttled scrollCursorIntoView function. Exposed so that tests can cancel its pending trailing call before asserting on the scroll position. */
-  throttledScrollCursorIntoView: DebouncedFunc<(y: number, height: number) => void> | null
+  /** Cancels a pending scrollCursorIntoView. Exposed so that tests can stop a scroll that the cursor has queued from moving the page after they set the scroll position. */
+  cancelScrollCursorIntoView: (() => void) | null
 }
 
 const preloadedTestFlags = typeof window === 'undefined' ? null : (window.em?.testFlags ?? null)
@@ -41,7 +40,7 @@ const testFlags: TestFlags = {
   pinDropHovers: false,
   simulateDrag: false,
   simulateDrop: false,
-  throttledScrollCursorIntoView: null,
+  cancelScrollCursorIntoView: null,
   commandUniverseCommands: null,
 }
 

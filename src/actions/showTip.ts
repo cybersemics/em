@@ -2,7 +2,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import TipId from '../@types/TipId'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import { toggleDropdownActionCreator as toggleDropdown } from './toggleDropdown'
+import { closeDropdownsActionCreator as closeDropdowns } from './closeDropdowns'
 
 /** Shows a tip popup at the bottom of the screen. */
 const showTip = (state: State, { tip }: { tip: TipId }): State => ({
@@ -15,7 +15,7 @@ export const showTipActionCreator =
   (payload: Parameters<typeof showTip>[1]): Thunk =>
   (dispatch, getState) => {
     // Close any open dropdown (e.g. Command Center) so the tip is visible.
-    dispatch(toggleDropdown())
+    dispatch(closeDropdowns())
     dispatch({ type: 'showTip', ...payload })
   }
 

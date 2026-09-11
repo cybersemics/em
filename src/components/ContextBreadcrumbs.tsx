@@ -155,7 +155,6 @@ const ContextBreadcrumbs = ({
   charLimit,
   hideArchive,
   hidden,
-  homeContext,
   path,
   staticText,
   thoughtsLimit,
@@ -171,7 +170,6 @@ const ContextBreadcrumbs = ({
    * Useful for ThoughtAnnotation spacing.
    */
   hidden?: boolean
-  homeContext?: boolean
   path: Path
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
@@ -221,7 +219,7 @@ const ContextBreadcrumbs = ({
     >
       {isRoot(simplePath) ? (
         /*
-      If the path is the root context, check homeContext which is true if the context is directly in the root (in which case the HomeLink is already displayed as the thought)
+      If the path is the root context, render the HomeLink as the breadcrumbs.
 
       For example:
 
@@ -234,18 +232,16 @@ const ContextBreadcrumbs = ({
 
       Activating the context view on "a" will show three contexts: ROOT, b, and c/d.
 
-      - The ROOT context will render the HomeLink as a thought. No breadcrumbs are displayed.
+      - The ROOT context will render the HomeLink as a thought. No breadcrumbs are rendered, since Thought does not render ContextBreadcrumbs for the root context.
       - The "b" context will render "b" as a thought and the HomeLink as the breadcrumbs.
       - The "c/d" context will render "d" as a thought and "c" as the breadcrumbs.
     */
-        !homeContext ? (
-          <HomeLink
-            className={css({ position: 'static' })}
-            color={token('colors.gray50')}
-            size={16}
-            iconStyle={homeIconStyle}
-          />
-        ) : null
+        <HomeLink
+          className={css({ position: 'static' })}
+          color={token('colors.gray50')}
+          size={16}
+          iconStyle={homeIconStyle}
+        />
       ) : (
         <TransitionGroup childFactory={factoryManager}>
           {ellipsizedThoughts.map(({ isOverflow, label, nodeRef }, i) => {

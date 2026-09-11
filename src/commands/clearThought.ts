@@ -7,9 +7,9 @@ import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const clearThoughtCommand: Command = {
+const clearThoughtCommand = {
   id: 'clearThought',
-  label: 'Clear Thought',
+  label: 'Clear Thought' as const,
   description: 'Clear the text of the current thought. A quick recovery after you have changed your mind.',
   gesture: 'rl',
   keyboard: { key: 'c', alt: true, shift: true, meta: true },
@@ -57,6 +57,6 @@ const clearThoughtCommand: Command = {
       selection.clear()
     }
   },
-}
+} satisfies Command
 
 export default clearThoughtCommand

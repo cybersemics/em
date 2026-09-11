@@ -86,7 +86,7 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
-  it('merge duplicate children', () => {
+  it('keep duplicate children on uncategorize (no merge)', () => {
     const steps = [
       newThought('a'),
       newSubthought('b'),
@@ -104,6 +104,7 @@ describe('normal view', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - c
+    - d
     - d`)
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])

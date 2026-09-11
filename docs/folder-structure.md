@@ -25,7 +25,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 - [`/src/index.tsx`](../src/index.tsx) — App entry point: mounts `<App />` into the DOM.
 - [`/src/initialize.ts`](../src/initialize.ts) — Bootstraps the thoughtspace, the offline-status store, the cursor from URL, and global event handlers. Called by `index.tsx`.
 - [`/src/commands.ts`](../src/commands.ts) — Builds the `globalCommands` array, three lookup indices (by id, keyboard, gesture), and the global `keyDown` / `keyUp` / gesture handlers. See [commands.md](commands.md).
-- [`/src/constants.ts`](../src/constants.ts) — App-wide constants (root tokens, timeouts, settings enum, `LongPressState`, `COMMAND_GROUPS`, etc.). For constants used in only one module, define them locally; promote here when shared.
+- [`/src/constants.ts`](../src/constants.ts) — App-wide constants (root tokens, timeouts, settings enum, `LongPressState`, `COMMAND_DIFFICULTIES`, etc.). For constants used in only one module, define them locally; promote here when shared.
 - [`/src/browser.ts`](../src/browser.ts) — Platform detection (`isTouch`, `isSafari`, `isMac`, `isMobile`).
 - [`/src/globals.ts`](../src/globals.ts) — A small set of mutable globals that need to live outside Redux for performance (e.g. `suppressExpansion`).
 - [`/src/colors.config.ts`](../src/colors.config.ts), [`/src/durations.config.ts`](../src/durations.config.ts) — Design-token configuration consumed by Panda CSS.
@@ -49,7 +49,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 
 ## Conventions
 
-- **Pure where possible.** `selectors/` and `util/` should be pure functions; `actions/` is where side effects live.
+- **Pure where possible.** `selectors/` and `util/` should be pure functions; `actions/` is where side effects live. The exception in `selectors/` is a function that has to consult the browser selection to answer a question about state — [`isMultiEditing`](../src/selectors/isMultiEditing.ts) and [`selectionOffsets`](../src/selectors/selectionOffsets.ts), both reading through the `device/selection.ts` wrapper. Neither may be called from a reducer, which must not read the DOM at all; see the reducer purity rule in [`code-standards.instructions.md`](../.github/instructions/code-standards.instructions.md).
 - **One concern per directory.** A file that both reads state and dispatches probably belongs in `actions/`, not `selectors/`. A util that imports React belongs in `hooks/` or `components/`, not `util/`.
 - **Tests next to source.** Tests live in `__tests__/` subdirectories, not in a separate `tests/` tree.
 - **Browser API access is gated.** `window.getSelection`, `localStorage`, viewport reads — all go through `device/` or `stores/` wrappers, not direct calls in feature code.

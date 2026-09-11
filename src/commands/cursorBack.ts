@@ -10,9 +10,9 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isMultiEditing from '../selectors/isMultiEditing'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 
-const cursorBackCommand: Command = {
+const cursorBackCommand = {
   id: 'cursorBack',
-  label: 'Back',
+  label: 'Back' as const,
   description: 'Move the cursor up a level.',
   gesture: 'r',
   svg: BackIcon,
@@ -58,6 +58,6 @@ const cursorBackCommand: Command = {
       scrollTo('top', 'smooth')
     }
   }),
-}
+} satisfies Command
 
 export default cursorBackCommand

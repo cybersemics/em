@@ -33,7 +33,7 @@ const useOnPaste = ({
         typeof window !== 'undefined' &&
         (plainText.startsWith(`{
   "thoughtIndex": {
-    "__ROOT__": {`) ||
+    "${HOME_TOKEN}": {`) ||
           plainText.startsWith(`{
   "thoughtIndex": {
     "${HOME_TOKEN}": {`)) &&

@@ -1,5 +1,6 @@
 import State from '../@types/State'
 import * as selection from '../device/selection'
+import head from '../util/head'
 import isMulticursorPath from './isMulticursorPath'
 
 /** Returns true if a multiselection is being edited, i.e. the real caret is in the cursor thought and the cursor is one
@@ -8,9 +9,15 @@ import isMulticursorPath from './isMulticursorPath'
  * Commands that would otherwise hijack an ordinary editing keystroke defer to the browser in this state, e.g. Backspace
  * within the text deletes a character and Select All selects the text rather than the thoughts.
  *
- * The browser selection is checked because an ordinary multiselection leaves the caret outside of any thought; only an
- * edited multiselection places it back in one. */
+ * The caret is checked against the cursor thought specifically, not just any thought: Shift + ArrowUp/ArrowDown extends
+ * a multiselection while leaving the caret behind in the thought the selection started from, and only clears it on the
+ * next animation frame. Accepting the caret in any thought would classify that ordinary multiselection as an edited one
+ * until the frame lands, so a command dispatched within it would defer to the browser, e.g. Escape would fail to clear
+ * the multiselection. */
 const isMultiEditing = (state: State): boolean =>
-  !!state.isKeyboardOpen && !!state.cursor && isMulticursorPath(state, state.cursor) && selection.isThought()
+  !!state.isKeyboardOpen &&
+  !!state.cursor &&
+  isMulticursorPath(state, state.cursor) &&
+  selection.isOnEditable(head(state.cursor))
 
 export default isMultiEditing

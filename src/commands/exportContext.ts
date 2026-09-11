@@ -5,9 +5,9 @@ import { HOME_TOKEN } from '../constants'
 import { getAllChildren } from '../selectors/getChildren'
 import hasMulticursor from '../selectors/hasMulticursor'
 
-const command: Command = {
+const command = {
   id: 'exportContext',
-  label: 'Export',
+  label: 'Export' as const,
   description: 'Download or copy the current context as plain text or html.',
   svg: ShareIcon,
   multicursor: false,
@@ -17,6 +17,6 @@ const command: Command = {
   },
   exec: dispatch => dispatch(showModal({ id: 'export' })),
   allowExecuteFromModal: true,
-}
+} satisfies Command
 
 export default command

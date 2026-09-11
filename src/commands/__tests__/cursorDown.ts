@@ -4,6 +4,7 @@ import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursorAtFirstMatch } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
+import multicursorValues from '../../test-helpers/multicursorValues'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import hashPath from '../../util/hashPath'
 import headValue from '../../util/headValue'
@@ -22,14 +23,6 @@ const shiftDownEvent = { shiftKey: true, preventDefault: () => {} } as unknown a
 
 /** Synthetic Down keyboard event (no shift). */
 const downEvent = { shiftKey: false, preventDefault: () => {} } as unknown as KeyboardEvent
-
-/** Returns the sorted values of the current multicursor set. */
-const multicursorValues = (): (string | undefined)[] => {
-  const state = store.getState()
-  return Object.values(state.multicursors)
-    .map(path => headValue(state, path))
-    .sort()
-}
 
 describe('cursorDown Shift+Down multiselect in table view second column', () => {
   it('extends the multiselect to the next col2 cell within the same cell', () => {

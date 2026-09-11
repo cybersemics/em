@@ -1,5 +1,4 @@
 import pluralize from 'pluralize'
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { alertActionCreator as alert } from '../actions/alert'
 import { archiveThoughtActionCreator as archiveThought } from '../actions/archiveThought'
@@ -49,9 +48,9 @@ const exec: Command['exec'] = (dispatch, getState) => {
   }
 }
 
-const archiveCommand: Command = {
+const archiveCommand = {
   id: 'archive',
-  label: 'Archive',
+  label: 'Archive' as const,
   description: 'Move the thought to a hidden archive. It can be recovered or viewed by toggling hidden thoughts.',
   // Main gesture and alternate patterns to help with mis-swipes
   gesture: [
@@ -78,11 +77,11 @@ const archiveCommand: Command = {
     },
   },
   svg: ArchiveIcon,
-  keyboard: { key: Key.Backspace, shift: true, meta: true },
+  keyboard: { key: 'Backspace', shift: true, meta: true },
   canExecute: state => {
     return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
   },
   exec,
-}
+} satisfies Command
 
 export default archiveCommand

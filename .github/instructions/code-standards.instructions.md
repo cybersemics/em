@@ -28,6 +28,16 @@
     const resolved = command.id === 'repeat' ? lastCommand : command
     ```
     Multi-line logic with branches or early returns is fine to extract.
+- Do not wrap a store in bare getters and setters. A function whose entire body is `someStore.getState().foo` or `someStore.update({ foo })` adds no behavior; it obscures which store the value comes from and expands the module's API for nothing. Read and write the store directly at the call site. A wrapper that carries real logic — managing a timer, setting a companion flag, deriving the value from state — is not bare and earns its place.
+  ```ts
+  // ✗ bare getter/setter
+  export const isBatchEditing = () => batchEditing.getState().batching
+  export const setBatchEditingUndoLabel = (undoLabel: string) => batchEditing.update({ undoLabel })
+
+  // ✓ use the store directly at the call site
+  batchEditing.getState().batching
+  batchEditing.update({ undoLabel })
+  ```
 - Only a single, default export is allowed. Named exports are not allowed.
   - Exception: action-creators are co-located with reducers in `src/actions` and exported as named exports.
   - Filenames should exactly match the default export name.
@@ -35,6 +45,8 @@
 ### Functional Programming
 
 - Prefer pure functions.
+- Reducers in `src/actions` must not read the DOM. The browser selection, focus, and element geometry live outside Redux state, so a reducer that reads them returns different state for the same arguments and cannot be exercised without a document. Read them in the action-creator co-located with the reducer and pass the values in the payload, as `extractSubthought` and `extractCategory` do with `selectionStart` and `selectionEnd`.
+  - Generating a value is not the same as reading the environment. Reducers may call `timestamp()` and `createId()`, which the thought and lexeme records require.
 - Prefer ternary operators over if statements.
 - Avoid mutations and side effects when possible.
 - Use `const`; avoid `let`.
@@ -56,5 +68,21 @@
 - Write a JSDOC comment for each function definition.
 - Add descriptive comments to code that is counterintuitive, non-obvious, or requires explanation.
 - JSDOC prose must be complete sentences (`jsdoc/require-description-complete-sentence`). Put shell commands, which are neither capitalized nor sentence-terminated, in a fenced code block, and end the lead-in line with a period rather than a colon — a colon merges the fence into the preceding paragraph and the rule then demands a period after the command. For a single command, inline code inside a sentence reads better than a fence: ``Run manually with `node scripts/estimate/src/backfill.ts`.`` Never let the rule's autofixer capitalize a command, path, or identifier.
+- Prefer an options object over a long list of positional arguments. A call like `useGestureHighlight(command, gestureInProgress, true, false)` is unreadable at the call site — the booleans and bare strings say nothing about what they mean, and their order is only recoverable by opening the definition. Destructure a single object instead and document each property inline with the type, which puts the names at the call site and makes the order irrelevant:
+  ```ts
+  // ✗ opaque at the call site
+  const useGestureHighlight = (command: Command, gestureInProgress: string | undefined, selected: boolean | undefined, disabled: boolean) => ...
+
+  // ✓ named at the call site
+  const useGestureHighlight = ({ command, gestureInProgress, selected, disabled }: {
+    /** The command whose gesture diagram to highlight. */
+    command: Command
+    /** The raw gesture string traced so far, or undefined if none active. */
+    gestureInProgress: string | undefined
+    ...
+  }) => ...
+  ```
+  - The one or two arguments that identify the subject may stay positional, with the rest in a trailing options object, as `getSortedRank(state, id, value, { staleId })` does. This is the usual shape for selectors and reducers, whose leading `state` argument is unambiguous.
+  - React components already receive a props object, so this rule is about ordinary functions and hooks.
 - Avoid overly vague variable names or extraneous affixes such as "data".
 - Avoid redundancy in code and naming.

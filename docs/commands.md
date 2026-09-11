@@ -34,9 +34,9 @@ interface Command {
 A real example, abridged from [`pin.ts`](../src/commands/pin.ts):
 
 ```ts
-const pinCommand: Command = {
+const pinCommand = {
   id: 'pin',
-  label: 'Pin',
+  label: 'Pin' as const,
   labelInverse: 'Unpin',
   description: 'Pins open a thought so its subthoughts are always visible.',
   keyboard: { key: 'p', meta: true, alt: true },
@@ -48,11 +48,13 @@ const pinCommand: Command = {
     },
   },
   exec: (dispatch, getState, e, { type }) => {
-    /* dispatch toggleAttribute({ path: cursor, values: ['=pin', 'true'] }) */
+    /* dispatch pin() */
   },
   isActive: state => !!isPinned(state, head(/* ... */)),
-}
+} satisfies Command
 ```
+
+The `satisfies Command` and the `as const` on the label are load-bearing rather than stylistic. Annotating the constant `: Command` instead would type it as the interface, discarding what each command actually says about itself; `satisfies` checks the object against the interface while keeping the inferred type. The label needs `as const` on top of that, because the interface types `label` as `string` and that contextual type widens the literal even under `satisfies`. Together they let [`CommandLabel`](../src/@types/CommandLabel.ts) be derived as the union of every command's label, the same way [`CommandId`](../src/@types/CommandId.ts) is derived from the barrel's keys, so neither type has to repeat what the commands already declare. A command that skips either one widens its label to `string` and collapses that union. Rather than let that pass silently, `CommandLabel` resolves to a message naming the fix, so every call site that passes a label fails to compile and reports it.
 
 `exec` receives the Redux `dispatch`, a `getState` thunk, the event that triggered the command, and a `{ type }` field that is `'keyboard'`, `'gesture'`, `'toolbar'`, or `'chainedGesture'` so the command can adapt its behavior (e.g. `pin` shows an alert only when triggered via keyboard, since the toolbar already gives visual feedback).
 
@@ -86,6 +88,8 @@ The handler also:
 - Skips when a modal is showing, *unless* the command has `allowExecuteFromModal: true` (e.g. navigation commands that should still work).
 - Calls `e.preventDefault()` before dispatching, *unless* `command.permitDefault` is set. (`command.preventDefault` forces a preventDefault even when `canExecute` returns false.)
 - Routes through `executeCommandWithMulticursor`, which short-circuits to `executeCommand` if no multicursor is active.
+
+`keyDown` is a `window` listener, so a React handler that calls `stopPropagation` shadows every command bound to that key. [`Note`](../src/components/Note.tsx) does exactly that for the keys that navigate its own contenteditable — Escape and ArrowUp exit the note, Backspace deletes an empty one, ArrowDown moves the cursor down — so it only claims a keypress that carries no command modifier. A chord that includes Command/Ctrl or Option belongs to a command rather than to the note, and is left to propagate ([issue #4954](https://github.com/cybersemics/em/issues/4954)).
 
 There's a special case in `beforeInput` for `newThought` and `indent` to handle iOS auto-capitalization: the Enter / space character is prevented in the `beforeinput` event rather than `keydown` ([issue #3707](https://github.com/cybersemics/em/issues/3707)). Another branch in `beforeInput` handles Android: soft keyboards report the space keydown as `keyCode 229` (`'Unidentified'`), so it never matches the `indent` command in `keyDown` and `keyCommandId` is never set — the branch catches the `beforeinput` `insertText` of a single space over an empty thought and dispatches `indent` directly ([issue #4178](https://github.com/cybersemics/em/issues/4178)).
 
@@ -123,11 +127,35 @@ The **Command Universe** is the searchable command palette. Two flavors:
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
 - **`MobileCommandUniverse`** — mobile drawer opened by `openMobileCommandUniverse`, also reachable by gesture.
 
-Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), which defines the order: Navigation → Creating thoughts → Deleting thoughts → Moving thoughts → Editing thoughts → Oops → Special Views → Visibility → Settings → Help → Cancel.
+Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
+
+Help and Customize Toolbar present commands grouped by `COMMAND_DIFFICULTIES` (in [`constants.ts`](../src/constants.ts)), a two-level hierarchy of difficulty levels containing category groups, which defines the order: Beginner (Creating Thoughts → Navigation → Contexts) → Intermediate (Categorizing → Nudging → Deleting) → Advanced (Creating Thoughts II → Edit History → Notes → Views).
+
+`COMMAND_DIFFICULTIES` is the single source of truth for the hierarchy. `as const` preserves its literal IDs, and `satisfies` validates the structure and command references. `CommandDifficulty` and `CommandGroup` (in [`src/@types`](../src/@types)) are inferred from that readonly configuration, so their ID unions update automatically when entries are added or removed. Difficulty IDs and globally unique group IDs stay unchanged when titles, ordering, or group placement change; features referencing the hierarchy use `CommandDifficulty['id']` and `CommandGroup['id']`. The constant stores command IDs and presentation order; user learning progress belongs separately.
+
+`useCommandList` resolves command IDs into `Command[]` and returns `sections`: display-only `CommandSection` objects with `{ id, title, difficulty?, commands }`. Search results and the alphabetical list have their own IDs and no difficulty. `CommandTable` and `MobileCommandUniverse` render those sections using their stable IDs as React keys. `CommandTable` detects difficulty boundaries by ID and renders each difficulty title above its first visible section; `CommandTableSection` renders the titled command table within each section. Configuration groups remain categories, while display sections can also represent search results or the alphabetical list.
+
+Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
+
+### Flushing pending edits
+
+Typing into a thought does not reach Redux on the keystroke. [`Editable`](../src/components/Editable.tsx) dispatches `editThought` through a lodash throttle of `EDIT_THROTTLE` (500 ms) with `leading: false`, so the value the user just typed sits on the trailing edge until the window closes. A command that mutates thought text and runs inside that window would read the pre-edit value, and the trailing edit would then commit over the command's own result — the typed character wins and the formatting is lost ([issue #4774](https://github.com/cybersemics/em/issues/4774)).
+
+`Editable` subscribes to `commandEmitter` and flushes the throttle on `command`, so any activation surface can force the pending edit to commit first by triggering it. Every surface does, at the point where it knows a command is about to run:
+
+- **Keyboard and gesture** — `keyDown` and `handleGestureEnd` trigger it before they dispatch.
+- **Toolbar, Command Center, Command Universe** — `executeCommandWithMulticursor` triggers it for every type other than keyboard and gesture, which have already flushed.
+- **Pickers** — a swatch dispatches its action creator directly rather than executing a command, so [`formatSelectionColor`](../src/actions/formatSelectionColor.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) trigger it themselves.
+
+Notes are not part of this. [`Note`](../src/components/Note.tsx) commits through a plain `react-contenteditable` `onChange` that dispatches `editThought` / `setDescendant` immediately, with no throttle and no `commandEmitter` subscription, so a note edit is already in Redux by the time any command runs and there is nothing to flush.
 
 ### Multicursor
 
 When `state.multicursors` is non-empty, the user has one or more thoughts selected. A selection of exactly one thought is common — on mobile, opening the Command Center selects the cursor thought. Every command must declare how it behaves in this case via the required `multicursor` field — there is no implicit default.
+
+A selection is started by long pressing a thought ([`useDragHold`](../src/hooks/useDragHold.ts)), by Cmd/Ctrl + Click or Shift + Click ([`Thought`](../src/components/Thought.tsx)), or by the Select All command. Once one is active, a plain click or tap on a thought or on its bullet toggles that thought's selection rather than moving the cursor ([`Editable`](../src/components/Editable.tsx), [`BulletPositioner`](../src/components/BulletPositioner.tsx)) — the same behavior on mobile and desktop. The thought text shows a pointer cursor for as long as the multiselect is active, so that a mouse click over it reads as selecting the thought rather than placing the caret; it reverts to the text cursor while the multiselection is being edited (see [Multi edit mode](cursor-and-caret.md#multi-edit-mode)), where a click does place the caret. The bullet's usual expand/collapse and `=pin` handling is suppressed while a multiselect is active, since expansion is determined by the selected thoughts (see [`expandThoughts`](../src/selectors/expandThoughts.ts)). Deselecting the last selected thought ends the multiselect, which on touch also closes the Command Center ([`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts)).
+
+On touch, the cursor is parked outside the selection for as long as more than one thought is selected ([`multiselectCursorMiddleware`](../src/redux-middleware/multiselectCursorMiddleware.ts)). Visibility is computed relative to the cursor ([`calculateAutofocus`](../src/selectors/calculateAutofocus.ts)), so a cursor left on one of the selected thoughts dims all the others and expands its own children, rendering equally selected thoughts differently from one another. The middleware therefore moves the cursor to the selection's nearest common ancestor, which shows every selected thought at full opacity and leaves them all collapsed, and lands it on the first selected thought in document order when the selection ends — typically when the Command Center is closed. It reads the settled multicursors after each action rather than hooking the multicursor reducers, so it re-parks when the selection is extended into another subtree or replaced wholesale by Back or Forward, and it ignores the multicursors entirely while `isMulticursorExecuting` is set. A selection whose common ancestor is the root is left alone, since the root is not a cursor position and a command that acts on the selection still reads the cursor — [Categorize](#categorize) refuses to run without one even though it takes its thoughts from the multiselection. Parking is confined to touch because <kbd>Shift</kbd> + <kbd>ArrowUp</kbd>/<kbd>ArrowDown</kbd> extends the selection from the cursor, which requires the cursor to remain in it. That move is conditional on the cursor still being where the middleware parked it: [Clear Thought](cursor-and-caret.md#multi-edit-mode) sets the cursor to the first selected thought in order to edit the selection, and the blur that ends that editing session must not yank the cursor back out of the thought the user was just typing in.
 
 - **`multicursor: false`** — execute on `state.cursor` as if no multicursor existed; selection stays. For commands that don't interact with the thoughtspace (e.g. opening modals). The cursor-navigation commands also declare `multicursor: false` yet still respond to a selection, since navigating a multiselect means moving the selection itself rather than executing once per selected thought: [`cursorUp`](../src/commands/cursorUp.ts) and [`cursorDown`](../src/commands/cursorDown.ts) read `state.multicursors` in their own `exec` to extend or collapse the selection, and the [`cursorForward`](../src/actions/cursorForward.ts) and [`cursorBack`](../src/actions/cursorBack.ts) reducers replace the selection with the thoughts one level forward or back.
 - **`multicursor: true`** — execute once per selected thought.
@@ -135,28 +163,37 @@ When `state.multicursors` is non-empty, the user has one or more thoughts select
 
 | Option | Meaning |
 |---|---|
-| `disallow` | Block execution and show an alert when *more than one* thought is selected. A single selected thought is executed on directly, as if only the cursor were set, so the cursor is not restored afterwards. Use sparingly — usually `multicursor: false` or `filter` is better. |
-| `error` | The alert message shown when `disallow` is true and more than one thought is selected. String or `(state) => string`. |
 | `execMulticursor(cursors, dispatch, getState)` | Custom replacement for the per-cursor loop. |
 | `onComplete(filteredCursors, dispatch, getState)` | Callback after the loop finishes. |
 | `preventSetCursor` | Don't restore the cursor at the end. |
 | `reverse` | Iterate cursors in reverse document order (matters for ops like move). |
 | `clearMulticursor` | Clear the multicursor selection after execution. |
-| `filter` | One of `'all'` (default), `'first-sibling'`, `'last-sibling'`, `'prefer-ancestor'`. |
+| `selectNewCursors` | Select the thoughts the executions moved the cursor to instead of restoring the original selection. |
+| `filter` | One of `'all'` (default), `'first-sibling'`, `'last-sibling'`, `'prefer-ancestor'`, applied by [`filterCursors`](../src/selectors/filterCursors.ts). |
 
-`executeCommandWithMulticursor` walks the filtered cursors in document order (`documentSort`), `setCursor`s each path in turn, calls the regular `exec`, and finally restores the original cursor (unless `preventSetCursor` is set). It wraps the loop in `setIsMulticursorExecuting({ value: true, undoLabel: command.id })` so the entire multi-step operation collapses into a single undo entry.
+`executeCommandWithMulticursor` walks the filtered cursors in document order (`documentSort`), `setCursor`s each path in turn, calls the regular `exec`, and finally restores the original cursor (unless `preventSetCursor` is set) and the multicursors themselves (unless `clearMulticursor` is set). It wraps the loop in `setIsMulticursorExecuting({ value: true, undoLabel: command.id })` so the entire multi-step operation collapses into a single undo entry.
 
-`setIsMulticursorExecuting` is the general mechanism for that collapsing, not a private detail of the command loop: [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) merges every action dispatched while `state.isMulticursorExecuting` is true into the preceding undo patch, and shows `undoLabel` in the undo/redo alert. Any code path that edits every selected thought without going through a `multicursor: true` command must bracket its dispatch with the same pair, or the user has to undo once per thought. The [`ColorPicker`](../src/components/ColorPicker.tsx) and [`LetterCasePicker`](../src/components/LetterCasePicker.tsx) reach the thoughtspace through [`formatSelection`](../src/actions/formatSelection.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) rather than through their `multicursor: false` toolbar commands, so those two action-creators do the bracketing themselves; drag-and-drop of a multiselect does the same.
+Restoring the multicursors is what keeps the Command Center open on mobile. [`setCursor`](../src/actions/setCursor.ts) clears `state.multicursors` unless `preserveMulticursor` is passed, and [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) closes the Command Center as soon as the selection is empty — so a command that moves the selected thought (`swapParent`, whose reducer ends in `setCursor`) empties the selection mid-run and would dismiss the panel under the user, were the loop not to add the thoughts back at its new path. A command that bypasses the loop, as the `disallow` branch does for a single selected thought, must not move the thought it acts on for this reason.
+
+The restore is not free for a command that changes nothing. `setCursor` recomputes `state.expanded`, which [`expandThoughts`](../src/selectors/expandThoughts.ts) derives from the multicursors as well as from the cursor, so restoring a cursor that never moved still leaves a diff behind — and since the bracket's opening `setIsMulticursorExecuting` has already started an undo patch, that diff survives as an undo entry labeled with the command. [`copyCursor`](../src/commands/copyCursor.ts), which only reads the thoughtspace, therefore sets `preventSetCursor`: with no `setCursor` the multicursors are never cleared either, the bracket nets to no change, and the empty-patch guard in [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) drops the patch, so Copy Cursor adds nothing to the undo history.
+
+A command tapped in the Command Center is executed with `type: 'commandCenter'`, and the loop then ends by selecting the thought the cursor landed on whenever nothing is selected any more — which is exactly what a `clearMulticursor` command such as [`delete`](../src/commands/delete.ts) leaves behind. Otherwise the Command Center would dismiss itself the moment such a command was tapped, since [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) closes it as soon as the selection empties; instead it stays open, selecting the cursor thought the same way opening it does, and can be used again straight away. Deleting the last thought leaves no cursor to select, so there the Command Center closes as usual.
+
+`selectNewCursors` is how the thought-creating commands leave the thoughts they created selected, so that a multiselect New Thought is followed by a multiselect of the new thoughts rather than by nothing. It needs no knowledge of where each command inserts, because each of them sets the cursor to the thought it creates: the loop takes the cursor after every `exec` and keeps it when it differs from the path it set, which also means a selected thought the command could not act on — [`newUncle`](../src/commands/newUncle.ts) at the root — contributes nothing. The loop then selects the collected thoughts and sets the cursor to the last of them with `preserveMulticursor`, which recomputes `state.expanded` so that thoughts created away from the original cursor are visible. That same `setCursor` passes `isKeyboardOpen: false`, since the new thoughts are selected rather than edited — there is no typing into several of them at once. Each `exec` opened the keyboard for the thought it created, and a multiselection with the keyboard open is how [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) recognizes a multiselection being edited ([Clear Thought](cursor-and-caret.md#multi-edit-mode)), which it deliberately leaves the Command Center closed over; closing the keyboard is therefore what lets the middleware open the Command Center over the new selection on mobile. Fewer than two of them is not a selection, so it clears instead, ending as the command does without a multiselect: with the caret in the new thought and the keyboard open. [`newSubthought`](../src/commands/newSubthought.ts) and [`newSubthoughtTop`](../src/commands/newSubthoughtTop.ts) reach the same postcondition, including the closed keyboard, through `onComplete` and `execMulticursor` respectively.
+
+`setIsMulticursorExecuting` is the general mechanism for that collapsing, not a private detail of the command loop: [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) merges every action dispatched while `state.isMulticursorExecuting` is true into the preceding undo patch, and shows `undoLabel` in the undo/redo alert. Any code path that edits every selected thought without going through a `multicursor: true` command must bracket its dispatch with the same pair, or the user has to undo once per thought. The [`ColorPicker`](../src/components/ColorPicker.tsx) and [`LetterCasePicker`](../src/components/LetterCasePicker.tsx) reach the thoughtspace through [`formatSelection`](../src/actions/formatSelection.ts) and [`formatLetterCase`](../src/actions/formatLetterCase.ts) rather than through their `multicursor: false` toolbar commands, so those two action-creators do the bracketing themselves; drag-and-drop of a multiselect does the same. Both edit the selected thoughts whether or not the selection has a cursor — a thought stays selectable once the Home button has dismissed the cursor — which is why [`textColor`](../src/commands/textColor.ts) and [`letterCase`](../src/commands/letterCase.ts) admit `hasMulticursor` in `canExecute` and `isActive`.
 
 The flag is also what marks the traversal as bookkeeping rather than user intent, so that observers do not react to the transient state it passes through. Setting the cursor to each selected thought empties `state.multicursors` (the loop does not pass `preserveMulticursor`) and the restore then re-adds them one at a time, so the count falls to zero and climbs back mid-command; it would likewise reset `cursorCleared` on each hop. [`setCursor`](../src/actions/setCursor.ts) preserves `cursorCleared` while the flag is set, and [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) suspends the Command Center's show/hide reaction. Both settle on the closing `setIsMulticursorExecuting({ value: false })`, which the middleware evaluates against the final multicursors.
 
-The whole of `executeCommandWithMulticursor` is synchronous, including that bracket, so an **asynchronous** command gets no help from it: the bracket is opened and closed around the call, and anything dispatched after the first `await` lands outside it. [`generateThought`](../src/commands/generateThought.ts) is the case in point — its `exec` only reaches the thoughtspace once a network request has returned. It defines an `execMulticursor` that yields once (so that the loop's own synchronous bracket has closed), opens a second bracket of its own, generates every selected thought, and closes it only after all of them have settled. A `multicursor: true` declaration would instead leave one undo step per generated thought, and each `exec`'s own `setCursor` would drop the caret on whichever request happened to finish last.
+The whole of `executeCommandWithMulticursor` is synchronous, including that bracket, so an **asynchronous** command gets no help from it: the bracket is opened and closed around the call, and anything dispatched after the first `await` lands outside it. [`generateThought`](../src/commands/generateThought.ts), [`generateEmoji`](../src/commands/generateEmoji.ts), [`defineTerm`](../src/commands/defineTerm.ts), and [`organizeThought`](../src/commands/organizeThought.ts) are the cases in point — their edits may only reach the thoughtspace once a network request has returned. Each defines an `execMulticursor` that yields once (so that the loop's own synchronous bracket has closed), opens a second bracket of its own, generates or reorganizes, and closes it only after the request has settled. A `multicursor: true` declaration would instead leave one undo step per generated thought, and per-cursor caret updates could land on whichever request happened to finish last.
+
+Because that early restore runs before the request returns, an async command that **moves** selected thoughts must recompute the selection itself once the new paths exist. Organize Thoughts does this after applying the outline, so the originally selected thoughts stay selected at their new parents rather than leaving stale paths that no longer match any bullet.
 
 ### Gating and defaults
 
 Three fields shape what happens when the command might not be runnable:
 
-- **`canExecute(state)`** — boolean predicate. If false, `exec` is not called.
+- **`canExecute(state)`** — boolean predicate. If false, `exec` is not called. It also drives the enabled appearance of the [Toolbar](../src/components/ToolbarButton.tsx) and [Command Center](../src/components/CommandCenter/PanelCommand.tsx) buttons, so a predicate that reports a command as executable when it would be a no-op leaves an enabled button that does nothing when tapped. A command that acts on the selection must therefore test [`selectedPaths`](../src/selectors/selectedPaths.ts) — the multicursors if there are any, otherwise the cursor — rather than `state.cursor`, which is not the thought the command runs on when a thought elsewhere in the tree is selected. Pass the command's own `multicursor.filter` to `selectedPaths` so that the predicate judges exactly the paths the loop will execute on; otherwise a path that the filter drops (such as a descendant of another selected thought) can disable a command that would have worked. Quantify with `every` rather than `some`, since the multicursor loop aborts the whole selection as soon as one path fails `canExecute`: `indent` and `outdent` require every selected path to be movable, `swapParent` requires every selected path to be a subthought, and [`newGrandChild`](../src/commands/newGrandChild.ts) requires every selected thought to have a visible child. Thus a selection containing an ineligible thought disables the command outright rather than silently applying it to the rest. Because `selectedPaths` prefers the multicursors, the predicate returns the same value for every path in the loop, so the one predicate both dims the button and blocks the gesture; no `disallow` branch is needed, and none should be added, since that branch bypasses the multicursor restore described above.
 - **`preventDefault`** — call `e.preventDefault()` even when `canExecute` returns false. Useful for keyboard shortcuts that should *always* swallow the keypress.
 - **`permitDefault`** — do *not* call `e.preventDefault()` even when the command runs. Useful for shortcuts that piggyback on existing browser behavior (e.g. system copy/paste).
 - **`allowExecuteFromModal`** — allow the command to run while a modal is open. Defaults to false; navigation commands set this to true.
@@ -174,14 +211,24 @@ Only commands that make an *undoable, non-navigational* change are recorded, so 
 - Commands that set `repeatable: false` are never recorded. `undo` and `redo` move through the undo history rather than making a new undoable change, and recording `repeat` would recurse.
 - A command that only dispatches asynchronously (Generate Thought) is not recorded, since its patch does not exist yet when `exec` returns.
 
+### Undo history and the undo slider
+
+Every undoable action leaves a patch on `state.undoPatches` ([`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts)): a fast-json-patch diff that reverts the action, whose operations also carry `actions`, the types of the actions that produced the patch (or, for a multicursor command, its `undoLabel` followed by the types). Nothing else about the actions is recorded; a patch plus the states on either side of it is the complete record of what happened. Undo moves a patch from `undoPatches` to `redoPatches` as a forward patch, and redo moves it back; `redoPatches[0]` is the oldest undone action, i.e. the newest point in the history. The moved patch is recomputed as a diff of the state on either side of the move rather than inverted symbolically, so a patch that a non-undoable action has already reverted — the Note command writes back the `noteFocus` and `noteOffset` that the undoable `setNoteFocus` recorded — applies as a no-op and yields nothing to move. Such a patch is dropped rather than pushed empty: a patch's actions are carried on its operations, so a patch with no operations has no actions, which disables undo and throws the next time it is reached.
+
+An **undo step** — what one Undo reverts — spans two patches when a navigation action follows an undoable action (the cursor is restored to where it was before the edit) or an edit follows a `newThought` (creating a thought and typing its value are one step). [`undoSteps`](../src/selectors/undoSteps.ts) applies the same grouping across both stacks, newest first, and reports the position of the current state. It groups the two stacks separately so that the current state always falls on a step boundary, and it omits one refinement of `undoReducer`: a formatting-only edit of a freshly created thought is undone on its own by Undo but counted with the `newThought` by the selector, since telling them apart requires the thought's value at that point in the history. The `undo` and `redo` actions accept a `count` of patches to revert or restore exactly, bypassing the step logic. That is how the slider moves by whole steps in either direction: the built-in redo grouping is not the mirror image of undo (after undoing an edit together with the cursor move that followed it, one redo restores only the edit), so dispatching a plain `redo()` per step would drift.
+
+The **undo slider** ([`UndoSlider`](../src/components/UndoSlider.tsx), toggled by its toolbar button or by a long press on Undo or Redo) is an rc-slider range over those steps, capped at twenty, with the present at the right. Its two handles start together at the present with the *start* handle on top. Dragging the start handle back reveals the *end* handle, which always stays at least one step after the start (except at the present, where the two coincide); the start handle stops one step before the end handle rather than pushing it. Dragging or tapping either handle moves the thoughtspace to the point in time under it, so after dragging the end handle the user sees the end point while the start handle is preserved, and a tap on the start handle returns to the start point. The name of the action that produced each handle's point in time is rendered under the handle. The handles live in the state of `UndoSlider` rather than of the slider itself, which is unmounted while the slider is closed, so that closing and reopening it leaves them where the user put them. They reset to the current state whenever the total number of patches changes, i.e. when a new action discards the history ahead of the current state and they no longer refer to the same steps. Opening the slider flushes any pending throttled edit through `commandEmitter`, and so does each move (see [Flushing pending edits](#flushing-pending-edits)): the slider is not a command, so nothing else would flush for it, and an edit typed just before it was opened would be missing from the steps and lost as soon as the slider moved the thoughtspace.
+
+The copy button to the right of the slider copies a **bug report** for the actions between the handles ([`stepsToReproduce`](../src/selectors/stepsToReproduce.ts)): under *Steps to Reproduce*, the whole thoughtspace at the start point, exported as plain text with meta attributes inside a markdown code block (omitted when it is empty, which exports as the root's placeholder value rather than as nothing), followed by a numbered step for each undo step up to the end point; under *Current Behavior*, the thoughtspace at the end point; and an empty *Expected Behavior* heading to fill in. The selector reconstructs the state before and after every patch in the range by applying the patches from the current state (inverse patches backwards, forward patches forwards) and describes each step from its action types, its operation paths (which name the thoughts it created, deleted, or edited), and those states. A step names the action as dispatched (``Indent.``, ``Move Thought Down.``, or the command label for a multicursor command) — a creation is named for the command that made it, since New Subthought dispatches `newThought` and only the created thought's parent tells them apart — plus whatever its arguments determined: a typed value (``New Thought `c`.``, or ``New Subthought `e`.`` for a thought created inside the cursor), a new value (``Edit `a` to `aa`.``), the formatting an edit applied (``Bold.``), a pasted text, an attribute path (``Toggle Attribute `=pin`.``), a destination (``Move Thought after `b`.`` (a meta attribute is never used as the landmark, since it is hidden)), or an extracted text. The thought acted on is named only when it is not the cursor (``on the root``), because the steps act on the cursor and the selection: they begin with ``Set the cursor on `b`.`` and, before a multicursor command, ``Select `a` and `b`.``, and a step is preceded by the same whenever it acts on a different cursor or selection than the step before it left. Navigation-only patches are folded into those cursor moves. An action without a hand-written description is named as is, plus any meta attributes it set or removed, which tell toggles apart (``Toggle Sort (sets `=sort/Alphabetical/Desc`).``).
+
 ### Adding a new command
 
-1. Create `src/commands/yourCommand.ts`. Default-export a `Command` object with at minimum `id`, `label`, `exec`, and `multicursor`.
+1. Create `src/commands/yourCommand.ts`. Default-export a `Command` object with at minimum `id`, `label`, `exec`, and `multicursor`. Name the command in the singular — `defineTerm`, not `defineTerms` — since a command affects a single thought by default, and carry the singular through all internal terminology (file name, `id`, action names, variables). Multiselect support is secondary and may call for plural forms only in certain user-facing labels.
 2. Add `export { default as yourCommand } from './yourCommand'` to [`src/commands/index.ts`](../src/commands/index.ts).
 3. Pick at least one activation surface:
    - `keyboard` — a `Key` object or string. The `index()` startup pass will warn if you collide with an existing shortcut.
    - `gesture` — a string of `l/r/u/d` characters (or array of strings).
-   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate group in `COMMAND_GROUPS` ([`constants.ts`](../src/constants.ts)).
+   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate category group of the appropriate difficulty level in `COMMAND_DIFFICULTIES` ([`constants.ts`](../src/constants.ts)).
 4. Decide multicursor behavior. If you skip this and set `multicursor: true`, consider whether `filter` or `execMulticursor` is more appropriate before merging.
 5. Add tests under `src/commands/__tests__/`.
 
@@ -281,6 +328,10 @@ Swap the current thought with its parent.
 
 https://github.com/user-attachments/assets/0ca1a77b-e174-4884-9606-739a94cde039
 
+### Swap Grandparent
+
+Swap the current thought with its grandparent, leaving the parent in between where it is. The two thoughts exchange places in the tree and each adopts the other's children.
+
 ### Bind Context
 
 Bind two different contexts of a thought so that they always have the same children.
@@ -297,7 +348,11 @@ https://github.com/user-attachments/assets/5466ad2a-6b7c-4869-a23c-03d9d752dc9b
 
 ### Open Command Center
 
-Opens a special keyboard which contains commands that can be executed on the cursor thought.
+Opens a special keyboard which contains commands that can be executed on the cursor thought. Opening it selects the cursor thought as a multicursor, so every command tapped there runs through `executeCommandWithMulticursor` on a selection of exactly one thought. A `disallow` command is therefore still executable from the Command Center; it only alerts once a second thought is selected.
+
+Both [`openCommandCenter`](../src/commands/openCommandCenter.ts) and [`closeCommandCenter`](../src/commands/closeCommandCenter.ts) set `showCommandCenter` themselves rather than leaving [`multicursorAlertMiddleware`](../src/redux-middleware/multicursorAlertMiddleware.ts) to derive it from the selection they changed. The middleware governs multiselection changes, and it deliberately ignores them in states where the Command Center is hidden with the selection intact — over an edit ([Clear Thought](cursor-and-caret.md#multi-edit-mode)), under the Undo Slider, and while `isMulticursorExecuting` is set. In each of those the user can see the panel's actual state, so an explicit gesture must move it rather than be filtered out: swiping up over a hidden panel re-opens it (the selection is already there, so there is nothing for `addMulticursor` to add), and swiping down over a visible one closes it outright instead of clearing the selection and waiting for the middleware to notice. Deciding on `showCommandCenter` rather than on `hasMulticursor` is what keeps the panel from getting stuck open or stuck closed with its own gesture inert.
+
+Swiping up with no cursor and nothing selected cannot open the Command Center, and swiping up while it is already open is more likely to be an attempt to scroll; both show the scroll zone help alert on the second attempt within ten seconds.
 
 ### Close Command Center
 
@@ -371,11 +426,11 @@ https://github.com/user-attachments/assets/e7077d5d-2387-48b5-8a60-c944d38889ec
 
 ### New Grandchild
 
-Create a thought within the first subthought.
+Create a thought within the first subthought. With a multiselect, a new grandchild is created in every selected thought; the new grandchildren are then selected, with the cursor on the last of them. With no cursor, the root stands in for it, so the new thought is created within the first visible thought in the root. The command is disabled when any selected thought — or the root, when nothing is selected — has no subthought to create the grandchild in.
 
 ### Categorize
 
-Move the current thought into a new, empty thought at the same level.
+Move the current thought into a new, empty thought at the same level. With a multiselect, every selected thought moves into the new category — and when every visible sibling is selected, the meta attributes that describe the parent's children — `=view`, `=sort`, and the `=children`, `=grandchildren`, and `=descendants` containers — follow them into the category, each moving whole with everything it holds. The parent's own direct `=pin` stays, since it pins the parent itself rather than the wrapped children.
 
 <kbd>Command + Option + o</kbd> or <kbd>Command + ]</kbd>
 
@@ -389,7 +444,7 @@ Deletes the current thought and moves all its subthoughts up a level.
 
 https://github.com/user-attachments/assets/a0da2b2a-925e-4f6a-9924-3bba37b7feb2
 
-### Extract
+### Extract Subthought
 
 Extract selected part of a thought as its child.
 
@@ -397,11 +452,43 @@ Extract selected part of a thought as its child.
 
 https://github.com/user-attachments/assets/e415abf1-6c1e-4ffd-b7aa-0fdf372effbc
 
+### Extract Category
+
+Extract selected part of a thought as its new parent. Where Extract Subthought draws the selection down into a child, Extract Category lifts it up into a parent: the rest of the thought — and every other selected thought — is moved into a new category whose value is the extracted text. When the selected thoughts do not share a parent, Categorize refuses and nothing is extracted.
+
+<kbd>Command + Control + Option + e</kbd>
+
+### Define Term
+
+Adds a 10–20 word AI-generated dictionary entry as the first subthought of each selected thought. The selected thought's own value is not changed. The command is disabled when any selected thought is empty or has another AI request in progress.
+
+On first use, em shows the same blocking AI data disclosure as Generate Thought. The command sends the visible text of all selected thoughts to `${VITE_AI_URL}/defineTerm` in one request, and the service generates all definitions in one structured LLM response. A valid response is applied as one undo step; a failed or malformed batch leaves the thoughts unchanged. If an individual thought is edited or deleted before the request finishes, its definition is discarded rather than being added under the newer state. Server errors are shown in the error banner, and rate limiting asks the user to try again later.
+
+Gesture: ↑ → ←
+
 ### Generate Thought
 
 Generates a thought using AI.
 
+On first use of the AI generation path on a device, em shows a blocking disclosure modal. The user can cancel, allow the current use only, or allow future uses without seeing the notice again. Choosing either allow option resumes the request that opened the disclosure. A remembered acknowledgement can be removed later under Settings → AI Data Acknowledgment. The command sends the relevant current thought context (ancestors and sibling values around the cursor thought) in a JSON request to the OpenAI-backed AI service at `${VITE_AI_URL}/generateThought`. The indented outline marks context thoughts with `[]` and the replacement target with `[x]`. Sibling metaprogramming attributes are omitted from the outline, since they configure the app rather than describe the user's thoughts; they are omitted whether or not Show Hidden Thoughts is on, so that a view toggle cannot change what leaves the device. The target itself is always included, even when it is an attribute, and an attribute in the ancestor path is kept so that the outline never places the target under a parent that is not its own. The service returns a complete replacement for each selected thought, not text to append to its current value. Multiple selected thoughts are sent as one request with one outline per thought, generated in one LLM completion, and applied all or nothing: a failed or malformed response leaves every selected thought unchanged. They can be reverted together with one undo. A selected empty thought whose first child is a URL fetches its webpage title alongside the AI request instead of being included in it. `VITE_AI_URL` is the service's base URL so other AI routes can share it. The AI API is rate-limited per IP; when the limit is reached, the command asks the user to try again later. The URL-title branch of this command does not call the AI service.
+
 <kbd>Command + Option + g</kbd>
+
+### Generate Emoji
+
+Generates ten ordered emoji for the current thought using AI and prepends the best match. Repeating the command cycles through the cached alternatives without making another request; editing the thought after generation causes the next use to request fresh alternatives and replace the previously generated prefix. An existing emoji that was not generated by the command is treated as part of the thought and preserved.
+
+Generate Emoji uses the same blocking AI data disclosure, rate limiting, pending state, failure recovery, and `${VITE_AI_URL}` service as Generate Thought, calling `/generateEmoji` with the thought values. Multiple selected thoughts are sent in one request and generated in one LLM completion, and the batch is applied all or nothing: a failed or malformed response restores every selected thought. Selected thoughts that still show a value the command produced cycle their cached alternatives instantly and are left out of the request. The whole selection can be reverted together with one undo.
+
+Gesture: ↑ → ↓
+
+### Organize Thoughts
+
+Restructures the selected sibling thoughts and their descendants using AI. This may categorize them under new parent thoughts, split long thoughts into smaller ones, and reorder them more logically. The parent and unselected siblings are sent as read-only context and are left in place. The command is disabled when the selection spans different parents, when a context view is active, or when any selected thought already has an AI request in progress.
+
+On first use, em shows the same blocking AI data disclosure as Generate Thought. The command sends a numbered indented outline of the selected thoughts (and their descendants), their parent, and unselected siblings to `${VITE_AI_URL}/organizeThought` in one request. The model returns the final state in the same indented format, retaining `[n]` for existing thoughts and using `[new]` for categories and split pieces; the AI service validates every id and converts that text to the recursive JSON tree consumed by the app. Existing thoughts keep their prompt ids so duplicate text is unambiguous. A valid response is applied as one undo step, and the originally selected thoughts remain selected at their new paths so the bullet indicators stay in sync with the desktop alert and Command Center. A failed or malformed result leaves the thoughts unchanged. If a selected thought is edited or deleted before the request finishes, the reorganization is discarded. Server errors are shown in the error banner, and rate limiting asks the user to try again later.
+
+Gesture: ↑ → ↑
 
 ### Delete
 
@@ -431,7 +518,9 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 
 Bump the current thought down one level and replace it with a new, empty thought. When multiple thoughts are selected, their parent is bumped down and the selected thoughts are moved into the new thought.
 
-<kbd>Command + Option + d</kbd>
+A leading emoji labels the thought it is attached to rather than being part of its text, so it stays behind — along with the whitespace that separates it — and only the text it labels is bumped down. The caret is placed after it, ready for the replacement text. A thought that is nothing but an emoji has no text to separate, so it is bumped down whole as usual.
+
+<kbd>Command + Shift + D</kbd>
 
 https://github.com/user-attachments/assets/838c3546-4aa0-4256-af89-621356b455ad
 
@@ -465,7 +554,13 @@ Merges all duplicate siblings at the same level as the cursor. The first thought
 
 ### Split Sentences
 
-Splits multiple sentences in a single thought into separate thoughts.
+Splits multiple sentences in a single thought into separate thoughts. A parenthetical at the end of the thought is split off into a child before anything else, e.g. `This is a thought (and a subthought)`; otherwise sentence punctuation (`.;!?`) takes priority over every other delimiter.
+
+A thought that contains only a single sentence is split at its highest-precedence delimiter. A dash surrounded by whitespace or a colon splits it into a main thought and a child, e.g. `one - 1` and `Start: 1` both become a thought with a single child; the right side is then split on its commas, e.g. `Shopping list - apples, bananas` becomes a thought with two children. A colon only splits when it is followed by whitespace, so that a time such as `10:30` is left intact. If there is no such dash or colon, a copula splits it into a subject and a predicate as described below. If there is no copula either, a slash splits it into a chain of descendants, e.g. `one/two/three`. If there is no slash either, it is split into siblings on commas, then on the symbols `↑↓←→+`, then on the word "and". A hyphenated "and" compound at the end of the thought, such as `set-and-forget`, is a list of single words rather than a sentence joined by "and", so it is split before the word "and" is: the words before it become the main thought and its words become children, e.g. `Implies set-and-forget` becomes `Implies` with the children `set` and `forget`, and a thought that is only the compound splits into siblings. A period that belongs to an abbreviation, a decimal, or a url is not a sentence boundary, so `Mr. Jones → and me` also counts as a single sentence; such a thought splits on its commas and symbols, but not on "and", which commonly joins the parts of one sentence, e.g. `Fruit cost: apple $10.23 and pear $10.70`. A dash without surrounding whitespace is usually part of a compound word, such as `Jean-Michel`, so it has the lowest precedence of all: `Jeff Koons, Jean-Michel Basquiat` splits on the comma and `a → b-c` on the arrow, and only a thought with no other delimiter, such as `one-1`, splits into a main thought and a child at such a dash.
+
+A copula, that is `is`, `are`, `was`, or `were`, splits a single sentence that has no colon and no dash surrounded by whitespace into its subject as the main thought and its predicate as the child. The predicate loses its leading article and is capitalized when the subject is, so `Attention is the most valuable resource` becomes `Attention` with the child `Most valuable resource`, and `attention is the most valuable resource` becomes `attention` with the child `most valuable resource`. Like the right side of a dash, the predicate is split on its commas, e.g. `Best fruits are apples, bananas, oranges` becomes a thought with three children. Only a sentence with exactly one copula is split this way: `The sky is blue and the grass is green` is two clauses, so it splits into siblings on "and" instead. A sentence whose subject is a bare pronoun, such as `This is a single sentence` or `There is a problem`, is left intact, since the pronoun would make a meaningless thought on its own. The copula ranks above a slash, so `Input/output is the bottleneck` becomes `Input/output` with the child `Bottleneck`, and above a dash without surrounding whitespace, so `Jean-Michel is a painter` becomes `Jean-Michel` with the child `Painter`.
+
+A thought that none of the delimiters split is split at the caret instead: the text before the caret becomes the main thought and the text after it becomes its child, e.g. `Hello wo|rld` becomes `Hello wo` with the child `rld`. Only a collapsed selection counts as the caret, and only when it is strictly inside the text, so a caret at the start or the end of the thought, or a range of selected text, leaves the thought intact and the command reports that there is nothing to split. A delimiter always takes priority over the caret. Under a multiselect, the caret belongs to the one thought that owns the browser selection; the other selected thoughts are split only at their delimiters.
 
 <kbd>Command + Shift + S</kbd>
 
@@ -489,7 +584,7 @@ remaining selected thought becomes the next anchor.
 
 ### Copy Cursor
 
-Copies the cursor and all descendants.
+Copies the cursor and all descendants. When thoughts are selected, copies the selection instead, skipping any selected thought that is already a descendant of another ([`getMulticursorThoughtIds`](../src/selectors/getMulticursorThoughtIds.ts)). It only reads the thoughtspace, so it leaves the cursor, the selection, and the undo history untouched.
 
 <kbd>Command + c</kbd>
 
@@ -708,6 +803,8 @@ Navigation and non-undoable commands are ignored, so Repeat always repeats the l
 ### Toggle Undo Slider
 
 Toggle a handy slider that lets you rewind edits.
+
+Drag the start handle back to rewind, then drag the end handle to a later point; tap a handle to jump to its point in time. The copy button copies a bug report with the steps to reproduce the actions between the two. See [Undo history and the undo slider](#undo-history-and-the-undo-slider).
 
 ### Export
 

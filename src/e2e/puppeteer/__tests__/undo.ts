@@ -2,7 +2,7 @@ import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getCaretOffset from '../helpers/getCaretOffset'
@@ -251,47 +251,49 @@ it('Native undo places the caret at the end of the restored thought', async () =
   expect(await getCaretOffset()).toBe('correct'.length)
 })
 
-// We have to test this in puppeteer because chained commands are executed as separate commands at a higher level than action-creators and undone with an ad hoc mergeNext property on the action.
-it('Undo Select All + Categorize chained command in one step', async () => {
-  await emulate(KnownDevices['iPhone 15 Pro'])
+describe('mobile only', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
-  // create thoughts a, b, c
-  await gesture(newThoughtCommand)
-  await keyboard.type('a')
-  await gesture(newThoughtCommand)
-  await keyboard.type('b')
-  await gesture(newThoughtCommand)
-  await keyboard.type('c')
+  // We have to test this in puppeteer because chained commands are executed as separate commands at a higher level than action-creators and undone with an ad hoc mergeNext property on the action.
+  it('Undo Select All + Categorize chained command in one step', async () => {
+    // create thoughts a, b, c
+    await gesture(newThoughtCommand)
+    await keyboard.type('a')
+    await gesture(newThoughtCommand)
+    await keyboard.type('b')
+    await gesture(newThoughtCommand)
+    await keyboard.type('c')
 
-  // Select All + Categorize
-  await gesture('ldr' + 'lu')
+    // Select All + Categorize
+    await gesture('ldr' + 'lu')
 
-  // make sure multicursor is disabled after chained command
-  const highlightedCountAfterChain = await page.evaluate(
-    () => document.querySelectorAll('[data-highlighted=true]').length,
-  )
+    // make sure multicursor is disabled after chained command
+    const highlightedCountAfterChain = await page.evaluate(
+      () => document.querySelectorAll('[data-highlighted=true]').length,
+    )
 
-  expect(highlightedCountAfterChain).toBe(0)
+    expect(highlightedCountAfterChain).toBe(0)
 
-  const exported1 = await exportThoughts()
-  expect(exported1).toBe(`
+    const exported1 = await exportThoughts()
+    expect(exported1).toBe(`
 - 
   - a
   - b
   - c
 `)
 
-  await press('z', { meta: true })
+    await press('z', { meta: true })
 
-  const exported2 = await exportThoughts()
-  expect(exported2).toBe(`
+    const exported2 = await exportThoughts()
+    expect(exported2).toBe(`
 - a
 - b
 - c
 `)
 
-  // make sure multicursor is disabled after undo
-  const highlightedCount = await page.evaluate(() => document.querySelectorAll('[data-highlighted=true]').length)
+    // make sure multicursor is disabled after undo
+    const highlightedCount = await page.evaluate(() => document.querySelectorAll('[data-highlighted=true]').length)
 
-  expect(highlightedCount).toBe(0)
+    expect(highlightedCount).toBe(0)
+  })
 })

@@ -44,6 +44,13 @@ GITHUB_ACTIONS="" ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__test
 
 Prerequisite: **Docker** available (for browserless). The script manages the container and dev server itself — do not start your own, and do not point it at the shared `:9222` Chrome / `:3000` server used during exploration.
 
+That last rule is load-bearing, because a stale dev server fails *silently and misleadingly* rather than loudly. `vite --strictPort` exits immediately when an earlier instance still holds `:2552`, so a restart can leave the old server running, and a liveness check like `nc -z localhost 2552` still succeeds. The suite then runs against whatever source that server started with: an edit you just made — a rebase especially — appears to have no effect, and the run reads as missing functionality rather than a stale environment. If you ever drive Vitest directly (`npx vitest run --project puppeteer-e2e <file>`), which bypasses the script's orphaned-server guard, prove the server is newer than your last edit before you believe a failure:
+
+```bash
+ps -eo pid,lstart,command | grep '[v]ite --host --port 2552'  # started before your edit? kill it, restart, re-check
+curl -sk https://localhost:2552/src/<edited file> | grep '<something you just changed>'
+```
+
 ## iOS — WDIO + Appium
 
 iOS tests run on **BrowserStack** real devices, exactly as iOS reproduction does (see `browser-control-ios`). **This is the path in the agent/Copilot environment — there is no local simulator there.** A local simulator is a local-developer convenience only.
