@@ -9,6 +9,7 @@ import { isTouch } from '../browser'
 import { CONTENT_BOX_PADDING_LEFT, LongPressState } from '../constants'
 import testFlags from '../e2e/testFlags'
 import usePositionedThoughts from '../hooks/usePositionedThoughts'
+import useScrollClamp from '../hooks/useScrollClamp'
 import useSizeTracking from '../hooks/useSizeTracking'
 import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
 import { hasChildren } from '../selectors/getChildren'
@@ -78,44 +79,12 @@ const useNavAndFooterHeight = () => {
   }
 }
 
-/** When navigating deep within the hierarchy, many ancestors and siblings of ancestors are hidden, resulting in a large blank space above the cursor. If the user scrolls up, the entire screen will be blank. To avoid this, crop the space above and simultaneously scroll up by the same amount so that the thoughts do not appear to move (relative to the viewport), but the empty space above is eliminated. Returns the number of pixels that all thoughts should be shifted off. */
-const useAutocrop = (spaceAbove: number): number => {
-  // get the scroll position before the render so it can be preserved
-  const scrollY = window.scrollY
-
-  const viewportHeight = viewportStore.useSelector(viewport => viewport.innerHeight)
-
-  // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
-  const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
-
-  const spaceAboveLast = useRef(spaceAboveExtended)
-
-  // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
-  useEffect(
-    () => {
-      const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
-      window.scrollTo({ top: scrollY - spaceAboveDelta })
-      spaceAboveLast.current = spaceAboveExtended
-    },
-    // do not trigger effect on scrollY change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [spaceAboveExtended],
-  )
-
-  // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-  return -spaceAboveExtended + viewportHeight
-}
-
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
-const useLayoutTreeTop = (
-  ref: RefObject<HTMLElement | null>,
-  /** The amount that the layout tree is shifted up is needed to produce the correct layoutTreeTop value. See: useAutocrop. */
-  autocrop: number,
-) => {
+const useLayoutTreeTop = (ref: RefObject<HTMLElement | null>) => {
   useEffect(() => {
     if (!ref.current) return
-    viewportStore.update({ layoutTreeTop: (ref.current?.offsetTop || 0) + autocrop })
-  }, [ref, autocrop])
+    viewportStore.update({ layoutTreeTop: ref.current.offsetTop })
+  }, [ref])
 
   return ref
 }
@@ -236,13 +205,30 @@ const LayoutTree = () => {
   // (The same multiplicand is applied to the vertical translation that crops hidden thoughts above the cursor.)
   const indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
 
-  const autocrop = useAutocrop(spaceAbove)
-
   /** The space added below the last rendered thought and the breadcrumbs/footer. This is calculated such that there is a total of one viewport of height between the last rendered thought and the bottom of the document. This ensures that when the keyboard is closed, the scroll position will not change. If the caret is on a thought at the top edge of the screen when the keyboard is closed, then the document will shrink by the height of the virtual keyboard. The scroll position will only be forced to change if the document height is less than window.scrollY + window.innerHeight. */
   // Subtract singleLineHeight since we can assume that the last rendered thought is within the viewport. (It would be more accurate to use its exact rendered height, but it just means that there may be slightly more space at the bottom, which is not a problem. The scroll position is only forced to change when there is not enough space.)
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
-  useLayoutTreeTop(ref, autocrop)
+  const visibleBounds = treeThoughtsPositioned.reduce(
+    (accum, thought) =>
+      thought.autofocus === 'show' || thought.autofocus === 'dim'
+        ? {
+            top: Math.min(accum.top, thought.y),
+            bottom: Math.max(accum.bottom, thought.y + thought.height),
+          }
+        : accum,
+    { top: Infinity, bottom: -Infinity },
+  )
+
+  const elasticOffset = useScrollClamp({
+    layoutRef: ref,
+    visibleTop: visibleBounds.top,
+    visibleBottom: visibleBounds.bottom,
+    viewportHeight,
+    enabled: spaceAbove > 0,
+  })
+
+  useLayoutTreeTop(ref)
 
   const treeThoughtsMemoized = useMemo(
     () =>
@@ -266,7 +252,7 @@ const LayoutTree = () => {
         }),
         fauxCaretTreeProvider(indent),
       )}
-      style={{ transform: `translateY(${autocrop}px)` }}
+      style={{ transform: `translateY(${elasticOffset.get()}px)` }}
       ref={ref}
     >
       <HoverArrow
