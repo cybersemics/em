@@ -143,8 +143,7 @@ const updateThoughts = (
     idbSynced,
     lexemeIndexUpdates,
     local,
-    // An empty placement map means no thought changed position; omit it so the batch carries only real moves.
-    ...(movePlacements && Object.keys(movePlacements).length > 0 ? { movePlacements } : null),
+    movePlacements,
     pendingDeletes,
     remote,
     thoughtIndexUpdates: thoughtIndexUpdatesFresh,
