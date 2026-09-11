@@ -63,6 +63,12 @@ const getActiveEmptySelectionColors = (state: State): Partial<CommandState> => {
 }
 
 /** Combines the command state of two thoughts, keeping only the formatting that applies to both. A command that differs between them falls back to its inactive value: false for a formatting command, and undefined for a color. */
+// The highlight this produces reads as a statement about the whole selection — Bold lit means every selected thought is
+// bold — which implies that tapping it removes bold from all of them, and that tapping an unlit button applies that mark
+// to all of them. Executing a formatting command on a multiselection does not do that yet: the multicursor loop runs the
+// command once per selected thought, so a mixed selection is inverted rather than made uniform. Toggling all selected
+// thoughts in the same direction is tracked in https://github.com/cybersemics/em/issues/5148, which will bring the
+// formatting behavior in line with what this highlighting already describes.
 const intersectCommandState = (a: CommandState, b: CommandState): CommandState =>
   Object.fromEntries(
     Object.values(FormattingCommand).map(command => [
@@ -86,7 +92,11 @@ export const updateCommandState = () => {
   const selectionIsActiveThought = state.cursor && selection.isActive() && selection.isThought()
   commandStateStore.update(
     selectionIsActiveThought
-      ? {
+      ? // The caret is live inside a thought, so the state describes what is selected there rather than the whole
+        // thought: the marks wrapping the selected markup, or — for a collapsed caret — the marks wrapping the caret,
+        // which is what the next character typed will inherit. A collapsed caret has no markup to carry a color, so the
+        // colors come from the browser instead, which reports one that has been enabled but not yet typed.
+        {
           ...getCommandState(selection.html() ?? ''),
           ...(!selection.text()?.length ? getActiveEmptySelectionColors(state) : {}),
         }
