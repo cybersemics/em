@@ -19,7 +19,7 @@ import {
 } from './attributeChildren'
 import createLexemeIndex from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
-import { enqueueMaterializedThoughtsToStore } from './sync'
+import { applyMaterializedThoughtsToStore } from './sync'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 import { createTreecrdtLocalWriteOptions } from './writeBarrier'
 
@@ -380,7 +380,7 @@ const createTreecrdtDataProvider = () => {
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
       const keys = lexemes.applyChanges(event)
-      void enqueueMaterializedThoughtsToStore(event, materializationContext, keys).catch(err =>
+      void applyMaterializedThoughtsToStore(event, materializationContext, keys).catch(err =>
         console.error('TreeCRDT materialization refresh failed', err),
       )
     })

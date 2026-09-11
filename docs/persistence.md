@@ -111,7 +111,7 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 `client.onMaterialized` fires after operations are materialized into SQLite — for remote ops arriving over sync as well as for local writes. Every event updates the membership index from current node state. The previous hash is looked up by thought ID, so rename/delete also work when the old thought was never loaded into Redux. Indexing runs even without a UI bridge.
 
-[`enqueueMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/enqueueMaterializedThoughtsToStore.ts) queues each event through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts). The queued task awaits membership indexing even without a bridge. With a bridge, it then:
+[`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) queues each event through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts). The queued task awaits membership indexing even without a bridge. With a bridge, it then:
 
 1. Waits for the write barrier.
 2. For non-local events, refreshes attributes and runs [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts) to load affected thoughts and re-project sibling order onto `rank`.

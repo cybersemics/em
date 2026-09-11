@@ -21,7 +21,7 @@ type MaterializationContext = Readonly<{
 }>
 
 /** Serializes UI refreshes without putting index persistence behind the local-write barrier. */
-const enqueueMaterializedThoughtsToStore = (
+const applyMaterializedThoughtsToStore = (
   event: MaterializationEvent,
   { bridge, client, db }: MaterializationContext,
   changedKeys: Promise<string[]>,
@@ -70,4 +70,4 @@ const enqueueMaterializedThoughtsToStore = (
     }
   })
 
-export default enqueueMaterializedThoughtsToStore
+export default applyMaterializedThoughtsToStore
