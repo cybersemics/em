@@ -26,7 +26,6 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
     CREATE TABLE IF NOT EXISTS ${META_TABLE} (id INTEGER PRIMARY KEY CHECK (id = 1), head_seq INTEGER NOT NULL);
   `)
   let pending = Promise.resolve()
-  let version = 0
 
   /** Replaces a thought's membership from current materialized state, returning both affected hashes. */
   const reindex = async (id: ThoughtId): Promise<string[]> => {
@@ -69,7 +68,6 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
 
   /** Queues index writes independently of UI refreshes, which may wait for local persistence. */
   const applyChanges = (event: MaterializationEvent): Promise<string[]> => {
-    version += 1
     const update = pending.then(async () => {
       const keys = new Set<string>()
       // A subsequent write may already have superseded this value in storage, but Redux may still display it.
@@ -140,7 +138,6 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
 
   return {
     applyChanges,
-    getVersion: () => version,
     getLexemesByIds,
     getLexemeById: async (key: string) => (await getLexemesByIds([key]))[0],
     waitForIdle,

@@ -376,7 +376,7 @@ const createTreecrdtDataProvider = () => {
 
     const lexemes = await createLexemeIndex(client)
     const clientDb = createClientDataProvider({ client, replicaId }, lexemes)
-    const materializationContext = { bridge: materialization, client, db: clientDb, lexemes }
+    const materializationContext = { bridge: materialization, client, db: clientDb }
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
       const keys = lexemes.applyChanges(event)

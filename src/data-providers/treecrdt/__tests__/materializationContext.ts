@@ -4,7 +4,7 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN } from '../../../constants'
 import type { DataProvider } from '../../DataProvider'
-import type { enqueueMaterializedThoughtsToStore as EnqueueMaterializedThoughtsToStore } from '../sync/applyMaterializedThoughtsToStore'
+import type EnqueueMaterializedThoughtsToStore from '../sync/enqueueMaterializedThoughtsToStore'
 import createTreecrdtDataProvider from '../thoughtspace'
 
 const { enqueueMaterializedThoughtsToStore } = vi.hoisted(() => ({

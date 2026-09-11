@@ -111,13 +111,11 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 `client.onMaterialized` fires after operations are materialized into SQLite — for remote ops arriving over sync as well as for local writes. Every event updates the membership index from current node state. The previous hash is looked up by thought ID, so rename/delete also work when the old thought was never loaded into Redux. Indexing runs even without a UI bridge.
 
-When a bridge is attached, `enqueueMaterializedThoughtsToStore` serializes UI refreshes through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts).
+[`enqueueMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/enqueueMaterializedThoughtsToStore.ts) queues each event through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts). The queued task awaits membership indexing even without a bridge. With a bridge, it then:
 
-[`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
-
-1. Waits for membership indexing and the write barrier.
+1. Waits for the write barrier.
 2. For non-local events, refreshes attributes and runs [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts) to load affected thoughts and re-project sibling order onto `rank`.
-3. Loads complete lexemes for the affected old/new hashes. If an optimistic edit or materialization arrived during the read, retries before applying through the bridge. Unchanged lexemes are not republished. Local events refresh only lexemes, leaving synchronous thought edits alone.
+3. Loads complete lexemes for the affected old/new hashes. If an optimistic edit or materialization arrived during the read, detected from the Redux snapshot and existing write/materialization queue counters, retries before applying through the bridge. Unchanged lexemes are not republished. Local events refresh only lexemes, leaving synchronous thought edits alone.
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
 
