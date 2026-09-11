@@ -2,13 +2,15 @@
  * Files one tracking issue per intermittently failing Puppeteer test, matching the repo's existing
  * convention: title `Flaky test: <file> > <full name>`, label `test`. Deduplicated by exact title
  * match against all open issues, so nightly runs are idempotent and human-filed issues are
- * respected.
+ * respected. A test whose tracking issue was closed — fixed once, flaky again — reopens that issue
+ * rather than filing a second one, so every occurrence and every attempted fix stay on one issue.
  *
- * Resolves the tracking issue for every failing test — the one just created, or the open one that
- * already existed — and writes them to flaky-results/flaky-issues.json so the steps that run after
- * this one can use them: `Notify Discord` links each offender in its alert, and `Start Copilot
- * tasks` dispatches an agent at each entry marked `created`. Consistent failures are never filed,
- * but are still linked when a tracking issue for them is already open.
+ * Resolves the tracking issue for every failing test — the one just created, the one just reopened,
+ * or the open one that already existed — and writes them to flaky-results/flaky-issues.json so the
+ * steps that run after this one can use them: `Notify Discord` links each offender in its alert, and
+ * `Start Copilot tasks` dispatches an agent at each entry whose `status` is `created` or `reopened`.
+ * Consistent failures are never filed, but are still linked when a tracking issue for them is
+ * already open.
  *
  * Loaded by the `File tracking issues` step of .github/workflows/puppeteer-flaky.yml through
  * actions/github-script. Reads flaky-results/flaky-summary.json (written by
@@ -16,12 +18,16 @@
  */
 const fs = require('node:fs')
 
-// Cap issue creation per run so a catastrophic run (e.g. main broken, every suite failing) cannot
-// flood the tracker. Dedupe makes the next run pick up any overflow that is still failing.
-const MAX_NEW_ISSUES = 10
+// Cap the issues one run may put on the tracker, filed or reopened, so a catastrophic run (e.g.
+// main broken, every suite failing) cannot flood it. Dedupe makes the next run pick up any overflow
+// that is still failing.
+const MAX_ISSUES_OPENED = 10
 
 const SUMMARY_FILE = 'flaky-results/flaky-summary.json'
 const ISSUES_FILE = 'flaky-results/flaky-issues.json'
+
+/** The label every tracking issue carries, which is also what bounds the closed-issue lookup. */
+const LABEL = 'test'
 
 /** Issue title for a failed test, matching the existing manual convention (see e.g. #4640). */
 const issueTitle = t => {
@@ -33,10 +39,13 @@ const issueTitle = t => {
   return `Flaky test: ${file} > ${name}`.slice(0, 256)
 }
 
-/** Issue body for a failed test, linking back to the run that detected it. */
-const issueBody = t =>
+/**
+ * What this run observed about a failing test, under a lead-in line saying why it is being written —
+ * the body of the issue this files, or of the comment it leaves on the issue it reopens.
+ */
+const failureReport = (leadIn, t) =>
   [
-    `Automatically filed by the [Puppeteer Flaky workflow](${process.env.RUN_URL}).`,
+    leadIn,
     '',
     `- **File**: \`${t.file}\``,
     `- **Test**: ${t.fullName}`,
@@ -70,46 +79,103 @@ const fileFlakyIssues = async ({ github, context, core }) => {
   })
   const openByTitle = new Map(openIssues.filter(i => !i.pull_request).map(i => [i.title, i]))
 
+  // The same dedupe against closed issues, which is what tells a flake that has come back from one
+  // nobody has seen before. Bounded to the `test` label — a couple of hundred issues against the
+  // several thousand every closed issue in this repository would be — which is a label this
+  // workflow puts on everything it files. A tracking issue closed without it is not found here and
+  // is filed afresh, exactly as it was before this existed.
+  const closedIssues = await github.paginate(github.rest.issues.listForRepo, {
+    owner,
+    repo,
+    state: 'closed',
+    labels: LABEL,
+    per_page: 100,
+  })
+  const closedByTitle = new Map(
+    closedIssues
+      .filter(i => !i.pull_request)
+      // listForRepo answers newest first and a Map keeps the last entry written for a key, so
+      // reverse to reopen the most recent issue when a test has been filed and closed more than once.
+      .toReversed()
+      .map(i => [i.title, i]),
+  )
+
   /** Tracking issue per failing test, in summary order, for the Discord alert to link. */
   const issues = []
-  let created = 0
+  let opened = 0
   for (const t of failedTests) {
     const title = issueTitle(t)
     const open = openByTitle.get(title)
     if (open) {
       core.info(`Open issue already exists, skipping: ${title}`)
-      issues.push({ file: t.file, fullName: t.fullName, number: open.number, url: open.html_url, created: false })
+      issues.push({ file: t.file, fullName: t.fullName, number: open.number, url: open.html_url, status: 'tracked' })
       continue
     }
     // Only intermittent failures are flakes. A test that failed every iteration is a consistent
-    // failure (i.e. a regression) and is reported to Discord and the job summary, but not filed as
-    // a flake.
+    // failure (i.e. a regression) and is reported to Discord and the job summary, but is neither
+    // filed nor reopened as a flake.
     if (t.failed === t.of) {
       core.info(`Consistent failure, not filing: ${title}`)
       continue
     }
-    if (created >= MAX_NEW_ISSUES) {
+    if (opened >= MAX_ISSUES_OPENED) {
       core.warning(
-        `Issue cap (${MAX_NEW_ISSUES}) reached; not filing an issue for: ${title}. ` +
-          'It will be filed by a later run if it is still failing.',
+        `Issue cap (${MAX_ISSUES_OPENED}) reached; leaving this test alone: ${title}. ` +
+          'A later run will file or reopen it if it is still failing.',
       )
       continue
     }
+
+    // A closed issue means this flake was fixed once and has come back. Reopening it keeps every
+    // occurrence — and the pull request that closed it — on one issue, where the next agent reads
+    // what the last fix tried, instead of starting a trail that says nothing about the last attempt.
+    const closed = closedByTitle.get(title)
+    if (closed) {
+      await github.rest.issues.update({
+        owner,
+        repo,
+        issue_number: closed.number,
+        state: 'open',
+        state_reason: 'reopened',
+      })
+      await github.rest.issues.createComment({
+        owner,
+        repo,
+        issue_number: closed.number,
+        body: failureReport(
+          `This test is failing again, so the [Puppeteer Flaky workflow](${process.env.RUN_URL}) reopened this issue.`,
+          t,
+        ),
+      })
+      openByTitle.set(title, closed)
+      issues.push({
+        file: t.file,
+        fullName: t.fullName,
+        number: closed.number,
+        url: closed.html_url,
+        status: 'reopened',
+      })
+      opened++
+      core.info(`Reopened issue #${closed.number}: ${title}`)
+      continue
+    }
+
     const { data: issue } = await github.rest.issues.create({
       owner,
       repo,
       title,
-      body: issueBody(t),
-      labels: ['test'],
+      body: failureReport(`Automatically filed by the [Puppeteer Flaky workflow](${process.env.RUN_URL}).`, t),
+      labels: [LABEL],
     })
     openByTitle.set(title, issue)
-    issues.push({ file: t.file, fullName: t.fullName, number: issue.number, url: issue.html_url, created: true })
-    created++
+    issues.push({ file: t.file, fullName: t.fullName, number: issue.number, url: issue.html_url, status: 'created' })
+    opened++
     core.info(`Filed issue: ${title}`)
   }
 
   fs.writeFileSync(ISSUES_FILE, JSON.stringify(issues, null, 2))
-  core.info(`Filed ${created} new issue(s); ${issues.length - created} already tracked.`)
+  const created = issues.filter(i => i.status === 'created').length
+  core.info(`Filed ${created} new issue(s); reopened ${opened - created}; ${issues.length - opened} already tracked.`)
 }
 
 module.exports = fileFlakyIssues

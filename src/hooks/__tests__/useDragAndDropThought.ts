@@ -1,11 +1,14 @@
-import { fireEvent } from '@testing-library/dom'
+import { fireEvent, screen } from '@testing-library/dom'
 import { render, renderHook } from '@testing-library/react'
 import { PropsWithChildren, act, createElement } from 'react'
 import { Provider } from 'react-redux'
+import DragThoughtItem from '../../@types/DragThoughtItem'
+import DragThoughtZone from '../../@types/DragThoughtZone'
 import DropThoughtZone from '../../@types/DropThoughtZone'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { longPressActionCreator as longPress } from '../../actions/longPress'
+import Alert from '../../components/Alert'
 import Editable from '../../components/Editable'
 import { LongPressState } from '../../constants'
 import globals from '../../globals'
@@ -18,6 +21,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import useDragAndDropThought from '../useDragAndDropThought'
 
 const dragEndCallbacks = vi.hoisted(() => [] as (() => void)[])
+const dropCallbacks = vi.hoisted(() => [] as ((item: unknown, monitor: unknown) => void)[])
 
 vi.mock('react-dnd', async importOriginal => {
   const actual = await importOriginal<typeof import('react-dnd')>()
@@ -28,7 +32,10 @@ vi.mock('react-dnd', async importOriginal => {
       if (end) dragEndCallbacks.push(end)
       return [{ isDragging: false }, vi.fn(), vi.fn()]
     },
-    useDrop: () => [{ canDropThought: false, isDeepHovering: false, isHovering: false }, vi.fn()],
+    useDrop: ({ drop }: { drop?: (item: unknown, monitor: unknown) => void }) => {
+      if (drop) dropCallbacks.push(drop)
+      return [{ canDropThought: false, isDeepHovering: false, isHovering: false }, vi.fn()]
+    },
   }
 })
 
@@ -44,6 +51,7 @@ beforeEach(async () => {
   await initStore()
   globals.suppressCursorAfterTouch = false
   dragEndCallbacks.length = 0
+  dropCallbacks.length = 0
 })
 
 afterEach(() => {
@@ -103,4 +111,46 @@ it('preserves an unrelated cursor when a trailing click fires after drag cleanup
   })
 
   expect(store.getState().cursor).toEqual(contextToPath(store.getState(), ['a']))
+})
+
+it('renders home as the destination in the move alert when a thought is dropped at the root', async () => {
+  await dispatch(
+    importText({
+      text: `
+        - a
+          - b
+        - c
+      `,
+    }),
+  )
+
+  const state = store.getState()
+  const pathB = contextToPath(state, ['a', 'b']) as SimplePath
+  const pathC = contextToPath(state, ['c']) as SimplePath
+
+  render(createElement(Provider, { store, children: createElement(Alert) }))
+
+  // wire the drop target onto c, the root-level thought that b is dropped at
+  renderHook(
+    () =>
+      useDragAndDropThought({
+        hoverZone: DropThoughtZone.ThoughtDrop,
+        isCursorParent: false,
+        isVisible: true,
+        path: pathC,
+        simplePath: pathC,
+      }),
+    { wrapper },
+  )
+
+  const item: DragThoughtItem[] = [{ path: pathB, simplePath: pathB, zone: DragThoughtZone.Thoughts }]
+  const monitor = { didDrop: () => false, isOver: () => true, getItem: () => item }
+
+  await act(async () => {
+    dropCallbacks[0](item, monitor)
+    // the alert is dispatched on a 100ms timeout so that MultiGesture has cleared the error first
+    await vi.advanceTimersByTimeAsync(100)
+  })
+
+  expect(screen.getByTestId('alert-content').textContent).toBe('"b" moved to home.')
 })

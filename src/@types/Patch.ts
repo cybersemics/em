@@ -11,7 +11,8 @@ export interface CommandPatchMetadata {
   commandId: CommandId
   /** User-facing command label at the time the patch was created. */
   label: string
-  type: CommandType
+  /** How the command was invoked. Undefined for programmatic execution. */
+  type?: CommandType
   keyboardIndex?: number
 }
 
@@ -23,6 +24,11 @@ export interface ActionPatchMetadata {
 }
 
 export type PatchMetadataInput = CommandPatchMetadata | ActionPatchMetadata
+
+/** Command attribution carried by each action dispatched during a command transaction. */
+export interface CommandAttributedAction {
+  commandMetadata?: CommandPatchMetadata
+}
 export type PatchMetadata = PatchMetadataInput & {
   /** The underlying action types, in first-occurrence order, independently of the command that produced them. */
   actionTypes: [ActionType, ...ActionType[]]

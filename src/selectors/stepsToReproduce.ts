@@ -82,6 +82,8 @@ const describeCommandInvocation = (patch: Patch): string => {
     case 'desktopCommandUniverse':
       return `Choose ${command.label} in the Command Universe.`
   }
+
+  return `Run ${command.label}.`
 }
 
 /** The ids of the thoughts that exist after a patch but not before it, i.e. that its actions created. */

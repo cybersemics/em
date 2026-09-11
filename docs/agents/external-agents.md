@@ -93,6 +93,14 @@ These depend on things the runner provides: Chrome already listening on a debugg
 
 One idea inside `browser-control` is worth knowing wherever you drive this app, because it is a property of **em** rather than of any harness: *observing is free, but actuating goes through the project's own e2e helpers*, since some of em's controls (the toolbar buttons and color swatches) are bound to touch events only when `isTouch`, so a raw mouse click silently no-ops under touch emulation. It has not been extracted into a shared skill — do that if it starts causing trouble locally.
 
+## Claude Code in the cloud
+
+"Local" above means *not the Copilot cloud agent*, which is not quite the same as *on a laptop*: a Claude Code session started from [claude.ai/code](https://claude.ai/code) reads `AGENTS.md` through the same `CLAUDE.md` symlink and the same `.agents/skills/`, but runs on a disposable Anthropic-managed runner rather than on a developer's machine. Everything above still applies to it. Two properties of that runner do not apply to either of the others, and [`end-session`](skills.md#end-session) Step 8 is where they turn into rules.
+
+The runner is **reclaimed once the session goes idle**, and reopening the session provisions a fresh one. That makes idling the cheap state and waking the expensive one, which inverts the usual instinct to keep a session running: there is no compute charge for the runner, but every wake re-reads the whole conversation. A session whose work is finished should be allowed to end.
+
+The session can also be **woken by pull request activity**, which it subscribes to per pull request. Subscription is the right way to wait, because it costs nothing until GitHub actually emits something. A scheduled check-in on top of it is not, because it fires on a clock rather than on an event and pays to rebuild the runner that idling correctly released. The one blind spot is a conflict created when the base branch advances, which GitHub emits no webhook for at all — [`copilot-conflicts.yml`](../../.github/workflows/copilot-conflicts.yml) covers that from CI on every push to `main`, though it scans only pull requests authored by the Copilot account.
+
 ## Changing any of this
 
 **Adding a skill to the shared set** is one symlink:

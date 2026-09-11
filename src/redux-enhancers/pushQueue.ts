@@ -117,7 +117,6 @@ const pushQueue: StoreEnhancer<any> =
             (dbQueue ?? []).map(batch => ({
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
               lexemeIndexUpdates: batch.lexemeIndexUpdates,
-              lexemeIndexUpdatesOld: batch.lexemeIndexUpdatesOld,
               movePlacements: batch.movePlacements,
               local: batch.local,
             })),
@@ -138,7 +137,6 @@ const pushQueue: StoreEnhancer<any> =
       const freeBatch = (freeQueue || []).reduce<PushBatch>(mergeBatch, {
         thoughtIndexUpdates: {},
         lexemeIndexUpdates: {},
-        lexemeIndexUpdatesOld: {},
       })
 
       Object.entries(freeBatch.thoughtIndexUpdates).forEach(([id, thoughtUpdate]) => {

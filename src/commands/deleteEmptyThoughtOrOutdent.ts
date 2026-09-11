@@ -1,6 +1,9 @@
+import pluralize from 'pluralize'
 import Command from '../@types/Command'
 import State from '../@types/State'
+import { alertActionCreator as alert } from '../actions/alert'
 import { deleteEmptyThoughtActionCreator as deleteEmptyThought } from '../actions/deleteEmptyThought'
+import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../actions/deleteThoughtWithCursor'
 import { outdentActionCreator as outdent } from '../actions/outdent'
 import DeleteEmptyThoughtIcon from '../components/icons/DeleteEmptyThoughtIcon'
 import * as selection from '../device/selection'
@@ -67,7 +70,15 @@ const canExecute = (state: State): boolean =>
 // eslint-disable-next-line jsdoc/require-jsdoc
 const exec: Command['exec'] = (dispatch, getState) => {
   const state = getState()
-  if (state.cursorCleared) {
+  if (state.isMulticursorExecuting) {
+    // Outdent an only child rather than deleting it, but only when it has somewhere to go. A thought at the root has
+    // no parent to outdent out of, so it must be deleted for Select All + Backspace to clear the thoughtspace (#4008).
+    if (state.cursor && state.cursor.length > 1 && canExecuteOutdent(state)) {
+      dispatch(outdent())
+    } else {
+      dispatch(deleteThoughtWithCursor())
+    }
+  } else if (state.cursorCleared) {
     dispatch(deleteEmptyThought)
   } else if (canExecuteOutdent(state)) {
     dispatch(outdent())
@@ -84,6 +95,10 @@ const deleteEmptyThoughtOrOutdent = {
   multicursor: {
     preventSetCursor: true,
     reverse: true,
+    clearMulticursor: true,
+    onComplete(filteredCursors, dispatch) {
+      dispatch(alert(`Deleted ${pluralize('thought', filteredCursors.length, true)}.`))
+    },
   },
   svg: DeleteEmptyThoughtIcon,
   canExecute,

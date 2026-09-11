@@ -16,6 +16,29 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 
 beforeEach(initStore)
 
+it('reverts a bumped leaf that starts with an emoji on a single undo', async () => {
+  await dispatch([
+    importText({
+      text: `- 🧠 Brain`,
+    }),
+    setCursor(['🧠 Brain']),
+  ])
+
+  executeCommand(bumpThoughtDown, { store })
+
+  // Precondition: the bump occurred, otherwise the undo below would have nothing to revert.
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - 🧠 ${''}
+    - Brain`)
+
+  await dispatch(undo())
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - 🧠 Brain`)
+})
+
 describe('DOM', () => {
   beforeEach(createTestApp)
   afterEach(cleanupTestApp)
@@ -181,6 +204,32 @@ describe('multicursor', () => {
   - a
     - b
     - c
+    - d`)
+  })
+
+  it("leaves the emoji of the selected thoughts' parent behind when it is bumped down", () => {
+    store.dispatch([
+      importText({
+        text: `
+          - 🧠 Brain
+            - b
+            - c
+            - d`,
+      }),
+      setCursor(['🧠 Brain', 'b']),
+      addMulticursor(['🧠 Brain', 'b']),
+      addMulticursor(['🧠 Brain', 'c']),
+    ])
+
+    executeCommandWithMulticursor(bumpThoughtDown, { store })
+
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - 🧠 ${''}
+    - Brain
+      - b
+      - c
     - d`)
   })
 

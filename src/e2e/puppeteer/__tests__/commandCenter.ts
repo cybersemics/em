@@ -1,13 +1,15 @@
 import { KnownDevices } from 'puppeteer'
+import clearThoughtCommand from '../../../commands/clearThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import closeKeyboard from '../helpers/closeKeyboard'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
-import waitForAlertContent from '../helpers/waitForAlertContent'
+import waitForAlert from '../helpers/waitForAlert'
 import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForEditable from '../helpers/waitForEditable'
@@ -59,7 +61,7 @@ describe('command center', () => {
     await click('[data-testid="command-center-panel"] [aria-label="Delete"]')
 
     // wait for the thought to be deleted before asserting on the Command Center
-    await waitForAlertContent('Deleted 1 thought')
+    await waitForAlert('Deleted 1 thought')
 
     // The delete is what would dismiss the Command Center, and its alert renders in the same update, so a wrongly
     // dismissed sheet is already sliding shut by now and never reports itself as open again.
@@ -124,5 +126,29 @@ describe('command center', () => {
     // control: the same swipe starting above the system-gesture strip must still open the Command Center
     await gesture('u', { xStart: innerWidth / 4, yStart: innerHeight - 200 })
     await waitForCommandCenterOpen()
+  })
+
+  // https://github.com/cybersemics/em/issues/5260
+  it('does not reopen when the keyboard is dismissed after Clear Thought', async () => {
+    await paste('- a')
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    // Clear Thought empties the thought for retyping and dismisses the sheet so the keyboard has the screen
+    await gesture(clearThoughtCommand)
+    await waitForEditable('')
+    await waitForCommandCenterClosed()
+
+    // dismiss the keyboard, as tapping a blank area does
+    await closeKeyboard()
+
+    // the blur exits the cleared state, restoring the thought's value
+    await waitForEditable('a')
+
+    // the sheet stays dismissed and the thought is no longer selected
+    expect(await page.$('[data-testid=command-menu-panel]')).toBeNull()
+    expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(0)
   })
 })

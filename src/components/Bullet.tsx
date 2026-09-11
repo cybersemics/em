@@ -338,8 +338,9 @@ const Bullet = ({
 
   /** The 1-based ordinal and style of an ordered list item, or null if the thought is not in an ordered context. A thought is ordered when its parent has =children/=bullet/Ordered|Alpha or its grandparent has =grandchildren/=bullet/Ordered|Alpha. */
   const ordered = useSelector((state): { index: number; style: 'Ordered' | 'Alpha' } | null => {
-    // Ordered numbering does not apply in the context view.
-    if (showContexts) return null
+    // Ordered numbering does not apply in the context view. A context view entry is rendered in place of its
+    // context, so the =children/=bullet of its real parent must not number it.
+    if (showContexts || isInContextView) return null
     // childIndexNonAttribute is -1 for attributes and undefined outside the linearized tree; neither should be numbered.
     if (childIndexNonAttribute == null || childIndexNonAttribute < 0) return null
     const thought = getThoughtById(state, thoughtId)

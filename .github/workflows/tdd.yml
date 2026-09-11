@@ -346,7 +346,7 @@ jobs:
 
       - name: Restore GitHub Actions files from PR HEAD
         if: github.event_name == 'pull_request'
-        run: git checkout FETCH_HEAD -- .github/actions/
+        run: git checkout FETCH_HEAD -- .github/actions/ .github/scripts/
 
       - name: Checkout test files from PR head
         id: patch
@@ -444,6 +444,12 @@ jobs:
             echo "❌ TDD flagged: changed tests PASS on the base branch."
             echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
             echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
+
+            # Emit GitHub diff annotations for each added it()/test() call so the
+            # TDD violation is highlighted directly in the PR file changes view.
+            git diff "${{ needs.detect.outputs.merge_base }}" "${{ github.event.pull_request.head.sha }}" -- $UNIT_FILES > /tmp/test.patch
+            sh .github/scripts/annotate-tdd-violations.sh /tmp/test.patch
+
             exit 1
           fi
 
@@ -475,7 +481,7 @@ jobs:
 
       - name: Restore GitHub Actions files from PR HEAD
         if: github.event_name == 'pull_request'
-        run: git checkout FETCH_HEAD -- .github/actions/
+        run: git checkout FETCH_HEAD -- .github/actions/ .github/scripts/
 
       - name: Checkout test files and support from PR head
         id: patch
@@ -585,6 +591,12 @@ jobs:
             echo "❌ TDD flagged: changed puppeteer tests PASS on the base branch."
             echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
             echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
+
+            # Emit GitHub diff annotations for each added it()/test() call so the
+            # TDD violation is highlighted directly in the PR file changes view.
+            git diff "${{ needs.detect.outputs.merge_base }}" "${{ github.event.pull_request.head.sha }}" -- $PUPPETEER_FILES > /tmp/test.patch
+            sh .github/scripts/annotate-tdd-violations.sh /tmp/test.patch
+
             exit 1
           fi
 

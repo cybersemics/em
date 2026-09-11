@@ -6,7 +6,7 @@ import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
 import getEditable from '../helpers/getEditable'
 import paste from '../helpers/paste'
-import waitForAlertContent from '../helpers/waitForAlertContent'
+import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -80,7 +80,7 @@ const dragToDropGutter = async (nodeHandle: ElementHandle<Element> | JSHandle<un
   }
 
   // Wait for the "Drop to remove" alert
-  await waitForAlertContent('Drop to remove')
+  await waitForAlert('Drop to remove')
 
   await page.touchscreen.touchEnd()
 }
@@ -97,11 +97,11 @@ describe('DropGutter: mobile only', () => {
     await click('[aria-label="Add to Favorites"]')
 
     // wait until the favorite alert appears
-    await waitForAlertContent('Added "a" to favorites')
+    await waitForAlert('Added "a" to favorites')
 
     await dragToDropGutter(await waitForEditable('a'))
 
-    await waitForAlertContent('Removed 1 thought')
+    await waitForAlert('Removed 1 thought')
 
     // Assert that the thought element no longer exists
     expect(await isThoughtInDOM('a')).toBe(false)
@@ -122,7 +122,7 @@ describe('DropGutter: mobile only', () => {
 
     await dragToDropGutter(await waitForEditable('a'))
 
-    await waitForAlertContent('Removed 1 thought')
+    await waitForAlert('Removed 1 thought')
 
     // Assert that the thought element no longer exists
     expect(await isThoughtInDOM('a')).toBe(false)

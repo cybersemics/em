@@ -1,7 +1,12 @@
 name: BrowserStack
 
-# Documentation, agent/editor configuration, and the native platform projects cannot change what
-# this workflow tests, so a change set confined to them has nothing for a real device to exercise.
+# Documentation, agent/editor configuration, repository tooling, the native platform projects, and
+# unrelated workflow files cannot change what this workflow tests, so a change set confined to them
+# has nothing for a real device to exercise. Nor can the code that is outside the web build:
+# packages/ai is a separate Vercel service reached over HTTP, eslint-plugin-em is loaded only by
+# eslint.config.js, the scripts/ workspaces are CI automation, and src/e2e/puppeteer belongs to
+# Puppeteer. Test filters none of those — it collects their unit tests — so the two lists differ
+# deliberately; see docs/testing.md § Path filtering.
 # Skipping is worth more here than in a cheap workflow: every run occupies a slot in the shared
 # BrowserStack session pool, so one pointless run delays every other PR's iOS tests behind it.
 #
@@ -28,6 +33,7 @@ on:
       - 'docs/**'
       - '.github/instructions/**'
       - '.github/skills/**'
+      - '.github/agents/**'
       - '.claude/**'
       - '.agents/**'
       - '.vscode/**'
@@ -37,6 +43,52 @@ on:
       - 'ios/**'
       - 'desktop/**'
       - 'assets/**'
+      # Repository tooling no run here reads: formatter, linter, and dependency-checker config, the
+      # Capacitor and Vercel manifests, the standalone icon generator (its own Yarn project, not a
+      # root workspace), and the TDD annotator script.
+      - '.editorconfig'
+      - '.gitattributes'
+      - '.gitignore'
+      - '.prettierignore'
+      - '.prettierrc.json'
+      - '.ncurc.js'
+      - '.depcheckrc.json'
+      - 'eslint.config.js'
+      - 'tsconfig.eslint.json'
+      - 'capacitor.config.ts'
+      - 'vercel.json'
+      - 'scripts/icons/**'
+      - '.github/scripts/**'
+      - '.github/dependabot.yml'
+      # Workflows that cannot change this one's result. Named individually rather than as
+      # '.github/workflows/**' so that editing THIS file still runs it: paths-ignore has no
+      # exception syntax, and `!` works only in `paths`, which would invert the safe default to
+      # "never runs". A workflow added later is simply not on this list, so it runs — wasteful,
+      # never wrong.
+      - '.github/workflows/agent-scripts.yml'
+      - '.github/workflows/cancel-pr-runs.yml'
+      - '.github/workflows/copilot-*.yml'
+      - '.github/workflows/dependabot-*.yml'
+      - '.github/workflows/docs.yml'
+      - '.github/workflows/estimate-*.yml'
+      - '.github/workflows/issue-classifier.yml'
+      - '.github/workflows/lint.yml'
+      - '.github/workflows/pr-ready.yml'
+      - '.github/workflows/preview-qr.yml'
+      - '.github/workflows/tauri-release-*.yml'
+      - '.github/workflows/tdd.yml'
+      - '.github/workflows/update-browserslist.yml'
+      - '.github/workflows/vercel-*.yml'
+      # Outside the web build: packages/ai is a separate Vercel service the app reaches over HTTP,
+      # eslint-plugin-em is loaded only by eslint.config.js, and the scripts/ workspaces are CI
+      # automation. `yarn build` builds packages/webview and nothing else here.
+      - 'packages/ai/**'
+      - 'packages/eslint-plugin-em/**'
+      - 'scripts/ci/**'
+      - 'scripts/estimate/**'
+      - 'scripts/issue-classifier/**'
+      # The other browser suite. The two share no imports.
+      - 'src/e2e/puppeteer/**'
   pull_request_target:
     types: [opened, synchronize, reopened]
     # GitHub Actions does not support YAML anchors, so this list is duplicated from `push` above.
@@ -45,6 +97,7 @@ on:
       - 'docs/**'
       - '.github/instructions/**'
       - '.github/skills/**'
+      - '.github/agents/**'
       - '.claude/**'
       - '.agents/**'
       - '.vscode/**'
@@ -53,6 +106,40 @@ on:
       - 'ios/**'
       - 'desktop/**'
       - 'assets/**'
+      - '.editorconfig'
+      - '.gitattributes'
+      - '.gitignore'
+      - '.prettierignore'
+      - '.prettierrc.json'
+      - '.ncurc.js'
+      - '.depcheckrc.json'
+      - 'eslint.config.js'
+      - 'tsconfig.eslint.json'
+      - 'capacitor.config.ts'
+      - 'vercel.json'
+      - 'scripts/icons/**'
+      - '.github/scripts/**'
+      - '.github/dependabot.yml'
+      - '.github/workflows/agent-scripts.yml'
+      - '.github/workflows/cancel-pr-runs.yml'
+      - '.github/workflows/copilot-*.yml'
+      - '.github/workflows/dependabot-*.yml'
+      - '.github/workflows/docs.yml'
+      - '.github/workflows/estimate-*.yml'
+      - '.github/workflows/issue-classifier.yml'
+      - '.github/workflows/lint.yml'
+      - '.github/workflows/pr-ready.yml'
+      - '.github/workflows/preview-qr.yml'
+      - '.github/workflows/tauri-release-*.yml'
+      - '.github/workflows/tdd.yml'
+      - '.github/workflows/update-browserslist.yml'
+      - '.github/workflows/vercel-*.yml'
+      - 'packages/ai/**'
+      - 'packages/eslint-plugin-em/**'
+      - 'scripts/ci/**'
+      - 'scripts/estimate/**'
+      - 'scripts/issue-classifier/**'
+      - 'src/e2e/puppeteer/**'
   workflow_dispatch:
     inputs:
       rerun_id:

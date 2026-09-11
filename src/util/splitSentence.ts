@@ -472,6 +472,11 @@ const splitSentenceByDelimiters = (value: string): SplitResult[] => {
 
   // if the return string is one sentence that ends with no other main split characters except one period at the end, split the thought by its sub-sentence delimiter
   const hasOnlyPeriodSplitterAtEnd = !/;!?$/.test(resultSentences)
+  // A decimal number's period is not a sentence boundary, e.g. "A - B 1.1", so the value is a single sentence that never reached the sub-sentence delimiters above. Split it into a child at a dash, which the decimal otherwise suppresses.
+  if (!resultSentences.match(SEPARATOR_TOKEN) && hasOnlyPeriodSplitterAtEnd && /\d\.\d/.test(plainValue)) {
+    const dashValues = splitIntoChild(value, plainValue, /^(.+?)\s*[-–—]\s*(.+)$/)
+    if (dashValues) return dashValues
+  }
 
   const right =
     !resultSentences.match(SEPARATOR_TOKEN) && hasOnlyPeriodSplitterAtEnd

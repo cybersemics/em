@@ -3,9 +3,8 @@
  */
 import { composeWithDevTools } from '@redux-devtools/extension'
 import _ from 'lodash'
-import { Middleware, applyMiddleware, createStore, isAction } from 'redux'
+import { applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
-import State from '../@types/State'
 import appReducer from '../actions/app'
 import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
@@ -19,6 +18,7 @@ import freeThoughts from '../redux-middleware/freeThoughts'
 import loggerMiddleware from '../redux-middleware/loggerMiddleware'
 import multi from '../redux-middleware/multi'
 import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
+import multiselectCursorMiddleware from '../redux-middleware/multiselectCursorMiddleware'
 import pullQueue from '../redux-middleware/pullQueue'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
@@ -32,29 +32,21 @@ if (!appReducer) {
   throw new Error('appReducer is undefined. This probably means there is a circular import.')
 }
 
-/** Keeps command bookkeeping in the dispatch log without running document side effects. In particular, refreshing
- * editingValue on a boundary would replace a still-throttled user edit with the older Redux value. */
-const skipCommandBoundaries =
-  (middleware: Middleware<object, State>): Middleware<object, State> =>
-  api =>
-  next => {
-    const dispatch = middleware(api)(next)
-    return action =>
-      isAction(action) && (action.type === 'beginCommand' || action.type === 'endCommand')
-        ? next(action)
-        : dispatch(action)
-  }
-
 const middlewareEnhancer = applyMiddleware(
   // prevent accidentally passing a reducer to the dispatch function (dev and test only)
   // (must go before the thunk middleware so that it can throw an error before the thunk middleware tries to execute it)
   ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
   multi,
   thunk,
-  ...[pullQueue, clearSelection, updateEditingValue, updateUrlHistory, freeThoughts].map(skipCommandBoundaries),
+  pullQueue,
+  clearSelection,
+  updateEditingValue,
+  updateUrlHistory,
+  freeThoughts,
   loggerMiddleware,
-  skipCommandBoundaries(multicursorAlertMiddleware),
-  skipCommandBoundaries(closeDropdownsWhenCursorNull),
+  multicursorAlertMiddleware,
+  multiselectCursorMiddleware,
+  closeDropdownsWhenCursorNull,
 )
 
 // only validate Redux state in dev and test environments

@@ -215,7 +215,7 @@ it('name a multicursor command by its label, preceded by the selection it acts o
 
 1. Set the cursor on \`a\`.
 2. Select \`a\` and \`b\`.
-3. Press \`Ctrl + Shift + ↓\`. Move Thought \`b\` after \`a\`.
+3. Run Move Thought Down. Move Thought \`b\` after \`a\`.
 
 ## Current Behavior
 
@@ -233,6 +233,7 @@ it('name a multicursor command by its label, preceded by the selection it acts o
 })
 
 it.each([
+  [undefined, 'Run Move Thought Down.'],
   ['toolbar', 'Tap the Move Thought Down button.'],
   ['gesture', 'Swipe `dud`.'],
   ['commandCenter', 'Tap Move Thought Down in the Command Center.'],
@@ -342,8 +343,8 @@ it('describe meta attributes that are set, changed, and removed', () => {
 
 1. Set the cursor on \`a\`.
 2. Set Descendant \`=view/Table\`.
-3. Press \`Ctrl + Alt + s\`. This sets \`=sort/Alphabetical/Asc\`.
-4. Press \`Ctrl + Alt + s\`. This sets \`=sort/Alphabetical/Desc\`.
+3. Run Sort. This sets \`=sort/Alphabetical/Asc\`.
+4. Run Sort. This sets \`=sort/Alphabetical/Desc\`.
 5. Delete Attribute \`=view/Table\`.
 
 ## Current Behavior
@@ -618,7 +619,7 @@ it('describe the deletion of an empty thought', () => {
 \`\`\`
 
 1. Set the cursor on the empty thought.
-2. Press \`Backspace\`. Delete Thought.
+2. Run Delete Empty Thought Or Outdent. Delete Thought.
 
 ## Current Behavior
 
@@ -824,7 +825,7 @@ it('place a thought created above the cursor by the cursor', () => {
 \`\`\`
 
 1. Set the cursor on \`c\`.
-2. Press \`Shift + Enter\`. New Thought Above before \`c\`.
+2. Run New Thought (above). New Thought Above before \`c\`.
 
 ## Current Behavior
 
@@ -863,7 +864,7 @@ it('place a subthought created above the existing subthoughts by the first of th
 \`\`\`
 
 1. Set the cursor on \`a\`.
-2. Press \`Ctrl + Shift + Enter\`. New Subthought Top before \`x\`.
+2. Run New Subthought (above). New Subthought Top before \`x\`.
 
 ## Current Behavior
 

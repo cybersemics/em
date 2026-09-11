@@ -1,4 +1,5 @@
 import Patch from '../@types/Patch'
+import { isUndoable } from './actionMetadata.registry'
 
 /** Determines a history step's size from action semantics. Undo and the slider traverse newest first; Redo traverses
  * forward and attaches navigation to the following patch. The slider preserves its existing structural grouping of
@@ -14,7 +15,7 @@ const getUndoStepCount = (
       : !!patch &&
         !!adjacent &&
         (patch.metadata.isNavigation
-          ? !adjacent.metadata.isNavigation
+          ? adjacent.metadata.actionTypes.some(isUndoable)
           : adjacent.metadata.actionTypes[0] === 'newThought' && !isFormatting)
   return grouped ? 2 : 1
 }

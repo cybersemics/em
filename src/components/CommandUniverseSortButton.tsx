@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { css, cx } from '../../styled-system/css'
 import CommandSortType from '../@types/CommandSortType'
+import useOnClickOutside from '../hooks/useOnClickOutside'
 import FadeTransition from './FadeTransition'
 import SortOption from './SortOption'
 import AToZIcon from './icons/AToZIcon'
@@ -20,6 +21,10 @@ interface CommandUniverseSortButtonProps {
 const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonProps) => {
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const closeDropdown = useCallback(() => setDropdownOpen(false), [])
+
+  useOnClickOutside(buttonRef, closeDropdown)
 
   /** Closes the sort dropdown when the user scrolls. */
   const handleScroll = () => {
@@ -42,6 +47,7 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
 
   return (
     <button
+      ref={buttonRef}
       type='button'
       aria-label='Group commands'
       onClick={() => setDropdownOpen(!isDropdownOpen)}

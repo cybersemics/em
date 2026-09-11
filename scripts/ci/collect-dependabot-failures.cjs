@@ -38,8 +38,8 @@ const MARKER = '<!-- dependabot-fix -->'
 
 /**
  * Tasks started per pull request before this gives up on it. A bump the agent cannot fix in
- * three attempts is not one more attempt away from being fixed, and each attempt moves the head
- * commit, which is what the per-commit dedupe keys on.
+ * three tasks is not one more task away from being fixed, and each task moves the head commit,
+ * which is what the per-commit dedupe keys on.
  */
 const MAX_TASKS = 3
 
@@ -212,7 +212,7 @@ const collectDependabotFailures = async ({ github, context, core }) => {
 
   // A task that pushes a fix moves the head, and the checks that run on it are a fresh commit as
   // far as the dedupe above is concerned — so a task that cannot fix the bump would start another
-  // one every time it tried. The count is kept in the comment, and the comment says which attempt it
+  // one every time it tried. The count is kept in the comment, and the comment says which task it
   // is, so the cap is visible before it is reached rather than as silence afterwards. The `sessions`
   // spelling is what comments written before the rename carry, and can go once no open Dependabot
   // pull request still has one.

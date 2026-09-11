@@ -4,10 +4,12 @@ import newThoughtCommand from '../../../commands/newThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickBullet from '../helpers/clickBullet'
+import clickNote from '../helpers/clickNote'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
 import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
@@ -219,6 +221,32 @@ describe('all platforms', () => {
     // If the waitUntil succeeds, the expect will always pass since we just confirmed that exact condition. If waitUntil times out, we never reach the expect anyway.
   })
 
+  // https://github.com/cybersemics/em/issues/3956
+  it('clicking a thought after editing a note should move the caret to the clicked thought', async () => {
+    const importText = `
+    - One
+    - Two
+      - =note
+        - Note`
+
+    await paste(importText)
+
+    // click Two first so its note becomes active/enabled
+    await clickThought('Two')
+
+    // click the note to set the caret there
+    await clickNote('Note')
+
+    // click thought "One"
+    await clickThought('One')
+
+    // caret should be on "One", not "Two"
+    await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'One')
+
+    const textContent = await getSelection().focusNode?.textContent
+    expect(textContent).toBe('One')
+  })
+
   // https://github.com/cybersemics/em/issues/4426
   it('clicking the end of a wrapped line whose next line begins with formatted text keeps the caret on that line', async () => {
     // Inline formatting splits the editable into sibling text nodes. The unformatted prefix fills the line and
@@ -273,6 +301,38 @@ describe('all platforms', () => {
 
     const offset = await getSelection().focusOffset
     expect(offset).toBe(prefix.trimEnd().length)
+  })
+
+  // https://github.com/cybersemics/em/pull/4539#issuecomment-5178048205
+  it('pasting a duplicate thought should leave the caret at the end of the pasted thought', async () => {
+    await paste(`
+      - AAA
+      - BBB
+      - CCC
+    `)
+
+    await clickThought('AAA')
+    await press('c', { ctrl: true })
+
+    const editableNodeHandle = await waitForEditable('CCC')
+    await click(editableNodeHandle, { edge: 'right' })
+    await press('Enter')
+    await waitForEditable('')
+
+    await press('v', { ctrl: true })
+
+    // the import is asynchronous; it is complete when the empty thought has been replaced by the pasted thought
+    await waitUntil(() => !Array.from(document.querySelectorAll('[data-editable]')).some(el => el.innerHTML === ''))
+
+    await keyboard.type('x')
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- AAA
+- BBB
+- CCC
+- AAAx
+`)
   })
 })
 

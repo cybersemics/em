@@ -3,10 +3,13 @@ import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../actions/keyboardOpen'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import exportContext from '../../selectors/exportContext'
+import rootedParentOf from '../../selectors/rootedParentOf'
+import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -319,6 +322,44 @@ describe('splitSentences', () => {
     executeCommand(splitSentencesCommand, { store })
 
     expect(store.getState().isKeyboardOpen).toBe(true)
+  })
+
+  it('keeps the split thoughts in order in a context sorted by Created', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - One. Two. Three. Four. Five. Six.
+        `,
+      }),
+      setCursor(['One. Two. Three. Four. Five. Six.']),
+    ])
+
+    // Advance the clock between each step so that the thought, the sort preference, and the split thoughts all have
+    // distinct created timestamps, as they do when a user sorts a context and splits a thought in it some time later.
+    vi.advanceTimersByTime(1000)
+
+    const state = store.getState()
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Created', direction: 'Asc' },
+      }),
+    )
+
+    vi.advanceTimersByTime(1000)
+
+    executeCommand(splitSentencesCommand, { store })
+
+    // The split thoughts are all created within the same millisecond, so they tie on the sort condition and fall back
+    // to their rank, which must follow the order the sentences were split in (#4085).
+    const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain', { excludeMeta: true })
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - One.
+  - Two.
+  - Three.
+  - Four.
+  - Five.
+  - Six.`)
   })
 
   describe('multicursor', () => {

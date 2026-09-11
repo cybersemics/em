@@ -11,7 +11,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
-import waitForAlertContent from '../helpers/waitForAlertContent'
+import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
@@ -377,7 +377,7 @@ describe('drag', () => {
       showAlert: true,
     })
 
-    await waitForAlertContent('"d" moved to "a"')
+    await waitForAlert('"d" moved to "a"')
 
     const destinationLinkText = await page.$eval(
       '[data-testid=alert-content] [data-thought-link]',
