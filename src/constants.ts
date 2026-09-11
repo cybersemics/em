@@ -279,6 +279,21 @@ export const EMOJI_REGEX = emojiRegex
  */
 export const REGEX_EMOJI_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
+/*
+  Matches a group of one or more emoji at the start of a string.
+
+  Note: Some emoji end with a zero width joiner or zero width space which don't actually give any visible whitespace.
+        So optionally including them at the end of the regex.
+
+  Note: The above regex uses unicode property escape to match emojis https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions/Unicode_Property_Escapes.
+        However these emoji property escapes don't account for emoji variant selector (\ufe0f) which can be found in many emojis (example: 🖼️, 🖥️).
+        So we add \ufe0f as optional match and also prevent it from being detected as non emoji character.
+ */
+export const REGEX_EMOJI_GROUP = new RegExp(`^(?:${EMOJI_REGEX.source})+\u200D?\u200B?`)
+
+/** Matches a group of one or more emoji at the start of a string, including the whitespace that separates it from the rest of the string. */
+export const REGEX_EMOJI_PREFIX = new RegExp(`${REGEX_EMOJI_GROUP.source}\\s*`)
+
 export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code', 'font']
 
 export const EXTERNAL_FORMATTING_TAGS = ['b', 'i', 'u', 'strong', 'strike']
