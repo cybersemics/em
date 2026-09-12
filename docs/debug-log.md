@@ -17,7 +17,9 @@ Every entry shares an envelope and adds its own fields:
                          entry
 ```
 
-`seq` is monotonic, so a gap means entries were dropped and a counter climbing while `dt` collapses toward zero means a runaway loop. A `format()` dump appends two things after the entries: `--- lastFrameAt`, the last animation frame the page painted, and `--- state.thoughts`, every thought by id, value, rank and parent. The frame marker is what separates a freeze *in* the app from one below it — if the marker keeps advancing past the last entry, the page was still painting and the hang is at the native layer.
+`seq` is monotonic, so a gap means entries were dropped and a counter climbing while `dt` collapses toward zero means a runaway loop.
+
+A `format()` dump wraps the entries in three things. Above them, a `--- device` / `--- userAgent` / `--- version` / `--- commit` header, rendered at format time so it survives however much the rolling buffer has evicted. Below them, `--- lastFrameAt`, the last animation frame the page painted, and `--- state.thoughts`, every thought by id, value, rank and parent. The frame marker is what separates a freeze *in* the app from one below it — if the marker keeps advancing past the last entry, the page was still painting and the hang is at the native layer.
 
 Logging is **off** in production unless the user turns on **Debug Logging** in Settings. It auto-enables on localhost and `*.vercel.app`, excluding test environments (Vitest via `MODE`, Puppeteer via `navigator.webdriver`) and the native Capacitor and Tauri shells, which serve production builds from localhost-like origins. On an auto-enabled host the Settings checkbox switches a device-local opt-out instead of the synced setting, so a preview build can be aligned with production for performance testing without disabling logging on the user's other devices.
 
@@ -61,7 +63,7 @@ Those are the same two keystrokes. Measured on two live captures of one four-ste
 - Thought ids are numbered by **first appearance within their own log**, so the nth distinct thought either log creates gets the same placeholder in both. That is what makes two runs of the same steps compare equal.
 - Reserved ids ([`HOME_TOKEN`](../src/constants.ts) and the rest, all carrying 24+ leading zeros) are left alone. They mean the same thing on every device, so canonicalizing them would discard the only ids that are directly comparable.
 - Per-device nonces and wall-clock stamps — `clientId`, `updatedBy`, `lastUpdated` — are masked, in the plain form and in the escaped form they take inside a stringified payload.
-- `session` entries are reported side by side as an environment header rather than compared, since they differ between any two devices by construction.
+- The environment is reported side by side rather than compared, since it differs between any two devices by construction. It is read from the `---` header, falling back to the `session` entry for logs written before that header existed — the header is preferred because the session entry is an ordinary entry, which the rolling buffer evicts in exactly the long sessions whose logs are most worth comparing.
 - `frameGap` entries are dropped by default: they measure how loaded the device was, so a reporter's phone produces many and a headless browser almost none. `--include frameGap` keeps them, which is what a freeze or jank report wants.
 
 Those same two captures compare as **identical**. The report is bounded, so neither log's size reaches the reader.

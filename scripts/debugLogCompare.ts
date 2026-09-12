@@ -45,7 +45,7 @@ interface Log {
   entries: Entry[]
   /** Lines that matched no known shape, excluding the `---` markers and the state dump that format() appends. A clean log reports zero, so any count here means the file is partly or wholly not a debug log. */
   skipped: number
-  /** The environment fields of the last `session` entry — user agent, screen, mode, app version, commit hash. */
+  /** The environment the log was captured in: format()'s `--- device` / `--- userAgent` / `--- version` / `--- commit` header, falling back to the fields of the last `session` entry. */
   session: Record<string, unknown> | null
   /** The `--- state.thoughts: N thoughts, M lexemes` summary that format() appends, if present. */
   stateDump: string | null
@@ -133,21 +133,42 @@ const parse = (text: string, name: string): Log => {
     return [{ seq: Number(seq), t: Date.parse(iso), dt: Number(dt), type, fields: fields ?? '', line }]
   })
 
-  // The last session entry describes the environment the log was captured in. It is the single most useful
-  // thing to put in front of whoever is comparing: a log from iOS Safari two app versions back explains a
-  // divergence that no amount of entry-by-entry reading would.
+  // The environment the log was captured in. It is the single most useful thing to put in front of whoever is
+  // comparing: a log from iOS Safari two app versions back explains a divergence that no amount of
+  // entry-by-entry reading would.
   //
-  // Parsed defensively. The input is a file downloaded from an issue attachment, so a damaged entry must cost
-  // the environment header rather than the whole comparison.
+  // format() renders it as a `--- key: value` header, which is preferred because it is written at format time.
+  // The session entry says the same thing but is an ordinary entry, so the rolling buffer evicts it once
+  // capacity is exceeded — in exactly the long sessions whose logs are most worth comparing. Older logs
+  // predate the header and carry only the entry, so both are read.
+  //
+  // The entry is parsed defensively. The input is a file downloaded from an issue attachment, so a damaged one
+  // must cost the environment header rather than the whole comparison.
+  const headerFields = Object.fromEntries(
+    lines.flatMap(line => {
+      const match = line.match(/^--- (device|userAgent|version|commit): (.*)$/)
+      return match ? [[match[1], match[2]]] : []
+    }),
+  )
   const lastSession = entries.filter(entry => entry.type === 'session').at(-1)
-  const session = ((): Record<string, unknown> | null => {
-    if (!lastSession?.fields) return null
+  const sessionFields = ((): Record<string, unknown> => {
+    if (!lastSession?.fields) return {}
     try {
       return JSON.parse(lastSession.fields) as Record<string, unknown>
     } catch {
-      return null
+      return {}
     }
   })()
+  // Where the header is present it supersedes the session fields that say the same thing in different words,
+  // so the environment block reports each fact once rather than four times. `mode` has no header equivalent
+  // and is worth keeping, since a log from a development build explains differences a production one would not.
+  const superseded = ['ua', 'screen', 'appVersion', 'commitHash']
+  const kept =
+    Object.keys(headerFields).length > 0
+      ? Object.fromEntries(Object.entries(sessionFields).filter(([key]) => !superseded.includes(key)))
+      : sessionFields
+  const merged = { ...kept, ...headerFields }
+  const session = Object.keys(merged).length > 0 ? merged : null
 
   // Everything from the state dump onwards is one line per thought, so counting it as skipped would report
   // hundreds of unparsed lines for a real thoughtspace. That count is the reader's signal that a download
@@ -318,7 +339,7 @@ const renderEnvironment = (theirs: Log, mine: Log): string[] => {
   const keys = [...new Set([...Object.keys(theirs.session ?? {}), ...Object.keys(mine.session ?? {})])]
   return [
     '',
-    'Environment (last session entry)',
+    'Environment',
     ...keys.flatMap(key => {
       const theirValue = String(theirs.session?.[key] ?? '—')
       const myValue = String(mine.session?.[key] ?? '—')

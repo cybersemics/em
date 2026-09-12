@@ -277,6 +277,42 @@ const testStateDumpIsNotCountedAsSkipped = async () => {
   assert.equal(noisy.skipped, 1)
 }
 
+/**
+ * Verifies the environment is read from format()'s `---` header, which is written at format time, in
+ * preference to the session entry, which is an ordinary entry the rolling buffer evicts once capacity is
+ * exceeded. A reporter's full buffer is exactly the case where only the header survives.
+ */
+const testEnvironmentPrefersTheFormatHeader = async () => {
+  const header = [
+    '--- device: iPhone (ios), 390x844, touch',
+    '--- userAgent: Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148',
+    '--- version: 349.1.0',
+    '--- commit: abc1234',
+  ]
+
+  // a long log whose session entry has been evicted, leaving only the header
+  const evicted = debugLogCompare.parse([...header, ...theirs.split('\n').slice(1)].join('\n'), 'theirs')
+  assert.equal(evicted.entries.filter(e => e.type === 'session').length, 0, 'fixture still has a session entry')
+  assert.equal(evicted.session?.version, '349.1.0')
+  assert.equal(evicted.session?.device, 'iPhone (ios), 390x844, touch')
+  assert.equal(evicted.skipped, 0, 'the header was counted as unrecognized')
+
+  // the session fields the header restates are dropped, so each fact is reported once rather than twice
+  assert.equal(evicted.session?.ua, undefined, 'the session ua survived alongside the header userAgent')
+  assert.equal(evicted.session?.appVersion, undefined, 'the session appVersion survived alongside the header version')
+
+  // an older log, written before the header existed, still reports its session entry
+  assert.match(String(debugLogCompare.parse(theirs, 'theirs').session?.ua), /iPhone/)
+
+  assert.match(
+    debugLogCompare.render(debugLogCompare.compare(evicted, debugLogCompare.parse(mine, 'mine'), defaults), {
+      context: 2,
+      maxLines: 20,
+    }),
+    /349\.1\.0/,
+  )
+}
+
 /** Verifies a file that is not a debug log is reported as such rather than compared as an empty one. */
 const testNonLogInput = async () => {
   const log = debugLogCompare.parse('404: Not Found\n<html><body>nope</body></html>', 'theirs')
@@ -297,6 +333,7 @@ await testInsertionRealigns()
 await testMaskingReachesNestedPayloads()
 await testDamagedSessionEntry()
 await testStateDumpIsNotCountedAsSkipped()
+await testEnvironmentPrefersTheFormatHeader()
 await testNonLogInput()
 
 console.info('PASS: debugLogCompare')
