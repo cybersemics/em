@@ -2,8 +2,10 @@ import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
+import longPressBullet from '../helpers/longPressBullet'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForAlert from '../helpers/waitForAlert'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
@@ -72,11 +74,18 @@ it('Apply text color to an uppercase formatting tag', async () => {
   expect(result).toBe('<font color="#00c7e6">HELLO WORLD</font>')
 })
 
-/** Returns whether the Bold toolbar button is rendered in its active state. */
-const isBoldButtonActive = () =>
+/** Returns whether each of the given text formatting toolbar buttons is rendered in its active state. */
+const formattingButtonStates = (labels: string[]) =>
   page.evaluate(
-    () =>
-      document.querySelector('[data-testid="toolbar-icon"][aria-label="Bold"]')?.getAttribute('data-active') === 'true',
+    labels =>
+      Object.fromEntries(
+        labels.map(label => [
+          label,
+          document.querySelector(`[data-testid="toolbar-icon"][aria-label="${label}"]`)?.getAttribute('data-active') ===
+            'true',
+        ]),
+      ),
+    labels,
   )
 
 // Regression test for #3912: the Bold/Italic/Underline/Strikethrough buttons flickered back to their inactive
@@ -96,7 +105,7 @@ it('Bold button stays active when the cursor is moved to a fully-bold thought vi
 
   // move the cursor to the plain thought: the Bold button should be inactive
   await clickThought('Two')
-  expect(await isBoldButtonActive()).toBe(false)
+  expect(await formattingButtonStates(['Bold'])).toEqual({ Bold: false })
 
   // move the cursor back to the bold thought by tapping its bullet.
   // NOTE: the clickBullet helper is not reused here because it locates the thought via getEditable, whose XPath
@@ -119,7 +128,7 @@ it('Bold button stays active when the cursor is moved to a fully-bold thought vi
   await page.waitForFunction(() => (window.getSelection()?.focusOffset ?? -1) === 0)
 
   // the Bold button should reflect the thought's bold formatting rather than flickering back to inactive
-  expect(await isBoldButtonActive()).toBe(true)
+  expect(await formattingButtonStates(['Bold'])).toEqual({ Bold: true })
 })
 
 it('Clear Thought placeholder inherits whole-thought formatting (#4612)', async () => {
@@ -178,4 +187,31 @@ it('Clear Thought dims emoji in the placeholder (#4671)', async () => {
   expect(placeholderStyle.content).toContain('👋 Hello')
   expect(placeholderStyle.filter).toBe('opacity(0.5)')
   expect(placeholderStyle.opacity).toBe('1')
+})
+
+// https://github.com/cybersemics/em/issues/5286
+it('formatting buttons reflect a long-pressed thought rather than a previously formatted thought', async () => {
+  await paste(`
+    - aaa
+    - bbb
+    - ccc
+  `)
+
+  await clickThought('aaa')
+  await clickToolbar('Bold')
+  await clickToolbar('Italic')
+  await clickToolbar('Underline')
+  await clickToolbar('Strikethrough')
+  await waitForEditable('<strike><u><i><b>aaa</b></i></u></strike>')
+
+  // long press selects ccc without moving the cursor off the formatted thought
+  await longPressBullet(await waitForEditable('ccc'))
+  await waitForAlert('1 thought selected')
+
+  expect(await formattingButtonStates(['Bold', 'Italic', 'Underline', 'Strikethrough'])).toEqual({
+    Bold: false,
+    Italic: false,
+    Underline: false,
+    Strikethrough: false,
+  })
 })
