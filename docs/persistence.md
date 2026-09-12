@@ -90,7 +90,7 @@ The function returns the `readonly Operation[]` it minted. That array is what th
 
 TreeCRDT stores sibling order directly, so a reorder is a `move` with an explicit placement (`first`, `last`, or `after: <siblingId>`) rather than a new rank number.
 
-`PushBatch.movePlacements: Index<ThoughtId | null>` carries that intent from the action layer: the key is the moved thought, the value is the sibling to place it after (`null` means first). It is produced by [`moveThought`](../src/actions/moveThought.ts), [`sort`](../src/actions/sort.ts), and the [undo/redo enhancer](../src/redux-enhancers/undoRedoEnhancer.ts).
+`PushBatch.movePlacements: Index<ThoughtId | null>` carries that intent from the action layer: the key is the moved thought, the value is the sibling to place it after (`null` means first). It is produced by [`moveThought`](../src/actions/moveThought.ts), [`sort`](../src/actions/sort.ts), [`editThought`](../src/actions/editThought.ts), and the [undo/redo enhancer](../src/redux-enhancers/undoRedoEnhancer.ts). `moveThought` and `editThought` derive theirs from the rank they are about to write with [`getMovePlacement`](../src/selectors/getMovePlacement.ts), which names the last sibling ranked before it. `editThought` needs one because editing a value re-ranks the thought within a sorted context, and a rank that arrives without a placement leaves the stored order untouched.
 
 `getTreecrdtPlacement` resolves it:
 
