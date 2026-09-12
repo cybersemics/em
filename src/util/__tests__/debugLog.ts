@@ -1,4 +1,5 @@
 import { vi } from 'vitest'
+import pkg from '../../../package.json'
 import State from '../../@types/State'
 import debugLog from '../debugLog'
 import storage from '../storage'
@@ -12,6 +13,7 @@ beforeEach(() => {
 afterEach(() => {
   debugLog.setEnabled(false)
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe('enabled gate', () => {
@@ -147,6 +149,35 @@ describe('clear', () => {
 })
 
 describe('format', () => {
+  it('renders the device, user agent, em version, and build commit as the first four lines', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('input')
+    const lines = debugLog.format().split('\n')
+    // the device names the navigator platform (empty in jsdom), the shell, the screen, and the pointer type
+    expect(lines[0]).toMatch(/^--- device: .+ \((web|ios|android|tauri)\), \d+x\d+, (touch|mouse)$/)
+    expect(lines[1]).toBe(`--- userAgent: ${navigator.userAgent}`)
+    expect(lines[2]).toBe(`--- version: ${pkg.version}`)
+    expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
+    expect(lines[4]).toContain('#0 input')
+  })
+
+  it('names the tauri shell, which Capacitor reports as web', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    // the flag the Tauri runtime injects into the WebView, which is what @tauri-apps/api reads to detect the shell
+    vi.stubGlobal('isTauri', true)
+    expect(debugLog.format().split('\n')[0]).toContain('(tauri)')
+  })
+
+  it('renders the header even when the buffer is empty, so a log with no entries still identifies the build', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const lines = debugLog.format().split('\n')
+    expect(lines.length).toBe(4)
+    expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
+  })
+
   it('renders a one-line-per-entry text block', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
@@ -227,7 +258,8 @@ describe('auto-enable', () => {
 
   it('does not auto-enable in the native Capacitor shell', async () => {
     vi.stubEnv('MODE', 'production')
-    vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true } }))
+    // getPlatform is part of the shell that src/browser.ts reads at module load, so the double implements it too
+    vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true, getPlatform: () => 'ios' } }))
     vi.resetModules()
     const fresh = (await import('../debugLog')).default
     expect(fresh.autoEnabled).toBe(false)
