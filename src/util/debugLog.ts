@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core'
 import pkg from '../../package.json'
 import State from '../@types/State'
+import { isTouch } from '../browser'
 import storage from './storage'
 
 /** The localStorage key prefix under which the rolling debug log is persisted. Entries are sharded across numbered chunk keys (`debugLog-0` … `debugLog-9`) so that appending an entry only rewrites the active chunk instead of the whole buffer. */
@@ -220,8 +221,30 @@ const formatThought = (thought: {
   return `${thought.id} ${JSON.stringify(value)} rank:${thought.rank} parent:${thought.parentId}${thought.pending ? ' pending' : ''}`
 }
 
-/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Appends the last-frame marker and, when state is provided, a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
+/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, and build commit. Appends the last-frame marker and, when state is provided, a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
 const format = (state?: State): string => {
+  // The device: the navigator platform, the shell em is served through (web, ios, or android), the screen dimensions,
+  // and the pointer type. The shell is worth naming separately because it is not recoverable from the user agent, which
+  // a Capacitor WebView shares with the mobile browser it embeds.
+  const device = [
+    `${(typeof navigator !== 'undefined' && navigator.platform) || 'unknown platform'} (${Capacitor.getPlatform()})`,
+    typeof window !== 'undefined' && window.screen
+      ? `${window.screen.width}x${window.screen.height}`
+      : 'unknown screen',
+    isTouch ? 'touch' : 'mouse',
+  ].join(', ')
+
+  // The header is rendered here rather than read back from the session marker, which the rolling buffer evicts once
+  // capacity is exceeded — i.e. in exactly the long sessions whose logs are most worth reading. It describes the device
+  // and build the log was formatted on, so a hydrated log spanning an app update may still carry a session marker from
+  // the version that wrote the older entries.
+  const header = [
+    `--- device: ${device}`,
+    `--- userAgent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'}`,
+    `--- version: ${pkg.version}`,
+    `--- commit: ${__COMMIT_HASH__}`,
+  ].join('\n')
+
   const entryLines = entries
     .map(({ seq, t, dt, type, ...fields }) => {
       const fieldStr = Object.keys(fields).length > 0 ? ` ${JSON.stringify(fields)}` : ''
@@ -246,7 +269,7 @@ const format = (state?: State): string => {
       ].join('\n')
     : ''
 
-  return `${entryLines}${markerLine}${dump}`
+  return `${header}${entryLines ? `\n${entryLines}` : ''}${markerLine}${dump}`
 }
 
 /** Empties the buffer and removes all of its localStorage keys, including the legacy single-key buffer and the frame marker. */

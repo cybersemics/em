@@ -187,9 +187,11 @@ const DebugLogging = () => {
             {...fastClick(() => {
               // read fresh state for the state.thoughts dump, as above
               dispatch((_, getState) => {
-                const text = debugLog.format(getState())
-                copy(text)
-                setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
+                copy(debugLog.format(getState()))
+                // the formatted log always carries the environment header, so the status counts entries rather than
+                // testing the text for emptiness
+                const entries = debugLog.read().length
+                setStatus(entries ? `Copied ${entries} entries` : 'Log is empty')
               })
             })}
             className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
