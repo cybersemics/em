@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core'
+import { isTauri } from '@tauri-apps/api/core'
 import pkg from '../../package.json'
 import State from '../@types/State'
 import { isTouch } from '../browser'
@@ -223,11 +224,12 @@ const formatThought = (thought: {
 
 /** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, and build commit. Appends the last-frame marker and, when state is provided, a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
 const format = (state?: State): string => {
-  // The device: the navigator platform, the shell em is served through (web, ios, or android), the screen dimensions,
-  // and the pointer type. The shell is worth naming separately because it is not recoverable from the user agent, which
-  // a Capacitor WebView shares with the mobile browser it embeds.
+  // The device: the navigator platform, the shell em is served through (web, ios, android, or tauri), the screen
+  // dimensions, and the pointer type. The shell is worth naming separately because it is not recoverable from the user
+  // agent: a Capacitor WebView shares its user agent with the mobile browser it embeds, and the Tauri desktop shell
+  // reports the web platform to Capacitor, so only the flag its runtime injects tells it apart from a browser.
   const device = [
-    `${(typeof navigator !== 'undefined' && navigator.platform) || 'unknown platform'} (${Capacitor.getPlatform()})`,
+    `${(typeof navigator !== 'undefined' && navigator.platform) || 'unknown platform'} (${isTauri() ? 'tauri' : Capacitor.getPlatform()})`,
     typeof window !== 'undefined' && window.screen
       ? `${window.screen.width}x${window.screen.height}`
       : 'unknown screen',

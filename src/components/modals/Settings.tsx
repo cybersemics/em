@@ -190,8 +190,8 @@ const DebugLogging = () => {
                 copy(debugLog.format(getState()))
                 // the formatted log always carries the environment header, so the status counts entries rather than
                 // testing the text for emptiness
-                const entries = debugLog.read().length
-                setStatus(entries ? `Copied ${entries} entries` : 'Log is empty')
+                const entryCount = debugLog.read().length
+                setStatus(entryCount ? `Copied ${entryCount} entries` : 'Log is empty')
               })
             })}
             className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
