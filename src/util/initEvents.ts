@@ -22,6 +22,7 @@ import store from '../stores/app'
 import { updateCaretRect } from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import multitouchStore, { updateMultitouch } from '../stores/multitouchStore'
 import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
@@ -310,6 +311,43 @@ const initEvents = (store: Store<State, any>) => {
     globals.suppressCursorAfterTouch = false
   }
 
+  /**
+   * Prevents native pinch-to-zoom on iOS Safari. Safari ignores the viewport `user-scalable=no` /
+   * `maximum-scale=1` settings and still allows pinch-to-zoom and two-finger panning of the page,
+   * both of which should be inert in the app. `gesturestart`/`gesturechange`/`gestureend` are
+   * Safari-only events fired for multi-finger gestures. See #4233.
+   */
+  const onSafariGesture = (e: Event) => e.preventDefault()
+
+  /**
+   * Prevents native behavior during a two-finger gesture (e.g. two-finger tracing or pinch). While the
+   * multitouch latch is set, this preventDefaults touchmove so the browser does not move the contentEditable
+   * caret / extend the text selection to follow the fingers (observed on iOS Safari) or scroll the page. It is
+   * a no-op for single-finger interactions (the latch is only set once a second finger is down), so normal
+   * scrolling and text selection are unaffected. Registered non-passively so preventDefault is honored. See #4233.
+   *
+   * Three or more fingers are left alone, since gestures of that size belong to the OS rather than to em —
+   * notably the iOS three-finger swipe that drives undo and redo. Suppressing the default there would fight the
+   * system gesture recognizer for touches em has no use for anyway. The latch still covers the tail of a
+   * two-finger gesture, when one finger has lifted and the caret would otherwise follow the remaining one.
+   */
+  const onMultitouchMove = (e: TouchEvent) => {
+    if (multitouchStore.getState() && e.touches.length < 3 && e.cancelable) e.preventDefault()
+  }
+
+  /**
+   * Clears the multitouch latch when a mouse or pen interaction begins, since neither can be part of a
+   * multi-touch gesture. Without this the latch, which is otherwise only reset by a fresh single-finger
+   * touchstart, would survive indefinitely on a device that has both a touchscreen and a pointer (e.g. a
+   * touchscreen laptop or an iPad with a trackpad): after a two-finger touch every subsequent click would be
+   * rejected by the tap and mousedown handlers and the cursor could no longer be moved. The terminating
+   * tap/click of a multi-touch gesture is unaffected, because the compatibility mousedown/click a touch
+   * synthesizes is dispatched without a preceding pointerdown of type mouse. See #4233.
+   */
+  const onPointerDown = (e: PointerEvent) => {
+    if (e.pointerType !== 'touch') multitouchStore.update(false)
+  }
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
@@ -401,6 +439,31 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('touchstart', onTouchStart, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
+  // track the number of active touch points so that multi-touch input can be rejected (e.g. two-finger
+  // tracing must not begin a drag-and-drop). Registered in the capture phase for the same reason as
+  // onTouchStart above (touchstart may not be propagated), and so that the latch is set before the gesture
+  // and drag subsystems read it. See #4233.
+  window.addEventListener('touchstart', updateMultitouch, { capture: true })
+  window.addEventListener('touchend', updateMultitouch)
+  window.addEventListener('touchcancel', updateMultitouch)
+  // Registered in the capture phase so that the latch is cleared before the gesture, drag, and cursor-set
+  // subsystems read it in the same interaction.
+  window.addEventListener('pointerdown', onPointerDown, { capture: true })
+  // Multi-touch suppression is registered on touch devices only. macOS Safari fires the same gesture* events for
+  // a trackpad pinch, where zooming the page is legitimate browser behavior that must not be blocked. And a
+  // non-passive (blocking) touchmove listener on window marks the entire viewport as a blocking touch-handler
+  // region, which changes how Chrome composites the page and shifts the subpixel anti-aliasing of composited
+  // elements such as the NavBar home icon; that is invisible to the user, but it breaks the render-thoughts
+  // image snapshots on desktop, where the listener can never fire anyway. See #4233.
+  if (isTouch) {
+    // prevent the native caret / text selection and scrolling from following the fingers during a multi-touch
+    // gesture (non-passive so preventDefault is honored)
+    window.addEventListener('touchmove', onMultitouchMove, { passive: false })
+    // disable native pinch-to-zoom / two-finger page panning on iOS Safari
+    document.addEventListener('gesturestart', onSafariGesture)
+    document.addEventListener('gesturechange', onSafariGesture)
+    document.addEventListener('gestureend', onSafariGesture)
+  }
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)
@@ -435,6 +498,14 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('touchstart', onTouchStart, { capture: true })
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
+    window.removeEventListener('touchstart', updateMultitouch, { capture: true })
+    window.removeEventListener('touchend', updateMultitouch)
+    window.removeEventListener('touchcancel', updateMultitouch)
+    window.removeEventListener('pointerdown', onPointerDown, { capture: true })
+    window.removeEventListener('touchmove', onMultitouchMove)
+    document.removeEventListener('gesturestart', onSafariGesture)
+    document.removeEventListener('gesturechange', onSafariGesture)
+    document.removeEventListener('gestureend', onSafariGesture)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener('dragenter', dragEnter)
