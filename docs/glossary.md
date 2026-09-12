@@ -70,6 +70,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **dbQueue / freeQueue** — Two halves of the push-queue split. `dbQueue` writes batches with `local || remote` set; `freeQueue` releases entries from the in-memory cache. See [persistence.md → Push queue](persistence.md#push-queue-redux--treecrdt).
 
+**debug log** — A bounded, synchronous, `localStorage`-backed rolling log of app events, for diagnosing catastrophic bugs (notably freezes) on devices with no reachable console. Survives a reload or device restart, so a crashed session's log can still be retrieved. Its *frame marker* — a timestamp overwritten in place by a `requestAnimationFrame` loop — distinguishes a freeze inside em from a hang below it. Enabled by the Debug Logging setting, and by default on development and preview hosts. See [debug-log.md](debug-log.md).
+
 **docId** — The TreeCRDT document identifier for the thoughtspace. Equal to *tsid*. See [persistence.md → The TreeCRDT client](persistence.md#the-treecrdt-client).
 
 **DragCanceled / DragHold / DragInProgress / Inactive** — Values of [`LongPressState`](../src/constants.ts), the state machine for the drag/long-press subsystem. See [drag-and-drop.md → State machine](drag-and-drop.md#state-machine-statelongpress).
