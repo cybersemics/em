@@ -2,8 +2,11 @@ import Command from '../@types/Command'
 import State from '../@types/State'
 import { newGrandChildActionCreator as newGrandChild } from '../actions/newGrandChild'
 import SettingsIcon from '../components/icons/SettingsIcon'
+import { TUTORIAL_STEP_START } from '../constants'
 import { hasChildren } from '../selectors/getChildren'
 import getRootPath from '../selectors/getRootPath'
+import getSetting from '../selectors/getSetting'
+import isTutorial from '../selectors/isTutorial'
 import selectedPaths from '../selectors/selectedPaths'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -26,7 +29,12 @@ const newGrandChildCommand = {
     const selected = selectedPaths(state)
     // Without a selection, the root stands in for the cursor: the new thought is created in the first visible child of the root, so the root must have a visible child.
     const paths = selected.length > 0 ? selected : [getRootPath(state)]
-    return isDocumentEditable() && paths.every(path => hasChildren(state, head(path)))
+    return (
+      isDocumentEditable() &&
+      // The tutorial's welcome step offers only Next, so creating a thought there would jump ahead of the tutorial.
+      !(isTutorial(state) && +(getSetting(state, 'Tutorial Step') || 1) === TUTORIAL_STEP_START) &&
+      paths.every(path => hasChildren(state, head(path)))
+    )
   },
   exec: dispatch => dispatch(newGrandChild()),
 } satisfies Command
