@@ -1,4 +1,5 @@
 import { clearActionCreator as clear } from '../actions/clear'
+import { TUTORIAL_STEP_START } from '../constants'
 import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import store from '../stores/app'
 import { resetStores } from '../stores/ministore'
@@ -11,7 +12,7 @@ interface Params {
   persist?: boolean
 
   /**
-   * AllowTutorial: Set to true to override the skipping of the tutorial.
+   * AllowTutorial: Set to true to start the tutorial at its welcome step instead of skipping it, as START TUTORIAL on the welcome modal does.
    */
   allowTutorial?: boolean
 }
@@ -36,15 +37,20 @@ const initStore = async ({ persist, allowTutorial }: Params = {}) => {
     resetStores()
   }
 
-  if (!allowTutorial) {
-    store.dispatch([
-      // skip tutorial
-      { type: 'tutorial', value: false },
+  store.dispatch([
+    // Start the tutorial at the welcome step, or skip it. The tutorial must be turned on explicitly rather than merely
+    // not turned off: a skip is cached in storageCache.tutorialComplete, which survives clear, so after a file-level
+    // initStore has skipped the tutorial, a nested initStore({ allowTutorial: true }) would otherwise leave it off.
+    ...(allowTutorial
+      ? [
+          { type: 'tutorial', value: true },
+          { type: 'tutorialStep', value: TUTORIAL_STEP_START },
+        ]
+      : [{ type: 'tutorial', value: false }]),
 
-      // close welcome modal
-      { type: 'closeModal' },
-    ])
-  }
+    // close welcome modal
+    { type: 'closeModal' },
+  ])
 }
 
 export default initStore

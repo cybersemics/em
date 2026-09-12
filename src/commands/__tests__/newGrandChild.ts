@@ -1,9 +1,7 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
-import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
-import { HOME_TOKEN, TUTORIAL_STEP_START } from '../../constants'
+import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -370,8 +368,7 @@ describe('multicursor', () => {
 })
 
 describe('tutorial', () => {
-  // Reopen the tutorial at the welcome step after the fixture has skipped it, as Help's Part I: Intro does.
-  beforeEach(() => store.dispatch([tutorial({ value: true }), setTutorialStep({ value: TUTORIAL_STEP_START })]))
+  beforeEach(() => initStore({ allowTutorial: true }))
 
   // https://github.com/cybersemics/em/issues/5530
   it('does not create a grandchild on the welcome step', () => {
