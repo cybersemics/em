@@ -12,6 +12,8 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import waitForCursor from '../helpers/waitForCursor'
+import waitForNoteFocus from '../helpers/waitForNoteFocus'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -146,6 +148,41 @@ it('restores the note caret after undo so Backspace edits the note without mergi
       text: 'The world of birds',
     },
   })
+})
+
+it('redoes a note edit that was undone after the cursor left the note', async () => {
+  await paste(`
+    - One
+      - =note
+        - birds
+    - Two
+  `)
+
+  const note = await waitForSelector('[aria-label="note-editable"]')
+  if (!note) throw new Error('Note editable not found')
+  await note.click()
+  await press('End')
+  await keyboard.type(' of prey')
+  await waitForNoteText('birds of prey')
+
+  // move the cursor out of the note, so that undo has a navigation step to revert before the edit
+  await clickThought('Two')
+  await waitForCursor('Two')
+
+  await command('undo')
+  await waitForNoteText('birds')
+
+  // the caret returns to the note as the edit is undone
+  await waitForNoteFocus()
+
+  await command('redo')
+
+  const exported = (await exportThoughts()).trimEnd()
+  expect(exported).toBe(`
+- One
+  - =note
+    - birds of prey
+- Two`)
 })
 
 // https://github.com/cybersemics/em/pull/4524#issuecomment-4936720071
