@@ -1,5 +1,8 @@
+import { KnownDevices } from 'puppeteer'
 import type { PreloadedEmWindow } from '../../../@types'
 import clickThought from '../helpers/clickThought'
+import deviceEmulation from '../helpers/deviceEmulation'
+import { startGesture } from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
@@ -26,8 +29,42 @@ const getThoughtTop = async (value: string): Promise<number> => {
   return top
 }
 
+/** Returns the visible-thought scroll clamp bounds derived from current DOM geometry. */
+const getVisibleThoughtBounds = async (): Promise<{
+  maxScrollY: number
+  minScrollY: number
+}> =>
+  page.evaluate(() => {
+    const visibleRects = Array.from(document.querySelectorAll<HTMLElement>('[data-editable]'))
+      .filter(element => {
+        let currentElement: HTMLElement | null = element
+        while (currentElement) {
+          const style = window.getComputedStyle(currentElement)
+          if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) <= 0.01) {
+            return false
+          }
+          currentElement = currentElement.parentElement
+        }
+        return true
+      })
+      .map(element => element.getBoundingClientRect())
+
+    if (!visibleRects.length) {
+      throw new Error('No visible thoughts found.')
+    }
+
+    const visibleTopDocument = Math.min(...visibleRects.map(rect => rect.top + window.scrollY))
+    const visibleBottomDocument = Math.max(...visibleRects.map(rect => rect.bottom + window.scrollY))
+    const viewportAllowance = window.innerHeight / 2
+    const minScrollY = Math.max(0, visibleTopDocument - viewportAllowance)
+    const maxScrollY = Math.max(minScrollY, visibleBottomDocument - viewportAllowance)
+
+    return { minScrollY, maxScrollY }
+  })
+
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 usePersistentTreecrdtStorage()
+deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
 describe('scrollCursorIntoView', () => {
   it('should scroll cursor into view after page refresh with delayed replicateChildren', async () => {
@@ -113,8 +150,8 @@ describe('scrollCursorIntoView', () => {
   })
 })
 
-describe('autocrop', () => {
-  it('preserve thought positions relative to viewport when navigating deeper', async () => {
+describe('scroll clamp', () => {
+  it('clamps window scrolling to the visible thought range with half-viewport allowance', async () => {
     const importText = `
       - a
       - b
@@ -151,25 +188,117 @@ describe('autocrop', () => {
 
     await clickThought('m')
 
-    // scroll down so that z is rendered and visible
+    // scroll down so that deep descendants are rendered and visible
     await scrollTo(0, 200)
 
     await clickThought('z')
     await waitForCursor('z')
     await waitForBrowserSettled()
-
-    // get the y position of thought z relative to the viewport before moving the cursor down to 1
-    const topBefore = await getThoughtTop('z')
-
-    // navigate deeper to z's child, which crops the space above the cursor
     await press('ArrowDown')
     await waitForCursor('1')
     await waitForBrowserSettled()
+    await press('ArrowDown')
+    await waitForCursor('2')
+    await waitForBrowserSettled()
+    await press('ArrowDown')
+    await waitForCursor('3')
+    await waitForBrowserSettled()
 
-    // get the y position of thought z relative to the viewport after moving the cursor down to 1
-    const topAfter = await getThoughtTop('z')
+    const { minScrollY, maxScrollY } = await getVisibleThoughtBounds()
+    expect(minScrollY).toBeGreaterThan(1)
+    const topBeforeOverscroll = await getThoughtTop('1')
+    const scrollYBeforeOverscroll = await page.evaluate(() => window.scrollY)
+    const viewport = await page.viewport()
+    if (!viewport) {
+      throw new Error('Missing viewport.')
+    }
+    const activeGesture = await startGesture({
+      // Start in the scroll zone to preserve native page scroll behavior while touching.
+      xStart: (viewport.width * 7) / 8,
+      yStart: viewport.height / 3,
+    })
 
-    // TODO: We should expect 0 scroll. Why does it scroll by 0.25px?
-    expect(Math.abs(topAfter - topBefore)).toBeLessThan(1)
+    await scrollTo(0, 0)
+    await waitForBrowserSettled()
+    const scrollTopWhileTouching = await page.evaluate(() => window.scrollY)
+    expect(scrollTopWhileTouching).toBeLessThan(minScrollY - 1)
+    const topWhileTouching = await getThoughtTop('1')
+    const rawScrollDelta = Math.abs(scrollYBeforeOverscroll - scrollTopWhileTouching)
+    const visualDelta = Math.abs(topWhileTouching - topBeforeOverscroll)
+    expect(visualDelta).toBeGreaterThan(0.5)
+    expect(visualDelta).toBeLessThan(rawScrollDelta)
+
+    await page.evaluate(() => {
+      const runtimeWindow = window as unknown as { __releaseSamples: Promise<{ scrollY: number; top: number }[]> }
+      runtimeWindow.__releaseSamples = new Promise(resolve => {
+        const anchor = document.querySelector('[data-editing=true]') as HTMLElement | null
+        if (!anchor) {
+          throw new Error('Missing editing thought for release samples.')
+        }
+
+        const samples: { scrollY: number; top: number }[] = []
+        /** Captures the current scroll position and anchor top for release-frame assertions. */
+        const capture = () => {
+          samples.push({ scrollY: window.scrollY, top: anchor.getBoundingClientRect().top })
+        }
+        /** Starts frame-by-frame sampling immediately after touch release. */
+        const onRelease = () => {
+          capture()
+          let frames = 0
+          /** Samples geometry on animation frames until enough samples are collected. */
+          const sampleFrame = () => {
+            capture()
+            frames += 1
+            if (frames >= 5) {
+              resolve(samples)
+              return
+            }
+            requestAnimationFrame(sampleFrame)
+          }
+          requestAnimationFrame(sampleFrame)
+        }
+        window.addEventListener('touchend', onRelease, { once: true })
+        window.addEventListener('touchcancel', onRelease, { once: true })
+      })
+    })
+
+    await activeGesture.end()
+    await page.waitForFunction(min => Math.abs(window.scrollY - min) <= 1, {}, minScrollY)
+    const releaseSamples = await page.evaluate(
+      () => (window as unknown as { __releaseSamples: Promise<{ scrollY: number; top: number }[]> }).__releaseSamples,
+    )
+    const maxPerFrameTopDelta = releaseSamples.reduce((max, sample, index) => {
+      if (index === 0) return max
+      return Math.max(max, Math.abs(sample.top - releaseSamples[index - 1].top))
+    }, 0)
+    expect(maxPerFrameTopDelta).toBeLessThan(30)
+    const firstSample = releaseSamples[0]
+    const lastSample = releaseSamples[releaseSamples.length - 1]
+    expect(Math.abs(lastSample.top - firstSample.top)).toBeGreaterThan(2)
+    expect(Math.abs(lastSample.scrollY - minScrollY)).toBeLessThanOrEqual(1)
+
+    const scrollTopClamped = await page.evaluate(() => window.scrollY)
+    expect(scrollTopClamped).toBeGreaterThanOrEqual(minScrollY - 1)
+    expect(scrollTopClamped).toBeLessThanOrEqual(minScrollY + 1)
+
+    const topThoughtAfterClamp = await getThoughtTop('1')
+    const halfViewport = await page.evaluate(() => window.innerHeight / 2)
+    expect(topThoughtAfterClamp).toBeLessThanOrEqual(halfViewport + 2)
+
+    const activeGestureBottom = await startGesture({
+      xStart: (viewport.width * 7) / 8,
+      yStart: viewport.height / 3,
+    })
+    await scrollTo(0, 100000)
+    const scrollBottomWhileTouching = await page.evaluate(() => window.scrollY)
+    expect(scrollBottomWhileTouching).toBeGreaterThan(maxScrollY + 1)
+    await activeGestureBottom.end()
+    await page.waitForFunction(max => window.scrollY <= max + 1, {}, maxScrollY)
+    const scrollBottomClamped = await page.evaluate(() => window.scrollY)
+    expect(scrollBottomClamped).toBeGreaterThanOrEqual(maxScrollY - 1)
+    expect(scrollBottomClamped).toBeLessThanOrEqual(maxScrollY + 1)
+
+    const thought3Bottom = await page.$eval('[data-editing=true]', element => element.getBoundingClientRect().bottom)
+    expect(thought3Bottom).toBeGreaterThanOrEqual(halfViewport - 2)
   })
 })

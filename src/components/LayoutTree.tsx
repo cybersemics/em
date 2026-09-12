@@ -1,3 +1,4 @@
+import { AnimationPlaybackControls, animate } from 'framer-motion'
 import { isEqual, throttle } from 'lodash'
 import { RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
@@ -23,6 +24,7 @@ import TreeNode from './TreeNode'
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
 const CONTENT_PADDING_BOTTOM = 153
+const LAYOUT_TREE_ELASTIC_OFFSET = '--layout-tree-elastic-offset'
 
 /** Calculates the height of a single-line thought. Initially uses an estimated height, then uses the height measured from thn DOM. */
 const useSingleLineHeight = (sizes: Index<{ height: number; width?: number; isVisible: boolean }>) => {
@@ -86,6 +88,133 @@ const useLayoutTreeTop = (ref: RefObject<HTMLElement | null>) => {
   }, [ref])
 
   return ref
+}
+
+/** Clamps native window scrolling to the vertical band of autofocus-visible thoughts. */
+const useClampScrollToVisibleThoughts = ({
+  ref,
+  viewportHeight,
+  visibleThoughtExtrema,
+}: {
+  ref: RefObject<HTMLElement | null>
+  viewportHeight: number
+  visibleThoughtExtrema: { top: number; bottom: number } | null
+}) => {
+  const touchInProgress = useRef(false)
+  const springControls = useRef<AnimationPlaybackControls | null>(null)
+  const springOffset = useRef(0)
+  const springInProgress = useRef(false)
+
+  useEffect(() => {
+    if (!visibleThoughtExtrema) return
+
+    /** Applies a vertical offset to the layout tree for elastic overscroll. */
+    const setElasticOffset = (value: number) => {
+      if (!ref.current) return
+      springOffset.current = value
+      ref.current.style.setProperty(LAYOUT_TREE_ELASTIC_OFFSET, `${value}px`)
+    }
+
+    /** Stops active elastic spring animation and freezes at the current offset. */
+    const stopSpring = () => {
+      springControls.current?.stop()
+      springControls.current = null
+      springInProgress.current = false
+    }
+
+    /** Converts a linear overscroll distance into iOS-style resisted distance. */
+    const rubberBand = (distance: number) => {
+      const coefficient = 0.55
+      const maxOverscroll = Math.min(150, viewportHeight * 0.2)
+      const resisted = (distance * viewportHeight * coefficient) / (viewportHeight + distance * coefficient)
+      return Math.min(maxOverscroll, resisted)
+    }
+
+    /** Returns the current clamp bounds and clamped scrollY. */
+    const getBounds = () => {
+      const layoutTreeTop = ref.current?.offsetTop || 0
+      const viewportAllowance = viewportHeight / 2
+      const minScrollY = Math.max(0, layoutTreeTop + visibleThoughtExtrema.top - viewportAllowance)
+      const maxScrollY = Math.max(minScrollY, layoutTreeTop + visibleThoughtExtrema.bottom - viewportAllowance)
+      const clampedScrollY = Math.min(maxScrollY, Math.max(minScrollY, window.scrollY))
+      return { clampedScrollY, minScrollY, maxScrollY }
+    }
+
+    /** Clamps the current window scroll position to the visible-thought range. */
+    const clampScroll = () => {
+      const { clampedScrollY } = getBounds()
+      const rawOffset = clampedScrollY - window.scrollY
+
+      if (touchInProgress.current) {
+        const elasticOffset = Math.sign(rawOffset) * rubberBand(Math.abs(rawOffset))
+        setElasticOffset(elasticOffset - rawOffset)
+        return
+      }
+
+      if (Math.abs(rawOffset) >= 0.5) {
+        window.scrollTo(window.scrollX, clampedScrollY)
+      }
+
+      if (!springInProgress.current && Math.abs(springOffset.current) >= 0.5) {
+        setElasticOffset(0)
+      }
+    }
+
+    /** Defers scroll clamping until the active touch gesture finishes. */
+    const onTouchStart = () => {
+      stopSpring()
+      touchInProgress.current = true
+    }
+
+    /** Ends touch deferral and springs back to the visible-thought bounds. */
+    const onTouchEnd = () => {
+      touchInProgress.current = false
+      const { clampedScrollY } = getBounds()
+      const rawOffset = clampedScrollY - window.scrollY
+      const elasticOffsetFromRaw = Math.sign(rawOffset) * rubberBand(Math.abs(rawOffset))
+      const releaseOffset = Math.abs(rawOffset) >= 0.5 ? elasticOffsetFromRaw : springOffset.current
+
+      stopSpring()
+
+      // Keep the visible thought position continuous as we atomically reset window.scrollY.
+      setElasticOffset(releaseOffset)
+      if (Math.abs(rawOffset) >= 0.5) {
+        window.scrollTo(window.scrollX, clampedScrollY)
+      }
+
+      if (Math.abs(releaseOffset) < 0.5) {
+        setElasticOffset(0)
+        return
+      }
+
+      springInProgress.current = true
+      springControls.current = animate(releaseOffset, 0, {
+        type: 'spring',
+        stiffness: 3600,
+        damping: 220,
+        mass: 1.2,
+        onUpdate: value => setElasticOffset(value),
+        onComplete: () => {
+          springInProgress.current = false
+          setElasticOffset(0)
+        },
+      })
+    }
+
+    clampScroll()
+    window.addEventListener('touchstart', onTouchStart, { passive: true })
+    window.addEventListener('touchend', onTouchEnd, { passive: true })
+    window.addEventListener('touchcancel', onTouchEnd, { passive: true })
+    window.addEventListener('scroll', clampScroll, { passive: true })
+    return () => {
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchend', onTouchEnd)
+      window.removeEventListener('touchcancel', onTouchEnd)
+      window.removeEventListener('scroll', clampScroll)
+      stopSpring()
+      setElasticOffset(0)
+    }
+  }, [ref, viewportHeight, visibleThoughtExtrema])
 }
 
 /** Lays out thoughts as DOM siblings with manual x,y positioning. */
@@ -198,6 +327,20 @@ const LayoutTree = () => {
   // compare between state.cursor and the position of the thought
   const cursorThoughtPositionedIndex = treeThoughtsPositioned.findIndex(thought => thought.isCursor)
   const cursorThoughtPositioned = treeThoughtsPositioned[cursorThoughtPositionedIndex]
+  const visibleThoughtExtrema = useMemo(
+    () =>
+      treeThoughtsPositioned.reduce<{ top: number; bottom: number } | null>((accum, thought) => {
+        if (thought.autofocus !== 'show' && thought.autofocus !== 'dim') return accum
+        const bottom = thought.y + thought.height
+        return !accum
+          ? { top: thought.y, bottom }
+          : {
+              top: Math.min(accum.top, thought.y),
+              bottom: Math.max(accum.bottom, bottom),
+            }
+      }, null),
+    [treeThoughtsPositioned],
+  )
 
   // The indentDepth multipicand (0.9) causes the horizontal counter-indentation to fall short of the actual indentation, causing a progressive shifting right as the user navigates deeper. This provides an additional cue for the user's depth, which is helpful when autofocus obscures the actual depth, but it must stay small otherwise the thought width becomes too small.
   // The indentCursorAncestorTables multipicand (0.5) is smaller, since animating over by the entire width of column 1 is too abrupt.
@@ -208,6 +351,7 @@ const LayoutTree = () => {
   const spaceBelow = viewportHeight - navAndFooterHeight - CONTENT_PADDING_BOTTOM - singleLineHeight
 
   useLayoutTreeTop(ref)
+  useClampScrollToVisibleThoughts({ ref, viewportHeight, visibleThoughtExtrema })
 
   const treeThoughtsMemoized = useMemo(
     () =>
@@ -231,6 +375,7 @@ const LayoutTree = () => {
         }),
         fauxCaretTreeProvider(indent),
       )}
+      style={{ transform: `translateY(var(${LAYOUT_TREE_ELASTIC_OFFSET}, 0px))` }}
       ref={ref}
     >
       <HoverArrow
