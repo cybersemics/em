@@ -121,6 +121,9 @@ export const formatSelectionActionCreator =
     // Treat a collapsed caret (in a non-empty thought) or a full selection as formatting the whole thought.
     const selectionLength = end - start
     const whole = (selectionLength === 0 && plainLength !== 0) || selectionLength === plainLength
+    // The caret offset the whole-thought range was widened from, which narrows a color-clearing command back to the
+    // colored chunk that surrounds the caret (#4052).
+    const caret = range && selectionLength === 0 && plainLength !== 0 ? start : undefined
     if (whole) {
       start = 0
       end = plainLength
@@ -130,6 +133,7 @@ export const formatSelectionActionCreator =
       start,
       end,
       command,
+      caret,
       colorValue: color ? colors[color] : undefined,
       defaultColor: state.noteFocus ? colors.fgNote : colors.fg,
       defaultBackgroundColor: colors.bg,
