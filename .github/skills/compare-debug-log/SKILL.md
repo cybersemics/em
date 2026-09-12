@@ -89,7 +89,7 @@ The first argument is always **theirs**, the second **yours**. In the report, `-
 
 Read the report in this order — the cheap sections often answer the question before the diff does.
 
-1. **Environment.** Platform, app version, commit hash, screen size. A divergence explained by "they are three versions behind" needs no further analysis.
+1. **Environment.** Device (platform, shell, screen, pointer), user agent, em version, build commit. A divergence explained by "they are three versions behind" needs no further analysis.
 2. **Entry types in only one log.** Frequently the whole answer. `composition` entries in theirs and none in yours means an IME was involved. `move` in theirs and none in yours means a reorder your run never performed.
 3. **First divergence.** The entry where the two streams stop agreeing, with matching context above it.
 4. **The alignment that follows it.** Later divergences, in case the first is incidental.

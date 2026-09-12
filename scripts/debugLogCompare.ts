@@ -333,7 +333,7 @@ const renderOp = (op: Op): string =>
       ? `  - ${truncate(op.theirs!.line)}`
       : `  + ${truncate(op.mine!.line)}`
 
-/** Renders the environment each log was captured in, side by side, from the last session entry of each. */
+/** Renders the environment each log was captured in, side by side. */
 const renderEnvironment = (theirs: Log, mine: Log): string[] => {
   if (!theirs.session && !mine.session) return []
   const keys = [...new Set([...Object.keys(theirs.session ?? {}), ...Object.keys(mine.session ?? {})])]
