@@ -1086,4 +1086,15 @@ describe('single-line paste into a thought', () => {
 
     expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')
   })
+
+  it('replaces the whole value when the thought is cleared and the caret is past the beginning', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      state => cursorCleared(state, { value: true }),
+      // a cleared thought still shows its text, so the caret can sit at an offset the emptied value cannot resolve
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 5 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')
+  })
 })

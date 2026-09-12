@@ -5,6 +5,7 @@ import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
+import isFormattingElement from '../util/isFormattingElement'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -431,6 +432,23 @@ export const offsetFromClosestParent = (nodeRoot: Node, offsetRoot: number): Nod
   return offsetFromClosestParentRecursive(nodeRoot, offsetRoot)
 }
 
+/**
+ * Returns a collapsed Range at a plain text offset within the given root, mapping through nested formatting tags. Returns null if the root has no text content to resolve the offset against.
+ *
+ * @param root The node the offset is relative to.
+ * @param offset The offset that is taken relative to the root's value with all the html tags removed.
+ */
+export const collapsedRangeAtOffset = (root: Node, offset: number): Range | null => {
+  const nodeOffset = offsetFromClosestParent(root, offset)
+  if (!nodeOffset?.node) return null
+
+  const range = document.createRange()
+  range.setStart(nodeOffset.node, nodeOffset.offset)
+  range.setEnd(nodeOffset.node, nodeOffset.offset)
+
+  return range
+}
+
 /** Set the selection at the desired offset on the given node. Inserts empty text node when element has no children.
  * NOTE: asyncFocus() needs to be called on mobile before set and before any asynchronous effects that call set.
  *
@@ -624,18 +642,21 @@ export const removeCurrentSelection = () => {
   if (selection && selection.rangeCount > 0) document.execCommand('delete')
 }
 
-/** Remove the useless HTMLElement from element. */
-const removeEmptyElementsRecursively = (element: HTMLElement, remainText: string) => {
-  // Loop through the child nodes of the element
-  for (let i = element.childNodes.length - 1; i >= 0; i--) {
-    const child = element.childNodes[i] as HTMLElement
+/** Wraps a container's contents in shallow clones of the formatting elements the given node sits inside. Cloning a range's contents returns bare text, dropping the tags that wholly contain it (#4229). */
+const wrapInFormattingAncestors = (container: HTMLElement, node: Node) => {
+  // wrap outward from the innermost ancestor; the editable itself is not a formatting element, so the walk stops there
+  for (let ancestor = node.parentElement; isFormattingElement(ancestor); ancestor = ancestor.parentElement) {
+    const wrapper = ancestor.cloneNode(false) as HTMLElement
+    while (container.firstChild) wrapper.appendChild(container.firstChild)
+    container.appendChild(wrapper)
+  }
+}
 
-    // Recursively check the child element
-    removeEmptyElementsRecursively(child, remainText)
-
-    if (!child.hasChildNodes() && child.textContent !== remainText) {
-      child.remove()
-    }
+/** Removes all text from an element, leaving its formatting elements behind as empty shells. */
+const stripText = (element: Element) => {
+  for (const node of Array.from(element.childNodes)) {
+    if (node.nodeType === Node.TEXT_NODE) node.remove()
+    else stripText(node as Element)
   }
 }
 
@@ -643,42 +664,27 @@ const removeEmptyElementsRecursively = (element: HTMLElement, remainText: string
 export const html = () => {
   const selection = document?.getSelection()
   if (!selection || selection.rangeCount === 0) return null
-  const range = selection?.getRangeAt(0)
+  const range = selection.getRangeAt(0)
+  const node = range.startContainer
+  const div = document.createElement('div')
 
-  if (range.startContainer.isEqualNode(range.endContainer)) {
-    let containerHtml: string | null = null
-
-    if (range && range.startContainer) {
-      let node = range.startContainer
-
-      // Check if the node is an Element using the instanceof operator
-      if (node instanceof Element) {
-        // When the caret is collapsed on the editable element itself (e.g. when the cursor is moved to a thought
-        // by tapping its bullet), return the editable's inner HTML rather than its outerHTML, so that the wrapper
-        // element and its attributes (such as placeholder="<b>…</b>", whose value contains raw HTML) are excluded
-        // from the selection html (#3912).
-        containerHtml = node.getAttribute('contenteditable') === 'true' ? node.innerHTML : node.outerHTML
-      } else if (node instanceof CharacterData) {
-        while (node.parentElement?.tagName !== 'DIV') {
-          node = node.parentElement!
-        }
-
-        const parentElement = node.parentElement
-        const clonedElement = parentElement.cloneNode(true) as HTMLElement
-        removeEmptyElementsRecursively(clonedElement!, range.startContainer.textContent!)
-        containerHtml = clonedElement ? clonedElement.innerHTML : null
-      }
-    }
-
-    // iOS Safari converts non-breaking spaces into UTF-8 characters when accessing range textContent.
-    // Convert them back into HTML character entities to ensure that REGEX_HTML_SINGLE_LINE matches (#3779).
-    return containerHtml?.replace(range.startContainer.textContent!.replace(/\u00A0/g, '&nbsp;'), selection.toString())
+  if (range.collapsed && node instanceof Element) {
+    // A collapsed caret on the editable itself (e.g. after tapping a thought's bullet) selects no text, so report the
+    // formatting it sits in as empty shells — commandStateStore reads this to light the toolbar buttons. Take the
+    // editable's children rather than the element itself, so the wrapper's attributes, such as a placeholder whose
+    // value contains raw HTML, are excluded (#3912).
+    const clone = node.cloneNode(true) as Element
+    const isEditable = node.getAttribute('contenteditable') === 'true'
+    div.append(...(isEditable ? Array.from(clone.childNodes) : [clone]))
+    stripText(div)
+  } else {
+    div.appendChild(range.cloneContents())
+    // Identity, not isEqualNode: two distinct nodes that happen to hold the same content span a multi-node range, whose
+    // clone already carries its own formatting, so re-applying the start node's ancestors would wrap it twice.
+    if (node === range.endContainer && node instanceof CharacterData) wrapInFormattingAncestors(div, node)
   }
 
-  const div = document.createElement('div')
-  div.appendChild(range.cloneContents())
-  const currentHtml = div.innerHTML
-  return currentHtml
+  return div.innerHTML
 }
 
 /** Returns the bounding rectangle for the current browser selection. */
