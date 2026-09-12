@@ -140,6 +140,7 @@ describe('multicursor', () => {
   - a
   - b
   - c`)
+    expect(store.getState().alert?.value).toBe('Undo: New Thought (above)')
   })
 
   // https://github.com/cybersemics/em/issues/3564

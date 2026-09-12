@@ -418,7 +418,8 @@ it('reverts the reorganization with one undo', async () => {
   - apples
     - granny smith
   - bananas`)
-  expect(store.getState().alert?.value).toBe('Undo: Organize Thought')
+  // Command attribution preserves the authored label instead of deriving one from the underlying action type.
+  expect(store.getState().alert?.value).toBe('Undo: Organize Thoughts')
 
   const state = store.getState()
   const applesPath = contextToPath(state, ['apples'])

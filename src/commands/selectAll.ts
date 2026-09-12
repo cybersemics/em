@@ -45,7 +45,7 @@ const selectAllCommand = {
 
     return true
   },
-  exec: (dispatch, getState, e) => {
+  exec: (dispatch, getState) => {
     const state = getState()
 
     // Toggle between Select All and Deselect All
@@ -57,15 +57,7 @@ const selectAllCommand = {
     // the thought being edited, closing the keyboard and exiting the cleared state (see onBlur in Editable).
     const isEdited = isMultiEditing(state)
 
-    dispatch(
-      isDeselectAll
-        ? clearMulticursors()
-        : addAllMulticursor({
-            // Hacky magic value, but it's the easiest way to tell the command that this is a chained gesture so that it can adjust the undo behavior.
-            // Select All and the chained command need to be undone together, and this is not a property of the Command object but of the way it is invoked, so is somewhat appropriately stored on the event object, albeit ad hoc.
-            mergeNext: e.type === 'chainedGesture',
-          }),
-    )
+    dispatch(isDeselectAll ? clearMulticursors() : addAllMulticursor())
 
     // An ordinary multiselection leaves the caret outside any editable, which is how isMultiEditing tells it apart from
     // a multiselection that is being edited (Clear Thought). Otherwise the caret left behind in the cursor thought makes
