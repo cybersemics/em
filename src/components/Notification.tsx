@@ -1,13 +1,15 @@
-import React, { ComponentProps, FC, ReactNode, useCallback, useRef, useState } from 'react'
+import React, { ComponentProps, ReactNode, useCallback, useRef, useState } from 'react'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import { isTouch } from '../browser'
+import useCombinedRefs from '../hooks/useCombinedRefs'
 import FadeTransition from './FadeTransition'
 import PopupBase from './PopupBase'
 
 /** A popup component in which you can customize what is rendered. Used for Alerts + Tips. */
-const Notification: FC<
+const Notification = React.forwardRef<
+  HTMLDivElement,
   {
     icon?: ReactNode
     /** The content rendered with padding in the center of the notification. */
@@ -17,13 +19,14 @@ const Notification: FC<
     /** Optional content rendered after the value without padding or alignment. Must be positioned independently. */
     children?: ReactNode
   } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave'>
-> = ({ icon, onClose, value, transitionKey, children, ...props }) => {
+>(({ icon, onClose, value, transitionKey, children, ...props }, ref) => {
   const [isDismissed, setIsDismissed] = useState(false)
   // Share this ref between FadeTransition and PopupBase so the fade opacity is applied directly to the
   // positioned zIndex: 'popup' element rather than to an intermediate static <span>. Without a nodeRef,
   // FadeTransition's span becomes a z-index: auto stacking context while opacity < 1, trapping the popup's
   // z-index behind #content and causing the toast to fade in behind full-screen thoughts.
   const popupRef = useRef<HTMLDivElement>(null)
+  const combinedRef = useCombinedRefs([ref, popupRef])
 
   /** Dismiss the alert on close. */
   const handleClose = useCallback(() => {
@@ -50,7 +53,7 @@ const Notification: FC<
       {value ? (
         <FadeTransition type='slow' nodeRef={popupRef} onEntering={() => setIsDismissed(false)}>
           <PopupBase
-            ref={popupRef}
+            ref={combinedRef}
             anchorFromBottom
             anchorOffset={36}
             key={transitionKey}
@@ -83,6 +86,8 @@ const Notification: FC<
       ) : null}
     </TransitionGroup>
   )
-}
+})
+
+Notification.displayName = 'Notification'
 
 export default Notification

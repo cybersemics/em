@@ -8,6 +8,7 @@ import { alertActionCreator } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { deleteResumableFile } from '../actions/importFiles'
 import { AlertType } from '../constants'
+import * as selection from '../device/selection'
 import alertStore from '../stores/alert'
 import syncStatusStore from '../stores/syncStatus'
 import fastClick from '../util/fastClick'
@@ -58,19 +59,47 @@ const Alert: FC = () => {
   const iconSize = useSelector(state => 0.78 * state.fontSize)
   const multicursor = useSelector(state => state.alert?.alertType === AlertType.MulticursorActive)
   const dispatch = useDispatch()
+  const popupRef = useRef<HTMLDivElement>(null)
 
   /** Dismiss the alert on close. */
   const onClose = useCallback(() => {
     dispatch(alertActionCreator(null))
   }, [dispatch])
 
-  const { startTimer, clearTimer } = useDelayedEffect(onClose, alert?.clearDelay)
+  /** Auto-dismiss the alert, unless the user is selecting its text. Closing would tear down the selection mid-copy. */
+  const onCloseAuto = useCallback(() => {
+    if (selection.isSelectedWithin(popupRef.current)) return
+    onClose()
+  }, [onClose])
+
+  const { startTimer, clearTimer } = useDelayedEffect(onCloseAuto, alert?.clearDelay)
+
+  // Suspend the auto-dismiss timer while text is selected on the alert, and restart it once the selection is
+  // released. Only the transitions are acted on, otherwise selection changes elsewhere (e.g. typing in a thought)
+  // would keep restarting the timer and the alert would never be dismissed.
+  const isSelectedRef = useRef(false)
+  useEffect(() => {
+    /** Starts or stops the auto-dismiss timer as the selection enters or leaves the alert. */
+    const onSelectionChange = () => {
+      const isSelected = selection.isSelectedWithin(popupRef.current)
+      if (isSelected === isSelectedRef.current) return
+      isSelectedRef.current = isSelected
+      if (isSelected) {
+        clearTimer()
+      } else {
+        startTimer()
+      }
+    }
+    document.addEventListener('selectionchange', onSelectionChange)
+    return () => document.removeEventListener('selectionchange', onSelectionChange)
+  }, [clearTimer, startTimer])
 
   const Icon = alert?.alertType === AlertType.Undo ? UndoIcon : alert?.alertType === AlertType.Redo ? RedoIcon : null
 
   // if dismissed, set timeout to 0 to remove alert component immediately. Otherwise it will block toolbar interactions until the timeout completes.
   return (
     <Notification
+      ref={popupRef}
       transitionKey={transitionKey}
       onClose={alert?.clearDelay != null ? onClose : undefined}
       value={alert ? value : null}
