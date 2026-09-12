@@ -43,7 +43,7 @@ interface Log {
   name: string
   /** Every entry, in file order. */
   entries: Entry[]
-  /** Lines that matched no known shape. A handful is normal (console noise, the state dump); a large count means the file is not a debug log. */
+  /** Lines that matched no known shape, excluding the `---` markers and the state dump that format() appends. A clean log reports zero, so any count here means the file is partly or wholly not a debug log. */
   skipped: number
   /** The environment fields of the last `session` entry — user agent, screen, mode, app version, commit hash. */
   session: Record<string, unknown> | null
@@ -136,15 +136,32 @@ const parse = (text: string, name: string): Log => {
   // The last session entry describes the environment the log was captured in. It is the single most useful
   // thing to put in front of whoever is comparing: a log from iOS Safari two app versions back explains a
   // divergence that no amount of entry-by-entry reading would.
+  //
+  // Parsed defensively. The input is a file downloaded from an issue attachment, so a damaged entry must cost
+  // the environment header rather than the whole comparison.
   const lastSession = entries.filter(entry => entry.type === 'session').at(-1)
-  const session = lastSession?.fields ? (JSON.parse(lastSession.fields) as Record<string, unknown>) : null
+  const session = ((): Record<string, unknown> | null => {
+    if (!lastSession?.fields) return null
+    try {
+      return JSON.parse(lastSession.fields) as Record<string, unknown>
+    } catch {
+      return null
+    }
+  })()
+
+  // Everything from the state dump onwards is one line per thought, so counting it as skipped would report
+  // hundreds of unparsed lines for a real thoughtspace. That count is the reader's signal that a download
+  // returned something other than a debug log, so it must not be buried under the dump — nor under the
+  // `---` markers format() writes, which are expected too. A clean parse reports zero.
+  const dumpIndex = lines.findIndex(line => line.startsWith('--- state.thoughts:'))
+  const beforeDump = dumpIndex < 0 ? lines : lines.slice(0, dumpIndex)
 
   return {
     name,
     entries,
-    skipped: lines.filter(line => line.trim() && !ENTRY_REGEX.test(line)).length,
+    skipped: beforeDump.filter(line => line.trim() && !line.startsWith('--- ') && !ENTRY_REGEX.test(line)).length,
     session,
-    stateDump: lines.find(line => line.startsWith('--- state.thoughts:'))?.replace('--- ', '') ?? null,
+    stateDump: lines[dumpIndex]?.replace('--- ', '') ?? null,
     lastFrameAt: lines.find(line => line.startsWith('--- lastFrameAt:'))?.replace('--- ', '') ?? null,
   }
 }
@@ -329,6 +346,11 @@ const renderTypeGap = (theirs: Log, mine: Log): string[] => {
   return ['', 'Entry types in only one log', `  theirs only  ${only(theirTypes, myTypes)}`, `  mine only    ${only(myTypes, theirTypes)}`] // prettier-ignore
 }
 
+/** Renders what was read out of one log: how many entries were compared, and how many lines were not recognized at all. A non-zero skip count is the signal that a download returned something other than a debug log. */
+const describe = (log: Log): string =>
+  `${log.entries.length} entries compared` +
+  (log.skipped > 0 ? `, ${log.skipped} line${log.skipped === 1 ? '' : 's'} unrecognized` : '')
+
 /** Renders the comparison as a bounded plain-text report. */
 const render = (
   { theirs, mine, ops, divergence, matchedPrefix }: Comparison,
@@ -336,8 +358,8 @@ const render = (
 ): string => {
   const header = [
     'Debug log comparison',
-    `  theirs  ${theirs.name}  ${theirs.entries.length} entries compared, ${theirs.skipped} lines skipped`,
-    `  mine    ${mine.name}  ${mine.entries.length} entries compared, ${mine.skipped} lines skipped`,
+    `  theirs  ${theirs.name}  ${describe(theirs)}`,
+    `  mine    ${mine.name}  ${describe(mine)}`,
     ...(theirs.stateDump || mine.stateDump
       ? ['', 'Final state', `  theirs  ${theirs.stateDump ?? '—'}`, `  mine    ${mine.stateDump ?? '—'}`]
       : []),
@@ -374,12 +396,9 @@ const render = (
     ...ops.slice(divergence).slice(0, maxLines).map(renderOp),
   ]
 
-  const shown = ops.length - Math.max(0, divergence - context)
-  return [
-    ...header,
-    ...body,
-    ...(shown > maxLines + context ? ['', `  …${ops.length - divergence - maxLines} further steps not shown.`] : []),
-  ].join('\n')
+  // The body prints at most maxLines steps from the divergence on, so this is what is left after it.
+  const remaining = ops.length - divergence - maxLines
+  return [...header, ...body, ...(remaining > 0 ? ['', `  …${remaining} further steps not shown.`] : [])].join('\n')
 }
 
 /** Reads a log file from disk and parses it. */

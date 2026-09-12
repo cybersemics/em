@@ -246,6 +246,37 @@ const testMaskingReachesNestedPayloads = async () => {
   )
 }
 
+/**
+ * Verifies a damaged session entry costs the environment header rather than the whole comparison. The input
+ * is a file downloaded from an issue attachment, so it is the one input that must never be trusted to parse.
+ */
+const testDamagedSessionEntry = async () => {
+  const damaged = entry('2026-09-12T12:53:22.074Z', 8, 'session', '{"ua":"Mozilla/5.0", "screen":}')
+  const log = debugLogCompare.parse([damaged, ...mine.split('\n').slice(1)].join('\n'), 'mine')
+  assert.equal(log.session, null, 'a damaged session entry was not tolerated')
+  assert.equal(log.entries.length, 10, 'the rest of the log was lost with it')
+  assert.equal(compare(theirs, [damaged, ...mine.split('\n').slice(1)].join('\n')).divergence, -1)
+}
+
+/**
+ * Verifies the state dump is not counted as unparsed. It is one line per thought, so a real thoughtspace would
+ * report hundreds of skipped lines — burying the count that tells the reader a download returned something
+ * other than a debug log.
+ */
+const testStateDumpIsNotCountedAsSkipped = async () => {
+  const thoughts = Array.from(
+    { length: 300 },
+    (_, i) => `aa${String(i).padStart(30, '0')} "t${i}" rank:${i} parent:00000000000000000000000000000001`,
+  )
+  const log = debugLogCompare.parse([mine, '--- state.thoughts: 300 thoughts, 300 lexemes', ...thoughts].join('\n'), 'mine') // prettier-ignore
+  assert.equal(log.skipped, 0, 'the state dump was counted as unparsed lines')
+  assert.equal(log.stateDump, 'state.thoughts: 300 thoughts, 300 lexemes')
+
+  // a genuinely unrecognized line before the dump still counts, since that is the signal worth keeping
+  const noisy = debugLogCompare.parse(['404: Not Found', mine, '--- state.thoughts: 1 thoughts, 1 lexemes', 'x'].join('\n'), 'mine') // prettier-ignore
+  assert.equal(noisy.skipped, 1)
+}
+
 /** Verifies a file that is not a debug log is reported as such rather than compared as an empty one. */
 const testNonLogInput = async () => {
   const log = debugLogCompare.parse('404: Not Found\n<html><body>nope</body></html>', 'theirs')
@@ -264,6 +295,8 @@ await testFrameGapIgnoredByDefault()
 await testAnchor()
 await testInsertionRealigns()
 await testMaskingReachesNestedPayloads()
+await testDamagedSessionEntry()
+await testStateDumpIsNotCountedAsSkipped()
 await testNonLogInput()
 
 console.info('PASS: debugLogCompare')
