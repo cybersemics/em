@@ -5,6 +5,7 @@ import type { PreloadedEmWindow } from '../../@types'
 import type { ThoughtspaceStorage } from '../../data-providers/thoughtspace'
 import createId from '../../util/createId'
 import deviceEmulation from './helpers/deviceEmulation'
+import waitForInitialized from './helpers/waitForInitialized'
 import { page, setPage } from './session'
 
 // eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
@@ -118,6 +119,11 @@ const setup = async ({
   })
 
   await page.goto(url)
+
+  // The welcome modal renders from initial state while initialize() is still running, so it is not a readiness
+  // signal. Wait for initialization before the test interacts; otherwise startup's final cursor restoration can
+  // overwrite the cursor, note focus, or multiselection the test has already created.
+  await waitForInitialized()
 
   if (skipTutorial) {
     // wait for welcome modal to appear
