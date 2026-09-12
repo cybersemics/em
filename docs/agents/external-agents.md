@@ -79,11 +79,13 @@ The skill states *what* must be true and lets a single clause carry *how* per en
 
 ## What is shared, and what is not
 
-**Shared** — [`write-issue`](skills.md#write-issue), [`plan`](skills.md#plan), [`tdd-write-failing-test`](skills.md#tdd-write-failing-test), [`test-diagnosis`](skills.md#test-diagnosis), [`puppeteer-update-snapshots`](skills.md#puppeteer-update-snapshots), [`ci-monitor`](skills.md#ci-monitor), [`docs-sync`](skills.md#docs-sync), [`end-session`](skills.md#end-session).
+**Shared** — [`write-issue`](skills.md#write-issue), [`plan`](skills.md#plan), [`tdd-write-failing-test`](skills.md#tdd-write-failing-test), [`compare-debug-log`](skills.md#compare-debug-log), [`test-diagnosis`](skills.md#test-diagnosis), [`puppeteer-update-snapshots`](skills.md#puppeteer-update-snapshots), [`ci-monitor`](skills.md#ci-monitor), [`docs-sync`](skills.md#docs-sync), [`end-session`](skills.md#end-session).
 
 Three of those needed a per-harness clause. `end-session` and `ci-monitor` name a Copilot tool that has no local equivalent — opening a pull request, listing workflow runs — and now name the `gh` command alongside it. `test-diagnosis` was written as though a failure could only arrive from CI; its trigger now covers a suite run locally, where the output is already on screen rather than in a log to be fetched.
 
 `write-issue` needed nothing — it shells out to `gh` and names no provisioned resource.
+
+`compare-debug-log` is shared even though it borders the browser story, because the half that carries the insight does not need a browser: comparing two logs is two files and a script. Only the capture step wants a live session, and a local agent that has one — a dev server and a Chrome on a debugging port — gets that too. Given a log a reporter attached and one captured any other way, the comparison runs anywhere.
 
 The rest of it was portable untouched. `puppeteer-update-snapshots` turned out to be the *most* local skill in the set — its command explicitly unsets `GITHUB_ACTIONS` so that the Docker and Vite setup runs, which is exactly the local path.
 
@@ -109,7 +111,7 @@ The session can also be **woken by pull request activity**, which it subscribes 
 ln -s ../../.github/skills/<name> .agents/skills/<name>
 ```
 
-Then add a row to the table in `AGENTS.md`, and update the shared list on this page. Check first that the skill names no cloud-only tool or provisioned resource — and if it names one in a single line, prefer the one-clause treatment above to leaving it out.
+Then mention it in `AGENTS.md`, where the shared skills are named in prose rather than tabulated, and update the shared list on this page. Check first that the skill names no cloud-only tool or provisioned resource — and if it names one in a single line, prefer the one-clause treatment above to leaving it out.
 
 **The two prompt files are not symlinked to each other, and should not be.** `AGENTS.md` and `.github/copilot-instructions.md` genuinely differ: one describes an environment that is already running, the other an environment you have to start, and one dictates where the other suggests. Their overlap is the parts already delegated to skills. Do not try to unify them — unify the procedures they both call instead. Remember that the cloud agent reads *both*, so they must not contradict each other, only differ in what they cover.
 

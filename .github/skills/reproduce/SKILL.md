@@ -18,7 +18,7 @@ By following the documented steps in the issue, you can reliably reproduce the p
 
 1. **Parse** — extract Steps to Reproduce, Current Behavior, Expected Behavior, and the **target platform** (web / android / ios) from the issue.
 2. **Set up the browser** — pass the target platform to `browser-control`, which attaches the right MCP, applies emulation, and navigates to the dev server.
-3. **Reproduce** — drive the browser MCP through the steps; confirm the failure mode fires.
+3. **Reproduce** — drive the browser MCP through the steps; confirm the failure mode fires. If the issue carries a **Debug Log**, run `compare-debug-log` alongside this step.
 4. **Write the failing test** — invoke `tdd-write-failing-test` to turn the reproduction into an automated regression test and prove it fails for the right reason, *before* fixing.
 5. **Fix** — root-cause and fix the code.
 6. **Validate** — re-run the test via `run-test`; it must now pass (the failure is gone and the expected behavior holds).
@@ -114,6 +114,14 @@ The browser environment is now ready (Step 2) with a fresh browser profile and a
    required?).
 
 **YOU MUST ESCALATE IF YOU CANNOT EXPLICITLY REPRODUCE** — but for an ambiguous `[Mobile]` issue, run the iOS fallback above first.
+
+### If the issue carries a Debug Log
+
+An issue with a **`## Debug Log`** section (or an attached log file) hands you a forensic trace of what em actually did on the reporter's device. **Execute the `compare-debug-log` skill** — it captures the same trace while you drive the steps here and reports the entry where your run and theirs stopped agreeing.
+
+Arm the capture **before** step 1 (`npx tsx scripts/debug-log-capture.ts --start`), since the buffer has to be empty when the reproduction begins; the skill covers the rest. Do not read either log into context — they run to hundreds of kilobytes, and the comparison prints a bounded report.
+
+This applies to the escalation above too: if you **cannot** reproduce, compare your failed attempt against their log before escalating. A named divergence ("their log has four `composition` entries mine never produced") is a question the user can answer; "could not reproduce" is not.
 
 ### em App Interaction Reference
 

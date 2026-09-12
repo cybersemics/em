@@ -24,6 +24,7 @@ flowchart TD
     REP --> BC["<b>browser-control</b><br/>picks the platform"]
     BC --> BCC["<b>browser-control-chrome</b><br/>web · Android"]
     BC --> BCI["<b>browser-control-ios</b><br/>real iPhone"]
+    REP --> CDL["<b>compare-debug-log</b><br/>their log vs. yours"]
     REP --> TDD["<b>tdd-write-failing-test</b><br/>turn the repro into a test"]
     TDD --> RT["<b>run-test</b><br/>run one test for real"]
     REP --> RT
@@ -45,6 +46,7 @@ flowchart TD
     click BC "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "browser-control — routes by platform"
     click BCC "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control-chrome" "browser-control-chrome — web and Android"
     click BCI "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control-ios" "browser-control-ios — real iPhone"
+    click CDL "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#compare-debug-log" "compare-debug-log — where their run and yours parted"
     click TDD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#tdd-write-failing-test" "tdd-write-failing-test — capture the bug"
     click RT "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#run-test" "run-test — run one test for real"
     click CM "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "ci-monitor — wait for every check"
@@ -61,6 +63,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`browser-control`](#browser-control) | Bring up a browser or device for a given platform | [SKILL.md](../../.github/skills/browser-control/SKILL.md) |
 | [`browser-control-chrome`](#browser-control-chrome) | The web and Android half of that | [SKILL.md](../../.github/skills/browser-control-chrome/SKILL.md) |
 | [`browser-control-ios`](#browser-control-ios) | The iOS half — a real iPhone on BrowserStack | [SKILL.md](../../.github/skills/browser-control-ios/SKILL.md) |
+| [`compare-debug-log`](#compare-debug-log) | Compare a reporter's attached Debug Log against one captured while reproducing | [SKILL.md](../../.github/skills/compare-debug-log/SKILL.md) |
 | [`tdd-write-failing-test`](#tdd-write-failing-test) | Turn a reproduction into a permanent test that fails for the right reason | [SKILL.md](../../.github/skills/tdd-write-failing-test/SKILL.md) |
 | [`run-test`](#run-test) | Run one test in the real harness and report what happened | [SKILL.md](../../.github/skills/run-test/SKILL.md) |
 | [`ci-monitor`](#ci-monitor) | Wait for every CI check and report which passed | [SKILL.md](../../.github/skills/ci-monitor/SKILL.md) |
@@ -154,6 +157,20 @@ The default is to work in the web layer, because it is the same page as every ot
 The session is created by a shell script rather than by the tooling, and the reason is worth knowing: BrowserStack takes 20 to 40 seconds to allocate a physical iPhone, and that wait can exceed a fixed timeout in the tooling that cannot be configured. So the session is created by a detached background process that writes its ID to a file, a heartbeat keeps it alive, and a small local proxy lets the tooling adopt the already-running session instantly. Full detail in [Environment](environment.md).
 
 One real limitation: **autocorrect cannot be tested.** Shared BrowserStack devices have iOS auto-correction switched off and it cannot be enabled. Bugs that depend on the live autocorrect engine cannot be reproduced and should be escalated.
+
+### compare-debug-log
+
+**Source: [`.github/skills/compare-debug-log/SKILL.md`](../../.github/skills/compare-debug-log/SKILL.md)**
+
+Runs from [`reproduce`](#reproduce) Step 3 when the issue carries a **`## Debug Log`** — the on-device forensic trace a reporter can export from Settings. The agent captures the same trace while driving the steps, and the two are compared. The entry where they stop agreeing is the strongest lead a hard-to-identify bug offers.
+
+Two facts shape the whole skill, and both were measured rather than assumed.
+
+**`diff` does not work on debug logs.** Every entry carries a fresh sequence number, timestamp and millisecond delta, and every thought carries a random 128-bit id, so two runs of the *same* steps share almost no bytes — `diff` reported 79 of 84 lines changed on two captures of one four-step interaction. So each entry is reduced to a signature with the volatile parts neutralized, thought ids are numbered by first appearance within their own log, and the two signature streams are aligned. The same two captures then compare as identical. How the normalization works, and what it deliberately leaves alone, is in [Debug Log](../debug-log.md#comparing-two-logs).
+
+**A log must never be read into context.** Four steps of editing produce about 6 KB; a full buffer approaches a megabyte. So the reporter's log is downloaded to a file, the local one is captured to a file by a script that attaches through the existing e2e bridges, and only a bounded report is printed.
+
+The skill also tells the agent to run it *before* escalating a failed reproduction. "Their log has four `composition` entries mine never produced" is a question the user can answer; "could not reproduce" is not.
 
 ## Testing
 

@@ -35,6 +35,12 @@ const DUMP_VALUE_MAX_LENGTH = 100
 /** The localStorage key recording a device-local opt-out of auto-enabled logging (see autoEnabled), so a development or preview host can be aligned with production (e.g. for performance testing). A preference rather than log data, so clear() leaves it alone. */
 const OPT_OUT_KEY = 'debugLogOptOut'
 
+/** The localStorage key recording a device-local opt-in to mirroring every entry to the console as it is appended (see setConsole). A preference rather than log data, so clear() leaves it alone. */
+const CONSOLE_KEY = 'debugLogConsole'
+
+/** Prefix on every mirrored console line, so debug log entries can be told apart from the app's other console output (`console.info` from testFlags.logActions, React warnings, network errors) when reading a console listing. */
+const CONSOLE_PREFIX = 'debugLog'
+
 /** A single rolling-log entry. `seq`, `t`, `dt`, and `type` form a common envelope; all other fields are event-specific. */
 interface DebugLogEntry {
   /** Monotonic sequence number. Gaps or a rapidly climbing counter reveal dropped entries or a runaway loop. */
@@ -86,6 +92,15 @@ const hydrate = (): DebugLogEntry[] => {
 let entries: DebugLogEntry[] = hydrate()
 // whether logging is currently active; when false, log() is a no-op with zero cost
 let enabled = false
+// whether each entry is also mirrored to the console as it is appended. Read once here rather than per
+// entry, so the mirror costs one boolean test in log() while it is off.
+let consoleEnabled = (() => {
+  try {
+    return storage.getItem(CONSOLE_KEY) === 'true'
+  } catch {
+    return false
+  }
+})()
 // monotonic sequence counter
 let seq = entries.length > 0 ? entries[entries.length - 1].seq + 1 : 0
 // the entries of the chunk currently being written, so persist() only serializes CHUNK_SIZE entries.
@@ -148,6 +163,12 @@ const persist = (): void => {
   }
 }
 
+/** Renders one entry as a single line: the `seq`, `t`, `dt`, and `type` envelope followed by the event-specific fields as JSON. Shared by format() and the console mirror so that a log read off the console parses identically to one dumped from the buffer. */
+const formatEntry = ({ seq, t, dt, type, ...fields }: DebugLogEntry): string => {
+  const fieldStr = Object.keys(fields).length > 0 ? ` ${JSON.stringify(fields)}` : ''
+  return `[${new Date(t).toISOString()}] +${dt}ms #${seq} ${type}${fieldStr}`
+}
+
 /** Appends an entry to the rolling buffer and persists its chunk synchronously. No-op when logging is disabled. Never throws, so instrumentation can never worsen a freeze or break editing. */
 const log = (type: string, fields?: Record<string, unknown>): void => {
   if (!enabled) return
@@ -166,6 +187,11 @@ const log = (type: string, fields?: Record<string, unknown>): void => {
     }
     chunk.push(entry)
     persist()
+    // Mirror to the console last, so a console that throws or is monkey-patched cannot cost the entry its
+    // place in the persisted buffer — which is the copy that survives a freeze or a device restart.
+    if (consoleEnabled) {
+      console.info(`${CONSOLE_PREFIX} ${formatEntry(entry)}`)
+    }
   } catch {
     // Logging must never throw.
   }
@@ -247,12 +273,7 @@ const format = (state?: State): string => {
     `--- commit: ${__COMMIT_HASH__}`,
   ].join('\n')
 
-  const entryLines = entries
-    .map(({ seq, t, dt, type, ...fields }) => {
-      const fieldStr = Object.keys(fields).length > 0 ? ` ${JSON.stringify(fields)}` : ''
-      return `[${new Date(t).toISOString()}] +${dt}ms #${seq} ${type}${fieldStr}`
-    })
-    .join('\n')
+  const entryLines = entries.map(formatEntry).join('\n')
 
   let markerLine = ''
   try {
@@ -310,6 +331,36 @@ const setEnabled = (value: boolean): void => {
   }
 }
 
+/** Returns whether entries are currently being mirrored to the console. */
+const isConsole = (): boolean => consoleEnabled
+
+/**
+ * Turns console mirroring on or off and records the choice in localStorage, so it survives the page reloads
+ * that a reproduction performs. Off by default on every host, including the development and preview hosts
+ * where logging itself auto-enables: the log captures every selectionchange and input event, which would
+ * bury the console for everyone. Never throws.
+ *
+ * Mirrored lines carry the same shape format() writes, behind a `debugLog` prefix, so a log read off the
+ * console and one dumped from the buffer are the same text. Intended for watching a single interaction live
+ * through a browser MCP's console listing; for a whole reproduction, dump the buffer to a file instead —
+ * a few steps of editing produce thousands of characters. See docs/debug-log.md.
+ *
+ * Note that localStorage.clear() removes this flag along with everything else, so re-arm the mirror after
+ * resetting app state.
+ */
+const setConsole = (value: boolean): void => {
+  consoleEnabled = value
+  try {
+    if (value) {
+      storage.setItem(CONSOLE_KEY, 'true')
+    } else {
+      storage.removeItem(CONSOLE_KEY)
+    }
+  } catch {
+    // The mirror must never interfere with the app.
+  }
+}
+
 /** Returns whether this device has opted out of auto-enabled logging. Only consulted on auto-enable hosts. Never throws. */
 const isAutoOptOut = (): boolean => {
   try {
@@ -343,10 +394,12 @@ const debugLog = {
   clear,
   format,
   isAutoOptOut,
+  isConsole,
   isEnabled,
   log,
   read,
   setAutoOptOut,
+  setConsole,
   setEnabled,
 }
 
