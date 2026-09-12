@@ -51,6 +51,7 @@ import thoughtToPath from '../selectors/thoughtToPath'
 import caretRectStore from '../stores/caretRectStore'
 import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
+import pendingFormatStore, { clearPendingFormat, getPendingFormat } from '../stores/pendingFormatStore'
 import storageModel from '../stores/storageModel'
 import addEmojiSpace from '../util/addEmojiSpace'
 import debugLog from '../util/debugLog'
@@ -169,9 +170,12 @@ const Editable = ({
       isMulticursorPath(state, state.cursor),
   )
 
+  // Formatting applied to the thought while it was empty is held in pendingFormatStore until the user types (#3910).
+  // Style the placeholder with it so that the empty thought previews the formatting the typed text will take.
+  const pendingFormatValue = pendingFormatStore.useSelector(({ formats }) => formats[thoughtId] ?? '')
   const placeholderCommandState = useMemo(
-    () => (isCursorCleared ? getCommandState(value) : null),
-    [isCursorCleared, value],
+    () => (isCursorCleared ? getCommandState(value) : pendingFormatValue ? getCommandState(pendingFormatValue) : null),
+    [isCursorCleared, pendingFormatValue, value],
   )
   const placeholderForeColor =
     typeof placeholderCommandState?.foreColor === 'string' ? placeholderCommandState.foreColor : undefined
@@ -611,7 +615,19 @@ const Editable = ({
         // When the cursor is cleared, there may be an existing style that wraps the entire thought.
         // That style should be re-applied once they type something. (#3673)
 
-        const wrappedValue = state.cursorCleared ? applyOuterTags(e.target.value, oldValue) : e.target.value
+        // Formatting applied to the thought while it was empty has been held in pendingFormatStore, since an empty
+        // value has no text to wrap. Transfer it onto the first text typed into the thought and consume it (#3910).
+        // The wrapped value takes the immediate, forced branch below, which re-renders the editable with the
+        // formatting so that the browser carries it through the rest of the typing.
+        const pendingFormat = getPendingFormat(head(simplePath))
+        const isPendingFormat = pendingFormat !== undefined && oldValue.length === 0 && e.target.value.length > 0
+        if (isPendingFormat) clearPendingFormat(head(simplePath))
+
+        const wrappedValue = state.cursorCleared
+          ? applyOuterTags(e.target.value, oldValue)
+          : isPendingFormat
+            ? applyOuterTags(e.target.value, pendingFormat)
+            : e.target.value
         const trimmedWrappedValue = trimHtml(wrappedValue)
         const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
         const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
