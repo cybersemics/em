@@ -68,6 +68,12 @@ const Note = React.memo(
       if (targetPath && !noteId) {
         setNoteDraft(noteValue(state, path) ?? '')
       }
+      // Bail if state already has the caret on this note. Then the focus did not come from the user: it came from the
+      // effect below placing the caret, which focuses the note as a side effect. There is no cursor to move, but
+      // setCursor would still clear the one-shot noteOffset the effect is in the middle of honoring and recompute
+      // cursorOffset, and the undo enhancer records those as a fresh navigation action — discarding the redo stack the
+      // moment an undo restores a note caret, so the note edit that was just undone has no redo step.
+      if (state.noteFocus && equalPathHead(state.cursor, path)) return
       dispatch(
         setCursor({
           path,

@@ -13,6 +13,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
 import waitForCursor from '../helpers/waitForCursor'
+import waitForNoteFocus from '../helpers/waitForNoteFocus'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -48,10 +49,6 @@ const waitForNoteText = (text: string | null) =>
     {},
     text,
   )
-
-/** Waits for the caret to be in the rendered note. */
-const waitForNoteFocus = () =>
-  page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'note-editable')
 
 /** Gets the current native selection within the rendered note. */
 const getNoteSelection = () =>

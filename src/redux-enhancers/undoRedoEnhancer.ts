@@ -44,6 +44,11 @@ function isEditThoughtAction(action: UnknownAction): action is UnknownAction & e
   return action.type === 'editThought'
 }
 
+/** Returns true when a restored note offset is being cleared after the caret has been placed. */
+function isClearNoteOffsetAction(action: UnknownAction): boolean {
+  return action.type === 'setNoteFocus' && action.value === true && action.offset === null
+}
+
 /** Gets plain text from html. */
 function getTextContent(value: string): string {
   const element = document.createElement('div')
@@ -216,19 +221,6 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
  */
 const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
   compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))
-
-/**
- * Returns true when clearing a restored one-shot note offset is all an action did. The offset is a request to place the
- * caret at a position in the note, which Note.tsx honors and then clears — twice over, since the effect that places the
- * caret dispatches setNoteFocus, and placing the caret focuses the note, whose onFocus handler dispatches setCursor.
- * Neither is a user action, so recording either as an undoable navigation action would discard the redo stack the moment
- * an undo restored the offset, leaving the note edit that was just undone with no redo step. Only the clear itself is
- * ephemeral, so an action that moves the cursor or changes note focus as well is still recorded.
- */
-const isClearNoteOffset = (state: State, newState: State): boolean =>
-  state.noteOffset !== null &&
-  newState.noteOffset === null &&
-  diffState(newState as Index, state).every(operation => operation.path === '/noteOffset')
 
 /**
  * Append action names to all operations of a Patch.
@@ -454,7 +446,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         state === newState ||
         // Clearing a one-shot note offset after restoring the caret is ephemeral. Recording it as a navigation
         // action would clear the redo stack immediately after undo.
-        isClearNoteOffset(state, newState) ||
+        isClearNoteOffsetAction(action) ||
         // bail if the action is not undoable.
         // Exception: multicursor actions dispatched while a multicursor command is executing belong to the command's
         // single undo entry, e.g. the addMulticursor calls that restore the multiselect at the end of
