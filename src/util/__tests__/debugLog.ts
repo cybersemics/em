@@ -270,3 +270,83 @@ describe('auto-enable', () => {
     expect(debugLog.isEnabled()).toBe(true)
   })
 })
+
+describe('console mirror', () => {
+  beforeEach(() => {
+    debugLog.setConsole(false)
+  })
+
+  afterEach(() => {
+    debugLog.setConsole(false)
+  })
+
+  it('does not mirror to the console by default', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.log('test', { a: 1 })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('mirrors each entry once it is turned on', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('test', { a: 1 })
+    expect(info).toHaveBeenCalledTimes(1)
+    expect(info.mock.calls[0][0]).toMatch(/^debugLog \[.*\] \+\d+ms #\d+ test \{"a":1\}$/)
+  })
+
+  it('mirrors the same line that format() writes, so either source parses the same', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('test', { a: 1 })
+    const mirrored = (info.mock.calls.at(-1)![0] as string).replace(/^debugLog /, '')
+    expect(debugLog.format().split('\n')).toContain(mirrored)
+  })
+
+  it('stops mirroring when turned off', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.setConsole(false)
+    debugLog.log('test', { a: 1 })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('persists the choice so it survives a reload', async () => {
+    debugLog.setConsole(true)
+    expect(storage.getItem('debugLogConsole')).toBe('true')
+
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.isConsole()).toBe(true)
+
+    // stop the fresh instance's frame heartbeat so it cannot log into later tests
+    fresh.setEnabled(false)
+  })
+
+  it('survives clear(), which empties the log but must leave the preference alone', () => {
+    debugLog.setConsole(true)
+    debugLog.clear()
+    expect(debugLog.isConsole()).toBe(true)
+    expect(storage.getItem('debugLogConsole')).toBe('true')
+  })
+
+  it('does not mirror while logging is disabled', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setConsole(true)
+    debugLog.log('test', { a: 1 })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('a throwing console cannot cost an entry its place in the buffer', () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {
+      throw new Error('console is gone')
+    })
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    expect(() => debugLog.log('test', { a: 1 })).not.toThrow()
+    expect(debugLog.read().some(entry => entry.type === 'test')).toBe(true)
+  })
+})

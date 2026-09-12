@@ -11,6 +11,7 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Cursor and Caret](cursor-and-caret.md) — The cursor (active thought) vs. the browser selection (caret).
 - [Drag and Drop](drag-and-drop.md) — react-dnd integration and drop targets.
 - [Layout Rendering](layout-rendering.md) — How thoughts are positioned in the absolute-flat-list layout, including the autocrop / vertical-autocrop mechanism and how the cursor is scrolled into view.
+- [Debug Log](debug-log.md) — The on-device rolling log that survives a freeze, how to get it off a device, and how to compare two of them.
 
 ## Agents
 
