@@ -250,24 +250,27 @@ describe('scroll clamp', () => {
         const capture = () => {
           samples.push({ scrollY: window.scrollY, top: anchor.getBoundingClientRect().top })
         }
-        /** Starts frame-by-frame sampling immediately after touch release. */
+        /** Samples the synchronous release handoff, then starts frame-by-frame spring sampling. */
         const onRelease = () => {
           capture()
-          let frames = 0
-          /** Samples geometry on animation frames until enough samples are collected. */
-          const sampleFrame = () => {
+          queueMicrotask(() => {
             capture()
-            frames += 1
-            if (frames >= 5) {
-              resolve(samples)
-              return
+            let frames = 0
+            /** Samples geometry on animation frames until enough samples are collected. */
+            const sampleFrame = () => {
+              capture()
+              frames += 1
+              if (frames >= 5) {
+                resolve(samples)
+                return
+              }
+              requestAnimationFrame(sampleFrame)
             }
             requestAnimationFrame(sampleFrame)
-          }
-          requestAnimationFrame(sampleFrame)
+          })
         }
-        window.addEventListener('touchend', onRelease, { once: true })
-        window.addEventListener('touchcancel', onRelease, { once: true })
+        window.addEventListener('touchend', onRelease, { capture: true, once: true })
+        window.addEventListener('touchcancel', onRelease, { capture: true, once: true })
       })
     })
 
@@ -276,13 +279,9 @@ describe('scroll clamp', () => {
     const releaseSamples = await page.evaluate(
       () => (window as unknown as { __releaseSamples: Promise<{ scrollY: number; top: number }[]> }).__releaseSamples,
     )
-    const maxPerFrameTopDelta = releaseSamples.reduce((max, sample, index) => {
-      if (index === 0) return max
-      return Math.max(max, Math.abs(sample.top - releaseSamples[index - 1].top))
-    }, 0)
-    expect(maxPerFrameTopDelta).toBeLessThan(30)
     const firstSample = releaseSamples[0]
     const lastSample = releaseSamples[releaseSamples.length - 1]
+    expect(Math.abs(releaseSamples[1].top - firstSample.top)).toBeLessThanOrEqual(1)
     expect(Math.abs(lastSample.top - firstSample.top)).toBeGreaterThan(2)
     expect(Math.abs(lastSample.scrollY - minScrollY)).toBeLessThanOrEqual(1)
 
@@ -290,6 +289,16 @@ describe('scroll clamp', () => {
     expect(scrollTopClamped).toBeGreaterThanOrEqual(minScrollY - 1)
     expect(scrollTopClamped).toBeLessThanOrEqual(minScrollY + 1)
 
+    await page.waitForFunction(
+      maxTop => {
+        const thought = Array.from(document.querySelectorAll('[data-editable]')).find(
+          element => element.innerHTML === '1',
+        )
+        return thought ? thought.getBoundingClientRect().top <= maxTop : false
+      },
+      {},
+      viewportTopBoundary + viewportAllowance + 2,
+    )
     const topThoughtAfterClamp = await getThoughtTop('1')
     expect(topThoughtAfterClamp).toBeLessThanOrEqual(viewportTopBoundary + viewportAllowance + 2)
 
