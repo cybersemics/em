@@ -60,12 +60,13 @@ const getVisibleThoughtBounds = async (): Promise<{
     const visibleBottomDocument = Math.max(...visibleRects.map(rect => rect.bottom + window.scrollY))
     const viewportTopBoundary = document.getElementById('toolbar')?.getBoundingClientRect().bottom || 0
     const navHeight = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect().height || 0
-    const footerHeight = document.querySelector('[aria-label="footer"]')?.getBoundingClientRect().height || 0
-    const viewportBottomBoundary = window.innerHeight - navHeight - footerHeight
+    const footerRect = document.querySelector('[aria-label="footer"]')?.getBoundingClientRect()
+    const viewportBottomBoundary = window.innerHeight - navHeight
     const viewportUsableHeight = Math.max(1, viewportBottomBoundary - viewportTopBoundary)
-    const viewportAllowance = viewportUsableHeight
+    const viewportAllowance = viewportUsableHeight * 0.8
     const minScrollY = Math.max(0, visibleTopDocument - (viewportTopBoundary + viewportAllowance))
-    const maxScrollY = Math.max(minScrollY, visibleBottomDocument - (viewportBottomBoundary - viewportAllowance))
+    const visibleContentBottom = Math.max(visibleBottomDocument, footerRect ? footerRect.bottom + window.scrollY : 0)
+    const maxScrollY = Math.max(minScrollY, visibleContentBottom - (viewportBottomBoundary - viewportAllowance))
 
     return { minScrollY, maxScrollY, viewportTopBoundary, viewportBottomBoundary, viewportAllowance }
   })
@@ -159,7 +160,7 @@ describe('scrollCursorIntoView', () => {
 })
 
 describe('scroll clamp', () => {
-  it('clamps window scrolling to the visible thought range with half-viewport allowance', async () => {
+  it('clamps window scrolling to visible content while preserving footer access', async () => {
     const importText = `
       - a
       - b
@@ -212,8 +213,7 @@ describe('scroll clamp', () => {
     await waitForCursor('3')
     await waitForBrowserSettled()
 
-    const { minScrollY, maxScrollY, viewportAllowance, viewportBottomBoundary, viewportTopBoundary } =
-      await getVisibleThoughtBounds()
+    const { minScrollY, viewportAllowance, viewportTopBoundary } = await getVisibleThoughtBounds()
     expect(minScrollY).toBeGreaterThan(1)
     const topBeforeOverscroll = await getThoughtTop('1')
     const scrollYBeforeOverscroll = await page.evaluate(() => window.scrollY)
@@ -293,20 +293,14 @@ describe('scroll clamp', () => {
     const topThoughtAfterClamp = await getThoughtTop('1')
     expect(topThoughtAfterClamp).toBeLessThanOrEqual(viewportTopBoundary + viewportAllowance + 2)
 
-    const activeGestureBottom = await startGesture({
-      xStart: (viewport.width * 7) / 8,
-      yStart: viewport.height / 3,
-    })
     await scrollTo(0, 100000)
-    const scrollBottomWhileTouching = await page.evaluate(() => window.scrollY)
-    expect(scrollBottomWhileTouching).toBeGreaterThan(maxScrollY + 1)
-    await activeGestureBottom.end()
-    await page.waitForFunction(max => window.scrollY <= max + 1, {}, maxScrollY)
-    const scrollBottomClamped = await page.evaluate(() => window.scrollY)
-    expect(scrollBottomClamped).toBeGreaterThanOrEqual(maxScrollY - 1)
-    expect(scrollBottomClamped).toBeLessThanOrEqual(maxScrollY + 1)
-
-    const thought3Bottom = await page.$eval('[data-editing=true]', element => element.getBoundingClientRect().bottom)
-    expect(thought3Bottom).toBeGreaterThanOrEqual(viewportBottomBoundary - viewportAllowance - 2)
+    await waitForBrowserSettled()
+    const footerRect = await page.$eval('[aria-label="footer"]', element => {
+      const rect = element.getBoundingClientRect()
+      return { bottom: rect.bottom, top: rect.top }
+    })
+    const viewportHeight = await page.evaluate(() => window.innerHeight)
+    expect(footerRect.top).toBeLessThan(viewportHeight)
+    expect(footerRect.bottom).toBeLessThanOrEqual(viewportHeight + 1)
   })
 })

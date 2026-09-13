@@ -135,15 +135,16 @@ const useClampScrollToVisibleThoughts = ({
       const layoutTreeTop = ref.current?.offsetTop || 0
       const toolbarBottom = document.getElementById('toolbar')?.getBoundingClientRect().bottom || 0
       const navHeight = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect().height || 0
-      const footerHeight = document.querySelector('[aria-label="footer"]')?.getBoundingClientRect().height || 0
-      const viewportBottomBoundary = viewportHeight - navHeight - footerHeight
+      const footerRect = document.querySelector('[aria-label="footer"]')?.getBoundingClientRect()
+      const viewportBottomBoundary = viewportHeight - navHeight
       const viewportUsableHeight = Math.max(1, viewportBottomBoundary - toolbarBottom)
-      const viewportAllowance = viewportUsableHeight
+      const viewportAllowance = viewportUsableHeight * 0.8
       const minScrollY = Math.max(0, layoutTreeTop + visibleThoughtExtrema.top - (toolbarBottom + viewportAllowance))
-      const maxScrollY = Math.max(
-        minScrollY,
-        layoutTreeTop + visibleThoughtExtrema.bottom - (viewportBottomBoundary - viewportAllowance),
+      const visibleContentBottom = Math.max(
+        layoutTreeTop + visibleThoughtExtrema.bottom,
+        footerRect ? footerRect.bottom + window.scrollY : 0,
       )
+      const maxScrollY = Math.max(minScrollY, visibleContentBottom - (viewportBottomBoundary - viewportAllowance))
       const clampedScrollY = Math.min(maxScrollY, Math.max(minScrollY, window.scrollY))
       return { clampedScrollY, minScrollY, maxScrollY }
     }
