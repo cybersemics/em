@@ -52,6 +52,7 @@ const ColorSwatch: FC<{
   return (
     <span
       aria-label={label || color || backgroundColor}
+      data-selected={selected ? 'true' : 'false'}
       onClick={isTouch ? undefined : tapUp}
       onTouchEnd={isTouch ? tapUp : undefined}
       className={css({ cursor: 'pointer' })}
