@@ -1,4 +1,5 @@
 import { page } from '../session'
+import waitForInitialized from './waitForInitialized'
 
 /**
  * Reset the app to a clean, empty thoughtspace: clear `localStorage` + `sessionStorage`, reload, and
@@ -11,6 +12,10 @@ const resetApp = async (): Promise<void> => {
     sessionStorage.clear()
   })
   await page.reload()
+
+  // Re-establish the same initialization barrier as the shared setup: the welcome screen appears before startup
+  // finishes, and startup's final cursor restoration would otherwise overwrite the test's first interactions.
+  await waitForInitialized()
 
   // Clearing storage brings the welcome screen back; dismiss it with a DOM click (robust across the
   // desktop and mobile-emulation profiles).
