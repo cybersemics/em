@@ -103,13 +103,13 @@ When the cursor is deep, many ancestors and ancestor-siblings are hidden by auto
 
 1. `usePositionedThoughts` provides `y` and `height` for each thought, and marks autofocus state (`show`, `dim`, `hide`, `hide-parent`).
 2. `LayoutTree` reduces those positioned thoughts to the minimum top and maximum bottom among `show`/`dim` entries.
-3. The clamp bounds are computed with a symmetric allowance (`viewportAllowance`) above and below the band:
-   - `minScrollY = max(0, layoutTreeTop + visibleTop - viewportAllowance)`
-   - `maxScrollY = max(minScrollY, layoutTreeTop + visibleBottom + viewportAllowance - viewportHeight)`
+3. The clamp bounds are computed within the usable viewport between the toolbar bottom (`viewportTopBoundary`) and the nav/footer top (`viewportBottomBoundary`). A symmetric allowance (`viewportAllowance`) is measured within that usable height:
+   - `minScrollY = max(0, layoutTreeTop + visibleTop - (viewportTopBoundary + viewportAllowance))`
+   - `maxScrollY = max(minScrollY, layoutTreeTop + visibleBottom - (viewportBottomBoundary - viewportAllowance))`
 4. A scroll listener applies `window.scrollTo` only when `window.scrollY` leaves those bounds. During a touch gesture it converts linear out-of-range movement into resisted movement using a temporary `translateY` on the outer LayoutTree element, with a cap that limits the visible overscroll.
 5. On `touchend`/`touchcancel`, the code captures the current resisted offset, synchronously resets `window.scrollY` to the nearest bound, then springs the temporary transform back to zero. The synchronous reset and equal transform offset keep the thought positions continuous at handoff, so there is no visible jump.
 
-Net effect: users can still scroll to any displayed thought and about `viewportAllowance` beyond it (currently `0.75 * viewportHeight`), and touch users get an iOS-style elastic feel at the interior bounds while still settling inside the visible-thought band.
+Net effect: users can still scroll to any displayed thought and about `viewportAllowance` beyond it (currently `0.75 * usableViewportHeight`), and touch users get an iOS-style elastic feel at the interior bounds while still settling inside the visible-thought band.
 
 ## Indent (horizontal autocrop)
 
