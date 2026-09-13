@@ -1,5 +1,6 @@
 import { throttle } from 'lodash'
 import testFlags from '../e2e/testFlags'
+import cancelOnReset from '../util/cancelOnReset'
 import scrollCursorIntoView from './scrollCursorIntoView'
 
 const throttledScrollCursorIntoView = throttle((y: number, height: number) => scrollCursorIntoView(y, height), 400)
@@ -30,5 +31,8 @@ scheduleScrollCursorIntoView.cancel = () => {
 
 // Expose the cancel so that tests can stop a scroll that the cursor has queued from moving the page after they set the scroll position.
 testFlags.cancelScrollCursorIntoView = scheduleScrollCursorIntoView.cancel
+
+// The throttle and the tick timer are module scope, so a scroll queued in one unit test would otherwise fire into the next.
+cancelOnReset(scheduleScrollCursorIntoView)
 
 export default scheduleScrollCursorIntoView

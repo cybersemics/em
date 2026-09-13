@@ -7,6 +7,7 @@ import { childRecipe, editableRecipe, thoughtRecipe } from '../../styled-system/
 import { searchActionCreator as search } from '../actions/search'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import store from '../stores/app'
+import cancelOnReset from '../util/cancelOnReset'
 import strip from '../util/strip'
 import SearchIcon from './SearchIcon'
 import SearchSubthoughts from './SearchSubthoughts'
@@ -14,9 +15,8 @@ import SearchSubthoughts from './SearchSubthoughts'
 // milliseconds to delay the search function for performance
 const SEARCH_DEBOUNCE_WAIT = 180
 
-const debouncedSearch = _.debounce(
-  (newValue, archived, dispatch) => dispatch(search({ value: newValue, archived })),
-  SEARCH_DEBOUNCE_WAIT,
+const debouncedSearch = cancelOnReset(
+  _.debounce((newValue, archived, dispatch) => dispatch(search({ value: newValue, archived })), SEARCH_DEBOUNCE_WAIT),
 )
 
 /** Select next editable and prevent default keydown. */

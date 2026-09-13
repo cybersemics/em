@@ -6,12 +6,15 @@ import { alertActionCreator } from '../actions/alert'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import { AlertType } from '../constants'
+import cancelOnReset from '../util/cancelOnReset'
 
 /** Throttled dispatch for alert actions. */
-const throttledAlert = _.throttle(
-  (dispatch: Dispatch, ...args: Parameters<typeof alertActionCreator>) => dispatch(alertActionCreator(...args)),
-  50,
-  { leading: false, trailing: true },
+const throttledAlert = cancelOnReset(
+  _.throttle(
+    (dispatch: Dispatch, ...args: Parameters<typeof alertActionCreator>) => dispatch(alertActionCreator(...args)),
+    50,
+    { leading: false, trailing: true },
+  ),
 )
 
 /** A middleware that manages multicursor alerts and shows/hides the Command Center on mobile. This is done so that the Alert and Command Center are updated regardless of which action the multiselect is triggered from. Note that this only works in one direction: Multiselect -> Alert/CommandCenter. If the Command Center is closed somewhere else (e.g. toggleDropdown) it will need to clear the multicursors itself. */

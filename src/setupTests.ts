@@ -4,6 +4,7 @@ import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
 import 'vi-canvas-mock'
+import cancelOnReset from './util/cancelOnReset'
 
 expect.extend(matchers)
 
@@ -86,41 +87,14 @@ window.addEventListener('error', e => {
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
 
-// Fix intermittent `ReferenceError: localStorage is not defined` (#3345). jsdom installs
-// localStorage/sessionStorage as OWN globals and deletes them after each test file, but module-scoped
-// throttled writers (e.g. saveJumpHistory) can fire timers post-teardown that hit the bare identifiers.
-// Defining a fallback on the global PROTOTYPE keeps them resolvable (teardown only deletes OWN keys);
-// jsdom's own properties shadow it during tests, so in-test behavior is unchanged.
-const globalPrototype = Object.getPrototypeOf(globalThis)
-// Guard against polluting Object.prototype in the unlikely event the global's prototype is Object.prototype.
-if (globalPrototype && globalPrototype !== Object.prototype) {
-  /** Creates a minimal in-memory Storage implementation for use as a post-teardown fallback. */
-  const createStorageFallback = (): Storage => {
-    const store = new Map<string, string>()
-    return {
-      clear: () => store.clear(),
-      getItem: key => store.get(key) ?? null,
-      key: index => Array.from(store.keys())[index] ?? null,
-      removeItem: key => store.delete(key),
-      setItem: (key, value) => store.set(key, `${value}`),
-      get length() {
-        return store.size
-      },
-    }
-  }
-
-  ;['localStorage', 'sessionStorage'].forEach(name => {
-    // Only define the fallback once per worker; jsdom's own property shadows it during tests.
-    if (!Object.prototype.hasOwnProperty.call(globalPrototype, name)) {
-      Object.defineProperty(globalPrototype, name, {
-        value: createStorageFallback(),
-        writable: true,
-        configurable: true,
-        enumerable: false,
-      })
-    }
-  })
-}
+// Cancel every module-scope throttle and debounce after each test (#5257). Vitest isolates modules per file, not
+// per test, so a pending trailing call would otherwise fire into the next test or, after the last test in a file, into
+// teardown — which is where the intermittent `ReferenceError: localStorage is not defined` came from (#3345), since
+// jsdom deletes its globals when the file's environment is torn down. This is the boundary for tests that use no
+// fixture; initStore and createTestApp also cancel at their own reset and cleanup points.
+afterEach(() => {
+  cancelOnReset.cancelAll()
+})
 
 // Disable the Lottie icon animations, whose 5s repeating interval never runs out of pending timers: any test that
 // mounts an animated icon (e.g. the Command Universe) would make cleanupTestApp's vi.runAllTimersAsync abort with

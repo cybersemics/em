@@ -5,6 +5,7 @@ import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
 import viewportStore, { updateSize } from '../../../stores/viewport'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
+import cancelOnReset from '../../../util/cancelOnReset'
 import getSafeAreaBottom from '../getSafeAreaBottom'
 
 /** Provides control over the spring animation. */
@@ -80,10 +81,12 @@ const updateIOSSafariKeyboardState = () => {
 }
 
 /** Handles viewport resize events. */
-const onResize = _.throttle(() => {
-  updateSize() // Ensure viewportStore is updated
-  updateIOSSafariKeyboardState()
-}, 16.666)
+const onResize = cancelOnReset(
+  _.throttle(() => {
+    updateSize() // Ensure viewportStore is updated
+    updateIOSSafariKeyboardState()
+  }, 16.666),
+)
 
 /** A virtual keyboard handler for iOS Safari. */
 const iOSSafariHandler: VirtualKeyboardHandler = {
