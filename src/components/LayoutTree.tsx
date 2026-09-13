@@ -133,9 +133,12 @@ const useClampScrollToVisibleThoughts = ({
     /** Returns the current clamp bounds and clamped scrollY. */
     const getBounds = () => {
       const layoutTreeTop = ref.current?.offsetTop || 0
-      const viewportAllowance = viewportHeight / 2
+      const viewportAllowance = viewportHeight * 0.75
       const minScrollY = Math.max(0, layoutTreeTop + visibleThoughtExtrema.top - viewportAllowance)
-      const maxScrollY = Math.max(minScrollY, layoutTreeTop + visibleThoughtExtrema.bottom - viewportAllowance)
+      const maxScrollY = Math.max(
+        minScrollY,
+        layoutTreeTop + visibleThoughtExtrema.bottom + viewportAllowance - viewportHeight,
+      )
       const clampedScrollY = Math.min(maxScrollY, Math.max(minScrollY, window.scrollY))
       return { clampedScrollY, minScrollY, maxScrollY }
     }

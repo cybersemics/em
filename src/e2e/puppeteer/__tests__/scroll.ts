@@ -55,9 +55,9 @@ const getVisibleThoughtBounds = async (): Promise<{
 
     const visibleTopDocument = Math.min(...visibleRects.map(rect => rect.top + window.scrollY))
     const visibleBottomDocument = Math.max(...visibleRects.map(rect => rect.bottom + window.scrollY))
-    const viewportAllowance = window.innerHeight / 2
+    const viewportAllowance = window.innerHeight * 0.75
     const minScrollY = Math.max(0, visibleTopDocument - viewportAllowance)
-    const maxScrollY = Math.max(minScrollY, visibleBottomDocument - viewportAllowance)
+    const maxScrollY = Math.max(minScrollY, visibleBottomDocument + viewportAllowance - window.innerHeight)
 
     return { minScrollY, maxScrollY }
   })
@@ -282,8 +282,11 @@ describe('scroll clamp', () => {
     expect(scrollTopClamped).toBeLessThanOrEqual(minScrollY + 1)
 
     const topThoughtAfterClamp = await getThoughtTop('1')
-    const halfViewport = await page.evaluate(() => window.innerHeight / 2)
-    expect(topThoughtAfterClamp).toBeLessThanOrEqual(halfViewport + 2)
+    const { viewportAllowance, viewportHeight } = await page.evaluate(() => ({
+      viewportAllowance: window.innerHeight * 0.75,
+      viewportHeight: window.innerHeight,
+    }))
+    expect(topThoughtAfterClamp).toBeLessThanOrEqual(viewportAllowance + 2)
 
     const activeGestureBottom = await startGesture({
       xStart: (viewport.width * 7) / 8,
@@ -299,6 +302,6 @@ describe('scroll clamp', () => {
     expect(scrollBottomClamped).toBeLessThanOrEqual(maxScrollY + 1)
 
     const thought3Bottom = await page.$eval('[data-editing=true]', element => element.getBoundingClientRect().bottom)
-    expect(thought3Bottom).toBeGreaterThanOrEqual(halfViewport - 2)
+    expect(thought3Bottom).toBeGreaterThanOrEqual(viewportHeight - viewportAllowance - 2)
   })
 })
