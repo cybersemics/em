@@ -7,9 +7,12 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { splitThoughtActionCreator as splitThought } from '../actions/splitThought'
 import { isTouch } from '../browser'
 import Icon from '../components/icons/NewThoughtIcon'
+import { TUTORIAL_STEP_START } from '../constants'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
+import getSetting from '../selectors/getSetting'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isTutorial from '../selectors/isTutorial'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import editingValueStore from '../stores/editingValue'
@@ -79,7 +82,10 @@ const newThoughtCommand = {
   svg: Icon,
   // Just chain the immediateyl useful outdent command for now. More can be added in the future.
   isChainable: command => command.id === 'outdent',
-  canExecute: () => isDocumentEditable(),
+  canExecute: (state: State) =>
+    isDocumentEditable() &&
+    // The tutorial's welcome step offers only Next, and the first-thought step is where it asks for Enter, so creating a thought before then would jump ahead of the tutorial.
+    !(isTutorial(state) && +(getSetting(state, 'Tutorial Step') || 1) === TUTORIAL_STEP_START),
   exec,
 } satisfies Command
 
