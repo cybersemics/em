@@ -12,6 +12,7 @@ import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
 import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
+import scrollTo from './device/scrollTo'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -160,6 +161,9 @@ const testHelpers = {
   waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
   importToContext: withDispatch(importToContext),
+  // The production scroll, so that a test's explicit scroll supersedes a scroll the cursor had queued exactly as the
+  // app's own do (see device/scrollTo.ts), instead of the helper cancelling the pending cursor scroll by hand.
+  scrollTo,
 }
 
 // add useful functions to window.em for debugging

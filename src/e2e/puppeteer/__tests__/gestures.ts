@@ -136,7 +136,7 @@ describe('gestures', () => {
     await paste(outline)
 
     // Scroll partway down so the swipe has room to scroll further and a baseline to measure from.
-    await scrollTo(0, 100)
+    await scrollTo(100)
 
     expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
     const viewport = page.viewport()!
