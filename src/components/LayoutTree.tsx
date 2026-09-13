@@ -138,7 +138,7 @@ const useClampScrollToVisibleThoughts = ({
       const footerHeight = document.querySelector('[aria-label="footer"]')?.getBoundingClientRect().height || 0
       const viewportBottomBoundary = viewportHeight - navHeight - footerHeight
       const viewportUsableHeight = Math.max(1, viewportBottomBoundary - toolbarBottom)
-      const viewportAllowance = viewportUsableHeight * 0.75
+      const viewportAllowance = viewportUsableHeight
       const minScrollY = Math.max(0, layoutTreeTop + visibleThoughtExtrema.top - (toolbarBottom + viewportAllowance))
       const maxScrollY = Math.max(
         minScrollY,

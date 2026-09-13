@@ -63,7 +63,7 @@ const getVisibleThoughtBounds = async (): Promise<{
     const footerHeight = document.querySelector('[aria-label="footer"]')?.getBoundingClientRect().height || 0
     const viewportBottomBoundary = window.innerHeight - navHeight - footerHeight
     const viewportUsableHeight = Math.max(1, viewportBottomBoundary - viewportTopBoundary)
-    const viewportAllowance = viewportUsableHeight * 0.75
+    const viewportAllowance = viewportUsableHeight
     const minScrollY = Math.max(0, visibleTopDocument - (viewportTopBoundary + viewportAllowance))
     const maxScrollY = Math.max(minScrollY, visibleBottomDocument - (viewportBottomBoundary - viewportAllowance))
 
