@@ -1076,6 +1076,23 @@ describe('single-line paste into a thought', () => {
     )
   })
 
+  it('replaces a range at the beginning of a formatting tag', () => {
+    const stateBefore = newThought(initialState(), { value: '<b>hone</b>' })
+    const thoughtId = contextToThoughtId(stateBefore, ['<b>hone</b>'])!
+
+    // the "h" of the bold "hone"
+    const stateNew = importTextAtFirstMatch({
+      at: ['<b>hone</b>'],
+      text: 'st',
+      caretPosition: 1,
+      replaceStart: 0,
+      replaceEnd: 1,
+    })(stateBefore)
+
+    // the replacement leaves no text before the offset, but the insertion still belongs to the formatting that follows it
+    expect(getThoughtById(stateNew, thoughtId)!.value).toBe('<b>stone</b>')
+  })
+
   it('replaces the whole value when the thought is cleared', () => {
     const stateNew = reducerFlow([
       newThought({ value: 'one <b>two</b> three' }),

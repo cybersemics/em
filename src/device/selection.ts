@@ -419,10 +419,10 @@ const offsetFromClosestParentRecursive = (node: Node, relativeOffset: number): N
  * @param nodeOffset - The offset that is taken relative to the value with all the html tags removed.
  */
 export const offsetFromClosestParent = (nodeRoot: Node, offsetRoot: number): NodeOffset | null => {
-  // case where caret should be positioned at the beginning of the node.
-  if (offsetRoot <= 0) return { node: nodeRoot, offset: 0 }
+  // a root with no text has no text node to resolve the offset against, so anchor on the root itself
+  if (!nodeRoot.textContent) return { node: nodeRoot, offset: 0 }
   // case where the caret should be positioned at the end of the node.
-  else if (nodeRoot.textContent && offsetRoot >= nodeRoot.textContent.length) {
+  else if (offsetRoot >= nodeRoot.textContent.length) {
     return {
       node: nodeRoot,
       offset: nodeRoot.childNodes.length,
