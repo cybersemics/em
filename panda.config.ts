@@ -409,7 +409,7 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
     fontFamily: 'monospace',
   },
-  /* Sweep a highlight across thought text (and the empty-thought placeholder) while Generate Thought is in flight. */
+  /* Sweep a highlight across thought text (and the empty-thought placeholder) while an AI request is in flight. */
   '[data-generating]': {
     backgroundImage: 'linear-gradient(90deg, {colors.dim} 0%, {colors.fg} 50%, {colors.dim} 100%)',
     backgroundSize: '250% 100%',

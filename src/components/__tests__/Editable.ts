@@ -5,8 +5,9 @@ import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { executeCommand } from '../../commands'
+import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import generateThought from '../../commands/generateThought'
+import organizeThought from '../../commands/organizeThought'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
@@ -285,5 +286,111 @@ describe('Generate Thought', () => {
     const editable = (await findThoughtByText('generated'))!
     expect(editable).not.toHaveAttribute('data-generating')
     expect(document.querySelector('[placeholder="Generating Thought"]')).toBeNull()
+  })
+})
+
+describe('Organize Thoughts', () => {
+  const mockFetch = vi.fn()
+  const originalFetch = global.fetch
+
+  beforeEach(() => {
+    global.fetch = mockFetch
+    mockFetch.mockReset()
+    clearAiDisclosureAcknowledgement()
+  })
+
+  afterEach(() => {
+    global.fetch = originalFetch
+    vi.unstubAllEnvs()
+  })
+
+  it('shows Reorganizing Thought as the placeholder of an empty thought while Organize Thoughts is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- ' }), setCursor([''])])
+
+    await act(async () => {
+      executeCommand(organizeThought)
+    })
+
+    const editable = document.querySelector('[placeholder="Reorganizing Thought"]')
+    expect(editable).not.toBeNull()
+    expect(editable).toHaveAttribute('data-generating')
+  })
+
+  it('keeps the current text of a non-empty thought while Organize Thoughts is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- apples' }), setCursor(['apples'])])
+
+    await act(async () => {
+      executeCommand(organizeThought)
+    })
+
+    const editable = (await findThoughtByText('apples'))!
+    expect(editable).toHaveAttribute('data-generating')
+    expect(editable.textContent).toBe('apples')
+    expect(document.querySelector('[placeholder="Reorganizing Thought"]')).toBeNull()
+  })
+
+  it('keeps existing text and shows Reorganizing Thought on empty thoughts in the same selection', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([
+      importText({ text: '- \n- potato' }),
+      setCursor(['']),
+      addMulticursorAtFirstMatch(['']),
+      addMulticursorAtFirstMatch(['potato']),
+    ])
+
+    await act(async () => {
+      executeCommandWithMulticursor(organizeThought, { store })
+      await vi.runAllTimersAsync()
+    })
+
+    const empty = document.querySelector('[placeholder="Reorganizing Thought"]')
+    expect(empty).not.toBeNull()
+    expect(empty).toHaveAttribute('data-generating')
+
+    const potato = (await findThoughtByText('potato'))!
+    expect(potato).toHaveAttribute('data-generating')
+    expect(potato.textContent).toBe('potato')
+  })
+
+  it('clears the generating marker when Organize Thoughts completes', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+
+    /** Resolves the pending AI request. Assigned when the mocked fetch is called, so the test controls exactly when the reorganization completes. */
+    let resolveAiRequest: (response: { json: () => Promise<{ outline: unknown }> }) => void = () => {}
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveAiRequest = resolve
+        }),
+    )
+
+    await dispatch([importText({ text: '- apples' }), setCursor(['apples'])])
+
+    await act(async () => {
+      executeCommand(organizeThought)
+    })
+
+    const pending = (await findThoughtByText('apples'))!
+    expect(pending).toHaveAttribute('data-generating')
+
+    await act(async () => {
+      resolveAiRequest({ json: () => Promise.resolve({ outline: [{ id: '1', text: null, children: [] }] }) })
+    })
+
+    const editable = (await findThoughtByText('apples'))!
+    expect(editable).not.toHaveAttribute('data-generating')
+    expect(document.querySelector('[placeholder="Reorganizing Thought"]')).toBeNull()
   })
 })
