@@ -93,7 +93,7 @@ describe('Gestures', () => {
     await gesture('r', { xStart: caret.x - 40, yStart: caret.y, segmentLength: 80 })
 
     // Back clears the cursor when the thoughtspace holds a single thought, so no thought is being edited afterwards.
-    const cursorCleared = await waitUntil(async () => (await getEditingText()) === undefined).catch(() => false)
+    const cursorCleared = await waitUntil(async () => (await getEditingText()) === undefined)
     expect(cursorCleared).toBeTruthy()
   })
 })
