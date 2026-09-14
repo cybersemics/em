@@ -5,6 +5,8 @@ import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { executeCommand } from '../../commands'
+import generateThought from '../../commands/generateThought'
 import { HOME_TOKEN } from '../../constants'
 import * as selection from '../../device/selection'
 import contextToPath from '../../selectors/contextToPath'
@@ -17,6 +19,7 @@ import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import windowEvent from '../../test-helpers/windowEvent'
+import { acknowledgeAiDisclosure, clearAiDisclosureAcknowledgement } from '../../util/aiDisclosure'
 import Editable from '../Editable'
 
 beforeEach(createTestApp)
@@ -203,4 +206,84 @@ it('toggles the multicursor on a click that follows a new touchstart', async () 
 
   // the first tap selected b, the second deselected it
   expect(Object.keys(store.getState().multicursors)).toHaveLength(1)
+})
+
+describe('Generate Thought', () => {
+  const mockFetch = vi.fn()
+  const originalFetch = global.fetch
+
+  beforeEach(() => {
+    global.fetch = mockFetch
+    mockFetch.mockReset()
+    clearAiDisclosureAcknowledgement()
+  })
+
+  afterEach(() => {
+    global.fetch = originalFetch
+    vi.unstubAllEnvs()
+  })
+
+  it('shows Generating Thought as the placeholder of an empty thought while Generate Thought is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- ' }), setCursor([''])])
+
+    await act(async () => {
+      executeCommand(generateThought)
+    })
+
+    const editable = document.querySelector('[placeholder="Generating Thought"]')
+    expect(editable).not.toBeNull()
+    expect(editable).toHaveAttribute('data-generating')
+  })
+
+  it('keeps the current text of a non-empty thought while Generate Thought is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- a' }), setCursor(['a'])])
+
+    await act(async () => {
+      executeCommand(generateThought)
+    })
+
+    const editable = (await findThoughtByText('a'))!
+    expect(editable).toHaveAttribute('data-generating')
+    expect(editable.textContent).toBe('a')
+    expect(document.querySelector('[placeholder="Generating Thought"]')).toBeNull()
+  })
+
+  it('clears the generating marker when Generate Thought completes', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+
+    /** Resolves the pending AI request. Assigned when the mocked fetch is called, so the test controls exactly when the generation completes. */
+    let resolveAiRequest: (response: { json: () => Promise<{ thoughts: string[] }> }) => void = () => {}
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveAiRequest = resolve
+        }),
+    )
+
+    await dispatch([importText({ text: '- a' }), setCursor(['a'])])
+
+    await act(async () => {
+      executeCommand(generateThought)
+    })
+
+    const pending = (await findThoughtByText('a'))!
+    expect(pending).toHaveAttribute('data-generating')
+
+    await act(async () => {
+      resolveAiRequest({ json: () => Promise.resolve({ thoughts: ['generated'] }) })
+    })
+
+    const editable = (await findThoughtByText('generated'))!
+    expect(editable).not.toHaveAttribute('data-generating')
+    expect(document.querySelector('[placeholder="Generating Thought"]')).toBeNull()
+  })
 })
