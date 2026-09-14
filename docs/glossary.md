@@ -126,7 +126,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **meta-attribute** — See *attribute*.
 
-**ministore** — Lightweight non-Redux store for ephemeral UI state, in [`/src/stores`](../src/stores). Used when the value doesn't need to participate in undo/redo, persistence, or selectors (e.g. `editingValue`, `viewport`, `scrollTop`).
+**ministore** — Lightweight non-Redux store for ephemeral UI state, in [`/src/stores`](../src/stores). Used when the value doesn't need to participate in undo/redo, persistence, or selectors (e.g. `editingValue`, `viewport`, `scrollTop`). A module may also create one for its own bookkeeping that must reset between tests — the pull queue's once-per-session favorites flag, the URL middleware's last path and cursor, the multiselect middleware's parked cursor — since every store the factory creates is restored by `resetStores`, while a module-level `let` would carry its value from one test into the next.
 
 **movePlacements** — `Index<ThoughtId | null>` on `PushBatch`. Keyed by moved thought; the value is the sibling to place it after (`null` = first). Carries reorder intent from the action layer to TreeCRDT, which stores sibling order directly instead of by rank. See [persistence.md → Order and placement](persistence.md#order-and-placement).
 
