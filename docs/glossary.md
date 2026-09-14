@@ -92,7 +92,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## G
 
-**generating** — Flag on `Thought` set while content is being produced by AI. Distinct from `pending` (loading from storage). Generate Thought and Organize Thoughts use it as a display-only signal: empty thoughts show a command-specific placeholder ("Generating Thought" or "Reorganizing Thought") and all generating thoughts shimmer, without writing a pending value. **generatingPlaceholder** is the in-memory label for that empty-thought placeholder and is not persisted.
+**generating** — Flag on `Thought` set while content is being produced by AI. Distinct from `pending` (loading from storage). Generate Thought, Organize Thoughts, and Define Term use it as a display-only signal: empty thoughts show a command-specific placeholder ("Generating Thought" or "Reorganizing Thought") and all generating thoughts shimmer, without writing a pending value. **generatingPlaceholder** is the in-memory label for that empty-thought placeholder and is not persisted.
 
 **GLOBAL_ROOT_TOKEN** — The root node of the TreeCRDT tree, and the value `ROOT_PARENT_ID` aliases. `HOME_TOKEN`, `EM_TOKEN`, and `ABSOLUTE_TOKEN` are inserted as its children during initialization. See [`constants.ts`](../src/constants.ts).
 

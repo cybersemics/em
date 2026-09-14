@@ -24,7 +24,7 @@ const usePlaceholder = ({ isEditing, path, simplePath }: { isEditing: boolean; p
     if (!thought) return ''
 
     const { value } = thought
-    // Display-only: the stored value stays empty while Generate Thought or Organize Thoughts is in flight.
+    // Display-only: the stored value stays empty while an AI request is in flight.
     if (thought.generating && !value) return thought.generatingPlaceholder || 'Generating Thought'
     if (!isCursorCleared && value) return value
 

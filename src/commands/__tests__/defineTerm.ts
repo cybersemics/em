@@ -147,6 +147,21 @@ it('reports an invalid AI response', async () => {
   expect(store.getState().error).toBe('Failed to define term')
 })
 
+it('marks a thought as generating without changing its value', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockReturnValueOnce(new Promise(() => {}))
+  await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
+
+  executeCommand(defineTerm)
+  await vi.runAllTimersAsync()
+
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))).toMatchObject({
+    generating: true,
+    generatingPlaceholder: 'Defining Term',
+    value: 'apple',
+  })
+})
+
 it('does not overwrite an edit made while inference is pending', async () => {
   acknowledgeAiDisclosure()
   /** Resolves the pending AI request so the test controls when generation completes. */

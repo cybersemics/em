@@ -6,6 +6,7 @@ import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
+import defineTerm from '../../commands/defineTerm'
 import generateThought from '../../commands/generateThought'
 import organizeThought from '../../commands/organizeThought'
 import { HOME_TOKEN } from '../../constants'
@@ -392,5 +393,69 @@ describe('Organize Thoughts', () => {
     const editable = (await findThoughtByText('apples'))!
     expect(editable).not.toHaveAttribute('data-generating')
     expect(document.querySelector('[placeholder="Reorganizing Thought"]')).toBeNull()
+  })
+})
+
+describe('Define Term', () => {
+  const mockFetch = vi.fn()
+  const originalFetch = global.fetch
+
+  beforeEach(() => {
+    global.fetch = mockFetch
+    mockFetch.mockReset()
+    clearAiDisclosureAcknowledgement()
+  })
+
+  afterEach(() => {
+    global.fetch = originalFetch
+    vi.unstubAllEnvs()
+  })
+
+  it('keeps the current text of a thought while Define Term is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
+
+    await act(async () => {
+      executeCommand(defineTerm)
+    })
+
+    const editable = (await findThoughtByText('apple'))!
+    expect(editable).toHaveAttribute('data-generating')
+    expect(editable.textContent).toBe('apple')
+  })
+
+  it('clears the generating marker when Define Term completes', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+
+    /** Resolves the pending AI request. Assigned when the mocked fetch is called, so the test controls exactly when the definition completes. */
+    let resolveAiRequest: (response: { json: () => Promise<{ definitions: string[] }> }) => void = () => {}
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveAiRequest = resolve
+        }),
+    )
+
+    await dispatch([importText({ text: '- apple' }), setCursor(['apple'])])
+
+    await act(async () => {
+      executeCommand(defineTerm)
+    })
+
+    const pending = (await findThoughtByText('apple'))!
+    expect(pending).toHaveAttribute('data-generating')
+
+    await act(async () => {
+      resolveAiRequest({
+        json: () => Promise.resolve({ definitions: ['A round, edible fruit with crisp flesh that grows on trees.'] }),
+      })
+    })
+
+    const editable = (await findThoughtByText('apple'))!
+    expect(editable).not.toHaveAttribute('data-generating')
   })
 })
