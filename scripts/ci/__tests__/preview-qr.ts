@@ -14,6 +14,7 @@ import {
   parseBody,
   renderBlock,
   repairAfterAttach,
+  selectPullRequest,
   spliceBody,
 } from '../preview-qr.mjs'
 
@@ -287,5 +288,25 @@ describe('repairAfterAttach', () => {
     const repaired = repairAfterAttach({ before, after: `${before}\n\n![${QR_FILE}](${imageB})`, state: target })!
     expect(repaired).toContain(authored)
     expect(repaired).toContain(`![Preview deployment](${imageB})</a>`)
+  })
+})
+
+describe('selectPullRequest', () => {
+  const base = { number: 1, head: { sha: shaA } }
+  /** A pull request stacked on `base`'s branch, which therefore also contains every commit of it. */
+  const stacked = { number: 2, head: { sha: shaB } }
+
+  it('picks the pull request whose head is the commit over a stacked one that merely contains it', () => {
+    expect(selectPullRequest([base, stacked], shaA)).toBe(base)
+    expect(selectPullRequest([base, stacked], shaB)).toBe(stacked)
+  })
+
+  it('returns null when every candidate has moved past the commit', () => {
+    expect(selectPullRequest([stacked], shaA)).toBeNull()
+    expect(selectPullRequest([], shaA)).toBeNull()
+  })
+
+  it('refuses to pick between two pull requests that share the commit as their head', () => {
+    expect(() => selectPullRequest([base, { number: 3, head: { sha: shaA } }], shaA)).toThrow(/2 open pull requests/)
   })
 })

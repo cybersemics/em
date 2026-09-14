@@ -1,8 +1,12 @@
 import path from 'path'
+import { KnownDevices } from 'puppeteer'
 import configureSnapshots from '../configureSnapshots'
+import deviceEmulation from '../helpers/deviceEmulation'
 import openModal from '../helpers/openModal'
 import renderGestureDiagram from '../helpers/renderGestureDiagram'
 import screenshot from '../helpers/screenshot'
+import waitForSelector from '../helpers/waitForSelector'
+import { page } from '../session'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
@@ -55,4 +59,33 @@ it('keeps the filled arrowhead visible while preserving gradient transparency', 
 
   expect(gradientArrow).toEqual(solidArrow)
   expect(gradientShaft).toEqual(translucentShaft)
+})
+
+describe('mobile stroke sizing', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  // https://github.com/cybersemics/em/pull/5319
+  it('uses the same visible stroke thickness for straight, circular and question-mark gestures in Help', async () => {
+    await openModal('help')
+    await waitForSelector('tr td:last-child svg')
+
+    const widths = await page.evaluate(() =>
+      ['New Thought', 'New Thought (above)', 'Command Universe'].map(label => {
+        const row = Array.from(document.querySelectorAll('tr')).find(
+          row => row.querySelector('b')?.textContent === label,
+        )
+        const svg = row?.querySelector('td:last-child svg')
+        const path = Array.from(svg?.querySelectorAll<SVGPathElement>('path[stroke-width]') ?? []).find(
+          path => !path.closest('defs'),
+        )
+        if (!path) throw new Error(`Missing gesture stroke for ${label}.`)
+        const matrix = path.getScreenCTM()!
+        return Number(path.getAttribute('stroke-width')) * Math.hypot(matrix.a, matrix.b)
+      }),
+    )
+
+    expect(widths[0]).toBeGreaterThan(0)
+    expect(widths[1]).toBeCloseTo(widths[0], 6)
+    expect(widths[2]).toBeCloseTo(widths[0], 6)
+  })
 })

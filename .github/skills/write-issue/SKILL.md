@@ -19,9 +19,19 @@ So put your open questions to the reporter first, and post once the answers are 
 - Expected Behavior, where the correct behaviour is a decision rather than an observation.
 - Evidence you believe exists and do not have — a screenshot, a video, a debug log.
 
-Ask them in one pass rather than one at a time, and only where the answer is the reporter's to give: a question you can settle by reproducing the bug or by reading the code is yours to settle.
+Ask everything you can ask now in one pass rather than one at a time, and only where the answer is the reporter's to give: a question you can settle by reproducing the bug or by reading the code is yours to settle.
 
 What you post is then succinct and free of loose ends — no "possibly", no "I think this is related to", no alternative left unruled-out. Where an answer genuinely cannot be had, name it as a known unknown in the preamble rather than leaving it implied.
+
+### More than one round
+
+A pass is a round, not your one chance. An answer often decides something that was undecidable before it, and the questions that decision raises could not have been asked earlier: settling that a behaviour should be configurable makes its default askable, settling that this is two bugs makes the scope of the second one askable, settling Expected Behavior makes its boundary askable.
+
+So read each round of answers for what it opened, and put those questions to the reporter in another round. Keep going until a round opens nothing new, then post. There is no limit on rounds, only on asking the same thing twice.
+
+Every round follows the rule the first one did: everything askable now goes in it, nothing an earlier answer already settled, nothing you can settle yourself. A round that would only restate the last one in different words is the signal to stop asking and post.
+
+The rounds are cheap next to what they prevent — a question the reporter would have answered in a second breath, left instead as a guess in the issue or as a decision the assignee makes alone.
 
 ## The template
 
@@ -70,6 +80,8 @@ Include preconditions that are awkward but load-bearing — a specific device wi
 ### Current Behavior
 
 What happens, as an observation, with the evidence: a screenshot, a video, or a debug log. Not the cause, and not a proposed fix. Quote a one-line error inline rather than in a fenced block; keep fences for output that actually spans lines.
+
+It is exclusively the outcome of the steps above. A qualifier about what the failure did not need — "No drag is needed", "this happens even without the Context View open" — is a condition of the reproduction rather than a result of it, and belongs in Steps to Reproduce. Either the steps already exclude what it rules out, and it says nothing, or they do not, and the steps are what is wrong: cut the unnecessary step so the steps produce the failure on their own.
 
 ### Expected Behavior
 
@@ -227,12 +239,19 @@ New issues often originate in a comment thread on another issue or PR.
 3. Link forward, from the new issue to its origin: `Split out from #2968, which covered the Question Mark icon specifically.`
 4. Link back, with a comment on the source issue naming the new number: `Opened #5092 to track the general misalignment of Gesture Diagrams at different font sizes.`
 
+## After posting
+
+**Do not summarize the issue.** It is written, and the link opens it. Restating the steps, the current behaviour, and the expected behaviour puts a second copy of the issue in the turn, which the reader has to read through to discover it says nothing the issue does not. Report only what is not in the issue — a relationship configured, a comment left on a source issue, a question the answers did not settle.
+
+**Put the link last.** The link to the issue goes after everything else written in the turn, not at the top of it. It is where the reader leaves for, so whatever they need before they go has to come above it. A link at the beginning is followed before the rest is read.
+
 ## Common defects
 
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
+- A Current Behavior carrying a qualifier about the reproduction — "No drag is needed" — where the condition belongs in the steps.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
@@ -242,6 +261,7 @@ New issues often originate in a comment thread on another issue or PR.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
 - A piece of a larger feature opened as a sibling with `Part of #5481` in the body, where a sub-issue relationship is what tracks it.
 - A loose end left for the reader — an unruled-out alternative, a missing value, an unnamed platform — that the reporter could have answered before posting.
+- An issue posted after one round of questions, with a detail the answers themselves left undecided and nobody went back to ask about.
 
 ## When something is unknown
 
@@ -249,4 +269,4 @@ Ask, as above. State whatever survives the answers in the preamble rather than o
 
 Do not guess Expected Behavior, since a guess there becomes a regression test asserting behaviour nobody chose.
 
-- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, break it down and ask more questions with the ask tool.
+- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.
