@@ -29,6 +29,7 @@ import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
+import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
 
@@ -53,6 +54,11 @@ const Note = React.memo(
     const note = useSelector(state => noteValue(state, path))
     const editableNonce = useSelector(state => state.editableNonce)
 
+    // A note is short enough that the trackpad's hit test lands outside it from the moment the space bar is
+    // pressed, so the caret escapes without any drag at all. It only escapes from the end, where the note abuts
+    // the parent thought, so that is where it belongs when restored. (#3276)
+    useCaretRestore({ editableRef: noteRef, enabled: !!hasFocus, end: true })
+
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
       preventAutoscrollEnd(noteRef.current)
@@ -62,6 +68,12 @@ const Note = React.memo(
       if (targetPath && !noteId) {
         setNoteDraft(noteValue(state, path) ?? '')
       }
+      // Bail if state already has the caret on this note. Then the focus did not come from the user: it came from the
+      // effect below placing the caret, which focuses the note as a side effect. There is no cursor to move, but
+      // setCursor would still clear the one-shot noteOffset the effect is in the middle of honoring and recompute
+      // cursorOffset, and the undo enhancer records those as a fresh navigation action — discarding the redo stack the
+      // moment an undo restores a note caret, so the note edit that was just undone has no redo step.
+      if (state.noteFocus && equalPathHead(state.cursor, path)) return
       dispatch(
         setCursor({
           path,

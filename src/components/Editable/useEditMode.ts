@@ -18,26 +18,8 @@ import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
 import equalPath from '../../util/equalPath'
 import isCommandKey from '../../util/isCommandKey'
-
-// #4173: Ghost-click suppression state. On a rapid tap between adjacent thoughts, iOS Safari coalesces the
-// two taps into a double-tap and emits a delayed, retargeted synthesized mousedown/click/dblclick on the
-// previously-focused thought ~50-250ms after the second tap's touchend. That delayed mousedown would drive
-// onMouseDown -> setCursor and yank the cursor back. We record the last real touchend (time + element); a
-// genuine mousedown follows its own touchend within a few ms on the same element, whereas the ghost arrives
-// later on a different thought, so it can be detected and dropped.
-let lastTouchEndTime = 0
-let lastTouchEndTarget: EventTarget | null = null
-const GHOST_MOUSE_WINDOW_MS = 700
-
-/**
- * Returns true if the last real touchend recently (within GHOST_MOUSE_WINDOW_MS) landed on a DIFFERENT
- * editable than `editable` — the shared signature of iOS's rapid-tap retargeting (#4173). Reads the last
- * recorded touchend from module state.
- */
-const isRetargetedTap = (editable: EventTarget): boolean =>
-  !!lastTouchEndTarget &&
-  lastTouchEndTarget !== editable &&
-  performance.now() - lastTouchEndTime < GHOST_MOUSE_WINDOW_MS
+import lastTouch from './lastTouch'
+import useCaretRestore from './useCaretRestore'
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
@@ -77,6 +59,8 @@ const useEditMode = ({
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
   const editingOrOnCursor = isCursor || editing
+
+  useCaretRestore({ editableRef: contentRef, enabled: isCursor && !!editing })
 
   useEffect(
     () => {
@@ -223,10 +207,8 @@ const useEditMode = ({
     const onTouchEnd = (e: TouchEvent) => {
       pressingRef.current = false
       // Evaluate against the PREVIOUS touchend before overwriting it below.
-      const willRetarget = isRetargetedTap(editable)
-      lastTouchEndTime = performance.now()
-      lastTouchEndTarget = editable
-
+      const willRetarget = lastTouch.isRetargeted(editable)
+      lastTouch.record(editable)
       // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
       // retargets the synthesized mousedown/focus to the previously-focused thought (onMouseDown suppresses
       // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.
@@ -286,7 +268,7 @@ const useEditMode = ({
       // second tap already moved focus. A genuine mousedown follows its own touchend within a few ms on the
       // same element; a ghost arrives later on a different thought. Dropping it (preventDefault also blocks
       // the focus change) keeps the cursor on the thought the user actually tapped.
-      if (isTouch && isSafari() && isRetargetedTap(editable)) {
+      if (isTouch && isSafari() && lastTouch.isRetargeted(editable)) {
         e.preventDefault()
         return
       }

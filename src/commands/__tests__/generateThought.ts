@@ -1,6 +1,7 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
@@ -350,6 +351,123 @@ test('replace a non-empty thought using its ancestors and siblings', async () =>
     - potato
     - carrot
     - garlic`)
+
+  vi.unstubAllEnvs()
+})
+
+test('omit metaprogramming attributes from the context sent to the AI service', async () => {
+  const text = `
+      - Grocery list
+        - =pin
+        - =note
+          - Buy organic
+        - potato
+        - carrot
+        - onion
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thoughts: ['garlic'] }),
+  })
+
+  await dispatch([importText({ text }), setCursor(['Grocery list', 'onion'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inputs: ['[] Grocery list\n  [] potato\n  [] carrot\n  [x] onion'] }),
+  })
+
+  vi.unstubAllEnvs()
+})
+
+test('omit metaprogramming attributes from the context when hidden thoughts are shown', async () => {
+  const text = `
+      - Grocery list
+        - =pin
+        - potato
+        - carrot
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thoughts: ['onion'] }),
+  })
+
+  await dispatch([importText({ text }), toggleHiddenThoughts(), setCursor(['Grocery list', 'carrot'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inputs: ['[] Grocery list\n  [] potato\n  [x] carrot'] }),
+  })
+
+  vi.unstubAllEnvs()
+})
+
+test('mark the cursor thought as the replacement target when it is itself a metaprogramming attribute', async () => {
+  const text = `
+      - Grocery list
+        - =pin
+        - potato
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thoughts: ['=publish'] }),
+  })
+
+  await dispatch([importText({ text }), toggleHiddenThoughts(), setCursor(['Grocery list', '=pin'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inputs: ['[] Grocery list\n  [x] =pin\n  [] potato'] }),
+  })
+
+  vi.unstubAllEnvs()
+})
+
+test('send an attribute ancestor as context when the cursor is inside a metaprogramming attribute', async () => {
+  const text = `
+      - Grocery list
+        - =note
+          - Buy organic
+    `
+
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockResolvedValueOnce({
+    json: () => Promise.resolve({ thoughts: ['Buy organic produce'] }),
+  })
+
+  await dispatch([importText({ text }), toggleHiddenThoughts(), setCursor(['Grocery list', '=note', 'Buy organic'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  expect(mockFetch).toHaveBeenCalledWith('http://test-ai-url/generateThought', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inputs: ['[] Grocery list\n  [] =note\n    [x] Buy organic'] }),
+  })
 
   vi.unstubAllEnvs()
 })

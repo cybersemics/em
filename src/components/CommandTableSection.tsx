@@ -4,7 +4,7 @@ import { modalTextRecipe } from '../../styled-system/recipes'
 import Command from '../@types/Command'
 import CommandTableOnly from './CommandTableOnly'
 
-interface CommandsGroupProps {
+interface CommandTableSectionProps {
   customize?: boolean
   onSelect?: (command: Command | null) => void
   selectedCommand?: Command
@@ -15,9 +15,9 @@ interface CommandsGroupProps {
   isMobileGestures: boolean
 }
 /**
- * A group of commands within a CommandTable (Help and CustomizeToolbar).
+ * A titled display section within a CommandTable (Help and CustomizeToolbar).
  */
-const CommandsGroup: FC<CommandsGroupProps> = ({
+const CommandTableSection: FC<CommandTableSectionProps> = ({
   customize,
   onSelect,
   selectedCommand,
@@ -49,4 +49,4 @@ const CommandsGroup: FC<CommandsGroupProps> = ({
   )
 }
 
-export default CommandsGroup
+export default CommandTableSection

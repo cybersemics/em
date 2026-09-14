@@ -9,7 +9,7 @@ allowed-tools:
   - bash
 ---
 
-This is the **End Session** skill. It runs at the other end of the work from `issue-repro` and `plan`: those two gate you *into* implementation, this one gates you *out* of the session. Work through it step by step, in order, every time you are about to stop — whether you are stopping because the work is done or because you are escalating.
+This is the **End Session** skill. It runs at the other end of the work from the `reproduce` and `plan` skills: those two gate you *into* implementation, this one gates you *out* of the session. Work through it step by step, in order, every time you are about to stop — whether you are stopping because the work is done or because you are escalating.
 
 The reason this skill exists: an agent's last action is the one no one supervises. A session that ends with an uncommitted fix on a disposable runner has destroyed the work, not delivered it — the branch looks untouched and the effort is unrecoverable. A session that ends while CI is still running has reported a result it never observed. Both look like success from inside the transcript. This checklist is the thing that makes the ending honest.
 
@@ -21,8 +21,8 @@ Check this **before** the rest of the checklist, because most of the time the co
 
 You may **not** end your turn if any of these is true:
 
-- You have just emitted a gate confirmation line (`issue-repro: …` or `plan: …`). Those lines are explicitly **not** stopping points — continue in the same turn.
-- You are mid-way through `issue-repro`, `plan`, or the fix-validate loop, and have not hit the 5-attempt limit.
+- You have just emitted a gate confirmation line (`reproduce: …` or `plan: …`). Those lines are explicitly **not** stopping points — continue in the same turn.
+- You are mid-way through `reproduce`, `plan`, or the fix-validate loop, and have not hit the 5-attempt limit.
 - CI runs are still in progress. Wait for them with `ci-monitor`. "I'll report the runs that finished" is not an ending.
 - You are about to describe work as complete without having watched a check confirm it.
 
@@ -30,7 +30,7 @@ There is no human waiting to unblock you mid-task — stopping to ask for permis
 
 1. The work is complete and every CI check is green.
 2. You have hit a documented limit — 5 fix-push cycles, or 5 fix-validate attempts — and are escalating.
-3. You cannot reproduce the issue (`issue-repro` Step 3), and are escalating.
+3. You cannot reproduce the issue (the `reproduce` skill, Step 3), and are escalating.
 4. The correct path is genuinely ambiguous and proceeding either way risks the wrong outcome.
 
 Endings 2–4 still run the whole checklist below. **An escalation is an ending, not an exemption** — that is precisely when unpushed work is most likely to be lost, because you are stopping in the middle rather than at a natural finish.
@@ -93,7 +93,7 @@ A regression test committed `it.skip` is a transient safety marker, not a delive
 git diff origin/main...HEAD -- '*.ts' '*.tsx' | grep -nE '^\+.*\b(it|describe)\.skip\b'
 ```
 
-Any hit is a test **this branch** added or left skipped. If it is the regression test from `issue-repro` Step 4 and the fix is in, remove the `.skip`, re-run it via `run-test` to confirm it now passes, and commit that with the fix (back to Step 3).
+Any hit is a test **this branch** added or left skipped. If it is the regression test from the `reproduce` skill's Step 4 and the fix is in, remove the `.skip`, re-run it via `run-test` to confirm it now passes, and commit that with the fix (back to Step 3).
 
 The one legitimate exit with a `.skip` still present is an escalation where the fix was never implemented — the skipped test is the useful artifact of a failed session. Say so explicitly in your report.
 
@@ -121,7 +121,7 @@ Use `ci-monitor`. Wait for every run on the branch to complete; do not report on
 
 ## Step 7: Report
 
-Your final message is the entire record for whoever picks this up. It must contain:
+Your final message is the entire record for whoever picks this up. Write it **in the turn that did the work**, before you yield — never on a later wake, which may arrive hours after the fact or not at all. It must contain:
 
 - **What you did**, step by step — branch created, commits made, PR opened, CI status, fixes applied.
 - **The PR URL and its status.**
@@ -129,6 +129,17 @@ Your final message is the entire record for whoever picks this up. It must conta
 - **A concise diagnosis of any CI failure** you hit along the way, and what you did about it.
 - **What you did not do.** Anything out of scope, deferred, or left broken. A test still skipped, a file you left alone in Step 2, a second reproduction path you did not get to. Silence here reads as "everything is handled."
 - **If escalating:** what you tried, what you observed each time, and the specific question or decision you need from the user. "It didn't work" is not an escalation.
+
+---
+
+## Step 8: How to wait for whatever comes next
+
+A cloud session's runner is reclaimed once it goes idle, and that is the correct end state rather than a failure: an idle session costs nothing, while every wake costs a full turn — a fresh runner, and the whole conversation re-read. So end deliberately instead of leaving the session alive to watch.
+
+- **Subscribe; do not poll.** A pull request subscription delivers CI results, review comments, and the merge itself as events, and costs nothing in between. Ending your turn *is* how you wait for them.
+- **Do not put a timer on top of it.** A scheduled check-in fires whether or not anything happened, re-provisions the runner that was correctly reclaimed, and spends a turn reporting that nothing changed. Left overnight on a quiet pull request, that is one wake an hour for no information.
+- **Never wake to narrate a finished outcome.** A merged pull request needs nothing further, so the wake that announces it is pure cost — and it is the report you owed in Step 7 arriving late. Report the merge in the turn that performed it, and let the session go.
+- The one thing a subscription genuinely misses is a conflict created when the base branch advances, which GitHub emits no webhook for. That belongs in CI, not in a timer: [`copilot-conflicts.yml`](../../workflows/copilot-conflicts.yml) already scans for it on every push to `main`.
 
 ---
 
@@ -144,7 +155,7 @@ end-session: complete — checklist passed per .github/skills/end-session/SKILL.
 end-session: escalating — checklist passed per .github/skills/end-session/SKILL.md; blocked on <one-line reason>.
 ```
 
-Unlike the `issue-repro` and `plan` gate lines, this one **is** a stopping point — it is the only one. Emitting it is your assertion that the tree is clean, the branch is pushed, and CI was observed green (or that you are escalating with everything preserved). Do not emit it speculatively and then keep working.
+Unlike the `reproduce` and `plan` gate lines, this one **is** a stopping point — it is the only one. Emitting it is your assertion that the tree is clean, the branch is pushed, and CI was observed green (or that you are escalating with everything preserved). Do not emit it speculatively and then keep working.
 
 ---
 
@@ -154,3 +165,5 @@ Unlike the `issue-repro` and `plan` gate lines, this one **is** a stopping point
 - **Cleaning the tree by deleting.** `git checkout .` makes Step 3's command print nothing and destroys the session's work doing it. Account for files; never discard them.
 - **Escalating without pushing.** The most expensive ending available: the investigation is gone and the user restarts from zero. Escalation runs the full checklist.
 - **Reporting CI you did not watch.** Ending while runs are in flight and describing the ones that happened to finish.
+- **Yielding first and reporting on the next wake.** Finishing a merge or a green run, ending the turn silently, and planning to summarise when something wakes you. The runner is reclaimed in the meantime, so the report arrives hours later from a fresh one — or never, because nothing wakes a session whose work is already done. The report belongs in the turn that did the work.
+- **Keeping the session alive to watch.** Scheduling a check-in so the session stays warm. The subscription already covers every event worth waking for, and the timer only pays to rebuild what idling correctly tore down.

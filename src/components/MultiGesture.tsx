@@ -278,6 +278,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           return
         }
 
+        // React Native Web reports page coordinates. Measure finger movement in the viewport so
+        // momentum scrolling cannot turn an upward swipe into a downward or stationary gesture.
+        const clientPoint = {
+          x: gestureState.moveX - window.scrollX,
+          y: gestureState.moveY - window.scrollY,
+        }
+
         // initialize this.currentStart on the the first trigger of the move event
         // TODO: Why doesn't onPanResponderStart work?
         if (!this.currentStart) {
@@ -298,10 +305,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             this.disableScroll = false
           }
 
-          this.currentStart = {
-            x: gestureState.moveX,
-            y: gestureState.moveY,
-          }
+          this.currentStart = clientPoint
           this.scrollYStart = window.scrollY
           if (this.props.onStart) {
             this.props.onStart({ clientStart: this.clientStart!, e })
@@ -311,10 +315,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         const g = gesture(
           this.currentStart,
-          {
-            x: gestureState.moveX,
-            y: gestureState.moveY,
-          },
+          clientPoint,
           this.minDistanceSquared,
           // The new sequence will be appended as soon as it is detected, so we need to base the bias on the second-to-last letter in the sequence
           this.sequence.length > 1
@@ -326,10 +327,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
 
         if (g) {
           this.disableScroll = true
-          this.currentStart = {
-            x: gestureState.moveX,
-            y: gestureState.moveY,
-          }
+          this.currentStart = clientPoint
 
           if (g !== this.sequence[this.sequence.length - 1]) {
             // append the gesture to the sequence and call the onGesture handler
@@ -349,22 +347,22 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             abandon: this.abandon,
           })
         }
+        const clientEnd = {
+          x: gestureState.moveX - window.scrollX,
+          y: gestureState.moveY - window.scrollY,
+        }
         // Log the start and end coordinates so that a false gesture, such as an OS app switcher swipe misread as a command gesture, can be diagnosed from the debug log. innerHeight and safeAreaBottom determine the bottom system-gesture exclusion that was in effect (see isInGestureZone), so the log also reveals if the exclusion was inert because the safe area inset read as zero.
         debugLog.log('gesture', {
           sequence: this.sequence,
           x: this.clientStart && Math.round(this.clientStart.x),
           y: this.clientStart && Math.round(this.clientStart.y),
-          endX: Math.round(gestureState.moveX),
-          endY: Math.round(gestureState.moveY),
+          endX: Math.round(clientEnd.x),
+          endY: Math.round(clientEnd.y),
           abandon: this.abandon,
           innerHeight: viewportStore.getState().innerHeight,
           safeAreaBottom: getSafeAreaBottom(),
         })
         if (!this.abandon) {
-          const clientEnd = {
-            x: gestureState.moveX,
-            y: gestureState.moveY,
-          }
           this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
         }
         this.reset()
