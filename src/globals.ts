@@ -45,6 +45,12 @@ let suppressBlurSync = false
  * touchstart, which clears the flag first. */
 let suppressCursorAfterTouch = false
 
+/** Set when the current press landed on the caret, i.e. the user is reaching for native caret repositioning (the iOS
+ * magnifier, the Android caret handle) rather than starting a drag or a gesture. Set by the capture-phase touchstart
+ * listener in initEvents and cleared on touchend, so its lifetime is the press. Read by useLongPress, canDrag, and
+ * shouldCancelGesture — react-dnd's own timer can begin a drag without going through the long press state machine. */
+let pressOnCaret = false
+
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -56,6 +62,7 @@ const globals = {
   suppressChange,
   suppressBlurSync,
   suppressCursorAfterTouch,
+  pressOnCaret,
   arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }
