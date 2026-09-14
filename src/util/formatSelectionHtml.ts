@@ -78,17 +78,15 @@ const positionAtOffset = (root: Node, target: number): Position => {
   return { node: root, offset: 0 }
 }
 
-/** Returns the nearest ancestor element of node within container (inclusive of node) that satisfies the predicate. */
-const closestElement = (node: Node, container: Node, predicate: (el: HTMLElement) => boolean): HTMLElement | null => {
-  for (let n: Node | null = node; n && n !== container; n = n.parentNode) {
-    if (n.nodeType === Node.ELEMENT_NODE && predicate(n as HTMLElement)) return n as HTMLElement
+/** Returns the nearest ancestor element of the given tag (within container), starting from node, or null. */
+const closestTag = (node: Node, container: Node, tag: string): HTMLElement | null => {
+  let n: Node | null = node.nodeType === Node.ELEMENT_NODE ? node : node.parentNode
+  while (n && n !== container) {
+    if (n.nodeType === Node.ELEMENT_NODE && (n as HTMLElement).tagName.toLowerCase() === tag) return n as HTMLElement
+    n = n.parentNode
   }
   return null
 }
-
-/** Returns the nearest ancestor element of the given tag (within container), starting from node, or null. */
-const closestTag = (node: Node, container: Node, tag: string): HTMLElement | null =>
-  closestElement(node, container, el => el.tagName.toLowerCase() === tag)
 
 /** Returns true if every selected character in the [s, e) range is already inside an element of the given tag, i.e. the
  * range is fully formatted and applying the command should toggle it off rather than wrap it again. */
@@ -171,10 +169,23 @@ const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
   }
 }
 
-/** Returns true if the element carries a text color or background color, i.e. a <font color> or an inline
- * color/background-color style, as in getCommandState's extractColors. */
-const isColorElement = (el: HTMLElement): boolean =>
-  !!(el.getAttribute('color') || el.style.color || el.style.backgroundColor)
+/** Returns the nearest ancestor element within container that carries a text color or background color and contains the
+ * node, or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
+ * style, as in getCommandState's extractColors. Color formatting is not nested, so the nearest such ancestor covers the
+ * whole colored chunk. */
+const enclosingColorElement = (node: Node, container: Node): HTMLElement | null => {
+  for (let n: Node | null = node; n && n !== container; n = n.parentNode) {
+    if (
+      n.nodeType === Node.ELEMENT_NODE &&
+      ((n as HTMLElement).getAttribute('color') ||
+        (n as HTMLElement).style.color ||
+        (n as HTMLElement).style.backgroundColor)
+    ) {
+      return n as HTMLElement
+    }
+  }
+  return null
+}
 
 /** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
  * single <font> element that carries both the color attribute and the background-color style. The color command fully
@@ -228,30 +239,6 @@ interface FormatOptions {
   defaultBackgroundColor?: string
 }
 
-/** Returns the formatting element surrounding a collapsed caret that the command would remove — an element of the
- * command's own tag, or, for a color command that resolves to no color, the colored element around the caret — or null
- * if the command adds formatting rather than removing it. Scoping such a command to that element keeps it from
- * reformatting the whole thought the caret was widened to, which would make a thought with two formatted chunks
- * entirely formatted on the first tap (#4052). The caret is then no longer inside such an element, so a second tap
- * formats the whole thought and a third clears it. Color formatting is not allowed to nest, so the nearest colored
- * ancestor covers the whole colored chunk. */
-const caretFormattingElement = (
-  container: HTMLElement,
-  { caret, command, colorValue, defaultColor, defaultBackgroundColor }: FormatOptions,
-): HTMLElement | null => {
-  if (caret === undefined) return null
-  const node = positionAtOffset(container, caret).node
-
-  // a caret inside an element of the command's own tag means the command toggles that tag off
-  const tag = tagForCommand(command)
-  if (tag) return closestTag(node, container, tag)
-
-  if (command !== 'foreColor' && command !== 'backColor') return null
-
-  const { color, background } = resolveSelectionColors(command, colorValue, defaultColor, defaultBackgroundColor)
-  return color || background ? null : closestElement(node, container, isColorElement)
-}
-
 /**
  * Applies a formatting command to an HTML string over a plain-text [start, end) range, returning the new HTML.
  * The start and end offsets default to the full range, as in slice.
@@ -259,18 +246,33 @@ const caretFormattingElement = (
  * This is the synchronous replacement for document.execCommand: it computes the formatted markup directly rather than
  * mutating a contentEditable and waiting for the change to re-enter Redux (#4637).
  */
-const formatSelectionHtml = (html: string, options: FormatOptions): string => {
-  const { start: startOption, end: endOption, command, colorValue, defaultColor, defaultBackgroundColor } = options
+const formatSelectionHtml = (
+  html: string,
+  {
+    start: startOption,
+    end: endOption,
+    command,
+    caret,
+    colorValue,
+    defaultColor,
+    defaultBackgroundColor,
+  }: FormatOptions,
+): string => {
   const container = document.createElement('div')
   container.innerHTML = html
 
   const tag = tagForCommand(command)
   const plainLength = container.textContent?.length ?? 0
 
-  const caretElement = caretFormattingElement(container, options)
+  // A tag command whose caret sits inside an element of that tag toggles off only that element, rather than formatting
+  // the whole thought the caret was widened to — otherwise a thought with two bold chunks becomes entirely bold on the
+  // first tap (#4052). The caret is then no longer inside a tag element, so a second tap formats the whole thought and
+  // a third clears it.
+  const caretTagElement =
+    tag && caret !== undefined ? closestTag(positionAtOffset(container, caret).node, container, tag) : null
 
-  const start = caretElement ? plainOffsetOf(container, caretElement) : (startOption ?? 0)
-  const end = caretElement ? start + (caretElement.textContent?.length ?? 0) : (endOption ?? plainLength)
+  const start = caretTagElement ? plainOffsetOf(container, caretTagElement) : (startOption ?? 0)
+  const end = caretTagElement ? start + (caretTagElement.textContent?.length ?? 0) : (endOption ?? plainLength)
 
   // The caller normalizes a collapsed caret or full selection to [0, plainLength], so this is a whole-thought command.
   const whole = start === 0 && end === plainLength
@@ -279,14 +281,11 @@ const formatSelectionHtml = (html: string, options: FormatOptions): string => {
   const s = positionAtOffset(container, start)
   const e = positionAtOffset(container, end)
 
-  /** Builds a Range over the target: the formatting element the caret narrowed the command to (selecting the element
-   * itself, so removing it takes its tags with it), the whole thought's contents (selecting the outer wrapper elements
-   * too, so a wrap grabs them), or the plain-text sub-range. */
+  /** Builds a Range over the target: the whole thought's contents (selecting the outer wrapper elements too, so a wrap
+   * grabs them) or the plain-text sub-range. */
   const makeRange = (): Range => {
     const range = document.createRange()
-    if (caretElement) {
-      range.selectNode(caretElement)
-    } else if (whole) {
+    if (whole) {
       range.selectNodeContents(container)
     } else {
       range.setStart(s.node, s.offset)
@@ -325,7 +324,22 @@ const formatSelectionHtml = (html: string, options: FormatOptions): string => {
       defaultColor,
       defaultBackgroundColor,
     )
-    applyColor(container, makeRange(), colors)
+
+    // A command that clears the color at a collapsed caret removes only the colored chunk that surrounds the caret,
+    // rather than every chunk in the thought that happens to share the color (#4052). The caret is then no longer
+    // inside a colored element, so a second tap colors the whole thought and a third clears it.
+    const colorElement =
+      !colors.color && !colors.background && caret !== undefined
+        ? enclosingColorElement(positionAtOffset(container, caret).node, container)
+        : null
+
+    const range = makeRange()
+    if (colorElement) {
+      range.setStartBefore(colorElement)
+      range.setEndAfter(colorElement)
+    }
+
+    applyColor(container, range, colors)
   }
 
   container.normalize()
