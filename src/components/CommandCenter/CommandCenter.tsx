@@ -31,16 +31,23 @@ const easeOpen = [0.1, 0.2, 0.2, 1] as const
 /** MUI sharp — matches the close curve used by SwipeableDrawer. Slow first frame avoids a large initial gap. */
 const easeClose = [0.4, 0, 0.6, 1] as const
 
+/**************************************************************
+ * Sheet stage constants
+ **************************************************************/
 /** Snap index of the standard stage. Index 0 is the closed state, which the Sheet turns into onClose. */
 const SNAP_STANDARD = 1
 /** Snap index of the expanded stage. */
 const SNAP_EXPANDED = 2
 
-/** The offset in rem between the standard and expanded stages. */
+/** The height offset between the standard and expanded stages. */
 const STAGE_OFFSET_REM = 2.78
 
-/** Height of the chevron area at the bottom of the drawer reserved for the expand chevron. */
-const CHEVRON_BAND_REM = 1.56
+/**************************************************************
+ * Chevron section constants
+ **************************************************************/
+
+/** The height of Chevron section. */
+const CHEVRON_SECTION_HEIGHT_REM = 1.56
 
 /** Dimensions of the chevron path in px. */
 const CHEVRON_WIDTH = 25
@@ -109,12 +116,12 @@ const HiddenOverlay = () => {
 /**
  * Custom hook that returns reactive transforms for a draggable sheet.
  *
- * The drawer has a single, fixed height. What changes between its two stages is how far it is pushed
- * down: at the standard stage the bottom `stageOffset` pixels hang below the screen and are clipped,
- * and at the expanded stage the whole drawer is on screen. Both progress values below are therefore
- * pure functions of the sheet's `y`, which the drag handler writes directly from the finger. Deriving
- * every animation from `y` is what makes the transition track the gesture without anything jumping
- * when it ends.
+ * The drawer has one fixed height. Only its vertical position changes between the two stages.
+ * At the standard stage, the bottom `stageOffset` pixels sit below the screen and are clipped.
+ * At the expanded stage, the whole drawer is on screen.
+ * The drag handler writes `y` directly from the finger position. Both progress values below are
+ * calculated from `y` alone, and so is every animation. That way, the drawer can follow the finger
+ * movement.
  */
 const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
   /*
@@ -133,11 +140,11 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
   const height = useTransform(() => {
     return ref.current?.yInverted.get() ?? 0
   })
-
-  /*
-   * 0 while closed, 1 once the drawer reaches the standard stage, and 1 for the rest of the way to the
-   * expanded stage. Normalized against the standard snap point rather than the full sheet height so
-   * that expanding does not brighten the glow overlay, which the design requires to stay fixed.
+  /**
+   * Controls the overlay opacity and the blur height.
+   *
+   * The value is 0 when the drawer is closed and 1 when the drawer is open. Both drawer stages,
+   * standard and expanded, count as open, so the overlay height stays the same at either stage.
    */
   const sheetProgress = useTransform(() => {
     const yInverted = ref.current?.yInverted.get() ?? 0
@@ -174,16 +181,11 @@ const CommandCenter = () => {
   const sheetRef = useRef<SheetRef>(null)
   const { height, opacity, blurHeight, stageProgress } = useSheetTransforms(sheetRef)
 
-  /*
-   * The two vertical dimensions the drawer's stages are built from, resolved against the font size
-   * (`1rem` is `state.fontSize`, see AppComponent). They are published to CSS as custom properties on
-   * the content root below, because `css()` is extracted at build time and cannot read runtime values.
-   */
   const stageOffset = Math.round(fontSize * STAGE_OFFSET_REM)
 
   /* Negative snap points are measured from the top of the sheet, so this resolves to
-   * [closed, sheetHeight - stageOffset, sheetHeight] — i.e. the standard stage leaves the bottom
-   * stageOffset pixels of the drawer below the screen, where the Sheet root clips them. */
+   * [closed, sheetHeight - stageOffset, sheetHeight]. At the standard stage, the bottom stageOffset
+   * pixels of the drawer stay below the screen, since the Sheet root clips those pixels. */
   const snapPoints = useMemo(() => [0, -stageOffset, 1], [stageOffset])
 
   const [stage, setStage] = useState<'standard' | 'expanded'>('standard')
@@ -204,19 +206,9 @@ const CommandCenter = () => {
     [scrollRef],
   )
 
-  /** Only let a downward drag collapse the drawer when the command list is scrolled to the top, so the gesture does not conflict with scrolling the list. */
+  // Disabling drag-to-collapse when the CommandTable's scroll position is not at the top.
+  // This ensures that the drag-to-collapse gesture does not conflict with scrolling the list.
   const isDragDisabled = scrollPosition !== undefined && scrollPosition !== 'top'
-
-  /** True while a drag is in progress that began at the expanded stage. Such a drag collapses to the standard stage however far or fast it is thrown, so that leaving the Command Center always takes a second, deliberate swipe from the standard stage. */
-  const [isDismissBlocked, setIsDismissBlocked] = useState(false)
-
-  /** The y the sheet rests at in the standard stage, i.e. the whole travel between the two stages. */
-  const getStandardY = useCallback(() => sheetRef.current?.snapPoints[SNAP_STANDARD]?.snapValueY ?? 0, [])
-
-  /** Classifies the gesture by the stage it starts at, since the collapse-only restriction depends on where the drag began rather than on where it ends up. */
-  const onDragStart = useCallback(() => {
-    setIsDismissBlocked((sheetRef.current?.y.get() ?? Infinity) < getStandardY() / 2)
-  }, [getStandardY])
 
   /** Where the current touch started, and whether the command list was at its top at that moment. Both are read at touchstart because the browser decides whether to claim the gesture as a scroll on the very first touchmove, by which point the list may already have moved. */
   const touchStartYRef = useRef(0)
@@ -234,16 +226,12 @@ const CommandCenter = () => {
 
     /** Prevent native page scroll on touchmove, except inside the expanded stage's scroll container, which needs the browser to scroll it. Its overscroll-behavior keeps that scroll from chaining to the body. */
     const onTouchMove = (e: TouchEvent) => {
+      // check if the touch is inside the scroll container of the command list
       if (e.target instanceof Node && scrollerRef.current?.contains(e.target)) {
-        /*
-         * At the top of the command list a downward swipe must collapse the drawer rather than scroll.
-         * The list is still scrollable there, so the compositor claims the swipe as an overscroll and
-         * fires pointercancel, which kills the sheet's drag about 20px in. preventDefault is the only
-         * lever that stops it: touch-action cannot express "downward to the drag handler, upward to the
-         * browser", because every value permitting vertical scrolling also permits that claim.
-         */
-        const isMovingDown = (e.touches[0]?.clientY ?? 0) > touchStartYRef.current
-        if (!isListAtTopRef.current || !isMovingDown) return
+        const isTouchMovingUp = (e.touches[0]?.clientY ?? 0) < touchStartYRef.current
+
+        // if the swipe direction is upward (means to scroll-down the list) or when the scroll position of the command list is not in the top, we should return early to allow normal scrolling behavior
+        if (isTouchMovingUp || !isListAtTopRef.current) return
       }
       e.preventDefault()
     }
@@ -260,17 +248,20 @@ const CommandCenter = () => {
     dispatch([toggleDropdown({ dropDownType: 'commandCenter', value: false }), clearMulticursors()])
   }, [dispatch])
 
-  /** Records the stage the drawer settled on, and rewinds the command list so the next expand starts at the top. */
+  /** Records the stage the drawer settled on, and reset the command list's scroll position so the next expand starts at the top. */
   const onSnap = useCallback((snapIndex: number) => {
     setStage(snapIndex === SNAP_EXPANDED ? 'expanded' : 'standard')
     if (snapIndex !== SNAP_EXPANDED) scrollerRef.current?.scrollTo({ top: 0 })
   }, [])
 
-  /** Mounts the CommandTable once the open animation is over, keeping useCommandList off the critical path. It has to be mounted before a drag can reveal it, so this cannot wait for onSnap. */
+  // mount the CommandTable only when the Command Center is open, to avoid unnecessary renders and state updates when it is closed
   const onOpenEnd = useCallback(() => {
     setIsCommandTableMounted(true)
+
     /* If the sheet had not been measured when it opened, Sheet falls back to y=0 and the drawer opens
-     * fully expanded while reporting the standard stage. Correct it here. */
+     * fully expanded while reporting the standard stage.
+     * As a workaround, we check the sheet's position and snap it to the standard stage if necessary.
+     */
     const sheet = sheetRef.current
     if (sheet && sheet.snapPoints.length > 0 && sheet.y.get() < stageOffset / 2) sheet.snapTo(SNAP_STANDARD)
   }, [stageOffset])
@@ -286,16 +277,11 @@ const CommandCenter = () => {
 
   const isOpen = showCommandCenter && !showSidebar
 
-  /* Every stage animation below is a different mapping of the same stageProgress, so they cannot
-   * drift apart: there is one number driving all of them, and that number is the finger.
-   *
-   * None of them translates its view. The grid and the CommandTable stay anchored to the drawer and
-   * cross-fade in place, so the only thing that moves them is the drawer's own rise into the expanded
-   * stage. Sliding them as they crossed over was tried and removed: the two are deliberately
-   * superimposed for the middle of the gesture, and superimposed layers travelling at different rates
-   * read as the command list scrolling rather than as one view replacing the other. */
+  // The Standard and Expanded stage animations are controlled independently by
+  // `standardViewOpacity` and `expandedViewOpacity`, but both are derived from
+  // the same `stageProgress` value to ensure smooth transitions between stages.
   const standardViewOpacity = useTransform(stageProgress, [0, 0.9], [1, 0])
-  const extendedViewOpacity = useTransform(stageProgress, [0.3, 1], [0, 1])
+  const expandedViewOpacity = useTransform(stageProgress, [0.3, 1], [0, 1])
   const standardPointerEvents = useTransform(stageProgress, p => (p > 0.5 ? 'none' : 'auto')) as MotionValue<
     'none' | 'auto'
   >
@@ -339,9 +325,7 @@ const CommandCenter = () => {
           onSnap={onSnap}
           onOpenEnd={onOpenEnd}
           onCloseEnd={onCloseEnd}
-          onDragStart={onDragStart}
-          /** A drag that begins at the expanded stage may only collapse to the standard stage; closing the Command Center always takes a second swipe from there. */
-          disableDismiss={isDismissBlocked}
+          disableDismiss={stage === 'expanded'}
           /** The expanded stage's search field would otherwise auto-snap the sheet and disable dragging while the keyboard is open. Em manages the virtual keyboard itself. */
           avoidKeyboard={false}
           tweenConfig={{
@@ -397,27 +381,7 @@ const CommandCenter = () => {
               zIndex: 'auto',
             }}
           >
-            {/*
-             * Sheet.Header is the only slot outside Sheet.Content that react-modal-sheet gives its drag
-             * props to, so wrapping the collapse band in one makes a swipe on it drive the sheet exactly as
-             * a swipe on the drawer body does. It is deliberately not gated on isDragDisabled: the band
-             * covers the chevron and the header row, neither of which is part of the command list, so it
-             * stays a handle no matter where that list is scrolled.
-             *
-             * The row is a child of the band rather than a neighbour it reaches down over, so the band ends
-             * at the row's bottom edge by construction and nothing has to be measured. Being in flow, the
-             * row still counts toward the measured sheet height the snap points derive from, exactly as it
-             * did inside Sheet.Content.
-             */}
             <Sheet.Header
-              /**
-               * The collapse band: the full-width strip spanning the collapse chevron and the header row
-               * beneath it, so that a swipe landing beside the arrow still collapses the drawer. It keeps the
-               * library's full-bleed width — insetting it here would pull the band in from the screen edges
-               * and leave a thumb swipe near an edge outside it — so the horizontal inset lives on the row.
-               * The bottom margin replaces the row gap the content root loses when the row leaves it, which
-               * is what keeps the measured sheet height, and therefore the snap points, unchanged.
-               */
               className={css({
                 position: 'relative',
                 marginBottom: '0.889rem',
@@ -433,7 +397,7 @@ const CommandCenter = () => {
                   display: 'flex',
                   justifyContent: 'center',
                 })}
-                style={{ opacity: extendedViewOpacity, pointerEvents: expandedPointerEvents }}
+                style={{ opacity: expandedViewOpacity, pointerEvents: expandedPointerEvents }}
               >
                 <button
                   {...fastClick(() => sheetRef.current?.snapTo(SNAP_STANDARD))}
@@ -504,8 +468,11 @@ const CommandCenter = () => {
                   gap: '0.889rem',
                 })}
                 style={{
-                  /** The `max()` mirrors the one on the chevron band below, so the drawer grows by however much the band rises and the gap above the chevron is preserved. The stage offset is not here: it is the spacer element at the end of this container. */
-                  paddingBottom: `calc(1.333rem + max(${token('spacing.safeAreaBottom')}, 0.889rem) + ${CHEVRON_BAND_REM}rem)`,
+                  // Apply extra padding to the bottom of the content to account for the safe area and the chevron section.
+                  // However, safeAreaBottom is not always available (e.g, in a browser).
+                  // So we use `max()` to apply a minimum padding to prevent the chevron from sitting too close
+                  // to the bottom of the screen.
+                  paddingBottom: `calc(1.333rem + max(${token('spacing.safeAreaBottom')}, 0.889rem) + ${CHEVRON_SECTION_HEIGHT_REM}rem)`,
                 }}
               >
                 <div className={css({ position: 'relative' })}>
@@ -543,9 +510,11 @@ const CommandCenter = () => {
                       minHeight: 0,
                     })}
                     style={{
-                      opacity: extendedViewOpacity,
+                      opacity: expandedViewOpacity,
                       pointerEvents: expandedPointerEvents,
-                      bottom: `calc(-1 * (${CHEVRON_BAND_REM}rem + ${STAGE_OFFSET_REM}rem))`,
+                      // Set a negative bottom value to allow content to extend into the hidden chevron
+                      // area instead of stopping at the visible edge.
+                      bottom: `calc(-1 * (${CHEVRON_SECTION_HEIGHT_REM}rem + ${STAGE_OFFSET_REM}rem))`,
                     }}
                   >
                     <div
