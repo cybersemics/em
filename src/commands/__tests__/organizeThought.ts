@@ -5,6 +5,7 @@ import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getThoughtById from '../../selectors/getThoughtById'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
 import store from '../../stores/app'
@@ -369,6 +370,60 @@ it('does not apply a reorganization after an edit made while inference is pendin
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - oranges`)
+})
+
+it('marks a non-empty thought as generating without changing its value', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockReturnValueOnce(new Promise(() => {}))
+  await dispatch([importText({ text: '- apples' }), setCursor(['apples'])])
+
+  executeCommand(organizeThought)
+  await vi.runAllTimersAsync()
+
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))).toMatchObject({
+    generating: true,
+    generatingPlaceholder: 'Reorganizing Thought',
+    value: 'apples',
+  })
+})
+
+it('marks an empty thought as generating without changing its value', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockReturnValueOnce(new Promise(() => {}))
+  await dispatch([importText({ text: '- ' }), setCursor([''])])
+
+  executeCommand(organizeThought)
+  await vi.runAllTimersAsync()
+
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))).toMatchObject({
+    generating: true,
+    generatingPlaceholder: 'Reorganizing Thought',
+    value: '',
+  })
+})
+
+it('marks empty descendants as generating without changing their value', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockReturnValueOnce(new Promise(() => {}))
+  await dispatch([
+    importText({
+      text: `
+        - apples
+          - 
+      `,
+    }),
+    setCursor(['apples']),
+  ])
+
+  executeCommand(organizeThought)
+  await vi.runAllTimersAsync()
+
+  const children = getAllChildrenAsThoughts(store.getState(), head(store.getState().cursor!))
+  expect(children[0]).toMatchObject({
+    generating: true,
+    generatingPlaceholder: 'Reorganizing Thought',
+    value: '',
+  })
 })
 
 it('is disabled while a reorganization request is pending', async () => {

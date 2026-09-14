@@ -150,6 +150,7 @@ const Editable = ({
   }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
+  const generating = useSelector(state => !!getThoughtById(state, head(simplePath))?.generating)
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const isCursorCleared = useSelector(
     // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
@@ -1108,6 +1109,7 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
+      data-generating={generating || undefined}
       data-placeholder-cleared={isCursorCleared || undefined}
       data-placeholder-bold={placeholderCommandState?.bold || undefined}
       data-placeholder-code={placeholderCommandState?.code || undefined}

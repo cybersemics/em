@@ -6,7 +6,6 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import { alertActionCreator as alert } from '../actions/alert'
-import { cursorClearedActionCreator as cursorCleared } from '../actions/cursorCleared'
 import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
@@ -108,13 +107,13 @@ const buildInput = (state: State, { simplePath, thought }: GenerationTarget): st
  * Generates a new value for the thought at each of the given paths and applies it to the thought. If a thought is
  * empty and its first child is a URL, the title of the webpage is fetched; otherwise the value is generated with AI.
  * Every thought that is generated with AI is sent in one request and one LLM completion, and every prompt is built
- * from the same pre-generation snapshot. Each thought is set to a pending value and marked as generating while its
- * request is in flight. Returns the new values in path order, or null for a thought that was not generated.
+ * from the same pre-generation snapshot. Each thought is marked as generating while its request is in flight; the
+ * stored value is left unchanged. Returns the new values in path order, or null for a thought that was not generated.
  *
  * Takes an explicit list of paths instead of reading state.cursor so that it can be run for every thought of a
  * multiselect.
- * Cursor-specific side effects (cursorCleared and the caret at the end of the generated value) are the caller's
- * responsibility, since they apply to a single thought and this may be one of many.
+ * The caret at the end of the generated value is the caller's responsibility, since it applies to a single thought
+ * and this may be one of many.
  */
 const generateThoughtAtPathsActionCreator =
   (paths: Path[]): Thunk<Promise<(string | null)[]>> =>
@@ -144,7 +143,8 @@ const generateThoughtAtPathsActionCreator =
 
     if (activeTargets.length === 0) return targets.map(() => null)
 
-    // set to pending while the values are being generated
+    // Mark as generating while the values are produced. The stored value is left unchanged so that undo reverts to
+    // the original text rather than a pending placeholder, and so empty thoughts can show a display-only placeholder.
     dispatch(
       updateThoughts({
         thoughtIndexUpdates: Object.fromEntries(
@@ -152,7 +152,6 @@ const generateThoughtAtPathsActionCreator =
             target.thought.id,
             {
               ...target.thought,
-              value: `${target.thought.value}...`,
               generating: true,
             },
           ]),
@@ -233,10 +232,11 @@ const generateThoughtAtPathsActionCreator =
       if (!thoughtPending) return null
 
       dispatch([
-        // Restore the original value before applying the generated one. updateThoughts is not undoable, so the pending
-        // value would otherwise become the state that undo reverts to, leaving the thought at "a..." rather than "a". It
-        // is also why editThought was previously given an oldValue whose Lexeme was never created. Both updates are
-        // dispatched in the same batch, so the restored value is never rendered.
+        // Restore the snapshot value and clear generating before applying the generated one. updateThoughts is not
+        // undoable. An interleaved edit of this thought must be rolled back to the snapshot so editThought's oldValue
+        // matches the lexeme, and generating must be cleared here because editThought no-ops when the generated value
+        // equals the original. Both updates are dispatched in the same batch, so the restored snapshot is never
+        // rendered.
         updateThoughts({
           thoughtIndexUpdates: {
             [thought.id]: {
@@ -315,11 +315,11 @@ const generateThought = {
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
   exec: async (dispatch, getState, e, commandContext) => {
     const state = getState()
+    const cursor = state.cursor!
+    const thought = getThoughtById(state, head(cursor))
 
     // do nothing if generation is already in progress
-    if (state.cursorCleared) return
-
-    const cursor = state.cursor!
+    if (!thought || thought.generating) return
 
     if (
       generatesWithAi(state, cursor) &&
@@ -329,18 +329,11 @@ const generateThought = {
       return
     }
 
-    // Render the cursor thought as an empty thought while its value is generated. cursorCleared is a single global
-    // flag that only applies to the thought being edited, so it is set here rather than in generateThoughtAtPaths.
-    dispatch(cursorCleared({ value: true }))
-
     const [valueNew] = await dispatch(generateThoughtAtPathsActionCreator([cursor]))
 
-    // editThought resets cursorCleared as part of the same reducer pass that updates the thought, which is what allows
-    // the new value to reach the DOM. Resetting it here only has an effect when nothing was generated.
-    dispatch([
-      ...(valueNew !== null ? [setCursor({ path: cursor, offset: valueNew.length })] : []),
-      cursorCleared({ value: false }),
-    ])
+    if (valueNew !== null) {
+      dispatch(setCursor({ path: cursor, offset: valueNew.length }))
+    }
   },
 } satisfies Command
 
