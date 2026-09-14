@@ -188,6 +188,30 @@ describe('formatSelection', () => {
     expect(cursorValue()).toBe('Hello <b>W</b>orl<b>d</b>')
   })
 
+  // the tag equivalent of "removes only the background color surrounding the caret" (#4052), which takes the
+  // toggle-off branch rather than the color branch: without the caret the partially bold thought would be bolded whole
+  it('removes only the bold surrounding the caret', async () => {
+    await dispatch([newThought({ value: 'hello there world' })])
+
+    selectRange(0, 'hello'.length)
+    await dispatch(formatSelection('bold'))
+
+    selectRange('hello there '.length, 'hello there world'.length)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('<b>hello</b> there <b>world</b>')
+
+    // place a collapsed caret inside "hello" and toggle bold off
+    selectRange(2, 2)
+    await dispatch(formatSelection('bold'))
+
+    expect(cursorValue()).toBe('hello there <b>world</b>')
+
+    // the caret is no longer inside a <b>, so tapping again bolds the whole thought rather than the next chunk
+    selectRange(2, 2)
+    await dispatch(formatSelection('bold'))
+    expect(cursorValue()).toBe('<b>hello there world</b>')
+  })
+
   it('bolds a whole thought whose leading text is italic, wrapping the outer tag', async () => {
     await dispatch([newThought({ value: '<i>Hello</i> World' })])
 
@@ -416,6 +440,31 @@ describe('formatSelection color', () => {
     // "One two" is red; " three" remains green
     expect(cursorValue()).toBe(
       '<font color="#000000" style="background-color: rgb(255, 87, 61);">One two</font><font color="#000000" style="background-color: rgb(0, 214, 136);"> three</font>',
+    )
+  })
+
+  // https://github.com/cybersemics/em/issues/4052
+  it('removes only the background color surrounding the caret', async () => {
+    await dispatch([newThought({ value: 'hello there world' })])
+
+    // green background on "hello"
+    selectRange(0, 'hello'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+
+    // green background on "world"
+    selectRange('hello there '.length, 'hello there world'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+    expect(cursorValue()).toBe(
+      '<font color="#000000" style="background-color: rgb(0, 214, 136);">hello</font> there <font color="#000000" style="background-color: rgb(0, 214, 136);">world</font>',
+    )
+
+    // place a collapsed caret inside "hello" and toggle the background color off
+    selectRange(2, 2)
+    await dispatch(formatSelection('backColor', 'bg'))
+
+    // only the background surrounding the caret is removed; "world" keeps its background
+    expect(cursorValue()).toBe(
+      'hello there <font color="#000000" style="background-color: rgb(0, 214, 136);">world</font>',
     )
   })
 
