@@ -7,6 +7,7 @@ import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import defineTerm from '../../commands/defineTerm'
+import generateEmoji from '../../commands/generateEmoji'
 import generateThought from '../../commands/generateThought'
 import organizeThought from '../../commands/organizeThought'
 import { HOME_TOKEN } from '../../constants'
@@ -457,5 +458,90 @@ describe('Define Term', () => {
 
     const editable = (await findThoughtByText('apple'))!
     expect(editable).not.toHaveAttribute('data-generating')
+  })
+})
+
+describe('Generate Emoji', () => {
+  const mockFetch = vi.fn()
+  const originalFetch = global.fetch
+
+  beforeEach(() => {
+    global.fetch = mockFetch
+    mockFetch.mockReset()
+    clearAiDisclosureAcknowledgement()
+  })
+
+  afterEach(() => {
+    global.fetch = originalFetch
+    vi.unstubAllEnvs()
+  })
+
+  it('shows Generating Emoji as the placeholder of an empty thought while Generate Emoji is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- ' }), setCursor([''])])
+
+    await act(async () => {
+      executeCommand(generateEmoji)
+    })
+
+    const editable = document.querySelector('[placeholder="Generating Emoji"]')
+    expect(editable).not.toBeNull()
+    expect(editable).toHaveAttribute('data-generating')
+  })
+
+  it('keeps the current text of a non-empty thought while Generate Emoji is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- Dog' }), setCursor(['Dog'])])
+
+    await act(async () => {
+      executeCommand(generateEmoji)
+    })
+
+    const editable = (await findThoughtByText('Dog'))!
+    expect(editable).toHaveAttribute('data-generating')
+    expect(editable.textContent).toBe('Dog')
+    expect(document.querySelector('[placeholder="Generating Emoji"]')).toBeNull()
+  })
+
+  it('clears the generating marker when Generate Emoji completes', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+
+    /** Resolves the pending AI request. Assigned when the mocked fetch is called, so the test controls exactly when the emoji land. */
+    let resolveAiRequest: (response: { json: () => Promise<{ emojis: string[][] }> }) => void = () => {}
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveAiRequest = resolve
+        }),
+    )
+
+    await dispatch([importText({ text: '- Dog' }), setCursor(['Dog'])])
+
+    await act(async () => {
+      executeCommand(generateEmoji)
+    })
+
+    const pending = (await findThoughtByText('Dog'))!
+    expect(pending).toHaveAttribute('data-generating')
+
+    await act(async () => {
+      resolveAiRequest({
+        json: () =>
+          Promise.resolve({
+            emojis: [['🐕', '🐕‍🦺', '🦮', '🐾', '🦴', '🐶', '🐩', '🐺', '🏠', '🦊']],
+          }),
+      })
+    })
+
+    const editable = (await findThoughtByText('🐕 Dog'))!
+    expect(editable).not.toHaveAttribute('data-generating')
+    expect(document.querySelector('[placeholder="Generating Emoji"]')).toBeNull()
   })
 })

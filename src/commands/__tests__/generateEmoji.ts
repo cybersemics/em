@@ -83,7 +83,25 @@ it('marks the thought as generating while inference is pending', async () => {
   executeCommand(generateEmoji)
 
   const cursor = store.getState().cursor!
-  expect(getThoughtById(store.getState(), head(cursor))).toMatchObject({ generating: true, value: 'Dog...' })
+  expect(getThoughtById(store.getState(), head(cursor))).toMatchObject({
+    generating: true,
+    generatingPlaceholder: 'Generating Emoji',
+    value: 'Dog',
+  })
+})
+
+it('marks an empty thought as generating without changing its value', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockReturnValueOnce(new Promise(() => {}))
+  await dispatch([importText({ text: '- ' }), setCursor([''])])
+
+  executeCommand(generateEmoji)
+
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))).toMatchObject({
+    generating: true,
+    generatingPlaceholder: 'Generating Emoji',
+    value: '',
+  })
 })
 
 it('restores the original value on undo', async () => {
@@ -156,7 +174,7 @@ it('does not overwrite an edit made while inference is pending', async () => {
   await dispatch([importText({ text: '- Dog' }), setCursor(['Dog'])])
 
   executeCommand(generateEmoji)
-  await dispatch(editThoughtByContext(['Dog...'], 'Dogs'))
+  await dispatch(editThoughtByContext(['Dog'], 'Dogs'))
   await act(async () => {
     resolveAiRequest({ json: () => Promise.resolve({ emojis: [emojis] }) })
   })
