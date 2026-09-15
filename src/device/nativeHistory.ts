@@ -19,10 +19,10 @@ let unsubscribe: (() => void) | null = null
  * In the browser these gestures surface as a `historyUndo`/`historyRedo` `beforeinput` event, which
  * `beforeInput` intercepts. WebKit only dispatches that event while its own undo stack has a step to undo,
  * and it registers a step only for edits it performed itself. Since em applies most edits by re-rendering
- * the contenteditable from Redux, WebKit's stack runs dry long before em's history does; from then on iOS
- * handles the gesture itself and reports "Nothing to Undo" while em still has plenty to undo.
+ * the contenteditable from Redux, WebKit's stack holds far fewer steps than em's history, so `beforeInput`
+ * recycles WebKit's position through the stack after each gesture to keep a step available on either side.
  *
- * The Capacitor app closes that gap natively: `NativeHistoryWebView` hands the responder chain an undo
+ * The Capacitor app sidesteps WebKit's stack entirely: `NativeHistoryWebView` hands the responder chain an undo
  * manager that emits `nativeHistory` instead of performing the gesture, so it reaches em regardless of
  * WebKit's stack. Since the gesture is then consumed natively, no `beforeinput` is dispatched and the two
  * routes cannot both fire for a single gesture.
