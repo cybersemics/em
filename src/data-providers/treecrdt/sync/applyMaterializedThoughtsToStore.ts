@@ -37,7 +37,8 @@ const applyMaterializedThoughtsToStore = async (
   const confirmed = confirmation?.generation === generation ? confirmation : undefined
   if (events.length === 0 && !confirmed) return
   const changes = events.flatMap(entry => entry.event.changes)
-  const keys = [...new Set(events.flatMap(entry => entry.keys))]
+  // Local confirmations already contain the final memberships. Read only additional event keys.
+  const keys = [...new Set(events.flatMap(entry => entry.keys))].filter(key => !(key in (confirmed?.lexemeIndex ?? {})))
   const { deletedIds, thoughts } = await refreshThoughtsFromMaterializationChanges(changes, db)
   const values = await db.getLexemesByIds(keys)
 

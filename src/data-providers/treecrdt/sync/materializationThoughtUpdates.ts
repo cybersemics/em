@@ -8,40 +8,17 @@ import type { DataProvider } from '../../DataProvider'
 /** Provider reads needed to refresh materialized TreeCRDT changes. */
 export type MaterializationStore = Pick<DataProvider, 'getThoughtById' | 'getLexemesByIds'>
 
-export type MaterializationThoughtRefresh = {
+type MaterializationThoughtRefresh = {
   /** Thought ids removed from the tree. */
   deletedIds: ThoughtId[]
   /** Thoughts to merge into app state after materialization. */
   thoughts: Thought[]
 }
 
-/** Applies TreeCRDT sibling order to em's temporary rank projection for one parent. */
-const addTreeOrderRankProjection = async (
-  updates: Index<Thought>,
-  db: MaterializationStore,
-  parentId: ThoughtId,
-): Promise<void> => {
-  if (parentId === GLOBAL_ROOT_TOKEN) return
-  const parent = await db.getThoughtById(parentId)
-  if (!parent) return
-
-  updates[parent.id] = parent
-
-  const orderedChildIds = Object.values(parent.childrenMap || {})
-  for (const [rank, childId] of orderedChildIds.entries()) {
-    const child = await db.getThoughtById(childId)
-    if (!child) continue
-    updates[child.id] = {
-      ...child,
-      rank,
-    }
-  }
-}
-
 /** Collects affected ids from materialization changes and loads fresh thoughts from the provider. */
 export async function refreshThoughtsFromMaterializationChanges(
   changes: Change[],
-  db: MaterializationStore,
+  db: Pick<DataProvider, 'getThoughtById'>,
 ): Promise<MaterializationThoughtRefresh> {
   const deleted = new Set<ThoughtId>()
   const touched = new Set<ThoughtId>()
@@ -82,33 +59,31 @@ export async function refreshThoughtsFromMaterializationChanges(
     }
   }
 
-  const thoughtIndexUpdates: Index<Thought> = {}
+  const thoughtIndexUpdates: Index<Thought | undefined> = {}
 
   for (const id of touched) {
     if (id === GLOBAL_ROOT_TOKEN) continue
     const thought = await db.getThoughtById(id)
+    thoughtIndexUpdates[id] = thought
     // Events may have been coalesced or superseded while a local write was in flight.
     if (!thought) {
       deleted.add(id)
       continue
     }
-    thoughtIndexUpdates[thought.id] = thought
     orderParents.add(thought.parentId)
   }
 
-  // Current em selectors still sort by numeric rank. For remote/order-only TreeCRDT changes, derive a local rank
-  // projection from the authoritative TreeCRDT child order without exposing TreeCRDT's internal order keys.
-  // TODO: Remove when read-side selectors consume provider-backed sibling order instead of rank projection.
+  // Moves also change sibling ranks. Read each affected parent/child once; the provider already derives its rank.
   for (const parentId of orderParents) {
-    await addTreeOrderRankProjection(thoughtIndexUpdates, db, parentId)
-  }
-
-  for (const id of deleted) {
-    delete thoughtIndexUpdates[id]
+    if (parentId === GLOBAL_ROOT_TOKEN) continue
+    if (!(parentId in thoughtIndexUpdates)) thoughtIndexUpdates[parentId] = await db.getThoughtById(parentId)
+    for (const childId of Object.values(thoughtIndexUpdates[parentId]?.childrenMap ?? {})) {
+      if (!(childId in thoughtIndexUpdates)) thoughtIndexUpdates[childId] = await db.getThoughtById(childId)
+    }
   }
 
   return {
     deletedIds: [...deleted],
-    thoughts: Object.values(thoughtIndexUpdates),
+    thoughts: Object.values(thoughtIndexUpdates).filter((thought): thought is Thought => !!thought),
   }
 }
