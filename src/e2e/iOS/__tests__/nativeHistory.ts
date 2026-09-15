@@ -1,5 +1,5 @@
 /**
- * iOS Safari native undo/redo tests.
+ * IOS Safari native undo/redo tests.
  * Uses WDIO test runner with Mocha framework.
  */
 import getEditingText from '../helpers/getEditingText'
@@ -7,7 +7,7 @@ import newThought from '../helpers/newThought'
 
 describe('Native history', () => {
   // https://github.com/cybersemics/em/issues/5575
-  it.skip('a native redo gesture restores the thought removed by a native undo gesture', async () => {
+  it('a native redo gesture restores the thought removed by a native undo gesture', async () => {
     await newThought('hello')
     await newThought('world')
 
