@@ -1,4 +1,11 @@
-import { findAllByLabelText, findByLabelText, queryByLabelText, queryByText, screen } from '@testing-library/dom'
+import {
+  findAllByLabelText,
+  findByLabelText,
+  findByRole,
+  queryByLabelText,
+  queryByText,
+  screen,
+} from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
@@ -11,7 +18,6 @@ import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import findAllThoughtsByText from '../../test-helpers/queries/findAllThoughtsByText'
 import findSubthoughts from '../../test-helpers/queries/findSubthoughts'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
-import getClosestByLabel from '../../test-helpers/queries/getClosestByLabel'
 import queryThoughtByText from '../../test-helpers/queries/queryThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import series from '../../util/series'
@@ -150,25 +156,9 @@ describe('freeThoughts', () => {
   })
 })
 
-// TODO: Broke after LayoutTree
-describe.skip('render', () => {
-  it('activate toggleContextView', async () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-            - m
-          - b
-            - m
-        `,
-      }),
-      setCursor(['a', 'm']),
-      toggleContextView(),
-    ])
-  })
-
+describe('render', () => {
   it('show all the contexts in which a thought exists', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -181,18 +171,19 @@ describe.skip('render', () => {
       toggleContextView(),
     ])
 
-    const thoughtM = await findThoughtByText('m')
-    const thoughtContainerM = getClosestByLabel(thoughtM, 'child')
+    await act(vi.runOnlyPendingTimersAsync)
 
-    const thoughtsA = await findAllThoughtsByText('a', thoughtContainerM)
-    expect(thoughtsA).toHaveLength(1)
+    const contexts = await findSubthoughts('m')
 
-    const thoughtsB = await findAllThoughtsByText('b', thoughtContainerM)
-    expect(thoughtsB).toHaveLength(1)
+    const contextValues = await series(
+      contexts.map(context => async () => (await findByLabelText(context, 'thought')).textContent),
+    )
+
+    expect(contextValues).toEqual(['a', 'b'])
   })
 
   it('do not expand contexts when cursor is on the context view', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -207,18 +198,14 @@ describe.skip('render', () => {
       toggleContextView(),
     ])
 
-    const thoughtM = await findThoughtByText('m')
-    const thoughtContainerM = getClosestByLabel(thoughtM, 'child')
+    await act(vi.runOnlyPendingTimersAsync)
 
-    const thoughtX = await queryThoughtByText('x', thoughtContainerM)
-    expect(thoughtX).toBeNull()
-
-    const thoughtsY = await queryThoughtByText('y', thoughtContainerM)
-    expect(thoughtsY).toBeNull()
+    expect(await queryThoughtByText('x')).toBeNull()
+    expect(await queryThoughtByText('y')).toBeNull()
   })
 
   it('expand cursor on a cyclic context (the context on which the context view is activated)', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -229,24 +216,19 @@ describe.skip('render', () => {
               - y
         `,
       }),
-      setCursor(['a']),
       setCursor(['a', 'm']),
       toggleContextView(),
       setCursor(['a', 'm', 'a']),
     ])
 
-    const thoughtM = await findThoughtByText('m')
-    const thoughtContainerM = getClosestByLabel(thoughtM, 'child')
+    await act(vi.runOnlyPendingTimersAsync)
 
-    const thoughtX = await findThoughtByText('x', thoughtContainerM)
-    expect(thoughtX).toBeTruthy()
-
-    const thoughtsY = await queryThoughtByText('y', thoughtContainerM)
-    expect(thoughtsY).toBeNull()
+    expect(await findThoughtByText('x')).toBeTruthy()
+    expect(await queryThoughtByText('y')).toBeNull()
   })
 
   it('expand cursor on a tangential context (from a different part of the hierarchy)', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -257,24 +239,19 @@ describe.skip('render', () => {
               - y
         `,
       }),
-      setCursor(['a']),
       setCursor(['a', 'm']),
       toggleContextView(),
       setCursor(['a', 'm', 'b']),
     ])
 
-    const thoughtM = await findThoughtByText('m')
-    const thoughtContainerM = getClosestByLabel(thoughtM, 'child')
+    await act(vi.runOnlyPendingTimersAsync)
 
-    const thoughtX = await queryThoughtByText('x', thoughtContainerM)
-    expect(thoughtX).toBeNull()
-
-    const thoughtsY = await queryThoughtByText('y', thoughtContainerM)
-    expect(thoughtsY).toBeTruthy()
+    expect(await findThoughtByText('y')).toBeTruthy()
+    expect(await queryThoughtByText('x')).toBeNull()
   })
 
   it('show instructions when thought exists in not found in any other contexts', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -283,6 +260,8 @@ describe.skip('render', () => {
       setCursor(['a']),
       toggleContextView(),
     ])
+
+    await act(vi.runOnlyPendingTimersAsync)
 
     // only search for first part of text since the whole text consists of several text nodes
     const instructions = await screen.findAllByText('This thought is not found in any other contexts', { exact: false })
@@ -290,7 +269,7 @@ describe.skip('render', () => {
   })
 
   it('change bullet to no fill', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -300,12 +279,14 @@ describe.skip('render', () => {
       toggleContextView(),
     ])
 
-    const bulletGlyph = await screen.findByLabelText('bullet-glyph')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const bulletGlyph = (await findThoughtByText('a'))!.closest('[aria-label="child"]')!.querySelector('[data-bullet]')
     expect(bulletGlyph).toHaveAttribute('fill', 'none')
   })
 
-  it.skip('show breadcrumbs for each thought context', async () => {
-    store.dispatch([
+  it('show breadcrumbs for each thought context', async () => {
+    await dispatch([
       importText({
         text: `
           - a
@@ -323,17 +304,16 @@ describe.skip('render', () => {
       toggleContextView(),
     ])
 
-    const subthoughts = await findSubthoughts('m')
+    await act(vi.runOnlyPendingTimersAsync)
 
-    const breadcrumbsAB = await findAllByLabelText(subthoughts[0], 'context-breadcrumbs')
-    expect(breadcrumbsAB[0]).toHaveTextContent('a')
+    const contexts = await findSubthoughts('m')
 
-    const breadcrumbsCDE = await findAllByLabelText(subthoughts[1], 'context-breadcrumbs')
-    expect(breadcrumbsCDE[0]).toHaveTextContent('c • d')
+    expect(await findByLabelText(contexts[0], 'context-breadcrumbs')).toHaveTextContent('a')
+    expect(await findByLabelText(contexts[1], 'context-breadcrumbs')).toHaveTextContent('c • d')
   })
 
   it('render home icon as thought for each thought in the home context', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -346,21 +326,22 @@ describe.skip('render', () => {
       toggleContextView(),
     ])
 
-    const subthoughts = await findSubthoughts('m')
+    await act(vi.runOnlyPendingTimersAsync)
 
-    // first context should render home icon
-    const thoughtB = await findByLabelText(subthoughts[0], 'thought')
-    const homeIconB = await findAllByLabelText(thoughtB, 'home')
-    expect(homeIconB).toHaveLength(1)
+    const contexts = await findSubthoughts('m')
 
-    // second context a/b should not render home icon
-    const thoughtA = await findByLabelText(subthoughts[1], 'thought')
-    const homeIconA = await queryByLabelText(thoughtA, 'home')
-    expect(homeIconA).toBeNull()
+    // the home context renders the home icon in place of the thought
+    const thoughtHome = await findByLabelText(contexts[0], 'thought')
+    expect(await findAllByLabelText(thoughtHome, 'home')).toHaveLength(1)
+
+    // the a/b context renders b as the thought
+    const thoughtB = await findByLabelText(contexts[1], 'thought')
+    expect(queryByLabelText(thoughtB, 'home')).toBeNull()
+    expect(thoughtB).toHaveTextContent('b')
   })
 
   it('render correct superscript on contexts', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         /*
 
@@ -392,17 +373,16 @@ describe.skip('render', () => {
       toggleContextView(),
     ])
 
-    const subthoughtsM = await findSubthoughts('m')
+    await act(vi.runOnlyPendingTimersAsync)
 
-    const superscriptA = subthoughtsM[0].querySelector('sup')
-    expect(superscriptA).toHaveTextContent('3')
+    const contexts = await findSubthoughts('m')
 
-    const superscriptB = subthoughtsM[1].querySelector('sup')
-    expect(superscriptB).toHaveTextContent('4')
+    expect(await findByRole(contexts[0], 'superscript')).toHaveTextContent('3')
+    expect(await findByRole(contexts[1], 'superscript')).toHaveTextContent('4')
   })
 
   it('sort contexts by ancestors (breadcrumbs)', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - b
@@ -417,21 +397,20 @@ describe.skip('render', () => {
       toggleContextView(),
     ])
 
-    const subthoughts = await findSubthoughts('m')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const contexts = await findSubthoughts('m')
 
     // get the textContent of each context's breadcrumbs in order
     const breadcrumbsText = await series(
-      subthoughts.map(subthought => async () => {
-        const breadcrumbs = await findByLabelText(subthought, 'context-breadcrumbs')
-        return breadcrumbs.textContent
-      }),
+      contexts.map(context => async () => (await findByLabelText(context, 'context-breadcrumbs')).textContent),
     )
 
     expect(breadcrumbsText).toEqual(['a', 'b'])
   })
 
   it('sort contexts by ancestors with different depths', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - c
@@ -453,21 +432,20 @@ describe.skip('render', () => {
       toggleContextView(),
     ])
 
-    const subthoughts = await findSubthoughts('m')
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const contexts = await findSubthoughts('m')
 
     // get the textContent of each context's breadcrumbs in order
     const breadcrumbsText = await series(
-      subthoughts.map(subthought => async () => {
-        const breadcrumbs = await findByLabelText(subthought, 'context-breadcrumbs')
-        return breadcrumbs.textContent
-      }),
+      contexts.map(context => async () => (await findByLabelText(context, 'context-breadcrumbs')).textContent),
     )
 
     expect(breadcrumbsText).toEqual(['a • d', 'a • d • e', 'b', 'c'])
   })
 
   it('sort contexts within the same ancestor by value', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -482,21 +460,20 @@ describe.skip('render', () => {
       toggleContextView(),
     ])
 
-    const subthoughts = await findSubthoughts('m')
+    await act(vi.runOnlyPendingTimersAsync)
 
-    // get the breadcrumbs and textContent of each context in order
-    const breadcrumbsText = await series(
-      subthoughts.map(subthought => async () => {
-        const thought = await findByLabelText(subthought, 'thought')
-        return thought.textContent
-      }),
+    const contexts = await findSubthoughts('m')
+
+    // get the textContent of each context in order
+    const contextValues = await series(
+      contexts.map(context => async () => (await findByLabelText(context, 'thought')).textContent),
     )
 
-    expect(breadcrumbsText).toEqual(['c', 'd'])
+    expect(contextValues).toEqual(['c', 'd'])
   })
 
   it('Expand grandchildren of contexts', async () => {
-    store.dispatch([
+    await dispatch([
       importText({
         text: `
           - a
@@ -514,9 +491,9 @@ describe.skip('render', () => {
       setCursor(['a', 'm', 'a', 'x']),
     ])
 
-    const contextsM = await findSubthoughts('m')
-    const thoughtX1 = await findThoughtByText('x1', contextsM[0])
-    expect(thoughtX1).toBeTruthy()
+    await act(vi.runOnlyPendingTimersAsync)
+
+    expect(await findThoughtByText('x1')).toBeTruthy()
   })
 })
 
