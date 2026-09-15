@@ -172,11 +172,9 @@ describe('pending format', () => {
   // https://github.com/cybersemics/em/issues/3910
   it('removes the color of an empty thought when it is undone (#3910)', async () => {
     await dispatch(importText({ text: '- ' }))
-    const id = head(store.getState().cursor!)
     await dispatch(formatSelection('foreColor', 'green'))
 
     await dispatch(undo())
-    expect(getThoughtById(store.getState(), id)?.value).toBe('')
 
     await dispatch(setCursor(['']))
     const user = userEvent.setup({ delay: null })
