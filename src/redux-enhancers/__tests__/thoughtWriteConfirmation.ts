@@ -93,7 +93,6 @@ it('confirms a new thought alongside unloaded occurrences of the same value', as
   store.dispatch(newThought({ at: [HOME_TOKEN], insertNewSubthought: true, value: 'cat' }))
   const created = contextToThought(store.getState(), ['cat'])!
   expect(store.getState().pendingThoughtWrites[created.id].patch).toEqual({
-    id: created.id,
     value: 'cat',
     created: created.created,
     lastUpdated: created.lastUpdated,

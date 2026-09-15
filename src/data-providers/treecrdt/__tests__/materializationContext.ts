@@ -15,8 +15,8 @@ let clientTwo: TreecrdtClient
 let bindings: Awaited<ReturnType<ReturnType<typeof createTreecrdtDataProvider>['bindClient']>>[]
 
 /** Creates a complete thought for provider contract tests. */
-const thought = (value: string) => ({
-  id: THOUGHT_ID,
+const thought = (value: string, id = THOUGHT_ID) => ({
+  id,
   parentId: EM_TOKEN,
   value,
   rank: 0,
@@ -33,7 +33,7 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-  await Promise.all(bindings.map(binding => binding.unsubscribe()))
+  await Promise.all(bindings.map(binding => binding.closeBinding()))
   await Promise.all([clientOne.drop(), clientTwo.drop()])
   vi.restoreAllMocks()
 })
@@ -48,8 +48,8 @@ it('reads final memberships once for a multi-batch write and its publication', a
   bridge.onCommit.mockClear()
 
   const results = await provider.persistPushQueueBatches([
-    { thoughtIndexUpdates: { [THOUGHT_ID]: { id: THOUGHT_ID, value: 'dog' } } },
-    { thoughtIndexUpdates: { [secondId]: { ...thought('dog'), id: secondId } } },
+    { thoughtIndexUpdates: { [THOUGHT_ID]: { value: 'dog' } } },
+    { thoughtIndexUpdates: { [secondId]: thought('dog', secondId) } },
   ])
 
   expect(results[0].lexemeIndex).toEqual({
@@ -70,16 +70,16 @@ it.each([true, false])('maintains attribute children across batched writes (UI b
   bindings.push(await provider.bindClient(clientOne, replica, withBridge ? bridge : undefined))
   const parentId = '00000000000000000000000000000202' as ThoughtId
   await provider.db.updateThoughts({
-    thoughtIndexUpdates: { [THOUGHT_ID]: thought('=pin'), [parentId]: { ...thought('parent'), id: parentId, rank: 1 } },
+    thoughtIndexUpdates: { [THOUGHT_ID]: thought('=pin'), [parentId]: { ...thought('parent', parentId), rank: 1 } },
   })
   await expect(provider.db.getThoughtById(EM_TOKEN)).resolves.toMatchObject({
     childrenMap: { '=pin': THOUGHT_ID, [parentId]: parentId },
   })
 
   await provider.persistPushQueueBatches([
-    { thoughtIndexUpdates: { [THOUGHT_ID]: { id: THOUGHT_ID, value: 'plain' } } },
-    { thoughtIndexUpdates: { [THOUGHT_ID]: { id: THOUGHT_ID, parentId } }, movePlacements: { [THOUGHT_ID]: null } },
-    { thoughtIndexUpdates: { [THOUGHT_ID]: { id: THOUGHT_ID, value: '=archive' } } },
+    { thoughtIndexUpdates: { [THOUGHT_ID]: { value: 'plain' } } },
+    { thoughtIndexUpdates: { [THOUGHT_ID]: { parentId } }, movePlacements: { [THOUGHT_ID]: null } },
+    { thoughtIndexUpdates: { [THOUGHT_ID]: { value: '=archive' } } },
   ])
 
   await expect(provider.db.getThoughtById(parentId)).resolves.toMatchObject({ childrenMap: { '=archive': THOUGHT_ID } })
@@ -158,7 +158,7 @@ it('publishes coherent local and incoming commits before draining a closed bindi
   const read = provider.db.getThoughtById(THOUGHT_ID)
   // Let the public read enter its bound queue before closing admission.
   await Promise.resolve()
-  const closed = binding.unsubscribe()
+  const closed = binding.closeBinding()
   released.resolve()
   await Promise.all([local, incoming, closed])
 

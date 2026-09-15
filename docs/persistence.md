@@ -59,7 +59,7 @@ The thoughtspace is opened by a single tab at a time. [`sessionLock.ts`](../src/
 There is **one CRDT tree per thoughtspace**, not one document per parent thought:
 
 - Each thought is a node in that tree, keyed by its `ThoughtId`. Parent/child structure and sibling order live in the tree itself.
-- `GLOBAL_ROOT_TOKEN` is the tree root, and `ROOT_PARENT_ID` is defined as an alias for it ([`constants.ts`](../src/constants.ts)) — so the two names refer to the same node, and `treeParentId` is a no-op that documents the boundary. Reads go the other way: `getThoughtById` reports `ROOT_PARENT_ID` when the tree has no parent for a node.
+- `GLOBAL_ROOT_TOKEN` is the tree root, and `ROOT_PARENT_ID` is defined as an alias for it ([`constants.ts`](../src/constants.ts)). Parent IDs pass directly to TreeCRDT; `getThoughtById` reports `ROOT_PARENT_ID` when the tree has no parent for a node.
 - `SYSTEM_ROOT_THOUGHT_IDS` (`HOME_TOKEN`, `EM_TOKEN`, `ABSOLUTE_TOKEN`) are inserted as children of the global root during initialization, along with `[EM, 'Settings']` at the fixed `SETTINGS_TOKEN` — see `initializeThoughtspaceStorage` in [`treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts).
 
 Each node carries a payload: a JSON-encoded `ThoughtPayload` ([`payload.ts`](../src/data-providers/treecrdt/payload.ts)) with `value`, `created`, `lastUpdated`, `updatedBy`, and an optional `archived` timestamp. Everything else about a `Thought` is derived on read (see below). In particular **`rank`, `parentId`, and `childrenMap` are not stored in the payload.**
@@ -89,7 +89,7 @@ Two app-owned indexes live alongside the CRDT tables in the same SQLite database
 
 `updateThoughtsForClient` applies one push-queue batch:
 
-1. **Upserts.** Field patches are merged with the current stored thought; a partial edit cannot create a missing thought. New thoughts use `client.local.insert` with a resolved placement (see below). Existing thoughts use `client.local.move` for placement changes and `client.local.payload` for changed payload fields. Redundant payload writes are skipped.
+1. **Upserts.** Field patches are keyed by thought ID and merged with the current stored thought; a partial edit cannot create a missing thought. New thoughts use `client.local.insert` with a resolved placement (see below). Existing thoughts use `client.local.move` for placement changes and `client.local.payload` for changed payload fields. Redundant payload writes are skipped.
 2. **Deletions.** Each `null` entry becomes a `client.local.delete`. Surviving children move first: moving them after deleting their old parent can revive that defensively deleted ancestor.
 3. **Derived indexes.** Materialization maintains memberships and attribute children for both local and incoming operations. `lexemeIndexUpdates` is only needed for read results and cache eviction, not local mutations or persistence: memberships come from the stored nodes, including unloaded occurrences.
 
@@ -126,7 +126,7 @@ It also namespaces local write IDs by page load. Redux batches include their tho
 
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) drains the owning job's events and finishes membership and attribute indexes even without a bridge. With a bridge, it:
 
-1. Discards obsolete generations and loads affected thoughts and sibling order through [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts). Local and remote events follow the same path. Deletions are checked against current storage; the internal global root is not published to Redux.
+1. Discards obsolete generations and loads affected thoughts and parent child maps through [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts). Only structural changes refresh sibling ranks; payload edits still refresh parent maps for attribute renames. Local and remote events follow the same path. Deletions are checked against current storage; the internal global root is not published to Redux.
 2. Reads complete affected memberships and synchronously calls `onCommit` with committed thoughts and matching write confirmations. The storage queue prevents intervening writes, so no version-counter retry loop is needed. `getGeneration` detects a receiving-view reset during the read and discards its publication.
 
 [`createThoughtspaceMaterializationBridge`](../src/data-providers/createThoughtspaceMaterializationBridge.ts) supplies the Redux adapter for app initialization and headless store tests. Its `onCommit` reads current Redux state, preserves UI flags, filters unchanged memberships, and dispatches the committed update; the provider can read only the reset generation, not Redux's thoughts or lexemes. Publication bypasses the payload-timestamp guard and overlays remaining field intent. Ordinary pulls retain their timestamp guard. If a provider read itself triggers recovery, its job finishes the derived indexes and rereads once before returning a coherent read model.
@@ -217,6 +217,6 @@ Device permissions live in [`permissionsStore.ts`](../src/data-providers/permiss
 
 ## Cleanup
 
-`db.clear` is the runtime's `drop`. It detaches the data provider (rejecting any writes still waiting on initialization), stops WebSocket sync, unsubscribes the materialization listener, and calls `client.drop()`, which closes SQLite and — for OPFS storage — deletes the thoughtspace's database file. Used by the device-removal flow above, and by e2e tests through `em.testHelpers.dropThoughtspace`.
+`db.clear` is the runtime's `drop`. It detaches the data provider (rejecting any writes still waiting on initialization), stops WebSocket sync, and calls `closeBinding` to drain accepted work before unsubscribing the materialization listener. Then `client.drop()` closes SQLite and — for OPFS storage — deletes the thoughtspace's database file. Used by the device-removal flow above, and by e2e tests through `em.testHelpers.dropThoughtspace`.
 
 Unit tests and most e2e runs initialize with `storage: 'memory'`, so they never touch OPFS; persistence-specific Puppeteer suites opt into OPFS explicitly. See [testing.md](testing.md).

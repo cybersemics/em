@@ -28,11 +28,6 @@ import {
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
 
-type TreecrdtClientIdentity = Readonly<{
-  client: TreecrdtClient
-  replicaId: Uint8Array
-}>
-
 type TreecrdtReadModel = Pick<DataProvider, 'getLexemeById' | 'getLexemesByIds' | 'getThoughtById' | 'getThoughtsByIds'>
 
 type BoundTreecrdtDataProvider = TreecrdtReadModel & {
@@ -70,13 +65,6 @@ export const createIndexedChildrenMap = (
   return childrenMap
 }
 
-/** Injects delayed TreeCRDT reads for e2e tests that exercise slow local materialization after refresh. */
-const waitForTestReplicationDelay = async (): Promise<void> => {
-  if (testFlags.replicationDelay > 0) {
-    await sleep(testFlags.replicationDelay)
-  }
-}
-
 /** Fetches a thought by ID from the given TreeCRDT client. */
 const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): Promise<Thought | undefined> => {
   // TreeCRDT retains deleted payloads; EM reads expose only live thoughts.
@@ -109,9 +97,6 @@ const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): 
   return thought
 }
 
-/** Converts em's root parent id to TreeCRDT's global root id. */
-const treeParentId = (id: ThoughtId): ThoughtId => (id === ROOT_PARENT_ID ? GLOBAL_ROOT_TOKEN : id)
-
 /**
  * Compatibility fallback for direct provider inserts and placements whose sibling anchor disappeared.
  * Redux writes capture explicit placement before storage normalizes display ranks.
@@ -139,7 +124,7 @@ const getTreecrdtPlacement = async (
   movePlacements?: Index<ThoughtId | null>,
   options?: { requireExplicit?: boolean },
 ): Promise<TreecrdtPlacement> => {
-  const parentId = treeParentId(thought.parentId)
+  const parentId = thought.parentId
 
   if (!movePlacements || !Object.prototype.hasOwnProperty.call(movePlacements, thoughtId)) {
     if (options?.requireExplicit) {
@@ -162,7 +147,7 @@ const getTreecrdtPlacement = async (
 
 /** Applies thought updates and collects the old/new membership keys using the same storage reads. */
 const updateThoughtsForClient = async (
-  { client, replicaId }: TreecrdtClientIdentity,
+  { client, replicaId }: { client: TreecrdtClient; replicaId: Uint8Array },
   { thoughtIndexUpdates, movePlacements, writeId }: Parameters<DataProvider['updateThoughts']>[0],
 ): Promise<{ operations: readonly Operation[]; lexemeKeys: string[] }> => {
   const ops: Operation[] = []
@@ -200,7 +185,7 @@ const updateThoughtsForClient = async (
       ...(thought.archived !== undefined && { archived: thought.archived }),
     })
 
-    const parentId = treeParentId(thought.parentId)
+    const parentId = thought.parentId
 
     if (!exists) {
       const placement = await getTreecrdtPlacement(client, thoughtId, thought, movePlacements)
@@ -312,20 +297,6 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
   await ensureAttributeChildrenIndexReady(client)
 }
 
-/** Creates a read model permanently bound to one TreeCRDT client. */
-const createClientReadModel = (
-  client: TreecrdtClient,
-  lexemes: Awaited<ReturnType<typeof createLexemeIndex>>,
-): TreecrdtReadModel => ({
-  getLexemeById: lexemes.getLexemeById,
-  getLexemesByIds: lexemes.getLexemesByIds,
-  getThoughtById: id => getThoughtByIdFromClient(client, id),
-  getThoughtsByIds: async ids => {
-    await waitForTestReplicationDelay()
-    return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
-  },
-})
-
 /**
  * Creates the stable app-facing TreeCRDT data provider.
  *
@@ -364,23 +335,32 @@ const createTreecrdtDataProvider = () => {
     client: TreecrdtClient,
     replicaId: Uint8Array,
     materialization?: ThoughtspaceMaterializationBridge,
-  ): Promise<{ syncClient: TreecrdtWebSocketSyncClient; unsubscribe: () => Promise<void> }> => {
+  ): Promise<{ syncClient: TreecrdtWebSocketSyncClient; closeBinding: () => Promise<void> }> => {
     if (activeDb) throw new Error('TreeCRDT DataProvider: client already bound')
     await initializeThoughtspaceStorage(client, replicaId)
 
     const lexemes = await createLexemeIndex(client)
-    const clientDb = createClientReadModel(client, lexemes)
+    const clientDb: TreecrdtReadModel = {
+      getLexemeById: lexemes.getLexemeById,
+      getLexemesByIds: lexemes.getLexemesByIds,
+      getThoughtById: id => getThoughtByIdFromClient(client, id),
+      getThoughtsByIds: async ids => {
+        // Simulate slow local materialization after refresh in e2e tests.
+        if (testFlags.replicationDelay > 0) await sleep(testFlags.replicationDelay)
+        return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
+      },
+    }
     const materializationContext: MaterializationContext = {
       bridge: materialization,
       client,
       db: clientDb,
       pending: [],
     }
-    let subscribed = true
+    let acceptingWork = true
 
     /** Finishes indexing and publication before another external storage call may start. */
-    const run = <T>(work: () => Promise<T>): Promise<T> => {
-      if (!subscribed) return Promise.reject(new Error('TreeCRDT client binding is closed.'))
+    const runStorageJob = <T>(work: () => Promise<T>): Promise<T> => {
+      if (!acceptingWork) return Promise.reject(new Error('TreeCRDT client binding is closed.'))
       return withTreecrdtWriteBarrier(async () => {
         try {
           return await work()
@@ -392,7 +372,7 @@ const createTreecrdtDataProvider = () => {
 
     /** Persists one Redux flush and confirms it with the resulting read model, including no-ops. */
     const persistPushQueueBatches: BoundTreecrdtDataProvider['persistPushQueueBatches'] = batches =>
-      run(async () => {
+      runStorageJob(async () => {
         const generation = materialization?.getGeneration()
         const writeIds = batches.flatMap(batch => (batch.writeId ? [batch.writeId] : []))
         const results: Awaited<ReturnType<typeof updateThoughtsForClient>>[] = []
@@ -421,14 +401,16 @@ const createTreecrdtDataProvider = () => {
       void keys.catch(() => undefined)
       materializationContext.pending.push({ event, keys, generation: materialization?.getGeneration() })
       // Owned jobs flush directly. This also handles a recovery event emitted outside a write.
-      if (subscribed && materializationContext.pending.length === 1) {
-        void run(async () => undefined).catch(err => console.error('TreeCRDT materialization refresh failed', err))
+      if (acceptingWork && materializationContext.pending.length === 1) {
+        void runStorageJob(async () => undefined).catch(err =>
+          console.error('TreeCRDT materialization refresh failed', err),
+        )
       }
     })
 
     /** A recovering read can precede its derived index updates; finish those before returning a read model. */
     const read = <T>(work: () => Promise<T>): Promise<T> =>
-      run(async () => {
+      runStorageJob(async () => {
         const result = await work()
         if (materializationContext.pending.length === 0) return result
         await applyMaterializedThoughtsToStore(materializationContext)
@@ -449,31 +431,31 @@ const createTreecrdtDataProvider = () => {
     const syncClient: TreecrdtWebSocketSyncClient = {
       ...client,
       runner: {
-        exec: sql => run(async () => client.runner.exec(sql)),
-        getText: (sql, params) => run(async () => client.runner.getText(sql, params)),
+        exec: sql => runStorageJob(async () => client.runner.exec(sql)),
+        getText: (sql, params) => runStorageJob(async () => client.runner.getText(sql, params)),
       },
       meta: {
-        headLamport: () => run(() => client.meta.headLamport()),
-        replicaMaxCounter: replica => run(() => client.meta.replicaMaxCounter(replica)),
+        headLamport: () => runStorageJob(() => client.meta.headLamport()),
+        replicaMaxCounter: replica => runStorageJob(() => client.meta.replicaMaxCounter(replica)),
       },
       opRefs: {
-        all: () => run(() => client.opRefs.all()),
-        children: parent => run(() => client.opRefs.children(parent)),
+        all: () => runStorageJob(() => client.opRefs.all()),
+        children: parent => runStorageJob(() => client.opRefs.children(parent)),
       },
       ops: {
-        append: (op, options) => run(() => client.ops.append(op, options)),
-        appendMany: (ops, options?: WriteOptions) => run(() => client.ops.appendMany(ops, options)),
-        all: () => run(() => client.ops.all()),
-        since: (lamport, root) => run(() => client.ops.since(lamport, root)),
-        children: parent => run(() => client.ops.children(parent)),
-        get: refs => run(() => client.ops.get(refs)),
+        append: (op, options) => runStorageJob(() => client.ops.append(op, options)),
+        appendMany: (ops, options?: WriteOptions) => runStorageJob(() => client.ops.appendMany(ops, options)),
+        all: () => runStorageJob(() => client.ops.all()),
+        since: (lamport, root) => runStorageJob(() => client.ops.since(lamport, root)),
+        children: parent => runStorageJob(() => client.ops.children(parent)),
+        get: refs => runStorageJob(() => client.ops.get(refs)),
       },
     }
     return {
       syncClient,
-      unsubscribe: async () => {
-        if (!subscribed) return
-        subscribed = false
+      closeBinding: async () => {
+        if (!acceptingWork) return
+        acceptingWork = false
         try {
           await waitForTreecrdtWriteBarrier()
           await lexemes.waitForIdle()
