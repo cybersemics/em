@@ -10,7 +10,7 @@ const A = '00000000000000000000000000000401' as ThoughtId
 const B = '00000000000000000000000000000402' as ThoughtId
 const replica = new Uint8Array(32).fill(4)
 let client: TreecrdtClient
-let unbind: (() => Promise<void>) | undefined
+let closeBinding: (() => Promise<void>) | undefined
 
 /** Encodes a real node payload for the index lifecycle tests. */
 const payload = (value: string) => encodeThoughtPayload({ value, created: 1, lastUpdated: 2, updatedBy: 'test' })
@@ -18,7 +18,7 @@ const payload = (value: string) => encodeThoughtPayload({ value, created: 1, las
 /** Binds a provider to the same database, allowing restart tests to preserve all stored data. */
 const bind = async () => {
   const provider = createTreecrdtDataProvider()
-  ;({ unsubscribe: unbind } = await provider.bindClient(client, replica))
+  ;({ closeBinding } = await provider.bindClient(client, replica))
   return provider.db
 }
 
@@ -28,9 +28,9 @@ beforeEach(async () => {
 
 afterEach(async () => {
   try {
-    await unbind?.()
+    await closeBinding?.()
   } finally {
-    unbind = undefined
+    closeBinding = undefined
     await client.drop()
     vi.restoreAllMocks()
   }
@@ -38,7 +38,7 @@ afterEach(async () => {
 
 it('rebuilds memberships from existing thoughts instead of incomplete legacy lexemes', async () => {
   await bind()
-  await unbind!()
+  await closeBinding!()
   await client.local.insert(replica, HOME_TOKEN, A, { type: 'last' }, payload('Cats'))
   await client.local.insert(replica, HOME_TOKEN, B, { type: 'last' }, payload('cat'))
   await client.runner.exec('CREATE TABLE em_lexemes (id TEXT PRIMARY KEY, payload_json TEXT NOT NULL)')
@@ -53,7 +53,7 @@ it('rebuilds memberships from existing thoughts instead of incomplete legacy lex
   expect(await client.ops.all()).toEqual(before)
   expect(Array.from((await client.tree.getPayload(A))!)).toEqual(Array.from(payload('Cats')))
 
-  await unbind!()
+  await closeBinding!()
   const dump = vi.spyOn(client.tree, 'dump')
   const reopened = await bind()
   expect((await reopened.getLexemeById(hashThought('cat')))?.contexts).toEqual([A, B])
@@ -99,8 +99,8 @@ it('repairs an interrupted index update on reopen without checkpointing later wr
   await expect(db.getLexemeById(hashThought('bird'))).rejects.toBe(failure)
   await expect(waitForTreecrdtWriteBarrier()).rejects.toBe(failure)
   expect(await client.runner.getText('SELECT head_seq FROM em_lexeme_memberships_meta')).toBe(checkpoint)
-  await expect(unbind!()).rejects.toBe(failure)
-  unbind = undefined
+  await expect(closeBinding!()).rejects.toBe(failure)
+  closeBinding = undefined
 
   const reopened = await bind()
   expect(await reopened.getLexemeById(hashThought('cat'))).toBeUndefined()

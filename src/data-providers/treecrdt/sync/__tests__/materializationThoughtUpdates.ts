@@ -64,7 +64,7 @@ it('refreshes each affected sibling once using provider ranks', async () => {
   expect(provider.getThoughtById).toHaveBeenCalledTimes(4)
 })
 
-it('refreshes both parents and their siblings once after a cross-parent move', async () => {
+it('refreshes both parents and affected siblings without reading ancestors after a cross-parent move', async () => {
   const newLeft = thought(LEFT_ID, 'left', 0, HOME_TOKEN, [B_ID])
   const newRight = thought(RIGHT_ID, 'right', 1, HOME_TOKEN, [C_ID, A_ID])
   const thoughtANew = thought(A_ID, 'a', 1, RIGHT_ID)
@@ -93,5 +93,26 @@ it('refreshes both parents and their siblings once after a cross-parent move', a
     parentId: RIGHT_ID,
     rank: 1,
   })
-  expect(provider.getThoughtById).toHaveBeenCalledTimes(6)
+  expect(provider.getThoughtById).toHaveBeenCalledTimes(5)
+})
+
+it('refreshes a renamed attribute and its parent without reading unchanged siblings', async () => {
+  const attribute = thought(A_ID, '=pin', 0, LEFT_ID)
+  const parent = {
+    ...thought(LEFT_ID, 'left', 0, HOME_TOKEN),
+    childrenMap: { '=pin': A_ID, [B_ID]: B_ID },
+  }
+  const provider = fakeProvider({
+    [LEFT_ID]: parent,
+    [A_ID]: attribute,
+    [B_ID]: thought(B_ID, 'b', 1, LEFT_ID),
+  })
+
+  const result = await refreshThoughtsFromMaterializationChanges(
+    [{ kind: 'payload', node: A_ID, payload: null }],
+    provider,
+  )
+
+  expect(result.thoughts).toEqual([attribute, parent])
+  expect(provider.getThoughtById).toHaveBeenCalledTimes(2)
 })

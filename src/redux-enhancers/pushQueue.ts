@@ -70,7 +70,9 @@ const pushQueue: StoreEnhancer<any> =
       // Compare each queued edit with the preceding optimistic state, never with a later storage read.
       // A move must not carry an unchanged value; a rename must not carry an unchanged parent.
       const previousThoughts: Index<Thought | null> = { ...state.thoughts.thoughtIndex }
+      const pendingThoughtWrites = { ...stateNew.pendingThoughtWrites }
       const writes = dbQueue.map(batch => {
+        const writeId = `generation:${stateNew.thoughtspaceGeneration}:${createId()}`
         const nextThoughts = { ...previousThoughts, ...batch.thoughtIndexUpdates }
         const movePlacements = { ...batch.movePlacements }
         // Capture position against the optimistic siblings, before storage normalizes their ranks.
@@ -92,28 +94,38 @@ const pushQueue: StoreEnhancer<any> =
           Object.entries(batch.thoughtIndexUpdates).map(([id, thought]) => {
             const previous = previousThoughts[id]
             previousThoughts[id] = thought
-            return [
-              id,
-              !thought
-                ? null
-                : {
-                    id: thought.id,
-                    ...Object.fromEntries(
-                      (['value', 'created', 'lastUpdated', 'updatedBy', 'archived'] as const)
-                        .filter(key => !previous || previous.pending || thought[key] !== previous[key])
-                        .map(key => [key, thought[key]]),
-                    ),
-                    ...(!previous || previous.pending || id in movePlacements
-                      ? { parentId: thought.parentId, rank: thought.rank }
-                      : {}),
-                  },
-            ]
+            const patch: ThoughtPatch | null = !thought
+              ? null
+              : {
+                  ...Object.fromEntries(
+                    (['value', 'created', 'lastUpdated', 'updatedBy', 'archived'] as const)
+                      .filter(key => !previous || previous.pending || thought[key] !== previous[key])
+                      .map(key => [key, thought[key]]),
+                  ),
+                  ...(!previous || previous.pending || id in movePlacements
+                    ? { parentId: thought.parentId, rank: thought.rank }
+                    : {}),
+                }
+            const previousWrite = pendingThoughtWrites[id]
+            // Keep outstanding fields until this thought's latest write completes. Reinserting the key
+            // preserves local edit order when several pending placements share a parent.
+            delete pendingThoughtWrites[id]
+            pendingThoughtWrites[id] = {
+              writeId,
+              patch: patch ? { ...previousWrite?.patch, ...patch } : null,
+              ...(id in movePlacements
+                ? { afterId: movePlacements[id] }
+                : previousWrite?.afterId !== undefined
+                  ? { afterId: previousWrite.afterId }
+                  : {}),
+            }
+            return [id, patch]
           }),
         )
         return {
           local: batch.local,
           movePlacements,
-          writeId: `generation:${stateNew.thoughtspaceGeneration}:${createId()}`,
+          writeId,
           thoughtIndexUpdates,
         }
       })
@@ -190,25 +202,6 @@ const pushQueue: StoreEnhancer<any> =
         if (!lexemeUpdate) {
           db.freeLexeme?.(id)
         }
-      })
-
-      const pendingThoughtWrites = { ...stateNew.pendingThoughtWrites }
-      writes.forEach(({ movePlacements, writeId, thoughtIndexUpdates }) => {
-        Object.entries(thoughtIndexUpdates).forEach(([id, patch]) => {
-          const previous = pendingThoughtWrites[id]
-          // Keep outstanding fields until this thought's latest write completes. Reinserting the key
-          // preserves local edit order when several pending placements share a parent.
-          delete pendingThoughtWrites[id]
-          pendingThoughtWrites[id] = {
-            writeId,
-            patch: patch ? { ...previous?.patch, ...patch } : null,
-            ...(id in movePlacements
-              ? { afterId: movePlacements[id] }
-              : previous?.afterId !== undefined
-                ? { afterId: previous.afterId }
-                : {}),
-          }
-        })
       })
 
       // clear push queue

@@ -21,47 +21,21 @@ export async function refreshThoughtsFromMaterializationChanges(
   db: Pick<DataProvider, 'getThoughtById'>,
 ): Promise<MaterializationThoughtRefresh> {
   const deleted = new Set<ThoughtId>()
-  const touched = new Set<ThoughtId>()
+  const changedNodes = new Set<ThoughtId>()
+  const structuralNodes = new Set<ThoughtId>()
   const orderParents = new Set<ThoughtId>()
-  for (const ch of changes) {
-    switch (ch.kind) {
-      case 'insert':
-        touched.add(ch.node as ThoughtId)
-        touched.add(ch.parentAfter as ThoughtId)
-        orderParents.add(ch.parentAfter as ThoughtId)
-        break
-      case 'move':
-        touched.add(ch.node as ThoughtId)
-        if (ch.parentBefore) {
-          touched.add(ch.parentBefore as ThoughtId)
-          orderParents.add(ch.parentBefore as ThoughtId)
-        }
-        touched.add(ch.parentAfter as ThoughtId)
-        orderParents.add(ch.parentAfter as ThoughtId)
-        break
-      case 'delete':
-        touched.add(ch.node as ThoughtId)
-        if (ch.parentBefore) {
-          touched.add(ch.parentBefore as ThoughtId)
-          orderParents.add(ch.parentBefore as ThoughtId)
-        }
-        break
-      case 'restore':
-        touched.add(ch.node as ThoughtId)
-        if (ch.parentAfter) {
-          touched.add(ch.parentAfter as ThoughtId)
-          orderParents.add(ch.parentAfter as ThoughtId)
-        }
-        break
-      case 'payload':
-        touched.add(ch.node as ThoughtId)
-        break
-    }
+  for (const change of changes) {
+    const id = change.node as ThoughtId
+    changedNodes.add(id)
+    if (change.kind !== 'payload') structuralNodes.add(id)
+    if ('parentBefore' in change && change.parentBefore) orderParents.add(change.parentBefore as ThoughtId)
+    if ('parentAfter' in change && change.parentAfter) orderParents.add(change.parentAfter as ThoughtId)
   }
 
+  const parents = new Set(orderParents)
   const thoughtIndexUpdates: Index<Thought | undefined> = {}
 
-  for (const id of touched) {
+  for (const id of changedNodes) {
     if (id === GLOBAL_ROOT_TOKEN) continue
     const thought = await db.getThoughtById(id)
     thoughtIndexUpdates[id] = thought
@@ -70,13 +44,17 @@ export async function refreshThoughtsFromMaterializationChanges(
       deleted.add(id)
       continue
     }
-    orderParents.add(thought.parentId)
+    // Payload changes can rename attribute keys in the parent's childrenMap, but do not change sibling ranks.
+    parents.add(thought.parentId)
+    if (structuralNodes.has(id)) orderParents.add(thought.parentId)
   }
 
-  // Moves also change sibling ranks. Read each affected parent/child once; the provider already derives its rank.
-  for (const parentId of orderParents) {
+  // Refresh only affected parents and, for structural changes, their children. Do not walk up to ancestors.
+  for (const parentId of parents) {
     if (parentId === GLOBAL_ROOT_TOKEN) continue
     if (!(parentId in thoughtIndexUpdates)) thoughtIndexUpdates[parentId] = await db.getThoughtById(parentId)
+    if (!thoughtIndexUpdates[parentId]) deleted.add(parentId)
+    if (!orderParents.has(parentId)) continue
     for (const childId of Object.values(thoughtIndexUpdates[parentId]?.childrenMap ?? {})) {
       if (!(childId in thoughtIndexUpdates)) thoughtIndexUpdates[childId] = await db.getThoughtById(childId)
     }

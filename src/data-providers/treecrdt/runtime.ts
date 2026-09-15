@@ -66,7 +66,7 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   type InitResult = { clientId: string; storage: string }
 
   let client: TreecrdtClient | null = null
-  let unsubscribeMaterialization: (() => Promise<void>) | null = null
+  let closeBinding: (() => Promise<void>) | null = null
   let lifecycleTail: Promise<void> = Promise.resolve()
   let initPromise: Promise<InitResult> | null = null
   let dropPromise: Promise<void> | null = null
@@ -99,12 +99,12 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
 
     provider.resetBinding(new Error('TreeCRDT client binding cleared before initialization.'))
 
-    const unsubscribe = unsubscribeMaterialization
-    unsubscribeMaterialization = null
+    const closeCurrentBinding = closeBinding
+    closeBinding = null
     const clientToDrop = client
 
     await captureError(websocketSync.stop)
-    await captureError(() => unsubscribe?.())
+    await captureError(() => closeCurrentBinding?.())
 
     await captureError(() => clientToDrop?.drop())
 
@@ -141,7 +141,7 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   /** Opens and binds one client. Lifecycle serialization provides retryable single-flight behavior. */
   const initializeClient = async (options: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {
     let nextClient: TreecrdtClient | null = null
-    let nextUnsubscribeMaterialization: (() => Promise<void>) | null = null
+    let nextCloseBinding: (() => Promise<void>) | null = null
 
     try {
       if (client) throw new Error('TreeCRDT client cleanup is incomplete. Retry drop before initialization.')
@@ -149,11 +149,11 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
       await initPermissionsStore()
       nextClient = await createTreecrdtClient(getTreecrdtClientOptions(options.storage))
       const binding = await provider.bindClient(nextClient, clientIdToReplicaId(clientId), options.materialization)
-      nextUnsubscribeMaterialization = binding.unsubscribe
+      nextCloseBinding = binding.closeBinding
       await websocketSync.tryStartFromEnv(binding.syncClient)
 
       client = nextClient
-      unsubscribeMaterialization = nextUnsubscribeMaterialization
+      closeBinding = nextCloseBinding
       if (options.storage === 'persistent' && nextClient.storage === 'memory') {
         console.warn(
           'Persistent thoughtspace storage is unavailable. em is using temporary in-memory storage; changes will be lost when this page reloads or closes.',
@@ -163,7 +163,7 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
     } catch (error) {
       provider.resetBinding(error)
       try {
-        await nextUnsubscribeMaterialization?.()
+        await nextCloseBinding?.()
       } finally {
         await nextClient?.close()
       }
