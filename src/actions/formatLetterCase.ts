@@ -46,12 +46,23 @@ export const formatLetterCaseActionCreator =
     const cursorText = cursorEditable?.textContent ?? null
     const selectedRange = cursorEditable ? selection.offsetRange(cursorEditable) : null
 
+    // The range of the cursor thought to letter-case, or null to letter-case the whole thought (#4281). As in
+    // formatSelection, a collapsed caret or a full selection letter-cases the whole thought. A multiselection has no
+    // browser selection to letter-case a range of, and each of its thoughts is letter-cased in full.
+    const selectedTextRange =
+      !isMulticursor &&
+      selectedRange &&
+      selectedRange.end > selectedRange.start &&
+      selectedRange.end - selectedRange.start < (cursorText?.length ?? 0)
+        ? selectedRange
+        : null
+
     /** Applies the letter case transform to plain text. */
     const transformedText = (text: string): string => {
       // round-trip the plain text through an element so that it is escaped, since applyLetterCase parses HTML
       const el = document.createElement('div')
       el.textContent = text
-      el.innerHTML = applyLetterCase(command, el.innerHTML)
+      el.innerHTML = applyLetterCase(command, el.innerHTML, selectedTextRange ?? undefined)
       return el.textContent ?? text
     }
 
@@ -74,7 +85,7 @@ export const formatLetterCaseActionCreator =
 
       if (!value) return []
 
-      const newValue = applyLetterCase(command, value)
+      const newValue = applyLetterCase(command, value, selectedTextRange ?? undefined)
 
       return state.noteFocus
         ? [

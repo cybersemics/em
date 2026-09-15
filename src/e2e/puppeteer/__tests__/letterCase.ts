@@ -7,6 +7,7 @@ import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForEditingTextChange from '../helpers/waitForEditingTextChange'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
@@ -69,7 +70,7 @@ it('the selected text remains selected after a letter case change that lengthens
 
   await clickToolbar('Letter Case', 'UpperCase')
 
-  await waitForEditable('STRASSE X')
+  await waitForEditable('STRASSE x')
 
   // see the comment on the re-selection wait above
   await waitUntil(() => window.getSelection()?.toString() === 'STRASSE')
@@ -95,4 +96,18 @@ it('flushes pending edits before applying letter case from the picker', async ()
   await waitForEditable('AB')
 
   expect(await getEditingText()).toBe('AB')
+})
+
+// https://github.com/cybersemics/em/issues/4281
+it('applies letter case to the selected text only', async () => {
+  await paste('Welcome to the world of beautiful people')
+
+  await clickThought('Welcome to the world of beautiful people')
+  await setSelection(24, 33)
+
+  await clickToolbar('Letter Case', 'UpperCase')
+
+  await waitForEditingTextChange('Welcome to the world of beautiful people')
+
+  expect(await getEditingText()).toBe('Welcome to the world of BEAUTIFUL people')
 })
