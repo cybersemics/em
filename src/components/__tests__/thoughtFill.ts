@@ -50,7 +50,7 @@ it('colors bullet and superscript when the entire thought is split across adjace
   expect(rgbToHex(superscript.style.color).toLowerCase()).toBe('#ff573d')
 })
 
-// #3910: a color applied to an empty thought is held in pendingFormatStore until the thought is typed into, and the
+// #3910: a color applied to an empty thought is held on the thought until it is typed into, and the
 // bullet previews it from there. The pending format is keyed by thought id and outlives the cursor, so the bullet
 // must keep the color once the thought is no longer the cursor thought.
 it('colors the bullet of an empty thought with a pending format after the cursor moves away', async () => {

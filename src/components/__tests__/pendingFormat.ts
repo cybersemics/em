@@ -119,7 +119,7 @@ describe('pending format', () => {
   // without depending on where it is held. The empty thought is imported rather than created with newThought so that
   // its creation is a separate undo step, which the first typed character would otherwise merge into.
   // https://github.com/cybersemics/em/issues/3910
-  it.skip('restores the color of an empty thought when the first typed character is undone (#3910)', async () => {
+  it('restores the color of an empty thought when the first typed character is undone (#3910)', async () => {
     await dispatch(importText({ text: '- ' }))
     // captured before the undo, which can leave the cursor null
     const id = head(store.getState().cursor!)
@@ -146,7 +146,7 @@ describe('pending format', () => {
   // green distinguishes the intended behavior from both plausible wrong ones: reverting nothing would leave blue, and
   // reverting more than one step would take the thought with it.
   // https://github.com/cybersemics/em/issues/3910
-  it.skip('undoes one color at a time on an empty thought (#3910)', async () => {
+  it('undoes one color at a time on an empty thought (#3910)', async () => {
     await dispatch(importText({ text: '- ' }))
     const id = head(store.getState().cursor!)
     await dispatch(formatSelection('foreColor', 'green'))
@@ -170,7 +170,7 @@ describe('pending format', () => {
   // unformatted. Asserted in this direction rather than as undo-then-redo, which would pass on a build where undo does
   // nothing at all.
   // https://github.com/cybersemics/em/issues/3910
-  it.skip('removes the color of an empty thought when it is undone (#3910)', async () => {
+  it('removes the color of an empty thought when it is undone (#3910)', async () => {
     await dispatch(importText({ text: '- ' }))
     const id = head(store.getState().cursor!)
     await dispatch(formatSelection('foreColor', 'green'))

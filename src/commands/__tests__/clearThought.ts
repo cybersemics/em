@@ -177,7 +177,7 @@ describe('clearThought', () => {
   // and the held color has to be applied instead. Reachable because clearThought only requires a cursor, and a
   // multiselect clear sets the flag for every selected thought.
   // https://github.com/cybersemics/em/issues/3910
-  it.skip('applies the color of an empty thought to the text typed after Clear Thought (#3910)', async () => {
+  it('applies the color of an empty thought to the text typed after Clear Thought (#3910)', async () => {
     await act(async () => {
       store.dispatch([importText({ text: '- ' }), setCursorFirstMatchActionCreator([''])])
     })

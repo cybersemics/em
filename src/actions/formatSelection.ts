@@ -11,15 +11,15 @@ import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
-import { clearPendingFormat, getPendingFormat, setPendingFormat } from '../stores/pendingFormatStore'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
 import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
+import { setPendingFormatActionCreator as setPendingFormat } from './setPendingFormat'
 
 /** The single placeholder character that carries the formatting applied to an empty thought, whose own value has no
- * text for the formatting tags to wrap. See pendingFormatStore. */
+ * text for the formatting tags to wrap. See setPendingFormat. */
 const PENDING_FORMAT_PLACEHOLDER = 'x'
 
 /**
@@ -114,29 +114,28 @@ export const formatSelectionActionCreator =
     // The current value of the note or thought being formatted (#3901).
     const value = state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value
 
-    // An empty thought has no text to wrap, and its value must stay empty, so the formatting is held in
-    // pendingFormatStore and transferred onto the text that is typed into the thought next (#3910). It is accumulated
-    // on a placeholder character so that further commands compose exactly as they do on a real value.
+    // An empty thought has no text to wrap, and its value must stay empty, so the formatting is held on the thought
+    // and transferred onto the text that is typed into it next (#3910). It is accumulated on a placeholder character
+    // so that further commands compose exactly as they do on a real value.
     if (value.length === 0) {
       if (state.noteFocus) return
-      const pendingValue = getPendingFormat(thought.id) ?? PENDING_FORMAT_PLACEHOLDER
-      setPendingFormat(
-        thought.id,
-        formatSelectionHtml(pendingValue, {
-          start: 0,
-          end: PENDING_FORMAT_PLACEHOLDER.length,
-          command,
-          colorValue: color ? colors[color] : undefined,
-          defaultColor: colors.fg,
-          defaultBackgroundColor: colors.bg,
+      const pendingValue = thought.pendingFormat ?? PENDING_FORMAT_PLACEHOLDER
+      dispatch(
+        setPendingFormat({
+          path: state.cursor,
+          value: formatSelectionHtml(pendingValue, {
+            start: 0,
+            end: PENDING_FORMAT_PLACEHOLDER.length,
+            command,
+            colorValue: color ? colors[color] : undefined,
+            defaultColor: colors.fg,
+            defaultBackgroundColor: colors.bg,
+          }),
         }),
       )
       updateCommandState()
       return
     }
-
-    // Formatting a thought that has text supersedes any formatting held for it while it was empty.
-    clearPendingFormat(thought.id)
 
     // Compute the plain-text character offsets [start, end) of the selection relative to the editable.
     const plainLength = contentEditable.textContent?.length ?? 0

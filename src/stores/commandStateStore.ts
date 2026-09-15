@@ -7,7 +7,6 @@ import themeColors from '../selectors/themeColors'
 import getCommandState from '../util/getCommandState'
 import rgbToHex from '../util/rgbToHex'
 import store from './app'
-import { getPendingFormat } from './pendingFormatStore'
 import reactMinistore from './react-ministore'
 
 /** A store that tracks the document's command state (e.g. bold, italic, underline, strikethrough). */
@@ -68,10 +67,10 @@ export const updateCommandState = () => {
   if (!state.cursor) return
   const thought = pathToThought(state, state.cursor)
 
-  // Formatting applied to an empty thought is held in pendingFormatStore until it is typed into, so the toolbar and
-  // the bullet report it from there rather than from the (necessarily empty) value (#3910).
-  const pendingFormat = thought && thought.value.length === 0 ? getPendingFormat(thought.id) : undefined
-  if (pendingFormat !== undefined) {
+  // Formatting applied to an empty thought is held on the thought until it is typed into, so the toolbar and the
+  // bullet report it from there rather than from the (necessarily empty) value (#3910).
+  const pendingFormat = thought?.value.length === 0 ? thought.pendingFormat : undefined
+  if (pendingFormat) {
     commandStateStore.update(getCommandState(pendingFormat))
     return
   }

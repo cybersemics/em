@@ -20,7 +20,6 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import commandStateStore from '../stores/commandStateStore'
-import pendingFormatStore from '../stores/pendingFormatStore'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import getCommandState from '../util/getCommandState'
 import hashPath from '../util/hashPath'
@@ -330,14 +329,14 @@ const Bullet = ({
 
   const persistedFill = useSelector(state => getThoughtFill(state, thoughtId))
   const isEmpty = useSelector(state => getThoughtById(state, thoughtId)?.value === '')
-  // Formatting applied to an empty thought is held in pendingFormatStore until it is typed into, so the bullet takes
-  // its color from there. Read by thought id rather than from the cursor-scoped commandStateStore, so that the color
+  // Formatting applied to an empty thought is held on the thought until it is typed into, so the bullet takes its
+  // color from there. Read from the thought rather than the cursor-scoped commandStateStore, so that the color
   // survives the cursor moving away, as the pending formatting itself does (#3910).
-  const pendingFormatFill = pendingFormatStore.useSelector(({ formats }) => {
-    const pendingFormat = isEmpty ? formats[thoughtId] : undefined
-    if (!pendingFormat) return undefined
+  const pendingFormatFill = useSelector(state => {
+    const thought = getThoughtById(state, thoughtId)
+    if (thought?.value !== '' || !thought.pendingFormat) return undefined
 
-    const { backColor, foreColor } = getCommandState(pendingFormat)
+    const { backColor, foreColor } = getCommandState(thought.pendingFormat)
     const fill = backColor || foreColor
     return typeof fill === 'string' ? fill : undefined
   })
