@@ -360,7 +360,7 @@ describe('formatSelection color', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5505
-  it.skip('clears the color of a selected substring inside a colored thought', async () => {
+  it('clears the color of a selected substring inside a colored thought', async () => {
     await dispatch([newThought({ value: 'as' })])
 
     await dispatch(formatSelection('foreColor', 'blue'))
@@ -371,7 +371,7 @@ describe('formatSelection color', () => {
     expect(cursorValue()).toBe('<font color="#00c7e6">a</font>s')
   })
 
-  it.skip('recolors a selected substring inside a colored thought without nesting', async () => {
+  it('recolors a selected substring inside a colored thought without nesting', async () => {
     await dispatch([newThought({ value: 'as' })])
 
     await dispatch(formatSelection('foreColor', 'blue'))
