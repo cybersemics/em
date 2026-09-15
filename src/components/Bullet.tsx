@@ -21,6 +21,7 @@ import isMulticursorPath from '../selectors/isMulticursorPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import commandStateStore from '../stores/commandStateStore'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
+import getCommandState from '../util/getCommandState'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -328,13 +329,24 @@ const Bullet = ({
 
   const persistedFill = useSelector(state => getThoughtFill(state, thoughtId))
   const isEmpty = useSelector(state => getThoughtById(state, thoughtId)?.value === '')
+  // Formatting applied to an empty thought is held on the thought until it is typed into, so the bullet takes its
+  // color from there. Read from the thought rather than the cursor-scoped commandStateStore, so that the color
+  // survives the cursor moving away, as the pending formatting itself does (#3910).
+  const pendingFormatFill = useSelector(state => {
+    const thought = getThoughtById(state, thoughtId)
+    if (thought?.value !== '' || !thought.pendingFormat) return undefined
+
+    const { backColor, foreColor } = getCommandState(thought.pendingFormat)
+    const fill = backColor || foreColor
+    return typeof fill === 'string' ? fill : undefined
+  })
   const activeCommandFill = commandStateStore.useSelector(state => {
     if (!isEditing || !isEmpty) return undefined
 
     const fill = state.backColor || state.foreColor
     return typeof fill === 'string' ? fill : undefined
   })
-  const fill = persistedFill || activeCommandFill
+  const fill = persistedFill || pendingFormatFill || activeCommandFill
 
   /** The 1-based ordinal and style of an ordered list item, or null if the thought is not in an ordered context. A thought is ordered when its parent has =children/=bullet/Ordered|Alpha or its grandparent has =grandchildren/=bullet/Ordered|Alpha. */
   const ordered = useSelector((state): { index: number; style: 'Ordered' | 'Alpha' } | null => {
