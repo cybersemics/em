@@ -207,7 +207,7 @@ it('scrolls the Color Picker only as far as needed when opened with the keyboard
 })
 
 // https://github.com/cybersemics/em/issues/4263
-it.skip('does not move the Text Color button when a color is selected', async () => {
+it('does not move the Text Color button when a color is selected', async () => {
   await paste('- One')
   await clickThought('One')
 
