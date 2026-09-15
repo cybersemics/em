@@ -35,30 +35,24 @@ const thought = (
 })
 
 /** Creates the minimal thoughtspace provider surface needed by refreshThoughtsFromMaterializationChanges. */
-const fakeProvider = (thoughts: Index<Thought>): DataProvider => ({
-  clear: async () => undefined,
-  getLexemeById: async () => undefined,
-  getLexemesByIds: async keys => keys.map(() => undefined),
-  getThoughtById: async (id: ThoughtId) => thoughts[id],
-  getThoughtsByIds: async ids => ids.map(id => thoughts[id]),
-  updateThoughts: async () => ({ operations: [], lexemeIndex: {} }),
-  freeThought: async () => undefined,
-  freeLexeme: async () => undefined,
+const fakeProvider = (thoughts: Index<Thought>): Pick<DataProvider, 'getThoughtById'> => ({
+  getThoughtById: vi.fn(async (id: ThoughtId) => thoughts[id]),
 })
 
-it('projects TreeCRDT sibling order into compatibility ranks', async () => {
+it('refreshes each affected sibling once using provider ranks', async () => {
   const newParent = thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [C_ID, A_ID, B_ID])
-  const thoughtA = thought(A_ID, 'a', 0, HOME_TOKEN)
-  const thoughtB = thought(B_ID, 'b', 1, HOME_TOKEN)
-  const thoughtC = thought(C_ID, 'c', 2, HOME_TOKEN)
+  const thoughtA = thought(A_ID, 'a', 1, HOME_TOKEN)
+  const thoughtB = thought(B_ID, 'b', 2, HOME_TOKEN)
+  const thoughtC = thought(C_ID, 'c', 0, HOME_TOKEN)
+  const provider = fakeProvider({
+    [HOME_TOKEN]: newParent,
+    [A_ID]: thoughtA,
+    [B_ID]: thoughtB,
+    [C_ID]: thoughtC,
+  })
   const result = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: C_ID, parentBefore: HOME_TOKEN, parentAfter: HOME_TOKEN }],
-    fakeProvider({
-      [HOME_TOKEN]: newParent,
-      [A_ID]: thoughtA,
-      [B_ID]: thoughtB,
-      [C_ID]: thoughtC,
-    }),
+    provider,
   )
 
   const updates = Object.fromEntries(result.thoughts.map(nextThought => [nextThought.id, nextThought]))
@@ -67,23 +61,26 @@ it('projects TreeCRDT sibling order into compatibility ranks', async () => {
   expect(updates[C_ID].rank).toBe(0)
   expect(updates[A_ID].rank).toBe(1)
   expect(updates[B_ID].rank).toBe(2)
+  expect(provider.getThoughtById).toHaveBeenCalledTimes(4)
 })
 
-it('projects TreeCRDT sibling order for both parents after a cross-parent move', async () => {
+it('refreshes both parents and their siblings once after a cross-parent move', async () => {
   const newLeft = thought(LEFT_ID, 'left', 0, HOME_TOKEN, [B_ID])
   const newRight = thought(RIGHT_ID, 'right', 1, HOME_TOKEN, [C_ID, A_ID])
   const thoughtANew = thought(A_ID, 'a', 1, RIGHT_ID)
-  const thoughtB = thought(B_ID, 'b', 1, LEFT_ID)
+  const thoughtB = thought(B_ID, 'b', 0, LEFT_ID)
   const thoughtC = thought(C_ID, 'c', 0, RIGHT_ID)
+  const provider = fakeProvider({
+    [HOME_TOKEN]: thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [LEFT_ID, RIGHT_ID]),
+    [LEFT_ID]: newLeft,
+    [RIGHT_ID]: newRight,
+    [A_ID]: thoughtANew,
+    [B_ID]: thoughtB,
+    [C_ID]: thoughtC,
+  })
   const result = await refreshThoughtsFromMaterializationChanges(
     [{ kind: 'move', node: A_ID, parentBefore: LEFT_ID, parentAfter: RIGHT_ID }],
-    fakeProvider({
-      [LEFT_ID]: newLeft,
-      [RIGHT_ID]: newRight,
-      [A_ID]: thoughtANew,
-      [B_ID]: thoughtB,
-      [C_ID]: thoughtC,
-    }),
+    provider,
   )
 
   const updates = Object.fromEntries(result.thoughts.map(nextThought => [nextThought.id, nextThought]))
@@ -96,4 +93,5 @@ it('projects TreeCRDT sibling order for both parents after a cross-parent move',
     parentId: RIGHT_ID,
     rank: 1,
   })
+  expect(provider.getThoughtById).toHaveBeenCalledTimes(6)
 })

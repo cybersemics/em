@@ -69,15 +69,7 @@ const applyPendingThoughtWrites = (
       delete thoughts[id]
       return
     }
-    // Neither derived membership nor UI-only flags belong to a pending persistence patch.
-    const {
-      childrenMap: _childrenMap,
-      pending: _pending,
-      generating: _generating,
-      splitSource: _splitSource,
-      ...fields
-    } = patch
-    if (previous) thoughts[id] = { ...previous, ...fields }
+    if (previous) thoughts[id] = { ...previous, ...patch }
     if (patch.parentId !== undefined) placements.add(id)
     if (thoughts[id]) parents.add(thoughts[id].parentId)
   })

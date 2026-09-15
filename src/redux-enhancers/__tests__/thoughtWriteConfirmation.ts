@@ -92,6 +92,16 @@ it('confirms a new thought alongside unloaded occurrences of the same value', as
 
   store.dispatch(newThought({ at: [HOME_TOKEN], insertNewSubthought: true, value: 'cat' }))
   const created = contextToThought(store.getState(), ['cat'])!
+  expect(store.getState().pendingThoughtWrites[created.id].patch).toEqual({
+    id: created.id,
+    value: 'cat',
+    created: created.created,
+    lastUpdated: created.lastUpdated,
+    updatedBy: created.updatedBy,
+    parentId: HOME_TOKEN,
+    rank: created.rank,
+    archived: undefined,
+  })
   expect(getLexeme(store.getState(), 'cat')?.contexts).toEqual([created.id])
   await waitForThoughtspaceIdle()
 

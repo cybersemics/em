@@ -38,6 +38,57 @@ afterEach(async () => {
   vi.restoreAllMocks()
 })
 
+it('reads final memberships once for a multi-batch write and its publication', async () => {
+  const provider = createTreecrdtDataProvider()
+  const bridge = { getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }), apply: vi.fn() }
+  bindings.push(await provider.bindClient(clientOne, replica, bridge))
+  await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('cat') } })
+  const secondId = '00000000000000000000000000000202' as ThoughtId
+  const getText = vi.spyOn(clientOne.runner, 'getText')
+  bridge.apply.mockClear()
+
+  const results = await provider.persistPushQueueBatches([
+    { thoughtIndexUpdates: { [THOUGHT_ID]: { id: THOUGHT_ID, value: 'dog' } } },
+    { thoughtIndexUpdates: { [secondId]: { ...thought('dog'), id: secondId } } },
+  ])
+
+  expect(results[0].lexemeIndex).toEqual({
+    [hashThought('cat')]: null,
+    [hashThought('dog')]: { contexts: [THOUGHT_ID, secondId], created: 1, lastUpdated: 1, updatedBy: 'test' },
+  })
+  expect(results[1].lexemeIndex).toBe(results[0].lexemeIndex)
+  expect(bridge.apply).toHaveBeenCalledOnce()
+  expect(bridge.apply.mock.calls[0][0].lexemeIndex).toEqual(results[0].lexemeIndex)
+  expect(getText.mock.calls.filter(([sql]) => sql.includes('FROM (SELECT * FROM em_lexeme_memberships'))).toHaveLength(
+    1,
+  )
+})
+
+it.each([true, false])('maintains attribute children across batched writes (UI bridge: %s)', async withBridge => {
+  const provider = createTreecrdtDataProvider()
+  const bridge = { getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }), apply: vi.fn() }
+  bindings.push(await provider.bindClient(clientOne, replica, withBridge ? bridge : undefined))
+  const parentId = '00000000000000000000000000000202' as ThoughtId
+  await provider.db.updateThoughts({
+    thoughtIndexUpdates: { [THOUGHT_ID]: thought('=pin'), [parentId]: { ...thought('parent'), id: parentId, rank: 1 } },
+  })
+  await expect(provider.db.getThoughtById(EM_TOKEN)).resolves.toMatchObject({
+    childrenMap: { '=pin': THOUGHT_ID, [parentId]: parentId },
+  })
+
+  await provider.persistPushQueueBatches([
+    { thoughtIndexUpdates: { [THOUGHT_ID]: { id: THOUGHT_ID, value: 'plain' } } },
+    { thoughtIndexUpdates: { [THOUGHT_ID]: { id: THOUGHT_ID, parentId } }, movePlacements: { [THOUGHT_ID]: null } },
+    { thoughtIndexUpdates: { [THOUGHT_ID]: { id: THOUGHT_ID, value: '=archive' } } },
+  ])
+
+  await expect(provider.db.getThoughtById(parentId)).resolves.toMatchObject({ childrenMap: { '=archive': THOUGHT_ID } })
+  expect((await provider.db.getThoughtById(EM_TOKEN))!.childrenMap).not.toHaveProperty('=pin')
+
+  await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: null } })
+  await expect(provider.db.getThoughtById(parentId)).resolves.toMatchObject({ childrenMap: {} })
+})
+
 it('retains the originating client and bridge for work queued before rebinding', async () => {
   const provider = createTreecrdtDataProvider()
   const bridgeOne = { getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }), apply: vi.fn() }

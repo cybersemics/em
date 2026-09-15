@@ -69,7 +69,7 @@ Each node carries a payload: a JSON-encoded `ThoughtPayload` ([`payload.ts`](../
 Two app-owned indexes live alongside the CRDT tables in the same SQLite database. Neither is part of the CRDT, so neither replicates; both are rebuilt or maintained locally.
 
 - **`em_lexeme_memberships`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — one row per live thought, keyed by thought ID and indexed by `hashThought(value)`. Reads assemble `Lexeme.contexts` from these rows; Redux's potentially incomplete context arrays never replace stored membership. System root nodes are excluded. Lexeme metadata is derived from live members: earliest creation and latest update/writer, with contexts ordered by creation then thought ID.
-- **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id. A companion `em_attribute_children_meta` table records the index version; when it doesn't match `INDEX_VERSION`, `ensureAttributeChildrenIndexReady` rebuilds the index by walking the materialized tree once from the global root. After that it's maintained incrementally on every write and on every materialization batch.
+- **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id. A companion `em_attribute_children_meta` table records the index version; when it doesn't match `INDEX_VERSION`, `ensureAttributeChildrenIndexReady` rebuilds the index by walking the materialized tree once from the global root. After that it's maintained incrementally from materialization batches.
 
 `em_lexeme_memberships_meta` records the materialization frontier only after successful index updates. On startup, a missing or stale frontier causes a rebuild from TreeCRDT, repairing incomplete old indexes without rewriting thought payloads or operations. An indexing failure rejects subsequent reads/writes until reopening repairs it; later events cannot checkpoint over the failure. The index has its own serialized queue, independent of UI refreshes, so persistence never waits on a UI task that is itself waiting for persistence.
 
@@ -89,15 +89,15 @@ Two app-owned indexes live alongside the CRDT tables in the same SQLite database
 
 `updateThoughtsForClient` applies one push-queue batch:
 
-1. **Upserts.** Field patches are merged with the current stored thought; a partial edit cannot create a missing thought. New thoughts use `client.local.insert` with a resolved placement (see below). Existing thoughts use `client.local.move` for placement changes and `client.local.payload` for changed payload fields. Redundant payload writes are skipped. The attribute index is updated whenever a thought's parent or value changed.
-2. **Deletions.** Each `null` entry becomes a `client.local.delete`, and its attribute-index row is removed. Surviving children move first: moving them after deleting their old parent can revive that defensively deleted ancestor.
-3. **Memberships.** The bound provider waits for indexing triggered by materialization. `lexemeIndexUpdates` is only needed for read results and cache eviction, not local mutations or persistence: memberships come from the stored nodes, including unloaded occurrences.
+1. **Upserts.** Field patches are merged with the current stored thought; a partial edit cannot create a missing thought. New thoughts use `client.local.insert` with a resolved placement (see below). Existing thoughts use `client.local.move` for placement changes and `client.local.payload` for changed payload fields. Redundant payload writes are skipped.
+2. **Deletions.** Each `null` entry becomes a `client.local.delete`. Surviving children move first: moving them after deleting their old parent can revive that defensively deleted ancestor.
+3. **Derived indexes.** Materialization maintains memberships and attribute children for both local and incoming operations. `lexemeIndexUpdates` is only needed for read results and cache eviction, not local mutations or persistence: memberships come from the stored nodes, including unloaded occurrences.
 
 The function returns the operations it minted and the affected old/new lexeme keys. The runtime forwards the operations to remote sync.
 
 Payloads remain whole-record TreeCRDT values: merging an app patch with a stored read does not introduce per-field CRDT conflict resolution.
 
-`DataProvider.updateThoughts` persists one batch and returns `{ operations, lexemeIndex }`, with complete old/new memberships and `null` for removed lexemes. The runtime can persist several push-queue batches in one storage job. Reads and writes that arrive before binding wait on a readiness promise; failed initialization or `drop` rejects those waiters so the next initialization starts clean.
+`DataProvider.updateThoughts` persists one batch and returns `{ operations, lexemeIndex }`, with complete old/new memberships and `null` for removed lexemes. The runtime can persist several push-queue batches in one storage job, sharing the final membership read between their results and Redux publication. Reads and writes that arrive before binding wait on a readiness promise; failed initialization or `drop` rejects those waiters so the next initialization starts clean.
 
 #### Order and placement
 
@@ -157,10 +157,7 @@ Failures are non-fatal by design: a failed start logs a warning and em keeps run
 
 ## Push queue (Redux → TreeCRDT)
 
-[`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) is a Redux store enhancer that runs after every reducer. It drains `state.pushQueue` (a list of `PushBatch` objects pushed there by [`updateThoughts`](../src/actions/updateThoughts.ts) and friends) and partitions it into:
-
-- **`dbQueue`** — batches with `local || remote` set. The enhancer converts full Redux records into changed fields and sibling placements. `thoughtspaceRuntime.persistPushQueueBatches` applies them in one provider job and resolves after publication; then `idbSynced` callbacks run. Confirmations from before a store reset are discarded, but callbacks still settle.
-- **`freeQueue`** — state-only batches whose `null` thought/lexeme entries indicate they should be released from the in-memory cache. Calls `db.freeThought` / `db.freeLexeme` (no-ops for TreeCRDT; the Redux-side release is what matters).
+[`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) runs after every reducer and drains `state.pushQueue`. Batches with `local || remote` set become `dbQueue`; state-only batches become `freeQueue` and notify the provider through `freeThought` / `freeLexeme` (no-ops in TreeCRDT). The enhancer converts database batches into changed persisted fields and sibling placements, excluding derived child lists and UI flags. `thoughtspaceRuntime.persistPushQueueBatches` applies them in one provider job and resolves after publication, then `idbSynced` callbacks run. Confirmations from before a store reset are discarded, but callbacks still settle.
 
 The enhancer also caches a small set of critical settings (`CACHED_SETTINGS` in [`constants.ts`](../src/constants.ts)) into `localStorage` so that things like the Tutorial setting are available during the first paint before the thoughtspace hydrates. The corresponding read path is [`selectors/getSetting.ts`](../src/selectors/getSetting.ts).
 

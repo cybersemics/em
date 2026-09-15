@@ -10,16 +10,10 @@ import { EM_TOKEN, GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID, SETTINGS_TOKEN, SETTINGS_V
 import testFlags from '../../e2e/testFlags'
 import { childrenMapKey } from '../../util/createChildrenMap'
 import hashThought from '../../util/hashThought'
-import isAttribute from '../../util/isAttribute'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import type { PersistThoughtspaceBatch, ThoughtspaceMaterializationBridge } from '../thoughtspace'
-import {
-  deleteAttributeChild,
-  ensureAttributeChildrenIndexReady,
-  getAttributeChildrenByParent,
-  upsertAttributeChild,
-} from './attributeChildren'
+import { ensureAttributeChildrenIndexReady, getAttributeChildrenByParent } from './attributeChildren'
 import createLexemeIndex from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { applyMaterializedThoughtsToStore } from './sync'
@@ -39,12 +33,10 @@ type TreecrdtClientIdentity = Readonly<{
   replicaId: Uint8Array
 }>
 
-type TreecrdtClientDataProvider = Pick<
-  DataProvider,
-  'getLexemeById' | 'getLexemesByIds' | 'getThoughtById' | 'getThoughtsByIds' | 'updateThoughts'
->
+type TreecrdtReadModel = Pick<DataProvider, 'getLexemeById' | 'getLexemesByIds' | 'getThoughtById' | 'getThoughtsByIds'>
 
-type BoundTreecrdtDataProvider = TreecrdtClientDataProvider & {
+type BoundTreecrdtDataProvider = TreecrdtReadModel & {
+  updateThoughts: DataProvider['updateThoughts']
   persistPushQueueBatches: (
     batches: readonly PersistThoughtspaceBatch[],
   ) => Promise<Awaited<ReturnType<DataProvider['updateThoughts']>>[]>
@@ -213,15 +205,11 @@ const updateThoughtsForClient = async (
     if (!exists) {
       const placement = await getTreecrdtPlacement(client, thoughtId, thought, movePlacements)
       ops.push(await client.local.insert(replicaId, parentId, thoughtId, placement, payloadBytes, writeOptions))
-      if (isAttribute(thought.value)) {
-        await upsertAttributeChild(client, parentId, thoughtId, thought.value)
-      }
     } else {
       if (!existing) continue
       lexemeKeys.add(hashThought(existing.value))
 
       const parentChanged = existing.parentId !== thought.parentId
-      const valueChanged = existing.value !== thought.value
       const orderChanged = thoughtId in (movePlacements || {})
       if (parentChanged || orderChanged) {
         const placement = await getTreecrdtPlacement(client, thoughtId, thought, movePlacements, {
@@ -240,14 +228,6 @@ const updateThoughtsForClient = async (
       if (payloadChanged) {
         ops.push(await client.local.payload(replicaId, thoughtId, payloadBytes, writeOptions))
       }
-
-      if (parentChanged || valueChanged) {
-        if (isAttribute(thought.value)) {
-          await upsertAttributeChild(client, parentId, thoughtId, thought.value)
-        } else if (isAttribute(existing.value)) {
-          await deleteAttributeChild(client, thoughtId)
-        }
-      }
     }
   }
 
@@ -256,7 +236,6 @@ const updateThoughtsForClient = async (
     const payload = await client.tree.getPayload(id)
     if (payload) lexemeKeys.add(hashThought(decodeThoughtPayload(payload).value))
     ops.push(await client.local.delete(replicaId, id, writeOptions))
-    await deleteAttributeChild(client, id)
   }
 
   return { operations: ops, lexemeKeys: [...lexemeKeys] }
@@ -333,25 +312,17 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
   await ensureAttributeChildrenIndexReady(client)
 }
 
-/** Creates a data provider whose operations are permanently bound to one TreeCRDT client. */
-const createClientDataProvider = (
-  { client, replicaId }: TreecrdtClientIdentity,
+/** Creates a read model permanently bound to one TreeCRDT client. */
+const createClientReadModel = (
+  client: TreecrdtClient,
   lexemes: Awaited<ReturnType<typeof createLexemeIndex>>,
-): TreecrdtClientDataProvider => ({
+): TreecrdtReadModel => ({
   getLexemeById: lexemes.getLexemeById,
   getLexemesByIds: lexemes.getLexemesByIds,
   getThoughtById: id => getThoughtByIdFromClient(client, id),
   getThoughtsByIds: async ids => {
     await waitForTestReplicationDelay()
     return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
-  },
-  updateThoughts: async updates => {
-    const { operations, lexemeKeys } = await updateThoughtsForClient({ client, replicaId }, updates)
-    const values = await lexemes.getLexemesByIds(lexemeKeys)
-    return {
-      operations,
-      lexemeIndex: Object.fromEntries(lexemeKeys.map((key, i) => [key, values[i] ?? null])),
-    }
   },
 })
 
@@ -398,7 +369,7 @@ const createTreecrdtDataProvider = () => {
     await initializeThoughtspaceStorage(client, replicaId)
 
     const lexemes = await createLexemeIndex(client)
-    const clientDb = createClientDataProvider({ client, replicaId }, lexemes)
+    const clientDb = createClientReadModel(client, lexemes)
     const materializationContext: MaterializationContext = {
       bridge: materialization,
       client,
@@ -424,8 +395,11 @@ const createTreecrdtDataProvider = () => {
       run(async () => {
         const generation = materialization?.getSnapshot().generation
         const writeIds = batches.flatMap(batch => (batch.writeId ? [batch.writeId] : []))
-        const results: Awaited<ReturnType<DataProvider['updateThoughts']>>[] = []
-        for (const batch of batches) results.push(await clientDb.updateThoughts(batch))
+        const results: Awaited<ReturnType<typeof updateThoughtsForClient>>[] = []
+        for (const batch of batches) results.push(await updateThoughtsForClient({ client, replicaId }, batch))
+        const keys = [...new Set(results.flatMap(result => result.lexemeKeys))]
+        const values = await clientDb.getLexemesByIds(keys)
+        const lexemeIndex = Object.fromEntries(keys.map((key, i) => [key, values[i] ?? null]))
         // Includes no-op confirmations, which have no materialization event of their own.
         if (
           generation === undefined ||
@@ -435,10 +409,10 @@ const createTreecrdtDataProvider = () => {
           await applyMaterializedThoughtsToStore(materializationContext, {
             generation,
             writeIds,
-            lexemeIndex: Object.assign({}, ...results.map(result => result.lexemeIndex)),
+            lexemeIndex,
           })
         }
-        return results
+        return results.map(({ operations }) => ({ operations, lexemeIndex }))
       })
 
     const unsubscribeMaterialized = client.onMaterialized(event => {

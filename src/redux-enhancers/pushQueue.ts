@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import Index from '../@types/IndexType'
 import PushBatch from '../@types/PushBatch'
@@ -66,15 +65,12 @@ const pushQueue: StoreEnhancer<any> =
 
       if (stateNew.pushQueue.length === 0) return stateNew
 
-      // separate out updates for the database from state-only updates
-      // state-only updates are only used to free up memory
-      const { dbQueue, freeQueue } = _.groupBy(stateNew.pushQueue, batch =>
-        batch.local || batch.remote ? 'dbQueue' : 'freeQueue',
-      ) as { dbQueue?: PushBatch[]; freeQueue?: PushBatch[] }
+      const dbQueue = stateNew.pushQueue.filter(batch => batch.local || batch.remote)
+      const freeQueue = stateNew.pushQueue.filter(batch => !batch.local && !batch.remote)
       // Compare each queued edit with the preceding optimistic state, never with a later storage read.
       // A move must not carry an unchanged value; a rename must not carry an unchanged parent.
       const previousThoughts: Index<Thought | null> = { ...state.thoughts.thoughtIndex }
-      const writes = (dbQueue ?? []).map(batch => {
+      const writes = dbQueue.map(batch => {
         const nextThoughts = { ...previousThoughts, ...batch.thoughtIndexUpdates }
         const movePlacements = { ...batch.movePlacements }
         // Capture position against the optimistic siblings, before storage normalizes their ranks.
@@ -98,22 +94,24 @@ const pushQueue: StoreEnhancer<any> =
             previousThoughts[id] = thought
             return [
               id,
-              !thought || !previous || previous.pending
-                ? thought
+              !thought
+                ? null
                 : {
                     id: thought.id,
                     ...Object.fromEntries(
                       (['value', 'created', 'lastUpdated', 'updatedBy', 'archived'] as const)
-                        .filter(key => thought[key] !== previous[key])
+                        .filter(key => !previous || previous.pending || thought[key] !== previous[key])
                         .map(key => [key, thought[key]]),
                     ),
-                    ...(id in movePlacements ? { parentId: thought.parentId, rank: thought.rank } : {}),
+                    ...(!previous || previous.pending || id in movePlacements
+                      ? { parentId: thought.parentId, rank: thought.rank }
+                      : {}),
                   },
             ]
           }),
         )
         return {
-          batch,
+          local: batch.local,
           movePlacements,
           writeId: `generation:${stateNew.thoughtspaceGeneration}:${createId()}`,
           thoughtIndexUpdates,
@@ -121,7 +119,7 @@ const pushQueue: StoreEnhancer<any> =
       })
 
       if (
-        dbQueue?.some(
+        dbQueue.some(
           batch =>
             Object.keys(batch.thoughtIndexUpdates).length > 0 || Object.keys(batch.lexemeIndexUpdates).length > 0,
         )
@@ -129,7 +127,7 @@ const pushQueue: StoreEnhancer<any> =
         // cache updated settings
         const settingsIds = getSettingsIds(stateNew)
         Object.entries(settingsIds).forEach(([name, id]) => {
-          for (const batch of dbQueue ?? []) {
+          for (const batch of dbQueue) {
             if (id && id in batch.thoughtIndexUpdates) {
               const thought = getThoughtById(stateNew, id)
               cacheSetting(name, thought?.value || null)
@@ -140,9 +138,7 @@ const pushQueue: StoreEnhancer<any> =
         // Log the flush so database lastUpdated stamps can be correlated with debug log entries and unlanded writes
         // detected (a `push` with no matching `pushSynced` is a write that never completed).
         const debugEnabled = debugLog.isEnabled()
-        const thoughtUpdates = debugEnabled
-          ? (dbQueue ?? []).flatMap(batch => Object.entries(batch.thoughtIndexUpdates))
-          : []
+        const thoughtUpdates = debugEnabled ? dbQueue.flatMap(batch => Object.entries(batch.thoughtIndexUpdates)) : []
         if (debugEnabled) {
           // sample of the thought updates being written; the full set is visible in the corresponding action entries
           const sample = thoughtUpdates.slice(0, 10).map(([id, thought]) => {
@@ -151,13 +147,13 @@ const pushQueue: StoreEnhancer<any> =
             return { id, value, rank: thought.rank }
           })
           debugLog.log('push', {
-            batches: (dbQueue ?? []).length,
+            batches: dbQueue.length,
             thoughtCount: thoughtUpdates.length,
             deleteCount: thoughtUpdates.filter(([, thought]) => !thought).length,
-            lexemeCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.lexemeIndexUpdates).length, 0),
-            moveCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.movePlacements ?? {}).length, 0),
-            local: (dbQueue ?? []).some(batch => batch.local !== false),
-            remote: (dbQueue ?? []).some(batch => batch.remote !== false),
+            lexemeCount: dbQueue.reduce((n, batch) => n + Object.keys(batch.lexemeIndexUpdates).length, 0),
+            moveCount: dbQueue.reduce((n, batch) => n + Object.keys(batch.movePlacements ?? {}).length, 0),
+            local: dbQueue.some(batch => batch.local !== false),
+            remote: dbQueue.some(batch => batch.remote !== false),
             thoughts: sample,
           })
         }
@@ -165,16 +161,9 @@ const pushQueue: StoreEnhancer<any> =
         const writeGeneration = stateNew.thoughtspaceGeneration
         const writeIds = writes.map(write => write.writeId)
         void thoughtspaceRuntime
-          .persistPushQueueBatches(
-            writes.map(({ batch, thoughtIndexUpdates, movePlacements, writeId }) => ({
-              thoughtIndexUpdates,
-              writeId,
-              movePlacements,
-              local: batch.local,
-            })),
-          )
+          .persistPushQueueBatches(writes)
           .then(() => {
-            dbQueue?.forEach(batch => batch.idbSynced?.())
+            dbQueue.forEach(batch => batch.idbSynced?.())
             debugLog.log('pushSynced', { thoughtCount: thoughtUpdates.length })
           })
           .catch(err => {
@@ -186,7 +175,7 @@ const pushQueue: StoreEnhancer<any> =
           })
       }
 
-      const freeBatch = (freeQueue || []).reduce<PushBatch>(mergeBatch, {
+      const freeBatch = freeQueue.reduce<PushBatch>(mergeBatch, {
         thoughtIndexUpdates: {},
         lexemeIndexUpdates: {},
       })
