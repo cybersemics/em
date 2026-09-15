@@ -70,7 +70,7 @@ it('the selected text remains selected after a letter case change that lengthens
 
   await clickToolbar('Letter Case', 'UpperCase')
 
-  await waitForEditable('STRASSE X')
+  await waitForEditable('STRASSE x')
 
   // see the comment on the re-selection wait above
   await waitUntil(() => window.getSelection()?.toString() === 'STRASSE')
@@ -99,7 +99,7 @@ it('flushes pending edits before applying letter case from the picker', async ()
 })
 
 // https://github.com/cybersemics/em/issues/4281
-it.skip('applies letter case to the selected text only', async () => {
+it('applies letter case to the selected text only', async () => {
   await paste('Welcome to the world of beautiful people')
 
   await clickThought('Welcome to the world of beautiful people')

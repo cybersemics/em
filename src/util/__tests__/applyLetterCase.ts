@@ -74,3 +74,27 @@ describe('transforms that change the length of the text', () => {
     expect(textContent(applyLetterCase('TitleCase', 'ᾷßx<b>.</b>ß<b>B</b>'))).toBe('ᾷßx.ßb')
   })
 })
+
+describe('a selected range', () => {
+  // https://github.com/cybersemics/em/issues/4281
+  it('transforms only the range, leaving the rest of the value unchanged', () => {
+    expect(applyLetterCase('UpperCase', 'Welcome to the world of beautiful people', { start: 24, end: 33 })).toBe(
+      'Welcome to the world of BEAUTIFUL people',
+    )
+  })
+
+  it('transforms a range that spans tags while preserving the markup', () => {
+    const value = '<b>hello <font color="#00FF00">green</font> world</b>'
+    expect(applyLetterCase('UpperCase', value, { start: 6, end: 11 })).toBe(
+      '<b>hello <font color="#00FF00">GREEN</font> world</b>',
+    )
+  })
+
+  it('transforms a range whose transform changes the length of the text', () => {
+    expect(applyLetterCase('UpperCase', 'Straße x', { start: 0, end: 6 })).toBe('STRASSE x')
+  })
+
+  it('transforms to the end of the value when no end is given', () => {
+    expect(applyLetterCase('LowerCase', 'HELLO WORLD', { start: 6 })).toBe('HELLO world')
+  })
+})
