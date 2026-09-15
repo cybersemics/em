@@ -152,23 +152,6 @@ const removeEmptyFormatting = (container: HTMLElement) => {
   }
 }
 
-/** Inserts a node at the (collapsed) range, lifting out of any empty formatting ancestors that extractContents left
- * behind. Without this, re-coloring content that already fills a single wrapper (e.g. the second dispatch of a
- * foreColor + backColor pair) would nest the new <font> inside the emptied one instead of replacing it. */
-const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
-  // Climb from the insertion point to the outermost formatting ancestor that extractContents left empty, and replace
-  // it with the node. (The collapsed range often sits on an empty text node inside the emptied wrapper.)
-  let emptyAncestor: HTMLElement | null = null
-  for (let n: Node | null = range.startContainer; n && n !== container; n = n.parentNode) {
-    if (isFormattingElement(n) && (n.textContent ?? '') === '') emptyAncestor = n
-  }
-  if (emptyAncestor) {
-    emptyAncestor.replaceWith(node)
-  } else {
-    range.insertNode(node)
-  }
-}
-
 /** Returns the nearest ancestor element within container that carries a text color or background color and contains the
  * node, or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
  * style, as in getCommandState's extractColors. Color formatting is not nested, so the nearest such ancestor covers the
@@ -185,6 +168,47 @@ const enclosingColorElement = (node: Node, container: Node): HTMLElement | null 
     }
   }
   return null
+}
+
+/** Moves whatever of el follows the collapsed range into a copy of el placed directly after it, so that the range
+ * becomes a boundary between two siblings rather than a point inside one. */
+const splitAtRange = (el: HTMLElement, range: Range) => {
+  const tail = document.createRange()
+  tail.setStart(range.startContainer, range.startOffset)
+  tail.setEnd(el, el.childNodes.length)
+  const contents = tail.extractContents()
+  if ((contents.textContent ?? '') === '') return
+  const clone = el.cloneNode(false) as HTMLElement
+  clone.appendChild(contents)
+  el.after(clone)
+}
+
+/** Inserts a node at the (collapsed) range, lifting it out of any color element enclosing the insertion point and of any
+ * empty formatting ancestors that extractContents left behind. Without this, re-coloring content that already fills a
+ * single wrapper (e.g. the second dispatch of a foreColor + backColor pair) would nest the new <font> inside the emptied
+ * one instead of replacing it, and a sub-range of a colored thought would go back inside the color it was extracted
+ * from, leaving the old color in force (#5505). */
+const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
+  // A color command redetermines the color of its entire range, so the range must not come to rest inside an element
+  // still carrying the old one. Split that element at the insertion point and insert between the two halves.
+  const colorElement = enclosingColorElement(range.startContainer, container)
+  if (colorElement) {
+    splitAtRange(colorElement, range)
+    colorElement.after(node)
+    return
+  }
+
+  // Climb from the insertion point to the outermost formatting ancestor that extractContents left empty, and replace
+  // it with the node. (The collapsed range often sits on an empty text node inside the emptied wrapper.)
+  let emptyAncestor: HTMLElement | null = null
+  for (let n: Node | null = range.startContainer; n && n !== container; n = n.parentNode) {
+    if (isFormattingElement(n) && (n.textContent ?? '') === '') emptyAncestor = n
+  }
+  if (emptyAncestor) {
+    emptyAncestor.replaceWith(node)
+  } else {
+    range.insertNode(node)
+  }
 }
 
 /** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
