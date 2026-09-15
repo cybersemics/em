@@ -103,6 +103,31 @@ const getColorPickerGeometry = () =>
     }
   })
 
+/** Returns the y position of the Text Color toolbar button once it has come to rest, i.e. once it has not moved for ten consecutive frames. */
+const restingTextColorButtonTop = () =>
+  page.evaluate(
+    () =>
+      new Promise<number>((resolve, reject) => {
+        const button = document.querySelector('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+        if (!button) throw new Error('Text Color button not found.')
+
+        const deadline = Date.now() + 5000
+        let previousTop = NaN
+        let stableFrames = 0
+
+        /** Samples the button's y position once per frame until it stops changing. */
+        const sample = () => {
+          const top = button.getBoundingClientRect().top
+          stableFrames = top === previousTop ? stableFrames + 1 : 0
+          previousTop = top
+          if (stableFrames === 10) resolve(top)
+          else if (Date.now() > deadline) reject(new Error(`The Text Color button is still moving (y=${top}).`))
+          else requestAnimationFrame(sample)
+        }
+        requestAnimationFrame(sample)
+      }),
+  )
+
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
 // https://github.com/cybersemics/em/issues/4604
@@ -179,6 +204,21 @@ it('scrolls the Color Picker only as far as needed when opened with the keyboard
       `Expected the Color Picker to come to rest against the right edge of the toolbar, but it spans ${geometry.colorPickerLeft}-${geometry.colorPickerRight} within a toolbar spanning ${geometry.toolbarLeft}-${geometry.toolbarRight} (tolerance ${geometry.edgeTolerance}).`,
     )
   }
+})
+
+// https://github.com/cybersemics/em/issues/4263
+it.skip('does not move the Text Color button when a color is selected', async () => {
+  await paste('- One')
+  await clickThought('One')
+
+  await clickToolbar('Text Color')
+  await waitForSelector('[aria-label="text color swatches"]')
+  const topBeforeSelection = await restingTextColorButtonTop()
+
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
+  await waitForEditable(`<font color="${rgbaToHex(colors.light.blue)}">One</font>`)
+
+  expect(await restingTextColorButtonTop()).toBe(topBeforeSelection)
 })
 
 it('Set the text color of the text and bullet', async () => {
