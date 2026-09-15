@@ -32,7 +32,7 @@ let freeThoughtsThreshold = 500
 /** Escape hatch to abandon imports when frozen. This is a workaround for a bug that has not been resolved. */
 let abandonImport = false
 
-/** Used to suppress the Editable change handler to ignore execCommand in registerNativeUndoStep. */
+/** Used to suppress the Editable change handler to ignore the execCommand in registerNativeUndoStep and registerNativeRedoStep. */
 let suppressChange = false
 
 /** Used to suppress the blur handlers that resync the editable's innerHTML to the value in Redux. Set while the
