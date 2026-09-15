@@ -94,7 +94,7 @@ describe('Format', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4716
-  it.skip('Clear Thought slants the emoji in the placeholder', async () => {
+  it('Clear Thought slants the emoji in the placeholder', async () => {
     await paste(`
     - 😁 Hello`)
     await clickThought('😁 Hello')
@@ -114,7 +114,10 @@ describe('Format', () => {
     // WebKit never synthesizes oblique for a color emoji glyph, so a slant that reaches the emoji has to come from a
     // transform on the rendered box rather than from font-style. Read the angle back out of the computed matrix
     // (matrix(a, b, c, d, e, f), where c is the tangent of the skew angle).
-    const values = placeholder.transform.match(/matrix\(([^)]+)\)/)?.[1].split(',').map(Number)
+    const values = placeholder.transform
+      .match(/matrix\(([^)]+)\)/)?.[1]
+      .split(',')
+      .map(Number)
     if (!values && placeholder.transform !== 'none')
       throw new Error(`expected a matrix or no transform on the cleared placeholder, got "${placeholder.transform}"`)
     const skewXDeg = values ? (Math.atan(-values[2]) * 180) / Math.PI : 0
