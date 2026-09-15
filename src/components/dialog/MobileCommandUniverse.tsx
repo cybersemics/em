@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
 import CommandUniversePageRouter from '../CommandUniverse/CommandUniversePageRouter'
-import CommandUniverseProvider from '../CommandUniverse/CommandUniverseProvider'
 import FadeTransition from '../FadeTransition'
 import Dialog from './Dialog'
 import DialogHeader from './DialogHeader'
@@ -40,14 +39,10 @@ const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
   )
 }
 
-/** Keeps the session owner outside its presentation so alternative shells can share the same navigator. */
+/** Renders the mobile Command Universe from its Redux-owned navigation session. */
 const MobileCommandUniverse = () => {
   const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
-  return (
-    <CommandUniverseProvider isOpen={isOpen}>
-      <CommandUniverseDialog isOpen={isOpen} />
-    </CommandUniverseProvider>
-  )
+  return <CommandUniverseDialog isOpen={isOpen} />
 }
 
 export default MobileCommandUniverse
