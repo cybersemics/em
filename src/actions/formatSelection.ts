@@ -42,7 +42,8 @@ import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
  * Limitations:
  *
  * - The only way to intercept a native undo gesture is via the `beforeinput` event, which is only dispatched when the native undo stack has a step
- * to undo. When the stack drifts out of sync, the native dialog will not display an option to undo or redo past a certain point.
+ * to undo. `beforeInput` keeps a step available by recycling WebKit's position through the stack after each gesture, so one step anywhere in the
+ * stack is enough — but until something registers that first step, the gesture is not dispatched at all.
  * - If there are no editables, such as after undoing the creation of the only remaining thought, then there will be no `beforeinput` event and native
  * undo/redo behavior will stop having an effect. Technically, native undo is still running, but it doesn't know how to re-create a deleted thought.
  */

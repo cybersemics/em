@@ -10,7 +10,7 @@ import waitForElement from '../helpers/waitForElement'
 
 describe('Undo', () => {
   // https://github.com/cybersemics/em/issues/4984
-  it.skip('native undo deletes the thought after the edits made on top of it have been undone', async () => {
+  it('native undo deletes the thought after the edits made on top of it have been undone', async () => {
     await newThought('Makre')
 
     // Replace "kre" with "ke" as the iOS keyboard does when it autocorrects a word. Auto-Correction is off on shared
