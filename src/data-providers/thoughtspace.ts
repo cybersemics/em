@@ -1,6 +1,3 @@
-import type Index from '../@types/IndexType'
-import type Lexeme from '../@types/Lexeme'
-import type Thought from '../@types/Thought'
 import type ThoughtUpdates from '../@types/ThoughtUpdates'
 import type { DataProvider } from './DataProvider'
 import createTreecrdtThoughtspace from './treecrdt/runtime'
@@ -12,16 +9,11 @@ export type PersistThoughtspaceBatch = Parameters<DataProvider['updateThoughts']
 /** Storage lifetime requested from the active thoughtspace provider. */
 export type ThoughtspaceStorage = 'memory' | 'persistent'
 
-export type ThoughtspaceMaterializationSnapshot = {
-  generation: number
-  thoughtIndex: Index<Thought>
-  lexemeIndex: Index<Lexeme>
-}
-
 export type ThoughtspaceMaterializationBridge = {
-  getSnapshot: () => ThoughtspaceMaterializationSnapshot
+  /** Invalidates publication when the receiving view is reset. */
+  getGeneration: () => number
   /** Synchronously publishes committed data and confirms its writes before another storage job starts. */
-  apply: (updates: ThoughtUpdates & { writeIds?: string[] }) => void
+  onCommit: (updates: ThoughtUpdates & { writeIds?: string[] }) => void
 }
 
 export type ThoughtspaceRuntimeInitOptions = {

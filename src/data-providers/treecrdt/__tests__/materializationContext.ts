@@ -40,12 +40,12 @@ afterEach(async () => {
 
 it('reads final memberships once for a multi-batch write and its publication', async () => {
   const provider = createTreecrdtDataProvider()
-  const bridge = { getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }), apply: vi.fn() }
+  const bridge = { getGeneration: () => 0, onCommit: vi.fn() }
   bindings.push(await provider.bindClient(clientOne, replica, bridge))
   await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('cat') } })
   const secondId = '00000000000000000000000000000202' as ThoughtId
   const getText = vi.spyOn(clientOne.runner, 'getText')
-  bridge.apply.mockClear()
+  bridge.onCommit.mockClear()
 
   const results = await provider.persistPushQueueBatches([
     { thoughtIndexUpdates: { [THOUGHT_ID]: { id: THOUGHT_ID, value: 'dog' } } },
@@ -57,8 +57,8 @@ it('reads final memberships once for a multi-batch write and its publication', a
     [hashThought('dog')]: { contexts: [THOUGHT_ID, secondId], created: 1, lastUpdated: 1, updatedBy: 'test' },
   })
   expect(results[1].lexemeIndex).toBe(results[0].lexemeIndex)
-  expect(bridge.apply).toHaveBeenCalledOnce()
-  expect(bridge.apply.mock.calls[0][0].lexemeIndex).toEqual(results[0].lexemeIndex)
+  expect(bridge.onCommit).toHaveBeenCalledOnce()
+  expect(bridge.onCommit.mock.calls[0][0].lexemeIndex).toEqual(results[0].lexemeIndex)
   expect(getText.mock.calls.filter(([sql]) => sql.includes('FROM (SELECT * FROM em_lexeme_memberships'))).toHaveLength(
     1,
   )
@@ -66,7 +66,7 @@ it('reads final memberships once for a multi-batch write and its publication', a
 
 it.each([true, false])('maintains attribute children across batched writes (UI bridge: %s)', async withBridge => {
   const provider = createTreecrdtDataProvider()
-  const bridge = { getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }), apply: vi.fn() }
+  const bridge = { getGeneration: () => 0, onCommit: vi.fn() }
   bindings.push(await provider.bindClient(clientOne, replica, withBridge ? bridge : undefined))
   const parentId = '00000000000000000000000000000202' as ThoughtId
   await provider.db.updateThoughts({
@@ -91,8 +91,8 @@ it.each([true, false])('maintains attribute children across batched writes (UI b
 
 it('retains the originating client and bridge for work queued before rebinding', async () => {
   const provider = createTreecrdtDataProvider()
-  const bridgeOne = { getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }), apply: vi.fn() }
-  const bridgeTwo = { getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }), apply: vi.fn() }
+  const bridgeOne = { getGeneration: () => 0, onCommit: vi.fn() }
+  const bridgeTwo = { getGeneration: () => 0, onCommit: vi.fn() }
   bindings.push(await provider.bindClient(clientOne, replica, bridgeOne))
   const started = deferred()
   const released = deferred()
@@ -111,10 +111,10 @@ it('retains the originating client and bridge for work queued before rebinding',
   released.resolve()
   await Promise.all([first, second])
 
-  expect(bridgeOne.apply).toHaveBeenCalledWith(
+  expect(bridgeOne.onCommit).toHaveBeenCalledWith(
     expect.objectContaining({ thoughtIndex: expect.objectContaining({ [THOUGHT_ID]: thought('client one') }) }),
   )
-  expect(bridgeTwo.apply).toHaveBeenCalledWith(
+  expect(bridgeTwo.onCommit).toHaveBeenCalledWith(
     expect.objectContaining({ thoughtIndex: expect.objectContaining({ [THOUGHT_ID]: thought('client two') }) }),
   )
   await expect(provider.db.getThoughtById(THOUGHT_ID)).resolves.toEqual(thought('client two'))
@@ -124,8 +124,8 @@ it('publishes coherent local and incoming commits before draining a closed bindi
   const provider = createTreecrdtDataProvider()
   const published: { value: string; contexts: ThoughtId[] | undefined }[] = []
   const binding = await provider.bindClient(clientOne, replica, {
-    getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }),
-    apply: ({ thoughtIndex, lexemeIndex }) => {
+    getGeneration: () => 0,
+    onCommit: ({ thoughtIndex, lexemeIndex }) => {
       const value = thoughtIndex[THOUGHT_ID]!.value
       published.push({ value, contexts: lexemeIndex[hashThought(value)]?.contexts })
     },
@@ -171,13 +171,49 @@ it('publishes coherent local and incoming commits before draining a closed bindi
   await expect(binding.syncClient.ops.appendMany([operation])).rejects.toThrow('binding is closed')
 })
 
+it('discards an incoming publication when the receiving view resets during its read', async () => {
+  const provider = createTreecrdtDataProvider()
+  let generation = 0
+  const onCommit = vi.fn()
+  const binding = await provider.bindClient(clientOne, replica, { getGeneration: () => generation, onCommit })
+  bindings.push(binding)
+  await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('cat') } })
+  await clientTwo.ops.appendMany(await clientOne.ops.all())
+  const operation = await clientTwo.local.payload(
+    new Uint8Array(32).fill(2),
+    THOUGHT_ID,
+    encodeThoughtPayload(thought('dog')),
+  )
+  onCommit.mockClear()
+  const started = deferred()
+  const released = deferred()
+  const getText = clientOne.runner.getText.bind(clientOne.runner)
+  vi.spyOn(clientOne.runner, 'getText').mockImplementation(async (sql, params) => {
+    const result = await getText(sql, params)
+    if (sql.includes('FROM (SELECT * FROM em_lexeme_memberships')) {
+      started.resolve()
+      await released.promise
+    }
+    return result
+  })
+
+  const incoming = binding.syncClient.ops.appendMany([operation])
+  await started.promise
+  generation += 1
+  released.resolve()
+  await incoming
+
+  expect(onCommit).not.toHaveBeenCalled()
+  await expect(provider.db.getLexemeById(hashThought('dog'))).resolves.toMatchObject({ contexts: [THOUGHT_ID] })
+})
+
 it.each([
   ['sync', true],
   ['provider', true],
   ['provider', false],
 ] as const)('finishes derived indexes after %s read-path recovery (UI bridge: %s)', async (entry, withBridge) => {
   const provider = createTreecrdtDataProvider()
-  const bridge = { getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }), apply: vi.fn() }
+  const bridge = { getGeneration: () => 0, onCommit: vi.fn() }
   const binding = await provider.bindClient(clientOne, replica, withBridge ? bridge : undefined)
   bindings.push(binding)
   await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('cat') } })

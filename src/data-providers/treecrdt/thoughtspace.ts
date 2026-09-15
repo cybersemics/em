@@ -393,7 +393,7 @@ const createTreecrdtDataProvider = () => {
     /** Persists one Redux flush and confirms it with the resulting read model, including no-ops. */
     const persistPushQueueBatches: BoundTreecrdtDataProvider['persistPushQueueBatches'] = batches =>
       run(async () => {
-        const generation = materialization?.getSnapshot().generation
+        const generation = materialization?.getGeneration()
         const writeIds = batches.flatMap(batch => (batch.writeId ? [batch.writeId] : []))
         const results: Awaited<ReturnType<typeof updateThoughtsForClient>>[] = []
         for (const batch of batches) results.push(await updateThoughtsForClient({ client, replicaId }, batch))
@@ -419,7 +419,7 @@ const createTreecrdtDataProvider = () => {
       const keys = lexemes.applyChanges(event)
       // The outer job may still be reading/writing when indexing rejects. Publication observes the error.
       void keys.catch(() => undefined)
-      materializationContext.pending.push({ event, keys, generation: materialization?.getSnapshot().generation })
+      materializationContext.pending.push({ event, keys, generation: materialization?.getGeneration() })
       // Owned jobs flush directly. This also handles a recovery event emitted outside a write.
       if (subscribed && materializationContext.pending.length === 1) {
         void run(async () => undefined).catch(err => console.error('TreeCRDT materialization refresh failed', err))

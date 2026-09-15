@@ -276,6 +276,49 @@ it('publishes a committed membership read beneath a newer pending edit', async (
   await expect(db.getThoughtById(thought.id)).resolves.toMatchObject({ value: 'bird' })
 })
 
+it('preserves the current generating flag when an incoming commit finishes reading', async () => {
+  store.dispatch(importText({ text: '- cat' }))
+  await waitForThoughtspaceIdle()
+  const thought = contextToThought(store.getState(), ['cat'])!
+  store.dispatch(
+    updateThoughts({
+      thoughtIndexUpdates: { [thought.id]: { ...thought, generating: true } },
+      local: false,
+      remote: false,
+      overwritePending: true,
+    }),
+  )
+  const started = deferred()
+  const released = deferred()
+  const getText = client.runner.getText.bind(client.runner)
+  vi.spyOn(client.runner, 'getText').mockImplementation(async (sql, params) => {
+    const result = await getText(sql, params)
+    if (sql.includes('FROM (SELECT * FROM em_lexeme_memberships')) {
+      started.resolve()
+      await released.promise
+    }
+    return result
+  })
+
+  const incoming = receiveRemote(peer =>
+    peer.local.payload(remoteReplica, thought.id, encodeThoughtPayload({ ...thought, value: 'dog' })),
+  )
+  await started.promise
+  store.dispatch(
+    updateThoughts({
+      thoughtIndexUpdates: { [thought.id]: { ...thought, generating: false } },
+      local: false,
+      remote: false,
+      overwritePending: true,
+    }),
+  )
+  released.resolve()
+  await incoming
+  await waitForThoughtspaceIdle()
+
+  expect(contextToThought(store.getState(), ['dog'])).toMatchObject({ id: thought.id, generating: false })
+})
+
 it('acknowledges a no-op without requiring a materialization event', async () => {
   store.dispatch(importText({ text: '- cat' }))
   await waitForThoughtspaceIdle()
