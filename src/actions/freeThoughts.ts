@@ -50,6 +50,10 @@ const freeThoughts = (state: State): State => {
     ABSOLUTE_TOKEN,
     EM_TOKEN,
     HOME_TOKEN,
+    // Unsaved edits and their ancestors must remain available until persistence confirms them.
+    ...Object.keys(state.pendingThoughtWrites).flatMap<ThoughtId>(id =>
+      state.thoughts.thoughtIndex[id] ? thoughtToPath(state, id as ThoughtId) : [],
+    ),
     // drag-and-drop related thoughts
     ...(state.draggedSimplePath ?? []),
     ...(state.draggingThoughts.flat() as ThoughtId[]),

@@ -1,6 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 /** Re-export all reducers for app.ts. */
 
+export { default as acknowledgeThoughtWrites } from './acknowledgeThoughtWrites'
+
 export { default as addAllMulticursor } from './addAllMulticursor'
 export { default as addLatestCommands } from './addLatestCommands'
 export { default as addMulticursor } from './addMulticursor'

@@ -9,8 +9,8 @@ import { importFilesActionCreator as importFiles } from './actions/importFiles'
 import { initThoughtsActionCreator as initThoughts } from './actions/initThoughts'
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
-import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
+import createThoughtspaceMaterializationBridge from './data-providers/createThoughtspaceMaterializationBridge'
 import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -63,26 +63,7 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
 
   const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
     storage,
-    materialization: {
-      getSnapshot: () => {
-        const state = store.getState()
-        return {
-          thoughtIndex: state.thoughts.thoughtIndex,
-          lexemeIndex: state.thoughts.lexemeIndex,
-        }
-      },
-      apply: ({ thoughtIndex, lexemeIndex }) => {
-        store.dispatch(
-          updateThoughtsActionCreator({
-            thoughtIndexUpdates: thoughtIndex,
-            lexemeIndexUpdates: lexemeIndex,
-            local: false,
-            remote: false,
-            repairCursor: true,
-          }),
-        )
-      },
-    },
+    materialization: createThoughtspaceMaterializationBridge(store),
   })
 
   storageStatusStore.update(storageInUse)

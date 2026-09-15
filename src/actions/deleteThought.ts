@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
 import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
@@ -8,25 +7,19 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import updateThoughts from '../actions/updateThoughts'
-import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import { getChildrenRanked } from '../selectors/getChildren'
-import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
-import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import hashPath from '../util/hashPath'
-import hashThought from '../util/hashThought'
-import head from '../util/head'
 import headValue from '../util/headValue'
 import isDescendant from '../util/isDescendant'
 import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
-import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
 
 interface Payload {
@@ -40,71 +33,25 @@ interface Payload {
 interface ThoughtUpdates {
   path: Path
   thoughtIndex: Index<Thought | null>
-  lexemeIndex: Index<Lexeme | null>
   pendingDeletes?: PushBatch['pendingDeletes']
 }
 
-/** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions. */
+/** Deletes a thought and its loaded descendants, or frees them from cache without changing stored membership. */
 const deleteThought = (state: State, { local = true, pathParent, thoughtId, remote = true }: Payload) => {
   const deletedThought = getThoughtById(state, thoughtId) as Thought | undefined
   if (!deletedThought) return state
 
-  const { value } = deletedThought
-
   // See: Payload.local
   const persist = local || remote
-
-  // guard against missing lexeme
-  // while this ideally shouldn't happen, there are some concurrency issues that can cause it to happen, as well as freeThoughts, so we should print an error and just delete the Parent
-  if (!hasLexeme(state, value)) {
-    console.warn(`Lexeme not found for thought value: ${value}. Deleting thought anyway.`)
-  }
-
-  const key = deletedThought ? hashThought(value!) : null
-  const lexeme = deletedThought ? getLexeme(state, value!) : null
-
-  const parent = getThoughtById(state, deletedThought ? deletedThought.parentId : head(pathParent))
+  const parent = getThoughtById(state, deletedThought.parentId)
 
   if (!parent) {
-    console.error('Parent not found!', thoughtId, deletedThought?.value)
+    console.error('Parent not found!', thoughtId, deletedThought.value)
     return state
   }
 
-  const lexemeIndexNew = { ...state.thoughts.lexemeIndex }
   const simplePath = thoughtToPath(state, thoughtId)
   const path = [...pathParent, thoughtId] as Path
-
-  // TODO: Re-enable Recently Edited
-  // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  // let recentlyEdited = state.recentlyEdited
-  // try {
-  //   recentlyEdited = treeDelete(state, state.recentlyEdited, path)
-  // } catch (e) {
-  //   console.error('deleteThought: treeDelete immer error')
-  //   console.error(e)
-  // }
-
-  // The new Lexeme is typically the old Lexeme less the deleted context.
-  // However, during deallocation we should not remove a single context, which would create an invalid Lexeme. Instead, we keep the Lexeme intact with all contexts, only deallocating it when all of its context thoughts have been deallocated.
-  const lexemeWithoutContext = lexeme ? removeContext(lexeme, thoughtId) : null
-
-  const lexemeNew = persist
-    ? lexemeWithoutContext?.contexts.length
-      ? lexemeWithoutContext
-      : null
-    : (lexemeWithoutContext?.contexts || []).some(cxid => getThoughtById(state, cxid))
-      ? // ! lexeme must be defined because lexemeWithoutContext exists
-        lexeme!
-      : null
-
-  // update state so that we do not have to wait for the remote
-  if (key) {
-    if (lexemeNew) {
-      lexemeIndexNew[key] = lexemeNew
-    } else {
-      delete lexemeIndexNew[key]
-    }
-  }
 
   // disable context view
   const contextViewsNew = { ...state.contextViews }
@@ -112,41 +59,9 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
 
   /** Generates an update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
   const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
-    // modify the state to use the lexemeIndex with lexemeNew
-    // this ensures that contexts are calculated correctly for descendants with duplicate values
-    const stateNew: State = {
-      ...state,
-      thoughts: {
-        ...state.thoughts,
-        lexemeIndex: lexemeIndexNew,
-      },
-    }
-
-    const children = getChildrenRanked(stateNew, thought.id)
+    const children = getChildrenRanked(state, thought.id)
     return children.reduce(
       (accum, child) => {
-        const hashedKey = hashThought(child.value)
-        const lexemeChild = getLexeme(stateNew, child.value)
-
-        // The new Lexeme is typically the old Lexeme less the deleted context.
-        // However, during deallocation we should not remove a single context, which would create an invalid context superscript. Instead, we keep the Lexeme intact with all contexts, only deallocating it when all of its context thoughts have been deallocated.
-        const lexemeChildWithoutContext = lexemeChild ? removeContext(lexemeChild, child.id) : null
-        const lexemeChildNew = persist
-          ? lexemeChildWithoutContext?.contexts.length
-            ? lexemeChildWithoutContext
-            : null
-          : lexemeChildWithoutContext?.contexts.some(cxid => getThoughtById(state, cxid))
-            ? // !: lexemeChild must be defined because lexemeChildWithoutContext exists
-              lexemeChild!
-            : null
-
-        // update local lexemeIndex so that we do not have to wait for the remote
-        if (lexemeChildNew) {
-          lexemeIndexNew[hashedKey] = lexemeChildNew
-        } else {
-          delete lexemeIndexNew[hashedKey]
-        }
-
         // if pending, append to a special pendingDeletes field so all descendants can be loaded and deleted asynchronously
         if (child.pending) {
           const thoughtUpdate: ThoughtUpdates = {
@@ -174,11 +89,6 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
             ...(accumRecursive.pendingDeletes || []),
             ...(recursiveResults.pendingDeletes || []),
           ]),
-          lexemeIndex: {
-            ...accum.lexemeIndex,
-            ...recursiveResults.lexemeIndex,
-            [hashedKey]: lexemeChildNew,
-          },
           thoughtIndex: {
             ...accum.thoughtIndex,
             ...recursiveResults.thoughtIndex,
@@ -187,7 +97,6 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
       },
       {
         path: pathParent,
-        lexemeIndex: accumRecursive.lexemeIndex,
         thoughtIndex: {
           ...accumRecursive.thoughtIndex,
           [thought.id]: null,
@@ -196,17 +105,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
     )
   }
 
-  // do not delete descendants when the thought has a duplicate sibling
-  const descendantUpdatesResult: ThoughtUpdates = deletedThought
-    ? recursiveDeletes(deletedThought)
-    : { lexemeIndex: {}, thoughtIndex: {}, path: HOME_PATH }
-
-  const lexemeIndexUpdates: ThoughtUpdates['lexemeIndex'] = key
-    ? {
-        ...(lexemeNew !== lexeme ? { [key]: lexemeNew } : null),
-        ...descendantUpdatesResult.lexemeIndex,
-      }
-    : {}
+  const descendantUpdatesResult = recursiveDeletes(deletedThought)
 
   const thoughtIndexUpdates = {
     // Deleted thought's parent
@@ -224,6 +123,19 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
     // descendants
     ...descendantUpdatesResult.thoughtIndex,
   }
+
+  // Cache eviction keeps complete memberships until none of their occurrences remain loaded.
+  // Persistent deletion instead derives memberships from thoughtIndexUpdates in updateThoughts.
+  const lexemeIndexUpdates = persist
+    ? undefined
+    : Object.fromEntries(
+        Object.entries(state.thoughts.lexemeIndex).flatMap(([key, lexeme]) =>
+          lexeme.contexts.some(id => thoughtIndexUpdates[id] === null) &&
+          !lexeme.contexts.some(id => getThoughtById(state, id) && thoughtIndexUpdates[id] !== null)
+            ? [[key, null]]
+            : [],
+        ),
+      )
 
   const isDeletedThoughtCursor = equalPathHead(simplePath, state.cursor)
 
@@ -247,7 +159,6 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
     updateThoughts({
       thoughtIndexUpdates,
       lexemeIndexUpdates,
-      // recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
       local,
       remote,

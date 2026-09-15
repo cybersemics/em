@@ -13,13 +13,15 @@ export type PersistThoughtspaceBatch = Parameters<DataProvider['updateThoughts']
 export type ThoughtspaceStorage = 'memory' | 'persistent'
 
 export type ThoughtspaceMaterializationSnapshot = {
+  generation: number
   thoughtIndex: Index<Thought>
   lexemeIndex: Index<Lexeme>
 }
 
 export type ThoughtspaceMaterializationBridge = {
   getSnapshot: () => ThoughtspaceMaterializationSnapshot
-  apply: (updates: ThoughtUpdates) => void | Promise<void>
+  /** Synchronously publishes committed data and confirms its writes before another storage job starts. */
+  apply: (updates: ThoughtUpdates & { writeIds?: string[] }) => void
 }
 
 export type ThoughtspaceRuntimeInitOptions = {
