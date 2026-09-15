@@ -168,7 +168,7 @@ const pushQueue: StoreEnhancer<any> =
           })
           .catch(err => {
             if (store.getState().thoughtspaceGeneration === writeGeneration) {
-              store.dispatch({ type: 'acknowledgeThoughtWrites', writeIds, error: String(err) } as unknown as A)
+              store.dispatch({ type: 'recordThoughtWriteResult', writeIds, error: String(err) } as unknown as A)
             }
             console.error('Thoughtspace persistence failed', err)
             debugLog.log('pushError', { error: String(err) })
