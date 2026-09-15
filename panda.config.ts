@@ -381,6 +381,15 @@ const globalCss = defineGlobalStyles({
     color: 'var(--placeholder-color, currentColor)',
     // Safari does not fade color emoji with opacity on a pseudo-element, so filter the rendered content instead.
     filter: 'opacity(0.5)',
+    // Safari never synthesizes an oblique face for color emoji, so font-style leaves them upright while the text around
+    // them slants. Skew the whole placeholder geometrically instead, which slants emoji and text alike, and turn
+    // font-style off so the text is not slanted twice. -12deg is the angle of Helvetica's italic, so the text looks the
+    // same as it does everywhere else. Transforms do not apply to inline boxes, hence inline-block.
+    _safari: {
+      fontStyle: 'normal',
+      display: 'inline-block',
+      transform: 'skewX(-12deg)',
+    },
   },
   '[placeholder][data-placeholder-bold]:empty::before': {
     fontWeight: 700,
