@@ -112,8 +112,8 @@ it('waits for startup writes to be published before reporting idle', async () =>
   const initialized = treecrdtThoughtspace.init({
     storage: 'memory',
     materialization: {
-      getSnapshot: () => ({ generation: 0, thoughtIndex: {}, lexemeIndex: {} }),
-      apply: () => {
+      getGeneration: () => 0,
+      onCommit: () => {
         order.push('published')
       },
     },
