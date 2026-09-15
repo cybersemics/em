@@ -81,9 +81,3 @@ export async function deleteLexeme(client: TreecrdtClient, id: string): Promise<
   await ensureLexemesSchema(client)
   await client.runner.exec(bindParams(`DELETE FROM ${TABLE} WHERE id = ?1`, [id]))
 }
-
-/** Deletes all lexeme rows (table must already be ensured for callers that need it). */
-export async function deleteAllLexemes(client: TreecrdtClient): Promise<void> {
-  await ensureLexemesSchema(client)
-  await client.runner.exec(`DELETE FROM ${TABLE}`)
-}

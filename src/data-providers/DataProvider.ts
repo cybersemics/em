@@ -4,11 +4,9 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 
 /** A standard interface for data providers that can sync thoughts. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface DataProvider<T extends any[] = any> {
+export interface DataProvider {
   name?: string
   clear: () => Promise<unknown>
-  init?: (...args: T) => void
   getLexemeById: (key: string) => Promise<Lexeme | undefined>
   getLexemesByIds: (keys: string[]) => Promise<(Lexeme | undefined)[]>
   getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
@@ -21,12 +19,4 @@ export interface DataProvider<T extends any[] = any> {
   }) => Promise<unknown>
   freeThought: (id: ThoughtId) => Promise<void>
   freeLexeme: (key: string) => Promise<void>
-
-  /****************************************
-   * Used by dataProviderTest only
-   ****************************************/
-  updateLexeme?: (id: string, thought: Lexeme) => Promise<unknown>
-  updateThought?: (id: ThoughtId, thoughtOld: Thought | undefined, thoughtDb: Thought) => Promise<unknown>
-  updateLexemeIndex?: (lexemeIndex: Index<Lexeme>) => Promise<unknown>
-  updateThoughtIndex?: (thoughtIndex: Index<Thought>) => Promise<unknown>
 }

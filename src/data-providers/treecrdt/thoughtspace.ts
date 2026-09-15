@@ -1,7 +1,6 @@
 import type { Operation } from '@treecrdt/interface'
 import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../@types/IndexType'
-import type Lexeme from '../../@types/Lexeme'
 import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
@@ -20,7 +19,6 @@ import {
   upsertAttributeChild,
 } from './attributeChildren'
 import {
-  deleteAllLexemes,
   deleteLexeme as deleteLexemeRow,
   ensureLexemesSchema,
   getLexemeById as getLexemeByIdSql,
@@ -42,8 +40,7 @@ type TreecrdtClientIdentity = Readonly<{
 type TreecrdtClientDataProvider = Pick<
   DataProvider,
   'getLexemeById' | 'getLexemesByIds' | 'getThoughtById' | 'getThoughtsByIds' | 'updateThoughts'
-> &
-  Required<Pick<DataProvider, 'updateLexemeIndex'>>
+>
 
 /** Creates the private provider-readiness state used by writes that race startup. */
 const createProviderReadiness = () => {
@@ -260,14 +257,6 @@ const updateThoughtsForClient = async (
   return ops
 }
 
-/** Replaces all stored lexemes in one exact TreeCRDT client. */
-const updateLexemeIndexForClient = async (client: TreecrdtClient, lexemeIndex: Index<Lexeme>): Promise<void> => {
-  await deleteAllLexemes(client)
-  for (const [id, lexeme] of Object.entries(lexemeIndex)) {
-    await upsertLexeme(client, id, lexeme)
-  }
-}
-
 const ROOT_PAYLOAD = encodeThoughtPayload({
   value: GLOBAL_ROOT_TOKEN,
   created: 0,
@@ -359,7 +348,6 @@ const createClientDataProvider = ({ client, replicaId }: TreecrdtClientIdentity)
     return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
   },
   updateThoughts: updates => updateThoughtsForClient({ client, replicaId }, updates),
-  updateLexemeIndex: lexemeIndex => updateLexemeIndexForClient(client, lexemeIndex),
 })
 
 /**
@@ -399,7 +387,6 @@ const createTreecrdtDataProvider = () => {
     // Freeing cache entries remains a no-op before initialization.
     freeThought: async _id => undefined,
     freeLexeme: async _key => undefined,
-    updateLexemeIndex: lexemeIndex => getActiveDb().updateLexemeIndex(lexemeIndex),
   } satisfies Omit<DataProvider, 'clear'>
 
   /** Seeds the supplied client, creates its provider, and then releases queued startup writes. */
