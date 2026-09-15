@@ -21,7 +21,8 @@ const MARKER = '<!-- copilot-conflicts -->'
  * workflow's own opt-out; `hold` pauses development on the pull request generally, and a pull
  * request nobody intends to advance is not worth spending a task on. Either one excludes the
  * pull request from the scan entirely, so no comment is written or updated and its retry state
- * stays frozen until the label is removed.
+ * stays frozen until the label is removed — or until a dispatch names the pull request, which
+ * overrides the opt-out because a human asking for a task is the thing the label said was absent.
  */
 const SKIP_LABELS = ['skip-auto-resolve-conflicts', 'hold']
 

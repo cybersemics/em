@@ -142,7 +142,13 @@ Starting a new branch discards its abandoned redo entries. Closing and reopening
 
 The router and route types update from the registry. No separate id union, props union, or routing switch needs editing. `commandUniverseNavigateActionCreator` calls are checked against the registered component's props. Add tests for the new page's behavior.
 
-Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), which defines the order: Navigation → Creating thoughts → Deleting thoughts → Moving thoughts → Editing thoughts → Oops → Special Views → Visibility → Settings → Help → Cancel.
+Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
+
+Help and Customize Toolbar present commands grouped by `COMMAND_DIFFICULTIES` (in [`constants.ts`](../src/constants.ts)), a two-level hierarchy of difficulty levels containing category groups, which defines the order: Beginner (Creating Thoughts → Navigation → Contexts) → Intermediate (Categorizing → Nudging → Deleting) → Advanced (Creating Thoughts II → Edit History → Notes → Views).
+
+`COMMAND_DIFFICULTIES` is the single source of truth for the hierarchy. `as const` preserves its literal IDs, and `satisfies` validates the structure and command references. `CommandDifficulty` and `CommandGroup` (in [`src/@types`](../src/@types)) are inferred from that readonly configuration, so their ID unions update automatically when entries are added or removed. Difficulty IDs and globally unique group IDs stay unchanged when titles, ordering, or group placement change; features referencing the hierarchy use `CommandDifficulty['id']` and `CommandGroup['id']`. The constant stores command IDs and presentation order; user learning progress belongs separately.
+
+`useCommandList` resolves command IDs into `Command[]` and returns `sections`: display-only `CommandSection` objects with `{ id, title, difficulty?, commands }`. Search results and the alphabetical list have their own IDs and no difficulty. `CommandTable` and `MobileCommandUniverse` render those sections using their stable IDs as React keys. `CommandTable` detects difficulty boundaries by ID and renders each difficulty title above its first visible section; `CommandTableSection` renders the titled command table within each section. Configuration groups remain categories, while display sections can also represent search results or the alphabetical list.
 
 Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
 
@@ -237,7 +243,7 @@ The copy button to the right of the slider copies a **bug report** for the actio
 3. Pick at least one activation surface:
    - `keyboard` — a `Key` object or string. The `index()` startup pass will warn if you collide with an existing shortcut.
    - `gesture` — a string of `l/r/u/d` characters (or array of strings).
-   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate group in `COMMAND_GROUPS` ([`constants.ts`](../src/constants.ts)).
+   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate category group of the appropriate difficulty level in `COMMAND_DIFFICULTIES` ([`constants.ts`](../src/constants.ts)).
 4. Decide multicursor behavior. If you skip this and set `multicursor: true`, consider whether `filter` or `execMulticursor` is more appropriate before merging.
 5. Add tests under `src/commands/__tests__/`.
 
@@ -526,6 +532,8 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 ### Bump Thought Down
 
 Bump the current thought down one level and replace it with a new, empty thought. When multiple thoughts are selected, their parent is bumped down and the selected thoughts are moved into the new thought.
+
+A leading emoji labels the thought it is attached to rather than being part of its text, so it stays behind — along with the whitespace that separates it — and only the text it labels is bumped down. The caret is placed after it, ready for the replacement text. A thought that is nothing but an emoji has no text to separate, so it is bumped down whole as usual.
 
 <kbd>Command + Shift + D</kbd>
 
