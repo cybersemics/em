@@ -38,6 +38,7 @@ const clear = (
     // reset state
     state => ({
       ...initialState(),
+      thoughtspaceGeneration: state.thoughtspaceGeneration + 1,
       // preserve pushQueue, otherwise local + remote changes will not be pushed
       pushQueue: local && remote ? state.pushQueue : [],
       // by default, do not reset autologin and isLoading

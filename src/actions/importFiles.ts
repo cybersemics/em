@@ -17,25 +17,20 @@ import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteTh
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { pullActionCreator as pull } from '../actions/pull'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild, getAllChildren } from '../selectors/getChildren'
-import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import syncStatusStore from '../stores/syncStatus'
-import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
-import hashThought from '../util/hashThought'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import isAttribute from '../util/isAttribute'
-import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
@@ -327,8 +322,6 @@ export const importFilesActionCreator =
             block.scope !== '' && isMetaDuplicate
               ? findAnyChild(stateAfterPull, id, child => child.value === block.scope)
               : undefined
-          const lexeme = getLexeme(stateAfterPull, block.scope)
-          const hasContext = !!lexeme?.contexts.includes(id)
 
           // The id of a new thought is assigned when it is created, so the Path of the imported thought is only known
           // once the thought exists: it is the child that was added to the parent. A duplicate is merged into rather
@@ -358,26 +351,7 @@ export const importFilesActionCreator =
                 : null,
               // If the thought is a duplicate, immediately update the import progress and resolve the task.
               duplicate
-                ? // It is possible for the Lexeme to be missing if the import was interrupted after the thought was saved but before the Lexeme was saved.
-                  // In this case, recreate the Lexeme.
-                  hasContext
-                  ? updateAndResolve
-                  : updateThoughts({
-                      lexemeIndexUpdates: {
-                        [hashThought(block.scope)]: lexeme
-                          ? addContext(lexeme, {
-                              id: duplicate.id,
-                            })
-                          : newLexeme({
-                              created: duplicate.lastUpdated,
-                              id: duplicate.id,
-                              lastUpdated: duplicate.lastUpdated,
-                              value: block.scope,
-                            }),
-                      },
-                      thoughtIndexUpdates: {},
-                      idbSynced: updateAndResolve,
-                    })
+                ? updateAndResolve
                 : // import the new thought
                   // Any missing children from previously interrupted imports are cleaned up in createThought.
                   newThought({
