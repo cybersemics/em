@@ -211,8 +211,6 @@ it('does not move the Text Color button when a color is selected', async () => {
   await paste('- One')
   await clickThought('One')
 
-  await clickToolbar('Text Color')
-  await waitForSelector('[aria-label="text color swatches"]')
   const topBeforeSelection = await restingTextColorButtonTop()
 
   await clickToolbar('Text Color', 'text color swatches', 'blue')
