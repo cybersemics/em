@@ -154,8 +154,7 @@ const removeEmptyFormatting = (container: HTMLElement) => {
 
 /** Returns the nearest ancestor element within container that carries a text color or background color and contains the
  * node, or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
- * style, as in getCommandState's extractColors. Color formatting is not nested, so the nearest such ancestor covers the
- * whole colored chunk. */
+ * style, as in getCommandState's extractColors. */
 const enclosingColorElement = (node: Node, container: Node): HTMLElement | null => {
   for (let n: Node | null = node; n && n !== container; n = n.parentNode) {
     if (
