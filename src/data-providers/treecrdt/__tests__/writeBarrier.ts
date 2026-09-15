@@ -1,6 +1,6 @@
 import {
   createTreecrdtLocalWriteOptions,
-  isTreecrdtLocalMaterialization,
+  isStaleTreecrdtMaterialization,
   waitForTreecrdtWriteBarrier,
   withTreecrdtWriteBarrier,
 } from '../writeBarrier'
@@ -45,42 +45,62 @@ it('surfaces TreeCRDT write failures when waiting for idle', async () => {
   await expect(waitForTreecrdtWriteBarrier()).resolves.toBeUndefined()
 })
 
-it('identifies only this tab local TreeCRDT materialization events', () => {
-  const first = createTreecrdtLocalWriteOptions()
-  const second = createTreecrdtLocalWriteOptions()
-
-  expect(first.writeId).toBeDefined()
-  expect(second.writeId).toBeDefined()
-  expect(second.writeId).not.toBe(first.writeId)
+it('discards only events entirely attributed to this tab’s cleared generation', () => {
+  const first = createTreecrdtLocalWriteOptions('generation:1:old')
+  const second = createTreecrdtLocalWriteOptions('generation:2:current')
 
   expect(
-    isTreecrdtLocalMaterialization({
-      headSeq: 1,
-      changes: [{ kind: 'payload', node: 'local-a', payload: null, source: { writeIds: [first.writeId!] } }],
-    }),
+    isStaleTreecrdtMaterialization(
+      {
+        headSeq: 1,
+        changes: [{ kind: 'payload', node: 'local-a', payload: null, source: { writeIds: [first.writeId!] } }],
+      },
+      2,
+    ),
   ).toBe(true)
   expect(
-    isTreecrdtLocalMaterialization({
-      headSeq: 1,
-      changes: [{ kind: 'payload', node: 'remote-a', payload: null, source: { writeIds: ['remote-write'] } }],
-    }),
+    isStaleTreecrdtMaterialization(
+      {
+        headSeq: 1,
+        changes: [
+          { kind: 'payload', node: 'local-a', payload: null, source: { writeIds: [first.writeId!, second.writeId!] } },
+        ],
+      },
+      2,
+    ),
   ).toBe(false)
   expect(
-    isTreecrdtLocalMaterialization({
-      headSeq: 1,
-      changes: [],
-    }),
+    isStaleTreecrdtMaterialization(
+      {
+        headSeq: 1,
+        changes: [],
+      },
+      2,
+    ),
   ).toBe(false)
   expect(
-    isTreecrdtLocalMaterialization({
-      headSeq: 1,
-      changes: [{ kind: 'payload', node: 'local-a', payload: null }],
-    }),
+    isStaleTreecrdtMaterialization(
+      {
+        headSeq: 1,
+        changes: [{ kind: 'payload', node: 'local-a', payload: null }],
+      },
+      2,
+    ),
   ).toBe(false)
   expect(
-    isTreecrdtLocalMaterialization({
-      headSeq: 1,
-      changes: [{ kind: 'payload', node: 'remote-a', payload: null }],
-    }),
+    isStaleTreecrdtMaterialization(
+      {
+        headSeq: 1,
+        changes: [
+          {
+            kind: 'payload',
+            node: 'remote-a',
+            payload: null,
+            source: { writeIds: ['em-local:another-tab:generation:1:old'] },
+          },
+        ],
+      },
+      2,
+    ),
   ).toBe(false)
 })

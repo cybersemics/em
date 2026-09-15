@@ -1,31 +1,27 @@
 import _ from 'lodash'
 import Block from '../@types/Block'
-import Lexeme from '../@types/Lexeme'
+import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import ThoughtIndices from '../@types/ThoughtIndices'
 import Timestamp from '../@types/Timestamp'
 import { deleteThought } from '../actions'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import { anyChild } from '../selectors/getChildren'
-import getLexeme from '../selectors/getLexeme'
 import getNextRank from '../selectors/getNextRank'
 import getThoughtById from '../selectors/getThoughtById'
 import nextSibling from '../selectors/nextSibling'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
-import hashThought from '../util/hashThought'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import timestamp from '../util/timestamp'
 import createId from './createId'
 import isRoot from './isRoot'
-import mergeThoughts from './mergeThoughts'
 import mergeUpdates from './mergeUpdates'
 
 export interface ImportJSONOptions {
@@ -42,8 +38,7 @@ const skipRootThought = (blocks: Block[]) => {
   return head.children.length > 0 ? [...head.children, ...tail] : tail
 }
 
-// MIGRATION_TODO: This function now also returns another thought so that for each Child entry a Thought entry is also created.
-/** Generates a Thought and Lexeme for inserting a new thought into a context. */
+/** Generates a thought and its updated parent for inserting a block into a context. */
 const insertThought = (
   state: State,
   {
@@ -69,17 +64,7 @@ const insertThought = (
   const lastUpdatedInherited =
     block.lastUpdated || childLastUpdated || thoughtOld.lastUpdated || lastUpdated || timestamp()
   const createdInherited = block.created || childCreated || lastUpdated || timestamp()
-  const lexemeOld = getLexeme(state, value)
-
   const newThoughtId = createId()
-
-  const lexemeNew: Lexeme = {
-    ...lexemeOld,
-    contexts: [...(lexemeOld?.contexts || []), newThoughtId],
-    created: lexemeOld?.created ?? createdInherited,
-    lastUpdated: lastUpdatedInherited,
-    updatedBy,
-  }
 
   const thoughtNew: Thought = {
     ...thoughtOld,
@@ -101,9 +86,6 @@ const insertThought = (
 
   return {
     idNew: newThought.id,
-    lexemeIndex: {
-      [hashThought(value)]: lexemeNew,
-    },
     thoughtIndex: {
       [id]: thoughtNew,
       [newThought.id]: newThought,
@@ -120,92 +102,64 @@ const saveThoughts = (
   startRank = 0,
   lastUpdated = timestamp(),
   updatedBy = clientId,
-): ThoughtIndices => {
+): Index<Thought> => {
   const id = head(path)
 
-  if (!id)
-    return {
-      lexemeIndex: {},
-      thoughtIndex: {},
+  if (!id) return {}
+
+  return blocks.reduce<Index<Thought>>((accum, block, index) => {
+    const skipLevel: boolean = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
+    const rank = startRank + index * rankIncrement
+
+    const value = block.scope.trim()
+
+    const stateNewBeforeInsert: State = {
+      ...state,
+      thoughts: {
+        ...state.thoughts,
+        thoughtIndex: { ...state.thoughts.thoughtIndex, ...accum },
+      },
     }
 
-  const updates = blocks.reduce<ThoughtIndices>(
-    (accum, block, index) => {
-      const skipLevel: boolean = block.scope === HOME_TOKEN || block.scope === EM_TOKEN
-      const rank = startRank + index * rankIncrement
+    const insertUpdates = !skipLevel
+      ? insertThought(stateNewBeforeInsert, {
+          block,
+          id,
+          value,
+          rank,
+          lastUpdated,
+          updatedBy,
+        })
+      : null
 
-      const value = block.scope.trim()
-
-      const stateNewBeforeInsert: State = {
-        ...state,
-        thoughts: mergeThoughts(state.thoughts, accum),
-      }
-
-      const insertUpdates = !skipLevel
-        ? insertThought(stateNewBeforeInsert, {
-            block,
-            id,
-            value,
-            rank,
-            lastUpdated,
-            updatedBy,
-          })
-        : null
-
-      const updatedState = insertUpdates
-        ? {
-            ...stateNewBeforeInsert,
-            thoughts: {
-              ...stateNewBeforeInsert.thoughts,
-              thoughtIndex: mergeUpdates(stateNewBeforeInsert.thoughts.thoughtIndex, insertUpdates.thoughtIndex),
-              lexemeIndex: mergeUpdates(stateNewBeforeInsert.thoughts.lexemeIndex, insertUpdates.lexemeIndex),
-            },
-          }
-        : stateNewBeforeInsert
-
-      const childPath: Path = skipLevel ? path : [...path, insertUpdates!.idNew]
-
-      const updatedAccumulatedThoughtIndex = {
-        ...accum.thoughtIndex,
-        ...(insertUpdates?.thoughtIndex || {}),
-      }
-
-      const updatedAccumulatedLexemeIndex = {
-        ...accum.lexemeIndex,
-        ...(insertUpdates?.lexemeIndex || {}),
-      }
-
-      if (block.children.length > 0) {
-        const updates = saveThoughts(updatedState, childPath, block.children, rankIncrement, startRank, lastUpdated)
-
-        return {
-          lexemeIndex: {
-            ...updatedAccumulatedLexemeIndex,
-            ...updates.lexemeIndex,
-          },
-          thoughtIndex: {
-            ...updatedAccumulatedThoughtIndex,
-            ...updates.thoughtIndex,
+    const updatedState = insertUpdates
+      ? {
+          ...stateNewBeforeInsert,
+          thoughts: {
+            ...stateNewBeforeInsert.thoughts,
+            thoughtIndex: mergeUpdates(stateNewBeforeInsert.thoughts.thoughtIndex, insertUpdates.thoughtIndex),
           },
         }
-      } else {
-        return {
-          ...accum,
-          lexemeIndex: updatedAccumulatedLexemeIndex,
-          thoughtIndex: updatedAccumulatedThoughtIndex,
-        }
-      }
-    },
-    {
-      thoughtIndex: {},
-      lexemeIndex: {},
-    },
-  )
+      : stateNewBeforeInsert
 
-  return {
-    thoughtIndex: updates.thoughtIndex,
-    lexemeIndex: updates.lexemeIndex,
-  }
+    const childPath: Path = skipLevel ? path : [...path, insertUpdates!.idNew]
+
+    const updatedAccumulatedThoughtIndex = {
+      ...accum,
+      ...(insertUpdates?.thoughtIndex || {}),
+    }
+
+    if (block.children.length > 0) {
+      const updates = saveThoughts(updatedState, childPath, block.children, rankIncrement, startRank, lastUpdated)
+
+      return {
+        ...updatedAccumulatedThoughtIndex,
+        ...updates,
+      }
+    } else {
+      return updatedAccumulatedThoughtIndex
+    }
+  }, {})
 }
 
 /** Return number of contexts in blocks array. */
@@ -249,7 +203,7 @@ const importJson = (
   const importPath = destEmpty ? rootedParentOf(state, simplePath) : simplePath
   const blocksNormalized = skipRoot ? skipRootThought(blocks) : blocks
 
-  const { thoughtIndex, lexemeIndex } = saveThoughts(
+  const thoughtIndex = saveThoughts(
     stateUpdated,
     importPath,
     blocksNormalized,
@@ -285,10 +239,6 @@ const importJson = (
     thoughtIndexUpdates: {
       ...deletedEmptyUpdates?.thoughtIndexUpdates,
       ...thoughtIndex,
-    },
-    lexemeIndexUpdates: {
-      ...deletedEmptyUpdates?.lexemeIndexUpdates,
-      ...lexemeIndex,
     },
     lastImported,
   }

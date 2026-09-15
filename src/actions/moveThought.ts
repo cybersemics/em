@@ -193,6 +193,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         [isAttribute(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
       }
 
+      const isSorted = getSortPreference(state, destinationThoughtId).type !== 'None'
       const thoughtIndexUpdates: Index<Thought> = {
         ...(!sameContext
           ? {
@@ -216,9 +217,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
           parentId: destinationThought.id,
           rank:
             // get updated sort preference since the context may have been unsorted
-            getSortPreference(state, destinationThoughtId).type !== 'None'
-              ? getSortedRank(state, destinationThoughtId, sourceThought.value)
-              : newRank,
+            isSorted ? getSortedRank(state, destinationThoughtId, sourceThought.value) : newRank,
           ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
           updatedBy: clientId,
@@ -227,10 +226,18 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
 
       return updateThoughts(state, {
         thoughtIndexUpdates,
-        lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,
-        movePlacements: { [sourceThought.id]: effectiveAfterId },
+        movePlacements: {
+          [sourceThought.id]: isSorted
+            ? getMoveThoughtAfterIdByRank(
+                state,
+                destinationThoughtId,
+                sourceThought.id,
+                thoughtIndexUpdates[sourceThought.id].rank,
+              )
+            : effectiveAfterId,
+        },
       })
     },
     // update cursor if moved path is on the cursor

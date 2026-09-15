@@ -1,4 +1,5 @@
 import deleteEmptyThought from '../../actions/deleteEmptyThought'
+import deleteThought from '../../actions/deleteThought'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
@@ -58,6 +59,30 @@ it('delete thought with duplicate child', () => {
 
   // lexemeIndex
   expect(getLexeme(stateNew, 'a')).toBeUndefined()
+})
+
+it('keeps complete memberships during cache eviction until the last occurrence is freed', () => {
+  const state = reducerFlow([newThought('a'), newThought('a')])(initialState())
+  const [first, second] = getAllChildrenByContext(state, [HOME_TOKEN])
+  const lexeme = getLexeme(state, 'a')
+
+  const firstFreed = deleteThought(state, {
+    pathParent: [HOME_TOKEN],
+    thoughtId: first,
+    local: false,
+    remote: false,
+  })
+  expect(getLexeme(firstFreed, 'a')).toBe(lexeme)
+  expect(getThoughtById(firstFreed, first)).toBeUndefined()
+
+  const bothFreed = deleteThought(firstFreed, {
+    pathParent: [HOME_TOKEN],
+    thoughtId: second,
+    local: false,
+    remote: false,
+  })
+  expect(getLexeme(bothFreed, 'a')).toBeUndefined()
+  expect(getAllChildrenByContext(bothFreed, [HOME_TOKEN])).toEqual([first, second])
 })
 
 it('update cursor after thought deletion', () => {

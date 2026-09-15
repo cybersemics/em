@@ -1,4 +1,3 @@
-import type { Operation } from '@treecrdt/interface'
 import { type ClientOptions, type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import type { DataProvider } from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
@@ -10,14 +9,9 @@ import type {
 } from '../thoughtspace'
 import { clientIdReady, tsid } from '../thoughtspaceSession'
 import acquireTreecrdtSessionLock from './sessionLock'
-import { getMaterializedThoughtsToStoreVersion, waitForMaterializedThoughtsToStore } from './sync/materializationQueue'
 import createTreecrdtWebSocketSync from './sync/treecrdtWebSocketSync'
 import createTreecrdtDataProvider from './thoughtspace'
-import { getTreecrdtWriteBarrierVersion, waitForTreecrdtWriteBarrier, withTreecrdtWriteBarrier } from './writeBarrier'
-
-type PersistTreecrdtBatch = Parameters<DataProvider['updateThoughts']>[0] & {
-  local?: boolean
-}
+import { waitForTreecrdtWriteBarrier } from './writeBarrier'
 
 /** One app-scoped TreeCRDT thoughtspace with its bound data provider and lifecycle. */
 interface TreecrdtThoughtspace extends ThoughtspaceRuntime {
@@ -67,27 +61,12 @@ const getTreecrdtClientOptions = (storage: ThoughtspaceStorage): ClientOptions =
   docId: tsid,
 })
 
-/** Waits until both local writes and materialization refreshes are stable. */
-const waitForStableIdle = async (): Promise<void> => {
-  let writeVersion: number
-  let materializationVersion: number
-  do {
-    writeVersion = getTreecrdtWriteBarrierVersion()
-    materializationVersion = getMaterializedThoughtsToStoreVersion()
-    await waitForTreecrdtWriteBarrier()
-    await waitForMaterializedThoughtsToStore()
-  } while (
-    writeVersion !== getTreecrdtWriteBarrierVersion() ||
-    materializationVersion !== getMaterializedThoughtsToStoreVersion()
-  )
-}
-
 /** Creates an inert TreeCRDT client owner whose storage is selected during initialization. */
 const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   type InitResult = { clientId: string; storage: string }
 
   let client: TreecrdtClient | null = null
-  let unsubscribeMaterialization: (() => void) | null = null
+  let closeBinding: (() => Promise<void>) | null = null
   let lifecycleTail: Promise<void> = Promise.resolve()
   let initPromise: Promise<InitResult> | null = null
   let dropPromise: Promise<void> | null = null
@@ -120,12 +99,12 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
 
     provider.resetBinding(new Error('TreeCRDT client binding cleared before initialization.'))
 
-    const unsubscribe = unsubscribeMaterialization
-    unsubscribeMaterialization = null
+    const closeCurrentBinding = closeBinding
+    closeBinding = null
     const clientToDrop = client
 
     await captureError(websocketSync.stop)
-    await captureError(() => unsubscribe?.())
+    await captureError(() => closeCurrentBinding?.())
 
     await captureError(() => clientToDrop?.drop())
 
@@ -152,36 +131,29 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   const db: DataProvider = { ...provider.db, clear: drop }
 
   /** Persists push queue batches through the bound provider and forwards local ops to remote sync. */
-  const persistPushQueueBatches = (batches: readonly PersistTreecrdtBatch[]): Promise<void> =>
-    withTreecrdtWriteBarrier(async () => {
-      for (const batch of batches) {
-        const { local: isLocal, ...updates } = batch
-        const maybeOps = await db.updateThoughts(updates)
-        if (isLocal && Array.isArray(maybeOps) && maybeOps.length > 0) {
-          void websocketSync.pushLocalOps(maybeOps as readonly Operation[])
-        }
-      }
+  const persistPushQueueBatches: ThoughtspaceRuntime['persistPushQueueBatches'] = async batches => {
+    const results = await provider.persistPushQueueBatches(batches)
+    results.forEach((result, index) => {
+      if (batches[index].local && result.operations.length > 0) void websocketSync.pushLocalOps(result.operations)
     })
+  }
 
   /** Opens and binds one client. Lifecycle serialization provides retryable single-flight behavior. */
   const initializeClient = async (options: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {
     let nextClient: TreecrdtClient | null = null
-    let nextUnsubscribeMaterialization: (() => void) | null = null
+    let nextCloseBinding: (() => Promise<void>) | null = null
 
     try {
       if (client) throw new Error('TreeCRDT client cleanup is incomplete. Retry drop before initialization.')
       const clientId = await clientIdReady
       await initPermissionsStore()
       nextClient = await createTreecrdtClient(getTreecrdtClientOptions(options.storage))
-      nextUnsubscribeMaterialization = await provider.bindClient(
-        nextClient,
-        clientIdToReplicaId(clientId),
-        options.materialization,
-      )
-      await websocketSync.tryStartFromEnv(nextClient)
+      const binding = await provider.bindClient(nextClient, clientIdToReplicaId(clientId), options.materialization)
+      nextCloseBinding = binding.closeBinding
+      await websocketSync.tryStartFromEnv(binding.syncClient)
 
       client = nextClient
-      unsubscribeMaterialization = nextUnsubscribeMaterialization
+      closeBinding = nextCloseBinding
       if (options.storage === 'persistent' && nextClient.storage === 'memory') {
         console.warn(
           'Persistent thoughtspace storage is unavailable. em is using temporary in-memory storage; changes will be lost when this page reloads or closes.',
@@ -190,8 +162,11 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
       return { clientId, storage: nextClient.storage }
     } catch (error) {
       provider.resetBinding(error)
-      nextUnsubscribeMaterialization?.()
-      await nextClient?.close()
+      try {
+        await nextCloseBinding?.()
+      } finally {
+        await nextClient?.close()
+      }
       throw error
     }
   }
@@ -218,7 +193,7 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
     acquireAccess,
     init,
     drop,
-    waitForIdle: (): Promise<void> => withIdleTimeout(waitForStableIdle()),
+    waitForIdle: (): Promise<void> => withIdleTimeout(Promise.resolve(initPromise).then(waitForTreecrdtWriteBarrier)),
     persistPushQueueBatches,
   }
 }

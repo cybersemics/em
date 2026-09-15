@@ -3,6 +3,9 @@ import { fireEvent } from '@testing-library/react'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { HOME_TOKEN } from '../../constants'
+import db from '../../data-providers/thoughtspace'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import store from '../../stores/app'
 import click from '../../test-helpers/click'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -10,6 +13,7 @@ import { editThoughtByContextActionCreator as editThoughtByContext } from '../..
 import getDescendantsOfContext from '../../test-helpers/queries/getDescendantsOfContext'
 import getThoughtByContext from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -631,6 +635,11 @@ it('home: Note Asc with edit', async () => {
 
   const thoughts = screen.getAllByLabelText('thought-container')
   expect(thoughts.map((child: HTMLElement) => child.textContent)).toMatchObject(['c1', 'b3', 'a4'])
+  await waitForThoughtspaceIdle()
+  const stored = await db.getThoughtById(HOME_TOKEN)
+  expect(Object.values(stored!.childrenMap)).toEqual(
+    getChildrenRanked(store.getState(), HOME_TOKEN).map(child => child.id),
+  )
 })
 
 it('home: Note Asc with mixed thoughts', async () => {

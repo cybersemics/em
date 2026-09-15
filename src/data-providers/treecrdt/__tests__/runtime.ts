@@ -1,4 +1,5 @@
 import { EM_TOKEN } from '../../../constants'
+import deferred from '../../../test-helpers/deferred'
 import { tsid } from '../../thoughtspaceSession'
 import createTreecrdtThoughtspace from '../runtime'
 
@@ -19,7 +20,6 @@ let createRealTreecrdtClient!: TreecrdtModule['createTreecrdtClient']
 
 const emptyUpdates = {
   thoughtIndexUpdates: {},
-  lexemeIndexUpdates: {},
 }
 
 beforeAll(async () => {
@@ -99,6 +99,39 @@ it('coalesces concurrent initialization into one client', async () => {
   await treecrdtThoughtspace.drop()
 })
 
+it('waits for startup writes to be published before reporting idle', async () => {
+  const started = deferred()
+  const released = deferred()
+  mockCreateTreecrdtClient.mockImplementationOnce(async options => {
+    started.resolve()
+    await released.promise
+    return createRealTreecrdtClient(options)
+  })
+  const treecrdtThoughtspace = createTreecrdtThoughtspace()
+  const order: string[] = []
+  const initialized = treecrdtThoughtspace.init({
+    storage: 'memory',
+    materialization: {
+      getGeneration: () => 0,
+      onCommit: () => {
+        order.push('published')
+      },
+    },
+  })
+  await started.promise
+  const write = treecrdtThoughtspace.persistPushQueueBatches([
+    { ...emptyUpdates, local: true, writeId: 'generation:0:startup' },
+  ])
+  const idle = treecrdtThoughtspace.waitForIdle().then(() => {
+    order.push('idle')
+  })
+  released.resolve()
+  await Promise.all([initialized, write, idle])
+  await treecrdtThoughtspace.drop()
+
+  expect(order).toEqual(['published', 'idle'])
+})
+
 it('serializes an in-flight init, drop, and following init', async () => {
   let releaseClient!: () => void
   let markClientStarted!: () => void
@@ -131,19 +164,26 @@ it('serializes an in-flight init, drop, and following init', async () => {
   await treecrdtThoughtspace.drop()
 })
 
-it('rejects queued startup writes when initialization fails and uses a fresh gate on retry', async () => {
+it('rejects queued startup reads and writes when initialization fails and uses a fresh gate on retry', async () => {
   const initError = new Error('client initialization failed')
   mockCreateTreecrdtClient.mockRejectedValueOnce(initError)
 
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
   const queuedWrite = treecrdtThoughtspace.db.updateThoughts(emptyUpdates)
   const queuedWriteExpectation = expect(queuedWrite).rejects.toBe(initError)
+  const queuedReadExpectation = expect(treecrdtThoughtspace.db.getThoughtById(EM_TOKEN)).rejects.toBe(initError)
 
   await expect(treecrdtThoughtspace.init({ storage: 'memory' })).rejects.toBe(initError)
   await queuedWriteExpectation
+  await queuedReadExpectation
 
+  const retriedRead = treecrdtThoughtspace.db.getThoughtById(EM_TOKEN)
   await treecrdtThoughtspace.init({ storage: 'memory' })
-  await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
+  await expect(retriedRead).resolves.toMatchObject({ id: EM_TOKEN })
+  await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual({
+    operations: [],
+    lexemeIndex: {},
+  })
   await treecrdtThoughtspace.drop()
 })
 
@@ -163,7 +203,10 @@ it('rejects writes queued before each settled drop and creates a fresh gate for 
   await Promise.all([treecrdtThoughtspace.drop(), secondWriteExpectation])
 
   await treecrdtThoughtspace.init({ storage: 'memory' })
-  await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual([])
+  await expect(treecrdtThoughtspace.db.updateThoughts(emptyUpdates)).resolves.toEqual({
+    operations: [],
+    lexemeIndex: {},
+  })
   await treecrdtThoughtspace.drop()
 })
 
@@ -185,14 +228,13 @@ it('discards a terminal client when drop reports an error', async () => {
   const treecrdtThoughtspace = createTreecrdtThoughtspace()
   await treecrdtThoughtspace.init({ storage: 'memory' })
   await expect(treecrdtThoughtspace.drop()).rejects.toBe(dropError)
-  expect(() => treecrdtThoughtspace.db.getThoughtById('missing' as never)).toThrow(
-    'TreeCRDT DataProvider: init not called',
-  )
+  const nextRead = treecrdtThoughtspace.db.getThoughtById(EM_TOKEN)
   expect(close).not.toHaveBeenCalled()
 
   await expect(treecrdtThoughtspace.init({ storage: 'memory' })).resolves.toEqual({
     clientId: expect.any(String),
     storage: 'memory',
   })
+  await expect(nextRead).resolves.toMatchObject({ id: EM_TOKEN })
   await treecrdtThoughtspace.drop()
 })
