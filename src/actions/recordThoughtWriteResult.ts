@@ -2,7 +2,7 @@ import type State from '../@types/State'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /** Clears matching committed writes or retains their edits with the reported failure. */
-const acknowledgeThoughtWrites = (state: State, { writeIds, error }: { writeIds: string[]; error?: string }): State => {
+const recordThoughtWriteResult = (state: State, { writeIds, error }: { writeIds: string[]; error?: string }): State => {
   const completed = new Set(writeIds)
   const pendingThoughtWrites = Object.fromEntries(
     Object.entries(state.pendingThoughtWrites).flatMap(([id, write]) =>
@@ -15,6 +15,6 @@ const acknowledgeThoughtWrites = (state: State, { writeIds, error }: { writeIds:
   }
 }
 
-export default acknowledgeThoughtWrites
+export default recordThoughtWriteResult
 
-registerActionMetadata('acknowledgeThoughtWrites', { undoable: false })
+registerActionMetadata('recordThoughtWriteResult', { undoable: false })

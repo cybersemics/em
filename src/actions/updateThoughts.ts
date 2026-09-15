@@ -21,7 +21,7 @@ import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
 import projectLexemes from '../util/projectLexemes'
 import reducerFlow from '../util/reducerFlow'
-import acknowledgeThoughtWrites from './acknowledgeThoughtWrites'
+import recordThoughtWriteResult from './recordThoughtWriteResult'
 
 export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdates'> & {
   lexemeIndexUpdates?: PushBatch['lexemeIndexUpdates']
@@ -182,7 +182,7 @@ const updateThoughts = (
     confirmedWriteIds,
   }: UpdateThoughtsOptions,
 ) => {
-  if (confirmedWriteIds) state = acknowledgeThoughtWrites(state, { writeIds: confirmedWriteIds })
+  if (confirmedWriteIds) state = recordThoughtWriteResult(state, { writeIds: confirmedWriteIds })
   if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
 
   const thoughtIndexOld = { ...state.thoughts.thoughtIndex }

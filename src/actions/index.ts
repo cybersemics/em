@@ -1,8 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 /** Re-export all reducers for app.ts. */
 
-export { default as acknowledgeThoughtWrites } from './acknowledgeThoughtWrites'
-
 export { default as addAllMulticursor } from './addAllMulticursor'
 export { default as addLatestCommands } from './addLatestCommands'
 export { default as addMulticursor } from './addMulticursor'
@@ -67,6 +65,7 @@ export { default as newSubthought } from './newSubthought'
 export { default as newThought } from './newThought'
 export { default as outdent } from './outdent'
 export { default as pin } from './pin'
+export { default as recordThoughtWriteResult } from './recordThoughtWriteResult'
 export { default as removeMulticursor } from './removeMulticursor'
 export { default as rerank } from './rerank'
 export { default as selectBetween } from './selectBetween'
