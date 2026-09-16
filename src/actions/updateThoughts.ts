@@ -45,6 +45,22 @@ export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdates'> & {
   confirmedWriteIds?: string[]
 }
 
+/** Reuses equal entries in a freshly reconciled index, retaining the whole index when nothing changed. */
+const reuseUnchangedEntries = <T>(
+  previous: Index<T>,
+  next: Index<T>,
+  equal: (previous: T | undefined, next: T) => boolean = _.isEqual,
+): Index<T> => {
+  const keys = Object.keys(next)
+  let unchanged = keys.length === Object.keys(previous).length
+  keys.forEach(key => {
+    if (previous[key] === next[key]) return
+    if (equal(previous[key], next[key])) next[key] = previous[key]
+    else unchanged = false
+  })
+  return unchanged ? previous : next
+}
+
 /** Applies outstanding field edits to confirmed state, rebuilding only their affected parent lists. */
 const applyPendingThoughtWrites = (
   state: State,
@@ -185,8 +201,7 @@ const updateThoughts = (
   if (confirmedWriteIds) state = recordThoughtWriteResult(state, { writeIds: confirmedWriteIds })
   if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
 
-  const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
-  const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
+  const { thoughtIndex: thoughtIndexOld, lexemeIndex: lexemeIndexOld } = state.thoughts
 
   // Ordinary pulls can read intermediate local writes with the same timestamp (#3948).
   // Keep the <= guard for those unversioned reads. Materialization owns the storage queue
@@ -207,16 +222,31 @@ const updateThoughts = (
 
   // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
   const mergedThoughts = mergeUpdates(thoughtIndexOld, thoughtIndexUpdatesFresh, { overwritePending })
-  const thoughtIndex =
+  let thoughtIndex =
     !local && !remote && !overwritePending
       ? applyPendingThoughtWrites(state, mergedThoughts, thoughtIndexUpdatesFresh)
       : mergedThoughts
-  const lexemeIndex = projectLexemes(
+  let lexemeIndex = projectLexemes(
     mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending }),
     local || remote
       ? thoughtIndexUpdatesFresh
       : Object.fromEntries(Object.keys(state.pendingThoughtWrites).map(id => [id, thoughtIndex[id] ?? null])),
   )
+
+  if (materialized) {
+    // Compare after projecting newer edits, not against the raw committed values.
+    thoughtIndex = reuseUnchangedEntries(
+      state.thoughts.thoughtIndex,
+      thoughtIndex,
+      (previous, thought) =>
+        !!previous &&
+        _.isEqual(previous, thought) &&
+        // Object equality ignores key order, but childrenMap order is TreeCRDT's sibling order.
+        _.isEqual(Object.keys(previous.childrenMap), Object.keys(thought.childrenMap)),
+    )
+    lexemeIndex = reuseUnchangedEntries(state.thoughts.lexemeIndex, lexemeIndex)
+    if (thoughtIndex === state.thoughts.thoughtIndex && lexemeIndex === state.thoughts.lexemeIndex) return state
+  }
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 

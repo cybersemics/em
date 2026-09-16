@@ -81,6 +81,19 @@ afterEach(async () => {
   vi.restoreAllMocks()
 })
 
+it('confirms a persisted rename without replacing the optimistic view', async () => {
+  store.dispatch(importText({ text: '- parent\n  - cat\n  - sibling' }))
+  await waitForThoughtspaceIdle()
+
+  store.dispatch(editThought(['parent', 'cat'], 'dog'))
+  const optimistic = store.getState()
+  await waitForThoughtspaceIdle()
+
+  expect(store.getState().thoughts).toBe(optimistic.thoughts)
+  expect(store.getState().expanded).toBe(optimistic.expanded)
+  expect(store.getState().pendingThoughtWrites).toEqual({})
+})
+
 it('confirms a new thought alongside unloaded occurrences of the same value', async () => {
   store.dispatch(importText({ text: '- other\n  - branch\n    - hidden\n      - cat' }))
   await waitForThoughtspaceIdle()
@@ -179,6 +192,7 @@ it('keeps a second move visible while the first is confirmed and reloads the fin
   store.dispatch(moveThought({ from: ['left', 'cat'], to: ['right', 'cat'], newRank: 1 }))
   await firstStarted.promise
   store.dispatch(moveThought({ from: ['right', 'cat'], to: ['left', 'cat'], newRank: 1 }))
+  const optimisticThought = contextToThought(store.getState(), ['left', 'cat'])!
   firstReleased.resolve()
   await secondStarted.promise
   const during = store.getState()
@@ -186,6 +200,7 @@ it('keeps a second move visible while the first is confirmed and reloads the fin
   await waitForThoughtspaceIdle()
 
   expect(during.pendingThoughtWrites[thought.id].patch?.parentId).toBe(left.id)
+  expect(during.thoughts.thoughtIndex[thought.id]).toBe(optimisticThought)
   expect(exportContext(during, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - left
     - tail
@@ -262,6 +277,7 @@ it('publishes a committed membership read beneath a newer pending edit', async (
   store.dispatch(editThought(['cat'], 'dog'))
   await firstStarted.promise
   store.dispatch(editThought(['dog'], 'bird'))
+  const optimistic = store.getState()
   firstReleased.resolve()
   await secondStarted.promise
   const during = store.getState()
@@ -269,6 +285,8 @@ it('publishes a committed membership read beneath a newer pending edit', async (
   await waitForThoughtspaceIdle()
 
   expect(during.pendingThoughtWrites[thought.id].patch?.value).toBe('bird')
+  expect(during.pendingThoughtWrites).toBe(optimistic.pendingThoughtWrites)
+  expect(during.thoughts).toBe(optimistic.thoughts)
   expect(getLexeme(during, 'bird')?.contexts).toEqual([thought.id])
   expect(getLexeme(during, 'dog')).toBeUndefined()
   expect(store.getState().pendingThoughtWrites).toEqual({})
@@ -311,11 +329,13 @@ it('preserves the current generating flag when an incoming commit finishes readi
       overwritePending: true,
     }),
   )
+  const parent = store.getState().thoughts.thoughtIndex[HOME_TOKEN]
   released.resolve()
   await incoming
   await waitForThoughtspaceIdle()
 
   expect(contextToThought(store.getState(), ['dog'])).toMatchObject({ id: thought.id, generating: false })
+  expect(store.getState().thoughts.thoughtIndex[HOME_TOKEN]).toBe(parent)
 })
 
 it('acknowledges a no-op without requiring a materialization event', async () => {
@@ -325,10 +345,12 @@ it('acknowledges a no-op without requiring a materialization event', async () =>
   const operations = await client.ops.all()
 
   store.dispatch(updateThoughts({ thoughtIndexUpdates: { [thought.id]: thought } }))
+  const optimistic = store.getState()
   expect(store.getState().pendingThoughtWrites[thought.id]).toBeDefined()
   await waitForThoughtspaceIdle()
 
   expect(store.getState().pendingThoughtWrites).toEqual({})
+  expect(store.getState().thoughts).toBe(optimistic.thoughts)
   expect(await client.ops.all()).toEqual(operations)
 })
 
@@ -402,11 +424,14 @@ it('discards a queued no-op confirmation when Redux is cleared before persistenc
 it('applies a remote reorder without requiring a payload timestamp change', async () => {
   store.dispatch(importText({ text: '- a\n- b\n- c' }))
   await waitForThoughtspaceIdle()
+  const a = contextToThought(store.getState(), ['a'])!
+  const b = contextToThought(store.getState(), ['b'])!
   const c = contextToThought(store.getState(), ['c'])!
 
   await receiveRemote(peer => peer.local.move(remoteReplica, c.id, HOME_TOKEN, { type: 'first' }))
   await waitForThoughtspaceIdle()
 
+  expect(Object.values(store.getState().thoughts.thoughtIndex[HOME_TOKEN].childrenMap)).toEqual([c.id, a.id, b.id])
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - c
   - a

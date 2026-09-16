@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import type { Store } from 'redux'
 import type State from '../@types/State'
 import type { ThoughtspaceMaterializationBridge } from './thoughtspace'
@@ -26,15 +25,12 @@ const createThoughtspaceMaterializationBridge = (
         ]
       }),
     )
-    const changedLexemes = Object.fromEntries(
-      Object.entries(lexemeIndex).filter(([key, value]) => !_.isEqual(value ?? undefined, current.lexemeIndex[key])),
-    )
     // Even an unchanged commit must acknowledge its pending writes.
-    if (!writeIds && Object.keys(thoughtsForRedux).length === 0 && Object.keys(changedLexemes).length === 0) return
+    if (!writeIds && Object.keys(thoughtsForRedux).length === 0 && Object.keys(lexemeIndex).length === 0) return
     store.dispatch({
       type: 'updateThoughts',
       thoughtIndexUpdates: thoughtsForRedux,
-      lexemeIndexUpdates: changedLexemes,
+      lexemeIndexUpdates: lexemeIndex,
       local: false,
       remote: false,
       repairCursor: true,
