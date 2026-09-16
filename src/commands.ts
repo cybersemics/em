@@ -29,7 +29,15 @@ import { undoActionCreator as undo } from './actions/undo'
 import { isMac, isSafari, isTouch } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
+import {
+  AlertType,
+  COMMAND_PALETTE_TIMEOUT,
+  HOME_PATH,
+  LongPressState,
+  NATIVE_HISTORY_GESTURE_TIMEOUT,
+  Settings,
+  noop,
+} from './constants'
 import focusNativeHistoryAnchor from './device/nativeHistoryAnchor'
 import * as selection from './device/selection'
 import globals from './globals'
@@ -789,13 +797,13 @@ export const handleNativeHistory = (type: 'undo' | 'redo') => {
 let registeringNativeRedoStep = false
 
 /**
- * Registers a single native redo step in WKWebView, so that a native redo gesture (iOS shake-to-undo, three-finger
- * swipe right, or the Edit menu) is delivered at all.
+ * Registers a single native redo step in WKWebView, so that the shake-to-redo gesture is delivered at all.
  *
  * WebKit offers a redo gesture only while its own redo stack has a step, and a step lands there only when WebKit
  * itself performs an undo. Since `beforeInput` prevents the native undo and performs em's undo instead, WebKit's redo
  * stack stays empty and the redo gesture never reaches em: iOS confirms the gesture with its own overlay while
- * nothing is restored (#5575).
+ * nothing is restored (#5575). A shake reaches em through this route alone — it produces no touch events for
+ * `device/nativeHistory.ts` to recognize — so without a step there is nothing to deliver.
  *
  * This inserts an empty marker and immediately undoes it natively, which moves that step onto the redo stack. Its DOM
  * effect is immaterial: the insert is undone before the function returns, and globals.suppressChange hides both
@@ -838,7 +846,6 @@ export const beforeInput = (e: InputEvent) => {
   // Pass through the events dispatched by registerNativeRedoStep's own execCommands, including its `historyUndo`.
   // Letting WebKit perform that undo is the entire point of the call: it is what moves a step onto the redo stack.
   if (registeringNativeRedoStep) return
-
   // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires a cancelable beforeinput with inputType
   // historyUndo/historyRedo. Left unhandled, it mutates the contenteditable DOM directly, bypassing em's undo and
   // leaving stale formatting markup (e.g. a black font color from a removed background highlight) that renders the
@@ -850,9 +857,15 @@ export const beforeInput = (e: InputEvent) => {
   // routes cannot both fire for a single gesture.
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
     e.preventDefault()
-    handleNativeHistory(e.inputType === 'historyUndo' ? 'undo' : 'redo')
-    // Preventing the native operation leaves WebKit's redo stack empty, so register a step that keeps the redo gesture
-    // coming. Deferred to a task of its own so that em's re-render, and the caret restore that follows it, land first.
+    // A three-finger swipe reaches em twice on iOS Safari: once as the touch events device/nativeHistory.ts
+    // recognizes, and again here a moment later. The default is still prevented so WebKit cannot mutate the
+    // contenteditable, but the gesture has already been applied.
+    if (Date.now() - globals.nativeHistoryGestureTime > NATIVE_HISTORY_GESTURE_TIMEOUT) {
+      handleNativeHistory(e.inputType === 'historyUndo' ? 'undo' : 'redo')
+    }
+    // Preventing the native operation leaves WebKit's redo stack empty, so register a step that keeps the shake
+    // redo gesture coming. Deferred to a task of its own so that em's re-render, and the caret restore that follows
+    // it, land first.
     setTimeout(registerNativeRedoStep)
     return
   }

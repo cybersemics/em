@@ -45,6 +45,11 @@ let suppressBlurSync = false
  * touchstart, which clears the flag first. */
 let suppressCursorAfterTouch = false
 
+/** Time of the last native undo/redo gesture that `device/nativeHistory.ts` detected from touch events. The same
+ * three-finger swipe is also reported by iOS as a `historyUndo`/`historyRedo` `beforeinput` a moment later, so
+ * `beforeInput` reads this to avoid applying one gesture twice. */
+let nativeHistoryGestureTime = -Infinity
+
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -56,6 +61,7 @@ const globals = {
   suppressChange,
   suppressBlurSync,
   suppressCursorAfterTouch,
+  nativeHistoryGestureTime,
   arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }

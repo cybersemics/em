@@ -152,6 +152,10 @@ export const MIN_LINE_HEIGHT = 26
 // delay after gesture hint is activated before desktop command universe appears
 export const COMMAND_PALETTE_TIMEOUT = 400
 
+// How long after a native undo/redo gesture recognized from touch events the matching historyUndo/historyRedo
+// beforeinput is treated as the same gesture rather than a new one. See device/nativeHistory.ts.
+export const NATIVE_HISTORY_GESTURE_TIMEOUT = 1000
+
 // delay to show executed command after gesture is completed
 export const GESTURE_HINT_TIMEOUT = 5000
 
