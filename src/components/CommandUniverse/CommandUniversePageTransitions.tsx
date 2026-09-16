@@ -70,7 +70,6 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
       {children.map(child => {
         const entryId = String(child.key)
         const entryIndex = entries.findIndex(entry => entry.entryId === entryId)
-        const pageId = entries[entryIndex].page.pageId
         const active = entryId === activeEntryId
         const entering = !!transition && transition.toEntryId === entryId
         const exiting = !!transition && transition.fromEntryId === entryId
@@ -88,7 +87,6 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
           <motion.div
             key={entryId}
             data-entry-id={entryId}
-            data-testid={pageId === 'grid' ? 'command-universe-grid-surface' : undefined}
             // A surface only ever mounts as the destination of a new history entry, so it starts where that zoom
             // comes from.
             initial={entering ? away(transition.zoom === 'in' ? 'out' : 'in') : target}
