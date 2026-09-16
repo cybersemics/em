@@ -19,16 +19,21 @@ describe('mobile Command Universe', () => {
     await click('button[aria-label="New Thought"]')
     await page.waitForFunction(
       () => document.activeElement?.tagName === 'H3' && document.activeElement.textContent === 'New Thought',
+      { timeout: 6000 },
     )
 
+    const gridScalePromise = page.waitForFunction(
+      () => {
+        const grid = document.querySelector('[data-testid="command-universe-grid-surface"]')
+        if (!grid) return false
+        const style = getComputedStyle(grid)
+        const opacity = Number(style.opacity)
+        return opacity > 0.2 && opacity < 0.6 ? new DOMMatrixReadOnly(style.transform).a : false
+      },
+      { timeout: 6000 },
+    )
     await click('button[aria-label="Back"]')
-    const gridScaleHandle = await page.waitForFunction(() => {
-      const grid = document.querySelector('[data-testid="command-universe-grid-surface"]')
-      if (!grid) return false
-      const style = getComputedStyle(grid)
-      const opacity = Number(style.opacity)
-      return opacity > 0.2 && opacity < 0.6 ? new DOMMatrixReadOnly(style.transform).a : false
-    })
+    const gridScaleHandle = await gridScalePromise
 
     const gridScale = await gridScaleHandle.jsonValue()
     expect(gridScale).toBeGreaterThan(1.2)

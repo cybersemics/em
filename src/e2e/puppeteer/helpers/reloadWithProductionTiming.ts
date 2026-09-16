@@ -7,6 +7,7 @@ const reloadWithProductionTiming = async () => {
   })
   await page.reload({ waitUntil: 'domcontentloaded' })
   await page.waitForSelector('[aria-label=empty-thoughtspace]')
+  await page.waitForFunction(() => !document.body.innerText.includes('Status: Initializing'))
 }
 
 export default reloadWithProductionTiming
