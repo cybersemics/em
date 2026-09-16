@@ -21,14 +21,14 @@ it('show the pinned command in the corner widget after pressing Pin Command on i
     await vi.runAllTimersAsync()
   })
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-  expect(screen.queryByRole('img', { name: 'Pinned command: New Thought' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Show gesture for New Thought' })).toBeNull()
 
   await user.click(screen.getByRole('button', { name: 'New Thought' }))
   await act(vi.runAllTimersAsync)
   await user.click(screen.getByRole('button', { name: 'Pin Command' }))
   await act(vi.runAllTimersAsync)
 
-  expect(screen.getByRole('img', { name: 'Pinned command: New Thought' })).toBeVisible()
+  expect(screen.getByRole('button', { name: 'Show gesture for New Thought' })).toBeVisible()
   expect(screen.getByRole('button', { name: 'Unpin Command' })).toBeVisible()
 })
 
@@ -55,8 +55,8 @@ it('replace the pinned command when another command is pinned', async () => {
   await user.click(pinButton)
   await act(vi.runAllTimersAsync)
 
-  expect(screen.getByRole('img', { name: 'Pinned command: Indent' })).toBeVisible()
-  expect(screen.queryByRole('img', { name: 'Pinned command: New Thought' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Show gesture for Indent' })).toBeVisible()
+  expect(screen.queryByRole('button', { name: 'Show gesture for New Thought' })).toBeNull()
 })
 
 it('remove the corner widget after pressing Unpin Command', async () => {
@@ -73,6 +73,6 @@ it('remove the corner widget after pressing Unpin Command', async () => {
   await user.click(screen.getByRole('button', { name: 'Unpin Command' }))
   await act(vi.runAllTimersAsync)
 
-  expect(screen.queryByRole('img', { name: 'Pinned command: New Thought' })).toBeNull()
+  expect(screen.queryByRole('button', { name: 'Show gesture for New Thought' })).toBeNull()
   expect(screen.getByRole('button', { name: 'Pin Command' })).toBeVisible()
 })

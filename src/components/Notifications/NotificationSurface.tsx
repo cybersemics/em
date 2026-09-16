@@ -13,7 +13,7 @@ interface NotificationSurfaceProps {
   /** Where the notification sits at each breakpoint. */
   anchor: Anchor | { base: Anchor; lg?: Anchor }
   /** The decorative image treatment. */
-  glow: 'rainbow'
+  glow: 'rainbow' | 'learning'
   /** Whether the consumer wants the surface visible. Hidden surfaces still mount for the fade. */
   isVisible: boolean
   /** Called once after a Clear action or successful swipe has finished fading the surface. */

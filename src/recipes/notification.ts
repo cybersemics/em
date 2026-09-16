@@ -109,6 +109,29 @@ const notificationRecipe = defineSlotRecipe({
           transform: 'var(--notification-glow-flip)',
         },
       },
+      learning: {
+        container: {
+          '& [data-notification-gradient]': {
+            background:
+              'linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(17, 31, 45, 0.8) 55%, rgba(37, 26, 50, 1) 100%)',
+          },
+        },
+        glow: {
+          backgroundImage:
+            'radial-gradient(ellipse at 0% 65%, rgba(61, 156, 181, 0.6) 0%, rgba(61, 156, 181, 0) 55%), radial-gradient(ellipse at 100% 100%, rgba(137, 78, 168, 0.65) 0%, rgba(137, 78, 168, 0) 60%), url(/img/glow/glow-3c.avif)',
+          backgroundPosition: 'center bottom',
+          width: 'min(100vw, 1000px)',
+          height: 'min(60vh, 480px)',
+          right: 0,
+          left: 'auto',
+          bottom: -48,
+          mixBlendMode: 'screen',
+          opacity: 0.75,
+        },
+        content: {
+          paddingBottom: 'max(4.25rem, calc(3.25rem + env(safe-area-inset-bottom)))',
+        },
+      },
     },
   },
   // The anchor is selected through props, so Panda must emit the lg class ahead of time.

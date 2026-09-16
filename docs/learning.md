@@ -1,6 +1,6 @@
 # Learning Journey
 
-The learning journey helps early users learn commands gradually through normal use. The full design is tracked in [#5481](https://github.com/cybersemics/em/issues/5481). This document describes what exists in the code today: a pinned command shown in a persistent corner widget, surrounded by a practice-progress ring.
+The learning journey helps early users learn commands gradually through normal use. The full design is tracked in [#5481](https://github.com/cybersemics/em/issues/5481). A pinned command stays in a corner widget with a practice-progress ring; opening the ring reveals its gesture and a link to its Command Universe detail page.
 
 ## State
 
@@ -32,7 +32,7 @@ Every command's detail page ([`CommandUniverseDetailPage`](../src/components/Com
 
 ## The corner widget
 
-[`PinnedCommand`](../src/components/Learning/PinnedCommand.tsx) is mounted in `AppComponent` beside the NavBar and renders nothing while no command is pinned. It is `position: fixed` in the bottom-right corner, aligned with the NavBar row using the same `safeAreaBottom` expression, on the `pinnedCommand` z-index layer just above `navbar`. It is display-only in this version: `pointer-events: none` lets taps and gestures in the corner reach the content beneath, so the gesture zone and scroll zone are unaffected. It exposes `role="img"` with the label `Pinned command: <label>`.
+[`PinnedCommand`](../src/components/Learning/PinnedCommand.tsx) is mounted in `AppComponent` beside the NavBar and renders nothing while no command is pinned. It is `position: fixed` in the bottom-right corner, aligned with the NavBar row using the same `safeAreaBottom` expression, on the `pinnedCommand` z-index layer just above `navbar`. Only the ring button accepts pointer events, leaving the surrounding corner open to gestures and taps. The button is named `Show gesture for <label>` and reports whether its tooltip is expanded.
 
 While a command is pinned, the NavBar's inner row and the Footer leave `PINNED_COMMAND_RESERVED_WIDTH` free on the right so breadcrumbs, buttons, and footer links do not run under the ring. The NavBar's full-width blackout is untouched, so no gap opens behind the bottom chrome.
 
@@ -46,6 +46,12 @@ While a command is pinned, the NavBar's inner row and the Footer leave `PINNED_C
 
 [`TestPinnedCommandRing`](../src/components/modals/TestPinnedCommandRing.tsx) renders the ring at 0%, 30%, the export's 63.5%, 90%, 100% mono, and completed colorful for the [`pinned-command-ring`](../src/e2e/puppeteer/__tests__/pinned-command-ring.ts) snapshot. The screenshot helper disables CSS filters, so the snapshot guards geometry and gradients, not the blur.
 
+## Gesture tooltip
+
+[`PinnedCommandTooltip`](../src/components/Learning/PinnedCommandTooltip.tsx) uses the shared [`NotificationSurface`](../src/components/Notifications/NotificationSurface.tsx) with the `learning` glow treatment. It displays the pinned command's canonical gesture from the command registry, or explains that no gesture is assigned. Its lower row shows the Help and command icons, the command-name button, and a gesture instruction. The command-name button opens that command's detail page directly, so a previous Command Universe search cannot hide it. Opening and dismissing the tooltip does not execute the command, change the pin, or award practice reps. The tooltip can be dismissed by activating the diagram, tapping outside, a successful swipe, or Escape; a command without a gesture has a text dismissal control in place of the diagram.
+
+The ring records the editor's selection offsets before pointer activation can move focus. When the command-name button opens the Command Universe, its open action preserves that snapshot rather than replacing it with the selection inside the tooltip. This lets commands that act on selected text continue to use the editor range.
+
 ## Not yet built
 
-Verified execution outcomes, rep counting, the gesture tooltip, the learning overview, next-command suggestions, and persistence are separate child issues of #5481. Tapping the widget does nothing in this version.
+Verified execution outcomes, rep counting, the learning overview, next-command suggestions, and persistence are separate child issues of #5481.
