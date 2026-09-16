@@ -5,6 +5,7 @@
 import getEditingText from '../helpers/getEditingText'
 import getThoughts from '../helpers/getThoughts'
 import newThought from '../helpers/newThought'
+import shakeAndTap from '../helpers/shakeAndTap'
 import threeFingerSwipe from '../helpers/threeFingerSwipe'
 
 describe('Native history', () => {
@@ -37,5 +38,25 @@ describe('Native history', () => {
     // timeout instead of the thought that failed to come back.
     await browser.pause(2000)
     expect(await getThoughts()).toEqual(['hello'])
+  })
+
+  // https://github.com/cybersemics/em/issues/5575
+  it.skip('a shake undo still works after a three-finger undo and redo', async () => {
+    await newThought('hello')
+
+    await threeFingerSwipe('l')
+    await browser.waitUntil(async () => (await getThoughts()).length === 0, {
+      timeoutMsg: 'the native undo gesture did not remove the thought',
+    })
+
+    await threeFingerSwipe('r')
+    await browser.waitUntil(async () => (await getThoughts()).length === 1, {
+      timeoutMsg: 'the native redo gesture did not restore the thought',
+    })
+
+    // Shake reaches em by a different route than the swipe, and must still undo once a swipe has been used.
+    await shakeAndTap('Undo')
+    await browser.pause(2000)
+    expect(await getThoughts()).toEqual([])
   })
 })
