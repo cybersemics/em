@@ -1,5 +1,5 @@
 import { delay } from 'motion'
-import { motion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { PropsWithChildren, useEffect, useRef, useState } from 'react'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -41,12 +41,11 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
 
   // Geometry and icon color use distinct enter/exit easing. The glow and search mask
   // lead on entry (200ms) and settle with the text on exit (400ms).
-  // The Group/Alphabetical crossfade is independent of whether the tooltip is visible.
+  // Sort changes use the same exit-then-enter sequence as the command results grid.
   const enter = { duration: durations.get('medium') / 1000, ease: [0.4, 0, 0.2, 1] as const }
   const exit = { duration: durations.get('medium') / 1000, ease: [0.16, 1, 0.3, 1] as const }
-  const crossfade = { duration: durations.get('medium') / 1000, ease: 'easeInOut' as const }
+  const sortFade = { duration: durations.get('medium') / 1000, ease: 'easeInOut' as const }
   const glowFade = { duration: durations.get(tooltipVisible ? 'fast' : 'medium') / 1000, ease: 'easeOut' as const }
-  const valueLayer = css({ position: 'absolute', inset: 0, textAlign: 'right' })
   const iconLayer = css({
     position: 'absolute',
     inset: 0,
@@ -59,7 +58,7 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
 
   // One variant label drives the search mask, glow, tooltip, and button highlight.
   // Descendants inherit it unless they supply their own animate prop, as the label
-  // and icon crossfades do. initial=false avoids animating the hidden tooltip on mount.
+  // and icon sort transitions do. initial=false avoids animating the hidden tooltip on mount.
   return (
     <motion.div
       initial={false}
@@ -135,52 +134,48 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
           style={{ y: '-50%', pointerEvents: tooltipVisible ? 'auto' : 'none' }}
           variants={{ hidden: { scale: 0.9, transition: exit }, visible: { scale: 1, transition: enter } }}
         >
-          <motion.span
-            className={css({
-              color: 'white',
-              fontSize: '0.65rem',
-              lineHeight: 1.25,
-              fontWeight: 400,
-              letterSpacing: '0.02em',
-            })}
-            variants={{ hidden: { opacity: 0 }, visible: { opacity: 0.5 } }}
-            transition={enter}
-          >
-            Sort by
-          </motion.span>
-          <motion.span
-            className={css({
-              position: 'relative',
-              display: 'inline-block',
-              color: 'white',
-              fontSize: '0.8rem',
-              lineHeight: 1.2,
-              fontWeight: 500,
-              letterSpacing: '-0.004em',
-            })}
-            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
-            transition={crossfade}
-          >
-            {/* Both labels stay mounted so rapid reversals continue from their current
-                opacity. Reserve the longer label's width to keep the tooltip anchored. */}
-            <span className={css({ visibility: 'hidden' })}>Alphabetical</span>
-            <motion.span
-              initial={false}
-              animate={{ opacity: selectedSort === 'group' ? 1 : 0 }}
-              transition={crossfade}
-              className={valueLayer}
-            >
-              Group
-            </motion.span>
-            <motion.span
-              initial={false}
-              animate={{ opacity: selectedSort === 'alphabetical' ? 1 : 0 }}
-              transition={crossfade}
-              className={valueLayer}
-            >
-              Alphabetical
-            </motion.span>
-          </motion.span>
+          <motion.div variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }} transition={sortFade}>
+            <AnimatePresence initial={false} mode='wait'>
+              <motion.div
+                key={selectedSort}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={sortFade}
+                className={css({ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' })}
+              >
+                <span
+                  className={css({
+                    color: 'white',
+                    opacity: 0.5,
+                    fontSize: '0.65rem',
+                    lineHeight: 1.25,
+                    fontWeight: 400,
+                    letterSpacing: '0.02em',
+                  })}
+                >
+                  Sort by
+                </span>
+                <span
+                  className={css({
+                    position: 'relative',
+                    display: 'inline-block',
+                    color: 'white',
+                    fontSize: '0.8rem',
+                    lineHeight: 1.2,
+                    fontWeight: 500,
+                    letterSpacing: '-0.004em',
+                  })}
+                >
+                  {/* Reserve the longer label's width to keep the tooltip anchored. */}
+                  <span className={css({ visibility: 'hidden' })}>Alphabetical</span>
+                  <span className={css({ position: 'absolute', inset: 0, textAlign: 'right' })}>
+                    {selectedSort === 'group' ? 'Group' : 'Alphabetical'}
+                  </span>
+                </span>
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
         </motion.div>
         <motion.button
           ref={buttonRef}
@@ -210,22 +205,22 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
             _active: { background: 'transparent' },
           })}
         >
-          <motion.span
-            initial={false}
-            animate={{ opacity: selectedSort === 'group' ? 1 : 0 }}
-            transition={crossfade}
-            className={iconLayer}
-          >
-            <CommandsListIcon size={28} fill='currentColor' strokeWidth={0} />
-          </motion.span>
-          <motion.span
-            initial={false}
-            animate={{ opacity: selectedSort === 'alphabetical' ? 1 : 0 }}
-            transition={crossfade}
-            className={iconLayer}
-          >
-            <AToZIcon size={28} fill='currentColor' strokeWidth={0} />
-          </motion.span>
+          <AnimatePresence initial={false} mode='wait'>
+            <motion.span
+              key={selectedSort}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={sortFade}
+              className={iconLayer}
+            >
+              {selectedSort === 'group' ? (
+                <CommandsListIcon size={28} fill='currentColor' strokeWidth={0} />
+              ) : (
+                <AToZIcon size={28} fill='currentColor' strokeWidth={0} />
+              )}
+            </motion.span>
+          </AnimatePresence>
         </motion.button>
       </div>
     </motion.div>
