@@ -100,16 +100,17 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
         {command.longDescription ? (
           <div
             className={css({
-              color: 'fg',
-              fontSize: '0.75rem',
+              color: 'commandUniverseLongDescriptionText',
+              fontSize: '0.8rem',
               fontWeight: 300,
+              letterSpacing: '0.075px',
               lineHeight: 1.5,
               '& > *': { margin: 0 },
               '& > * + *': { marginTop: '0.5rem' },
               '& ul, & ol': { paddingInlineStart: '1.25rem' },
               '& li + li': { marginTop: '0.25rem' },
               '& code': {
-                fontFamily: 'monospace',
+                fontFamily: 'inherit',
                 backgroundColor: 'codeBg',
                 padding: '0 0.25em',
                 borderRadius: '0.2em',
@@ -126,7 +127,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
               display: 'flex',
               alignItems: 'center',
               gap: '0.625rem',
-              paddingTop: command.longDescription ? '1.5rem' : 0,
+              paddingTop: command.longDescription ? '0.775rem' : 0,
               paddingBottom: '1.45rem',
             })}
           >
