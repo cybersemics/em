@@ -83,6 +83,37 @@ const flattenGestureGeometry = (geometry: GestureGeometry): GesturePoint[] => [
   ...geometry.segments.flatMap(flattenSegment),
 ]
 
+/** Finds a single linear gradient that advances with distance along an axis-monotone gesture. */
+const getMonotoneGradientLine = (geometry: GestureGeometry) => {
+  const points = flattenGestureGeometry(geometry)
+  const first = points[0]
+  const last = points.at(-1)!
+  const xChange = last.x - first.x
+  const yChange = last.y - first.y
+  const xDirection = Math.abs(xChange) < 1e-6 ? 0 : Math.sign(xChange)
+  const yDirection = Math.abs(yChange) < 1e-6 ? 0 : Math.sign(yChange)
+  const monotone = points.slice(1).every((point, index) => {
+    const previous = points[index]
+    const dx = point.x - previous.x
+    const dy = point.y - previous.y
+    return (
+      (xDirection === 0 ? Math.abs(dx) < 1e-6 : dx * xDirection >= -1e-6) &&
+      (yDirection === 0 ? Math.abs(dy) < 1e-6 : dy * yDirection >= -1e-6)
+    )
+  })
+  if (!monotone || (xDirection === 0 && yDirection === 0)) return null
+
+  // Along horizontal and vertical legs, signed x + y is their cumulative distance.
+  const extent = Math.abs(xChange) + Math.abs(yChange)
+  const divisor = xDirection !== 0 && yDirection !== 0 ? 2 : 1
+  return {
+    x1: first.x,
+    y1: first.y,
+    x2: first.x + (xDirection * extent) / divisor,
+    y2: first.y + (yDirection * extent) / divisor,
+  }
+}
+
 /** Serializes an ordered pair of points as a short SVG path. */
 const serializePiece = (points: readonly GesturePoint[]) =>
   points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ')
@@ -228,6 +259,37 @@ const ContinuousGradientGestureRenderer = ({
   const highlightedSegments =
     highlight == null ? [] : geometry.segments.filter(segment => segment.gestureIndex < highlight)
   const highlightPath = highlightedSegments.length ? serializeGesturePath(highlightedSegments) : null
+  const monotoneGradientLine = getMonotoneGradientLine(geometry)
+
+  if (monotoneGradientLine) {
+    const chevronPath = geometry.chevron ? serializePiece(geometry.chevron) : null
+    const fullHighlight = geometry.chevron && highlight != null && highlight >= geometry.path.length
+    return (
+      <g style={dropShadow ? { filter: dropShadow } : undefined}>
+        <defs>
+          <linearGradient id={`${instanceId}-continuous`} gradientUnits='userSpaceOnUse' {...monotoneGradientLine}>
+            <stop offset={`${ramp.startOffset}%`} stopColor={ramp.from} />
+            <stop offset={`${ramp.endOffset}%`} stopColor={ramp.to} />
+          </linearGradient>
+        </defs>
+        <path
+          d={`${serializeGesturePath(geometry.segments)}${chevronPath ? ` ${chevronPath}` : ''}`}
+          stroke={`url(#${instanceId}-continuous)`}
+          {...pathProps}
+        />
+        {highlightPath && (
+          <path
+            d={`${highlightPath}${fullHighlight ? ` ${chevronPath}` : ''}`}
+            stroke={highlightColor ?? token('colors.vividHighlight')}
+            {...pathProps}
+          />
+        )}
+        {markerEnd && (
+          <path d={serializePiece(pieces.at(-1)!.points)} fill='none' stroke='none' markerEnd={markerEnd} />
+        )}
+      </g>
+    )
+  }
 
   return (
     <g style={dropShadow ? { filter: dropShadow } : undefined}>
