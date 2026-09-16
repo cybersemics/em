@@ -160,7 +160,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
                   whiteSpace: 'normal',
                   overflowWrap: 'break-word',
                   color: disabled ? 'gray45' : 'fg',
-                  fontSize: '0.75rem',
+                  fontSize: '0.795rem',
                   fontWeight: 500,
                   lineHeight: 1.35,
                 })}
@@ -174,7 +174,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
                 color: 'fgOverlay75',
                 marginTop: '0.267rem',
                 marginBottom: '0.267rem',
-                fontSize: '0.6875rem',
+                fontSize: '0.75rem',
                 opacity: 0.8,
                 marginLeft: '-0.2rem',
                 lineHeight: 1.3,

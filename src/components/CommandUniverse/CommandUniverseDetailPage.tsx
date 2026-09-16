@@ -43,14 +43,14 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
 
   return (
     <DialogContent scrollRef={scrollRef}>
-      <div className={css({ paddingInline: '1.25rem', paddingTop: '0.5rem', paddingBottom: '1.5rem' })}>
+      <div className={css({ paddingInline: '0.75rem', paddingTop: '0.5rem', paddingBottom: '1.5rem' })}>
         <header
           className={css({
             display: 'flex',
             alignItems: 'center',
-            gap: '1rem',
-            paddingTop: '0.5rem',
-            paddingBottom: '1.25rem',
+            gap: '1.3rem',
+            paddingTop: '0.35rem',
+            paddingBottom: '1.375rem',
           })}
         >
           <div
@@ -72,8 +72,8 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
               className={css({
                 margin: 0,
                 color: 'fg',
-                fontSize: '1.1rem',
-                fontWeight: 400,
+                fontSize: '1.125rem',
+                fontWeight: 500,
                 lineHeight: 1.2,
                 outline: 'none',
               })}
@@ -84,11 +84,10 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
               <p
                 className={css({
                   margin: 0,
-                  color: 'fgOverlay75',
-                  marginTop: '0.25rem',
-                  fontSize: '0.8rem',
+                  color: 'commandUniverseSubtitleText',
+                  marginTop: '0.35rem',
+                  fontSize: '0.85rem',
                   fontWeight: 300,
-                  opacity: 0.85,
                   lineHeight: 1.35,
                 })}
               >
@@ -126,9 +125,9 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
             className={css({
               display: 'flex',
               alignItems: 'center',
-              gap: '1.25rem',
+              gap: '0.625rem',
               paddingTop: command.longDescription ? '1.5rem' : 0,
-              paddingBottom: '1.5rem',
+              paddingBottom: '1.45rem',
             })}
           >
             <div className={css({ flex: 'none', width: '130px', aspectRatio: '1 / 1' })}>
@@ -147,7 +146,19 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
                 glow={false}
               />
             </div>
-            <p className={css({ margin: 0, color: 'fg', flex: 1, fontSize: '0.75rem', lineHeight: 1.4 })}>
+            <p
+              className={css({
+                margin: 0,
+                flex: 1,
+                fontSize: '0.8rem',
+                lineHeight: 1.4,
+                backgroundImage:
+                  'linear-gradient(158deg, {colors.commandUniverseGestureCaptionGradientStart} 0%, {colors.commandUniverseGestureCaptionGradientEnd} 100%)',
+                backgroundClip: 'text',
+                color: 'transparent',
+                WebkitTextFillColor: 'transparent',
+              })}
+            >
               Use this gesture in <b>em</b> to quickly activate the command.
             </p>
           </div>
