@@ -2,10 +2,10 @@
  * IOS Safari native undo/redo tests.
  * Uses WDIO test runner with Mocha framework.
  */
+import { NATIVE_HISTORY_REGISTER_DELAY } from '../../../constants'
 import getEditingText from '../helpers/getEditingText'
 import getThoughts from '../helpers/getThoughts'
 import newThought from '../helpers/newThought'
-import shakeAndTap from '../helpers/shakeAndTap'
 import threeFingerSwipe from '../helpers/threeFingerSwipe'
 
 describe('Native history', () => {
@@ -41,7 +41,7 @@ describe('Native history', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5575
-  it('a shake undo still works after a three-finger undo and redo', async () => {
+  it('a native undo still works after a three-finger undo and redo', async () => {
     await newThought('hello')
 
     await threeFingerSwipe('l')
@@ -54,9 +54,14 @@ describe('Native history', () => {
       timeoutMsg: 'the native redo gesture did not restore the thought',
     })
 
-    // Shake reaches em by a different route than the swipe, and must still undo once a swipe has been used.
-    await shakeAndTap('Undo')
-    await browser.pause(2000)
+    // Shake reaches em only as a historyUndo beforeinput, which WebKit dispatches only while its own stack holds a
+    // live step. The swipe re-renders the editable that step was recorded against, so unless a fresh one is
+    // registered afterwards there is nothing to deliver and the shake does nothing. execCommand stands in for the
+    // shake here because it depends on that same step, and a real device cannot be shaken in a cloud test lab.
+    // Wait out NATIVE_HISTORY_REGISTER_DELAY first, since registration is deferred past em's re-render.
+    await browser.pause(NATIVE_HISTORY_REGISTER_DELAY + 1000)
+    await browser.execute(() => document.execCommand('undo'))
+    await browser.pause(1000)
     expect(await getThoughts()).toEqual([])
   })
 })
