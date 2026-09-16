@@ -30,6 +30,7 @@ import { isMac, isSafari, isTouch } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
+import focusNativeHistoryAnchor from './device/nativeHistoryAnchor'
 import * as selection from './device/selection'
 import globals from './globals'
 import documentSort from './selectors/documentSort'
@@ -806,8 +807,9 @@ let registeringNativeRedoStep = false
  * DOM that the re-render replaces — WebKit then silently discards the step when the gesture arrives, dispatching
  * nothing, which is indistinguishable from never having registered it.
  *
- * The native undo is performed only if the insert succeeded, since an execCommand that finds no editable selection
- * returns false and the undo would otherwise revert the user's own last edit.
+ * Registration needs a focused editing host, and undoing the creation of the only thought leaves none, so an insert
+ * that finds no editable selection falls back to the hidden anchor. The undo runs only once an insert has succeeded,
+ * since it would otherwise revert the user's own last edit.
  *
  * No-op on non-iOS platforms (isTouch && isSafari gates iOS WKWebView; desktop Safari has no shake/three-finger undo).
  */
@@ -815,7 +817,11 @@ const registerNativeRedoStep = (): void => {
   if (!isTouch || !isSafari()) return
   globals.suppressChange = true
   registeringNativeRedoStep = true
-  if (document.execCommand('insertHTML', false, '<span data-native-history></span>')) {
+  const marker = '<span data-native-history></span>'
+  const inserted =
+    document.execCommand('insertHTML', false, marker) ||
+    (focusNativeHistoryAnchor() && document.execCommand('insertHTML', false, marker))
+  if (inserted) {
     document.execCommand('undo')
   }
   registeringNativeRedoStep = false
