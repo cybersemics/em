@@ -29,6 +29,9 @@ it('show the pinned command in the corner widget after pressing Pin Command on i
   await act(vi.runAllTimersAsync)
 
   expect(screen.getByRole('button', { name: 'Show gesture for New Thought' })).toBeVisible()
+  expect(screen.getByRole('button', { name: 'Show gesture for New Thought' })).toHaveAccessibleDescription(
+    'Practice progress: 0 of 5 repetitions',
+  )
   expect(screen.getByRole('button', { name: 'Unpin Command' })).toBeVisible()
 })
 

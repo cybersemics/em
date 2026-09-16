@@ -1,4 +1,4 @@
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { PropsWithChildren, useId } from 'react'
 import { css } from '../../../styled-system/css'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
@@ -94,16 +94,20 @@ const FillArc = ({ progress, stops }: { progress: number; stops: Stop[] }) => {
 const PinnedCommandRing = ({
   progress,
   complete,
+  animateCompletion = false,
   children,
 }: PropsWithChildren<{
   /** Practice progress from 0 (unstarted) to 1 (target reached). */
   progress: number
   /** Whether the target has been reached. Switches the fill from mono to colorful. */
   complete: boolean
+  /** Fade to the completed color only for a local below-target to target crossing. */
+  animateCompletion?: boolean
 }>) => {
   // filter and gradient ids must be unique when several rings are on one page, e.g. in the snapshot fixture
   const id = useId()
   const colorDuration = durations.get('pinnedCommandComplete') / 1000
+  const shouldAnimateCompletion = animateCompletion && !useReducedMotion()
 
   return (
     <div
@@ -156,17 +160,18 @@ const PinnedCommandRing = ({
         <>
           <motion.div
             className={css({ position: 'absolute', inset: 0 })}
+            initial={false}
             animate={{ opacity: complete ? 0 : 1 }}
-            transition={{ duration: colorDuration }}
+            transition={{ duration: shouldAnimateCompletion ? colorDuration : 0 }}
           >
             <FillArc progress={progress} stops={STOPS_MONO} />
           </motion.div>
           {complete && (
             <motion.div
               className={css({ position: 'absolute', inset: 0 })}
-              initial={{ opacity: 0 }}
+              initial={{ opacity: shouldAnimateCompletion ? 0 : 1 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: colorDuration }}
+              transition={{ duration: shouldAnimateCompletion ? colorDuration : 0 }}
             >
               <FillArc progress={progress} stops={STOPS_COLORFUL} />
             </motion.div>

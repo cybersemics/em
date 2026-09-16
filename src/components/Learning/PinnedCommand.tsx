@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -22,10 +22,16 @@ const PinnedCommand = () => {
   const [openedCommandId, setOpenedCommandId] = useState<CommandId | null>(null)
   const [keepRaisedDuringExit, setKeepRaisedDuringExit] = useState(false)
   const pinnedCommandId = useSelector(state => state.learning.pinnedCommandId)
-  const progress = useSelector(state => {
-    const record = pinnedCommandId ? state.learning.progress[pinnedCommandId] : null
-    return record ? Math.min(1, record.reps / record.targetReps) : 0
-  })
+  const progressRecord = useSelector(state => (pinnedCommandId ? state.learning.progress[pinnedCommandId] : undefined))
+  const progress = progressRecord ? Math.min(1, progressRecord.reps / progressRecord.targetReps) : 0
+  const complete = progress >= 1
+  const previousCompletion = useRef({ pinnedCommandId, complete })
+  const animateCompletion =
+    previousCompletion.current.pinnedCommandId === pinnedCommandId && !previousCompletion.current.complete && complete
+
+  useEffect(() => {
+    previousCompletion.current = { pinnedCommandId, complete }
+  }, [pinnedCommandId, complete])
 
   const isOpen = !!pinnedCommandId && openedCommandId === pinnedCommandId
   const isRingRaised = isOpen || keepRaisedDuringExit
@@ -70,6 +76,11 @@ const PinnedCommand = () => {
       <button
         type='button'
         aria-label={`Show gesture for ${command.label}`}
+        aria-description={
+          progressRecord
+            ? `Practice progress: ${progressRecord.reps} of ${progressRecord.targetReps} repetitions`
+            : 'Practice progress unavailable'
+        }
         aria-expanded={isOpen}
         aria-controls={tooltipId}
         data-testid='pinned-command'
@@ -107,7 +118,7 @@ const PinnedCommand = () => {
           pointerEvents: isRingRaised ? 'none' : undefined,
         }}
       >
-        <PinnedCommandRing progress={progress} complete={progress >= 1}>
+        <PinnedCommandRing progress={progress} complete={complete} animateCompletion={animateCompletion}>
           <Icon size={14} fill={token('colors.gray50')} cssRaw={css.raw({ flex: 'none' })} />
         </PinnedCommandRing>
       </button>
