@@ -36,6 +36,15 @@ export const LATEST_COMMAND_DIAGRAM_DURATION = 800
 // number of latest commands to show at a time
 export const LATEST_COMMAND_LIMIT = 3
 
+/** Practice repetitions needed to learn a command. Captured into a command's progress record when it is first pinned, so changing this does not change existing records. Provisional value pending a product decision (see #5485). */
+export const LEARNING_TARGET_REPS = 5
+
+/** Width and height of the pinned command ring's box in CSS px, from the Figma export. */
+export const PINNED_COMMAND_RING_SIZE = 73
+
+/** Horizontal space, in the nav bar's own (font-scaled) px, that the bottom chrome leaves free on the right while a command is pinned so that its text and buttons do not run under the ring. */
+export const PINNED_COMMAND_RESERVED_WIDTH = 50
+
 // each tutorial step is defined as a constant for compile-time validation
 // all integers must existing between TUTORIAL_STEP_START and TUTORIAL_STEP_END
 // fractional values may be used for "hints" that are not included in the Next/Prev sequence

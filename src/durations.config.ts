@@ -41,6 +41,8 @@ const durationsConfig = {
   commandCenter: 320,
   /* Duration of the Mobile Command Universe zoom transition between levels (e.g. Level 2 grid ↔ Level 1 detail). */
   commandUniverseZoom: 750,
+  /* Crossfade from the mono fill to the colorful fill when the pinned command's practice ring completes. */
+  pinnedCommandComplete: 750,
 } as const
 
 export default durationsConfig

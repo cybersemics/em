@@ -1,11 +1,17 @@
-import { FC, useRef } from 'react'
-import { useSelector } from 'react-redux'
+import { FC, useId, useRef } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
-import { gestureString } from '../../commands'
+import { pinCommandActionCreator as pinCommand } from '../../actions/pinCommand'
+import { unpinCommandActionCreator as unpinCommand } from '../../actions/unpinCommand'
+import { commandById, gestureString } from '../../commands'
 import GestureDiagram from '../GestureDiagram'
+import GradientDivider from '../GradientDivider'
 import DialogContent from '../dialog/DialogContent'
+import ArrowRightIcon from '../icons/ArrowRightIcon'
+import PinnedCommandPinIcon from '../icons/PinnedCommandPinIcon'
+import PinnedCommandUnpinIcon from '../icons/PinnedCommandUnpinIcon'
 import SettingsIcon from '../icons/SettingsIcon'
 
 interface CommandUniverseDetailPageProps {
@@ -28,10 +34,91 @@ const useCommandLabels = (command: Command) => {
 }
 
 /**
+ * A row that pins this command to the persistent corner widget, or unpins it when it is already the pinned command.
+ * Pinning replaces any other pinned command and never executes the command.
+ */
+const PinCommandRow = ({ command }: { command: Command }) => {
+  const dispatch = useDispatch()
+  // commandById returns the registry's own object, so the selector result is referentially stable
+  const pinnedCommand = useSelector(state =>
+    state.learning.pinnedCommandId ? commandById(state.learning.pinnedCommandId) : null,
+  )
+  const isPinned = pinnedCommand?.id === command.id
+  const descriptionId = useId()
+  const title = isPinned ? 'Unpin Command' : 'Pin Command'
+
+  return (
+    <div className={css({ marginBottom: '0.75rem' })}>
+      <GradientDivider />
+      <button
+        type='button'
+        aria-label={title}
+        aria-describedby={descriptionId}
+        onClick={() => dispatch(isPinned ? unpinCommand() : pinCommand({ commandId: command.id }))}
+        className={css({
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          width: '100%',
+          padding: '0.75rem 0',
+          background: 'transparent',
+          border: 'none',
+          textAlign: 'left',
+          color: 'fg',
+          cursor: 'pointer',
+        })}
+      >
+        <div
+          className={css({
+            flex: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '36px',
+            height: '36px',
+          })}
+        >
+          {isPinned ? (
+            <PinnedCommandUnpinIcon cssRaw={css.raw({ flex: 'none' })} size={48} fill={token('colors.fg')} />
+          ) : (
+            <PinnedCommandPinIcon cssRaw={css.raw({ flex: 'none' })} size={48} fill={token('colors.fg')} />
+          )}
+        </div>
+        <div className={css({ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 })}>
+          <b className={css({ fontSize: '0.9rem', fontWeight: 400, lineHeight: 1.2 })}>{title}</b>
+          <p
+            id={descriptionId}
+            className={css({
+              margin: 0,
+              marginTop: '0.25rem',
+              color: 'fgOverlay75',
+              fontSize: '0.75rem',
+              lineHeight: 1.35,
+            })}
+          >
+            {isPinned
+              ? 'Remove this command from the corner. Your practice progress is kept.'
+              : 'Pin this command to the corner to help you practice and memorise it.'}
+            {pinnedCommand && !isPinned ? (
+              <>
+                {' '}
+                This will replace the currently pinned command: <b>{pinnedCommand.label}</b>.
+              </>
+            ) : null}
+          </p>
+        </div>
+        <ArrowRightIcon size={20} fill={token('colors.fgOverlay75')} cssRaw={css.raw({ flex: 'none' })} />
+      </button>
+      <GradientDivider />
+    </div>
+  )
+}
+
+/**
  * Level 1 of the Command Universe — the per-command detail page reached by tapping a
- * grid cell. Layout: icon + title + subtitle row, optional React content
- * (`command.longDescription`), and an optional gesture row showing the diagram with a
- * short caption to its right.
+ * grid cell. Layout: icon + title + subtitle row, the Pin Command row, optional React
+ * content (`command.longDescription`), and an optional gesture row showing the diagram
+ * with a short caption to its right.
  *
  * This page owns its content and scroller. Navigation, focus, and motion live outside it.
  */
@@ -97,6 +184,8 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
             ) : null}
           </div>
         </header>
+
+        <PinCommandRow command={command} />
 
         {command.longDescription ? (
           <div

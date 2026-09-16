@@ -133,6 +133,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     jumpHistory: storageModel.get('jumpHistory'),
     jumpIndex: 0,
     latestCommands: [],
+    learning: { pinnedCommandId: null, progress: {} },
     longPress: LongPressState.Inactive,
     manualSortMap: {},
     modals: {},

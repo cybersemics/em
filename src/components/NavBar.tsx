@@ -3,7 +3,7 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
-import { BASE_FONT_SIZE } from '../constants'
+import { BASE_FONT_SIZE, PINNED_COMMAND_RESERVED_WIDTH } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import backgroundGlowStore from '../stores/backgroundGlowStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -53,6 +53,8 @@ const NavBar = ({ position }: { position: string }) => {
   const isCursor = useSelector(state => !!state.cursor && state.cursor.length > 0)
   // While a background glow image is selected, the blackout is disabled entirely; the glow falloff in BackgroundGlow fades the content out above the nav bar instead.
   const glowImage = backgroundGlowStore.useSelector(state => state.image)
+  // While a command is pinned, the row ends short of the right edge so the breadcrumbs and buttons do not run under the pinned command ring. The blackout on the nav element itself stays full width.
+  const isCommandPinned = useSelector(state => !!state.learning.pinnedCommandId)
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
 
@@ -99,6 +101,12 @@ const NavBar = ({ position }: { position: string }) => {
                   alignItems: 'flex-end',
                 }),
               })}
+              // Panda cannot extract a runtime width, so the reservation stays inline.
+              style={
+                position === 'bottom' && isCommandPinned
+                  ? { width: `calc(100% - ${PINNED_COMMAND_RESERVED_WIDTH}px)` }
+                  : undefined
+              }
             >
               {!isTutorialOn && (
                 <>
