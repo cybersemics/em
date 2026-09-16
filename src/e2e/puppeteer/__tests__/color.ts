@@ -804,7 +804,7 @@ describe('mobile', () => {
   deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   // https://github.com/cybersemics/em/issues/4264
-  it.skip('tapping the empty space around a color swatch applies the color of that swatch', async () => {
+  it('tapping the empty space around a color swatch applies the color of that swatch', async () => {
     await paste(`
       - One
     `)
