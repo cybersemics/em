@@ -443,7 +443,7 @@ const reportCommandSuccess = ({
   source: CommandType
   userInitiated: boolean
   errorBefore: State['error']
-  execution?: void | Promise<void>
+  execution?: void | Promise<void | false>
 }): void | Promise<void> => {
   /** An error raised through app state during this invocation also prevents credit. */
   const report = () => {
@@ -457,7 +457,9 @@ const reportCommandSuccess = ({
     return
   }
 
-  return execution.then(report)
+  return execution.then(result => {
+    if (result !== false) report()
+  })
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
@@ -543,7 +545,7 @@ export const executeCommandWithMulticursor = (
 
   // The thoughts created by the executions, collected for selectNewCursors.
   const newCursors: Path[] = []
-  const executions: Promise<void>[] = []
+  const executions: Promise<void | false>[] = []
   let didExecute = false
 
   // If there is a custom execMulticursor function, call it with the filtered multicursors.
@@ -552,8 +554,8 @@ export const executeCommandWithMulticursor = (
     // execMulticursor bypasses executeCommand, which is what records the last command for the repeat command, so record it here. The patch is captured after setIsMulticursorExecuting, the same point the per-cursor loop below captures it from, so that both branches judge a change by the same measure.
     const undoablePatchPrev = lastUndoablePatch(commandStore.getState())
     const execution = multicursor.execMulticursor(filteredPaths, commandStore.dispatch, commandStore.getState)
-    didExecute = true
-    if (execution) executions.push(execution)
+    didExecute = execution !== false
+    if (execution instanceof Promise) executions.push(execution)
     recordLastCommand(command, keyboardIndex, commandStore.getState(), undoablePatchPrev)
   } else {
     for (const path of filteredPaths) {
@@ -652,7 +654,9 @@ export const executeCommandWithMulticursor = (
     source: type,
     userInitiated,
     errorBefore,
-    execution: executions.length ? Promise.all(executions).then(() => undefined) : undefined,
+    execution: executions.length
+      ? Promise.all(executions).then(results => (results.includes(false) ? false : undefined))
+      : undefined,
   })
 }
 

@@ -17,6 +17,8 @@ const ACKNOWLEDGED_VALUE = '1'
 let allowNextAiUse = false
 /** The AI request to run after the user accepts the disclosure. */
 let pendingAiUse: (() => void) | null = null
+/** Settles a blocked command when its disclosure is canceled or replaced. */
+let resolvePendingAiUse: ((result: false) => void) | null = null
 
 /** Returns true if the user has acknowledged the AI data disclosure on this device. */
 export const hasAcknowledgedAiDisclosure = () => storage.getItem(AI_DISCLOSURE_KEY) === ACKNOWLEDGED_VALUE
@@ -36,11 +38,32 @@ const consumeAiDisclosureAllowance = () => {
   return true
 }
 
-/** Queues an AI request if disclosure is required. Returns true when the disclosure must be shown. */
-const requestAiDisclosure = (continuation: () => void) => {
-  if (hasAcknowledgedAiDisclosure() || consumeAiDisclosureAllowance()) return false
-  pendingAiUse = continuation
-  return true
+/** Discards the AI request pending disclosure. */
+export const cancelAiDisclosure = () => {
+  pendingAiUse = null
+  resolvePendingAiUse?.(false)
+  resolvePendingAiUse = null
+}
+
+/** Queues an AI request if disclosure is required and returns its eventual completion; otherwise returns null. */
+const requestAiDisclosure = (
+  continuation: () => void | false | Promise<void | false>,
+): Promise<void | false> | null => {
+  if (hasAcknowledgedAiDisclosure() || consumeAiDisclosureAllowance()) return null
+
+  // Only one disclosure can be open. Replacing a pending request cancels its original command invocation.
+  cancelAiDisclosure()
+
+  return new Promise<void | false>((resolve, reject) => {
+    resolvePendingAiUse = resolve
+    pendingAiUse = () => {
+      try {
+        Promise.resolve(continuation()).then(resolve, reject)
+      } catch (error) {
+        reject(error)
+      }
+    }
+  })
 }
 
 /** Persists acknowledgement of the AI data disclosure on this device. */
@@ -58,19 +81,15 @@ export const acceptAiDisclosure = ({ remember }: { remember: boolean }): (() => 
 
   const continuation = pendingAiUse
   pendingAiUse = null
+  resolvePendingAiUse = null
   return continuation
-}
-
-/** Discards the AI request pending disclosure. */
-export const cancelAiDisclosure = () => {
-  pendingAiUse = null
 }
 
 /** Revokes AI data disclosure acknowledgement and clears any pending or one-time AI use. */
 export const clearAiDisclosureAcknowledgement = () => {
   storage.removeItem(AI_DISCLOSURE_KEY)
   allowNextAiUse = false
-  pendingAiUse = null
+  cancelAiDisclosure()
 }
 
 export default requestAiDisclosure

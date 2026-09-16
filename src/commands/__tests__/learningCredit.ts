@@ -7,15 +7,23 @@ import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import importToContext from '../../test-helpers/importToContext'
 import initStore from '../../test-helpers/initStore'
+import requestAiDisclosure, {
+  acceptAiDisclosure,
+  cancelAiDisclosure,
+  clearAiDisclosureAcknowledgement,
+} from '../../util/aiDisclosure'
 import storage from '../../util/storage'
 import toggleDoneCommand from '../toggleDone'
 
 const runnableCommand = { ...toggleDoneCommand, canExecute: () => true }
 
 beforeEach(async () => {
+  clearAiDisclosureAcknowledgement()
   storage.removeItem('learning:v1')
   await initStore()
 })
+
+afterEach(clearAiDisclosureAcknowledgement)
 
 it('awards and persists one rep for a successful keyboard invocation', () => {
   store.dispatch(pinCommand({ commandId: 'toggleDone' }))
@@ -66,6 +74,43 @@ it('waits for returned asynchronous work and ignores a rejected invocation', asy
       { store, type: 'gesture', userInitiated: true },
     ),
   ).rejects.toThrow('Command failed')
+  expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
+})
+
+it('waits through first-use AI disclosure and awards nothing when it is canceled', async () => {
+  store.dispatch(pinCommand({ commandId: 'toggleDone' }))
+  const command = {
+    ...runnableCommand,
+    exec: () => requestAiDisclosure(async () => undefined) ?? undefined,
+  }
+
+  const canceled = executeCommandWithMulticursor(command, { store, type: 'gesture', userInitiated: true })
+  expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
+  cancelAiDisclosure()
+  await canceled
+  expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
+
+  const accepted = executeCommandWithMulticursor(command, { store, type: 'gesture', userInitiated: true })
+  expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
+  acceptAiDisclosure({ remember: false })?.()
+  await accepted
+  expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
+})
+
+it('settles a disclosure invocation replaced by another command', async () => {
+  store.dispatch(pinCommand({ commandId: 'toggleDone' }))
+  const command = {
+    ...runnableCommand,
+    exec: () => requestAiDisclosure(async () => undefined) ?? undefined,
+  }
+
+  const first = executeCommandWithMulticursor(command, { store, type: 'gesture', userInitiated: true })
+  const second = executeCommandWithMulticursor(command, { store, type: 'gesture', userInitiated: true })
+  await first
+  expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
+
+  acceptAiDisclosure({ remember: false })?.()
+  await second
   expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
 })
 

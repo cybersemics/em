@@ -27,7 +27,7 @@ The learning journey helps early users learn commands gradually through normal u
 
 These actions are registered `undoable: false`, and `learning` is listed in `statePropertiesToOmit` in [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts), so pinning and practice never add an undo step or get reverted by undoing an edit.
 
-The command runner reports success once per top-level invocation, including a multicursor invocation. It does so when `exec` returns normally or its returned promise resolves, provided the command was executable and did not set a new app error. A thrown or rejected error prevents a success report. This tests the command's execution boundary; work that a command starts without returning its promise cannot be judged after it finishes. Toolbar, Command Center, Command Universe, and internal calls do not earn practice credit.
+The command runner reports success once per top-level invocation, including a multicursor invocation. It does so when `exec` returns normally or its returned promise resolves, provided the command was executable, did not set a new app error, and did not return `false` for cancellation. A thrown or rejected error prevents a success report. AI commands return their request promises through the first-use disclosure; canceling the disclosure earns nothing. This tests the command's execution boundary; work that a command starts without returning its promise cannot be judged after it finishes. Toolbar, Command Center, Command Universe, and internal calls do not earn practice credit.
 
 ## Pinning from the Command Universe
 
