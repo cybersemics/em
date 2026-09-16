@@ -95,9 +95,9 @@ describe('Format', () => {
 
   // https://github.com/cybersemics/em/issues/4716
   it('Clear Thought slants the emoji in the placeholder', async () => {
+    // paste sets the cursor to the last imported thought, which is all clearThought needs.
     await paste(`
     - 😁 Hello`)
-    await clickThought('😁 Hello')
 
     await gesture('rl') // Clear Thought
     await waitForElement('[data-editable][data-placeholder-cleared]')
