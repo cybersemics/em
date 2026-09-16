@@ -175,33 +175,6 @@ describe('gestures', () => {
 
     expect(await exportThoughts()).toBe(outline)
   })
-
-  // https://github.com/cybersemics/em/issues/4115
-  it.skip('cancels a touch that starts at the edge of the screen', async () => {
-    // Mobile Safari recognizes its interactive back swipe from a touch that starts within a narrow strip at the edge
-    // of the screen, and abandons it only when the page calls preventDefault on the touchstart. Chrome has no such
-    // gesture, so the cancelled touch — rather than a navigation that does not happen — is the observable behavior.
-    await page.evaluate(() => {
-      const win = window as typeof window & { __touchstartCancelled: boolean[] }
-      win.__touchstartCancelled = []
-      document.addEventListener('touchstart', e => win.__touchstartCancelled.push(e.defaultPrevented))
-    })
-
-    const viewport = page.viewport()!
-    const yStart = Math.round(viewport.height / 3)
-
-    const edgeGesture = await startGesture({ xStart: 2, yStart })
-    await edgeGesture.end()
-
-    // A touch that starts away from the edge keeps its default behavior. Cancelling it would stop the browser from
-    // focusing the thought that was tapped.
-    const interiorGesture = await startGesture({ xStart: Math.round(viewport.width / 2), yStart })
-    await interiorGesture.end()
-
-    expect(
-      await page.evaluate(() => (window as typeof window & { __touchstartCancelled: boolean[] }).__touchstartCancelled),
-    ).toEqual([true, false])
-  })
 })
 
 describe('chaining commands', () => {

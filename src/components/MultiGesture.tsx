@@ -80,6 +80,9 @@ const dirToRad = {
 
 type BiasType = keyof typeof dirToRad
 
+/** The width of the strip at each side of the screen where the browser recognizes its back/forward navigation swipe. */
+const SYSTEM_EDGE_SWIPE_WIDTH = 20
+
 /** Return the closest gesture based on the angle between two points. See: https://github.com/cybersemics/em/issues/1379. */
 const gesture = (p1: Point, p2: Point, minDistanceSquared: number, bias: BiasType = 'NoBias'): Direction | null => {
   // Instead of calculating the actual distance, calculate distance squared.
@@ -144,40 +147,55 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     )
 
     // enable/disable scrolling based on where the user clicks
+    // non-passive so that the browser's navigation swipe can be cancelled with preventDefault
     // TODO: Could this be moved to onMoveShouldSetResponder?
-    document.body.addEventListener('touchstart', e => {
-      // If a gesture is already in progress (this.currentStart is set in onPanResponderMove),
-      // ignore additional touchstarts. Otherwise a stray finger landing outside the gesture zone
-      // would set this.abandon = true, which causes onPanResponderRelease to skip props.onEnd —
-      // leaving the gesture menu and transparent overlay stuck on screen. See #3887.
-      if (this.currentStart) return
+    document.body.addEventListener(
+      'touchstart',
+      e => {
+        // If a gesture is already in progress (this.currentStart is set in onPanResponderMove),
+        // ignore additional touchstarts. Otherwise a stray finger landing outside the gesture zone
+        // would set this.abandon = true, which causes onPanResponderRelease to skip props.onEnd —
+        // leaving the gesture menu and transparent overlay stuck on screen. See #3887.
+        if (this.currentStart) return
 
-      if (testFlags.logMultigesture) {
-        const x = e.touches[0].clientX
-        const y = e.touches[0].clientY
-        console.info('touchstart', {
-          isInGestureZone: isInGestureZone(x, y, this.leftHanded),
-          shouldCancelGesture: this.props.shouldCancelGesture?.(x, y),
-        })
-      }
-
-      if (e?.touches.length > 0) {
-        const x = e.touches[0].clientX
-        const y = e.touches[0].clientY
-        debugLog.log('touchstart', { x: Math.round(x), y: Math.round(y) })
-        this.clientStart = { x, y }
-        // Remember the element the browser pinned this touch to, so a release can still be detected
-        // if that element unmounts mid-gesture. See the pointerup listener below.
-        this.touchTarget = e.target instanceof Element ? e.target : null
-        const inGestureZone = isInGestureZone(x, y, this.leftHanded)
-
-        if (inGestureZone && !props.shouldCancelGesture?.(x, y)) {
-          this.disableScroll = true
-        } else {
-          this.abandon = true
+        if (testFlags.logMultigesture) {
+          const x = e.touches[0].clientX
+          const y = e.touches[0].clientY
+          console.info('touchstart', {
+            isInGestureZone: isInGestureZone(x, y, this.leftHanded),
+            shouldCancelGesture: this.props.shouldCancelGesture?.(x, y),
+          })
         }
-      }
-    })
+
+        if (e?.touches.length > 0) {
+          const x = e.touches[0].clientX
+          const y = e.touches[0].clientY
+          debugLog.log('touchstart', { x: Math.round(x), y: Math.round(y) })
+          this.clientStart = { x, y }
+          // Remember the element the browser pinned this touch to, so a release can still be detected
+          // if that element unmounts mid-gesture. See the pointerup listener below.
+          this.touchTarget = e.target instanceof Element ? e.target : null
+          const inGestureZone = isInGestureZone(x, y, this.leftHanded)
+
+          if (inGestureZone && !props.shouldCancelGesture?.(x, y)) {
+            this.disableScroll = true
+
+            // Suppress the browser's back/forward navigation swipe, which Mobile Safari recognizes when a touch starts
+            // within a narrow strip at the edge of the screen. Only preventDefault on touchstart abandons it;
+            // preventDefault on touchmove comes too late, so the previous page slides in under the finger while em reads
+            // the same swipe as a gesture — showing a second, stale gesture menu. See #4115. touchmove and touchend are
+            // still delivered, so a gesture that starts at the edge is still recognized, and the strip holds no thoughts
+            // or controls to tap since the content is inset further than it.
+            if (x < SYSTEM_EDGE_SWIPE_WIDTH || x > viewportStore.getState().innerWidth - SYSTEM_EDGE_SWIPE_WIDTH) {
+              e.preventDefault()
+            }
+          } else {
+            this.abandon = true
+          }
+        }
+      },
+      { passive: false },
+    )
 
     // Since we set this.disableScroll or this.abandon on touchstart, we need to reset them on touchend.
     // This occurs, for eample, on tap.
