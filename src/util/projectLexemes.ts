@@ -4,33 +4,59 @@ import type Thought from '../@types/Thought'
 import { ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN } from '../constants'
 import hashThought from './hashThought'
 
+const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN])
+
 /** Projects changed thoughts over known memberships without discarding unloaded occurrences. */
-const projectLexemes = (lexemeIndex: Index<Lexeme>, thoughts: Index<Thought | null>): Index<Lexeme> => {
-  if (Object.keys(thoughts).length === 0) return lexemeIndex
-  const lexemes = { ...lexemeIndex }
-  const keys = Object.fromEntries(
-    Object.entries(thoughts)
-      .filter(([id]) => ![GLOBAL_ROOT_TOKEN, HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].includes(id))
-      .map(([id, thought]) => [id, thought ? hashThought(thought.value) : null]),
-  )
-  Object.entries(lexemes).forEach(([key, lexeme]) => {
-    const contexts = lexeme.contexts.filter(id => !(id in keys) || keys[id] === key)
-    if (contexts.length === lexeme.contexts.length) return
-    if (contexts.length) lexemes[key] = { ...lexeme, contexts }
-    else delete lexemes[key]
+const projectLexemes = (lexemeIndex: Index<Lexeme>, thoughtUpdates: Index<Thought | null>): Index<Lexeme> => {
+  const hashByThoughtId: Index<string | null> = {}
+  const thoughtsByHash = new Map<string, Thought[]>()
+  Object.entries(thoughtUpdates).forEach(([id, thought]) => {
+    if (ROOT_IDS.has(id)) return
+    const hash = thought ? hashThought(thought.value) : null
+    hashByThoughtId[id] = hash
+    if (!thought || hash === null) return
+    const groupedThoughts = thoughtsByHash.get(hash)
+    if (groupedThoughts) groupedThoughts.push(thought)
+    else thoughtsByHash.set(hash, [thought])
   })
-  Object.entries(thoughts).forEach(([id, thought]) => {
-    const key = keys[id]
-    if (!thought || key == null) return
-    const lexeme = lexemes[key]
-    lexemes[key] = {
-      contexts: lexeme?.contexts.includes(thought.id) ? lexeme.contexts : [...(lexeme?.contexts ?? []), thought.id],
-      created: lexeme && lexeme.created < thought.created ? lexeme.created : thought.created,
-      lastUpdated: lexeme && lexeme.lastUpdated > thought.lastUpdated ? lexeme.lastUpdated : thought.lastUpdated,
-      updatedBy: lexeme && lexeme.lastUpdated > thought.lastUpdated ? lexeme.updatedBy : thought.updatedBy,
+  if (Object.keys(hashByThoughtId).length === 0) return lexemeIndex
+
+  let nextLexemeIndex = lexemeIndex
+  Object.entries(lexemeIndex).forEach(([hash, lexeme]) => {
+    const contexts = lexeme.contexts.filter(id => !(id in hashByThoughtId) || hashByThoughtId[id] === hash)
+    if (contexts.length === lexeme.contexts.length) return
+    if (nextLexemeIndex === lexemeIndex) nextLexemeIndex = { ...lexemeIndex }
+    if (contexts.length) nextLexemeIndex[hash] = { ...lexeme, contexts }
+    else delete nextLexemeIndex[hash]
+  })
+
+  thoughtsByHash.forEach((thoughts, hash) => {
+    const lexeme = nextLexemeIndex[hash]
+    const contexts = new Set(lexeme?.contexts)
+    let created = lexeme?.created ?? thoughts[0].created
+    let latest: Lexeme | Thought = lexeme ?? thoughts[0]
+    thoughts.forEach(thought => {
+      contexts.add(thought.id)
+      if (thought.created < created) created = thought.created
+      if (thought.lastUpdated >= latest.lastUpdated) latest = thought
+    })
+    if (
+      lexeme &&
+      contexts.size === lexeme.contexts.length &&
+      created === lexeme.created &&
+      latest.lastUpdated === lexeme.lastUpdated &&
+      latest.updatedBy === lexeme.updatedBy
+    )
+      return
+    if (nextLexemeIndex === lexemeIndex) nextLexemeIndex = { ...lexemeIndex }
+    nextLexemeIndex[hash] = {
+      contexts: lexeme && contexts.size === lexeme.contexts.length ? lexeme.contexts : [...contexts],
+      created,
+      lastUpdated: latest.lastUpdated,
+      updatedBy: latest.updatedBy,
     }
   })
-  return lexemes
+  return nextLexemeIndex
 }
 
 export default projectLexemes
