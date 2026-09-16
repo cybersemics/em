@@ -3,6 +3,7 @@ import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { LEARNING_TARGET_REPS } from '../constants'
+import learningStorage from '../data-providers/learningStorage'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /**
@@ -23,8 +24,10 @@ const pinCommand = (state: State, { commandId }: { commandId: CommandId }): Stat
 /** Action-creator for pinCommand. */
 export const pinCommandActionCreator =
   (payload: Parameters<typeof pinCommand>[1]): Thunk =>
-  dispatch =>
+  (dispatch, getState) => {
     dispatch({ type: 'pinCommand', ...payload })
+    learningStorage.save(getState().learning)
+  }
 
 export default _.curryRight(pinCommand)
 

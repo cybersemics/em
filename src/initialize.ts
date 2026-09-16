@@ -10,7 +10,8 @@ import { initThoughtsActionCreator as initThoughts } from './actions/initThought
 import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
-import { commandById, executeCommand } from './commands'
+import { commandById, executeCommand, globalCommands } from './commands'
+import learningStorage from './data-providers/learningStorage'
 import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
@@ -58,6 +59,9 @@ type InitializeOptions = { storage: ThoughtspaceStorage }
 
 /** Initialize local db and window events. */
 const initializeInternal = async ({ storage }: InitializeOptions) => {
+  const learning = learningStorage.load(new Set(globalCommands.map(command => command.id)))
+  if (learning) store.dispatch({ type: 'hydrateLearning', learning })
+
   initOfflineStatusStore(/* websocket */)
   const eventHandlers = initEvents(store)
 

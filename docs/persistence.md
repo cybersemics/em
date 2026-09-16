@@ -13,6 +13,8 @@ Two queues bridge Redux and the local TreeCRDT store:
 
 The single point of integration with persistence is the [`DataProvider`](../src/data-providers/DataProvider.ts) interface, implemented by the active thoughtspace backend. [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exports both the active provider (`db`) and the `ThoughtspaceRuntime` that owns its lifecycle; today both are the TreeCRDT implementation.
 
+Learning state has a separate device-local boundary: [`learningStorage.ts`](../src/data-providers/learningStorage.ts) stores the pinned command and its practice progress in `localStorage` under a versioned key. It is shared across thoughtspaces on the same device and is not replicated by TreeCRDT.
+
 ## In-memory state (Redux)
 
 Thoughts live in `state.thoughts.thoughtIndex` (keyed by `ThoughtId`) and `state.thoughts.lexemeIndex` (keyed by hashed value). Only thoughts that are *visible* — the cursor, its ancestors, `state.expanded` paths, and any context-view contexts and their ancestors — are held in memory. Everything else has either never been pulled or was freed after going off-screen.

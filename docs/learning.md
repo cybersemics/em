@@ -17,14 +17,17 @@ The learning journey helps early users learn commands gradually through normal u
 - A missing record means the command is unstarted. A record is created when a command is first pinned, capturing the target from `LEARNING_TARGET_REPS` in [`constants.ts`](../src/constants.ts). Changing that constant does not change existing records.
 - Completion is derived: `reps >= targetReps`. There is no separate learned flag or journey status.
 
-The state is held in memory only. There is no persistence boundary yet, so the pin and any progress are lost on reload. When storage is added it belongs behind a dedicated learning persistence module, not in the reducers or components.
+[`learningStorage`](../src/data-providers/learningStorage.ts) saves the pin and progress in versioned device-local storage. Initialization loads it before the app renders and discards records for commands that no longer exist. Pinning, unpinning, and awarding a rep save the new learning state. Learning is independent of the active thoughtspace; it does not sync to other devices.
 
 ## Actions
 
 - [`pinCommand`](../src/actions/pinCommand.ts) — selects the command and initializes its progress record if absent. Repinning reuses the existing record.
 - [`unpinCommand`](../src/actions/unpinCommand.ts) — clears the selection and retains every progress record.
+- [`commandSucceeded`](../src/actions/commandSucceeded.ts) — receives a command-level success report and awards one rep when the invoked command is pinned and the invocation came from an actual keyboard shortcut or gesture. Reps stop at the record's target.
 
-Both are registered `undoable: false`, and `learning` is listed in `statePropertiesToOmit` in [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts), so pinning neither adds an undo step nor is reverted by undoing an edit. Nothing records reps yet; awarding verified reps is [#5484](https://github.com/cybersemics/em/issues/5484) and [#5485](https://github.com/cybersemics/em/issues/5485).
+These actions are registered `undoable: false`, and `learning` is listed in `statePropertiesToOmit` in [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts), so pinning and practice never add an undo step or get reverted by undoing an edit.
+
+The command runner reports success once per top-level invocation, including a multicursor invocation. It does so when `exec` returns normally or its returned promise resolves, provided the command was executable and did not set a new app error. A thrown or rejected error prevents a success report. This tests the command's execution boundary; work that a command starts without returning its promise cannot be judged after it finishes. Toolbar, Command Center, Command Universe, and internal calls do not earn practice credit.
 
 ## Pinning from the Command Universe
 
@@ -54,4 +57,4 @@ The ring records the editor's selection offsets before pointer activation can mo
 
 ## Not yet built
 
-Verified execution outcomes, rep counting, the learning overview, next-command suggestions, and persistence are separate child issues of #5481.
+The learning overview, next-command suggestions, and completion animation are separate child issues of #5481.
