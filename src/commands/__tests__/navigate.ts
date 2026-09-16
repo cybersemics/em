@@ -1,11 +1,11 @@
 import navigateBack from '../navigateBack'
 import navigateForward from '../navigateForward'
 
-/** Stubs window.navigation with the given capabilities and returns spies for back and forward. */
+/** Stubs window.navigation with the given capabilities and returns spies for back and forward. The DOM lib declares window.navigation readonly, so it is stubbed as a global rather than assigned. */
 const stubNavigation = ({ canGoBack, canGoForward }: { canGoBack: boolean; canGoForward: boolean }) => {
   const back = vi.fn()
   const forward = vi.fn()
-  window.navigation = { canGoBack, canGoForward, back, forward }
+  vi.stubGlobal('navigation', { canGoBack, canGoForward, back, forward })
   return { back, forward }
 }
 
@@ -18,13 +18,11 @@ const stubHistoryLength = (length: number) => {
   }
 }
 
-afterEach(() => {
-  delete window.navigation
-})
+afterEach(() => vi.unstubAllGlobals())
 
 describe('navigateBack', () => {
   it('canExecute falls back to window.history.length when the Navigation API is unavailable', () => {
-    delete window.navigation
+    vi.unstubAllGlobals()
 
     const restoreEmpty = stubHistoryLength(1)
     expect(navigateBack.canExecute()).toBe(false)
@@ -50,7 +48,7 @@ describe('navigateBack', () => {
   })
 
   it('exec falls back to window.history.back when the Navigation API is unavailable', () => {
-    delete window.navigation
+    vi.unstubAllGlobals()
     const back = vi.spyOn(window.history, 'back').mockImplementation(() => {})
     navigateBack.exec()
     expect(back).toHaveBeenCalledTimes(1)
@@ -60,7 +58,7 @@ describe('navigateBack', () => {
 
 describe('navigateForward', () => {
   it('canExecute falls back to window.history.length when the Navigation API is unavailable', () => {
-    delete window.navigation
+    vi.unstubAllGlobals()
 
     const restoreEmpty = stubHistoryLength(1)
     expect(navigateForward.canExecute()).toBe(false)
@@ -86,7 +84,7 @@ describe('navigateForward', () => {
   })
 
   it('exec falls back to window.history.forward when the Navigation API is unavailable', () => {
-    delete window.navigation
+    vi.unstubAllGlobals()
     const forward = vi.spyOn(window.history, 'forward').mockImplementation(() => {})
     navigateForward.exec()
     expect(forward).toHaveBeenCalledTimes(1)

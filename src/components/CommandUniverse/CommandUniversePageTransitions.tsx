@@ -1,10 +1,12 @@
 import { ReactElement, useEffect, useLayoutEffect, useRef } from 'react'
+import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import useCommandUniverseNavigator from '../../hooks/useCommandUniverseNavigator'
 
-/** Coordinates retained page surfaces. The router supplies keyed content; the provider owns history. */
+/** Coordinates retained page surfaces while Redux owns their history. */
 const CommandUniversePageTransitions = ({ children }: { children: ReactElement[] }) => {
-  const { entries, activeEntryId, isOpen } = useCommandUniverseNavigator()
+  const { entries, index } = useSelector(state => state.commandUniverseNavigation)
+  const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
+  const activeEntryId = entries[index].entryId
   const pages = useRef(new Map<string, HTMLDivElement>())
   const focusTargets = useRef(new Map<string, HTMLElement>())
   const previousActiveEntryId = useRef(activeEntryId)

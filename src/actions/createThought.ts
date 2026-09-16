@@ -19,8 +19,6 @@ import keyValueBy from '../util/keyValueBy'
 import timestamp from '../util/timestamp'
 
 interface Payload {
-  // directly adds children to thought.childrenMap with no additional validation
-  children?: ThoughtId[]
   id?: ThoughtId
   /** Callback for when the updates have been synced with IDB. */
   idbSynced?: () => void
@@ -32,7 +30,7 @@ interface Payload {
 /**
  * Creates a new thought with a known context and rank. Does not update the cursor. Use the newThought reducer for a higher level function.
  */
-const createThought = (state: State, { path, value, rank, id, idbSynced, children, splitSource }: Payload) => {
+const createThought = (state: State, { path, value, rank, id, idbSynced, splitSource }: Payload) => {
   id = id || createId()
   const lexemeOld = getLexeme(state, value)
 
@@ -50,7 +48,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
   const parent = getThoughtById(state, parentId)
 
   if (!parent) {
-    console.error({ path, value, rank, id, idbSynced, children, splitSource })
+    console.error({ path, value, rank, id, idbSynced, splitSource })
     throw new Error(`createThought: Parent thought with id ${parentId} not found`)
   }
 
@@ -65,8 +63,9 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
   // }
 
   const thoughtNew: Thought = {
-    // Do not use createChildrenMap since the thoughts must exist and createThought does not require the thoughts to exist.
-    childrenMap: children ? keyValueBy(children || {}, id => ({ [id]: id })) : {},
+    // A new thought has no children yet. A caller that needs children creates them with further createThought calls
+    // once this thought exists, so the parent's childrenMap never references a thought that is not in the index.
+    childrenMap: {},
     created: timestamp(),
     id,
     lastUpdated: timestamp(),

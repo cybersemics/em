@@ -302,17 +302,29 @@ describe('Superscripts', () => {
 
   // https://github.com/cybersemics/em/pull/4539#issuecomment-5167203257
   it('paste duplicate thought into an empty sibling at the same level', async () => {
-    await newThought('AAA')
+    await paste(`
+      - AAA
+    `)
+
     await clickThought('AAA')
     await press('c', { ctrl: true })
-    await newThought('')
+
+    // clickThought hits the center of AAA, so Enter would split it; click the end so it creates a sibling
+    const editableNodeHandle = await waitForEditable('AAA')
+    await click(editableNodeHandle, { edge: 'right' })
+    await press('Enter')
+    await waitForEditable('')
+
     await press('v', { ctrl: true })
 
-    const values = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('[data-editable]')).map(element => (element as HTMLElement).innerText),
-    )
+    // the import is asynchronous; it is complete when the empty thought has been replaced by the pasted thought
+    await waitUntil(() => !Array.from(document.querySelectorAll('[data-editable]')).some(el => el.innerHTML === ''))
 
-    expect(values.filter(Boolean)).toEqual(['AAA', 'AAA'])
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- AAA
+- AAA
+`)
   })
 
   // https://github.com/cybersemics/em/pull/4539#issuecomment-5178983042

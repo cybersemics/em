@@ -1,10 +1,10 @@
 import { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import { commandUniverseBackActionCreator as commandUniverseBack } from '../../actions/commandUniverseBack'
+import { commandUniverseForwardActionCreator as commandUniverseForward } from '../../actions/commandUniverseForward'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
-import useCommandUniverseNavigator from '../../hooks/useCommandUniverseNavigator'
 import CommandUniversePageRouter from '../CommandUniverse/CommandUniversePageRouter'
-import CommandUniverseProvider from '../CommandUniverse/CommandUniverseProvider'
 import FadeTransition from '../FadeTransition'
 import Dialog from './Dialog'
 import DialogHeader from './DialogHeader'
@@ -24,10 +24,12 @@ const HiddenDialogAssets = () => (
 const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
   const dispatch = useDispatch()
   const nodeRef = useRef<HTMLDivElement>(null)
-  const navigation = useCommandUniverseNavigator()
+  const { entries, index } = useSelector(state => state.commandUniverseNavigation)
   const onClose = useCallback(() => {
     dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
   }, [dispatch])
+  const onBack = useCallback(() => dispatch(commandUniverseBack()), [dispatch])
+  const onForward = useCallback(() => dispatch(commandUniverseForward()), [dispatch])
 
   return (
     <>
@@ -36,10 +38,10 @@ const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
         <Dialog onClose={onClose} nodeRef={nodeRef}>
           <DialogHeader
             onClose={onClose}
-            onBack={navigation.back}
-            onForward={navigation.forward}
-            canGoBack={navigation.canGoBack}
-            canGoForward={navigation.canGoForward}
+            onBack={onBack}
+            onForward={onForward}
+            canGoBack={index > 0}
+            canGoForward={index < entries.length - 1}
           >
             Commands
           </DialogHeader>
@@ -52,14 +54,10 @@ const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
   )
 }
 
-/** Keeps the session owner outside its presentation so alternative shells can share the same navigator. */
+/** Renders the mobile Command Universe from its Redux-owned navigation session. */
 const MobileCommandUniverse = () => {
   const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
-  return (
-    <CommandUniverseProvider isOpen={isOpen}>
-      <CommandUniverseDialog isOpen={isOpen} />
-    </CommandUniverseProvider>
-  )
+  return <CommandUniverseDialog isOpen={isOpen} />
 }
 
 export default MobileCommandUniverse
