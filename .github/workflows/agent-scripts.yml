@@ -16,6 +16,10 @@ name: Agent Scripts
 #   - scripts/ci/__tests__/ covers the comment the fix automations keep on a pull request — the
 #     shared renderer, and the Copilot conflict scan that decides what goes in it — which nothing
 #     else exercises until one of them writes on a real pull request.
+#   - scripts/debugLogCompare.test.ts covers the debug-log comparison the compare-debug-log skill
+#     runs. Its whole job is to neutralize what differs between two runs of the same steps — ids,
+#     sequence numbers, timestamps, per-device nonces — so a regression there does not fail loudly,
+#     it just reports a divergence that is not real, which is worse than no tool at all.
 #
 # `paths` means a non-matching PR reports no check at all — not a skipped one — so this workflow
 # must never be made a required status check on main (see § Path filtering in docs/testing.md).
@@ -29,6 +33,10 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
+      - scripts/debugLogCompare.ts
+      - scripts/debugLogCompare.test.ts
+      - scripts/debug-log-capture.ts
+      - scripts/debug-log-diff.ts
       - scripts/ci/task-comment.cjs
       - scripts/ci/__tests__/task-comment.mjs
       - scripts/ci/collect-copilot-conflicts.cjs
@@ -52,6 +60,10 @@ on:
       - scripts/mcp-session-proxy.mjs
       - scripts/mcp-session-proxy.test.mjs
       - scripts/bridge-attach.test.ts
+      - scripts/debugLogCompare.ts
+      - scripts/debugLogCompare.test.ts
+      - scripts/debug-log-capture.ts
+      - scripts/debug-log-diff.ts
       - scripts/ci/task-comment.cjs
       - scripts/ci/__tests__/task-comment.mjs
       - scripts/ci/collect-copilot-conflicts.cjs
@@ -116,6 +128,9 @@ jobs:
 
       - name: Run web bridge attach integration test
         run: npx tsx scripts/bridge-attach.test.ts
+
+      - name: Run debug log comparison tests
+        run: npx tsx scripts/debugLogCompare.test.ts
 
       - name: Run task comment tests
         run: node scripts/ci/__tests__/task-comment.mjs

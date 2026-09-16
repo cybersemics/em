@@ -15,7 +15,7 @@ import DialogContent from '../dialog/DialogContent'
  * gestures are inputted.
  */
 const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
-  const { search, setSearch, sortOrder, setSortOrder, groups } = useCommandList()
+  const { search, setSearch, sortOrder, setSortOrder, sections } = useCommandList()
 
   // Pass this ref to `DialogContent`, which owns the scrollable element, so that we can reset
   // the scroll position to the top as results crossfade.
@@ -57,15 +57,15 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
             onEnter={() => scrollRef.current?.scrollTo({ top: 0 })}
           >
             <div ref={fadeRef}>
-              {groups.map((group, index) => (
+              {sections.map((section, index) => (
                 <div
-                  key={group.title}
+                  key={section.id}
                   className={css({
                     position: 'relative',
                     contain: 'layout paint',
                   })}
                 >
-                  {/* Section header row — centered title flanked by gradient hairlines that fade outward to delimit each command group. */}
+                  {/* Section header row — centered title flanked by gradient hairlines that fade outward to delimit each command section. */}
                   <div
                     className={css({
                       display: 'flex',
@@ -74,7 +74,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
                       gap: '1rem',
                       paddingBlock: '1.25rem',
                     })}
-                    // First group sits flush against the search row — skip its top padding so it doesn't double up.
+                    // First section sits flush against the search row — skip its top padding so it doesn't double up.
                     style={index === 0 ? { paddingTop: 0 } : undefined}
                   >
                     {/* Left hairline: transparent at the panel edge, solid near the title. */}
@@ -96,7 +96,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
                         whiteSpace: 'nowrap',
                       })}
                     >
-                      {group.title}
+                      {section.title}
                     </h2>
                     {/* Right hairline: solid near the title, fading to transparent at the panel edge. */}
                     <div
@@ -108,7 +108,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
                       })}
                     />
                   </div>
-                  <CommandUniverseGrid commands={group.commands} search={search} />
+                  <CommandUniverseGrid commands={section.commands} search={search} />
                 </div>
               ))}
             </div>
