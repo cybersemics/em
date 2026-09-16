@@ -1,0 +1,37 @@
+import { KnownDevices } from 'puppeteer'
+import click from '../helpers/click'
+import deviceEmulation from '../helpers/deviceEmulation'
+import gesture from '../helpers/gesture'
+import reloadWithProductionTiming from '../helpers/reloadWithProductionTiming'
+import waitForSelector from '../helpers/waitForSelector'
+import { page } from '../session'
+
+vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 })
+
+describe('mobile Command Universe', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  // https://github.com/cybersemics/em/issues/4200
+  it.skip('scales the grid in while returning from a settled command detail page', async () => {
+    await reloadWithProductionTiming()
+    await gesture('rdld')
+    await waitForSelector('button[aria-label="New Thought"]')
+    await click('button[aria-label="New Thought"]')
+    await page.waitForFunction(
+      () => document.activeElement?.tagName === 'H3' && document.activeElement.textContent === 'New Thought',
+    )
+
+    await click('button[aria-label="Back"]')
+    await page.waitForFunction(() => {
+      const grid = document.querySelector('[data-testid="command-universe-grid-surface"]')
+      if (!grid) return false
+      const opacity = Number(getComputedStyle(grid).opacity)
+      return opacity > 0.2 && opacity < 0.6
+    })
+
+    const gridScale = await page.$eval('[data-testid="command-universe-grid-surface"]', grid =>
+      new DOMMatrixReadOnly(getComputedStyle(grid).transform).a,
+    )
+    expect(gridScale).toBeGreaterThan(1.2)
+  })
+})
