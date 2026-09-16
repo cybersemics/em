@@ -12,9 +12,6 @@ const settled = { opacity: 1, scale: 1, filter: 'blur(0px)' }
 /** Where a surface sits when it is not the page being shown. Zooming in pushes the page you left outward. */
 const away = (zoom: 'in' | 'out') => ({ opacity: 0, scale: zoom === 'in' ? 2.5 : 0.3, filter: 'blur(48px)' })
 
-/** A retained page that no navigation is currently moving. */
-const parked = { opacity: 0, scale: 1, filter: 'blur(0px)' }
-
 /**
  * Coordinates retained page surfaces while Redux owns their history and transition semantics.
  *
@@ -72,12 +69,21 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
     >
       {children.map(child => {
         const entryId = String(child.key)
-        const pageId = entries.find(entry => entry.entryId === entryId)?.page.pageId
+        const entryIndex = entries.findIndex(entry => entry.entryId === entryId)
+        const pageId = entries[entryIndex].page.pageId
         const active = entryId === activeEntryId
         const entering = !!transition && transition.toEntryId === entryId
         const exiting = !!transition && transition.fromEntryId === entryId
         const moving = isOpen && (entering || exiting)
-        const target = entering || (!transition && active) ? settled : exiting ? away(transition.zoom) : parked
+        // Keep a retained surface at the endpoint of its nearest history edge. Back and Forward then animate
+        // it from the same pose where the previous transition left it, even after that transition clears.
+        const parkedTarget =
+          entryIndex < index
+            ? away(entries[entryIndex + 1].arrival!.zoom)
+            : entryIndex > index
+              ? away(entries[entryIndex].arrival!.zoom === 'in' ? 'out' : 'in')
+              : settled
+        const target = entering || (!transition && active) ? settled : exiting ? away(transition.zoom) : parkedTarget
         return (
           <motion.div
             key={entryId}

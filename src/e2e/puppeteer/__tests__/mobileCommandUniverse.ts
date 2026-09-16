@@ -12,7 +12,7 @@ describe('mobile Command Universe', () => {
   deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   // https://github.com/cybersemics/em/issues/4200
-  it.skip('scales the grid in while returning from a settled command detail page', async () => {
+  it('scales the grid in while returning from a settled command detail page', async () => {
     await reloadWithProductionTiming()
     await gesture('rdld')
     await waitForSelector('button[aria-label="New Thought"]')
@@ -22,16 +22,15 @@ describe('mobile Command Universe', () => {
     )
 
     await click('button[aria-label="Back"]')
-    await page.waitForFunction(() => {
+    const gridScaleHandle = await page.waitForFunction(() => {
       const grid = document.querySelector('[data-testid="command-universe-grid-surface"]')
       if (!grid) return false
-      const opacity = Number(getComputedStyle(grid).opacity)
-      return opacity > 0.2 && opacity < 0.6
+      const style = getComputedStyle(grid)
+      const opacity = Number(style.opacity)
+      return opacity > 0.2 && opacity < 0.6 ? new DOMMatrixReadOnly(style.transform).a : false
     })
 
-    const gridScale = await page.$eval('[data-testid="command-universe-grid-surface"]', grid =>
-      new DOMMatrixReadOnly(getComputedStyle(grid).transform).a,
-    )
+    const gridScale = await gridScaleHandle.jsonValue()
     expect(gridScale).toBeGreaterThan(1.2)
   })
 })
