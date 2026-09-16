@@ -41,7 +41,8 @@ it('expands the pinned gesture and reveals its command without changing the pin'
   expect(tooltip).toBeVisible()
   expect(ring).toHaveAttribute('aria-expanded', 'true')
   expect(within(tooltip).getByRole('button', { name: 'New Thought' })).toBeVisible()
-  expect(within(tooltip).getByText('Trace the gesture to activate.')).toBeVisible()
+  expect(within(tooltip).getByText('TIP')).toBeVisible()
+  expect(within(tooltip).getByText('Clear')).toBeVisible()
 
   await user.click(within(tooltip).getByRole('button', { name: 'New Thought' }))
   await act(vi.runAllTimersAsync)
@@ -90,7 +91,7 @@ it('closes on Escape and explains a command without a gesture', async () => {
   expect(screen.queryByRole('dialog', { name: 'Gesture for Settings' })).toBeNull()
 })
 
-it('dismisses when the expanded gesture is activated', async () => {
+it('dismisses when Clear is activated', async () => {
   await act(async () => {
     store.dispatch(pinCommand({ commandId: 'newThought' }))
     await vi.runAllTimersAsync()
@@ -99,7 +100,7 @@ it('dismisses when the expanded gesture is activated', async () => {
 
   const ring = screen.getByRole('button', { name: 'Show gesture for New Thought' })
   await user.click(ring)
-  await user.click(screen.getByRole('button', { name: 'Hide gesture for New Thought' }))
+  await user.click(screen.getByText('Clear'))
   await act(vi.runAllTimersAsync)
 
   expect(ring).toHaveAttribute('aria-expanded', 'false')
