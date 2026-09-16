@@ -8497,7 +8497,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@typescript/native@npm:typescript@7.0.2, typescript@npm:7.0.2, typescript@npm:^7.0.2":
+"@typescript/native@npm:typescript@7.0.2, typescript@npm:7.0.2":
   version: 7.0.2
   resolution: "typescript@npm:7.0.2"
   dependencies:
@@ -9643,6 +9643,7 @@ __metadata:
   dependencies:
     "@types/cors": "npm:^2.8.19"
     "@types/express": "npm:^4.17.18"
+    "@typescript/native": "npm:typescript@7.0.2"
     "@vercel/firewall": "npm:^1.2.5"
     body-parser: "npm:^2.3.0"
     cors: "npm:^2.8.6"
@@ -9650,7 +9651,7 @@ __metadata:
     express: "npm:^4.18.2"
     openai: "npm:^7.13.0"
     tsx: "npm:^4.23.13"
-    typescript: "npm:^7.0.2"
+    typescript: "npm:@typescript/typescript6@6.0.2"
     zod: "npm:^4.5.4"
   languageName: unknown
   linkType: soft
@@ -24222,7 +24223,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A7.0.2#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^7.0.2#optional!builtin<compat/typescript>":
+"typescript@patch:typescript@npm%3A7.0.2#optional!builtin<compat/typescript>":
   version: 7.0.2
   resolution: "typescript@patch:typescript@npm%3A7.0.2#optional!builtin<compat/typescript>::version=7.0.2&hash=3bafbf"
   dependencies:
