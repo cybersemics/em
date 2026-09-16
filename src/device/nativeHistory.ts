@@ -2,6 +2,7 @@ import { PluginListenerHandle } from '@capacitor/core'
 import { WebviewBackground } from 'webview-background'
 import { isCapacitor, isIOS, isSafari, isTouch } from '../browser'
 import { handleNativeHistory } from '../commands'
+import { NATIVE_HISTORY_REGISTER_DELAY } from '../constants'
 import globals from '../globals'
 import isRedoEnabled from '../selectors/isRedoEnabled'
 import isUndoEnabled from '../selectors/isUndoEnabled'
@@ -60,7 +61,7 @@ const onTouchEnd = (e: TouchEvent) => {
   if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) <= Math.abs(dy)) return
 
   globals.nativeHistoryGestureTime = Date.now()
-  handleNativeHistory(dx > 0 ? 'redo' : 'undo')
+  handleNativeHistory(dx > 0 ? 'redo' : 'undo', { registerDelay: NATIVE_HISTORY_REGISTER_DELAY })
 }
 
 /**

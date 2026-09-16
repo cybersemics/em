@@ -41,7 +41,7 @@ describe('Native history', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5575
-  it.skip('a shake undo still works after a three-finger undo and redo', async () => {
+  it('a shake undo still works after a three-finger undo and redo', async () => {
     await newThought('hello')
 
     await threeFingerSwipe('l')

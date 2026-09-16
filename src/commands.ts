@@ -26,7 +26,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { undoActionCreator as undo } from './actions/undo'
-import { isMac, isSafari, isTouch } from './browser'
+import { isCapacitor, isMac, isSafari, isTouch } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import {
@@ -775,23 +775,6 @@ export const handleGestureCancel = () => {
   })
 }
 
-/** Performs a native undo/redo gesture (iOS shake-to-undo, three-finger swipe, or the Edit menu) as em's own undo/redo, so that Redux remains the single source of truth. Called from both routes a native gesture can arrive by: the `historyUndo`/`historyRedo` `beforeinput` event in the browser, and the `nativeHistory` event from the Capacitor plugin. */
-export const handleNativeHistory = (type: 'undo' | 'redo') => {
-  // Flush any pending throttled edit before reading the state, mirroring keyDown. Editing dispatches editThought on a
-  // throttle, so a native undo triggered mid-edit (e.g. immediately after an autocorrect) would otherwise undo the
-  // previous step and let the pending edit commit afterwards, duplicating text (#4477).
-  commandEmitter.trigger('command', commandById(type))
-  // cursorAtEnd places the caret at the end of the restored thought rather than at the cursorOffset captured before
-  // the undone action, which is the position the thought was entered at and leaves the caret away from the restored
-  // word, typically at the beginning of the thought.
-  const state = store.getState()
-  if (type === 'undo') {
-    if (isUndoEnabled(state)) store.dispatch(undo({ cursorAtEnd: true }))
-  } else if (isRedoEnabled(state)) {
-    store.dispatch(redo({ cursorAtEnd: true }))
-  }
-}
-
 /** Set while the synthetic execCommands in registerNativeRedoStep are running, so that the `historyUndo` `beforeinput`
  * they dispatch is passed through to WebKit instead of being routed through em's undo a second time. */
 let registeringNativeRedoStep = false
@@ -819,10 +802,12 @@ let registeringNativeRedoStep = false
  * that finds no editable selection falls back to the hidden anchor. The undo runs only once an insert has succeeded,
  * since it would otherwise revert the user's own last edit.
  *
- * No-op on non-iOS platforms (isTouch && isSafari gates iOS WKWebView; desktop Safari has no shake/three-finger undo).
+ * No-op outside iOS Mobile Safari. The Capacitor app is excluded because its gestures are consumed natively and
+ * never consult WebKit's stacks (isTouch && isSafari alone would match its WKWebView too), and desktop Safari has no
+ * shake or three-finger undo.
  */
 const registerNativeRedoStep = (): void => {
-  if (!isTouch || !isSafari()) return
+  if (!isTouch || !isSafari() || isCapacitor()) return
   globals.suppressChange = true
   registeringNativeRedoStep = true
   const marker = '<span data-native-history></span>'
@@ -834,6 +819,31 @@ const registerNativeRedoStep = (): void => {
   }
   registeringNativeRedoStep = false
   globals.suppressChange = false
+}
+
+/** Performs a native undo/redo gesture (iOS shake-to-undo, three-finger swipe, or the Edit menu) as em's own undo/redo, so that Redux remains the single source of truth. Called from every route a native gesture can arrive by: the `historyUndo`/`historyRedo` `beforeinput` event in the browser, the three-finger swipe recognized from touch events in `device/nativeHistory.ts`, and the `nativeHistory` event from the Capacitor plugin. `registerDelay` is how long to wait before refreshing WebKit's history step — see below. */
+export const handleNativeHistory = (type: 'undo' | 'redo', { registerDelay = 0 }: { registerDelay?: number } = {}) => {
+  // Flush any pending throttled edit before reading the state, mirroring keyDown. Editing dispatches editThought on a
+  // throttle, so a native undo triggered mid-edit (e.g. immediately after an autocorrect) would otherwise undo the
+  // previous step and let the pending edit commit afterwards, duplicating text (#4477).
+  commandEmitter.trigger('command', commandById(type))
+  // cursorAtEnd places the caret at the end of the restored thought rather than at the cursorOffset captured before
+  // the undone action, which is the position the thought was entered at and leaves the caret away from the restored
+  // word, typically at the beginning of the thought.
+  const state = store.getState()
+  if (type === 'undo') {
+    if (isUndoEnabled(state)) store.dispatch(undo({ cursorAtEnd: true }))
+  } else if (isRedoEnabled(state)) {
+    store.dispatch(redo({ cursorAtEnd: true }))
+  }
+
+  // em's undo re-renders the editable WebKit recorded its step against, which leaves that step stale: WebKit
+  // discards it when the next gesture arrives and dispatches nothing, so a later shake reaches em nowhere (#5575).
+  // Register a fresh one on every native gesture em handles, whichever route it arrived by. A step registered before
+  // the re-render lands is stale on arrival, so the caller says how long that takes on its route: a `beforeinput`
+  // already arrives late enough for the next task to be clear, while the touch route runs at touchend, well before
+  // the re-render.
+  setTimeout(registerNativeRedoStep, registerDelay)
 }
 
 /** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707).
@@ -863,10 +873,6 @@ export const beforeInput = (e: InputEvent) => {
     if (Date.now() - globals.nativeHistoryGestureTime > NATIVE_HISTORY_GESTURE_TIMEOUT) {
       handleNativeHistory(e.inputType === 'historyUndo' ? 'undo' : 'redo')
     }
-    // Preventing the native operation leaves WebKit's redo stack empty, so register a step that keeps the shake
-    // redo gesture coming. Deferred to a task of its own so that em's re-render, and the caret restore that follows
-    // it, land first.
-    setTimeout(registerNativeRedoStep)
     return
   }
 

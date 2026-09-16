@@ -156,6 +156,10 @@ export const COMMAND_PALETTE_TIMEOUT = 400
 // beforeinput is treated as the same gesture rather than a new one. See device/nativeHistory.ts.
 export const NATIVE_HISTORY_GESTURE_TIMEOUT = 1000
 
+// How long to wait after a touch-recognized native undo/redo before refreshing WebKit's history step, so that em's
+// re-render and the caret restore that follows it land first. See handleNativeHistory in commands.ts.
+export const NATIVE_HISTORY_REGISTER_DELAY = 1000
+
 // delay to show executed command after gesture is completed
 export const GESTURE_HINT_TIMEOUT = 5000
 
