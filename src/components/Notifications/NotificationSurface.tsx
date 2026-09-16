@@ -1,5 +1,5 @@
 import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
-import { ReactNode, useCallback, useEffect, useRef } from 'react'
+import { ReactNode, Ref, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { notificationRecipe } from '../../../styled-system/recipes'
 import useSwipeToClear from '../../hooks/useSwipeToClear'
 import durations from '../../util/durations'
@@ -8,6 +8,8 @@ import ProgressiveBlur from '../ProgressiveBlur'
 type Anchor = 'bottom-full' | 'bottom-right'
 
 interface NotificationSurfaceProps {
+  /** Runs the surface's guarded fade before notifying its owner. */
+  ref?: Ref<{ dismiss: () => void }>
   /** Where the notification sits at each breakpoint. */
   anchor: Anchor | { base: Anchor; lg?: Anchor }
   /** The decorative image treatment. */
@@ -18,13 +20,14 @@ interface NotificationSurfaceProps {
   onDismiss?: () => void
   /** Enable the touch swipe interaction on the content layer. */
   swipeToDismiss?: boolean
-  /** Content can request the same animated dismissal as a swipe. */
-  children: ReactNode | ((dismiss: () => void) => ReactNode)
+  /** Notification-specific content. */
+  children: ReactNode
 }
 
 /** A notification's positioned blur, glow, and interactive content layers. */
 const NotificationSurface = ({
   anchor,
+  ref,
   glow,
   isVisible,
   onDismiss,
@@ -57,6 +60,8 @@ const NotificationSurface = ({
     dismissing.current = true
     dismiss()
   }, [dismiss])
+
+  useImperativeHandle(ref, () => ({ dismiss: requestDismiss }), [requestDismiss])
 
   useEffect(() => {
     if (isVisible) {
@@ -94,7 +99,7 @@ const NotificationSurface = ({
           style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
           {...(swipeToDismiss ? touchHandlers : {})}
         >
-          {typeof children === 'function' ? children(requestDismiss) : children}
+          {children}
         </div>
       </motion.div>
     </div>
