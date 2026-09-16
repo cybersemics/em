@@ -15,7 +15,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 // https://github.com/cybersemics/em/issues/4175
-it.skip('Create a thought from the search input', async () => {
+it('Create a thought from the search input', async () => {
   await dispatch([
     importText({
       text: `
