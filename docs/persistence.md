@@ -69,13 +69,13 @@ Each node carries a payload: a JSON-encoded `ThoughtPayload` ([`payload.ts`](../
 Two app-owned indexes live alongside the CRDT tables in the same SQLite database. Neither is part of the CRDT, so neither replicates; both are rebuilt or maintained locally.
 
 - **`em_lexeme_memberships`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — one row per live thought, keyed by thought ID and indexed by `hashThought(value)`. Reads assemble `Lexeme.contexts` from these rows; Redux's potentially incomplete context arrays never replace stored membership. System root nodes are excluded. Lexeme metadata is derived from live members: earliest creation and latest update/writer, with contexts ordered by creation then thought ID.
-- **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id. A companion `em_attribute_children_meta` table records the index version; when it doesn't match `INDEX_VERSION`, `ensureAttributeChildrenIndexReady` rebuilds the index by walking the materialized tree once from the global root. After that it's maintained incrementally from materialization batches.
+- **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id.
 
-`em_lexeme_memberships_meta` records the materialization frontier only after successful index updates. On startup, a missing or stale frontier causes a rebuild from TreeCRDT, repairing incomplete old indexes without rewriting thought payloads or operations. An indexing failure rejects subsequent reads/writes until reopening repairs it; later events cannot checkpoint over the failure. The index has its own serialized queue, independent of UI refreshes, so persistence never waits on a UI task that is itself waiting for persistence.
+`em_derived_indexes_meta` records a shared index version and materialization frontier only after both indexes finish. A missing, outdated, or stale checkpoint rebuilds both from TreeCRDT without rewriting payloads or operations. The checkpoint is invalidated before rebuilding so an interrupted rebuild is retried. Older independent index markers are ignored. An indexing failure rejects later work rather than checkpointing over the failure; reopening repairs the indexes.
 
 ### Reading a thought
 
-`getThoughtByIdFromClient` assembles a `Thought` from the tree plus the attribute index:
+`createThoughtReader` assembles a `Thought` from the tree plus the attribute index:
 
 - Non-live nodes return `undefined`, even though TreeCRDT retains their payloads after deletion.
 - `value` / `created` / `lastUpdated` / `updatedBy` / `archived` come from the decoded payload.
@@ -83,13 +83,15 @@ Two app-owned indexes live alongside the CRDT tables in the same SQLite database
 - `rank` is the node's **index among its siblings** (`0` when it has no parent). It is a projection of the tree's order, computed per read, not a persisted field.
 - `childrenMap` is built by `createIndexedChildrenMap`: attribute children are keyed by their value (via `childrenMapKey`, which disambiguates duplicates), all other children by their `ThoughtId`. Insertion order follows `client.tree.children`, so `Object.values(childrenMap)` is the authoritative sibling order.
 
+Child-order reads are shared within one batch or committed refresh, never across writes.
+
 `testFlags.replicationDelay` injects an artificial delay into `getThoughtsByIds`, used by e2e tests that need to observe slow local materialization after a refresh.
 
 ### Writes
 
 `updateThoughtsForClient` applies one push-queue batch:
 
-1. **Upserts.** Field patches are keyed by thought ID and merged with the current stored thought; a partial edit cannot create a missing thought. New thoughts use `client.local.insert` with a resolved placement (see below). Existing thoughts use `client.local.move` for placement changes and `client.local.payload` for changed payload fields. Redundant payload writes are skipped.
+1. **Upserts.** Field patches are keyed by thought ID and merged with the stored payload and parent, without constructing child maps or display ranks; a partial edit cannot create a missing thought. New thoughts use `client.local.insert` with a resolved placement (see below). Existing thoughts use `client.local.move` for placement changes and `client.local.payload` for changed payload fields. Redundant payload writes are skipped.
 2. **Deletions.** Each `null` entry becomes a `client.local.delete`. Surviving children move first: moving them after deleting their old parent can revive that defensively deleted ancestor.
 3. **Derived indexes.** Materialization maintains memberships and attribute children for both local and incoming operations. `lexemeIndexUpdates` is only needed for read results and cache eviction, not local mutations or persistence: memberships come from the stored nodes, including unloaded occurrences.
 
@@ -122,9 +124,9 @@ It also namespaces local write IDs by page load. Redux batches include their tho
 
 ### Change observation (materialization)
 
-`client.onMaterialized` fires after operations are materialized into SQLite — for remote ops arriving over sync as well as for local writes. Every event updates the membership index from current node state. The previous hash is looked up by thought ID, so rename/delete also work when the old thought was never loaded into Redux. Indexing runs even without a UI bridge.
+`client.onMaterialized` fires after operations are materialized into SQLite — for remote ops arriving over sync as well as for local writes. The listener buffers events; the owning storage job updates attribute children and lexeme memberships, then publishes once. There is no separate index-write queue. Memberships come from current node state; the previous hash is looked up by thought ID, so rename/delete also work when the old thought was never loaded into Redux. Both indexes advance even without a UI bridge or after a Redux reset.
 
-[`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) drains the owning job's events and finishes membership and attribute indexes even without a bridge. With a bridge, it:
+[`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) consumes the owning job's indexed events; it does not write derived tables. With a bridge, it:
 
 1. Discards obsolete generations and loads affected thoughts and parent child maps through [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts). Only structural changes refresh sibling ranks; payload edits still refresh parent maps for attribute renames. Local and remote events follow the same path. Deletions are checked against current storage; the internal global root is not published to Redux.
 2. Reads complete affected memberships and synchronously calls `onCommit` with committed thoughts and matching write confirmations. The storage queue prevents intervening writes, so no version-counter retry loop is needed. `getGeneration` detects a receiving-view reset during the read and discards its publication.

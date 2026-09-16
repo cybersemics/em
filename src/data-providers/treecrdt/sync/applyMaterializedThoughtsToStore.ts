@@ -1,39 +1,35 @@
 import type { MaterializationEvent } from '@treecrdt/interface/engine'
-import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
 import type Index from '../../../@types/IndexType'
 import type Thought from '../../../@types/Thought'
 import type ThoughtUpdates from '../../../@types/ThoughtUpdates'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
-import { refreshAttributeChildrenFromChanges } from '../attributeChildren'
-import { isStaleTreecrdtMaterialization } from '../writeBarrier'
+import { isStaleThoughtWrite, isStaleTreecrdtMaterialization } from '../writeBarrier'
 import { type MaterializationStore, refreshThoughtsFromMaterializationChanges } from './materializationThoughtUpdates'
 
 /** Dependencies captured when a client registers its materialization listener. */
 export type MaterializationContext = Readonly<{
   bridge?: ThoughtspaceMaterializationBridge
-  client: TreecrdtClient
   db: MaterializationStore
-  pending: { event: MaterializationEvent; keys: Promise<string[]>; generation: number | undefined }[]
+  pending: { event: MaterializationEvent; keys: string[]; generation: number | undefined }[]
 }>
 
 /** Publishes committed storage while the provider still owns the queue; the receiver handles its view state. */
 const applyMaterializedThoughtsToStore = async (
-  { bridge, client, db, pending }: MaterializationContext,
+  { bridge, db, pending }: MaterializationContext,
   confirmation?: { generation: number | undefined; writeIds: string[]; lexemeIndex: ThoughtUpdates['lexemeIndex'] },
 ): Promise<void> => {
   if (pending.length === 0 && !confirmation) return
   const generation = bridge?.getGeneration()
-  const indexed = await Promise.all(pending.splice(0).map(async entry => ({ ...entry, keys: await entry.keys })))
-  // Derived storage indexes must also advance without a UI bridge or for an obsolete Redux generation.
-  await refreshAttributeChildrenFromChanges(
-    client,
-    indexed.flatMap(entry => entry.event.changes),
-  )
+  const indexed = pending.splice(0)
   if (!bridge || generation === undefined) return
   const events = indexed.filter(
     entry => entry.generation === generation && !isStaleTreecrdtMaterialization(entry.event, generation),
   )
-  const confirmed = confirmation?.generation === generation ? confirmation : undefined
+  const confirmed =
+    confirmation?.generation === generation &&
+    (confirmation.writeIds.length === 0 || !confirmation.writeIds.every(id => isStaleThoughtWrite(id, generation)))
+      ? confirmation
+      : undefined
   if (events.length === 0 && !confirmed) return
   const changes = events.flatMap(entry => entry.event.changes)
   // Local confirmations already contain the final memberships. Read only additional event keys.

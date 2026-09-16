@@ -1,5 +1,6 @@
 import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import type ThoughtId from '../../../@types/ThoughtId'
+import type Timestamp from '../../../@types/Timestamp'
 import { HOME_TOKEN } from '../../../constants'
 import hashThought from '../../../util/hashThought'
 import { encodeThoughtPayload } from '../payload'
@@ -83,7 +84,7 @@ it('repairs an interrupted index update on reopen without checkpointing later wr
   const db = await bind()
   await client.local.insert(replica, HOME_TOKEN, A, { type: 'last' }, payload('cat'))
   await db.getLexemeById(hashThought('cat'))
-  const checkpoint = await client.runner.getText('SELECT head_seq FROM em_lexeme_memberships_meta')
+  const checkpoint = await client.runner.getText('SELECT head_seq FROM em_derived_indexes_meta')
   const getText = client.runner.getText.bind(client.runner)
   const failure = new Error('index write interrupted')
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
@@ -98,7 +99,7 @@ it('repairs an interrupted index update on reopen without checkpointing later wr
   await client.local.insert(replica, HOME_TOKEN, B, { type: 'last' }, payload('bird'))
   await expect(db.getLexemeById(hashThought('bird'))).rejects.toBe(failure)
   await expect(waitForTreecrdtWriteBarrier()).rejects.toBe(failure)
-  expect(await client.runner.getText('SELECT head_seq FROM em_lexeme_memberships_meta')).toBe(checkpoint)
+  expect(await client.runner.getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(checkpoint)
   await expect(closeBinding!()).rejects.toBe(failure)
   closeBinding = undefined
 
@@ -106,4 +107,29 @@ it('repairs an interrupted index update on reopen without checkpointing later wr
   expect(await reopened.getLexemeById(hashThought('cat'))).toBeUndefined()
   expect((await reopened.getLexemeById(hashThought('dog')))?.contexts).toEqual([A])
   expect((await reopened.getLexemeById(hashThought('bird')))?.contexts).toEqual([B])
+})
+
+it('rebuilds attribute children and memberships when reopening after a missed materialization', async () => {
+  const db = await bind()
+  await db.updateThoughts({
+    thoughtIndexUpdates: {
+      [A]: {
+        value: '=pin',
+        parentId: HOME_TOKEN,
+        rank: 0,
+        created: 1 as Timestamp,
+        lastUpdated: 2 as Timestamp,
+        updatedBy: 'test',
+      },
+    },
+  })
+  await closeBinding!()
+  // Arrange the durable state left when the tree commits but the app exits before indexing the event.
+  await client.local.payload(replica, A, payload('=archive'))
+
+  const reopened = await bind()
+
+  expect((await reopened.getThoughtById(HOME_TOKEN))!.childrenMap).toEqual({ '=archive': A })
+  expect((await reopened.getLexemeById(hashThought('=archive')))?.contexts).toEqual([A])
+  expect(await reopened.getLexemeById(hashThought('=pin'))).toBeUndefined()
 })

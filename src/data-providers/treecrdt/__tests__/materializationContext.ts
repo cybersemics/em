@@ -7,6 +7,7 @@ import deferred from '../../../test-helpers/deferred'
 import hashThought from '../../../util/hashThought'
 import { encodeThoughtPayload } from '../payload'
 import createTreecrdtDataProvider from '../thoughtspace'
+import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
 
 const THOUGHT_ID = '00000000000000000000000000000201' as ThoughtId
 const replica = new Uint8Array(32).fill(1)
@@ -64,6 +65,73 @@ it('reads final memberships once for a multi-batch write and its publication', a
   )
 })
 
+it('renames without reading child lists when no view needs publication', async () => {
+  const provider = createTreecrdtDataProvider()
+  bindings.push(await provider.bindClient(clientOne, replica))
+  await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('cat') } })
+  const children = vi.spyOn(clientOne.tree, 'children')
+
+  const result = await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: { value: 'dog' } } })
+
+  expect(result.lexemeIndex[hashThought('dog')]).toMatchObject({ contexts: [THOUGHT_ID] })
+  expect(children).not.toHaveBeenCalled()
+  await expect(provider.db.getThoughtById(THOUGHT_ID)).resolves.toEqual(thought('dog'))
+})
+
+it('reads sibling order once for placement and once for the committed refresh', async () => {
+  const provider = createTreecrdtDataProvider()
+  const bridge = { getGeneration: () => 0, onCommit: vi.fn() }
+  bindings.push(await provider.bindClient(clientOne, replica, bridge))
+  const secondId = '00000000000000000000000000000202' as ThoughtId
+  const thirdId = '00000000000000000000000000000203' as ThoughtId
+  await provider.db.updateThoughts({
+    thoughtIndexUpdates: {
+      [THOUGHT_ID]: thought('a'),
+      [secondId]: { ...thought('b', secondId), rank: 1 },
+      [thirdId]: { ...thought('c', thirdId), rank: 2 },
+    },
+  })
+  const children = vi.spyOn(clientOne.tree, 'children')
+  bridge.onCommit.mockClear()
+
+  await provider.db.updateThoughts({
+    thoughtIndexUpdates: { [THOUGHT_ID]: { parentId: EM_TOKEN } },
+    movePlacements: { [THOUGHT_ID]: thirdId },
+  })
+
+  expect(children.mock.calls.filter(([id]) => id === EM_TOKEN)).toHaveLength(2)
+  expect(bridge.onCommit).toHaveBeenCalledOnce()
+  expect(bridge.onCommit.mock.calls[0][0].thoughtIndex).toMatchObject({
+    [EM_TOKEN]: { childrenMap: { [secondId]: secondId, [thirdId]: thirdId, [THOUGHT_ID]: THOUGHT_ID } },
+    [THOUGHT_ID]: { rank: 2 },
+    [secondId]: { rank: 0 },
+    [thirdId]: { rank: 1 },
+  })
+})
+
+it('publishes a partially applied batch without confirming the failed write', async () => {
+  const provider = createTreecrdtDataProvider()
+  const bridge = { getGeneration: () => 0, onCommit: vi.fn() }
+  bindings.push(await provider.bindClient(clientOne, replica, bridge))
+  const missingId = '00000000000000000000000000000202' as ThoughtId
+
+  await expect(
+    provider.db.updateThoughts({
+      thoughtIndexUpdates: { [THOUGHT_ID]: thought('=pin'), [missingId]: { value: 'incomplete' } },
+      writeId: 'generation:0:partial',
+    }),
+  ).rejects.toThrow(`Cannot apply an edit to missing thought ${missingId}.`)
+  await expect(waitForTreecrdtWriteBarrier()).rejects.toThrow(`Cannot apply an edit to missing thought ${missingId}.`)
+
+  expect(bridge.onCommit).toHaveBeenCalledOnce()
+  expect(bridge.onCommit.mock.calls[0][0]).toMatchObject({
+    thoughtIndex: { [THOUGHT_ID]: thought('=pin'), [EM_TOKEN]: { childrenMap: { '=pin': THOUGHT_ID } } },
+    lexemeIndex: { [hashThought('=pin')]: { contexts: [THOUGHT_ID] } },
+    writeIds: undefined,
+  })
+  await expect(provider.db.getThoughtById(missingId)).resolves.toBeUndefined()
+})
+
 it.each([true, false])('maintains attribute children across batched writes (UI bridge: %s)', async withBridge => {
   const provider = createTreecrdtDataProvider()
   const bridge = { getGeneration: () => 0, onCommit: vi.fn() }
@@ -76,7 +144,7 @@ it.each([true, false])('maintains attribute children across batched writes (UI b
     childrenMap: { '=pin': THOUGHT_ID, [parentId]: parentId },
   })
 
-  await provider.persistPushQueueBatches([
+  const results = await provider.persistPushQueueBatches([
     { thoughtIndexUpdates: { [THOUGHT_ID]: { value: 'plain' } } },
     { thoughtIndexUpdates: { [THOUGHT_ID]: { parentId } }, movePlacements: { [THOUGHT_ID]: null } },
     { thoughtIndexUpdates: { [THOUGHT_ID]: { value: '=archive' } } },
@@ -84,9 +152,45 @@ it.each([true, false])('maintains attribute children across batched writes (UI b
 
   await expect(provider.db.getThoughtById(parentId)).resolves.toMatchObject({ childrenMap: { '=archive': THOUGHT_ID } })
   expect((await provider.db.getThoughtById(EM_TOKEN))!.childrenMap).not.toHaveProperty('=pin')
+  expect(results.at(-1)!.lexemeIndex).toMatchObject({
+    [hashThought('=pin')]: null,
+    [hashThought('plain')]: null,
+    [hashThought('=archive')]: { contexts: [THOUGHT_ID] },
+  })
 
   await provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: null } })
   await expect(provider.db.getThoughtById(parentId)).resolves.toMatchObject({ childrenMap: {} })
+})
+
+it('finishes both indexes without publishing a write invalidated during indexing', async () => {
+  const provider = createTreecrdtDataProvider()
+  let generation = 0
+  const onCommit = vi.fn()
+  bindings.push(await provider.bindClient(clientOne, replica, { getGeneration: () => generation, onCommit }))
+  const started = deferred()
+  const released = deferred()
+  const exec = clientOne.runner.exec.bind(clientOne.runner)
+  vi.spyOn(clientOne.runner, 'exec').mockImplementation(async sql => {
+    if (sql.startsWith('INSERT INTO em_attribute_children ')) {
+      started.resolve()
+      await released.promise
+    }
+    return exec(sql)
+  })
+
+  const write = provider.db.updateThoughts({
+    thoughtIndexUpdates: { [THOUGHT_ID]: thought('=pin') },
+    writeId: 'generation:0:attribute',
+  })
+  await started.promise
+  generation += 1
+  const read = provider.db.getThoughtById(EM_TOKEN)
+  released.resolve()
+  const result = await write
+
+  expect(onCommit).not.toHaveBeenCalled()
+  expect(result.lexemeIndex[hashThought('=pin')]).toMatchObject({ contexts: [THOUGHT_ID] })
+  await expect(read).resolves.toMatchObject({ childrenMap: { '=pin': THOUGHT_ID } })
 })
 
 it('retains the originating client and bridge for work queued before rebinding', async () => {

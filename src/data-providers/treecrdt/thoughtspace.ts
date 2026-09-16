@@ -13,18 +13,17 @@ import hashThought from '../../util/hashThought'
 import sleep from '../../util/sleep'
 import type { DataProvider } from '../DataProvider'
 import type { PersistThoughtspaceBatch, ThoughtspaceMaterializationBridge } from '../thoughtspace'
-import { ensureAttributeChildrenIndexReady, getAttributeChildrenByParent } from './attributeChildren'
+import {
+  getAttributeChildrenByParent,
+  rebuildAttributeChildrenIndex,
+  refreshAttributeChildrenFromChanges,
+} from './attributeChildren'
 import createLexemeIndex from './lexemes'
-import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
+import { type ThoughtPayload, decodeThoughtPayload, encodeThoughtPayload } from './payload'
 import { applyMaterializedThoughtsToStore } from './sync'
 import type { MaterializationContext } from './sync/applyMaterializedThoughtsToStore'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
-import {
-  createTreecrdtLocalWriteOptions,
-  isStaleThoughtWrite,
-  waitForTreecrdtWriteBarrier,
-  withTreecrdtWriteBarrier,
-} from './writeBarrier'
+import { createTreecrdtLocalWriteOptions, waitForTreecrdtWriteBarrier, withTreecrdtWriteBarrier } from './writeBarrier'
 
 type TreecrdtPlacement = { type: 'first' } | { type: 'last' } | { type: 'after'; after: ThoughtId }
 
@@ -65,36 +64,47 @@ export const createIndexedChildrenMap = (
   return childrenMap
 }
 
-/** Fetches a thought by ID from the given TreeCRDT client. */
-const getThoughtByIdFromClient = async (client: TreecrdtClient, id: ThoughtId): Promise<Thought | undefined> => {
-  // TreeCRDT retains deleted payloads; EM reads expose only live thoughts.
-  if (!(await client.tree.exists(id))) return undefined
-  const payloadBytes = await client.tree.getPayload(id)
-  if (payloadBytes === null) return undefined
-
-  const payload = decodeThoughtPayload(payloadBytes)
-
-  const parentIdRaw = await client.tree.parent(id)
-  const parentId: ThoughtId = parentIdRaw === null ? (ROOT_PARENT_ID as ThoughtId) : (parentIdRaw as ThoughtId)
-  const siblingIds = parentIdRaw === null ? [] : await client.tree.children(parentIdRaw)
-  const rank = parentIdRaw === null ? 0 : Math.max(0, siblingIds.indexOf(id))
-
-  const childIds = (await client.tree.children(id)) as ThoughtId[]
-  const childrenMap = createIndexedChildrenMap(childIds, await getAttributeChildrenByParent(client, id))
-
-  const thought: Thought = {
-    id,
-    value: payload.value,
-    rank,
-    created: payload.created as Timestamp,
-    lastUpdated: payload.lastUpdated as Timestamp,
-    updatedBy: payload.updatedBy,
-    parentId,
-    childrenMap,
-    ...(payload.archived !== undefined && { archived: payload.archived as Timestamp }),
+/** Shares child-order reads within one read or committed refresh, never across writes. */
+const createThoughtReader = (client: TreecrdtClient) => {
+  const childOrders = new Map<string, Promise<Map<ThoughtId, number>>>()
+  /** Reads each parent's child order once, including concurrent requests for that parent. */
+  const readChildOrder = (parentId: string): Promise<Map<ThoughtId, number>> => {
+    let children = childOrders.get(parentId)
+    if (!children) {
+      children = client.tree.children(parentId).then(ids => new Map(ids.map((id, rank) => [id as ThoughtId, rank])))
+      childOrders.set(parentId, children)
+    }
+    return children
   }
+  return async (id: ThoughtId): Promise<Thought | undefined> => {
+    // TreeCRDT retains deleted payloads; EM reads expose only live thoughts.
+    if (!(await client.tree.exists(id))) return undefined
+    const payloadBytes = await client.tree.getPayload(id)
+    if (payloadBytes === null) return undefined
 
-  return thought
+    const payload = decodeThoughtPayload(payloadBytes)
+
+    const parentIdRaw = await client.tree.parent(id)
+    const parentId: ThoughtId = parentIdRaw === null ? (ROOT_PARENT_ID as ThoughtId) : (parentIdRaw as ThoughtId)
+    const rank = parentIdRaw === null ? 0 : ((await readChildOrder(parentIdRaw)).get(id) ?? 0)
+
+    const childIds = [...(await readChildOrder(id)).keys()]
+    const childrenMap = createIndexedChildrenMap(childIds, await getAttributeChildrenByParent(client, id))
+
+    const thought: Thought = {
+      id,
+      value: payload.value,
+      rank,
+      created: payload.created as Timestamp,
+      lastUpdated: payload.lastUpdated as Timestamp,
+      updatedBy: payload.updatedBy,
+      parentId,
+      childrenMap,
+      ...(payload.archived !== undefined && { archived: payload.archived as Timestamp }),
+    }
+
+    return thought
+  }
 }
 
 /**
@@ -105,11 +115,16 @@ const getRankPlacement = async (
   client: TreecrdtClient,
   parentId: ThoughtId,
   thoughtId: ThoughtId,
-  rank: number,
+  rank: number | undefined,
 ): Promise<TreecrdtPlacement> => {
   const childIds = await client.tree.children(parentId)
+  // An explicit placement needs no numeric rank unless its anchor has disappeared.
+  const previousParent = rank === undefined ? await client.tree.parent(thoughtId) : null
+  const previousSiblings =
+    previousParent === null ? [] : previousParent === parentId ? childIds : await client.tree.children(previousParent)
+  const targetRank = rank ?? Math.max(0, previousSiblings.indexOf(thoughtId))
   const afterId = childIds.reduce<ThoughtId | undefined>(
-    (previousId, childId, index) => (childId !== thoughtId && index < rank ? (childId as ThoughtId) : previousId),
+    (previousId, childId, index) => (childId !== thoughtId && index < targetRank ? (childId as ThoughtId) : previousId),
     undefined,
   )
 
@@ -120,7 +135,7 @@ const getRankPlacement = async (
 const getTreecrdtPlacement = async (
   client: TreecrdtClient,
   thoughtId: ThoughtId,
-  thought: Thought,
+  thought: { parentId: ThoughtId; rank?: number },
   movePlacements?: Index<ThoughtId | null>,
   options?: { requireExplicit?: boolean },
 ): Promise<TreecrdtPlacement> => {
@@ -164,7 +179,9 @@ const updateThoughtsForClient = async (
     }
     if (patch.value !== undefined) lexemeKeys.add(hashThought(patch.value))
     const exists = await client.tree.exists(thoughtId)
-    const existing = exists ? await getThoughtByIdFromClient(client, thoughtId) : undefined
+    const existingBytes = exists ? await client.tree.getPayload(thoughtId) : null
+    const existing = existingBytes ? decodeThoughtPayload(existingBytes) : undefined
+    const existingParent = exists ? await client.tree.parent(thoughtId) : null
     if (
       !existing &&
       (patch.value === undefined ||
@@ -176,7 +193,11 @@ const updateThoughtsForClient = async (
     ) {
       throw new Error(`Cannot apply an edit to missing thought ${thoughtId}.`)
     }
-    const thought = { ...existing, ...patch, id: thoughtId } as Thought
+    const thought = {
+      ...existing,
+      ...patch,
+      parentId: patch.parentId ?? existingParent ?? ROOT_PARENT_ID,
+    } as ThoughtPayload & { parentId: ThoughtId; rank?: number }
     const payloadBytes = encodeThoughtPayload({
       value: thought.value,
       created: thought.created,
@@ -194,7 +215,7 @@ const updateThoughtsForClient = async (
       if (!existing) continue
       lexemeKeys.add(hashThought(existing.value))
 
-      const parentChanged = existing.parentId !== thought.parentId
+      const parentChanged = (existingParent ?? ROOT_PARENT_ID) !== thought.parentId
       const orderChanged = thoughtId in (movePlacements || {})
       if (parentChanged || orderChanged) {
         const placement = await getTreecrdtPlacement(client, thoughtId, thought, movePlacements, {
@@ -293,8 +314,6 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
       createTreecrdtLocalWriteOptions(),
     )
   }
-
-  await ensureAttributeChildrenIndexReady(client)
 }
 
 /**
@@ -340,68 +359,119 @@ const createTreecrdtDataProvider = () => {
     await initializeThoughtspaceStorage(client, replicaId)
 
     const lexemes = await createLexemeIndex(client)
+    await client.runner.exec(`CREATE TABLE IF NOT EXISTS em_derived_indexes_meta (
+      id INTEGER PRIMARY KEY CHECK (id = 1), version INTEGER NOT NULL, head_seq INTEGER NOT NULL
+    )`)
+    /** Marks a frontier complete only after both derived indexes have caught up. */
+    const checkpointIndexes = (headSeq: number) =>
+      client.runner.getText(
+        'INSERT OR REPLACE INTO em_derived_indexes_meta (id, version, head_seq) VALUES (1, 1, ?1)',
+        [headSeq],
+      )
+    const { headSeq } = JSON.parse((await client.runner.getText('SELECT treecrdt_ensure_materialized()'))!) as {
+      headSeq: number
+    }
+    const indexedHead = await client.runner.getText('SELECT head_seq FROM em_derived_indexes_meta WHERE version = 1')
+    if (indexedHead === null || Number(indexedHead) !== headSeq) {
+      // Invalidate before rebuilding so an interrupted rebuild is retried on the next open.
+      await client.runner.exec('DELETE FROM em_derived_indexes_meta')
+      await rebuildAttributeChildrenIndex(client)
+      await lexemes.rebuild()
+      await checkpointIndexes(headSeq)
+    }
     const clientDb: TreecrdtReadModel = {
       getLexemeById: lexemes.getLexemeById,
       getLexemesByIds: lexemes.getLexemesByIds,
-      getThoughtById: id => getThoughtByIdFromClient(client, id),
+      getThoughtById: id => createThoughtReader(client)(id),
       getThoughtsByIds: async ids => {
         // Simulate slow local materialization after refresh in e2e tests.
         if (testFlags.replicationDelay > 0) await sleep(testFlags.replicationDelay)
-        return Promise.all(ids.map(id => getThoughtByIdFromClient(client, id)))
+        return Promise.all(ids.map(createThoughtReader(client)))
       },
     }
     const materializationContext: MaterializationContext = {
       bridge: materialization,
-      client,
       db: clientDb,
       pending: [],
     }
     let acceptingWork = true
+    let storageJobRunning = false
+    let indexedEvents = 0
+    let indexFailure: { error: unknown } | undefined
+
+    /** Updates buffered events, including recovery events emitted during these reads. */
+    const flushIndexes = async (): Promise<void> => {
+      if (indexFailure) throw indexFailure.error
+      const previousCount = indexedEvents
+      try {
+        while (indexedEvents < materializationContext.pending.length) {
+          const entry = materializationContext.pending[indexedEvents]
+          await refreshAttributeChildrenFromChanges(client, entry.event.changes)
+          entry.keys = await lexemes.applyChanges(entry.event.changes)
+          indexedEvents += 1
+        }
+        if (indexedEvents !== previousCount) {
+          await checkpointIndexes(materializationContext.pending[indexedEvents - 1].event.headSeq)
+        }
+      } catch (error) {
+        // Do not let later work checkpoint over a partially updated index; reopening rebuilds both.
+        indexFailure = { error }
+        throw error
+      }
+    }
 
     /** Finishes indexing and publication before another external storage call may start. */
-    const runStorageJob = <T>(work: () => Promise<T>): Promise<T> => {
+    const runStorageJob = <T>(
+      work: () => Promise<T>,
+      confirmation?: Parameters<typeof applyMaterializedThoughtsToStore>[1],
+    ): Promise<T> => {
       if (!acceptingWork) return Promise.reject(new Error('TreeCRDT client binding is closed.'))
       return withTreecrdtWriteBarrier(async () => {
+        storageJobRunning = true
         try {
+          await flushIndexes()
           return await work()
         } finally {
-          await applyMaterializedThoughtsToStore(materializationContext)
+          try {
+            await flushIndexes()
+            indexedEvents = 0
+            await applyMaterializedThoughtsToStore(
+              { ...materializationContext, db: { ...clientDb, getThoughtById: createThoughtReader(client) } },
+              confirmation,
+            )
+          } finally {
+            storageJobRunning = false
+          }
         }
       })
     }
 
     /** Persists one Redux flush and confirms it with the resulting read model, including no-ops. */
-    const persistPushQueueBatches: BoundTreecrdtDataProvider['persistPushQueueBatches'] = batches =>
-      runStorageJob(async () => {
+    const persistPushQueueBatches: BoundTreecrdtDataProvider['persistPushQueueBatches'] = batches => {
+      const confirmation: NonNullable<Parameters<typeof applyMaterializedThoughtsToStore>[1]> = {
+        generation: undefined,
+        writeIds: batches.flatMap(batch => (batch.writeId ? [batch.writeId] : [])),
+        lexemeIndex: {},
+      }
+      return runStorageJob(async () => {
         const generation = materialization?.getGeneration()
-        const writeIds = batches.flatMap(batch => (batch.writeId ? [batch.writeId] : []))
         const results: Awaited<ReturnType<typeof updateThoughtsForClient>>[] = []
         for (const batch of batches) results.push(await updateThoughtsForClient({ client, replicaId }, batch))
+        await flushIndexes()
         const keys = [...new Set(results.flatMap(result => result.lexemeKeys))]
         const values = await clientDb.getLexemesByIds(keys)
         const lexemeIndex = Object.fromEntries(keys.map((key, i) => [key, values[i] ?? null]))
-        // Includes no-op confirmations, which have no materialization event of their own.
-        if (
-          generation === undefined ||
-          writeIds.length === 0 ||
-          !writeIds.every(id => isStaleThoughtWrite(id, generation))
-        ) {
-          await applyMaterializedThoughtsToStore(materializationContext, {
-            generation,
-            writeIds,
-            lexemeIndex,
-          })
-        }
+        // Assign only after success: a failed batch may publish partial storage, but must not confirm its writes.
+        confirmation.generation = generation
+        confirmation.lexemeIndex = lexemeIndex
         return results.map(({ operations }) => ({ operations, lexemeIndex }))
-      })
+      }, confirmation)
+    }
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
-      const keys = lexemes.applyChanges(event)
-      // The outer job may still be reading/writing when indexing rejects. Publication observes the error.
-      void keys.catch(() => undefined)
-      materializationContext.pending.push({ event, keys, generation: materialization?.getGeneration() })
-      // Owned jobs flush directly. This also handles a recovery event emitted outside a write.
-      if (acceptingWork && materializationContext.pending.length === 1) {
+      materializationContext.pending.push({ event, keys: [], generation: materialization?.getGeneration() })
+      // The active job owns completion. Only unsolicited events need another job.
+      if (acceptingWork && !storageJobRunning && materializationContext.pending.length === 1) {
         void runStorageJob(async () => undefined).catch(err =>
           console.error('TreeCRDT materialization refresh failed', err),
         )
@@ -411,9 +481,10 @@ const createTreecrdtDataProvider = () => {
     /** A recovering read can precede its derived index updates; finish those before returning a read model. */
     const read = <T>(work: () => Promise<T>): Promise<T> =>
       runStorageJob(async () => {
+        const previousEventCount = materializationContext.pending.length
         const result = await work()
-        if (materializationContext.pending.length === 0) return result
-        await applyMaterializedThoughtsToStore(materializationContext)
+        if (materializationContext.pending.length === previousEventCount) return result
+        await flushIndexes()
         return work()
       })
 
@@ -458,7 +529,7 @@ const createTreecrdtDataProvider = () => {
         acceptingWork = false
         try {
           await waitForTreecrdtWriteBarrier()
-          await lexemes.waitForIdle()
+          await flushIndexes()
         } finally {
           unsubscribeMaterialized()
         }
