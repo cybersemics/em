@@ -182,34 +182,6 @@ const splitAtRange = (el: HTMLElement, range: Range) => {
   el.after(clone)
 }
 
-/** Inserts a node at the (collapsed) range, lifting it out of any color element enclosing the insertion point and of any
- * empty formatting ancestors that extractContents left behind. Without this, re-coloring content that already fills a
- * single wrapper (e.g. the second dispatch of a foreColor + backColor pair) would nest the new <font> inside the emptied
- * one instead of replacing it, and a sub-range of a colored thought would go back inside the color it was extracted
- * from, leaving the old color in force (#5505). */
-const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
-  // A color command redetermines the color of its entire range, so the range must not come to rest inside an element
-  // still carrying the old one. Split that element at the insertion point and insert between the two halves.
-  const colorElement = enclosingColorElement(range.startContainer, container)
-  if (colorElement) {
-    splitAtRange(colorElement, range)
-    colorElement.after(node)
-    return
-  }
-
-  // Climb from the insertion point to the outermost formatting ancestor that extractContents left empty, and replace
-  // it with the node. (The collapsed range often sits on an empty text node inside the emptied wrapper.)
-  let emptyAncestor: HTMLElement | null = null
-  for (let n: Node | null = range.startContainer; n && n !== container; n = n.parentNode) {
-    if (isFormattingElement(n) && (n.textContent ?? '') === '') emptyAncestor = n
-  }
-  if (emptyAncestor) {
-    emptyAncestor.replaceWith(node)
-  } else {
-    range.insertNode(node)
-  }
-}
-
 /** Expands the range outward over every formatting element whose entire text it already covers, so that the element
  * travels with the extracted content instead of being left behind empty. Without this, coloring text that fills a
  * formatting element strips that formatting whenever the range sits wholly within one text node — which is what happens
@@ -262,7 +234,16 @@ const applyColor = (
     insertNode = font
   }
 
-  insertAtRange(container, range, insertNode)
+  // A color command redetermines the color of its entire range, so the node must not come to rest inside an element
+  // still carrying the old one. Split that element at the insertion point and insert between the two halves (#5505).
+  const colorElement = enclosingColorElement(range.startContainer, container)
+  if (colorElement) {
+    splitAtRange(colorElement, range)
+    colorElement.after(insertNode)
+  } else {
+    range.insertNode(insertNode)
+  }
+
   // remove any now-empty formatting element left behind where the range was extracted
   removeEmptyFormatting(container)
 }
