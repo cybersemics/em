@@ -7,6 +7,7 @@ import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from 
 import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from '../../actions/saveSelectionOffsets'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
 import { commandById } from '../../commands'
+import durations from '../../util/durations'
 import SettingsIcon from '../icons/SettingsIcon'
 import PinnedCommandRing from './PinnedCommandRing'
 import PinnedCommandTooltip from './PinnedCommandTooltip'
@@ -19,6 +20,7 @@ const PinnedCommand = () => {
   const dispatch = useDispatch()
   const tooltipId = useId()
   const [openedCommandId, setOpenedCommandId] = useState<CommandId | null>(null)
+  const [keepRaisedDuringExit, setKeepRaisedDuringExit] = useState(false)
   const pinnedCommandId = useSelector(state => state.learning.pinnedCommandId)
   const progress = useSelector(state => {
     const record = pinnedCommandId ? state.learning.progress[pinnedCommandId] : null
@@ -26,6 +28,18 @@ const PinnedCommand = () => {
   })
 
   const isOpen = !!pinnedCommandId && openedCommandId === pinnedCommandId
+  const isRingRaised = isOpen || keepRaisedDuringExit
+
+  useEffect(() => {
+    if (isOpen) {
+      if (!keepRaisedDuringExit) setKeepRaisedDuringExit(true)
+      return
+    }
+    if (!keepRaisedDuringExit) return
+
+    const timeout = window.setTimeout(() => setKeepRaisedDuringExit(false), durations.get('medium'))
+    return () => window.clearTimeout(timeout)
+  }, [isOpen, keepRaisedDuringExit])
 
   useEffect(() => {
     if (!isOpen) return
@@ -78,12 +92,20 @@ const PinnedCommand = () => {
           // interpolated template literal is dropped, leaving the widget at its static position at the end of the page.
           bottom: 'calc(max(11px, token(spacing.safeAreaBottom)) - 22.5px)',
           zIndex: 'pinnedCommand',
+          transformOrigin: 'right bottom',
+          transition: 'transform {durations.medium} ease-out',
           padding: 0,
           border: 0,
           background: 'transparent',
           cursor: 'pointer',
           pointerEvents: 'auto',
         })}
+        style={{
+          transform: isOpen ? 'scale(1.5)' : 'scale(1)',
+          zIndex: isRingRaised ? token('zIndex.pinnedCommandExpanded') : undefined,
+          // The enlarged ring overlaps Clear on desktop; let that control remain tappable.
+          pointerEvents: isRingRaised ? 'none' : undefined,
+        }}
       >
         <PinnedCommandRing progress={progress} complete={progress >= 1}>
           <Icon size={14} fill={token('colors.gray50')} cssRaw={css.raw({ flex: 'none' })} />
