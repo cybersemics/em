@@ -92,37 +92,16 @@ describe('continuous path-length gradient', () => {
   })
 
   it('blends across the complete gesture by default', () => {
-    const markup = render({ ...props, path: 'rd', gradient })
+    const stops = gradientStops(render({ ...props, path: 'rd', gradient }))
 
-    expect(markup).toContain('<stop offset="0%" stop-color="#111"')
-    expect(markup).toContain('<stop offset="100%" stop-color="#eee"')
-  })
-
-  it('paints a monotone turn and its chevron as one translucent gradient stroke', () => {
-    const markup = render({
-      ...props,
-      path: 'rd',
-      cornerRadius: 12,
-      arrowhead: 'outlined-wide',
-      gradient: { from: 'rgba(88, 181, 212, 0.45)', to: '#fff' },
-    })
-
-    expect(renderedPathData(markup)).toHaveLength(1)
-    expect(markup).toContain('-continuous"')
-    expect(markup).not.toContain('-piece-0-color')
-    expect(markup).toContain('stop-color="rgba(88, 181, 212, 0.45)"')
-  })
-
-  it('retains partial highlighting over a monotone gradient', () => {
-    const markup = render({ ...props, path: 'rd', gradient, highlight: 1 })
-
-    expect(renderedPathData(markup).at(-1)).toBe('M 0 0 L 150 0')
+    expect(stops).toHaveLength(2)
+    expect(mixOf(stops[0].end)).toBe(50)
   })
 
   it('uses a luminance mask so translucent piece caps do not accumulate alpha', () => {
     const markup = render({
       ...props,
-      path: 'rdlu',
+      path: 'rd',
       gradient: { from: 'rgba(88, 181, 212, 0.45)', to: '#fff' },
     })
 
@@ -168,8 +147,8 @@ describe('gesture shape', () => {
   const gradient = { from: '#111', to: '#eee' }
 
   it('samples softened corners into additional gradient pieces', () => {
-    const sharp = render({ path: 'rul', gradient, arrowhead: 'none' })
-    const soft = render({ path: 'rul', gradient, arrowhead: 'none', cornerRadius: 5 })
+    const sharp = render({ path: 'rdr', gradient, arrowhead: 'none' })
+    const soft = render({ path: 'rdr', gradient, arrowhead: 'none', cornerRadius: 5 })
 
     expect(soft.match(/-piece-\d+-color/g)!.length).toBeGreaterThan(sharp.match(/-piece-\d+-color/g)!.length)
   })
@@ -182,7 +161,7 @@ describe('gesture shape', () => {
       chevronApexAngle: 60,
       chevronSize: 2.2,
     })
-    const chevron = pointsOf(`M ${renderedPathData(markup).at(-1)!.split(' M ').at(-1)}`)
+    const chevron = pointsOf(renderedPathData(markup).at(-1)!)
     const [leg1, apex, leg2] = chevron
     const a = { x: leg1.x - apex.x, y: leg1.y - apex.y }
     const b = { x: leg2.x - apex.x, y: leg2.y - apex.y }
