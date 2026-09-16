@@ -134,7 +134,24 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
           style={{ y: '-50%', pointerEvents: tooltipVisible ? 'auto' : 'none' }}
           variants={{ hidden: { scale: 0.9, transition: exit }, visible: { scale: 1, transition: enter } }}
         >
-          <motion.div variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }} transition={sortFade}>
+          <motion.div
+            variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
+            transition={sortFade}
+            className={css({ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' })}
+          >
+            {/* Keep the heading steady while the selected sort fades with the grid. */}
+            <span
+              className={css({
+                color: 'white',
+                opacity: 0.5,
+                fontSize: '0.65rem',
+                lineHeight: 1.25,
+                fontWeight: 400,
+                letterSpacing: '0.02em',
+              })}
+            >
+              Sort by
+            </span>
             <AnimatePresence initial={false} mode='wait'>
               <motion.div
                 key={selectedSort}
@@ -144,18 +161,6 @@ const CommandUniverseSortButton = ({ children, onSortChange }: PropsWithChildren
                 transition={sortFade}
                 className={css({ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' })}
               >
-                <span
-                  className={css({
-                    color: 'white',
-                    opacity: 0.5,
-                    fontSize: '0.65rem',
-                    lineHeight: 1.25,
-                    fontWeight: 400,
-                    letterSpacing: '0.02em',
-                  })}
-                >
-                  Sort by
-                </span>
                 <span
                   className={css({
                     position: 'relative',
