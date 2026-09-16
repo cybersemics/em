@@ -9,6 +9,7 @@ import { exportContext } from '../../selectors/exportContext'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
+import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
@@ -47,4 +48,8 @@ it('Create a thought from the search input', async () => {
   - B
   - C
   - AAA`)
+
+  // the search screen closes so that the new thought is visible, with the cursor on it
+  expect(screen.queryByPlaceholderText('Search')).toBeNull()
+  expectPathToEqual(store.getState(), store.getState().cursor, ['AAA'])
 })
