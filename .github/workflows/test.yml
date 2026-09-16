@@ -83,9 +83,11 @@ on:
       - 'index.html'
       # Spec directories the unit project excludes outright (vitest.config.ts), plus the iOS
       # helpers only those specs import. NOT all of src/e2e/iOS: config/__tests__ is a unit test.
+      # All of src/e2e/android: it has no unit tests.
       - 'src/e2e/puppeteer/**'
       - 'src/e2e/iOS/__tests__/**'
       - 'src/e2e/iOS/helpers/**'
+      - 'src/e2e/android/**'
   pull_request:
     branches:
       - '**'
@@ -137,6 +139,7 @@ on:
       - 'src/e2e/puppeteer/**'
       - 'src/e2e/iOS/__tests__/**'
       - 'src/e2e/iOS/helpers/**'
+      - 'src/e2e/android/**'
   workflow_dispatch:
     inputs:
       rerun_id:

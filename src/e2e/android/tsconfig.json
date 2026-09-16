@@ -1,10 +1,10 @@
 {
-  // Typechecks the WebdriverIO (iOS Safari) tests. This and src/e2e/android/tsconfig.json are the only programs
-  // that declare WebdriverIO's globals — browser, $, $$, and expect from @wdio/globals/types, mocha's describe/it via
-  // @wdio/mocha-framework — and @wdio/browserstack-service's global interfaces (State, GRRUrls, …).
-  // The root tsconfig excludes this directory so that none of those leak into app code. Modules shared
-  // with the app (e.g. src/util/consoleProxy.ts) are pulled in here by import and are therefore checked
-  // by both programs; the root one is what stops them from depending on these globals.
+  // Typechecks the WebdriverIO (Android Chrome) tests. Together with src/e2e/iOS/tsconfig.json these are the only
+  // programs that declare WebdriverIO's globals — browser, $, $$, and expect from @wdio/globals/types, mocha's
+  // describe/it via @wdio/mocha-framework — and @wdio/browserstack-service's global interfaces. The root tsconfig
+  // excludes this directory so that none of those leak into app code. The Android suite imports the iOS suite's
+  // platform-neutral helpers and config, so those files are checked by both WebdriverIO programs, which declare the
+  // same globals.
   "extends": "../../../tsconfig.json",
   // The app modules pulled in by import rely on the app's ambient declarations (vite-env.d.ts, @types/*.d.ts)
   // and on the global augmentations in src/@types/index.ts (Window.em, the redux Dispatch overloads, …),

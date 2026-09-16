@@ -86,6 +86,7 @@ on:
       - 'scripts/issue-classifier/**'
       # The other browser suite. The two share no imports.
       - 'src/e2e/iOS/**'
+      - 'src/e2e/android/**'
   pull_request:
     branches:
       - '**'
@@ -138,6 +139,7 @@ on:
       - 'scripts/estimate/**'
       - 'scripts/issue-classifier/**'
       - 'src/e2e/iOS/**'
+      - 'src/e2e/android/**'
   workflow_dispatch:
     inputs:
       rerun_id:

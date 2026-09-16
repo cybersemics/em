@@ -22,15 +22,16 @@ yarn test            # unit and jsdom tests
 yarn test:puppeteer  # puppeteer (Docker required; starts its own local Vite server)
 ```
 
-The iOS suites require the app to already be running:
+The WebdriverIO suites (iOS and Android) require the app to already be running:
 
 ```sh
 # terminal 1
 yarn start
 
 # terminal 2
-yarn test:ios:browserstack  # BrowserStack credentials required
-yarn test:ios:local         # local Appium and iOS Simulator required
+yarn test:ios:browserstack      # BrowserStack credentials required
+yarn test:ios:local             # local Appium and iOS Simulator required
+yarn test:android:browserstack  # BrowserStack credentials required
 ```
 
 > [!IMPORTANT]
@@ -53,6 +54,9 @@ yarn test:puppeteer caret -t "should move the caret to the correct position"
 
 # iOS test file
 yarn test:ios:local --spec src/e2e/iOS/__tests__/caret.ts
+
+# Android test file
+yarn test:android:browserstack --spec src/e2e/android/__tests__/smoke.ts
 ```
 
 To accept an intentional visual change, update only the affected Puppeteer snapshots:
@@ -438,7 +442,7 @@ yarn test:puppeteer -u render-thoughts
 
 ⚡️ 1–2s each (but large overhead to start session)
 
-Start the app before either iOS suite:
+Start the app before any WebdriverIO suite:
 
 ```sh
 # terminal 1
@@ -446,6 +450,7 @@ yarn start
 # terminal 2: choose one
 yarn test:ios:browserstack
 yarn test:ios:local
+yarn test:android:browserstack
 ```
 
 #### Setting up credentials for BrowserStack
@@ -475,21 +480,29 @@ appium
 
 Run Appium in addition to `yarn start`, then run `yarn test:ios:local`. The local configuration installs Vite's generated development certificate in the booted simulator, so run `yarn start` at least once before starting the suite.
 
-WebdriverIO tests provide automated test coverage of actual iOS devices (among others) in the cloud with BrowserStack. This allows us to cover some of the trickiest platform-specific behaviors, such as browser selection and autoscroll. The same blackbox rules apply as for puppeteer tests.
+WebdriverIO tests provide automated test coverage of actual iOS and Android devices in the cloud with BrowserStack. This allows us to cover some of the trickiest platform-specific behaviors, such as browser selection and autoscroll. The same blackbox rules apply as for puppeteer tests.
 
 `wdio` executes test suites with native `WebDriver` support via `@wdio/mocha-framework` and `@wdio/browserstack-service`, which is responsible for session and credential management. `wdio` also provides lifecycle hooks that are helpful for initiating a session efficiently.
 
-The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config). [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) contains common iOS Safari settings and lifecycle hooks. [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) loads credentials, starts the Cloudflare tunnel, and configures `@wdio/browserstack-service`. [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) configures local Appium and the iOS Simulator.
+The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config). [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) contains common iOS Safari settings and lifecycle hooks. [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) loads credentials and configures `@wdio/browserstack-service` for iOS Safari. The dev-server probe, the BrowserStack slot wait, and the Cloudflare tunnel claim live in [browserStackLauncherHooks.ts](../src/e2e/iOS/config/browserStackLauncherHooks.ts), an `onPrepare`/`onComplete` pair that both BrowserStack configs spread. [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) configures local Appium and the iOS Simulator.
 
-#### TypeScript for the iOS tests
+#### Android
 
-The iOS tests are typechecked by their own [`src/e2e/iOS/tsconfig.json`](../src/e2e/iOS/tsconfig.json), which is the only program that declares WebdriverIO's globals — `browser`, `$`, `$$`, and `expect` from `@wdio/globals/types`, mocha's `describe`/`it` via `@wdio/mocha-framework`, and `@wdio/browserstack-service`'s global interfaces (`State`, `GRRUrls`, …). The root `tsconfig.json` excludes `src/e2e/iOS`, so none of those exist for app code: a file that forgets to import the app's own `State` fails to compile instead of silently binding to BrowserStack's. `yarn lint` runs both programs (`lint:tsc`), and editors pick the nearest `tsconfig.json`, so each file sees the globals of the runtime it targets.
+[`src/e2e/android`](../src/e2e/android) runs Chrome on a real Android device through BrowserStack Automate, the same product, tunnel pool, slot wait, and launcher hooks as the iOS suite. Its [config](../src/e2e/android/config/wdio.browserstack.conf.ts) spreads the iOS base config and launcher hooks and changes only the specs, the worker count, and the device: a Google Pixel 8 on Android 14, chosen for stock Chrome and GBoard with no OEM keyboard between the test and the VirtualKeyboard API the app relies on. It runs one worker (`maxInstances: 1`), so an Android run takes one of the account's parallels rather than two.
 
-A module shared with the app is checked by both programs and therefore cannot reference `browser`. The console proxy is split along that line: [`src/util/consoleProxy.ts`](../src/util/consoleProxy.ts) is the app side and owns the storage key and record shape, while draining the buffer and waiting for the proxy to install live in [`wdio.base.conf.ts`](../src/e2e/iOS/config/wdio.base.conf.ts).
+The suite is a smoke test, not a port of the iOS specs. [`smoke.ts`](../src/e2e/android/__tests__/smoke.ts) asserts what only a real Android Chrome can prove: `<body data-platform="android">` is set, tapping a thought raises the keyboard through the VirtualKeyboard API without shrinking the layout (`interactive-widget=overlays-content`), hiding the keyboard exits edit mode even though no blur fires (the path [`androidWebHandler.ts`](../src/device/virtual-keyboard/handlers/androidWebHandler.ts) exists for), and typing reaches the thought. Add an Android test only for behaviour that is Android-specific.
+
+Android needs no console proxy: BrowserStack reads Chrome's console natively, so `android.yml` does not set `VITE_BROWSER_CONSOLE_CAPTURE` and the inherited proxy hooks are no-ops. There is no local (emulator) configuration yet.
+
+#### TypeScript for the WebdriverIO tests
+
+The WebdriverIO tests are typechecked by their own programs, [`src/e2e/iOS/tsconfig.json`](../src/e2e/iOS/tsconfig.json) and [`src/e2e/android/tsconfig.json`](../src/e2e/android/tsconfig.json), the only ones that declare WebdriverIO's globals — `browser`, `$`, `$$`, and `expect` from `@wdio/globals/types`, mocha's `describe`/`it` via `@wdio/mocha-framework`, and `@wdio/browserstack-service`'s global interfaces (`State`, `GRRUrls`, …). The root `tsconfig.json` excludes `src/e2e/iOS` and `src/e2e/android`, so none of those exist for app code: a file that forgets to import the app's own `State` fails to compile instead of silently binding to BrowserStack's. `yarn lint` runs all three programs (`lint:tsc`). The Android program imports the iOS suite's helpers and config, which are therefore checked by both WebdriverIO programs; they declare the same globals, so nothing changes, and editors pick the nearest `tsconfig.json`, so each file sees the globals of the runtime it targets.
+
+A module shared with the app is checked by the root program as well and therefore cannot reference `browser`. The console proxy is split along that line: [`src/util/consoleProxy.ts`](../src/util/consoleProxy.ts) is the app side and owns the storage key and record shape, while draining the buffer and waiting for the proxy to install live in [`wdio.base.conf.ts`](../src/e2e/iOS/config/wdio.base.conf.ts).
 
 #### Origin health check
 
-An iOS run is only as good as the origin it loads, and a wrong origin is indistinguishable from a working one to a naive check: a Cloudflare edge error page (502, 1033, "can't reach origin") and the Vite token gate's `403` are both well-formed HTML documents with a `<body>`. Two hooks in [`wdio.base.conf.ts`](../src/e2e/iOS/config/wdio.base.conf.ts) assert the page is actually em:
+A device run is only as good as the origin it loads, and a wrong origin is indistinguishable from a working one to a naive check: a Cloudflare edge error page (502, 1033, "can't reach origin") and the Vite token gate's `403` are both well-formed HTML documents with a `<body>`. Two hooks in [`wdio.base.conf.ts`](../src/e2e/iOS/config/wdio.base.conf.ts) assert the page is actually em:
 
 - **`onPrepare`** requests the URL the device will load (`CLOUDFLARED_URL`, else `https://localhost:3000`) from the runner and requires `200` plus em's own `data-app="em"` marker on the root container in [`index.html`](../index.html) (a generic `id="root"` is not distinctive enough to rule out an error page). This runs in the launcher, before any session exists, so a wrong origin costs one request rather than the whole retry budget — a worker cannot change `specFileRetries`, so an origin discovered bad later fails every spec five times over. It throws rather than exiting so each config's own handler can clean up first (notably killing the cloudflared connector, which would otherwise be orphaned and hold a pool hostname against other runs). It is skipped in CI when `CLOUDFLARED_URL` is unset, because the app is then served over plain HTTP and the `https` localhost URL is not the origin under test.
 - **`before`** waits on the device for `[data-app="em"]` to have children — that is, for em's own JavaScript to have run — rather than for a `<body>` to exist. It backstops the case where the device reaches something the runner does not.
@@ -504,7 +517,7 @@ wdio documentation:
 
 #### Cloudflare tunnel for the dev server
 
-BrowserStack's iOS Safari devices load the app over a public HTTPS URL rather than BrowserStack Local, because Safari blocks `localStorage` on self-signed certs. [`wdio.browserstack.conf.ts`](../src/e2e/iOS/config/wdio.browserstack.conf.ts) exposes the local dev server (`https://localhost:3000`) through a pool of **named Cloudflare Tunnels** on our own domain, `emthought.cc`, using [`cloudflared`](https://github.com/cloudflare/cloudflared) (the npm binary — no Docker). This is used by every path that runs iOS Safari tests: [`ios.yml`](../.github/workflows/ios.yml), the iOS job in [`tdd.yml`](../.github/workflows/tdd.yml), and local/agent `yarn test:ios` runs.
+BrowserStack's iOS Safari devices load the app over a public HTTPS URL rather than BrowserStack Local, because Safari blocks `localStorage` on self-signed certs; the Android Chrome suite takes the same path so that both share one mechanism. [`browserStackLauncherHooks.ts`](../src/e2e/iOS/config/browserStackLauncherHooks.ts) exposes the local dev server (`https://localhost:3000`) through a pool of **named Cloudflare Tunnels** on our own domain, `emthought.cc`, using [`cloudflared`](https://github.com/cloudflare/cloudflared) (the npm binary — no Docker). This is used by every path that runs iOS Safari tests: [`ios.yml`](../.github/workflows/ios.yml), the iOS job in [`tdd.yml`](../.github/workflows/tdd.yml), and local/agent `yarn test:ios` runs.
 
 We use a fixed-domain pool rather than the ephemeral `*.trycloudflare.com` quick tunnel `cloudflared` offers out of the box, because that quick-tunnel hostname is random and third-party — allowlisting it in the Copilot agent firewall means allowlisting *anyone's* `trycloudflare.com` tunnel, not just ours. A pool of tunnels on a domain we own lets us allowlist exactly what we need, while still tolerating a dead or already-claimed tunnel (see below).
 
@@ -512,7 +525,7 @@ We use a fixed-domain pool rather than the ephemeral `*.trycloudflare.com` quick
 
 ##### How a run claims a tunnel
 
-[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `wdio.browserstack.conf.ts`'s `onPrepare`. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts). The gate only guards the tunnel's public hostnames; every other authority (localhost, a LAN IP, `bs-local.com`) cannot have come through the tunnel — Cloudflare routes to the tunnel by Host header — and passes ungated. `onPrepare` discovers the token by asking the dev server's off-tunnel-only `/__tunnel-token` route over localhost, so a local run needs no `TUNNEL_TOKEN`; CI generates one per run and exports it to both its server and the runner (env `TUNNEL_TOKEN` overrides generation), which is also why every server on the pool is gated — the claim probe below relies on foreign servers 403ing this run's token.
+[`cloudflareTunnelPool.ts`](../src/e2e/iOS/config/cloudflareTunnelPool.ts) exports `findFirstAvailableTunnel(pool, appGateToken)`, called from `browserStackLauncherHooks.ts`'s `onPrepare`, which both BrowserStack configs spread. `pool` comes from the `CLOUDFLARE_TUNNEL_POOL` env var (a JSON array of `{ name, hostname, token }`); `appGateToken` is the per-run Vite app-gate secret — see [`tunnelTokenGate.ts`](../src/vite-middleware/tunnelTokenGate.ts) and `tunnelTokenGate` in [`vite.config.ts`](../vite.config.ts). The gate only guards the tunnel's public hostnames; every other authority (localhost, a LAN IP, `bs-local.com`) cannot have come through the tunnel — Cloudflare routes to the tunnel by Host header — and passes ungated. `onPrepare` discovers the token by asking the dev server's off-tunnel-only `/__tunnel-token` route over localhost, so a local run needs no `TUNNEL_TOKEN`; CI generates one per run and exports it to both its server and the runner (env `TUNNEL_TOKEN` overrides generation), which is also why every server on the pool is gated — the claim probe below relies on foreign servers 403ing this run's token.
 
 The gate must see `?__token=` on the **document** request. Vite rewrites `Accept: text/html` navigations (Chrome, Safari, BrowserStack iOS) to `/index.html` and drops the query string; curl's default `Accept: */*` does not take that path. That is why curl can 200 while a browser shows the gate's `Forbidden` on the same URL. The middleware reads Connect's `originalUrl` so the token survives that rewrite. The device URL is always `https://<hostname>/?__token=…` (slash before the query). Concatenating onto `https://host` without that slash yields `https://host?__token=`, which iOS Safari does not load as `/` — the first WDIO session fails `before` while later `specFileRetries` can still pass.
 
@@ -528,7 +541,7 @@ Only then does the run attach its connector, and it requires a burst of consecut
 
 If every tunnel is occupied the run waits, rescanning the pool every 10s for up to 45 minutes, rather than failing immediately. The starting index is derived from `GITHUB_RUN_ID` (or the PID locally) so concurrent runs spread across the pool instead of all racing for the first entry.
 
-This means `ios.yml`, `tdd.yml`, and local/agent runs can safely run concurrently against the same pool without a shared cross-workflow lock — each just claims whichever tunnel is free. BrowserStack's own parallel-session cap is handled the same way, by waiting for real availability rather than by a GitHub lock — see [Layered BrowserStack concurrency](#layered-browserstack-concurrency).
+This means `ios.yml`, `android.yml`, `tdd.yml`, and local/agent runs can safely run concurrently against the same pool without a shared cross-workflow lock — each just claims whichever tunnel is free. BrowserStack's own parallel-session cap is handled the same way, by waiting for real availability rather than by a GitHub lock — see [Layered BrowserStack concurrency](#layered-browserstack-concurrency).
 
 ##### One-time setup: provisioning the pool
 
@@ -542,19 +555,19 @@ Requires an **Account**-scoped Cloudflare permission grant including `Cloudflare
 4. Re-run the script (same or a larger `POOL_SIZE`) any time to top up the pool — it reuses tunnels that already exist rather than recreating them.
 
 
-Related tests: [/src/e2e/iOS](../src/e2e/iOS)
+Related tests: [/src/e2e/iOS](../src/e2e/iOS) and [/src/e2e/android](../src/e2e/android)
 
 ### Vitest configuration
 
 [`vitest.config.ts`](../vitest.config.ts) defines three projects, all extending [`vite.config.ts`](../vite.config.ts):
 
-- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding the two e2e spec directories (`src/e2e/puppeteer/__tests__/`, `src/e2e/iOS/__tests__/`), `evals/`, and `.claude/`. Only the spec directories are excluded, not all of `src/e2e/`: the e2e harness has ordinary unit tests of its own (`src/e2e/iOS/config/__tests__/`) that no other runner collects. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.ts`](../src/setupTests.ts). Used by `yarn test`.
+- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding the three e2e spec directories (`src/e2e/puppeteer/__tests__/`, `src/e2e/iOS/__tests__/`, `src/e2e/android/__tests__/`), `evals/`, and `.claude/`. Only the spec directories are excluded, not all of `src/e2e/`: the e2e harness has ordinary unit tests of its own (`src/e2e/iOS/config/__tests__/`) that no other runner collects. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.ts`](../src/setupTests.ts). Used by `yarn test`.
 - **`puppeteer-e2e`** — custom environment [`puppeteer-environment.ts`](../src/e2e/puppeteer-environment.ts), setup file [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), only includes `src/e2e/puppeteer/__tests__/*.ts`. The `vite-plugin-terminal` plugin pipes `console.log` from the page back to the terminal so Puppeteer test failures are debuggable. Used by `yarn test:puppeteer`; locally, [`test-puppeteer.sh`](../src/e2e/puppeteer/test-puppeteer.sh) also starts Browserless and a dedicated Vite dev server on port 2552.
 - **`eval`** — `node` environment and picks up live model evaluations under `packages/ai/src/evals/`. Its concurrent cases retry failures up to twice and allow 60 seconds per case. The directory is excluded from `unit` so `yarn test` remains deterministic and credential-free; run all evaluations explicitly with `yarn test:evals`, which loads `packages/ai/.env.local` before Vitest imports the AI client.
 
 Exceptions thrown inside a DOM event listener never propagate out of `dispatchEvent` — jsdom catches them and re-reports them as an `error` event on `window`. Vitest turns that event back into a run-failing unhandled error, but only while nothing else is listening for `error`, and [`initEvents.ts`](../src/util/initEvents.ts) registers a listener at module scope to drive the error banner, which suppresses that conversion in any test that imports app code. [`setupTests.ts`](../src/setupTests.ts) restores it by re-emitting trusted `error` events as `uncaughtException`, so a test that crashes on click fails the run instead of passing silently. Tests that dispatch a synthetic `ErrorEvent` to exercise the banner itself are unaffected, since events constructed in test code are not trusted.
 
-iOS tests are not part of the Vitest config — they run under WDIO, see [WebdriverIO tests](#5-webdriverio-tests).
+The WebdriverIO tests (iOS and Android) are not part of the Vitest config — they run under WDIO, see [WebdriverIO tests](#5-webdriverio-tests).
 
 ### Isolation and cleanup
 
@@ -670,6 +683,8 @@ A second value in a dropdown that is already open is tapped directly, since call
 
 Do not import Puppeteer helpers into iOS tests or assume identical driver behavior. Keep the test vocabulary parallel at the level of user intent, not implementation.
 
+The Android suite has no vocabulary of its own beyond what is Android-specific. Its tests import the platform-neutral iOS helpers directly (`paste`, `clickThought`, `waitForEditable`, `isKeyboardShown`, …), and [`src/e2e/android/helpers/`](../src/e2e/android/helpers) holds only the Android counterparts — [`hideKeyboard`](../src/e2e/android/helpers/hideKeyboard.ts) for `hideKeyboardByTappingDone`. Two iOS defaults are wrong on Android and must not be reused as they are: `tap`'s `pointerType` defaults to `mouse`, which never reaches the touch handlers that `isTouch` enables on Android Chrome, and `toolbarTapOptions`' `y: 60` is mobile Safari's chrome offset, meaningless to chromedriver, which taps in viewport coordinates. Parameterise them by platform before an Android test taps the toolbar.
+
 ## Test Flags
 
 [testFlags](../src/e2e/testFlags.ts) are used to alter runtime behavior of the app during tests. This is generally forbidden, as the automated test environment should be as close as possible to production so that it is testing the same behavior the end user sees. But there are some conditions that are difficult or impossible to create through normal user behavior (e.g. network latency) or that can enhance test readability (e.g. visualizations) when runtime alteration is warranted.
@@ -708,7 +723,7 @@ When the failure is wrong, fix the test—not the application—and rerun it aga
 
 ## CI workflows
 
-The primary Test, Puppeteer, and BrowserStack workflows run on pushes to `main` and on pull requests (BrowserStack uses `pull_request_target`). The TDD workflow runs on pull requests that add tests. All four accept `workflow_dispatch` with an optional `rerun_id` so the `ghworkflow` shell function (see [Tips](#triggering-github-actions-workflows-manually)) can fan out manually triggered runs for flake hunting.
+The primary Test, Puppeteer, BrowserStack, and BrowserStack Android workflows run on pushes to `main` and on pull requests (the two BrowserStack workflows use `pull_request_target`). The TDD workflow runs on pull requests that add tests. All five accept `workflow_dispatch` with an optional `rerun_id` so the `ghworkflow` shell function (see [Tips](#triggering-github-actions-workflows-manually)) can fan out manually triggered runs for flake hunting.
 
 Vercel Preview runs on pull requests separately from the test workflows. It deploys the pull request's `em-ai` service first, verifies its health route, then supplies that deployment's URL as `VITE_AI_URL` while building the matching `em` web preview. The GitHub `Preview` deployment links to the user-facing web app; the workflow summary includes the paired AI service URL for diagnostics. Both deploys run sequentially in one job so the GitHub deployment status represents the entire pair.
 
@@ -724,13 +739,13 @@ What this does leave is a pull request whose checks are pinned to an old base. `
 
 Merge `main` in when the pull request actually conflicts, which is not a matter of taste: GitHub declines to build `refs/pull/<n>/merge` for a conflicting pull request, so Test, Puppeteer, Lint, and TDD produce **no run at all** until it is resolved — the same signature described under [Arming Dependabot auto-merge](#arming-dependabot-auto-merge). Resolve it with a merge commit rather than a rebase, which keeps anyone's existing checkout of the branch valid. The other case is a base branch that has just recovered from a breakage of its own: there the merge is what moves the pull request onto the fixed base, since its last run was against the broken one.
 
-BrowserStack and Vercel Preview are the exception on both counts. They trigger on `pull_request_target` and check out `github.event.pull_request.head.sha`, so they test the head commit rather than a merge with `main` — and they keep running while a pull request conflicts, which is why a conflicting pull request reports those two checks and none of the others.
+BrowserStack, BrowserStack Android, and Vercel Preview are the exception on both counts. They trigger on `pull_request_target` and check out `github.event.pull_request.head.sha`, so they test the head commit rather than a merge with `main` — and they keep running while a pull request conflicts, which is why a conflicting pull request reports those three checks and none of the others.
 
 #### Path filtering
 
-Test, Puppeteer, BrowserStack, and Vercel Preview each carry a `paths-ignore` filter. **The four lists are no longer identical.** Test, Puppeteer, and BrowserStack share a core and then diverge, because a unit run and a browser run have different inputs; Vercel Preview keeps only the documentation and native groups it already had, since it builds `packages/ai` alongside the web app and so cannot filter it.
+Test, Puppeteer, BrowserStack, BrowserStack Android, and Vercel Preview each carry a `paths-ignore` filter. **The five lists are not identical.** Test, Puppeteer, BrowserStack, and BrowserStack Android share a core and then diverge, because a unit run and a browser run have different inputs; Vercel Preview keeps only the documentation and native groups it already had, since it builds `packages/ai` alongside the web app and so cannot filter it.
 
-The core shared by the three test workflows covers four groups:
+The core shared by the four test workflows covers four groups:
 
 - **Documentation and agent/editor configuration** — `**/*.md`, `docs/`, `.github/instructions/`, `.github/skills/`, `.github/agents/`, `.claude/`, `.agents/`, `.vscode/`, `.hooks/`.
 - **Native platform projects** — `android/`, `ios/`, `desktop/`, and `assets/` (the icon and splash sources generated into the first two).
@@ -739,11 +754,11 @@ The core shared by the three test workflows covers four groups:
 
 A change set confined to those paths cannot affect what the workflow tests. None of the native directories contains a JS or TS file, and the web favicons come from `public/`, not `assets/`. **If a Capacitor asset is ever wired into the Vite build, the native entries must be removed** — otherwise a real change would ship untested.
 
-**The workflow group is a list of names, not `.github/workflows/**`.** A wildcard there would filter the workflow's own file, so editing `puppeteer.yml` would not run Puppeteer and the change would merge unvalidated. `paths-ignore` has no exception syntax — `!` works only in `paths`, and rewriting the filter as `paths` inverts the safe default from "runs when it needn't" to "never runs". Naming them keeps the default safe in the useful direction: a workflow added later is simply not on the list, so it triggers a run until someone adds it. `puppeteer-diff-comment.yml` and `puppeteer-flaky.yml` are deliberately absent even from Test's copy, which has no use for them, so that all three lists stay identical in this group.
+**The workflow group is a list of names, not `.github/workflows/**`.** A wildcard there would filter the workflow's own file, so editing `puppeteer.yml` would not run Puppeteer and the change would merge unvalidated. `paths-ignore` has no exception syntax — `!` works only in `paths`, and rewriting the filter as `paths` inverts the safe default from "runs when it needn't" to "never runs". Naming them keeps the default safe in the useful direction: a workflow added later is simply not on the list, so it triggers a run until someone adds it. `puppeteer-diff-comment.yml` and `puppeteer-flaky.yml` are deliberately absent even from Test's copy, which has no use for them, so that all four lists stay identical in this group.
 
-**Where the three diverge.** Test never runs `yarn build`, so it also filters `public/`, `index.html`, and the spec directories the `unit` project excludes in [`vitest.config.ts`](../vitest.config.ts) — `src/e2e/puppeteer/` and `src/e2e/iOS/__tests__/` — plus `src/e2e/iOS/helpers/`, which only those specs import. Not all of `src/e2e/iOS/`: `config/__tests__/waitForBrowserStackSlots.ts` is a unit test and imports from `config/`. Puppeteer and BrowserStack invert that. They build the app, so `public/` and `index.html` are live inputs, but they never run the unit project, so they filter what sits outside the web build: `packages/ai/` (a separate Vercel service the app reaches over HTTP through `VITE_AI_URL`), `packages/eslint-plugin-em/` (loaded only by `eslint.config.js`), and the CI-automation workspaces `scripts/ci/`, `scripts/estimate/`, and `scripts/issue-classifier/`. Each also filters the other's suite, which is safe because the two share no imports. `yarn build` builds `packages/webview` and nothing else under `packages/`, which is why that one is filtered nowhere.
+**Where the four diverge.** Test never runs `yarn build`, so it also filters `public/`, `index.html`, and the spec directories the `unit` project excludes in [`vitest.config.ts`](../vitest.config.ts) — `src/e2e/puppeteer/` and `src/e2e/iOS/__tests__/` — plus `src/e2e/iOS/helpers/`, which only those specs import, and all of `src/e2e/android/`, which has no unit tests. Not all of `src/e2e/iOS/`: `config/__tests__/waitForBrowserStackSlots.ts` is a unit test and imports from `config/`. Puppeteer and BrowserStack invert that. They build the app, so `public/` and `index.html` are live inputs, but they never run the unit project, so they filter what sits outside the web build: `packages/ai/` (a separate Vercel service the app reaches over HTTP through `VITE_AI_URL`), `packages/eslint-plugin-em/` (loaded only by `eslint.config.js`), and the CI-automation workspaces `scripts/ci/`, `scripts/estimate/`, and `scripts/issue-classifier/`. Each also filters the other's suite, which is safe because the two share no imports. `yarn build` builds `packages/webview` and nothing else under `packages/`, which is why that one is filtered nowhere.
 
-**Test cannot filter `packages/` or `scripts/` wholesale**, however tempting the symmetry. The `unit` project's include glob, `**/__tests__/**/*.ts`, is unanchored, so it collects some thirty test files from `packages/ai/`, `packages/eslint-plugin-em/`, `scripts/ci/`, `scripts/estimate/`, and `scripts/issue-classifier/` alongside the ones under `src/`. Nor may any of the three filter `scripts/build-styles.mjs` or `.github/actions/`: `build:styles` runs on every install, and `install` and `serve` are the composite actions every one of these jobs uses.
+**Test cannot filter `packages/` or `scripts/` wholesale**, however tempting the symmetry. The `unit` project's include glob, `**/__tests__/**/*.ts`, is unanchored, so it collects some thirty test files from `packages/ai/`, `packages/eslint-plugin-em/`, `scripts/ci/`, `scripts/estimate/`, and `scripts/issue-classifier/` alongside the ones under `src/`. Nor may any of the four filter `scripts/build-styles.mjs` or `.github/actions/`: `build:styles` runs on every install, and `install` and `serve` are the composite actions every one of these jobs uses.
 
 One narrow gap is worth knowing about. `yarn test` is `vitest --project unit`, whose `**/__tests__/**/*.ts` glob also collects the workspaces under `scripts/`, and the issue classifier's sample-integrity tests ([`scripts/issue-classifier/src/__tests__/samples.ts`](../scripts/issue-classifier/src/__tests__/samples.ts)) read the prompt and samples they guard as fixtures. Those assets live beside the code in `scripts/issue-classifier/`, so a sample edit is a `.jsonl` change that runs Test normally — but the prompt itself is `scripts/issue-classifier/instructions.md`, and `**/*.md` is filtered. A pull request that edits only the prompt therefore skips the checks on it, so run `yarn test` locally when editing it.
 
@@ -769,13 +784,14 @@ concurrency:
 
 Downstream workflows already tolerate it: [`Puppeteer Diff Comment`](../.github/workflows/puppeteer-diff-comment.yml) acts only on a `success` or `failure` conclusion, so a cancelled run posts nothing from its partial artifacts.
 
-BrowserStack supersedes too, but keys its group on `github.event.pull_request.number` because it is a `pull_request_target` workflow (see above). TDD's iOS job runs against the same BrowserStack account from a *different* group, so it contends for the shared session cap either way — both wait for a free slot in-process rather than for each other (see [Layered BrowserStack concurrency](#layered-browserstack-concurrency)).
+BrowserStack and BrowserStack Android supersede too, each in its own group so that an Android run never cancels an iOS run of the same pull request, but key those groups on `github.event.pull_request.number` because they are `pull_request_target` workflows (see above). TDD's iOS job runs against the same BrowserStack account from a *different* group, so it contends for the shared session cap either way — both wait for a free slot in-process rather than for each other (see [Layered BrowserStack concurrency](#layered-browserstack-concurrency)).
 
 | Workflow | File | What it runs | Notes |
 |---|---|---|---|
 | **Test** | [`.github/workflows/test.yml`](../.github/workflows/test.yml) | `yarn test` (Vitest unit + jsdom) | The fast tier. Should always pass. Filtered by `paths-ignore` (see above). |
 | **Puppeteer** | [`.github/workflows/puppeteer.yml`](../.github/workflows/puppeteer.yml) | `yarn test:puppeteer` against a `browserless/chrome:latest` service container on port 7566. | On failure, image-snapshot diffs are uploaded in the `__diff_output__` artifact. |
 | **BrowserStack** | [`.github/workflows/ios.yml`](../.github/workflows/ios.yml) | `yarn test:ios` (an alias of `test:ios:browserstack`) against real iOS devices via BrowserStack. | Uses `pull_request_target` so credentials are available, guarded by `changed_files > 0` and `paths-ignore`, deduplicated per PR, and gated on live BrowserStack session availability (see [Layered BrowserStack concurrency](#layered-browserstack-concurrency)). |
+| **BrowserStack Android** | [`.github/workflows/android.yml`](../.github/workflows/android.yml) | `yarn test:android` (an alias of `test:android:browserstack`): the Android smoke suite against a real Android device (Chrome) via BrowserStack. | Mirrors BrowserStack: `pull_request_target`, `changed_files > 0`, `paths-ignore`, per-PR deduplication in its own group, and the live session wait. One worker, so it takes one parallel. |
 | **TDD** | [`.github/workflows/tdd.yml`](../.github/workflows/tdd.yml) | Runs newly added unit, Puppeteer, and iOS tests against the selected pre-fix commit. | Expects the new regression test to fail before the fix. Pull requests only. |
 | **Vercel Preview** | [`.github/workflows/vercel-preview.yml`](../.github/workflows/vercel-preview.yml) | Deploys paired `em-ai` and `em` previews, with the AI preview URL compiled into the web app. | Uses `pull_request_target`, shares the standard `paths-ignore` filter, and reports the web URL through GitHub Deployments. |
 | **Preview QR** | [`.github/workflows/preview-qr.yml`](../.github/workflows/preview-qr.yml) | Keeps a collapsed disclosure with a QR code of the latest successful preview at the bottom of the pull request description. | `workflow_run` on Vercel Preview, in the base-repo context; never checks out pull request code (see [Preview QR code](#preview-qr-code)). |
@@ -852,16 +868,16 @@ Both steps write the comment, and the scan rewrites whatever the dispatch left, 
 
 #### Layered BrowserStack concurrency
 
-Two things limit how many iOS runs can proceed at once, and they are enforced in different places. **Superseding** is GitHub's job: only the newest commit on a pull request is worth a device session. **The BrowserStack parallel-session cap** is not — a GitHub group can only serialize on the assumption that the account is busy, whereas [`waitForBrowserStackSlots.ts`](../src/e2e/iOS/config/waitForBrowserStackSlots.ts) can ask whether it actually is.
+Two things limit how many device runs can proceed at once, and they are enforced in different places. **Superseding** is GitHub's job: only the newest commit on a pull request is worth a device session. **The BrowserStack parallel-session cap** is not — a GitHub group can only serialize on the assumption that the account is busy, whereas [`waitForBrowserStackSlots.ts`](../src/e2e/iOS/config/waitForBrowserStackSlots.ts) can ask whether it actually is.
 
 - **Workflow level — per-PR superseding.** Each pull request gets its own group with `cancel-in-progress: true`, so a new commit cancels the PR's previous run whether it is still waiting for a slot or already mid-suite. Non-PR runs (pushes to `main`, `workflow_dispatch`) get a unique group per run: every `main` commit should be tested, and `ghworkflow` fans out dispatch runs deliberately for flake hunting, so none of these may cancel each other.
-- **In-process — the slot wait.** `wdio.browserstack.conf.ts`'s `onPrepare` calls `waitForBrowserStackSlots(sessionsNeeded)` **before claiming a tunnel**, and once more after the claim as a recheck, so that nothing is created against a full pool. `sessionsNeeded` is `maxInstances` (2), or the `--spec` file count when that is smaller — `tdd.yml` runs one or two changed specs and needs only that many sessions. It polls `https://api.browserstack.com/automate/plan.json` (Basic auth with `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY`) every ~15s with jitter, logging usage as it waits, until there is both parallel headroom (`parallel_sessions_max_allowed - parallel_sessions_running >= sessionsNeeded`) **and** queue headroom (`queued_sessions + sessionsNeeded <= queued_sessions_max_allowed`). The queue is a separate cap: extra `POST .../session` calls wait there when all parallels are busy, and overflowing it fails with `BROWSERSTACK_QUEUE_SIZE_EXCEEDED` even when parallels look free. `maxInstances` stays at 2 so one run does not take the whole parallel cap and a handful of overlapping CI jobs cannot burst 4×5 session creates into that queue.
+- **In-process — the slot wait.** `browserStackLauncherHooks.ts`'s `onPrepare`, spread by both BrowserStack configs, calls `waitForBrowserStackSlots(sessionsNeeded)` **before claiming a tunnel**, and once more after the claim as a recheck, so that nothing is created against a full pool. `sessionsNeeded` is the config's `maxInstances` (2 for iOS, 1 for Android), or the `--spec` file count when that is smaller — `tdd.yml` runs one or two changed specs and needs only that many sessions. It polls `https://api.browserstack.com/automate/plan.json` (Basic auth with `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY`) every ~15s with jitter, logging usage as it waits, until there is both parallel headroom (`parallel_sessions_max_allowed - parallel_sessions_running >= sessionsNeeded`) **and** queue headroom (`queued_sessions + sessionsNeeded <= queued_sessions_max_allowed`). The queue is a separate cap: extra `POST .../session` calls wait there when all parallels are busy, and overflowing it fails with `BROWSERSTACK_QUEUE_SIZE_EXCEEDED` even when parallels look free. `maxInstances` stays at 2 so one run does not take the whole parallel cap and a handful of overlapping CI jobs cannot burst 4×5 session creates into that queue.
 
-  The order matters because a waiting run should hold as little as possible. Sessions are the scarcer resource (a full run takes 2 of the account's 5, but only 1 of the 5 pool tunnels), and the wait can be long, so it happens before the tunnel claim and holds only the runner. The recheck after the claim covers the window in which the claim itself waited for a busy pool; it normally returns immediately.
+  The order matters because a waiting run should hold as little as possible. Sessions are the scarcer resource (a full iOS run takes 2 of the account's 5 and an Android run 1, but each only 1 of the 5 pool tunnels), and the wait can be long, so it happens before the tunnel claim and holds only the runner. The recheck after the claim covers the window in which the claim itself waited for a busy pool; it normally returns immediately.
 
   The wait is not a queue. Each run polls independently, with no ordering between them, so under load a run can keep losing the race to newer arrivals — the GitHub group this replaced was FIFO and never expired. The ceiling is therefore sized for the worst honest case rather than a typical one: **3 hours**. A `ghworkflow` fan-out of 15 dispatch runs, admitted 2 at a time with a 20-minute suite, would drain a perfectly fair queue in about 150 minutes, and the ceiling leaves room for unfairness on top of that while staying inside the 6-hour job limit. Past it the run throws an error that names the last observed usage and says the run was *starved* — the account is not broken, other runs kept winning — and the config's `catch` kills any tunnel connector rather than starting workers. `specFileRetriesDeferred` (`wdio.base.conf.ts`) remains the fallback for the check-then-create race: the wait is a check, not a reservation, so two runs can still see the same headroom in the same instant.
 
-So two `ios.yml` runs overlap freely whenever the account has room for both (2 workers each), instead of queueing behind one another regardless of real usage.
+So two `ios.yml` runs overlap freely whenever the account has room for both (2 workers each), instead of queueing behind one another regardless of real usage, and an `android.yml` run is one more consumer of the same pool: a pull request push now draws 3 sessions and 2 tunnels.
 
 - **Merged or closed PRs cancel themselves.** The first step re-reads the pull request state and cancels its own run via the API if the PR is no longer open — a merge triggers the workflow's own `push` run on `main`, so re-testing the merged code would prove nothing while occupying the gate for a full suite. Cancelling rather than exiting green is deliberate: no test ran, so nothing may report as passed. [`Cancel PR Runs`](#merged-and-closed-pull-requests) now sweeps these runs at close time, which makes this step a backstop for the one race it cannot cover — a run created from a `synchronize` event that lands after the sweep has already listed runs. It is worth keeping, because a run admitted through this gate is the most expensive one in the repo to waste.
 - **Checkout pins `github.event.pull_request.head.sha`, not the head branch name.** A branch name makes `actions/checkout` build a wildcard refspec, and a wildcard matching nothing makes `git fetch` exit non-zero with an **empty stderr** — so a branch deleted on merge used to fail the clone with a bare `The process '/usr/bin/git' failed with exit code 1`. A SHA is fetched exactly and stays reachable in the base repository via `refs/pull/<n>/head` after the branch is deleted (including for fork pull requests, which is why no `repository:` input is needed), keeping the checkout robust in the window between the cancel step's check and the fetch.
@@ -879,7 +895,7 @@ When a pull request adds a regression test alongside a bug fix, it must satisfy 
 
 The [`tdd-write-failing-test` skill](../.github/skills/tdd-write-failing-test/SKILL.md) temporarily stages the red test as `it.skip` with a bare issue-URL comment. Its focused `run-test` runner unskips the test for local validation, so a skipped test can never masquerade as a pass. The TDD workflow likewise unskips it against the pre-fix implementation and expects the valid assertion failure described above. After the fix, remove `.skip`; the normal Test/Puppeteer/BrowserStack workflow must run the unchanged assertion and pass. Never merge the transient skip.
 
-The TDD workflow detects added `it(...)`/`test(...)` definitions in unit, Puppeteer, and iOS test files. It checks out the pre-fix implementation and overlays the changed test files — plus any changed test infrastructure they depend on (helpers, config/setup directories, and shared `src/e2e/*.ts` files) — from the pull request. For tests that are not staged with the transient skip, the normal workflows prove the green side separately.
+The TDD workflow detects added `it(...)`/`test(...)` definitions in unit, Puppeteer, and iOS test files (the Android suite is not yet validated by TDD). It checks out the pre-fix implementation and overlays the changed test files — plus any changed test infrastructure they depend on (helpers, config/setup directories, and shared `src/e2e/*.ts` files) — from the pull request. For tests that are not staged with the transient skip, the normal workflows prove the green side separately.
 
 By default, the pre-fix implementation is the PR's base commit. If the bug was introduced later or another commit is a better control, add this on its own line in the pull request description:
 

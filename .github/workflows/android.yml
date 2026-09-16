@@ -1,4 +1,4 @@
-name: BrowserStack
+name: BrowserStack Android
 
 # Documentation, agent/editor configuration, repository tooling, the native platform projects, and
 # unrelated workflow files cannot change what this workflow tests, so a change set confined to them
@@ -8,7 +8,7 @@ name: BrowserStack
 # Puppeteer. Test filters none of those — it collects their unit tests — so the two lists differ
 # deliberately; see docs/testing.md § Path filtering.
 # Skipping is worth more here than in a cheap workflow: every run occupies a slot in the shared
-# BrowserStack session pool, so one pointless run delays every other PR's iOS tests behind it.
+# BrowserStack session pool, so one pointless run delays every other PR's device tests behind it.
 #
 # paths-ignore skips the workflow outright, which means NO check is reported — not a "skipped"
 # check, and not a synthetic pass from a job-level `if`. That is only correct because BrowserStack
@@ -20,7 +20,7 @@ name: BrowserStack
 # code still runs in full. `**/*.md` is safe because nothing under src/ imports markdown.
 #
 # The native entries below rest on `yarn build` staying web-only (build:packages, build:styles,
-# vite build) and on this workflow testing mobile Safari over a tunnel rather than the Capacitor
+# vite build) and on this workflow testing mobile Chrome over a tunnel rather than the Capacitor
 # app. None of those directories contains a JS or TS file today. If a Capacitor asset is ever wired
 # into the Vite build, remove them — otherwise a real change would ship untested.
 on:
@@ -89,7 +89,6 @@ on:
       - 'scripts/issue-classifier/**'
       # The other browser suite. The two share no imports.
       - 'src/e2e/puppeteer/**'
-      - 'src/e2e/android/**'
   pull_request_target:
     types: [opened, synchronize, reopened]
     # GitHub Actions does not support YAML anchors, so this list is duplicated from `push` above.
@@ -141,7 +140,6 @@ on:
       - 'scripts/estimate/**'
       - 'scripts/issue-classifier/**'
       - 'src/e2e/puppeteer/**'
-      - 'src/e2e/android/**'
   workflow_dispatch:
     inputs:
       rerun_id:
@@ -170,7 +168,7 @@ on:
 # provider's idle timeout instead of closing cleanly, briefly counting against the pool. That costs
 # less than what it replaces — running entire suites against superseded commits.
 concurrency:
-  group: ${{ github.event_name == 'pull_request_target' && format('browserstack-pr-{0}', github.event.pull_request.number) || format('browserstack-run-{0}', github.run_id) }}
+  group: ${{ github.event_name == 'pull_request_target' && format('browserstack-android-pr-{0}', github.event.pull_request.number) || format('browserstack-android-run-{0}', github.run_id) }}
   cancel-in-progress: true
 
 env:
@@ -181,13 +179,10 @@ env:
   # browser (Puppeteer tests attach to the browserless/chrome service via CDP; only
   # agent-scripts.yml launches the bundled browser), saving ~20s per install.
   PUPPETEER_SKIP_DOWNLOAD: true
-  # Activates the console proxy (src/util/consoleProxy.ts), which we need because BrowserStack
-  # can't access iOS console logs.
-  VITE_BROWSER_CONSOLE_CAPTURE: 1
 
 jobs:
   run:
-    name: BrowserStack
+    name: BrowserStack Android
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0
     env:
@@ -236,7 +231,7 @@ jobs:
       # build a wildcard refspec (`+refs/heads/<name>*:refs/remotes/origin/<name>*`), and a wildcard
       # that matches nothing makes `git fetch` exit 1 with an *empty* stderr — so a branch deleted on
       # merge killed this step with a bare "The process '/usr/bin/git' failed with exit code 1" and
-      # no iOS test ran. The cancel step above turns away already-merged runs, but a PR can still
+      # no Android test ran. The cancel step above turns away already-merged runs, but a PR can still
       # merge in the window between that check and this one, so the checkout has to be robust on its
       # own rather than relying on the guard.
       #
@@ -304,7 +299,7 @@ jobs:
           # Bind 0.0.0.0 (--host) so the app is reachable via the runner's localhost by the
           # cloudflared connector (which the wdio config starts). Capture the PID and tee output
           # to serve.log so the readiness loop and the cleanup step can use them.
-          # HTTP=1 forces a plain-HTTP origin here: Cloudflare's tunnel already terminates HTTPS at its edge for Safari (a real CA-signed cert on the public hostname), so this local connector-to-origin hop never needs its own TLS.
+          # HTTP=1 forces a plain-HTTP origin here: Cloudflare's tunnel already terminates HTTPS at its edge for the device browser (a real CA-signed cert on the public hostname), so this local connector-to-origin hop never needs its own TLS.
           HTTP=1 yarn servebuild --host > serve.log 2>&1 &
           echo "APP_PID=$!" >> "$GITHUB_ENV"
 
@@ -335,13 +330,13 @@ jobs:
         if: env.BROWSERSTACK_USERNAME == '' || env.BROWSERSTACK_ACCESS_KEY == ''
         run: echo "Skipping BrowserStack because credentials are not configured."
 
-      - name: Test iOS on BrowserStack
+      - name: Test Android on BrowserStack
         if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
-        run: yarn test:ios
+        run: yarn test:android
         env:
           BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
           BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
-          BROWSERSTACK_BUILD_NAME: 'CI - ${{github.run_id}}'
+          BROWSERSTACK_BUILD_NAME: 'CI Android - ${{github.run_id}}'
           BROWSERSTACK_PROJECT_NAME: 'em'
           TUNNEL_TOKEN: ${{env.TUNNEL_TOKEN}}
           # A JSON array of { name, hostname, token }, provisioned out-of-band — see
@@ -364,6 +359,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: cloudflared-browserstack-log
+          name: cloudflared-browserstack-android-log
           path: cloudflared-browserstack.log
           if-no-files-found: ignore
