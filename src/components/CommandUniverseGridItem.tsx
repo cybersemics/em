@@ -1,12 +1,12 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
 import State from '../@types/State'
+import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../actions/commandUniverseNavigate'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
-import useCommandUniverseNavigator from '../hooks/useCommandUniverseNavigator'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import CircleEllipsisIcon from './icons/CircleEllipsisIcon'
@@ -30,7 +30,7 @@ interface CommandUniverseGridItemProps {
 
 /** Renders a single command as a cell in CommandUniverseGrid. */
 const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '' }) => {
-  const navigator = useCommandUniverseNavigator()
+  const dispatch = useDispatch()
   const isActive = useSelector(state => command.isActive?.(state))
   const disabled = useSelector(state => !isExecutable(state, command))
   const label = command.labelInverse && isActive ? command.labelInverse : command.label
@@ -50,7 +50,9 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
           type='button'
           aria-label={label}
           onClick={event =>
-            navigator.open('detail', { command }, { origin: event.currentTarget.getBoundingClientRect() })
+            dispatch(
+              commandUniverseNavigate('detail', { command }, { origin: event.currentTarget.getBoundingClientRect() }),
+            )
           }
           className={css({
             position: 'relative',

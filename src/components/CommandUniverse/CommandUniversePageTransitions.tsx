@@ -1,8 +1,9 @@
 import { MotionConfigContext, motion, useReducedMotion } from 'motion/react'
-import { ReactElement, useContext, useLayoutEffect, useRef, useState } from 'react'
+import { ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
+import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import useCommandUniverseNavigator from '../../hooks/useCommandUniverseNavigator'
+import { commandUniverseFinishTransitionActionCreator as commandUniverseFinishTransition } from '../../actions/commandUniverseFinishTransition'
 import commandUniverseMotion from './commandUniverseMotion'
 
 /** The page being shown. */
@@ -15,21 +16,24 @@ const away = (zoom: 'in' | 'out') => ({ opacity: 0, scale: zoom === 'in' ? 2.5 :
 const parked = { opacity: 0, scale: 1, filter: 'blur(0px)' }
 
 /**
- * Coordinates retained page surfaces. The router supplies keyed content; the provider owns history.
+ * Coordinates retained page surfaces while Redux owns their history and transition semantics.
  *
  * Each surface declares where it belongs and Motion moves it there. Because the target is declarative,
  * navigating while a zoom is running simply re-targets: Motion continues from wherever the surface
  * got to rather than restarting, which is what keeps Back usable before the motion finishes.
  */
 const CommandUniversePageTransitions = ({ children }: { children: ReactElement[] }) => {
-  const { activeEntryId, isOpen, transition, finishTransition } = useCommandUniverseNavigator()
+  const dispatch = useDispatch()
+  const { entries, index, transition } = useSelector(state => state.commandUniverseNavigation)
+  const isOpen = useSelector(state => !!state.showMobileCommandUniverse)
+  const activeEntryId = entries[index].entryId
   const { transition: motionOptions = commandUniverseMotion } = useContext(MotionConfigContext)
   const reducedMotion = useReducedMotion()
   const root = useRef<HTMLDivElement>(null)
   const focusTargets = useRef(new Map<string, HTMLElement>())
   const [transformOrigin, setTransformOrigin] = useState('center')
 
-  // The zoom grows from the tapped cell. The navigator carries that cell's rectangle in viewport
+  // The zoom grows from the tapped cell. Redux carries that cell's rectangle in viewport
   // coordinates; only the container's own position on screen is missing, and that exists solely after
   // layout. Measure it here and hand the result down as an ordinary style.
   useLayoutEffect(() => {
@@ -43,6 +47,13 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
 
   const duration = reducedMotion ? 0 : (motionOptions.duration ?? commandUniverseMotion.duration)
   const ease = motionOptions.ease ?? commandUniverseMotion.ease
+
+  useEffect(() => {
+    const retained = new Set(entries.map(entry => entry.entryId))
+    focusTargets.current.forEach((_, entryId) => {
+      if (!retained.has(entryId)) focusTargets.current.delete(entryId)
+    })
+  }, [entries])
 
   /** Restores what the page had focused, or focuses its designated heading, without moving the scroll. */
   const restoreFocus = (entryId: string) => {
@@ -85,14 +96,14 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
                 : { duration: 0 }
             }
             // The navigation ends when its destination arrives. A completion from an abandoned navigation
-            // carries that navigation's id, which the provider rejects.
+            // carries that navigation's id, which the Redux reducer rejects.
             onAnimationComplete={
               entering
                 ? () => {
                     if (!isOpen) return
                     // Commit the navigation before focusing: until the transition clears, every page is inert and
                     // a focus call inside one is ignored.
-                    flushSync(() => finishTransition(transition.id))
+                    flushSync(() => dispatch(commandUniverseFinishTransition(transition.id)))
                     restoreFocus(entryId)
                   }
                 : undefined

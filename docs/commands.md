@@ -127,33 +127,39 @@ The **Command Universe** is the searchable command palette. Two flavors:
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
 - **`MobileCommandUniverse`** — dialog opened by `openMobileCommandUniverse`, also reachable by gesture. Clicking a grid cell opens its command detail page, including when the command cannot currently execute. Cells are native buttons, so Enter and Space also open details. Back/Forward in `DialogHeader` navigate the dialog history. Search stays above the grid scroller, and changing search or sort resets the results to the top.
 
-The Command Universe has one session owner and separate routing and presentation layers:
+The Command Universe has Redux-owned session navigation with separate routing and presentation layers:
 
-- [`CommandUniverseProvider`](../src/components/CommandUniverse/CommandUniverseProvider.tsx) owns one [`CommandUniversePageNavigator`](../src/@types/CommandUniversePageNavigator.ts), keeping its reducer and lifecycle logic inside the provider. The header, router, and grid items read that same instance through [`useCommandUniverseNavigator`](../src/hooks/useCommandUniverseNavigator.ts). The consumer hook never creates a second history and throws when no provider is present. The provider sits outside the modal's fade/unmount boundary. Its `isOpen` describes the entire Command Universe session, not whether one particular presentation is visible.
-- [`commandUniversePages`](../src/components/CommandUniverse/commandUniversePages.ts) maps page ids to components. [`CommandUniversePage`](../src/@types/CommandUniversePage.ts) derives both the ids and the corresponding props from that registry. A history entry wraps a page with its own `entryId`, so two entries for the same page remain distinct. The navigator stores opaque page props and has no command-specific fields. For example, `navigator.open('detail', { command })` passes a command to the registered detail component.
-- [`CommandUniversePageRouter`](../src/components/CommandUniverse/CommandUniversePageRouter.tsx) selects the registered component and forwards its props. It does not own history, read command data, or size the dialog. The modal composition sizes the outer non-scrolling viewport. Each page uses [`DialogContent`](../src/components/dialog/DialogContent.tsx) for its independent scroller, padding, and custom scrollbar.
-- [`CommandUniversePageTransitions`](../src/components/CommandUniverse/CommandUniversePageTransitions.tsx) gives each retained surface a declarative target and lets Motion move it there, with `useReducedMotion` skipping the zoom when requested. Because the target is declarative, navigating while a zoom is running simply re-targets: Motion continues from wherever the surface got to rather than restarting. Completion comes from Motion rather than a parallel timer, and completion ids prevent an abandoned animation from ending a newer one. Inactive and transitioning pages are inert, but the header stays outside the page surfaces and so remains usable throughout. On arrival the view restores the destination's last focused element or focuses its designated heading without changing scroll position, committing the navigation first so the destination is no longer inert.
+- `state.commandUniverseNavigation` owns the history entries, active index, and current transition. [`commandUniverseNavigate`](../src/actions/commandUniverseNavigate.ts), [`commandUniverseBack`](../src/actions/commandUniverseBack.ts), and [`commandUniverseForward`](../src/actions/commandUniverseForward.ts) mutate it through the app's filename-routed Redux reducer. Opening the mobile Command Universe composes [`commandUniverseReset`](../src/actions/commandUniverseReset.ts) to start a fresh session. These actions are non-undoable and can be dispatched by the Command system.
+- [`commandUniversePages`](../src/components/CommandUniverse/commandUniversePages.ts) maps page ids to components. [`CommandUniversePage`](../src/@types/CommandUniversePage.ts) derives both the ids and the corresponding props from that registry. A history entry wraps a page with its own `entryId`, so two visits to the same page remain distinct. The navigation state stores opaque page props and has no command-specific fields.
+- [`CommandUniversePageRouter`](../src/components/CommandUniverse/CommandUniversePageRouter.tsx) selects the active entry from Redux, resolves its registered component, and forwards its props. It does not own history, read command data, or size the dialog. The modal composition sizes the outer non-scrolling viewport. Each page uses [`DialogContent`](../src/components/dialog/DialogContent.tsx) for its independent scroller, padding, and custom scrollbar.
+- [`CommandUniversePageTransitions`](../src/components/CommandUniverse/CommandUniversePageTransitions.tsx) gives each retained surface a declarative target and lets Motion move it there, with `useReducedMotion` skipping the zoom when requested. Because the target is declarative, navigating while a zoom is running simply re-targets: Motion continues from wherever the surface got to rather than restarting. Completion comes from Motion rather than a parallel timer, and [`commandUniverseFinishTransition`](../src/actions/commandUniverseFinishTransition.ts) ignores a late completion from an abandoned animation. Inactive and transitioning pages are inert, but the header stays outside the page surfaces and so remains usable throughout. On arrival the view restores the destination's last focused element or focuses its designated heading without changing scroll position, committing the navigation first so the destination is no longer inert.
 
 Each history entry records the zoom direction and source rectangle, in viewport coordinates, of the navigation that created it. Back reverses that entry's zoom and Forward replays it, so a new entry can zoom either inward or outward. Navigation is never blocked by a running animation: Back and Forward stay enabled throughout, so a mistaken tap can be undone without waiting the zoom out. Reachable history entries remain mounted with their independent scroll positions. Starting a new branch discards its abandoned redo pages. Closing unmounts the page surfaces after the dialog fade, and reopening starts a fresh session even during an unfinished close fade. This history is independent of browser history and the editor's undo/redo.
 
 Motion defaults live in [`commandUniverseMotion`](../src/components/CommandUniverse/commandUniverseMotion.ts), using the shared duration utility. The transition view reads them directly, and an enclosing Motion `MotionConfig` overrides them where one is present, which is how tests run the animation at zero duration.
 
-For a future docked presentation, keep the provider and the router's rendered page tree mounted in the same React position while changing the shell's layout. Keep `isOpen` true when docking. Sharing the provider preserves history, but replacing the router subtree would still remount page-local state and scroll containers. The current app renders the modal presentation; docking controls are separate work.
-
-#### Adding a Command Universe page
-
-1. Create a page component under `src/components/CommandUniverse/`. Its props are its navigation parameters. Read the shared navigator with `useCommandUniverseNavigator` when needed, and use `DialogContent` if the page scrolls.
-2. Import it into `commandUniversePages.ts` and add its page id as a registry key.
-
-The router and route types update from the registry. No separate id union, props union, or routing switch needs editing. Navigation calls are checked against the registered component's props. Add tests for the new page's behavior.
+For a future docked presentation, keep the router's rendered page tree mounted in the same React position while changing the shell's layout. Redux preserves navigation history across presentations, but replacing the router subtree would still remount page-local state and scroll containers. The current app renders the modal presentation; docking controls are separate work.
 
 #### Rich command descriptions
 
 `Command.longDescription` is a `ReactNode`, rendered directly by [`CommandUniverseDetailPage`](../src/components/CommandUniverse/CommandUniverseDetailPage.tsx). Plain strings render as text. Use JSX paragraphs, fragments, normal anchors, or components for rich content. Command modules containing JSX use `.tsx`; a substantial description may be a separate component. There is no Markdown or HTML-string parser in the detail page.
 
-Description components can read `useCommandUniverseNavigator` when they need internal navigation. Ordinary external links can use `<a href='…'>` directly. Static descriptions, such as `newThought`, define their JSX paragraphs inline in the command object.
+Description components can dispatch the Command Universe navigation actions when they need internal navigation. Ordinary external links can use `<a href='…'>` directly. Static descriptions, such as `newThought`, define their JSX paragraphs inline in the command object.
 
-Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`. Commands are presented grouped by `COMMAND_GROUPS` (in [`constants.ts`](../src/constants.ts)), which defines the order: Navigation → Creating thoughts → Deleting thoughts → Moving thoughts → Editing thoughts → Oops → Special Views → Visibility → Settings → Help → Cancel.
+#### Adding a Command Universe page
+
+1. Create a page component under `src/components/CommandUniverse/`. Its props are its navigation parameters. Dispatch the Command Universe navigation actions when needed, and use `DialogContent` if the page scrolls.
+2. Import it into `commandUniversePages.ts` and add its page id as a registry key.
+
+The router and route types update from the registry. No separate id union, props union, or routing switch needs editing. `commandUniverseNavigateActionCreator` calls are checked against the registered component's props. Add tests for the new page's behavior.
+
+Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
+
+Help and Customize Toolbar present commands grouped by `COMMAND_DIFFICULTIES` (in [`constants.ts`](../src/constants.ts)), a two-level hierarchy of difficulty levels containing category groups, which defines the order: Beginner (Creating Thoughts → Navigation → Contexts) → Intermediate (Categorizing → Nudging → Deleting) → Advanced (Creating Thoughts II → Edit History → Notes → Views).
+
+`COMMAND_DIFFICULTIES` is the single source of truth for the hierarchy. `as const` preserves its literal IDs, and `satisfies` validates the structure and command references. `CommandDifficulty` and `CommandGroup` (in [`src/@types`](../src/@types)) are inferred from that readonly configuration, so their ID unions update automatically when entries are added or removed. Difficulty IDs and globally unique group IDs stay unchanged when titles, ordering, or group placement change; features referencing the hierarchy use `CommandDifficulty['id']` and `CommandGroup['id']`. The constant stores command IDs and presentation order; user learning progress belongs separately.
+
+`useCommandList` resolves command IDs into `Command[]` and returns `sections`: display-only `CommandSection` objects with `{ id, title, difficulty?, commands }`. Search results and the alphabetical list have their own IDs and no difficulty. `CommandTable` and `MobileCommandUniverse` render those sections using their stable IDs as React keys. `CommandTable` detects difficulty boundaries by ID and renders each difficulty title above its first visible section; `CommandTableSection` renders the titled command table within each section. Configuration groups remain categories, while display sections can also represent search results or the alphabetical list.
 
 Both take the browser selection away from the thought as they open — the desktop palette by focusing its search input, the mobile drawer by clearing the selection outright — so both snapshot it into `state.selectionOffsets` on the way in, for the commands whose input is the selected text. See [Caret / Browser Selection](cursor-and-caret.md#caret--browser-selection).
 
@@ -248,7 +254,7 @@ The copy button to the right of the slider copies a **bug report** for the actio
 3. Pick at least one activation surface:
    - `keyboard` — a `Key` object or string. The `index()` startup pass will warn if you collide with an existing shortcut.
    - `gesture` — a string of `l/r/u/d` characters (or array of strings).
-   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate group in `COMMAND_GROUPS` ([`constants.ts`](../src/constants.ts)).
+   - Toolbar — add an `svg`, `isActive`, and (optionally) `longPress`. Add the `id` to the appropriate category group of the appropriate difficulty level in `COMMAND_DIFFICULTIES` ([`constants.ts`](../src/constants.ts)).
 4. Decide multicursor behavior. If you skip this and set `multicursor: true`, consider whether `filter` or `execMulticursor` is more appropriate before merging.
 5. Add tests under `src/commands/__tests__/`.
 
@@ -537,6 +543,8 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 ### Bump Thought Down
 
 Bump the current thought down one level and replace it with a new, empty thought. When multiple thoughts are selected, their parent is bumped down and the selected thoughts are moved into the new thought.
+
+A leading emoji labels the thought it is attached to rather than being part of its text, so it stays behind — along with the whitespace that separates it — and only the text it labels is bumped down. The caret is placed after it, ready for the replacement text. A thought that is nothing but an emoji has no text to separate, so it is bumped down whole as usual.
 
 <kbd>Command + Shift + D</kbd>
 
