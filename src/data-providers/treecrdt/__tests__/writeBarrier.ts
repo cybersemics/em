@@ -45,62 +45,28 @@ it('surfaces TreeCRDT write failures when waiting for idle', async () => {
   await expect(waitForTreecrdtWriteBarrier()).resolves.toBeUndefined()
 })
 
-it('discards only events entirely attributed to this tab’s cleared generation', () => {
-  const first = createTreecrdtLocalWriteOptions('generation:1:old')
-  const second = createTreecrdtLocalWriteOptions('generation:2:current')
+const oldWriteId = createTreecrdtLocalWriteOptions('generation:1:old').writeId!
+const currentWriteId = createTreecrdtLocalWriteOptions('generation:2:current').writeId!
+const change = { kind: 'payload' as const, node: 'a', payload: null }
 
-  expect(
-    isStaleTreecrdtMaterialization(
-      {
-        headSeq: 1,
-        changes: [{ kind: 'payload', node: 'local-a', payload: null, source: { writeIds: [first.writeId!] } }],
-      },
-      2,
-    ),
-  ).toBe(true)
-  expect(
-    isStaleTreecrdtMaterialization(
-      {
-        headSeq: 1,
-        changes: [
-          { kind: 'payload', node: 'local-a', payload: null, source: { writeIds: [first.writeId!, second.writeId!] } },
-        ],
-      },
-      2,
-    ),
-  ).toBe(false)
-  expect(
-    isStaleTreecrdtMaterialization(
-      {
-        headSeq: 1,
-        changes: [],
-      },
-      2,
-    ),
-  ).toBe(false)
-  expect(
-    isStaleTreecrdtMaterialization(
-      {
-        headSeq: 1,
-        changes: [{ kind: 'payload', node: 'local-a', payload: null }],
-      },
-      2,
-    ),
-  ).toBe(false)
-  expect(
-    isStaleTreecrdtMaterialization(
-      {
-        headSeq: 1,
-        changes: [
-          {
-            kind: 'payload',
-            node: 'remote-a',
-            payload: null,
-            source: { writeIds: ['em-local:another-tab:generation:1:old'] },
-          },
-        ],
-      },
-      2,
-    ),
-  ).toBe(false)
+it.each([
+  {
+    name: 'old local generation',
+    changes: [{ ...change, source: { writeIds: [oldWriteId] } }],
+    stale: true,
+  },
+  {
+    name: 'mixed old and current local generations',
+    changes: [{ ...change, source: { writeIds: [oldWriteId, currentWriteId] } }],
+    stale: false,
+  },
+  { name: 'empty event', changes: [], stale: false },
+  { name: 'unattributed change', changes: [change], stale: false },
+  {
+    name: 'another tab',
+    changes: [{ ...change, source: { writeIds: ['em-local:another-tab:generation:1:old'] } }],
+    stale: false,
+  },
+])('detects stale materialization: $name', ({ changes, stale }) => {
+  expect(isStaleTreecrdtMaterialization({ headSeq: 1, changes }, 2)).toBe(stale)
 })

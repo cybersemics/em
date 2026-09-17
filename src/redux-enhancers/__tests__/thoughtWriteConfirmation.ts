@@ -11,10 +11,9 @@ import { redoActionCreator as redo } from '../../actions/redo'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { updateThoughtsActionCreator as updateThoughts } from '../../actions/updateThoughts'
 import { HOME_TOKEN } from '../../constants'
-import db, { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
+import db from '../../data-providers/thoughtspace'
 import { decodeThoughtPayload, encodeThoughtPayload } from '../../data-providers/treecrdt/payload'
 import { waitForTreecrdtWriteBarrier } from '../../data-providers/treecrdt/writeBarrier'
-import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
 import getLexeme from '../../selectors/getLexeme'
 import store from '../../stores/app'
@@ -28,6 +27,7 @@ import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import createId from '../../util/createId'
+import hashThought from '../../util/hashThought'
 
 let syncClient: TreecrdtWebSocketSyncClient
 
@@ -56,7 +56,6 @@ vi.mock('../../data-providers/treecrdt/sync/treecrdtWebSocketSync', async import
 const remoteReplica = new Uint8Array(32).fill(9)
 let client: TreecrdtClient
 let remote: TreecrdtClient
-let cleanup: () => void
 
 /** Authors an operation on another replica and receives it through the real sync client boundary. */
 const receiveRemote = async (write: (peer: TreecrdtClient) => Promise<Operation>) => {
@@ -66,17 +65,12 @@ const receiveRemote = async (write: (peer: TreecrdtClient) => Promise<Operation>
 
 beforeEach(async () => {
   await initStore()
-  await waitForThoughtspaceIdle()
-  await thoughtspaceRuntime.drop()
-  ;({ cleanup } = await initialize({ storage: 'memory' }))
-  await vi.runAllTimersAsync()
   client = await vi.mocked(createTreecrdtClient).mock.results.at(-1)!.value
   remote = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' }, docId: client.docId })
 })
 
 afterEach(async () => {
   await waitForThoughtspaceIdle()
-  cleanup()
   await remote.drop()
   vi.restoreAllMocks()
 })
@@ -94,8 +88,8 @@ it('confirms a persisted rename without replacing the optimistic view', async ()
   expect(store.getState().pendingThoughtWrites).toEqual({})
 })
 
-it('confirms a new thought alongside unloaded occurrences of the same value', async () => {
-  store.dispatch(importText({ text: '- other\n  - branch\n    - hidden\n      - cat' }))
+it('confirms a new thought alongside unloaded occurrences and preserves memberships after reload', async () => {
+  store.dispatch(importText({ text: '- anchor\n- other\n  - branch\n    - hidden\n      - cat' }))
   await waitForThoughtspaceIdle()
   const hidden = contextToThought(store.getState(), ['other', 'branch', 'hidden', 'cat'])!
   store.dispatch(clear())
@@ -103,7 +97,7 @@ it('confirms a new thought alongside unloaded occurrences of the same value', as
   expect(store.getState().thoughts.thoughtIndex[hidden.id]).toBeUndefined()
   expect(getLexeme(store.getState(), 'cat')).toBeUndefined()
 
-  store.dispatch(newThought({ at: [HOME_TOKEN], insertNewSubthought: true, value: 'cat' }))
+  store.dispatch([setCursor(['anchor']), newThought({ value: 'cat' })])
   const created = contextToThought(store.getState(), ['cat'])!
   expect(store.getState().pendingThoughtWrites[created.id].patch).toEqual({
     value: 'cat',
@@ -119,6 +113,11 @@ it('confirms a new thought alongside unloaded occurrences of the same value', as
 
   expect(getLexeme(store.getState(), 'cat')?.contexts.slice().sort()).toEqual([hidden.id, created.id].sort())
   expect(store.getState().pendingThoughtWrites).toEqual({})
+
+  store.dispatch(clear())
+  await store.dispatch(pull([HOME_TOKEN], { maxDepth: 1 }))
+  expect(getLexeme(store.getState(), 'cat')?.contexts.slice().sort()).toEqual([hidden.id, created.id].sort())
+  expect((await db.getLexemeById(hashThought('cat')))?.contexts.slice().sort()).toEqual([hidden.id, created.id].sort())
 })
 
 it('confirms imported and deleted subtree memberships without losing unloaded occurrences', async () => {
@@ -220,19 +219,20 @@ it('keeps a second move visible while the first is confirmed and reloads the fin
 })
 
 it('confirms unloaded memberships after rename, undo, and redo through the real Redux provider path', async () => {
-  store.dispatch(importText({ text: '- other\n  - branch\n    - hidden\n      - cat\n- dog' }))
+  store.dispatch(importText({ text: '- other\n  - branch\n    - hidden\n      - cat\n- parent\n  - dog' }))
   await waitForThoughtspaceIdle()
   const hidden = contextToThought(store.getState(), ['other', 'branch', 'hidden', 'cat'])!
-  const edited = contextToThought(store.getState(), ['dog'])!
+  const edited = contextToThought(store.getState(), ['parent', 'dog'])!
   store.dispatch(clear())
-  await store.dispatch(pull([HOME_TOKEN], { maxDepth: 1 }))
+  await store.dispatch(pull([HOME_TOKEN], { maxDepth: 2 }))
   expect(store.getState().thoughts.thoughtIndex[hidden.id]).toBeUndefined()
   expect(getLexeme(store.getState(), 'cat')).toBeUndefined()
 
-  store.dispatch(editThought(['dog'], 'cat'))
+  store.dispatch(editThought(['parent', 'dog'], 'cat'))
   expect(getLexeme(store.getState(), 'cat')?.contexts).toEqual([edited.id])
   await waitForThoughtspaceIdle()
   expect(getLexeme(store.getState(), 'cat')?.contexts.slice().sort()).toEqual([hidden.id, edited.id].sort())
+  expect((await db.getLexemeById(hashThought('cat')))?.contexts.slice().sort()).toEqual([hidden.id, edited.id].sort())
   expect(store.getState().pendingThoughtWrites).toEqual({})
 
   store.dispatch(undo())
