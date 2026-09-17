@@ -13,6 +13,7 @@ const GradientDivider = () => (
         'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, {colors.white} 50%, rgba(255, 255, 255, 0) 100%)',
       mixBlendMode: 'overlay',
       pointerEvents: 'none',
+      opacity: 0.25,
     })}
   />
 )
