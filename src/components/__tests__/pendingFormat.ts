@@ -126,7 +126,7 @@ describe('pending format', () => {
   // #3910: a note is a thought, so it holds formatting applied while it is empty the same way. toggleNote creates the
   // note's thought with an empty value, which is what gives the formatting somewhere to live.
   it('applies a color to the text typed into an empty note (#3910)', async () => {
-    await dispatch([importText({ text: '- x' }), setCursor(['x']), toggleNote()])
+    await dispatch([importText({ text: '- x' }), toggleNote()])
     await dispatch(formatSelection('foreColor', 'green'))
 
     const user = userEvent.setup({ delay: null })
@@ -140,7 +140,7 @@ describe('pending format', () => {
 
   // #3910: the note's placeholder previews the held formatting, as the thought's does.
   it('previews the color of an empty note on its placeholder (#3910)', async () => {
-    await dispatch([importText({ text: '- x' }), setCursor(['x']), toggleNote()])
+    await dispatch([importText({ text: '- x' }), toggleNote()])
     await dispatch(formatSelection('foreColor', 'green'))
 
     expect(getNoteEditable().style.getPropertyValue('--placeholder-color')).toBe('#00d688')
@@ -149,7 +149,7 @@ describe('pending format', () => {
   // #3910: a tag command applies to the text typed into an empty note the same way a color does, even though it does
   // not preview on the placeholder (see Note.tsx).
   it('applies bold to the text typed into an empty note (#3910)', async () => {
-    await dispatch([importText({ text: '- x' }), setCursor(['x']), toggleNote()])
+    await dispatch([importText({ text: '- x' }), toggleNote()])
     await dispatch(formatSelection('bold'))
 
     const user = userEvent.setup({ delay: null })
