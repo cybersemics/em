@@ -1,9 +1,11 @@
+import { KnownDevices } from 'puppeteer'
 import colors from '../../../colors.config'
 import rgbToHex from '../../../util/rgbToHex'
 import rgbaToHex from '../../../util/rgbaToHex'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
+import deviceEmulation from '../helpers/deviceEmulation'
 import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
@@ -204,19 +206,6 @@ it('scrolls the Color Picker only as far as needed when opened with the keyboard
       `Expected the Color Picker to come to rest against the right edge of the toolbar, but it spans ${geometry.colorPickerLeft}-${geometry.colorPickerRight} within a toolbar spanning ${geometry.toolbarLeft}-${geometry.toolbarRight} (tolerance ${geometry.edgeTolerance}).`,
     )
   }
-})
-
-// https://github.com/cybersemics/em/issues/4263
-it('does not move the Text Color button when a color is selected', async () => {
-  await paste('- One')
-  await clickThought('One')
-
-  const topBeforeSelection = await restingTextColorButtonTop()
-
-  await clickToolbar('Text Color', 'text color swatches', 'blue')
-  await waitForEditable(`<font color="${rgbaToHex(colors.light.blue)}">One</font>`)
-
-  expect(await restingTextColorButtonTop()).toBe(topBeforeSelection)
 })
 
 it('Set the text color of the text and bullet', async () => {
@@ -834,4 +823,21 @@ it('underline applied after a text color draws its line in that color', async ()
   await clickToolbar('Underline')
 
   expect(rgbToHex(await decorationColor())).toBe(rgbaToHex(colors.light.red))
+})
+
+describe('mobile', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  // https://github.com/cybersemics/em/issues/4263
+  it('does not move the Text Color button when a color is selected', async () => {
+    await paste('- One')
+    await clickThought('One')
+
+    const topBeforeSelection = await restingTextColorButtonTop()
+
+    await clickToolbar('Text Color', 'text color swatches', 'blue')
+    await waitForEditable(`<font color="${rgbaToHex(colors.light.blue)}">One</font>`)
+
+    expect(await restingTextColorButtonTop()).toBe(topBeforeSelection)
+  })
 })
