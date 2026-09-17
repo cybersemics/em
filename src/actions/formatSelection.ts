@@ -5,6 +5,7 @@ import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
+import noteThought from '../selectors/noteThought'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
@@ -16,6 +17,11 @@ import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
 import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
+import { setPendingFormatActionCreator as setPendingFormat } from './setPendingFormat'
+
+/** The single placeholder character that carries the formatting applied to an empty thought, whose own value has no
+ * text for the formatting tags to wrap. See setPendingFormat. */
+const PENDING_FORMAT_PLACEHOLDER = 'x'
 
 /**
  * Registers a single native undo step in WKWebView for a formatSelection edit on iOS.
@@ -110,7 +116,32 @@ export const formatSelectionActionCreator =
     // The current value of the note or thought being formatted (#3901).
     const value = state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value
 
-    if (value.length === 0) return
+    // An empty thought has no text to wrap, and its value must stay empty, so the formatting is held on the thought
+    // and transferred onto the text that is typed into it next (#3910). It is accumulated on a placeholder character
+    // so that further commands compose exactly as they do on a real value.
+    if (value.length === 0) {
+      // A note's formatting is held on the thought that holds its text, which noteThought resolves. It is null for a
+      // note assembled from several thoughts (=children/=note/=path), which has nowhere to hold it.
+      const target = state.noteFocus ? noteThought(state, state.cursor) : thought
+      if (!target) return
+
+      dispatch(
+        setPendingFormat({
+          id: target.id,
+          value: formatSelectionHtml(target.pendingFormat ?? PENDING_FORMAT_PLACEHOLDER, {
+            start: 0,
+            end: PENDING_FORMAT_PLACEHOLDER.length,
+            command,
+            colorValue: color ? colors[color] : undefined,
+            // A note is semi-transparent by default, so its default foreground differs from a thought's (#3902).
+            defaultColor: state.noteFocus ? colors.fgNote : colors.fg,
+            defaultBackgroundColor: colors.bg,
+          }),
+        }),
+      )
+      updateCommandState()
+      return
+    }
 
     // Compute the plain-text character offsets [start, end) of the selection relative to the editable.
     const plainLength = contentEditable.textContent?.length ?? 0

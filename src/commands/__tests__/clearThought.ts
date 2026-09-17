@@ -171,4 +171,38 @@ describe('clearThought', () => {
       '<font color="#ff573d"><strike><u><b>b</b></u></strike></font>',
     )
   })
+
+  // #3910: Clear Thought on a thought that is already empty must not discard the color it is holding. The cleared
+  // branch re-applies the cleared thought's own tags, and an empty thought has none, so it contributes nothing here
+  // and the held color has to be applied instead. Reachable because clearThought only requires a cursor, and a
+  // multiselect clear sets the flag for every selected thought.
+  // https://github.com/cybersemics/em/issues/3910
+  it('applies the color of an empty thought to the text typed after Clear Thought (#3910)', async () => {
+    await act(async () => {
+      store.dispatch([importText({ text: '- ' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      store.dispatch(formatSelection('foreColor', 'green'))
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      executeCommand(clearThoughtCommand)
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const editable = (await findThoughtByText(''))!
+    const user = userEvent.setup({ delay: null })
+    await user.type(editable, 'H')
+
+    await act(vi.runAllTimersAsync)
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<font color="#00d688">H</font>')
+  })
 })

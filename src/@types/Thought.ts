@@ -13,6 +13,8 @@ interface Thought {
   id: ThoughtId
   lastUpdated: Timestamp
   parentId: ThoughtId
+  /** Formatting applied to the thought while it was empty, held until text is typed into it. In-memory only: it is not part of the persisted ThoughtPayload. See actions/setPendingFormat. */
+  pendingFormat?: string
   /** Still loading from the database. */
   pending?: boolean
   rank: number

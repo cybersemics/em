@@ -53,6 +53,7 @@ import editingValueStore from '../stores/editingValue'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
 import storageModel from '../stores/storageModel'
 import addEmojiSpace from '../util/addEmojiSpace'
+import applyOuterTags from '../util/applyOuterTags'
 import debugLog from '../util/debugLog'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -62,7 +63,6 @@ import head from '../util/head'
 import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
-import isFormattingElement from '../util/isFormattingElement'
 import lastURL from '../util/lastURL'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
@@ -95,24 +95,6 @@ interface EditableProps {
 }
 
 /** Descends a chain of formatting elements that each wrap the whole thought, returning the innermost one. */
-const innermostWrapper = (element: HTMLElement): HTMLElement =>
-  element.childNodes.length === 1 && isFormattingElement(element.firstChild)
-    ? innermostWrapper(element.firstChild)
-    : element
-
-/** If oldValue is wrapped in formatting nodes, transfer those wrappers to the new value. Every wrapper in the chain is
- * preserved, so a thought formatted with several marks (e.g. bold + underline + text color) keeps all of them. */
-const applyOuterTags = (newValue: string, oldValue: string): string => {
-  const div = document.createElement('div')
-  div.innerHTML = oldValue
-
-  if (div.childNodes.length > 1 || !isFormattingElement(div.firstChild)) return newValue
-
-  innermostWrapper(div.firstChild).innerHTML = newValue
-
-  return div.firstChild.outerHTML
-}
-
 // this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
 let cursorOffsetInitialized = false
 
@@ -169,9 +151,14 @@ const Editable = ({
       isMulticursorPath(state, state.cursor),
   )
 
+  // Formatting applied to the thought while it was empty is held on the thought until the user types (#3910). Style
+  // the placeholder with it so that the empty thought previews the formatting the typed text will take. A cleared
+  // thought keeps its own value's formatting, but only when it has a value to take it from — an empty thought that is
+  // also cleared has none, so the held formatting is used instead.
+  const pendingFormat = useSelector(state => getThoughtById(state, thoughtId)?.pendingFormat)
   const placeholderCommandState = useMemo(
-    () => (isCursorCleared ? getCommandState(value) : null),
-    [isCursorCleared, value],
+    () => (isCursorCleared && value ? getCommandState(value) : pendingFormat ? getCommandState(pendingFormat) : null),
+    [isCursorCleared, pendingFormat, value],
   )
   const placeholderForeColor =
     typeof placeholderCommandState?.foreColor === 'string' ? placeholderCommandState.foreColor : undefined
@@ -611,7 +598,19 @@ const Editable = ({
         // When the cursor is cleared, there may be an existing style that wraps the entire thought.
         // That style should be re-applied once they type something. (#3673)
 
-        const wrappedValue = state.cursorCleared ? applyOuterTags(e.target.value, oldValue) : e.target.value
+        // Formatting applied to the thought while it was empty is held on the thought, since an empty value has no
+        // text to wrap. Transfer it onto the first text typed into the thought (#3910); editThought drops the held
+        // copy once the value carries it. The wrapped value takes the immediate, forced branch below, which re-renders
+        // the editable with the formatting so that the browser carries it through the rest of the typing.
+        // A cleared thought is handled first, but only when it has a value whose tags can be re-applied — an empty
+        // thought that is also cleared has none, so it falls through to the formatting held for it.
+        const pendingFormatValue = getThoughtById(state, head(simplePath))?.pendingFormat
+        const wrappedValue =
+          state.cursorCleared && oldValue.length > 0
+            ? applyOuterTags(e.target.value, oldValue)
+            : pendingFormatValue && oldValue.length === 0 && e.target.value.length > 0
+              ? applyOuterTags(e.target.value, pendingFormatValue)
+              : e.target.value
         const trimmedWrappedValue = trimHtml(wrappedValue)
         const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
         const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
