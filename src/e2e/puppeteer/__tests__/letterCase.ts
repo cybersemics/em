@@ -119,6 +119,8 @@ it('the selected text remains selected when the thought has trailing whitespace'
   await newThought('hello beautiful world')
   await keyboard.type(' ')
 
+  // Typing hides the toolbar in distraction-free mode. Clicking the thought is a pointer event, which reveals it.
+  await clickThought('hello beautiful world ')
   await setSelection(6, 15)
 
   await clickToolbar('Letter Case', 'UpperCase')

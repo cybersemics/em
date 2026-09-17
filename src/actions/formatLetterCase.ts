@@ -15,6 +15,13 @@ import { setCursorActionCreator as setCursor } from './setCursor'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
 
+/** Returns the plain text of an HTML value, i.e. what the editable renders it as. */
+const plainText = (html: string): string => {
+  const el = document.createElement('div')
+  el.innerHTML = html
+  return el.textContent ?? ''
+}
+
 /** Format the browser selection or cursor thought based on the specified letter case change. */
 export const formatLetterCaseActionCreator =
   (command: LetterCaseType): Thunk =>
@@ -56,6 +63,10 @@ export const formatLetterCaseActionCreator =
       selectedRange.end - selectedRange.start < (cursorText?.length ?? 0)
         ? selectedRange
         : null
+
+    // The cursor thought's value, which is what its editable re-renders from. Editable trims the value on its way into
+    // Redux, so it can differ from the editable's own text while the thought is being edited.
+    const cursorValue = cursor ? getThoughtById(state, head(cursor))?.value : undefined
 
     /** Applies the letter case transform to plain text. */
     const transformedText = (text: string): string => {
@@ -133,10 +144,15 @@ export const formatLetterCaseActionCreator =
       restoreRange.end > restoreRange.start &&
       cursorEditableSelector &&
       cursorEditable &&
-      cursorText !== null
+      cursorValue !== undefined
     ) {
-      // a multicursor may exclude the cursor thought, in which case its text is re-rendered unchanged
-      const newText = isCursorEdited ? transformedText(cursorText) : cursorText
+      // The text the editable will re-render to, derived from the value being dispatched rather than from the
+      // editable's own text: Editable trims the value on its way into Redux, so a thought with leading or trailing
+      // whitespace renders as text the editable never held, and a prediction made from the editable would never match.
+      // A multicursor may exclude the cursor thought, in which case its value is re-rendered unchanged.
+      const newText = plainText(
+        isCursorEdited ? applyLetterCase(command, cursorValue, selectedTextRange ?? undefined) : cursorValue,
+      )
       const observer = new MutationObserver(() => {
         const editable = document.querySelector(cursorEditableSelector)
         // ignore any mutation that precedes the re-render, e.g. one dispatched in the same tick as the edit
