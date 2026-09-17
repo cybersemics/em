@@ -146,6 +146,21 @@ describe('pending format', () => {
     expect(getNoteEditable().style.getPropertyValue('--placeholder-color')).toBe('#00d688')
   })
 
+  // #3910: a tag command applies to the text typed into an empty note the same way a color does, even though it does
+  // not preview on the placeholder (see Note.tsx).
+  it('applies bold to the text typed into an empty note (#3910)', async () => {
+    await dispatch([importText({ text: '- x' }), setCursor(['x']), toggleNote()])
+    await dispatch(formatSelection('bold'))
+
+    const user = userEvent.setup({ delay: null })
+    await user.type(getNoteEditable(), 'H')
+    await act(vi.runAllTimersAsync)
+
+    const state = store.getState()
+
+    expect(noteValue(state, state.cursor!)).toBe('<b>H</b>')
+  })
+
   // #3910: a color applied to an empty thought must take part in undo like a color applied to text. Undoing the first
   // typed character restores the empty thought, so the color it was holding has to come back with it — otherwise undo
   // leaves an empty, uncolored thought that the user never created. Typing again is what proves the color survived,

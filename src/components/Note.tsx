@@ -58,6 +58,10 @@ const Note = React.memo(
 
     // Formatting applied to the note while it was empty is held on the note's thought until the user types (#3910).
     // Style the placeholder with it so that the empty note previews the formatting its text will take.
+    // Only the colors preview. react-contenteditable re-renders only when one of the props it watches changes, and
+    // `style` is one while `data-*` is not, so the color reaches the DOM but the data-placeholder-* attributes that
+    // drive bold/italic/underline/strikethrough/code never do. Moving Note onto the app's own ContentEditable, which
+    // spreads props without that gate, fixes it and is out of scope here.
     const pendingFormat = useSelector(state => noteThought(state, path)?.pendingFormat)
     const placeholderCommandState = useMemo(
       () => (pendingFormat ? getCommandState(pendingFormat) : null),
