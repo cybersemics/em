@@ -4,6 +4,7 @@ import clickToolbar from '../helpers/clickToolbar'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import keyboard from '../helpers/keyboard'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
@@ -110,4 +111,21 @@ it('applies letter case to the selected text only', async () => {
   await waitForEditingTextChange('Welcome to the world of beautiful people')
 
   expect(await getEditingText()).toBe('Welcome to the world of BEAUTIFUL people')
+})
+
+it('the selected text remains selected when the thought has trailing whitespace', async () => {
+  // Typed rather than pasted: Editable trims the value on its way into Redux while the live editable keeps the
+  // trailing space, so the text the editable re-renders to is not the text the DOM had before the edit.
+  await newThought('hello beautiful world')
+  await keyboard.type(' ')
+
+  await setSelection(6, 15)
+
+  await clickToolbar('Letter Case', 'UpperCase')
+
+  // waitForEditable polls on an animation frame, and the re-selection runs in the mutation observer callback for the
+  // same re-render, so the selection is already restored by the time the new value is visible.
+  await waitForEditable('hello BEAUTIFUL world')
+
+  expect(await getSelection().toString()).toBe('BEAUTIFUL')
 })
