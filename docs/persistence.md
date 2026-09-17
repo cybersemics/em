@@ -146,12 +146,12 @@ Failures are non-fatal by design: a failed start logs a warning and em keeps run
 
 [`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) is a Redux store enhancer that runs after every reducer. It drains `state.pushQueue` (a list of `PushBatch` objects pushed there by [`updateThoughts`](../src/actions/updateThoughts.ts) and friends) and partitions it into:
 
-- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which wraps them in the write barrier and calls the active data provider's `updateThoughts` with the batch's `thoughtIndexUpdates`, `lexemeIndexUpdates`, `lexemeIndexUpdatesOld`, and `movePlacements`. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
+- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which wraps them in the write barrier and calls the active data provider's `updateThoughts` with the batch's `thoughtIndexUpdates`, `lexemeIndexUpdates`, and `movePlacements`. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
 - **`freeQueue`** — state-only batches whose `null` thought/lexeme entries indicate they should be released from the in-memory cache. Calls `db.freeThought` / `db.freeLexeme` (no-ops for TreeCRDT; the Redux-side release is what matters).
 
 The enhancer also caches a small set of critical settings (`CACHED_SETTINGS` in [`constants.ts`](../src/constants.ts)) into `localStorage` so that things like the Tutorial setting are available during the first paint before the thoughtspace hydrates. The corresponding read path is [`selectors/getSetting.ts`](../src/selectors/getSetting.ts).
 
-When [debug logging](../src/util/debugLog.ts) is enabled, each flush emits a `push` entry (batch count, thought/lexeme/move counts, and a sample of the thoughts written) and then either `pushSynced` or `pushError`. A `push` with no matching `pushSynced` is a write that never completed.
+When [debug logging](debug-log.md) is enabled, each flush emits a `push` entry (batch count, thought/lexeme/move counts, and a sample of the thoughts written) and then either `pushSynced` or `pushError`. A `push` with no matching `pushSynced` is a write that never completed.
 
 Once Redux dispatches a thought update, the data flow is therefore:
 

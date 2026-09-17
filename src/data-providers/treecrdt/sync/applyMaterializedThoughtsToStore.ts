@@ -43,7 +43,6 @@ export async function applyMaterializedThoughtsToStore(
     await db.updateThoughts({
       thoughtIndexUpdates: {},
       lexemeIndexUpdates,
-      lexemeIndexUpdatesOld: {},
     })
   }
 

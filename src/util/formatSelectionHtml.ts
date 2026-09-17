@@ -1,7 +1,7 @@
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
 import isFormattingElement from './isFormattingElement'
+import resolveSelectionColors from './resolveSelectionColors'
 import rgbToHex from './rgbToHex'
-import rgbaToHex from './rgbaToHex'
 
 /** A formatting command that maps to a single HTML tag toggle. */
 type TagCommand = 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code'
@@ -34,13 +34,28 @@ const unwrapAll = (root: Element | DocumentFragment, selector: string) => {
 }
 
 /** Wraps an extracted fragment in the command's tag, first unwrapping any nested instances of the same tag so the
- * result doesn't nest redundantly (e.g. bolding a whole thought that already has a bold substring). */
+ * result doesn't nest redundantly (e.g. bolding a whole thought that already has a bold substring). When the whole
+ * fragment is already wrapped in a color element, the tag is nested inside that element rather than around it, so
+ * that a `<u>`/`<strike>` inherits the color and draws its line in it: text-decoration-color resolves to the
+ * currentColor of the decorating element, not of its children, so a decoration on the outside would draw in the
+ * theme's default color (white in dark mode). This is also the markup applyColor produces when the color is applied
+ * last, so the result no longer depends on the order the user formatted in. */
 const wrapWithTag = (fragment: DocumentFragment, command: FormatCommand): HTMLElement => {
   unwrapAll(fragment, tagForCommand(command)!)
   const wrapper = createWrapper(command)
-  wrapper.appendChild(fragment)
+
+  // The fragment's sole child when it is an element that sets a text color, i.e. the whole range is colored. A color
+  // is carried by a <font color> or an inline color style, as in getCommandState's extractColors.
+  const onlyChild = fragment.childNodes.length === 1 ? (fragment.firstElementChild as HTMLElement | null) : null
+  const colorElement = onlyChild && (onlyChild.style.color || onlyChild.getAttribute('color')) ? onlyChild : null
+
+  wrapper.append(...Array.from(colorElement ? colorElement.childNodes : fragment.childNodes))
   wrapper.normalize()
-  return wrapper
+
+  if (!colorElement) return wrapper
+
+  colorElement.appendChild(wrapper)
+  return colorElement
 }
 
 /** A { node, offset } position on a text node, as resolved from a plain-text offset. */
@@ -154,41 +169,9 @@ const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
   }
 }
 
-/** Text color applied by a backColor command for contrast against the background (always black, per product design). */
-const CONTRAST_COLOR = '#000000'
-
-/** Normalizes a color to an alpha-aware hex so that colors differing only in opacity are not treated as equal — e.g.
- * opaque white (fg, the thought default) vs 50%-alpha white (fgNote, the note default), which both collapse to #ffffff
- * under an alpha-dropping conversion. This is what lets a note be explicitly set to white without being mistaken for a
- * reset to its own (translucent) default (#4657). Passes 6-digit hex inputs (e.g. the default background) through. */
-const toComparableColor = (color: string): string => (color.startsWith('#') ? rgbToHex(color) : rgbaToHex(color))
-
-/** Determines the target text color and background for a single color command. A foreColor sets the text color and
- * clears the background; a backColor sets the background and forces a contrasting (black) text color. A color set to
- * the corresponding theme default clears it instead of applying a redundant default-colored wrapper (foreColor →
- * default text color, backColor → default background), leaving no markup (#3901). This folds ColorPicker's former
- * two-dispatch foreColor + backColor pairing into a single transform (#4637). */
-const resolveColors = (
-  command: 'foreColor' | 'backColor',
-  colorValue: string | undefined,
-  defaultColor: string | undefined,
-  defaultBackgroundColor: string | undefined,
-): { color: string | null; background: string | null } => {
-  /** True if the color value equals the given theme default (compared as alpha-aware hex). */
-  const isDefault = (value: string | undefined, defaultValue: string | undefined) =>
-    value !== undefined && defaultValue !== undefined && toComparableColor(value) === toComparableColor(defaultValue)
-
-  if (command === 'foreColor') {
-    return { color: isDefault(colorValue, defaultColor) ? null : (colorValue ?? null), background: null }
-  }
-  // a backColor set to the default background clears both the background and the forced contrast color
-  if (isDefault(colorValue, defaultBackgroundColor)) return { color: null, background: null }
-  return { color: CONTRAST_COLOR, background: colorValue ?? null }
-}
-
 /** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
  * single <font> element that carries both the color attribute and the background-color style. The color command fully
- * redetermines both properties (see resolveColors), so existing color/background wrappers within the range are stripped
+ * redetermines both properties (see resolveSelectionColors), so existing color/background wrappers within the range are stripped
  * before re-wrapping once. Non-color formatting (b/i/u/code) within the range is preserved. */
 const applyColor = (
   container: HTMLElement,
@@ -204,7 +187,7 @@ const applyColor = (
   unwrapAll(temp, 'font, span')
   temp.normalize()
 
-  const { color, background } = resolveColors(command, colorValue, defaultColor, defaultBackgroundColor)
+  const { color, background } = resolveSelectionColors(command, colorValue, defaultColor, defaultBackgroundColor)
 
   // move the (color-stripped) content into a fragment, wrapping it in a single <font> when a color/background applies
   const content = document.createDocumentFragment()

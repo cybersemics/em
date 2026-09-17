@@ -51,10 +51,13 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
         // When the keyboard closes (blur or exiting the cleared state), the multicursors are still active and this
         // branch re-opens the Command Center.
         // Starting a multiselection from none is exempt, since selecting a thought while the keyboard is open is how
-        // the Command Center is opened in the first place (Open Command Center adds the cursor thought, and only ever
-        // does so when there was no multiselection yet). Checking prevNumMulticursors rather than a plain count-change
-        // keeps a multiselection that is already being edited (Clear Thought) from re-opening the Command Center over
-        // the editing session should its multicursor count fluctuate for some unrelated reason while typing.
+        // the Command Center is opened in the first place (Open Command Center adds the cursor thought when there is no
+        // multiselection yet). Checking prevNumMulticursors rather than a plain count-change keeps a multiselection that
+        // is already being edited (Clear Thought) from re-opening the Command Center over the editing session should
+        // its multicursor count fluctuate for some unrelated reason while typing.
+        // This only governs multiselection changes. An explicit Open/Close Command Center gesture is never subject to
+        // it: both commands set showCommandCenter themselves so that the user can always reach the Command Center they
+        // can see (see openCommandCenter.ts and closeCommandCenter.ts).
         (!state.isKeyboardOpen || prevNumMulticursors === 0)
       ) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))

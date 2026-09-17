@@ -72,6 +72,16 @@ const codeBackgroundColor = () =>
     return null
   })
 
+/** Returns the color that the underline or strikethrough line of the thought being edited is actually painted in.
+ * Since the decoration color defaults to `currentColor`, this is the computed color of the decorating element itself,
+ * not of the text it contains. */
+const decorationColor = () =>
+  page.evaluate(() => {
+    const decoration = document.querySelector('[data-editing=true] [data-editable] :is(u, strike)')
+    if (!decoration) throw new Error('No underline or strikethrough element found in the editing thought')
+    return window.getComputedStyle(decoration).textDecorationColor
+  })
+
 /** Returns the horizontal geometry needed to verify Color Picker toolbar scrolling. */
 const getColorPickerGeometry = () =>
   page.evaluate(() => {
@@ -365,6 +375,37 @@ it('Bullet remains the default color when a substring color is set', async () =>
   expect(bulletColor).toBe(null)
 })
 
+it('Selection remains active after applying a font color to part of the text', async () => {
+  await paste(`
+  - Golden Retriever`)
+
+  await clickThought('Golden Retriever')
+  await setSelection(0, 6)
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
+
+  expect(await getSelection().toString()).toBe('Golden')
+  expect(extractColor((await getEditingText())!).backgroundColor).toBe(null)
+  expect(extractColor((await getEditingText())!).color).toBe(rgbaToHex(colors.light.blue))
+})
+
+it('Selection remains active when applying a font color after a background elsewhere', async () => {
+  await paste(`
+  - Golden Retriever`)
+
+  await clickThought('Golden Retriever')
+  await setSelection(0, 6)
+  await clickToolbar('Text Color', 'background color swatches', 'green')
+
+  await setSelection(7, 16)
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  expect(await getSelection().toString()).toBe('Retriever')
+  await press('Escape')
+  await waitForEditable(
+    '<font color="#000000" style="background-color: rgb(0, 214, 136);">Golden</font> <font color="#00c7e6">Retriever</font>',
+  )
+})
+
 it('remove all formatting from the thought', async () => {
   const importText = `
   - Labrador`
@@ -412,7 +453,9 @@ it('Verify superscript colors in different views', async () => {
   expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
 
   // Test 2: Verify superscript color when entire thought is colored
+  await press('Escape')
   await clickThought('k')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const supColor2 = await getSuperscriptColor()
@@ -748,4 +791,31 @@ it('Set the background color of text that is marked as code with the =style attr
 
   const background = await codeBackgroundColor()
   expect(background && rgbToHex(background)).toBe(rgbaToHex(colors.light.red))
+})
+
+// The painted decoration color is the user-visible symptom and can only be observed in a real browser; the markup that
+// produces it is asserted at the action level in src/actions/__tests__/formatSelection.ts.
+it('a text color applied after underline draws the line in that color', async () => {
+  await paste(`
+    - One
+  `)
+
+  await clickThought('One')
+  await clickToolbar('Underline')
+  await clickToolbar('Text Color', 'text color swatches', 'red')
+
+  expect(rgbToHex(await decorationColor())).toBe(rgbaToHex(colors.light.red))
+})
+
+// https://github.com/cybersemics/em/pull/4032#pullrequestreview-5149433775
+it('underline applied after a text color draws its line in that color', async () => {
+  await paste(`
+    - One
+  `)
+
+  await clickThought('One')
+  await clickToolbar('Text Color', 'text color swatches', 'red')
+  await clickToolbar('Underline')
+
+  expect(rgbToHex(await decorationColor())).toBe(rgbaToHex(colors.light.red))
 })

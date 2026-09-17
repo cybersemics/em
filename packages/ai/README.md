@@ -10,6 +10,7 @@ It is an [Express](https://expressjs.com/) app that is deployed to [Vercel](http
 - `POST /ai/defineTerm` - Writes a 10–20 word dictionary entry for each term in one LLM request. The request body is `{ "terms": ["..."] }`; the response is `{ "definitions": ["..."] }` in matching order on success or `{ "error": "..." }` on failure. The client appends `/defineTerm` to `VITE_AI_URL`.
 - `POST /ai/generateThought` - Generates a complete replacement for the target thought marked with `[x]` in each indented input outline in one LLM request; context thoughts are marked with `[]`. The request body is `{ "inputs": ["..."] }`; the response is `{ "thoughts": ["..."] }` in matching order on success or `{ "error": "..." }` on failure. The client appends `/generateThought` to `VITE_AI_URL`.
 - `POST /ai/generateEmoji` - Generates ten distinct, ordered emoji for each thought value in one LLM request. The request body is `{ "values": ["..."] }`; the response is `{ "emojis": [["...", "..."]] }` with one list per value in matching order on success or `{ "error": "..." }` on failure. The client appends `/generateEmoji` to `VITE_AI_URL`.
+- `POST /ai/organizeThought` - Reorganizes a numbered indented outline of thoughts. Lines marked `[n]` are reorganizable; `[]` lines are context-only (the parent or unselected siblings). The model returns the final state as an indented outline with `[n]` for existing thoughts and `[new]` for new thoughts. The route validates and converts that text before responding with `{ "outline": [{ "id": "1" | null, "text": "..." | null, "children": [] }] }`, or `{ "error": "..." }` on failure. The client appends `/organizeThought` to `VITE_AI_URL`.
 
 ## Local development
 
@@ -57,7 +58,7 @@ Other scripts:
 
 - `typecheck` - Type-check the source with `tsc` (no emit). Not used by Vercel, which builds the function from source.
 
-Live model evaluations live in `src/evals/` and run together from the repository root with `yarn test:evals`. The Generate Emoji evaluation requires at least two matches among the ten generated results for each semantic category from issue #4400. The Generate Thought evaluation asserts against the model's complete replacement thought, covering alphabetical sequence completion, typo correction, parent and sibling context, nested capital generation, top-level sequences, partial fill-in, replacement of misplaced items, and omission of context-only text. Concurrent cases retry failures up to twice to accommodate model nondeterminism. Evaluations require the corresponding service key or the shared fallback in `.env.local` and are intentionally excluded from the default deterministic test suite.
+Live model evaluations live in `src/evals/` and run together from the repository root with `yarn test:evals`. The Generate Emoji evaluation requires at least two matches among the ten generated results for each semantic category from issue #4400. The Generate Thought evaluation asserts against the model's complete replacement thought, covering alphabetical sequence completion, typo correction, parent and sibling context, nested capital generation, top-level sequences, partial fill-in, replacement of misplaced items, and omission of context-only text. The Organize Thought evaluation asserts directly against the model's indented textual final state, covering semantic groups, compound splitting without duplication, preserved nesting, reclassification into existing categories, and omission of context-only thoughts. Concurrent cases retry failures up to twice to accommodate model nondeterminism. Evaluations require the corresponding service key or the shared fallback in `.env.local` and are intentionally excluded from the default deterministic test suite.
 
 > **Note:** This package has no `build` script on purpose. A `build` script makes Vercel run a static build and then fail looking for an output directory; omitting it lets Vercel auto-detect the Express app and deploy it as a Function.
 
@@ -99,6 +100,7 @@ Each service authenticates with its own OpenAI API key so that its usage and spe
 | Define Term      | `OPENAI_API_KEY_DEFINE_TERM`       |
 | Generate Emoji   | `OPENAI_API_KEY_GENERATE_EMOJI`   |
 | Generate Thought | `OPENAI_API_KEY_GENERATE_THOUGHT` |
+| Organize Thought | `OPENAI_API_KEY_ORGANIZE_THOUGHT` |
 
 Adding a service means adding a member to [`src/@types/Service.ts`](src/@types/Service.ts), passing it to
 `completeChat`, and creating a key of the same name in the OpenAI dashboard. The fallback keeps a deployment that sets
@@ -150,5 +152,6 @@ Function metrics (invocations, duration percentiles, error rate, cold starts, me
 - `OPENAI_API_KEY_DEFINE_TERM` — per-service key for Define Term in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_EMOJI` — per-service key for Generate Emoji in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `OPENAI_API_KEY_GENERATE_THOUGHT` — per-service key for Generate Thought in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
+- `OPENAI_API_KEY_ORGANIZE_THOUGHT` — per-service key for Organize Thought in the `em-ai` Vercel Production and Preview environments. See [API keys](#api-keys).
 - `PORT` — optional local server port. Defaults to `3111`.
 - `VITE_AI_URL` — public, build-time client base URL. Development uses `http://localhost:3111/ai`, production uses `https://ai.emthought.space/ai`, and pull request builds receive their matching `em-ai` preview URL from the workflow.
