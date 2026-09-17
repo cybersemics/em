@@ -7,7 +7,7 @@ import { page } from '../session'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 // https://github.com/cybersemics/em/issues/4177
-it.skip('close the Search input with the Search command when no search text has been entered', async () => {
+it('close the Search input with the Search command when no search text has been entered', async () => {
   await paste('- a')
   await clickThought('a')
 
@@ -23,5 +23,16 @@ it.skip('close the Search input with the Search command when no search text has 
     throw new Error(
       `Expected the Search input to be dismissed, but it is still rendered with the value "${searchValue}".`,
     )
+  }
+})
+
+// https://github.com/cybersemics/em/issues/4177
+it('open the Search input with the Search command when no thought is being edited', async () => {
+  await press('f', { meta: true, alt: true })
+
+  try {
+    await waitForSelector('[placeholder="Search"]', { timeout: 5000 })
+  } catch {
+    throw new Error('Expected the Search input to be rendered, but it never appeared.')
   }
 })

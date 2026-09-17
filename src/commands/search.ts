@@ -14,10 +14,16 @@ const searchCommand = {
   keyboard: { key: 'f', meta: true, alt: true },
   exec: (dispatch, getState) => {
     const state = getState()
-    dispatch(search({ value: !state.search && selection.isActive() ? selection.text() : null }))
+
+    // The Search input is rendered whenever state.search is non-null, so an empty search is open, not closed.
+    // Testing the value for truthiness instead would read an empty search as closed and re-open it (#4177).
+    const isSearchOpen = state.search != null
+
+    // seed the search with the selected text, if any
+    dispatch(search({ value: isSearchOpen ? null : selection.isActive() ? selection.text() : '' }))
 
     // if enabling search, save current cursor
-    if (state.search == null) {
+    if (!isSearchOpen) {
       dispatch(cursorBeforeSearch({ value: state.cursor }))
     }
     // otherwise restore cursor
