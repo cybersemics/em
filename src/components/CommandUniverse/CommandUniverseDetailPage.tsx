@@ -212,8 +212,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
               display: 'flex',
               alignItems: 'center',
               gap: '0.625rem',
-              paddingTop: command.longDescription ? '0.775rem' : 0,
-              paddingBottom: '1.45rem',
+              padding: '0.65rem 0 0.275rem',
             })}
           >
             <div className={css({ flex: 'none', width: '130px', aspectRatio: '1 / 1' })}>
