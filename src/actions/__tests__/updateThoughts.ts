@@ -2,8 +2,9 @@ import type Thought from '../../@types/Thought'
 import type ThoughtId from '../../@types/ThoughtId'
 import type Timestamp from '../../@types/Timestamp'
 import { EM_TOKEN, HOME_TOKEN } from '../../constants'
-import hashThought from '../hashThought'
-import projectLexemes from '../projectLexemes'
+import hashThought from '../../util/hashThought'
+import initialState from '../../util/initialState'
+import updateThoughts from '../updateThoughts'
 
 const A = '00000000000000000000000000000701' as ThoughtId
 const B = '00000000000000000000000000000702' as ThoughtId
@@ -24,14 +25,23 @@ const thought: Thought = {
 }
 
 it.each([{ rank: 1, parentId: EM_TOKEN }, { value: 'Cats' }])(
-  'preserves the index reference when membership and metadata are unchanged (%j)',
+  'preserves lexeme references through an edit and its unchanged confirmation (%j)',
   update => {
     const lexeme = { contexts: [A], created: thought.created, lastUpdated: thought.lastUpdated, updatedBy: 'writer' }
     Object.freeze(lexeme.contexts)
     Object.freeze(lexeme)
     const lexemeIndex = Object.freeze({ [catHash]: lexeme })
+    const state = initialState()
+    state.thoughts.lexemeIndex = lexemeIndex
+    state.thoughts.thoughtIndex[A] = thought
+    const thoughtIndexUpdates = { [A]: { ...thought, ...update } }
 
-    expect(projectLexemes(lexemeIndex, { [A]: { ...thought, ...update } })).toBe(lexemeIndex)
+    const edited = updateThoughts(state, { thoughtIndexUpdates })
+    expect(edited.thoughts.lexemeIndex).toEqual(lexemeIndex)
+    expect(edited.thoughts.lexemeIndex[catHash]).toBe(lexeme)
+
+    const confirmed = updateThoughts(edited, { thoughtIndexUpdates, materialized: true, local: false, remote: false })
+    expect(confirmed.thoughts.lexemeIndex).toBe(edited.thoughts.lexemeIndex)
   },
 )
 
@@ -47,18 +57,26 @@ it('preserves unaffected references while grouping renames, additions, and delet
   })
   Object.freeze(lexemeIndex)
 
-  const projected = projectLexemes(lexemeIndex, {
-    [A]: { ...thought, value: 'Dog', lastUpdated: 3 as Timestamp, updatedBy: 'renamer' },
-    [B]: null,
-    [C]: {
-      ...thought,
-      id: C,
-      value: 'dogs',
-      created: 4 as Timestamp,
-      lastUpdated: 4 as Timestamp,
-      updatedBy: 'creator',
+  const state = initialState()
+  state.thoughts.lexemeIndex = lexemeIndex
+  state.thoughts.thoughtIndex[A] = thought
+  state.thoughts.thoughtIndex[B] = { ...thought, id: B }
+  const {
+    thoughts: { lexemeIndex: projected },
+  } = updateThoughts(state, {
+    thoughtIndexUpdates: {
+      [A]: { ...thought, value: 'Dog', lastUpdated: 3 as Timestamp, updatedBy: 'renamer' },
+      [B]: null,
+      [C]: {
+        ...thought,
+        id: C,
+        value: 'dogs',
+        created: 4 as Timestamp,
+        lastUpdated: 4 as Timestamp,
+        updatedBy: 'creator',
+      },
+      [E]: { ...thought, id: E, value: 'bird' },
     },
-    [E]: { ...thought, id: E, value: 'bird' },
   })
 
   expect(projected).toEqual({
@@ -71,9 +89,14 @@ it('preserves unaffected references while grouping renames, additions, and delet
 it('preserves the context list when only aggregate metadata changes', () => {
   const lexeme = { contexts: [A, B], created: thought.created, lastUpdated: thought.lastUpdated, updatedBy: 'writer' }
   const lexemeIndex = { [catHash]: lexeme }
+  const state = initialState()
+  state.thoughts.lexemeIndex = lexemeIndex
+  state.thoughts.thoughtIndex[A] = thought
 
-  const projected = projectLexemes(lexemeIndex, {
-    [A]: { ...thought, lastUpdated: 3 as Timestamp, updatedBy: 'editor' },
+  const {
+    thoughts: { lexemeIndex: projected },
+  } = updateThoughts(state, {
+    thoughtIndexUpdates: { [A]: { ...thought, lastUpdated: 3 as Timestamp, updatedBy: 'editor' } },
   })
 
   expect(projected[catHash]).toEqual({ contexts: [A, B], created: 1, lastUpdated: 3, updatedBy: 'editor' })

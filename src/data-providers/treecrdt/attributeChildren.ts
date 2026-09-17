@@ -95,16 +95,6 @@ export async function syncAttributeChild(
   }
 }
 
-/** Updates the indexed parent for a moved child, if the child is indexed. */
-export async function moveAttributeChild(
-  client: TreecrdtClient,
-  parentId: ThoughtId,
-  childId: ThoughtId,
-): Promise<void> {
-  await ensureAttributeChildrenSchema(client)
-  await client.runner.exec(bindParams(`UPDATE ${TABLE} SET parent_id = ?1 WHERE child_id = ?2`, [parentId, childId]))
-}
-
 /** Reindexes a single child from TreeCRDT's current materialized state. */
 export async function reindexAttributeChild(client: TreecrdtClient, childId: ThoughtId): Promise<void> {
   await ensureAttributeChildrenSchema(client)
@@ -156,7 +146,9 @@ export async function refreshAttributeChildrenFromChanges(
         break
       case 'move':
         if (ch.parentBefore !== ch.parentAfter) {
-          await moveAttributeChild(client, ch.parentAfter as ThoughtId, childId)
+          await client.runner.exec(
+            bindParams(`UPDATE ${TABLE} SET parent_id = ?1 WHERE child_id = ?2`, [ch.parentAfter, childId]),
+          )
         }
         break
       case 'payload': {

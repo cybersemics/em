@@ -326,10 +326,6 @@ const createTreecrdtDataProvider = () => {
   let activeDb: BoundTreecrdtDataProvider | null = null
   let providerReadiness = createProviderReadiness()
 
-  /** Dispatches public writes to the client provider that becomes ready for them. */
-  const updateThoughts: DataProvider['updateThoughts'] = updates =>
-    activeDb ? activeDb.updateThoughts(updates) : providerReadiness.promise.then(db => db.updateThoughts(updates))
-
   /** Clears the current client provider, rejects startup writes, and creates fresh readiness state. */
   const resetBinding = (reason: unknown): void => {
     providerReadiness.reject(reason)
@@ -343,7 +339,8 @@ const createTreecrdtDataProvider = () => {
     getLexemesByIds: async keys => (await providerReadiness.promise).getLexemesByIds(keys),
     getThoughtById: async id => (await providerReadiness.promise).getThoughtById(id),
     getThoughtsByIds: async ids => (await providerReadiness.promise).getThoughtsByIds(ids),
-    updateThoughts,
+    updateThoughts: updates =>
+      activeDb ? activeDb.updateThoughts(updates) : providerReadiness.promise.then(db => db.updateThoughts(updates)),
     // Freeing cache entries remains a no-op before initialization.
     freeThought: async _id => undefined,
     freeLexeme: async _key => undefined,

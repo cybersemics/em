@@ -4,17 +4,13 @@ import type ThoughtId from '../../../../@types/ThoughtId'
 import type Timestamp from '../../../../@types/Timestamp'
 import { HOME_TOKEN, ROOT_PARENT_ID } from '../../../../constants'
 import type { DataProvider } from '../../../DataProvider'
-import { refreshThoughtsFromMaterializationChanges } from '../materializationThoughtUpdates'
+import applyMaterializedThoughtsToStore from '../applyMaterializedThoughtsToStore'
 
 const A_ID = 'a-id' as ThoughtId
 const B_ID = 'b-id' as ThoughtId
 const C_ID = 'c-id' as ThoughtId
 const LEFT_ID = 'left-id' as ThoughtId
 const RIGHT_ID = 'right-id' as ThoughtId
-
-/** Creates a childrenMap that preserves the provided insertion order for Object.values. */
-const childrenMap = (children: ThoughtId[]): Index<ThoughtId> =>
-  Object.fromEntries(children.map(childId => [childId, childId]))
 
 /** Creates a minimal Thought for materialization projection tests. */
 const thought = (
@@ -28,15 +24,16 @@ const thought = (
   value,
   rank,
   parentId,
-  childrenMap: childrenMap(children),
+  childrenMap: Object.fromEntries(children.map(childId => [childId, childId])),
   created: 0 as Timestamp,
   lastUpdated: 0 as Timestamp,
   updatedBy: '',
 })
 
-/** Creates the minimal thoughtspace provider surface needed by refreshThoughtsFromMaterializationChanges. */
-const fakeProvider = (thoughts: Index<Thought>): Pick<DataProvider, 'getThoughtById'> => ({
+/** Supplies stored thoughts to the committed publication under test. */
+const fakeProvider = (thoughts: Index<Thought>): Pick<DataProvider, 'getThoughtById' | 'getLexemesByIds'> => ({
   getThoughtById: vi.fn(async (id: ThoughtId) => thoughts[id]),
+  getLexemesByIds: async () => [],
 })
 
 it('refreshes each affected sibling once using provider ranks', async () => {
@@ -50,17 +47,28 @@ it('refreshes each affected sibling once using provider ranks', async () => {
     [B_ID]: thoughtB,
     [C_ID]: thoughtC,
   })
-  const result = await refreshThoughtsFromMaterializationChanges(
-    [{ kind: 'move', node: C_ID, parentBefore: HOME_TOKEN, parentAfter: HOME_TOKEN }],
-    provider,
-  )
+  const onCommit = vi.fn()
+  await applyMaterializedThoughtsToStore({
+    bridge: { getGeneration: () => 0, onCommit },
+    db: provider,
+    pending: [
+      {
+        event: {
+          headSeq: 1,
+          changes: [{ kind: 'move', node: C_ID, parentBefore: HOME_TOKEN, parentAfter: HOME_TOKEN }],
+        },
+        keys: [],
+        generation: 0,
+      },
+    ],
+  })
 
-  const updates = Object.fromEntries(result.thoughts.map(nextThought => [nextThought.id, nextThought]))
-
-  expect(Object.values(updates[HOME_TOKEN].childrenMap)).toEqual([C_ID, A_ID, B_ID])
-  expect(updates[C_ID].rank).toBe(0)
-  expect(updates[A_ID].rank).toBe(1)
-  expect(updates[B_ID].rank).toBe(2)
+  expect(onCommit).toHaveBeenCalledExactlyOnceWith({
+    thoughtIndex: { [HOME_TOKEN]: newParent, [A_ID]: thoughtA, [B_ID]: thoughtB, [C_ID]: thoughtC },
+    lexemeIndex: {},
+    writeIds: undefined,
+  })
+  expect(Object.values(onCommit.mock.calls[0][0].thoughtIndex[HOME_TOKEN].childrenMap)).toEqual([C_ID, A_ID, B_ID])
   expect(provider.getThoughtById).toHaveBeenCalledTimes(4)
 })
 
@@ -78,21 +86,26 @@ it('refreshes both parents and affected siblings without reading ancestors after
     [B_ID]: thoughtB,
     [C_ID]: thoughtC,
   })
-  const result = await refreshThoughtsFromMaterializationChanges(
-    [{ kind: 'move', node: A_ID, parentBefore: LEFT_ID, parentAfter: RIGHT_ID }],
-    provider,
-  )
-
-  const updates = Object.fromEntries(result.thoughts.map(nextThought => [nextThought.id, nextThought]))
-
-  expect(Object.values(updates[LEFT_ID].childrenMap)).toEqual([B_ID])
-  expect(Object.values(updates[RIGHT_ID].childrenMap)).toEqual([C_ID, A_ID])
-  expect(updates[B_ID].rank).toBe(0)
-  expect(updates[C_ID].rank).toBe(0)
-  expect(updates[A_ID]).toMatchObject({
-    parentId: RIGHT_ID,
-    rank: 1,
+  const onCommit = vi.fn()
+  await applyMaterializedThoughtsToStore({
+    bridge: { getGeneration: () => 0, onCommit },
+    db: provider,
+    pending: [
+      {
+        event: { headSeq: 1, changes: [{ kind: 'move', node: A_ID, parentBefore: LEFT_ID, parentAfter: RIGHT_ID }] },
+        keys: [],
+        generation: 0,
+      },
+    ],
   })
+
+  expect(onCommit).toHaveBeenCalledExactlyOnceWith({
+    thoughtIndex: { [LEFT_ID]: newLeft, [RIGHT_ID]: newRight, [A_ID]: thoughtANew, [B_ID]: thoughtB, [C_ID]: thoughtC },
+    lexemeIndex: {},
+    writeIds: undefined,
+  })
+  expect(Object.values(onCommit.mock.calls[0][0].thoughtIndex[LEFT_ID].childrenMap)).toEqual([B_ID])
+  expect(Object.values(onCommit.mock.calls[0][0].thoughtIndex[RIGHT_ID].childrenMap)).toEqual([C_ID, A_ID])
   expect(provider.getThoughtById).toHaveBeenCalledTimes(5)
 })
 
@@ -108,11 +121,23 @@ it('refreshes a renamed attribute and its parent without reading unchanged sibli
     [B_ID]: thought(B_ID, 'b', 1, LEFT_ID),
   })
 
-  const result = await refreshThoughtsFromMaterializationChanges(
-    [{ kind: 'payload', node: A_ID, payload: null }],
-    provider,
-  )
+  const onCommit = vi.fn()
+  await applyMaterializedThoughtsToStore({
+    bridge: { getGeneration: () => 0, onCommit },
+    db: provider,
+    pending: [
+      {
+        event: { headSeq: 1, changes: [{ kind: 'payload', node: A_ID, payload: null }] },
+        keys: [],
+        generation: 0,
+      },
+    ],
+  })
 
-  expect(result.thoughts).toEqual([attribute, parent])
+  expect(onCommit).toHaveBeenCalledExactlyOnceWith({
+    thoughtIndex: { [A_ID]: attribute, [LEFT_ID]: parent },
+    lexemeIndex: {},
+    writeIds: undefined,
+  })
   expect(provider.getThoughtById).toHaveBeenCalledTimes(2)
 })
