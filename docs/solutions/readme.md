@@ -46,7 +46,64 @@ Anything closed before 2024-04 predates every one of these and is presumed obsol
 Organised by subsystem, mirroring `docs/`, so the two trees read together: a reader in [`layout-rendering.md`](../layout-rendering.md) finds `solutions/layout/` where they expect it. The problem type lives in frontmatter rather than the directory name, which keeps "show me every test failure" a query rather than a second taxonomy.
 
 <!-- index:start -->
-_Empty — the first pass has not landed yet._
+### `editing/` — Editing, caret, and selection
+
+- [isActive, isThought, and isNote answer different questions](editing/selection-predicate-semantics.md)
+- [Never consolidate Editable's tap handlers onto mousedown](editing/tap-handler-event-ownership.md)
+- [Void-area caret tests pass whether or not the bug is present](editing/void-area-caret-has-no-test.md)
+
+### `data-model/` — Thoughts, lexemes, paths, and ids
+
+- [Changing normalizeThought re-keys every Lexeme, and there is no migration to write](data-model/changing-lexeme-hashing-is-not-a-migration.md)
+- [Context view entries keep their real lineage, so attributes leak in](data-model/context-view-entries-keep-their-real-lineage.md)
+- [Editing a thought overwrites the persisted Lexeme with only the loaded contexts](data-model/lexeme-contexts-clobbered-when-not-loaded.md)
+- [toggleAttribute treats a container of meta siblings as empty](data-model/nested-attribute-container-cleanup.md)
+- [A Path is assignable to a Context, so the brand protects one direction only](data-model/path-is-assignable-to-context.md)
+
+### `persistence/` — Storage, sync, and replication
+
+- [On an insecure origin, three unrelated-looking failures have one cause](persistence/insecure-origin-silent-degradation.md)
+- [savingProgress has had no writer since the TreeCRDT migration](persistence/saving-progress-has-no-writer.md)
+- [Why the thoughtspace is one CRDT tree, not per-parent subdocuments](persistence/why-one-crdt-tree-not-subdocuments.md)
+
+### `layout/` — Positioning, sizing, and animation
+
+- [Dialog scroll lock belongs in CSS, not an un-counted global](layout/dialog-scroll-lock-ios.md)
+- [em → rem is not a pure refactor under a non-root font size](layout/em-to-rem-nested-font-size.md)
+- [Every keystroke re-rendered every thought: reference identity in the LayoutTree path](layout/layout-tree-prop-identity-rerenders.md)
+- [The Mobile Safari navigation flash is a browser limit, not a timing bug](layout/mobile-safari-navigation-flash.md)
+- [Thought spacing is padding-based: never reintroduce a multiline flag](layout/no-multiline-flag-thought-spacing.md)
+- [Layout is measured from enumerated dependencies, never a ResizeObserver](layout/no-resize-observers-for-layout.md)
+- [The position: fixed fallback must stay Mobile-Safari-only](layout/position-fixed-fallback-mobile-safari-only.md)
+
+### `drag-and-drop/` — Drag sources, drop targets, and the long-press state machine
+
+- [The hover guards are what stop the shake detector cancelling drags](drag-and-drop/hover-guards-prevent-drag-cancel.md)
+- [Registering a second react-dnd backend strips the draggable attribute iOS Safari needs](drag-and-drop/single-backend-and-draggable-attribute.md)
+- [The bullet and the editable need two separate useDrag hooks](drag-and-drop/two-drag-sources-bullet-and-editable.md)
+
+### `commands/` — Commands, keyboard, and gestures
+
+- [The 25/65 gesture bias is deliberately absent from GestureDiagram](commands/gesture-bias-not-in-diagram.md)
+- [MultiGesture's react-native-web integration cannot be inlined or defaulted](commands/panresponder-integration-is-load-bearing.md)
+
+### `styling/` — Panda CSS, theming, and typography
+
+- [When a blur, a blend, or a z-index silently does nothing](styling/compositing-traps-blur-blend-stacking.md)
+- [A Panda css() class cannot override an unlayered vendor stylesheet](styling/panda-cannot-override-vendor-css.md)
+- [A Panda class with no rule: stale extraction and unreadable variants](styling/panda-class-with-no-rule.md)
+
+### `testing/` — Unit, store, and end-to-end tests
+
+- [Animation durations live in JS so both zeroing paths can reach them](testing/animation-durations-single-source.md)
+- [Measuring a layout shift when test timing has collapsed the animation](testing/measuring-layout-shift-with-animations-zeroed.md)
+- [Middleware and enhancer closure state survives initStore](testing/middleware-state-survives-initstore.md)
+- [Never add a stacking-context property to the snapshot stylesheet](testing/puppeteer-snapshot-layer-promotion.md)
+
+### `build/` — Build, bundling, and the native shells
+
+- [Only listed extensions are precached, and a CSS url() asset is invisible otherwise](build/pwa-precache-extension-allowlist.md)
+- [A blank Tauri window is the dev server's self-signed certificate](build/tauri-blank-window-self-signed-cert.md)
 <!-- index:end -->
 
 ## Writing one
