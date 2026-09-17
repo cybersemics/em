@@ -152,7 +152,7 @@ describe('autocrop', () => {
     await clickThought('m')
 
     // scroll down so that z is rendered and visible
-    await scrollTo(0, 200)
+    await scrollTo(200)
 
     await clickThought('z')
     await waitForCursor('z')

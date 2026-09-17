@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { isTouch } from '../browser'
+import cancelOnReset from '../util/cancelOnReset'
 import reactMinistore from './react-ministore'
 
 /** Scroll zone as a percentage of the smaller size of the screen. */
@@ -31,41 +32,43 @@ const viewportStore = reactMinistore<ViewportState>({
 })
 
 /** Throttled update of viewport height. Invoked on window resize. */
-export const updateSize = _.throttle(
-  () => {
-    // There is a bug in iOS Safari where visualViewport.height is incorrect if the phone is rotated with the keyboard up, rotated back, and the keyboard is closed.
-    // It can be detected by ensuring the visualViewport portrait mode matches window portrait mode.
-    // If it is invalid, go back to the default
-    const isPortrait = window.innerHeight > window.innerWidth
-    const currentKeyboardHeight = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
+export const updateSize = cancelOnReset(
+  _.throttle(
+    () => {
+      // There is a bug in iOS Safari where visualViewport.height is incorrect if the phone is rotated with the keyboard up, rotated back, and the keyboard is closed.
+      // It can be detected by ensuring the visualViewport portrait mode matches window portrait mode.
+      // If it is invalid, go back to the default
+      const isPortrait = window.innerHeight > window.innerWidth
+      const currentKeyboardHeight = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
 
-    // Only update the cached keyboard height when the keyboard is actually open (nonzero height).
-    // When the keyboard closes, currentKeyboardHeight is 0 — preserving the cache ensures
-    // iOSSafariHandler can still read the last-known height for its opening animation.
-    if (currentKeyboardHeight > 0) {
-      if (isPortrait) {
-        virtualKeyboardHeightPortrait = currentKeyboardHeight
-      } else {
-        virtualKeyboardHeightLandscape = currentKeyboardHeight
+      // Only update the cached keyboard height when the keyboard is actually open (nonzero height).
+      // When the keyboard closes, currentKeyboardHeight is 0 — preserving the cache ensures
+      // iOSSafariHandler can still read the last-known height for its opening animation.
+      if (currentKeyboardHeight > 0) {
+        if (isPortrait) {
+          virtualKeyboardHeightPortrait = currentKeyboardHeight
+        } else {
+          virtualKeyboardHeightLandscape = currentKeyboardHeight
+        }
       }
-    }
 
-    viewportStore.update({
-      innerWidth: window.innerWidth,
-      innerHeight: window.innerHeight,
-      // When the keyboard is closed, fall back to the cached height so consumers
-      // (e.g. iOSSafariHandler) still know the keyboard's expected height for animations.
-      virtualKeyboardHeight:
-        currentKeyboardHeight > 0
-          ? currentKeyboardHeight
-          : isPortrait
-            ? virtualKeyboardHeightPortrait
-            : virtualKeyboardHeightLandscape,
-    })
-  },
-  // lock to 60 fps
-  16.666,
-  { leading: true },
+      viewportStore.update({
+        innerWidth: window.innerWidth,
+        innerHeight: window.innerHeight,
+        // When the keyboard is closed, fall back to the cached height so consumers
+        // (e.g. iOSSafariHandler) still know the keyboard's expected height for animations.
+        virtualKeyboardHeight:
+          currentKeyboardHeight > 0
+            ? currentKeyboardHeight
+            : isPortrait
+              ? virtualKeyboardHeightPortrait
+              : virtualKeyboardHeightLandscape,
+      })
+    },
+    // lock to 60 fps
+    16.666,
+    { leading: true },
+  ),
 )
 
 export default viewportStore

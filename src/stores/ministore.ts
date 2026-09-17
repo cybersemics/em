@@ -1,4 +1,5 @@
 import Emitter from 'emitter20'
+import cancelOnReset from '../util/cancelOnReset'
 import cancellable, { CancellablePromise } from '../util/cancellable'
 
 export interface Ministore<T> {
@@ -24,8 +25,9 @@ export interface Ministore<T> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stores = new Set<Ministore<any>>()
 
-/** Resets all ministores to their initial state. Called by the initStore test helper so that module-level store state does not leak from one test to the next. */
+/** Resets all ministores to their initial state. Called by the initStore and createTestApp test helpers so that module-level store state does not leak from one test to the next. Pending module-scope throttles are cancelled first, so a trailing call scheduled before the reset cannot write a stale value back into a store (or localStorage) after it. */
 export const resetStores = () => {
+  cancelOnReset.cancelAll()
   stores.forEach(store => store.reset())
 }
 

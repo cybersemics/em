@@ -20,9 +20,10 @@ interface Params {
  * Initializes the store. Defaults to clearing the store and skipping the tutorial.
  */
 const initStore = async ({ persist, allowTutorial }: Params = {}) => {
-  // Use fake timers so throttled/debounced side effects (e.g., url/history updates, storage writes)
-  // don't execute after the test completes and the environment is torn down.
-  // This makes tests deterministic and prevents post-teardown access to window/localStorage.
+  // Use fake timers so that the in-memory thoughtspace's asynchronous work is flushed only when a test advances the
+  // clock (see docs/testing.md § Fake timers). Without them, dropping and reinitializing the thoughtspace below races
+  // the tests that follow ("TreeCRDT DataProvider: init not called"). Pending throttles are not the reason: those are
+  // cancelled at every test boundary regardless of timers (cancelOnReset).
   vi.useFakeTimers()
 
   if (!persist) {

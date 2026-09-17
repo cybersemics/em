@@ -6,12 +6,15 @@ import { alertActionCreator } from '../actions/alert'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import { AlertType } from '../constants'
+import cancelOnReset from '../util/cancelOnReset'
 
 /** Throttled dispatch for alert actions. */
-const throttledAlert = _.throttle(
-  (dispatch: Dispatch, ...args: Parameters<typeof alertActionCreator>) => dispatch(alertActionCreator(...args)),
-  50,
-  { leading: false, trailing: true },
+const throttledAlert = cancelOnReset(
+  _.throttle(
+    (dispatch: Dispatch, ...args: Parameters<typeof alertActionCreator>) => dispatch(alertActionCreator(...args)),
+    50,
+    { leading: false, trailing: true },
+  ),
 )
 
 /** A middleware that manages multicursor alerts and shows/hides the Command Center on mobile. This is done so that the Alert and Command Center are updated regardless of which action the multiselect is triggered from. Note that this only works in one direction: Multiselect -> Alert/CommandCenter. If the Command Center is closed somewhere else (e.g. toggleDropdown) it will need to clear the multicursors itself. */
@@ -65,12 +68,18 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
     }
     // on desktop, show a persistent alert
     else {
-      // clear multicursor alert
-      if (!numMulticursors && state.alert?.alertType === AlertType.MulticursorActive) {
-        throttledAlert(dispatch, null)
-      }
-
-      if (numMulticursors !== prevNumMulticursors) {
+      // A single throttle carries both the count alert and its clear, and only the last call's arguments survive to the
+      // trailing invocation. So a selection that drops to zero must schedule only the clear: scheduling the count alert
+      // as well would replace the pending clear with a "0 thoughts selected" alert that overwrites whatever alert is
+      // showing by then (e.g. an AI request's rate-limit message) and is cleared only on the next action.
+      if (!numMulticursors) {
+        // clear multicursor alert. The clear is throttled, so by the time it fires another alert may have replaced
+        // the multicursor one; scoping it to the multicursor alertType makes the action creator drop it in that case
+        // rather than dismiss an unrelated alert.
+        if (state.alert?.alertType === AlertType.MulticursorActive) {
+          throttledAlert(dispatch, null, { alertType: AlertType.MulticursorActive })
+        }
+      } else if (numMulticursors !== prevNumMulticursors) {
         // show or update multicursor alert
         throttledAlert(
           dispatch,
