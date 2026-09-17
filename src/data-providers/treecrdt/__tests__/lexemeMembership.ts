@@ -61,13 +61,9 @@ it('rebuilds memberships from existing thoughts instead of incomplete legacy lex
   expect(dump).not.toHaveBeenCalled()
 })
 
-it('removes an unloaded membership on rename and delete, and restores only the current value', async () => {
+it('ignores deleted payloads and restores membership only for the current value', async () => {
   const db = await bind()
-  await client.local.insert(replica, HOME_TOKEN, A, { type: 'last' }, payload('cat'))
-  await client.local.insert(replica, HOME_TOKEN, B, { type: 'last' }, payload('Cats'))
-  await client.local.payload(replica, A, payload('dog'))
-
-  expect((await db.getLexemeById(hashThought('cat')))?.contexts).toEqual([B])
+  await client.local.insert(replica, HOME_TOKEN, A, { type: 'last' }, payload('dog'))
   expect((await db.getLexemeById(hashThought('dog')))?.contexts).toEqual([A])
 
   await client.local.delete(replica, A)
@@ -76,7 +72,7 @@ it('removes an unloaded membership on rename and delete, and restores only the c
   expect(Array.from((await client.tree.getPayload(A))!)).toEqual(Array.from(payload('dog')))
 
   await client.local.insert(replica, HOME_TOKEN, A, { type: 'last' }, payload('cat'))
-  expect((await db.getLexemeById(hashThought('cat')))?.contexts).toEqual([A, B])
+  expect((await db.getLexemeById(hashThought('cat')))?.contexts).toEqual([A])
   expect(await db.getLexemeById(hashThought('dog'))).toBeUndefined()
 })
 

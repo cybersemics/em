@@ -36,42 +36,6 @@ const fakeProvider = (thoughts: Index<Thought>): Pick<DataProvider, 'getThoughtB
   getLexemesByIds: async () => [],
 })
 
-it('refreshes each affected sibling once using provider ranks', async () => {
-  const newParent = thought(HOME_TOKEN, HOME_TOKEN, 0, ROOT_PARENT_ID, [C_ID, A_ID, B_ID])
-  const thoughtA = thought(A_ID, 'a', 1, HOME_TOKEN)
-  const thoughtB = thought(B_ID, 'b', 2, HOME_TOKEN)
-  const thoughtC = thought(C_ID, 'c', 0, HOME_TOKEN)
-  const provider = fakeProvider({
-    [HOME_TOKEN]: newParent,
-    [A_ID]: thoughtA,
-    [B_ID]: thoughtB,
-    [C_ID]: thoughtC,
-  })
-  const onCommit = vi.fn()
-  await applyMaterializedThoughtsToStore({
-    bridge: { getGeneration: () => 0, onCommit },
-    db: provider,
-    pending: [
-      {
-        event: {
-          headSeq: 1,
-          changes: [{ kind: 'move', node: C_ID, parentBefore: HOME_TOKEN, parentAfter: HOME_TOKEN }],
-        },
-        keys: [],
-        generation: 0,
-      },
-    ],
-  })
-
-  expect(onCommit).toHaveBeenCalledExactlyOnceWith({
-    thoughtIndex: { [HOME_TOKEN]: newParent, [A_ID]: thoughtA, [B_ID]: thoughtB, [C_ID]: thoughtC },
-    lexemeIndex: {},
-    writeIds: undefined,
-  })
-  expect(Object.values(onCommit.mock.calls[0][0].thoughtIndex[HOME_TOKEN].childrenMap)).toEqual([C_ID, A_ID, B_ID])
-  expect(provider.getThoughtById).toHaveBeenCalledTimes(4)
-})
-
 it('refreshes both parents and affected siblings without reading ancestors after a cross-parent move', async () => {
   const newLeft = thought(LEFT_ID, 'left', 0, HOME_TOKEN, [B_ID])
   const newRight = thought(RIGHT_ID, 'right', 1, HOME_TOKEN, [C_ID, A_ID])

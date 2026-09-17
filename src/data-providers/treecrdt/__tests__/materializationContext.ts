@@ -2,7 +2,7 @@ import { hexToBytes, nodeIdToBytes16 } from '@treecrdt/interface/ids'
 import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
-import { EM_TOKEN } from '../../../constants'
+import { EM_TOKEN, HOME_TOKEN } from '../../../constants'
 import deferred from '../../../test-helpers/deferred'
 import hashThought from '../../../util/hashThought'
 import { encodeThoughtPayload } from '../payload'
@@ -86,23 +86,30 @@ it('reads sibling order once for placement and once for the committed refresh', 
   const thirdId = '00000000000000000000000000000203' as ThoughtId
   await provider.db.updateThoughts({
     thoughtIndexUpdates: {
-      [THOUGHT_ID]: thought('a'),
-      [secondId]: { ...thought('b', secondId), rank: 1 },
-      [thirdId]: { ...thought('c', thirdId), rank: 2 },
+      [THOUGHT_ID]: { ...thought('a'), parentId: HOME_TOKEN },
+      [secondId]: { ...thought('b', secondId), parentId: HOME_TOKEN, rank: 1 },
+      [thirdId]: { ...thought('c', thirdId), parentId: HOME_TOKEN, rank: 2 },
     },
   })
   const children = vi.spyOn(clientOne.tree, 'children')
+  const getPayload = vi.spyOn(clientOne.tree, 'getPayload')
   bridge.onCommit.mockClear()
 
   await provider.db.updateThoughts({
-    thoughtIndexUpdates: { [THOUGHT_ID]: { parentId: EM_TOKEN } },
+    thoughtIndexUpdates: { [THOUGHT_ID]: { parentId: HOME_TOKEN } },
     movePlacements: { [THOUGHT_ID]: thirdId },
   })
 
-  expect(children.mock.calls.filter(([id]) => id === EM_TOKEN)).toHaveLength(2)
+  expect(children.mock.calls.filter(([id]) => id === HOME_TOKEN)).toHaveLength(2)
+  // One existing payload read, one membership refresh, and four published thoughts.
+  expect(getPayload).toHaveBeenCalledTimes(6)
   expect(bridge.onCommit).toHaveBeenCalledOnce()
+  expect(Object.values(bridge.onCommit.mock.calls[0][0].thoughtIndex[HOME_TOKEN].childrenMap)).toEqual([
+    secondId,
+    thirdId,
+    THOUGHT_ID,
+  ])
   expect(bridge.onCommit.mock.calls[0][0].thoughtIndex).toMatchObject({
-    [EM_TOKEN]: { childrenMap: { [secondId]: secondId, [thirdId]: thirdId, [THOUGHT_ID]: THOUGHT_ID } },
     [THOUGHT_ID]: { rank: 2 },
     [secondId]: { rank: 0 },
     [thirdId]: { rank: 1 },

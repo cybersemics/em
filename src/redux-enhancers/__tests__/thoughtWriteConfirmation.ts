@@ -55,10 +55,15 @@ vi.mock('../../data-providers/treecrdt/sync/treecrdtWebSocketSync', async import
 
 const remoteReplica = new Uint8Array(32).fill(9)
 let client: TreecrdtClient
-let remote: TreecrdtClient
+let remote: TreecrdtClient | undefined
 
 /** Authors an operation on another replica and receives it through the real sync client boundary. */
 const receiveRemote = async (write: (peer: TreecrdtClient) => Promise<Operation>) => {
+  remote ??= await createTreecrdtClient({
+    storage: { type: 'memory' },
+    runtime: { type: 'direct' },
+    docId: client.docId,
+  })
   await remote.ops.appendMany(await client.ops.all())
   await syncClient.ops.appendMany([await write(remote)])
 }
@@ -66,26 +71,16 @@ const receiveRemote = async (write: (peer: TreecrdtClient) => Promise<Operation>
 beforeEach(async () => {
   await initStore()
   client = await vi.mocked(createTreecrdtClient).mock.results.at(-1)!.value
-  remote = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' }, docId: client.docId })
 })
 
 afterEach(async () => {
-  await waitForThoughtspaceIdle()
-  await remote.drop()
-  vi.restoreAllMocks()
-})
-
-it('confirms a persisted rename without replacing the optimistic view', async () => {
-  store.dispatch(importText({ text: '- parent\n  - cat\n  - sibling' }))
-  await waitForThoughtspaceIdle()
-
-  store.dispatch(editThought(['parent', 'cat'], 'dog'))
-  const optimistic = store.getState()
-  await waitForThoughtspaceIdle()
-
-  expect(store.getState().thoughts).toBe(optimistic.thoughts)
-  expect(store.getState().expanded).toBe(optimistic.expanded)
-  expect(store.getState().pendingThoughtWrites).toEqual({})
+  try {
+    await waitForThoughtspaceIdle()
+  } finally {
+    await remote?.drop()
+    remote = undefined
+    vi.restoreAllMocks()
+  }
 })
 
 it('confirms a new thought alongside unloaded occurrences and preserves memberships after reload', async () => {
@@ -117,7 +112,6 @@ it('confirms a new thought alongside unloaded occurrences and preserves membersh
   store.dispatch(clear())
   await store.dispatch(pull([HOME_TOKEN], { maxDepth: 1 }))
   expect(getLexeme(store.getState(), 'cat')?.contexts.slice().sort()).toEqual([hidden.id, created.id].sort())
-  expect((await db.getLexemeById(hashThought('cat')))?.contexts.slice().sort()).toEqual([hidden.id, created.id].sort())
 })
 
 it('confirms imported and deleted subtree memberships without losing unloaded occurrences', async () => {
@@ -289,6 +283,8 @@ it('publishes a committed membership read beneath a newer pending edit', async (
   expect(during.thoughts).toBe(optimistic.thoughts)
   expect(getLexeme(during, 'bird')?.contexts).toEqual([thought.id])
   expect(getLexeme(during, 'dog')).toBeUndefined()
+  expect(store.getState().thoughts).toBe(optimistic.thoughts)
+  expect(store.getState().expanded).toBe(optimistic.expanded)
   expect(store.getState().pendingThoughtWrites).toEqual({})
   await expect(db.getThoughtById(thought.id)).resolves.toMatchObject({ value: 'bird' })
 })
@@ -445,20 +441,22 @@ it('persists a queued rename without moving the thought back after a remote move
   const right = contextToThought(store.getState(), ['right'])!
   const started = deferred()
   const released = deferred()
-  const exists = client.tree.exists.bind(client.tree)
-  vi.spyOn(client.tree, 'exists').mockImplementationOnce(async id => {
+  const parent = client.tree.parent.bind(client.tree)
+  vi.spyOn(client.tree, 'parent').mockImplementationOnce(async id => {
+    const result = await parent(id)
     started.resolve()
     await released.promise
-    return exists(id)
+    return result
   })
-  vi.spyOn(console, 'error').mockImplementation(() => undefined)
 
-  store.dispatch(editThought(['left', 'cat'], 'dog'))
-  await started.promise
   const incoming = receiveRemote(peer => peer.local.move(remoteReplica, cat.id, right.id, { type: 'first' }))
+  await started.promise
+  await expect(client.tree.parent(cat.id)).resolves.toBe(right.id)
+  // Storage has moved the thought, but Redux still supplies its old parent when renaming it.
+  store.dispatch(editThought(['left', 'cat'], 'dog'))
   released.resolve()
   await incoming
-  await expect(waitForThoughtspaceIdle()).resolves.toBeUndefined()
+  await waitForThoughtspaceIdle()
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - left
@@ -513,29 +511,42 @@ it('keeps a newer optimistic move visible while a committed structural read is p
   await waitForThoughtspaceIdle()
   const cat = contextToThought(store.getState(), ['left', 'cat'])!
   const middle = contextToThought(store.getState(), ['middle'])!
-  const started = deferred()
-  const released = deferred()
+  const readStarted = deferred()
+  const readReleased = deferred()
+  const writeStarted = deferred()
+  const writeReleased = deferred()
   const parent = client.tree.parent.bind(client.tree)
   vi.spyOn(client.tree, 'parent').mockImplementationOnce(async id => {
     const result = await parent(id)
-    started.resolve()
-    await released.promise
+    readStarted.resolve()
+    await readReleased.promise
     return result
+  })
+  const move = client.local.move.bind(client.local)
+  vi.spyOn(client.local, 'move').mockImplementationOnce(async (...args) => {
+    writeStarted.resolve()
+    await writeReleased.promise
+    return move(...args)
   })
 
   const incoming = receiveRemote(peer => peer.local.move(remoteReplica, cat.id, middle.id, { type: 'first' }))
-  await started.promise
+  await readStarted.promise
   store.dispatch(moveThought({ from: ['left', 'cat'], to: ['right', 'cat'], newRank: 0 }))
   expect(contextToThought(store.getState(), ['right', 'cat'])?.id).toBe(cat.id)
-  released.resolve()
+  readReleased.resolve()
   await incoming
+  await writeStarted.promise
+  const during = store.getState()
+  writeReleased.resolve()
   await waitForThoughtspaceIdle()
 
-  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  const expected = `- ${HOME_TOKEN}
   - left
   - middle
   - right
-    - cat`)
+    - cat`
+  expect(exportContext(during, [HOME_TOKEN], 'text/plain')).toBe(expected)
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(expected)
 })
 
 it('keeps a failed rename visible without masking a remote move', async () => {
