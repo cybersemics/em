@@ -49,7 +49,6 @@ const PinCommandRow = ({ command }: { command: Command }) => {
 
   return (
     <div className={css({ marginBottom: '0.75rem' })}>
-      <GradientDivider />
       <button
         type='button'
         aria-label={title}
@@ -65,6 +64,7 @@ const PinCommandRow = ({ command }: { command: Command }) => {
           border: 'none',
           textAlign: 'left',
           color: 'fg',
+          fontFamily: 'inherit',
           cursor: 'pointer',
         })}
       >
@@ -109,16 +109,14 @@ const PinCommandRow = ({ command }: { command: Command }) => {
         </div>
         <ArrowRightIcon size={20} fill={token('colors.fgOverlay75')} cssRaw={css.raw({ flex: 'none' })} />
       </button>
-      <GradientDivider />
     </div>
   )
 }
 
 /**
  * Level 1 of the Command Universe — the per-command detail page reached by tapping a
- * grid cell. Layout: icon + title + subtitle row, the Pin Command row, optional React
- * content (`command.longDescription`), and an optional gesture row showing the diagram
- * with a short caption to its right.
+ * grid cell. Layout: icon + title + subtitle row, optional React content
+ * (`command.longDescription`), an optional gesture row, and the Pin Command row.
  *
  * This page owns its content and scroller. Navigation, focus, and motion live outside it.
  */
@@ -183,8 +181,6 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
             ) : null}
           </div>
         </header>
-
-        <PinCommandRow command={command} />
 
         {command.longDescription ? (
           <div
@@ -253,6 +249,10 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
             </p>
           </div>
         ) : null}
+
+        <GradientDivider />
+
+        <PinCommandRow command={command} />
       </div>
     </DialogContent>
   )

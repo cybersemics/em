@@ -28,7 +28,7 @@ Both are registered `undoable: false`, and `learning` is listed in `statePropert
 
 ## Pinning from the Command Universe
 
-Every command's detail page ([`CommandUniverseDetailPage`](../src/components/CommandUniverse/CommandUniverseDetailPage.tsx)) has a Pin Command row under the header. It reads Unpin Command when that command is the pinned one, and its description names the command that pinning would replace. Pressing it never executes the command.
+Every command's detail page ([`CommandUniverseDetailPage`](../src/components/CommandUniverse/CommandUniverseDetailPage.tsx)) has a Pin Command row after the command description and gesture, separated by a divider. It reads Unpin Command when that command is the pinned one, and its description names the command that pinning would replace. Pressing it never executes the command.
 
 ## The corner widget
 
