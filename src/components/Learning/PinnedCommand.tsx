@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { motion, useMotionValue, useTransform } from 'framer-motion'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
@@ -21,6 +22,9 @@ const PinnedCommand = () => {
   const tooltipId = useId()
   const [openedCommandId, setOpenedCommandId] = useState<CommandId | null>(null)
   const [keepRaisedDuringExit, setKeepRaisedDuringExit] = useState(false)
+  const tooltipOpacity = useMotionValue(0)
+  const ringScale = useTransform(tooltipOpacity, [0, 1], [1, 1.5])
+  const handleTooltipOpacityChange = useCallback((opacity: number) => tooltipOpacity.set(opacity), [tooltipOpacity])
   const pinnedCommandId = useSelector(state => state.learning.pinnedCommandId)
   const progressRecord = useSelector(state => (pinnedCommandId ? state.learning.progress[pinnedCommandId] : undefined))
   const progress = progressRecord ? Math.min(1, progressRecord.reps / progressRecord.targetReps) : 0
@@ -73,7 +77,7 @@ const PinnedCommand = () => {
 
   return (
     <>
-      <button
+      <motion.button
         type='button'
         aria-label={`Show gesture for ${command.label}`}
         aria-description={
@@ -104,7 +108,6 @@ const PinnedCommand = () => {
           bottom: 'calc(max(11px, token(spacing.safeAreaBottom)) - 22.5px)',
           zIndex: 'pinnedCommand',
           transformOrigin: 'right bottom',
-          transition: 'transform {durations.medium} ease-out',
           padding: 0,
           border: 0,
           background: 'transparent',
@@ -112,7 +115,7 @@ const PinnedCommand = () => {
           pointerEvents: 'auto',
         })}
         style={{
-          transform: isOpen ? 'scale(1.5)' : 'scale(1)',
+          scale: ringScale,
           zIndex: isRingRaised ? token('zIndex.pinnedCommandExpanded') : undefined,
           // The enlarged ring overlaps Clear on desktop; let that control remain tappable.
           pointerEvents: isRingRaised ? 'none' : undefined,
@@ -121,12 +124,13 @@ const PinnedCommand = () => {
         <PinnedCommandRing progress={progress} complete={complete} animateCompletion={animateCompletion}>
           <Icon size={14} fill={token('colors.gray50')} cssRaw={css.raw({ flex: 'none' })} />
         </PinnedCommandRing>
-      </button>
+      </motion.button>
       <PinnedCommandTooltip
         id={tooltipId}
         command={command}
         isOpen={isOpen}
         onClose={() => setOpenedCommandId(null)}
+        onOpacityChange={handleTooltipOpacityChange}
         onReveal={revealCommand}
       />
     </>

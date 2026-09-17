@@ -19,12 +19,21 @@ interface PinnedCommandTooltipProps {
   isOpen: boolean
   /** Closes the tooltip after its fade or swipe animation. */
   onClose: () => void
+  /** Reports the surface opacity so the ring can scale with it. */
+  onOpacityChange: (opacity: number) => void
   /** Reveals this command's detail page without executing it. */
   onReveal: () => void
 }
 
 /** The pinned command's gesture and Command Universe link in the same visual frame as Tip. */
-const PinnedCommandTooltip = ({ command, id, isOpen, onClose, onReveal }: PinnedCommandTooltipProps) => {
+const PinnedCommandTooltip = ({
+  command,
+  id,
+  isOpen,
+  onClose,
+  onOpacityChange,
+  onReveal,
+}: PinnedCommandTooltipProps) => {
   const surfaceRef = useRef<{ dismiss: () => void }>(null)
   const tooltipRef = useRef<HTMLElement>(null)
   usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
@@ -63,6 +72,7 @@ const PinnedCommandTooltip = ({ command, id, isOpen, onClose, onReveal }: Pinned
       glow='rainbow'
       isVisible={isOpen}
       onDismiss={onClose}
+      onOpacityChange={onOpacityChange}
       swipeToDismiss
     >
       <section

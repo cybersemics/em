@@ -18,6 +18,8 @@ interface NotificationSurfaceProps {
   isVisible: boolean
   /** Called once after a Clear action or successful swipe has finished fading the surface. */
   onDismiss?: () => void
+  /** Receives the combined visibility and swipe opacity as it changes. */
+  onOpacityChange?: (opacity: number) => void
   /** Enable the touch swipe interaction on the content layer. */
   swipeToDismiss?: boolean
   /** Notification-specific content. */
@@ -31,28 +33,37 @@ const NotificationSurface = ({
   glow,
   isVisible,
   onDismiss,
+  onOpacityChange,
   swipeToDismiss = false,
   children,
 }: NotificationSurfaceProps) => {
   const dismissed = useRef(false)
   const dismissing = useRef(false)
+  const visibilityOpacity = useMotionValue(0)
 
   /** Notify the consumer only once even if multiple dismiss events finish together. */
   const handleDismissed = useCallback(() => {
     if (dismissed.current) return
     dismissed.current = true
     dismissing.current = false
+    // The swipe hook resets its completion after this callback. Keep the surface hidden through that reset.
+    visibilityOpacity.set(0)
     onDismiss?.()
-  }, [onDismiss])
+  }, [onDismiss, visibilityOpacity])
 
   const { completion, touchHandlers, dismiss } = useSwipeToClear({ onDismissed: handleDismissed })
   const swipeOpacity = useTransform(completion, value => 1 - value)
-  const visibilityOpacity = useMotionValue(0)
   const opacity = useTransform(
     [swipeOpacity, visibilityOpacity],
     ([swipe, visibility]) => (swipe as number) * (visibility as number),
   )
   const slots = notificationRecipe({ anchor, glow })
+
+  useEffect(() => {
+    if (!onOpacityChange) return
+    onOpacityChange(opacity.get())
+    return opacity.on('change', onOpacityChange)
+  }, [opacity, onOpacityChange])
 
   /** Start the same opacity animation for content controls and swipe dismissal. */
   const requestDismiss = useCallback(() => {
