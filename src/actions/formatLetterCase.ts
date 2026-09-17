@@ -91,12 +91,32 @@ export const formatLetterCaseActionCreator =
             end: transformedOffset(cursorText, selectedRange.end),
           }
         : selectedRange
+
+    // Keep the cursor thought's edit synchronous with its live editable, as formatSelection does for partial thought
+    // formatting. Writing the new value and restoring the range here means the edit does not need a forced render, and
+    // that matters beyond saving a render: force bumps editableNonce, which useEditMode subscribes to, so the forced
+    // render re-runs it and it collapses the caret to cursorOffset — on touch that lands after the range is restored
+    // and wipes it. ContentEditable skips an innerHTML assignment when the live HTML already matches the prop.
+    const restoreSynchronously = !!(
+      isCursorEdited &&
+      cursorEditable &&
+      restoreRange &&
+      restoreRange.end > restoreRange.start
+    )
+    const cursorThoughtId = cursor && !state.noteFocus ? head(cursor) : null
+
     const editActions = paths.flatMap(path => {
       const value = state.noteFocus && cursor ? noteValue(state, cursor) : getThoughtById(state, head(path))?.value
 
       if (!value) return []
 
       const newValue = applyLetterCase(command, value, selectedTextRange ?? undefined)
+      const isCursorThought = head(path) === cursorThoughtId
+
+      if (restoreSynchronously && isCursorThought) {
+        cursorEditable!.innerHTML = newValue
+        selection.setRange(cursorEditable!, restoreRange!)
+      }
 
       return state.noteFocus
         ? [
@@ -107,10 +127,11 @@ export const formatLetterCaseActionCreator =
           ]
         : [
             editThought({
+              ...(restoreSynchronously && isCursorThought ? { cursorOffset: cursorOffset ?? undefined } : null),
               oldValue: value,
               newValue,
               path: simplifyPath(state, path),
-              force: true,
+              force: !(restoreSynchronously && isCursorThought),
             }),
           ]
     })
@@ -127,7 +148,10 @@ export const formatLetterCaseActionCreator =
       // It shouldn't be possible to have noteFocus be true with the keyboard closed, so setCursor shouldn't be necessary for notes.
       // It seems like the caret goes to the end of the note anyway when its value is replaced.
       // preserveMulticursor keeps the multiselected thoughts selected, otherwise setCursor clears them (#4840).
-      !state.noteFocus && cursorSimplePath
+      // Skipped when the caret was restored synchronously: the edit already carries the offset, and setCursor
+      // recomputes expanded and resets cursorCleared, whose re-render re-runs useEditMode — which would place the
+      // caret at cursorOffset on top of the restored range. As in formatSelection, which dispatches no setCursor.
+      !state.noteFocus && cursorSimplePath && !restoreSynchronously
         ? setCursor({ path: cursorSimplePath, offset: cursorOffset, preserveMulticursor: true })
         : null,
 
@@ -140,6 +164,7 @@ export const formatLetterCaseActionCreator =
     // next animation frame, so wait for the replacement itself rather than for a frame. Otherwise the re-selection can
     // land on the old text and be wiped by the re-render, leaving nothing selected (#4985).
     if (
+      !restoreSynchronously &&
       restoreRange &&
       restoreRange.end > restoreRange.start &&
       cursorEditableSelector &&

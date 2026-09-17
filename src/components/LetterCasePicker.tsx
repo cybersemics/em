@@ -64,7 +64,7 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
             aria-label={type}
             data-selected={selected === type ? 'true' : 'false'}
             {...fastClick(e => e.stopPropagation())}
-            onTouchStart={e => toggleLetterCase(type, e)}
+            onTouchEnd={e => toggleLetterCase(type, e)}
             onMouseDown={e => !isTouch && toggleLetterCase(type, e)}
           >
             {type === 'LowerCase' && <LowerCaseIcon />}
