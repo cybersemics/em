@@ -32,7 +32,7 @@ let freeThoughtsThreshold = 500
 /** Escape hatch to abandon imports when frozen. This is a workaround for a bug that has not been resolved. */
 let abandonImport = false
 
-/** Used to suppress the Editable change handler to ignore execCommand in registerNativeUndoStep. */
+/** Used to suppress the Editable change handler to ignore the execCommand in registerNativeUndoStep and registerNativeRedoStep. */
 let suppressChange = false
 
 /** Used to suppress the blur handlers that resync the editable's innerHTML to the value in Redux. Set while the
@@ -45,6 +45,11 @@ let suppressBlurSync = false
  * touchstart, which clears the flag first. */
 let suppressCursorAfterTouch = false
 
+/** Time of the last native undo/redo gesture that `device/nativeHistory.ts` detected from touch events. The same
+ * three-finger swipe is also reported by iOS as a `historyUndo`/`historyRedo` `beforeinput` a moment later, so
+ * `beforeInput` reads this to avoid applying one gesture twice. */
+let nativeHistoryGestureTime = -Infinity
+
 // check duplicate ranks within the same context for debugging
 const globals = {
   abandonImport,
@@ -56,6 +61,7 @@ const globals = {
   suppressChange,
   suppressBlurSync,
   suppressCursorAfterTouch,
+  nativeHistoryGestureTime,
   arrowKeyBoundaryCross: arrowKeyBoundaryCross as string | null,
   touching,
 }

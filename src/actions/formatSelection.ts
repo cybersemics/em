@@ -43,8 +43,9 @@ import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
  *
  * - The only way to intercept a native undo gesture is via the `beforeinput` event, which is only dispatched when the native undo stack has a step
  * to undo. When the stack drifts out of sync, the native dialog will not display an option to undo or redo past a certain point.
- * - If there are no editables, such as after undoing the creation of the only remaining thought, then there will be no `beforeinput` event and native
- * undo/redo behavior will stop having an effect. Technically, native undo is still running, but it doesn't know how to re-create a deleted thought.
+ * - Registering a step needs a focused editable, so when there are none — as after undoing the creation of the only remaining thought — no further
+ * undo step is registered. Redo is unaffected: `registerNativeRedoStep` falls back to `device/nativeHistoryAnchor.ts`, a hidden editing host that
+ * always exists.
  */
 const registerNativeUndoStep = (html: string): void => {
   if (!isTouch || !isSafari()) return
