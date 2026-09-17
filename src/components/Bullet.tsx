@@ -340,8 +340,11 @@ const Bullet = ({
     const fill = backColor || foreColor
     return typeof fill === 'string' ? fill : undefined
   })
+  // commandStateStore describes the caret, which may be in this thought's note rather than the thought itself. The
+  // bullet reflects the thought, so a note's formatting must not reach it (#3910).
+  const isNoteFocus = useSelector(state => state.noteFocus)
   const activeCommandFill = commandStateStore.useSelector(state => {
-    if (!isEditing || !isEmpty) return undefined
+    if (!isEditing || !isEmpty || isNoteFocus) return undefined
 
     const fill = state.backColor || state.foreColor
     return typeof fill === 'string' ? fill : undefined

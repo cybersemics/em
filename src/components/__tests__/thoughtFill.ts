@@ -3,6 +3,7 @@ import { act } from 'react'
 import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import contextToPath from '../../selectors/contextToPath'
 import { getChildrenRanked } from '../../selectors/getChildren'
 import store from '../../stores/app'
@@ -66,4 +67,20 @@ it('colors the bullet of an empty thought with a pending format after the cursor
 
   expect(bulletGlyph?.style.fill).toBeTruthy()
   expect(rgbToHex(bulletGlyph!.style.fill).toLowerCase()).toBe('#00d688')
+})
+
+// #3910: a note holds its own pending formatting, and commandStateStore reports it so the toolbar describes the caret.
+// The bullet belongs to the thought, so a color applied to the note must not reach it — including when the thought is
+// itself empty, which is when the bullet reads commandStateStore.
+it('does not color the bullet with a color applied to the note of an empty thought (#3910)', async () => {
+  await dispatch([importText({ text: '- ' }), setCursor(['']), toggleNote()])
+  const path = store.getState().cursor!
+
+  await dispatch(formatSelection('foreColor', 'green'))
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const bullet = screen.getByTestId(`bullet-${hashPath(path)}`)
+  const bulletGlyph = bullet.querySelector('[aria-label="bullet-glyph"]') as SVGElement | null
+
+  expect(bulletGlyph?.style.fill).toBe('')
 })
