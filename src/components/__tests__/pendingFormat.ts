@@ -180,7 +180,6 @@ describe('pending format', () => {
     await dispatch(undo())
     expect(getThoughtById(store.getState(), id)?.value).toBe('')
 
-    await dispatch(setCursor(['']))
     await user.type(getEditable(), 'H')
     await act(vi.runAllTimersAsync)
 
@@ -203,7 +202,6 @@ describe('pending format', () => {
     await dispatch(undo())
     expect(getThoughtById(store.getState(), id)?.value).toBe('')
 
-    await dispatch(setCursor(['']))
     const user = userEvent.setup({ delay: null })
     await user.type(getEditable(), 'H')
     await act(vi.runAllTimersAsync)
@@ -224,7 +222,6 @@ describe('pending format', () => {
 
     await dispatch(undo())
 
-    await dispatch(setCursor(['']))
     const user = userEvent.setup({ delay: null })
     await user.type(getEditable(), 'H')
     await act(vi.runAllTimersAsync)

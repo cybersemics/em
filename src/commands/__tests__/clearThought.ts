@@ -179,7 +179,7 @@ describe('clearThought', () => {
   // https://github.com/cybersemics/em/issues/3910
   it('applies the color of an empty thought to the text typed after Clear Thought (#3910)', async () => {
     await act(async () => {
-      store.dispatch([importText({ text: '- ' }), setCursorFirstMatchActionCreator([''])])
+      store.dispatch([importText({ text: '- ' })])
     })
 
     await act(vi.runOnlyPendingTimersAsync)

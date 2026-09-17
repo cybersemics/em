@@ -73,7 +73,7 @@ it('colors the bullet of an empty thought with a pending format after the cursor
 // The bullet belongs to the thought, so a color applied to the note must not reach it — including when the thought is
 // itself empty, which is when the bullet reads commandStateStore.
 it('does not color the bullet with a color applied to the note of an empty thought (#3910)', async () => {
-  await dispatch([importText({ text: '- ' }), setCursor(['']), toggleNote()])
+  await dispatch([importText({ text: '- ' }), toggleNote()])
   const path = store.getState().cursor!
 
   await dispatch(formatSelection('foreColor', 'green'))
