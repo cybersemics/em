@@ -4,16 +4,16 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN } from '../../../constants'
 import type { DataProvider } from '../../DataProvider'
-import type { enqueueMaterializedThoughtsToStore as EnqueueMaterializedThoughtsToStore } from '../sync/applyMaterializedThoughtsToStore'
+import type ApplyMaterializedThoughtsToStore from '../sync/applyMaterializedThoughtsToStore'
 import createTreecrdtDataProvider from '../thoughtspace'
 
-const { enqueueMaterializedThoughtsToStore } = vi.hoisted(() => ({
-  enqueueMaterializedThoughtsToStore: vi.fn().mockResolvedValue(undefined),
+const { applyMaterializedThoughtsToStore } = vi.hoisted(() => ({
+  applyMaterializedThoughtsToStore: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('../sync', async importOriginal => {
   const actual = await importOriginal<typeof import('../sync')>()
-  return { ...actual, enqueueMaterializedThoughtsToStore }
+  return { ...actual, applyMaterializedThoughtsToStore }
 })
 
 const THOUGHT_ID = '00000000000000000000000000000201' as ThoughtId
@@ -72,15 +72,18 @@ it('retains the originating materialization context after rebinding the provider
     await provider.bindClient(clientTwo, new Uint8Array(32).fill(2), bridgeTwo)
     await persistThought(provider.db, 'client two')
 
+    applyMaterializedThoughtsToStore.mockClear()
+
     onMaterializedOne?.({
       headSeq: 1,
       changes: [{ kind: 'payload', node: THOUGHT_ID, payload: null }],
     })
 
-    expect(enqueueMaterializedThoughtsToStore).toHaveBeenCalledTimes(1)
-    const [, context] = enqueueMaterializedThoughtsToStore.mock.calls[0] as unknown as Parameters<
-      typeof EnqueueMaterializedThoughtsToStore
+    expect(applyMaterializedThoughtsToStore).toHaveBeenCalledTimes(1)
+    const [, context, indexedKeys] = applyMaterializedThoughtsToStore.mock.calls[0] as unknown as Parameters<
+      typeof ApplyMaterializedThoughtsToStore
     >
+    await indexedKeys
 
     expect(context.bridge).toBe(bridgeOne)
     expect(context.client).toBe(clientOne)
