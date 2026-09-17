@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ContentEditable, { ContentEditableEvent } from 'react-contenteditable'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -21,12 +21,15 @@ import globals from '../globals'
 import useFreshCallback from '../hooks/useFreshCallback'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
+import noteThought from '../selectors/noteThought'
 import noteValue from '../selectors/noteValue'
 import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
+import applyOuterTags from '../util/applyOuterTags'
 import equalPathHead from '../util/equalPathHead'
+import getCommandState from '../util/getCommandState'
 import head from '../util/head'
 import strip from '../util/strip'
 import useOnCut from './Editable/useOnCut'
@@ -52,6 +55,18 @@ const Note = React.memo(
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
     const editableNonce = useSelector(state => state.editableNonce)
+
+    // Formatting applied to the note while it was empty is held on the note's thought until the user types (#3910).
+    // Style the placeholder with it so that the empty note previews the formatting its text will take.
+    const pendingFormat = useSelector(state => noteThought(state, path)?.pendingFormat)
+    const placeholderCommandState = useMemo(
+      () => (pendingFormat ? getCommandState(pendingFormat) : null),
+      [pendingFormat],
+    )
+    const placeholderForeColor =
+      typeof placeholderCommandState?.foreColor === 'string' ? placeholderCommandState.foreColor : undefined
+    const placeholderBackColor =
+      typeof placeholderCommandState?.backColor === 'string' ? placeholderCommandState.backColor : undefined
 
     /** Focus Handling with useFreshCallback. */
     const onFocus = useFreshCallback(() => {
@@ -169,15 +184,24 @@ const Note = React.memo(
             return
           }
 
-          const noteThought = firstVisibleChild(state, head(targetPath))
+          const noteThoughtValue = firstVisibleChild(state, head(targetPath))
 
-          if (noteThought) {
+          if (noteThoughtValue) {
+            // The formatting held while the note was empty is transferred onto the first text typed into it (#3910).
+            // editThought drops the held copy, and force re-renders the note with the tags in place so that the browser
+            // carries them through the rest of the typing.
+            const wrappedValue =
+              noteThoughtValue.pendingFormat && noteThoughtValue.value.length === 0 && value.length > 0
+                ? applyOuterTags(value, noteThoughtValue.pendingFormat)
+                : value
+
             dispatch(
               editThought({
-                path: appendToPath(targetPath, noteThought.id) as SimplePath,
-                oldValue: noteThought.value,
-                newValue: value,
+                path: appendToPath(targetPath, noteThoughtValue.id) as SimplePath,
+                oldValue: noteThoughtValue.value,
+                newValue: wrappedValue,
                 noteOffset: noteOffset ?? undefined,
+                force: wrappedValue !== value,
               }),
             )
           } else {
@@ -254,6 +278,15 @@ const Note = React.memo(
           aria-label='note-editable'
           data-thought-id={head(path)}
           placeholder='Enter a note'
+          data-placeholder-bold={placeholderCommandState?.bold || undefined}
+          data-placeholder-code={placeholderCommandState?.code || undefined}
+          data-placeholder-italic={placeholderCommandState?.italic || undefined}
+          data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
+          data-placeholder-underline={placeholderCommandState?.underline || undefined}
+          style={{
+            ...(placeholderForeColor ? { '--placeholder-color': placeholderForeColor } : null),
+            ...(placeholderBackColor ? { '--placeholder-background-color': placeholderBackColor } : null),
+          }}
           className={css({
             display: 'inline-block',
             padding: '0 1em 0 0.333em',

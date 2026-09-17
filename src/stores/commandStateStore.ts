@@ -2,6 +2,7 @@ import CommandState from '../@types/CommandState'
 import FormattingCommand from '../@types/FormattingCommand'
 import State from '../@types/State'
 import * as selection from '../device/selection'
+import noteThought from '../selectors/noteThought'
 import pathToThought from '../selectors/pathToThought'
 import themeColors from '../selectors/themeColors'
 import getCommandState from '../util/getCommandState'
@@ -68,8 +69,10 @@ export const updateCommandState = () => {
   const thought = pathToThought(state, state.cursor)
 
   // Formatting applied to an empty thought is held on the thought until it is typed into, so the toolbar and the
-  // bullet report it from there rather than from the (necessarily empty) value (#3910).
-  const pendingFormat = thought?.value.length === 0 ? thought.pendingFormat : undefined
+  // bullet report it from there rather than from the (necessarily empty) value (#3910). Under noteFocus the formatting
+  // belongs to the note's own thought, not the cursor thought.
+  const pendingFormatThought = state.noteFocus ? noteThought(state, state.cursor) : thought
+  const pendingFormat = pendingFormatThought?.value.length === 0 ? pendingFormatThought.pendingFormat : undefined
   if (pendingFormat) {
     commandStateStore.update(getCommandState(pendingFormat))
     return

@@ -1,20 +1,19 @@
-import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import getThoughtById from '../selectors/getThoughtById'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import head from '../util/head'
 import updateThoughts from './updateThoughts'
 
 export interface setPendingFormatPayload {
-  path: Path
+  id: ThoughtId
   /** The formatting to hold, or null to clear it. */
   value: string | null
 }
 
 /** Holds formatting that has been applied to an empty thought until text is typed into it. An empty thought's value must stay empty, so the formatting has nowhere to live in the value itself. */
-const setPendingFormat = (state: State, { path, value }: setPendingFormatPayload): State => {
-  const thought = getThoughtById(state, head(path))
+const setPendingFormat = (state: State, { id, value }: setPendingFormatPayload): State => {
+  const thought = getThoughtById(state, id)
   if (!thought || thought.pendingFormat === (value ?? undefined)) return state
 
   // Omit the key rather than setting it to undefined, which a JSON patch does not treat as a removal.

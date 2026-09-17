@@ -5,6 +5,7 @@ import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
+import noteThought from '../selectors/noteThought'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
@@ -118,17 +119,21 @@ export const formatSelectionActionCreator =
     // and transferred onto the text that is typed into it next (#3910). It is accumulated on a placeholder character
     // so that further commands compose exactly as they do on a real value.
     if (value.length === 0) {
-      if (state.noteFocus) return
-      const pendingValue = thought.pendingFormat ?? PENDING_FORMAT_PLACEHOLDER
+      // A note's formatting is held on the thought that holds its text, which noteThought resolves. It is null for a
+      // note assembled from several thoughts (=children/=note/=path), which has nowhere to hold it.
+      const target = state.noteFocus ? noteThought(state, state.cursor) : thought
+      if (!target) return
+
       dispatch(
         setPendingFormat({
-          path: state.cursor,
-          value: formatSelectionHtml(pendingValue, {
+          id: target.id,
+          value: formatSelectionHtml(target.pendingFormat ?? PENDING_FORMAT_PLACEHOLDER, {
             start: 0,
             end: PENDING_FORMAT_PLACEHOLDER.length,
             command,
             colorValue: color ? colors[color] : undefined,
-            defaultColor: colors.fg,
+            // A note is semi-transparent by default, so its default foreground differs from a thought's (#3902).
+            defaultColor: state.noteFocus ? colors.fgNote : colors.fg,
             defaultBackgroundColor: colors.bg,
           }),
         }),

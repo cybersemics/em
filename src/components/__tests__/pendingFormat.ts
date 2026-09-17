@@ -6,19 +6,22 @@ import { formatSelectionActionCreator as formatSelection } from '../../actions/f
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
+import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
 import getThoughtById from '../../selectors/getThoughtById'
+import noteValue from '../../selectors/noteValue'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
 
 /**
- * Formatting applied to an *empty* thought (#3910). An empty thought's value must stay empty, so the formatting has
+ * Formatting applied to an *empty* thought or note (#3910). Their value must stay empty, so the formatting has
  * nowhere to live in the thoughtspace until text is typed into it. The behavior spans formatSelection (which holds
- * it), Editable's onChangeHandler (which transfers it onto the first typed character), undo, and the placeholder that
- * previews it, so the tests are grouped by feature rather than filed under any one of those. The bullet's use of the
- * same formatting lives in thoughtFill.ts, and its interaction with Clear Thought in commands/__tests__/clearThought.ts.
+ * it), the onChange handlers in Editable and Note (which transfer it onto the first typed character), undo, and the
+ * placeholder that previews it, so the tests are grouped by feature rather than filed under any one of those. The
+ * bullet's use of the same formatting lives in thoughtFill.ts, and its interaction with Clear Thought in
+ * commands/__tests__/clearThought.ts.
  *
  * Only the first character is typed in each case. Once the value carries the formatting, the remaining characters
  * inherit it from the caret, which is native contenteditable behavior that JSDOM does not implement (covered in
@@ -31,6 +34,13 @@ const getEditable = (): HTMLElement => {
   const id = head(state.cursor!)
   const editable = document.querySelector(`[aria-label="editable-${id}"]`)
   if (!editable) throw new Error(`Editable not found for thought ${id}`)
+  return editable as HTMLElement
+}
+
+/** Returns the editable DOM element for the note of the cursor thought. */
+const getNoteEditable = (): HTMLElement => {
+  const editable = document.querySelector('[aria-label="note-editable"]')
+  if (!editable) throw new Error('Note editable not found')
   return editable as HTMLElement
 }
 
@@ -111,6 +121,29 @@ describe('pending format', () => {
     await dispatch(formatSelection('foreColor', 'green'))
 
     expect(getEditable().style.getPropertyValue('--placeholder-color')).toBe('#00d688')
+  })
+
+  // #3910: a note is a thought, so it holds formatting applied while it is empty the same way. toggleNote creates the
+  // note's thought with an empty value, which is what gives the formatting somewhere to live.
+  it('applies a color to the text typed into an empty note (#3910)', async () => {
+    await dispatch([importText({ text: '- x' }), setCursor(['x']), toggleNote()])
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    const user = userEvent.setup({ delay: null })
+    await user.type(getNoteEditable(), 'H')
+    await act(vi.runAllTimersAsync)
+
+    const state = store.getState()
+
+    expect(noteValue(state, state.cursor!)).toBe('<font color="#00d688">H</font>')
+  })
+
+  // #3910: the note's placeholder previews the held formatting, as the thought's does.
+  it('previews the color of an empty note on its placeholder (#3910)', async () => {
+    await dispatch([importText({ text: '- x' }), setCursor(['x']), toggleNote()])
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    expect(getNoteEditable().style.getPropertyValue('--placeholder-color')).toBe('#00d688')
   })
 
   // #3910: a color applied to an empty thought must take part in undo like a color applied to text. Undoing the first
