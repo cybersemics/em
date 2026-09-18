@@ -49,20 +49,45 @@ const toSentenceCase = (text: string): string => {
   return afterPeriod.replace(/^(\s*)(\w)/, (match, prefix, char) => prefix + char.toUpperCase())
 }
 
-/** Util function to apply the appropriate transformation based on the command. */
-const applyLetterCase = (command: LetterCaseType, value: string): string => {
+/** Returns the text transform for a letter case command, or null if the command is not a letter case. */
+const transformForCommand = (command: LetterCaseType): ((text: string) => string) | null => {
   switch (command) {
     case 'LowerCase':
-      return transformText(value, text => text.toLowerCase())
+      return text => text.toLowerCase()
     case 'UpperCase':
-      return transformText(value, text => text.toUpperCase())
+      return text => text.toUpperCase()
     case 'SentenceCase':
-      return transformText(value, toSentenceCase)
+      return toSentenceCase
     case 'TitleCase':
-      return transformText(value, text => titleCase(text.toLowerCase()))
+      return text => titleCase(text.toLowerCase())
     default:
-      return value
+      return null
   }
+}
+
+/** Options for {@link applyLetterCase}. */
+interface LetterCaseOptions {
+  /** Plain-text start offset of the range (inclusive). Defaults to 0, i.e. the start of the value. */
+  start?: number
+  /** Plain-text end offset of the range (exclusive). Defaults to the end of the value. */
+  end?: number
+}
+
+/**
+ * Applies the appropriate transformation to a value over a plain-text [start, end) range, returning the new HTML.
+ * The start and end offsets default to the full range, as in slice.
+ */
+const applyLetterCase = (
+  command: LetterCaseType,
+  value: string,
+  { start = 0, end = Infinity }: LetterCaseOptions = {},
+): string => {
+  const transform = transformForCommand(command)
+  if (!transform) return value
+  // Letter-case only the [start, end) range so that the rest of the thought is left alone (#4281). Windowing the
+  // transform rather than the value keeps transformText's markup preservation and its prefix-based redistribution of
+  // the transformed text across text nodes, which still holds since the window of a prefix is a prefix of the window.
+  return transformText(value, text => text.slice(0, start) + transform(text.slice(start, end)) + text.slice(end))
 }
 
 export default applyLetterCase
