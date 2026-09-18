@@ -24,6 +24,20 @@ dispatch(setCursor({ path: newPath, offset: 5 }))
 
 ![image](https://user-images.githubusercontent.com/750276/151666504-8548ed98-515c-4894-856a-994af38203e0.png)
 
+### The cursor in the URL
+
+[`updateUrlHistory`](../src/redux-middleware/updateUrlHistory.ts) writes the cursor's path into the address bar (throttled), so a link identifies a thought and a reload restores the cursor via [`initialize`](../src/initialize.ts). *How* it writes depends on the device:
+
+| Environment | Write | Consequence |
+| --- | --- | --- |
+| Desktop browser | `pushState` | browser back/forward step through cursor positions; `onPopstate` in [`initEvents`](../src/util/initEvents.ts) turns each one back into a `setCursor` |
+| Touch browser | `replaceState` | the URL stays current, but no history entries accumulate |
+| PWA | neither | the URL is not updated at all; the address bar is not visible and the cursor is persisted locally ([#212](https://github.com/cybersemics/em/issues/212)) |
+
+The touch case exists because a browser that has history to go back to offers an **edge-swipe gesture** to do it, and em cannot decline that gesture. iOS hands the touch to its own recognizer before the page sees a release — a touch that starts at the screen edge gets a `touchstart` and then no `touchend` at all — so `preventDefault` is not an available remedy, whether or not WebKit honours it. The swipe was dragging a stale rendering of em in under the finger while em read the same swipe as a gesture, painting a second gesture menu over the live one ([#4115](https://github.com/cybersemics/em/issues/4115)). Leaving nothing on the back stack removes the swipe's destination, which is the only layer where the behaviour can be reached. The same reasoning already applied to PWAs, one platform over.
+
+What this costs on touch is browser back/forward as cursor navigation — including [`navigateBack`](../src/commands/navigateBack.ts) and [`navigateForward`](../src/commands/navigateForward.ts), which are bound to `cmd+[` / `cmd+]` and have no gesture, so they are unreachable on a touch device regardless.
+
 ## Caret / Browser Selection
 
 The caret is the native browser selection — `window.getSelection()`. We use the name "caret" because it's shorter and unambiguous. Unless otherwise noted, "caret" means a *collapsed* browser selection.

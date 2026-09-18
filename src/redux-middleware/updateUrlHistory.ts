@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import { isTouch } from '../browser'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -20,6 +21,16 @@ const THROTTLE_MIDDLEWARE = 100
 
 /** Only write the cursor every 100 ms. */
 const SAVE_CURSOR_THROTTLE = 100
+
+/**
+ * How the cursor is written to the address bar. Touch devices replace the current entry rather than
+ * pushing a new one, so that the browser's edge-swipe gesture has no stale rendering of em to
+ * navigate back to (#4115). The page cannot refuse that gesture — iOS hands the touch to its own
+ * recognizer, so preventDefault never runs — which leaves removing its destination as the only
+ * remedy. The cost is browser back/forward as cursor navigation, which on touch is unreachable
+ * anyway: navigateBack and navigateForward are bound to cmd+[ and cmd+] with no gesture.
+ */
+const historyMethod = isTouch ? 'replaceState' : 'pushState'
 
 // The last path that is passed to updateUrlHistoryThrottled. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow.`
 let pathPrev: Path | null = null
@@ -87,7 +98,7 @@ const updateUrlHistory = (state: State, path: Path) => {
   ) {
     // preserve the query string
     const url = window.location.search ? `/~/${window.location.search}` : '/'
-    window.history.pushState({}, '', url)
+    window.history[historyMethod]({}, '', url)
   }
 
   // nothing to update if the cursor has not changed
@@ -113,7 +124,7 @@ const updateUrlHistory = (state: State, path: Path) => {
   if (!isPWA) {
     try {
       // update browser history
-      window.history.pushState(
+      window.history[historyMethod](
         // an incrementing ID to track back or forward browser actions
         (window.history.state || 0) + 1,
         '',
