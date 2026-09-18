@@ -1,13 +1,11 @@
 import pluralize from 'pluralize'
-import { FC, useEffect, useState } from 'react'
+import { FC } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { textNoteRecipe } from '../../styled-system/recipes'
-import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
-import { errorActionCreator as error } from '../actions/error'
 import { searchLimitActionCreator as setSearchLimit } from '../actions/searchLimit'
-import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import { EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../constants'
 import hasLexeme from '../selectors/hasLexeme'
 import store from '../stores/app'
 import escapeRegex from '../util/escapeRegex'
@@ -21,47 +19,12 @@ const DEFAULT_SEARCH_LIMIT = 20
 
 /** Subthoughts of search. */
 const SearchSubthoughts: FC = () => {
-  const [isRemoteSearching, setIsRemoteSearching] = useState(false)
-  const [isLocalSearching, setIsLocalSearching] = useState(false)
-
   const dispatch = useDispatch()
   const search = useSelector(state => state.search)
-  const remoteSearch = useSelector(state => state.remoteSearch)
   const searchLimit = useSelector(state => state.searchLimit || DEFAULT_SEARCH_LIMIT)
   const thoughtIndex = useSelector(state => state.thoughts.thoughtIndex)
 
-  /**
-   * Search thoughts remotely or locally and add it to pullQueue.
-   */
-  //ignore this line beacaue its call in useEffect Function
-  const searchThoughts = async (value: string) => {
-    throw new Error('Not implemented')
-    // const searchLocal = localSearch(store.getState())
-
-    const setLoadingState = remoteSearch ? setIsRemoteSearching : setIsLocalSearching
-    setLoadingState(true)
-    try {
-      // const contextMap = remoteSearch ? {} : (await searchLocal).searchAndGenerateContextMap(value)
-      // dispatch(searchContexts({ value: contextMap }))
-    } catch (err) {
-      const errorMessage = `${remoteSearch ? 'Remote' : 'Local'} search failed`
-      dispatch(error({ value: errorMessage }))
-      console.error(errorMessage)
-    }
-    setLoadingState(false)
-  }
-
-  useEffect(
-    () => {
-      if (search) searchThoughts(search)
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [search, remoteSearch],
-  )
-
   if (!search) return null
-
-  if (isRemoteSearching || isLocalSearching) return <div>...searching</div>
 
   const searchRegexp = new RegExp(escapeRegex(search), 'gi')
 
@@ -102,7 +65,7 @@ const SearchSubthoughts: FC = () => {
   return (
     <div>
       {!hasLexeme(store.getState(), search) && isDocumentEditable() ? (
-        <NewThought path={[] as unknown as SimplePath} label={`Create "${search}"`} value={search} type='button' />
+        <NewThought path={HOME_PATH} label={`Create "${search}"`} value={search} type='button' />
       ) : null}
       <span className={cx(textNoteRecipe(), css({ fontSize: 'sm' }))}>
         {pluralize('match', children.length, true)} for "{search}"

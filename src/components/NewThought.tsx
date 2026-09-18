@@ -5,6 +5,8 @@ import { anchorButtonRecipe, bulletRecipe, childRecipe, thoughtRecipe } from '..
 import SimplePath from '../@types/SimplePath'
 import { createThoughtActionCreator as createThought } from '../actions/createThought'
 import { cursorBackActionCreator as cursorBack } from '../actions/cursorBack'
+import { searchActionCreator as search } from '../actions/search'
+import { searchContextsActionCreator as searchContexts } from '../actions/searchContexts'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import asyncFocus from '../device/asyncFocus'
@@ -33,6 +35,8 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)) : 0
   const dispatch = useDispatch()
   const show = useSelector(state => {
+    // the inline placeholder is redundant when the last child is already an empty thought, but a labeled button is an explicit call to action that always applies
+    if (type !== 'bullet') return true
     const children = getChildrenRanked(state, head(path))
     return !children.length || children[children.length - 1].value !== ''
   })
@@ -64,12 +68,14 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
 
     asyncFocus()
 
-    dispatch(
+    dispatch([
+      // exit the search screen so that the new thought is visible and can be edited
+      ...(state.search != null ? [search({ value: null }), searchContexts({ value: null })] : []),
       setCursor({
         path: appendToPath(path, newThoughtId),
         offset: getTextContentFromHTML(value).length,
       }),
-    )
+    ])
   }, [dispatch, distance, path, value])
 
   return show ? (
