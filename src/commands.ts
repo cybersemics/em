@@ -46,6 +46,7 @@ import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
+import pinnedCommandStore from './stores/pinnedCommand'
 import { isNavigation } from './util/actionMetadata.registry'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
@@ -687,6 +688,10 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
   if (sequence.length === 1 || gestureStore.getState().possibleCommands.length > 2) {
     haptics.light()
   }
+
+  // While the pinned command tooltip is open the user is practicing the gesture it shows, so the gesture menu would
+  // only cover it. Haptics still confirm each segment.
+  if (pinnedCommandStore.getState().tooltipOpen) return
 
   // gesture menu
   // alert after a delay of COMMAND_PALETTE_TIMEOUT

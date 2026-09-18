@@ -11,6 +11,7 @@ import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse
 import { commandById } from '../../commands'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
+import pinnedCommandStore from '../../stores/pinnedCommand'
 import durations from '../../util/durations'
 import haptics from '../../util/haptics'
 import SettingsIcon from '../icons/SettingsIcon'
@@ -67,11 +68,20 @@ const PinnedCommand = () => {
     if (previous.pinnedCommandId !== pinnedCommandId || reps <= previous.reps) return
     setIsIconAnimated(isCommandActive)
     setIconAnimationKey(key => key + 1)
+    // A rep earned while the tooltip is open means the user traced the gesture it was showing; the tooltip has done
+    // its job, so close it. The rep itself is already counted.
+    setOpenedCommandId(null)
     if (reps >= targetReps) setFlourish(count => count + 1)
   }, [pinnedCommandId, reps, targetReps, isCommandActive])
 
   const isOpen = !!pinnedCommandId && openedCommandId === pinnedCommandId
   const isRingRaised = isOpen || keepRaisedDuringExit
+
+  // Publish the open state for the gesture handlers, which keep the gesture menu closed over an open tooltip.
+  useEffect(() => {
+    pinnedCommandStore.update({ tooltipOpen: isOpen })
+    return () => pinnedCommandStore.update({ tooltipOpen: false })
+  }, [isOpen])
 
   // The ring remounts when it changes slot; give focus back to it if it had focus before the move.
   useEffect(() => {

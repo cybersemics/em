@@ -1,11 +1,16 @@
 import { useEffect, useRef } from 'react'
+import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
 import { isTouch } from '../../browser'
 import { formatKeyboardShortcut, gestureString } from '../../commands'
+import { Settings } from '../../constants'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
+import getUserSetting from '../../selectors/getUserSetting'
+import gestureStore from '../../stores/gesture'
 import fastClick from '../../util/fastClick'
+import isInGestureZone from '../../util/isInGestureZone'
 import GestureDiagram from '../GestureDiagram'
 import NotificationSurface from '../Notifications/NotificationSurface'
 import CircleButton from '../dialog/CircleButton'
@@ -27,6 +32,9 @@ interface PinnedCommandTooltipProps {
   /** Reveals this command's detail page without executing it. */
   onReveal: () => void
 }
+
+/** How far a pointer may travel between down and up and still count as a tap. Matches MultiGesture's minimum swipe distance, so anything further is a gesture. */
+const TAP_SLOP = 10
 
 /** The glow behind the gesture diagram. Owned here rather than by the surface because it exists only with the diagram. Stable so usePrefetchImages does not re-run every render. */
 const GESTURE_GLOW_IMAGE: [string] = ['/img/pinned-command/pinned-command-gesture-glow.avif']
@@ -52,18 +60,64 @@ const PinnedCommandTooltip = ({
   const labelHead = lastSpace === -1 ? '' : command.label.slice(0, lastSpace + 1)
   const labelTail = lastSpace === -1 ? command.label : command.label.slice(lastSpace + 1)
 
+  // A gesture is in progress on the page beneath: the user is practicing. Dim everything but the diagram.
+  const isTracing = gestureStore.useSelector(state => state.gesture !== '')
+
+  const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
+
+  // A tap anywhere, on the tooltip or off it, dismisses. So does a scroll. A gesture trace does not: the surface passes
+  // pointer events through, so a drag that starts in the gesture zone is a trace for the thoughtspace beneath, while
+  // one that starts outside it, in the scroll zone or the toolbar, is a scroll. The zone is the same isInGestureZone
+  // that MultiGesture applies, so the two cannot disagree. A tap is a pointer that never strays past TAP_SLOP from
+  // where it went down, judged on every move rather than only at lift, since a trace can end back where it began.
+  // Pointer events cover touch and mouse alike, and a touch the browser takes for scrolling ends in pointercancel,
+  // which is not a tap. Listening in the capture phase means no control can hide a press by stopping propagation; the
+  // dev-only tuning panel is the one place a press must not count, since it is operated while the tooltip stays open.
   useEffect(() => {
     if (!isOpen) return
-    /** Dismiss a tap outside the tooltip while leaving its command link and Clear control usable. */
-    const onPointerDown = (event: PointerEvent) => {
+    let start: { x: number; y: number; inGestureZone: boolean } | null = null
+
+    /** Records where the pointer went down and which zone that was, unless it went down on the tuning panel. */
+    const handlePointerDown = (event: PointerEvent) => {
       const target = event.target as Element | null
-      if (target && !tooltipRef.current?.contains(target) && !target.closest('[data-testid="pinned-command"]')) {
-        surfaceRef.current?.dismiss()
-      }
+      const { clientX: x, clientY: y } = event
+      start = target?.closest?.('[data-pinned-command-debug]')
+        ? null
+        : { x, y, inGestureZone: isInGestureZone(x, y, leftHanded) }
     }
-    document.addEventListener('pointerdown', onPointerDown, true)
-    return () => document.removeEventListener('pointerdown', onPointerDown, true)
-  }, [isOpen])
+
+    /** Once the pointer has strayed past the slop, this press is a drag for good: a scroll dismisses, a trace does not. */
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!start || Math.hypot(event.clientX - start.x, event.clientY - start.y) < TAP_SLOP) return
+      const isScroll = !start.inGestureZone
+      start = null
+      if (isScroll) surfaceRef.current?.dismiss()
+    }
+
+    /** Dismisses if the pointer lifted without ever leaving the tap slop. */
+    const handlePointerUp = (event: PointerEvent) => {
+      handlePointerMove(event)
+      if (!start) return
+      start = null
+      surfaceRef.current?.dismiss()
+    }
+
+    /** A cancelled pointer was taken over by the browser or the OS; it is not a tap. */
+    const handlePointerCancel = () => {
+      start = null
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    document.addEventListener('pointermove', handlePointerMove, true)
+    document.addEventListener('pointerup', handlePointerUp, true)
+    document.addEventListener('pointercancel', handlePointerCancel, true)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true)
+      document.removeEventListener('pointermove', handlePointerMove, true)
+      document.removeEventListener('pointerup', handlePointerUp, true)
+      document.removeEventListener('pointercancel', handlePointerCancel, true)
+    }
+  }, [isOpen, leftHanded])
 
   // Touch devices practice the gesture; other devices practice the shortcut. A command with neither is only reachable
   // from the Command Universe, so point there.
@@ -82,6 +136,8 @@ const PinnedCommandTooltip = ({
       isVisible={isOpen}
       onDismiss={onClose}
       onOpacityChange={onOpacityChange}
+      dimmed={isTracing}
+      passThrough
     >
       <section
         ref={tooltipRef}
@@ -107,8 +163,11 @@ const PinnedCommandTooltip = ({
         })}
       >
         {gesture ? (
-          // Portrait-only gesture diagram with its own glow, positioned relative to the diagram box.
-          // The separate surface glow remains visible when the command has no gesture.
+          // Portrait only: there is no landscape design for the diagram yet. It sits in the content layer so the blur,
+          // gradient, fade, and inert state cover it, but the surface passes pointer events through, so a trace that
+          // starts over it reaches the thoughtspace instead of the swipe-to-dismiss handler. Its glow is its own image
+          // behind it, positioned relative to the diagram box so the two stay aligned on every device; the surface
+          // glow is separate because this one can be absent.
           // Sizes were tuned against the design at 393pt.
           <div
             data-testid='pinned-command-gesture'
@@ -161,10 +220,9 @@ const PinnedCommandTooltip = ({
           </div>
         ) : null}
 
-        {/* One row, vertically centered, so the genie, the text, and the ring in the corner read as a single unit; Clear hangs below it in the surface's bottom padding. The right padding keeps the text clear of the enlarged ring. */}
+        {/* The only interactive region: the surface passes pointer events through elsewhere. One row, vertically centered, so the genie, the text, and the ring in the corner read as a single unit; Clear hangs below it in the surface's bottom padding. The right padding keeps the text clear of the enlarged ring. */}
         <div
           className={css({
-            pointerEvents: 'auto',
             display: 'flex',
             position: 'relative',
             alignItems: 'center',
@@ -179,6 +237,7 @@ const PinnedCommandTooltip = ({
             // already keeps the text off the edge. The scale fallback mirrors PinnedCommand.
             paddingRight: 'calc(59.3px * 1.25 + 0.5rem - 1.5rem)',
           })}
+          style={{ opacity: isTracing ? 0.5 : 1, pointerEvents: isOpen ? 'auto' : 'none' }}
         >
           {/* The learning genie: the same button as the Command Universe header's Help. The learning portal it opens does not exist yet, so it has no action. */}
           <div
