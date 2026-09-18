@@ -8,7 +8,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('search', () => {
   // https://github.com/cybersemics/em/issues/4176
-  it.skip('renders the search text with space after the magnifier icon', async () => {
+  it('renders the search text with space after the magnifier icon', async () => {
     await newThought('a')
     await command('search')
     await waitForSelector('[contenteditable][placeholder="Search"]')
