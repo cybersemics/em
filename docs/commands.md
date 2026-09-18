@@ -103,6 +103,8 @@ A gesture is a string of swipe directions, where each character is one of `'l'`,
 
 A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Touches that start outside the zone scroll the page as usual.
 
+`shouldCancelGesture` in [`AppComponent`](../src/components/AppComponent.tsx) abandons a gesture that starts on the toolbar, on a selected text range, on the caret (see [Cursor and Caret](cursor-and-caret.md#selectionrangestore)), or while a press, modal, or sidebar is active. It is evaluated with the touch point at touchstart and again without one during the gesture, so only the point-dependent checks are limited to the first call.
+
 `handleGestureSegment` is called incrementally as the user swipes; it triggers a haptic for each new segment and, after `COMMAND_PALETTE_TIMEOUT`, opens the gesture menu so the user can see all commands reachable from the current sequence.
 
 `handleGestureEnd` runs when the gesture finishes. It looks up the final sequence in `commandGestureIndex`, with two special cases:
