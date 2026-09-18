@@ -27,6 +27,7 @@ import storageStatusStore from './stores/storageStatus'
 import syncStatusStore from './stores/syncStatus'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
+import debugLog from './util/debugLog'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
@@ -165,6 +166,10 @@ const testHelpers = {
 // add useful functions to window.em for debugging
 const windowEm = {
   contextToThoughtId: withState((state: State, thoughts: Context) => contextToThoughtId(state, thoughts)),
+  // The rolling debug log, so that a reproduction can read, clear, and stream it from outside the app —
+  // the Settings modal's copy/download controls are the only other way off the device, and neither is
+  // reachable from a script. See docs/debug-log.md.
+  debugLog,
   exportContext: (contextOrThoughtId: Context | ThoughtId, format?: MimeType) =>
     exportContext(store.getState(), contextOrThoughtId, format),
   getContexts: withState(getContexts),

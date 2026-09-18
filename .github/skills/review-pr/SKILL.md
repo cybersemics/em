@@ -12,6 +12,22 @@ Finding the problem is the hard part and it is already done by the time you writ
 
 ## Where feedback goes
 
+A review is one submission, not a series of comments. Send the summary and every inline comment together, so the author gets one notification and reads the findings against each other. `gh pr comment` posts a standalone comment outside the review, which is not the same thing.
+
+```bash
+gh api repos/cybersemics/em/pulls/<number>/reviews --input review.json
+```
+
+```json
+{
+  "event": "COMMENT",
+  "body": "<summary>",
+  "comments": [{ "path": "src/components/GestureDiagram.tsx", "line": 153, "side": "RIGHT", "body": "<finding>" }]
+}
+```
+
+Use `COMMENT` unless you are approving or requesting changes. A `line` must exist on the `RIGHT` side of the diff, or the whole review is rejected.
+
 Anything anchored to a line, a function, or a module goes in an **inline comment** on that line. General and architectural feedback goes in the **summary comment**.
 
 An inline comment can only anchor to a line in the diff. A finding in a file the pull request does not touch has no anchor and belongs in the summary.

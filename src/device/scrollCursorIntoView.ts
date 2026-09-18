@@ -4,13 +4,16 @@ import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import viewportStore from '../stores/viewport'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
+// A scroll that is waiting for preventAutoscroll to finish. Held so that it can be cancelled, since it is a scroll that has been decided on but not yet performed.
+let preventAutoscrollTimer: ReturnType<typeof setTimeout> | undefined
+
 /** Scrolls the minimum amount necessary to move the viewport so that it includes the element. */
 const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // preventAutoscroll works by briefly increasing the element's height, which breaks isElementInViewport.
   // Therefore, we need to wait until preventAutoscroll is done.
   // See: preventAutoscroll.ts
   if (isPreventAutoscrollInProgress()) {
-    setTimeout(() => {
+    preventAutoscrollTimer = setTimeout(() => {
       scrollIntoViewIfNeeded(y, height)
     }, PREVENT_AUTOSCROLL_TIMEOUT)
     return
@@ -104,5 +107,8 @@ const scrollCursorIntoView = (y: number, height: number) => {
 
   scrollIntoViewIfNeeded(y, height)
 }
+
+/** Cancels a scroll that is waiting for preventAutoscroll to finish. Does not affect a scroll that has already been performed. */
+scrollCursorIntoView.cancel = () => clearTimeout(preventAutoscrollTimer)
 
 export default scrollCursorIntoView
