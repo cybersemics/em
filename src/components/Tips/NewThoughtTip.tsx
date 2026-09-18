@@ -10,7 +10,7 @@ import { gestureString } from '../../commands'
 import newThoughtCommand from '../../commands/newThought'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
-import Tip from './Tip'
+import Tip from '../Notifications/Tip'
 
 /** A tip that explains how to add a new thought. */
 const NewThoughtTip: FC = () => {
