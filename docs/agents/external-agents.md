@@ -116,3 +116,7 @@ Then mention it in `AGENTS.md`, where the shared skills are named in prose rathe
 **The two prompt files are not symlinked to each other, and should not be.** `AGENTS.md` and `.github/copilot-instructions.md` genuinely differ: one describes an environment that is already running, the other an environment you have to start, and one dictates where the other suggests. Their overlap is the parts already delegated to skills. Do not try to unify them — unify the procedures they both call instead. Remember that the cloud agent reads *both*, so they must not contradict each other, only differ in what they cover.
 
 **`allowed-tools` is an open question.** Every skill declares it with Copilot's vocabulary — `bash`, and the MCP *server* names `chrome-devtools` and `wdio`. Claude Code expects its own tool names, and none of the skills installed locally on any developer machine here use the field at all. Whether an unrecognised value is ignored or is treated as a restriction granting nothing has not been tested. If a shared skill behaves as though it has no tools, this is the first thing to check.
+
+## Visual tuning
+
+The local [design-dials skill](../../.agents/skills/design-dials/SKILL.md) provides a temporary panel for tuning visual values on real devices. After tuning, bake the values into responsive relationships and remove the panel. Its [pinned-command reference](../../.agents/skills/design-dials/reference/PinnedCommandDebugPanel.md) documents the worked example.
