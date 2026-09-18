@@ -18,6 +18,7 @@
 
 - `docs/` contains comprehensive documentation on the codebase. Start from [`docs/readme.md`](docs/readme.md), which indexes every subsystem doc.
 - `grep` across `docs/**/*.md` when investigating, and keep querying it — especially when you meet something you do not understand. [`docs/glossary.md`](docs/glossary.md) defines the project's vocabulary; if a term is unfamiliar, resolve it there first.
+- [`docs/solutions/`](docs/solutions/readme.md) holds durable learnings recovered from closed issues and merged pull requests — the non-obvious cause, the approach that looked right and failed, the guardrail. `grep` it when you meet a symptom, before theorising from the code. It is deliberately separate from the subsystem docs: `docs/` says how something works, `docs/solutions/` says how it went wrong.
 - **Documentation is a two-way obligation: you read it, and you keep it true.** When a change makes something in `docs/` wrong, `docs-sync` will find and repair it — on its own if you invoke it, or as the first step of `end-session`. Landing the doc fix in the same commit as the change is what keeps the two from drifting apart.
 - This matters more here than in most projects, because `docs/` is the fastest way into an unfamiliar subsystem — for you, for the next person, and for the next agent, which may plan a change against whatever it says. Docs describe how the project works **now**, not how it changed, so a doc your change outdated is better rewritten than annotated with what it used to say.
 
