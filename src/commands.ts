@@ -1,11 +1,11 @@
 /* eslint-disable import/prefer-default-export */
 /** Defines global keyboard shortcuts and gestures. */
-import Emitter from 'emitter20'
 import { GestureResponderEvent } from 'react-native'
 import { Store } from 'redux'
 import { ArrowKey } from './@types/ArrowKey'
 import Command from './@types/Command'
 import CommandId from './@types/CommandId'
+import CommandSuccess from './@types/CommandSuccess'
 import CommandType from './@types/CommandType'
 import Direction from './@types/Direction'
 import Gesture from './@types/Gesture'
@@ -42,6 +42,7 @@ import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
+import commandEmitter from './stores/commandEmitter'
 import editingValueStore from './stores/editingValueStore'
 import gestureStore from './stores/gestureStore'
 import heldKeysStore from './stores/heldKeysStore'
@@ -58,7 +59,7 @@ import keyValueBy from './util/keyValueBy'
 
 export const globalCommands: Command[] = Object.values(commandsObject)
 
-export const commandEmitter = new Emitter()
+export { commandEmitter }
 
 /** The id of the command matched by the key that is down, read by beforeInput. Set on keyDown and cleared on keyUp. A ministore rather than a module variable so that resetStores clears it between tests, including after a keydown that no keyup followed. Nothing subscribes, so a keystroke never renders. */
 const keyCommandIdStore = ministore<{ id: string | null }>({ id: null })
@@ -441,12 +442,12 @@ export const executeCommand = (
 
   // resolve repeat to the last command that was executed and the keyboardIndex it was triggered with, and exit early if there is none
   const resolved = commandArg.id === 'repeat' ? lastCommandStore.getState().lastCommand : { command: commandArg }
-  if (!resolved) return
+  if (!resolved) return false
   const command = resolved.command
 
   const canExecute = !command.canExecute || command.canExecute(commandStore.getState())
   // Exit early if the command cannot execute
-  if (!canExecute) return
+  if (!canExecute) return false
 
   // A repeated command takes the keyboardIndex that was recorded with it, since the repeat keypress matches none of its own keyboard shortcuts. Otherwise it is derived from the event.
   const keyboardIndex = keyboardIndexArg ?? resolved.keyboardIndex
@@ -460,11 +461,46 @@ export const executeCommand = (
         keyboardIndex: commandMetadata.keyboardIndex,
       })
       if (result instanceof Promise) {
-        return result.then(() => recordLastCommand(command, metadata, commandStore.getState()))
+        return result.then(result => {
+          recordLastCommand(command, metadata, commandStore.getState())
+          return result
+        })
       }
       recordLastCommand(command, metadata, commandStore.getState())
+      return result
     }),
   )
+}
+
+/** Reports one successful top-level invocation after any returned asynchronous work has completed. */
+const reportCommandSuccess = ({
+  commandStore,
+  commandId,
+  source,
+  errorBefore,
+  execution,
+}: {
+  commandStore: Store<State>
+  commandId: CommandId
+  source: CommandSuccess['source']
+  errorBefore: State['error']
+  execution?: void | Promise<void | false>
+}): void | Promise<void> => {
+  /** An error raised through app state during this invocation also prevents credit. */
+  const report = () => {
+    if (commandStore.getState().error === errorBefore) {
+      commandEmitter.trigger('commandSucceeded', { commandId, source } satisfies CommandSuccess)
+    }
+  }
+
+  if (!execution) {
+    report()
+    return
+  }
+
+  return execution.then(result => {
+    if (result !== false) report()
+  })
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
@@ -482,6 +518,7 @@ export const executeCommandWithMulticursor = (
   } = {},
 ) => {
   const commandStore = storeArg ?? store
+  const source = type ?? 'internal'
   const inputMethod = type
   const commandType = type ?? 'keyboard'
   event = event ?? eventNoop
@@ -502,15 +539,12 @@ export const executeCommandWithMulticursor = (
   }
 
   const state = commandStore.getState()
+  const errorBefore = state.error
 
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
   if (!command.multicursor || !hasMulticursor(state)) {
-    return executeCommand(command, {
-      store: commandStore,
-      type: inputMethod,
-      event,
-      keyboardIndex,
-    })
+    const execution = executeCommand(command, { store: commandStore, type: inputMethod, event, keyboardIndex })
+    return execution === false ? undefined : reportCommandSuccess({ commandStore, commandId: commandArg.id, source, errorBefore, execution })
   }
 
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
@@ -535,7 +569,7 @@ export const executeCommandWithMulticursor = (
       : filteredPaths
 
   const commandMetadata = createCommandMetadata(command, { type: inputMethod, event, keyboardIndex })
-  return commandStore.dispatch(
+  const execution = commandStore.dispatch(
     commandTransaction(commandMetadata, (dispatch, metadata) => {
       // Pass the attributed dispatch through the existing executor API so nested asynchronous work retains its parent.
       const scopedStore = { ...commandStore, dispatch }
@@ -550,6 +584,8 @@ export const executeCommandWithMulticursor = (
 
       // The thoughts created by the executions, collected for selectNewCursors.
       const newCursors: Path[] = []
+      const executions: Promise<void | false>[] = []
+      let didExecute = false
 
       /** Restores selection state and closes the synchronous multicursor bracket. */
       const completeMulticursorExecution = () => {
@@ -627,7 +663,7 @@ export const executeCommandWithMulticursor = (
       // Otherwise, execute the command once for each of the filtered multicursors.
       if (multicursor.execMulticursor) {
         // Custom execution may settle asynchronously; record Repeat once its attributed work is complete.
-        let result: void | Promise<void>
+        let result: void | false | Promise<void | false>
         try {
           result = multicursor.execMulticursor(execPaths, dispatch, commandStore.getState)
         } catch (error) {
@@ -639,7 +675,10 @@ export const executeCommandWithMulticursor = (
           // Restore the selection and close the synchronous command bracket now. The custom command owns any asynchronous
           // multicursor bracket; its supplied dispatch automatically attributes the completed edits.
           completeMulticursorExecution()
-          return result.then(() => recordLastCommand(command, metadata, commandStore.getState()))
+          return result.then(result => {
+            recordLastCommand(command, metadata, commandStore.getState())
+            return result
+          })
         }
       } else {
         try {
@@ -649,12 +688,14 @@ export const executeCommandWithMulticursor = (
             if (!recomputedPath) continue
 
             dispatch(setCursor({ path: recomputedPath }))
-            executeCommand(command, {
+            const result = executeCommand(command, {
               store: scopedStore,
               type: inputMethod,
               event,
               keyboardIndex,
             })
+            if (result !== false) didExecute = true
+            if (result instanceof Promise) executions.push(result)
 
             // The command sets the cursor to the thought it created, so a cursor on a different thought than the one that was
             // just set is the new thought. A command that could not act on the selected thought leaves the cursor where it
@@ -672,8 +713,10 @@ export const executeCommandWithMulticursor = (
 
       completeMulticursorExecution()
       recordLastCommand(command, metadata, commandStore.getState())
+      return !didExecute ? false : executions.length ? Promise.all(executions).then(results => results.includes(false) ? false : undefined) : undefined
     }),
   )
+  return execution === false ? undefined : reportCommandSuccess({ commandStore, commandId: commandArg.id, source, errorBefore, execution })
 }
 
 /**

@@ -300,11 +300,12 @@ const generateThought = {
       }
 
       /** Requests disclosure when any selected thought will use AI, then generates the full selection. */
-      const generateAllWithDisclosure = () => {
+      const generateAllWithDisclosure = (): Promise<void | false> => {
         const usesAi = cursors.some(path => generatesWithAi(getState(), path))
-        if (usesAi && requestAiDisclosure(generateAllWithDisclosure)) {
+        const pending = usesAi ? requestAiDisclosure(generateAllWithDisclosure) : null
+        if (pending) {
           dispatch(showModal({ id: 'aiDisclosure' }))
-          return
+          return pending
         }
         return generateAll()
       }
@@ -313,20 +314,20 @@ const generateThought = {
     },
   },
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
-  exec: async (dispatch, getState, e, commandContext) => {
+  exec: async (dispatch, getState, e, commandContext): Promise<void | false> => {
     const state = getState()
     const cursor = state.cursor!
     const thought = getThoughtById(state, head(cursor))
 
     // do nothing if generation is already in progress
-    if (!thought || thought.generating) return
+    if (!thought || thought.generating) return false
 
-    if (
-      generatesWithAi(state, cursor) &&
-      requestAiDisclosure(() => generateThought.exec(dispatch, getState, e, commandContext))
-    ) {
+    const pending = generatesWithAi(state, cursor)
+      ? requestAiDisclosure(() => generateThought.exec(dispatch, getState, e, commandContext))
+      : null
+    if (pending) {
       dispatch(showModal({ id: 'aiDisclosure' }))
-      return
+      return pending
     }
 
     const [valueNew] = await dispatch(generateThoughtAtPathsActionCreator([cursor]))

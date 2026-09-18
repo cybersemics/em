@@ -14,14 +14,12 @@ const AI_DISCLOSURE_VERSION = 'v1'
 const AI_DISCLOSURE_KEY = `aiDisclosureAcknowledged/${AI_DISCLOSURE_VERSION}`
 /** Value for the AI data disclosure acknowledgement. */
 const ACKNOWLEDGED_VALUE = '1'
-
-/** The in-memory half of the disclosure state: a ministore rather than module variables so that it is restored between tests along with every other store. Both fields live in one object because ministore.update calls a function argument as an updater, so the continuation can only be stored as a field. */
+/** Disclosure state is reset with the other ministores between tests. */
 const aiUseStore = ministore<{
-  /** Whether to allow one more AI use without persisting acknowledgement. */
   allowNext: boolean
-  /** The AI request to run after the user accepts the disclosure. */
   pending: (() => void) | null
-}>({ allowNext: false, pending: null })
+  resolvePending: ((result: false) => void) | null
+}>({ allowNext: false, pending: null, resolvePending: null })
 
 /** Returns true if the user has acknowledged the AI data disclosure on this device. */
 export const hasAcknowledgedAiDisclosure = () => storage.getItem(AI_DISCLOSURE_KEY) === ACKNOWLEDGED_VALUE
@@ -41,11 +39,31 @@ const consumeAiDisclosureAllowance = () => {
   return true
 }
 
-/** Queues an AI request if disclosure is required. Returns true when the disclosure must be shown. */
-const requestAiDisclosure = (continuation: () => void) => {
-  if (hasAcknowledgedAiDisclosure() || consumeAiDisclosureAllowance()) return false
-  aiUseStore.update({ pending: continuation })
-  return true
+/** Discards the AI request pending disclosure. */
+export const cancelAiDisclosure = () => {
+  const { resolvePending } = aiUseStore.getState()
+  aiUseStore.update({ pending: null, resolvePending: null })
+  resolvePending?.(false)
+}
+
+/** Queues an AI request if disclosure is required and returns its eventual completion; otherwise returns null. */
+const requestAiDisclosure = (
+  continuation: () => void | false | Promise<void | false>,
+): Promise<void | false> | null => {
+  if (hasAcknowledgedAiDisclosure() || consumeAiDisclosureAllowance()) return null
+
+  // Only one disclosure can be open. Replacing a pending request cancels its original command invocation.
+  cancelAiDisclosure()
+
+  return new Promise<void | false>((resolve, reject) => {
+    aiUseStore.update({ resolvePending: resolve, pending: () => {
+      try {
+        Promise.resolve(continuation()).then(resolve, reject)
+      } catch (error) {
+        reject(error)
+      }
+    } })
+  })
 }
 
 /** Persists acknowledgement of the AI data disclosure on this device. */
@@ -62,18 +80,15 @@ export const acceptAiDisclosure = ({ remember }: { remember: boolean }): (() => 
   }
 
   const continuation = aiUseStore.getState().pending
-  aiUseStore.update({ pending: null })
+  aiUseStore.update({ pending: null, resolvePending: null })
   return continuation
 }
 
-/** Discards the AI request pending disclosure. */
-export const cancelAiDisclosure = () => {
-  aiUseStore.update({ pending: null })
-}
-
-/** Revokes AI data disclosure acknowledgement on this device. */
+/** Revokes AI data disclosure acknowledgement and clears any pending or one-time AI use. */
 export const clearAiDisclosureAcknowledgement = () => {
   storage.removeItem(AI_DISCLOSURE_KEY)
+  aiUseStore.update({ allowNext: false })
+  cancelAiDisclosure()
 }
 
 export default requestAiDisclosure
