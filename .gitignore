@@ -61,3 +61,6 @@ docs/.obsidian
 
 # scratch space – for throwaway scripts, notes, and logs
 /.local
+
+# agent worktrees – full checkouts of this repo that an agent session creates on demand
+.claude/worktrees/
