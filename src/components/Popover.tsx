@@ -20,9 +20,7 @@ const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => 
   const overflow = useWindowOverflow(ref)
 
   return (
-    // nodeRef avoids FadeTransition's wrapper span, which would make this div a block-in-inline. WebKit relayouts that
-    // case inconsistently, applying marginTop above the line box and shifting the whole toolbar button down (#4263).
-    <FadeTransition type='fast' in={show} exit={false} unmountOnExit nodeRef={ref}>
+    <FadeTransition type='fast' in={show} exit={false} unmountOnExit>
       <div
         ref={ref}
         className={css({
