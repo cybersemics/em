@@ -1,5 +1,13 @@
-import { MotionValue, animate, motion, useReducedMotion } from 'motion/react'
-import { PropsWithChildren, useEffect, useId, useRef, useState } from 'react'
+import {
+  MotionValue,
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useTransform,
+} from 'motion/react'
+import { PropsWithChildren, useCallback, useEffect, useId, useRef, useState } from 'react'
 import { css } from '../../../styled-system/css'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
 import durations from '../../util/durations'
@@ -9,7 +17,7 @@ import durations from '../../util/durations'
  *
  * PinnedCommandRing
  * ├─ RingTrack: dim background circle with its gradient, blur, and shadow.
- * ├─ RingProgress: supplied fill and color.
+ * ├─ RingProgress: animated fill, color, and flourish.
  * │  └─ BlurredProgressArc: the gradient arc, split into overlapping blur bands.
  * │     └─ RingBlurBand: the mask and blur for one band of the arc.
  * └─ RingIcon: the command icon centered inside the ring.
@@ -54,6 +62,8 @@ const ANNULUS_MASK = `radial-gradient(circle at ${CENTER_X}px ${CENTER_Y}px, tra
 interface RingProgressProps {
   /** Practice progress from 0 (unstarted) to 1 (target reached). */
   progress: number
+  /** Increment to play the flourish. Only changes matter; the initial value plays nothing. */
+  flourish?: number
   /** Visibility of the colorful fill, from 0 (mono) to 1 (fully colorful). */
   activeOpacity?: MotionValue<number>
 }
@@ -152,7 +162,7 @@ const BlurredProgressArc = ({ progress, stops }: { progress: number; stops: Stop
 }
 
 /**
- * Animates the fill from its current angle to the supplied progress, while keeping color a presentation input.
+ * Controls the visible fill, color, and spin, animating the fill from its current angle to the supplied progress.
  *
  * The arc's end angle is written into conic-gradient strings (see BlurredProgressArc and RingBlurBand). Browsers
  * cannot transition between two gradient strings, so CSS cannot animate the fill. Instead, Motion's `animate` tweens
@@ -167,8 +177,11 @@ const BlurredProgressArc = ({ progress, stops }: { progress: number; stops: Stop
  *
  * When `progress` changes before a tween finishes, the effect's cleanup stops it and a new tween takes over. With
  * reduced motion, the effect skips the tween and the fill shows the new progress immediately.
+ *
+ * A flourish takes over the fill animation until it finishes, allowing the completing rep to flow straight into the
+ * celebration. Remains mounted when progress is zero.
  */
-const RingProgress = ({ progress, activeOpacity }: RingProgressProps) => {
+const RingProgress = ({ progress, flourish = 0, activeOpacity }: RingProgressProps) => {
   const prefersReducedMotion = useReducedMotion()
   // The progress currently drawn, which trails `progress` while a tween is running.
   const [renderedProgress, setRenderedProgress] = useState(progress)
@@ -176,14 +189,71 @@ const RingProgress = ({ progress, activeOpacity }: RingProgressProps) => {
   const currentProgress = useRef(progress)
   // Reduced motion draws the target directly, even on the render before the effect has caught `renderedProgress` up.
   const visibleProgress = prefersReducedMotion ? progress : renderedProgress
-  const colorOpacity = activeOpacity?.get() ?? 0
+  const [isFlourishing, setIsFlourishing] = useState(false)
+  const previousFlourish = useRef(flourish)
+  const fillAnimation = useRef<{ stop: () => void } | null>(null)
+  // While a flourish plays it drives the fill, so the fill effect must not start a competing animation.
+  const flourishOwnsFill = useRef(false)
+  const flourishAnimation = useRef<{ stop: () => void } | null>(null)
+  // One master timeline drives the whole flourish, so the spin, the color, and the last segment of the fill are
+  // always in step: rotation is t × 360°, color is a bell that peaks at the half turn, and a fill that was still
+  // short of full closes over the first half so the arc completes at the brightest moment.
+  const flourishT = useMotionValue(0)
+  const spin = useTransform(flourishT, value => (prefersReducedMotion ? 0 : value * 360))
+  const flourishColorOpacity = useTransform(flourishT, value => Math.sin(Math.PI * value))
+  const inactiveOpacity = useMotionValue(0)
+  const activeColorOpacity = activeOpacity ?? inactiveOpacity
+  const [isActiveColor, setIsActiveColor] = useState(activeColorOpacity.get() > 0)
+  const colorOpacity = useTransform([flourishColorOpacity, activeColorOpacity], ([flourishColor, tooltipColor]) =>
+    Math.max(flourishColor as number, tooltipColor as number),
+  )
+  const monoOpacity = useTransform(colorOpacity, value => 1 - value)
+
+  useMotionValueEvent(activeColorOpacity, 'change', value => setIsActiveColor(value > 0))
+
+  /** Plays the flourish from wherever the fill currently is, taking over any fill animation in progress. */
+  const startFlourish = useCallback(() => {
+    fillAnimation.current?.stop()
+    flourishAnimation.current?.stop()
+    const from = currentProgress.current
+    flourishT.set(0)
+    flourishOwnsFill.current = true
+    setIsFlourishing(true)
+    flourishAnimation.current = animate(flourishT, [0, 1], {
+      duration: durations.get('pinnedCommandFlourish') / 1000,
+      ease: 'easeInOut',
+      onUpdate: value => {
+        // Close the remaining fill over the first half of the turn.
+        const fill = from + (1 - from) * Math.min(1, value * 2)
+        currentProgress.current = fill
+        setRenderedProgress(fill)
+      },
+      onComplete: () => {
+        currentProgress.current = 1
+        setRenderedProgress(1)
+        flourishOwnsFill.current = false
+        setIsFlourishing(false)
+      },
+    })
+  }, [flourishT])
+
   useEffect(() => {
+    if (flourish === previousFlourish.current) return
+    previousFlourish.current = flourish
+    startFlourish()
+  }, [flourish, startFlourish])
+
+  useEffect(() => {
+    // A flourish owns the fill while it plays; the completing rep changes progress and flourish together.
+    if (flourishOwnsFill.current) return
     // Nothing to animate: snap to the target when motion is reduced or the fill is already there.
     if (prefersReducedMotion || currentProgress.current === progress) {
       currentProgress.current = progress
       setRenderedProgress(progress)
       return
     }
+
+    // Start from the visible angle so consecutive reps never jump backwards or restart the arc.
     const animation = animate(currentProgress.current, progress, {
       duration: durations.get('medium') / 1000,
       onUpdate: value => {
@@ -191,19 +261,27 @@ const RingProgress = ({ progress, activeOpacity }: RingProgressProps) => {
         setRenderedProgress(value)
       },
     })
+    fillAnimation.current = animation
     return () => animation.stop()
   }, [progress, prefersReducedMotion])
+
+  useEffect(() => () => flourishAnimation.current?.stop(), [])
+
   return progress > 0 ? (
-    <motion.div className={css({ position: 'absolute', inset: 0 })}>
+    // The spin rotates the arcs about the ring center, which is not the box center.
+    <motion.div
+      className={css({ position: 'absolute', inset: 0, transformOrigin: '36.42px 36.16px' })}
+      style={{ rotate: spin }}
+    >
       <motion.div
         data-testid='pinned-command-ring-fill'
         data-progress={visibleProgress}
         className={css({ position: 'absolute', inset: 0 })}
-        style={{ opacity: 1 - colorOpacity }}
+        style={{ opacity: monoOpacity }}
       >
         <BlurredProgressArc progress={visibleProgress} stops={STOPS_MONO} />
       </motion.div>
-      {colorOpacity > 0 && (
+      {(isFlourishing || isActiveColor) && (
         <motion.div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: colorOpacity }}>
           <BlurredProgressArc progress={visibleProgress} stops={STOPS_COLORFUL} />
         </motion.div>
@@ -227,7 +305,7 @@ const RingIcon = ({ children }: PropsWithChildren) => (
   </div>
 )
 
-/** Composes the background track, progress, and centered command icon. */
+/** Composes the background track, animated progress, and centered command icon. */
 const PinnedCommandRing = ({ children, ...progressProps }: PropsWithChildren<RingProgressProps>) => (
   <div
     className={css({ position: 'relative', flex: 'none' })}
