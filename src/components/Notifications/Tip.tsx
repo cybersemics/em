@@ -4,7 +4,6 @@ import { css } from '../../../styled-system/css'
 import TipId from '../../@types/TipId'
 import { dismissTipActionCreator as dismissTip } from '../../actions/dismissTip'
 import { isTouch } from '../../browser'
-import usePrefetchImages from '../../hooks/usePrefetchImages'
 import fastClick from '../../util/fastClick'
 import CloseIcon from '../icons/CloseIcon'
 import NotificationSurface from './NotificationSurface'
@@ -19,9 +18,6 @@ const Tip: FC<PropsWithChildren<{ tipId: TipId }>> = ({ tipId, children }) => {
   const isHidden = useSelector(
     state => (state.isKeyboardOpen && isTouch) || state.showCommandCenter || state.showSidebar || !!state.showModal,
   )
-
-  /** Prefetch the glow image before the tip becomes visible. */
-  usePrefetchImages(['/img/tip/tip-glow-alpha.webp'])
 
   const isTipActive = tip === tipId
 

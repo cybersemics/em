@@ -35,6 +35,8 @@ interface GestureDiagramBaseProps {
   style?: React.CSSProperties
   /** Explicit SVG viewBox. When omitted, framing is calculated from the gesture geometry. */
   viewBox?: `${number} ${number} ${number} ${number}`
+  /** How the drawing sits in a box of a different aspect ratio. Defaults to the SVG default, centered. Since the viewBox follows each gesture's own bounds, pass e.g. `xMinYMax meet` to keep one edge stable across gestures. */
+  preserveAspectRatio?: string
   /** Maximum rendered width in pixels. */
   maxWidth?: number
   /** Applies the positional adjustment used by GestureContainer. */
@@ -106,6 +108,7 @@ const GestureDiagram = ({
   chevronApexAngle = 80,
   chevronSize = 2.2,
   highlightColor,
+  preserveAspectRatio,
 }: GestureDiagramProps) => {
   // One stable prefix keeps this diagram's marker, masks, and gradients unique in the document.
   const [instanceId] = useState(nanoid)
@@ -190,6 +193,7 @@ const GestureDiagram = ({
         cssRaw,
       )}
       style={{ aspectRatio: `${maxWidth ?? size} / ${maxHeight ?? size}`, ...style }}
+      preserveAspectRatio={preserveAspectRatio}
       viewBox={
         viewBox ??
         getGestureViewBox(geometry!, {

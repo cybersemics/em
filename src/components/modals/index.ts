@@ -16,3 +16,5 @@ export { default as welcome } from './Welcome'
 export { default as testGestureDiagram } from './TestGestureDiagram'
 
 export { default as testPinnedCommandRing } from './TestPinnedCommandRing'
+
+export { default as testPinnedCommandTooltip } from './TestPinnedCommandTooltip'

@@ -7,8 +7,8 @@ The main directory structure is organized as follows. Tests are located in a sub
 - [`/src/@types`](../src/@types) — Shared TypeScript type definitions and ambient declarations. The canonical shapes (`Thought`, `Path`, `Lexeme`, `Command`, `State`, etc.) live here.
 - [`/src/actions`](../src/actions) — Redux reducers and action-creators are co-located. Prefer reducers when possible, as they are pure functions that are more easily testable and composable. Only define an action creator if it requires a side effect. Use [`util/reducerFlow`](../src/util/reducerFlow.ts) to compose reducers.
 - [`/src/commands`](../src/commands) — Keyboard, gesture, and toolbar commands (formerly `shortcuts`). One file per command, plus an `index.ts` barrel. See [commands.md](commands.md) for the architecture.
-- [`/src/components`](../src/components) — React components.
-- [`/src/data-providers`](../src/data-providers) — Storage and sync backends implementing the [`DataProvider`](../src/data-providers/DataProvider.ts) interface. The live implementation is TreeCRDT in [`treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts). See [persistence.md](persistence.md).
+- [`/src/components`](../src/components) — React components. `Notifications/` holds the shared notification surface and its Tip wrapper; `Tips/` holds the content for the individual tips. The older `Notification.tsx` is a separate popup component.
+- [`/src/data-providers`](../src/data-providers) — Storage and sync modules. Thoughtspace backends implement the [`DataProvider`](../src/data-providers/DataProvider.ts) interface; the live implementation is TreeCRDT in [`treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts). See [persistence.md](persistence.md).
 - [`/src/device`](../src/device) — Device/DOM-level helpers for selection, scrolling, clipboard, focus, and platform detection. The selection wrapper [`device/selection.ts`](../src/device/selection.ts) is the single point of access to `window.getSelection()` (enforced by lint). See [cursor-and-caret.md](cursor-and-caret.md).
 - [`/src/e2e`](../src/e2e) — End-to-end test setup, including Puppeteer and iOS environments. See [testing.md](testing.md).
 - [`/src/hooks`](../src/hooks) — React hooks.
@@ -16,7 +16,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 - [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers (e.g. the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) that flushes state mutations to thoughtspace persistence).
 - [`/src/redux-middleware`](../src/redux-middleware) — Redux middleware (e.g. the [`pullQueue`](../src/redux-middleware/pullQueue.ts) that loads thoughts on demand, or [`clearSelection`](../src/redux-middleware/clearSelection.ts) that clears the browser caret on cursor changes).
 - [`/src/selectors`](../src/selectors) — Pure functions that compute (and often memoize) slices from the Redux state. See [data-model.md](data-model.md) for the canonical traversal selectors.
-- [`/src/stores`](../src/stores) — Lightweight non-Redux ministores for ephemeral UI state. Examples: [`editingValue`](../src/stores/editingValue.ts) (the in-progress thought text), [`viewport`](../src/stores/viewport.ts), [`scrollTop`](../src/stores/scrollTop.ts), [`gesture`](../src/stores/gesture.ts), [`syncStatus`](../src/stores/syncStatus.ts), [`selectionRangeStore`](../src/stores/selectionRangeStore.ts).
+- [`/src/stores`](../src/stores) — The app store, typed local preferences in [`storageModel.ts`](../src/stores/storageModel.ts), and lightweight non-Redux ministores for ephemeral UI state. Examples: [`editingValue`](../src/stores/editingValue.ts) (the in-progress thought text), [`viewport`](../src/stores/viewport.ts), [`scrollTop`](../src/stores/scrollTop.ts), [`gesture`](../src/stores/gesture.ts), [`syncStatus`](../src/stores/syncStatus.ts), [`selectionRangeStore`](../src/stores/selectionRangeStore.ts).
 - [`/src/test-helpers`](../src/test-helpers) — Helpers used in unit, store, and JSDOM tests. See [testing.md](testing.md).
 - [`/src/util`](../src/util) — Pure utility functions. No React, no Redux access.
 
@@ -53,5 +53,3 @@ The main directory structure is organized as follows. Tests are located in a sub
 - **One concern per directory.** A file that both reads state and dispatches probably belongs in `actions/`, not `selectors/`. A util that imports React belongs in `hooks/` or `components/`, not `util/`.
 - **Tests next to source.** Tests live in `__tests__/` subdirectories, not in a separate `tests/` tree.
 - **Browser API access is gated.** `window.getSelection`, `localStorage`, viewport reads — all go through `device/` or `stores/` wrappers, not direct calls in feature code.
-
-`components/Notifications/` owns the shared `NotificationSurface` and Tip wrapper. `components/Tips/` contains each tip’s content; swipe dismissal lives in `hooks/useSwipeToClear.ts`.
