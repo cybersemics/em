@@ -381,6 +381,17 @@ describe('formatSelection color', () => {
     expect(cursorValue()).toBe('<font color="#00c7e6">a</font>s')
   })
 
+  it('clears the color of a selected substring in the middle of a colored thought', async () => {
+    await dispatch([newThought({ value: 'asd' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    selectRange(1, 2)
+    await dispatch(formatSelection('foreColor', 'fg'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6">a</font>s<font color="#00c7e6">d</font>')
+  })
+
   it('recolors a selected substring inside a colored thought without nesting', async () => {
     await dispatch([newThought({ value: 'as' })])
 
