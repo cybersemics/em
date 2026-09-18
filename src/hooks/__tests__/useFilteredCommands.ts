@@ -183,7 +183,11 @@ const wrapper = ({ children }: { children: React.ReactNode }) => {
 describe('useFilteredCommands', () => {
   beforeEach(() => {
     // Reset stores
-    store.dispatch({ type: 'clear', full: true })
+    store.dispatch([
+      { type: 'clear', full: true },
+      // Skip the tutorial as initStore does. New Thought, which these tests rely on as an always executable command, is not executable on the tutorial's welcome step.
+      { type: 'tutorial', value: false },
+    ])
     gestureStore.update({ gesture: '', possibleCommands: [] })
     vi.clearAllMocks()
   })
