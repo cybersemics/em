@@ -11,6 +11,7 @@ import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import updateJumpHistory from '../redux-enhancers/updateJumpHistoryEnhancer'
 import validateStateEnhancer from '../redux-enhancers/validateStateEnhancer'
+import awardPracticeRepMiddleware from '../redux-middleware/awardPracticeRep'
 import clearSelection from '../redux-middleware/clearSelection'
 import closeDropdownsWhenCursorNull from '../redux-middleware/closeDropdownsWhenCursorNull'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
@@ -47,6 +48,7 @@ const middlewareEnhancer = applyMiddleware(
   multicursorAlertMiddleware,
   multiselectCursorMiddleware,
   closeDropdownsWhenCursorNull,
+  awardPracticeRepMiddleware,
 )
 
 // only validate Redux state in dev and test environments
