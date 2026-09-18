@@ -11,6 +11,7 @@ import rerank from '../actions/rerank'
 import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import expandThoughts from '../selectors/expandThoughts'
+import getAfterIdByRank from '../selectors/getAfterIdByRank'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
@@ -46,20 +47,6 @@ export interface MoveThoughtPayload {
    * Undefined means derive placement from newRank for legacy em rank-based callers.
    */
   afterId?: ThoughtId | null
-}
-
-/** Derives an explicit TreeCRDT afterId from em's temporary rank ordering. */
-const getMoveThoughtAfterIdByRank = (
-  state: State,
-  destinationThoughtId: ThoughtId,
-  sourceThoughtId: ThoughtId,
-  newRank: number,
-): ThoughtId | null => {
-  const after = getChildrenRanked(state, destinationThoughtId)
-    .filter(child => child.id !== sourceThoughtId && child.rank < newRank)
-    .at(-1)
-
-  return after?.id ?? null
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
@@ -113,12 +100,13 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   const effectiveAfterId =
     afterId !== undefined
       ? afterId
-      : getMoveThoughtAfterIdByRank(state, destinationThoughtId, sourceThought.id, newRank)
+      : getAfterIdByRank(state, destinationThoughtId, { rank: newRank, sourceId: sourceThought.id })
 
-  if (
-    effectiveAfterId === sourceThought.id ||
-    (effectiveAfterId !== null && !childrenOfDestination.some(child => child.id === effectiveAfterId))
-  ) {
+  // Distinguish the two ways an afterId can be invalid, since a caller that resolves afterId from an ordering other
+  // than the destination's ranked children hits the first case far more often than the second.
+  if (effectiveAfterId === sourceThought.id) {
+    throw new Error(`moveThought: afterId cannot be the moved thought itself.`)
+  } else if (effectiveAfterId !== null && !childrenOfDestination.some(child => child.id === effectiveAfterId)) {
     throw new Error(`moveThought: afterId must be null or a child of the destination context.`)
   }
 

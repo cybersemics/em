@@ -147,7 +147,7 @@ it('rejects placement after the moved thought', () => {
       newRank: thoughtB.rank,
       afterId: thoughtB.id,
     })(state),
-  ).toThrow('afterId must be null or a child of the destination context')
+  ).toThrow('afterId cannot be the moved thought itself')
 })
 
 it('move across contexts', () => {
