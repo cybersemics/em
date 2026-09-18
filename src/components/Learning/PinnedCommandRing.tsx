@@ -1,15 +1,30 @@
-import { motion, useReducedMotion } from 'motion/react'
-import { PropsWithChildren, useId } from 'react'
+import {
+  MotionValue,
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useTransform,
+} from 'motion/react'
+import { PropsWithChildren, useCallback, useEffect, useId, useRef, useState } from 'react'
 import { css } from '../../../styled-system/css'
 import { PINNED_COMMAND_RING_SIZE } from '../../constants'
 import durations from '../../util/durations'
 
-/*
- * Geometry and paint values come from the Figma SVG exports of the ring, in a 73×73 box. The track is a plain stroked
- * circle and reproduces the export verbatim. The fill is an annular sector with an along-arc gradient and an angular
- * progressive layer blur (tail σ 7 → head σ 2), which no browser can draw directly; it is approximated by drawing the
- * arc as one conic gradient and stacking a few copies of it, each masked to an angular band with a soft crossfade into
- * its neighbours and each blurred a different amount. See docs/learning.md.
+/**
+ * These values are derived directly from the original design in Figma, in a 73×73 box.
+ *
+ * PinnedCommandRing
+ * ├─ RingTrack: dim background circle with its gradient, blur, and shadow.
+ * ├─ RingProgress: animated fill, color, and flourish.
+ * │  └─ BlurredProgressArc: the gradient arc, split into overlapping blur bands.
+ * │     └─ RingBlurBand: the mask and blur for one band of the arc.
+ * └─ RingIcon: the command icon centered inside the ring.
+ *
+ * The arc's blur decreases from tail to head. CSS cannot vary blur along an arc, so the rendering
+ * approximates it with overlapping copies of the gradient, each masked to a band and blurred separately.
+ * The mask belongs inside the blur wrapper so both the inner and outer edges soften. See docs/learning.md.
  */
 
 const CENTER_X = 36.42
@@ -44,154 +59,237 @@ const STOPS_COLORFUL: Stop[] = [
 /** Restricts a layer to the ring's annulus. Applied before the layer's blur, so the blur softens the ring edges. */
 const ANNULUS_MASK = `radial-gradient(circle at ${CENTER_X}px ${CENTER_Y}px, transparent ${FILL_RADIUS - STROKE_WIDTH / 2 - 0.3}px, black ${FILL_RADIUS - STROKE_WIDTH / 2}px, black ${FILL_RADIUS + STROKE_WIDTH / 2}px, transparent ${FILL_RADIUS + STROKE_WIDTH / 2 + 0.3}px)`
 
-/** The progress arc drawn as stacked, band-masked conic gradients with a blur that decreases from tail to head. */
-const FillArc = ({ progress, stops }: { progress: number; stops: Stop[] }) => {
-  // conic-gradient angles start at 12 o'clock and run clockwise, matching the arc
+interface RingProgressProps {
+  /** Practice progress from 0 (unstarted) to 1 (target reached). */
+  progress: number
+  /** Increment to play the flourish. Only changes matter; the initial value plays nothing. */
+  flourish?: number
+  /** Visibility of the colorful fill, from 0 (mono) to 1 (fully colorful). */
+  activeOpacity?: MotionValue<number>
+}
+
+/** Draws the stationary background circle with its gradient, blur, and shadow. */
+const RingTrack = () => {
+  // Each ring needs unique filter and gradient IDs, including rings rendered together in a fixture.
+  const id = useId()
+
+  return (
+    <svg
+      viewBox={`0 0 ${PINNED_COMMAND_RING_SIZE} ${PINNED_COMMAND_RING_SIZE}`}
+      className={css({ position: 'absolute', inset: 0, overflow: 'visible' })}
+      aria-hidden='true'
+    >
+      <defs>
+        <filter id={`${id}-track`} x='-50%' y='-50%' width='200%' height='200%' colorInterpolationFilters='sRGB'>
+          <feGaussianBlur in='SourceAlpha' stdDeviation='7.73333' />
+          <feColorMatrix
+            type='matrix'
+            values='0 0 0 0 0.73419 0 0 0 0 0.73419 0 0 0 0 0.73419 0 0 0 0.5 0'
+            result='shadow'
+          />
+          <feBlend mode='normal' in='SourceGraphic' in2='shadow' result='shape' />
+          <feGaussianBlur in='shape' stdDeviation='4.2' />
+        </filter>
+        <linearGradient
+          id={`${id}-track-gradient`}
+          x1='6.916'
+          y1='54.165'
+          x2='88.916'
+          y2='-2.835'
+          gradientUnits='userSpaceOnUse'
+        >
+          <stop offset='0.129824' stopColor='#CECECE' stopOpacity='0.57' />
+          <stop offset='0.365404' stopColor='#878787' stopOpacity='0.32' />
+          <stop offset='0.778871' stopColor='white' />
+        </linearGradient>
+      </defs>
+      <g opacity='0.52' filter={`url(#${id}-track)`} style={{ mixBlendMode: 'hard-light' }}>
+        <circle
+          cx={CENTER_X}
+          cy={CENTER_Y}
+          r={TRACK_RADIUS}
+          fill='none'
+          stroke={`url(#${id}-track-gradient)`}
+          strokeWidth={STROKE_WIDTH}
+        />
+      </g>
+    </svg>
+  )
+}
+
+/** Paints one band of the arc, applying its blur after masking the gradient to the ring. */
+const RingBlurBand = ({ index, sweep, background }: { index: number; sweep: number; background: string }) => {
+  const sigma = BLUR_SIGMA_TAIL + (BLUR_SIGMA_HEAD - BLUR_SIGMA_TAIL) * ((index + 0.5) / BLUR_LAYERS)
+  const fade = 0.5 / BLUR_LAYERS
+  // Adjacent bands overlap and crossfade so their opacity sums to one. The first and last masks extend beyond
+  // the arc; the gradient itself defines the endpoints, avoiding a hard cut through the blur.
+  const bandStart = index === 0 ? [-1, -0.99] : [index / BLUR_LAYERS - fade, index / BLUR_LAYERS + fade]
+  const bandEnd =
+    index === BLUR_LAYERS - 1 ? [2, 3] : [(index + 1) / BLUR_LAYERS - fade, (index + 1) / BLUR_LAYERS + fade]
+  const bandMask = `conic-gradient(from 0deg at ${CENTER_X}px ${CENTER_Y}px, transparent ${(bandStart[0] * sweep).toFixed(2)}deg, black ${(bandStart[1] * sweep).toFixed(2)}deg, black ${(bandEnd[0] * sweep).toFixed(2)}deg, transparent ${(bandEnd[1] * sweep).toFixed(2)}deg)`
+  const mask = `${ANNULUS_MASK}, ${bandMask}`
+
+  return (
+    <div className={css({ position: 'absolute', inset: 0 })} style={{ filter: `blur(${sigma}px)` }}>
+      <div
+        className={css({
+          position: 'absolute',
+          inset: 0,
+          maskComposite: 'intersect',
+          WebkitMaskComposite: 'source-in' as string,
+        })}
+        style={{ background, maskImage: mask, WebkitMaskImage: mask }}
+      />
+    </div>
+  )
+}
+
+/** Paints a progress arc whose gradient and blur follow the arc from its tail to its head. */
+const BlurredProgressArc = ({ progress, stops }: { progress: number; stops: Stop[] }) => {
+  // Conic gradients start at 12 o'clock and run clockwise, matching the ring's progress direction.
   const sweep = progress * 360
   const colorStops = stops.map(([offset, color]) => `${color} ${(offset * sweep).toFixed(2)}deg`).join(', ')
   const headColor = stops[stops.length - 1][1]
-  const fade = 0.5 / BLUR_LAYERS
+  const background = `conic-gradient(from 0deg at ${CENTER_X}px ${CENTER_Y}px, ${colorStops}, ${headColor} ${sweep.toFixed(2)}deg, transparent ${sweep.toFixed(2)}deg)`
 
   return (
     <>
-      {Array.from({ length: BLUR_LAYERS }, (_, i) => {
-        const sigma = BLUR_SIGMA_TAIL + (BLUR_SIGMA_HEAD - BLUR_SIGMA_TAIL) * ((i + 0.5) / BLUR_LAYERS)
-        // Each band covers 1/BLUR_LAYERS of the arc and crossfades over ±fade into its neighbours so the two ramps
-        // sum to full opacity. The first band opens well before the tail and the last closes well after the head, so
-        // the arc ends are shaped by the gradient itself rather than cut by the mask.
-        const bandStart = i === 0 ? [-1, -0.99] : [i / BLUR_LAYERS - fade, i / BLUR_LAYERS + fade]
-        const bandEnd = i === BLUR_LAYERS - 1 ? [2, 3] : [(i + 1) / BLUR_LAYERS - fade, (i + 1) / BLUR_LAYERS + fade]
-        const bandMask = `conic-gradient(from 0deg at ${CENTER_X}px ${CENTER_Y}px, transparent ${(bandStart[0] * sweep).toFixed(2)}deg, black ${(bandStart[1] * sweep).toFixed(2)}deg, black ${(bandEnd[0] * sweep).toFixed(2)}deg, transparent ${(bandEnd[1] * sweep).toFixed(2)}deg)`
-        const mask = `${ANNULUS_MASK}, ${bandMask}`
-        return (
-          // the blur is on the wrapper so it applies after the inner element's masks
-          <div key={i} className={css({ position: 'absolute', inset: 0 })} style={{ filter: `blur(${sigma}px)` }}>
-            <div
-              className={css({
-                position: 'absolute',
-                inset: 0,
-                maskComposite: 'intersect',
-                WebkitMaskComposite: 'source-in' as string,
-              })}
-              style={{
-                background: `conic-gradient(from 0deg at ${CENTER_X}px ${CENTER_Y}px, ${colorStops}, ${headColor} ${sweep.toFixed(2)}deg, transparent ${sweep.toFixed(2)}deg)`,
-                maskImage: mask,
-                WebkitMaskImage: mask,
-              }}
-            />
-          </div>
-        )
-      })}
+      {Array.from({ length: BLUR_LAYERS }, (_, index) => (
+        <RingBlurBand key={index} index={index} sweep={sweep} background={background} />
+      ))}
     </>
   )
 }
 
 /**
- * The practice-progress ring around a pinned command. Renders the dim track, the progress arc from 0 to 1, and the
- * children (the command icon) at the center. The arc is mono while practicing and crossfades to the colorful fill when
- * complete; completion is derived by the caller, not stored here.
+ * Controls the visible fill, color, and spin. A flourish takes over the fill animation until it finishes,
+ * allowing the completing rep to flow straight into the celebration. Remains mounted when progress is zero.
  */
-const PinnedCommandRing = ({
-  progress,
-  complete,
-  animateCompletion = false,
-  children,
-}: PropsWithChildren<{
-  /** Practice progress from 0 (unstarted) to 1 (target reached). */
-  progress: number
-  /** Whether the target has been reached. Switches the fill from mono to colorful. */
-  complete: boolean
-  /** Fade to the completed color only for a local below-target to target crossing. */
-  animateCompletion?: boolean
-}>) => {
-  // filter and gradient ids must be unique when several rings are on one page, e.g. in the snapshot fixture
-  const id = useId()
-  const colorDuration = durations.get('pinnedCommandComplete') / 1000
-  const shouldAnimateCompletion = animateCompletion && !useReducedMotion()
-
-  return (
-    <div
-      className={css({ position: 'relative', flex: 'none' })}
-      style={{ width: PINNED_COMMAND_RING_SIZE, height: PINNED_COMMAND_RING_SIZE }}
-    >
-      {/* Track: the Figma export's stroke, layer blur, drop shadow, opacity and blend mode. */}
-      <svg
-        viewBox={`0 0 ${PINNED_COMMAND_RING_SIZE} ${PINNED_COMMAND_RING_SIZE}`}
-        className={css({ position: 'absolute', inset: 0, overflow: 'visible' })}
-        aria-hidden='true'
-      >
-        <defs>
-          <filter id={`${id}-track`} x='-50%' y='-50%' width='200%' height='200%' colorInterpolationFilters='sRGB'>
-            <feGaussianBlur in='SourceAlpha' stdDeviation='7.73333' />
-            <feColorMatrix
-              type='matrix'
-              values='0 0 0 0 0.73419 0 0 0 0 0.73419 0 0 0 0 0.73419 0 0 0 0.5 0'
-              result='shadow'
-            />
-            <feBlend mode='normal' in='SourceGraphic' in2='shadow' result='shape' />
-            <feGaussianBlur in='shape' stdDeviation='4.2' />
-          </filter>
-          <linearGradient
-            id={`${id}-track-gradient`}
-            x1='6.916'
-            y1='54.165'
-            x2='88.916'
-            y2='-2.835'
-            gradientUnits='userSpaceOnUse'
-          >
-            <stop offset='0.129824' stopColor='#CECECE' stopOpacity='0.57' />
-            <stop offset='0.365404' stopColor='#878787' stopOpacity='0.32' />
-            <stop offset='0.778871' stopColor='white' />
-          </linearGradient>
-        </defs>
-        <g opacity='0.52' filter={`url(#${id}-track)`} style={{ mixBlendMode: 'hard-light' }}>
-          <circle
-            cx={CENTER_X}
-            cy={CENTER_Y}
-            r={TRACK_RADIUS}
-            fill='none'
-            stroke={`url(#${id}-track-gradient)`}
-            strokeWidth={STROKE_WIDTH}
-          />
-        </g>
-      </svg>
-
-      {progress > 0 && (
-        <>
-          <motion.div
-            className={css({ position: 'absolute', inset: 0 })}
-            initial={false}
-            animate={{ opacity: complete ? 0 : 1 }}
-            transition={{ duration: shouldAnimateCompletion ? colorDuration : 0 }}
-          >
-            <FillArc progress={progress} stops={STOPS_MONO} />
-          </motion.div>
-          {complete && (
-            <motion.div
-              className={css({ position: 'absolute', inset: 0 })}
-              initial={{ opacity: shouldAnimateCompletion ? 0 : 1 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: shouldAnimateCompletion ? colorDuration : 0 }}
-            >
-              <FillArc progress={progress} stops={STOPS_COLORFUL} />
-            </motion.div>
-          )}
-        </>
-      )}
-
-      <div
-        className={css({
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        })}
-      >
-        {children}
-      </div>
-    </div>
+const RingProgress = ({ progress, flourish = 0, activeOpacity }: RingProgressProps) => {
+  const prefersReducedMotion = useReducedMotion()
+  const [renderedProgress, setRenderedProgress] = useState(progress)
+  const currentProgress = useRef(progress)
+  const visibleProgress = prefersReducedMotion ? progress : renderedProgress
+  const [isFlourishing, setIsFlourishing] = useState(false)
+  const previousFlourish = useRef(flourish)
+  const fillAnimation = useRef<{ stop: () => void } | null>(null)
+  // While a flourish plays it drives the fill, so the fill effect must not start a competing animation.
+  const flourishOwnsFill = useRef(false)
+  const flourishAnimation = useRef<{ stop: () => void } | null>(null)
+  // One master timeline drives the whole flourish, so the spin, the color, and the last segment of the fill are
+  // always in step: rotation is t × 360°, color is a bell that peaks at the half turn, and a fill that was still
+  // short of full closes over the first half so the arc completes at the brightest moment.
+  const flourishT = useMotionValue(0)
+  const spin = useTransform(flourishT, value => (prefersReducedMotion ? 0 : value * 360))
+  const flourishColorOpacity = useTransform(flourishT, value => Math.sin(Math.PI * value))
+  const inactiveOpacity = useMotionValue(0)
+  const activeColorOpacity = activeOpacity ?? inactiveOpacity
+  const [isActiveColor, setIsActiveColor] = useState(activeColorOpacity.get() > 0)
+  const colorOpacity = useTransform([flourishColorOpacity, activeColorOpacity], ([flourishColor, tooltipColor]) =>
+    Math.max(flourishColor as number, tooltipColor as number),
   )
+  const monoOpacity = useTransform(colorOpacity, value => 1 - value)
+
+  useMotionValueEvent(activeColorOpacity, 'change', value => setIsActiveColor(value > 0))
+
+  /** Plays the flourish from wherever the fill currently is, taking over any fill animation in progress. */
+  const startFlourish = useCallback(() => {
+    fillAnimation.current?.stop()
+    flourishAnimation.current?.stop()
+    const from = currentProgress.current
+    flourishT.set(0)
+    flourishOwnsFill.current = true
+    setIsFlourishing(true)
+    flourishAnimation.current = animate(flourishT, [0, 1], {
+      duration: durations.get('pinnedCommandFlourish') / 1000,
+      ease: 'easeInOut',
+      onUpdate: value => {
+        // Close the remaining fill over the first half of the turn.
+        const fill = from + (1 - from) * Math.min(1, value * 2)
+        currentProgress.current = fill
+        setRenderedProgress(fill)
+      },
+      onComplete: () => {
+        currentProgress.current = 1
+        setRenderedProgress(1)
+        flourishOwnsFill.current = false
+        setIsFlourishing(false)
+      },
+    })
+  }, [flourishT])
+
+  useEffect(() => {
+    if (flourish === previousFlourish.current) return
+    previousFlourish.current = flourish
+    startFlourish()
+  }, [flourish, startFlourish])
+
+  useEffect(() => {
+    // A flourish owns the fill while it plays; the completing rep changes progress and flourish together.
+    if (flourishOwnsFill.current) return
+    if (prefersReducedMotion || currentProgress.current === progress) {
+      currentProgress.current = progress
+      setRenderedProgress(progress)
+      return
+    }
+
+    // Start from the visible angle so consecutive reps never jump backwards or restart the arc.
+    const animation = animate(currentProgress.current, progress, {
+      duration: durations.get('medium') / 1000,
+      onUpdate: value => {
+        currentProgress.current = value
+        setRenderedProgress(value)
+      },
+    })
+    fillAnimation.current = animation
+    return () => animation.stop()
+  }, [progress, prefersReducedMotion])
+
+  useEffect(() => () => flourishAnimation.current?.stop(), [])
+
+  return progress > 0 ? (
+    // The spin rotates the arcs about the ring center, which is not the box center.
+    <motion.div
+      className={css({ position: 'absolute', inset: 0, transformOrigin: '36.42px 36.16px' })}
+      style={{ rotate: spin }}
+    >
+      <motion.div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: monoOpacity }}>
+        <BlurredProgressArc progress={visibleProgress} stops={STOPS_MONO} />
+      </motion.div>
+      {(isFlourishing || isActiveColor) && (
+        <motion.div className={css({ position: 'absolute', inset: 0 })} style={{ opacity: colorOpacity }}>
+          <BlurredProgressArc progress={visibleProgress} stops={STOPS_COLORFUL} />
+        </motion.div>
+      )}
+    </motion.div>
+  ) : null
 }
+
+/** Centers the supplied command icon without changing the ring's geometry. */
+const RingIcon = ({ children }: PropsWithChildren) => (
+  <div
+    className={css({
+      position: 'absolute',
+      inset: 0,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    })}
+  >
+    {children}
+  </div>
+)
+
+/** Composes the background track, animated progress, and centered command icon. */
+const PinnedCommandRing = ({ children, ...progressProps }: PropsWithChildren<RingProgressProps>) => (
+  <div
+    className={css({ position: 'relative', flex: 'none' })}
+    style={{ width: PINNED_COMMAND_RING_SIZE, height: PINNED_COMMAND_RING_SIZE }}
+  >
+    <RingTrack />
+    <RingProgress {...progressProps} />
+    <RingIcon>{children}</RingIcon>
+  </div>
+)
 
 export default PinnedCommandRing

@@ -13,7 +13,7 @@ Two queues bridge Redux and the local TreeCRDT store:
 
 The single point of integration with persistence is the [`DataProvider`](../src/data-providers/DataProvider.ts) interface, implemented by the active thoughtspace backend. [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exports both the active provider (`db`) and the `ThoughtspaceRuntime` that owns its lifecycle; today both are the TreeCRDT implementation.
 
-Learning state has a separate device-local boundary: [`learningStorage.ts`](../src/data-providers/learningStorage.ts) stores the pinned command and its practice progress in `localStorage` under a versioned key. It is shared across thoughtspaces on the same device and is not replicated by TreeCRDT.
+Learning state uses the same [`storageModel`](../src/stores/storageModel.ts) as font size and jump history. It stores the pinned command and its practice progress in `localStorage` under `learning`, and [`initialState`](../src/util/initialState.ts) restores it when Redux initializes. The pinned selection is intentionally device-specific. Practice progress is also local for now; user-wide progress synchronization is deferred. Neither is currently replicated by TreeCRDT. Local storage is scoped to the browser profile and app origin, so separate installations on the same device do not share this state.
 
 ## In-memory state (Redux)
 

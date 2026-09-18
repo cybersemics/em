@@ -56,16 +56,21 @@ const PinCommandRow = ({ command }: { command: Command }) => {
         onClick={() => dispatch(isPinned ? unpinCommand() : pinCommand({ commandId: command.id }))}
         className={css({
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           gap: '1rem',
           width: '100%',
-          padding: '0.75rem 0',
+          padding: '1.5rem 0.5rem 0',
           background: 'transparent',
           border: 'none',
           textAlign: 'left',
           color: 'fg',
           fontFamily: 'inherit',
           cursor: 'pointer',
+          transition: `opacity {durations.fast} ease-out`,
+          '&:active': {
+            opacity: 0.5,
+          },
+          userSelect: 'none',
         })}
       >
         <div
@@ -76,6 +81,7 @@ const PinCommandRow = ({ command }: { command: Command }) => {
             justifyContent: 'center',
             width: '36px',
             height: '36px',
+            marginTop: '0.75rem',
           })}
         >
           {isPinned ? (
@@ -91,23 +97,33 @@ const PinCommandRow = ({ command }: { command: Command }) => {
             className={css({
               margin: 0,
               marginTop: '0.25rem',
-              color: 'fgOverlay75',
-              fontSize: '0.75rem',
+              color: 'commandUniverseLongDescriptionText',
+              fontSize: '0.8rem',
               lineHeight: 1.35,
             })}
           >
             {isPinned
-              ? 'Remove this command from the corner. Your practice progress is kept.'
-              : 'Pin this command to the corner to help you practice and memorise it.'}
-            {pinnedCommand && !isPinned ? (
-              <>
-                {' '}
-                This will replace the currently pinned command: <b>{pinnedCommand.label}</b>.
-              </>
-            ) : null}
+              ? 'Remove this command from the corner of the screen.'
+              : 'Pin this command to the corner of the screen to help you practice and memorise it.'}
           </p>
+          {pinnedCommand && !isPinned ? (
+            <p
+              className={css({
+                margin: 0,
+                marginTop: '0.25rem',
+                color: 'commandUniverseLongDescriptionText',
+                fontSize: '0.8rem',
+                lineHeight: 1.35,
+              })}
+            >
+              {' '}
+              This will replace the currently pinned command: <b>{pinnedCommand.label}</b>.
+            </p>
+          ) : null}
         </div>
-        <ArrowRightIcon size={20} fill={token('colors.fgOverlay75')} cssRaw={css.raw({ flex: 'none' })} />
+        <div>
+          <ArrowRightIcon size={20} fill={token('colors.fgOverlay75')} cssRaw={css.raw({ flex: 'none' })} />
+        </div>
       </button>
     </div>
   )
@@ -132,7 +148,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
         <header
           className={css({
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             gap: '1.3rem',
             paddingTop: '0.35rem',
             paddingBottom: '1.375rem',
@@ -146,6 +162,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
               justifyContent: 'center',
               width: '36px',
               height: '36px',
+              marginTop: '0.5rem',
             })}
           >
             <Icon cssRaw={css.raw({ flex: 'none' })} size={36} fill={iconFill} />

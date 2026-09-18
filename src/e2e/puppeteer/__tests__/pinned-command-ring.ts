@@ -1,4 +1,4 @@
-/** Snapshots only. Covers the pinned command ring's geometry and gradients at fixed progress states. The screenshot helper disables filters, so the blur itself is not part of the snapshot. */
+/** Snapshots only. Covers the pinned command ring's geometry, gradients, blur, and shadows at fixed progress states, including a supplied colorful state. */
 import path from 'path'
 import configureSnapshots from '../configureSnapshots'
 import openModal from '../helpers/openModal'
@@ -13,5 +13,5 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 it('PinnedCommandRing', async () => {
   await openModal('testPinnedCommandRing')
 
-  expect(await screenshot()).toMatchImageSnapshot()
+  expect(await screenshot({ preserveFilters: true })).toMatchImageSnapshot()
 })

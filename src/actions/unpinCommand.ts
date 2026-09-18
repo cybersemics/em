@@ -1,21 +1,21 @@
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import learningStorage from '../data-providers/learningStorage'
+import storageModel from '../stores/storageModel'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-/** Clears the pinned command. All practice progress is retained so that repinning restores it. */
+/** Clears the pinned command and erases its practice reps. Progress exists only while a command is pinned. */
 const unpinCommand = (state: State): State => ({
   ...state,
   learning: {
-    ...state.learning,
     pinnedCommandId: null,
+    progress: {},
   },
 })
 
 /** Action-creator for unpinCommand. */
 export const unpinCommandActionCreator = (): Thunk => (dispatch, getState) => {
   dispatch({ type: 'unpinCommand' })
-  learningStorage.save(getState().learning)
+  storageModel.set('learning', getState().learning)
 }
 
 export default unpinCommand

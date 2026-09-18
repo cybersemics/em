@@ -1,4 +1,4 @@
-import { FC } from 'react'
+import { FC, RefObject, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -26,11 +26,15 @@ interface CommandUniverseGridItemProps {
   command: Command
   /** Search text that will be highlighted within the matched command title. */
   search?: string
+  /** The inner dialog scroller used to decide when this cell's gesture is near view. */
+  scrollRootRef: RefObject<HTMLDivElement | null>
 }
 
 /** Renders a single command as a cell in CommandUniverseGrid. */
-const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '' }) => {
+const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '', scrollRootRef }) => {
   const dispatch = useDispatch()
+  const gestureBoxRef = useRef<HTMLDivElement>(null)
+  const [showGesture, setShowGesture] = useState(false)
   const isActive = useSelector(state => command.isActive?.(state))
   const disabled = useSelector(state => !isExecutable(state, command))
   const label = command.labelInverse && isActive ? command.labelInverse : command.label
@@ -43,17 +47,51 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
 
   const Icon = command.svg ?? SettingsIcon
 
+  useEffect(() => {
+    const box = gestureBoxRef.current
+    const scrollRoot = scrollRootRef.current
+    if (!isTouch || !box || !scrollRoot) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const page = box.closest('[data-entry-id]')
+        // A hidden page may load diagrams for Back, but must not remove ones that were visible before the zoom.
+        if (page?.getAttribute('aria-hidden') === 'true' || page?.hasAttribute('inert')) {
+          if (entry.isIntersecting) setShowGesture(true)
+          return
+        }
+        setShowGesture(entry.isIntersecting)
+      },
+      { root: scrollRoot, rootMargin: '180px 0px' },
+    )
+    observer.observe(box)
+    return () => observer.disconnect()
+  }, [scrollRootRef])
+
   return (
     <tr>
       <td className={css({ display: 'block', height: '100%' })}>
         <button
           type='button'
           aria-label={label}
-          onClick={event =>
+          onClick={event => {
+            const root = event.currentTarget.closest('[data-entry-id]')?.parentElement
+            if (!root) throw new Error('Command Universe transition root is missing.')
+            const cell = event.currentTarget.getBoundingClientRect()
+            const page = root.getBoundingClientRect()
             dispatch(
-              commandUniverseNavigate('detail', { command }, { origin: event.currentTarget.getBoundingClientRect() }),
+              commandUniverseNavigate(
+                'detail',
+                { command },
+                {
+                  origin: {
+                    x: (cell.x + cell.width / 2 - page.x) / page.width,
+                    y: (cell.y + cell.height / 2 - page.y) / page.height,
+                  },
+                },
+              ),
             )
-          }
+          }}
           className={css({
             position: 'relative',
             cursor: 'pointer',
@@ -103,6 +141,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
               })}
             >
               <div
+                ref={gestureBoxRef}
                 className={css({
                   width: '100%',
                   aspectRatio: '1 / 1',
@@ -110,18 +149,20 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
                   margin: '0 auto',
                 })}
               >
-                <GestureDiagram
-                  path={gestureString(command)}
-                  cssRaw={css.raw({ display: 'block' })}
-                  size={150}
-                  arrowSize={1}
-                  strokeWidth={12}
-                  arrowhead='outlined-wide'
-                  cornerRadius={12}
-                  rounded={command.rounded}
-                  gradient={GESTURE_GRADIENT}
-                  glow={false}
-                />
+                {showGesture && (
+                  <GestureDiagram
+                    path={gestureString(command)}
+                    cssRaw={css.raw({ display: 'block' })}
+                    size={150}
+                    arrowSize={1}
+                    strokeWidth={12}
+                    arrowhead='outlined-wide'
+                    cornerRadius={12}
+                    rounded={command.rounded}
+                    gradient={GESTURE_GRADIENT}
+                    glow={false}
+                  />
+                )}
               </div>
             </div>
           ) : null}

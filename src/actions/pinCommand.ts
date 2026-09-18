@@ -1,23 +1,24 @@
 import _ from 'lodash'
 import CommandId from '../@types/CommandId'
+import { CommandLearningProgress } from '../@types/LearningState'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { LEARNING_TARGET_REPS } from '../constants'
-import learningStorage from '../data-providers/learningStorage'
+import storageModel from '../stores/storageModel'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 /**
- * Pins a command to the persistent corner widget, replacing any previously pinned command. Initializes a practice
- * record for the command if it has none, capturing the current default target; repinning a command reuses its existing
- * record, so partial and completed progress is retained. Pinning never executes the command.
+ * Pins a command to the persistent corner widget, replacing any previously pinned command and erasing that command's
+ * reps. Starts a fresh practice record at the current default target unless this command is already the pinned one,
+ * in which case its record is kept. Pinning never executes the command.
  */
 const pinCommand = (state: State, { commandId }: { commandId: CommandId }): State => ({
   ...state,
   learning: {
     pinnedCommandId: commandId,
-    progress: state.learning.progress[commandId]
-      ? state.learning.progress
-      : { ...state.learning.progress, [commandId]: { reps: 0, targetReps: LEARNING_TARGET_REPS } },
+    progress: {
+      [commandId]: state.learning.progress[commandId] ?? { reps: 0, targetReps: LEARNING_TARGET_REPS },
+    } satisfies Record<string, CommandLearningProgress>,
   },
 })
 
@@ -26,7 +27,7 @@ export const pinCommandActionCreator =
   (payload: Parameters<typeof pinCommand>[1]): Thunk =>
   (dispatch, getState) => {
     dispatch({ type: 'pinCommand', ...payload })
-    learningStorage.save(getState().learning)
+    storageModel.set('learning', getState().learning)
   }
 
 export default _.curryRight(pinCommand)

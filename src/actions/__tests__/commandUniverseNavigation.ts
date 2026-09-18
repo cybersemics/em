@@ -68,6 +68,33 @@ it('reverses an entry arrival on Back and replays it on Forward', () => {
   expect(forward.commandUniverseNavigation.transition?.zoom).toBe('out')
 })
 
+it('accepts an explicit zoom transition', () => {
+  const state = toggleMobileCommandUniverse(initialState(), { value: true })
+  const visited = commandUniverseNavigate(state, {
+    entryId: 'zoom-detail',
+    page: { pageId: 'detail', props: { command } },
+    arrival: { zoom: 'in', origin: null },
+    transition: 'zoom',
+  })
+
+  expect(visited.commandUniverseNavigation.transition?.type).toBe('zoom')
+})
+
+it('supports no transition for a direct detail visit while retaining its Back history', () => {
+  const state = toggleMobileCommandUniverse(initialState(), { value: true })
+  const visited = commandUniverseNavigate(state, {
+    entryId: 'direct-detail',
+    page: { pageId: 'detail', props: { command } },
+    arrival: { zoom: 'in', origin: null },
+    transition: 'none',
+  })
+
+  expect(visited.commandUniverseNavigation.entries.map(entry => entry.page.pageId)).toEqual(['grid', 'detail'])
+  expect(visited.commandUniverseNavigation.transition?.type).toBe('none')
+  const back = commandUniverseBack(commandUniverseFinishTransition(visited, { transitionId: 'direct-detail' }))
+  expect(back.commandUniverseNavigation.index).toBe(0)
+})
+
 it('drops the abandoned forward branch while keeping the reachable history', () => {
   const state = toggleMobileCommandUniverse(initialState(), { value: true })
   const first = commandUniverseNavigate(state, {

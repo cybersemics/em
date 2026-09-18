@@ -3,6 +3,7 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
+import { commandById } from '../commands'
 import { BASE_FONT_SIZE, PINNED_COMMAND_RESERVED_WIDTH } from '../constants'
 import isTutorial from '../selectors/isTutorial'
 import backgroundGlowStore from '../stores/backgroundGlowStore'
@@ -54,7 +55,9 @@ const NavBar = ({ position }: { position: string }) => {
   // While a background glow image is selected, the blackout is disabled entirely; the glow falloff in BackgroundGlow fades the content out above the nav bar instead.
   const glowImage = backgroundGlowStore.useSelector(state => state.image)
   // While a command is pinned, the row ends short of the right edge so the breadcrumbs and buttons do not run under the pinned command ring. The blackout on the nav element itself stays full width.
-  const isCommandPinned = useSelector(state => !!state.learning.pinnedCommandId)
+  const isCommandPinned = useSelector(state =>
+    Boolean(state.learning.pinnedCommandId && commandById(state.learning.pinnedCommandId)),
+  )
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
 

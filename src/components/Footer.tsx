@@ -9,7 +9,7 @@ import { alertActionCreator as alert } from '../actions/alert'
 import fontSizeDown from '../actions/fontSizeDown'
 import fontSizeUp from '../actions/fontSizeUp'
 import { showModalActionCreator as showModal } from '../actions/showModal'
-import { PINNED_COMMAND_RESERVED_WIDTH, TUTORIAL2_STEP_SUCCESS } from '../constants'
+import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { tsid } from '../data-providers/thoughtspaceSession'
 import scrollTo from '../device/scrollTo'
 import getSetting from '../selectors/getSetting'
@@ -241,7 +241,6 @@ const BackgroundGlowPicker = () => {
 const Footer = () => {
   const dispatch = useDispatch()
   const { tutorialStep, isTutorialOn, fontSize } = useFooterUseSelectors()
-  const isCommandPinned = useSelector(state => !!state.learning.pinnedCommandId)
 
   // useWhyDidYouUpdate('<Footer>', {
   //   authenticated,
@@ -271,8 +270,6 @@ const Footer = () => {
   return (
     <ul
       aria-label='footer'
-      // The pinned command ring is fixed to the bottom-right corner, so keep the right-aligned links clear of it. Panda cannot extract a runtime padding, so it stays inline.
-      style={isCommandPinned ? { paddingRight: `calc(1.75em + ${PINNED_COMMAND_RESERVED_WIDTH}px)` } : undefined}
       className={css({
         position: 'relative',
         padding: '1.75em',

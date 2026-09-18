@@ -15,38 +15,37 @@ it('pin a command and start a fresh progress record at the default target', () =
   })
 })
 
-it('replace the pinned command and keep the previous command’s progress', () => {
-  const stateNew = reducerFlow([pinCommand({ commandId: 'newThought' }), pinCommand({ commandId: 'indent' })])(
-    initialState(),
-  )
+it('replace the pinned command and erase the previous command’s reps', () => {
+  const started = {
+    ...initialState(),
+    learning: { pinnedCommandId: 'newThought' as const, progress: { newThought: { reps: 2, targetReps: 5 } } },
+  }
+  const stateNew = reducerFlow([pinCommand({ commandId: 'indent' })])(started)
 
   expect(stateNew.learning).toEqual({
     pinnedCommandId: 'indent',
-    progress: {
-      newThought: { reps: 0, targetReps: 5 },
-      indent: { reps: 0, targetReps: 5 },
-    },
+    progress: { indent: { reps: 0, targetReps: 5 } },
   })
 })
 
-it('repin a command without resetting its existing progress record', () => {
+it('pin the already pinned command and keep its reps', () => {
   const started = {
     ...initialState(),
-    learning: { pinnedCommandId: null, progress: { newThought: { reps: 2, targetReps: 5 } } },
+    learning: { pinnedCommandId: 'newThought' as const, progress: { newThought: { reps: 2, targetReps: 5 } } },
   }
-  const stateNew = reducerFlow([pinCommand({ commandId: 'indent' }), pinCommand({ commandId: 'newThought' })])(started)
+  const stateNew = reducerFlow([pinCommand({ commandId: 'newThought' })])(started)
 
-  expect(stateNew.learning.pinnedCommandId).toBe('newThought')
   expect(stateNew.learning.progress.newThought).toEqual({ reps: 2, targetReps: 5 })
 })
 
-it('unpin keeps every progress record', () => {
-  const stateNew = reducerFlow([pinCommand({ commandId: 'newThought' }), unpinCommand])(initialState())
+it('unpin erases the command’s reps', () => {
+  const started = {
+    ...initialState(),
+    learning: { pinnedCommandId: 'newThought' as const, progress: { newThought: { reps: 2, targetReps: 5 } } },
+  }
+  const stateNew = reducerFlow([unpinCommand])(started)
 
-  expect(stateNew.learning).toEqual({
-    pinnedCommandId: null,
-    progress: { newThought: { reps: 0, targetReps: 5 } },
-  })
+  expect(stateNew.learning).toEqual({ pinnedCommandId: null, progress: {} })
 })
 
 describe('undo', () => {

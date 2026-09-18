@@ -3,10 +3,13 @@ import CommandId from '../@types/CommandId'
 import CommandType from '../@types/CommandType'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
-import learningStorage from '../data-providers/learningStorage'
+import storageModel from '../stores/storageModel'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-/** Records a completed command invocation and awards one practice rep when it matches the active pin. */
+/**
+ * Records a completed command invocation and awards one practice rep when it matches the active pin. Reps keep
+ * counting past the target so the widget can react to practice after completion.
+ */
 const commandSucceeded = (
   state: State,
   { commandId, source, userInitiated }: { commandId: CommandId; source: CommandType; userInitiated: boolean },
@@ -16,8 +19,7 @@ const commandSucceeded = (
     !userInitiated ||
     (source !== 'keyboard' && source !== 'gesture') ||
     state.learning.pinnedCommandId !== commandId ||
-    !record ||
-    record.reps >= record.targetReps
+    !record
   ) {
     return state
   }
@@ -41,7 +43,7 @@ export const commandSucceededActionCreator =
     const learningBefore = getState().learning
     dispatch({ type: 'commandSucceeded', ...payload })
     const learningAfter = getState().learning
-    if (learningAfter !== learningBefore) learningStorage.save(learningAfter)
+    if (learningAfter !== learningBefore) storageModel.set('learning', learningAfter)
   }
 
 export default _.curryRight(commandSucceeded)

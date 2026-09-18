@@ -416,6 +416,8 @@ While we prefer to avoid backdoor access to state in integration tests, it is re
 
 #### Visual snapshot tests
 
+The [`screenshot`](../src/e2e/puppeteer/helpers/screenshot.ts) helper disables CSS filters by default for consistent rendering. Tests whose visual contract includes blur or filter-based shadows can use `screenshot({ preserveFilters: true })`; the other screenshot normalization settings still apply.
+
 Snapshot tests are a specific type of puppeteer test used to prevent visual regressions. They automate taking a screenshot on your PR branch and then comparing it to a reference screenshot in `main`. If the screenshot differs by a certain number of pixels, then it is considered a regression and the test will fail. In the case of a failed snapshot test, a visual diff will be generated that allows you to see why it failed.
 
 Do not use snapshot tests for testing behavior (such as the result of a user action). Instead, select DOM elements by aria label or data-testid. Use snapshot tests for covering visual regressions such as positioning, layout, svg rendering, and general appearance of components.
