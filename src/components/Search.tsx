@@ -88,6 +88,13 @@ const Search: FC = () => {
                   '&[contenteditable]': {
                     display: 'block',
                     paddingTop: 0,
+                    // The magnifier is absolutely positioned in the gutter, so its 22px glyph reaches 10px into the
+                    // input. Pad the text by that intrusion + 6px so it always clears the glyph, and drop the
+                    // editable's bullet spacing margin, which scales with the font size and would otherwise pull the
+                    // text back over the glyph at small font sizes. Written as literals because Panda's `css()` is
+                    // compile-time and won't evaluate `${expr}`.
+                    marginLeft: 0,
+                    paddingLeft: '16px',
                   },
                   // 'empty'
                   '&:empty::before': {
