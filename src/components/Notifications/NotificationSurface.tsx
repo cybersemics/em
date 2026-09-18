@@ -31,6 +31,18 @@ interface NotificationSurfaceProps {
   onOpacityChange?: (opacity: number) => void
   /** Enable the touch swipe interaction on the content layer. */
   swipeToDismiss?: boolean
+  /**
+   * Let pointer events over the content layer fall through to the page beneath, so a decorative child such as a
+   * gesture diagram does not intercept a trace meant for the thoughtspace. Children that should stay interactive set
+   * pointer-events: auto themselves; swipe-to-dismiss still works from those children because their touches bubble
+   * to the content layer.
+   */
+  passThrough?: boolean
+  /**
+   * Fade the blur, scrim, and glow to half strength, for while the user interacts with the page beneath. Children
+   * are not affected, so the consumer decides which of them dim along.
+   */
+  dimmed?: boolean
   /** Notification-specific content. */
   children: ReactNode
 }
@@ -44,6 +56,8 @@ const NotificationSurface = ({
   onDismiss,
   onOpacityChange,
   swipeToDismiss = false,
+  passThrough = false,
+  dimmed = false,
   children,
 }: NotificationSurfaceProps) => {
   usePrefetchImages(GLOW_IMAGES[glow])
@@ -67,6 +81,18 @@ const NotificationSurface = ({
     [swipeOpacity, visibilityOpacity],
     ([swipe, visibility]) => (swipe as number) * (visibility as number),
   )
+  // The dim multiplies the decorative layers only. It is kept out of `opacity` so consumers following the surface's
+  // opacity, such as the ring's scale, are unaffected.
+  const dimOpacity = useMotionValue(1)
+  const dimmedOpacity = useTransform([opacity, dimOpacity], ([base, dim]) => (base as number) * (dim as number))
+
+  useEffect(() => {
+    const controls = animate(dimOpacity, dimmed ? 0.5 : 1, {
+      duration: durations.get('fast') / 1000,
+      ease: NOTIFICATION_EASING.open,
+    })
+    return () => controls.stop()
+  }, [dimmed, dimOpacity])
   const slots = notificationRecipe({ anchor, glow })
 
   useEffect(() => {
@@ -103,28 +129,28 @@ const NotificationSurface = ({
       {/* ProgressiveBlur keeps its own opacity so Safari can animate backdrop-filter correctly. */}
       <div data-notification-blur=''>
         <div data-notification-blur-mobile=''>
-          <ProgressiveBlur direction='to top' maxBlur={24} layers={3} opacity={opacity} />
+          <ProgressiveBlur direction='to top' maxBlur={24} layers={3} opacity={dimmedOpacity} />
         </div>
         <div data-notification-blur-desktop=''>
           <ProgressiveBlur
             direction='to top'
             maxBlur={24}
             layers={3}
-            opacity={opacity}
+            opacity={dimmedOpacity}
             mask={NOTIFICATION_CORNER_MASK}
           />
         </div>
-        <motion.div data-notification-gradient='' style={{ opacity: opacity }} />
+        <motion.div data-notification-gradient='' style={{ opacity: dimmedOpacity }} />
       </div>
       <motion.div data-notification-opacity-wrapper='' style={{ opacity }}>
         <motion.div
           className={slots.glow}
           data-notification-glow={glow}
-          style={{ backgroundImage: `url(${GLOW_IMAGES[glow][0]})` }}
+          style={{ opacity: dimOpacity, backgroundImage: `url(${GLOW_IMAGES[glow][0]})` }}
         />
         <div
           className={slots.content}
-          style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
+          style={{ pointerEvents: isVisible && !passThrough ? 'auto' : 'none' }}
           {...(swipeToDismiss ? touchHandlers : {})}
         >
           {children}
