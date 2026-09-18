@@ -39,6 +39,7 @@ import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
+import multitouchStore from '../stores/multitouchStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import appendToPath from '../util/appendToPath'
 import debugLog from '../util/debugLog'
@@ -64,6 +65,13 @@ export type DropValidationResult = {
 const canDrag = (props: ThoughtContainerProps) => {
   const hasSelectionRange = selectionRangeStore.getState()
   if (isTouch && hasSelectionRange) return false
+
+  // Reject multi-touch input so that two-finger tracing is not interpreted as a drag-and-drop.
+  // react-dnd's TouchBackend initiates a drag from the primary touch and has no multi-touch rejection
+  // of its own, so a two-finger trace over a thought would otherwise begin a drag. The multitouch store
+  // latches while more than one finger is down and stays set until every finger lifts, so a finger lifting
+  // mid-gesture cannot re-open the drag. See #4233.
+  if (isTouch && multitouchStore.getState()) return false
 
   const state = store.getState()
   const thoughtId = head(props.simplePath)
