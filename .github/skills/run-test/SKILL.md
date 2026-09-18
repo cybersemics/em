@@ -34,13 +34,13 @@ The puppeteer harness is **self-contained**: `test-puppeteer.sh` starts a browse
 
 ```bash
 # whole file
-GITHUB_ACTIONS="" ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts
+env -u CI -u GITHUB_ACTIONS ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts
 
 # a single test by name
-GITHUB_ACTIONS="" ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts -t "<it name>"
+env -u CI -u GITHUB_ACTIONS ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts -t "<it name>"
 ```
 
-**The `GITHUB_ACTIONS=""` prefix is required here.** The script only starts browserless + the `:2552` server when `GITHUB_ACTIONS` is unset; in real CI those are provided by the workflow, so it skips them. An agent runner sets `GITHUB_ACTIONS=true` (so the script would skip) but does **not** provide those services — the test would then fail connecting to `ws://localhost:7566`. Clearing the var **only for this command** makes the script self-provision; leave `CI` set (the harness still needs it). This mirrors the `puppeteer-update-snapshots` skill.
+**Clearing both vars is required here — `GITHUB_ACTIONS` so the services start, `CI` so the tests are pointed at them.** The script only starts browserless + the `:2552` server when `GITHUB_ACTIONS` is unset; in real CI those are provided by the workflow, so it skips them. An agent runner sets `GITHUB_ACTIONS=true` (so the script would skip) but does **not** provide those services — the test would then fail connecting to `ws://localhost:7566`. `CI` then decides which app URL the suite opens (`setup.ts`): set means `https://172.17.0.1:3000`, unset means `https://host.docker.internal:2552` — and `:2552` is the server the script just started, whereas `:3000` is up only where a runner's setup phase left `yarn start` running, as the Copilot one does and a Claude Code cloud session does not (there every test fails with `net::ERR_CONNECTION_REFUSED`). Clearing both **only for this command** works in either. This mirrors the `puppeteer-update-snapshots` skill.
 
 Prerequisite: **Docker** available (for browserless). The script manages the container and dev server itself — do not start your own, and do not point it at the shared `:9222` Chrome / `:3000` server used during exploration.
 
