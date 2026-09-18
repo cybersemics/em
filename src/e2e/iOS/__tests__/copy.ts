@@ -3,7 +3,7 @@ import gesture from '../helpers/gesture'
 import paste from '../helpers/paste'
 import recordClipboardWrites from '../helpers/recordClipboardWrites'
 import tap from '../helpers/tap'
-import { toolbarTapOptions } from '../helpers/tapToolbar'
+import tapToolbar, { toolbarTapOptions } from '../helpers/tapToolbar'
 import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForElement from '../helpers/waitForElement'
 
@@ -12,13 +12,34 @@ describe('Copy', () => {
   it('carries underline, strikethrough, text color, and background highlight onto the clipboard', async () => {
     await paste(`
       - a
-        - <u>One</u>
-        - <strike>Two</strike>
-        - <font color="#aa80ff">Three</font>
-        - <font style="background-color: rgb(0, 199, 230);">Four</font>
+        - One
+        - Two
+        - Three
+        - Four
     `)
 
+    await clickThought('One')
+    await tapToolbar('Underline')
+
+    await clickThought('Two')
+    await tapToolbar('Strikethrough')
+
+    await clickThought('Three')
+    await tapToolbar('Text Color', 'text color swatches', 'purple')
+
+    // The picker stays open, so tap the background swatch directly; tapToolbar would toggle it closed.
+    await clickThought('Four')
+    await tap(
+      await waitForElement(
+        '[data-testid="toolbar-icon"][aria-label="Text Color"] [aria-label="background color swatches"] [aria-label="blue"]',
+      ),
+      toolbarTapOptions,
+    )
+
     const clipboardWrites = await recordClipboardWrites()
+
+    // Close the picker, whose popover would otherwise sit over the swipe that opens the Command Center.
+    await tapToolbar('Text Color')
 
     // Copy Cursor copies the cursor and all of its descendants, so all four formats ride on one copy.
     await clickThought('a')
@@ -34,8 +55,7 @@ describe('Copy', () => {
     expect(writes[0].accepted).toBe(true)
     expect(writes[0].contents['text/html']).toContain('<u>One</u>')
     expect(writes[0].contents['text/html']).toContain('<strike>Two</strike>')
-    // import normalizes a <font color> into an equivalent span, so the copy carries the style form.
-    expect(writes[0].contents['text/html']).toContain('color: #aa80ff')
+    expect(writes[0].contents['text/html']).toContain('color="#aa80ff"')
     expect(writes[0].contents['text/html']).toContain('background-color: rgb(0, 199, 230)')
   })
 })
