@@ -1,7 +1,9 @@
 import { importTextActionCreator as importText } from '../actions/importText'
 import { initialize } from '../initialize'
 import store from '../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../test-helpers/initStore'
+import multicursorValues from '../test-helpers/multicursorValues'
 import { setCursorFirstMatchActionCreator as setCursor } from '../test-helpers/setCursorFirstMatch'
 
 beforeEach(initStore)
@@ -28,5 +30,15 @@ describe('initializeCursor', () => {
 
     // startup must not overwrite the live cursor with the cursor decoded from the URL
     expect(store.getState().cursor).toEqual(cursor)
+  })
+
+  it('keeps a multiselection made while the thoughtspace was still initializing', async () => {
+    const initialized = initialize({ storage: 'memory' })
+    store.dispatch([importText({ text: '- a\n- b' }), setCursor(['b']), addMulticursor(['a']), addMulticursor(['b'])])
+    expect(multicursorValues()).toEqual(['a', 'b'])
+
+    await initialized
+
+    expect(multicursorValues()).toEqual(['a', 'b'])
   })
 })
