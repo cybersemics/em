@@ -11,7 +11,8 @@ expect.extend({
 vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 
 it('PinnedCommandRing', async () => {
-  await openModal('testPinnedCommandRing')
+  // On the TDD base branch, the new fixture must fail at runtime rather than prevent compilation.
+  await openModal('testPinnedCommandRing' as Parameters<typeof openModal>[0])
 
   expect(await screenshot({ preserveFilters: true })).toMatchImageSnapshot()
 })
