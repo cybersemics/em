@@ -27,6 +27,7 @@ import * as selection from '../device/selection'
 import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
+import getAfterIdByRank from '../selectors/getAfterIdByRank'
 import getNextRank from '../selectors/getNextRank'
 import getRankAfter from '../selectors/getRankAfter'
 import getRankBefore from '../selectors/getRankBefore'
@@ -35,7 +36,6 @@ import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
-import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
@@ -251,16 +251,24 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
           }),
         )
       } else if (result.isValid) {
+        const newRank = prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath)
         dispatch(
           moveThought({
             oldPath: thoughtFrom,
             newPath,
-            newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
-            // props.simplePath is a SimplePath, so its previous sibling must always be resolved in normal view.
-            // See the note in DropHover on why the context view would otherwise be inferred for a cyclic context.
+            newRank,
+            // Resolve the TreeCRDT placement from the destination's ranked children, i.e. the same ordering that
+            // newRank and the isBefore no-op check above are resolved from. Resolving it from the rendered order
+            // instead (prevSibling) diverges from newRank whenever the rendered order differs from the rank order:
+            // prevSibling omits hidden thoughts and follows the context's sort preference, so the thought it returns
+            // can be the dragged thought itself even though isBefore did not consider the drop a no-op, which
+            // moveThought rejects with "afterId cannot be the moved thought itself".
             afterId: prevPath
               ? head(prevPath)
-              : (prevSibling(state, props.simplePath, { showContexts: false })?.id ?? null),
+              : getAfterIdByRank(state, head(rootedParentOf(state, props.simplePath)), {
+                  rank: newRank,
+                  sourceId: head(thoughtFrom),
+                }),
           }),
         )
       }

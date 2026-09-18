@@ -92,6 +92,8 @@ TreeCRDT stores sibling order directly, so a reorder is a `move` with an explici
 
 `PushBatch.movePlacements: Index<ThoughtId | null>` carries that intent from the action layer: the key is the moved thought, the value is the sibling to place it after (`null` means first). It is produced by [`moveThought`](../src/actions/moveThought.ts), [`sort`](../src/actions/sort.ts), and the [undo/redo enhancer](../src/redux-enhancers/undoRedoEnhancer.ts).
 
+A caller that already knows where the thought lands passes `afterId` in the `moveThought` payload; one that does not omits it, and `moveThought` derives it with [`getAfterIdByRank`](../src/selectors/getAfterIdByRank.ts) — the last child of the destination whose rank precedes the new rank. `moveThought` rejects an `afterId` that is the moved thought itself or is not a child of the destination, so a caller passing one explicitly must resolve it from the destination's ranked children, the same ordering the `newRank` it passes alongside is resolved from. Resolving it from the rendered order instead disagrees with that rank whenever the two orderings differ — the rendered order omits hidden thoughts and follows the context's `=sort` preference — which is why [`useDragAndDropThought`](../src/hooks/useDragAndDropThought.tsx) calls `getAfterIdByRank` rather than [`prevSibling`](../src/selectors/prevSibling.ts).
+
 `getTreecrdtPlacement` resolves it:
 
 - A move of an existing thought **requires** an explicit placement and throws without one.
