@@ -1198,6 +1198,21 @@ it('paste em text with formatted html and meta charset as inline', async () => {
   expect(exported).not.toContain('<meta')
 })
 
+// https://github.com/cybersemics/em/issues/3960
+// Captured from the iOS pasteboard, which decorates what em wrote: a meta charset, an inline style block on
+// the outer list, and Apple-converted-space. isEmText is false because the text/em marker cannot ride the
+// async Clipboard API that WebKit requires, so none of that is cleaned up before the html is parsed.
+it('paste an iOS pasteboard copy of em thoughts, preserving formatting', async () => {
+  const html = `<head><meta charset="UTF-8"></head><ul style="caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); font-style: normal; font-weight: 400; text-align: start; white-space: normal; -webkit-text-stroke-width: 0px;"><li>a<span class="Apple-converted-space"> </span><ul><li><u>One</u></li><li><strike>Two</strike></li><li><span style="color: rgb(170, 128, 255);">Three</span></li><li><span style="background-color: rgb(0, 199, 230);">Four</span></li></ul></li></ul>`
+
+  const exported = await importExport(html, 'text/html')
+
+  expect(exported).toContain('<u>One</u>')
+  expect(exported).toContain('<strike>Two</strike>')
+  expect(exported).toContain('color: rgb(170, 128, 255)')
+  expect(exported).toContain('background-color: rgb(0, 199, 230)')
+})
+
 it('insert single-line HTML copied from Windows desktop Chrome at end of thought', async () => {
   const html = `<html>
 <body>

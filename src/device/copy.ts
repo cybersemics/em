@@ -5,7 +5,7 @@ import { isSafari, isTouch } from '../browser'
 import * as selection from './selection'
 
 interface CopyOptions {
-  /** Rich text/html representation written alongside the plain text. When provided, the clipboard is written deterministically (text/plain + text/html + text/em) rather than relying on the browser's native copy event. */
+  /** Rich text/html representation written alongside the plain text. When provided, the clipboard is written deterministically (text/plain + text/html, plus the text/em marker where the platform supports it) rather than relying on the browser's native copy event. */
   html?: string
 }
 
@@ -52,11 +52,11 @@ const copyRichExecCommand = (text: string, html: string): void => {
   selection.restore(selectionState)
 }
 
-/** Copies text and html to the clipboard on Safari/WebKit.
+/** Copies text and html to the clipboard on desktop Safari.
  *
- * Safari ignores setData() during a programmatic execCommand('copy') and sanitizes text/html written via the
- * async Clipboard API down to an empty document, so the rich path used on Chrome does not work here. However,
- * Copy Cursor runs on the Cmd+C keydown with permitDefault, so the browser fires its own genuine, user-
+ * Safari ignores setData() during a programmatic execCommand('copy'), so the rich path used on Chrome does not
+ * work here. However, Copy Cursor runs on the Cmd+C keydown with permitDefault, so the browser fires its own
+ * genuine, user-
  * initiated copy event — and Safari *does* honor setData() in that event. The Editable's onCopy handler
  * (useOnCopy) handles it when an editable is focused, but with a multicursor the copy event targets <body>
  * (no editable is focused), so useOnCopy never runs and the browser serializes the empty collapsed selection
@@ -109,47 +109,83 @@ const copyRichSafari = (text: string, html: string): void => {
   pendingSafariCopy = { onCopy, timeoutId }
 }
 
-/** Copies text and html (plus the text/em source marker) to the clipboard for a rich (structured) copy.
- * Dispatches to a Safari-specific path because Safari does not honor setData() during a programmatic copy.
- */
-const copyRich = (text: string, html: string): void => {
-  if (isSafari()) {
-    copyRichSafari(text, html)
-  } else {
-    copyRichExecCommand(text, html)
-  }
-}
-
-/** Copies a string to the clipboard. When html is provided, also writes text/html and the text/em source marker so that structured content pastes correctly even on browsers that do not fire a native copy event for a collapsed selection. */
-const copy = (text: string, { html }: CopyOptions = {}): void => {
+/** Copies plain text to the clipboard, via the native plugin in the Capacitor app and a programmatic ClipboardJS execCommand('copy') elsewhere. */
+const copyPlain = (text: string): void => {
+  const selectionState = selection.save()
   if (Capacitor.isNativePlatform()) {
-    // save selection
-    const selectionState = selection.save()
-    Clipboard.write({
-      string: text,
-    })
-    // restore selection
-    selection.restore(selectionState)
-  } else if (html != null && !(isSafari() && isTouch)) {
-    // copyRich manages its own selection lifecycle, so it must not be wrapped in save/restore here.
-    copyRich(text, html)
+    Clipboard.write({ string: text })
   } else {
-    // Plain-text copy via a programmatic ClipboardJS execCommand('copy').
-    //
-    // This is also the path for mobile Safari (isSafari() && isTouch). There, the rich copy cannot run: the
-    // copy is triggered by a Command Center tap rather than Cmd+C, so no native copy event fires, and Safari
-    // does not honor setData() during a programmatic copy. The full multicursor selection is still copied as
-    // indented plain text, which em reconstructs into the thought tree on paste (the pre-#3993 mobile behavior).
-    //
-    // save selection
-    const selectionState = selection.save()
-    // copy from dummy element using ClipboardJS
     const dummyButton = document.createElement('button')
     const clipboard = new ClipboardJS(dummyButton, { text: () => text })
     dummyButton.click()
     clipboard.destroy()
-    // restore selection
-    selection.restore(selectionState)
+  }
+  selection.restore(selectionState)
+}
+
+/** Copies text and html to the clipboard on mobile WebKit — mobile Safari and the iOS Capacitor app.
+ *
+ * Neither rich path above is available here. The copy is triggered by a Command Center tap rather than Cmd+C,
+ * so no user-initiated copy event fires for copyRichSafari to intercept, and WebKit ignores setData() during
+ * the programmatic execCommand('copy') that copyRichExecCommand depends on. The async Clipboard API does
+ * work, measured on an iOS device: the html round-trips with underline, strikethrough and colors intact,
+ * WebKit only prepending inline style normalization to the outer element.
+ *
+ * WebKit grants the write only in the same task as the gesture that triggered it, so a caller that awaits
+ * before it knows what to copy must use copyDeferred instead.
+ */
+const copyRichAsyncClipboard = (text: string, html: string): void => {
+  navigator.clipboard
+    .write([
+      new ClipboardItem({
+        'text/plain': new Blob([text], { type: 'text/plain' }),
+        'text/html': new Blob([html], { type: 'text/html' }),
+      }),
+    ])
+    .catch(() => copyPlain(text))
+}
+
+/** Copies text and html (plus the text/em source marker where the platform supports it) to the clipboard for a
+ * rich (structured) copy. Each branch exists because the mechanism below it is the only one that platform
+ * honors; see the comment on each.
+ */
+const copyRich = (text: string, html: string): void => {
+  if (isSafari() && isTouch) {
+    copyRichAsyncClipboard(text, html)
+  } else if (isSafari()) {
+    copyRichSafari(text, html)
+  } else {
+    // Chromium, which includes the Android Capacitor WebView and the Puppeteer automation the e2e suite uses.
+    copyRichExecCommand(text, html)
+  }
+}
+
+/** Copies a string to the clipboard. When html is provided, also writes text/html so that structured content pastes correctly, including on the mobile platforms whose clipboard previously carried plain text alone. */
+const copy = (text: string, { html }: CopyOptions = {}): void => {
+  if (html != null) {
+    copyRich(text, html)
+  } else {
+    copyPlain(text)
+  }
+}
+
+/** Copies content that is not known yet, for a caller that must await before it can export what the user asked
+ * for. Mobile WebKit refuses a clipboard write made after that await, so the write is registered now, in the
+ * same task as the gesture, and satisfied from `content` once it resolves (#3960). Every other platform waits
+ * for the content and takes its usual path, none of them being gesture-bound.
+ */
+export const copyDeferred = (content: Promise<{ text: string; html: string }>): void => {
+  if (isSafari() && isTouch) {
+    navigator.clipboard
+      .write([
+        new ClipboardItem({
+          'text/plain': content.then(({ text }) => new Blob([text], { type: 'text/plain' })),
+          'text/html': content.then(({ html }) => new Blob([html], { type: 'text/html' })),
+        }),
+      ])
+      .catch(async () => copyPlain((await content).text))
+  } else {
+    content.then(({ text, html }) => copyRich(text, html))
   }
 }
 
