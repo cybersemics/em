@@ -46,20 +46,15 @@ const STAGE_OFFSET_REM = 2.78
  * Chevron section constants
  **************************************************************/
 
-/** The height of Chevron section. */
+/** The height of Chevron section area. */
 const CHEVRON_SECTION_HEIGHT_REM = 1.56
 
-/** Dimensions of the chevron path in px. */
-const CHEVRON_WIDTH = 25
-const CHEVRON_HEIGHT = 7
-const CHEVRON_STROKE = 5
+/** Dimensions of the chevron svg in px. The rounded path is inset by half its stroke, so these are the bounds of the visible mark, not a box it is letterboxed inside. */
+const CHEVRON_WIDTH = 33
+const CHEVRON_HEIGHT = 13
 
-/** Colour of the chevron. Translucent enough that the drawer's backdrop reads through the mark itself, matching the design, where it is a 53% white stroke inside a layer at 23% opacity. */
-const CHEVRON_COLOR = token('colors.fgOverlay30')
-
-/** The svg box, grown from the path bounds to accommodate the stroke that overhangs them. */
-const CHEVRON_BOX_WIDTH = CHEVRON_WIDTH + CHEVRON_STROKE
-const CHEVRON_BOX_HEIGHT = CHEVRON_HEIGHT + CHEVRON_STROKE
+/** Colour of the chevron */
+const CHEVRON_COLOR = token('colors.fgOverlay10')
 
 /**
  * A custom hook that returns the last non-zero number of multicursors.
@@ -411,12 +406,11 @@ const CommandCenter = () => {
                   })}
                 >
                   <ChevronImg
-                    variant='stroked'
                     direction='down'
-                    width={CHEVRON_BOX_WIDTH}
-                    height={CHEVRON_BOX_HEIGHT}
-                    strokeWidth={CHEVRON_STROKE}
+                    width={CHEVRON_WIDTH}
+                    height={CHEVRON_HEIGHT}
                     fill={CHEVRON_COLOR}
+                    rounded
                   />
                 </button>
               </motion.div>
@@ -553,12 +547,11 @@ const CommandCenter = () => {
                     })}
                   >
                     <ChevronImg
-                      variant='stroked'
                       direction='up'
-                      width={CHEVRON_BOX_WIDTH}
-                      height={CHEVRON_BOX_HEIGHT}
-                      strokeWidth={CHEVRON_STROKE}
+                      width={CHEVRON_WIDTH}
+                      height={CHEVRON_HEIGHT}
                       fill={CHEVRON_COLOR}
+                      rounded
                     />
                   </button>
                 </motion.div>
