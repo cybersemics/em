@@ -7,8 +7,10 @@ import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { toggleSortActionCreator } from '../../actions/toggleSort'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import db from '../../data-providers/thoughtspace'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import attributeByContext from '../../test-helpers/attributeByContext'
@@ -19,6 +21,7 @@ import initStore from '../../test-helpers/initStore'
 import getDescendantsOfContext from '../../test-helpers/queries/getDescendantsOfContext'
 import getThoughtByContext from '../../test-helpers/queries/getThoughtByContext'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import hashPath from '../../util/hashPath'
 import toggleSortCommand from '../toggleSort'
 
@@ -366,6 +369,11 @@ describe('DOM', () => {
         .map(value => value || '_')
         .join('')
       expect(childrenString).toMatch('_a_bc_def_')
+      await waitForThoughtspaceIdle()
+      const stored = await db.getThoughtById(HOME_TOKEN)
+      expect(Object.values(stored!.childrenMap)).toEqual(
+        getChildrenRanked(store.getState(), HOME_TOKEN).map(child => child.id),
+      )
     })
 
     it('only one empty subthought', async () => {

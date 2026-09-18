@@ -1,11 +1,9 @@
 import Index from '../../@types/IndexType'
-import Lexeme from '../../@types/Lexeme'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import hashThought from '../../util/hashThought'
 import removeHome from '../../util/removeHome'
 import importJson from '../importJson'
 import initialState from '../initialState'
@@ -71,7 +69,7 @@ const testData: RoamPage[] = [
 const importExport = (roamJson: RoamPage[]) => {
   const thoughtsJSON = roamJsonToBlocks(roamJson)
   const state = initialState()
-  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJson(state, HOME_PATH as SimplePath, thoughtsJSON, {
+  const { thoughtIndexUpdates } = importJson(state, HOME_PATH as SimplePath, thoughtsJSON, {
     skipRoot: false,
   })
 
@@ -82,10 +80,6 @@ const importExport = (roamJson: RoamPage[]) => {
       thoughtIndex: {
         ...state.thoughts.thoughtIndex,
         ...(thoughtIndexUpdates as Index<Thought>),
-      },
-      lexemeIndex: {
-        ...state.thoughts.lexemeIndex,
-        ...(lexemeIndexUpdates as Index<Lexeme>),
       },
     },
   }
@@ -209,53 +203,25 @@ test('it should convert a Roam json into a list of thoughts and subthoughts with
 })
 
 test('it should save create-time as created and edit-time as lastUpdated', () => {
-  const roamBlocks = testData.map(roamBlock => roamBlock.children).flat()
-
   const blocks = roamJsonToBlocks(testData)
 
-  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJson(initialState(), HOME_PATH as SimplePath, blocks, {
+  const { thoughtIndexUpdates } = importJson(initialState(), HOME_PATH as SimplePath, blocks, {
     skipRoot: false,
   })
-
-  /** Gets the edit-time of a RoamBlock. */
-  const editTimeOf = (value: string) => {
-    const roamBlock = roamBlocks.find(roamBlock => roamBlock.string === value)
-    return roamBlock?.['edit-time'] || null
-  }
-
-  /** Gets the create-time of a RoamBlock. */
-  const createTime = (value: string) => {
-    const roamBlock = roamBlocks.find(roamBlock => roamBlock.string === value)
-    return roamBlock?.['create-time'] || null
-  }
 
   const thoughtIndexEntries = keyValueBy(thoughtIndexUpdates as Index<Thought>, (key, thought) => ({
     [thought.value]: thought,
   }))
 
   expect(thoughtIndexEntries).toMatchObject({
-    // RoamPages acquire the edit time of their last child
-    Fruits: { lastUpdated: editTimeOf('Banana') },
-    Veggies: { lastUpdated: editTimeOf('Spinach') },
-    // RoamBlocks use specified edit time
-    Apple: { lastUpdated: editTimeOf('Apple') },
-    Orange: { lastUpdated: editTimeOf('Orange') },
-    Banana: { lastUpdated: editTimeOf('Banana') },
-    Broccoli: { lastUpdated: editTimeOf('Broccoli') },
-    Spinach: { lastUpdated: editTimeOf('Spinach') },
-  })
-
-  expect(lexemeIndexUpdates).toMatchObject({
-    // RoamPages acquire the edit time of their first child for thoughts
-    // TODO: This differs from thoughtIndex incidentally. Should normalize the edit times used for thoughtIndex and lexemeIndex.
-    [hashThought('Fruits')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
-    [hashThought('Veggies')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
-
-    // RoamBlocks use specified edit time
-    [hashThought('Apple')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
-    [hashThought('Orange')]: { created: createTime('Orange'), lastUpdated: editTimeOf('Orange') },
-    [hashThought('Banana')]: { created: createTime('Banana'), lastUpdated: editTimeOf('Banana') },
-    [hashThought('Broccoli')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
-    [hashThought('Spinach')]: { created: createTime('Spinach'), lastUpdated: editTimeOf('Spinach') },
+    // Pages inherit creation from the first child and the edit time of their last child.
+    Fruits: { created: 1600111381583, lastUpdated: 1600111383910 },
+    Veggies: { created: 1600111381600, lastUpdated: 1600111389050 },
+    // Blocks preserve the supplied creation and edit times.
+    Apple: { created: 1600111381583, lastUpdated: 1600111381580 },
+    Orange: { created: 1600111383054, lastUpdated: 1600111383050 },
+    Banana: { created: 1600111383911, lastUpdated: 1600111383910 },
+    Broccoli: { created: 1600111381600, lastUpdated: 1600111381599 },
+    Spinach: { created: 1600111389054, lastUpdated: 1600111389050 },
   })
 })

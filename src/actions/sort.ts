@@ -39,7 +39,6 @@ const sort = (state: State, id: ThoughtId, sortPreference?: SortPreference): Sta
 
   return updateThoughts(state, {
     thoughtIndexUpdates,
-    lexemeIndexUpdates: {},
     movePlacements,
     preventExpandThoughts: true,
   })

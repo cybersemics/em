@@ -1,11 +1,14 @@
 import _ from 'lodash'
+import type Index from '../@types/IndexType'
+import type Lexeme from '../@types/Lexeme'
 import Path from '../@types/Path'
 import PushBatch from '../@types/PushBatch'
 import RecentlyEditedTree from '../@types/RecentlyEditedTree'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import type ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import { HOME_TOKEN } from '../constants'
+import { ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
 import getSetting from '../selectors/getSetting'
 import pathToThought from '../selectors/pathToThought'
@@ -13,12 +16,18 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import { childrenMapKey } from '../util/createChildrenMap'
+import hashThought from '../util/hashThought'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import mergeUpdates from '../util/mergeUpdates'
 import reducerFlow from '../util/reducerFlow'
+import recordThoughtWriteResult from './recordThoughtWriteResult'
 
-export type UpdateThoughtsOptions = PushBatch & {
+const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN])
+
+export type UpdateThoughtsOptions = Omit<PushBatch, 'lexemeIndexUpdates'> & {
+  lexemeIndexUpdates?: PushBatch['lexemeIndexUpdates']
   cursorOffset?: number
   // callback for when the updates have been synced with IDB
   idbSynced?: () => void
@@ -33,6 +42,154 @@ export type UpdateThoughtsOptions = PushBatch & {
    * This should only be used when the updates are coming from another device. For local updates, updateThoughts is typically called within a higher level reducer (e.g. moveThought) which handles all cursor updates. There would be false positives during local updates since the cursor is updated after updateThoughts.
    */
   repairCursor?: boolean
+  /** A committed refresh published within the provider's storage sequence. */
+  materialized?: boolean
+  /** Clears only matching pending edits in the same update that publishes their committed state. */
+  confirmedWriteIds?: string[]
+}
+
+/** Projects changed thoughts over known memberships without discarding unloaded occurrences. */
+const projectLexemes = (lexemeIndex: Index<Lexeme>, thoughtUpdates: Index<Thought | null>): Index<Lexeme> => {
+  const hashByThoughtId: Index<string | null> = {}
+  const thoughtsByHash = new Map<string, Thought[]>()
+  Object.entries(thoughtUpdates).forEach(([id, thought]) => {
+    if (ROOT_IDS.has(id)) return
+    const hash = thought ? hashThought(thought.value) : null
+    hashByThoughtId[id] = hash
+    if (!thought || hash === null) return
+    const groupedThoughts = thoughtsByHash.get(hash)
+    if (groupedThoughts) groupedThoughts.push(thought)
+    else thoughtsByHash.set(hash, [thought])
+  })
+  if (Object.keys(hashByThoughtId).length === 0) return lexemeIndex
+
+  let nextLexemeIndex = lexemeIndex
+  Object.entries(lexemeIndex).forEach(([hash, lexeme]) => {
+    const contexts = lexeme.contexts.filter(id => !(id in hashByThoughtId) || hashByThoughtId[id] === hash)
+    if (contexts.length === lexeme.contexts.length) return
+    if (nextLexemeIndex === lexemeIndex) nextLexemeIndex = { ...lexemeIndex }
+    if (contexts.length) nextLexemeIndex[hash] = { ...lexeme, contexts }
+    else delete nextLexemeIndex[hash]
+  })
+
+  thoughtsByHash.forEach((thoughts, hash) => {
+    const lexeme = nextLexemeIndex[hash]
+    const contexts = new Set(lexeme?.contexts)
+    let created = lexeme?.created ?? thoughts[0].created
+    let latest: Lexeme | Thought = lexeme ?? thoughts[0]
+    thoughts.forEach(thought => {
+      contexts.add(thought.id)
+      if (thought.created < created) created = thought.created
+      if (thought.lastUpdated >= latest.lastUpdated) latest = thought
+    })
+    if (
+      lexeme &&
+      contexts.size === lexeme.contexts.length &&
+      created === lexeme.created &&
+      latest.lastUpdated === lexeme.lastUpdated &&
+      latest.updatedBy === lexeme.updatedBy
+    )
+      return
+    if (nextLexemeIndex === lexemeIndex) nextLexemeIndex = { ...lexemeIndex }
+    nextLexemeIndex[hash] = {
+      contexts: lexeme && contexts.size === lexeme.contexts.length ? lexeme.contexts : [...contexts],
+      created,
+      lastUpdated: latest.lastUpdated,
+      updatedBy: latest.updatedBy,
+    }
+  })
+  return nextLexemeIndex
+}
+
+/** Reuses equal entries in a freshly reconciled index, retaining the whole index when nothing changed. */
+const reuseUnchangedEntries = <T>(
+  previous: Index<T>,
+  next: Index<T>,
+  equal: (previous: T | undefined, next: T) => boolean = _.isEqual,
+): Index<T> => {
+  const keys = Object.keys(next)
+  let unchanged = keys.length === Object.keys(previous).length
+  keys.forEach(key => {
+    if (previous[key] === next[key]) return
+    if (equal(previous[key], next[key])) next[key] = previous[key]
+    else unchanged = false
+  })
+  return unchanged ? previous : next
+}
+
+/** Applies outstanding field edits to confirmed state, rebuilding only their affected parent lists. */
+const applyPendingThoughtWrites = (
+  state: State,
+  confirmed: Index<Thought>,
+  updates: Index<Thought | null>,
+): Index<Thought> => {
+  const pending = Object.entries(state.pendingThoughtWrites)
+  if (pending.length === 0) return confirmed
+  const thoughts = { ...confirmed }
+  // A pull can refresh an old parent without refreshing its optimistically moved child.
+  const parents = new Set(
+    Object.values(updates).flatMap(thought =>
+      thought && Object.values(thought.childrenMap).some(id => id in state.pendingThoughtWrites) ? [thought.id] : [],
+    ),
+  )
+  const placements = new Set<string>()
+
+  pending.forEach(([id, { patch }]) => {
+    const previous = confirmed[id] ?? state.thoughts.thoughtIndex[id]
+    if (previous) parents.add(previous.parentId)
+    if (patch === null) {
+      delete thoughts[id]
+      return
+    }
+    if (previous) thoughts[id] = { ...previous, ...patch }
+    if (patch.parentId !== undefined) placements.add(id)
+    if (thoughts[id]) parents.add(thoughts[id].parentId)
+  })
+
+  placements.forEach(id => {
+    const thought = thoughts[id]
+    if (!thought) return
+    // A remote move can make a still-pending destination our descendant. Never project a cycle.
+    const visited = new Set<string>([id])
+    let parent = thoughts[thought.parentId]
+    while (parent && parent.id !== GLOBAL_ROOT_TOKEN && !visited.has(parent.id)) {
+      visited.add(parent.id)
+      parent = thoughts[parent.parentId]
+    }
+    if (parent && visited.has(parent.id)) {
+      const previous = confirmed[id]
+      if (previous) thoughts[id] = { ...thought, parentId: previous.parentId, rank: previous.rank }
+      else delete thoughts[id]
+      placements.delete(id)
+    }
+  })
+
+  parents.forEach(parentId => {
+    const parent = thoughts[parentId]
+    if (!parent) return
+    const children = Object.values(parent.childrenMap).filter(id =>
+      placements.has(id) ? false : state.pendingThoughtWrites[id]?.patch !== null,
+    )
+    pending.forEach(([id, { afterId }]) => {
+      const thought = thoughts[id]
+      if (!placements.has(id) || thought?.parentId !== parentId) return
+      const afterIndex = afterId == null ? -1 : children.indexOf(afterId)
+      const index =
+        afterId === null || afterIndex >= 0
+          ? afterIndex + 1
+          : children.findIndex(childId => thoughts[childId] && thoughts[childId].rank > thought.rank)
+      children.splice(index < 0 ? children.length : index, 0, thought.id)
+    })
+    const oldKeys = Object.fromEntries(Object.entries(parent.childrenMap).map(([key, id]) => [id, key]))
+    const childrenMap: Index<ThoughtId> = {}
+    children.forEach((id, rank) => {
+      const child = thoughts[id]
+      childrenMap[child ? childrenMapKey(childrenMap, child) : (oldKeys[id] ?? id)] = id
+      if (child) thoughts[id] = { ...child, rank }
+    })
+    thoughts[parentId] = { ...thoughts[parentId], childrenMap }
+  })
+  return thoughts
 }
 
 /** A reducer that repairs the cursor if it moved or was deleted. */
@@ -81,7 +238,7 @@ const updateThoughts = (
   state: State,
   {
     cursorOffset,
-    lexemeIndexUpdates,
+    lexemeIndexUpdates = {},
     thoughtIndexUpdates,
     recentlyEdited,
     pendingDeletes,
@@ -93,34 +250,21 @@ const updateThoughts = (
     isLoading,
     overwritePending,
     repairCursor,
+    materialized,
+    confirmedWriteIds,
   }: UpdateThoughtsOptions,
 ) => {
+  if (confirmedWriteIds) state = recordThoughtWriteResult(state, { writeIds: confirmedWriteIds })
   if (Object.keys(thoughtIndexUpdates).length === 0 && Object.keys(lexemeIndexUpdates).length === 0) return state
 
-  const thoughtIndexOld = { ...state.thoughts.thoughtIndex }
-  const lexemeIndexOld = { ...state.thoughts.lexemeIndex }
+  const { thoughtIndex: thoughtIndexOld, lexemeIndex: lexemeIndexOld } = state.thoughts
 
-  // Last-write-wins guard for reconcile updates (local === false), e.g. a forced pull (RecentlyEdited's
-  // pullJumpHistory) or a cross-device onThoughtChange. The pulled snapshot is read asynchronously from
-  // the data provider and may predate a local edit that landed in the meantime; if it overwrote the newer
-  // in-memory thought it would corrupt parent/child links (e.g. after Swap Parent, producing a parent-chain
-  // cycle and hanging the app). Drop any incoming thought that is no newer than the existing non-pending
-  // thought.
-  //
-  // The comparison must be `<=`, not `<`: a single high-level action such as swapParent runs several
-  // moveThought reducers synchronously in one reducerFlow, so every thought it touches is stamped with the
-  // *same* lastUpdated millisecond, and each moveThought queues its own push batch — including the
-  // transient intermediate state (e.g. the old parent's childrenMap before the moved child is removed). A
-  // forced pull that reads that intermediate snapshot re-dispatches it with a lastUpdated equal to the
-  // final state's, so a strict `<` would let it through and clobber the correct result (planting a child in
-  // two contexts → cycle → hang, https://github.com/cybersemics/em/issues/3948). Because the final state is
-  // emitted last, its lastUpdated is always >= any intermediate, so `<=` reliably discards the stale echo
-  // while genuinely newer cross-device edits (strictly greater) still win.
-  //
-  // Skip when overwritePending is set (freeThoughts/deleteThought/generateThought intentionally overwrite)
-  // and keep deletions (null) and missing/pending thoughts so pulls still load them.
+  // Ordinary pulls can read intermediate local writes with the same timestamp (#3948).
+  // Keep the <= guard for those unversioned reads. Materialization owns the storage queue
+  // instead: an order-only change need not advance the payload timestamp. Missing/pending thoughts,
+  // deletions, and intentional cache overwrites still pass through.
   const thoughtIndexUpdatesFresh =
-    local || overwritePending
+    local || overwritePending || materialized
       ? thoughtIndexUpdates
       : keyValueBy(thoughtIndexUpdates, (id, thoughtUpdate) => {
           const thoughtOld = thoughtIndexOld[id]
@@ -133,8 +277,32 @@ const updateThoughts = (
         })
 
   // TODO: Can we use { overwritePending: !local } and get rid of the overwritePending option to updateThoughts? i.e. Are there any false positives when local is false?
-  const thoughtIndex = mergeUpdates(thoughtIndexOld, thoughtIndexUpdatesFresh, { overwritePending })
-  const lexemeIndex = mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending })
+  const mergedThoughts = mergeUpdates(thoughtIndexOld, thoughtIndexUpdatesFresh, { overwritePending })
+  let thoughtIndex =
+    !local && !remote && !overwritePending
+      ? applyPendingThoughtWrites(state, mergedThoughts, thoughtIndexUpdatesFresh)
+      : mergedThoughts
+  let lexemeIndex = projectLexemes(
+    mergeUpdates(lexemeIndexOld, lexemeIndexUpdates, { overwritePending }),
+    local || remote
+      ? thoughtIndexUpdatesFresh
+      : Object.fromEntries(Object.keys(state.pendingThoughtWrites).map(id => [id, thoughtIndex[id] ?? null])),
+  )
+
+  if (materialized) {
+    // Compare after projecting newer edits, not against the raw committed values.
+    thoughtIndex = reuseUnchangedEntries(
+      state.thoughts.thoughtIndex,
+      thoughtIndex,
+      (previous, thought) =>
+        !!previous &&
+        _.isEqual(previous, thought) &&
+        // Object equality ignores key order, but childrenMap order is TreeCRDT's sibling order.
+        _.isEqual(Object.keys(previous.childrenMap), Object.keys(thought.childrenMap)),
+    )
+    lexemeIndex = reuseUnchangedEntries(state.thoughts.lexemeIndex, lexemeIndex)
+    if (thoughtIndex === state.thoughts.thoughtIndex && lexemeIndex === state.thoughts.lexemeIndex) return state
+  }
 
   const recentlyEditedNew = recentlyEdited || state.recentlyEdited
 

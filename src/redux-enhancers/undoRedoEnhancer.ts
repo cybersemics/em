@@ -106,6 +106,8 @@ const statePropertiesToOmit: (keyof State)[] = [
   'editableNonce',
   'isKeyboardOpen',
   'pushQueue',
+  'pendingThoughtWrites',
+  'thoughtspaceGeneration',
   'selectionOffsets',
 ]
 

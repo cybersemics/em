@@ -870,6 +870,8 @@ it('move thought to the middle of a sorted context', () => {
 
   // newRank should be ignored when moving into a sorted context
   expect(contextToThought(stateNew, ['b'])?.rank).not.toEqual(999)
+  const moved = contextToThought(stateNew, ['b'])!
+  expect(stateNew.pushQueue.at(-1)?.movePlacements?.[moved.id]).toBe(contextToThought(stateNew, ['a'])!.id)
 })
 
 it('move thought to the end of a sorted context', () => {

@@ -1,4 +1,5 @@
 import { clearActionCreator as clear } from '../actions/clear'
+import createThoughtspaceMaterializationBridge from '../data-providers/createThoughtspaceMaterializationBridge'
 import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import store from '../stores/app'
 import { resetStores } from '../stores/ministore'
@@ -28,7 +29,10 @@ const initStore = async ({ persist, allowTutorial }: Params = {}) => {
   if (!persist) {
     await waitForThoughtspaceIdle()
     await thoughtspaceRuntime.drop()
-    await thoughtspaceRuntime.init({ storage: 'memory' })
+    await thoughtspaceRuntime.init({
+      storage: 'memory',
+      materialization: createThoughtspaceMaterializationBridge(store),
+    })
     store.dispatch(clear())
 
     // Ministores are module-level singletons that vitest only isolates per test file, so reset them
