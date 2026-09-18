@@ -1,5 +1,6 @@
 import { animate, useMotionValue, useTransform } from 'motion/react'
 import React, { useCallback, useRef } from 'react'
+import { NOTIFICATION_EASING } from '../constants'
 import durations from '../util/durations'
 import useSafeArea from './useSafeArea'
 
@@ -68,7 +69,7 @@ const useSwipeToClear = ({
       dismissing.current = true
       animate(swipeDistance, threshold, {
         duration,
-        ease: 'easeOut',
+        ease: NOTIFICATION_EASING.close,
         onComplete: finishDismiss,
       })
     },
@@ -79,7 +80,7 @@ const useSwipeToClear = ({
   const animateSpringBack = useCallback(() => {
     animate(swipeDistance, 0, {
       duration: durations.get('fast') / 1000,
-      ease: 'easeOut',
+      ease: NOTIFICATION_EASING.open,
     })
   }, [swipeDistance])
 

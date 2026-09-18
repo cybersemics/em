@@ -79,6 +79,7 @@ const modalRecipe = defineSlotRecipe({
       signup: {},
       testGestureDiagram: {},
       testPinnedCommandRing: {},
+      testPinnedCommandTooltip: {},
     },
     center: {
       true: {
