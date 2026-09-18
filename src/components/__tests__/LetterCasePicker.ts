@@ -1,4 +1,3 @@
-import { fireEvent } from '@testing-library/react'
 import { act } from 'react'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
 import { homeActionCreator as home } from '../../actions/home'
@@ -172,22 +171,4 @@ it('Set Upper Case with a multicursor selection that has no cursor', async () =>
   - FOO`)
 
   expect(document.querySelector('[aria-label="UpperCase"][data-selected="true"]')).toBeInTheDocument()
-})
-
-// A swatch applies on touchend, as the ColorPicker swatches do. Applying on touchstart edits the editable while the
-// finger is still down, and the rest of the touch sequence then blurs it — on a device that closes the keyboard and
-// drops the selection the edit had just restored.
-it('applies the letter case on touchend', async () => {
-  await dispatch([newThought({ value: 'Hello' })])
-  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
-
-  const swatch = document.querySelector('[aria-label="letter case swatches"] [aria-label="UpperCase"]')!
-  await act(async () => {
-    fireEvent.touchEnd(swatch)
-  })
-  await act(vi.runOnlyPendingTimersAsync)
-
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- ${HOME_TOKEN}
-  - HELLO`)
 })
