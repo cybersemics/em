@@ -1,7 +1,7 @@
 import { animate, useMotionValue, useTransform } from 'framer-motion'
 import React, { useCallback, useRef } from 'react'
-import useSafeArea from '../../hooks/useSafeArea'
-import durations from '../../util/durations'
+import durations from '../util/durations'
+import useSafeArea from './useSafeArea'
 
 // Dismiss score threshold (px-equivalent). The dismiss score is computed as
 // swipeDistance + velocity * 1.75, so a pure-distance swipe needs 175px of
@@ -27,7 +27,7 @@ const useSwipeToClear = ({
   threshold = DEFAULT_SWIPE_DISMISS_THRESHOLD,
   onDismissed,
 }: {
-  /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the tip. */
+  /** Cumulative swipe distance (in px) at which a swipe fully fades and dismisses the surface. */
   threshold?: number
   /** Called when the dismiss completes — either immediately (swipe distance reached threshold) or after the dismiss animation finishes. */
   onDismissed: () => void
@@ -49,7 +49,7 @@ const useSwipeToClear = ({
         onComplete: () => {
           dismissing.current = false
           onDismissed()
-          // Reset so the next showing of the tip starts with completion = 0.
+          // Reset so the next showing of the surface starts with completion = 0.
           swipeDistance.set(0)
         },
       })
