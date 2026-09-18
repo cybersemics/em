@@ -300,33 +300,34 @@ const generateThought = {
       }
 
       /** Requests disclosure when any selected thought will use AI, then generates the full selection. */
-      const generateAllWithDisclosure = () => {
+      const generateAllWithDisclosure = (): Promise<void | false> => {
         const usesAi = cursors.some(path => generatesWithAi(getState(), path))
-        if (usesAi && requestAiDisclosure(generateAllWithDisclosure)) {
+        const pending = usesAi ? requestAiDisclosure(generateAllWithDisclosure) : null
+        if (pending) {
           dispatch(showModal({ id: 'aiDisclosure' }))
-          return
+          return pending
         }
-        generateAll()
+        return generateAll()
       }
 
-      generateAllWithDisclosure()
+      return generateAllWithDisclosure()
     },
   },
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
-  exec: async (dispatch, getState, e, commandContext) => {
+  exec: async (dispatch, getState, e, commandContext): Promise<void | false> => {
     const state = getState()
 
     // do nothing if generation is already in progress
-    if (state.cursorCleared) return
+    if (state.cursorCleared) return false
 
     const cursor = state.cursor!
 
-    if (
-      generatesWithAi(state, cursor) &&
-      requestAiDisclosure(() => generateThought.exec(dispatch, getState, e, commandContext))
-    ) {
+    const pending = generatesWithAi(state, cursor)
+      ? requestAiDisclosure(() => generateThought.exec(dispatch, getState, e, commandContext))
+      : null
+    if (pending) {
       dispatch(showModal({ id: 'aiDisclosure' }))
-      return
+      return pending
     }
 
     // Render the cursor thought as an empty thought while its value is generated. cursorCleared is a single global

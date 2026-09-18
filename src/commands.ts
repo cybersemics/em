@@ -17,6 +17,7 @@ import State from './@types/State'
 import { addMulticursorActionCreator as addMulticursor } from './actions/addMulticursor'
 import { alertActionCreator as alert } from './actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from './actions/clearMulticursors'
+import { commandSucceededActionCreator as commandSucceeded } from './actions/commandSucceeded'
 import { cursorClearedActionCreator as cursorCleared } from './actions/cursorCleared'
 import { gestureMenuActionCreator as gestureMenu } from './actions/gestureMenu'
 import { indentActionCreator as indent } from './actions/indent'
@@ -407,12 +408,12 @@ export const executeCommand = (
 
   // resolve repeat to the last command that was executed and the keyboardIndex it was triggered with, and exit early if there is none
   const resolved = commandArg.id === 'repeat' ? lastCommand : { command: commandArg }
-  if (!resolved) return
+  if (!resolved) return false
   const command = resolved.command
 
   const canExecute = !command.canExecute || command.canExecute(commandStore.getState())
   // Exit early if the command cannot execute
-  if (!canExecute) return
+  if (!canExecute) return false
 
   // A repeated command takes the keyboardIndex that was recorded with it, since the repeat keypress matches none of its own keyboard shortcuts. Otherwise it is derived from the event.
   const keyboardIndex = keyboardIndexArg ?? resolved.keyboardIndex ?? keyboardIndexOf(command, type, event)
@@ -422,9 +423,43 @@ export const executeCommand = (
   const undoablePatchPrev = lastUndoablePatch(commandStore.getState())
 
   // execute single command
-  command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
+  const execution = command.exec(commandStore.dispatch, commandStore.getState, event, { type, keyboardIndex })
 
   recordLastCommand(command, keyboardIndex, commandStore.getState(), undoablePatchPrev)
+  return execution
+}
+
+/** Reports one successful top-level invocation after any returned asynchronous work has completed. */
+const reportCommandSuccess = ({
+  commandStore,
+  commandId,
+  source,
+  userInitiated,
+  errorBefore,
+  execution,
+}: {
+  commandStore: Store<State>
+  commandId: CommandId
+  source: CommandType
+  userInitiated: boolean
+  errorBefore: State['error']
+  execution?: void | Promise<void | false>
+}): void | Promise<void> => {
+  /** An error raised through app state during this invocation also prevents credit. */
+  const report = () => {
+    if (commandStore.getState().error === errorBefore) {
+      commandStore.dispatch(commandSucceeded({ commandId, source, userInitiated }))
+    }
+  }
+
+  if (!execution) {
+    report()
+    return
+  }
+
+  return execution.then(result => {
+    if (result !== false) report()
+  })
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
@@ -434,11 +469,14 @@ export const executeCommandWithMulticursor = (
     store: storeArg,
     type,
     event,
+    userInitiated = false,
   }: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     store?: Store<State, any>
     type?: CommandType
     event?: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent
+    /** True only for an actual shortcut or gesture entry point, rather than an internal call. */
+    userInitiated?: boolean
   } = {},
 ) => {
   const commandStore = storeArg ?? store
@@ -461,10 +499,21 @@ export const executeCommandWithMulticursor = (
   }
 
   const state = commandStore.getState()
+  const errorBefore = state.error
 
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
   if (!command.multicursor || !hasMulticursor(state)) {
-    return executeCommand(command, { store: commandStore, type, event, keyboardIndex })
+    const execution = executeCommand(command, { store: commandStore, type, event, keyboardIndex })
+    return execution === false
+      ? undefined
+      : reportCommandSuccess({
+          commandStore,
+          commandId: commandArg.id,
+          source: type,
+          userInitiated,
+          errorBefore,
+          execution,
+        })
   }
 
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
@@ -474,6 +523,7 @@ export const executeCommandWithMulticursor = (
 
   // For each multicursor, place the cursor on the path and execute the command by calling executeCommand.
   const filteredPaths = filterCursors(state, paths, multicursor.filter)
+  if (filteredPaths.length === 0) return
 
   // Exit early if the command cannot execute on any of the filtered paths
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
@@ -495,13 +545,17 @@ export const executeCommandWithMulticursor = (
 
   // The thoughts created by the executions, collected for selectNewCursors.
   const newCursors: Path[] = []
+  const executions: Promise<void | false>[] = []
+  let didExecute = false
 
   // If there is a custom execMulticursor function, call it with the filtered multicursors.
   // Otherwise, execute the command once for each of the filtered multicursors.
   if (multicursor.execMulticursor) {
     // execMulticursor bypasses executeCommand, which is what records the last command for the repeat command, so record it here. The patch is captured after setIsMulticursorExecuting, the same point the per-cursor loop below captures it from, so that both branches judge a change by the same measure.
     const undoablePatchPrev = lastUndoablePatch(commandStore.getState())
-    multicursor.execMulticursor(filteredPaths, commandStore.dispatch, commandStore.getState)
+    const execution = multicursor.execMulticursor(filteredPaths, commandStore.dispatch, commandStore.getState)
+    didExecute = execution !== false
+    if (execution instanceof Promise) executions.push(execution)
     recordLastCommand(command, keyboardIndex, commandStore.getState(), undoablePatchPrev)
   } else {
     for (const path of filteredPaths) {
@@ -510,7 +564,9 @@ export const executeCommandWithMulticursor = (
       if (!recomputedPath) continue
 
       commandStore.dispatch(setCursor({ path: recomputedPath }))
-      executeCommand(command, { store: commandStore, type, event, keyboardIndex })
+      const execution = executeCommand(command, { store: commandStore, type, event, keyboardIndex })
+      if (execution !== false) didExecute = true
+      if (execution instanceof Promise) executions.push(execution)
 
       // The command sets the cursor to the thought it created, so a cursor on a different thought than the one that was
       // just set is the new thought. A command that could not act on the selected thought leaves the cursor where it
@@ -589,6 +645,19 @@ export const executeCommandWithMulticursor = (
 
   // Reset isMulticursorExecuting after all operations
   commandStore.dispatch(setIsMulticursorExecuting({ value: false }))
+
+  if (!didExecute) return
+
+  return reportCommandSuccess({
+    commandStore,
+    commandId: commandArg.id,
+    source: type,
+    userInitiated,
+    errorBefore,
+    execution: executions.length
+      ? Promise.all(executions).then(results => (results.includes(false) ? false : undefined))
+      : undefined,
+  })
 }
 
 /**
@@ -703,9 +772,10 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
         },
         type: 'gesture',
         store,
+        userInitiated: true,
       })
     }
-    executeCommandWithMulticursor(command, { event: e, type: 'gesture', store })
+    executeCommandWithMulticursor(command, { event: e, type: 'gesture', store, userInitiated: true })
     if (chainableCommandInProgressExclusive?.id === 'selectAll') {
       store.dispatch(clearMulticursors())
     }
@@ -878,6 +948,6 @@ export const keyDown = (e: KeyboardEvent) => {
     }
 
     // execute command
-    executeCommandWithMulticursor(command, { event: e, type: 'keyboard', store })
+    executeCommandWithMulticursor(command, { event: e, type: 'keyboard', store, userInitiated: true })
   }
 }

@@ -31,25 +31,27 @@ const generateEmoji = {
       }
 
       /** Requests disclosure before generating emoji for the full selection. */
-      const generateAllWithDisclosure = () => {
-        if (requestAiDisclosure(generateAllWithDisclosure)) {
+      const generateAllWithDisclosure = (): Promise<void | false> => {
+        const pending = requestAiDisclosure(generateAllWithDisclosure)
+        if (pending) {
           dispatch(showModal({ id: 'aiDisclosure' }))
-          return
+          return pending
         }
-        generateAll()
+        return generateAll()
       }
 
-      generateAllWithDisclosure()
+      return generateAllWithDisclosure()
     },
   },
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
-  exec: async (dispatch, getState, event, commandContext) => {
+  exec: async (dispatch, getState, event, commandContext): Promise<void | false> => {
     const cursor = getState().cursor
-    if (!cursor) return
+    if (!cursor) return false
 
-    if (requestAiDisclosure(() => generateEmoji.exec(dispatch, getState, event, commandContext))) {
+    const pending = requestAiDisclosure(() => generateEmoji.exec(dispatch, getState, event, commandContext))
+    if (pending) {
       dispatch(showModal({ id: 'aiDisclosure' }))
-      return
+      return pending
     }
 
     await dispatch(generateEmojiAtPaths([cursor]))
