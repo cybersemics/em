@@ -851,3 +851,5 @@ Add or remove devices that can access and edit this thoughtspace.
 ### Cancel
 
 Cancel the current gesture.
+
+The Command Universe grid mounts gesture diagrams within 180px of its inner scroll viewport using Motion’s `useInView` with `once: false`. Diagram boxes retain their size, and diagrams already rendered stay mounted while the page is hidden or transitioning so Back can animate the retained grid.
