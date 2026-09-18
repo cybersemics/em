@@ -103,8 +103,6 @@ A gesture is a string of swipe directions, where each character is one of `'l'`,
 
 A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Touches that start outside the zone scroll the page as usual.
 
-A touch that starts inside the gesture zone but within 20px of the left or right side of the screen is cancelled with `preventDefault`, which is the only way to stop the browser from reading it as its back/forward navigation swipe. Mobile Safari decides on the `touchstart`, so cancelling the `touchmove` that disables scrolling comes too late: the previous page slides in under the finger while em simultaneously tracks the swipe as a gesture, showing a second, stale gesture menu. Only the outer edge of the gesture zone is cancelled, so the scroll zone still starts native scrolls, and thoughts are inset further than the strip and still receive taps.
-
 `handleGestureSegment` is called incrementally as the user swipes; it triggers a haptic for each new segment and, after `COMMAND_PALETTE_TIMEOUT`, opens the gesture menu so the user can see all commands reachable from the current sequence.
 
 `handleGestureEnd` runs when the gesture finishes. It looks up the final sequence in `commandGestureIndex`, with two special cases:
