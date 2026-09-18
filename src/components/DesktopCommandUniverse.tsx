@@ -11,6 +11,7 @@ import { hashCommand, hashKeyDown } from '../commands'
 import { executeCommandWithMulticursor } from '../commands'
 import openDesktopCommandUniverseCommand from '../commands/openDesktopCommandUniverse'
 import * as selection from '../device/selection'
+import testFlags from '../e2e/testFlags'
 import useFilteredCommands from '../hooks/useFilteredCommands'
 import storageModel from '../stores/storageModel'
 import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
@@ -308,10 +309,13 @@ const DesktopCommandUniverseWithTransition: FC = () => {
   // Commands need to be calculated even if the desktop command universe is not shown because useFilteredCommands is responsible for updating gestureStore's possibleCommands which is needed to prevent haptics when there are no more possible commands. Otherwise, either haptics would continue to fire when there are no more possible commands, or would falsely fire when the current sequence is not a valid gesture but there are possible commands with additional swipes.
   const [recentCommands, setRecentCommands] = useState(storageModel.get('recentCommands'))
   const [search, setSearch] = useState('')
-  const commands = useFilteredCommands(search, {
+  const commandsAll = useFilteredCommands(search, {
     recentCommands,
     sortActiveCommandsFirst: true,
   })
+
+  // Snapshot tests inject stub commands so that the snapshot only covers the appearance of the command list.
+  const commands = testFlags.commandUniverseCommands ?? commandsAll
 
   // clear search when desktop command universe is closed
   useEffect(() => {
