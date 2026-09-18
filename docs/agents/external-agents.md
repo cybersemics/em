@@ -89,7 +89,7 @@ A Claude Code cloud session has neither the Copilot tools nor a `gh` binary, but
 
 `compare-debug-log` is shared even though it borders the browser story, because the half that carries the insight does not need a browser: comparing two logs is two files and a script. Only the capture step wants a live session, and a local agent that has one — a dev server and a Chrome on a debugging port — gets that too. Given a log a reporter attached and one captured any other way, the comparison runs anywhere.
 
-The rest of it was portable untouched. `puppeteer-update-snapshots` turned out to be the *most* local skill in the set — its command explicitly unsets `GITHUB_ACTIONS` so that the Docker and Vite setup runs, which is exactly the local path.
+The rest of it was portable untouched. `puppeteer-update-snapshots` turned out to be the *most* local skill in the set — its command explicitly unsets `GITHUB_ACTIONS` and `CI` so that the Docker and Vite setup runs and the tests open what it started, which is exactly the local path.
 
 **Not shared** — [`browser-control`](skills.md#browser-control) and its Chrome and iOS halves, [`reproduce`](skills.md#reproduce), and [`run-test`](skills.md#run-test).
 
