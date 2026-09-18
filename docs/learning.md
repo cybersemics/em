@@ -6,4 +6,6 @@ The learning journey is tracked in [#5481](https://github.com/cybersemics/em/iss
 
 `storageModel` stores this state under `learning`. `initialState` restores it alongside font size and jump history. Decoding validates the stored shape and drops malformed records without importing the command registry. Consumers must ignore IDs no longer available in the current command registry.
 
-Practice records are local for now. User-wide learning progress and synchronization remain deferred. Controls, the corner widget, and practice counting are introduced in subsequent layers.
+Practice records are local for now. User-wide learning progress and synchronization remain deferred. The corner widget and practice counting are introduced in subsequent layers.
+
+Command Universe detail pages offer Pin and Unpin controls. Pinning another command replaces the selection; the row describes which command will be replaced. These controls do not execute commands.
