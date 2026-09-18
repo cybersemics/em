@@ -51,10 +51,22 @@ if [ -z "$GITHUB_ACTIONS" ]; then
     echo "Starting browserless docker container..."
     CONTAINER_ID=$(docker run -d --rm -p 7566:3000 --add-host=host.docker.internal:host-gateway -e "CONNECTION_TIMEOUT=-1" browserless/chrome)
 
-    # Wait for the container to be ready
+    # Wait for the container to be ready. Poll browserless's own HTTP endpoint rather than the TCP
+    # port: Docker publishes 7566 the instant the container starts, but Chrome inside it needs
+    # another ten seconds or so on a cold start. In that window the port answers and the websocket
+    # does not, so the run dies before a single test with "Could not connect to browserless."
+    # (src/e2e/puppeteer-environment.ts). A warm container hides this; a machine that has just
+    # started its Docker daemon — a cloud agent session, for one — hits it every time.
     echo "Waiting for browserless to be ready..."
-    while ! nc -z localhost 7566; do
-        sleep 0.1
+    for i in $(seq 1 60); do
+        if curl -fsS -o /dev/null http://localhost:7566/json/version 2>/dev/null; then
+            break
+        elif [ "$i" -eq 60 ]; then
+            echo "Error: browserless did not become ready within 60s." >&2
+            docker logs $CONTAINER_ID >&2
+            exit 1
+        fi
+        sleep 1
     done
 
     # Fail fast if the port is already occupied (e.g. an orphaned Vite server from a previous run).
