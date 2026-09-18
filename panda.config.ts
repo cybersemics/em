@@ -17,6 +17,7 @@ import linkRecipe from './src/recipes/link'
 import modalRecipe from './src/recipes/modal'
 import modalActionLinkRecipe from './src/recipes/modalActionLink'
 import modalTextRecipe from './src/recipes/modalText'
+import notificationRecipe from './src/recipes/notification'
 import panelCommandGroupRecipe from './src/recipes/panelCommandGroupRecipe'
 import panelCommandRecipe from './src/recipes/panelCommandRecipe'
 import slideTransitionRecipe from './src/recipes/slideTransition'
@@ -516,7 +517,7 @@ export default defineConfig({
             'dialog',
             'dialogContainer',
             'popup',
-            'tip',
+            'notification',
             'cloneDroppedThought',
             'hoverArrow',
             'gestureTrace',
@@ -573,6 +574,7 @@ export default defineConfig({
         dialogRecipe,
         modalRecipe,
         modalTextRecipe,
+        notificationRecipe,
         fadeTransitionRecipe,
         slideTransitionRecipe,
       },
