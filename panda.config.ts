@@ -508,6 +508,8 @@ export default defineConfig({
             'resizer',
             'bullet',
             'stack',
+            // above content so that the scroll zone's touch capture layer covers the thoughts, but below the navbar, toolbar, and other chrome
+            'scrollZoneTouch',
             'content',
             'scrollZone',
           ]),

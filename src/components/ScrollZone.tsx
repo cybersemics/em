@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
-import { AlertType, Settings } from '../constants'
+import { AlertType, LongPressState, Settings } from '../constants'
 import globals from '../globals'
 import useScrollTop from '../hooks/useScrollTop'
 import getUserSetting from '../selectors/getUserSetting'
@@ -83,49 +83,66 @@ const useScrollParallax = ({
   return supportsScrollTimeline ? undefined : `translateY(-${scrollTop / 4 + 300}px)`
 }
 
-/** An overlay for the scroll zone that blocks pointer events. */
+/** The scroll zone, consisting of a transparent layer that captures touches and a stardust indicator that shows the user where the zone is. */
 const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const scrollZoneRef = useRef<HTMLDivElement>(null)
   const highlightRef = useRef<HTMLDivElement>(null)
   const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
   const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   const showScrollZoneHelpAlert = useSelector(state => state.alert?.alertType === AlertType.ScrollZoneHelp)
+  const dragInProgress = useSelector(state => state.longPress === LongPressState.DragInProgress)
 
   useScrollHaptics()
   const transform = useScrollParallax({ ref: scrollZoneRef, disabled: hideScrollZone })
 
-  if (hideScrollZone) return null
-
   return (
-    <div
-      ref={scrollZoneRef}
-      className={css({
-        backgroundImage: `url('/img/scroll-zone/stardust.png')`,
-        backgroundRepeat: 'repeat',
-        zIndex: 'scrollZone',
-        backgroundSize: '800px',
-        position: 'fixed',
-        left: leftHanded ? 0 : undefined,
-        right: leftHanded ? undefined : 0,
-        // height must exceed all possible scroll heights
-        height: '999999px',
-        pointerEvents: 'none',
-      })}
-      style={{ transform, width: scrollZoneWidth }}
-    >
-      {/* The pulsing highlight is a separate overlay so that it can fade out when the help alert is dismissed rather than disappearing abruptly. */}
-      <FadeTransition type='medium' in={showScrollZoneHelpAlert} nodeRef={highlightRef} unmountOnExit>
+    <>
+      {/* Thoughts extend underneath the scroll zone, so without this layer a touch in the zone lands on a thought's editable and the browser starts a native caret drag, moving the caret of the focused thought and opening the magnifier. Capturing the touch keeps the zone scroll-only. It is always rendered, as hideScrollZone only hides the indicator; the zone itself remains active, just as isInGestureZone excludes it unconditionally. */}
+      <div
+        data-testid='scroll-zone'
+        className={css({
+          position: 'fixed',
+          top: 0,
+          bottom: 0,
+          left: leftHanded ? 0 : undefined,
+          right: leftHanded ? undefined : 0,
+          zIndex: 'scrollZoneTouch',
+        })}
+        // react-dnd-touch-backend resolves drop targets with document.elementFromPoint, which returns this layer instead of the target underneath, so ignore pointer events while dragging.
+        style={{ width: scrollZoneWidth, pointerEvents: dragInProgress ? 'none' : 'auto' }}
+      />
+      {!hideScrollZone && (
         <div
-          ref={highlightRef}
+          ref={scrollZoneRef}
           className={css({
-            position: 'absolute',
-            inset: 0,
+            backgroundImage: `url('/img/scroll-zone/stardust.png')`,
+            backgroundRepeat: 'repeat',
+            zIndex: 'scrollZone',
+            backgroundSize: '800px',
+            position: 'fixed',
+            left: leftHanded ? 0 : undefined,
+            right: leftHanded ? undefined : 0,
+            // height must exceed all possible scroll heights
+            height: '999999px',
             pointerEvents: 'none',
-            animation: 'pulseBackgroundHighlight 1s cubic-bezier(0, 0.2, 0.8, 1) infinite alternate',
           })}
-        />
-      </FadeTransition>
-    </div>
+          style={{ transform, width: scrollZoneWidth }}
+        >
+          {/* The pulsing highlight is a separate overlay so that it can fade out when the help alert is dismissed rather than disappearing abruptly. */}
+          <FadeTransition type='medium' in={showScrollZoneHelpAlert} nodeRef={highlightRef} unmountOnExit>
+            <div
+              ref={highlightRef}
+              className={css({
+                position: 'absolute',
+                inset: 0,
+                pointerEvents: 'none',
+                animation: 'pulseBackgroundHighlight 1s cubic-bezier(0, 0.2, 0.8, 1) infinite alternate',
+              })}
+            />
+          </FadeTransition>
+        </div>
+      )}
+    </>
   )
 }
 
