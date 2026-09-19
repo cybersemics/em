@@ -26,7 +26,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { undoActionCreator as undo } from './actions/undo'
-import { isMac } from './browser'
+import { isMac, isSafari, isTouch } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
@@ -783,6 +783,38 @@ export const handleNativeHistory = (type: 'undo' | 'redo') => {
   }
 }
 
+/** Whether a native undo/redo is being replayed by recycleNativeHistory, so that the `beforeinput` it dispatches is swallowed instead of routed to em's undo/redo a second time. */
+let recyclingNativeHistory = false
+
+/**
+ * Returns to WebKit's own history the step that a native undo/redo gesture consumed, so that the next gesture is still
+ * dispatched.
+ *
+ * WebKit dispatches the `historyUndo`/`historyRedo` `beforeinput` only while its own history has a step in that
+ * direction, and it registers a step only for edits it performed itself. Since em applies most edits by re-rendering
+ * the editable from Redux, WebKit's history holds far fewer steps than em's — and because preventing the event still
+ * advances WebKit's position, the gestures run out while em still has plenty to undo, after which iOS handles the
+ * gesture itself and reports "Nothing to Undo" (#4984).
+ *
+ * Advancing WebKit's position is reversible, so replaying the gesture and immediately inverting it — both prevented,
+ * neither routed to em — leaves a step on either side of WebKit's position for as long as it holds any step at all.
+ * Unlike registering a step with an `insertHTML` (#4637), this mutates no DOM and discards no redo steps, so native
+ * redo keeps working.
+ *
+ * No-op outside iOS Safari, which is the only place a native history gesture arrives as a `beforeinput`: the Capacitor
+ * app receives it as a `nativeHistory` plugin event instead, which never touches WebKit's history.
+ */
+const recycleNativeHistory = (type: 'undo' | 'redo') => {
+  if (!isTouch || !isSafari()) return
+  // Defer so that the replay does not re-enter the beforeinput dispatch that triggered it.
+  setTimeout(() => {
+    recyclingNativeHistory = true
+    document.execCommand(type)
+    document.execCommand(type === 'undo' ? 'redo' : 'undo')
+    recyclingNativeHistory = false
+  })
+}
+
 /** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707).
  *
  * Android soft keyboards report the space keydown as keyCode 229 ('Unidentified'), so the space-to-indent
@@ -801,7 +833,12 @@ export const beforeInput = (e: InputEvent) => {
   // routes cannot both fire for a single gesture.
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
     e.preventDefault()
-    handleNativeHistory(e.inputType === 'historyUndo' ? 'undo' : 'redo')
+    // The replay recycleNativeHistory performs is only there to move WebKit's position; undoing em a second time would
+    // consume a step of em's history that no gesture asked for.
+    if (recyclingNativeHistory) return
+    const type = e.inputType === 'historyUndo' ? 'undo' : 'redo'
+    handleNativeHistory(type)
+    recycleNativeHistory(type)
     return
   }
 
