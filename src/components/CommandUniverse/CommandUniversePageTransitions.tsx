@@ -1,5 +1,5 @@
 import { MotionConfigContext, motion, useReducedMotion } from 'motion/react'
-import { ReactElement, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { ReactElement, useContext, useEffect, useLayoutEffect, useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
@@ -7,10 +7,15 @@ import { commandUniverseFinishTransitionActionCreator as commandUniverseFinishTr
 import commandUniverseMotion from './commandUniverseMotion'
 
 /** The page being shown. */
-const settled = { opacity: 1, scale: 1, filter: 'blur(0px)' }
+const settled = { opacity: 1, transform: 'scale(1)', filter: 'blur(0px)' }
 
 /** Where a surface sits when it is not the page being shown. Zooming in pushes the page you left outward. */
-const away = (zoom: 'in' | 'out') => ({ opacity: 0, scale: zoom === 'in' ? 2.5 : 0.3, filter: 'blur(48px)' })
+const away = (zoom: 'in' | 'out') => ({
+  opacity: 0,
+  // Use transform: scale(...) to opt into WAAPI for better animation performance. Motion's scale prop runs on the JS frame loop.
+  transform: `scale(${zoom === 'in' ? 2.5 : 0.3})`,
+  filter: 'blur(48px)',
+})
 
 /**
  * Coordinates retained page surfaces while Redux owns their history and transition semantics.
@@ -28,19 +33,9 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
   const reducedMotion = useReducedMotion()
   const root = useRef<HTMLDivElement>(null)
   const focusTargets = useRef(new Map<string, HTMLElement>())
-  const [transformOrigin, setTransformOrigin] = useState('center')
-
-  // The zoom grows from the tapped cell. Redux carries that cell's rectangle in viewport
-  // coordinates; only the container's own position on screen is missing, and that exists solely after
-  // layout. Measure it here and hand the result down as an ordinary style.
-  useLayoutEffect(() => {
-    if (!root.current || !transition) return
-    const rect = root.current.getBoundingClientRect()
-    const origin = transition.origin
-    const x = origin ? origin.x + origin.width / 2 - rect.x : rect.width / 2
-    const y = origin ? origin.y + origin.height / 2 - rect.y : rect.height / 2
-    setTransformOrigin(`${x}px ${y}px`)
-  }, [transition])
+  const pendingFocus = useRef<string | null>(null)
+  // The cell records its origin before navigation mounts another page, avoiding a layout read during the zoom.
+  const transformOrigin = transition?.origin ? `${transition.origin.x * 100}% ${transition.origin.y * 100}%` : 'center'
 
   const duration = reducedMotion ? 0 : (motionOptions.duration ?? commandUniverseMotion.duration)
   const ease = motionOptions.ease ?? commandUniverseMotion.ease
@@ -62,6 +57,19 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
     target.focus({ preventScroll: true })
   }
 
+  useLayoutEffect(() => {
+    if (!isOpen || transition?.type !== 'none') return
+    pendingFocus.current = transition.toEntryId
+    dispatch(commandUniverseFinishTransition(transition.id))
+  }, [dispatch, isOpen, transition])
+
+  useLayoutEffect(() => {
+    if (!isOpen || transition || !pendingFocus.current) return
+    const entryId = pendingFocus.current
+    pendingFocus.current = null
+    if (entryId === activeEntryId) restoreFocus(entryId)
+  }, [activeEntryId, isOpen, transition])
+
   return (
     <div
       ref={root}
@@ -73,7 +81,7 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
         const active = entryId === activeEntryId
         const entering = !!transition && transition.toEntryId === entryId
         const exiting = !!transition && transition.fromEntryId === entryId
-        const moving = isOpen && (entering || exiting)
+        const moving = isOpen && transition?.type !== 'none' && (entering || exiting)
         // Keep a retained surface at the endpoint of its nearest history edge. Back and Forward then animate
         // it from the same pose where the previous transition left it, even after that transition clears.
         const parkedTarget =
@@ -89,7 +97,7 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
             data-entry-id={entryId}
             // A surface only ever mounts as the destination of a new history entry, so it starts where that zoom
             // comes from.
-            initial={entering ? away(transition.zoom === 'in' ? 'out' : 'in') : target}
+            initial={entering && transition.type !== 'none' ? away(transition.zoom === 'in' ? 'out' : 'in') : target}
             animate={target}
             transition={
               moving
@@ -104,7 +112,7 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
             // The navigation ends when its destination arrives. A completion from an abandoned navigation
             // carries that navigation's id, which the Redux reducer rejects.
             onAnimationComplete={
-              entering
+              entering && transition.type !== 'none'
                 ? () => {
                     if (!isOpen) return
                     // Commit the navigation before focusing: until the transition clears, every page is inert and
