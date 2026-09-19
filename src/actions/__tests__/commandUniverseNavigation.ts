@@ -1,4 +1,5 @@
 import { expectTypeOf } from 'vitest'
+import Command from '../../@types/Command'
 import CommandUniversePage from '../../@types/CommandUniversePage'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
@@ -10,8 +11,11 @@ import toggleMobileCommandUniverse, { toggleMobileCommandUniverseActionCreator }
 
 it('derives page ids and their required props from the registered components', () => {
   type NavigateArguments = Parameters<typeof commandUniverseNavigateActionCreator>
-  expectTypeOf<'grid'>().toMatchTypeOf<CommandUniversePage['pageId']>()
+  expectTypeOf<'grid' | 'detail'>().toMatchTypeOf<CommandUniversePage['pageId']>()
   expectTypeOf<['grid', Record<string, never>]>().toMatchTypeOf<NavigateArguments>()
+  expectTypeOf<['detail', { command: Command }]>().toMatchTypeOf<NavigateArguments>()
+  expectTypeOf<['detail', Record<string, never>]>().not.toMatchTypeOf<NavigateArguments>()
+  expectTypeOf<['grid', { command: Command }]>().not.toMatchTypeOf<NavigateArguments>()
   expectTypeOf<['grid', { unregistered: true }]>().not.toMatchTypeOf<NavigateArguments>()
   expectTypeOf<['missing', Record<string, never>]>().not.toMatchTypeOf<NavigateArguments>()
 })
@@ -60,11 +64,12 @@ it('routes page visits through the global Redux store and keeps repeated visits 
   store.dispatch(toggleMobileCommandUniverseActionCreator({ value: true }))
   const rootId = store.getState().commandUniverseNavigation.entries[0].entryId
 
-  store.dispatch(commandUniverseNavigateActionCreator('grid', {}))
+  const command = { id: 'newThought', label: 'New Thought', exec: () => {}, multicursor: false } satisfies Command
+  store.dispatch(commandUniverseNavigateActionCreator('detail', { command }))
 
   const navigation = store.getState().commandUniverseNavigation
   expect(navigation.index).toBe(1)
-  expect(navigation.entries.map(entry => entry.page.pageId)).toEqual(['grid', 'grid'])
+  expect(navigation.entries.map(entry => entry.page.pageId)).toEqual(['grid', 'detail'])
   expect(navigation.entries[1].entryId).not.toBe(rootId)
 })
 
