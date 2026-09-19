@@ -77,6 +77,9 @@ interface Command {
   /** A description of what the command does whnn it is in an inverse state. */
   descriptionInverse?: string | ((state: State) => string)
 
+  /** A richer description shown on the command detail page in Command Universe. Supports JSX for links, formatting and embedded components. */
+  longDescription?: React.ReactNode
+
   /** A function that returns an error message if the command should indicate an error. */
   error?: (state: State) => string | null
 
