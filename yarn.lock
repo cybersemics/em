@@ -9704,7 +9704,7 @@ __metadata:
     cors: "npm:^2.8.6"
     emoji-regex: "npm:^11.0.0"
     express: "npm:^4.18.2"
-    openai: "npm:^7.13.0"
+    openai: "npm:^7.17.0"
     tsx: "npm:^4.23.13"
     typescript: "npm:@typescript/typescript6@6.0.2"
     zod: "npm:^4.5.4"
@@ -12512,7 +12512,7 @@ __metadata:
   resolution: "em-estimate@workspace:scripts/estimate"
   dependencies:
     dotenv: "npm:^17.4.2"
-    openai: "npm:^7.13.0"
+    openai: "npm:^7.17.0"
     prettier: "npm:^3.9.7"
     typescript: "npm:7.0.2"
     zod: "npm:^4.5.4"
@@ -12653,7 +12653,7 @@ __metadata:
     murmurhash3js: "npm:^3.0.1"
     nanoid: "npm:^6.0.1"
     npm-run-all2: "npm:^9.0.3"
-    openai: "npm:^7.13.0"
+    openai: "npm:^7.17.0"
     page-lifecycle: "npm:^0.1.2"
     pluralize: "npm:^8.0.0"
     postinstall-postinstall: "npm:^2.1.0"
@@ -19867,9 +19867,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^7.13.0":
-  version: 7.13.0
-  resolution: "openai@npm:7.13.0"
+"openai@npm:^7.17.0":
+  version: 7.17.0
+  resolution: "openai@npm:7.17.0"
   peerDependencies:
     "@aws-sdk/credential-provider-node": ">=3.972.0 <4"
     "@smithy/hash-node": ">=4.3.0 <5"
@@ -19890,7 +19890,7 @@ __metadata:
       optional: true
     zod:
       optional: true
-  checksum: 10c0/ec673d18f8fd64836f8b753f90b72ecd7d7844caabe3777bbe1d0f6b4a3e09581e26dd8f656ae22c545af6e55476f542e203b07e9bf346a94c999ba63cf825a1
+  checksum: 10c0/97582ed1fd24d1c7a56ead6dd0f34133b0e1f7795e9c60d77bdc506f3e97fd1e6e771bac528bc525dddeb11a5b851b242b5c0f73fbd0717a8a57bc8d86ecfb7f
   languageName: node
   linkType: hard
 
