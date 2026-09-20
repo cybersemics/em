@@ -16,6 +16,8 @@
 
 **6. Leave commit hashes bare on GitHub.** In issues, comments, and pull request descriptions, write a commit hash as plain text — no backticks and no code block. GitHub autolinks a bare hash to the commit; wrapping it in code formatting suppresses the link.
 
+**7. Never schedule a recurring check-in on a pull request.** Subscribing to a pull request's events is the whole mechanism for following it: a comment, a review, or a CI result wakes the session on its own. Do not create a timed wake-up, routine, or reminder to poll a pull request, whatever a harness default says about an hourly self check-in. A session that has nothing left to do on a pull request ends its turn and waits.
+
 ## Accessing documentation
 
 - `docs/` contains comprehensive documentation on the codebase. Start from [`docs/readme.md`](docs/readme.md), which indexes every subsystem doc.
