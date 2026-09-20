@@ -8,14 +8,15 @@ We targeted Copilot specifically because the project already runs on GitHub — 
 
 > Agents running on a developer's own machine — Codex, Claude Code — share a subset of these skills through symlinks. See [External agents](external-agents.md).
 
-| Document                              | What it covers                                                                     |
-| ------------------------------------- | ---------------------------------------------------------------------------------- |
-| This page                             | The map: what the pieces are, what loads when, how a task flows through them       |
-| [Skills](skills.md)                   | Every skill, what each one does, and how they call each other                      |
-| [Environment](environment.md)         | What the runner sets up, how the agent drives a browser, how iOS works             |
-| [MCP servers](mcp.md)                 | The three external tool servers, what each gives the agent, and how they are wired |
-| [The TDD workflow](tdd.md)            | Why regression tests are committed switched off, and what the CI checks mean       |
-| [External agents](external-agents.md) | Codex and Claude Code — what they share with the cloud agent, and what they cannot |
+| Document                                            | What it covers                                                                                                            |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| This page                                           | The map: what the pieces are, what loads when, how a task flows through them                                              |
+| [Skills](skills.md)                                 | Every skill, what each one does, and how they call each other                                                             |
+| [Environment](environment.md)                       | What the runner sets up, how the agent drives a browser, how iOS works                                                    |
+| [MCP servers](mcp.md)                               | The three external tool servers, what each gives the agent, and how they are wired                                        |
+| [The TDD workflow](tdd.md)                          | Why regression tests are committed switched off, and what the CI checks mean                                              |
+| [External agents](external-agents.md)               | Codex and Claude Code — what they share with the cloud agent, and what they cannot                                        |
+| [Documentation strategy](documentation-strategy.md) | Why `docs/` is comprehensive, how that compares with Compound Engineering's learnings store, and the evidence behind both |
 
 ## The four kinds of file
 

@@ -16,6 +16,7 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 ## Agents
 
 - [Agent Infrastructure](agents/readme.md) — How coding agents work on this repo: what the Copilot cloud agent reads, the skills they run, the environment and MCP servers behind them, the TDD workflow, and how Codex and Claude Code share the same suite.
+- [Documentation Strategy](agents/documentation-strategy.md) — Why the docs are comprehensive and read on demand, how that compares with Compound Engineering's learnings store, what the research says about documentation for agents, and the recommendations that came out of it.
 
 ## Reference
 
