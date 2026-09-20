@@ -9647,7 +9647,7 @@ __metadata:
     "@vercel/firewall": "npm:^1.2.5"
     body-parser: "npm:^2.3.0"
     cors: "npm:^2.8.6"
-    emoji-regex: "npm:^10.6.0"
+    emoji-regex: "npm:^11.0.0"
     express: "npm:^4.18.2"
     openai: "npm:^7.13.0"
     tsx: "npm:^4.23.13"
@@ -12515,7 +12515,7 @@ __metadata:
     dompurify: "npm:^3.4.15"
     dotenv: "npm:17.4.2"
     emitter20: "npm:^2.0.0"
-    emoji-regex: "npm:^10.6.0"
+    emoji-regex: "npm:^11.0.0"
     eslint: "npm:^10.10.0"
     eslint-config-prettier: "npm:^10.1.8"
     eslint-plugin-export-default-identifier: "npm:0.3.0"
@@ -12624,10 +12624,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"emoji-regex@npm:^10.3.0, emoji-regex@npm:^10.6.0":
+"emoji-regex@npm:^10.3.0":
   version: 10.6.0
   resolution: "emoji-regex@npm:10.6.0"
   checksum: 10c0/1e4aa097bb007301c3b4b1913879ae27327fdc48e93eeefefe3b87e495eb33c5af155300be951b4349ff6ac084f4403dc9eff970acba7c1c572d89396a9a32d7
+  languageName: node
+  linkType: hard
+
+"emoji-regex@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "emoji-regex@npm:11.0.0"
+  checksum: 10c0/b8acc7af7a892df0a2753540e65fecb02b704873712b5e4a395613a5ef01f6ba695a772c75c2c056d08576c2a0f86bf2cd27c2903d184878a92bd96235dba3e4
   languageName: node
   linkType: hard
 
