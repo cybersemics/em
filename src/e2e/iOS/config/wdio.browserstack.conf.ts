@@ -24,6 +24,46 @@ const date = new Date().toISOString().slice(0, 10)
 
 let tunnelProcess: ChildProcess | null = null
 
+/** The colors spec asserts a WebKit layout bug (#4263) that only a recent WebKit exhibits, so it is the one spec that runs on a newer OS than the rest of the suite. */
+const modernWebKitSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/color.ts')
+
+/** Builds a BrowserStack device capability, optionally restricting which specs run on it. */
+const deviceCapability = ({
+  deviceName,
+  osVersion,
+  specs,
+  exclude,
+}: {
+  /** The BrowserStack device name, e.g. 'iPhone 15 Plus'. */
+  deviceName: string
+  /** The iOS version to run on the device, e.g. '17'. */
+  osVersion: string
+  /** Specs to run on this device instead of the suite's. */
+  specs?: string[]
+  /** Specs to omit from the suite's on this device. */
+  exclude?: string[]
+}): WebdriverIO.Capabilities => ({
+  ...baseConfig.baseCapabilities,
+  'appium:deviceName': deviceName,
+  'appium:platformVersion': osVersion,
+  ...(specs ? { specs } : null),
+  ...(exclude ? { exclude } : null),
+  'bstack:options': {
+    deviceName,
+    osVersion,
+    projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
+    buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
+    sessionName: `iOS ${osVersion} Safari Tests`,
+    // The device reaches the dev server over the public cloudflared HTTPS URL (onPrepare), so
+    // BrowserStack Local (`local: true`) is not used on this path. These flags collect diagnostic
+    // data on BrowserStack's web dashboard, which we don't need/use.
+    debug: false,
+    networkLogs: false,
+    consoleLogs: 'errors',
+    idleTimeout: 60,
+  },
+})
+
 /**
  * Checks that a dev server is running on port 3000 and fetches its tunnel token from the
  * /__tunnel-token endpoint (see tunnelTokenGate.ts) for local runs.
@@ -66,6 +106,22 @@ const probeDevServer = async (): Promise<{ token: string | null } | null> => {
   return (await probe('https')) || (await probe('http'))
 }
 
+// Most specs run on iOS 17, which the suite's screen coordinates are calibrated for, and the one spec
+// that needs a newer WebKit runs on iOS 26. Both devices are 430x932, so only the OS varies.
+const capabilities = [
+  // The suite's default device. Its coordinates are the reason the OS is not simply moved forward:
+  // taps and gestures are performed in screen coordinates derived from page coordinates by a fixed
+  // Safari chrome offset (toolbarTapOptions), and on iOS 26 four caret tests fail because taps and
+  // gestures aimed at the lower half of the page no longer land where that arithmetic says. Moving
+  // the whole suite forward means deriving those coordinates from the webview rect first.
+  deviceCapability({ deviceName: 'iPhone 15 Plus', osVersion: '17', exclude: [modernWebKitSpec] }),
+  // A WebKit recent enough to exhibit the bug the spec assigned here covers. A device suite pinned to
+  // an OS that predates the bug under test reports green while users hit it: the Popover margin
+  // relayout in #4263 grows the toolbar by 11.6px on iOS 26 and does not reproduce at all on 17, so
+  // its regression test passed on the base branch and TDD correctly flagged it as covering nothing.
+  deviceCapability({ deviceName: 'iPhone 15 Pro Max', osVersion: '26', specs: [modernWebKitSpec] }),
+]
+
 /**
  * WDIO configuration for BrowserStack iOS testing.
  * Uses a pool of named Cloudflare Tunnels (see cloudflareTunnelPool.ts) to expose the local
@@ -89,33 +145,7 @@ export const config: WebdriverIO.Config = {
   user,
   key: process.env.BROWSERSTACK_ACCESS_KEY,
 
-  // Capabilities
-  // Keep the OS current. This suite exists to catch device-specific WebKit behavior, and a WebKit
-  // old enough to predate a bug reports the suite as green while users hit it: the Popover margin
-  // relayout in #4263 grows the toolbar by 11.6px on iOS 26 (measured on both iPhone 15 and
-  // iPhone 15 Pro Max) and does not reproduce at all on iOS 17. Hold the 430x932 screen geometry
-  // across a bump so that only the OS varies. See docs/testing.md § Device pin.
-  capabilities: [
-    {
-      ...baseConfig.baseCapabilities,
-      'appium:deviceName': 'iPhone 15 Pro Max',
-      'appium:platformVersion': '26',
-      'bstack:options': {
-        deviceName: 'iPhone 15 Pro Max',
-        osVersion: '26',
-        projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
-        buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
-        sessionName: 'iOS Safari Tests',
-        // The device reaches the dev server over the public cloudflared HTTPS URL (onPrepare), so
-        // BrowserStack Local (`local: true`) is not used on this path. These flags collect diagnostic
-        // data on BrowserStack's web dashboard, which we don't need/use.
-        debug: false,
-        networkLogs: false,
-        consoleLogs: 'errors',
-        idleTimeout: 60,
-      },
-    },
-  ],
+  capabilities,
 
   // Services
   services: [
@@ -136,9 +166,10 @@ export const config: WebdriverIO.Config = {
     // (`config.spec` itself is only used as the flag: the launcher merges the CLI args into the
     // config twice, so that array lists every file twice and its length is not the file count.)
     // WDIO's Testrunner type does not declare `spec`, which only ever arrives from the CLI.
+    // A spec can run on more than one capability, so the worker count is per capability.
     const { spec: cliSpecs } = config as { spec?: string[] }
     const specCount = cliSpecs?.length && config.specs?.length ? config.specs.length : Infinity
-    const sessionsNeeded = Math.min(baseConfig.maxInstances, specCount)
+    const sessionsNeeded = Math.min(baseConfig.maxInstances, specCount * capabilities.length)
 
     try {
       // Claim a tunnel from the pool if not already set (e.g. by a CI workflow step)
