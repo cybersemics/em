@@ -90,14 +90,19 @@ export const config: WebdriverIO.Config = {
   key: process.env.BROWSERSTACK_ACCESS_KEY,
 
   // Capabilities
+  // Keep the OS current. This suite exists to catch device-specific WebKit behavior, and a WebKit
+  // old enough to predate a bug reports the suite as green while users hit it: the Popover margin
+  // relayout in #4263 grows the toolbar by 11.6px on iOS 26 (measured on both iPhone 15 and
+  // iPhone 15 Pro Max) and does not reproduce at all on iOS 17. Hold the 430x932 screen geometry
+  // across a bump so that only the OS varies. See docs/testing.md § Device pin.
   capabilities: [
     {
       ...baseConfig.baseCapabilities,
-      'appium:deviceName': 'iPhone 15 Plus',
-      'appium:platformVersion': '17',
+      'appium:deviceName': 'iPhone 15 Pro Max',
+      'appium:platformVersion': '26',
       'bstack:options': {
-        deviceName: 'iPhone 15 Plus',
-        osVersion: '17',
+        deviceName: 'iPhone 15 Pro Max',
+        osVersion: '26',
         projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
         buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
         sessionName: 'iOS Safari Tests',
