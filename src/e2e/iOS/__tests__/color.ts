@@ -13,6 +13,17 @@ import waitForElement from '../helpers/waitForElement'
 /** Retrieve the innerHTML of the first note on the page. Assumes that there will be only a single note. */
 const getFirstNoteText = () => browser.execute(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML)
 
+/** Returns true if an inline element sits between the open Color Picker and the Text Color button that contains it. */
+const isColorPickerInlineWrapped = () =>
+  browser.execute(() => {
+    const picker = document.querySelector('[aria-label="Color Picker"]')
+    if (!picker) throw new Error('Color Picker not found.')
+    const button = picker.closest('[data-testid="toolbar-icon"]')
+    if (!button) throw new Error('Color Picker is not rendered inside a toolbar button.')
+    const span = picker.closest('span')
+    return !!span && button.contains(span)
+  })
+
 describe('Color', () => {
   it('Can change the background color of a thought that already has the same background color applied to part of its text, then change the text color', async () => {
     await paste(`- some <font color="#000000" style="background-color: rgb(255, 87, 61);">formatted</font> text`)
@@ -51,6 +62,13 @@ describe('Color', () => {
 
     await tapToolbar('Text Color')
     await waitForElement('[aria-label="Color Picker"]')
+
+    // The shift comes from the picker being a block inside an inline element, which WebKit lays out inconsistently: on
+    // iOS 26.6 the margin moves above the line box and grows the toolbar, while 26.3 renders it unchanged. BrowserStack
+    // matches osVersion on the major only, so which of those runs is up to the pool. The inline wrapper itself is React
+    // output and absent on every engine, so assert that too and the cause is caught wherever this lands.
+    expect(await isColorPickerInlineWrapped()).toBe(false)
+
     const toolbarHeight = await getToolbarHeight()
 
     // The picker is already open, so tap the swatch directly; tapToolbar would tap the Text Color button again and toggle the picker closed.
