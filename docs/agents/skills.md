@@ -267,6 +267,8 @@ The first step of `end-session`, and the reason documentation here is expected t
 
 It runs before the working tree is accounted for, because a documentation edit is itself a file change. Run it afterwards and it misses the commit.
 
+It skips `docs/plans/` and `docs/solutions/`. Those hold Compound Engineering plans and captured learnings, which are point-in-time records rather than descriptions of the project as it is, so a change that moves on from a plan does not make the plan wrong.
+
 The stakes are higher here than in a project where docs are only read by people. `docs/` is **required reading for the [`plan`](#plan) skill**, so a stale document is not merely unhelpful — it is the input to the next agent's plan, and a plan built on a constraint that no longer holds produces confident, wrong code. Every change that leaves documentation behind makes the following session start from a worse map.
 
 **Routing happens three ways**, because no one of them is sufficient.

@@ -43,7 +43,7 @@ Endings 2–4 still run the whole checklist below. **An escalation is an ending,
 
 This comes first because a doc edit is itself a file change — it has to happen before you take stock of the tree, not after, or it misses the commit. It is also the step most easily rationalised away at the end of a long session, which is exactly why it is a numbered step rather than a good intention.
 
-`docs/` is required reading for the `plan` skill, so a stale document does not merely misinform a human — it becomes the input to the next agent's plan. A change that leaves documentation behind makes every later session start from a worse map.
+`docs/` is required reading for the `plan` skill, so a stale document does not merely misinform a human — it becomes the input to the next agent's plan. A change that leaves documentation behind makes every later session start from a worse map. `docs/plans/` and `docs/solutions/` are the exception: they hold point-in-time planning artifacts and learnings, not a description of the project as it is, so `docs-sync` leaves them alone and a stale plan is not a finding.
 
 `docs: unaffected — <reason>` is a legitimate outcome, but it is a conclusion you reach after checking, not a default. Carry whichever line `docs-sync` hands back into your Step 7 report.
 
