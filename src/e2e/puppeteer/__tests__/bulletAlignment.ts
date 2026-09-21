@@ -5,7 +5,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('bullet alignment', () => {
   // https://github.com/cybersemics/em/issues/5567
-  it.skip('bullet is vertically centered on the thought text', async () => {
+  it('bullet is vertically centered on the thought text', async () => {
     await newThought('This is an empty thought')
     await page.waitForSelector('[aria-label="bullet-glyph"]')
 
