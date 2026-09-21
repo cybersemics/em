@@ -2,6 +2,8 @@ import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { UnknownAction } from 'redux'
 import Thunk from '../../@types/Thunk'
+import { addMulticursorActionCreator as addMulticursor } from '../../actions/addMulticursor'
+import { clearMulticursorsActionCreator as clearMulticursors } from '../../actions/clearMulticursors'
 import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
@@ -112,6 +114,58 @@ describe('pending format', () => {
     const cursorValue = getThoughtById(state, head(state.cursor!))!.value
 
     expect(cursorValue).toBe('<font color="#00d688">H</font>')
+  })
+
+  // #3910: a multiselect colors each selected thought in full, so an empty one among them holds the color the same way
+  // a lone empty thought does. Before this, formatSelection's multicursor branch formatted each thought's value, and an
+  // empty value has no text for the tags to wrap, so the command was a silent no-op on every empty thought selected.
+  it('holds a color for each empty thought in a multiselect (#3910)', async () => {
+    await dispatch(newThought({ value: '' }))
+    const first = store.getState().cursor!
+    await dispatch(newThought({ value: '' }))
+    const second = store.getState().cursor!
+
+    await dispatch([addMulticursor({ path: first }), addMulticursor({ path: second })])
+    await dispatch(formatSelection('foreColor', 'green'))
+    await dispatch(clearMulticursors())
+
+    const user = userEvent.setup({ delay: null })
+
+    await dispatch(setCursorPath({ path: first }))
+    await user.type(getEditable(), 'H')
+    await act(vi.runAllTimersAsync)
+
+    await dispatch(setCursorPath({ path: second }))
+    await user.type(getEditable(), 'H')
+    await act(vi.runAllTimersAsync)
+
+    const state = store.getState()
+
+    expect(getThoughtById(state, head(first))!.value).toBe('<font color="#00d688">H</font>')
+    expect(getThoughtById(state, head(second))!.value).toBe('<font color="#00d688">H</font>')
+  })
+
+  // #3910: a multiselect of both kinds colors each thought by the means available to it — the value of the one that has
+  // text, the held formatting of the one that does not — in a single command.
+  it('colors an empty and a non-empty thought together in a multiselect (#3910)', async () => {
+    await dispatch(newThought({ value: 'a' }))
+    const nonEmpty = store.getState().cursor!
+    await dispatch(newThought({ value: '' }))
+    const empty = store.getState().cursor!
+
+    await dispatch([addMulticursor({ path: nonEmpty }), addMulticursor({ path: empty })])
+    await dispatch(formatSelection('foreColor', 'green'))
+    await dispatch(clearMulticursors())
+
+    await dispatch(setCursorPath({ path: empty }))
+    const user = userEvent.setup({ delay: null })
+    await user.type(getEditable(), 'H')
+    await act(vi.runAllTimersAsync)
+
+    const state = store.getState()
+
+    expect(getThoughtById(state, head(nonEmpty))!.value).toBe('<font color="#00d688">a</font>')
+    expect(getThoughtById(state, head(empty))!.value).toBe('<font color="#00d688">H</font>')
   })
 
   // #3910: an empty thought has no text to color, so the color it is holding is previewed on the placeholder instead.
