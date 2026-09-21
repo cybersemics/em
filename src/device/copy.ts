@@ -136,8 +136,9 @@ const copyPlain = (text: string): void => {
  * refuses a write issued after an await, while mobile Safari accepts one; both were measured with the same
  * build. A caller that does not know what to copy until an await resolves must therefore use copyDeferred.
  *
- * No text/em marker: ClipboardItem's type allowlist excludes it. useOnCopy writes it through DataTransfer on
- * a real copy event, which is a separate interface the allowlist does not govern, and is untested here.
+ * No text/em marker: ClipboardItem's type allowlist excludes it. The useOnCopy handler writes it through
+ * DataTransfer on a real copy event, which is a separate interface the allowlist does not govern, and is
+ * untested here.
  */
 const copyRichAsyncClipboard = (text: string, html: string): void => {
   navigator.clipboard
