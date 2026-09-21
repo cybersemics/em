@@ -14,11 +14,11 @@
   },
   "dependencies": {
     "dotenv": "^17.4.2",
-    "openai": "^7.13.0",
+    "openai": "^7.17.0",
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.7",
     "typescript": "7.0.2"
   }
 }
