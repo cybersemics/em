@@ -126,10 +126,11 @@ const copyPlain = (text: string): void => {
 /** Copies text and html to the clipboard on mobile WebKit — mobile Safari and the iOS Capacitor app.
  *
  * Neither rich path above is available here. The copy is triggered by a Command Center tap rather than Cmd+C,
- * so no user-initiated copy event fires for copyRichSafari to intercept, and WebKit ignores setData() during
- * the programmatic execCommand('copy') that copyRichExecCommand depends on. The async Clipboard API does
- * work, measured on an iOS device: the html round-trips with underline, strikethrough and colors intact,
- * WebKit only prepending inline style normalization to the outer element.
+ * so no user-initiated copy event fires for copyRichSafari to intercept, and copyRichExecCommand depends on
+ * setData() during a programmatic execCommand('copy'), which Safari is documented above to ignore — inherited
+ * from that comment rather than measured here. The async Clipboard API does work, measured on an iOS device:
+ * the html round-trips with underline, strikethrough and colors intact, WebKit only prepending inline style
+ * normalization to the outer element.
  *
  * The two shells enforce user activation differently, and only one of them is strict. The Capacitor WebView
  * refuses a write issued after an await, while mobile Safari accepts one; both were measured with the same
