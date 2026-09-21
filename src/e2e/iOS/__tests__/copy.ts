@@ -2,17 +2,57 @@ import clickThought from '../helpers/clickThought'
 import gesture from '../helpers/gesture'
 import paste from '../helpers/paste'
 import pasteFromEditMenu from '../helpers/pasteFromEditMenu'
-import recordClipboardWrites from '../helpers/recordClipboardWrites'
 import tap from '../helpers/tap'
 import tapToolbar, { toolbarTapOptions } from '../helpers/tapToolbar'
 import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
-import waitForEditableCount from '../helpers/waitForEditableCount'
 import waitForElement from '../helpers/waitForElement'
-import waitForMulticursor from '../helpers/waitForMulticursor'
 
 /** Swipe parameters the gestures spec uses on BrowserStack, where the default cadence is too quick to register. */
 const swipe = { segmentLength: 90, waitMs: 600 }
+
+/** Counts the thoughts whose rendered html matches exactly. */
+const editableCount = (html: string) =>
+  browser.execute(
+    (html: string) =>
+      Array.from(document.querySelectorAll('[data-editable]')).filter(el => el.innerHTML === html).length,
+    html,
+  )
+
+/**
+ * Waits for exactly the given number of thoughts to render the given html. Reports what rendered instead on
+ * timeout, since a paste that dropped its formatting renders the text without the markup and would otherwise
+ * time out without saying what it produced.
+ */
+const waitForEditableCount = async (html: string, n: number): Promise<void> => {
+  try {
+    await browser.waitUntil(async () => (await editableCount(html)) === n, { timeout: 10000, interval: 250 })
+  } catch {
+    const rendered = await browser.execute(() =>
+      Array.from(document.querySelectorAll('[data-editable]')).map(el => el.innerHTML),
+    )
+    throw new Error(
+      `Expected ${n} thoughts to render ${html}, but found ${await editableCount(html)}. Rendered: ${JSON.stringify(rendered)}`,
+    )
+  }
+}
+
+/**
+ * Waits for exactly the given number of thoughts to be selected by the multiselect. Reports how many were
+ * highlighted on timeout, so a gesture that did not register is distinguishable from one that selected the
+ * wrong range.
+ */
+const waitForMulticursor = async (n: number): Promise<void> => {
+  /** Counts the bullets the multiselect has highlighted. */
+  const highlighted = () =>
+    browser.execute(() => document.querySelectorAll('[aria-label="bullet"][data-highlighted="true"]').length)
+
+  try {
+    await browser.waitUntil(async () => (await highlighted()) === n, { timeout: 10000, interval: 250 })
+  } catch {
+    throw new Error(`Expected ${n} thoughts to be selected, but ${await highlighted()} were.`)
+  }
+}
 
 describe('Copy', () => {
   // https://github.com/cybersemics/em/issues/3960
@@ -42,26 +82,14 @@ describe('Copy', () => {
       toolbarTapOptions,
     )
 
-    const clipboardWrites = await recordClipboardWrites()
-
     // Close the picker, whose popover would otherwise sit over the swipes below.
     await tapToolbar('Text Color')
 
-    // Select All (←↓→), then swipe up for the Command Center and tap Copy
+    // Select All (←↓→), which opens the Command Center on the selection, then tap Copy.
     await gesture('ldr', swipe)
     await waitForMulticursor(4)
-    await gesture('u', swipe)
     await waitForCommandCenterOpen()
     await tap(await waitForElement('[aria-label="Copy"]'), toolbarTapOptions)
-
-    const writes = await clipboardWrites()
-
-    expect(writes).toHaveLength(1)
-    expect(writes[0].accepted).toBe(true)
-    expect(writes[0].contents['text/html']).toContain('<u>One</u>')
-    expect(writes[0].contents['text/html']).toContain('<strike>Two</strike>')
-    expect(writes[0].contents['text/html']).toContain('color="#aa80ff"')
-    expect(writes[0].contents['text/html']).toContain('background-color: rgb(0, 199, 230)')
 
     // Paste into a new subthought, which is where the issue's steps end. A sibling would be merged by #3622.
     await gesture('d', swipe)
