@@ -169,9 +169,6 @@ const Metaprogramming = () => {
       <code>=readonly</code>
       <p>The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.</p>
 
-      {/* <code>=src</code>
-      <p>Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.</p> */}
-
       <code>=style</code>
       <p>
         Set CSS styles on the thought. You can set a style on all children or grandchildren with =children/=style or

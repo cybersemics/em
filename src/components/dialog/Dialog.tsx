@@ -1,5 +1,6 @@
 import React, { PropsWithChildren, useEffect, useRef } from 'react'
 import { dialogRecipe } from '../../../styled-system/recipes'
+import useOnClickOutside from '../../hooks/useOnClickOutside'
 
 interface DialogProps {
   onClose: () => void
@@ -13,26 +14,8 @@ const Dialog: React.FC<PropsWithChildren<DialogProps>> = ({ children, onClose, n
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const dialog = dialogRecipe()
 
-  /**
-   * Calls the onClose function when the user clicks outside the dialog.
-   */
-  useEffect(() => {
-    const currentDialogRef = dialogRef.current
-
-    /** When the user clicks outside the dialog, close the dialog. */
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node
-      if (currentDialogRef && !currentDialogRef.contains(target)) {
-        onClose()
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [onClose])
+  // Close the dialog when the user clicks or taps outside of it.
+  useOnClickOutside(dialogRef, onClose)
 
   /**
    * Disable swipe-to-go-back.

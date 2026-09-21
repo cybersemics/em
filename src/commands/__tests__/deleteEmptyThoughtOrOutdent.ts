@@ -195,12 +195,12 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(deleteEmptyThoughtOrOutdent, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+    // c1 is not an only child, so it is deleted rather than outdented (#4008).
     const expectedOutput = `- ${HOME_TOKEN}
   - a
   - b
   - b1
   - c
-    - c1
     - c2`
 
     expect(exported).toEqual(expectedOutput)

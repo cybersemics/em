@@ -18,6 +18,7 @@ const ErrorMessage: FC = () => {
       {value ? (
         <FadeTransition type='fast'>
           <div
+            role='alert'
             className={css({
               left: '0',
               right: '0',

@@ -139,7 +139,6 @@ interface State {
   /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]
   remoteSearch: boolean
-  resourceCache: Index<string>
   rootContext: Context
   search: string | null
   searchContexts: Index<Context> | null

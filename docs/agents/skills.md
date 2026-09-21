@@ -17,16 +17,17 @@ In general, if you want to add an additional capability to the agent, you should
 flowchart TD
     START(["Agent working an issue"])
 
-    START --> IR["<b>issue-repro</b><br/>reproduce the bug first"]
+    START --> REP["<b>reproduce</b><br/>see the bug happen first"]
     START --> PL["<b>plan</b><br/>plan before writing code"]
     START --> CM["<b>ci-monitor</b><br/>watch CI to completion"]
 
-    IR --> BC["<b>browser-control</b><br/>picks the platform"]
+    REP --> BC["<b>browser-control</b><br/>picks the platform"]
     BC --> BCC["<b>browser-control-chrome</b><br/>web · Android"]
     BC --> BCI["<b>browser-control-ios</b><br/>real iPhone"]
-    IR --> TDD["<b>tdd-write-failing-test</b><br/>turn the repro into a test"]
+    REP --> CDL["<b>compare-debug-log</b><br/>their log vs. yours"]
+    REP --> TDD["<b>tdd-write-failing-test</b><br/>turn the repro into a test"]
     TDD --> RT["<b>run-test</b><br/>run one test for real"]
-    IR --> RT
+    REP --> RT
 
     CM --> TD["<b>test-diagnosis</b><br/>what kind of failure is this?"]
     TD --> PUS["<b>puppeteer-update-snapshots</b><br/>regenerate screenshots"]
@@ -34,17 +35,18 @@ flowchart TD
     CM --> ES["<b>end-session</b><br/>checklist before stopping"]
     ES --> DS["<b>docs-sync</b><br/>make docs true again"]
 
-    style IR fill:#2d4a2d,color:#fff
+    style REP fill:#2d4a2d,color:#fff
     style PL fill:#2d4a2d,color:#fff
     style ES fill:#4a2d2d,color:#fff
 
-    click IR "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "issue-repro — reproduce before investigating"
+    click REP "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#reproduce" "reproduce — see the failure before investigating"
     click PL "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "plan — plan and critique before implementing"
     click ES "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "end-session — the exit checklist"
     click DS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#docs-sync" "docs-sync — keep documentation true"
     click BC "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "browser-control — routes by platform"
     click BCC "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control-chrome" "browser-control-chrome — web and Android"
     click BCI "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control-ios" "browser-control-ios — real iPhone"
+    click CDL "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#compare-debug-log" "compare-debug-log — where their run and yours parted"
     click TDD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#tdd-write-failing-test" "tdd-write-failing-test — capture the bug"
     click RT "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#run-test" "run-test — run one test for real"
     click CM "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "ci-monitor — wait for every check"
@@ -56,11 +58,12 @@ The two green boxes are the gates — the agent must run them before it is allow
 
 | Skill | What it does | Source |
 | --- | --- | --- |
-| [`issue-repro`](#issue-repro) | Reproduce a reported bug for real, then capture it in a test, before touching the cause | [SKILL.md](../../.github/skills/issue-repro/SKILL.md) |
+| [`reproduce`](#reproduce) | Reproduce a reported bug for real, then capture it in a test, before touching the cause | [SKILL.md](../../.github/skills/reproduce/SKILL.md) |
 | [`plan`](#plan) | Write an architectural plan grounded in existing code, then attack it | [SKILL.md](../../.github/skills/plan/SKILL.md) |
 | [`browser-control`](#browser-control) | Bring up a browser or device for a given platform | [SKILL.md](../../.github/skills/browser-control/SKILL.md) |
 | [`browser-control-chrome`](#browser-control-chrome) | The web and Android half of that | [SKILL.md](../../.github/skills/browser-control-chrome/SKILL.md) |
 | [`browser-control-ios`](#browser-control-ios) | The iOS half — a real iPhone on BrowserStack | [SKILL.md](../../.github/skills/browser-control-ios/SKILL.md) |
+| [`compare-debug-log`](#compare-debug-log) | Compare a reporter's attached Debug Log against one captured while reproducing | [SKILL.md](../../.github/skills/compare-debug-log/SKILL.md) |
 | [`tdd-write-failing-test`](#tdd-write-failing-test) | Turn a reproduction into a permanent test that fails for the right reason | [SKILL.md](../../.github/skills/tdd-write-failing-test/SKILL.md) |
 | [`run-test`](#run-test) | Run one test in the real harness and report what happened | [SKILL.md](../../.github/skills/run-test/SKILL.md) |
 | [`ci-monitor`](#ci-monitor) | Wait for every CI check and report which passed | [SKILL.md](../../.github/skills/ci-monitor/SKILL.md) |
@@ -72,9 +75,9 @@ The two green boxes are the gates — the agent must run them before it is allow
 
 ## The gates
 
-### issue-repro
+### reproduce
 
-**Source: [`.github/skills/issue-repro/SKILL.md`](../../.github/skills/issue-repro/SKILL.md)**
+**Source: [`.github/skills/reproduce/SKILL.md`](../../.github/skills/reproduce/SKILL.md)**
 
 Runs when an issue contains a "Steps to Reproduce" section, or something close to it like "How to reproduce".
 
@@ -155,6 +158,20 @@ The session is created by a shell script rather than by the tooling, and the rea
 
 One real limitation: **autocorrect cannot be tested.** Shared BrowserStack devices have iOS auto-correction switched off and it cannot be enabled. Bugs that depend on the live autocorrect engine cannot be reproduced and should be escalated.
 
+### compare-debug-log
+
+**Source: [`.github/skills/compare-debug-log/SKILL.md`](../../.github/skills/compare-debug-log/SKILL.md)**
+
+Runs from [`reproduce`](#reproduce) Step 3 when the issue carries a **`## Debug Log`** — the on-device forensic trace a reporter can export from Settings. The agent captures the same trace while driving the steps, and the two are compared. The entry where they stop agreeing is the strongest lead a hard-to-identify bug offers.
+
+Two facts shape the whole skill, and both were measured rather than assumed.
+
+**`diff` does not work on debug logs.** Every entry carries a fresh sequence number, timestamp and millisecond delta, and every thought carries a random 128-bit id, so two runs of the *same* steps share almost no bytes — `diff` reported 79 of 84 lines changed on two captures of one four-step interaction. So each entry is reduced to a signature with the volatile parts neutralized, thought ids are numbered by first appearance within their own log, and the two signature streams are aligned. The same two captures then compare as identical. How the normalization works, and what it deliberately leaves alone, is in [Debug Log](../debug-log.md#comparing-two-logs).
+
+**A log must never be read into context.** Four steps of editing produce about 6 KB; a full buffer approaches a megabyte. So the reporter's log is downloaded to a file, the local one is captured to a file by a script that attaches through the existing e2e bridges, and only a bounded report is printed.
+
+The skill also tells the agent to run it *before* escalating a failed reproduction. "Their log has four `composition` entries mine never produced" is a question the user can answer; "could not reproduce" is not.
+
 ## Testing
 
 ### tdd-write-failing-test
@@ -223,13 +240,13 @@ For suspected flakiness it checks the project's open issues labelled "test" for 
 
 **Source: [`.github/skills/end-session/SKILL.md`](../../.github/skills/end-session/SKILL.md)**
 
-The exit gate. [`issue-repro`](#issue-repro) and [`plan`](#plan) control the way into implementation; this one controls the way out, and it runs before every ending — work finished, escalation, or a turn the agent believes changed nothing.
+The exit gate. The [`reproduce`](#reproduce) and [`plan`](#plan) skills control the way into implementation; this one controls the way out, and it runs before every ending — work finished, escalation, or a turn the agent believes changed nothing.
 
 It exists because the last action of a run is the one nobody supervises, and its two worst failures are silent ones. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it: the runner is disposable, so the branch looks untouched and the effort is gone. A session that ends while CI is still running has reported a result it never watched. Both read as success from inside the transcript, which is why this is a checklist rather than a principle.
 
 It opens by asking whether the agent is entitled to stop at all — not straight after a gate confirmation line, not mid fix-validate loop, not with CI still running — because the more common failure is not a messy ending but a premature one, stopping to wait for a human who is not there. An earlier version of this system had agents printing a gate line and then yielding mid-task. Only four endings are legitimate: the work is green, a documented attempt limit was hit, the bug would not reproduce, or the path is genuinely ambiguous.
 
-From there the order is load-bearing, and each step is placed where it is for a reason. Documentation is repaired first, through [`docs-sync`](#docs-sync), because a doc edit is itself a file change and anything done after the tree is taken stock of misses the commit. Then every changed file is accounted for — each line of `git status --porcelain` is part of the work, scratch to delete, or something the agent did not write, which it must leave alone and mention rather than quietly discard. Then everything is committed and pushed, verified by `git status --porcelain` and `git log @{u}..HEAD` both coming back empty. Only then is CI examined, because committing restarts it. Regression tests are checked for a leftover `.skip` against what this branch added rather than the whole suite, the pull request is checked for its draft status, issue number, plan, and a description that says each thing once and claims no test results GitHub's own CI status already shows, and the final report carries the `docs:` line along with whatever was deliberately left undone.
+From there the order is load-bearing, and each step is placed where it is for a reason. Documentation is repaired first, through [`docs-sync`](#docs-sync), because a doc edit is itself a file change and anything done after the tree is taken stock of misses the commit. Then every changed file is accounted for — each line of `git status --porcelain` is part of the work, scratch to delete, or something the agent did not write, which it must leave alone and mention rather than quietly discard. Then everything is committed and pushed, verified by `git status --porcelain` and `git log @{u}..HEAD` both coming back empty. Only then is CI examined, because committing restarts it. Regression tests are checked for a leftover `.skip` against what this branch added rather than the whole suite, the pull request is checked for its draft status, issue reference, plan, and a description that says each thing once and claims no test results GitHub's own CI status already shows, and the final report carries the `docs:` line along with whatever was deliberately left undone.
 
 Escalation is explicitly not an exemption. It is the point at which unpushed work is *most* likely to be lost, because the agent is stopping in the middle rather than at a natural finish, and an escalation that discards the investigation makes the user start from zero.
 

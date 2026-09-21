@@ -4,11 +4,11 @@ import FormattingCommand from '../@types/FormattingCommand'
 const commands = Object.values(FormattingCommand)
 
 /**
- * This is a utility for creating opening and closing markup tag.
+ * This is a utility for creating opening and closing markup tags that match any of the given tag names.
  */
-const createTag = (tag: string) => ({
-  open: new RegExp(`^<${tag}[^>]*>`, 'i'),
-  close: new RegExp(`^</${tag}>`, 'i'),
+const createTag = (...tagNames: string[]) => ({
+  open: new RegExp(`^<(?:${tagNames.join('|')})[^>]*>`, 'i'),
+  close: new RegExp(`^</(?:${tagNames.join('|')})>`, 'i'),
 })
 
 const tags = {
@@ -17,8 +17,9 @@ const tags = {
   underline: createTag('u'),
   strikethrough: createTag('strike'),
   code: createTag('code'),
-  foreColor: createTag('span'),
-  backColor: createTag('span'),
+  // a color is carried by either a <font color> (applied by formatSelectionHtml) or a <span style="color">
+  foreColor: createTag('span', 'font'),
+  backColor: createTag('span', 'font'),
 }
 
 /** Extracts the foreground and background colors from the given string.

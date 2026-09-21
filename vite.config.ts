@@ -2,6 +2,7 @@ import { treecrdt } from '@treecrdt/wa-sqlite/vite-plugin'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 import react from '@vitejs/plugin-react'
 import { execSync } from 'child_process'
+import { randomBytes } from 'crypto'
 import path from 'path'
 import { type Plugin, defineConfig } from 'vite'
 import checker from 'vite-plugin-checker'
@@ -10,6 +11,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 import tunnelTokenGateMiddleware from './src/vite-middleware/tunnelTokenGate'
 
 const useHttps = !process.env.HTTP
+
+// The Cloudflare tunnel pool (cloudflareTunnelPool.ts) lives entirely under this domain. It is the
+// single signal tunnelTokenGate keys on — a request that arrived through the tunnel always carries
+// one of these hostnames as its authority — and Vite's allowedHosts must admit the same names.
+const TUNNEL_HOST_SUFFIX = '.emthought.cc'
 
 /** Resolve the short git commit hash of the current build, injected into the app via `define`. Prefers Vercel's build-time env var, falls back to git, then to 'unknown'. */
 const commitHash = (() => {
@@ -22,21 +28,28 @@ const commitHash = (() => {
 })()
 
 /**
- * Vite plugin that gates access behind a secret token when TUNNEL_TOKEN is set.
- * Used in CI to prevent unauthorized access when the dev server is exposed via
- * a public cloudflared tunnel. The first request must include ?__token=<secret>;
- * the gate then sets a session cookie so subsequent asset/HMR requests are
+ * Vite plugin that gates the Cloudflare tunnel's public hostnames behind a secret token, so
+ * exposing the dev server via cloudflared (for BrowserStack iOS Safari) never exposes it to the
+ * public internet. Only requests whose authority is under TUNNEL_HOST_SUFFIX are gated; localhost,
+ * LAN IPs, and bs-local.com pass untouched. The first tunneled request must include
+ * ?__token=<secret>; the gate then sets a session cookie so subsequent asset/HMR requests are
  * allowed without the query param. Requests with neither get a 403.
+ *
+ * The token needs no setup: CI generates a per-run secret and exports it to both this server and
+ * the test runner (ios.yml, tdd.yml), while locally the server generates its own and the iOS test
+ * runner discovers it over loopback via /__tunnel-token (wdio.browserstack.conf.ts). The gate
+ * must be active on every server the pool might route to even when no token was provided —
+ * cloudflareTunnelPool.ts proves a claimed tunnel routes to this run's server by expecting foreign
+ * tokens to 403, and an ungated server would 200 them all.
  *
  * Vite's HTML middleware runs first and rewrites `req.url` to `/index.html` for
  * browser navigations, dropping `?__token=`. The gate itself reads `originalUrl`
  * (see src/vite-middleware/tunnelTokenGate.ts).
  */
-function tunnelTokenGate(): Plugin | undefined {
-  const token = process.env.TUNNEL_TOKEN
-  if (!token) return undefined
+function tunnelTokenGate(): Plugin {
+  const token = process.env.TUNNEL_TOKEN || randomBytes(16).toString('hex')
 
-  const gate = tunnelTokenGateMiddleware(token)
+  const gate = tunnelTokenGateMiddleware(token, TUNNEL_HOST_SUFFIX)
 
   return {
     name: 'tunnel-token-gate',
@@ -114,13 +127,13 @@ export default defineConfig({
     createHtmlPlugin({ minify: true }),
     // Use HTTPS for dev server by default. Set HTTP=1 to disable.
     ...(useHttps ? [basicSsl()] : []),
-    // Gate access behind a token when exposed via cloudflared tunnel in CI.
+    // Gate the cloudflared tunnel hostnames behind a token; all other authorities pass ungated.
     tunnelTokenGate(),
   ],
   server: {
     // Allow bs-local.com for BrowserStack local testing, and the Cloudflare tunnel pool's
-    // hostnames (leading dot matches all *.emthought.cc subdomains) for BrowserStack iOS Safari.
-    allowedHosts: ['bs-local.com', '.emthought.cc'],
+    // hostnames (leading dot matches all subdomains) for BrowserStack iOS Safari.
+    allowedHosts: ['bs-local.com', TUNNEL_HOST_SUFFIX],
     watch: {
       // Agent worktrees live in .claude/worktrees and are full checkouts of the repo. Creating or
       // updating one writes files the watcher would otherwise pick up — a nested tsconfig.json in
@@ -142,6 +155,6 @@ export default defineConfig({
   preview: {
     // `yarn servebuild` (vite preview) is what ios.yml/tdd.yml actually run behind the tunnel —
     // preview.allowedHosts doesn't inherit server.allowedHosts, so it needs its own entry too.
-    allowedHosts: ['.emthought.cc'],
+    allowedHosts: [TUNNEL_HOST_SUFFIX],
   },
 })

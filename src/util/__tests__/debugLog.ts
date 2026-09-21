@@ -1,4 +1,6 @@
 import { vi } from 'vitest'
+import pkg from '../../../package.json'
+import State from '../../@types/State'
 import debugLog from '../debugLog'
 import storage from '../storage'
 
@@ -11,6 +13,7 @@ beforeEach(() => {
 afterEach(() => {
   debugLog.setEnabled(false)
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe('enabled gate', () => {
@@ -64,14 +67,14 @@ describe('capacity', () => {
   it('trims to the capacity, keeping the most recent entries', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
-    for (let i = 0; i < 1100; i++) {
+    for (let i = 0; i < 5100; i++) {
       debugLog.log('n', { i })
     }
     const entries = debugLog.read()
-    expect(entries.length).toBe(1000)
+    expect(entries.length).toBe(5000)
     // the oldest 100 were dropped, so the first retained entry is #100
     expect(entries[0].i).toBe(100)
-    expect(entries[entries.length - 1].i).toBe(1099)
+    expect(entries[entries.length - 1].i).toBe(5099)
   })
 })
 
@@ -88,17 +91,35 @@ describe('field cap', () => {
 })
 
 describe('persistence', () => {
-  it('persists entries to localStorage synchronously', () => {
+  it('persists entries to the active chunk key synchronously', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     debugLog.log('persisted')
-    const raw = storage.getItem('debugLog')
+    const raw = storage.getItem('debugLog-0')
     expect(raw).toBeTruthy()
     expect((JSON.parse(raw!) as { type: string }[]).some(e => e.type === 'persisted')).toBe(true)
   })
 
-  it('hydrates a prior session log on module load', async () => {
-    // seed localStorage as if a prior (crashed) session had persisted a log
+  it('rotates to the next chunk key so appending an entry only rewrites the active chunk', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    for (let i = 0; i < 501; i++) {
+      debugLog.log('n', { i })
+    }
+    expect((JSON.parse(storage.getItem('debugLog-0')!) as unknown[]).length).toBe(500)
+    expect((JSON.parse(storage.getItem('debugLog-1')!) as unknown[]).length).toBe(1)
+  })
+
+  it('hydrates chunked entries from a prior session on module load', async () => {
+    // seed localStorage as if a prior (crashed) session had persisted chunks
+    localStorage.setItem('debugLog-3', JSON.stringify([{ seq: 1500, t: 1, dt: 0, type: 'priorChunk' }]))
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.read().some(e => e.type === 'priorChunk')).toBe(true)
+  })
+
+  it('hydrates a legacy single-key log from a prior session on module load', async () => {
+    // seed localStorage as if a session on a pre-chunking version had persisted a log
     localStorage.setItem('debugLog', JSON.stringify([{ seq: 0, t: 1, dt: 0, type: 'prior' }]))
     vi.resetModules()
     const fresh = (await import('../debugLog')).default
@@ -115,16 +136,48 @@ describe('persistence', () => {
 })
 
 describe('clear', () => {
-  it('empties the buffer and removes the localStorage key', () => {
+  it('empties the buffer and removes the localStorage keys', () => {
     debugLog.setEnabled(true)
     debugLog.log('x')
+    localStorage.setItem('debugLog-frame', '123')
     debugLog.clear()
     expect(debugLog.read()).toEqual([])
     expect(storage.getItem('debugLog')).toBeNull()
+    expect(storage.getItem('debugLog-0')).toBeNull()
+    expect(storage.getItem('debugLog-frame')).toBeNull()
   })
 })
 
 describe('format', () => {
+  it('renders the device, user agent, em version, and build commit as the first four lines', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('input')
+    const lines = debugLog.format().split('\n')
+    // the device names the navigator platform (empty in jsdom), the shell, the screen, and the pointer type
+    expect(lines[0]).toMatch(/^--- device: .+ \((web|ios|android|tauri)\), \d+x\d+, (touch|mouse)$/)
+    expect(lines[1]).toBe(`--- userAgent: ${navigator.userAgent}`)
+    expect(lines[2]).toBe(`--- version: ${pkg.version}`)
+    expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
+    expect(lines[4]).toContain('#0 input')
+  })
+
+  it('names the tauri shell, which Capacitor reports as web', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    // the flag the Tauri runtime injects into the WebView, which is what @tauri-apps/api reads to detect the shell
+    vi.stubGlobal('isTauri', true)
+    expect(debugLog.format().split('\n')[0]).toContain('(tauri)')
+  })
+
+  it('renders the header even when the buffer is empty, so a log with no entries still identifies the build', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const lines = debugLog.format().split('\n')
+    expect(lines.length).toBe(4)
+    expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
+  })
+
   it('renders a one-line-per-entry text block', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
@@ -133,5 +186,199 @@ describe('format', () => {
     expect(text).toContain('input')
     expect(text).toContain('#0')
     expect(text).toContain('"data":" "')
+  })
+
+  it('appends the last-frame marker when present', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('x')
+    localStorage.setItem('debugLog-frame', '1700000000000')
+    const text = debugLog.format()
+    expect(text).toContain('lastFrameAt: 2023-11-14T22:13:20.000Z')
+  })
+
+  it('appends a state.thoughts dump grouped by parent and ordered by rank', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('x')
+    const state = {
+      thoughts: {
+        thoughtIndex: {
+          t1: { id: 't1', value: 'apple', rank: 1, parentId: 'root', childrenMap: {} },
+          t2: { id: 't2', value: 'banana', rank: 0, parentId: 'root', childrenMap: {}, pending: true },
+        },
+        lexemeIndex: {},
+      },
+    } as unknown as State
+    const text = debugLog.format(state)
+    expect(text).toContain('state.thoughts: 2 thoughts, 0 lexemes')
+    expect(text).toContain('t1 "apple" rank:1 parent:root')
+    expect(text).toContain('t2 "banana" rank:0 parent:root pending')
+    // siblings are ordered by rank within a parent, so banana (rank 0) precedes apple (rank 1)
+    expect(text.indexOf('banana')).toBeLessThan(text.indexOf('apple'))
+  })
+})
+
+// Auto-enable is decided at module load, so each case stubs the environment, resets the module registry, and imports a fresh instance (the same pattern as the hydration test above). The localhost hostname comes from jsdom's default URL; the *.vercel.app case needs a different jsdom URL, which is only configurable per file, so it lives in debugLogVercel.ts.
+describe('auto-enable', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    // no-ops unless the corresponding test failed before its own cleanup
+    Reflect.deleteProperty(navigator, 'webdriver')
+    vi.doUnmock('@capacitor/core')
+  })
+
+  it('does not auto-enable in the test environment', async () => {
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('auto-enables on localhost outside the test environment and records a session marker', async () => {
+    vi.stubEnv('MODE', 'development')
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(true)
+    expect(fresh.isEnabled()).toBe(true)
+    expect(fresh.read().some(e => e.type === 'session')).toBe(true)
+    // stop the fresh instance's frame heartbeat so it cannot log into later tests
+    fresh.setEnabled(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('does not auto-enable in automated browser sessions (navigator.webdriver)', async () => {
+    vi.stubEnv('MODE', 'development')
+    Object.defineProperty(navigator, 'webdriver', { value: true, configurable: true })
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('does not auto-enable in the native Capacitor shell', async () => {
+    vi.stubEnv('MODE', 'production')
+    // getPlatform is part of the shell that src/browser.ts reads at module load, so the double implements it too
+    vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true, getPlatform: () => 'ios' } }))
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(false)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('respects a persisted device-local opt-out on load', async () => {
+    localStorage.setItem('debugLogOptOut', 'true')
+    vi.stubEnv('MODE', 'development')
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.autoEnabled).toBe(true)
+    expect(fresh.isEnabled()).toBe(false)
+  })
+
+  it('setAutoOptOut disables and re-enables logging and persists the choice', async () => {
+    vi.stubEnv('MODE', 'development')
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.isEnabled()).toBe(true)
+
+    fresh.setAutoOptOut(true)
+    expect(fresh.isEnabled()).toBe(false)
+    expect(fresh.isAutoOptOut()).toBe(true)
+    expect(localStorage.getItem('debugLogOptOut')).toBe('true')
+
+    fresh.setAutoOptOut(false)
+    expect(fresh.isEnabled()).toBe(true)
+    expect(fresh.isAutoOptOut()).toBe(false)
+    expect(localStorage.getItem('debugLogOptOut')).toBeNull()
+
+    // stop the fresh instance's frame heartbeat so it cannot log into later tests
+    fresh.setEnabled(false)
+  })
+
+  it('setAutoOptOut is a no-op off auto-enable hosts, so the opt-out cannot suppress the synced setting in production', () => {
+    debugLog.setAutoOptOut(true)
+    expect(localStorage.getItem('debugLogOptOut')).toBeNull()
+    debugLog.setEnabled(true)
+    expect(debugLog.isEnabled()).toBe(true)
+  })
+})
+
+describe('console mirror', () => {
+  beforeEach(() => {
+    debugLog.setConsole(false)
+  })
+
+  afterEach(() => {
+    debugLog.setConsole(false)
+  })
+
+  it('does not mirror to the console by default', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.log('test', { a: 1 })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('mirrors each entry once it is turned on', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('test', { a: 1 })
+    expect(info).toHaveBeenCalledTimes(1)
+    expect(info.mock.calls[0][0]).toMatch(/^debugLog \[.*\] \+\d+ms #\d+ test \{"a":1\}$/)
+  })
+
+  it('mirrors the same line that format() writes, so either source parses the same', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('test', { a: 1 })
+    const mirrored = (info.mock.calls.at(-1)![0] as string).replace(/^debugLog /, '')
+    expect(debugLog.format().split('\n')).toContain(mirrored)
+  })
+
+  it('stops mirroring when turned off', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.setConsole(false)
+    debugLog.log('test', { a: 1 })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('persists the choice so it survives a reload', async () => {
+    debugLog.setConsole(true)
+    expect(storage.getItem('debugLogConsole')).toBe('true')
+
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.isConsole()).toBe(true)
+
+    // stop the fresh instance's frame heartbeat so it cannot log into later tests
+    fresh.setEnabled(false)
+  })
+
+  it('survives clear(), which empties the log but must leave the preference alone', () => {
+    debugLog.setConsole(true)
+    debugLog.clear()
+    expect(debugLog.isConsole()).toBe(true)
+    expect(storage.getItem('debugLogConsole')).toBe('true')
+  })
+
+  it('does not mirror while logging is disabled', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setConsole(true)
+    debugLog.log('test', { a: 1 })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('a throwing console cannot cost an entry its place in the buffer', () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {
+      throw new Error('console is gone')
+    })
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    expect(() => debugLog.log('test', { a: 1 })).not.toThrow()
+    expect(debugLog.read().some(entry => entry.type === 'test')).toBe(true)
   })
 })

@@ -348,6 +348,13 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'codeBg',
     fontFamily: 'monospace',
   },
+  /** Lets an explicitly applied background show through the code background, which is only a default and would
+   * otherwise paint over it. The background is carried either by the color wrapper that formatting nests outside the
+   * code element, or by the thought's container when it comes from =style (#4234). */
+  'font[style*="background-color"] code, span[style*="background-color"] code, [aria-label="child"][style*="background-color"] code':
+    {
+      backgroundColor: 'transparent',
+    },
   kbd: {
     fontFamily: 'inherit',
   },
@@ -491,6 +498,7 @@ export default defineConfig({
             'toolbarArrow',
             'toolbar',
             'navbar',
+            'backgroundGlowFalloff',
             'latestCommands',
             'tutorialTraceGesture',
             'dropEmpty',

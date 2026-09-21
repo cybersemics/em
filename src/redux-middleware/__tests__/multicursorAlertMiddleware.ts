@@ -7,6 +7,9 @@ import { executeCommandWithMulticursor } from '../../commands'
 import clearThoughtCommand from '../../commands/clearThought'
 import deleteCommand from '../../commands/delete'
 import indentCommand from '../../commands/indent'
+import newSubthoughtCommand from '../../commands/newSubthought'
+import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
+import newThoughtCommand from '../../commands/newThought'
 import { initialize } from '../../initialize'
 import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
@@ -98,8 +101,9 @@ it('does not re-open the Command Center over an edited multiselection when the m
   expect(store.getState().showCommandCenter).toBe(false)
 
   // The multicursor count fluctuating while the multiselection is already being edited (e.g. a stray add/remove) is
-  // not the same event as starting a new multiselection with Open Command Center (which only ever runs from no
-  // multiselection, see openCommandCenter.ts), so it must not re-open the Command Center over the editing session.
+  // not the same event as starting a new multiselection, so it must not re-open the Command Center over the editing
+  // session. An explicit Open Command Center gesture still re-opens it, since that command sets showCommandCenter
+  // itself rather than going through this middleware (see openCommandCenter.ts).
   const pathB = contextToPath(store.getState(), ['b'])!
   store.dispatch(removeMulticursor({ path: pathB }))
   expect(store.getState().showCommandCenter).toBe(false)
@@ -182,4 +186,84 @@ it('does not show the Command Center when undoing a multicursor delete while the
   // even though undo restores the multicursor
   expect(store.getState().showUndoSlider).toBe(true)
   expect(store.getState().showCommandCenter).toBe(false)
+})
+
+// https://github.com/cybersemics/em/issues/3564
+it('keeps the Command Center open when New Thought replaces the multiselection with the thoughts it creates', async () => {
+  await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+        - c`,
+    }),
+    setCursor(['a']),
+    addMulticursor(['a']),
+    addMulticursor(['b']),
+    addMulticursor(['c']),
+  ])
+
+  expect(store.getState().showCommandCenter).toBe(true)
+
+  // New Thought selects the new empty thoughts it creates, so the multiselection is replaced rather than ended and
+  // the Command Center must stay open over it.
+  executeCommandWithMulticursor(newThoughtCommand, { store })
+
+  expect(Object.keys(store.getState().multicursors).length).toBe(3)
+  expect(store.getState().showCommandCenter).toBe(true)
+})
+
+// https://github.com/cybersemics/em/issues/3564
+it('keeps the Command Center open when New Subthought replaces the multiselection with the thoughts it creates', async () => {
+  await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+        - b
+        - c`,
+    }),
+    setCursor(['a']),
+    addMulticursor(['a']),
+    addMulticursor(['b']),
+    addMulticursor(['c']),
+  ])
+
+  expect(store.getState().showCommandCenter).toBe(true)
+
+  executeCommandWithMulticursor(newSubthoughtCommand, { store })
+
+  expect(Object.keys(store.getState().multicursors).length).toBe(3)
+  expect(store.getState().showCommandCenter).toBe(true)
+})
+
+// https://github.com/cybersemics/em/issues/3564
+it('keeps the Command Center open when New Subthought (above) replaces the multiselection with the thoughts it creates', async () => {
+  await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - x
+        - b
+          - y
+        - c
+          - z`,
+    }),
+    setCursor(['a']),
+    addMulticursor(['a']),
+    addMulticursor(['b']),
+    addMulticursor(['c']),
+  ])
+
+  expect(store.getState().showCommandCenter).toBe(true)
+
+  executeCommandWithMulticursor(newSubthoughtTopCommand, { store })
+
+  expect(Object.keys(store.getState().multicursors).length).toBe(3)
+  expect(store.getState().showCommandCenter).toBe(true)
 })

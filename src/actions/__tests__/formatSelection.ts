@@ -95,6 +95,7 @@ describe('formatSelection', () => {
     await dispatch(formatSelection('bold'))
 
     expect(cursorValue()).toBe('<b>Golden</b> Retriever')
+    expect(window.getSelection()?.toString()).toBe('Golden')
   })
 
   // Reproduces format.ts > "Apply text color to an uppercase formatting tag"
@@ -246,6 +247,57 @@ describe('formatSelection color', () => {
     expect(cursorValue()).toBe('X<font color="#00c7e6"><b>ab</b></font>Y')
   })
 
+  // https://github.com/cybersemics/em/pull/4032#pullrequestreview-5149433775
+  // The color must stay outside the decoration so that <u>/<strike> inherit it and draw their line in it, since
+  // text-decoration-color resolves to the currentColor of the decorating element rather than of its children.
+  it('nests underline inside the color when the text color was applied first', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+    await dispatch(formatSelection('underline'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6"><u>One</u></font>')
+    expect(getCommandState(cursorValue())).toMatchObject({ underline: true, foreColor: '#00c7e6' })
+  })
+
+  it('nests strikethrough inside the color when the text color was applied first', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+    await dispatch(formatSelection('strikethrough'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6"><strike>One</strike></font>')
+  })
+
+  // the reverse order, which applyColor already wrapped correctly
+  it('keeps the color outside the decoration when the underline was applied first', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('underline'))
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6"><u>One</u></font>')
+  })
+
+  it('nests underline inside the color when the background color was applied first', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('backColor', 'blue'))
+    await dispatch(formatSelection('underline'))
+
+    expect(cursorValue()).toBe('<font color="#000000" style="background-color: rgb(0, 199, 230);"><u>One</u></font>')
+  })
+
+  it('removes the underline from inside the color when toggled off', async () => {
+    await dispatch([newThought({ value: 'One' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+    await dispatch(formatSelection('underline'))
+    await dispatch(formatSelection('underline'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6">One</font>')
+  })
+
   // color.ts > "remove all formatting from the thought"
   it('removes all formatting from the thought', async () => {
     await dispatch([newThought({ value: 'Labrador' })])
@@ -365,6 +417,57 @@ describe('formatSelection color', () => {
     expect(cursorValue()).toBe(
       '<font color="#000000" style="background-color: rgb(255, 87, 61);">One two</font><font color="#000000" style="background-color: rgb(0, 214, 136);"> three</font>',
     )
+  })
+
+  it('keeps a background elsewhere when applying a font color to a different substring', async () => {
+    await dispatch([newThought({ value: 'Hello world of beautiful people' })])
+
+    selectRange('Hello '.length, 'Hello world'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+
+    selectRange('Hello world of '.length, 'Hello world of beautiful'.length)
+    await dispatch(formatSelection('foreColor', 'red'))
+
+    expect(cursorValue()).toBe(
+      'Hello <font color="#000000" style="background-color: rgb(0, 214, 136);">world</font> of <font color="#ff573d">beautiful</font> people',
+    )
+  })
+
+  it('clears an overlapping background when applying a font color', async () => {
+    await dispatch([newThought({ value: 'Hello the world of beautiful people' })])
+
+    selectRange('Hello the '.length, 'Hello the world'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+
+    selectRange('Hello '.length, 'Hello the world of beautiful'.length)
+    await dispatch(formatSelection('foreColor', 'red'))
+
+    expect(cursorValue()).toBe('Hello <font color="#ff573d">the world of beautiful</font> people')
+  })
+
+  it('replaces a background with a font color on the unchanged selection', async () => {
+    await dispatch([newThought({ value: 'Hello world' })])
+
+    selectRange('Hello '.length, 'Hello world'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+    await dispatch(formatSelection('foreColor', 'red'))
+
+    expect(cursorValue()).toBe('Hello <font color="#ff573d">world</font>')
+  })
+
+  it('normalizes color wrappers before replacing a background with a font color', async () => {
+    await dispatch([newThought({ value: 'Hello world of beautiful world' })])
+
+    selectRange('Hello '.length, 'Hello world'.length)
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    selectRange('Hello '.length, 'Hello world of beautiful'.length)
+    await dispatch(formatSelection('backColor', 'green'))
+
+    selectRange('Hello '.length, 'Hello world of beautiful'.length)
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    expect(cursorValue()).toBe('Hello <font color="#00d688">world of beautiful</font> world')
   })
 
   // a background color applied over a bold thought must keep both the <b> and the color <font>

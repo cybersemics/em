@@ -1,5 +1,4 @@
 import { last } from 'lodash'
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
@@ -14,7 +13,7 @@ const newSubthoughtTopCommand = {
   label: 'New Subthought (above)' as const,
   description: 'Create a new subthought in the current thought. Add it to the top of any existing subthoughts.',
   gesture: 'rdu',
-  keyboard: { key: Key.Enter, shift: true, meta: true },
+  keyboard: { key: 'Enter', shift: true, meta: true },
   multicursor: {
     // preventSetCursor and clearMulticursor disable the generic restore of the old cursor and the old selection at the end of the multicursor loop, since execMulticursor sets both itself.
     preventSetCursor: true,
@@ -32,7 +31,13 @@ const newSubthoughtTopCommand = {
       dispatch([
         ...newSubthoughtPaths.map(path => path && addMulticursor({ path })),
         // The cursor is already in the last new subthought, but addMulticursor does not recalculate state.expanded, so re-setting it is what expands the selected thoughts and reveals their new subthoughts.
-        setCursor({ path: last(newSubthoughtPaths) ?? null, offset: 0, preserveMulticursor: true }),
+        // The new subthoughts are selected rather than edited, so close the keyboard that each exec opened, otherwise the Command Center stays closed over the selection on mobile (see selectNewCursors in commands.ts).
+        setCursor({
+          path: last(newSubthoughtPaths) ?? null,
+          isKeyboardOpen: false,
+          offset: 0,
+          preserveMulticursor: true,
+        }),
       ])
     },
   },

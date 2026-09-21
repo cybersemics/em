@@ -81,9 +81,9 @@ describe('multicursor', () => {
             - d
           `,
       }),
-      setCursor(['a', 'b']),
-      addMulticursor(['a', 'b']),
-      addMulticursor(['a', 'c']),
+      setCursor(['b']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
     ])
 
     executeCommandWithMulticursor(outdentCommand, { store })
@@ -130,5 +130,22 @@ describe('multicursor', () => {
     - f`
 
     expect(exported).toEqual(expectedOutput)
+  })
+})
+
+describe('canExecute', () => {
+  // https://github.com/cybersemics/em/issues/4866
+  it('cannot outdent a top-level thought', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+    ])
+
+    expect(outdentCommand.canExecute!(store.getState())).toBe(false)
   })
 })

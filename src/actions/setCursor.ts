@@ -99,14 +99,6 @@ const setCursor = (
     })
   }
 
-  // TODO
-  // load =src
-  // setTimeout(() => {
-  //   if (thoughtsResolved) {
-  //     dispatch(loadResource(thoughtsResolved))
-  //   }
-  // })
-
   // If expansion is suppressed, use existing expansion.
   // setCursor will be re-triggered after expansion is unsuppressed.
   const expanded = globals.suppressExpansion

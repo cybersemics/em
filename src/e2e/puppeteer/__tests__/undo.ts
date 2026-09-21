@@ -2,7 +2,7 @@ import { KnownDevices } from 'puppeteer'
 import newThoughtCommand from '../../../commands/newThought'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
-import emulate from '../helpers/emulate'
+import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
 import getCaretOffset from '../helpers/getCaretOffset'
@@ -12,6 +12,8 @@ import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import setSelection from '../helpers/setSelection'
+import waitForCursor from '../helpers/waitForCursor'
+import waitForNoteFocus from '../helpers/waitForNoteFocus'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -148,6 +150,41 @@ it('restores the note caret after undo so Backspace edits the note without mergi
   })
 })
 
+it('redoes a note edit that was undone after the cursor left the note', async () => {
+  await paste(`
+    - One
+      - =note
+        - birds
+    - Two
+  `)
+
+  const note = await waitForSelector('[aria-label="note-editable"]')
+  if (!note) throw new Error('Note editable not found')
+  await note.click()
+  await press('End')
+  await keyboard.type(' of prey')
+  await waitForNoteText('birds of prey')
+
+  // move the cursor out of the note, so that undo has a navigation step to revert before the edit
+  await clickThought('Two')
+  await waitForCursor('Two')
+
+  await command('undo')
+  await waitForNoteText('birds')
+
+  // the caret returns to the note as the edit is undone
+  await waitForNoteFocus()
+
+  await command('redo')
+
+  const exported = (await exportThoughts()).trimEnd()
+  expect(exported).toBe(`
+- One
+  - =note
+    - birds of prey
+- Two`)
+})
+
 // https://github.com/cybersemics/em/pull/4524#issuecomment-4936720071
 it('keeps a double-clicked word selected within a note', async () => {
   await paste(`
@@ -251,47 +288,49 @@ it('Native undo places the caret at the end of the restored thought', async () =
   expect(await getCaretOffset()).toBe('correct'.length)
 })
 
-// We have to test this in puppeteer because chained commands are executed as separate commands at a higher level than action-creators and undone with an ad hoc mergeNext property on the action.
-it('Undo Select All + Categorize chained command in one step', async () => {
-  await emulate(KnownDevices['iPhone 15 Pro'])
+describe('mobile only', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
-  // create thoughts a, b, c
-  await gesture(newThoughtCommand)
-  await keyboard.type('a')
-  await gesture(newThoughtCommand)
-  await keyboard.type('b')
-  await gesture(newThoughtCommand)
-  await keyboard.type('c')
+  // We have to test this in puppeteer because chained commands are executed as separate commands at a higher level than action-creators and undone with an ad hoc mergeNext property on the action.
+  it('Undo Select All + Categorize chained command in one step', async () => {
+    // create thoughts a, b, c
+    await gesture(newThoughtCommand)
+    await keyboard.type('a')
+    await gesture(newThoughtCommand)
+    await keyboard.type('b')
+    await gesture(newThoughtCommand)
+    await keyboard.type('c')
 
-  // Select All + Categorize
-  await gesture('ldr' + 'lu')
+    // Select All + Categorize
+    await gesture('ldr' + 'lu')
 
-  // make sure multicursor is disabled after chained command
-  const highlightedCountAfterChain = await page.evaluate(
-    () => document.querySelectorAll('[data-highlighted=true]').length,
-  )
+    // make sure multicursor is disabled after chained command
+    const highlightedCountAfterChain = await page.evaluate(
+      () => document.querySelectorAll('[data-highlighted=true]').length,
+    )
 
-  expect(highlightedCountAfterChain).toBe(0)
+    expect(highlightedCountAfterChain).toBe(0)
 
-  const exported1 = await exportThoughts()
-  expect(exported1).toBe(`
+    const exported1 = await exportThoughts()
+    expect(exported1).toBe(`
 - 
   - a
   - b
   - c
 `)
 
-  await press('z', { meta: true })
+    await press('z', { meta: true })
 
-  const exported2 = await exportThoughts()
-  expect(exported2).toBe(`
+    const exported2 = await exportThoughts()
+    expect(exported2).toBe(`
 - a
 - b
 - c
 `)
 
-  // make sure multicursor is disabled after undo
-  const highlightedCount = await page.evaluate(() => document.querySelectorAll('[data-highlighted=true]').length)
+    // make sure multicursor is disabled after undo
+    const highlightedCount = await page.evaluate(() => document.querySelectorAll('[data-highlighted=true]').length)
 
-  expect(highlightedCount).toBe(0)
+    expect(highlightedCount).toBe(0)
+  })
 })

@@ -474,6 +474,42 @@ describe('undo', () => {
     - d`)
   })
 
+  it('undo a patch that a non-undoable action already reverted', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - hello
+        - b`,
+      }),
+      setCursor(['a']),
+      editThought(['a'], 'aa'),
+      // Open, close, and open the note again with the Note command. It is not undoable, so it records no patch, and it leaves
+      // cursorOffset at the end of the thought.
+      toggleNote(),
+      toggleNote(),
+      toggleNote(),
+      // Note.tsx dispatches setNoteFocus when the note is blurred. It is undoable, so it records a patch, and noteFocus and
+      // noteOffset are the only two properties it restores.
+      setNoteFocus({ value: false }),
+      // The Note command opens the note again, setting noteFocus and noteOffset back to exactly what that patch restores and
+      // leaving it with nothing left to revert.
+      toggleNote(),
+      // Undoing a patch that reverts nothing produces an empty patch for redo. An empty patch carries no actions, so redoing it
+      // threw on the spread of its actions, which left the redo stack permanently broken.
+      undo(),
+    ])
+
+    expect(() => store.dispatch([redo(), redo()])).not.toThrow()
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - aa
+    - =note
+      - hello
+  - b`)
+  })
+
   // Broken when space-to-indent was added.
   // This test relies on multicursor across levels which will be disallowed soon, so it will need to be updaded anyway.
   // indentCommand and moveCursorForwar should probably be combined as well.
@@ -1366,5 +1402,22 @@ describe('multicursor grouping', () => {
   - c
   - d
   - e`)
+  })
+})
+
+describe('count', () => {
+  it('undo and redo an exact number of patches instead of a whole step', () => {
+    store.dispatch([newThought({}), editThought([''], 'a')])
+
+    // a whole step would also undo the new thought
+    store.dispatch(undo({ count: 1 }))
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - `)
+
+    store.dispatch(redo({ count: 1 }))
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a`)
   })
 })

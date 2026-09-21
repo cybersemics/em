@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import { MotionValue, motion, useTransform } from 'motion/react'
+import { MotionValue, motion, useMotionTemplate, useTransform } from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Sheet, SheetRef, useScrollPosition } from 'react-modal-sheet'
@@ -19,6 +19,7 @@ import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
 import isTutorial from '../../selectors/isTutorial'
+import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import ChevronImg from '../ChevronImg'
@@ -176,6 +177,11 @@ const CommandCenter = () => {
   const sheetRef = useRef<SheetRef>(null)
   const { height, opacity, blurHeight, stageProgress } = useSheetTransforms(sheetRef)
 
+  const backgroundGlow = backgroundGlowStore.useState()
+
+  // Reveals the glow-mode falloff only within the sheet area, with the same soft 2.5rem top edge as the plain falloff gradient. Anchored to the bottom of the viewport since the sheet is bottom-anchored.
+  const backgroundGlowMask = useMotionTemplate`linear-gradient(to top, black calc(${height}px - 2.5rem), transparent ${height}px)`
+  
   const stageOffset = Math.round(fontSize * STAGE_OFFSET_REM)
 
   /* Negative snap points are measured from the top of the sheet, so this resolves to
@@ -334,19 +340,49 @@ const CommandCenter = () => {
           /** Fixes sheet shifting up on ios when it opens. */
           disableScrollLocking
         >
-          <motion.div
-            /** Falloff. */
-            className={css({
-              pointerEvents: 'none',
-              position: 'absolute',
-              background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 1.2rem)',
-              paddingTop: '0.711rem',
-              bottom: 0,
-              width: '100%',
-              height: '100%',
-            })}
-            style={{ height }}
-          />
+          {backgroundGlow.image ? (
+            <motion.div
+              /** Falloff when a BackgroundGlow image is active. An exact copy of the app background (glow image at its opacity over the opaque background color), masked to the sheet area with a soft top edge. Because the layer is identical to the background behind the content, the masked blend is a pure crossfade: the thoughts fade out over the mask ramp while the glow brightness stays constant, with no dark seam. The fixed position and identical background sizing keep the image pixel-aligned with the BackgroundGlow layer behind the content. */
+              className={css({
+                position: 'fixed',
+                inset: 0,
+                pointerEvents: 'none',
+                backgroundColor: 'bg',
+              })}
+              style={{
+                maskImage: backgroundGlowMask,
+                WebkitMaskImage: backgroundGlowMask,
+              }}
+            >
+              <div
+                className={css({
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'bottom center',
+                  backgroundRepeat: 'no-repeat',
+                })}
+                style={{
+                  backgroundImage: `url(/img/glow/${backgroundGlow.image})`,
+                  opacity: backgroundGlow.opacity,
+                }}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              /** Falloff. Softly cuts off the content behind the sheet by fading to the opaque background color. */
+              className={css({
+                pointerEvents: 'none',
+                position: 'absolute',
+                background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 2.5rem)',
+                paddingTop: '0.711rem',
+                bottom: 0,
+                width: '100%',
+                height: '100%',
+              })}
+              style={{ height }}
+            />
+          )}
           <motion.div
             data-testid='command-center-overlay'
             className={css({
