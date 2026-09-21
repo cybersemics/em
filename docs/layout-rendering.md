@@ -52,7 +52,7 @@ Important behaviors:
 - **`=let` environment accumulation.** A context's `=let` bindings ([`parseLet`](../src/util/parseLet.ts)) are merged into the `env` that is passed down the recursion and carried on every `TreeThought`, so a descendant can name a binding defined by any ancestor and a nearer `=let` shadows an outer one. A level that defines no bindings passes the inherited `env` through by reference, so trees without `=let` never allocate one and `TreeNode`'s memoization is unaffected. See [metaprogramming.md → `=let`](metaprogramming.md#linking--cross-references).
 - **Table cell flags.** Each thought is tagged with `isTableCol1` / `isTableCol2` / `isTableCol2Child` based on `=view/Table` on its parent / grandparent / great-grandparent, plus `visibleChildrenKeys` is populated on table parents so col1 width can later be computed from the children's measured widths.
 
-The result is a flat array, in document order, with one entry per visible thought.
+The result is a flat array, in thoughtspace order, with one entry per visible thought.
 
 ## `usePositionedThoughts` (x and y)
 

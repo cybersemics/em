@@ -92,7 +92,7 @@ Used by the [`Thought`](../src/components/Thought.tsx) component. Wires up *both
 
 Notable behavior in [`useDragAndDropThought.tsx`](../src/hooks/useDragAndDropThought.tsx):
 
-- **`canDrag`** rejects drags from immovable / readonly thoughts (checked via `=immovable` / `=readonly` attributes on the thought *or its parent*) and from non-editable documents.
+- **`canDrag`** rejects drags from immovable / readonly thoughts (checked via `=immovable` / `=readonly` attributes on the thought *or its parent*) and while the thoughtspace is not editable.
 - **`canDrop`** rejects the drop if `state.longPress !== DragInProgress` (so it short-circuits when the drag has been canceled), if the parent path has the context view active (you can't drop into a context view), or if the destination is a descendant of any dragged thought (use of [`canDropPath`](../src/hooks/useDragAndDropThought.tsx), a [moize](https://github.com/planttheidea/moize)-cached helper with `maxSize: 50`, since `canDrop` runs every frame during hover).
 - **`drop`** validates each item separately (root/EM contexts can't move out of their root; can't drop on self), animates the dragged thought's flight to a collapsed destination via [`animateDroppedThought`](../src/util/animateDroppedThought.ts), and then dispatches either `moveThought` (default) or `createThought` (when in the context view, dropping creates a new entry under the dragged context). Wraps multicursor drops in `setIsMulticursorExecuting` so undo coalesces them.
 - **`hover`** is throttled by mouse position via [`throttleByMousePosition`](../src/util/throttleByMousePosition.ts) to update `state.hoveringPath` and `state.hoverZone` only when the cursor actually moves.
@@ -196,12 +196,12 @@ When a user has multiple thoughts selected via the multicursor (`state.multicurs
 
 1. If a multicursor is active and the dragged thought is *not* part of it, add it via `addMulticursor`.
 2. Build the drag item array: every multicursor path plus the dragged thought.
-3. Sort the array by document order with [`documentSort`](../src/selectors/documentSort.ts) so drops apply in the correct order.
+3. Sort the array by thoughtspace order with [`documentSort`](../src/selectors/documentSort.ts) so drops apply in the correct order.
 4. Set `state.draggingThoughts` to the simple paths and dispatch `longPress({ value: DragInProgress })`.
 
 The drop handler iterates the array and dispatches `moveThought` per item. To make undo coalesce the whole multi-move into one entry, it wraps the dispatch in `setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' })` and clears it after.
 
-A selected thought that would be a no-op at the drop position (dropping a thought on or immediately before itself — e.g. dropping the first child `b` above itself) is a valid drop target, so the drop indicator still shows and the drop is *not* aborted; that item is simply skipped while the remaining selected thoughts still move. To keep the selection in document order, the first dragged item is placed before the drop target and each subsequent item is placed after the previous one (via `getRankAfter`), so the skipped no-op still anchors the position of the items that follow it.
+A selected thought that would be a no-op at the drop position (dropping a thought on or immediately before itself — e.g. dropping the first child `b` above itself) is a valid drop target, so the drop indicator still shows and the drop is *not* aborted; that item is simply skipped while the remaining selected thoughts still move. To keep the selection in thoughtspace order, the first dragged item is placed before the drop target and each subsequent item is placed after the previous one (via `getRankAfter`), so the skipped no-op still anchors the position of the items that follow it.
 
 ## Performance considerations
 

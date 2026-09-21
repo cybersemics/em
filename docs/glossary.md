@@ -196,11 +196,13 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **thoughtspace** — A user's complete thought tree, identified by *tsid*. The unit of sharing: switching `?share=<tsid>` switches the app onto a different thoughtspace.
 
+**thoughtspace order** — The order thoughts are laid out in, i.e. a depth-first walk of the visible tree. Produced by [`documentSort`](../src/selectors/documentSort.ts) for a set of paths, and by the render walk for the visible thoughts. Commands that act on a multiselection apply in this order so that moves land predictably.
+
 **ThoughtspaceRuntime** — Lifecycle interface around the active provider ([`thoughtspace.ts`](../src/data-providers/thoughtspace.ts)): `acquireAccess`, `init`, `drop`, `waitForIdle`, `persistPushQueueBatches`. Implemented for TreeCRDT in [`runtime.ts`](../src/data-providers/treecrdt/runtime.ts).
 
 **TreeCRDT** — The CRDT that backs local persistence: one operation-based tree per thoughtspace, materialized into SQLite (wa-sqlite, OPFS-backed) and optionally synced over a WebSocket. See [persistence.md](persistence.md).
 
-**TreeThought / TreeThoughtPositioned** — The two parallel lists produced per render: visible thoughts in document order, and the same with `x`/`y`/`width`/`height`/`cliff` filled in. See [layout-rendering.md → Two lists](layout-rendering.md#two-lists-one-ordering).
+**TreeThought / TreeThoughtPositioned** — The two parallel lists produced per render: visible thoughts in thoughtspace order, and the same with `x`/`y`/`width`/`height`/`cliff` filled in. See [layout-rendering.md → Two lists](layout-rendering.md#two-lists-one-ordering).
 
 **tsid** — Thoughtspace ID. 21-char nanoid in `localStorage`. Scopes everything per-thoughtspace: the TreeCRDT `docId`, the OPFS database file (`/treecrdt-em-${tsid}.db`), the session lock, and the permissions key. Override with `?share=<tsid>`.
 
