@@ -64,7 +64,10 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
             aria-label={type}
             data-selected={selected === type ? 'true' : 'false'}
             {...fastClick(e => e.stopPropagation())}
-            onTouchStart={e => toggleLetterCase(type, e)}
+            // Apply the option on touchend rather than touchstart. React registers touchstart passively, so the handler's
+            // preventDefault is a no-op there and the browser goes on to synthesize mouse events from the tap, which
+            // land on the thought under the dropdown (#5608).
+            onTouchEnd={e => isTouch && toggleLetterCase(type, e)}
             onMouseDown={e => !isTouch && toggleLetterCase(type, e)}
           >
             {type === 'LowerCase' && <LowerCaseIcon />}
