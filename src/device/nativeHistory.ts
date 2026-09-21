@@ -20,7 +20,9 @@ let unsubscribe: (() => void) | null = null
  * `beforeInput` intercepts. WebKit only dispatches that event while its own undo stack has a step to undo,
  * and it registers a step only for edits it performed itself. Since em applies most edits by re-rendering
  * the contenteditable from Redux, WebKit's stack holds far fewer steps than em's history, so `beforeInput`
- * recycles WebKit's position through the stack after each gesture to keep a step available on either side.
+ * recycles WebKit's position through the stack after each gesture to keep a step available on either side,
+ * anchoring a fresh step in the focused editable when the position has been lost along with the editable it
+ * belonged to.
  *
  * The Capacitor app sidesteps WebKit's stack entirely: `NativeHistoryWebView` hands the responder chain an undo
  * manager that emits `nativeHistory` instead of performing the gesture, so it reaches em regardless of

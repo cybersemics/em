@@ -786,6 +786,17 @@ export const handleNativeHistory = (type: 'undo' | 'redo') => {
 /** Whether a native undo/redo is being replayed by recycleNativeHistory, so that the `beforeinput` it dispatches is swallowed instead of routed to em's undo/redo a second time. */
 let recyclingNativeHistory = false
 
+/** How many history `beforeinput` events the replay dispatched. WebKit keeps reporting `queryCommandEnabled('undo')` as true after it has stopped dispatching the event, so the dispatch itself is the only reliable signal that a step is still there. */
+let replayedNativeHistoryEvents = 0
+
+/** Moves WebKit's position through its own history and immediately back, which is net-zero while a step is available in the replayed direction and reclaims the step the gesture consumed once it is not. Returns the number of steps the replay found. */
+const replayNativeHistory = (type: 'undo' | 'redo'): number => {
+  replayedNativeHistoryEvents = 0
+  document.execCommand(type)
+  document.execCommand(type === 'undo' ? 'redo' : 'undo')
+  return replayedNativeHistoryEvents
+}
+
 /**
  * Returns to WebKit's own history the step that a native undo/redo gesture consumed, so that the next gesture is still
  * dispatched.
@@ -798,8 +809,15 @@ let recyclingNativeHistory = false
  *
  * Advancing WebKit's position is reversible, so replaying the gesture and immediately inverting it — both prevented,
  * neither routed to em — leaves a step on either side of WebKit's position for as long as it holds any step at all.
- * Unlike registering a step with an `insertHTML` (#4637), this mutates no DOM and discards no redo steps, so native
- * redo keeps working.
+ * Unlike anchoring a step with an `insertHTML` (#4637), the replay mutates no DOM and discards no redo steps, so
+ * native redo keeps working.
+ *
+ * The replay has nothing to recycle when the step the gesture consumed belonged to an editable that em's undo has
+ * since unmounted — WebKit drops such a step instead of making it redoable — so that gesture empties the history for
+ * good and every later gesture drains the steps typing registers afterwards, one per gesture, until iOS is again
+ * reporting "Nothing to Undo". Anchoring a step in the editable that is focused now restores the foothold: the text is
+ * typed and deleted again, so the thought is left as it was, and the replay that follows makes the anchored step
+ * redoable as well as undoable.
  *
  * No-op outside iOS Safari, which is the only place a native history gesture arrives as a `beforeinput`: the Capacitor
  * app receives it as a `nativeHistory` plugin event instead, which never touches WebKit's history.
@@ -809,8 +827,14 @@ const recycleNativeHistory = (type: 'undo' | 'redo') => {
   // Defer so that the replay does not re-enter the beforeinput dispatch that triggered it.
   setTimeout(() => {
     recyclingNativeHistory = true
-    document.execCommand(type)
-    document.execCommand(type === 'undo' ? 'redo' : 'undo')
+    // Anchor a step only when the replay came up empty, and only with a collapsed caret in a thought, since typing
+    // over a selection would destroy the selected text rather than restore it.
+    if (replayNativeHistory(type) === 0 && selection.isCollapsed() && selection.isThought()) {
+      globals.suppressChange = true
+      if (document.execCommand('insertText', false, ' ')) document.execCommand('delete')
+      globals.suppressChange = false
+      replayNativeHistory('undo')
+    }
     recyclingNativeHistory = false
   })
 }
@@ -822,6 +846,18 @@ const recycleNativeHistory = (type: 'undo' | 'redo') => {
  * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
  * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
 export const beforeInput = (e: InputEvent) => {
+  // recycleNativeHistory's replay and anchor are dispatched only to move WebKit's position, so none of the branches
+  // below may act on them: undoing em a second time would consume a step of em's history that no gesture asked for,
+  // and the anchored space would be read as the Android space-to-indent case. The replay is still prevented, since
+  // performing it would mutate the DOM; the anchor is not, since WebKit registers the step by performing it.
+  if (recyclingNativeHistory) {
+    if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
+      e.preventDefault()
+      replayedNativeHistoryEvents++
+    }
+    return
+  }
+
   // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires a cancelable beforeinput with inputType
   // historyUndo/historyRedo. Left unhandled, it mutates the contenteditable DOM directly, bypassing em's undo and
   // leaving stale formatting markup (e.g. a black font color from a removed background highlight) that renders the
@@ -833,9 +869,6 @@ export const beforeInput = (e: InputEvent) => {
   // routes cannot both fire for a single gesture.
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
     e.preventDefault()
-    // The replay recycleNativeHistory performs is only there to move WebKit's position; undoing em a second time would
-    // consume a step of em's history that no gesture asked for.
-    if (recyclingNativeHistory) return
     const type = e.inputType === 'historyUndo' ? 'undo' : 'redo'
     handleNativeHistory(type)
     recycleNativeHistory(type)

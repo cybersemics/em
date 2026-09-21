@@ -46,6 +46,7 @@ import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
  * stack is enough — but until something registers that first step, the gesture is not dispatched at all.
  * - If there are no editables, such as after undoing the creation of the only remaining thought, then there will be no `beforeinput` event and native
  * undo/redo behavior will stop having an effect. Technically, native undo is still running, but it doesn't know how to re-create a deleted thought.
+ * The next gesture that does reach `beforeInput` anchors a fresh step itself, so the gestures resume once a thought is focused again.
  */
 const registerNativeUndoStep = (html: string): void => {
   if (!isTouch || !isSafari()) return
