@@ -9,16 +9,19 @@ import tapToolbar, { toolbarTapOptions } from '../helpers/tapToolbar'
 import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForEditableCount from '../helpers/waitForEditableCount'
 import waitForElement from '../helpers/waitForElement'
+import waitForMulticursor from '../helpers/waitForMulticursor'
+
+/** Swipe parameters the gestures spec uses on BrowserStack, where the default cadence is too quick to register. */
+const swipe = { segmentLength: 90, waitMs: 600 }
 
 describe('Copy', () => {
   // https://github.com/cybersemics/em/issues/3960
   it('preserves underline, strikethrough, text color, and background highlight through a copy and paste', async () => {
     await paste(`
-      - a
-        - One
-        - Two
-        - Three
-        - Four
+      - One
+      - Two
+      - Three
+      - Four
     `)
 
     await clickThought('One')
@@ -41,14 +44,13 @@ describe('Copy', () => {
 
     const clipboardWrites = await recordClipboardWrites()
 
-    // Close the picker, whose popover would otherwise sit over the swipe that opens the Command Center.
+    // Close the picker, whose popover would otherwise sit over the swipes below.
     await tapToolbar('Text Color')
 
-    // Copy Cursor copies the cursor and all of its descendants, so all four formats ride on one copy.
-    await clickThought('a')
-
-    // swipe up to open the Command Center, then tap its Copy button
-    await gesture('u', { segmentLength: 90, waitMs: 600 })
+    // Select All (←↓→), then swipe up for the Command Center and tap Copy
+    await gesture('ldr', swipe)
+    await waitForMulticursor(4)
+    await gesture('u', swipe)
     await waitForCommandCenterOpen()
     await tap(await waitForElement('[aria-label="Copy"]'), toolbarTapOptions)
 
