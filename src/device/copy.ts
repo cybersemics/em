@@ -5,7 +5,7 @@ import { isSafari, isTouch } from '../browser'
 import * as selection from './selection'
 
 interface CopyOptions {
-  /** Rich text/html representation written alongside the plain text. When provided, the clipboard is written deterministically (text/plain + text/html, plus the text/em marker where the platform supports it) rather than relying on the browser's native copy event. */
+  /** Rich text/html representation written alongside the plain text. When provided, the clipboard is written deterministically (text/plain + text/html, plus the text/em marker where the write mechanism carries it) rather than relying on the browser's native copy event. */
   html?: string
 }
 
@@ -135,6 +135,9 @@ const copyPlain = (text: string): void => {
  * The two shells enforce user activation differently, and only one of them is strict. The Capacitor WebView
  * refuses a write issued after an await, while mobile Safari accepts one; both were measured with the same
  * build. A caller that does not know what to copy until an await resolves must therefore use copyDeferred.
+ *
+ * No text/em marker: ClipboardItem's type allowlist excludes it. useOnCopy writes it through DataTransfer on
+ * a real copy event, which is a separate interface the allowlist does not govern, and is untested here.
  */
 const copyRichAsyncClipboard = (text: string, html: string): void => {
   navigator.clipboard
@@ -147,7 +150,7 @@ const copyRichAsyncClipboard = (text: string, html: string): void => {
     .catch(() => copyPlain(text))
 }
 
-/** Copies text and html (plus the text/em source marker where the platform supports it) to the clipboard for a
+/** Copies text and html (plus the text/em source marker where the write mechanism carries it) to the clipboard for a
  * rich (structured) copy. Each branch exists because the mechanism below it is the only one that platform
  * honors; see the comment on each.
  */
