@@ -1,11 +1,11 @@
 import clickThought from '../helpers/clickThought'
-import dispatchPaste from '../helpers/dispatchPaste'
 import gesture from '../helpers/gesture'
-import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
+import pasteFromEditMenu from '../helpers/pasteFromEditMenu'
 import recordClipboardWrites from '../helpers/recordClipboardWrites'
 import tap from '../helpers/tap'
 import tapToolbar, { toolbarTapOptions } from '../helpers/tapToolbar'
+import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForEditableCount from '../helpers/waitForEditableCount'
 import waitForElement from '../helpers/waitForElement'
@@ -64,8 +64,10 @@ describe('Copy', () => {
     expect(writes[0].contents['text/html']).toContain('background-color: rgb(0, 199, 230)')
 
     // Paste into a new subthought, which is where the issue's steps end. A sibling would be merged by #3622.
-    await newThought(undefined, { insertNewSubthought: true })
-    await dispatchPaste(writes[0].contents)
+    await gesture('d', swipe)
+    await waitForCommandCenterClosed()
+    await gesture('rdr', swipe)
+    await pasteFromEditMenu()
 
     // Each format should survive the round trip. Import normalizes a <font color> into an equivalent span,
     // so the pasted copies of Three and Four carry the style form rather than the attribute form.
