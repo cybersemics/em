@@ -4,6 +4,7 @@ import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
 import 'vi-canvas-mock'
+import { resetStores } from './stores/ministore'
 
 expect.extend(matchers)
 
@@ -168,6 +169,15 @@ console.error = (...args) => {
   }
   consoleErrorOriginal(...args)
 }
+
+// Reset every ministore after every test. Vitest isolates modules per file, not per test, and the stores are module-level
+// singletons, so a value one test writes is what the next test in the file reads. initStore and createTestApp reset at
+// setup, but most unit suites use neither, and would otherwise have to hand-write the teardown. Vitest runs afterEach
+// hooks in reverse registration order, so this runs after a test file's own hooks and after Testing Library's automatic
+// cleanup: nothing is mounted by the time the reset notifies subscribers. Only ministore is imported here — a setup
+// file's imports are cached before a test file's vi.mock calls apply, so importing any module with app dependencies
+// would defeat every test that mocks one of them.
+afterEach(resetStores)
 
 afterEach(() => {
   if (!actEscapes.count) return
