@@ -424,6 +424,15 @@ const globalCss = defineGlobalStyles({
   '[data-generating] *': {
     WebkitTextFillColor: 'transparent',
   },
+  // Apple Color Emoji are images, not fillable glyphs. A transparent fill hides them on iOS and can leave them
+  // unpainted after generating ends. Restore an opaque fill on the temporary display wrap so they stay visible.
+  '[data-generating] [data-generating-emoji]': {
+    WebkitTextFillColor: 'fg',
+    color: 'fg',
+    backgroundImage: 'none',
+    backgroundClip: 'unset',
+    WebkitBackgroundClip: 'unset',
+  },
   '[placeholder][data-generating]:empty::before': {
     backgroundImage: 'linear-gradient(90deg, {colors.dim} 0%, {colors.fg} 50%, {colors.dim} 100%)',
     backgroundSize: '250% 100%',

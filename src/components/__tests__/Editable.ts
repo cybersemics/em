@@ -428,6 +428,166 @@ describe('Define Term', () => {
     expect(editable.textContent).toBe('apple')
   })
 
+  it('wraps emoji in the displayed HTML of the cursor thought while Define Term is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- 🍎 Apples' }), setCursor(['🍎 Apples'])])
+
+    await act(async () => {
+      executeCommand(defineTerm)
+    })
+
+    const editable = [...document.querySelectorAll('[data-editable]')].find(
+      thought => thought.textContent === '🍎 Apples',
+    )
+    expect(editable).toHaveAttribute('data-generating')
+    expect(editable?.querySelector('[data-generating-emoji]')?.textContent).toBe('🍎')
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).not.toContain('data-generating-emoji')
+  })
+
+  it('wraps emoji in the displayed HTML of a formatted non-cursor thought while Define Term is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([
+      importText({ text: '- 🍎 Apples\n- <b>🍌 Bananas</b>' }),
+      setCursor(['🍎 Apples']),
+      addMulticursorAtFirstMatch(['🍎 Apples']),
+      addMulticursorAtFirstMatch(['<b>🍌 Bananas</b>']),
+    ])
+
+    await act(async () => {
+      executeCommandWithMulticursor(defineTerm, { store })
+      await vi.runAllTimersAsync()
+    })
+
+    const cursorThought = [...document.querySelectorAll('[data-editable]')].find(
+      editable => editable.textContent === '🍎 Apples',
+    )
+    expect(cursorThought).toHaveAttribute('data-generating')
+    expect(cursorThought?.querySelector('[data-generating-emoji]')?.textContent).toBe('🍎')
+
+    const otherThought = [...document.querySelectorAll('[data-editable]')].find(
+      editable => editable.textContent === '🍌 Bananas',
+    )
+    expect(otherThought).toBeTruthy()
+    expect(otherThought).toHaveAttribute('data-generating')
+    const emoji = otherThought!.querySelector('b [data-generating-emoji]')
+    expect(emoji).not.toBeNull()
+    expect(emoji?.textContent).toBe('🍌')
+    expect(otherThought!.querySelector('b')?.textContent).toBe('🍌 Bananas')
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).not.toContain('data-generating-emoji')
+  })
+
+  it('does not persist the generating emoji wrap when the cursor thought is edited', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- 🍎 Apples' }), setCursor(['🍎 Apples'])])
+
+    await act(async () => {
+      executeCommand(defineTerm)
+    })
+
+    const editable = [...document.querySelectorAll('[data-editable]')].find(
+      thought => thought.textContent === '🍎 Apples',
+    )
+    expect(editable?.querySelector('[data-generating-emoji]')).not.toBeNull()
+
+    editable!.innerHTML = `${editable!.querySelector('[data-generating-emoji]')?.outerHTML} Apple`
+    fireEvent.input(editable!, { bubbles: true })
+    await act(vi.runAllTimersAsync)
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - 🍎 Apple`)
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).not.toContain('data-generating-emoji')
+  })
+
+  it('does not move the caret when the cursor thought is edited while Define Term is in flight', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+    mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+    await dispatch([importText({ text: '- 🍎 Apples' }), setCursor(['🍎 Apples'])])
+
+    const editable = [...document.querySelectorAll('[data-editable]')].find(
+      thought => thought.textContent === '🍎 Apples',
+    ) as HTMLElement
+    await act(async () => {
+      editable.focus()
+      selection.set(editable, { offset: editable.textContent!.length })
+    })
+
+    await act(async () => {
+      executeCommand(defineTerm)
+    })
+
+    const afterEmoji = '🍎 '.length
+    await act(async () => {
+      selection.set(editable, { offset: afterEmoji })
+    })
+    expect(selection.offsetThought()).toBe(afterEmoji)
+
+    const user = userEvent.setup({ delay: null })
+    await user.keyboard('Red ')
+    await act(vi.runAllTimersAsync)
+
+    expect(selection.offsetThought()).toBe(afterEmoji + 'Red '.length)
+  })
+
+  it('removes the display-only emoji wrap when Define Term completes', async () => {
+    vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+    acknowledgeAiDisclosure()
+
+    /** Resolves the pending AI request. Assigned when the mocked fetch is called, so the test controls exactly when the definition completes. */
+    let resolveAiRequest: (response: { json: () => Promise<{ definitions: string[] }> }) => void = () => {}
+    mockFetch.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveAiRequest = resolve
+        }),
+    )
+
+    await dispatch([
+      importText({ text: '- 🍎 Apples\n- 🍌 Bananas' }),
+      setCursor(['🍎 Apples']),
+      addMulticursorAtFirstMatch(['🍎 Apples']),
+      addMulticursorAtFirstMatch(['🍌 Bananas']),
+    ])
+
+    await act(async () => {
+      executeCommandWithMulticursor(defineTerm, { store })
+      await vi.runAllTimersAsync()
+    })
+
+    const pending = [...document.querySelectorAll('[data-editable]')].find(
+      editable => editable.textContent === '🍌 Bananas',
+    )
+    expect(pending?.querySelector('[data-generating-emoji]')).not.toBeNull()
+
+    await act(async () => {
+      resolveAiRequest({
+        json: () =>
+          Promise.resolve({
+            definitions: [
+              'A round, edible fruit with crisp flesh that grows on trees.',
+              'A long yellow fruit that grows in hanging bunches.',
+            ],
+          }),
+      })
+    })
+
+    const editable = (await findThoughtByText('🍌 Bananas'))!
+    expect(editable).not.toHaveAttribute('data-generating')
+    expect(editable.querySelector('[data-generating-emoji]')).toBeNull()
+    expect(editable.innerHTML).toBe('🍌 Bananas')
+  })
+
   it('clears the generating marker when Define Term completes', async () => {
     vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
     acknowledgeAiDisclosure()
