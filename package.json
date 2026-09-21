@@ -43,6 +43,7 @@
     "icons:desktop": "yarn --cwd scripts/icons install && yarn --cwd scripts/icons generate:desktop",
     "icons:native": "yarn --cwd scripts/icons install && yarn --cwd scripts/icons generate:native",
     "icons:web": "yarn --cwd scripts/icons install && yarn --cwd scripts/icons generate:web",
+    "lint:ai-compiler-api": "node ./scripts/check-ai-compiler-api.mjs",
     "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
     "lint:prettier": "FORCE_COLOR=1 prettier --check .",
