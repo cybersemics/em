@@ -19,11 +19,21 @@ const debouncedSearch = _.debounce(
   SEARCH_DEBOUNCE_WAIT,
 )
 
-/** Select next editable and prevent default keydown. */
+/** Handles the keys that belong to the search input rather than to a command. */
 const onKeyDown = (e: React.KeyboardEvent) => {
   if (e.key === 'ArrowDown') {
     e.preventDefault()
     throw new Error('TODO: Search onKeyDown')
+  }
+  // Results update as the query is typed, so Enter has nothing to submit. Stop it from reaching the global keyDown
+  // handler, which would otherwise resolve it to newThought (or another Enter chord) and create an empty thought
+  // behind the search screen (#5587). An Enter that confirms an IME candidate still has to reach the browser, so only
+  // a non-composing Enter, which would otherwise insert a line break into the search input, is prevented.
+  else if (e.key === 'Enter') {
+    e.stopPropagation()
+    if (!e.nativeEvent.isComposing) {
+      e.preventDefault()
+    }
   }
 }
 

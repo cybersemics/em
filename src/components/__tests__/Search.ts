@@ -13,7 +13,7 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 // https://github.com/cybersemics/em/issues/5587
-it.skip('does not create a new thought when Enter is pressed in the search input', async () => {
+it('does not create a new thought when Enter is pressed in the search input', async () => {
   await dispatch([
     importText({
       text: `
