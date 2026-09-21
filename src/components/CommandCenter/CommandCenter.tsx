@@ -54,7 +54,7 @@ const CHEVRON_SECTION_HEIGHT_REM = 1.56
 const CHEVRON_WIDTH = 33
 const CHEVRON_HEIGHT = 13
 
-/** Colour of the chevron */
+/** Colour of the chevron. */
 const CHEVRON_COLOR = token('colors.fgOverlay10')
 
 /**
@@ -181,7 +181,7 @@ const CommandCenter = () => {
 
   // Reveals the glow-mode falloff only within the sheet area, with the same soft 2.5rem top edge as the plain falloff gradient. Anchored to the bottom of the viewport since the sheet is bottom-anchored.
   const backgroundGlowMask = useMotionTemplate`linear-gradient(to top, black calc(${height}px - 2.5rem), transparent ${height}px)`
-  
+
   const stageOffset = Math.round(fontSize * STAGE_OFFSET_REM)
 
   /* Negative snap points are measured from the top of the sheet, so this resolves to
