@@ -154,6 +154,14 @@ const keyframes = defineKeyframes({
       width: '1.25em',
     },
   },
+  shimmerText: {
+    from: {
+      backgroundPosition: '200% 0',
+    },
+    to: {
+      backgroundPosition: '-200% 0',
+    },
+  },
   tofg: {
     to: {
       color: 'fg',
@@ -400,6 +408,39 @@ const globalCss = defineGlobalStyles({
   '[placeholder][data-placeholder-code]:empty::before': {
     backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
     fontFamily: 'monospace',
+  },
+  /* Sweep a highlight across thought text (and the empty-thought placeholder) while an AI request is in flight. */
+  '[data-generating]': {
+    backgroundImage: 'linear-gradient(90deg, {colors.dim} 0%, {colors.fg} 50%, {colors.dim} 100%)',
+    backgroundSize: '250% 100%',
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    color: 'transparent',
+    animation: 'shimmerText 4s linear infinite',
+    // color: transparent hides the caret; restore it so a focused generating thought stays editable.
+    caretColor: 'fg',
+  },
+  '[data-generating] *': {
+    WebkitTextFillColor: 'transparent',
+  },
+  // Apple Color Emoji are images, not fillable glyphs. A transparent fill hides them on iOS and can leave them
+  // unpainted after generating ends. Restore an opaque fill on the temporary display wrap so they stay visible.
+  '[data-generating] [data-generating-emoji]': {
+    WebkitTextFillColor: 'fg',
+    color: 'fg',
+    backgroundImage: 'none',
+    backgroundClip: 'unset',
+    WebkitBackgroundClip: 'unset',
+  },
+  '[placeholder][data-generating]:empty::before': {
+    backgroundImage: 'linear-gradient(90deg, {colors.dim} 0%, {colors.fg} 50%, {colors.dim} 100%)',
+    backgroundSize: '250% 100%',
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    color: 'transparent',
+    animation: 'shimmerText 4s linear infinite',
   },
   ':root': {
     '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',

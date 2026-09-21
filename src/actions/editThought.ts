@@ -149,7 +149,7 @@ const editThought = (
 
   const thoughtNew: Thought = {
     ...editedThought,
-    ...(editedThought.generating ? { generating: false } : null),
+    ...(editedThought.generating ? { generating: false, generatingPlaceholder: undefined } : null),
     // Editing a value does not change the thought's created timestamp, so under a Created sort its rank already
     // reflects its sort key and must be preserved. Re-ranking it would move it past siblings created in the same
     // millisecond, which sort by rank (#4085).
