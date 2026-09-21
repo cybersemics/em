@@ -61,9 +61,25 @@ const click = async (
       offset || 0,
     )
 
+  /** Returns the first x at which the editable is the topmost element, starting from its inside left edge. The bullet
+   * is absolutely positioned and overlaps the left edge of the editable at font sizes below 18, so clicking the very
+   * edge would hit the bullet instead of the text. */
+  const leftEdgeX = (): Promise<number> =>
+    page.evaluate(
+      (node: HTMLElement, startX: number, y: number) => {
+        const maxX = startX + 20
+        let x = startX
+        while (x < maxX && !node.contains(document.elementFromPoint(x, y))) x++
+        return x
+      },
+      nodeHandle as unknown as HTMLElement,
+      boundingBox.x + 1,
+      boundingBox.y + boundingBox.height / 2,
+    )
+
   const coordinate = !offset
     ? {
-        x: boundingBox.x + (edge === 'left' ? 1 : boundingBox.width - 1),
+        x: edge === 'left' ? await leftEdgeX() : boundingBox.x + boundingBox.width - 1,
         y: boundingBox.y + boundingBox.height / 2,
       }
     : await offsetCoordinates()
