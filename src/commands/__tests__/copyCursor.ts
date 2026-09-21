@@ -14,9 +14,6 @@ import copyCursorCommand from '../copyCursor'
 
 vi.mock('../../device/copy')
 
-/** Resolves to the content promised to the most recent copyDeferred call. */
-const copied = () => vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]
-
 beforeEach(initStore)
 
 describe('copyCursor', () => {
@@ -41,7 +38,7 @@ describe('copyCursor', () => {
 
     executeCommandWithMulticursor(copyCursorCommand, { store })
 
-    await expect(copied()).resolves.toEqual({
+    await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
       text: `- a
   - a1
   - a2`,
@@ -61,7 +58,10 @@ describe('copyCursor', () => {
 
     executeCommandWithMulticursor(copyCursorCommand, { store })
 
-    await expect(copied()).resolves.toEqual({ text: 'a', html: expect.any(String) })
+    await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+      text: 'a',
+      html: expect.any(String),
+    })
   })
 
   it('does not add an undo step', async () => {
@@ -111,7 +111,7 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      await expect(copied()).resolves.toEqual({
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
         text: `- a
   - a1
   - a2
@@ -137,7 +137,10 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      await expect(copied()).resolves.toEqual({ text: 'a', html: expect.any(String) })
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+        text: 'a',
+        html: expect.any(String),
+      })
     })
 
     it('only copies ancestors when both ancestor and descendant are selected', async () => {
@@ -160,7 +163,7 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      await expect(copied()).resolves.toEqual({
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
         text: `- a
   - a1
     - a1a
@@ -194,7 +197,7 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      await expect(copied()).resolves.toEqual({
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
         text: `- a
   - a1
     - a1a
