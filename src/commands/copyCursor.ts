@@ -23,8 +23,9 @@ import trimBullet from '../util/trimBullet'
 
 /** Pulls any pending descendants for the given thought IDs, exports them to plain text, copies to clipboard, and returns data for constructing the alert message. */
 const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () => State): Promise<string> => {
-  // Registered before the pull below, because mobile WebKit grants a clipboard write only in the same task as
-  // the gesture that triggered it, and the export is not known until the pull resolves (#3960).
+  // Registered before the pull below, because the iOS Capacitor WebView refuses a clipboard write issued after
+  // an await, and the export is not known until the pull resolves (#3960). Mobile Safari accepts it, and the
+  // iOS e2e suite runs Safari, so inlining this back into a plain copy() call would keep CI green without a Capacitor-specific test.
   let provideContent: (content: { text: string; html: string }) => void
   copyDeferred(
     new Promise<{ text: string; html: string }>(resolve => {

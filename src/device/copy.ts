@@ -131,8 +131,9 @@ const copyPlain = (text: string): void => {
  * work, measured on an iOS device: the html round-trips with underline, strikethrough and colors intact,
  * WebKit only prepending inline style normalization to the outer element.
  *
- * WebKit grants the write only in the same task as the gesture that triggered it, so a caller that awaits
- * before it knows what to copy must use copyDeferred instead.
+ * The two shells enforce user activation differently, and only one of them is strict. The Capacitor WebView
+ * refuses a write issued after an await, while mobile Safari accepts one; both were measured with the same
+ * build. A caller that does not know what to copy until an await resolves must therefore use copyDeferred.
  */
 const copyRichAsyncClipboard = (text: string, html: string): void => {
   navigator.clipboard
@@ -170,9 +171,12 @@ const copy = (text: string, { html }: CopyOptions = {}): void => {
 }
 
 /** Copies content that is not known yet, for a caller that must await before it can export what the user asked
- * for. Mobile WebKit refuses a clipboard write made after that await, so the write is registered now, in the
- * same task as the gesture, and satisfied from `content` once it resolves (#3960). Every other platform waits
- * for the content and takes its usual path, none of them being gesture-bound.
+ * for. The iOS Capacitor WebView refuses a clipboard write issued after that await, so the write is registered
+ * now, in the same task as the gesture, and satisfied from `content` once it resolves (#3960). Every other
+ * platform waits for the content and takes its usual path, none of them being gesture-bound.
+ *
+ * Mobile Safari accepts the undeferred write, and the iOS e2e suite runs Safari, so no test there covers this.
+ * Removing the deferral leaves CI green and breaks copy formatting in the app.
  */
 export const copyDeferred = (content: Promise<{ text: string; html: string }>): void => {
   if (isSafari() && isTouch) {
