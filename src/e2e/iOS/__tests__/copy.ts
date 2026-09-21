@@ -8,9 +8,6 @@ import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForElement from '../helpers/waitForElement'
 
-/** Swipe parameters the gestures spec uses on BrowserStack, where the default cadence is too quick to register. */
-const swipe = { segmentLength: 90, waitMs: 600 }
-
 /** Counts the thoughts whose rendered html matches exactly. */
 const editableCount = (html: string) =>
   browser.execute(
@@ -86,15 +83,15 @@ describe('Copy', () => {
     await tapToolbar('Text Color')
 
     // Select All (←↓→), which opens the Command Center on the selection, then tap Copy.
-    await gesture('ldr', swipe)
+    await gesture('ldr')
     await waitForMulticursor(4)
     await waitForCommandCenterOpen()
     await tap(await waitForElement('[aria-label="Copy"]'), toolbarTapOptions)
 
     // Paste into a new subthought, which is where the issue's steps end. A sibling would be merged by #3622.
-    await gesture('d', swipe)
+    await gesture('d')
     await waitForCommandCenterClosed()
-    await gesture('rdr', swipe)
+    await gesture('rdr')
     await pasteFromEditMenu()
 
     // Each format should survive the round trip. Import normalizes a <font color> into an equivalent span,
