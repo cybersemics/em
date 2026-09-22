@@ -122,7 +122,10 @@ export const formatSelectionActionCreator =
         setIsMulticursorExecuting({ value: false }),
       ])
 
-      // A held format changes no thought value, so nothing else refreshes the toolbar's view of the cursor thought.
+      // Refresh the command state from the edited thoughts so that the swatch reflects the color that was just applied,
+      // as the single thought path below does. Nothing else refreshes it here: the url history middleware only does so
+      // on a cursor change, which never happens for a multiselection that has no cursor, and a held format changes no
+      // thought value at all.
       updateCommandState()
 
       return
