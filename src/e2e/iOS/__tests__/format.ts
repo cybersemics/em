@@ -3,11 +3,14 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import clickThought from '../helpers/clickThought'
+import gesture from '../helpers/gesture'
+import getClearedPlaceholderStyle from '../helpers/getClearedPlaceholderStyle'
 import getEditingText from '../helpers/getEditingText'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import tapToolbar from '../helpers/tapToolbar.js'
+import waitForElement from '../helpers/waitForElement'
 
 describe('Format', () => {
   it('applying bold to an unfocused cursor thought does not open the keyboard', async () => {
@@ -89,5 +92,52 @@ describe('Format', () => {
     await tapToolbar('Text Color', 'text color swatches', 'green')
 
     expect(await thoughtHtml()).toBe('<font color="#00d688">One</font>')
+  })
+
+  // https://github.com/cybersemics/em/issues/4716
+  it('Clear Thought slants the emoji in the placeholder', async () => {
+    // paste sets the cursor to the last imported thought, which is all clearThought needs.
+    await paste(`
+    - 😁 Hello`)
+
+    await gesture('rl') // Clear Thought
+    await waitForElement('[data-editable][data-placeholder-cleared]')
+
+    const placeholder = await getClearedPlaceholderStyle()
+
+    expect(placeholder.content).toContain('😁 Hello')
+
+    // WebKit never synthesizes oblique for a color emoji glyph, so a slant that reaches the emoji has to come from a
+    // transform on the rendered box rather than from font-style. Read the angle back out of the computed matrix
+    // (matrix(a, b, c, d, e, f), where c is the tangent of the skew angle).
+    const values = placeholder.transform
+      .match(/matrix\(([^)]+)\)/)?.[1]
+      .split(',')
+      .map(Number)
+    if (!values && placeholder.transform !== 'none')
+      throw new Error(`expected a matrix or no transform on the cleared placeholder, got "${placeholder.transform}"`)
+    const skewXDeg = values ? (Math.atan(-values[2]) * 180) / Math.PI : 0
+    expect(skewXDeg).toBeCloseTo(12, 1)
+
+    // The transform slants the whole placeholder, so font-style must not slant the text a second time.
+    expect(placeholder.fontStyle).toBe('normal')
+  })
+
+  it('Clear Thought italicizes a placeholder that has no emoji', async () => {
+    // paste sets the cursor to the last imported thought, which is all clearThought needs.
+    await paste(`
+    - Hello`)
+
+    await gesture('rl') // Clear Thought
+    await waitForElement('[data-editable][data-placeholder-cleared]')
+
+    const placeholder = await getClearedPlaceholderStyle()
+
+    expect(placeholder.content).toContain('Hello')
+
+    // A skew slopes the upright letterforms rather than selecting the font's italic face, so it is reserved for the
+    // emoji that font-style cannot slant. A thought without one keeps true italics.
+    expect(placeholder.transform).toBe('none')
+    expect(placeholder.fontStyle).toBe('italic')
   })
 })

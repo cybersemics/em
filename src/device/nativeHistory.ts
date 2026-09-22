@@ -3,10 +3,10 @@ import { WebviewBackground } from 'webview-background'
 import { isCapacitor, isIOS, isSafari, isTouch } from '../browser'
 import { handleNativeHistory } from '../commands'
 import { NATIVE_HISTORY_REGISTER_DELAY } from '../constants'
-import globals from '../globals'
 import isRedoEnabled from '../selectors/isRedoEnabled'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import store from '../stores/app'
+import nativeHistoryGestureStore from '../stores/nativeHistoryGesture'
 
 /** The pending plugin listener registration, kept so that the listener can be removed on destroy. */
 let listener: Promise<PluginListenerHandle> | null = null
@@ -60,7 +60,7 @@ const onTouchEnd = (e: TouchEvent) => {
   const dy = gesture.y - gesture.startY
   if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) <= Math.abs(dy)) return
 
-  globals.nativeHistoryGestureTime = Date.now()
+  nativeHistoryGestureStore.update(Date.now())
   handleNativeHistory(dx > 0 ? 'redo' : 'undo', { registerDelay: NATIVE_HISTORY_REGISTER_DELAY })
 }
 

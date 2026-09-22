@@ -40,7 +40,6 @@ import {
 } from './constants'
 import focusNativeHistoryAnchor from './device/nativeHistoryAnchor'
 import * as selection from './device/selection'
-import globals from './globals'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
 import getThoughtById from './selectors/getThoughtById'
@@ -52,8 +51,11 @@ import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
+import editableSyncStore from './stores/editableSync'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
+import heldKeysStore from './stores/heldKeys'
+import nativeHistoryGestureStore from './stores/nativeHistoryGesture'
 import { isNavigation } from './util/actionMetadata.registry'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
@@ -789,7 +791,7 @@ let registeringNativeRedoStep = false
  * `device/nativeHistory.ts` to recognize — so without a step there is nothing to deliver.
  *
  * This inserts an empty marker and immediately undoes it natively, which moves that step onto the redo stack. Its DOM
- * effect is immaterial: the insert is undone before the function returns, and globals.suppressChange hides both
+ * effect is immaterial: the insert is undone before the function returns, and editableSync's suppressChange hides both
  * mutations from the Editable change handler, so no edit is recorded and the editable is not re-rendered. The step
  * exists only as the anchor that makes the native redo gesture fire; the `historyRedo` it eventually dispatches is
  * preventDefaulted like any other, so the step survives and further redo gestures keep firing.
@@ -808,7 +810,7 @@ let registeringNativeRedoStep = false
  */
 const registerNativeRedoStep = (): void => {
   if (!isTouch || !isSafari() || isCapacitor()) return
-  globals.suppressChange = true
+  editableSyncStore.update({ suppressChange: true })
   registeringNativeRedoStep = true
   const marker = '<span data-native-history></span>'
   const inserted =
@@ -818,7 +820,7 @@ const registerNativeRedoStep = (): void => {
     document.execCommand('undo')
   }
   registeringNativeRedoStep = false
-  globals.suppressChange = false
+  editableSyncStore.update({ suppressChange: false })
 }
 
 /** Performs a native undo/redo gesture (iOS shake-to-undo, three-finger swipe, or the Edit menu) as em's own undo/redo, so that Redux remains the single source of truth. Called from every route a native gesture can arrive by: the `historyUndo`/`historyRedo` `beforeinput` event in the browser, the three-finger swipe recognized from touch events in `device/nativeHistory.ts`, and the `nativeHistory` event from the Capacitor plugin. `registerDelay` is how long to wait before refreshing WebKit's history step — see below. */
@@ -870,7 +872,7 @@ export const beforeInput = (e: InputEvent) => {
     // A three-finger swipe reaches em twice on iOS Safari: once as the touch events device/nativeHistory.ts
     // recognizes, and again here a moment later. The default is still prevented so WebKit cannot mutate the
     // contenteditable, but the gesture has already been applied.
-    if (Date.now() - globals.nativeHistoryGestureTime > NATIVE_HISTORY_GESTURE_TIMEOUT) {
+    if (Date.now() - nativeHistoryGestureStore.getState() > NATIVE_HISTORY_GESTURE_TIMEOUT) {
       handleNativeHistory(e.inputType === 'historyUndo' ? 'undo' : 'redo')
     }
     return
@@ -895,13 +897,13 @@ export const beforeInput = (e: InputEvent) => {
 /** Global keyUp handler. */
 export const keyUp = (e: KeyboardEvent) => {
   // track meta key for expansion algorithm
-  if (e.key === (isMac ? 'Meta' : 'Control') && globals.suppressExpansion) {
+  if (e.key === (isMac ? 'Meta' : 'Control') && heldKeysStore.getState().suppressExpansion) {
     store.dispatch(suppressExpansion(false))
   }
 
   // clear the table column boundary crossing suppression once the arrow key is released, so it can cross again on the next discrete press
-  if (globals.arrowKeyBoundaryCross === e.key) {
-    globals.arrowKeyBoundaryCross = null
+  if (heldKeysStore.getState().arrowKeyBoundaryCross === e.key) {
+    heldKeysStore.update({ arrowKeyBoundaryCross: null })
   }
 
   keyCommandId = null
@@ -914,7 +916,7 @@ export const keyDown = (e: KeyboardEvent) => {
   // track meta key for expansion algorithm
   if (!isCommandKey(e)) {
     // disable suppress expansion without triggering re-render
-    globals.suppressExpansion = false
+    heldKeysStore.update({ suppressExpansion: false })
   }
 
   // For some reason, when the caret is at the beginning of the thought, alt + ArrowLeft sets the caret to the end.
@@ -926,7 +928,7 @@ export const keyDown = (e: KeyboardEvent) => {
 
   // After a table column boundary is crossed on a discrete keypress, hard-stop auto-repeat of the same arrow key until it is released.
   // This prevents holding the arrow key from continuously advancing the caret into or through the adjacent thought — it must be released and pressed again to move further.
-  if (globals.arrowKeyBoundaryCross === e.key && e.repeat) {
+  if (heldKeysStore.getState().arrowKeyBoundaryCross === e.key && e.repeat) {
     e.preventDefault()
     return
   }

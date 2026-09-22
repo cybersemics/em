@@ -3,7 +3,6 @@ import Thunk from '../@types/Thunk'
 import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
@@ -11,6 +10,7 @@ import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
+import editableSyncStore from '../stores/editableSync'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
@@ -49,9 +49,9 @@ import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
  */
 const registerNativeUndoStep = (html: string): void => {
   if (!isTouch || !isSafari()) return
-  globals.suppressChange = true
+  editableSyncStore.update({ suppressChange: true })
   document.execCommand('insertHTML', false, html)
-  globals.suppressChange = false
+  editableSyncStore.update({ suppressChange: false })
 }
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline, code, color, or removeFormat.
@@ -93,6 +93,12 @@ export const formatSelectionActionCreator =
 
         setIsMulticursorExecuting({ value: false }),
       ])
+
+      // Refresh the command state from the edited thoughts so that the swatch reflects the color that was just applied,
+      // as the single thought path below does. The url history middleware only refreshes it on a cursor change, which
+      // never happens for a multiselection that has no cursor.
+      updateCommandState()
+
       return
     }
 

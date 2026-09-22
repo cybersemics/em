@@ -249,7 +249,11 @@ const ContinuousGradientGestureRenderer = ({
           {renderStrokes('alpha')}
         </mask>
       </defs>
-      <g mask={`url(#${instanceId}-alpha)`}>{renderStrokes('color')}</g>
+      <g mask={`url(#${instanceId}-alpha)`}>
+        {/* WebKit needs an isolated inner group to composite the opaque pieces before applying the mask.
+            Without it, transparency accumulates at overlapping caps. Keep this paint style in the SVG itself. */}
+        <g style={{ isolation: 'isolate' }}>{renderStrokes('color')}</g>
+      </g>
       {highlightPath && (
         <path d={highlightPath} stroke={highlightColor ?? token('colors.vividHighlight')} {...pathProps} />
       )}
