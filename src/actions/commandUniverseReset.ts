@@ -7,8 +7,9 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 const commandUniverseReset = (state: State, { entryId = 'root' }: { entryId?: string } = {}): State => ({
   ...state,
   commandUniverseNavigation: {
-    entries: [{ entryId, page: { pageId: 'grid', props: {} } }],
+    entries: [{ entryId, page: { pageId: 'grid', props: {} }, arrival: null }],
     index: 0,
+    transition: null,
   },
 })
 
