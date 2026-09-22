@@ -2,13 +2,13 @@
  * IOS Safari caret positioning tests.
  * Uses WDIO test runner with Mocha framework.
  */
+import type { Element } from 'webdriverio'
 import gestures from '../../../test-helpers/gestures'
 import clickThought from '../helpers/clickThought'
 import editThought from '../helpers/editThought'
 import gesture from '../helpers/gesture'
 import getEditable from '../helpers/getEditable'
 import getEditingText from '../helpers/getEditingText'
-import getElementRectByScreen from '../helpers/getElementRectByScreen'
 import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
@@ -21,6 +21,32 @@ import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
+
+/** Pixels of Safari chrome above the page, measured as 59 on the devices this suite runs on. */
+const SAFARI_CHROME_TOP = 60
+
+/**
+ * Get an element's rect in the screen coordinates that performActions delivers touches in.
+ *
+ * Element rects are viewport-relative, so the chrome above the page has to be added. The virtual keyboard scrolls the
+ * visual viewport out from under the layout viewport, moving the page up the screen by `visualViewport.offsetTop` —
+ * measured as 59px of chrome with the keyboard down and 28px with it up. A rect is therefore only valid for the
+ * keyboard state it was read in, and has to be re-read after the keyboard opens or closes.
+ */
+const getElementRectForTouch = async (element: Element) => {
+  const raw = await browser.execute((el: HTMLElement) => {
+    const rect = el.getBoundingClientRect()
+    return JSON.stringify({
+      x: rect.x,
+      y: rect.y,
+      width: rect.width,
+      height: rect.height,
+      offsetTop: window.visualViewport?.offsetTop ?? 0,
+    })
+  }, element)
+  const rect = JSON.parse(raw) as { x: number; y: number; width: number; height: number; offsetTop: number }
+  return { ...rect, y: rect.y + SAFARI_CHROME_TOP - rect.offsetTop }
+}
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
 // https://github.com/cybersemics/em/issues/1475
@@ -240,7 +266,7 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandle = await waitForEditable('foo')
-    const elementRect = await getElementRectByScreen(editableNodeHandle)
+    const elementRect = await getElementRectForTouch(editableNodeHandle)
 
     // swipe right on thought
     await gesture('r', {
@@ -280,7 +306,7 @@ describe('Caret', () => {
     await clickThought('y')
 
     const editableNodeHandle = await waitForEditable('y')
-    const elementRect = await getElementRectByScreen(editableNodeHandle)
+    const elementRect = await getElementRectForTouch(editableNodeHandle)
 
     await gesture(gestures.newThought, {
       xStart: elementRect.x + 5,
@@ -337,7 +363,7 @@ describe('Caret', () => {
 
     const editable = await waitForEditable('Hello')
     await browser.execute(() => window.scrollTo(0, 0))
-    const rect = await getElementRectByScreen(editable)
+    const rectKeyboardUp = await getElementRectForTouch(editable)
 
     // Prime with a tap on the thought's center + keyboard dismissal. Priming while
     // "Hello" has the cursor is what leaves offsetRef.current set (and never reset) pre-#4371.
@@ -350,8 +376,8 @@ describe('Caret', () => {
           {
             type: 'pointerMove',
             duration: 0,
-            x: Math.round(rect.x + rect.width / 2),
-            y: Math.round(rect.y + rect.height / 2),
+            x: Math.round(rectKeyboardUp.x + rectKeyboardUp.width / 2),
+            y: Math.round(rectKeyboardUp.y + rectKeyboardUp.height / 2),
             origin: 'viewport',
           },
           { type: 'pointerDown', button: 0 },
@@ -361,6 +387,10 @@ describe('Caret', () => {
       },
     ])
     await hideKeyboardByTappingDone()
+
+    // Dismissing the keyboard scrolls the page and restores the visual viewport, so the rect above no longer locates
+    // the thought on screen.
+    const rect = await getElementRectForTouch(editable)
 
     // Cursor Back (swipe right) to set the cursor to null, so that "Hello" becomes a non-cursor thought.
     await gesture('r', {
