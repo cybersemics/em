@@ -27,3 +27,20 @@ it('auto-dismisses on touch after a tap synthesizes mouseover', async () => {
 
   expect(screen.queryByTestId('alert-content')).toBeNull()
 })
+
+it('pauses the auto-dismiss timer while the alert is being touched', async () => {
+  await dispatch(alert('Permanently deleted a', { clearDelay: 1000 }))
+  render(createElement(Provider, { store, children: createElement(Alert) }))
+
+  await act(async () => {
+    fireEvent.touchStart(screen.getByTestId('alert-content'), { touches: [{ pageY: 0 }] })
+  })
+  await act(() => vi.advanceTimersByTimeAsync(2000))
+  expect(screen.queryByTestId('alert-content')).not.toBeNull()
+
+  await act(async () => {
+    fireEvent.touchEnd(screen.getByTestId('alert-content'), { touches: [{ pageY: 0 }] })
+  })
+  await act(vi.runAllTimersAsync)
+  expect(screen.queryByTestId('alert-content')).toBeNull()
+})

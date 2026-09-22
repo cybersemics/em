@@ -16,7 +16,10 @@ const Notification: FC<
     transitionKey: string | number
     /** Optional content rendered after the value without padding or alignment. Must be positioned independently. */
     children?: ReactNode
-  } & Pick<ComponentProps<typeof PopupBase>, 'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave'>
+  } & Pick<
+    ComponentProps<typeof PopupBase>,
+    'onClose' | 'textAlign' | 'onMouseOver' | 'onMouseLeave' | 'onTouchStart' | 'onTouchEnd' | 'onTouchCancel'
+  >
 > = ({ icon, onClose, value, transitionKey, children, ...props }) => {
   const [isDismissed, setIsDismissed] = useState(false)
   // Share this ref between FadeTransition and PopupBase so the fade opacity is applied directly to the

@@ -76,10 +76,14 @@ const Alert: FC = () => {
       onClose={alert?.clearDelay != null ? onClose : undefined}
       value={alert ? value : null}
       icon={Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
-      // Only pause the auto-dismiss timer for a real pointer. Touch browsers emit compatibility mouseover on tap
-      // but no mouseout until the user taps elsewhere, which would strand the alert on screen indefinitely.
+      // Pause the auto-dismiss timer while the user is engaging with the alert. Touch has to be tracked
+      // separately: a touch browser synthesizes mouseover from a tap but no mouseout until the user taps
+      // elsewhere, so the mouse handlers alone would strand the alert on screen indefinitely.
       onMouseLeave={!isTouch ? startTimer : undefined}
       onMouseOver={!isTouch ? clearTimer : undefined}
+      onTouchStart={clearTimer}
+      onTouchEnd={startTimer}
+      onTouchCancel={startTimer}
     >
       {alert?.importFileId && (
         <a
