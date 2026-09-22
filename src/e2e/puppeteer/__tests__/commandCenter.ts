@@ -153,7 +153,7 @@ describe('command center', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5646
-  it.skip('dismisses a focus that arrives while it is shown so the keyboard is not raised over it', async () => {
+  it('dismisses a focus that arrives while it is shown so the keyboard is not raised over it', async () => {
     await paste('- Hello world beautiful')
     await clickThought('Hello world beautiful')
 

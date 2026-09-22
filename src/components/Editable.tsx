@@ -888,21 +888,21 @@ const Editable = ({
   const onFocus = useCallback(
     () => {
       /**
-       * On iOS, a long press between 415–650ms will trigger onFocus even when preventDefault is called in touchend, thus opening the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
+       * A touch device can deliver a native focus that preventDefault cannot stop, which opens the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
        *
        * Unfortunatly, doing this synchronously results in 1) iOS Writing Tools getting stuck open, and 2) the selection gets restored after the Command Center is closed (presumably because state.isKeyboardOpen is incorrectly set to true at some point). Clearing the selection after two animation frames fixes the issue.
        *
        * See: https://github.com/cybersemics/em/issues/3387.
        * */
-      if (isTouch && isSafari()) {
+      if (isTouch) {
         dispatch((dispatch, getState) => {
           const state = getState()
-          // On iOS a long press (~415–650ms) triggers this native onFocus and reopens the virtual keyboard
-          // even when preventDefault was called in touchend — there is no way to prevent the focus itself.
-          // Dismiss the keyboard again here when the Command Center is open (#3387) or a drag gesture is in
-          // progress (#4683), otherwise the keyboard reopens on top of the drag-and-drop hint after it was
-          // dismissed at drag start. Clearing after two animation frames (rather than synchronously) avoids
-          // iOS Writing Tools getting stuck open and the selection being restored.
+          // The Command Center dismissal (#3387) applies to every touch platform. On iOS a long press
+          // (~415–650ms) triggers this native onFocus even when preventDefault was called in touchend; on
+          // Android the browser commits a double tap's word selection asynchronously, so its focus arrives
+          // after a quick swipe up has already opened the Command Center (#5646). Neither focus can be
+          // prevented, so dismiss the keyboard again here. Clearing after two animation frames (rather than
+          // synchronously) avoids iOS Writing Tools getting stuck open and the selection being restored.
           const isDragging =
             state.longPress === LongPressState.DragHold || state.longPress === LongPressState.DragInProgress
           // A tap that moved the cursor without entering edit mode can likewise produce this focus despite
@@ -913,7 +913,10 @@ const Editable = ({
           if (isSpuriousTapFocus) {
             debugLog.log('guard', { step: 'suppressCursorAfterTouch' })
           }
-          if (state.showCommandCenter || isDragging || isSpuriousTapFocus) {
+          // The drag (#4683) and spurious tap dismissals stay iOS-only. They exist because iOS reopens the
+          // keyboard on top of the drag-and-drop hint after it was dismissed at drag start, which has not been
+          // observed elsewhere.
+          if (state.showCommandCenter || (isSafari() && (isDragging || isSpuriousTapFocus))) {
             selection.clear()
             dispatch(keyboardOpenActionCreator({ value: false }))
             requestAnimationFrame(() => {
