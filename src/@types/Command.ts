@@ -19,13 +19,13 @@ interface Command {
   /** A readable, internal unique id. */
   id: CommandId
 
-  /** Executes the command. When activated by a keyboard shortcut and the command defines an array of keyboard shortcuts, `keyboardIndex` is the index of the shortcut that was pressed within that array. When the command is executed again by repeat, it is the index that was recorded with it. */
+  /** Executes the command. Return false when execution is canceled. A returned promise keeps success pending until it settles. When activated by a keyboard shortcut and the command defines an array of keyboard shortcuts, `keyboardIndex` is the index of the shortcut that was pressed within that array. When the command is executed again by repeat, it is the index that was recorded with it. */
   exec: (
     dispatch: Dispatch,
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
     { type, keyboardIndex }: { type: CommandType; keyboardIndex?: number },
-  ) => void | Promise<void>
+  ) => void | false | Promise<void | false>
 
   /** Short label. */
   label: string
@@ -38,8 +38,12 @@ interface Command {
   multicursor:
     | boolean
     | {
-        /** Optional override for executing the command for multiple cursors. */
-        execMulticursor?: (cursors: Path[], dispatch: Dispatch, getState: () => State) => void
+        /** Optional override for executing the command for multiple cursors. Return false on cancellation or a promise for pending work. */
+        execMulticursor?: (
+          cursors: Path[],
+          dispatch: Dispatch,
+          getState: () => State,
+        ) => void | false | Promise<void | false>
         /** A callback that is invoked when the command finishes executing for all filtered multicursors. */
         onComplete?: (filteredCursors: Path[], dispatch: Dispatch, getState: () => State) => void
         /** Prevent the cursor from being set back at the end of the command execution. */
