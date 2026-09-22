@@ -12,6 +12,7 @@ import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
+import getMovePlacement from '../selectors/getMovePlacement'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -47,17 +48,6 @@ export interface MoveThoughtPayload {
    * If the destination remains sorted, its sort order determines placement instead.
    */
   afterId?: ThoughtId | null
-}
-
-/** Derives an explicit TreeCRDT afterId from children already ordered by rank. */
-const getMoveThoughtAfterIdByRank = (
-  rankedChildren: readonly Thought[],
-  sourceThoughtId: ThoughtId,
-  newRank: number,
-): ThoughtId | null => {
-  const after = _.findLast(rankedChildren, child => child.id !== sourceThoughtId && child.rank < newRank)
-
-  return after?.id ?? null
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
@@ -109,7 +99,13 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
   const effectiveAfterId =
-    afterId !== undefined ? afterId : getMoveThoughtAfterIdByRank(childrenOfDestination, sourceThought.id, newRank)
+    afterId !== undefined
+      ? afterId
+      : getMovePlacement(state, destinationThoughtId, {
+          id: sourceThought.id,
+          rank: newRank,
+          rankedChildren: childrenOfDestination,
+        })
 
   if (
     effectiveAfterId === sourceThought.id ||
@@ -227,7 +223,11 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         preventExpandThoughts: true,
         movePlacements: {
           [sourceThought.id]: isSorted
-            ? getMoveThoughtAfterIdByRank(childrenOfDestination, sourceThought.id, rank)
+            ? getMovePlacement(state, destinationThoughtId, {
+                id: sourceThought.id,
+                rank,
+                rankedChildren: childrenOfDestination,
+              })
             : effectiveAfterId,
         },
       })
