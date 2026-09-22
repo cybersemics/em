@@ -10,7 +10,7 @@ import { gestureString } from '../../commands'
 import newSubthoughtCommand from '../../commands/newSubthought'
 import fastClick from '../../util/fastClick'
 import GestureDiagram from '../GestureDiagram'
-import Tip from './Tip'
+import Tip from '../Notifications/Tip'
 
 /** A tip that explains how to add a new subthought. */
 const NewSubthoughtTip: FC = () => {
