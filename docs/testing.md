@@ -416,6 +416,8 @@ While we prefer to avoid backdoor access to state in integration tests, it is re
 
 #### Visual snapshot tests
 
+The [`screenshot`](../src/e2e/puppeteer/helpers/screenshot.ts) helper disables CSS filters by default for consistent rendering. Tests whose visual contract includes blur or filter-based shadows can use `screenshot({ preserveFilters: true })`; the other screenshot normalization settings still apply.
+
 Snapshot tests are a specific type of puppeteer test used to prevent visual regressions. They automate taking a screenshot on your PR branch and then comparing it to a reference screenshot in `main`. If the screenshot differs by a certain number of pixels, then it is considered a regression and the test will fail. In the case of a failed snapshot test, a visual diff will be generated that allows you to see why it failed.
 
 Do not use snapshot tests for testing behavior (such as the result of a user action). Instead, select DOM elements by aria label or data-testid. Use snapshot tests for covering visual regressions such as positioning, layout, svg rendering, and general appearance of components.
@@ -1278,5 +1280,3 @@ Your only job at each step is:
 4. Run `git bisect bad` if the regression is still present and `git bisect good` if it is gone.
 
 Record the commit hash it gives you at the very end and you’ve found the source of the regression! Often I take one more step of testing the bad commit again and the commit right before it (should be good) just to be extra sure. If any good/bad determination was mistaken along the way then it will throw off the whole process and the final result will not be accurate. But if you are precise and methodical, you can search through hundreds of commits in a matter of minutes to find the offending commit.
-
-The screenshot helper disables filters by default. Visual tests that cover blur or shadows opt in with `screenshot({ preserveFilters: true })`.
