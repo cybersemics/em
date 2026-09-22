@@ -1178,13 +1178,14 @@ https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
 
-The same flush settles an asynchronous command. `generateThought`, `generateEmoji`, `defineTerm`, and `organizeThought` each await a network request and, under multicursor, hold an undo bracket open across the selection. With `fetch` mocked, that whole run is timer- and microtask-bound, so one `vi.runAllTimersAsync()` after `executeCommandWithMulticursor` brings the store to its settled state, undo bracket closed included:
+For asynchronous commands such as `generateThought`, `generateEmoji`, `defineTerm`, and `organizeThought`, retain the returned execution promise. With `fetch` mocked, advance any fake timers the operation depends on, then await execution before asserting the result:
 
 ```ts
-// ✅ Do: flush, then assert on the result
+// ✅ Do: flush timers and await execution, then assert on the result
 await act(async () => {
-  executeCommandWithMulticursor(generateThought, { store })
+  const execution = executeCommandWithMulticursor(generateThought, { store })
   await vi.runAllTimersAsync()
+  await execution
 })
 
 expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
@@ -1199,7 +1200,7 @@ await vi.waitFor(() => expect(store.getState().isMulticursorExecuting).toBe(fals
 
 `vi.waitFor` is the store-test form of the sleep loop that [Principle 3](#3-never-wait-for-wall-clock-time-wait-for-the-response) forbids. It only passes under fake timers because Vitest advances the clock by the polling interval on each retry, so it reaches the same settled state in fixed-size steps — and it does so by watching a flag that is not the result under test. The flush names the condition exactly (every scheduled callback has run), takes one line, and when the command does not settle, it fails at the assertion on the outline rather than as a polling timeout. Keep the assertion outside the waiter, so that the test reads as act → flush → assert.
 
-This is a workaround for the commands not being awaitable: `executeCommandWithMulticursor` discards the promise, so a test cannot `await` the command itself. [#5337](https://github.com/cybersemics/em/issues/5337) tracks returning it. ([#5338](https://github.com/cybersemics/em/pull/5338), [#5222](https://github.com/cybersemics/em/pull/5222))
+`executeCommandWithMulticursor` returns a promise when commands return asynchronous work. Await it after advancing any fake timers that work depends on. Work scheduled internally without a returned promise still needs its own observable completion condition.
 
 ### Automated flaky-test detection
 

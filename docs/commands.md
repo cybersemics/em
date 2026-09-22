@@ -129,6 +129,8 @@ The **Command Universe** is the searchable command palette. Two flavors:
 
 Each grid cell reserves a square for its gesture diagram but mounts the original SVG only near the grid scroller's viewport. An `IntersectionObserver` updates those cells as the user scrolls and holds the last visible diagrams through a page zoom, so Back reveals them immediately. This keeps offscreen SVGs out of the retained grid's DOM during the zoom without changing the diagrams themselves.
 
+The grid uses Motion’s `useInView` with `once: false` to render diagrams near its scroll viewport. Already rendered diagrams are retained while the page is hidden or transitioning.
+
 The pinned-command gesture tooltip opens the pinned command's detail page directly through `commandUniverseNavigate`, after opening a fresh dialog session. This visit settles the detail page immediately without the Command Universe entry zoom, while retaining the grid in Back history and the usual animated Back and Forward navigation. A previous search cannot hide the target, and this navigation never executes the command. On pointer activation, the ring captures the editor selection before it can take focus; the dialog's open action keeps that snapshot instead of replacing it with the tooltip selection.
 
 The Command Universe has Redux-owned session navigation with separate routing and presentation layers:
@@ -857,5 +859,3 @@ Add or remove devices that can access and edit this thoughtspace.
 ### Cancel
 
 Cancel the current gesture.
-
-The grid uses Motion’s `useInView` with `once: false` to render diagrams near its scroll viewport. Already rendered diagrams are retained while the page is hidden or transitioning.
