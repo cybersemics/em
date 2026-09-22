@@ -71,7 +71,7 @@ const canDrag = (props: ThoughtContainerProps) => {
   // past the touch slop (#3763). This reads the flag latched by the capture-phase touchstart listener in initEvents
   // rather than state.longPress, because react-dnd's timer can begin a drag before DragHold is dispatched (see the
   // longPress reducer).
-  if (globals.pressOnCaret) return false
+  if (touchStore.getState().pressOnCaret) return false
 
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))

@@ -11,12 +11,12 @@ import { handleGestureCancel, handleGestureEnd, handleGestureSegment } from '../
 import { LongPressState, Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
-import globals from '../globals'
 import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
+import touchStore from '../stores/touch'
 import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
@@ -91,7 +91,7 @@ const shouldCancelGesture = (
     (x && y && selection.isNear(x, y, distance)) ||
     // A touch that landed on the caret belongs to native caret repositioning. Latched at touchstart by initEvents, so
     // it holds for the whole touch rather than only the call that carries coordinates.
-    globals.pressOnCaret ||
+    touchStore.getState().pressOnCaret ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
