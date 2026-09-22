@@ -139,7 +139,7 @@ describe('drag', () => {
 - ccc
 `)
 
-    // moveThought throws "afterId must be null or a child of the destination context" if the no-op drop is not
+    // moveThought throws "afterId cannot be the moved thought itself" if the no-op drop is not
     // cancelled. The error escapes to the window and is shown in the error banner, and the outline above is unchanged
     // either way, so also check that no banner is showing now that the drop has been processed.
     const errorBanner = await page.evaluate(() => document.querySelector('[role="alert"]')?.textContent ?? null)
