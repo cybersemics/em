@@ -224,6 +224,9 @@ const useEditMode = ({
       // Evaluate against the PREVIOUS touchend before overwriting it below.
       const willRetarget = lastTouch.isRetargeted(editable)
       lastTouch.record(editable)
+      // A touchend with no changed touch carries no tapped point, so there is no offset to resolve.
+      const touch = e.changedTouches[0]
+      if (!touch) return
       // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
       // retargets the synthesized mousedown/focus to the previously-focused thought (onMouseDown suppresses
       // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.
@@ -246,10 +249,7 @@ const useEditMode = ({
           // mousedown that does arrive late sets the caret to the same place.
           if (!equalPath(state.cursor, path) || !tapMayPlaceCaret) return
 
-          const { offset } = getCaretOffset(editable, {
-            clientX: e.changedTouches[0].clientX,
-            clientY: e.changedTouches[0].clientY,
-          })
+          const { offset } = getCaretOffset(editable, { clientX: touch.clientX, clientY: touch.clientY })
           if (offset === null) return
 
           caretRevertTimeout = setTimeout(() => {
@@ -267,10 +267,7 @@ const useEditMode = ({
 
         // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
         // even though the synthesized mousedown/focus retargeted away.
-        const { offset } = getCaretOffset(editable, {
-          clientX: e.changedTouches[0].clientX,
-          clientY: e.changedTouches[0].clientY,
-        })
+        const { offset } = getCaretOffset(editable, { clientX: touch.clientX, clientY: touch.clientY })
 
         // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
         // Calling selection.set() synchronously during touchend triggers iOS's text-selection machinery, which
