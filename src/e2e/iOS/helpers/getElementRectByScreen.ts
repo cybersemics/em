@@ -1,17 +1,17 @@
 import type { Element } from 'webdriverio'
-import getNativeElementRect from './getNativeElementRect.js'
+import SAFARI_CHROME_TOP from './safariChromeTop.js'
 
 /**
- * Get element's rect by device screen.
- * Uses the global browser object from WDIO.
+ * Get an element's rect in the screen coordinates that performActions delivers touches in.
+ *
+ * Opening or closing the keyboard scrolls the page, which moves the rect, so read it again after the keyboard changes
+ * rather than reusing one across the transition.
  */
 const getElementRectByScreen = async (element: Element) => {
-  const { x: safariContentX, y: safariContentY } = await getNativeElementRect('//XCUIElementTypeOther[@name="em"]')
   const elementRect = await browser.getElementRect(element.elementId)
   return {
     ...elementRect,
-    x: elementRect.x + safariContentX,
-    y: elementRect.y + safariContentY,
+    y: elementRect.y + SAFARI_CHROME_TOP,
   }
 }
 

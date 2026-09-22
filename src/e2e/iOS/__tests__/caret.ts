@@ -2,13 +2,13 @@
  * IOS Safari caret positioning tests.
  * Uses WDIO test runner with Mocha framework.
  */
-import type { Element } from 'webdriverio'
 import gestures from '../../../test-helpers/gestures'
 import clickThought from '../helpers/clickThought'
 import editThought from '../helpers/editThought'
 import gesture from '../helpers/gesture'
 import getEditable from '../helpers/getEditable'
 import getEditingText from '../helpers/getEditingText'
+import getElementRectByScreen from '../helpers/getElementRectByScreen'
 import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import isKeyboardShown from '../helpers/isKeyboardShown'
@@ -22,32 +22,6 @@ import waitForEditable from '../helpers/waitForEditable'
 import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
-/** Pixels of Safari chrome above the page, measured as 59 on the devices this suite runs on. */
-const SAFARI_CHROME_TOP = 60
-
-/**
- * Get an element's rect in the screen coordinates that performActions delivers touches in.
- *
- * Element rects are viewport-relative, so the chrome above the page has to be added. The virtual keyboard scrolls the
- * visual viewport out from under the layout viewport, moving the page up the screen by `visualViewport.offsetTop` —
- * measured as 59px of chrome with the keyboard down and 28px with it up. A rect is therefore only valid for the
- * keyboard state it was read in, and has to be re-read after the keyboard opens or closes.
- */
-const getElementRectForTouch = async (element: Element) => {
-  const raw = await browser.execute((el: HTMLElement) => {
-    const rect = el.getBoundingClientRect()
-    return JSON.stringify({
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
-      offsetTop: window.visualViewport?.offsetTop ?? 0,
-    })
-  }, element)
-  const rect = JSON.parse(raw) as { x: number; y: number; width: number; height: number; offsetTop: number }
-  return { ...rect, y: rect.y + SAFARI_CHROME_TOP - rect.offsetTop }
-}
-
 // tests succeeds individually, but fails when there are too many tests running in parallel
 // https://github.com/cybersemics/em/issues/1475
 // https://github.com/cybersemics/em/issues/1523
@@ -58,7 +32,7 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandle = await waitForEditable('foo')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     await waitUntil(isKeyboardShown)
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -70,7 +44,7 @@ describe('Caret', () => {
     await newThought('bar', { insertNewSubthought: true })
 
     const editableNodeHandle = await waitForEditable('foo')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     await waitUntil(async () => (await getEditingText()) === 'foo')
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -101,7 +75,7 @@ describe('Caret', () => {
     await newThought('d', { insertNewSubthought: true })
 
     const editableNodeHandle = await waitForEditable('c')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
     await waitUntil(async () => (await getEditingText()) === 'c')
 
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -121,7 +95,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandle = await waitForEditable('d')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
     await waitUntil(async () => (await getEditingText()) !== 'c')
 
     const editingText = await getEditingText()
@@ -141,7 +115,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandle = await waitForEditable('d')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     await waitUntil(async () => (await getEditingText()) === 'd')
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -173,10 +147,9 @@ describe('Caret', () => {
     await clickThought('b')
     await clickThought('c')
 
-    // y:60 compensates for the offset between web and screen coordinates
     const editable = await waitForEditable('d')
-    await tap(editable, { y: 60 })
-    await tap(editable, { y: 60 })
+    await tap(editable)
+    await tap(editable)
     await waitUntil(isKeyboardShown)
 
     await scrubSpaceBar(-6)
@@ -204,9 +177,8 @@ describe('Caret', () => {
         - A`,
     )
 
-    // y:60 compensates for the offset between web and screen coordinates
     const note = await waitForElement('[aria-label="note-editable"]')
-    await tap(note, { y: 60 })
+    await tap(note)
     await waitUntil(isKeyboardShown)
 
     // zero steps: holding the space bar is the whole gesture
@@ -231,7 +203,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandleD = await waitForEditable('d')
-    await tap(editableNodeHandleD, { y: 200 })
+    await tap(editableNodeHandleD, { y: 140 })
 
     // Wait until cursor change
     await waitUntil(async () => (await getEditingText()) === 'b')
@@ -254,7 +226,7 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandleD = await waitForEditable('d')
-    await tap(editableNodeHandleD, { y: 200 })
+    await tap(editableNodeHandleD, { y: 140 })
 
     // Wait until cursor change
     await waitUntil(async () => (await getEditingText()) === 'b')
@@ -266,7 +238,7 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandle = await waitForEditable('foo')
-    const elementRect = await getElementRectForTouch(editableNodeHandle)
+    const elementRect = await getElementRectByScreen(editableNodeHandle)
 
     // swipe right on thought
     await gesture('r', {
@@ -275,7 +247,7 @@ describe('Caret', () => {
       segmentLength: elementRect.width,
     })
 
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     const editingText = await getEditingText()
     expect(editingText).toBe('foo')
@@ -306,7 +278,7 @@ describe('Caret', () => {
     await clickThought('y')
 
     const editableNodeHandle = await waitForEditable('y')
-    const elementRect = await getElementRectForTouch(editableNodeHandle)
+    const elementRect = await getElementRectByScreen(editableNodeHandle)
 
     await gesture(gestures.newThought, {
       xStart: elementRect.x + 5,
@@ -363,7 +335,7 @@ describe('Caret', () => {
 
     const editable = await waitForEditable('Hello')
     await browser.execute(() => window.scrollTo(0, 0))
-    const rectKeyboardUp = await getElementRectForTouch(editable)
+    const rectKeyboardUp = await getElementRectByScreen(editable)
 
     // Prime with a tap on the thought's center + keyboard dismissal. Priming while
     // "Hello" has the cursor is what leaves offsetRef.current set (and never reset) pre-#4371.
@@ -386,11 +358,16 @@ describe('Caret', () => {
         ],
       },
     ])
-    await hideKeyboardByTappingDone()
+
+    // A priming tap that lands on the thought closes the keyboard by itself (measured), unlike the mis-aimed tap this
+    // test used to make, so only dismiss a keyboard that is still up.
+    if (await isKeyboardShown()) {
+      await hideKeyboardByTappingDone()
+    }
 
     // Dismissing the keyboard scrolls the page and restores the visual viewport, so the rect above no longer locates
     // the thought on screen.
-    const rect = await getElementRectForTouch(editable)
+    const rect = await getElementRectByScreen(editable)
 
     // Cursor Back (swipe right) to set the cursor to null, so that "Hello" becomes a non-cursor thought.
     await gesture('r', {
