@@ -21,6 +21,16 @@
 - **Documentation is a two-way obligation: you read it, and you keep it true.** When a change makes something in `docs/` wrong, `docs-sync` will find and repair it — on its own if you invoke it, or as the first step of `end-session`. Landing the doc fix in the same commit as the change is what keeps the two from drifting apart.
 - This matters more here than in most projects, because `docs/` is the fastest way into an unfamiliar subsystem — for you, for the next person, and for the next agent, which may plan a change against whatever it says. Docs describe how the project works **now**, not how it changed, so a doc your change outdated is better rewritten than annotated with what it used to say.
 
+## Setting up a worktree
+
+A fresh worktree shares only `.git`, so it starts without the build outputs that `postinstall` normally produces — `styled-system/` (Panda codegen) and `packages/webview/dist/`. Both are gitignored, and without them Vite cannot resolve `../../styled-system/css` or `webview-background`, so every test file that imports a component fails to transform. Run `yarn setup` once before tests or lint:
+
+```sh
+yarn setup
+```
+
+It is the `build:packages && build:styles` half of `postinstall`, safe to re-run, and it does not touch `node_modules`.
+
 ## Code standards
 
 Read [`.github/instructions/code-standards.instructions.md`](.github/instructions/code-standards.instructions.md) before writing code, and [`.github/instructions/testing.instructions.md`](.github/instructions/testing.instructions.md) before writing tests. These describe the conventions the codebase follows. Read them even when an existing file already shows you a pattern to copy — the pattern may predate the convention, and a convention you have not read loses to one you can see.
