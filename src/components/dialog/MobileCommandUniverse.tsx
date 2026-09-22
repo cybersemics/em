@@ -1,6 +1,8 @@
 import { useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
+import { commandUniverseBackActionCreator as commandUniverseBack } from '../../actions/commandUniverseBack'
+import { commandUniverseForwardActionCreator as commandUniverseForward } from '../../actions/commandUniverseForward'
 import { toggleMobileCommandUniverseActionCreator } from '../../actions/toggleMobileCommandUniverse'
 import CommandUniversePageRouter from '../CommandUniverse/CommandUniversePageRouter'
 import FadeTransition from '../FadeTransition'
@@ -22,17 +24,30 @@ const HiddenDialogAssets = () => (
 const CommandUniverseDialog = ({ isOpen }: { isOpen: boolean }) => {
   const dispatch = useDispatch()
   const nodeRef = useRef<HTMLDivElement>(null)
+  const { entries, index } = useSelector(state => state.commandUniverseNavigation)
   const onClose = useCallback(() => {
     dispatch(toggleMobileCommandUniverseActionCreator({ value: false }))
   }, [dispatch])
+  const onBack = useCallback(() => dispatch(commandUniverseBack()), [dispatch])
+  const onForward = useCallback(() => dispatch(commandUniverseForward()), [dispatch])
 
   return (
     <>
       <HiddenDialogAssets />
       <FadeTransition in={isOpen} unmountOnExit type='medium' nodeRef={nodeRef}>
         <Dialog onClose={onClose} nodeRef={nodeRef}>
-          <DialogHeader onClose={onClose}>Commands</DialogHeader>
-          <CommandUniversePageRouter />
+          <DialogHeader
+            onClose={onClose}
+            onBack={onBack}
+            onForward={onForward}
+            canGoBack={index > 0}
+            canGoForward={index < entries.length - 1}
+          >
+            Commands
+          </DialogHeader>
+          <div className={css({ height: 'min(70vh, 70dvh)', minHeight: 0 })}>
+            <CommandUniversePageRouter />
+          </div>
         </Dialog>
       </FadeTransition>
     </>
