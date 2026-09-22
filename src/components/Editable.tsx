@@ -23,6 +23,7 @@ import { isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
   EDIT_THROTTLE,
+  EMOJI_REGEX,
   EM_TOKEN,
   LongPressState,
   TUTORIAL2_STEP_CONTEXT1,
@@ -172,6 +173,13 @@ const Editable = ({
   const placeholderCommandState = useMemo(
     () => (isCursorCleared ? getCommandState(value) : null),
     [isCursorCleared, value],
+  )
+  // Whether the cleared placeholder contains an emoji, which is the only case that takes the geometric slant instead of
+  // font-style (see panda.config.ts). The placeholder is derived from the thought in state, so it follows the throttled
+  // value rather than changing on every keystroke.
+  const isPlaceholderEmoji = useMemo(
+    () => isCursorCleared && EMOJI_REGEX.test(placeholder || ''),
+    [isCursorCleared, placeholder],
   )
   const placeholderForeColor =
     typeof placeholderCommandState?.foreColor === 'string' ? placeholderCommandState.foreColor : undefined
@@ -1111,6 +1119,7 @@ const Editable = ({
       data-placeholder-cleared={isCursorCleared || undefined}
       data-placeholder-bold={placeholderCommandState?.bold || undefined}
       data-placeholder-code={placeholderCommandState?.code || undefined}
+      data-placeholder-emoji={isPlaceholderEmoji || undefined}
       data-placeholder-italic={placeholderCommandState?.italic || undefined}
       data-placeholder-strikethrough={placeholderCommandState?.strikethrough || undefined}
       data-placeholder-underline={placeholderCommandState?.underline || undefined}

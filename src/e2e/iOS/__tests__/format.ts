@@ -4,6 +4,7 @@
  */
 import clickThought from '../helpers/clickThought'
 import gesture from '../helpers/gesture'
+import getClearedPlaceholderStyle from '../helpers/getClearedPlaceholderStyle'
 import getEditingText from '../helpers/getEditingText'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
 import newThought from '../helpers/newThought'
@@ -102,12 +103,7 @@ describe('Format', () => {
     await gesture('rl') // Clear Thought
     await waitForElement('[data-editable][data-placeholder-cleared]')
 
-    const placeholder = await browser.execute(() => {
-      const editable = document.querySelector('[data-editable][data-placeholder-cleared]')
-      if (!editable) throw new Error('cleared thought not found')
-      const style = getComputedStyle(editable, '::before')
-      return { content: style.content, fontStyle: style.fontStyle, transform: style.transform }
-    })
+    const placeholder = await getClearedPlaceholderStyle()
 
     expect(placeholder.content).toContain('😁 Hello')
 
@@ -125,5 +121,23 @@ describe('Format', () => {
 
     // The transform slants the whole placeholder, so font-style must not slant the text a second time.
     expect(placeholder.fontStyle).toBe('normal')
+  })
+
+  it('Clear Thought italicizes a placeholder that has no emoji', async () => {
+    // paste sets the cursor to the last imported thought, which is all clearThought needs.
+    await paste(`
+    - Hello`)
+
+    await gesture('rl') // Clear Thought
+    await waitForElement('[data-editable][data-placeholder-cleared]')
+
+    const placeholder = await getClearedPlaceholderStyle()
+
+    expect(placeholder.content).toContain('Hello')
+
+    // A skew slopes the upright letterforms rather than selecting the font's italic face, so it is reserved for the
+    // emoji that font-style cannot slant. A thought without one keeps true italics.
+    expect(placeholder.transform).toBe('none')
+    expect(placeholder.fontStyle).toBe('italic')
   })
 })
