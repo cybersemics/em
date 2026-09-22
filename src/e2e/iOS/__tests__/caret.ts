@@ -334,7 +334,9 @@ describe('Caret', () => {
     await newThought('Hello')
 
     const editable = await waitForEditable('Hello')
-    await browser.execute(() => window.scrollTo(0, 0))
+    // Deliberately no scrollTo(0, 0): the keyboard makes Safari scroll the document so that scrollY tracks
+    // visualViewport.offsetTop, and forcing scrollY back to 0 leaves the two desynchronised, which shifts the
+    // page-to-screen offset by offsetTop and lands the tap below the thought.
     const rectKeyboardUp = await getElementRectByScreen(editable)
 
     // Prime with a tap on the thought's center + keyboard dismissal. Priming while
@@ -359,14 +361,9 @@ describe('Caret', () => {
       },
     ])
 
-    // A priming tap that lands on the thought closes the keyboard by itself (measured), unlike the mis-aimed tap this
-    // test used to make, so only dismiss a keyboard that is still up.
-    if (await isKeyboardShown()) {
-      await hideKeyboardByTappingDone()
-    }
+    await hideKeyboardByTappingDone()
 
-    // Dismissing the keyboard scrolls the page and restores the visual viewport, so the rect above no longer locates
-    // the thought on screen.
+    // Dismissing the keyboard scrolls the page, so the rect above no longer locates the thought on screen.
     const rect = await getElementRectByScreen(editable)
 
     // Cursor Back (swipe right) to set the cursor to null, so that "Hello" becomes a non-cursor thought.
