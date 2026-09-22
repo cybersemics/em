@@ -15,7 +15,6 @@ import { AlertType, LongPressState } from '../constants'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
-import globals from '../globals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
@@ -26,6 +25,7 @@ import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
+import touchStore from '../stores/touch'
 import { updateSize } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
@@ -303,7 +303,7 @@ const initEvents = (store: Store<State, any>) => {
    * once the press is over, rather than leaving a stale true for whatever reads it next. */
   const onTouchEnd = () => {
     scrollAtEdge.stop()
-    globals.pressOnCaret = false
+    touchStore.update({ pressOnCaret: false })
   }
 
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
@@ -314,11 +314,16 @@ const initEvents = (store: Store<State, any>) => {
    * because touchstart propagation is unreliable in the bubble phase (see the note on the touchmove listener below);
    * capture also puts it ahead of every reader. */
   const onTouchStart = (e: TouchEvent) => {
-    globals.suppressCursorAfterTouch = false
     // changedTouches is the finger that just landed; touches[0] is the first one still down, which a second finger
     // arriving mid-edit would measure instead.
     const touch = e.changedTouches[0]
-    globals.pressOnCaret = !!touch && selection.isCaretNear(touch.clientX, touch.clientY)
+    touchStore.update({
+      pressOnCaret: !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+      /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
+       * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
+       * phase (see the note on the touchmove listener below). */
+      suppressCursorAfterTouch: false,
+    })
   }
 
   /** Handle a page lifecycle state change, i.e. switching apps. */
