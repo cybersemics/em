@@ -49,16 +49,13 @@ export interface MoveThoughtPayload {
   afterId?: ThoughtId | null
 }
 
-/** Derives an explicit TreeCRDT afterId from em's temporary rank ordering. */
+/** Derives an explicit TreeCRDT afterId from children already ordered by rank. */
 const getMoveThoughtAfterIdByRank = (
-  state: State,
-  destinationThoughtId: ThoughtId,
+  rankedChildren: readonly Thought[],
   sourceThoughtId: ThoughtId,
   newRank: number,
 ): ThoughtId | null => {
-  const after = getChildrenRanked(state, destinationThoughtId)
-    .filter(child => child.id !== sourceThoughtId && child.rank < newRank)
-    .at(-1)
+  const after = _.findLast(rankedChildren, child => child.id !== sourceThoughtId && child.rank < newRank)
 
   return after?.id ?? null
 }
@@ -112,9 +109,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
   const effectiveAfterId =
-    afterId !== undefined
-      ? afterId
-      : getMoveThoughtAfterIdByRank(state, destinationThoughtId, sourceThought.id, newRank)
+    afterId !== undefined ? afterId : getMoveThoughtAfterIdByRank(childrenOfDestination, sourceThought.id, newRank)
 
   if (
     effectiveAfterId === sourceThought.id ||
@@ -232,7 +227,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         preventExpandThoughts: true,
         movePlacements: {
           [sourceThought.id]: isSorted
-            ? getMoveThoughtAfterIdByRank(state, destinationThoughtId, sourceThought.id, rank)
+            ? getMoveThoughtAfterIdByRank(childrenOfDestination, sourceThought.id, rank)
             : effectiveAfterId,
         },
       })
