@@ -447,6 +447,7 @@ const CommandCenter = () => {
                     height={CHEVRON_HEIGHT}
                     fill={CHEVRON_COLOR}
                     rounded
+                    stretch
                   />
                 </button>
               </motion.div>
@@ -588,6 +589,7 @@ const CommandCenter = () => {
                       height={CHEVRON_HEIGHT}
                       fill={CHEVRON_COLOR}
                       rounded
+                      stretch
                     />
                   </button>
                 </motion.div>

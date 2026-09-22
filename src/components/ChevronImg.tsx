@@ -5,14 +5,8 @@ import { SystemStyleObject } from '../../styled-system/types'
 import fastClick from '../util/fastClick'
 
 const PATHS = {
-  down: {
-    d: 'M14.83 16.42l9.17 9.17 9.17-9.17 2.83 2.83-12 12-12-12z',
-    viewBox: '12 16.42 24 14.83',
-  },
-  up: {
-    d: 'M14.83 31.58l9.17-9.17 9.17 9.17 2.83-2.83-12-12-12 12z',
-    viewBox: '12 16.75 24 14.83',
-  },
+  down: 'M14.83 16.42l9.17 9.17 9.17-9.17 2.83 2.83-12 12-12-12z',
+  up: 'M14.83 31.58l9.17-9.17 9.17 9.17 2.83-2.83-12-12-12 12z',
 }
 
 /** Stroke width as a fraction of the rendered height when rounded draws a thick open chevron. */
@@ -41,6 +35,8 @@ interface ChevronImgProps {
   width?: number
   /** Rounds the tips of the icon. Defaults to false. */
   rounded?: boolean
+  /** If true, stretches the chevron to fill its container. */
+  stretch?: boolean
 }
 
 /** A downward facing chevron. */
@@ -53,17 +49,18 @@ const ChevronImg = ({
   height = 22,
   width = 22,
   rounded,
+  stretch,
 }: ChevronImgProps) => {
   const color = fill || token('colors.fg')
-  const { d, viewBox } = PATHS[direction]
+  const path = PATHS[direction]
   const roundedStrokeWidth = height * ROUNDED_STROKE_RATIO
 
   return (
     <svg
-      viewBox={rounded ? `0 0 ${width} ${height}` : viewBox}
-      preserveAspectRatio='none'
-      height={`${height}px`}
-      width={`${width}px`}
+      viewBox={rounded ? `0 0 ${width} ${height}` : '0 0 48 48'}
+      preserveAspectRatio={stretch ? 'none' : undefined}
+      height={height}
+      width={width}
       style={additonalStyle}
       {...(onClickHandle ? fastClick(onClickHandle, { enableHaptics: false }) : null)}
       className={css({ cursor: 'pointer' }, cssRaw)}
@@ -78,7 +75,7 @@ const ChevronImg = ({
           strokeLinejoin='round'
         />
       ) : (
-        <path d={d} fill={color} />
+        <path d={path} fill={color} />
       )}
     </svg>
   )
