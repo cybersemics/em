@@ -84,9 +84,7 @@ const pushQueue: StoreEnhancer<any> =
         // Log the flush so database lastUpdated stamps can be correlated with debug log entries and unlanded writes
         // detected (a `push` with no matching `pushSynced` is a write that never completed).
         const debugEnabled = debugLog.isEnabled()
-        const thoughtUpdates = debugEnabled
-          ? dbQueue.flatMap(batch => Object.entries(batch.thoughtIndexUpdates))
-          : []
+        const thoughtUpdates = debugEnabled ? dbQueue.flatMap(batch => Object.entries(batch.thoughtIndexUpdates)) : []
         if (debugEnabled) {
           // sample of the thought updates being written; the full set is visible in the corresponding action entries
           const sample = thoughtUpdates.slice(0, 10).map(([id, thought]) => {
