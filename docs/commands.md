@@ -845,3 +845,5 @@ Add or remove devices that can access and edit this thoughtspace.
 Cancel the current gesture.
 
 The Command Universe grid mounts gesture diagrams within 180px of its inner scroll viewport using Motion’s `useInView` with `once: false`. Diagram boxes retain their size, and diagrams already rendered stay mounted while the page is hidden or transitioning so Back can animate the retained grid.
+
+Navigation accepts `transition: 'zoom' | 'none'`, defaulting to zoom. A visit without animation retains Back/Forward history and settles before focus moves into the destination. Zoom origins are measured relative to the page before navigation mounts the destination, avoiding a second layout-measurement render. Complete `transform: scale(...)` targets allow Motion to use native Web Animations. Opening the dialog can preserve an editor selection snapshot already captured by its caller.

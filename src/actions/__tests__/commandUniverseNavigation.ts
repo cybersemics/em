@@ -11,7 +11,7 @@ import commandUniverseNavigate, { commandUniverseNavigateActionCreator } from '.
 import toggleMobileCommandUniverse, { toggleMobileCommandUniverseActionCreator } from '../toggleMobileCommandUniverse'
 
 const command: Command = { id: 'newThought', label: 'New Thought', exec: () => {}, multicursor: false }
-const origin = { x: 10, y: 20, width: 30, height: 40 }
+const origin = { x: 0.25, y: 0.5 }
 
 it('derives page ids, props, and navigation options from the registered components', () => {
   type NavigateArguments = Parameters<typeof commandUniverseNavigateActionCreator>
@@ -66,6 +66,33 @@ it('reverses an entry arrival on Back and replays it on Forward', () => {
   const forward = commandUniverseForward(settledBack, { transitionId: 'forward' })
   expect(forward.commandUniverseNavigation.index).toBe(1)
   expect(forward.commandUniverseNavigation.transition?.zoom).toBe('out')
+})
+
+it('accepts an explicit zoom transition', () => {
+  const state = toggleMobileCommandUniverse(initialState(), { value: true })
+  const visited = commandUniverseNavigate(state, {
+    entryId: 'zoom-detail',
+    page: { pageId: 'detail', props: { command } },
+    arrival: { zoom: 'in', origin: null },
+    transition: 'zoom',
+  })
+
+  expect(visited.commandUniverseNavigation.transition?.type).toBe('zoom')
+})
+
+it('supports no transition for a direct detail visit while retaining its Back history', () => {
+  const state = toggleMobileCommandUniverse(initialState(), { value: true })
+  const visited = commandUniverseNavigate(state, {
+    entryId: 'direct-detail',
+    page: { pageId: 'detail', props: { command } },
+    arrival: { zoom: 'in', origin: null },
+    transition: 'none',
+  })
+
+  expect(visited.commandUniverseNavigation.entries.map(entry => entry.page.pageId)).toEqual(['grid', 'detail'])
+  expect(visited.commandUniverseNavigation.transition?.type).toBe('none')
+  const back = commandUniverseBack(commandUniverseFinishTransition(visited, { transitionId: 'direct-detail' }))
+  expect(back.commandUniverseNavigation.index).toBe(0)
 })
 
 it('drops the abandoned forward branch while keeping the reachable history', () => {

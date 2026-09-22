@@ -62,11 +62,24 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         <button
           type='button'
           aria-label={label}
-          onClick={event =>
+          onClick={event => {
+            const root = event.currentTarget.closest('[data-entry-id]')?.parentElement
+            if (!root) throw new Error('Command Universe transition root is missing.')
+            const cell = event.currentTarget.getBoundingClientRect()
+            const page = root.getBoundingClientRect()
             dispatch(
-              commandUniverseNavigate('detail', { command }, { origin: event.currentTarget.getBoundingClientRect() }),
+              commandUniverseNavigate(
+                'detail',
+                { command },
+                {
+                  origin: {
+                    x: (cell.x + cell.width / 2 - page.x) / page.width,
+                    y: (cell.y + cell.height / 2 - page.y) / page.height,
+                  },
+                },
+              ),
             )
-          }
+          }}
           className={css({
             position: 'relative',
             cursor: 'pointer',
