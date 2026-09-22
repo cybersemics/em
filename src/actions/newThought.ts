@@ -24,7 +24,6 @@ import {
   TUTORIAL_STEP_FIRSTTHOUGHT_ENTER,
   TUTORIAL_STEP_SECONDTHOUGHT,
   TUTORIAL_STEP_SECONDTHOUGHT_ENTER,
-  TUTORIAL_STEP_START,
   TUTORIAL_STEP_SUBTHOUGHT,
 } from '../constants'
 import asyncFocus from '../device/asyncFocus'
@@ -238,13 +237,7 @@ export const newThoughtActionCreator =
   (dispatch, getState) => {
     const state = getState()
     const { cursor } = state
-    const tutorial = getSetting(state, 'Tutorial') !== 'Off'
-    const tutorialStep = +!getSetting(state, 'Tutorial Step')
-
     const path = at || cursor
-
-    // cancel if tutorial has just started
-    if (tutorial && tutorialStep === TUTORIAL_STEP_START) return
 
     if (!preventSetCursor && isTouch) {
       asyncFocus()

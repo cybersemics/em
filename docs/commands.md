@@ -388,7 +388,7 @@ https://github.com/user-attachments/assets/682334ea-823e-497b-818f-584639a5db5b
 
 ### New Thought
 
-Create a shiny new thought.
+Create a shiny new thought. The command is disabled while the tutorial is on its welcome step, which offers only Next — the first-thought step that follows is where the tutorial asks for Enter, so a thought created before then would jump ahead of it. Paste, import, and toolbar customization create thoughts through the same [`newThought`](../src/actions/newThought.ts) action-creator and are not affected, since the gate is the command's `canExecute` rather than the action-creator.
 
 <kbd>Enter</kbd>
 
@@ -426,7 +426,7 @@ https://github.com/user-attachments/assets/e7077d5d-2387-48b5-8a60-c944d38889ec
 
 ### New Grandchild
 
-Create a thought within the first subthought. With a multiselect, a new grandchild is created in every selected thought; the new grandchildren are then selected, with the cursor on the last of them. With no cursor, the root stands in for it, so the new thought is created within the first visible thought in the root. The command is disabled when any selected thought — or the root, when nothing is selected — has no subthought to create the grandchild in.
+Create a thought within the first subthought. With a multiselect, a new grandchild is created in every selected thought; the new grandchildren are then selected, with the cursor on the last of them. With no cursor, the root stands in for it, so the new thought is created within the first visible thought in the root. The command is disabled when any selected thought — or the root, when nothing is selected — has no subthought to create the grandchild in, and, like New Thought, while the tutorial is on its welcome step.
 
 ### Categorize
 
