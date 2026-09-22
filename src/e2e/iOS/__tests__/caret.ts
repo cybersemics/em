@@ -242,11 +242,13 @@ describe('Caret', () => {
     const editableNodeHandle = await waitForEditable('foo')
     const elementRect = await getElementRectByScreen(editableNodeHandle)
 
-    // swipe right on thought
+    // Swipe right (Cursor Back) so that foo is no longer the cursor, and the tap below therefore moves the cursor
+    // rather than entering edit mode. Only the start of the swipe has to be over the thought; the length is left at
+    // the helper default, since a segment scaled to the thought's width shrinks with the font size and can fall
+    // under MultiGesture's minDistance.
     await gesture('r', {
       xStart: elementRect.x + 5,
       yStart: elementRect.y + elementRect.height / 2,
-      segmentLength: elementRect.width,
     })
 
     await tap(editableNodeHandle, { y: 60 })
