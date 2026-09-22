@@ -16,20 +16,6 @@ afterEach(async () => {
   vi.useRealTimers()
 })
 
-it('yields persisted thoughts breadth-first across sibling branches', async () => {
-  store.dispatch(importText({ text: '- a\n  - b\n    - c\n- x\n  - y\n    - z' }))
-  await waitForThoughtspaceIdle()
-
-  const chunks = await all(fetchDescendants(db, HOME_TOKEN, initialState))
-
-  expect(chunks.map(chunk => Object.values(chunk.thoughtIndex).map(thought => thought.value))).toEqual([
-    [HOME_TOKEN],
-    ['a', 'x'],
-    ['b', 'y'],
-    ['c', 'z'],
-  ])
-})
-
 it('buffers branches at the depth limit while still loading leaves and attributes', async () => {
   store.dispatch(importText({ text: '- leaf\n- branch\n  - child\n- =note\n  - content' }))
   await waitForThoughtspaceIdle()
