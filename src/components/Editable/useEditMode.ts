@@ -21,6 +21,11 @@ import isCommandKey from '../../util/isCommandKey'
 import lastTouch from './lastTouch'
 import useCaretRestore from './useCaretRestore'
 
+// How long after a touchend to check whether WebKit reverted the caret it placed at the tapped point (#4220).
+// Measured on iOS 26: the revert lands 26-39ms after touchend, and the mousedown that a tap further from the
+// caret synthesizes arrives at 37-42ms, so the check has to come after both.
+const CARET_REVERT_TIMEOUT = 100
+
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
   contentRef,
@@ -200,8 +205,18 @@ const useEditMode = ({
       dispatch(setCursor({ path, offset, cursorHistoryClear, preserveMulticursor }))
     }
 
+    // #4220: Pending re-placement of the caret after WebKit reverts it (see onTouchEnd).
+    let caretRevertTimeout: ReturnType<typeof setTimeout> | undefined
+
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
-    const onTouchStart = () => (pressingRef.current = true)
+    const onTouchStart = () => {
+      pressingRef.current = true
+      // A new touch proves that the previous tap's deferred caret placement no longer applies, on the same
+      // reasoning as the capture-phase touchstart listeners that clear globals.suppressCursorAfterTouch and
+      // Editable's recorded touchend time. Notably it keeps the second tap of a double tap, which selects a
+      // word, from having its range collapsed by the first tap's pending placement.
+      clearTimeout(caretRevertTimeout)
+    }
 
     /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
     const onTouchEnd = (e: TouchEvent) => {
@@ -214,15 +229,41 @@ const useEditMode = ({
       // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.
       dispatch((dispatch, getState) => {
         const state = getState()
-        const move =
-          willRetarget &&
+        // Conditions under which a tap is allowed to place the caret at all, independent of which thought it
+        // landed on.
+        const tapMayPlaceCaret =
           state.isKeyboardOpen &&
-          !equalPath(state.cursor, path) &&
           !hasMulticursor(state) &&
           !globals.suppressCursorAfterTouch &&
           state.longPress === LongPressState.Inactive &&
           style?.visibility !== 'hidden'
-        if (!move) return
+        const move = willRetarget && !equalPath(state.cursor, path) && tapMayPlaceCaret
+        if (!move) {
+          // #4220: WebKit swallows the synthesized mousedown for a tap that lands within a few characters of
+          // the caret, so onMouseDown never runs to place the caret. WebKit briefly places the caret at the
+          // tapped point itself and then reverts it, leaving the tap with no visible effect at all. Re-place it
+          // once the revert has happened. getCaretOffset resolves the same offset onMouseDown would have, so a
+          // mousedown that does arrive late sets the caret to the same place.
+          if (!equalPath(state.cursor, path) || !tapMayPlaceCaret) return
+
+          const { offset } = getCaretOffset(editable, {
+            clientX: e.changedTouches[0].clientX,
+            clientY: e.changedTouches[0].clientY,
+          })
+          if (offset === null) return
+
+          caretRevertTimeout = setTimeout(() => {
+            // Correct only a caret that WebKit left somewhere other than the tapped point. A tap it placed
+            // normally is left alone, as is a range (a long press or double tap selects text) and a selection
+            // that has since left this thought, which useCaretRestore owns.
+            const offsetNow = selection.offsetFromNode(editable)
+            if (offsetNow === null || offsetNow === offset || !selection.isCollapsed()) return
+            allowDefaultSelection()
+            setCaretOffset(offset)
+          }, CARET_REVERT_TIMEOUT)
+
+          return
+        }
 
         // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
         // even though the synthesized mousedown/focus retargeted away.
@@ -339,6 +380,7 @@ const useEditMode = ({
     }
 
     return () => {
+      clearTimeout(caretRevertTimeout)
       editable.removeEventListener('mousedown', onMouseDown)
       if (isTouch && isSafari()) {
         editable.removeEventListener('touchstart', onTouchStart)
