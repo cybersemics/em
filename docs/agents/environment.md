@@ -29,6 +29,24 @@ curl -fsSk -o /dev/null https://localhost:3000 || curl -fsS -o /dev/null http://
 
 The `-k` accepts the self-signed certificate. The shared Chrome is launched with certificate errors ignored, so the agent should never see a browser warning page.
 
+## What Claude Code on the web builds
+
+A cloud session at [claude.ai/code](https://claude.ai/code) never runs the Copilot workflow — that is Copilot's own mechanism. It arrives in a bare container instead: `node_modules` empty, no Docker daemon running, no images pulled. The same preparation is therefore done by a **SessionStart hook**, [`.claude/hooks/session-start.sh`](../../.claude/hooks/session-start.sh), registered in [`.claude/settings.json`](../../.claude/settings.json). Claude Code runs it before handing the session over and waits for it, so the session opens onto a repository that can already lint, typecheck, test and build.
+
+Three steps, each there because of something the container gets wrong in a way that is not obvious from the failure:
+
+| Step | What it is working around |
+| --- | --- |
+| `yarn install` | Nothing else is needed afterwards: `postinstall` runs `build:packages` and `build:styles`, which the type check and lint both depend on |
+| Start the Docker daemon | `service docker start` fails with `ulimit: error setting limit (Operation not permitted)`. Launching `dockerd` directly works, and the session is root, so no `sudo` |
+| Pull `browserless/chrome` from `mirror.gcr.io`, then re-tag it under the bare name | Docker Hub is unreachable two independent ways — its blob CDN answers 403 through the proxy, and anonymous pulls answer 429. [`test-puppeteer.sh`](../../src/e2e/puppeteer/test-puppeteer.sh) runs the image as `browserless/chrome`, so the mirrored copy has to carry that name |
+
+The hook acts only when `CLAUDE_CODE_REMOTE` is `true`. A Claude Code session on a developer's own machine gets nothing done to it — an already-set-up checkout does not need it, and starting a Docker daemon or pulling a 4.5GB image on someone's laptop would be rude.
+
+**It never fails the session.** There is no `set -e`, no step can abort it, and it always exits 0. This is the opposite of the choice the Copilot setup step makes, and for a different situation: that workflow runs in CI, where failing loudly stops a broken environment from being handed over, and a bad run can simply be re-run. A hook that exits non-zero is a repository that starts every future cloud session broken. So each step degrades instead — a failed image pull leaves a session that lints, unit-tests and builds but cannot run Puppeteer, and that says so on the way in. Each step reports one line to stdout, which lands in the session itself; the full output goes to `/tmp/claude-session-start.log`, and the daemon's to `/tmp/dockerd.log`.
+
+**`CI` must stay unset.** [`src/e2e/puppeteer/setup.ts`](../../src/e2e/puppeteer/setup.ts) chooses the app URL from it: set means `https://172.17.0.1:3000`, unset means `https://host.docker.internal:2552`. The harness starts its own Vite on 2552, so exporting `CI` points almost every Puppeteer file at a server nobody started and they fail with `ERR_CONNECTION_REFUSED`.
+
 ## One browser, two ways in
 
 The single most useful thing in this setup is that **the agent's tooling and the project's test helpers drive the same browser.**
@@ -161,10 +179,10 @@ Reproduction drives the live app: the shared Chrome, the dev server on port 3000
 
 Running a test uses the real test harness instead, which starts its own browser in Docker on port 7566 and its own server on port 2552. It handles launching the app and resetting state between tests. **Do not point it at the exploration setup** — it manages its own.
 
-One wrinkle worth knowing, because it produces a baffling error otherwise. The puppeteer script only starts Docker and its own server when it thinks it is not in CI. The agent's machine claims to be CI but does not provide those services, so the test tries to connect to a browser that was never started. Clearing the variable for that one command fixes it:
+Two environment variables are worth knowing about, because between them they produce two baffling errors. `GITHUB_ACTIONS` decides whether the script starts Docker and its own server at all; the Copilot machine claims to be a GitHub Action while providing neither, so the test connects to a browser that was never started. `CI` decides which URL the tests open — `https://172.17.0.1:3000` when it is set, `https://host.docker.internal:2552` when it is not — and only the second is the server the script just started. Clearing both for that one command covers either machine:
 
 ```bash
-GITHUB_ACTIONS="" ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts -t "<test name>"
+env -u CI -u GITHUB_ACTIONS ./src/e2e/puppeteer/test-puppeteer.sh src/e2e/puppeteer/__tests__/<file>.ts -t "<test name>"
 ```
 
 iOS tests run on BrowserStack, the same as reproduction, but the runner opens its own separate session.

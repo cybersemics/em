@@ -165,14 +165,18 @@ src/e2e/
 └── iOS/attachExistingSession.ts                 iOS bridge
 ```
 
-And the local half, which is almost entirely symlinks into the above — see [External agents](external-agents.md):
+And the Codex and Claude Code half, which is mostly symlinks into the above — see [External agents](external-agents.md) — plus the one piece that is not, the hook that prepares a Claude Code on the web container:
 
 ```
 AGENTS.md                            Read by Codex and Claude Code
 CLAUDE.md            → AGENTS.md
 .agents/skills/                      The shared subset, one symlink each
 └── <name>           → .github/skills/<name>
-.claude/skills       → .agents/skills
+.claude/
+├── skills           → .agents/skills
+├── settings.json                    Registers the hook below
+└── hooks/
+    └── session-start.sh             Prepares a Claude Code on the web session
 ```
 
 Three workflows are part of this system rather than ordinary CI:
