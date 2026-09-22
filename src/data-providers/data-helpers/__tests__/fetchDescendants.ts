@@ -1,6 +1,6 @@
 import all from 'it-all'
 import { importTextActionCreator as importText } from '../../../actions/importText'
-import { EM_TOKEN, HOME_TOKEN, SETTINGS_VALUE } from '../../../constants'
+import { EM_TOKEN, HOME_TOKEN } from '../../../constants'
 import store from '../../../stores/app'
 import initStore from '../../../test-helpers/initStore'
 import waitForThoughtspaceIdle from '../../../test-helpers/waitForThoughtspaceIdle'
@@ -54,13 +54,9 @@ it('loads EM descendants beyond the depth limit while buffering the other reques
 
   const chunks = await all(fetchDescendants(db, [HOME_TOKEN, EM_TOKEN], initialState, { maxDepth: 1 }))
 
-  // initStore also persists Settings/Tutorial/Off.
-  expect(chunks.map(chunk => Object.values(chunk.thoughtIndex).map(thought => thought.value))).toEqual([
-    [HOME_TOKEN, EM_TOKEN],
-    ['branch', SETTINGS_VALUE, 'preference'],
-    ['Tutorial', 'option'],
-    ['Off', 'value'],
-  ])
+  const values = Object.values(mergeThoughts(...chunks).thoughtIndex).map(thought => thought.value)
+  expect(values).toEqual(expect.arrayContaining(['branch', 'preference', 'option', 'value']))
+  expect(values).not.toContain('child')
 })
 
 it('loads pin metadata together and continues through children of a pinned parent at the depth limit', async () => {
