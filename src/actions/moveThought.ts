@@ -44,6 +44,7 @@ export interface MoveThoughtPayload {
    * ID of sibling after which to place in TreeCRDT.
    * Explicit null means first child.
    * Undefined means derive placement from newRank for legacy em rank-based callers.
+   * If the destination remains sorted, its sort order determines placement instead.
    */
   afterId?: ThoughtId | null
 }
@@ -193,6 +194,9 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         [isAttribute(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
       }
 
+      // Moving within this context may have disabled sorting above.
+      const isSorted = getSortPreference(state, destinationThoughtId).type !== 'None'
+      const rank = isSorted ? getSortedRank(state, destinationThoughtId, sourceThought.value) : newRank
       const thoughtIndexUpdates: Index<Thought> = {
         ...(!sameContext
           ? {
@@ -214,11 +218,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         [sourceThought.id]: {
           ...sourceThought,
           parentId: destinationThought.id,
-          rank:
-            // get updated sort preference since the context may have been unsorted
-            getSortPreference(state, destinationThoughtId).type !== 'None'
-              ? getSortedRank(state, destinationThoughtId, sourceThought.value)
-              : newRank,
+          rank,
           ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
           updatedBy: clientId,
@@ -230,7 +230,11 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,
-        movePlacements: { [sourceThought.id]: effectiveAfterId },
+        movePlacements: {
+          [sourceThought.id]: isSorted
+            ? getMoveThoughtAfterIdByRank(state, destinationThoughtId, sourceThought.id, rank)
+            : effectiveAfterId,
+        },
       })
     },
     // update cursor if moved path is on the cursor
