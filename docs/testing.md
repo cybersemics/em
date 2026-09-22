@@ -1278,3 +1278,5 @@ Your only job at each step is:
 4. Run `git bisect bad` if the regression is still present and `git bisect good` if it is gone.
 
 Record the commit hash it gives you at the very end and you’ve found the source of the regression! Often I take one more step of testing the bad commit again and the commit right before it (should be good) just to be extra sure. If any good/bad determination was mistaken along the way then it will throw off the whole process and the final result will not be accurate. But if you are precise and methodical, you can search through hundreds of commits in a matter of minutes to find the offending commit.
+
+The screenshot helper disables filters by default. Visual tests that cover blur or shadows opt in with `screenshot({ preserveFilters: true })`.

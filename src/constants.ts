@@ -684,3 +684,9 @@ export const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
 
 /** Practice repetitions needed to learn a command. Captured into a command's progress record when it is first pinned, so changing this does not change existing records. Provisional value pending a product decision (see #5485). */
 export const LEARNING_TARGET_REPS = 5
+
+/** Width and height of the pinned command ring's box in CSS px, from the Figma export. */
+export const PINNED_COMMAND_RING_SIZE = 73
+
+/** Horizontal space, in the nav bar's own (font-scaled) px, that the bottom chrome leaves free on the right while a command is pinned so that its text and buttons do not run under the ring or its extended tap target. */
+export const PINNED_COMMAND_RESERVED_WIDTH = 62
