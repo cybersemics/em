@@ -14,8 +14,7 @@ import { setCursorFirstMatchActionCreator as setCursorFirstMatch } from '../../t
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-// Current functionality is broken in main and won't be fixed soon so this test is skipped.
-it.skip('editing a thought should load the lexeme and merge contexts', async () => {
+it('editing a thought should load the lexeme and merge contexts', async () => {
   // Related issue: https://github.com/cybersemics/em/issues/1074
   await dispatch(
     importText({
@@ -52,19 +51,18 @@ it.skip('editing a thought should load the lexeme and merge contexts', async () 
   const thoughtContextsState = getLexemeFromState(store.getState(), 'f')?.contexts
 
   // Note: Thought h has been changed to f but the id remains the same
-  // check that state has the correct contexts, ignoring order and ids
+  // check that state has the correct contexts, ignoring order
   expect(thoughtContextsState).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
   expect(thoughtContextsState).toHaveLength(2)
 
-  // check that db has the correct contexts, ignoring order and ids
+  // check that db has the correct contexts, ignoring order
   const thoughtContextsDb = (await getLexemeFromProvider(db, 'f'))?.contexts
   expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtH?.id, thoughtF?.id]))
 
-  expect(thoughtContextsState).toHaveLength(2)
+  expect(thoughtContextsDb).toHaveLength(2)
 })
 
-// Current functionality is broken in main and won't be fixed soon so this test is skipped.
-it.skip('a new thought should merge into an unloaded lexeme and persist both contexts across a refresh', async () => {
+it('a new thought should merge into an unloaded lexeme and persist both contexts across a refresh', async () => {
   // Related issue: https://github.com/cybersemics/em/issues/5426
   await dispatch(
     importText({
@@ -98,12 +96,12 @@ it.skip('a new thought should merge into an unloaded lexeme and persist both con
 
   // the merged Lexeme should have been persisted, so both contexts are still there after the refresh
 
-  // check that db has the correct contexts, ignoring order and ids
+  // check that db has the correct contexts, ignoring order
   const thoughtContextsDb = (await getLexemeFromProvider(db, 'f'))?.contexts
   expect(thoughtContextsDb).toEqual(expect.arrayContaining([thoughtF?.id, thoughtFRoot?.id]))
   expect(thoughtContextsDb).toHaveLength(2)
 
-  // check that state has the correct contexts, ignoring order and ids
+  // check that state has the correct contexts, ignoring order
   const thoughtContextsState = getLexemeFromState(store.getState(), 'f')?.contexts
   expect(thoughtContextsState).toEqual(expect.arrayContaining([thoughtF?.id, thoughtFRoot?.id]))
   expect(thoughtContextsState).toHaveLength(2)
