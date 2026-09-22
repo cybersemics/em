@@ -166,6 +166,8 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **replication** — Loading thoughts out of local storage and into memory. [`replicateTree`](../src/data-providers/data-helpers/replicateTree.ts) walks a subtree in the background without populating Redux; the pull queue is the foreground path. `syncStatusStore.replicationProgress` tracks it for the UI.
 
+**resetStores** — The one test boundary for module-level state, in [`stores/ministore.ts`](../src/stores/ministore.ts). Restores every *ministore* to its initial value, after running any reset a module registered through `registerReset` — for state whose restoration is an action rather than a value, such as the [debug log](debug-log.md#in-tests)'s buffer and animation-frame heartbeat. Called by `initStore` and `createTestApp` at setup, by `cleanupTestApp` before it drains timers, and after every unit test by `setupTests.ts`. See [testing.md](testing.md#isolation-and-cleanup).
+
 **ROOT_CONTEXTS** — `[HOME_TOKEN, ABSOLUTE_TOKEN]`. The two top-level contexts.
 
 **ROOT_PARENT_ID** — Sentinel `ThoughtId` for the parent of the root thoughts. An alias for `GLOBAL_ROOT_TOKEN`, the TreeCRDT tree root. Distinct from `HOME_TOKEN` / `ABSOLUTE_TOKEN`, which are the root *thoughts*; `ROOT_PARENT_ID` is their *parent*. `getThoughtById` reports it as the `parentId` of any thought whose TreeCRDT parent is the tree root.
