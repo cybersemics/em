@@ -68,7 +68,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **DataProvider** — The single interface ([`DataProvider.ts`](../src/data-providers/DataProvider.ts)) for storage backends. The active implementation is exported through [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts).
 
-**dbQueue / freeQueue** — Two halves of the push-queue split. `dbQueue` writes batches with `local || remote` set; `freeQueue` releases entries from the in-memory cache. See [persistence.md → Push queue](persistence.md#push-queue-redux--treecrdt).
+**dbQueue / freeQueue** — Two halves of the push-queue split. `dbQueue` writes batches with `local || remote` set; `freeQueue` holds state-only deallocations that skip persistence. See [persistence.md → Push queue](persistence.md#push-queue-redux--treecrdt).
 
 **docId** — The TreeCRDT document identifier for the thoughtspace. Equal to *tsid*. See [persistence.md → The TreeCRDT client](persistence.md#the-treecrdt-client).
 
@@ -88,7 +88,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **fetchDescendants** — Async iterable that does breadth-first traversal of thought IDs and yields `{ thoughtIndex, lexemeIndex }` chunks. The actual pull engine. See [persistence.md → fetchDescendants](persistence.md#fetchdescendants-the-actual-pull-engine).
 
-**freeThought / freeLexeme** — `DataProvider` methods for releasing a thought or Lexeme from the provider's in-memory cache. No-ops under TreeCRDT, which keeps the whole thoughtspace in one SQLite database; freeing memory means dropping entries from the Redux indexes. See [persistence.md → Memory management](persistence.md#memory-management).
+**freeThoughts** — Redux action and middleware that drop unused thoughts and Lexemes from `thoughtIndex` / `lexemeIndex` once the cache exceeds `globals.freeThoughtsThreshold`. Persistence is unchanged: the push queue puts those batches on `freeQueue` so they are not written. See [persistence.md → Memory management](persistence.md#memory-management).
 
 ## G
 

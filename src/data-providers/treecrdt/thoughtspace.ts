@@ -396,9 +396,6 @@ const createTreecrdtDataProvider = () => {
     getThoughtById: id => getActiveDb().getThoughtById(id),
     getThoughtsByIds: ids => getActiveDb().getThoughtsByIds(ids),
     updateThoughts,
-    // Freeing cache entries remains a no-op before initialization.
-    freeThought: async _id => undefined,
-    freeLexeme: async _key => undefined,
     updateLexemeIndex: lexemeIndex => getActiveDb().updateLexemeIndex(lexemeIndex),
   } satisfies Omit<DataProvider, 'clear'>
 

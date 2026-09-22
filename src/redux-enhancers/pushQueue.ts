@@ -1,18 +1,15 @@
-import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import Index from '../@types/IndexType'
-import PushBatch from '../@types/PushBatch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
-import db, { thoughtspaceRuntime } from '../data-providers/thoughtspace'
+import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import debugLog from '../util/debugLog'
 import isAttribute from '../util/isAttribute'
 import keyValueBy from '../util/keyValueBy'
-import mergeBatch from '../util/mergeBatch'
 import storage from '../util/storage'
 
 // Critical settings (e.g. EM/Settings/Tutorial) are cached in local storage so there is no gap on startup.
@@ -49,7 +46,7 @@ const cacheSetting = (name: keyof typeof cachedSettingsIds, value: string | null
   }
 }
 
-/** Pushes database batches, frees provider cache for state-only batches, and caches settings. */
+/** Pushes database batches and caches settings. State-only batches skip persistence. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pushQueue: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
@@ -63,14 +60,12 @@ const pushQueue: StoreEnhancer<any> =
 
       if (stateNew.pushQueue.length === 0) return stateNew
 
-      // separate out updates for the database from state-only updates
-      // state-only updates are only used to free up memory
-      const { dbQueue, freeQueue } = _.groupBy(stateNew.pushQueue, batch =>
-        batch.local || batch.remote ? 'dbQueue' : 'freeQueue',
-      ) as { dbQueue?: PushBatch[]; freeQueue?: PushBatch[] }
+      // Persist only batches flagged local or remote. State-only batches deallocate Redux cache
+      // (see freeThoughts) and must not be written.
+      const dbQueue = stateNew.pushQueue.filter(batch => batch.local || batch.remote)
 
       if (
-        dbQueue?.some(
+        dbQueue.some(
           batch =>
             Object.keys(batch.thoughtIndexUpdates).length > 0 || Object.keys(batch.lexemeIndexUpdates).length > 0,
         )
@@ -78,7 +73,7 @@ const pushQueue: StoreEnhancer<any> =
         // cache updated settings
         const settingsIds = getSettingsIds(stateNew)
         Object.entries(settingsIds).forEach(([name, id]) => {
-          for (const batch of dbQueue ?? []) {
+          for (const batch of dbQueue) {
             if (id && id in batch.thoughtIndexUpdates) {
               const thought = getThoughtById(stateNew, id)
               cacheSetting(name, thought?.value || null)
@@ -90,7 +85,7 @@ const pushQueue: StoreEnhancer<any> =
         // detected (a `push` with no matching `pushSynced` is a write that never completed).
         const debugEnabled = debugLog.isEnabled()
         const thoughtUpdates = debugEnabled
-          ? (dbQueue ?? []).flatMap(batch => Object.entries(batch.thoughtIndexUpdates))
+          ? dbQueue.flatMap(batch => Object.entries(batch.thoughtIndexUpdates))
           : []
         if (debugEnabled) {
           // sample of the thought updates being written; the full set is visible in the corresponding action entries
@@ -100,13 +95,13 @@ const pushQueue: StoreEnhancer<any> =
             return { id, value, rank: thought.rank }
           })
           debugLog.log('push', {
-            batches: (dbQueue ?? []).length,
+            batches: dbQueue.length,
             thoughtCount: thoughtUpdates.length,
             deleteCount: thoughtUpdates.filter(([, thought]) => !thought).length,
-            lexemeCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.lexemeIndexUpdates).length, 0),
-            moveCount: (dbQueue ?? []).reduce((n, batch) => n + Object.keys(batch.movePlacements ?? {}).length, 0),
-            local: (dbQueue ?? []).some(batch => batch.local !== false),
-            remote: (dbQueue ?? []).some(batch => batch.remote !== false),
+            lexemeCount: dbQueue.reduce((n, batch) => n + Object.keys(batch.lexemeIndexUpdates).length, 0),
+            moveCount: dbQueue.reduce((n, batch) => n + Object.keys(batch.movePlacements ?? {}).length, 0),
+            local: dbQueue.some(batch => batch.local !== false),
+            remote: dbQueue.some(batch => batch.remote !== false),
             thoughts: sample,
           })
         }
@@ -114,7 +109,7 @@ const pushQueue: StoreEnhancer<any> =
         /** Pushes queued updates to the active thoughtspace provider sequentially. */
         const applyDbQueue = async () => {
           await thoughtspaceRuntime.persistPushQueueBatches(
-            (dbQueue ?? []).map(batch => ({
+            dbQueue.map(batch => ({
               thoughtIndexUpdates: batch.thoughtIndexUpdates,
               lexemeIndexUpdates: batch.lexemeIndexUpdates,
               movePlacements: batch.movePlacements,
@@ -125,7 +120,7 @@ const pushQueue: StoreEnhancer<any> =
 
         void applyDbQueue()
           .then(() => {
-            dbQueue?.forEach(batch => batch.idbSynced?.())
+            dbQueue.forEach(batch => batch.idbSynced?.())
             debugLog.log('pushSynced', { thoughtCount: thoughtUpdates.length })
           })
           .catch(err => {
@@ -133,23 +128,6 @@ const pushQueue: StoreEnhancer<any> =
             debugLog.log('pushError', { error: String(err) })
           })
       }
-
-      const freeBatch = (freeQueue || []).reduce<PushBatch>(mergeBatch, {
-        thoughtIndexUpdates: {},
-        lexemeIndexUpdates: {},
-      })
-
-      Object.entries(freeBatch.thoughtIndexUpdates).forEach(([id, thoughtUpdate]) => {
-        if (!thoughtUpdate) {
-          db.freeThought?.(id as ThoughtId)
-        }
-      })
-
-      Object.entries(freeBatch.lexemeIndexUpdates).forEach(([id, lexemeUpdate]) => {
-        if (!lexemeUpdate) {
-          db.freeLexeme?.(id)
-        }
-      })
 
       // clear push queue
       return { ...stateNew, pushQueue: [] }

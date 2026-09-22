@@ -77,20 +77,6 @@ it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
   expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
 })
 
-it('does not delete persisted lexemes when freeing cache', async () => {
-  await initTestThoughtspace()
-
-  const settingsKey = hashThought(SETTINGS_VALUE)
-  await treecrdtThoughtspace.freeLexeme(settingsKey)
-
-  const settingsLexeme = await treecrdtThoughtspace.getLexemeById(settingsKey)
-  expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
-})
-
-it('does not require an initialized TreeCRDT client when freeing lexeme cache', async () => {
-  await expect(treecrdtThoughtspace.freeLexeme(hashThought('missing'))).resolves.toBeUndefined()
-})
-
 it('uses indexed attribute values as childrenMap keys without changing TreeCRDT node ids', async () => {
   const valueById = {
     [PIN_ID]: '=pin',

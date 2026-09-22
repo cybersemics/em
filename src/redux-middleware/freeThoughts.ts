@@ -7,7 +7,7 @@ import { freeThoughtsActionCreator as freeThoughts } from '../actions/freeThough
 import { FREE_THOUGHTS_THROTTLE } from '../constants'
 import globals from '../globals'
 
-/** Checks if the thought cache has exceeded its memory limit. If so, dispatches freeThoughts which frees Redux indexes and provider cache. */
+/** Checks if the thought cache has exceeded its memory limit. If so, dispatches freeThoughts which frees Redux indexes. */
 const checkThreshold: Thunk = (dispatch, getState): void => {
   const state = getState()
   if (Object.keys(state.thoughts.thoughtIndex).length > globals.freeThoughtsThreshold) {

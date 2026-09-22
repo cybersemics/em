@@ -43,8 +43,6 @@ const fakeProvider = (thoughts: Index<Thought>): DataProvider => ({
   getThoughtById: async (id: ThoughtId) => thoughts[id],
   getThoughtsByIds: async ids => ids.map(id => thoughts[id]),
   updateThoughts: async () => undefined,
-  freeThought: async () => undefined,
-  freeLexeme: async () => undefined,
 })
 
 /** Converts test state to the provider-facing materialization snapshot. */

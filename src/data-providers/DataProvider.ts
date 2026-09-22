@@ -19,8 +19,6 @@ export interface DataProvider<T extends any[] = any> {
     lexemeIndexUpdates: Index<Lexeme | null>
     movePlacements?: Index<ThoughtId | null>
   }) => Promise<unknown>
-  freeThought: (id: ThoughtId) => Promise<void>
-  freeLexeme: (key: string) => Promise<void>
 
   /****************************************
    * Used by dataProviderTest only

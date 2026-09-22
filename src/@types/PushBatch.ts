@@ -12,7 +12,7 @@ interface PushBatch {
   /**
    * Update the local device.
    * Default: true.
-   * If local and remote are false, null updates only deallocate entries from Redux/provider cache.
+   * If local and remote are false, null updates only deallocate entries from Redux indexes.
    * In particular, this is used by the freeThoughts middleware.
    */
   local?: boolean
