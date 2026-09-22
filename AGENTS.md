@@ -4,7 +4,7 @@
 
 ## Working in this repo
 
-**1. Reproduce before theorising.** If you are fixing reported behaviour, try observing the failure yourself before making assumptions. An agent that starts from the code builds a theory and then finds evidence for it; one that has watched the thing fail is working from an observation.
+**1. Reproduce before theorising.** If you are fixing reported behaviour, try observing the failure yourself before making assumptions. An agent that starts from the code builds a theory and then finds evidence for it; one that has watched the thing fail is working from an observation. When the report carries a Debug Log, `compare-debug-log` holds it against one captured while you drive the same steps and tells you where the two runs parted — worth running even when the failure will not reproduce, since a named divergence is a better answer than none.
 
 **2. Use `write-issue` when you file one.** Issues reporting broken behaviour here follow a fixed format — "Steps to Reproduce", "Current Behavior", "Expected Behavior". The skill has the template and the conventions around it; run it whenever you create an issue, split one out of a comment thread, or add steps to one that lacks them.
 

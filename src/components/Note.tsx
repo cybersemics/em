@@ -17,7 +17,6 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import useFreshCallback from '../hooks/useFreshCallback'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -25,6 +24,7 @@ import noteValue from '../selectors/noteValue'
 import resolveNoteKey from '../selectors/resolveNoteKey'
 import resolveNotePath from '../selectors/resolveNotePath'
 import store from '../stores/app'
+import editableSyncStore from '../stores/editableSync'
 import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
@@ -68,6 +68,12 @@ const Note = React.memo(
       if (targetPath && !noteId) {
         setNoteDraft(noteValue(state, path) ?? '')
       }
+      // Bail if state already has the caret on this note. Then the focus did not come from the user: it came from the
+      // effect below placing the caret, which focuses the note as a side effect. There is no cursor to move, but
+      // setCursor would still clear the one-shot noteOffset the effect is in the middle of honoring and recompute
+      // cursorOffset, and the undo enhancer records those as a fresh navigation action — discarding the redo stack the
+      // moment an undo restores a note caret, so the note edit that was just undone has no redo step.
+      if (state.noteFocus && equalPathHead(state.cursor, path)) return
       dispatch(
         setCursor({
           path,
@@ -141,7 +147,7 @@ const Note = React.memo(
     /** Updates the =note attribute when the note text is edited. */
     const onChange = useCallback(
       (e: ContentEditableEvent) => {
-        if (globals.suppressChange) return
+        if (editableSyncStore.getState().suppressChange) return
 
         // calculate pathToContext onChange not in render for performance
         const value = justPasted

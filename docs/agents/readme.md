@@ -74,7 +74,7 @@ A human assigning an issue is the usual way a task starts, but not the only one:
 ```mermaid
 flowchart TD
     A["Issue assigned to the agent"] --> B{"Does the issue have<br/>Steps to Reproduce?"}
-    B -- yes --> C["<b>Gate 1</b> — issue-repro skill"]
+    B -- yes --> C["<b>Gate 1</b> — reproduce skill"]
     C --> C1["Reproduce the bug in a real browser or device"]
     C1 --> C2["Write a test that fails,<br/>committed switched off with .skip"]
     C2 --> D["<b>Gate 2</b> — plan skill"]
@@ -93,7 +93,7 @@ flowchart TD
     J1 --> J2["<b>PR Ready</b> — a workflow takes the<br/>pull request out of draft"]
     J2 --> K["Done"]
 
-    click C "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "The issue-repro skill"
+    click C "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#reproduce" "The reproduce skill"
     click C1 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "How the browser is brought up"
     click C2 "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md" "Why the test is committed switched off"
     click D "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "The plan skill"
@@ -112,8 +112,8 @@ Both gates exist to stop the same failure. An agent that starts reading source c
 The declarations are literal. After the first gate the agent must print one of these lines exactly:
 
 ```
-issue-repro: not applicable — the issue has no Steps to Reproduce.
-issue-repro: applicable — executing .github/skills/issue-repro/SKILL.md before any investigation.
+reproduce: not applicable — the issue has no Steps to Reproduce.
+reproduce: applicable — executing .github/skills/reproduce/SKILL.md before any investigation.
 ```
 
 and after the second:

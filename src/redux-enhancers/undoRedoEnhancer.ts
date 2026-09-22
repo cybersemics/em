@@ -212,7 +212,7 @@ const restorePushQueueFromPatches = (state: State, oldState: State, ops: Operati
     pushQueue: updateThoughts({
       lexemeIndexUpdates,
       thoughtIndexUpdates: moveUpdates.thoughtIndexUpdates,
-      ...(Object.keys(moveUpdates.movePlacements).length > 0 ? { movePlacements: moveUpdates.movePlacements } : null),
+      movePlacements: moveUpdates.movePlacements,
     })(oldStateWithUpdatedCursor).pushQueue,
   }
 }
