@@ -1,3 +1,4 @@
+import { RefObject } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Command from '../@types/Command'
@@ -8,10 +9,12 @@ interface CommandUniverseGridProps {
   commands: Command[]
   /** Search text that will be highlighted within the matched command title. */
   search?: string
+  /** The inner dialog scroller used to decide which gesture diagrams are near view. */
+  scrollRootRef: RefObject<HTMLDivElement | null>
 }
 
 /** Renders a 2-column grid of commands for the Command Universe surfaces. Pure presentation: receives pre-filtered commands and renders them. Chrome (search bar, sort button) lives in the parent. */
-const CommandUniverseGrid = ({ commands, search }: CommandUniverseGridProps) => {
+const CommandUniverseGrid = ({ commands, search, scrollRootRef }: CommandUniverseGridProps) => {
   const fontSize = useSelector(state => state.fontSize)
   return (
     <table className={css({ fontSize: '14px' })}>
@@ -25,7 +28,7 @@ const CommandUniverseGrid = ({ commands, search }: CommandUniverseGridProps) => 
         style={{ fontSize }}
       >
         {commands.filter(nonNull).map(command => (
-          <CommandUniverseGridItem key={command.id} command={command} search={search} />
+          <CommandUniverseGridItem key={command.id} command={command} search={search} scrollRootRef={scrollRootRef} />
         ))}
       </tbody>
     </table>
