@@ -31,7 +31,6 @@ import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
 import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
-import globals from './globals'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
 import getThoughtById from './selectors/getThoughtById'
@@ -45,6 +44,7 @@ import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
+import heldKeysStore from './stores/heldKeys'
 import { isNavigation } from './util/actionMetadata.registry'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
@@ -824,13 +824,13 @@ export const beforeInput = (e: InputEvent) => {
 /** Global keyUp handler. */
 export const keyUp = (e: KeyboardEvent) => {
   // track meta key for expansion algorithm
-  if (e.key === (isMac ? 'Meta' : 'Control') && globals.suppressExpansion) {
+  if (e.key === (isMac ? 'Meta' : 'Control') && heldKeysStore.getState().suppressExpansion) {
     store.dispatch(suppressExpansion(false))
   }
 
   // clear the table column boundary crossing suppression once the arrow key is released, so it can cross again on the next discrete press
-  if (globals.arrowKeyBoundaryCross === e.key) {
-    globals.arrowKeyBoundaryCross = null
+  if (heldKeysStore.getState().arrowKeyBoundaryCross === e.key) {
+    heldKeysStore.update({ arrowKeyBoundaryCross: null })
   }
 
   keyCommandId = null
@@ -843,7 +843,7 @@ export const keyDown = (e: KeyboardEvent) => {
   // track meta key for expansion algorithm
   if (!isCommandKey(e)) {
     // disable suppress expansion without triggering re-render
-    globals.suppressExpansion = false
+    heldKeysStore.update({ suppressExpansion: false })
   }
 
   // For some reason, when the caret is at the beginning of the thought, alt + ArrowLeft sets the caret to the end.
@@ -855,7 +855,7 @@ export const keyDown = (e: KeyboardEvent) => {
 
   // After a table column boundary is crossed on a discrete keypress, hard-stop auto-repeat of the same arrow key until it is released.
   // This prevents holding the arrow key from continuously advancing the caret into or through the adjacent thought — it must be released and pressed again to move further.
-  if (globals.arrowKeyBoundaryCross === e.key && e.repeat) {
+  if (heldKeysStore.getState().arrowKeyBoundaryCross === e.key && e.repeat) {
     e.preventDefault()
     return
   }

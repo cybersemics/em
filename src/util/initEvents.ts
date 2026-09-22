@@ -15,7 +15,6 @@ import { AlertType, LongPressState } from '../constants'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
-import globals from '../globals'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
@@ -27,6 +26,7 @@ import { updateScrollTop } from '../stores/scrollTop'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatus'
+import touchStore from '../stores/touch'
 import { updateSize } from '../stores/viewport'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
@@ -308,7 +308,7 @@ const initEvents = (store: Store<State, any>) => {
    * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
    * phase (see the note on the touchmove listener below). */
   const onTouchStart = () => {
-    globals.suppressCursorAfterTouch = false
+    touchStore.update({ suppressCursorAfterTouch: false })
   }
 
   /**

@@ -11,12 +11,12 @@ import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
-import globals from '../../globals'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
 import multitouchStore from '../../stores/multitouchStore'
+import touchStore from '../../stores/touch'
 import equalPath from '../../util/equalPath'
 import isCommandKey from '../../util/isCommandKey'
 import lastTouch from './lastTouch'
@@ -220,7 +220,7 @@ const useEditMode = ({
           state.isKeyboardOpen &&
           !equalPath(state.cursor, path) &&
           !hasMulticursor(state) &&
-          !globals.suppressCursorAfterTouch &&
+          !touchStore.getState().suppressCursorAfterTouch &&
           state.longPress === LongPressState.Inactive &&
           // Do not move the cursor when the tap is part of a multi-touch gesture (e.g. pinch or two-finger
           // trace): the caret must stay where it was. The latch persists through the terminating touchend of
@@ -292,10 +292,10 @@ const useEditMode = ({
       const preserveMulticursor = multiEditing && isMulticursorPath(state, path)
 
       // Suppress the synthesized mousedown that iOS Safari can emit for a tap whose touchend already moved
-      // the cursor without entering edit mode or a completed drag (see globals.suppressCursorAfterTouch). The cursor move
+      // the cursor without entering edit mode or a completed drag (see suppressCursorAfterTouch in stores/touch.ts). The cursor move
       // re-rendered this thought with editingOrOnCursor true before the mousedown arrived, so the branch
       // below would place the caret and refocus the editable as if this were a second tap.
-      if (isTouch && globals.suppressCursorAfterTouch) {
+      if (isTouch && touchStore.getState().suppressCursorAfterTouch) {
         e.preventDefault()
         return
       }
