@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
@@ -9,22 +8,18 @@ import Thunk from '../@types/Thunk'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
-import getLexeme from '../selectors/getLexeme'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import addContext from '../util/addContext'
 import createChildrenMap from '../util/createChildrenMap'
-import hashThought from '../util/hashThought'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
 import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
-import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
 import deleteAttribute from './deleteAttribute'
 import deleteThought from './deleteThought'
@@ -52,13 +47,7 @@ const editThought = (
 ) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
-  // thoughts may exist for both the old value and the new value
-  const lexemeIndex = { ...state.thoughts.lexemeIndex }
   const editedThoughtId = head(path)
-  const oldKey = hashThought(oldValue)
-  const newKey = hashThought(newValue)
-  const lexemeOld = getLexeme(state, oldValue)
-  const thoughtCollision = getLexeme(state, newValue)
 
   const editedThought = getThoughtById(state, editedThoughtId)
 
@@ -71,12 +60,6 @@ const editThought = (
   if (!parentOfEditedThought) {
     console.error('Parent not found')
     return state
-  }
-
-  // guard against missing Lexeme
-  // although this should never happen, syncing issues can cause this
-  if (!lexemeOld) {
-    console.warn(`Missing Lexeme: ${oldValue}`)
   }
 
   // only calculate decendant thought when current edited thought is a metaprogramming attribute
@@ -99,49 +82,6 @@ const editThought = (
     ])(state)
   }
 
-  // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  // let recentlyEdited = state.recentlyEdited
-  // try {
-  //   recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
-  // } catch (e) {
-  //   console.error('editThought: treeChange immer error')
-  //   console.error(e)
-  // }
-
-  // hasDescendantOfFloatingContext can be done in O(edges)
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  const isThoughtOldOrphan = () => lexemeOld && (!lexemeOld.contexts || lexemeOld.contexts.length < 2)
-
-  // do not add floating thought to context
-  const lexemeNewWithoutContext: Lexeme = thoughtCollision || {
-    contexts: [],
-    created: timestamp(),
-    lastUpdated: timestamp(),
-    updatedBy: clientId,
-  }
-
-  // the old thought less the context
-  const newOldLexeme = lexemeOld && !isThoughtOldOrphan() ? removeContext(lexemeOld, editedThoughtId) : null
-
-  const lexemeNew = addContext(lexemeNewWithoutContext, { id: editedThoughtId, archived: editedThought.archived })
-
-  // update local lexemeIndex so that we do not have to wait for the remote
-  lexemeIndex[newKey] = lexemeNew
-
-  // do not do anything with old lexemeIndex if hashes match, as the above line already took care of it
-  if (oldKey !== newKey) {
-    if (newOldLexeme) {
-      lexemeIndex[oldKey] = newOldLexeme
-    } else {
-      delete lexemeIndex[oldKey]
-    }
-  }
-
-  const lexemeIndexUpdates = {
-    // if the hashes of oldValue and newValue are equal, lexemeNew takes precedence since it contains the updated thought
-    [oldKey]: newOldLexeme,
-    [newKey]: lexemeNew,
-  }
   const isNote = parentOfEditedThought.value === '=note'
   const sortPreference = getSortPreference(state, editedThought.parentId)
   const sortType = sortPreference.type
@@ -222,9 +162,7 @@ const editThought = (
 
   const stateAfterUpdate = updateThoughts(stateNew, {
     cursorOffset,
-    lexemeIndexUpdates,
     thoughtIndexUpdates,
-    // recentlyEdited,
   })
 
   // remove =done when thought is edited to empty to prevent strikethrough on the placeholder

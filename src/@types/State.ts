@@ -16,6 +16,7 @@ import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
 import ThoughtId from './ThoughtId'
 import ThoughtIndices from './ThoughtIndices'
+import type ThoughtPatch from './ThoughtPatch'
 import Timestamp from './Timestamp'
 import Tip from './TipId'
 
@@ -135,6 +136,15 @@ interface State {
    * See: /redux-enhancers/pushQueue.ts.
    */
   pushQueue: PushBatch[]
+  /** Latest unconfirmed persistence write per thought; independent of unloaded Thought.pending flags and undo history. */
+  pendingThoughtWrites: Index<{
+    writeId: string
+    patch: ThoughtPatch | null
+    afterId?: ThoughtId | null
+    error?: string
+  }>
+  /** Invalidates asynchronous results when the local view is cleared. Not part of undo history. */
+  thoughtspaceGeneration: number
   recentlyEdited: RecentlyEditedTree
   /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]

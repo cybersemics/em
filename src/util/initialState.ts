@@ -158,6 +158,8 @@ const initialState = (created: Timestamp = timestamp()) => {
     status: 'disconnected',
     tip: null,
     pushQueue: [],
+    pendingThoughtWrites: {},
+    thoughtspaceGeneration: 0,
     thoughts: initialThoughts(created),
     undoPatches: [],
     showCommandCenter: false,

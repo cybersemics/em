@@ -1,6 +1,9 @@
 import type { Operation } from '@treecrdt/interface'
-import { type TreecrdtWebSocketSync, connectTreecrdtWebSocketSync } from '@treecrdt/sync'
-import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
+import {
+  type TreecrdtWebSocketSync,
+  type TreecrdtWebSocketSyncClient,
+  connectTreecrdtWebSocketSync,
+} from '@treecrdt/sync'
 import { getTreecrdtSyncBaseUrl } from './config'
 
 /** Creates WebSocket sync state owned by one TreeCRDT thoughtspace and document. */
@@ -16,7 +19,7 @@ const createTreecrdtWebSocketSync = () => {
   }
 
   /** Connects to the sync server, runs catch-up, then live subscription. No-op if no base URL. */
-  const start = async (client: TreecrdtClient): Promise<void> => {
+  const start = async (client: TreecrdtWebSocketSyncClient): Promise<void> => {
     const baseUrl = getTreecrdtSyncBaseUrl()
     if (!baseUrl) return
 
@@ -42,7 +45,7 @@ const createTreecrdtWebSocketSync = () => {
   }
 
   /** Starts sync when `VITE_TREECRDT_SYNC_BASE_URL` is set; skips in test; logs warnings on failure. */
-  const tryStartFromEnv = async (client: TreecrdtClient): Promise<void> => {
+  const tryStartFromEnv = async (client: TreecrdtWebSocketSyncClient): Promise<void> => {
     if (import.meta.env.MODE === 'test') return
     if (!getTreecrdtSyncBaseUrl()) return
     try {

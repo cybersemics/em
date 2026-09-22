@@ -46,7 +46,6 @@ const persistThoughtsTo = (
 ) =>
   db.updateThoughts({
     thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
-    lexemeIndexUpdates: {},
     movePlacements,
   })
 

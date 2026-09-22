@@ -89,6 +89,8 @@ Rank is an in-memory ordering only. TreeCRDT stores sibling order in the tree it
 
 A thought with `pending: true` is known to exist (its `id` is in `thoughtIndex`) but its real data has not yet been pulled from local/remote storage. The UI renders pending thoughts with placeholders, and the pull queue ([`pullQueue.ts`](../src/redux-middleware/pullQueue.ts)) drives fetches based on visible pending IDs. See [persistence.md](persistence.md).
 
+This is unrelated to Redux's `pendingThoughtWrites`, which tracks locally edited thoughts awaiting persistence confirmation. See [write confirmation](persistence.md#optimistic-edits-and-write-confirmation).
+
 ### ThoughtId
 
 ```ts
