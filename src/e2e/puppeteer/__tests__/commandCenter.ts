@@ -151,4 +151,36 @@ describe('command center', () => {
     expect(await page.$('[data-testid=command-menu-panel]')).toBeNull()
     expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(0)
   })
+
+  // https://github.com/cybersemics/em/issues/5646
+  it.skip('dismisses a focus that arrives while it is shown so the keyboard is not raised over it', async () => {
+    await paste('- Hello world beautiful')
+    await clickThought('Hello world beautiful')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    // A double tap just before the swipe leaves a word selection that the browser commits asynchronously, so it
+    // focuses the editable after the Command Center has already opened. Emulation commits the selection
+    // synchronously, before the swipe, so the focus is delivered here to place it where the device places it.
+    await page.evaluate(() => (document.querySelector('[data-editable]') as HTMLElement).focus())
+
+    // Focusing an editable is what raises the keyboard on Android, so the focus has to be dismissed and the
+    // Command Center left on screen.
+    await waitUntil(
+      () =>
+        !document.activeElement?.closest('[data-editable]') &&
+        !!document.querySelector('[data-testid="command-center-panel"][data-sheet-state="open"]'),
+      { timeout: 6000 },
+    ).catch(() => {})
+
+    // read the onscreen state once, so a timeout above reports what is actually onscreen rather than a bare timeout
+    const onscreen = await page.evaluate(() => ({
+      focusedEditable: document.activeElement?.closest('[data-editable]')
+        ? document.activeElement!.getAttribute('aria-label')
+        : null,
+      commandCenter: document.querySelector('[data-testid="command-center-panel"]')?.getAttribute('data-sheet-state'),
+    }))
+    expect(onscreen).toEqual({ focusedEditable: null, commandCenter: 'open' })
+  })
 })
