@@ -110,7 +110,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
                       })}
                     />
                   </div>
-                  <CommandUniverseGrid commands={section.commands} search={search} />
+                  <CommandUniverseGrid commands={section.commands} search={search} scrollRootRef={scrollRef} />
                 </div>
               ))}
             </div>
@@ -121,4 +121,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
   )
 }
 
-export default CommandUniverseGridPage
+const CommandUniverseGridPageMemo = React.memo(CommandUniverseGridPage)
+CommandUniverseGridPageMemo.displayName = 'CommandUniverseGridPage'
+
+export default CommandUniverseGridPageMemo
