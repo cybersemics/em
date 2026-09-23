@@ -196,11 +196,6 @@ const Editable = ({
   const multiEditing = caretRectStore.useSelector(caretRect => caretRect.x !== null)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
-  // onChangeHandler is memoized on [readonly, uneditable] so that ContentEditable is not re-rendered while the user is
-  // typing, which freezes the path it closes over at the render that created it. Track the current path separately so
-  // that multicursor mirroring still recognizes the thought as selected after a command has moved it, e.g. indenting a
-  // multiselection that is then cleared and typed into. (#5288)
-  const pathRef = useRef(path)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -247,10 +242,6 @@ const Editable = ({
     if (!contentRef.current) return
     contentRef.current.classList[value ? 'add' : 'remove'](invalidOptionRecipe())
   }
-
-  useEffect(() => {
-    pathRef.current = path
-  }, [path])
 
   // side effect to set old value ref to head value from updated simplePath. Also update editing value, if it is different from current value.
   useEffect(
@@ -748,13 +739,10 @@ const Editable = ({
         // thoughts stay in sync with the thought being typed into keystroke by keystroke. Each thought's current value
         // is read fresh from state to use as the correct oldValue. Keyed off the multicursors rather than cursorCleared,
         // which is reset after the first edit. (#4519)
-        // The multicursors are keyed by path, so the thought's current path is read from pathRef rather than from this
-        // handler's frozen closure, which still points at the thought's location before a command moved it. (#5288)
-        const currentPath = pathRef.current
-        if (isMulticursorPath(state, currentPath)) {
+        if (isMulticursorPath(state, path)) {
           dispatch(
             Object.values(state.multicursors)
-              .filter(multicursorPath => !equalPath(multicursorPath, currentPath))
+              .filter(multicursorPath => !equalPath(multicursorPath, path))
               .flatMap(multicursorPath => {
                 const thought = getThoughtById(state, head(multicursorPath))
                 return !thought || thought.value === newValue
@@ -811,8 +799,14 @@ const Editable = ({
         }
       })
     },
+    // Every value the handler reads that can change while it is mounted is listed, so that it never acts on the
+    // thought as it was at an earlier render. A thought moved by a command keeps its Editable, so omitting path left
+    // the handler matching the multicursors — which are keyed by path — against the location the thought had before
+    // the move, and no edit was mirrored to the rest of an indented multiselection (#5288).
+    // thoughtChangeHandler and invalidStateError are redefined on every render, but read nothing beyond these values
+    // and stable refs, so the copies captured with them are equally fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [readonly, uneditable /* TODO: options */],
+    [dispatch, onEdit, options, path, rank, readonly, simplePath, transient, uneditable],
   )
 
   /** Imports text that is pasted onto the thought. */
