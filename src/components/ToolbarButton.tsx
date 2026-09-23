@@ -133,7 +133,9 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
       touchStartXRef.current = null
       touchMovedRef.current = false
 
-      if (!customize && isButtonExecutable && !disabled && !scrolled && (isPressing || wasMouseDown)) {
+      const isTap = !customize && !scrolled && (isPressing || wasMouseDown)
+
+      if (isTap && isButtonExecutable && !disabled) {
         haptics.light()
 
         if (!isPressedRef.current) {
@@ -149,11 +151,12 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
                 : !commandState,
           )
         }
+      }
 
-        // prevent Editable blur
-        if (isTouch) {
-          e.preventDefault()
-        }
+      // Prevent Editable blur. Not gated on the command being executable, since tapping a disabled button should do
+      // nothing at all, including closing the keyboard.
+      if (isTap && isTouch) {
+        e.preventDefault()
       }
 
       lastScrollLeft.current = toolbarEl.scrollLeft
