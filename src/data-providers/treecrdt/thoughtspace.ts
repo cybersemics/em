@@ -294,7 +294,6 @@ const initializeThoughtspaceStorage = async (client: TreecrdtClient, replicaId: 
       }),
       createTreecrdtLocalWriteOptions(),
     )
-    settingsId = SETTINGS_TOKEN
   }
 }
 
@@ -350,7 +349,7 @@ const createTreecrdtDataProvider = () => {
     await client.runner.exec(`CREATE TABLE IF NOT EXISTS em_derived_indexes_meta (
       id INTEGER PRIMARY KEY CHECK (id = 1), version INTEGER NOT NULL, head_seq INTEGER NOT NULL
     )`)
-    /** Records the frontier only after both derived indexes have caught up. */
+    /** Saves the index checkpoint only after both derived indexes are updated. */
     const checkpointIndexes = (headSeq: number) =>
       client.runner.getText(
         'INSERT OR REPLACE INTO em_derived_indexes_meta (id, version, head_seq) VALUES (1, 1, ?1)',
