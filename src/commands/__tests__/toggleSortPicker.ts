@@ -7,6 +7,7 @@ import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import favoriteCommand from '../favorite'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
@@ -129,4 +130,35 @@ describe('toggleSortPicker error', () => {
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
   )
+
+  // https://github.com/cybersemics/em/issues/4098
+  it.skip('does not report an error when a thought is favorited under updated sort', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - One
+          - Two
+          - Three
+        `,
+      }),
+      setCursor(['One']),
+    ])
+
+    const state = store.getState()
+    // Enable updated ascending sort on the home context.
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Updated', direction: 'Asc' },
+      }),
+    )
+
+    // Advance the clock so that favoriting One updates it to a later timestamp than its siblings, as it does when a
+    // user favorites a thought some time after sorting the context.
+    vi.advanceTimersByTime(1000)
+
+    executeCommand(favoriteCommand, { store })
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
 })
