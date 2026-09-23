@@ -75,7 +75,8 @@ it('coalesces local events into one membership read without reading back local t
   expect(snapshot.lexemeIndex[hashThought('b')].contexts).toEqual([THOUGHT_ID])
 
   apply.mockClear()
-  // An order-only write produces an event, but must not republish unchanged memberships.
+  reader.mockClear()
+  // An order-only write produces an event, but must not read, write, or republish unchanged memberships.
   await withTreecrdtWriteBarrier(() =>
     provider.db.updateThoughts({
       thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') },
@@ -83,6 +84,7 @@ it('coalesces local events into one membership read without reading back local t
     }),
   )
   await waitForMaterializedThoughtsToStore()
+  expect(reader.mock.calls.filter(([sql]) => sql.includes('em_lexeme_memberships'))).toHaveLength(0)
   expect(apply).not.toHaveBeenCalled()
 })
 

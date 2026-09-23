@@ -61,7 +61,10 @@ const createLexemeIndex = async (client: TreecrdtClient) => {
         keys.add(hashThought(decodeThoughtPayload(change.payload).value))
       }
     }
-    for (const id of new Set(changes.map(change => change.node as ThoughtId))) {
+    // Moves change parent/order, not lexeme membership.
+    for (const id of new Set(
+      changes.filter(change => change.kind !== 'move').map(change => change.node as ThoughtId),
+    )) {
       for (const key of await reindex(id)) keys.add(key)
     }
     return [...keys]
