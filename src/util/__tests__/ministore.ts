@@ -1,5 +1,6 @@
 import _ from 'lodash'
-import ministore, { resetStores } from '../../stores/ministore'
+import ministore, { registerReset, resetStores } from '../../stores/ministore'
+import reactMinistore from '../../stores/react-ministore'
 
 /** A module-level store, as every store under src/stores is. Vitest isolates modules per file, not per test, so it outlives each test in this file. */
 const moduleStore = ministore(0)
@@ -86,6 +87,20 @@ describe('resetStores', () => {
     resetStores()
 
     expect(composite.getState()).toBe(12)
+  })
+})
+
+describe('registerReset', () => {
+  it('runs a registered reset before the stores are reset, so that it still sees the state it has to tear down', () => {
+    const store = ministore(1)
+    store.update(2)
+    const seen: number[] = []
+    registerReset(() => seen.push(store.getState()))
+
+    resetStores()
+
+    expect(seen).toEqual([2])
+    expect(store.getState()).toBe(1)
   })
 })
 
@@ -316,5 +331,59 @@ describe('compose', () => {
 
     storeA.update(5)
     expect(counter).toBe(1)
+  })
+})
+
+describe('dispose', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // https://github.com/cybersemics/em/issues/5246
+  it('release a timer held in state when the store is reset through the registry', () => {
+    vi.useFakeTimers()
+    const fired = vi.fn()
+    const store = ministore<{ timeoutId: number | null }>(
+      { timeoutId: null },
+      { dispose: state => window.clearTimeout(state.timeoutId ?? undefined) },
+    )
+    store.update({ timeoutId: window.setTimeout(fired, 100) })
+
+    resetStores()
+
+    expect(store.getState().timeoutId).toBe(null)
+    vi.advanceTimersByTime(100)
+    expect(fired).toHaveBeenCalledTimes(0)
+  })
+
+  it('see the live state before it is restored', () => {
+    const disposed: number[] = []
+    const store = ministore(1, { dispose: state => disposed.push(state) })
+    store.update(2)
+
+    store.reset()
+
+    expect(disposed).toEqual([2])
+    expect(store.getState()).toBe(1)
+  })
+
+  it('run even when the state already equals the initial state', () => {
+    const dispose = vi.fn()
+    const store = ministore({ timeoutId: null }, { dispose })
+
+    store.reset()
+
+    expect(dispose).toHaveBeenCalledExactlyOnceWith({ timeoutId: null })
+  })
+
+  it('run through reactMinistore', () => {
+    const dispose = vi.fn()
+    const store = reactMinistore<number>(1, { dispose })
+    store.update(2)
+
+    resetStores()
+
+    expect(dispose).toHaveBeenCalledExactlyOnceWith(2)
+    expect(store.getState()).toBe(1)
   })
 })

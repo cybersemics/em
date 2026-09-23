@@ -170,13 +170,11 @@ console.error = (...args) => {
   consoleErrorOriginal(...args)
 }
 
-// Reset every ministore after every test. Vitest isolates modules per file, not per test, and the stores are module-level
-// singletons, so a value one test writes is what the next test in the file reads. initStore and createTestApp reset at
-// setup, but most unit suites use neither, and would otherwise have to hand-write the teardown. Vitest runs afterEach
-// hooks in reverse registration order, so this runs after a test file's own hooks and after Testing Library's automatic
-// cleanup: nothing is mounted by the time the reset notifies subscribers. Only ministore is imported here — a setup
-// file's imports are cached before a test file's vi.mock calls apply, so importing any module with app dependencies
-// would defeat every test that mocks one of them.
+// Restore module-level state after every test: the ministores, and the state modules register with them (debugLog's
+// buffer and frame heartbeat). Vitest isolates modules per file, not per test, so without this a test that enables
+// debug logging leaks it into every later test in its file. initStore and createTestApp also reset at setup, but a
+// plain unit test uses neither, and would otherwise have to hand-write the teardown. Only ministore is imported here,
+// never the modules that register with it — see registerReset.
 afterEach(resetStores)
 
 afterEach(() => {
