@@ -177,7 +177,7 @@ describe('autocrop', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5670
-  it.skip('preserve thought positions relative to viewport when the viewport shrinks', async () => {
+  it('preserve thought positions relative to viewport when the viewport shrinks', async () => {
     const importText = `
       - a
       - b
