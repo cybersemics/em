@@ -126,7 +126,9 @@ To decide where a command gets tested:
 
 An arbitrary `sleep` used for synchronization is what you write when you don't know what condition you are waiting for. Name the condition instead: after every simulated action, ask *what would the user see change?* and wait for exactly that.
 
-This rule is about waiting for real time to pass, not about safety limits or time-dependent behavior:
+The UI's visible readiness is a user-facing contract. Integration tests should begin interacting when the app presents usable controls, even if local persistence or other background initialization is still running. A shared wait for that work to finish makes tests more lenient: it removes the startup window where races can occur and can conceal a regression that leaves the interface unusable until the local database is ready. Wait for the specific visible condition an action needs; synchronize on persistence itself only when persistence is the prerequisite or behavior under test. This protects offline-first operation from dependencies on asynchronous local data as well as on the network. ([#5305 review](https://github.com/cybersemics/em/pull/5305#pullrequestreview-5182621070))
+
+The ban on arbitrary sleeps is about waiting for real time to pass, not about safety limits or time-dependent behavior:
 
 - Runner timeouts such as Vitest's `testTimeout` and WDIO's `waitforTimeout` are legitimate safety limits.
 - When elapsed time is the behavior under test (debounce, throttle, delayed UI, etc.), use fake timers and advance them explicitly instead of sleeping in real time.
@@ -392,7 +394,7 @@ The test client is the sole viewport owner: Browserless's server launch options 
 
 Both paths install Microsoft Core Fonts, which packages non-free fonts used in snapshots.
 
-Shared setup dismisses the visible welcome modal and starts interacting without waiting for the local database. [`resetApp`](../src/e2e/puppeteer/helpers/resetApp.ts) likewise waits for the visible empty thoughtspace, not database readiness. The frontend must remain usable while persistence initializes in the background; late cursor restoration must preserve a cursor already established by interaction. A blanket initialization wait would hide regressions in that contract. Persistence-specific reloads through [`refresh`](../src/e2e/puppeteer/helpers/refresh.ts) still synchronize pending writes and initialization; tests should otherwise prefer a waiter for the expected visible content or cursor.
+Shared setup dismisses the visible welcome modal and starts interacting without waiting for the local database. [`resetApp`](../src/e2e/puppeteer/helpers/resetApp.ts) likewise waits for the visible empty thoughtspace, not database readiness. This preserves the [visible readiness contract](#3-never-wait-for-wall-clock-time-wait-for-the-response) during startup; late cursor restoration must preserve a cursor already established by interaction. Persistence-specific reloads through [`refresh`](../src/e2e/puppeteer/helpers/refresh.ts) still synchronize pending writes and initialization; tests should otherwise prefer a waiter for the expected visible content or cursor.
 
 Browserless Chromium runs with HTTP/2 disabled because current Chromium can reset its certificate verifier while Vite's large module graph is loading, aborting the shared HTTP/2 session with `ERR_CERT_VERIFIER_CHANGED`; HTTPS, secure-context APIs, and WebSockets remain enabled.
 
@@ -611,7 +613,7 @@ The scope of a review is everything the tests depend on to mean something: the t
 2. **Reachable arrange** — Could normal application behavior create the arranged state? Are essential preconditions present and non-contradictory?
 3. **Act** — Is the behavior under test triggered through a real user entry point (Puppeteer/iOS), `userEvent`/`fireEvent` (JSDOM), or the public interface (unit/store)?
 4. **Backdoors** — Are internals touched only via the [sanctioned helpers](#sanctioned-backdoors), and only in arrange/assert/wait — never in the act?
-5. **Waiting and flakes** — No wall-clock sleeps or hand-rolled polling loops? Does each wait name a user-visible condition rather than a proxy such as an exported outline? Are non-visual state/DB waiters only prerequisites to a visible assertion? Was the controlling condition investigated before adding a retry or workaround?
+5. **Waiting and flakes** — No wall-clock sleeps or hand-rolled polling loops? Does each wait name a user-visible condition rather than a proxy such as an exported outline? Does shared setup let tests interact as soon as the UI is visibly ready, without waiting for background initialization? Are non-visual state/DB waiters only prerequisites to a visible assertion? Was the controlling condition investigated before adding a retry or workaround?
 6. **Helper contracts** — Is the test composed from narrow, intent-named helpers? Are expectations visible in the test, unrelated waits absent from action helpers, and missing required targets reported as errors?
 7. **Selectors** — Do DOM locators identify meaning (role/name, label, semantic value, or test id) rather than style, ancestry, index, or render order?
 8. **Assertions** — Do assertions read exact user-visible output rather than Redux state, truthiness, or a proxy that plausible wrong behavior could satisfy? Is every negative assertion evaluated while the wrong behavior could still manifest, or superseded by a positive assertion that excludes it?
