@@ -1,6 +1,7 @@
 import { importTextActionCreator as importText } from '../../../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../../actions/keyboardOpen'
 import store from '../../../../stores/app'
+import virtualKeyboardStore from '../../../../stores/virtualKeyboardStore'
 import initStore from '../../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../../test-helpers/setCursorFirstMatch'
 import * as selection from '../../../selection'
@@ -8,13 +9,23 @@ import androidCapacitorHandler from '../androidCapacitorHandler'
 
 /** Captures the native keyboard listeners registered by the handler so the test can invoke them. */
 const mockKeyboardListeners: Record<string, () => void> = {}
+const mockTrackerListeners: Record<string, (event: { phase: string; height: number }) => void> = {}
+const mockState = vi.hoisted(() => ({ trackerAvailable: false }))
+const mockHide = vi.fn(() => Promise.resolve())
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
     getPlatform: () => 'android',
     isNativePlatform: () => true,
-    isPluginAvailable: () => true,
+    isPluginAvailable: (name: string) => name === 'Keyboard' || mockState.trackerAvailable,
   },
+  registerPlugin: () => ({
+    addListener: (event: string, callback: (data: { phase: string; height: number }) => void) => {
+      mockTrackerListeners[event] = callback
+      return Promise.resolve({ remove: () => {} })
+    },
+    removeAllListeners: () => Promise.resolve(),
+  }),
 }))
 
 vi.mock('@capacitor/keyboard', () => ({
@@ -23,12 +34,17 @@ vi.mock('@capacitor/keyboard', () => ({
       mockKeyboardListeners[event] = callback
       return Promise.resolve({ remove: () => {} })
     },
-    hide: () => Promise.resolve(),
+    hide: () => mockHide(),
     removeAllListeners: () => Promise.resolve(),
   },
 }))
 
-beforeEach(initStore)
+beforeEach(async () => {
+  await initStore()
+  mockState.trackerAvailable = false
+  mockHide.mockClear()
+  document.documentElement.style.removeProperty('--virtual-keyboard-height')
+})
 
 it('exits edit mode when the native keyboard hides (e.g. Android Down Arrow)', () => {
   // put the cursor on a thought with the keyboard open
@@ -74,4 +90,42 @@ it('collapses a selected range before the native keyboard starts hiding', () => 
   expect(document.activeElement).toBe(editable)
 
   document.body.removeChild(editable)
+})
+
+it('keeps the editor focused while the tracked keyboard closes, then exits edit mode', () => {
+  mockState.trackerAvailable = true
+  store.dispatch([importText({ text: '- a' }), setCursor(['a']), keyboardOpen({ value: true })])
+
+  const editable = document.createElement('div')
+  editable.setAttribute('contenteditable', 'true')
+  editable.textContent = 'a'
+  document.body.appendChild(editable)
+  editable.focus()
+
+  androidCapacitorHandler.init()
+  const progress = mockTrackerListeners.keyboardProgress
+  expect(progress).toBeDefined()
+
+  progress({ phase: 'willShow', height: 0 })
+  progress({ phase: 'progress', height: 160 })
+  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('160px')
+  progress({ phase: 'didShow', height: 320 })
+  expect(virtualKeyboardStore.getState().open).toBe(true)
+
+  expect(androidCapacitorHandler.hidePreservingFocus()).toBe(true)
+  expect(mockHide).toHaveBeenCalledOnce()
+  selection.setRange(editable, { start: 0, end: 1 })
+  progress({ phase: 'willHide', height: 320 })
+  progress({ phase: 'progress', height: 100 })
+  expect(selection.isCollapsed()).toBe(true)
+  expect(document.activeElement).toBe(editable)
+  expect(store.getState().isKeyboardOpen).toBe(true)
+  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('100px')
+
+  progress({ phase: 'didHide', height: 0 })
+  expect(store.getState().isKeyboardOpen).toBe(false)
+  expect(virtualKeyboardStore.getState().open).toBe(false)
+  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('0px')
+  document.body.removeChild(editable)
+  androidCapacitorHandler.destroy()
 })

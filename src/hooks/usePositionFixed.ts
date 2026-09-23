@@ -1,4 +1,5 @@
-import { isCapacitor, isSafari } from '../browser'
+import { Capacitor } from '@capacitor/core'
+import { isCapacitor, isIOS, isSafari } from '../browser'
 import viewportStore from '../stores/viewport'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import useScrollTop from './useScrollTop'
@@ -79,10 +80,12 @@ const usePositionFixed = ({
   // Calculate `top` values for normal `position: fixed`.
   if (position === 'fixed') {
     if (fromBottom) {
-      // Normal fixed positioning anchored to the bottom — safe-area-bottom keeps the element
-      // above the home indicator on rounded screens, and virtualKeyboard.height pushes it
-      // above the keyboard when open.
-      bottom = `calc(env(safe-area-inset-bottom) + ${virtualKeyboard.height}px + ${offset}px)`
+      // The Android tracker reports the full inset (including navigation), so take the greater
+      // of it and the resting safe area. Other handlers store height above the safe-area baseline.
+      bottom =
+        isCapacitor() && !isIOS && Capacitor.isPluginAvailable('VirtualKeyboardTracker')
+          ? `calc(max(env(safe-area-inset-bottom), var(--virtual-keyboard-height, 0px)) + ${offset}px)`
+          : `calc(env(safe-area-inset-bottom) + ${virtualKeyboard.height}px + ${offset}px)`
     } else {
       // fromTop
       // Normal fixed positioning anchored to the top — safe-area-top keeps the element

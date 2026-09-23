@@ -1,6 +1,7 @@
 package com.emtheapp.em;
 
 import android.os.Bundle;
+import android.os.Build;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -11,6 +12,9 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            registerPlugin(VirtualKeyboardTracker.class);
+        }
         super.onCreate(savedInstanceState);
 
         // When the keyboard (IME) opens, Android sends window insets to the FrameLayout that contains the WebView.
