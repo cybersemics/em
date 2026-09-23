@@ -65,7 +65,11 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // only obstruction. In mobile web the obstruction is the bottom navbar within the (already keyboard-aware)
   // visual viewport. (#4326)
   const navbarObstruction = isKeyboardOverlaying && keyboardOpen ? 0 : (navbarRect?.height ?? 0)
-  const bottomBoundary = effectiveViewportHeight - navbarObstruction
+  // Autocrop re-runs after a scroll and shifts the content down, so y here sits above where the cursor actually lands.
+  // Hold the boundary a line higher while the keyboard covers the screen, or a cursor that is really behind the
+  // keyboard reads as visible and is never scrolled (most visibly when creating a thought at the bottom of the list).
+  const keyboardClearance = isKeyboardOverlaying && keyboardOpen ? height : 0
+  const bottomBoundary = effectiveViewportHeight - navbarObstruction - keyboardClearance
 
   const isAboveViewport = yViewport < toolbarBottom
   const isBelowViewport = yViewport + height > bottomBoundary
