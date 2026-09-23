@@ -378,14 +378,6 @@ Navigate to Home.
 
 https://github.com/user-attachments/assets/f9d81d8f-f03e-45d3-850e-55f9f4b56a0d
 
-### Search
-
-Open the Search input. Use the same command to close.
-
-<kbd>Command + Option + f</kbd>
-
-https://github.com/user-attachments/assets/682334ea-823e-497b-818f-584639a5db5b
-
 ### New Thought
 
 Create a shiny new thought.

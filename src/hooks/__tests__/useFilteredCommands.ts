@@ -184,7 +184,6 @@ describe('useFilteredCommands', () => {
   beforeEach(() => {
     // Reset stores
     store.dispatch({ type: 'clear', full: true })
-    gestureStore.update({ gesture: '', possibleCommands: [] })
     vi.clearAllMocks()
   })
 

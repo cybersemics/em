@@ -155,7 +155,6 @@ const GestureMenu: FC<{
 function Glow() {
   return (
     <div
-      data-testid='glow-background'
       className={css({
         position: 'absolute',
         pointerEvents: 'none',
@@ -165,6 +164,7 @@ function Glow() {
       })}
     >
       <div
+        data-testid='glow-background'
         className={css({
           backgroundImage: 'url(/img/gesture-menu/glow.avif)',
           backgroundRepeat: 'no-repeat',

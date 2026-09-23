@@ -3,7 +3,6 @@ import Thunk from '../@types/Thunk'
 import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
 import noteThought from '../selectors/noteThought'
 import noteValue from '../selectors/noteValue'
@@ -12,6 +11,7 @@ import resolveNotePath from '../selectors/resolveNotePath'
 import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
+import editableSyncStore from '../stores/editableSync'
 import formatSelectionHtml, { FormatCommand, FormatOptions } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
@@ -66,9 +66,9 @@ const composePendingFormat = (
  */
 const registerNativeUndoStep = (html: string): void => {
   if (!isTouch || !isSafari()) return
-  globals.suppressChange = true
+  editableSyncStore.update({ suppressChange: true })
   document.execCommand('insertHTML', false, html)
-  globals.suppressChange = false
+  editableSyncStore.update({ suppressChange: false })
 }
 
 /** Format the browser selection or cursor thought as bold, italic, strikethrough, underline, code, color, or removeFormat.
