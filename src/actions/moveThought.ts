@@ -54,13 +54,13 @@ const rerankUpdated = (state: State, id: ThoughtId): State => {
   const thought = getThoughtById(state, id)
   if (!thought) return state
 
-  if (getSortPreference(state, thought.parentId).type !== 'Updated') return state
+  const sortPreference = getSortPreference(state, thought.parentId)
+  if (sortPreference.type !== 'Updated') return state
 
   const siblings = getChildrenRanked(state, thought.parentId).filter(child => child.id !== id)
   if (siblings.length === 0) return state
 
-  const isDescending = getSortPreference(state, thought.parentId).direction === 'Desc'
-  const rank = isDescending ? siblings[0].rank - 1 : siblings[siblings.length - 1].rank + 1
+  const rank = sortPreference.direction === 'Desc' ? siblings[0].rank - 1 : siblings[siblings.length - 1].rank + 1
   if (rank === thought.rank) return state
 
   return updateThoughts(state, {
