@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import Dispatch from '../@types/Dispatch'
 import State from '../@types/State'
@@ -27,7 +26,7 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 const cursorUpCommand = {
   id: 'cursorUp',
   label: 'Cursor Up' as const,
-  keyboard: [{ key: Key.ArrowUp }, { key: Key.ArrowUp, shift: true }],
+  keyboard: [{ key: 'ArrowUp' }, { key: 'ArrowUp', shift: true }],
   hideFromHelp: true,
   multicursor: false,
   svg: CursorUpIcon,

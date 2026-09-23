@@ -9,30 +9,19 @@ import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
+import findCursor from '../../test-helpers/queries/findCursor'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
+import selectRange from '../../test-helpers/selectRange'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import extractSubthoughtCommand from '../extractSubthought'
-
-/**
- * Set range selection.
- */
-const setSelection = (element: HTMLElement, selectionStart: number, selectionEnd: number) => {
-  const range = document.createRange()
-  const sel = window.getSelection()
-
-  range.setStart(element.childNodes[0], selectionStart)
-  range.setEnd(element.childNodes[0], selectionEnd)
-
-  sel?.removeAllRanges()
-  sel?.addRange(range)
-
-  return range.toString()
-}
 
 /**
  * Moves the browser selection off the thought and onto an input, as the Command Universe's search box does when it
@@ -93,7 +82,7 @@ describe('Extract Subthought', () => {
     const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
 
-    const selectedText = setSelection(thought!, 10, 17)
+    const selectedText = selectRange(thought!, 10, 17)
     act(() => {
       store.dispatch([extractSubthought()])
     })
@@ -122,7 +111,7 @@ describe('Extract Subthought', () => {
     const thought = await findThoughtByText(thoughtValue)
     expect(thought).toBeTruthy()
 
-    const selectedText = setSelection(thought!, 10, 22)
+    const selectedText = selectRange(thought!, 10, 22)
     act(() => {
       store.dispatch([extractSubthought()])
     })
@@ -133,6 +122,151 @@ describe('Extract Subthought', () => {
     const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
 
     expect(cursorThoughts).toMatchObject([{ value: thoughtValue.slice(0, 9) }])
+  })
+
+  describe('formatting', () => {
+    it('extracts the selection with its formatting intact', async () => {
+      act(() => {
+        store.dispatch([importText({ text: '- <b>Lorem ipsum dolor</b>' }), setCursor(['<b>Lorem ipsum dolor</b>'])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      selectRange(thought!, 6, 12)
+
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
+
+      const state = store.getState()
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>Lorem dolor</b>')
+      expect(getAllChildrenAsThoughtsByContext(state, ['<b>Lorem dolor</b>']).map(child => child.value)).toEqual([
+        '<b>ipsum</b>',
+      ])
+    })
+
+    it('merges the tags that become adjacent at every level of nesting', async () => {
+      act(() => {
+        store.dispatch([
+          importText({ text: '- <b>Lorem <i>ipsum dolor sit</i> amet</b>' }),
+          setCursor(['<b>Lorem <i>ipsum dolor sit</i> amet</b>']),
+        ])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      selectRange(thought!, 12, 17)
+
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
+
+      // Both halves of the split carry the whole enclosing chain, so re-joining them duplicates <b> at the top level
+      // and <i> one level down, the latter only becoming adjacent once the <b>s have merged.
+      const state = store.getState()
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<b>Lorem <i>ipsum  sit</i> amet</b>')
+      expect(
+        getAllChildrenAsThoughtsByContext(state, ['<b>Lorem <i>ipsum  sit</i> amet</b>']).map(child => child.value),
+      ).toEqual(['<b><i>dolor</i></b>'])
+    })
+
+    it('keeps each color when the selection spans two of them', async () => {
+      const value = '<span style="color: red;">Lorem ipsum </span><span style="color: green;">dolor sit</span>'
+      act(() => {
+        store.dispatch([importText({ text: `- ${value}` }), setCursor([value])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      // "ipsum dolor", which starts in the red half and ends in the green half
+      selectRange(thought!, 6, 17)
+
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
+
+      // The space on either side of the selection is left in place, as it is for an unformatted thought.
+      const state = store.getState()
+      const newValue = '<span style="color: red;">Lorem </span><span style="color: green;"> sit</span>'
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe(newValue)
+      expect(getAllChildrenAsThoughtsByContext(state, [newValue]).map(child => child.value)).toEqual([
+        '<span style="color: red;">ipsum </span><span style="color: green;">dolor</span>',
+      ])
+    })
+
+    it('extracts a selection that starts in the second text node', async () => {
+      act(() => {
+        store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      selectRange(thought!, 4, 7)
+
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
+
+      // The space on either side of the selection is left in place, as it is for an unformatted thought, and the <b>
+      // the split empties is dropped rather than left in the value.
+      const state = store.getState()
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one  three')
+      expect(getAllChildrenAsThoughtsByContext(state, ['one  three']).map(child => child.value)).toEqual(['<b>two</b>'])
+    })
+
+    it('extracts a selection that starts in the third text node', async () => {
+      act(() => {
+        store.dispatch([importText({ text: '- one <b>two</b> three' }), setCursor(['one <b>two</b> three'])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      selectRange(thought!, 8, 13)
+
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
+
+      const state = store.getState()
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one <b>two</b>')
+      expect(getAllChildrenAsThoughtsByContext(state, ['one <b>two</b>']).map(child => child.value)).toEqual(['three'])
+    })
+
+    it('extracts text that has a background color', async () => {
+      // seeded with newThought because importText rewrites the font tag that applyColor produces into a span
+      const value =
+        '<font color="#000000" style="background-color: rgb(0, 214, 136);">Lorem ipsum dolor sit amet</font>'
+      act(() => {
+        store.dispatch([newThought({ value }), setCursor([value])])
+      })
+
+      await act(vi.runOnlyPendingTimersAsync)
+
+      const thought = await findCursor()
+      expect(thought).toBeTruthy()
+      selectRange(thought!, 0, 11)
+
+      act(() => {
+        store.dispatch(extractSubthought())
+      })
+
+      const state = store.getState()
+      const newValue = '<font color="#000000" style="background-color: rgb(0, 214, 136);">dolor sit amet</font>'
+      expect(getThoughtById(state, head(state.cursor!))!.value).toBe(newValue)
+      expect(getAllChildrenAsThoughtsByContext(state, [newValue]).map(child => child.value)).toEqual([
+        '<font color="#000000" style="background-color: rgb(0, 214, 136);">Lorem ipsum</font>',
+      ])
+    })
   })
 
   describe('multicursor', () => {
@@ -154,7 +288,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findThoughtByText('alpha bravo')
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       act(() => {
         store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
@@ -188,7 +322,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findThoughtByText('alpha bravo')
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       // select a thought other than the one being edited, as alt-clicking its bullet does
       act(() => {
@@ -222,7 +356,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findThoughtByText('alpha bravo')
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       act(() => {
         store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
@@ -291,7 +425,7 @@ describe('Extract Subthought', () => {
 
       const thought = await findThoughtByText('alpha bravo')
       expect(thought).toBeTruthy()
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       act(() => {
         store.dispatch([addMulticursor(['alpha bravo']), addMulticursor(['charlie delta']), addMulticursor(['echo'])])
@@ -326,7 +460,7 @@ describe('Extract Subthought', () => {
       await act(vi.runOnlyPendingTimersAsync)
 
       const thought = await findThoughtByText('hello world')
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       // Opening the Command Universe snapshots the selection; its search input then takes it. Executing a command
       // closes the Command Universe first, so the snapshot has to survive the close.
@@ -363,7 +497,7 @@ describe('Extract Subthought', () => {
       await act(vi.runOnlyPendingTimersAsync)
 
       const thought = await findThoughtByText('alpha bravo')
-      setSelection(thought!, 6, 11)
+      selectRange(thought!, 6, 11)
 
       act(() => {
         store.dispatch(desktopCommandUniverse())

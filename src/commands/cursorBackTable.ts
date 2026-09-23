@@ -1,10 +1,9 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import BackIcon from '../components/icons/BackIcon'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import isTableCol2 from '../selectors/isTableCol2'
+import heldKeysStore from '../stores/heldKeys'
 import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 
@@ -13,7 +12,7 @@ const cursorBackTableCommand = {
   id: 'cursorBackTable',
   label: 'Cursor Back (Table Column)' as const,
   description: 'In table view, move the cursor from a column-two thought back to its column-one parent.',
-  keyboard: { key: Key.ArrowLeft },
+  keyboard: { key: 'ArrowLeft' },
   hideFromHelp: true,
   multicursor: false,
   svg: BackIcon,
@@ -45,7 +44,7 @@ const cursorBackTableCommand = {
     dispatch(setCursor({ path: parentPath, offset: value?.length ?? 0, preserveMulticursor: true }))
 
     // suppress auto-repeat of this key until it is released so that holding it does not race the caret through the parent thought
-    if (type === 'keyboard') globals.arrowKeyBoundaryCross = event.key
+    if (type === 'keyboard') heldKeysStore.update({ arrowKeyBoundaryCross: event.key })
   },
 } satisfies Command
 

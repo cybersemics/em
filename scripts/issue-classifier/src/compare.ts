@@ -281,8 +281,8 @@ export const mapConcurrent = async <T, R>(items: T[], limit: number, fn: (item: 
 /** Runs every model over every sample, `runs` times, and appends the graded rows to the output file. */
 const main = async () => {
   const { models, runs, samples: samplesFile, split, out, votes } = parseArgs(process.argv.slice(2))
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) throw new Error('OPENAI_API_KEY is required')
+  const apiKey = process.env.OPENAI_API_KEY_ISSUE_CLASSIFIER || process.env.OPENAI_API_KEY
+  if (!apiKey) throw new Error('OPENAI_API_KEY_ISSUE_CLASSIFIER or OPENAI_API_KEY is required')
 
   const repo = process.env.GITHUB_REPOSITORY ?? process.env.ISSUE_CLASSIFIER_REPO ?? DEFAULT_REPO
   const instructions = loadInstructions()

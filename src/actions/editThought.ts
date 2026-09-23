@@ -10,6 +10,7 @@ import { clientId } from '../data-providers/thoughtspaceSession'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
+import getMovePlacement from '../selectors/getMovePlacement'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -150,10 +151,12 @@ const editThought = (
   const thoughtNew: Thought = {
     ...editedThought,
     ...(editedThought.generating ? { generating: false } : null),
+    // Editing a value does not change the thought's created timestamp, so under a Created sort its rank already
+    // reflects its sort key and must be preserved. Re-ranking it would move it past siblings created in the same
+    // millisecond, which sort by rank (#4085).
     rank:
-      !isValueEmptyOrEmojiOnly && (sortType === 'Alphabetical' || sortType === 'Created' || sortType === 'Updated')
+      !isValueEmptyOrEmojiOnly && (sortType === 'Alphabetical' || sortType === 'Updated')
         ? getSortedRank(state, editedThought.parentId, newValue, {
-            created: editedThought.created,
             staleId: editedThought.id,
           })
         : editedThought.rank,
@@ -169,6 +172,19 @@ const editThought = (
     thoughts: { ...state.thoughts, thoughtIndex: { ...state.thoughts.thoughtIndex, [editedThought.id]: thoughtNew } },
   }
 
+  // If we're editing a note, the thought that owns the note is re-ranked, since a Note-sorted context sorts its
+  // children by their note value rather than their own.
+  const noteParentThought = isNote ? getThoughtById(state, parentOfEditedThought.parentId) : null
+  const noteParentThoughtNew =
+    noteParentThought && getSortPreference(state, noteParentThought.parentId).type === 'Note'
+      ? {
+          ...noteParentThought,
+          rank: getSortedRank(state, noteParentThought.parentId, newValue),
+          lastUpdated: timestamp(),
+          updatedBy: clientId,
+        }
+      : null
+
   const thoughtIndexUpdates: Index<Thought | null> = {
     ...(isAttribute(newValue)
       ? {
@@ -179,24 +195,29 @@ const editThought = (
         }
       : null),
     [editedThought.id]: thoughtNew,
+    ...(noteParentThoughtNew ? { [noteParentThoughtNew.id]: noteParentThoughtNew } : null),
   }
 
-  // If we're editing a note, update the parent thought's rank
-  if (isNote) {
-    const parentThought = getThoughtById(state, parentOfEditedThought.parentId)
-    if (parentThought) {
-      const sortPreference = getSortPreference(state, parentThought.parentId)
-      const sortType = sortPreference.type
-      if (sortType === 'Note') {
-        const newParentRank = getSortedRank(state, parentThought.parentId, newValue)
-        thoughtIndexUpdates[parentThought.id] = {
-          ...parentThought,
-          rank: newParentRank,
-          lastUpdated: timestamp(),
-          updatedBy: clientId,
+  // A new rank is invisible to the persistence layer on its own: sibling order is stored structurally there and
+  // only changes on a move, which is minted from an explicit placement. Without one the thought keeps the position
+  // it had when it was created, so the sorted position it was given here is lost on reload (#5126).
+  const movePlacements: Index<ThoughtId | null> = {
+    ...(thoughtNew.rank !== editedThought.rank
+      ? {
+          [editedThought.id]: getMovePlacement(state, editedThought.parentId, {
+            id: editedThought.id,
+            rank: thoughtNew.rank,
+          }),
         }
-      }
-    }
+      : null),
+    ...(noteParentThoughtNew && noteParentThoughtNew.rank !== noteParentThought?.rank
+      ? {
+          [noteParentThoughtNew.id]: getMovePlacement(state, noteParentThoughtNew.parentId, {
+            id: noteParentThoughtNew.id,
+            rank: noteParentThoughtNew.rank,
+          }),
+        }
+      : null),
   }
 
   // preserve contextViews
@@ -222,6 +243,7 @@ const editThought = (
     cursorOffset,
     lexemeIndexUpdates,
     thoughtIndexUpdates,
+    movePlacements,
     // recentlyEdited,
   })
 

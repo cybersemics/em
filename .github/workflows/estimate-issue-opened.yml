@@ -33,7 +33,9 @@ jobs:
         run: node scripts/estimate/src/issue.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # OpenAI API key used for issue estimation inference (issue.ts).
+          # OpenAI API key used for issue estimation inference (issue.ts). The estimate key bills this
+          # workflow separately in the OpenAI dashboard; the shared key is the fallback.
+          OPENAI_API_KEY_ESTIMATE: ${{ secrets.OPENAI_API_KEY_ESTIMATE }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
           EVERHOUR_PROJECT_ID: ${{ secrets.EVERHOUR_PROJECT_ID }}

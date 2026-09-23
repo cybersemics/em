@@ -59,7 +59,7 @@ Since August 2025 the Copilot coding agent reads `AGENTS.md` — and `CLAUDE.md`
 
 There is no documented way to switch that off, so this cannot be solved by exclusion. Two consequences follow.
 
-**Every statement in `AGENTS.md` has to be true for the cloud agent as well.** An early draft opened by declaring that the Copilot agent does not read the file, and elsewhere stated that the browser and device skills were unavailable. Copilot would have read both as being about itself — and the second is precisely the belief [`issue-repro`](skills.md#issue-repro) exists to fight, since agents talk themselves out of iOS work given any excuse. Anything environment-specific belongs in the Copilot files, which the cloud agent reads at higher precedence anyway.
+**Every statement in `AGENTS.md` has to be true for the cloud agent as well.** An early draft opened by declaring that the Copilot agent does not read the file, and elsewhere stated that the browser and device skills were unavailable. Copilot would have read both as being about itself — and the second is precisely the belief that the [`reproduce`](skills.md#reproduce) skill exists to fight, since agents talk themselves out of iOS work given any excuse. Anything environment-specific belongs in the Copilot files, which the cloud agent reads at higher precedence anyway.
 
 **`AGENTS.md` is deliberately the softer document.** It describes rather than dictates, because a developer's own machine is their own workflow — branch naming, commit granularity, and when to run what are not this file's business. That register is safe *because* of the precedence order: the strict forms of the rules that protect shared state, like the exit gate and the documentation obligation, are stated independently in `.github/copilot-instructions.md`, which outranks this file. The rule to remember when editing: **do not soften something only `AGENTS.md` says**, or the cloud agent inherits the soft version by default.
 
@@ -79,19 +79,29 @@ The skill states *what* must be true and lets a single clause carry *how* per en
 
 ## What is shared, and what is not
 
-**Shared** — [`write-issue`](skills.md#write-issue), [`plan`](skills.md#plan), [`tdd-write-failing-test`](skills.md#tdd-write-failing-test), [`test-diagnosis`](skills.md#test-diagnosis), [`puppeteer-update-snapshots`](skills.md#puppeteer-update-snapshots), [`ci-monitor`](skills.md#ci-monitor), [`docs-sync`](skills.md#docs-sync), [`end-session`](skills.md#end-session).
+**Shared** — [`write-issue`](skills.md#write-issue), [`plan`](skills.md#plan), [`tdd-write-failing-test`](skills.md#tdd-write-failing-test), [`compare-debug-log`](skills.md#compare-debug-log), [`test-diagnosis`](skills.md#test-diagnosis), [`puppeteer-update-snapshots`](skills.md#puppeteer-update-snapshots), [`ci-monitor`](skills.md#ci-monitor), [`docs-sync`](skills.md#docs-sync), [`end-session`](skills.md#end-session).
 
 Three of those needed a per-harness clause. `end-session` and `ci-monitor` name a Copilot tool that has no local equivalent — opening a pull request, listing workflow runs — and now name the `gh` command alongside it. `test-diagnosis` was written as though a failure could only arrive from CI; its trigger now covers a suite run locally, where the output is already on screen rather than in a log to be fetched.
 
 `write-issue` needed nothing — it shells out to `gh` and names no provisioned resource.
 
+`compare-debug-log` is shared even though it borders the browser story, because the half that carries the insight does not need a browser: comparing two logs is two files and a script. Only the capture step wants a live session, and a local agent that has one — a dev server and a Chrome on a debugging port — gets that too. Given a log a reporter attached and one captured any other way, the comparison runs anywhere.
+
 The rest of it was portable untouched. `puppeteer-update-snapshots` turned out to be the *most* local skill in the set — its command explicitly unsets `GITHUB_ACTIONS` so that the Docker and Vite setup runs, which is exactly the local path.
 
-**Not shared** — [`browser-control`](skills.md#browser-control) and its Chrome and iOS halves, [`issue-repro`](skills.md#issue-repro), and [`run-test`](skills.md#run-test).
+**Not shared** — [`browser-control`](skills.md#browser-control) and its Chrome and iOS halves, [`reproduce`](skills.md#reproduce), and [`run-test`](skills.md#run-test).
 
-These depend on things the runner provides: Chrome already listening on a debugging port, a dev server already up, BrowserStack credentials, and MCP servers configured outside this repository. `issue-repro` and `run-test` are not conceptually cloud-only — reproduce before theorising, and never let a skipped test's "0 tests run" masquerade as a pass, are good rules anywhere — but both delegate to `browser-control`, so adapting them means solving the local browser story first. `AGENTS.md` states the reproduce-first principle in prose instead, so the discipline survives even though the skill does not.
+These depend on things the runner provides: Chrome already listening on a debugging port, a dev server already up, BrowserStack credentials, and MCP servers configured outside this repository. The `reproduce` and `run-test` skills are not conceptually cloud-only — reproduce before theorising, and never let a skipped test's "0 tests run" masquerade as a pass, are good rules anywhere — but both delegate to `browser-control`, so adapting them means solving the local browser story first. `AGENTS.md` states the reproduce-first principle in prose instead, so the discipline survives even though the skill does not.
 
-One idea inside `browser-control` is worth knowing wherever you drive this app, because it is a property of **em** rather than of any harness: *observing is free, but actuating goes through the project's own e2e helpers*, since em's controls use `fastClick` and a raw mouse click silently no-ops under touch emulation. It has not been extracted into a shared skill — do that if it starts causing trouble locally.
+One idea inside `browser-control` is worth knowing wherever you drive this app, because it is a property of **em** rather than of any harness: *observing is free, but actuating goes through the project's own e2e helpers*, since some of em's controls (the toolbar buttons and color swatches) are bound to touch events only when `isTouch`, so a raw mouse click silently no-ops under touch emulation. It has not been extracted into a shared skill — do that if it starts causing trouble locally.
+
+## Claude Code in the cloud
+
+"Local" above means *not the Copilot cloud agent*, which is not quite the same as *on a laptop*: a Claude Code session started from [claude.ai/code](https://claude.ai/code) reads `AGENTS.md` through the same `CLAUDE.md` symlink and the same `.agents/skills/`, but runs on a disposable Anthropic-managed runner rather than on a developer's machine. Everything above still applies to it. Two properties of that runner do not apply to either of the others, and [`end-session`](skills.md#end-session) Step 8 is where they turn into rules.
+
+The runner is **reclaimed once the session goes idle**, and reopening the session provisions a fresh one. That makes idling the cheap state and waking the expensive one, which inverts the usual instinct to keep a session running: there is no compute charge for the runner, but every wake re-reads the whole conversation. A session whose work is finished should be allowed to end.
+
+The session can also be **woken by pull request activity**, which it subscribes to per pull request. Subscription is the right way to wait, because it costs nothing until GitHub actually emits something. A scheduled check-in on top of it is not, because it fires on a clock rather than on an event and pays to rebuild the runner that idling correctly released. The one blind spot is a conflict created when the base branch advances, which GitHub emits no webhook for at all — [`copilot-conflicts.yml`](../../.github/workflows/copilot-conflicts.yml) covers that from CI on every push to `main`, though it scans only pull requests authored by the Copilot account.
 
 ## Changing any of this
 
@@ -101,7 +111,7 @@ One idea inside `browser-control` is worth knowing wherever you drive this app, 
 ln -s ../../.github/skills/<name> .agents/skills/<name>
 ```
 
-Then add a row to the table in `AGENTS.md`, and update the shared list on this page. Check first that the skill names no cloud-only tool or provisioned resource — and if it names one in a single line, prefer the one-clause treatment above to leaving it out.
+Then mention it in `AGENTS.md`, where the shared skills are named in prose rather than tabulated, and update the shared list on this page. Check first that the skill names no cloud-only tool or provisioned resource — and if it names one in a single line, prefer the one-clause treatment above to leaving it out.
 
 **The two prompt files are not symlinked to each other, and should not be.** `AGENTS.md` and `.github/copilot-instructions.md` genuinely differ: one describes an environment that is already running, the other an environment you have to start, and one dictates where the other suggests. Their overlap is the parts already delegated to skills. Do not try to unify them — unify the procedures they both call instead. Remember that the cloud agent reads *both*, so they must not contradict each other, only differ in what they cover.
 

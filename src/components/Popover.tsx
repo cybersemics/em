@@ -2,21 +2,29 @@ import React, { FC, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
+import { isTouch } from '../browser'
 import useWindowOverflow from '../hooks/useWindowOverflow'
 import FadeTransition from './FadeTransition'
 import TriangleDown from './TriangleDown'
 
 interface PopoverProps {
+  ariaLabel?: string
   children: React.ReactNode
   show?: boolean
   size?: number
 }
 
 /** A reusable popover component that handles positioning and styling for popup menus. */
-const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
+const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => {
   const ref = useRef<HTMLDivElement>(null)
   const fontSize = useSelector(state => state.fontSize)
   const overflow = useWindowOverflow(ref)
+
+  /** Stops a tap that lands on the popover's padding rather than one of its options from reaching the toolbar button that renders the popover, which would otherwise close it (#4264). */
+  const containTap = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation()
+    e.preventDefault()
+  }
 
   return (
     <FadeTransition type='fast' in={show} exit={false} unmountOnExit>
@@ -38,6 +46,9 @@ const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
         }}
       >
         <div
+          aria-label={ariaLabel}
+          onClick={isTouch ? undefined : containTap}
+          onTouchEnd={isTouch ? containTap : undefined}
           className={css({
             backgroundColor: 'pickerBg',
             borderRadius: '3',
@@ -51,7 +62,8 @@ const Popover: FC<PopoverProps> = ({ children, show, size = 18 }) => {
           <TriangleDown
             fill={token('colors.fgOverlay90')}
             size={fontSize}
-            cssRaw={{ position: 'absolute', width: '100%' }}
+            // the triangle is full width and overlaps the top of the popover's content, so it must not intercept taps aimed at the options underneath it (#4264)
+            cssRaw={{ pointerEvents: 'none', position: 'absolute', width: '100%' }}
             style={{
               ...(overflow.left ? { left: -overflow.left } : { right: -overflow.right }),
               top: -fontSize / 2,

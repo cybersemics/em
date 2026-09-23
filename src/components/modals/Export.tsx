@@ -28,7 +28,8 @@ import replicateTree from '../../data-providers/data-helpers/replicateTree'
 import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
-import globals from '../../globals'
+import share from '../../device/share'
+import useOnClickOutside from '../../hooks/useOnClickOutside'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
 import { getChildrenRanked } from '../../selectors/getChildren'
@@ -266,20 +267,8 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
 
-  // Close the dropdown when clicking outside of it. Inlined from the unmaintained use-onclickoutside package.
-  useEffect(() => {
-    /** Closes the dropdown on mousedown/touchstart outside the dropdown element. */
-    const listener = (e: MouseEvent | TouchEvent) => {
-      if (!dropDownRef.current || dropDownRef.current.contains(e.target as Node)) return
-      closeDropdown()
-    }
-    document.addEventListener('mousedown', listener)
-    document.addEventListener('touchstart', listener, { passive: true })
-    return () => {
-      document.removeEventListener('mousedown', listener)
-      document.removeEventListener('touchstart', listener)
-    }
-  }, [closeDropdown])
+  // Close the dropdown when clicking outside of it.
+  useOnClickOutside(dropDownRef, closeDropdown)
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
@@ -309,6 +298,8 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  // Clears the alert ERROR_TIMEOUT after a clipboard error; cancelled by a successful copy. Scoped to this modal instance rather than a global, so it needs no reset between tests.
+  const errorTimer = useRef(0)
   const id = head(simplePaths[0])
   const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0]))) ?? ''
   const titleShort = ellipsize(title)
@@ -410,7 +401,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
     dispatch([closeModal(), alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`)])
 
-    clearTimeout(globals.errorTimer)
+    clearTimeout(errorTimer.current)
   }, [dispatch, exportThoughtsPhraseFinal])
 
   // Sets export content when pull is complete by useDescendants
@@ -466,8 +457,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         console.error(e)
         dispatch(error({ value: 'Error copying thoughts' }))
 
-        clearTimeout(globals.errorTimer)
-        globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
+        clearTimeout(errorTimer.current)
+        errorTimer.current = window.setTimeout(() => dispatch(alert(null)), 10000)
       })
 
       return () => {
@@ -508,7 +499,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   }, [onKeyDown])
 
   /** Shares or downloads when the export button is clicked. */
-  const onExportClick = () => {
+  const onExportClick = async () => {
     // On the iOS Capacitor app, the native share sheet can open while the software keyboard is
     // still visible, causing the two to overlap (#4294). Blur the focused editable and dismiss
     // the keyboard before presenting the share sheet. This is done synchronously (no await) so
@@ -518,15 +509,14 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       Keyboard.hide()
     }
 
-    // use mobile share if it is available
-    if (navigator.share) {
-      navigator.share({
-        text: exportContent!,
-        title: titleShort,
-      })
-    }
+    // use the native or mobile share dialog if it is available
+    const shared = await share({
+      text: exportContent!,
+      title: titleShort,
+    })
+
     // otherwise download the data with createObjectURL
-    else {
+    if (!shared) {
       try {
         download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
       } catch (err) {

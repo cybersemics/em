@@ -1,5 +1,4 @@
 import _ from 'lodash'
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import Path from '../@types/Path'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
@@ -40,7 +39,8 @@ const multicursor: Command['multicursor'] = {
             ...newSubthoughtPaths.map(path => addMulticursor({ path })),
             ...filteredCursors.map(path => removeMulticursor({ path })),
             // state.expanded is recalculated on setCursor, so set the cursor to apply the expansion of the new selection. The cursor is already in the last new subthought, so this does not move it.
-            setCursor({ path: _.last(newSubthoughtPaths)!, preserveMulticursor: true }),
+            // The new subthoughts are selected rather than edited, so close the keyboard that each exec opened, otherwise the Command Center stays closed over the selection on mobile (see selectNewCursors in commands.ts).
+            setCursor({ path: _.last(newSubthoughtPaths)!, isKeyboardOpen: false, preserveMulticursor: true }),
           ],
     )
   },
@@ -51,7 +51,7 @@ const newSubthoughtCommand = {
   label: 'New Subthought' as const,
   description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
   gesture: 'rdr',
-  keyboard: { key: Key.Enter, meta: true },
+  keyboard: { key: 'Enter', meta: true },
   multicursor,
   svg: Icon,
   canExecute: () => isDocumentEditable(),

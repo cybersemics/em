@@ -1,0 +1,18 @@
+{
+  // Typechecks the WebdriverIO (iOS Safari) tests. This is the only program that declares WebdriverIO's
+  // globals — browser, $, $$, and expect from @wdio/globals/types, mocha's describe/it via
+  // @wdio/mocha-framework — and @wdio/browserstack-service's global interfaces (State, GRRUrls, …).
+  // The root tsconfig excludes this directory so that none of those leak into app code. Modules shared
+  // with the app (e.g. src/util/consoleProxy.ts) are pulled in here by import and are therefore checked
+  // by both programs; the root one is what stops them from depending on these globals.
+  "extends": "../../../tsconfig.json",
+  // The app modules pulled in by import rely on the app's ambient declarations (vite-env.d.ts, @types/*.d.ts)
+  // and on the global augmentations in src/@types/index.ts (Window.em, the redux Dispatch overloads, …),
+  // which the root program gets from its src/**/*.ts include and this one has to name.
+  "include": ["**/*.ts", "../../@types/index.ts", "../../**/*.d.ts"],
+  // The root excludes this directory; exclude is inherited, so it must be reset here.
+  "exclude": [],
+  "compilerOptions": {
+    "types": ["node", "@wdio/globals/types", "@wdio/mocha-framework", "@wdio/browserstack-service"]
+  }
+}

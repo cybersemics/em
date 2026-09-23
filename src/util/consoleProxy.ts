@@ -3,41 +3,26 @@
  * sessionStorage when the VITE_BROWSER_CONSOLE_CAPTURE build-time env var is set.
  * BrowserStack does not provide native access to console logs from iOS runs;
  * this proxy lets us work around those limitations.
+ *
+ * This is the app side, imported first by src/index.tsx. The WebdriverIO side — draining the buffer
+ * and waiting for the proxy to install — lives in src/e2e/iOS/config/wdio.base.conf.ts, because it
+ * needs WebdriverIO's global `browser`, whose types are declared only for src/e2e/iOS. The two sides
+ * share nothing but the storage key and the record shape exported here.
  */
 
 export type CapturedLog = { level: string; message: string }
 
 /** SessionStorage key under which captured logs are buffered. Using sessionStorage rather than an in-memory array means the buffer survives same-tab page reloads, which iOS Safari occasionally does mid-test. */
-const STORAGE_KEY = '__capturedConsoleLogs__'
+export const CONSOLE_PROXY_STORAGE_KEY = '__capturedConsoleLogs__'
 
 /** Reads the buffer from sessionStorage. Returns [] on parse failure or missing buffer. */
 const read = (): CapturedLog[] => {
   try {
-    return JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? '[]') as CapturedLog[]
+    return JSON.parse(sessionStorage.getItem(CONSOLE_PROXY_STORAGE_KEY) ?? '[]') as CapturedLog[]
   } catch {
     return []
   }
 }
-
-/**
- * Atomically reads and clears the buffer for `key`. Runs IN THE REMOTE BROWSER:
- * drainConsoleProxy ships this via browser.execute, which serializes the function
- * source and drops all closure scope, so it must reference only its `key` param and
- * browser globals (no module-scope helpers, no STORAGE_KEY capture). Single source of
- * truth for the drain wire format.
- */
-const drainBuffer = (key: string): CapturedLog[] => {
-  try {
-    const logs = JSON.parse(sessionStorage.getItem(key) ?? '[]') as CapturedLog[]
-    sessionStorage.setItem(key, '[]')
-    return logs
-  } catch {
-    return []
-  }
-}
-
-/** Readiness probe for waitForConsoleProxy. Self-contained for the same browser.execute serialization reason as drainBuffer. The buffer key exists iff installConsoleProxy has run. */
-const isProxyInstalled = (key: string): boolean => sessionStorage.getItem(key) !== null
 
 let installed = false
 
@@ -54,9 +39,9 @@ const installConsoleProxy = (): void => {
   if (installed) return
   installed = true
 
-  // Create the storage key if it doesn't exist. drainConsoleProxy / waitForConsoleProxy use this as a readiness signal.
-  if (sessionStorage.getItem(STORAGE_KEY) === null) {
-    sessionStorage.setItem(STORAGE_KEY, '[]')
+  // Create the storage key if it doesn't exist. The WebdriverIO side uses its existence as the readiness signal.
+  if (sessionStorage.getItem(CONSOLE_PROXY_STORAGE_KEY) === null) {
+    sessionStorage.setItem(CONSOLE_PROXY_STORAGE_KEY, '[]')
   }
 
   const c = console as unknown as Record<string, (...args: unknown[]) => void>
@@ -67,32 +52,13 @@ const installConsoleProxy = (): void => {
         const message = args.map(a => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ')
         const buf = read()
         buf.push({ level: method, message })
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(buf))
+        sessionStorage.setItem(CONSOLE_PROXY_STORAGE_KEY, JSON.stringify(buf))
       } catch {
         // Serialization or storage failure (e.g. circular refs, quota) — drop this entry.
       }
       orig(...args)
     }
   }
-}
-
-/** Atomically reads and clears the console-proxy buffer in the remote browser. Returns [] when capture is not enabled or nothing has been captured. */
-export const drainConsoleProxy = async (): Promise<CapturedLog[]> => {
-  if (!process.env.VITE_BROWSER_CONSOLE_CAPTURE) return []
-  return browser.execute(drainBuffer, STORAGE_KEY)
-}
-
-/**
- * Resolves once the console proxy has installed in the remote browser, or rejects after `timeout` ms.
- *
- * No-op when VITE_BROWSER_CONSOLE_CAPTURE is unset – this env var must be set both at build time (so the served bundle includes the proxy) and at runtime (so this helper waits for it).
- */
-export const waitForConsoleProxy = async (timeout = 30000): Promise<void> => {
-  if (!process.env.VITE_BROWSER_CONSOLE_CAPTURE) return
-  await browser.waitUntil(async () => browser.execute(isProxyInstalled, STORAGE_KEY), {
-    timeout,
-    timeoutMsg: `Console proxy did not install within ${timeout}ms — VITE_BROWSER_CONSOLE_CAPTURE is set on the WDIO process but the served bundle was likely built without it. Rebuild with \`VITE_BROWSER_CONSOLE_CAPTURE=1 yarn build\` and re-serve.`,
-  })
 }
 
 export default installConsoleProxy

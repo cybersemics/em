@@ -30,7 +30,7 @@ Thoughts that are known to exist but haven't been loaded yet are flagged with `p
 | `'persistent'` (app default) | OPFS file `/treecrdt-em-${tsid}.db`, falling back to memory if OPFS is unavailable | `dedicated-worker` |
 | `'memory'` (unit tests, most e2e) | in-memory | `direct` |
 
-[`index.tsx`](../src/index.tsx) passes `testFlags.thoughtspaceStorage ?? 'persistent'`. If persistent storage was requested but the client came back with `storage === 'memory'`, the runtime logs a warning that changes will not survive a reload. The wa-sqlite WASM assets are emitted into `public/wa-sqlite` by the `treecrdt` Vite plugin (see [`vite.config.ts`](../vite.config.ts)).
+[`index.tsx`](../src/index.tsx) passes `testFlags.thoughtspaceStorage ?? 'persistent'`. If persistent storage was requested but the client came back with `storage === 'memory'`, the runtime logs a warning that changes will not survive a reload. `init` returns the storage the client actually opened, which [`initialize.ts`](../src/initialize.ts) puts in [`storageStatusStore`](../src/stores/storageStatus.ts); the Storage Diagnostics control in [`modals/Settings.tsx`](../src/components/modals/Settings.tsx) reports it alongside a live OPFS probe, so a browser that discards storage can be identified on a device with no reachable console. The wa-sqlite WASM assets are emitted into `public/wa-sqlite` by the `treecrdt` Vite plugin (see [`vite.config.ts`](../vite.config.ts)).
 
 The client surface em uses:
 
@@ -90,7 +90,7 @@ The function returns the `readonly Operation[]` it minted. That array is what th
 
 TreeCRDT stores sibling order directly, so a reorder is a `move` with an explicit placement (`first`, `last`, or `after: <siblingId>`) rather than a new rank number.
 
-`PushBatch.movePlacements: Index<ThoughtId | null>` carries that intent from the action layer: the key is the moved thought, the value is the sibling to place it after (`null` means first). It is produced by [`moveThought`](../src/actions/moveThought.ts), [`sort`](../src/actions/sort.ts), and the [undo/redo enhancer](../src/redux-enhancers/undoRedoEnhancer.ts).
+`PushBatch.movePlacements: Index<ThoughtId | null>` carries that intent from the action layer: the key is the moved thought, the value is the sibling to place it after (`null` means first). It is produced by [`moveThought`](../src/actions/moveThought.ts), [`sort`](../src/actions/sort.ts), [`editThought`](../src/actions/editThought.ts), and the [undo/redo enhancer](../src/redux-enhancers/undoRedoEnhancer.ts). `moveThought` and `editThought` derive theirs from the rank they are about to write with [`getMovePlacement`](../src/selectors/getMovePlacement.ts), which names the last sibling ranked before it. `editThought` needs one because editing a value re-ranks the thought within a sorted context, and a rank that arrives without a placement leaves the stored order untouched.
 
 `getTreecrdtPlacement` resolves it:
 
@@ -120,7 +120,7 @@ The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot`
 
 ### Memory management
 
-`freeThought` / `freeLexeme` are **no-ops** in the TreeCRDT provider. The whole thoughtspace is a single SQLite database, so there is no per-document cache to release — freeing memory only means dropping entries from the Redux indexes, which the `freeQueue` half of the push queue already does. [`redux-middleware/freeThoughts.ts`](../src/redux-middleware/freeThoughts.ts) dispatches `freeThoughts` once `thoughtIndex` exceeds `globals.freeThoughtsThreshold`.
+`freeThought` / `freeLexeme` are **no-ops** in the TreeCRDT provider. The whole thoughtspace is a single SQLite database, so there is no per-document cache to release — freeing memory only means dropping entries from the Redux indexes, which the `freeQueue` half of the push queue already does. [`redux-middleware/freeThoughts.ts`](../src/redux-middleware/freeThoughts.ts) dispatches `freeThoughts` once `thoughtIndex` exceeds the [`freeThoughtsThreshold`](../src/stores/freeThoughtsThreshold.ts) store's value.
 
 Deleting a thought is not a separate provider call: it is a `null` entry in `thoughtIndexUpdates`, handled by the write path above.
 
@@ -128,8 +128,8 @@ Deleting a thought is not a separate provider call: it is a `null` entry in `tho
 
 `ThoughtspaceRuntime` ([`thoughtspace.ts`](../src/data-providers/thoughtspace.ts), implemented in [`treecrdt/runtime.ts`](../src/data-providers/treecrdt/runtime.ts)) exposes `acquireAccess`, `init`, `drop`, `waitForIdle`, and `persistPushQueueBatches`.
 
-- **`init`** awaits `clientIdReady`, loads the permissions store, creates the client, binds it to the data provider (which seeds storage and subscribes to materialization), and finally tries to start WebSocket sync. `init` and `drop` are serialized on a single lifecycle tail, and adjacent `init` calls are coalesced, so teardown can never interleave with startup.
-- **`waitForIdle`** alternates between the write barrier and the materialization queue until neither version counter changes, then resolves; it rejects after `TREECRDT_IDLE_TIMEOUT = 30000` ms. E2E tests reach it through `em.testHelpers.waitForThoughtspaceRuntimeIdle`.
+- **`init`** awaits `clientIdReady`, loads the permissions store, creates the client, binds it to the data provider (which seeds storage and subscribes to materialization), and finally tries to start WebSocket sync. It resolves to `{ clientId, storage }`, where `storage` is the storage the client actually opened rather than the one requested. `init` and `drop` are serialized on a single lifecycle tail, and adjacent `init` calls are coalesced, so teardown can never interleave with startup.
+- **`waitForIdle`** alternates between the write barrier and the materialization queue until neither version counter changes, then resolves; it rejects after `TREECRDT_IDLE_TIMEOUT = 30000` ms. Puppeteer tests reach it through the [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) helper, which calls `em.testHelpers.waitForThoughtspaceRuntimeIdle`.
 
 ## Remote sync (opt-in)
 
@@ -142,18 +142,16 @@ Remote sync speaks the TreeCRDT sync protocol over a WebSocket ([`treecrdtWebSoc
 
 Failures are non-fatal by design: a failed start logs a warning and em keeps running against local storage only; a failed `pushLocalOps` logs and moves on.
 
-The [`server/`](../server) subpackage and [`src/@types/WebsocketProviderType.ts`](../src/@types/WebsocketProviderType.ts) are leftovers from the previous Hocuspocus/Yjs implementation. Nothing in the TreeCRDT client imports them.
-
 ## Push queue (Redux → TreeCRDT)
 
 [`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) is a Redux store enhancer that runs after every reducer. It drains `state.pushQueue` (a list of `PushBatch` objects pushed there by [`updateThoughts`](../src/actions/updateThoughts.ts) and friends) and partitions it into:
 
-- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which wraps them in the write barrier and calls the active data provider's `updateThoughts` with the batch's `thoughtIndexUpdates`, `lexemeIndexUpdates`, `lexemeIndexUpdatesOld`, and `movePlacements`. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
+- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which wraps them in the write barrier and calls the active data provider's `updateThoughts` with the batch's `thoughtIndexUpdates`, `lexemeIndexUpdates`, and `movePlacements`. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
 - **`freeQueue`** — state-only batches whose `null` thought/lexeme entries indicate they should be released from the in-memory cache. Calls `db.freeThought` / `db.freeLexeme` (no-ops for TreeCRDT; the Redux-side release is what matters).
 
 The enhancer also caches a small set of critical settings (`CACHED_SETTINGS` in [`constants.ts`](../src/constants.ts)) into `localStorage` so that things like the Tutorial setting are available during the first paint before the thoughtspace hydrates. The corresponding read path is [`selectors/getSetting.ts`](../src/selectors/getSetting.ts).
 
-When [debug logging](../src/util/debugLog.ts) is enabled, each flush emits a `push` entry (batch count, thought/lexeme/move counts, and a sample of the thoughts written) and then either `pushSynced` or `pushError`. A `push` with no matching `pushSynced` is a write that never completed.
+When [debug logging](debug-log.md) is enabled, each flush emits a `push` entry (batch count, thought/lexeme/move counts, and a sample of the thoughts written) and then either `pushSynced` or `pushError`. A `push` with no matching `pushSynced` is a write that never completed.
 
 Once Redux dispatches a thought update, the data flow is therefore:
 

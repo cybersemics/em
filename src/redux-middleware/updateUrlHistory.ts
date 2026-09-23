@@ -2,10 +2,12 @@ import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import { isTouch } from '../browser'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
 import { hasChildren } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import { updateCommandState } from '../stores/commandStateStore'
 import storageModel from '../stores/storageModel'
@@ -20,11 +22,24 @@ const THROTTLE_MIDDLEWARE = 100
 /** Only write the cursor every 100 ms. */
 const SAVE_CURSOR_THROTTLE = 100
 
+/**
+ * How the cursor is written to the address bar. Touch devices replace the current entry rather than
+ * pushing a new one, so that the browser's edge-swipe gesture has no stale rendering of em to
+ * navigate back to (#4115). The page cannot refuse that gesture — iOS hands the touch to its own
+ * recognizer, so preventDefault never runs — which leaves removing its destination as the only
+ * remedy. The cost is browser back/forward as cursor navigation, which on touch is unreachable
+ * anyway: navigateBack and navigateForward are bound to cmd+[ and cmd+] with no gesture.
+ */
+const historyMethod = isTouch ? 'replaceState' : 'pushState'
+
 // The last path that is passed to updateUrlHistoryThrottled. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow.`
 let pathPrev: Path | null = null
 
 /** The last cursor value. Updated immediately on every action. */
 let cursorPrev: Path | null = null
+
+/** The value of the last cursor thought. Updated immediately on every action. */
+let cursorThoughtValuePrev: string | null = null
 
 /** Encodes context array into a URL. */
 const pathToUrl = (state: State, path: Path) => {
@@ -83,7 +98,7 @@ const updateUrlHistory = (state: State, path: Path) => {
   ) {
     // preserve the query string
     const url = window.location.search ? `/~/${window.location.search}` : '/'
-    window.history.pushState({}, '', url)
+    window.history[historyMethod]({}, '', url)
   }
 
   // nothing to update if the cursor has not changed
@@ -109,7 +124,7 @@ const updateUrlHistory = (state: State, path: Path) => {
   if (!isPWA) {
     try {
       // update browser history
-      window.history.pushState(
+      window.history[historyMethod](
         // an incrementing ID to track back or forward browser actions
         (window.history.state || 0) + 1,
         '',
@@ -134,13 +149,17 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
     next(action)
     updateUrlHistoryThrottled(getState)
 
-    // Update the command state whenever the cursor changes.
+    // Update the command state whenever the cursor moves or the cursor thought's value changes.
     // Otherwise the command state will not update when the cursor is moved with no selection (mobile only, when the keyboard is down), since updateCommandState is otherwise only called on selection change.
-    const cursor = getState().cursor
-    if (!equalPath(cursor, cursorPrev)) {
+    // The value changes without a selection change when a formatting edit is undone or redone with the keyboard down, which would otherwise leave a color swatch or formatting command selected for formatting the thought no longer has (#5107).
+    const state = getState()
+    const cursor = state.cursor
+    const cursorThoughtValue = cursor ? (getThoughtById(state, head(cursor))?.value ?? null) : null
+    if (!equalPath(cursor, cursorPrev) || cursorThoughtValue !== cursorThoughtValuePrev) {
       updateCommandState()
     }
     cursorPrev = cursor
+    cursorThoughtValuePrev = cursorThoughtValue
   }
 }
 

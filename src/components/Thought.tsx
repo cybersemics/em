@@ -17,6 +17,7 @@ import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/
 import { isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
+import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
@@ -32,6 +33,7 @@ import getChildren, { getAllChildrenAsThoughts, getChildrenRanked } from '../sel
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMultiEditing from '../selectors/isMultiEditing'
 import rootedParentOf from '../selectors/rootedParentOf'
 import col1MaxWidthStore from '../stores/col1MaxWidthStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTyping'
@@ -523,18 +525,25 @@ const ThoughtContainer = ({
 
       const mouseEvent = e as React.MouseEvent
 
-      // Shift + Click selects all thoughts between the clicked thought and the previously selected thought.
-      if (mouseEvent.shiftKey) {
-        e.preventDefault()
-        dispatch(selectBetween({ path }))
-        return
-      }
+      if (!mouseEvent.shiftKey && !isCommandKey(mouseEvent)) return
 
-      // Cmd/Ctrl + Click toggles the clicked thought in the multicursor selection.
-      if (isCommandKey(mouseEvent)) {
-        e.preventDefault()
-        dispatch(toggleMulticursor({ path }))
-      }
+      e.preventDefault()
+
+      dispatch((dispatch, getState) => {
+        // An ordinary multiselection leaves the caret outside any editable, which is how isMultiEditing tells it apart
+        // from a multiselection that is being edited (Clear Thought), as Select All does when it selects the thoughts.
+        // A caret left behind in the clicked thought would otherwise be restored by any surface that saves and restores
+        // the selection — the Command Universe on close, or Copy Cursor around the clipboard write — re-focusing the
+        // editable and rendering a faux caret on every selected thought (#5405).
+        // Checked before the dispatch below, since afterwards the clicked thought is a multicursor and the caret still
+        // in it would itself read as multi edit mode. Not while the multiselection is being edited, since clearing the
+        // caret would blur the thought being edited and exit the cleared state (see onBlur in Editable).
+        if (!isMultiEditing(getState())) selection.clear()
+
+        // Shift + Click selects all thoughts between the clicked thought and the previously selected thought, while
+        // Cmd/Ctrl + Click toggles the clicked thought in the multicursor selection.
+        dispatch(mouseEvent.shiftKey ? selectBetween({ path }) : toggleMulticursor({ path }))
+      })
     },
     [dispatch, path],
   )

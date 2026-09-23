@@ -156,6 +156,45 @@ it('Clear Thought placeholder inherits whole-thought formatting (#4612)', async 
   expect(placeholderStyle.textDecorationLine).toContain('underline')
 })
 
+it('Clear Thought placeholder inherits whole-thought color (#4282)', async () => {
+  await paste(`
+  - hello`)
+  await clickThought('hello')
+
+  await clickToolbar('Text Color', 'text color swatches', 'red')
+  await page.waitForFunction(() => {
+    const html = document.querySelector('[data-editing=true] [data-editable]')?.innerHTML || ''
+    return html.includes('<font') && html.includes('hello')
+  })
+
+  // The color that the thought text renders in, which the placeholder must inherit.
+  const thoughtColor = await page.evaluate(() => {
+    const font = document.querySelector('[data-editing=true] [data-editable] font')
+    if (!font) throw new Error('Colored thought text not found')
+    return getComputedStyle(font).color
+  })
+
+  await press('c', { ctrl: true, alt: true, shift: true })
+  await waitForCursor('')
+
+  const placeholderStyle = await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    if (!editable) throw new Error('Editing thought not found')
+
+    const style = getComputedStyle(editable, '::before')
+    return {
+      content: style.content,
+      color: style.color,
+      filter: style.filter,
+    }
+  })
+
+  expect(placeholderStyle.content).toContain('hello')
+  // The placeholder keeps the thought's color, dimmed rather than replaced with gray.
+  expect(placeholderStyle.color).toBe(thoughtColor)
+  expect(placeholderStyle.filter).toBe('opacity(0.5)')
+})
+
 it('Clear Thought dims emoji in the placeholder (#4671)', async () => {
   await paste('- 👋 Hello')
   await clickThought('👋 Hello')

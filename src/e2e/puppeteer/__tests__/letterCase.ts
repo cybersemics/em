@@ -1,6 +1,9 @@
+import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
+import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
+import keyboard from '../helpers/keyboard'
 import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
@@ -72,4 +75,24 @@ it('the selected text remains selected after a letter case change that lengthens
   await waitUntil(() => window.getSelection()?.toString() === 'STRASSE')
 
   expect(await getSelection().toString()).toBe('STRASSE')
+})
+
+// https://github.com/cybersemics/em/issues/4774
+// These commands are covered in component tests as well, but it feels valuable to have some level
+// of belt-and-suspenders coverage for timing issues related to edits. Copilot has dutifully warned
+// that this test is a flake candidate, and additionally violates the principle of covering each
+// behaviour at exactly one level.
+it('flushes pending edits before applying letter case from the picker', async () => {
+  await paste('a')
+
+  await clickThought('a')
+  await clickToolbar('Letter Case')
+  await keyboard.type('b')
+
+  // dropdown is already open, so directly click the UpperCase swatch rather than using the two-click clickToolbar
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await waitForEditable('AB')
+
+  expect(await getEditingText()).toBe('AB')
 })

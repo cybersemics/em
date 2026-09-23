@@ -15,6 +15,11 @@ updates:
       time: '22:00'
       timezone: 'America/New_York'
     open-pull-requests-limit: 10
+    # Replaces Dependabot's default labels, which are `dependencies` plus an ecosystem label.
+    # npm is the only ecosystem configured here, so the `javascript` label it adds distinguishes
+    # nothing and is dropped by omitting it. `dependencies` must be listed to be kept.
+    labels:
+      - 'dependencies'
     # Group related deps into single PR
     groups:
       babel:

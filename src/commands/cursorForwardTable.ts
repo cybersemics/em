@@ -1,13 +1,12 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { cursorForwardActionCreator as cursorForward } from '../actions/cursorForward'
 import CursorForwardIcon from '../components/icons/CursorForwardIcon'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import attributeEquals from '../selectors/attributeEquals'
 import { firstVisibleChild } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import heldKeysStore from '../stores/heldKeys'
 import head from '../util/head'
 import headValue from '../util/headValue'
 
@@ -16,7 +15,7 @@ const cursorForwardTableCommand = {
   id: 'cursorForwardTable',
   label: 'Cursor Forward (Table Column)' as const,
   description: 'In table view, move the cursor from a column-one thought to its column-two child.',
-  keyboard: { key: Key.ArrowRight },
+  keyboard: { key: 'ArrowRight' },
   hideFromHelp: true,
   multicursor: false,
   svg: CursorForwardIcon,
@@ -44,7 +43,7 @@ const cursorForwardTableCommand = {
     dispatch(cursorForward())
 
     // suppress auto-repeat of this key until it is released so that holding it does not race the caret through the child thought
-    if (type === 'keyboard') globals.arrowKeyBoundaryCross = event.key
+    if (type === 'keyboard') heldKeysStore.update({ arrowKeyBoundaryCross: event.key })
   },
 } satisfies Command
 

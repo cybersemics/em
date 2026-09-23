@@ -12,6 +12,7 @@ import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
+import getMovePlacement from '../selectors/getMovePlacement'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -46,20 +47,6 @@ export interface MoveThoughtPayload {
    * Undefined means derive placement from newRank for legacy em rank-based callers.
    */
   afterId?: ThoughtId | null
-}
-
-/** Derives an explicit TreeCRDT afterId from em's temporary rank ordering. */
-const getMoveThoughtAfterIdByRank = (
-  state: State,
-  destinationThoughtId: ThoughtId,
-  sourceThoughtId: ThoughtId,
-  newRank: number,
-): ThoughtId | null => {
-  const after = getChildrenRanked(state, destinationThoughtId)
-    .filter(child => child.id !== sourceThoughtId && child.rank < newRank)
-    .at(-1)
-
-  return after?.id ?? null
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
@@ -113,7 +100,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   const effectiveAfterId =
     afterId !== undefined
       ? afterId
-      : getMoveThoughtAfterIdByRank(state, destinationThoughtId, sourceThought.id, newRank)
+      : getMovePlacement(state, destinationThoughtId, { id: sourceThought.id, rank: newRank })
 
   if (
     effectiveAfterId === sourceThought.id ||
@@ -239,11 +226,23 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
 
       const isPathInCursor = isDescendantPath(state.cursor, oldPath)
       const isCursorAtOldPath = state.cursor.length === oldPath.length
+
+      // In the context view the cursor is on the nominal context (the m of a/m~), while the dragged context row is
+      // the deeper Path a/m~/a that resolves to the same thought. oldPath is then not an ancestor of the cursor even
+      // though the moved thought is, so the cursor has to be rebased onto the thought's new location. Otherwise it
+      // keeps naming a parent that no longer contains the thought: expandThoughts can no longer reach the cursor,
+      // freeThoughts deallocates it as no longer visible, and the next expandThoughts throws "Invalid path".
+      // Skipped when the thought no longer exists, i.e. it was merged into a duplicate in the destination.
+      const isMovedThoughtInCursor =
+        !isPathInCursor && isDescendantPath(state.cursor, oldPathSimple) && !!getThoughtById(state, sourceThought.id)
+
       const newCursorPath = isPathInCursor
         ? isCursorAtOldPath
           ? newPath
           : ([...newPath, ...state.cursor.slice(newPath.length)] as Path)
-        : state.cursor
+        : isMovedThoughtInCursor
+          ? ([...destinationThoughtPath, sourceThought.id, ...state.cursor.slice(oldPathSimple.length)] as Path)
+          : state.cursor
 
       return {
         ...state,
