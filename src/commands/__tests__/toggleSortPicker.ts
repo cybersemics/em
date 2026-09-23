@@ -7,6 +7,7 @@ import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import archiveCommand from '../archive'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
@@ -125,6 +126,42 @@ describe('toggleSortPicker error', () => {
       // ordered by rank. Allocating those ranks against the timestamp alone inverted them against the sort condition
       // and turned the Sort icon red (#4085).
       executeCommand(splitSentencesCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/4086
+  it.skip.each(['Asc', 'Desc'] as const)(
+    'does not report an error after archiving a thought in a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One.
+            - Two.
+            - Three.
+          `,
+        }),
+        setCursor(['One.']),
+      ])
+
+      // Advance the clock between each step so that the thoughts, the sort preference, and the archive all have
+      // distinct timestamps, as they do when a user sorts a context and archives a thought in it some time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['Two.']))
+      executeCommand(archiveCommand, { store })
 
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
