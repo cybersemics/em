@@ -939,10 +939,14 @@ const Editable = ({
         // would otherwise override the cursor that archiveThought placed on the previous sibling.
         // When hidden thoughts are shown, isVisible is true and the cursor can still be set. (#4077)
         // Do not activate edit mode when the focus is the tail of a tap that already moved the cursor
-        // without edit mode or a completed drag (see globals.suppressCursorAfterTouch); the block above dismissed it.
+        // without edit mode or a completed drag (see globals.suppressCursorAfterTouch), or arrived while the
+        // Command Center is shown; the block above dismissed it. Entering edit mode anyway raises the virtual
+        // keyboard (useEditMode calls virtualKeyboard.show) and closes the Command Center, which the
+        // multicursors then re-open two animation frames later — leaving the keyboard under the sheet. (#5646)
         if (
           state.longPress === LongPressState.Inactive &&
           isVisible &&
+          !state.showCommandCenter &&
           !(globals.suppressCursorAfterTouch && !state.isKeyboardOpen)
         ) {
           setCursorOnThought({ isKeyboardOpen: true })

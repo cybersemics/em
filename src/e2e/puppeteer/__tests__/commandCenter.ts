@@ -153,7 +153,7 @@ describe('command center', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5646
-  it.skip('does not re-enter edit mode when a focus arrives while it is shown', async () => {
+  it('does not re-enter edit mode when a focus arrives while it is shown', async () => {
     await paste('- Hello world beautiful')
     await clickThought('Hello world beautiful')
 
