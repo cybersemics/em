@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import ministore, { resetStores } from '../../stores/ministore'
+import ministore, { registerReset, resetStores } from '../../stores/ministore'
 import reactMinistore from '../../stores/react-ministore'
 
 it('getState', () => {
@@ -69,6 +69,20 @@ describe('resetStores', () => {
     resetStores()
 
     expect(composite.getState()).toBe(12)
+  })
+})
+
+describe('registerReset', () => {
+  it('runs a registered reset before the stores are reset, so that it still sees the state it has to tear down', () => {
+    const store = ministore(1)
+    store.update(2)
+    const seen: number[] = []
+    registerReset(() => seen.push(store.getState()))
+
+    resetStores()
+
+    expect(seen).toEqual([2])
+    expect(store.getState()).toBe(1)
   })
 })
 

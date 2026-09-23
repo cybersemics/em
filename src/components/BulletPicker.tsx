@@ -50,7 +50,10 @@ const BulletOption: FC<{
     })}
     aria-label={option.label}
     {...fastClick(e => e.stopPropagation())}
-    onTouchStart={e => onClick(option.value, e)}
+    // Apply the option on touchend rather than touchstart. React registers touchstart passively, so the handler's
+    // preventDefault is a no-op there and the browser goes on to synthesize mouse events from the tap, which
+    // land on the thought under the dropdown (#5608).
+    onTouchEnd={e => isTouch && onClick(option.value, e)}
     onMouseDown={e => !isTouch && onClick(option.value, e)}
   >
     <span>{option.label}</span>

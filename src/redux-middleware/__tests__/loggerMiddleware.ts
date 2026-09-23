@@ -27,14 +27,7 @@ const invoke = (action: unknown) => {
   loggerMiddleware({ getState: () => stubState, dispatch: next } as any)(next)(action as any)
 }
 
-beforeEach(() => {
-  debugLog.setEnabled(false)
-  debugLog.clear()
-})
-
 afterEach(() => {
-  debugLog.setEnabled(false)
-  debugLog.clear()
   vi.restoreAllMocks()
 })
 
