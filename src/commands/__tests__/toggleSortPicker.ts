@@ -133,7 +133,7 @@ describe('toggleSortPicker error', () => {
   )
 
   // https://github.com/cybersemics/em/issues/4101
-  it.skip.each(['Asc', 'Desc'] as const)(
+  it.each(['Asc', 'Desc'] as const)(
     'does not report an error after Categorize in a context sorted by Created %s',
     direction => {
       store.dispatch([

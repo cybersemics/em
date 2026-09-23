@@ -422,7 +422,7 @@ Create a thought within the first subthought. With a multiselect, a new grandchi
 
 ### Categorize
 
-Move the current thought into a new, empty thought at the same level. With a multiselect, every selected thought moves into the new category — and when every visible sibling is selected, the meta attributes that describe the parent's children — `=view`, `=sort`, and the `=children`, `=grandchildren`, and `=descendants` containers — follow them into the category, each moving whole with everything it holds. The parent's own direct `=pin` stays, since it pins the parent itself rather than the wrapped children.
+Move the current thought into a new, empty thought at the same level. With a multiselect, every selected thought moves into the new category — and when every visible sibling is selected, the meta attributes that describe the parent's children — `=view`, `=sort`, and the `=children`, `=grandchildren`, and `=descendants` containers — follow them into the category, each moving whole with everything it holds. The parent's own direct `=pin` stays, since it pins the parent itself rather than the wrapped children. The category takes the place of the thought it wraps, except in a sorted context, where it is ranked by the sort condition like any other newly created thought — so a `Created` context puts it at the end, newest last. See [data-model.md → Visibility and sorting](data-model.md#visibility-and-sorting).
 
 <kbd>Command + Option + o</kbd> or <kbd>Command + ]</kbd>
 
