@@ -12,15 +12,15 @@ import SAFARI_CHROME_TOP from '../helpers/safariChromeTop'
 import waitForEditable from '../helpers/waitForEditable'
 
 /** Read the document scroll and the visual viewport offset together, so that both describe the same moment. */
-const readViewport = async (): Promise<{ scrollY: number; offsetTop: number }> =>
-  JSON.parse(
-    await browser.execute(() =>
-      JSON.stringify({
-        scrollY: Math.round(window.scrollY),
-        offsetTop: Math.round(window.visualViewport?.offsetTop ?? 0),
-      }),
-    ),
+const readViewport = async (): Promise<{ scrollY: number; offsetTop: number }> => {
+  const raw = await browser.execute(() =>
+    JSON.stringify({
+      scrollY: Math.round(window.scrollY),
+      offsetTop: Math.round(window.visualViewport?.offsetTop ?? 0),
+    }),
   )
+  return JSON.parse(raw) as { scrollY: number; offsetTop: number }
+}
 
 /** Touch a point given in screen coordinates, the space performActions delivers touches in. */
 const touchScreenPoint = async (x: number, y: number) => {
