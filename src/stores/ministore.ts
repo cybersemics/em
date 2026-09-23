@@ -16,8 +16,19 @@ export interface Ministore<T> {
   ) => () => void
   /** Updates the state. If the state is an object, accepts a partial update. Accepts an updater function that passes the old state. */
   update: (updatesOrUpdater: Partial<T> | ((oldState: T) => Partial<T>)) => void
-  /** Restores the state to the initial state that the store was created with. */
+  /** Releases any resource the state holds, then restores the state to the initial state that the store was created with. See MinistoreOptions.dispose. */
   reset: () => void
+}
+
+export interface MinistoreOptions<T> {
+  /**
+   * Releases the resources held in the state — a pending timer, a listener registration, a running animation — before
+   * reset restores the initial state. A reset restores a value; it cannot know that a field is a setTimeout handle whose
+   * timer is still pending, so a store that holds one declares here how to release it. Runs on every reset, including
+   * when the state already equals the initial state, so it must tolerate the initial state (typically a null handle).
+   * Stores that hold only values omit it.
+   */
+  dispose?: (state: T) => void
 }
 
 /** All ministores created by the factory, so that global state can be restored between tests. Derived stores are excluded, as they recompute from their sources. Ministores are module-level singletons, so the set does not grow at runtime. */
@@ -53,7 +64,7 @@ const unregister = (store: Ministore<any>) => {
 }
 
 /** Creates a mini store that tracks state and can update consumers. */
-const ministore = <T>(initialState: T): Ministore<T> => {
+const ministore = <T>(initialState: T, { dispose }: MinistoreOptions<T> = {}): Ministore<T> => {
   let state: T = initialState
   const emitter = new Emitter()
 
@@ -122,8 +133,11 @@ const ministore = <T>(initialState: T): Ministore<T> => {
     return cancellable<T>(promise, unsubscribe)
   }
 
-  /** Restores the initial state, notifying subscribers if it changed. */
-  const reset = () => update(initialState)
+  /** Releases whatever the current state holds, then restores the initial state, notifying subscribers if it changed. Disposal comes first so that no subscriber observes a state whose resource is still live, and runs unconditionally: the short circuit in update compares values, and an unchanged handle says nothing about whether its timer is still pending. */
+  const reset = () => {
+    dispose?.(state)
+    update(initialState)
+  }
 
   const store = {
     getState: () => state,
