@@ -28,25 +28,27 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // On desktop or when the virtual keyboard is down, it is equivalent to window.innerHeight.
   const visualViewportHeight = window.visualViewport?.height ?? window.innerHeight
 
-  // On iOS Capacitor the Keyboard plugin is configured with resize: 'none', so the WebView stays full-screen
-  // and window.visualViewport.height does NOT shrink when the keyboard opens. We therefore derive the effective
-  // viewport height (the area not covered by the keyboard) from the viewport store, whose virtualKeyboardHeight
-  // is set reliably by the native keyboard handler. On all other platforms visualViewport.height is correct. (#4326)
+  // Neither Capacitor app resizes its WebView when the keyboard opens — iOS via Keyboard resize: 'none', Android via
+  // SystemBars insetsHandling: 'disable' (#5670) — so window.visualViewport.height does NOT shrink. We therefore derive
+  // the effective viewport height (the area not covered by the keyboard) from the viewport store, whose
+  // virtualKeyboardHeight is set reliably by the native keyboard handler. In mobile web visualViewport.height is
+  // correct. (#4326)
   //
-  // iOSCapacitorHandler normalizes virtualKeyboardHeight by subtracting the safe-area-bottom inset, because element
+  // The Capacitor handlers normalize virtualKeyboardHeight by subtracting the safe-area-bottom inset, because element
   // positioning elsewhere always re-adds that inset. scrollCursorIntoView, however, works in raw viewport coordinates
   // (getBoundingClientRect / window.scrollY) and adds no inset, so we must add the safe-area-bottom back to recover the
   // keyboard's true height.
   //
-  // That raw height is UIKeyboardFrameEndUserInfoKey reported verbatim by the Capacitor Keyboard plugin, i.e. the whole
-  // input view including the QuickType predictive/suggestion bar. No separate allowance for the bar is needed, and none
-  // should be added: the reported height already shrinks by the bar's height when the user turns off
+  // On iOS that raw height is UIKeyboardFrameEndUserInfoKey reported verbatim by the Capacitor Keyboard plugin, i.e. the
+  // whole input view including the QuickType predictive/suggestion bar. No separate allowance for the bar is needed, and
+  // none should be added: the reported height already shrinks by the bar's height when the user turns off
   // Settings > General > Keyboard > Predictive. (#4326)
   const isIOSCapacitor = isIOS && isCapacitor()
+  const isKeyboardOverlaying = isCapacitor()
   const keyboardOpen = virtualKeyboardStore.getState().open
   const rawKeyboardHeight = viewport.virtualKeyboardHeight + getSafeAreaBottom()
   const effectiveViewportHeight =
-    isIOSCapacitor && keyboardOpen ? viewport.innerHeight - rawKeyboardHeight : visualViewportHeight
+    isKeyboardOverlaying && keyboardOpen ? viewport.innerHeight - rawKeyboardHeight : visualViewportHeight
 
   /** The y position of the element relative to the document. */
   const yDocument = viewport.layoutTreeTop + y
@@ -59,10 +61,10 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   const navbarRect = document.querySelector('[aria-label="nav"]')?.getBoundingClientRect()
 
   // The y position (in viewport coordinates) below which content is obstructed.
-  // On iOS Capacitor with the keyboard open the bottom navbar is hidden behind the keyboard, so the keyboard is the
-  // only obstruction. On all other platforms the obstruction is the bottom navbar within the (already keyboard-aware)
+  // In the Capacitor apps with the keyboard open the bottom navbar is hidden behind the keyboard, so the keyboard is the
+  // only obstruction. In mobile web the obstruction is the bottom navbar within the (already keyboard-aware)
   // visual viewport. (#4326)
-  const navbarObstruction = isIOSCapacitor && keyboardOpen ? 0 : (navbarRect?.height ?? 0)
+  const navbarObstruction = isKeyboardOverlaying && keyboardOpen ? 0 : (navbarRect?.height ?? 0)
   const bottomBoundary = effectiveViewportHeight - navbarObstruction
 
   const isAboveViewport = yViewport < toolbarBottom

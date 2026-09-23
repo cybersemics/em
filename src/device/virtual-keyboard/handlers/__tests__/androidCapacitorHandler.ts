@@ -1,13 +1,15 @@
 import { importTextActionCreator as importText } from '../../../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../../actions/keyboardOpen'
 import store from '../../../../stores/app'
+import viewportStore from '../../../../stores/viewport'
+import virtualKeyboardStore from '../../../../stores/virtualKeyboardStore'
 import initStore from '../../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../../test-helpers/setCursorFirstMatch'
 import * as selection from '../../../selection'
 import androidCapacitorHandler from '../androidCapacitorHandler'
 
 /** Captures the native keyboard listeners registered by the handler so the test can invoke them. */
-const mockKeyboardListeners: Record<string, () => void> = {}
+const mockKeyboardListeners: Record<string, (info?: { keyboardHeight: number }) => void> = {}
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
@@ -19,7 +21,7 @@ vi.mock('@capacitor/core', () => ({
 
 vi.mock('@capacitor/keyboard', () => ({
   Keyboard: {
-    addListener: (event: string, callback: () => void) => {
+    addListener: (event: string, callback: (info?: { keyboardHeight: number }) => void) => {
       mockKeyboardListeners[event] = callback
       return Promise.resolve({ remove: () => {} })
     },
@@ -74,4 +76,25 @@ it('collapses a selected range before the native keyboard starts hiding', () => 
   expect(document.activeElement).toBe(editable)
 
   document.body.removeChild(editable)
+})
+
+// The WebView keeps its full height when the keyboard opens, so the height of the area the keyboard covers is invisible
+// to the web layer and can only come from the native event. Without it scrollCursorIntoView believes the whole screen is
+// visible and leaves the caret underneath the keyboard.
+// https://github.com/cybersemics/em/issues/5670
+it('reports the keyboard height while the native keyboard is up', () => {
+  androidCapacitorHandler.init()
+
+  expect(mockKeyboardListeners.keyboardWillShow).toBeDefined()
+
+  mockKeyboardListeners.keyboardWillShow({ keyboardHeight: 342 })
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 342 })
+  expect(viewportStore.getState().virtualKeyboardHeight).toBe(342)
+
+  // the height persists through keyboardWillHide so that elements above the keyboard do not drop behind it mid-animation
+  mockKeyboardListeners.keyboardWillHide()
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 342 })
+
+  mockKeyboardListeners.keyboardDidHide()
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: false, height: 0 })
 })
