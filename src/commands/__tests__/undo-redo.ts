@@ -410,6 +410,46 @@ describe('undo', () => {
     expect(values).toEqual(['AAA', 'BBB', 'CCC'])
   })
 
+  // The Letter Case picker edits every selected thought without going through its toolbar command, so
+  // formatLetterCase brackets the edits with setIsMulticursorExecuting itself and names the undo step with a camel
+  // case undoLabel. The alert has to render its display form.
+  it('name a multicursor letter case change in the undo alert', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      formatLetterCase('LowerCase'),
+    ])
+
+    store.dispatch(undo())
+
+    expect(store.getState().alert?.value).toBe('Undo: Letter Case')
+  })
+
+  // Same for the Color picker, which reaches the thoughtspace through formatSelection.
+  it('name a multicursor text color change in the undo alert', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      formatSelection('foreColor', 'green'),
+    ])
+
+    store.dispatch(undo())
+
+    expect(store.getState().alert?.value).toBe('Undo: Text Color')
+  })
+
   it('undo should stay enabled and not throw after a multicursor command that nets to no change', () => {
     store.dispatch([
       importText({

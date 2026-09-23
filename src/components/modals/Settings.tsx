@@ -10,8 +10,8 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import download from '../../device/download'
 import share from '../../device/share'
-import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
+import abandonImportStore from '../../stores/abandonImport'
 import storageStatusStore from '../../stores/storageStatus'
 import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 import debugLog from '../../util/debugLog'
@@ -187,9 +187,11 @@ const DebugLogging = () => {
             {...fastClick(() => {
               // read fresh state for the state.thoughts dump, as above
               dispatch((_, getState) => {
-                const text = debugLog.format(getState())
-                copy(text)
-                setStatus(text ? `Copied ${debugLog.read().length} entries` : 'Log is empty')
+                copy(debugLog.format(getState()))
+                // the formatted log always carries the environment header, so the status counts entries rather than
+                // testing the text for emptiness
+                const entryCount = debugLog.read().length
+                setStatus(entryCount ? `Copied ${entryCount} entries` : 'Log is empty')
               })
             })}
             className={cx(extendTapRecipe(), css({ whiteSpace: 'nowrap' }))}
@@ -360,7 +362,7 @@ const ModalSettings = () => {
           onClick={() => {
             // Escape hatch to cancel imports when frozen.
             // This is a workaround for a bug that has not been resolved.
-            globals.abandonImport = true
+            abandonImportStore.update(true)
             setTimeout(() => {
               storage.removeItem('resume-imports')
               window.location.reload()
