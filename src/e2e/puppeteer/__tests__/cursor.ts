@@ -177,6 +177,9 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   // Make text bold using the toolbar
   await clickToolbar('Bold')
 
+  // Wait for formatting to render and the sorted thoughts to settle before moving the cursor.
+  await waitForCursor('<b>apple</b>')
+
   // Press arrow down to move cursor
   await press('ArrowDown')
 
