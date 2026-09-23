@@ -7,6 +7,7 @@ import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import outdentCommand from '../outdent'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
@@ -129,4 +130,48 @@ describe('toggleSortPicker error', () => {
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
   )
+
+  // https://github.com/cybersemics/em/issues/4096
+  it.skip('does not report an error when a subthought is outdented into a context sorted by Created', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - One
+        `,
+      }),
+      setCursor(['One']),
+    ])
+
+    // Advance the clock between each step so that the thoughts have distinct created timestamps, as they do when a
+    // user types them one at a time.
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(newThought({ value: 'Four', insertNewSubthought: true }))
+
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch([setCursor(['One']), newThought({ value: 'Two' })])
+
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(newThought({ value: 'Three' }))
+
+    vi.advanceTimersByTime(1000)
+
+    const state = store.getState()
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Created', direction: 'Asc' },
+      }),
+    )
+
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(setCursor(['One', 'Four']))
+
+    executeCommand(outdentCommand, { store })
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
 })
