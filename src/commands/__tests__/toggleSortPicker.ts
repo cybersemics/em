@@ -97,7 +97,7 @@ describe('toggleSortPicker error', () => {
   })
 
   // https://github.com/cybersemics/em/issues/4097
-  it.skip.each(['Asc', 'Desc'] as const)(
+  it.each(['Asc', 'Desc'] as const)(
     'does not report an error when a subthought is outdented into a context sorted by Updated %s',
     direction => {
       store.dispatch([
