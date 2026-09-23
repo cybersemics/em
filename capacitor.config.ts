@@ -38,6 +38,13 @@ const config: CapacitorConfig = {
     Keyboard: {
       resize: 'none',
     },
+    // Capacitor's SystemBars pads the decor view by the IME inset, which resizes the Android WebView when the
+    // keyboard opens. Disabling its inset handling is the Android counterpart to Keyboard.resize: 'none' above.
+    // Safe areas still resolve: panda defines --safe-area-inset-bottom from env(), which Capacitor was only
+    // overriding inline.
+    SystemBars: {
+      insetsHandling: 'disable',
+    },
   },
 }
 

@@ -20,6 +20,10 @@ public class MainActivity extends BridgeActivity {
         //
         // This is the Android equivalent of Capacitor's iOS Keyboard { resize: 'none' }, but because that option doesn't
         // exist on Android, we have to do it manually instead.
+        //
+        // This listener only covers the content view. Capacitor's own SystemBars listener pads the decor view above it by
+        // the IME inset, which resizes the WebView regardless of anything done here, so capacitor.config.ts must also set
+        // plugins.SystemBars.insetsHandling to 'disable'. See https://github.com/cybersemics/em/issues/5670.
         
         ViewCompat.setOnApplyWindowInsetsListener(
             findViewById(android.R.id.content),

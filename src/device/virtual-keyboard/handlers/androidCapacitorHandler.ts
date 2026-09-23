@@ -8,9 +8,10 @@ import * as selection from '../../selection'
 /**
  * A virtual keyboard handler for the Android Capacitor app.
  *
- * On Android the WebView does not resize when the keyboard opens or closes (windowSoftInputMode=adjustNothing
- * plus IME inset stripping in MainActivity, mirroring iOS Keyboard resize:'none'), so visualViewport never
- * fires a resize event for the keyboard. Additionally, dismissing the keyboard via the Down Arrow virtual
+ * On Android the WebView does not resize when the keyboard opens or closes (windowSoftInputMode=adjustNothing,
+ * IME inset stripping in MainActivity, and plugins.SystemBars.insetsHandling='disable' so Capacitor does not pad
+ * the decor view by the IME inset, mirroring iOS Keyboard resize:'none'), so visualViewport never fires a resize
+ * event for the keyboard. Additionally, dismissing the keyboard via the Down Arrow virtual
  * button does not blur the editable, so no blur event fires to dismiss the caret. We listen to the native
  * keyboardDidHide event to exit edit mode and clear the browser selection.
  *
