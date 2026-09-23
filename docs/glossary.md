@@ -122,7 +122,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## M
 
-**materialization** — TreeCRDT applying operations to its SQLite read model, after which `client.onMaterialized` fires. em ignores events produced by its own writes (identified by *writeId*) and refreshes Redux from the rest. See [persistence.md → Change observation](persistence.md#change-observation-materialization).
+**materialization** — TreeCRDT applying operations to its SQLite read model, after which `client.onMaterialized` fires. em updates derived indexes and refreshes Redux memberships for both local and incoming changes; only incoming changes refresh thoughts. See [persistence.md → Change observation](persistence.md#change-observation-materialization).
 
 **meta-attribute** — See *attribute*.
 
@@ -208,7 +208,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **undo step** — What one Undo reverts: a single patch on `state.undoPatches`, or two when a navigation action follows an undoable action or an edit follows a `newThought`. The undo slider moves by undo steps. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
 
-**updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write. (Self-originated materialization events are filtered by *writeId*, not by this field.)
+**updatedBy** — `clientId` of the writer, stored in each thought's payload. Persisted Lexemes derive it from their most recently updated member. Local materialization is identified by *writeId*, not by this field.
 
 **updateThoughts** — The action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push. The push queue persists those batches through the active data provider's `updateThoughts`.
 
@@ -222,4 +222,4 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **write barrier** — [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts). Serializes em → TreeCRDT persistence and exposes an idle barrier, so a materialization refresh cannot reapply stale rows over newer optimistic state. Also mints each write's *writeId*.
 
-**writeId** — `em-local:${sourceId}:${n}`, attached to every local TreeCRDT write and echoed on the materialization changes it produces. Lets this tab recognize and skip its own already-applied writes.
+**writeId** — `em-local:${sourceId}:${n}`, attached to every local TreeCRDT write and echoed on the materialization changes it produces. Lets this tab refresh memberships without reading back its already-optimistic local thoughts.

@@ -5,6 +5,7 @@ import MimeType from './@types/MimeType'
 import State from './@types/State'
 import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
+import { errorActionCreator as error } from './actions/error'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
 import { initThoughtsActionCreator as initThoughts } from './actions/initThoughts'
 import { pullActionCreator as pull } from './actions/pull'
@@ -64,6 +65,12 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
     storage,
     materialization: {
+      onError: () => {
+        eventHandlers.cleanup()
+        store.dispatch(
+          error({ value: 'Thoughtspace update failed. Editing has stopped. Reload to continue.', fatal: true }),
+        )
+      },
       getSnapshot: () => {
         const state = store.getState()
         return {

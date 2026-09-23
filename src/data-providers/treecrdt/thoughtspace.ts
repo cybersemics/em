@@ -17,8 +17,9 @@ import {
 } from './attributeChildren'
 import createLexemeIndex from './lexemes'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
-import { enqueueMaterializedThoughtsToStore } from './sync'
+import { applyMaterializedThoughtsToStore } from './sync'
 import type { MaterializationContext } from './sync/applyMaterializedThoughtsToStore'
+import { enqueueMaterializedThoughtsToStoreWork } from './sync/materializationQueue'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 import { createTreecrdtLocalWriteOptions } from './writeBarrier'
 
@@ -368,14 +369,16 @@ const createTreecrdtDataProvider = () => {
     }
 
     let subscribed = true
+    let failure: Error | undefined
     let indexQueue = Promise.resolve()
-    /** Waits for all indexing, including events produced by a recovering storage read. */
+    /** Waits for indexing to settle and rejects a failed binding. */
     const waitForIndexes = async () => {
       let pending: Promise<void>
       do {
         pending = indexQueue
         await pending
       } while (pending !== indexQueue)
+      if (failure) throw failure
     }
     const clientDb: TreecrdtClientDataProvider = {
       getLexemeById: async key => {
@@ -402,10 +405,19 @@ const createTreecrdtDataProvider = () => {
       bridge: materialization,
       db: clientDb,
       pending: [],
-      isActive: () => subscribed && activeDb === clientDb,
+      isActive: () => subscribed && activeDb === clientDb && !failure,
+    }
+
+    /** Stops this binding on an unexpected failure; a retired binding cannot fail the current view. */
+    const fail = (reason: unknown) => {
+      if (!subscribed || activeDb !== clientDb || failure) return
+      failure = reason instanceof Error ? reason : new Error(String(reason))
+      console.error('TreeCRDT thoughtspace materialization failed', failure)
+      materialization?.onError(failure)
     }
 
     const unsubscribeMaterialized = client.onMaterialized(event => {
+      if (failure) return
       // A failed update poisons this binding's queue: later events must not checkpoint over incomplete indexes.
       const keys = indexQueue.then(async () => {
         await refreshAttributeChildrenFromChanges(client, event.changes)
@@ -414,13 +426,20 @@ const createTreecrdtDataProvider = () => {
         return keys
       })
       indexQueue = keys.then(() => undefined)
-      void indexQueue.catch(err => console.error('TreeCRDT derived indexing failed', err))
+      void indexQueue.catch(fail)
       if (!materializationContext) return
       materializationContext.pending.push({ event, keys })
       if (materializationContext.pending.length === 1) {
-        void enqueueMaterializedThoughtsToStore(materializationContext).catch(err =>
-          console.error('TreeCRDT materialized UI sync failed', err),
-        )
+        void enqueueMaterializedThoughtsToStoreWork(async () => {
+          try {
+            if (failure) throw failure
+            await applyMaterializedThoughtsToStore(materializationContext)
+          } catch (error) {
+            if (!subscribed || activeDb !== clientDb) return
+            fail(error)
+            throw error
+          }
+        }).catch(() => undefined) // Already reported; the queue retains the error for waitForIdle.
       }
     })
 
@@ -430,7 +449,7 @@ const createTreecrdtDataProvider = () => {
       if (!subscribed) return
       subscribed = false
       unsubscribeMaterialized()
-      await waitForIndexes()
+      await indexQueue
     }
   }
 

@@ -20,6 +20,8 @@ export type ThoughtspaceMaterializationSnapshot = {
 export type ThoughtspaceMaterializationBridge = {
   getSnapshot: () => ThoughtspaceMaterializationSnapshot
   apply: (updates: ThoughtUpdates) => void | Promise<void>
+  /** Reports a terminal indexing or view-refresh failure. The binding rejects further writes. */
+  onError: (error: Error) => void
 }
 
 export type ThoughtspaceRuntimeInitOptions = {

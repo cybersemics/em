@@ -9,7 +9,6 @@ import {
   isTreecrdtLocalMaterialization,
   waitForTreecrdtWriteBarrier,
 } from '../writeBarrier'
-import { enqueueMaterializedThoughtsToStoreWork } from './materializationQueue'
 import refreshThoughtsFromMaterializationChanges from './materializationThoughtUpdates'
 
 export type MaterializationContext = {
@@ -59,7 +58,3 @@ export const applyMaterializedThoughtsToStore = async (context: MaterializationC
     }
   }
 }
-
-/** Coalesces materialization events behind the existing local-write barrier. */
-export const enqueueMaterializedThoughtsToStore = (context: MaterializationContext): Promise<void> =>
-  enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(context))

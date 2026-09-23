@@ -3,18 +3,18 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-/** Sets an error. */
-const error = (state: State, { value }: { value: string | null }) => ({
+/** Sets a dismissible or blocking error. */
+const error = (state: State, { value, fatal }: { value: string | null; fatal?: boolean }) => ({
   ...state,
-  error: value,
+  [fatal ? 'fatalError' : 'error']: value,
 })
 
 /** Action-creator for error. */
 export const errorActionCreator =
-  ({ value }: Parameters<typeof error>[1]): Thunk =>
+  ({ value, fatal }: Parameters<typeof error>[1]): Thunk =>
   (dispatch, getState) => {
-    if (value !== getState().error) {
-      dispatch({ type: 'error', value })
+    if (value !== getState()[fatal ? 'fatalError' : 'error']) {
+      dispatch({ type: 'error', value, fatal })
     }
   }
 

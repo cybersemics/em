@@ -125,6 +125,7 @@ const AppComponent: FC = () => {
   const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector(state => state.fontSize)
   const showModal = useSelector(state => state.showModal)
+  const fatalError = useSelector(state => state.fatalError)
   const tutorial = useSelector(isTutorial)
   const debugCrashLog = useSelector(getUserSetting(Settings.debugCrashLog))
   const rootRef = useRef<HTMLDivElement>(null)
@@ -179,6 +180,8 @@ const AppComponent: FC = () => {
       }
     }
   }, [colors, dark])
+
+  if (fatalError) throw new Error(fatalError)
 
   if (showModal && !modals[showModal]) {
     throw new Error(`Missing component for Modal type: ${showModal}`)

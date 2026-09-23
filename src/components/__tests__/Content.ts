@@ -1,4 +1,6 @@
+import { screen } from '@testing-library/react'
 import { act } from 'react'
+import { errorActionCreator as error } from '../../actions/error'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import * as selection from '../../device/selection'
 import click from '../../test-helpers/click'
@@ -11,6 +13,20 @@ afterEach(cleanupTestApp)
 
 it('render EmptyThoughtspace when there are no thoughts in the root context', async () => {
   expect(document.querySelector('[aria-label="empty-thoughtspace"]')).toBeTruthy()
+})
+
+it('replaces the editor with the refresh screen on a fatal error', async () => {
+  expect(screen.getByLabelText('empty-thoughtspace')).toBeTruthy()
+  const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const message = 'Thoughtspace update failed. Editing has stopped. Reload to continue.'
+  try {
+    await dispatch(error({ value: message, fatal: true }))
+    expect(screen.getByText(message)).toBeTruthy()
+    expect(screen.getByText('Refresh')).toBeTruthy()
+    expect(screen.queryByLabelText('empty-thoughtspace')).toBeNull()
+  } finally {
+    report.mockRestore()
+  }
 })
 
 it('do not render EmptyThoughtspace when there are thoughts in the root context', async () => {
