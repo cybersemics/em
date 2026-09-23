@@ -14,6 +14,9 @@ import { usePersistentTreecrdtStorage } from '../setup'
 
 const MOCK_REPLICATION_DELAY = 100
 
+/** The height of a typical Android virtual keyboard, which shrinks the WebView viewport when it opens. */
+const KEYBOARD_HEIGHT = 300
+
 /** Gets the y position of a thought relative to the viewport. Throws if the thought is not rendered. */
 const getThoughtTop = async (value: string): Promise<number> => {
   const top = await page.evaluate(value => {
@@ -170,6 +173,34 @@ describe('autocrop', () => {
     const topAfter = await getThoughtTop('z')
 
     // TODO: We should expect 0 scroll. Why does it scroll by 0.25px?
+    expect(Math.abs(topAfter - topBefore)).toBeLessThan(1)
+  })
+
+  // https://github.com/cybersemics/em/issues/5670
+  it.skip('preserve thought positions relative to viewport when the viewport shrinks', async () => {
+    const importText = `
+      - a
+      - b
+      - c
+    `
+
+    await paste(importText)
+
+    await clickThought('a')
+    await waitForCursor('a')
+    await waitForBrowserSettled()
+
+    // get the y position of thought a relative to the viewport before the viewport shrinks
+    const topBefore = await getThoughtTop('a')
+
+    // shrink the viewport as the Android WebView does when the virtual keyboard opens
+    const viewport = page.viewport()!
+    await page.setViewport({ ...viewport, height: viewport.height - KEYBOARD_HEIGHT })
+    await waitForBrowserSettled()
+
+    // get the y position of thought a relative to the viewport after the viewport shrinks
+    const topAfter = await getThoughtTop('a')
+
     expect(Math.abs(topAfter - topBefore)).toBeLessThan(1)
   })
 })
