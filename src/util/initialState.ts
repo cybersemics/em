@@ -119,7 +119,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     isKeyboardOpen: null,
     enableLatestCommandsDiagram: false,
     error: null,
-    fatalError: null,
     expanded: {},
     fontSize: storageModel.get('fontSize'),
     importThoughtPath: null,

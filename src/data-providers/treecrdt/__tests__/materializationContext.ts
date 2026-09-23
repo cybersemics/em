@@ -38,20 +38,18 @@ let provider: ReturnType<typeof createTreecrdtDataProvider>
 let close: () => Promise<void>
 let snapshot: ThoughtspaceMaterializationSnapshot
 const apply = vi.fn()
-const onError = vi.fn()
 
 beforeEach(async () => {
   client = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' } })
   provider = createTreecrdtDataProvider()
   snapshot = { thoughtIndex: {}, lexemeIndex: {} }
-  onError.mockReset()
   apply.mockReset().mockImplementation(updates => {
     snapshot = {
       thoughtIndex: { ...snapshot.thoughtIndex, ...updates.thoughtIndex },
       lexemeIndex: { ...snapshot.lexemeIndex, ...updates.lexemeIndex },
     }
   })
-  close = await provider.bindClient(client, REPLICA_ID, { getSnapshot: () => snapshot, apply, onError })
+  close = await provider.bindClient(client, REPLICA_ID, { getSnapshot: () => snapshot, apply })
 })
 
 afterEach(async () => {
@@ -118,31 +116,7 @@ it('retries stale membership readback after a newer optimistic rename and persis
   expect(snapshot.thoughtIndex[THOUGHT_ID].value).toBe('b')
 })
 
-it('reports a membership read failure and rejects later writes without retrying', async () => {
-  const failure = new Error('membership read failed')
-  const getText = client.runner.getText.bind(client.runner)
-  const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const reader = vi.spyOn(client.runner, 'getText').mockImplementation((sql, params) => {
-    if (sql.includes("'key', lexeme_hash")) throw failure
-    return getText(sql, params)
-  })
-  await withTreecrdtWriteBarrier(() =>
-    provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('a') } }),
-  )
-  await expect(waitForMaterializedThoughtsToStore()).rejects.toBe(failure)
-  reader.mockRestore()
-
-  await expect(provider.db.updateThoughts({ thoughtIndexUpdates: { [THOUGHT_ID]: thought('b') } })).rejects.toBe(
-    failure,
-  )
-  await waitForMaterializedThoughtsToStore()
-  report.mockRestore()
-  expect(onError).toHaveBeenCalledExactlyOnceWith(failure)
-  expect(apply).not.toHaveBeenCalled()
-  await expect(provider.db.getThoughtById(THOUGHT_ID)).resolves.toMatchObject({ value: 'a' })
-})
-
-it.each(['resolves', 'rejects'])('ignores readback that %s after the provider is reset', async outcome => {
+it('does not publish an old binding after the provider is reset during readback', async () => {
   const reading = deferred()
   const release = deferred()
   const getText = client.runner.getText.bind(client.runner)
@@ -151,7 +125,6 @@ it.each(['resolves', 'rejects'])('ignores readback that %s after the provider is
     if (sql.includes("'key', lexeme_hash")) {
       reading.resolve()
       await release.promise
-      if (outcome === 'rejects') throw new Error('database closed')
     }
     return result
   })
@@ -164,7 +137,6 @@ it.each(['resolves', 'rejects'])('ignores readback that %s after the provider is
   release.resolve()
   await waitForMaterializedThoughtsToStore()
   expect(apply).not.toHaveBeenCalled()
-  expect(onError).not.toHaveBeenCalled()
 })
 
 it('updates stored memberships on incoming deletion even when its thought was not loaded', async () => {

@@ -119,8 +119,6 @@ It also stamps every local write with a `writeId` of the form `em-local:${source
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
 
-An unexpected indexing or view-refresh failure stops publication and rejects further provider writes until reopening. The bridge's `onError` callback stops input handling and shows the app's blocking error screen with a refresh option; errors from a retired binding are ignored. Failed refreshes are not retried.
-
 ### Memory management
 
 `freeThought` / `freeLexeme` are **no-ops** in the TreeCRDT provider. The whole thoughtspace is a single SQLite database, so there is no per-document cache to release — freeing memory only means dropping entries from the Redux indexes, which the `freeQueue` half of the push queue already does. [`redux-middleware/freeThoughts.ts`](../src/redux-middleware/freeThoughts.ts) dispatches `freeThoughts` once `thoughtIndex` exceeds the [`freeThoughtsThreshold`](../src/stores/freeThoughtsThreshold.ts) store's value.

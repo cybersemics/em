@@ -73,8 +73,6 @@ interface State {
   /** Show the latest activated commands at the bottom of the screen for webcasts. */
   enableLatestCommandsDiagram: boolean
   error?: string | null
-  /** A blocking error that replaces the editor with the refresh screen. */
-  fatalError?: string | null
   /** A map of all Paths that are expanded. Recalculated whenever the cursor moves or the thoughts change. Keyed by hashPath(path). */
   expanded: Index<Path>
   /** Expand thoughts during drag-and-drop by hovering over them. Tracked separately from state.expanded so they can be toggled on/off independently from autoexpansion. */
