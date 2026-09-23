@@ -3,6 +3,7 @@ import { ThunkMiddleware } from 'redux-thunk'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import { isTouch } from '../browser'
 import { HOME_PATH, HOME_TOKEN } from '../constants'
 import * as selection from '../device/selection'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
@@ -10,6 +11,7 @@ import { hasChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import { updateCommandState } from '../stores/commandStateStore'
+import ministore from '../stores/ministore'
 import storageModel from '../stores/storageModel'
 import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
@@ -22,17 +24,29 @@ const THROTTLE_MIDDLEWARE = 100
 /** Only write the cursor every 100 ms. */
 const SAVE_CURSOR_THROTTLE = 100
 
-// The last path that is passed to updateUrlHistoryThrottled. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow.`
-let pathPrev: Path | null = null
+/**
+ * How the cursor is written to the address bar. Touch devices replace the current entry rather than
+ * pushing a new one, so that the browser's edge-swipe gesture has no stale rendering of em to
+ * navigate back to (#4115). The page cannot refuse that gesture — iOS hands the touch to its own
+ * recognizer, so preventDefault never runs — which leaves removing its destination as the only
+ * remedy. The cost is browser back/forward as cursor navigation, which on touch is unreachable
+ * anyway: navigateBack and navigateForward are bound to cmd+[ and cmd+] with no gesture.
+ */
+const historyMethod = isTouch ? 'replaceState' : 'pushState'
 
-/** The last cursor value. Updated immediately on every action. */
-let cursorPrev: Path | null = null
+// Both stores below are ministores rather than module variables so that resetStores restores them between tests.
+// Nothing subscribes to them, so a write costs one comparison, and the Path is held inside an object because the
+// factory merges object updates with a spread, which would flatten an array into keys.
 
-/** The value of the last cursor thought. Updated immediately on every action. */
-let cursorThoughtValuePrev: string | null = null
+/** The last path that is passed to updateUrlHistoryThrottled. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow. */
+const pathPrevStore = ministore<{ path: Path | null }>({ path: null })
 
-/** The last multicursors. Updated immediately on every action. Compared by identity, since the reducers that write state.multicursors only replace it when the selection changes. */
-let multicursorsPrev: Index<Path> | null = null
+/** The last cursor, the value of its thought, and the last multicursors. Updated immediately on every action. The multicursors are compared by identity, since the reducers that write state.multicursors only replace it when the selection changes. */
+const cursorPrevStore = ministore<{ cursor: Path | null; value: string | null; multicursors: Index<Path> | null }>({
+  cursor: null,
+  value: null,
+  multicursors: null,
+})
 
 /** Encodes context array into a URL. */
 const pathToUrl = (state: State, path: Path) => {
@@ -91,12 +105,12 @@ const updateUrlHistory = (state: State, path: Path) => {
   ) {
     // preserve the query string
     const url = window.location.search ? `/~/${window.location.search}` : '/'
-    window.history.pushState({}, '', url)
+    window.history[historyMethod]({}, '', url)
   }
 
   // nothing to update if the cursor has not changed
-  if (state.isLoading || equalPath(pathPrev, path)) return
-  pathPrev = path
+  if (state.isLoading || equalPath(pathPrevStore.getState().path, path)) return
+  pathPrevStore.update({ path })
 
   const decoded = decodeThoughtsUrl(state)
   const encoded = head(path || HOME_PATH)
@@ -117,7 +131,7 @@ const updateUrlHistory = (state: State, path: Path) => {
   if (!isPWA) {
     try {
       // update browser history
-      window.history.pushState(
+      window.history[historyMethod](
         // an incrementing ID to track back or forward browser actions
         (window.history.state || 0) + 1,
         '',
@@ -156,6 +170,11 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
 
     const cursor = state.cursor
     const cursorThoughtValue = cursor ? (getThoughtById(state, head(cursor))?.value ?? null) : null
+    const {
+      cursor: cursorPrev,
+      value: cursorThoughtValuePrev,
+      multicursors: multicursorsPrev,
+    } = cursorPrevStore.getState()
     if (
       !equalPath(cursor, cursorPrev) ||
       cursorThoughtValue !== cursorThoughtValuePrev ||
@@ -163,9 +182,7 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
     ) {
       updateCommandState()
     }
-    cursorPrev = cursor
-    cursorThoughtValuePrev = cursorThoughtValue
-    multicursorsPrev = state.multicursors
+    cursorPrevStore.update({ cursor, value: cursorThoughtValue, multicursors: state.multicursors })
   }
 }
 
