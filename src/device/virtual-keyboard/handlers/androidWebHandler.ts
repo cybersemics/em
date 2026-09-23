@@ -1,23 +1,44 @@
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { dismissKeyboardActionCreator as dismissKeyboard } from '../../../actions/dismissKeyboard'
 import store from '../../../stores/app'
+import viewportStore from '../../../stores/viewport'
+import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
 import * as selection from '../../selection'
+import getSafeAreaBottom from '../getSafeAreaBottom'
 
 /**
- * Collapses a selected range and exits edit mode when the virtual keyboard hides (its occluded height collapses to 0).
+ * Publishes the keyboard's height, then collapses a selected range and exits edit mode when it hides (its occluded
+ * height collapses to 0).
  *
- * The two steps are deliberately a paint apart. The `geometrychange` event is the only hide signal mobile web gets,
- * and unlike the Capacitor app's `keyboardWillHide` it does not arrive until the keyboard has finished animating
+ * The height has to be published because the keyboard overlays content rather than resizing the viewport, so nothing
+ * else can tell how much of the screen it covers.
+ *
+ * The two teardown steps are deliberately a paint apart. The `geometrychange` event is the only hide signal mobile web
+ * gets, and unlike the Capacitor app's `keyboardWillHide` it does not arrive until the keyboard has finished animating
  * away, so both the range and the focus would otherwise be torn down in the same beat — which makes Android rebuild
  * the text context menu and flash a second, read-only one back after everything has already gone (#5259). Collapsing
  * first dismisses the menu on its own, and letting that reach the compositor before the blur keeps the two teardowns
  * apart.
  */
 const onGeometryChange = () => {
-  if (navigator.virtualKeyboard.boundingRect.height !== 0) return
+  const rawHeight = navigator.virtualKeyboard.boundingRect.height
+
+  if (rawHeight !== 0) {
+    // Normalized as in the Capacitor handlers: the raw rect runs to the bottom of the screen, and element positioning
+    // always re-adds the safe-area inset.
+    const height = Math.max(0, rawHeight - getSafeAreaBottom())
+    viewportStore.update({ virtualKeyboardHeight: height })
+    virtualKeyboardStore.update({ open: true, height })
+    return
+  }
 
   selection.collapse()
-  requestAnimationFrame(() => setTimeout(() => store.dispatch(dismissKeyboard())))
+  requestAnimationFrame(() =>
+    setTimeout(() => {
+      virtualKeyboardStore.update({ open: false, height: 0 })
+      store.dispatch(dismissKeyboard())
+    }),
+  )
 }
 
 /**

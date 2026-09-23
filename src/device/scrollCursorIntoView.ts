@@ -44,7 +44,10 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
   // none should be added: the reported height already shrinks by the bar's height when the user turns off
   // Settings > General > Keyboard > Predictive. (#4326)
   const isIOSCapacitor = isIOS && isCapacitor()
-  const isKeyboardOverlaying = isCapacitor()
+  // The keyboard overlays content without resizing the viewport in both Capacitor apps and in mobile Chrome, which
+  // androidWebHandler opts into via navigator.virtualKeyboard.overlaysContent. iOS Safari is the exception: its visual
+  // viewport really does shrink, so visualViewport.height already accounts for the keyboard there.
+  const isKeyboardOverlaying = isCapacitor() || (isTouch && 'virtualKeyboard' in navigator)
   const keyboardOpen = virtualKeyboardStore.getState().open
   const rawKeyboardHeight = viewport.virtualKeyboardHeight + getSafeAreaBottom()
   const effectiveViewportHeight =

@@ -1,6 +1,8 @@
 import { importTextActionCreator as importText } from '../../../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../../actions/keyboardOpen'
 import store from '../../../../stores/app'
+import viewportStore from '../../../../stores/viewport'
+import virtualKeyboardStore from '../../../../stores/virtualKeyboardStore'
 import initStore from '../../../../test-helpers/initStore'
 import selectRange from '../../../../test-helpers/selectRange'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../../test-helpers/setCursorFirstMatch'
@@ -102,4 +104,24 @@ it('collapses a selected range before blurring when the virtual keyboard hides',
   expect(document.activeElement).not.toBe(editable)
 
   document.body.removeChild(editable)
+})
+
+// The keyboard overlays content rather than resizing the viewport, so the height it occludes is invisible to
+// visualViewport and can only come from the VirtualKeyboard API. Without it scrollCursorIntoView believes the whole
+// screen is visible and leaves the caret underneath the keyboard.
+// https://github.com/cybersemics/em/issues/5670
+it('reports the keyboard height while the virtual keyboard is up', async () => {
+  androidWebHandler.init()
+
+  keyboardHeight = 293
+  geometryChangeListeners.forEach(listener => listener())
+
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 293 })
+  expect(viewportStore.getState().virtualKeyboardHeight).toBe(293)
+
+  keyboardHeight = 0
+  geometryChangeListeners.forEach(listener => listener())
+
+  await vi.runAllTimersAsync()
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: false, height: 0 })
 })
