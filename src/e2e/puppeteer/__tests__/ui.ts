@@ -12,6 +12,7 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
+import waitForBackgroundImage from '../helpers/waitForBackgroundImage'
 import waitForSelector from '../helpers/waitForSelector'
 
 expect.extend({
@@ -55,8 +56,10 @@ describe('mobile', () => {
     // wait for the gesture menu to appear
     await waitForSelector('[data-testid=popup-value]')
 
-    // wait for the glow background image to load before taking snapshot
-    await waitForSelector('[data-testid=glow-background]')
+    // wait for the glow background image to be decoded and painted before taking the snapshot. The element is in the
+    // DOM before its image is available to the renderer, so a screenshot taken as soon as it appears can be missing
+    // the glow entirely.
+    await waitForBackgroundImage('[data-testid=glow-background]')
 
     // Hide the gesture trace before taking the snapshot. Its glow is drawn on a canvas and can render slightly
     // differently across environments, causing flaky snapshot diffs. The trace is not relevant to this snapshot,
