@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import Store from '../@types/Store'
 import makeSelectorEffect from '../hooks/makeSelectorEffect'
-import ministore, { Ministore } from './ministore'
+import ministore, { Ministore, MinistoreOptions } from './ministore'
 
 /** Enhances a generic store with React hooks. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,7 +40,8 @@ const makeReactStore = <U extends Store<any>>(store: U) => {
 }
 
 /** Create a ministore that is enhanced with React hooks. */
-const reactMinistore = <T>(initialState: T) => makeReactStore(ministore(initialState))
+const reactMinistore = <T>(initialState: T, options?: MinistoreOptions<T>) =>
+  makeReactStore(ministore(initialState, options))
 
 /** Create a read-only computed reactMinistore that derives its state from one or more ministores. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

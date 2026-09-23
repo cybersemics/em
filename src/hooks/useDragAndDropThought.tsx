@@ -24,7 +24,6 @@ import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -40,6 +39,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
 import selectionRangeStore from '../stores/selectionRangeStore'
+import touchStore from '../stores/touch'
 import appendToPath from '../util/appendToPath'
 import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
@@ -312,7 +312,7 @@ const endDrag = () => {
 
   // A browser may dispatch the release's compatibility click or focus after drag cleanup. Keep only cursor events
   // suppressed until the next real touchstart; do not hold longPress open and block unrelated gesture state.
-  if (isTouch) globals.suppressCursorAfterTouch = true
+  if (isTouch) touchStore.update({ suppressCursorAfterTouch: true })
 
   store.dispatch([
     longPress({ value: LongPressState.Inactive }),
