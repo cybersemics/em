@@ -132,7 +132,7 @@ describe('toggleSortPicker error', () => {
   )
 
   // https://github.com/cybersemics/em/issues/4096
-  it.skip('does not report an error when a subthought is outdented into a context sorted by Created', () => {
+  it('does not report an error when a subthought is outdented into a context sorted by Created', () => {
     store.dispatch([
       importText({
         text: `
