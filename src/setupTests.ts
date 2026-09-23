@@ -4,6 +4,7 @@ import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
 import 'vi-canvas-mock'
+import { resetStores } from './stores/ministore'
 
 expect.extend(matchers)
 
@@ -168,6 +169,13 @@ console.error = (...args) => {
   }
   consoleErrorOriginal(...args)
 }
+
+// Restore module-level state after every test: the ministores, and the state modules register with them (debugLog's
+// buffer and frame heartbeat). Vitest isolates modules per file, not per test, so without this a test that enables
+// debug logging leaks it into every later test in its file. initStore and createTestApp also reset at setup, but a
+// plain unit test uses neither, and would otherwise have to hand-write the teardown. Only ministore is imported here,
+// never the modules that register with it — see registerReset.
+afterEach(resetStores)
 
 afterEach(() => {
   if (!actEscapes.count) return

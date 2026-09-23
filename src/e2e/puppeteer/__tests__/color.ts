@@ -840,4 +840,31 @@ describe('mobile', () => {
 
     expect(await restingTextColorButtonTop()).toBe(topBeforeSelection)
   })
+
+  // https://github.com/cybersemics/em/issues/4264
+  it('tapping the empty space around a color swatch applies the color of that swatch', async () => {
+    await paste(`
+      - One
+    `)
+
+    await clickThought('One')
+    await clickToolbar('Text Color')
+    await waitForSelector('[aria-label="text color swatches"]')
+
+    // the empty space at the top of the row of text color swatches, directly above the blue swatch
+    const emptySpace = await page.evaluate(() => {
+      const row = document.querySelector('[aria-label="text color swatches"]')
+      const blue = row?.querySelector('[aria-label="blue"] svg')
+      if (!row || !blue) throw new Error('Blue text color swatch not found.')
+
+      const rowRect = row.getBoundingClientRect()
+      const blueRect = blue.getBoundingClientRect()
+      return { x: blueRect.left + blueRect.width / 2, y: rowRect.top + 1 }
+    })
+    await page.touchscreen.tap(emptySpace.x, emptySpace.y)
+    await nextFrame()
+
+    expect(await page.$('[aria-label="text color swatches"]')).not.toBeNull()
+    expect(extractColor((await getEditingText())!).color).toBe(rgbaToHex(colors.light.blue))
+  })
 })

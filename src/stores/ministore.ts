@@ -24,8 +24,25 @@ export interface Ministore<T> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stores = new Set<Ministore<any>>()
 
-/** Resets all ministores to their initial state. Called by the initStore test helper so that module-level store state does not leak from one test to the next. */
+/** Resets registered by modules whose state is not a store but must be restored along with the stores. See registerReset. */
+const resets = new Set<() => void>()
+
+/**
+ * Registers a function for resetStores to run. For module state that a store cannot hold because restoring it is an
+ * action rather than a value: debugLog has to cancel an animation-frame loop, and its clean slate is an empty buffer
+ * rather than its construction value, which is whatever localStorage held at import.
+ *
+ * Registering from the module itself, rather than having a test setup file import the module, matters: a setup
+ * file's imports are cached before a test file's vi.mock calls apply, so importing a module with app dependencies
+ * there would defeat every test that mocks one of them. This module has none.
+ */
+export const registerReset = (reset: () => void) => {
+  resets.add(reset)
+}
+
+/** Resets all ministores to their initial state, after running every registered reset so that a self-rescheduling loop is stopped first. Called at test boundaries — by initStore and createTestApp at setup, by cleanupTestApp before it drains timers, and after every test by setupTests — so that module-level state does not leak from one test to the next. */
 export const resetStores = () => {
+  resets.forEach(reset => reset())
   stores.forEach(store => store.reset())
 }
 
