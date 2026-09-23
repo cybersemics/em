@@ -17,7 +17,6 @@ import {
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 import * as selection from '../device/selection'
-import virtualKeyboardHandler from '../device/virtual-keyboard'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -67,17 +66,6 @@ const Content: FC = () => {
   return (
     <div
       id='content-wrapper'
-      onMouseDownCapture={e => {
-        // A stationary touch tap synthesizes mousedown just before the browser blurs the editable.
-        // Leave touchstart/touchmove alone so scrolling stays native.
-        if (
-          !selection.isThought(e.target) &&
-          document.activeElement?.hasAttribute('data-editable') &&
-          virtualKeyboardHandler.hidePreservingFocus()
-        ) {
-          e.preventDefault()
-        }
-      }}
       {...fastClick(
         e => {
           // make sure the the actual Content element has been clicked

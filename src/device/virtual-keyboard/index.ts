@@ -55,8 +55,6 @@ const virtualKeyboardHandler = {
       iOSSafariHandler.show?.(editable)
     }
   },
-  /** Close Android's IME while leaving the editable focused until native didHide. */
-  hidePreservingFocus: () => (isCapacitor() && !isIOS ? androidCapacitorHandler.hidePreservingFocus() : false),
 }
 
 export default virtualKeyboardHandler

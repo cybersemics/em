@@ -92,7 +92,7 @@ it('collapses a selected range before the native keyboard starts hiding', () => 
   document.body.removeChild(editable)
 })
 
-it('keeps the editor focused while the tracked keyboard closes, then exits edit mode', () => {
+it('exits edit mode when the tracked keyboard closes without a preceding blur', () => {
   mockState.trackerAvailable = true
   store.dispatch([importText({ text: '- a' }), setCursor(['a']), keyboardOpen({ value: true })])
 
@@ -112,8 +112,6 @@ it('keeps the editor focused while the tracked keyboard closes, then exits edit 
   progress({ phase: 'didShow', height: 320 })
   expect(virtualKeyboardStore.getState().open).toBe(true)
 
-  expect(androidCapacitorHandler.hidePreservingFocus()).toBe(true)
-  expect(mockHide).toHaveBeenCalledOnce()
   selection.setRange(editable, { start: 0, end: 1 })
   progress({ phase: 'willHide', height: 320 })
   progress({ phase: 'progress', height: 100 })

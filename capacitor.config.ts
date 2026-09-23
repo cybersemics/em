@@ -38,6 +38,11 @@ const config: CapacitorConfig = {
     Keyboard: {
       resize: 'none',
     },
+    // Android's SystemBars plugin pads the decor view by the IME height, which shrinks the WebView
+    // before VirtualKeyboardTracker can position fixed controls. iOS ignores this Android option.
+    SystemBars: {
+      insetsHandling: 'disable',
+    },
   },
 }
 

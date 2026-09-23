@@ -17,10 +17,8 @@ public class MainActivity extends BridgeActivity {
         }
         super.onCreate(savedInstanceState);
 
-        // When the keyboard (IME) opens, Android sends window insets to the FrameLayout that contains the WebView.
-        // This causes the WebView to resize, which causes the viewport to resize and breaks position: fixed elements.
-        // To fix this, we can strip the insets so the FrameLayout (and therefore the WebView) don't resize when the keyboard
-        // opens.
+        // Strip the IME inset before it reaches the WebView container. SystemBars inset handling is disabled in
+        // capacitor.config.ts so that it does not also pad the decor view by the keyboard height.
         //
         // This is the Android equivalent of Capacitor's iOS Keyboard { resize: 'none' }, but because that option doesn't
         // exist on Android, we have to do it manually instead.

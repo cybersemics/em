@@ -13,7 +13,7 @@ const hasTracker = () => Capacitor.isNativePlatform() && Capacitor.isPluginAvail
 
 /** The Android 11+ tracker owns keyboard lifecycle because its decor-view animation callback supersedes
  * Capacitor Keyboard's callback. Older Android versions retain the Capacitor hide-event behavior. */
-const androidCapacitorHandler: VirtualKeyboardHandler & { hidePreservingFocus: () => boolean } = {
+const androidCapacitorHandler: VirtualKeyboardHandler = {
   init: () => {
     if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('Keyboard')) return
 
@@ -52,13 +52,6 @@ const androidCapacitorHandler: VirtualKeyboardHandler & { hidePreservingFocus: (
   },
   show: () => {
     if (Capacitor.isNativePlatform() && Capacitor.isPluginAvailable('Keyboard')) Keyboard.show()
-  },
-  hidePreservingFocus: () => {
-    if (!hasTracker() || !virtualKeyboardStore.getState().open) return false
-    // The caller prevents mousedown's default blur. The tracker dismisses edit mode on didHide,
-    // after the closing animation has finished, while Keyboard.hide only requests the native close.
-    Keyboard.hide()
-    return true
   },
 }
 
