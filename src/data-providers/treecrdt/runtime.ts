@@ -87,7 +87,7 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   type InitResult = { clientId: string; storage: string }
 
   let client: TreecrdtClient | null = null
-  let unsubscribeMaterialization: (() => void) | null = null
+  let unsubscribeMaterialization: (() => Promise<void>) | null = null
   let lifecycleTail: Promise<void> = Promise.resolve()
   let initPromise: Promise<InitResult> | null = null
   let dropPromise: Promise<void> | null = null
@@ -166,7 +166,7 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
   /** Opens and binds one client. Lifecycle serialization provides retryable single-flight behavior. */
   const initializeClient = async (options: ThoughtspaceRuntimeInitOptions): Promise<InitResult> => {
     let nextClient: TreecrdtClient | null = null
-    let nextUnsubscribeMaterialization: (() => void) | null = null
+    let nextUnsubscribeMaterialization: (() => Promise<void>) | null = null
 
     try {
       if (client) throw new Error('TreeCRDT client cleanup is incomplete. Retry drop before initialization.')
@@ -190,8 +190,11 @@ const createTreecrdtThoughtspace = (): TreecrdtThoughtspace => {
       return { clientId, storage: nextClient.storage }
     } catch (error) {
       provider.resetBinding(error)
-      nextUnsubscribeMaterialization?.()
-      await nextClient?.close()
+      try {
+        await nextUnsubscribeMaterialization?.()
+      } finally {
+        await nextClient?.close()
+      }
       throw error
     }
   }
