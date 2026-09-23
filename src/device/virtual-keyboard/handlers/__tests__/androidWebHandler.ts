@@ -48,7 +48,8 @@ it('exits edit mode when the virtual keyboard hides (e.g. Android Down Arrow)', 
   geometryChangeListeners.forEach(listener => listener())
 
   // edit mode should be exited now that the keyboard is closed
-  await vi.waitFor(() => expect(store.getState().isKeyboardOpen).toBe(false))
+  await vi.runAllTimersAsync()
+  expect(store.getState().isKeyboardOpen).toBe(false)
 })
 
 // https://github.com/cybersemics/em/issues/4686
@@ -96,7 +97,8 @@ it('collapses a selected range before blurring when the virtual keyboard hides',
   expect(document.activeElement).toBe(editable)
 
   // the blur follows on a later tick, once the menu has been dismissed
-  await vi.waitFor(() => expect(store.getState().isKeyboardOpen).toBe(false))
+  await vi.runAllTimersAsync()
+  expect(store.getState().isKeyboardOpen).toBe(false)
   expect(document.activeElement).not.toBe(editable)
 
   document.body.removeChild(editable)

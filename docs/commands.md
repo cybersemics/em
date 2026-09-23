@@ -378,14 +378,6 @@ Navigate to Home.
 
 https://github.com/user-attachments/assets/f9d81d8f-f03e-45d3-850e-55f9f4b56a0d
 
-### Search
-
-Open the Search input. Use the same command to close.
-
-<kbd>Command + Option + f</kbd>
-
-https://github.com/user-attachments/assets/682334ea-823e-497b-818f-584639a5db5b
-
 ### New Thought
 
 Create a shiny new thought.
@@ -517,6 +509,8 @@ https://github.com/user-attachments/assets/95f037cc-cf88-4392-98fb-4d79cdae4fba
 ### Bump Thought Down
 
 Bump the current thought down one level and replace it with a new, empty thought. When multiple thoughts are selected, their parent is bumped down and the selected thoughts are moved into the new thought.
+
+A leading emoji labels the thought it is attached to rather than being part of its text, so it stays behind — along with the whitespace that separates it — and only the text it labels is bumped down. The caret is placed after it, ready for the replacement text. A thought that is nothing but an emoji has no text to separate, so it is bumped down whole as usual.
 
 <kbd>Command + Shift + D</kbd>
 

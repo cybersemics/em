@@ -1,9 +1,11 @@
+import { KnownDevices } from 'puppeteer'
 import colors from '../../../colors.config'
 import rgbToHex from '../../../util/rgbToHex'
 import rgbaToHex from '../../../util/rgbaToHex'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
+import deviceEmulation from '../helpers/deviceEmulation'
 import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
@@ -353,6 +355,37 @@ it('Bullet remains the default color when a substring color is set', async () =>
   expect(bulletColor).toBe(null)
 })
 
+it('Selection remains active after applying a font color to part of the text', async () => {
+  await paste(`
+  - Golden Retriever`)
+
+  await clickThought('Golden Retriever')
+  await setSelection(0, 6)
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
+
+  expect(await getSelection().toString()).toBe('Golden')
+  expect(extractColor((await getEditingText())!).backgroundColor).toBe(null)
+  expect(extractColor((await getEditingText())!).color).toBe(rgbaToHex(colors.light.blue))
+})
+
+it('Selection remains active when applying a font color after a background elsewhere', async () => {
+  await paste(`
+  - Golden Retriever`)
+
+  await clickThought('Golden Retriever')
+  await setSelection(0, 6)
+  await clickToolbar('Text Color', 'background color swatches', 'green')
+
+  await setSelection(7, 16)
+  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+  expect(await getSelection().toString()).toBe('Retriever')
+  await press('Escape')
+  await waitForEditable(
+    '<font color="#000000" style="background-color: rgb(0, 214, 136);">Golden</font> <font color="#00c7e6">Retriever</font>',
+  )
+})
+
 it('remove all formatting from the thought', async () => {
   const importText = `
   - Labrador`
@@ -400,7 +433,9 @@ it('Verify superscript colors in different views', async () => {
   expect(supColor1).toBe(null) // Superscript should remain uncolored for partial text coloring
 
   // Test 2: Verify superscript color when entire thought is colored
+  await press('Escape')
   await clickThought('k')
+  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
   await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
   const supColor2 = await getSuperscriptColor()
@@ -763,4 +798,35 @@ it('underline applied after a text color draws its line in that color', async ()
   await clickToolbar('Underline')
 
   expect(rgbToHex(await decorationColor())).toBe(rgbaToHex(colors.light.red))
+})
+
+describe('mobile', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  // https://github.com/cybersemics/em/issues/4264
+  it('tapping the empty space around a color swatch applies the color of that swatch', async () => {
+    await paste(`
+      - One
+    `)
+
+    await clickThought('One')
+    await clickToolbar('Text Color')
+    await waitForSelector('[aria-label="text color swatches"]')
+
+    // the empty space at the top of the row of text color swatches, directly above the blue swatch
+    const emptySpace = await page.evaluate(() => {
+      const row = document.querySelector('[aria-label="text color swatches"]')
+      const blue = row?.querySelector('[aria-label="blue"] svg')
+      if (!row || !blue) throw new Error('Blue text color swatch not found.')
+
+      const rowRect = row.getBoundingClientRect()
+      const blueRect = blue.getBoundingClientRect()
+      return { x: blueRect.left + blueRect.width / 2, y: rowRect.top + 1 }
+    })
+    await page.touchscreen.tap(emptySpace.x, emptySpace.y)
+    await nextFrame()
+
+    expect(await page.$('[aria-label="text color swatches"]')).not.toBeNull()
+    expect(extractColor((await getEditingText())!).color).toBe(rgbaToHex(colors.light.blue))
+  })
 })

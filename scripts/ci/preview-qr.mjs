@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Maintains a collapsed "Preview" disclosure at the bottom of a pull request description holding a
+ * Maintains a collapsed "Preview Deployment" disclosure at the bottom of a pull request description holding a
  * QR code of its latest successful Vercel preview. Run by .github/workflows/preview-qr.yml as
  * `node scripts/ci/preview-qr.mjs <head-sha>`, or with `--pr <number>` in place of the commit to
  * reconcile that pull request's current head, which is what the workflow's manual dispatch does.
@@ -66,13 +66,19 @@ const PREVIEW_WORKFLOW = '.github/workflows/vercel-preview.yml'
 const PREVIEW_ENVIRONMENT = 'Preview'
 
 /**
- * Formats a deployment timestamp for the disclosure summary in UTC, as `Sep 4, 2026`. UTC so two
- * runs never disagree about the date of one deployment.
+ * Formats a deployment timestamp for the disclosure summary in UTC, as `Sep 4, 2026, 10:00 AM UTC`.
+ * UTC so two runs never disagree about the moment of one deployment.
  */
-export const formatDate = iso =>
-  new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' }).format(
-    new Date(iso),
-  )
+export const formatTimestamp = iso =>
+  new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: 'UTC',
+    timeZoneName: 'short',
+  }).format(new Date(iso))
 
 /**
  * Splits a pull request body into the text outside the managed block and the block's parsed
@@ -94,7 +100,7 @@ export const parseBody = body => {
   if (!match) return { outside, state: null }
   try {
     const { stable, pending } = JSON.parse(match[1])
-    const image = block.match(/\[!\[Preview deployment\]\(([^)\s]+)\)\]\(/)?.[1]
+    const image = block.match(/!\[Preview deployment\]\(([^)\s]+)\)/)?.[1]
     return {
       outside,
       state: {
@@ -114,18 +120,20 @@ export const parseBody = body => {
  * The blank lines around the image are load-bearing twice over: GitHub only renders markdown
  * inside a `<details>` HTML block when a blank line ends the block's raw-HTML run, and gh's
  * `--attach` rewrite only sees the image reference if the markdown parser produced a node for it.
+ *
+ * The link around the image is a raw `<a>` rather than a markdown link so it can ask for a new tab;
+ * the image stays markdown inside it, which is what keeps `--attach` able to rewrite the reference.
+ * The tag opens a paragraph rather than an HTML block because it is not alone on its line, so the
+ * image is still parsed as markdown. GitHub may strip `target`, in which case this degrades to an
+ * ordinary link.
  */
 export const renderBlock = ({ stable, pending }) => {
   if (!stable && !pending) return null
   const summary = pending
-    ? `Preview · Generating new QR code… · ${formatDate(pending.createdAt)} · <code>${pending.sha.slice(0, 7)}</code>`
-    : `Preview · ${formatDate(stable.createdAt)} · <code>${stable.sha.slice(0, 7)}</code>`
+    ? `Preview Deployment · Generating new QR code… · ${formatTimestamp(pending.createdAt)} · ${pending.sha.slice(0, 7)}`
+    : `Preview Deployment · ${formatTimestamp(stable.createdAt)} · ${stable.sha.slice(0, 7)}`
   const content = stable
-    ? [
-        `[![Preview deployment](${stable.image})](${stable.url})`,
-        '',
-        `[${pending ? 'Open current preview' : 'Open preview'}](${stable.url})`,
-      ]
+    ? [`<a href="${stable.url}" target="_blank" rel="noopener noreferrer">![Preview deployment](${stable.image})</a>`]
     : ['Preview deployment is being generated.']
   const state = {
     stable: stable ? { sha: stable.sha, createdAt: stable.createdAt, url: stable.url } : null,
@@ -208,19 +216,38 @@ const api = async (route, init = {}) => {
 }
 
 /**
- * Resolves the one open pull request in this repository that the commit belongs to. Fork branch
- * names are not unique, so association is by commit identity; the caller then requires the pull
- * request's current head to still be this commit, since a later push makes the run stale.
+ * Picks, from the open pull requests a commit belongs to, the one the commit was deployed for: the
+ * pull request whose current head *is* the commit. A stacked pull request based on another's
+ * branch also contains every commit of its base, so containment alone is ambiguous; head identity
+ * is not. Returns null when no candidate's head is the commit — every one of them has moved on —
+ * and throws only if two pull requests share the commit as their head, which would need two
+ * branches pointing at one commit.
+ */
+export const selectPullRequest = (candidates, sha) => {
+  const heads = candidates.filter(pr => pr.head.sha === sha)
+  if (heads.length > 1) {
+    throw new Error(`Commit ${sha} is the head of ${heads.length} open pull requests; refusing to pick one.`)
+  }
+  return heads[0] ?? null
+}
+
+/**
+ * Resolves the open pull request in this repository whose head is the commit. Fork branch names
+ * are not unique, so association is by commit identity; a later push makes the run stale, so
+ * a pull request that has moved past the commit is reported and skipped.
  */
 const resolvePullRequest = async (repo, sha) => {
   const pulls = await api(`/repos/${repo}/commits/${sha}/pulls?per_page=100`)
   const candidates = pulls.filter(pr => pr.state === 'open' && pr.base.repo.full_name === repo)
-  if (candidates.length === 0) return null
-  if (candidates.length > 1) {
-    throw new Error(`Commit ${sha} belongs to ${candidates.length} open pull requests; refusing to pick one.`)
-  }
   // Re-fetch rather than trusting the association listing, which can lag behind a push.
-  return api(`/repos/${repo}/pulls/${candidates[0].number}`)
+  const current = await Promise.all(candidates.map(pr => api(`/repos/${repo}/pulls/${pr.number}`)))
+  const pr = selectPullRequest(current, sha)
+  if (!pr) {
+    for (const stale of current) {
+      console.info(`PR #${stale.number} has moved on to ${stale.head.sha}; ignoring stale event for ${sha}.`)
+    }
+  }
+  return pr
 }
 
 /**
@@ -285,11 +312,7 @@ const main = async sha => {
   const repo = process.env.GITHUB_REPOSITORY
   const pr = await resolvePullRequest(repo, sha)
   if (!pr) {
-    console.info(`No open pull request in ${repo} contains ${sha}; nothing to do.`)
-    return
-  }
-  if (pr.head.sha !== sha) {
-    console.info(`PR #${pr.number} has moved on to ${pr.head.sha}; ignoring stale event for ${sha}.`)
+    console.info(`No open pull request in ${repo} has ${sha} as its head; nothing to do.`)
     return
   }
   const run = await newestPreviewRun(repo, sha)

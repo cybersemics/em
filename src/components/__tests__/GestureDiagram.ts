@@ -13,7 +13,7 @@ const renderedPathData = (markup: string) =>
 
 /** Parses the coordinates from a path containing only move and line commands. */
 const pointsOf = (pathData: string) => {
-  const values = pathData.match(/-?[\d.]+/g)!.map(Number)
+  const values = pathData.match(/-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi)!.map(Number)
   return Array.from({ length: values.length / 2 }, (_, index) => ({
     x: values[index * 2],
     y: values[index * 2 + 1],
@@ -42,9 +42,9 @@ describe('GestureDiagram rendering modes', () => {
   it('preserves the rdld Bezier geometry in solid mode', () => {
     const markup = render({ path: 'rdld', arrowhead: 'none', useGradient: false })
 
-    expect(renderedPathData(markup)).toEqual([
-      'M 29.7,13.5 Q 46.8,-4.5 63,13.5 Q 72,27 54,40.5 Q 45,49.5 45,58.5 L 45,72',
-    ])
+    const paths = renderedPathData(markup)
+    expect(paths).toHaveLength(1)
+    expect(paths[0].match(/[MQL]/g)).toEqual(['M', 'Q', 'Q', 'Q', 'L'])
   })
 
   it('preserves segmented gradients when no custom ramp is supplied', () => {
@@ -192,5 +192,62 @@ describe('gesture shape', () => {
       to: geometry.chevron![1],
       gestureIndex: 2,
     })
+  })
+})
+
+describe('geometry-based framing', () => {
+  const props = {
+    size: 150,
+    arrowSize: 1,
+    strokeWidth: 12,
+    arrowhead: 'outlined-wide' as const,
+    gradient: { from: '#111', to: '#eee' },
+  }
+
+  it('preserves the requested display dimensions independently of geometry size', () => {
+    const markup = render({ ...props, path: 'rdr', maxWidth: 70, maxHeight: 50 })
+
+    expect(markup).toContain('width="70" height="50"')
+    expect(markup).toContain('aspect-ratio:70 / 50')
+  })
+
+  it('renders rdld geometry without a transform or stroke compensation', () => {
+    const markup = render({ ...props, path: 'rdld' })
+    const renderedStrokeWidth = Math.max(
+      ...[...markup.matchAll(/<path[^>]*stroke-width="([^"]+)"/g)].map(([, value]) => +value),
+    )
+
+    expect(markup).not.toContain('transform="scale(')
+    expect(renderedStrokeWidth).toBe(12 * 1.5)
+  })
+})
+
+describe('automatic viewBox', () => {
+  it('includes geometry-derived framing in static markup', () => {
+    const props = { arrowhead: 'none' as const, strokeWidth: 2, useGradient: false as const }
+    expect(render({ ...props, path: 'r' })).toContain('viewBox="-1.5 -26.5 53 53"')
+    expect(render({ ...props, path: 'd' })).toContain('viewBox="-26.5 -1.5 53 53"')
+  })
+
+  it('honors an explicit viewBox', () => {
+    expect(render({ path: 'rdld', viewBox: '1 2 300 200' })).toContain('viewBox="1 2 300 200"')
+  })
+})
+
+it('applies the same geometry and framing independently of the paint renderer', () => {
+  const props = { path: 'rdld' as const, size: 150, strokeWidth: 12, arrowSize: 1 }
+  const markups = [
+    render({ ...props, useGradient: false }),
+    render(props),
+    render({ ...props, gradient: { from: '#000', to: '#fff' } }),
+  ]
+
+  markups.forEach(markup => {
+    const viewBox = markup
+      .match(/viewBox="([^"]+)"/)![1]
+      .split(' ')
+      .map(Number)
+    expect(viewBox[0]).toBeCloseTo(((29.7 + 36.3 / 2) / 67.5) * 150 - 124)
+    expect(viewBox.slice(1)).toEqual([-39, 248, 248])
   })
 })

@@ -16,8 +16,9 @@ name: Preview QR
 # approval for a first-time contributor) are not yet building and leave the description alone.
 #
 # Ordering. Events can arrive late or out of order, so the script does not act on the event that
-# woke it. It resolves the pull request from the commit, exits if the pull request's head has
-# moved on, and reconciles the description to the *newest* Vercel Preview run for that head as the
+# woke it. It resolves the pull request from the commit (the one whose head *is* the commit, since a
+# pull request stacked on this one's branch contains it too), exits if the head has moved on, and
+# reconciles the description to the *newest* Vercel Preview run for that head as the
 # API reports it now — so commit A's late success cannot overwrite commit B, and an `in_progress`
 # delivered after its own `completed` finds the run finished and renders the finished state.
 # Immediately before writing it re-reads the pull request, so a human edit to the description
