@@ -40,7 +40,7 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   const cursorParent = parentOf(multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
   const simplePath = simplifyPath(state, multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
   // Protection belongs to the actual tree parent, which may differ from the displayed Context View parent.
-  const simpleParent = parentOf(simplePath)
+  const simpleParent = rootedParentOf(state, simplePath)
 
   // Check if all selected thoughts belong to the same parent
   const allSameParent = multicursorPaths.every(path =>
