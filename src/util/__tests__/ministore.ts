@@ -2,6 +2,9 @@ import _ from 'lodash'
 import ministore, { registerReset, resetStores } from '../../stores/ministore'
 import reactMinistore from '../../stores/react-ministore'
 
+/** A module-level store, as every store under src/stores is. Vitest isolates modules per file, not per test, so it outlives each test in this file. */
+const moduleStore = ministore(0)
+
 it('getState', () => {
   const store = ministore(1)
   expect(store.getState()).toBe(1)
@@ -43,6 +46,21 @@ describe('reset', () => {
     store.subscribe(() => counter++)
     store.reset()
     expect(counter).toBe(0)
+  })
+})
+
+// These two tests depend on their order: the first leaves state behind, the second checks that no hand-written teardown
+// was needed to clear it. Together they pin the afterEach in setupTests.ts, which is the only reset for a suite that
+// uses neither initStore nor createTestApp.
+// https://github.com/cybersemics/em/issues/5245
+describe('isolation between tests', () => {
+  it('leave a module-level store changed', () => {
+    moduleStore.update(1)
+    expect(moduleStore.getState()).toBe(1)
+  })
+
+  it('see the initial state without resetting it', () => {
+    expect(moduleStore.getState()).toBe(0)
   })
 })
 

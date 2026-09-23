@@ -6,35 +6,29 @@ import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
 interface Params {
   /**
-   * Persist: Set to true to keep the existing store state.
-   */
-  persist?: boolean
-
-  /**
    * AllowTutorial: Set to true to override the skipping of the tutorial.
    */
   allowTutorial?: boolean
 }
 
 /**
- * Initializes the store. Defaults to clearing the store and skipping the tutorial.
+ * Initializes the store. Clears the store and skips the tutorial.
  */
-const initStore = async ({ persist, allowTutorial }: Params = {}) => {
+const initStore = async ({ allowTutorial }: Params = {}) => {
   // Use fake timers so throttled/debounced side effects (e.g., url/history updates, storage writes)
   // don't execute after the test completes and the environment is torn down.
   // This makes tests deterministic and prevents post-teardown access to window/localStorage.
   vi.useFakeTimers()
 
-  if (!persist) {
-    await waitForThoughtspaceIdle()
-    await thoughtspaceRuntime.drop()
-    await thoughtspaceRuntime.init({ storage: 'memory' })
-    store.dispatch(clear())
+  await waitForThoughtspaceIdle()
+  await thoughtspaceRuntime.drop()
+  await thoughtspaceRuntime.init({ storage: 'memory' })
+  store.dispatch(clear())
 
-    // Ministores are module-level singletons that vitest only isolates per test file, so reset them
-    // alongside the Redux store to give each test the same clean slate.
-    resetStores()
-  }
+  // Ministores are module-level singletons that vitest only isolates per test file, so reset them alongside the Redux
+  // store. setupTests also resets them after every test; resetting here as well gives the test a clean slate even when
+  // the previous test's teardown did not run to completion.
+  resetStores()
 
   if (!allowTutorial) {
     store.dispatch([
