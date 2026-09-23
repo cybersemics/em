@@ -9,12 +9,16 @@ import Thunk from '../@types/Thunk'
 import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import getLexeme from '../selectors/getLexeme'
+import getMovePlacement from '../selectors/getMovePlacement'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import { childrenMapKey } from '../util/createChildrenMap'
 import createId from '../util/createId'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import keyValueBy from '../util/keyValueBy'
 import timestamp from '../util/timestamp'
 
@@ -76,6 +80,14 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, splitSo
     ...(splitSource ? { splitSource } : null),
   }
 
+  // Adding a child moves the parent's lastUpdated to now, which is its sort key in a context sorted by Updated, so the
+  // parent is re-ranked among its siblings to keep their ranks matching the sort condition (#4098). Empty and
+  // emoji-only thoughts are sorted to their point of creation, so they keep the rank they have.
+  const parentRank =
+    getSortPreference(state, parent.parentId).type === 'Updated' && !isEmptyOrEmojiOnly(parent.value)
+      ? getSortedRank(state, parent.parentId, parent.value, { staleId: parentId })
+      : parent.rank
+
   thoughtIndexUpdates[id] = thoughtNew
   thoughtIndexUpdates[parentId] = {
     ...parent,
@@ -94,6 +106,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, splitSo
       [childrenMapKey(parent.childrenMap, thoughtNew)]: id,
     },
     lastUpdated: timestamp(),
+    rank: parentRank,
     updatedBy: clientId,
   }
 
@@ -101,7 +114,14 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, splitSo
     [hashThought(value)]: lexemeNew,
   }
 
-  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced })
+  // A new rank is invisible to the persistence layer on its own: sibling order is stored structurally there and only
+  // changes on a move, which is minted from an explicit placement (#5126).
+  const movePlacements: Index<ThoughtId | null> =
+    parentRank !== parent.rank
+      ? { [parentId]: getMovePlacement(state, parent.parentId, { id: parentId, rank: parentRank }) }
+      : {}
+
+  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced, movePlacements })
 }
 
 /** Action-creator for createThought. */

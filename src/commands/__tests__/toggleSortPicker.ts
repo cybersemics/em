@@ -5,6 +5,7 @@ import { executeCommand } from '../../commands'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import favoriteCommand from '../favorite'
@@ -132,7 +133,7 @@ describe('toggleSortPicker error', () => {
   )
 
   // https://github.com/cybersemics/em/issues/4098
-  it.skip('does not report an error when a thought is favorited under updated sort', () => {
+  it('does not report an error when a thought is favorited under updated sort', () => {
     store.dispatch([
       importText({
         text: `
@@ -157,6 +158,42 @@ describe('toggleSortPicker error', () => {
     // user favorites a thought some time after sorting the context.
     vi.advanceTimersByTime(1000)
 
+    executeCommand(favoriteCommand, { store })
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
+
+  // https://github.com/cybersemics/em/issues/4098
+  it('does not report an error when a thought is unfavorited under updated sort', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - One
+          - Two
+          - Three
+        `,
+      }),
+      setCursor(['One']),
+    ])
+
+    const state = store.getState()
+    // Enable updated ascending sort on the home context.
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Updated', direction: 'Asc' },
+      }),
+    )
+
+    vi.advanceTimersByTime(1000)
+    executeCommand(favoriteCommand, { store })
+
+    // Update a sibling after One is favorited, so that unfavoriting One has to move it past Two again.
+    vi.advanceTimersByTime(1000)
+    store.dispatch([setCursor(['Two']), editThought(['Two'], 'Two!')])
+
+    vi.advanceTimersByTime(1000)
+    store.dispatch(setCursor(['One']))
     executeCommand(favoriteCommand, { store })
 
     expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
