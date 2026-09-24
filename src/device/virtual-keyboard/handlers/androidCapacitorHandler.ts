@@ -14,6 +14,7 @@ const hasTracker = () => Capacitor.isNativePlatform() && Capacitor.isPluginAvail
 
 // WebView can present a CSS update one frame after the native IME surface has moved.
 const WEBVIEW_PAINT_LEAD_MS = 16
+const VELOCITY_SMOOTHING = 0.35
 
 /** The Android 11+ tracker owns keyboard lifecycle because its decor-view animation callback supersedes
  * Capacitor Keyboard's callback. Older Android versions retain the Capacitor hide-event behavior. */
@@ -31,6 +32,7 @@ const androidCapacitorHandler: VirtualKeyboardHandler & { prepareBlurredHide: ()
     let blurredHide = false
     let previousProgressTime: number | null = null
     let previousHeight = 0
+    let smoothedVelocity: number | null = null
     VirtualKeyboardTracker.addListener(
       'keyboardProgress',
       ({ phase, height, shownHeight, timestampMs, navigationInset }) => {
@@ -45,9 +47,20 @@ const androidCapacitorHandler: VirtualKeyboardHandler & { prepareBlurredHide: ()
           )
         }
 
-        if (phase === 'willShow' || phase === 'willHide') previousProgressTime = null
+        if (phase === 'willShow' || phase === 'willHide') {
+          previousProgressTime = null
+          smoothedVelocity = null
+        }
         const elapsed = previousProgressTime == null || timestampMs == null ? 0 : timestampMs - previousProgressTime
-        const velocity = phase === 'progress' && elapsed > 0 ? (height - previousHeight) / elapsed : 0
+        const instantVelocity = phase === 'progress' && elapsed > 0 ? (height - previousHeight) / elapsed : 0
+        // The 16 ms projection magnifies sample-to-sample velocity noise. Smooth only the velocity,
+        // keeping the measured height and lifecycle endpoints exact.
+        if (phase === 'progress' && elapsed > 0)
+          smoothedVelocity =
+            smoothedVelocity == null
+              ? instantVelocity
+              : smoothedVelocity + (instantVelocity - smoothedVelocity) * VELOCITY_SMOOTHING
+        const velocity = phase === 'progress' && elapsed > 0 ? (smoothedVelocity ?? 0) : 0
         const projectedHeight =
           phase === 'progress'
             ? Math.min(shownHeight || height, Math.max(0, height + velocity * WEBVIEW_PAINT_LEAD_MS))

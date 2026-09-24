@@ -188,3 +188,21 @@ it('projects native progress from native sample times without passing the shown 
 
   androidCapacitorHandler.destroy()
 })
+
+it('keeps the projected keyboard edge moving forward when native progress slows between samples', () => {
+  mockState.trackerAvailable = true
+  androidCapacitorHandler.init()
+  const progress = mockTrackerListeners.keyboardProgress
+
+  progress({ phase: 'willShow', height: 390, shownHeight: 425, navigationInset: 39, timestampMs: 0 })
+  progress({ phase: 'progress', height: 392, shownHeight: 425, navigationInset: 39, timestampMs: 9 })
+  progress({ phase: 'progress', height: 395, shownHeight: 425, navigationInset: 39, timestampMs: 17 })
+  const precedingHeight = parseFloat(document.documentElement.style.getPropertyValue('--virtual-keyboard-height'))
+  progress({ phase: 'progress', height: 396, shownHeight: 425, navigationInset: 39, timestampMs: 25 })
+  const currentHeight = parseFloat(document.documentElement.style.getPropertyValue('--virtual-keyboard-height'))
+  expect(currentHeight).toBeGreaterThanOrEqual(precedingHeight)
+
+  progress({ phase: 'didShow', height: 425, shownHeight: 425, navigationInset: 39, timestampMs: 33 })
+  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('425px')
+  androidCapacitorHandler.destroy()
+})
