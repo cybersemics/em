@@ -2,7 +2,14 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import { ABSOLUTE_TOKEN, EM_TOKEN, FREE_THOUGHTS_MARGIN, FREE_THOUGHT_JUMPS, HOME_TOKEN } from '../constants'
+import {
+  ABSOLUTE_TOKEN,
+  EM_TOKEN,
+  FREE_THOUGHTS_MARGIN,
+  FREE_THOUGHTS_THRESHOLD,
+  FREE_THOUGHT_JUMPS,
+  HOME_TOKEN,
+} from '../constants'
 import { getAllChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getDescendantThoughtIds from '../selectors/getDescendantThoughtIds'
@@ -10,7 +17,6 @@ import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import thoughtToPath from '../selectors/thoughtToPath'
-import freeThoughtsThresholdStore from '../stores/freeThoughtsThreshold'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -87,10 +93,7 @@ const freeThoughts = (state: State): State => {
   let stateNew = state
 
   // free thoughts until MAX_THOUGHTS is reached (minus MAX_THOUGHTS_MARGIN to provide some slack)
-  while (
-    Object.values(stateNew.thoughts.thoughtIndex).length >
-    freeThoughtsThresholdStore.getState() - FREE_THOUGHTS_MARGIN
-  ) {
+  while (Object.values(stateNew.thoughts.thoughtIndex).length > FREE_THOUGHTS_THRESHOLD - FREE_THOUGHTS_MARGIN) {
     // find a thought that can be deleted
     const deletableThought = findDeletableThought(stateNew, preserveSet)
     // If all thoughts are preserved, we should bail.

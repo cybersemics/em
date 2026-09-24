@@ -504,6 +504,11 @@ export const CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']
 /** The number of jumpHistory paths to preserve during deallocation. */
 export const FREE_THOUGHT_JUMPS = 3
 
+/** The maximum size of the thoughtIndex before freeThoughts kicks in to free memory. */
+// e.g. Art • Buddhist Art • :: • Regions • China • Period • Era of North-South division • North • East • Northern Qi
+// = 455 thoughts loaded into memory
+export const FREE_THOUGHTS_THRESHOLD = 500
+
 /** The number of additional thoughts to free when the threshold is reached. This provides some slack so that freeThoughts is not triggered on every action. */
 export const FREE_THOUGHTS_MARGIN = 50
 
