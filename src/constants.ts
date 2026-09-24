@@ -679,3 +679,6 @@ export const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
   commandCenter: 'showCommandCenter',
   undoSlider: 'showUndoSlider',
 }
+
+/** Practice repetitions needed to learn a command. Captured into a command's progress record when it is first pinned, so changing this does not change existing records. Provisional value pending a product decision (see #5485). */
+export const LEARNING_TARGET_REPS = 5

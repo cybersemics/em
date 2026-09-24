@@ -209,3 +209,5 @@ Device permissions live in [`permissionsStore.ts`](../src/data-providers/permiss
 `db.clear` is the runtime's `drop`. It detaches the data provider (rejecting any writes still waiting on initialization), stops WebSocket sync, unsubscribes the materialization listener, and calls `client.drop()`, which closes SQLite and — for OPFS storage — deletes the thoughtspace's database file. Used by the device-removal flow above, and by e2e tests through `em.testHelpers.dropThoughtspace`.
 
 Unit tests and most e2e runs initialize with `storage: 'memory'`, so they never touch OPFS; persistence-specific Puppeteer suites opt into OPFS explicitly. See [testing.md](testing.md).
+
+Learning state uses `storageModel` under `learning` and is restored by `initialState`, like font size and jump history. The pin is device-specific; practice progress is local for now. Neither is replicated by TreeCRDT.
