@@ -17,6 +17,7 @@ import {
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 import * as selection from '../device/selection'
+import virtualKeyboardHandler from '../device/virtual-keyboard'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -66,6 +67,11 @@ const Content: FC = () => {
   return (
     <div
       id='content-wrapper'
+      onMouseDownCapture={e => {
+        // A stationary touch synthesizes mousedown before the browser blurs the editable.
+        // Align fixed controls with Android's changing IME surface without canceling that blur.
+        if (!selection.isThought(e.target)) virtualKeyboardHandler.prepareBlurredHide()
+      }}
       {...fastClick(
         e => {
           // make sure the the actual Content element has been clicked

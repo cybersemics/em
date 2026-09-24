@@ -1,6 +1,7 @@
 package com.emtheapp.em;
 
 import android.os.Build;
+import android.os.SystemClock;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowInsetsAnimation;
@@ -44,6 +45,11 @@ public class VirtualKeyboardTracker extends Plugin {
         JSObject data = new JSObject();
         data.put("phase", phase);
         data.put("height", Math.max(0, heightPx) / density);
+        data.put("shownHeight", Math.max(0, shownHeightPx) / density);
+        data.put("timestampMs", SystemClock.uptimeMillis());
+        WindowInsets rootInsets = decorView.getRootWindowInsets();
+        int navigationInsetPx = rootInsets == null ? 0 : rootInsets.getInsets(WindowInsets.Type.navigationBars()).bottom;
+        data.put("navigationInset", navigationInsetPx / density);
         notifyListeners("keyboardProgress", data);
     }
 
