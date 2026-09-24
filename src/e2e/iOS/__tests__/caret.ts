@@ -337,7 +337,7 @@ describe('Caret', () => {
     // Deliberately no scrollTo(0, 0): the keyboard makes Safari scroll the document so that scrollY tracks
     // visualViewport.offsetTop, and forcing scrollY back to 0 leaves the two desynchronised, which shifts the
     // page-to-screen offset by offsetTop and lands the tap below the thought.
-    const rectKeyboardUp = await getElementRectByScreen(editable)
+    const rect = await getElementRectByScreen(editable)
 
     // Prime with a tap on the thought's center + keyboard dismissal. Priming while
     // "Hello" has the cursor is what leaves offsetRef.current set (and never reset) pre-#4371.
@@ -350,8 +350,8 @@ describe('Caret', () => {
           {
             type: 'pointerMove',
             duration: 0,
-            x: Math.round(rectKeyboardUp.x + rectKeyboardUp.width / 2),
-            y: Math.round(rectKeyboardUp.y + rectKeyboardUp.height / 2),
+            x: Math.round(rect.x + rect.width / 2),
+            y: Math.round(rect.y + rect.height / 2),
             origin: 'viewport',
           },
           { type: 'pointerDown', button: 0 },
@@ -362,9 +362,6 @@ describe('Caret', () => {
     ])
 
     await hideKeyboardByTappingDone()
-
-    // Dismissing the keyboard scrolls the page, so the rect above no longer locates the thought on screen.
-    const rect = await getElementRectByScreen(editable)
 
     // Cursor Back (swipe right) to set the cursor to null, so that "Hello" becomes a non-cursor thought.
     await gesture('r', {

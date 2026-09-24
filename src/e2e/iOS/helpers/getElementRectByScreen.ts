@@ -1,12 +1,7 @@
 import type { Element } from 'webdriverio'
 import SAFARI_CHROME_TOP from './safariChromeTop.js'
 
-/**
- * Get an element's rect in the screen coordinates that performActions delivers touches in.
- *
- * Opening or closing the keyboard scrolls the page, which moves the rect, so read it again after the keyboard changes
- * rather than reusing one across the transition.
- */
+/** Get an element's rect in the screen coordinates that performActions delivers touches in. */
 const getElementRectByScreen = async (element: Element) => {
   const elementRect = await browser.getElementRect(element.elementId)
   return {
