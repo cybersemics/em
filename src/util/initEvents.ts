@@ -45,6 +45,12 @@ const WINDOW_SCROLLATEDGE_SPEED = 2
 /** How often to save the selection offset to storage when it changes. */
 const SELECTION_CHANGE_THROTTLE = 200
 
+/** A touchstart this soon after the last touchend means that touchend was withheld until the touchstart (#5660). A lift and a new touch are never this close together, while the withheld touchend arrives within the same millisecond. */
+const TOUCHEND_WITHHELD_MS = 10
+
+/** The longest gap between the two taps of a double tap. Matches the iOS double tap interval. */
+const DOUBLE_TAP_MS = 350
+
 // Store a timeout to determine if the device stays in the passive state.
 // See: onStateChange
 let passiveTimeout = 0
@@ -304,10 +310,36 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
-   * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
-   * phase (see the note on the touchmove listener below). */
-  const onTouchStart = () => {
-    touchStore.update({ suppressCursorAfterTouch: false })
+   * the completed touch. Also decides whether this touch's touchend can be trusted (#5660). Registered in the capture
+   * phase because touchstart propagation is unreliable in the bubble phase (see the note on the touchmove listener
+   * below). */
+  const onTouchStart = (e: TouchEvent) => {
+    const { touchEndTimeStamp, touchGap: previousTouchGap } = touchStore.getState()
+    const touchGap = e.timeStamp - touchEndTimeStamp
+    // iOS 27 withholds the touchend of a tap and dispatches it immediately before the next touchstart, with the same
+    // timeStamp. No finger can lift and touch down again within a few milliseconds, so a gap that short means the
+    // previous touch's touchend was withheld, and this touch's touchend will be withheld too.
+    const touchEndWithheld = touchGap < TOUCHEND_WITHHELD_MS
+    // The first withheld touch follows the double tap that caused it, and its touchend has not been withheld yet, so
+    // it can only be recognized by what came before it. Only WebKit is affected.
+    const afterDoubleTap =
+      isSafari() && previousTouchGap >= TOUCHEND_WITHHELD_MS && previousTouchGap < DOUBLE_TAP_MS && !touchEndWithheld
+    const touchEndUnreliable = touchEndWithheld || afterDoubleTap
+
+    if (touchEndUnreliable) {
+      // Log it so that a long press that did not start can be diagnosed from the debug log.
+      debugLog.log('touchEndUnreliable', {
+        touchGap: Math.round(touchGap),
+        previousTouchGap: Math.round(previousTouchGap),
+      })
+    }
+
+    touchStore.update({ suppressCursorAfterTouch: false, touchGap, touchEndUnreliable })
+  }
+
+  /** Records when the touch ended, so that the next touchstart can tell whether its touchend was withheld (#5660). Registered in the capture phase so that a handler that stops propagation cannot hide it. */
+  const onTouchEndCapture = (e: TouchEvent) => {
+    touchStore.update({ touchEndTimeStamp: e.timeStamp })
   }
 
   /** Handle a page lifecycle state change, i.e. switching apps. */
@@ -399,6 +431,7 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('mousemove', onMouseMove)
   // Note: touchstart may not be propagated after dragHold
   window.addEventListener('touchstart', onTouchStart, { capture: true })
+  window.addEventListener('touchend', onTouchEndCapture, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
   window.addEventListener('beforeunload', onBeforeUnload)
@@ -433,6 +466,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('touchstart', onTouchStart, { capture: true })
+    window.removeEventListener('touchend', onTouchEndCapture, { capture: true })
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('beforeunload', onBeforeUnload)

@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import touchStore from '../stores/touch'
 import haptics from '../util/haptics'
 
 export interface LongPressProps {
@@ -78,6 +79,9 @@ const useLongPress = (
    * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      // While iOS is withholding touchend, a tap cannot be told apart from a finger held down, so any touch would
+      // reach the long press delay. Not pressing is what keeps the long press from starting (#5660).
+      if ('touches' in e.nativeEvent && touchStore.getState().touchEndUnreliable) return
       if ('touches' in e.nativeEvent || e.nativeEvent.button !== 2) setPressing(true)
     },
     [setPressing],
