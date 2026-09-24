@@ -216,19 +216,38 @@ const api = async (route, init = {}) => {
 }
 
 /**
- * Resolves the one open pull request in this repository that the commit belongs to. Fork branch
- * names are not unique, so association is by commit identity; the caller then requires the pull
- * request's current head to still be this commit, since a later push makes the run stale.
+ * Picks, from the open pull requests a commit belongs to, the one the commit was deployed for: the
+ * pull request whose current head *is* the commit. A stacked pull request based on another's
+ * branch also contains every commit of its base, so containment alone is ambiguous; head identity
+ * is not. Returns null when no candidate's head is the commit — every one of them has moved on —
+ * and throws only if two pull requests share the commit as their head, which would need two
+ * branches pointing at one commit.
+ */
+export const selectPullRequest = (candidates, sha) => {
+  const heads = candidates.filter(pr => pr.head.sha === sha)
+  if (heads.length > 1) {
+    throw new Error(`Commit ${sha} is the head of ${heads.length} open pull requests; refusing to pick one.`)
+  }
+  return heads[0] ?? null
+}
+
+/**
+ * Resolves the open pull request in this repository whose head is the commit. Fork branch names
+ * are not unique, so association is by commit identity; a later push makes the run stale, so
+ * a pull request that has moved past the commit is reported and skipped.
  */
 const resolvePullRequest = async (repo, sha) => {
   const pulls = await api(`/repos/${repo}/commits/${sha}/pulls?per_page=100`)
   const candidates = pulls.filter(pr => pr.state === 'open' && pr.base.repo.full_name === repo)
-  if (candidates.length === 0) return null
-  if (candidates.length > 1) {
-    throw new Error(`Commit ${sha} belongs to ${candidates.length} open pull requests; refusing to pick one.`)
-  }
   // Re-fetch rather than trusting the association listing, which can lag behind a push.
-  return api(`/repos/${repo}/pulls/${candidates[0].number}`)
+  const current = await Promise.all(candidates.map(pr => api(`/repos/${repo}/pulls/${pr.number}`)))
+  const pr = selectPullRequest(current, sha)
+  if (!pr) {
+    for (const stale of current) {
+      console.info(`PR #${stale.number} has moved on to ${stale.head.sha}; ignoring stale event for ${sha}.`)
+    }
+  }
+  return pr
 }
 
 /**
@@ -293,11 +312,7 @@ const main = async sha => {
   const repo = process.env.GITHUB_REPOSITORY
   const pr = await resolvePullRequest(repo, sha)
   if (!pr) {
-    console.info(`No open pull request in ${repo} contains ${sha}; nothing to do.`)
-    return
-  }
-  if (pr.head.sha !== sha) {
-    console.info(`PR #${pr.number} has moved on to ${pr.head.sha}; ignoring stale event for ${sha}.`)
+    console.info(`No open pull request in ${repo} has ${sha} as its head; nothing to do.`)
     return
   }
   const run = await newestPreviewRun(repo, sha)

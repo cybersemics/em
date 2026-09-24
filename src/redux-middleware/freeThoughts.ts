@@ -5,18 +5,17 @@ import State from '../@types/State'
 import { Thunk } from '../@types/Thunk'
 import { freeThoughtsActionCreator as freeThoughts } from '../actions/freeThoughts'
 import { FREE_THOUGHTS_THROTTLE } from '../constants'
-import globals from '../globals'
-import cancelOnReset from '../util/cancelOnReset'
+import freeThoughtsThresholdStore from '../stores/freeThoughtsThreshold'
 
 /** Checks if the thought cache has exceeded its memory limit. If so, dispatches freeThoughts which frees Redux indexes and provider cache. */
 const checkThreshold: Thunk = (dispatch, getState): void => {
   const state = getState()
-  if (Object.keys(state.thoughts.thoughtIndex).length > globals.freeThoughtsThreshold) {
+  if (Object.keys(state.thoughts.thoughtIndex).length > freeThoughtsThresholdStore.getState()) {
     dispatch(freeThoughts())
   }
 }
 
-const checkThrottled = cancelOnReset(_.throttle(checkThreshold, FREE_THOUGHTS_THROTTLE, { leading: false }))
+const checkThrottled = _.throttle(checkThreshold, FREE_THOUGHTS_THROTTLE, { leading: false })
 
 /** Runs a throttled session keepalive on every action. */
 const freeThoughtsMiddleware: ThunkMiddleware<State> = ({ dispatch, getState }) => {

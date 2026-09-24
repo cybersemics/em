@@ -1,6 +1,9 @@
 import { Capacitor } from '@capacitor/core'
+import { isTauri } from '@tauri-apps/api/core'
 import pkg from '../../package.json'
 import State from '../@types/State'
+import { isTouch } from '../browser'
+import { registerReset } from '../stores/ministore'
 import storage from './storage'
 
 /** The localStorage key prefix under which the rolling debug log is persisted. Entries are sharded across numbered chunk keys (`debugLog-0` … `debugLog-9`) so that appending an entry only rewrites the active chunk instead of the whole buffer. */
@@ -32,6 +35,12 @@ const DUMP_VALUE_MAX_LENGTH = 100
 
 /** The localStorage key recording a device-local opt-out of auto-enabled logging (see autoEnabled), so a development or preview host can be aligned with production (e.g. for performance testing). A preference rather than log data, so clear() leaves it alone. */
 const OPT_OUT_KEY = 'debugLogOptOut'
+
+/** The localStorage key recording a device-local opt-in to mirroring every entry to the console as it is appended (see setConsole). A preference rather than log data, so clear() leaves it alone. */
+const CONSOLE_KEY = 'debugLogConsole'
+
+/** Prefix on every mirrored console line, so debug log entries can be told apart from the app's other console output (`console.info` from testFlags.logActions, React warnings, network errors) when reading a console listing. */
+const CONSOLE_PREFIX = 'debugLog'
 
 /** A single rolling-log entry. `seq`, `t`, `dt`, and `type` form a common envelope; all other fields are event-specific. */
 interface DebugLogEntry {
@@ -84,6 +93,15 @@ const hydrate = (): DebugLogEntry[] => {
 let entries: DebugLogEntry[] = hydrate()
 // whether logging is currently active; when false, log() is a no-op with zero cost
 let enabled = false
+// whether each entry is also mirrored to the console as it is appended. Read once here rather than per
+// entry, so the mirror costs one boolean test in log() while it is off.
+let consoleEnabled = (() => {
+  try {
+    return storage.getItem(CONSOLE_KEY) === 'true'
+  } catch {
+    return false
+  }
+})()
 // monotonic sequence counter
 let seq = entries.length > 0 ? entries[entries.length - 1].seq + 1 : 0
 // the entries of the chunk currently being written, so persist() only serializes CHUNK_SIZE entries.
@@ -146,6 +164,12 @@ const persist = (): void => {
   }
 }
 
+/** Renders one entry as a single line: the `seq`, `t`, `dt`, and `type` envelope followed by the event-specific fields as JSON. Shared by format() and the console mirror so that a log read off the console parses identically to one dumped from the buffer. */
+const formatEntry = ({ seq, t, dt, type, ...fields }: DebugLogEntry): string => {
+  const fieldStr = Object.keys(fields).length > 0 ? ` ${JSON.stringify(fields)}` : ''
+  return `[${new Date(t).toISOString()}] +${dt}ms #${seq} ${type}${fieldStr}`
+}
+
 /** Appends an entry to the rolling buffer and persists its chunk synchronously. No-op when logging is disabled. Never throws, so instrumentation can never worsen a freeze or break editing. */
 const log = (type: string, fields?: Record<string, unknown>): void => {
   if (!enabled) return
@@ -164,6 +188,11 @@ const log = (type: string, fields?: Record<string, unknown>): void => {
     }
     chunk.push(entry)
     persist()
+    // Mirror to the console last, so a console that throws or is monkey-patched cannot cost the entry its
+    // place in the persisted buffer — which is the copy that survives a freeze or a device restart.
+    if (consoleEnabled) {
+      console.info(`${CONSOLE_PREFIX} ${formatEntry(entry)}`)
+    }
   } catch {
     // Logging must never throw.
   }
@@ -220,14 +249,32 @@ const formatThought = (thought: {
   return `${thought.id} ${JSON.stringify(value)} rank:${thought.rank} parent:${thought.parentId}${thought.pending ? ' pending' : ''}`
 }
 
-/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Appends the last-frame marker and, when state is provided, a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
+/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, and build commit. Appends the last-frame marker and, when state is provided, a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
 const format = (state?: State): string => {
-  const entryLines = entries
-    .map(({ seq, t, dt, type, ...fields }) => {
-      const fieldStr = Object.keys(fields).length > 0 ? ` ${JSON.stringify(fields)}` : ''
-      return `[${new Date(t).toISOString()}] +${dt}ms #${seq} ${type}${fieldStr}`
-    })
-    .join('\n')
+  // The device: the navigator platform, the shell em is served through (web, ios, android, or tauri), the screen
+  // dimensions, and the pointer type. The shell is worth naming separately because it is not recoverable from the user
+  // agent: a Capacitor WebView shares its user agent with the mobile browser it embeds, and the Tauri desktop shell
+  // reports the web platform to Capacitor, so only the flag its runtime injects tells it apart from a browser.
+  const device = [
+    `${(typeof navigator !== 'undefined' && navigator.platform) || 'unknown platform'} (${isTauri() ? 'tauri' : Capacitor.getPlatform()})`,
+    typeof window !== 'undefined' && window.screen
+      ? `${window.screen.width}x${window.screen.height}`
+      : 'unknown screen',
+    isTouch ? 'touch' : 'mouse',
+  ].join(', ')
+
+  // The header is rendered here rather than read back from the session marker, which the rolling buffer evicts once
+  // capacity is exceeded — i.e. in exactly the long sessions whose logs are most worth reading. It describes the device
+  // and build the log was formatted on, so a hydrated log spanning an app update may still carry a session marker from
+  // the version that wrote the older entries.
+  const header = [
+    `--- device: ${device}`,
+    `--- userAgent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'}`,
+    `--- version: ${pkg.version}`,
+    `--- commit: ${__COMMIT_HASH__}`,
+  ].join('\n')
+
+  const entryLines = entries.map(formatEntry).join('\n')
 
   let markerLine = ''
   try {
@@ -246,7 +293,7 @@ const format = (state?: State): string => {
       ].join('\n')
     : ''
 
-  return `${entryLines}${markerLine}${dump}`
+  return `${header}${entryLines ? `\n${entryLines}` : ''}${markerLine}${dump}`
 }
 
 /** Empties the buffer and removes all of its localStorage keys, including the legacy single-key buffer and the frame marker. */
@@ -263,6 +310,38 @@ const clear = (): void => {
     // ignore
   }
 }
+
+/**
+ * Restores the in-memory state to a clean slate: logging off, the frame heartbeat cancelled, the buffer and its
+ * counters empty, the console mirror off. Run at test boundaries through resetStores (see registerReset); nothing in
+ * the app calls it.
+ *
+ * The clean slate is written out here rather than derived from the values these variables were constructed with,
+ * because those are not clean: `entries`, `seq` and `chunk` are initialized from whatever localStorage held at import,
+ * i.e. a previous session's log. What is restored instead is what a module load produces against empty storage on a
+ * host that does not auto-enable.
+ *
+ * Memory only. Erasing the persisted log is clear()'s job and stays a separate operation: a test owns its own
+ * localStorage, and resetting between tests must never be able to cost a user their log.
+ *
+ * The heartbeat has to be cancelled, not just forgotten. Fake timers fake requestAnimationFrame, so a loop left
+ * running makes vi.runAllTimersAsync spin until it aborts ("Aborting after running 100000 timers") — in whichever
+ * teardown drains timers next, far from the test that enabled logging. And a loop that died with a reinstalled fake
+ * clock while `frameId` stayed set could never be restarted, since startFrameHeartbeat returns early on a live handle.
+ */
+const reset = (): void => {
+  stopFrameHeartbeat()
+  enabled = false
+  consoleEnabled = false
+  entries = []
+  chunk = []
+  seq = 0
+  lastTime = 0
+  lastFrameTime = 0
+  lastMarkerWritten = 0
+}
+
+registerReset(reset)
 
 /** Returns whether logging is currently active. */
 const isEnabled = (): boolean => enabled
@@ -282,6 +361,36 @@ const setEnabled = (value: boolean): void => {
     startFrameHeartbeat()
   } else {
     stopFrameHeartbeat()
+  }
+}
+
+/** Returns whether entries are currently being mirrored to the console. */
+const isConsole = (): boolean => consoleEnabled
+
+/**
+ * Turns console mirroring on or off and records the choice in localStorage, so it survives the page reloads
+ * that a reproduction performs. Off by default on every host, including the development and preview hosts
+ * where logging itself auto-enables: the log captures every selectionchange and input event, which would
+ * bury the console for everyone. Never throws.
+ *
+ * Mirrored lines carry the same shape format() writes, behind a `debugLog` prefix, so a log read off the
+ * console and one dumped from the buffer are the same text. Intended for watching a single interaction live
+ * through a browser MCP's console listing; for a whole reproduction, dump the buffer to a file instead —
+ * a few steps of editing produce thousands of characters. See docs/debug-log.md.
+ *
+ * Note that localStorage.clear() removes this flag along with everything else, so re-arm the mirror after
+ * resetting app state.
+ */
+const setConsole = (value: boolean): void => {
+  consoleEnabled = value
+  try {
+    if (value) {
+      storage.setItem(CONSOLE_KEY, 'true')
+    } else {
+      storage.removeItem(CONSOLE_KEY)
+    }
+  } catch {
+    // The mirror must never interfere with the app.
   }
 }
 
@@ -318,10 +427,12 @@ const debugLog = {
   clear,
   format,
   isAutoOptOut,
+  isConsole,
   isEnabled,
   log,
   read,
   setAutoOptOut,
+  setConsole,
   setEnabled,
 }
 

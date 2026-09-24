@@ -9,7 +9,6 @@ import db from '../data-providers/thoughtspace'
 import { initialize } from '../initialize'
 import store from '../stores/app'
 import { resetStores } from '../stores/ministore'
-import cancelOnReset from '../util/cancelOnReset'
 import storage from '../util/storage'
 import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
@@ -68,10 +67,10 @@ const createTestApp = async ({
 /** Clear store, localStorage, local db, and window event handlers. */
 export const cleanupTestApp = async () => {
   await act(async () => {
-    // Cancel pending module-scope throttles (e.g. saveCursor, saveJumpHistory) before clearing storage. The
-    // vi.runAllTimersAsync calls below would otherwise fire them after the clear, writing this test's cursor into the
-    // storage the next test's initialState reads.
-    cancelOnReset.cancelAll()
+    // Restore module state before anything below drains timers. A test that left debug logging enabled leaves its
+    // requestAnimationFrame heartbeat running, and fake timers fake requestAnimationFrame, so vi.runAllTimersAsync
+    // would otherwise spin on it until it aborts with "Aborting after running 100000 timers".
+    resetStores()
 
     // clear localStorage before dispatching clear action, since initialState reads from localStorage
     storage.clear()

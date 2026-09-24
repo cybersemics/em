@@ -59,6 +59,9 @@ const colors = {
     bgMuted: 'rgba(51, 51, 51, 1)', // #333
     footerBg: 'rgba(26, 26, 26, 1)', // #1a1a1a
     gestureDiagramWrapper: 'rgba(94, 94, 94, 1)',
+    // Endpoints of the Command Universe gesture gradient. The dialog uses fixed dark background art.
+    gestureDiagramGradientStart: 'rgba(88, 181, 212, 0.45)', // #58b5d4 @ 45%
+    gestureDiagramGradientEnd: 'rgba(255, 255, 255, 1)',
     pickerBg: 'rgba(20, 20, 20, 1)', // #141414
     sidebarBg: 'rgba(10, 10, 18, 1)', // #0a0a12
     sidebarOverlayBg: 'rgba(0, 0, 0, 0.5)', // this is defined separately to bgOverlay50 as it doesn't change between dark/light mode
@@ -106,6 +109,9 @@ const colors = {
     dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)', // dialog header – inner-edge color of the left/right fade-to-transparent dividers in the header row
     dialogSearchAccent: '#E3BECD', // Command Universe search – glyph fill, caret, and bright (left) stop of the input text gradient
     dialogSearchAccentFade: 'rgba(217, 211, 213, 0.50)', // Command Universe search – faded (right) stop of the input text gradient
+    commandUniverseSubtitleText: '#f4f0ffd6',
+    commandUniverseGestureCaptionGradientStart: '#dbf5ff',
+    commandUniverseGestureCaptionGradientEnd: '#a9bfd6',
     gestureMenuLabel: 'rgba(255, 255, 255, 0.7)', // gesture menu – "Gestures" header label (always renders on the dark glow overlay, so it doesn't flip with theme)
     gestureMenuDivider: 'rgba(174, 168, 214, 0.59)', // gesture menu – gradient start stop of the divider under the "Gestures" header
   },
@@ -169,6 +175,9 @@ const colors = {
     bgMuted: 'rgba(221, 221, 221, 1)', // #ddd
     footerBg: 'rgba(228, 228, 228, 1)', // #e4e4e4
     gestureDiagramWrapper: 'rgba(180, 180, 180, 1)',
+    // Intentionally identical to the dark palette.
+    gestureDiagramGradientStart: 'rgba(88, 181, 212, 0.45)', // #58b5d4 @ 45%
+    gestureDiagramGradientEnd: 'rgba(255, 255, 255, 1)',
     pickerBg: 'rgba(235, 235, 235, 1)', // #ebebeb
     sidebarBg: 'rgba(230, 230, 230, 1)', // #0a0a12
     sidebarOverlayBg: 'rgba(0, 0, 0, 0.5)', // this is defined separately to bgOverlay50 as it doesn't change between dark/light mode
@@ -216,6 +225,9 @@ const colors = {
     dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)',
     dialogSearchAccent: '#E3BECD',
     dialogSearchAccentFade: 'rgba(217, 211, 213, 0.50)',
+    commandUniverseSubtitleText: '#f4f0ffd6',
+    commandUniverseGestureCaptionGradientStart: '#dbf5ff',
+    commandUniverseGestureCaptionGradientEnd: '#a9bfd6',
     gestureMenuLabel: 'rgba(255, 255, 255, 0.7)',
     gestureMenuDivider: 'rgba(174, 168, 214, 0.59)',
   },

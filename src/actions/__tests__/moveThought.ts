@@ -1,7 +1,9 @@
 import State from '../../@types/State'
 import importText from '../../actions/importText'
+import moveThought from '../../actions/moveThought'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
+import toggleContextView from '../../actions/toggleContextView'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
@@ -9,6 +11,7 @@ import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
 import getRankAfter from '../../selectors/getRankAfter'
 import pathToThought from '../../selectors/pathToThought'
+import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -16,6 +19,8 @@ import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByCo
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import appendToPath from '../../util/appendToPath'
+import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -279,6 +284,46 @@ it('moving unrelated thought should not update cursor', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+})
+
+it('moving a context in the context view should update the cursor to the moved thought', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - m
+        - b
+          - m
+      `,
+    }),
+    setCursor(['a', 'm']),
+    toggleContextView,
+    // drag the context a/m~/a onto the subthoughts drop zone of the context a/m~/b, i.e. move a/m into b/m
+    (state: State) => {
+      const contextA = contextToPathOrThrow(state, ['a', 'm', 'a'], 'moveThought')
+      const contextB = contextToPathOrThrow(state, ['a', 'm', 'b'], 'moveThought')
+      return moveThought(state, {
+        oldPath: contextA,
+        newPath: appendToPath(contextB, head(contextA)),
+        newRank: 0,
+      })
+    },
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+    - m
+      - m`)
+
+  // The cursor is on the nominal context m (a/m~), which is the thought that was moved, so it must follow the
+  // thought to b/m/m. Otherwise it is left on a/m, which no longer exists: expandThoughts can no longer reach it,
+  // freeThoughts deallocates the thought as no longer visible, and the next expandThoughts throws "Invalid path".
+  expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'm'])
 })
 
 it('move root thought into another root thought', () => {
