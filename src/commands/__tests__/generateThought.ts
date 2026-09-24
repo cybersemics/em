@@ -18,7 +18,6 @@ import {
   acceptAiDisclosure,
   acknowledgeAiDisclosure,
   allowAiDisclosureOnce,
-  clearAiDisclosureAcknowledgement,
   hasAcknowledgedAiDisclosure,
 } from '../../util/aiDisclosure'
 import headValue from '../../util/headValue'
@@ -31,7 +30,6 @@ global.fetch = mockFetch
 beforeEach(async () => {
   await initStore()
   vi.clearAllMocks()
-  clearAiDisclosureAcknowledgement()
   // clearAllMocks does not drain queued mockResolvedValueOnce responses, which would otherwise leak into the next test
   mockFetch.mockReset()
 })

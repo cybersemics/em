@@ -101,7 +101,7 @@ In the iOS Capacitor app the same gesture arrives by a second route, `nativeHist
 
 A gesture is a string of swipe directions, where each character is one of `'l'`, `'r'`, `'u'`, `'d'` (left/right/up/down). For example, `'rdru'` is right → down → right → up. Multiple sequences can map to the same command — the first one is the canonical gesture shown in the UI.
 
-A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Touches that start outside the zone scroll the page as usual.
+A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Single-finger touches that start outside the zone scroll the page as usual; multi-finger touches are inert everywhere (see [Multi-touch rejection](#multi-touch-rejection)).
 
 `handleGestureSegment` is called incrementally as the user swipes; it triggers a haptic for each new segment and, after `COMMAND_PALETTE_TIMEOUT`, opens the gesture menu so the user can see all commands reachable from the current sequence.
 
@@ -111,6 +111,20 @@ A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/u
 - **Chained commands.** If the sequence *starts* with a gesture for an `isChainable` command and continues with another command's gesture, the two are chained and executed together. The canonical example: `selectAll` is chainable, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Both commands execute inside one command transaction whose metadata identifies the combined command, so they produce one undo patch.
 
 After execution, an alert briefly confirms the command's `label` (in training mode), unless the command has `hideAlert: true`.
+
+### Multi-touch rejection
+
+Gestures are single-finger input. Two-finger tracing and pinch-to-zoom are inert: they draw no trace, open no gesture menu, execute no command, begin no drag, do not move the cursor, and neither zoom nor pan the page ([issue #4233](https://github.com/cybersemics/em/issues/4233)).
+
+Multi-touch is tracked by [`multitouchStore`](../src/stores/multitouchStore.ts), a latch set as soon as a second finger touches down and reset only when a fresh interaction begins — the `touchstart` of the next single-finger touch, or a `pointerdown` from a mouse or pen, neither of which can be part of a multi-touch gesture. Without the pointer case the latch would survive indefinitely on a device that has both a touchscreen and a pointer, such as a touchscreen laptop or an iPad with a trackpad, leaving every subsequent click rejected and the cursor unmovable. It is wired to the window touch events in [`initEvents`](../src/util/initEvents.ts), in the capture phase so that it is set before any subsystem reads it. A latch rather than a live touch count is essential: during a two-finger trace one finger routinely lifts before the other, so a count would momentarily drop to 1 and let the remaining finger begin a drag; and the terminating tap of a multi-touch gesture must still read as multi-touch so that it does not move the cursor.
+
+Each subsystem rejects multi-touch at its own entry point, since they do not share one:
+
+- [`MultiGesture`](../src/components/MultiGesture.tsx) abandons the sequence when a second finger touches down before a gesture has begun. `shouldCancelGesture` in [`AppComponent`](../src/components/AppComponent.tsx) covers the other direction — a second finger joining after a single-finger gesture is already in progress — by cancelling while the latch is set.
+- Drag-and-drop rejects it in `canDrag` and again in `useLongPress`; see [Drag and Drop](drag-and-drop.md#usedraganddropthought).
+- Tap handling and caret placement ignore it; see [Cursor and Caret](cursor-and-caret.md#mobile).
+
+Native browser behavior is suppressed in `initEvents`. While the latch is set and at most two fingers are down, `touchmove` is preventDefaulted so the native caret and text selection do not follow the fingers and the page does not scroll; and the Safari-only `gesturestart`/`gesturechange`/`gestureend` events are preventDefaulted, because iOS Safari ignores the viewport `user-scalable=no` / `maximum-scale=1` settings and would otherwise pinch-zoom or pan the page. Gestures of three or more fingers belong to the OS rather than to em — notably the iOS three-finger swipe that drives [undo and redo](#keyboard-activation) — so their default is left alone rather than fighting the system gesture recognizer for touches em has no use for. The two-finger bound still covers the tail of a two-finger gesture, when one finger has lifted and the caret would otherwise follow the remaining one. Both listeners are registered on touch devices only. macOS Safari fires the same gesture events for a trackpad pinch, where zooming the page is legitimate browser behavior; and a non-passive `touchmove` listener on `window` marks the whole viewport as a blocking touch-handler region, which changes how Chrome composites the page — invisible to the user, but enough to shift the subpixel anti-aliasing that the Puppeteer image snapshots compare.
 
 ### Toolbar and Command Universe
 
@@ -125,7 +139,25 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 The **Command Universe** is the searchable command palette. Two flavors:
 
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
-- **`MobileCommandUniverse`** — mobile drawer opened by `openMobileCommandUniverse`, also reachable by gesture.
+- **`MobileCommandUniverse`** — dialog opened by `openMobileCommandUniverse`, also reachable by gesture. Clicking a grid cell opens its command detail page, including when the command cannot currently execute. Cells are native buttons, so Enter and Space also open details. Back/Forward in `DialogHeader` navigate the dialog history. Search stays above the grid scroller, and changing search or sort resets the results to the top.
+
+The Command Universe has Redux-owned session navigation with separate routing and presentation layers:
+
+- `state.commandUniverseNavigation` owns the history entries and active index. [`commandUniverseNavigate`](../src/actions/commandUniverseNavigate.ts), [`commandUniverseBack`](../src/actions/commandUniverseBack.ts), and [`commandUniverseForward`](../src/actions/commandUniverseForward.ts) mutate it through the app's filename-routed Redux reducer. Opening the mobile Command Universe composes [`commandUniverseReset`](../src/actions/commandUniverseReset.ts) to start a fresh session. All four actions are non-undoable and can be dispatched by the Command system.
+- [`commandUniversePages`](../src/components/CommandUniverse/commandUniversePages.ts) maps page ids to components. [`CommandUniversePage`](../src/@types/CommandUniversePage.ts) derives both the ids and the corresponding props from that registry. A history entry wraps a page with its own `entryId`, so two visits to the same page remain distinct. The navigation state stores opaque page props and has no command-specific fields.
+- [`CommandUniversePageRouter`](../src/components/CommandUniverse/CommandUniversePageRouter.tsx) selects the active entry from Redux, resolves its registered component, and forwards its props. It does not own history, read command data, or size the dialog. The modal composition sizes the outer non-scrolling viewport. Each page uses [`DialogContent`](../src/components/dialog/DialogContent.tsx) for its independent scroller, padding, and custom scrollbar.
+- [`CommandUniversePageTransitions`](../src/components/CommandUniverse/CommandUniversePageTransitions.tsx) coordinates the retained page surfaces. Inactive pages are inert and hidden by whole-page opacity, which also hides descendants that override visibility themselves. After navigation, the view restores the destination's last focused element or focuses its designated heading without changing scroll position.
+
+Reachable history entries remain mounted with their independent scroll positions. Starting a new branch discards its abandoned redo pages. Closing and reopening starts a fresh session. This history is independent of browser history and the editor's undo/redo.
+
+For a future docked presentation, keep the router's rendered page tree mounted in the same React position while changing the shell's layout. Redux preserves navigation history across presentations, but replacing the router subtree would still remount page-local state and scroll containers. The current app renders the modal presentation; docking controls are separate work.
+
+#### Adding a Command Universe page
+
+1. Create a page component under `src/components/CommandUniverse/`. Its props are its navigation parameters. Dispatch the Command Universe navigation actions when needed, and use `DialogContent` if the page scrolls.
+2. Import it into `commandUniversePages.ts` and add its page id as a registry key.
+
+The router and route types update from the registry. No separate id union, props union, or routing switch needs editing. `commandUniverseNavigateActionCreator` calls are checked against the registered component's props. Add tests for the new page's behavior.
 
 Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
 
@@ -193,7 +225,7 @@ Because that early restore runs before the request returns, an async command tha
 
 Three fields shape what happens when the command might not be runnable:
 
-- **`canExecute(state)`** — boolean predicate. If false, `exec` is not called. It also drives the enabled appearance of the [Toolbar](../src/components/ToolbarButton.tsx) and [Command Center](../src/components/CommandCenter/PanelCommand.tsx) buttons, so a predicate that reports a command as executable when it would be a no-op leaves an enabled button that does nothing when tapped. A command that acts on the selection must therefore test [`selectedPaths`](../src/selectors/selectedPaths.ts) — the multicursors if there are any, otherwise the cursor — rather than `state.cursor`, which is not the thought the command runs on when a thought elsewhere in the tree is selected. Pass the command's own `multicursor.filter` to `selectedPaths` so that the predicate judges exactly the paths the loop will execute on; otherwise a path that the filter drops (such as a descendant of another selected thought) can disable a command that would have worked. Quantify with `every` rather than `some`, since the multicursor loop aborts the whole selection as soon as one path fails `canExecute`: `indent` and `outdent` require every selected path to be movable, `swapParent` requires every selected path to be a subthought, and [`newGrandChild`](../src/commands/newGrandChild.ts) requires every selected thought to have a visible child. Thus a selection containing an ineligible thought disables the command outright rather than silently applying it to the rest. Because `selectedPaths` prefers the multicursors, the predicate returns the same value for every path in the loop, so the one predicate both dims the button and blocks the gesture; no `disallow` branch is needed, and none should be added, since that branch bypasses the multicursor restore described above.
+- **`canExecute(state)`** — boolean predicate. If false, `exec` is not called. It also drives the enabled appearance of the [Toolbar](../src/components/ToolbarButton.tsx) and [Command Center](../src/components/CommandCenter/PanelCommand.tsx) buttons, so a predicate that reports a command as executable when it would be a no-op leaves an enabled button that does nothing when tapped. A disabled toolbar button is inert rather than merely non-executing: [`ToolbarButton`](../src/components/ToolbarButton.tsx) preventDefaults the `touchend` of any tap that lands on it, executable or not, so the tap neither runs the command nor blurs the editable and closes the virtual keyboard. A command that acts on the selection must therefore test [`selectedPaths`](../src/selectors/selectedPaths.ts) — the multicursors if there are any, otherwise the cursor — rather than `state.cursor`, which is not the thought the command runs on when a thought elsewhere in the tree is selected. Pass the command's own `multicursor.filter` to `selectedPaths` so that the predicate judges exactly the paths the loop will execute on; otherwise a path that the filter drops (such as a descendant of another selected thought) can disable a command that would have worked. Quantify with `every` rather than `some`, since the multicursor loop aborts the whole selection as soon as one path fails `canExecute`: `indent` and `outdent` require every selected path to be movable, `swapParent` requires every selected path to be a subthought, and [`newGrandChild`](../src/commands/newGrandChild.ts) requires every selected thought to have a visible child. Thus a selection containing an ineligible thought disables the command outright rather than silently applying it to the rest. Because `selectedPaths` prefers the multicursors, the predicate returns the same value for every path in the loop, so the one predicate both dims the button and blocks the gesture; no `disallow` branch is needed, and none should be added, since that branch bypasses the multicursor restore described above.
 - **`preventDefault`** — call `e.preventDefault()` even when `canExecute` returns false. Useful for keyboard shortcuts that should *always* swallow the keypress.
 - **`permitDefault`** — do *not* call `e.preventDefault()` even when the command runs. Useful for shortcuts that piggyback on existing browser behavior (e.g. system copy/paste).
 - **`allowExecuteFromModal`** — allow the command to run while a modal is open. Defaults to false; navigation commands set this to true.
@@ -379,14 +411,6 @@ Navigate to Home.
 <kbd>Command + Option + h</kbd>
 
 https://github.com/user-attachments/assets/f9d81d8f-f03e-45d3-850e-55f9f4b56a0d
-
-### Search
-
-Open the Search input. Use the same command to close.
-
-<kbd>Command + Option + f</kbd>
-
-https://github.com/user-attachments/assets/682334ea-823e-497b-818f-584639a5db5b
 
 ### New Thought
 

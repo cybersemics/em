@@ -1,6 +1,6 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import store from '../../stores/app'
-import heldKeysStore from '../../stores/heldKeys'
+import heldKeysStore from '../../stores/heldKeysStore'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'

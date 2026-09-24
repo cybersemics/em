@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import Thunk from '../@types/Thunk'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import heldKeysStore from '../stores/heldKeys'
+import heldKeysStore from '../stores/heldKeysStore'
 
 let timer: ReturnType<typeof setTimeout>
 
