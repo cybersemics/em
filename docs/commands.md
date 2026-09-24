@@ -127,7 +127,25 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 The **Command Universe** is the searchable command palette. Two flavors:
 
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
-- **`MobileCommandUniverse`** — mobile drawer opened by `openMobileCommandUniverse`, also reachable by gesture.
+- **`MobileCommandUniverse`** — dialog opened by `openMobileCommandUniverse`, also reachable by gesture. Clicking a grid cell opens its command detail page, including when the command cannot currently execute. Cells are native buttons, so Enter and Space also open details. Back/Forward in `DialogHeader` navigate the dialog history. Search stays above the grid scroller, and changing search or sort resets the results to the top.
+
+The Command Universe has Redux-owned session navigation with separate routing and presentation layers:
+
+- `state.commandUniverseNavigation` owns the history entries and active index. [`commandUniverseNavigate`](../src/actions/commandUniverseNavigate.ts), [`commandUniverseBack`](../src/actions/commandUniverseBack.ts), and [`commandUniverseForward`](../src/actions/commandUniverseForward.ts) mutate it through the app's filename-routed Redux reducer. Opening the mobile Command Universe composes [`commandUniverseReset`](../src/actions/commandUniverseReset.ts) to start a fresh session. All four actions are non-undoable and can be dispatched by the Command system.
+- [`commandUniversePages`](../src/components/CommandUniverse/commandUniversePages.ts) maps page ids to components. [`CommandUniversePage`](../src/@types/CommandUniversePage.ts) derives both the ids and the corresponding props from that registry. A history entry wraps a page with its own `entryId`, so two visits to the same page remain distinct. The navigation state stores opaque page props and has no command-specific fields.
+- [`CommandUniversePageRouter`](../src/components/CommandUniverse/CommandUniversePageRouter.tsx) selects the active entry from Redux, resolves its registered component, and forwards its props. It does not own history, read command data, or size the dialog. The modal composition sizes the outer non-scrolling viewport. Each page uses [`DialogContent`](../src/components/dialog/DialogContent.tsx) for its independent scroller, padding, and custom scrollbar.
+- [`CommandUniversePageTransitions`](../src/components/CommandUniverse/CommandUniversePageTransitions.tsx) coordinates the retained page surfaces. Inactive pages are inert and hidden by whole-page opacity, which also hides descendants that override visibility themselves. After navigation, the view restores the destination's last focused element or focuses its designated heading without changing scroll position.
+
+Reachable history entries remain mounted with their independent scroll positions. Starting a new branch discards its abandoned redo pages. Closing and reopening starts a fresh session. This history is independent of browser history and the editor's undo/redo.
+
+For a future docked presentation, keep the router's rendered page tree mounted in the same React position while changing the shell's layout. Redux preserves navigation history across presentations, but replacing the router subtree would still remount page-local state and scroll containers. The current app renders the modal presentation; docking controls are separate work.
+
+#### Adding a Command Universe page
+
+1. Create a page component under `src/components/CommandUniverse/`. Its props are its navigation parameters. Dispatch the Command Universe navigation actions when needed, and use `DialogContent` if the page scrolls.
+2. Import it into `commandUniversePages.ts` and add its page id as a registry key.
+
+The router and route types update from the registry. No separate id union, props union, or routing switch needs editing. `commandUniverseNavigateActionCreator` calls are checked against the registered component's props. Add tests for the new page's behavior.
 
 Both filter `globalCommands` by name and respect `hideFromDesktopCommandUniverse` / `hideFromGestureMenu` / `hideFromHelp`.
 
@@ -195,7 +213,7 @@ Because that early restore runs before the request returns, an async command tha
 
 Three fields shape what happens when the command might not be runnable:
 
-- **`canExecute(state)`** — boolean predicate. If false, `exec` is not called. It also drives the enabled appearance of the [Toolbar](../src/components/ToolbarButton.tsx) and [Command Center](../src/components/CommandCenter/PanelCommand.tsx) buttons, so a predicate that reports a command as executable when it would be a no-op leaves an enabled button that does nothing when tapped. A command that acts on the selection must therefore test [`selectedPaths`](../src/selectors/selectedPaths.ts) — the multicursors if there are any, otherwise the cursor — rather than `state.cursor`, which is not the thought the command runs on when a thought elsewhere in the tree is selected. Pass the command's own `multicursor.filter` to `selectedPaths` so that the predicate judges exactly the paths the loop will execute on; otherwise a path that the filter drops (such as a descendant of another selected thought) can disable a command that would have worked. Quantify with `every` rather than `some`, since the multicursor loop aborts the whole selection as soon as one path fails `canExecute`: `indent` and `outdent` require every selected path to be movable, `swapParent` requires every selected path to be a subthought, and [`newGrandChild`](../src/commands/newGrandChild.ts) requires every selected thought to have a visible child. Thus a selection containing an ineligible thought disables the command outright rather than silently applying it to the rest. Because `selectedPaths` prefers the multicursors, the predicate returns the same value for every path in the loop, so the one predicate both dims the button and blocks the gesture; no `disallow` branch is needed, and none should be added, since that branch bypasses the multicursor restore described above.
+- **`canExecute(state)`** — boolean predicate. If false, `exec` is not called. It also drives the enabled appearance of the [Toolbar](../src/components/ToolbarButton.tsx) and [Command Center](../src/components/CommandCenter/PanelCommand.tsx) buttons, so a predicate that reports a command as executable when it would be a no-op leaves an enabled button that does nothing when tapped. A disabled toolbar button is inert rather than merely non-executing: [`ToolbarButton`](../src/components/ToolbarButton.tsx) preventDefaults the `touchend` of any tap that lands on it, executable or not, so the tap neither runs the command nor blurs the editable and closes the virtual keyboard. A command that acts on the selection must therefore test [`selectedPaths`](../src/selectors/selectedPaths.ts) — the multicursors if there are any, otherwise the cursor — rather than `state.cursor`, which is not the thought the command runs on when a thought elsewhere in the tree is selected. Pass the command's own `multicursor.filter` to `selectedPaths` so that the predicate judges exactly the paths the loop will execute on; otherwise a path that the filter drops (such as a descendant of another selected thought) can disable a command that would have worked. Quantify with `every` rather than `some`, since the multicursor loop aborts the whole selection as soon as one path fails `canExecute`: `indent` and `outdent` require every selected path to be movable, `swapParent` requires every selected path to be a subthought, and [`newGrandChild`](../src/commands/newGrandChild.ts) requires every selected thought to have a visible child. Thus a selection containing an ineligible thought disables the command outright rather than silently applying it to the rest. Because `selectedPaths` prefers the multicursors, the predicate returns the same value for every path in the loop, so the one predicate both dims the button and blocks the gesture; no `disallow` branch is needed, and none should be added, since that branch bypasses the multicursor restore described above.
 - **`preventDefault`** — call `e.preventDefault()` even when `canExecute` returns false. Useful for keyboard shortcuts that should *always* swallow the keypress.
 - **`permitDefault`** — do *not* call `e.preventDefault()` even when the command runs. Useful for shortcuts that piggyback on existing browser behavior (e.g. system copy/paste).
 - **`allowExecuteFromModal`** — allow the command to run while a modal is open. Defaults to false; navigation commands set this to true.
@@ -379,14 +397,6 @@ Navigate to Home.
 <kbd>Command + Option + h</kbd>
 
 https://github.com/user-attachments/assets/f9d81d8f-f03e-45d3-850e-55f9f4b56a0d
-
-### Search
-
-Open the Search input. Use the same command to close.
-
-<kbd>Command + Option + f</kbd>
-
-https://github.com/user-attachments/assets/682334ea-823e-497b-818f-584639a5db5b
 
 ### New Thought
 
