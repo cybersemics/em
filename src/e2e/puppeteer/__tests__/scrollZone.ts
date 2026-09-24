@@ -3,7 +3,6 @@ import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
-import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
@@ -17,7 +16,7 @@ const LOREM =
   'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
 const DUIS = 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.'
 
-it('does not place the cursor in the thought underneath the scroll zone', async () => {
+it('places the cursor in the thought underneath the scroll zone', async () => {
   await paste(`
 - ${LOREM}
 - ${DUIS}
@@ -25,11 +24,9 @@ it('does not place the cursor in the thought underneath the scroll zone', async 
   await waitForEditable(LOREM)
   await waitForEditable(DUIS)
 
-  // Measure the first line of the first thought and the horizontal bounds of the scroll zone. The touch that
-  // reproduces #4272 lands on the first thought's text where it extends underneath the scroll zone, while the
-  // cursor is in another thought. On Android that starts Chrome's native caret drag, which moves the caret and
-  // raises the magnifier; headless Chrome has no caret drag, so the test asserts the cause instead: a touch in
-  // the scroll zone must not reach the thought underneath.
+  // Measure the first line of the first thought and the horizontal bounds of the scroll zone. Thoughts extend
+  // underneath the scroll zone, and text there is tappable like any other: the zone only excludes gestures and
+  // scrolls the thoughtspace, so a tap on a word underneath it places the cursor in that thought.
   const { scrollZoneX, textX, y } = await page.evaluate(value => {
     const editable = Array.from(document.querySelectorAll('[data-editable]')).find(
       element => element.innerHTML === value,
@@ -70,7 +67,27 @@ it('does not place the cursor in the thought underneath the scroll zone', async 
   await waitForCursor(DUIS)
 
   await page.touchscreen.tap(scrollZoneX, y)
-  await waitForBrowserSettled()
 
-  expect(await getEditingText()).toBe(DUIS)
+  await waitForCursor(LOREM).catch(async () => {
+    throw new Error(`Tapping the thought underneath the scroll zone left the cursor on "${await getEditingText()}".`)
+  })
+})
+
+it('disallows horizontal panning on a thought', async () => {
+  await paste(`- ${LOREM}`)
+  await waitForEditable(LOREM)
+
+  // Chrome Android's swipe-to-move-cursor rides on a horizontal pan that begins on an editable and drags the
+  // caret of whichever thought is focused, raising the magnifier (#4272). Headless Chrome implements neither the
+  // gesture nor the magnifier, so the test asserts the declaration that keeps the browser from recognizing that
+  // pan in the first place, which only a real browser resolves from the editable recipe.
+  const touchAction = await page.evaluate(value => {
+    const editable = Array.from(document.querySelectorAll('[data-editable]')).find(
+      element => element.innerHTML === value,
+    )
+    if (!editable) throw new Error(`Thought "${value}" is not rendered.`)
+    return getComputedStyle(editable).touchAction
+  }, LOREM)
+
+  expect(touchAction).toBe('pan-y')
 })
