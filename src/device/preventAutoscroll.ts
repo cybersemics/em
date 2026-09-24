@@ -18,6 +18,14 @@ let autoscrollPadding = 0
 
 /** Clean up styles from preventAutoscroll. This is called automatically 10 ms after preventAutoscroll, but it can and should be called as soon as focus has fired and the autoscroll window has safely passed. */
 export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
+  // Ignore an element that preventAutoscroll is not currently active on. Each editable's focus handler queues a
+  // cleanup for itself, so a cleanup queued by the previously focused thought can run after preventAutoscroll has
+  // already padded the next one. Creating a thought that is placed away from the cursor does exactly that: focus
+  // lands on the moved thought, then on the new thought, which was mounted in the same render and has no focus
+  // listener yet to clean itself up. Without this guard the stale call cancels the new thought's 10 ms cleanup and
+  // restores the previous thought's styles, leaving a viewport-tall padding stuck on the focused editable (#4101).
+  if (el !== activeEl) return
+
   clearTimeout(timeoutId)
   timeoutId = undefined
   activeEl = undefined
