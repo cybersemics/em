@@ -21,7 +21,7 @@ describe('orientation', () => {
   deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
   // https://github.com/cybersemics/em/issues/3990
-  it.skip('keeps the cursor in view when rotating from portrait to landscape', async () => {
+  it('keeps the cursor in view when rotating from portrait to landscape', async () => {
     await newThought('a')
     await closeKeyboard()
 
