@@ -1,5 +1,5 @@
 import type { Element } from 'webdriverio'
-import SAFARI_CHROME_TOP from './safariChromeTop.js'
+import getScreenOffsetY from './getScreenOffsetY.js'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
@@ -88,7 +88,7 @@ const tap = async (
   const finalCoords = {
     x: coordinate.x + x,
     // element rects are viewport-relative while touches are delivered in screen coordinates
-    y: coordinate.y + y + SAFARI_CHROME_TOP,
+    y: coordinate.y + y + (await getScreenOffsetY()),
   }
 
   console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
