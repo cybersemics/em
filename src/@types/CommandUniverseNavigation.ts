@@ -7,8 +7,8 @@ interface CommandUniverseNavigation {
     page: CommandUniversePage
     arrival: {
       zoom: 'in' | 'out'
-      /** Source rectangle in viewport coordinates. Null uses the page center. */
-      origin: Pick<DOMRectReadOnly, 'x' | 'y' | 'width' | 'height'> | null
+      /** Source point as fractions of the page width and height. Null uses the page center. */
+      origin: { x: number; y: number } | null
     } | null
   }[]
   index: number
@@ -17,7 +17,9 @@ interface CommandUniverseNavigation {
     fromEntryId: string
     toEntryId: string
     zoom: 'in' | 'out'
-    origin: Pick<DOMRectReadOnly, 'x' | 'y' | 'width' | 'height'> | null
+    origin: { x: number; y: number } | null
+    /** Page transition to play. Omitted means zoom; none settles the destination without animation. */
+    type?: 'zoom' | 'none'
   } | null
 }
 

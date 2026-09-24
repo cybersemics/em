@@ -10,8 +10,10 @@ type Arrival = NonNullable<CommandUniverseNavigation['entries'][number]['arrival
 
 interface NavigationOptions {
   zoom?: Arrival['zoom']
-  /** Source rectangle in viewport coordinates. Omit for a centered transition. */
+  /** Source point as fractions of the page width and height. Omit for a centered transition. */
   origin?: Arrival['origin']
+  /** Page transition to play. Defaults to zoom; none preserves history without animation. */
+  transition?: NonNullable<CommandUniverseNavigation['transition']>['type']
 }
 
 type NavigateArguments = {
@@ -25,7 +27,12 @@ type NavigateArguments = {
 /** Opens a registered Command Universe page and discards any abandoned forward history. */
 const commandUniverseNavigate = (
   state: State,
-  { entryId, page, arrival }: { entryId: string; page: CommandUniversePage; arrival: Arrival },
+  {
+    entryId,
+    page,
+    arrival,
+    transition,
+  }: { entryId: string; page: CommandUniversePage; arrival: Arrival; transition?: NavigationOptions['transition'] },
 ): State => {
   if (!state.showMobileCommandUniverse) return state
 
@@ -44,6 +51,7 @@ const commandUniverseNavigate = (
         fromEntryId: state.commandUniverseNavigation.entries[state.commandUniverseNavigation.index].entryId,
         toEntryId: entryId,
         ...arrival,
+        ...(transition ? { type: transition } : {}),
       },
     },
   }
@@ -60,6 +68,7 @@ export const commandUniverseNavigateActionCreator =
       entryId: nanoid(),
       page: { pageId, props } as CommandUniversePage,
       arrival: { zoom: options.zoom ?? 'in', origin: options.origin ?? null },
+      transition: options.transition,
     })
   }
 
