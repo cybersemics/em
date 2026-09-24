@@ -302,6 +302,7 @@ const Note = React.memo(
           style={{
             ...(placeholderForeColor ? { '--placeholder-color': placeholderForeColor } : null),
             ...(placeholderBackColor ? { '--placeholder-background-color': placeholderBackColor } : null),
+            ...(placeholderForeColor || placeholderBackColor ? { '--placeholder-opacity': 0.5 } : null),
           }}
           className={css({
             display: 'inline-block',

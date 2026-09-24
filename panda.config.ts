@@ -374,6 +374,7 @@ const globalCss = defineGlobalStyles({
     fontStyle: 'italic',
     color: 'var(--placeholder-color, {colors.dim})',
     backgroundColor: 'var(--placeholder-background-color, transparent)',
+    filter: 'opacity(var(--placeholder-opacity))',
     content: 'attr(placeholder)',
     cursor: 'text',
   },
@@ -416,6 +417,7 @@ const globalCss = defineGlobalStyles({
   },
   ':root': {
     '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
+    '--placeholder-opacity': '1',
   },
 })
 

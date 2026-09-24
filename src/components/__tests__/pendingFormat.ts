@@ -175,6 +175,28 @@ describe('pending format', () => {
     await dispatch(formatSelection('foreColor', 'green'))
 
     expect(getEditable().style.getPropertyValue('--placeholder-color')).toBe('#00d688')
+    expect(getEditable().style.getPropertyValue('--placeholder-opacity')).toBe('0.5')
+  })
+
+  // #3910: only a color is dimmed on the placeholder; a tag command such as bold previews at full opacity.
+  it('does not dim the placeholder of an empty thought held in bold (#3910)', async () => {
+    await dispatch(importText({ text: '- ' }))
+    await dispatch(formatSelection('bold'))
+
+    expect(getEditable()).toHaveAttribute('data-placeholder-bold')
+    expect(getEditable().style.getPropertyValue('--placeholder-opacity')).toBe('')
+  })
+
+  // #3910: a pending background uses the dynamic CSS variable introduced for Clear Thought's placeholder (#4616),
+  // while the opacity variable applies its dimmed treatment.
+  it('previews a dimmed background color on This is an empty thought (#3910)', async () => {
+    await dispatch(importText({ text: '- ' }))
+    vi.setSystemTime(Date.now() + 5001)
+    await dispatch(formatSelection('backColor', 'green'))
+
+    expect(getEditable()).toHaveAttribute('placeholder', 'This is an empty thought')
+    expect(getEditable().style.getPropertyValue('--placeholder-background-color')).toBe('rgb(0, 214, 136)')
+    expect(getEditable().style.getPropertyValue('--placeholder-opacity')).toBe('0.5')
   })
 
   // #3910: a note is a thought, so it holds formatting applied while it is empty the same way. toggleNote creates the
@@ -198,6 +220,15 @@ describe('pending format', () => {
     await dispatch(formatSelection('foreColor', 'green'))
 
     expect(getNoteEditable().style.getPropertyValue('--placeholder-color')).toBe('#00d688')
+    expect(getNoteEditable().style.getPropertyValue('--placeholder-opacity')).toBe('0.5')
+  })
+
+  it('previews a dimmed background color on an empty note (#3910)', async () => {
+    await dispatch([importText({ text: '- x' }), toggleNote()])
+    await dispatch(formatSelection('backColor', 'green'))
+
+    expect(getNoteEditable().style.getPropertyValue('--placeholder-background-color')).toBe('rgb(0, 214, 136)')
+    expect(getNoteEditable().style.getPropertyValue('--placeholder-opacity')).toBe('0.5')
   })
 
   // #3910: a tag command applies to the text typed into an empty note the same way a color does, even though it does
