@@ -1,5 +1,4 @@
 import { throttle } from 'lodash'
-import cancelOnReset from '../util/cancelOnReset'
 import scrollCursorIntoView from './scrollCursorIntoView'
 
 const throttledScrollCursorIntoView = throttle((y: number, height: number) => scrollCursorIntoView(y, height), 400)
@@ -27,8 +26,5 @@ scheduleScrollCursorIntoView.cancel = () => {
   throttledScrollCursorIntoView.cancel()
   scrollCursorIntoView.cancel()
 }
-
-// The throttle and the tick timer are module scope, so a scroll queued in one unit test would otherwise fire into the next.
-cancelOnReset(scheduleScrollCursorIntoView)
 
 export default scheduleScrollCursorIntoView

@@ -3,7 +3,6 @@ import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import storageModel from '../stores/storageModel'
-import cancelOnReset from '../util/cancelOnReset'
 import equalPath from '../util/equalPath'
 import parentOf from '../util/parentOf'
 
@@ -46,16 +45,14 @@ const updateJumpHistory = (state: State): State => {
 }
 
 /** Saves the jump history to localStorage. */
-const saveJumpHistory = cancelOnReset(
-  _.throttle(
-    (jumpHistory: (Path | null)[]) => {
-      storageModel.set('jumpHistory', jumpHistory)
-    },
-    SAVE_THROTTLE,
-    {
-      leading: false,
-    },
-  ),
+const saveJumpHistory = _.throttle(
+  (jumpHistory: (Path | null)[]) => {
+    storageModel.set('jumpHistory', jumpHistory)
+  },
+  SAVE_THROTTLE,
+  {
+    leading: false,
+  },
 )
 
 /** Update the jump history whenever thoughts change. */

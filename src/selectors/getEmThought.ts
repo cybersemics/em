@@ -6,7 +6,6 @@ import State from '../@types/State'
 import { EM_TOKEN } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getAllChildren } from '../selectors/getChildren'
-import cancelOnReset from '../util/cancelOnReset'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import resolveArray from '../util/resolveArray'
@@ -19,11 +18,9 @@ const LOCAL_KEY = 'EM_THOUGHTS'
 const localStorageCache = JSON.parse(storage.getItem(LOCAL_KEY) || '{}') as Index<string>
 
 /** Save cache to local storage (debounced). */
-const saveCache = cancelOnReset(
-  _.debounce(() => {
-    storage.setItem(LOCAL_KEY, JSON.stringify(localStorageCache))
-  }, 100),
-)
+const saveCache = _.debounce(() => {
+  storage.setItem(LOCAL_KEY, JSON.stringify(localStorageCache))
+}, 100)
 
 /** Returns the first subthought (or value if unary) of /em/...context, not including meta thoughts. If the thought is not in state, checks local storage (cached once). Use setDescendant to set. */
 const getEmThought = (state: State, context: Context | string): string | undefined => {

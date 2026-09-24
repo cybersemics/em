@@ -12,7 +12,6 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import { updateCommandState } from '../stores/commandStateStore'
 import ministore from '../stores/ministore'
 import storageModel from '../stores/storageModel'
-import cancelOnReset from '../util/cancelOnReset'
 import equalArrays from '../util/equalArrays'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -60,20 +59,18 @@ const pathToUrl = (state: State, path: Path) => {
 
 /** Persist the cursor so it can be restored after em is closed and reopened on the home page (see initialState). Ensure the location does not change through refreshes in standalone PWA mode. */
 // TODO: Restore cursor after thoughts replicate
-const saveCursor = cancelOnReset(
-  _.throttle(
-    (state: State, path: Path) => {
-      if (state.cursor) {
-        storageModel.set('cursor', { path, offset: selection.offsetThought() })
-      } else {
-        storageModel.remove('cursor')
-      }
-    },
-    SAVE_CURSOR_THROTTLE,
-    {
-      leading: false,
-    },
-  ),
+const saveCursor = _.throttle(
+  (state: State, path: Path) => {
+    if (state.cursor) {
+      storageModel.set('cursor', { path, offset: selection.offsetThought() })
+    } else {
+      storageModel.remove('cursor')
+    }
+  },
+  SAVE_CURSOR_THROTTLE,
+  {
+    leading: false,
+  },
 )
 
 /**
@@ -143,12 +140,10 @@ const updateUrlHistory = (state: State, path: Path) => {
 }
 
 // throttles updateUrlHistory and passes it a fresh state when it is called.
-const updateUrlHistoryThrottled = cancelOnReset(
-  _.throttle(getState => {
-    const state = getState()
-    updateUrlHistory(state, state.cursor)
-  }, THROTTLE_MIDDLEWARE),
-)
+const updateUrlHistoryThrottled = _.throttle(getState => {
+  const state = getState()
+  updateUrlHistory(state, state.cursor)
+}, THROTTLE_MIDDLEWARE)
 
 /** Updates the url history after the cursor has changed. The call to updateUrlHistory will short circuit if the cursor has not deviated from the current url. */
 const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {

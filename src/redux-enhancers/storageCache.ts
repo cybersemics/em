@@ -7,7 +7,6 @@ import ValueOf from '../@types/ValueOf'
 import { tsidShared } from '../data-providers/thoughtspaceSession'
 import { getStateSetting } from '../selectors/getSetting'
 import getUserToolbar from '../selectors/getUserToolbar'
-import cancelOnReset from '../util/cancelOnReset'
 import keyValueBy from '../util/keyValueBy'
 import storage from '../util/storage'
 
@@ -59,19 +58,17 @@ const initialCache: State['storageCache'] = keyValueBy(cacheControllers, (key, c
 // Each cache entry has its own throttled setter.
 // This allows the last value of each to be persisted.
 const throttledSetters = keyValueBy(cacheControllers, key => ({
-  [key]: cancelOnReset(
-    _.throttle(
-      (value: ValueOf<StorageCache>) => {
-        const storageKey = buildKey(key)
-        if (value != null) {
-          storage.setItem(storageKey, value.toString())
-        } else {
-          storage.removeItem(storageKey)
-        }
-      },
-      STORAGE_WRITE_THROTTLE,
-      { leading: false },
-    ),
+  [key]: _.throttle(
+    (value: ValueOf<StorageCache>) => {
+      const storageKey = buildKey(key)
+      if (value != null) {
+        storage.setItem(storageKey, value.toString())
+      } else {
+        storage.removeItem(storageKey)
+      }
+    },
+    STORAGE_WRITE_THROTTLE,
+    { leading: false },
   ),
 }))
 
