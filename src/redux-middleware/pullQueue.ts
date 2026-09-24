@@ -16,7 +16,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import thoughtToPath from '../selectors/thoughtToPath'
 import ministore from '../stores/ministore'
-import syncStatusStore from '../stores/syncStatus'
+import syncStatusStore from '../stores/syncStatusStore'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -29,7 +29,7 @@ const updatePullQueueDelay = 10
 const flushPullQueueDelay = 100
 
 /** Tracks if any pulls have executed yet. Used to pull favorites only on the first pull. A ministore rather than a module variable so that resetStores restores it between tests; nothing subscribes, so a write costs one comparison. Not reset by the clear action, so favorites are still pulled once per session. */
-const favoritesPulled = ministore(false)
+const favoritesPulledStore = ministore(false)
 
 /** Creates the initial pullQueue with only the em and root contexts. */
 const initialPullQueue = (): Record<ThoughtId, true> => ({
@@ -165,9 +165,9 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // pull favorites in the background on the first pull
     // note that syncStatusStore.isPulling does not include favorites because we want them to load in the background and not block push
-    if (!favoritesPulled.getState()) {
+    if (!favoritesPulledStore.getState()) {
       dispatch(pullFavorites())
-      favoritesPulled.update(true)
+      favoritesPulledStore.update(true)
     }
   }
 

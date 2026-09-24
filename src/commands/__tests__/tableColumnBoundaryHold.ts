@@ -1,5 +1,5 @@
 import { keyDown, keyUp } from '../../commands'
-import heldKeysStore from '../../stores/heldKeys'
+import heldKeysStore from '../../stores/heldKeysStore'
 
 /** Builds a minimal synthetic KeyboardEvent with a spyable preventDefault. */
 const makeEvent = (key: string, repeat: boolean): KeyboardEvent => {

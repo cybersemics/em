@@ -16,6 +16,6 @@ interface GeneratedEmojiState {
 }
 
 /** In-memory alternatives generated for each thought. */
-const generatedEmoji = ministore<GeneratedEmojiState>({ entries: {} })
+const generatedEmojiStore = ministore<GeneratedEmojiState>({ entries: {} })
 
-export default generatedEmoji
+export default generatedEmojiStore
