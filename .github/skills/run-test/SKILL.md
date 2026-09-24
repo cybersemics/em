@@ -65,6 +65,8 @@ Run a single spec:
 yarn test:ios:browserstack --spec src/e2e/iOS/__tests__/<file>.ts
 ```
 
+The Android WebdriverIO smoke suite runs on BrowserStack the same way, with `yarn test:android:browserstack --spec src/e2e/android/__tests__/<file>.ts`. It has no agent-session integration.
+
 ### Local simulator (local development only — NOT the agent environment)
 
 Only when you have a booted simulator locally. Also needs Appium on `:4723` and the em app installed on the sim, plus the dev server on `:3000`:

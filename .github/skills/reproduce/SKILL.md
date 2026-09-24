@@ -58,7 +58,7 @@ Pick exactly one of `web`, `android`, or `ios` — `browser-control` is going to
 | `[Android]`, `[Mobile]` | `android` |
 | no platform tag         | `web`     |
 
-`[Mobile]` without `[iOS]` is treated as **`android`** — the cheaper environment (mobile Chrome via the puppeteer suite; no iOS device to spin up) that reproduces almost all mobile-only behavior. For these **ambiguous-mobile** cases (the `[Mobile]` tag, or the generic mobile language below), `android` is a **default with an iOS fallback**, not a commitment: if you cannot reproduce on mobile Chrome, the bug is most likely iOS-specific, so retry on `ios` before escalating (see Step 3). Explicit `[Android]` (or "Chrome on mobile") stays `android` with **no** fallback; explicit `[iOS]`/`[Safari]` goes straight to `ios`.
+`[Mobile]` without `[iOS]` is treated as **`android`** — the cheaper environment (mobile Chrome emulation via the puppeteer suite; no device to spin up — the real-device Android suite in `src/e2e/android` is CI-only) that reproduces almost all mobile-only behavior. For these **ambiguous-mobile** cases (the `[Mobile]` tag, or the generic mobile language below), `android` is a **default with an iOS fallback**, not a commitment: if you cannot reproduce on mobile Chrome, the bug is most likely iOS-specific, so retry on `ios` before escalating (see Step 3). Explicit `[Android]` (or "Chrome on mobile") stays `android` with **no** fallback; explicit `[iOS]`/`[Safari]` goes straight to `ios`.
 
 **Body keywords (fallback):**
 

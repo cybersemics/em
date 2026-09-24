@@ -40,7 +40,8 @@ name: Dependabot Fix
 
 on:
   workflow_run:
-    workflows: ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'Vercel Preview', 'TDD', 'Agent Scripts']
+    workflows:
+      ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'BrowserStack Android', 'Vercel Preview', 'TDD', 'Agent Scripts']
     types: [completed]
   workflow_dispatch:
     inputs:
