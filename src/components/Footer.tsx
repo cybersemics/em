@@ -16,7 +16,7 @@ import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
 import backgroundGlowStore from '../stores/backgroundGlowStore'
 import offlineStatusStore from '../stores/offlineStatusStore'
-import syncStatusStore from '../stores/syncStatus'
+import syncStatusStore from '../stores/syncStatusStore'
 import fastClick from '../util/fastClick'
 
 /** Helper hook that allows web and native to share selectors for the footer component. */
