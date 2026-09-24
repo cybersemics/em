@@ -107,8 +107,9 @@ const initialState = (created: Timestamp = timestamp()) => {
     authenticated: false,
     autologin: storage.getItem('autologin') === 'true',
     commandUniverseNavigation: {
-      entries: [{ entryId: 'root', page: { pageId: 'grid', props: {} } }],
+      entries: [{ entryId: 'root', page: { pageId: 'grid', props: {} }, arrival: null }],
       index: 0,
+      transition: null,
     },
     contextViews: {},
     cursor: null,
