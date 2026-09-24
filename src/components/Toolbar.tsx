@@ -26,7 +26,7 @@ import {
 } from '../constants'
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
-import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
 import haptics from '../util/haptics'
 import FadeTransition from './FadeTransition'
 import ToolbarButton from './ToolbarButton'

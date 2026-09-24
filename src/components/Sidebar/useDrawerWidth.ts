@@ -1,4 +1,4 @@
-import viewportStore from '../../stores/viewport'
+import viewportStore from '../../stores/viewportStore'
 import { SIDEBAR_WIDTH_PX } from './constants'
 
 /**

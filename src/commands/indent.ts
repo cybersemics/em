@@ -4,7 +4,7 @@ import { isTouch } from '../browser'
 import IndentIcon from '../components/icons/IndentIcon'
 import prevSibling from '../selectors/prevSibling'
 import selectedPaths from '../selectors/selectedPaths'
-import editingValueStore from '../stores/editingValue'
+import editingValueStore from '../stores/editingValueStore'
 import isDocumentEditable from '../util/isDocumentEditable'
 import moveCursorForward from './moveCursorForward'
 
