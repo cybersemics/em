@@ -315,27 +315,30 @@ const initEvents = (store: Store<State, any>) => {
    * phase because touchstart propagation is unreliable in the bubble phase (see the note on the touchmove listener
    * below). */
   const onTouchStart = (e: TouchEvent) => {
-    const { touchEndTimeStamp, touchGap: previousTouchGap } = touchStore.getState()
+    const { touchEndTimeStamp, touchGap: previousTouchGap, touchEndWithheld: withheldBefore } = touchStore.getState()
     const touchGap = e.timeStamp - touchEndTimeStamp
     // iOS 27 withholds the touchend of a tap and dispatches it immediately before the next touchstart, with the same
     // timeStamp. No finger can lift and touch down again within a few milliseconds, so a gap that short means the
-    // previous touch's touchend was withheld, and this touch's touchend will be withheld too.
-    const touchEndWithheld = touchGap < TOUCHEND_WITHHELD_MS
-    // The first withheld touch follows the double tap that caused it, and its touchend has not been withheld yet, so
-    // it can only be recognized by what came before it. Only WebKit is affected.
-    const afterDoubleTap =
-      isSafari() && previousTouchGap >= TOUCHEND_WITHHELD_MS && previousTouchGap < DOUBLE_TAP_MS && !touchEndWithheld
-    const touchEndUnreliable = touchEndWithheld || afterDoubleTap
+    // touchend was withheld. iOS does not leave that state for the life of the page, even across blur and refocus.
+    const touchEndWithheld = withheldBefore || touchGap < TOUCHEND_WITHHELD_MS
+    // The first withheld tap follows the double tap that caused it and has no withheld touchend before it, so it can
+    // only be recognized by the double tap. Only WebKit is affected.
+    const afterDoubleTap = isSafari() && previousTouchGap < DOUBLE_TAP_MS
+    // iOS withholds only the touchend of a tap that leaves the caret where it is. A tap that moves the caret or focus
+    // is delivered on time, so only a touch on the caret's own word is suspect.
+    const touch = e.touches[0]
+    const touchEndUnreliable =
+      (touchEndWithheld || afterDoubleTap) && !!touch && selection.isOnCaretWord(touch.clientX, touch.clientY)
 
+    if (touchEndWithheld && !withheldBefore) {
+      // Log it so that a long press that did not start can be traced back to the stuck state in the debug log.
+      debugLog.log('touchEndWithheld', { touchGap: Math.round(touchGap) })
+    }
     if (touchEndUnreliable) {
-      // Log it so that a long press that did not start can be diagnosed from the debug log.
-      debugLog.log('touchEndUnreliable', {
-        touchGap: Math.round(touchGap),
-        previousTouchGap: Math.round(previousTouchGap),
-      })
+      debugLog.log('touchEndUnreliable', { afterDoubleTap })
     }
 
-    touchStore.update({ suppressCursorAfterTouch: false, touchGap, touchEndUnreliable })
+    touchStore.update({ suppressCursorAfterTouch: false, touchGap, touchEndWithheld, touchEndUnreliable })
   }
 
   /** Records when the touch ended, so that the next touchstart can tell whether its touchend was withheld (#5660). Registered in the capture phase so that a handler that stops propagation cannot hide it. */
