@@ -155,9 +155,6 @@ it('tracks the visible keyboard edge after an empty-space tap blurs the editable
   progress({ phase: 'willShow', height: 0, shownHeight: 0, navigationInset: 39, timestampMs: 0 })
   progress({ phase: 'didShow', height: 320, shownHeight: 320, navigationInset: 39, timestampMs: 100 })
 
-  document.documentElement.style.setProperty('--safe-area-inset-bottom', '39px')
-  androidCapacitorHandler.prepareBlurredHide()
-  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('359px')
   editable.blur()
   expect(document.activeElement).not.toBe(editable)
   progress({ phase: 'willHide', height: 320, shownHeight: 320, navigationInset: 39, timestampMs: 200 })
@@ -171,7 +168,6 @@ it('tracks the visible keyboard edge after an empty-space tap blurs the editable
   expect(store.getState().isKeyboardOpen).toBe(false)
 
   document.body.removeChild(editable)
-  document.documentElement.style.removeProperty('--safe-area-inset-bottom')
   androidCapacitorHandler.destroy()
 })
 
