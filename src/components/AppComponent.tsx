@@ -75,7 +75,16 @@ const isOnToolbar = (x?: number, y?: number): boolean => {
   return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
 }
 
-/** Cancel gesture if the touch is on the toolbar, or if there is an active text selection, drag, modal, or sidebar. */
+/** Returns true if the given touch point is within the Command Center drawer's bounds. The drawer handles its own drag, and it is portalled outside MultiGestureIfTouch so its touches never reach the PanResponder anyway — but a touchstart inside the gesture zone still arms MultiGesture's body-level touchmove preventDefault, which would stop the expanded stage's command list from scrolling. */
+const isOnCommandCenter = (x?: number, y?: number): boolean => {
+  if (x == null || y == null || typeof document === 'undefined') return false
+  const commandCenter = document.querySelector('[data-testid=command-menu-panel]')
+  if (!commandCenter) return false
+  const rect = commandCenter.getBoundingClientRect()
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom
+}
+
+/** Cancel gesture if the touch is on the toolbar or the Command Center, or if there is an active text selection, drag, modal, or sidebar. */
 const shouldCancelGesture = (
   /** The x coordinate of the touch event. If x and y are provided, cancels the gesture if the touch point is too close to the selection. See selection.isNear. */
   x?: number,
@@ -90,6 +99,8 @@ const shouldCancelGesture = (
     // cancels it (the touchstart guard in MultiGesture is skipped once a gesture is in progress). See #4233.
     multitouchStore.getState() ||
     isOnToolbar(x, y) ||
+    // the sheet element stays mounted while closed, so only consult its bounds when it is actually showing
+    (state.showCommandCenter && isOnCommandCenter(x, y)) ||
     // Cancel when the touch starts on a range input (e.g. the background glow debug sliders). Otherwise the gesture disables scrolling by calling preventDefault on touchmove, which blocks the slider's native drag.
     !!(x && y && document.elementFromPoint(x, y)?.closest('input[type="range"]')) ||
     (x && y && selection.isNear(x, y, distance)) ||
