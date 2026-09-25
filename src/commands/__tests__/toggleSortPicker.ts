@@ -9,6 +9,7 @@ import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
+import toggleTableViewCommand from '../toggleTableView'
 
 beforeEach(initStore)
 
@@ -125,6 +126,35 @@ describe('toggleSortPicker error', () => {
       // ordered by rank. Allocating those ranks against the timestamp alone inverted them against the sort condition
       // and turned the Sort icon red (#4085).
       executeCommand(splitSentencesCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/4081
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after toggling Table View in a context sorted by Created %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One
+            - Two
+            - Three
+          `,
+        }),
+        setCursor(['One']),
+      ])
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Created', direction },
+        }),
+      )
+
+      executeCommand(toggleTableViewCommand, { store })
 
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
