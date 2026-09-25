@@ -1,7 +1,7 @@
-import _ from 'lodash'
 import Path from '../@types/Path'
 import SplitResult from '../@types/SplitResult'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import editThought from '../actions/editThought'
 import editableRender from '../actions/editableRender'
@@ -12,6 +12,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
@@ -24,7 +25,11 @@ import trimHtml from '../util/trimHtml'
  * @param path     The path of the thought to split. Defaults to cursor.
  * @param offset   The index within the thought at which to split. Defaults to the browser selection offset.
  */
-const splitThought = (state: State, { path, splitResult }: { path?: Path; splitResult: SplitResult }) => {
+const splitThought = (
+  state: State,
+  { path, splitResult }: { path?: Path; splitResult: SplitResult },
+  document?: ThoughtspaceTransaction,
+) => {
   path = path || (state.cursor as Path)
 
   const simplePath = simplifyPath(state, path)
@@ -73,15 +78,15 @@ const splitThought = (state: State, { path, splitResult }: { path?: Path; splitR
           moveThought({
             oldPath: appendToPath(pathLeft, child.id),
             newPath: appendToPath(pathRight, child.id),
-            newRank: i,
+            afterId: children[i - 1]?.id ?? null,
           }),
         ),
-      )(state)
+      )(state, document)
     },
 
     // render
     editableRender,
-  ])(state)
+  ])(state, document)
 }
 
 /** Action-creator for splitThought. */
@@ -90,7 +95,7 @@ export const splitThoughtActionCreator =
   dispatch =>
     dispatch({ type: 'splitThought', ...payload })
 
-export default _.curryRight(splitThought)
+export default command(splitThought)
 
 // Register this action's metadata
 registerActionMetadata('splitThought', {

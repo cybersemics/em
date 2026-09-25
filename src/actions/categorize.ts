@@ -1,16 +1,18 @@
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren } from '../selectors/getChildren'
-import getRankBefore from '../selectors/getRankBefore'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import createId from '../util/createId'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -31,7 +33,11 @@ export interface categorizePayload {
 }
 
 /** Inserts a new thought and adds the given thought as a subthought. */
-const categorize = (state: State, { value = '' }: categorizePayload = {}): State => {
+const categorize = (
+  state: State,
+  { value = '' }: categorizePayload = {},
+  document?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -77,7 +83,7 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
     })
   }
 
-  const newRank = getRankBefore(state, simplePath)
+  const afterId = getPreviousSiblingId(state, head(simplePath))
   const newThoughtId = createId()
   const isInContextView = isContextViewActive(state, parentOf(cursor))
 
@@ -99,41 +105,28 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
       })
     : []
 
+  // Each move immediately normalizes ranks. Preserve the original order with stable sibling IDs rather than
+  // replaying ranks captured before the preceding move changed the document.
+  const pathsToMove = [
+    ...(multicursorPaths.length ? multicursorPaths : [simplePath]),
+    ...movedAttributes.map(attribute => appendToPath(parentOf(simplePath), attribute.id)),
+  ]
+    .filter(path => getThoughtById(state, head(path)))
+    .sort((a, b) => getThoughtById(state, head(a))!.rank - getThoughtById(state, head(b))!.rank)
+  const destinationPath = appendToPath(isInContextView ? rootedParentOf(state, simplePath) : cursorParent, newThoughtId)
+
   return reducerFlow([
     createThought({
       path: rootedParentOf(state, simplePath),
       value,
-      rank: newRank,
+      afterId,
       id: newThoughtId,
     }),
-    ...(multicursorPaths.length === 0
-      ? [
-          moveThought({
-            oldPath: simplePath,
-            newPath: appendToPath(
-              isInContextView ? rootedParentOf(state, simplePath) : cursorParent,
-              newThoughtId,
-              head(simplePath),
-            ),
-            newRank,
-          }),
-        ]
-      : multicursorPaths
-          .reverse()
-          // we ignore thoughts at cursor that are somehow missing, see getThoughtById
-          .filter(path => getThoughtById(state, head(path)))
-          .map(path =>
-            moveThought({
-              oldPath: path,
-              newPath: appendToPath(parentOf(simplePath), newThoughtId, head(path)),
-              newRank: getThoughtById(state, head(path))!.rank,
-            }),
-          )),
-    ...movedAttributes.map(attribute =>
+    ...pathsToMove.map((path, index) =>
       moveThought({
-        oldPath: appendToPath(parentOf(simplePath), attribute.id),
-        newPath: appendToPath(parentOf(simplePath), newThoughtId, attribute.id),
-        newRank: attribute.rank,
+        oldPath: path,
+        newPath: appendToPath(destinationPath, head(path)),
+        afterId: index === 0 ? null : head(pathsToMove[index - 1]),
       }),
     ),
     setCursor({
@@ -143,7 +136,7 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
       offset: value.length,
       isKeyboardOpen: true,
     }),
-  ])(state)
+  ])(state, document)
 }
 
 /** A Thunk that dispatches a 'categorize` action. */
@@ -152,7 +145,7 @@ export const categorizeActionCreator =
   dispatch =>
     dispatch({ type: 'categorize', ...payload })
 
-export default categorize
+export default command(categorize)
 
 // Register this action's metadata
 registerActionMetadata('categorize', {

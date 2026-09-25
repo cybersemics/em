@@ -1,18 +1,19 @@
 import { deleteThought } from '.'
-import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import createThought from '../actions/createThought'
 import setFirstSubthought from '../actions/setFirstSubthought'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildren, hasChildren } from '../selectors/getChildren'
-import getPrevRank from '../selectors/getPrevRank'
+import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
 import getSortPreference from '../selectors/getSortPreference'
-import getSortedRank from '../selectors/getSortedRank'
+import getSortedPlacement from '../selectors/getSortedPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import createId from '../util/createId'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -21,6 +22,7 @@ import isAttribute from '../util/isAttribute'
 const toggleAttribute = (
   state: State,
   { path, value, values }: { path: Path | null; value?: string; values?: string[] },
+  document?: ThoughtspaceTransaction,
 ): State => {
   // normalize values if user passed single value
   const _values = values || [value!]
@@ -43,41 +45,53 @@ const toggleAttribute = (
     }
 
     return firstThought?.value === _values[0]
-      ? deleteThought(state, { pathParent: path, thoughtId: firstThought.id })
-      : setFirstSubthought(state, {
-          path: path,
-          value: _values[0],
-        })
+      ? deleteThought(state, { pathParent: path, thoughtId: firstThought.id }, document)
+      : setFirstSubthought(
+          state,
+          {
+            path: path,
+            value: _values[0],
+          },
+          document,
+        )
   }
 
   // toggle a nullary attribute off if it exists; otherwise it is created below
   if (_values.length === 1 && firstSubthoughtId) {
-    return deleteThought(state, { pathParent: path, thoughtId: firstSubthoughtId })
+    return deleteThought(state, { pathParent: path, thoughtId: firstSubthoughtId }, document)
   }
 
   // otherwise, create the first subthought if it does not exist and recurse
   const stateWithFirstSubthought = firstSubthoughtId
     ? state
-    : createThought(state, {
-        id: idNew,
-        path,
-        value: _values[0],
-        rank:
-          getSortPreference(state, thoughtId).type === 'Alphabetical'
-            ? getSortedRank(state, thoughtId, _values[0])
-            : getPrevRank(state, thoughtId),
-      })
+    : createThought(
+        state,
+        {
+          id: idNew,
+          path,
+          value: _values[0],
+          afterId:
+            getSortPreference(state, thoughtId).type === 'Alphabetical'
+              ? getSortedPlacement(state, thoughtId, _values[0])
+              : getFirstChildPlacement(state, thoughtId),
+        },
+        document,
+      )
 
   // recursion
   // When the sequence ends in an attribute key, the recursive call receives no values and returns the state unchanged.
-  const stateNew = toggleAttribute(stateWithFirstSubthought, {
-    path: appendToPath(path, firstSubthoughtId || idNew),
-    values: _values.slice(1),
-  })
+  const stateNew = toggleAttribute(
+    stateWithFirstSubthought,
+    {
+      path: appendToPath(path, firstSubthoughtId || idNew),
+      values: _values.slice(1),
+    },
+    document,
+  )
 
   // after recursion, delete empty descendants
   return firstSubthoughtId && !hasChildren(stateNew, firstSubthoughtId)
-    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId })
+    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId }, document)
     : stateNew
 }
 
@@ -87,7 +101,7 @@ export const toggleAttributeActionCreator =
   dispatch =>
     dispatch({ type: 'toggleAttribute', ...payload })
 
-export default _.curryRight(toggleAttribute)
+export default command(toggleAttribute)
 
 // Register this action's metadata
 registerActionMetadata('toggleAttribute', {

@@ -1,19 +1,24 @@
 import { toggleThought } from '.'
-import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import { EM_TOKEN, Settings } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 
 /** Toggles a user setting on/off. */
-const toggleUserSetting = (state: State, { key, value }: { key: Settings; value?: boolean }) => {
+const toggleUserSetting = (
+  state: State,
+  { key, value }: { key: Settings; value?: boolean },
+  document?: ThoughtspaceTransaction,
+) => {
   const settingsId = findDescendant(state, EM_TOKEN, 'Settings')!
   const settingsPath = [EM_TOKEN, settingsId] as Path
   const exists = !!findDescendant(state, settingsId, key)
   return value === undefined || (value ? !exists : exists)
-    ? toggleThought(state, { path: settingsPath, value: key })
+    ? toggleThought(state, { path: settingsPath, value: key }, document)
     : state
 }
 
@@ -23,7 +28,7 @@ export const toggleUserSettingActionCreator =
   dispatch =>
     dispatch({ type: 'toggleUserSetting', ...payload })
 
-export default _.curryRight(toggleUserSetting)
+export default command(toggleUserSetting)
 
 // Register this action's metadata
 registerActionMetadata('toggleUserSetting', {

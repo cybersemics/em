@@ -8,6 +8,8 @@
 
 ## Quick Start
 
+The [memory-engine prototype](persistence.md#running-the-prototype) installs its prebuilt WASM package with the other dependencies. `setupTests.ts` explicitly initializes the packaged browser client with its WASM bytes because Node cannot fetch a file URL; the engine and loopback protocol are not mocked. Async import tests leave `setImmediate` real so IndexedDB and the protocol share an event loop, while fake timers still control UI delays. Await actual import/provider completion before asserting: draining timers alone does not drain protocol work.
+
 The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests. A fresh checkout — including every agent worktree under `.claude/worktrees/` — needs its own `yarn install`: the local Capacitor plugins in `packages/` are linked as workspace dependencies and are only compiled by the `postinstall` → `build:packages` step, so without it any test that reaches production code importing one fails to collect with `Failed to resolve import "webview-background" from "src/device/nativeHistory.ts"`. The generated Panda CSS output is the same story one step earlier, failing to collect with `Failed to resolve import '../../../styled-system/css'`.
 
 ```sh
@@ -586,15 +588,15 @@ Integration tests are blackbox, but named helpers may take shortcuts during arra
 | Visual snapshot stabilization | Arrange | [`hide`](../src/e2e/puppeteer/helpers/hide.ts), [`hideVisibility`](../src/e2e/puppeteer/helpers/hideVisibility.ts), [`hideHUD`](../src/e2e/puppeteer/helpers/hideHUD.ts), [`showMousePointer`](../src/e2e/puppeteer/helpers/showMousePointer.ts), [`screenshot`](../src/e2e/puppeteer/helpers/screenshot.ts) | DOM/style mutation is allowed only to remove irrelevant nondeterminism or expose input position in a visual test. Do not hide the subject of the snapshot. |
 | Image paint synchronization | Wait | [`waitForBackgroundImage`](../src/e2e/puppeteer/helpers/waitForBackgroundImage.ts) | Wait before snapshotting an element whose appearance depends on a CSS background image. The element enters the DOM before its image is available to the renderer, so `waitForSelector` alone can be followed by a frame that is missing the image. |
 | Test environment controls | Arrange | [`deviceEmulation`](../src/e2e/puppeteer/helpers/deviceEmulation.ts), [`setConnectionStatus`](../src/e2e/puppeteer/helpers/setConnectionStatus.ts), [`simulateDragAndDrop`](../src/e2e/puppeteer/helpers/simulateDragAndDrop.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts), the thoughtspace storage selection in [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), and reviewed helpers that set [`testFlags`](../src/e2e/testFlags.ts) | Use only for a condition that cannot be created reliably through normal input, explain why, and restore mutable controls in the corresponding `afterEach` or `afterAll` hook unless per-test page isolation resets them. The control must not change the semantic outcome under test. |
+| Deferred startup | Arrange | [`deferThoughtspaceInitialization`](../src/e2e/puppeteer/helpers/deferThoughtspaceInitialization.ts) | Hold the real initialization boundary to exercise keyboard input before storage is ready, then release it through the returned function. The preload script is removed after the one reload, and the page is isolated per test. The helper never enables editing before readiness. |
 | Structural assertion | Assert | [`exportThoughts`](../src/e2e/puppeteer/helpers/exportThoughts.ts) | Export the thought tree as plaintext. Do not make additional assertions on Redux state. |
 | Non-visual synchronization | Wait | [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) | Use only when persistence or another prerequisite has no immediate visual signal. `waitForThoughtspaceIdle` waits for every queued persistence write to commit and rejects if one failed; call it only to synchronize before a reload or before asserting that a write landed. It is synchronization, not the test's assertion; assert the final user-visible result separately. |
-| Timing/environment spoofing | Arrange | [`reloadWithProductionTiming`](../src/e2e/puppeteer/helpers/reloadWithProductionTiming.ts) (spoofs `navigator.webdriver` to restore production animation timing) | Use only for a state that cannot exist under test timing (such as the loading phase). Justify in the helper's doc comment and state how the spoof is undone (per-test page isolation counts, but say so). Subsequent waits must still name conditions rather than replay production durations. |
 
 DOM reads are different from backdoors: inline `page.evaluate`/`browser.execute` may read user-visible DOM when no helper exists, though a repeated read should become a named helper. It may not dispatch actions, mutate app state, set test flags, or write to the DOM.
 
 Backdoors are never the act. The behavior under test always goes through a real user entry point (Principle 2).
 
-A few older tests access `window.em`, set test flags inline, mutate the DOM, or hand-roll waits. Known examples include the specialized initialization test in [`startup.ts`](../src/e2e/puppeteer/__tests__/startup.ts), replication-delay setup in [`scroll.ts`](../src/e2e/puppeteer/__tests__/scroll.ts), and drag-hover timing in [`drag-and-drop.ts`](../src/e2e/puppeteer/__tests__/drag-and-drop.ts). They predate this policy; do not imitate them. When one is materially changed, move the exception behind a named helper and add it to the category table.
+A few older tests access `window.em`, set test flags inline, mutate the DOM, or hand-roll waits, such as drag-hover timing in [`drag-and-drop.ts`](../src/e2e/puppeteer/__tests__/drag-and-drop.ts). They predate this policy; do not imitate them. When one is materially changed, move the exception behind a named helper and add it to the category table.
 
 ## Reviewing Tests
 
@@ -640,7 +642,6 @@ The helpers in [`../src/test-helpers/`](../src/test-helpers) cover store setup a
 - **Read-by-value helpers.** [`getAllChildrenByContext`](../src/test-helpers/getAllChildrenByContext.ts), [`getChildrenRankedByContext`](../src/test-helpers/getChildrenRankedByContext.ts), [`getAllChildrenAsThoughtsByContext`](../src/test-helpers/getAllChildrenAsThoughtsByContext.ts), [`attributeByContext`](../src/test-helpers/attributeByContext.ts), [`contextToThought`](../src/test-helpers/contextToThought.ts).
 - [`multicursorValues`](../src/test-helpers/multicursorValues.ts) — the sorted thought values of the current multicursor set, so multiselect assertions read as values rather than ids.
 - [`expectPathToEqual`](../src/test-helpers/expectPathToEqual.ts) — Jest matcher that compares paths by their thought *values* rather than ids, so test failures are readable.
-- [`dataProviderTest`](../src/test-helpers/dataProviderTest.ts) — shared assertions for storage providers that implement the data provider interface.
 
 ### `src/e2e/puppeteer/helpers/` — for Puppeteer tests
 
@@ -1164,19 +1165,22 @@ Test `enter` and `leave` on each of the following actions:
 
 ## Tips and Tricks
 
+### Document commands
+
+Pure UI reducers can be called directly. Document commands require the real memory engine: initialize it with `initStore`, then use the test-only [`reducerFlow`](../src/test-helpers/reducerFlow.ts) as `reducerFlow(steps)(state)`, or [`runDocumentCommand`](../src/test-helpers/runDocumentCommand.ts) for a single command. Both restore the supplied immutable fixture through document operations before acting; nested flows reuse the current transaction without restoring again. Await `waitForThoughtspaceIdle` before teardown.
+
 ### Fake timers: flush, don't poll
 
-`initStore` and `createTestApp` enable fake timers. Under fake timers, nothing scheduled runs until the test advances the clock, so a test that triggers asynchronous work must flush it explicitly before asserting. When a test calls `initialize({ storage: 'memory' })` or performs database work directly:
+`initStore` and `createTestApp` enable fake timers. Advance them to flush scheduled UI work, but await asynchronous initialization and persistence explicitly. Document commands publish their complete memory snapshot synchronously; SQLite acknowledgement is a separate boundary:
 
 ```ts
 vi.useFakeTimers()
 await initialize({ storage: 'memory' })
 await vi.runAllTimersAsync()
+await waitForThoughtspaceIdle()
 ```
 
-> It looks like we must use fake timers if we want the `store` state to be updated based on database operations (e.g., if we use `initialize({ storage: 'memory' })` to reload the state). I think this is because the `thoughtspace` operations are asynchronous and don't call the store operations prior to the test ending. (I'm not sure why we didn't get other errors that made this clear.)
-
-https://github.com/cybersemics/em/pull/2741
+[`waitForThoughtspaceIdle`](../src/test-helpers/waitForThoughtspaceIdle.ts) waits for accepted writes and local loopback work. Timer advancement alone does not establish durability. Initialization already publishes the full canonical snapshot before resolving; no pull queue needs to be flushed.
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
 

@@ -153,7 +153,10 @@ const Editable = ({
     return childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
-  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
+  const value = useSelector(state => {
+    const thought = getThoughtById(state, head(simplePath))
+    return thought?.displayValue ?? thought?.value ?? ''
+  })
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const isCursorCleared = useSelector(
     // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)

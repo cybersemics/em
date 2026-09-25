@@ -1,21 +1,22 @@
-import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
-import getRankBefore from '../selectors/getRankBefore'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import getSortPreference from '../selectors/getSortPreference'
-import getSortedRank from '../selectors/getSortedRank'
+import getSortedPlacement from '../selectors/getSortedPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
@@ -28,7 +29,7 @@ interface Options {
 }
 
 /** Deletes a thought and moves all its children to its parent. */
-const uncategorize = (state: State, { at }: Options): State => {
+const uncategorize = (state: State, { at }: Options, document?: ThoughtspaceTransaction): State => {
   const { cursor } = state
 
   const path = at || cursor
@@ -46,13 +47,13 @@ const uncategorize = (state: State, { at }: Options): State => {
   const isInContextView = isContextViewActive(state, parentOf(path))
   if (isInContextView) {
     return reducerFlow([
-      state => uncategorize(state, { at: rootedParentOf(state, simplePath) }),
+      state => uncategorize(state, { at: rootedParentOf(state, simplePath) }, document),
       setCursor({
         path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
         isKeyboardOpen: state.isKeyboardOpen,
         offset: 0,
       }),
-    ])(state)
+    ])(state, document)
   }
 
   /** Returns first moved child path as new cursor after uncategorize. */
@@ -89,23 +90,19 @@ const uncategorize = (state: State, { at }: Options): State => {
   const shouldDeleteDescendantsAttribute =
     descendantsAttributeId && !findAnyChild(state, descendantsAttributeId, thought => thought.value !== '=pin')
 
-  /** Calculates the new rank for a child when moved to the parent. */
-  const getNewRank = (state: State, child: Thought) => {
-    // If we're inserting into a sorted context, short-circuit and use the sorted rank
-    if (contextHasSortPreference || parentHasSortPreference) return getSortedRank(state, parentId, child.value)
+  /** Resolves a child's preceding sibling in the current parent before moving it. */
+  const getPlacement = (state: State, child: Thought) => {
+    if (contextHasSortPreference || parentHasSortPreference)
+      return getSortedPlacement(state, parentId, child.value, { staleId: child.id })
 
     // If we're moving a meta attribute, insert it before the first non-meta child
     if (isAttribute(child.value)) {
       const firstNonMetaChild = findAnyChild(state, parentId, thought => !isAttribute(thought.value))
-      const insertMetaBeforePath = firstNonMetaChild
-        ? appendToPath(parentOf(simplePath), firstNonMetaChild.id)
-        : simplePath
-
-      return getRankBefore(state, insertMetaBeforePath)
+      return getPreviousSiblingId(state, firstNonMetaChild?.id ?? head(simplePath))
     }
 
     // Otherwise, insert it before the uncategorized context
-    return getRankBefore(state, simplePath)
+    return getPreviousSiblingId(state, head(simplePath))
   }
 
   return reducerFlow([
@@ -116,7 +113,7 @@ const uncategorize = (state: State, { at }: Options): State => {
           moveThought({
             oldPath: appendToPath(simplePath, sortId!),
             newPath: appendToPath(parentOf(simplePath), sortId!),
-            newRank: getRankBefore(state, simplePath),
+            afterId: getPreviousSiblingId(state, head(simplePath)),
           }),
           sort(parentId),
         ])
@@ -127,13 +124,17 @@ const uncategorize = (state: State, { at }: Options): State => {
       // Skip =sort since it has already been moved to the parent.
       if (contextHasSortPreference && child.value === '=sort') return state
 
-      return moveThought(state, {
-        oldPath: appendToPath(simplePath, child.id),
-        newPath: appendToPath(parentOf(simplePath), child.id),
-        newRank: getNewRank(state, child),
-        // If a child has the same value as the category being deleted, do not merge it into the category.
-        skipMerge: child.value === thought.value,
-      })
+      return moveThought(
+        state,
+        {
+          oldPath: appendToPath(simplePath, child.id),
+          newPath: appendToPath(parentOf(simplePath), child.id),
+          afterId: getPlacement(state, child),
+          // If a child has the same value as the category being deleted, do not merge it into the category.
+          skipMerge: child.value === thought.value,
+        },
+        document,
+      )
     }),
 
     // delete =pin
@@ -176,12 +177,16 @@ const uncategorize = (state: State, { at }: Options): State => {
     }),
     // set the new cursor
     state =>
-      setCursor(state, {
-        path: getNewCursor(state),
-        isKeyboardOpen: state.isKeyboardOpen,
-        offset: 0,
-      }),
-  ])(state)
+      setCursor(
+        state,
+        {
+          path: getNewCursor(state),
+          isKeyboardOpen: state.isKeyboardOpen,
+          offset: 0,
+        },
+        document,
+      ),
+  ])(state, document)
 }
 
 /** Action-creator for uncategorize. */
@@ -190,7 +195,7 @@ export const uncategorizeActionCreator =
   dispatch =>
     dispatch({ type: 'uncategorize', ...payload })
 
-export default _.curryRight(uncategorize)
+export default command(uncategorize)
 
 // Register this action's metadata
 registerActionMetadata('uncategorize', {

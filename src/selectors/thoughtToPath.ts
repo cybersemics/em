@@ -5,7 +5,7 @@ import { EM_TOKEN, HOME_PATH } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
 
-/** Generates the SimplePath for a Thought by traversing upwards to the root thought. Return null if any ancestors are missing, e.g. pending context. */
+/** Generates a SimplePath by traversing to the root. Falls back to HOME_PATH for missing thoughts or cycles. */
 const thoughtToPath = (state: State, thoughtId: ThoughtId, visited: Set<ThoughtId> = new Set()): SimplePath => {
   // Detect cycles
   if (visited.has(thoughtId)) {

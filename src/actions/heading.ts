@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
 import setDescendant from '../actions/setDescendant'
@@ -6,11 +7,12 @@ import { HeadingLevel } from '../commands/headings'
 import { filterAllChildren } from '../selectors/getChildren'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 
 /** Set or remove a heading on the cursor. */
-const heading = (state: State, { level }: { level: HeadingLevel }): State => {
+const heading = (state: State, { level }: { level: HeadingLevel }, document?: ThoughtspaceTransaction): State => {
   if (!state.cursor) return state
   const path = simplifyPath(state, state.cursor)
   const headingChildren = filterAllChildren(state, head(state.cursor), child => /^=heading[1-9]$/.test(child.value))
@@ -25,7 +27,7 @@ const heading = (state: State, { level }: { level: HeadingLevel }): State => {
 
     // set new heading
     level > 0 ? setDescendant({ path, values: [`=heading${level}`] }) : null,
-  ])(state)
+  ])(state, document)
 }
 
 /** Action-creator for heading. */
@@ -34,7 +36,7 @@ export const headingActionCreator =
   dispatch =>
     dispatch({ type: 'heading', ...payload })
 
-export default heading
+export default command(heading)
 
 // Register this action's metadata
 registerActionMetadata('heading', {

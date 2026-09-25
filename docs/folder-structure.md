@@ -5,24 +5,24 @@ The main directory structure is organized as follows. Tests are located in a sub
 ## Top-level directories under `src/`
 
 - [`/src/@types`](../src/@types) — Shared TypeScript type definitions and ambient declarations. The canonical shapes (`Thought`, `Path`, `Lexeme`, `Command`, `State`, etc.) live here.
-- [`/src/actions`](../src/actions) — Redux reducers and action-creators are co-located. Prefer reducers when possible, as they are pure functions that are more easily testable and composable. Only define an action creator if it requires a side effect. Use [`util/reducerFlow`](../src/util/reducerFlow.ts) to compose reducers.
+- [`/src/actions`](../src/actions) — UI reducers, document commands and action-creators are co-located. UI reducers are pure. Document commands receive an explicit `ThoughtspaceTransaction`, execute outside Redux's reducer and read canonical document state after each update. [`util/reducerFlow`](../src/util/reducerFlow.ts) composes both and forwards the transaction to document commands.
 - [`/src/commands`](../src/commands) — Keyboard, gesture, and toolbar commands (formerly `shortcuts`). One file per command, plus an `index.ts` barrel. See [commands.md](commands.md) for the architecture.
 - [`/src/components`](../src/components) — React components.
-- [`/src/data-providers`](../src/data-providers) — Storage and sync backends implementing the [`DataProvider`](../src/data-providers/DataProvider.ts) interface. The live implementation is TreeCRDT in [`treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts). See [persistence.md](persistence.md).
+- [`/src/data-providers`](../src/data-providers) — Storage and sync integration. The active prototype joins memory and persistent TreeCRDT peers in [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts), which owns synchronous document reads, transactions, and storage lifecycle. See [persistence.md](persistence.md).
 - [`/src/device`](../src/device) — Device/DOM-level helpers for selection, scrolling, clipboard, focus, and platform detection. The selection wrapper [`device/selection.ts`](../src/device/selection.ts) is the single point of access to `window.getSelection()` (enforced by lint). See [cursor-and-caret.md](cursor-and-caret.md).
 - [`/src/e2e`](../src/e2e) — End-to-end test setup, including Puppeteer and iOS environments. See [testing.md](testing.md).
 - [`/src/hooks`](../src/hooks) — React hooks.
 - [`/src/recipes`](../src/recipes) — Panda CSS recipes that define styled component variants. New components should use these or inline styles.
-- [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers (e.g. the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) that flushes state mutations to thoughtspace persistence).
-- [`/src/redux-middleware`](../src/redux-middleware) — Redux middleware (e.g. the [`pullQueue`](../src/redux-middleware/pullQueue.ts) that loads thoughts on demand, or [`clearSelection`](../src/redux-middleware/clearSelection.ts) that clears the browser caret on cursor changes).
+- [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers and their helpers. [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) coordinates command transactions and history outside Redux's reducer, then publishes the completed immutable state.
+- [`/src/redux-middleware`](../src/redux-middleware) — Redux middleware (e.g. [`clearSelection`](../src/redux-middleware/clearSelection.ts), which clears the browser caret on cursor changes). Document snapshots arrive through [`replaceThoughts`](../src/actions/replaceThoughts.ts), not loading middleware.
 - [`/src/selectors`](../src/selectors) — Pure functions that compute (and often memoize) slices from the Redux state. See [data-model.md](data-model.md) for the canonical traversal selectors.
-- [`/src/stores`](../src/stores) — Lightweight non-Redux ministores for ephemeral UI state. Examples: [`editingValueStore`](../src/stores/editingValueStore.ts) (the in-progress thought text), [`viewportStore`](../src/stores/viewportStore.ts), [`scrollTopStore`](../src/stores/scrollTopStore.ts), [`gestureStore`](../src/stores/gestureStore.ts), [`syncStatusStore`](../src/stores/syncStatusStore.ts), [`selectionRangeStore`](../src/stores/selectionRangeStore.ts). Also home to the mutable flags that must stay out of Redux for performance and used to live in a globals module — [`touchStore`](../src/stores/touchStore.ts) (`touching`, `suppressCursorAfterTouch`), [`editableSyncStore`](../src/stores/editableSyncStore.ts) (`suppressChange`, `suppressBlurSync`), [`heldKeysStore`](../src/stores/heldKeysStore.ts) (`suppressExpansion`, `arrowKeyBoundaryCross`), [`freeThoughtsThresholdStore`](../src/stores/freeThoughtsThresholdStore.ts), and [`abandonImportStore`](../src/stores/abandonImportStore.ts). A `getState()` read subscribes to nothing, so writing one never re-renders, and `resetStores` clears them between tests.
+- [`/src/stores`](../src/stores) — Lightweight non-Redux ministores for ephemeral UI state. Examples: [`editingValueStore`](../src/stores/editingValueStore.ts) (the in-progress thought text), [`viewportStore`](../src/stores/viewportStore.ts), [`scrollTopStore`](../src/stores/scrollTopStore.ts), [`gestureStore`](../src/stores/gestureStore.ts), [`syncStatusStore`](../src/stores/syncStatusStore.ts), [`selectionRangeStore`](../src/stores/selectionRangeStore.ts). Also home to the mutable flags that must stay out of Redux for performance and used to live in a globals module — [`touchStore`](../src/stores/touchStore.ts) (`touching`, `suppressCursorAfterTouch`), [`editableSyncStore`](../src/stores/editableSyncStore.ts) (`suppressChange`, `suppressBlurSync`), [`heldKeysStore`](../src/stores/heldKeysStore.ts) (`suppressExpansion`, `arrowKeyBoundaryCross`), and [`abandonImportStore`](../src/stores/abandonImportStore.ts). A `getState()` read subscribes to nothing, so writing one never re-renders, and `resetStores` clears them between tests.
 - [`/src/test-helpers`](../src/test-helpers) — Helpers used in unit, store, and JSDOM tests. See [testing.md](testing.md).
 - [`/src/util`](../src/util) — Pure utility functions. No React, no Redux access.
 
 ## Load-bearing top-level files
 
-- [`/src/index.tsx`](../src/index.tsx) — App entry point: mounts `<App />` into the DOM.
+- [`/src/index.tsx`](../src/index.tsx) — App entry point: acquires single-tab access and awaits thoughtspace initialization before mounting the interactive `<App />`; renders startup or error UI while it cannot open the document.
 - [`/src/initialize.ts`](../src/initialize.ts) — Bootstraps the thoughtspace, the offline-status store, the cursor from URL, and global event handlers. Called by `index.tsx`.
 - [`/src/commands.ts`](../src/commands.ts) — Builds the `globalCommands` array, three lookup indices (by id, keyboard, gesture), and the global `keyDown` / `keyUp` / gesture handlers. See [commands.md](commands.md).
 - [`/src/constants.ts`](../src/constants.ts) — App-wide constants (root tokens, timeouts, settings enum, `LongPressState`, `COMMAND_DIFFICULTIES`, etc.). For constants used in only one module, define them locally; promote here when shared.
@@ -36,12 +36,14 @@ The main directory structure is organized as follows. Tests are located in a sub
 |---|---|
 | Redux state shape | [`@types/State.ts`](../src/@types/State.ts) |
 | Thought / Path / Lexeme types | [`@types/`](../src/@types) |
-| State mutation (reducer or thunk) | [`actions/`](../src/actions) |
+| UI state updates and document command planning (reducer or thunk) | [`actions/`](../src/actions) |
+| Synchronous document transaction and Redux publication/history | [`redux-enhancers/undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) |
+| Non-undoable full document publication | [`actions/replaceThoughts.ts`](../src/actions/replaceThoughts.ts) |
 | Pure read from state | [`selectors/`](../src/selectors) |
 | Non-Redux UI state | [`stores/`](../src/stores) |
 | Browser DOM / selection / scroll APIs | [`device/`](../src/device) |
 | User-triggered command | [`commands/`](../src/commands) |
-| TreeCRDT persistence engine | [`data-providers/treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts) |
+| Memory/persistent TreeCRDT peers | [`data-providers/treecrdt/createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts), using `@treecrdt/wasm` and `@treecrdt/wa-sqlite` |
 | Layout positioning math | [`hooks/usePositionedThoughts.ts`](../src/hooks/usePositionedThoughts.ts) |
 | Visible-thoughts traversal | [`selectors/linearizeTree.ts`](../src/selectors/linearizeTree.ts) |
 | Pure helper (no React, no Redux) | [`util/`](../src/util) |

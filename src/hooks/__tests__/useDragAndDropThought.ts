@@ -94,7 +94,7 @@ it('preserves an unrelated cursor when a trailing click fires after drag cleanup
 
   await dispatch([
     longPress({ value: LongPressState.DragInProgress, draggingThoughts: [pathB] }),
-    moveThought({ from: ['a', 'b'], to: ['a', 'b'], newRank: 2 }),
+    moveThought({ from: ['a', 'b'], to: ['a', 'b'], after: ['a', 'c'] }),
   ])
 
   await act(async () => dragEndCallbacks[0]())

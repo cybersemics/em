@@ -1,5 +1,6 @@
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { tsidShared } from '../data-providers/thoughtspaceSession'
 import isTutorial from '../selectors/isTutorial'
@@ -24,7 +25,6 @@ const validateNextState = (nextState: State, action: Action): void => {
     !tsidShared &&
     // guard against EM thought not yet loaded
     emThought &&
-    !emThought.pending &&
     // after that, it should never be empty
     Object.keys(emThought.childrenMap).length === 0
   ) {
@@ -43,9 +43,15 @@ const validateNextState = (nextState: State, action: Action): void => {
 const validateStateEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> =>
-    createStore((state: State | undefined, action: A): State => {
-      const nextState: State = reducer(state, action)
+  <A extends Action<any>>(
+    // Redux's enhancer signature accepts arbitrary state types; this app enhancer only receives State.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    reducer: (state: any, action: A, document?: ThoughtspaceTransaction) => any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initialState: any,
+  ): Store<State, A> =>
+    createStore((state: State | undefined, action: A, document?: ThoughtspaceTransaction): State => {
+      const nextState: State = reducer(state, action, document)
 
       // Validate the next state - this will throw if there are fatal errors
       validateNextState(nextState, action)

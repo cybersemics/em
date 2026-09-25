@@ -9,9 +9,15 @@ import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
   it('do nothing on leaf', () => {
@@ -221,10 +227,7 @@ describe('normal view', () => {
         - b
         - d
     `
-    const state1 = importText({ text })(initialState())
-    const a1 = contextToThought(state1, ['a'])!
-    const c1 = contextToThought(state1, ['c'])!
-    const f1 = contextToThought(state1, ['f'])!
+    const state1 = runDocumentCommand(importText({ text }), initialState())
 
     const steps = [setCursor(['x']), uncategorize({})]
     const stateNew = reducerFlow(steps)(state1)
@@ -247,10 +250,8 @@ describe('normal view', () => {
     const e2 = contextToThought(stateNew, ['e'])!
     const f2 = contextToThought(stateNew, ['f'])!
 
-    // sibling ranks are unchanged
-    expect(a2.rank).toEqual(a1.rank)
-    expect(c2.rank).toEqual(c1.rank)
-    expect(f2.rank).toEqual(f1.rank)
+    // Canonical ranks are contiguous sibling positions, including the sort attribute.
+    expect([a2.rank, b2.rank, c2.rank, d2.rank, e2.rank, f2.rank]).toEqual([1, 2, 3, 4, 5, 6])
 
     // no duplicate ranks
     const ranks = new Set([a2.rank, b2.rank, c2.rank, d2.rank, e2.rank, f2.rank])

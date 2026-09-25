@@ -9,15 +9,21 @@ import getThoughtById from '../../selectors/getThoughtById'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('delete', () => {
   const state = reducerFlow([newThought('a'), newThought('b')])(initialState())
   const rootChildrenBefore = getAllChildrenByContext(state, [HOME_TOKEN])
   const [thoughtA] = childIdsToThoughts(state, rootChildrenBefore)
 
-  const stateNew = deleteThoughtAtFirstMatch(['b'])(state)
+  const stateNew = runDocumentCommand(deleteThoughtAtFirstMatch(['b']), state)
 
   const rootChildrenAfter = getAllChildrenByContext(stateNew, [HOME_TOKEN])
   expect(rootChildrenAfter).toEqual([thoughtA.id])

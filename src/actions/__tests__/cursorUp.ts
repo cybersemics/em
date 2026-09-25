@@ -1,5 +1,6 @@
 import { act } from 'react-dom/test-utils'
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import cursorUp from '../../actions/cursorUp'
 import importText from '../../actions/importText'
 import { importTextActionCreator as importTextAction } from '../../actions/importText'
@@ -17,11 +18,16 @@ import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import appendToPath from '../../util/appendToPath'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
   it('move cursor to previous sibling', () => {
@@ -77,7 +83,7 @@ describe('normal view', () => {
   })
 
   it('do nothing when there are no thoughts', () => {
-    const stateNew = cursorUp(initialState())
+    const stateNew = runDocumentCommand(cursorUp, initialState())
 
     expect(stateNew.cursor).toBe(null)
   })
@@ -190,7 +196,7 @@ describe('normal view', () => {
       ])
     })
     act(() => executeCommand(newSubthoughtTopCommand, { store }))
-    const stateNew = cursorUp(store.getState())
+    const stateNew = runDocumentCommand(cursorUp, store.getState())
     expectPathToEqual(stateNew, stateNew.cursor, ['x'])
   })
 
@@ -210,7 +216,8 @@ describe('normal view', () => {
     // the duplicate `a` is rendered above the original, so the cursor is set to the first `a` in rank order
     const firstA = getChildrenRankedByContext(state, ['x']).find(child => child.value === 'a')!
     const stateNew = reducerFlow([
-      (state: State) => setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, firstA.id) }),
+      (state: State, document?: ThoughtspaceTransaction) =>
+        setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, firstA.id) }, document),
       cursorUp,
     ])(state)
 

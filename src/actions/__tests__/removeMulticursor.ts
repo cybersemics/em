@@ -3,10 +3,15 @@ import newThought from '../../actions/newThought'
 import removeMulticursor from '../../actions/removeMulticursor'
 import contextToPath from '../../selectors/contextToPath'
 import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('removeMulticursor', () => {
   it('removes a multicursor', () => {

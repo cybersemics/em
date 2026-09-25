@@ -1,8 +1,8 @@
-import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import createThought from '../actions/createThought'
 import setCursor from '../actions/setCursor'
@@ -29,26 +29,23 @@ import {
 } from '../constants'
 import asyncFocus from '../device/asyncFocus'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
-import { getChildrenSorted } from '../selectors/getChildren'
-import getNextRank from '../selectors/getNextRank'
-import getPrevRank from '../selectors/getPrevRank'
-import getRankAfter from '../selectors/getRankAfter'
-import getRankBefore from '../selectors/getRankBefore'
+import { getChildrenRanked, getChildrenSorted } from '../selectors/getChildren'
+import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import getRootPath from '../selectors/getRootPath'
 import getSetting from '../selectors/getSetting'
 import getSortPreference from '../selectors/getSortPreference'
-import getSortedRank from '../selectors/getSortedRank'
+import getSortedPlacement from '../selectors/getSortedPlacement'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import createId from '../util/createId'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import isRoot from '../util/isRoot'
-import once from '../util/once'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
@@ -56,8 +53,8 @@ import unroot from '../util/unroot'
 export interface NewThoughtPayload {
   /** The Path which the new thought is inserted after, unless insertBefore or insertNewSubthought are specified. */
   at?: Path
-  /** Callback for when the updates have been synced with IDB. */
-  idbSynced?: () => void
+  /** Invoked after SQLite acknowledges the complete command. */
+  onPersisted?: () => void
   insertNewSubthought?: boolean
   insertBefore?: boolean
   value?: string
@@ -67,11 +64,11 @@ export interface NewThoughtPayload {
   splitSource?: ThoughtId
 }
 
-/** Adds a new thought to the cursor. Calculates the rank to add the new thought above, below, or within a thought.
+/** Adds a new thought above, below, or within the cursor's thought.
  *
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
  */
-const newThought = (state: State, payload: NewThoughtPayload | string) => {
+const newThought = (state: State, payload: NewThoughtPayload | string, document?: ThoughtspaceTransaction) => {
   // optionally allow string value to be passed as entire payload
   if (typeof payload === 'string') {
     payload = { value: payload }
@@ -79,7 +76,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
 
   const {
     at,
-    idbSynced,
+    onPersisted,
     insertNewSubthought,
     insertBefore,
     value = '',
@@ -130,34 +127,31 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const showContextsParent = isContextViewActive(state, rootedParentOf(state, path))
   const insertContext = (showContextsParent && !insertNewSubthought) || (showContexts && insertNewSubthought)
 
-  /** Gets the Path of the last visible child in a SimplePath if it is a sorted context. */
-  const getLastSortedChildPath = once((): SimplePath | null => {
-    const lastChild = _.last(getChildrenSorted(state, head(simplePath)))
-    return lastChild ? appendToPath(simplePath, lastChild.id) : null
-  })
-
   // if the sort preference is Created, then the current timestamp will be used to sort the new thought into place (#3782)
   const created = Date.now()
   const sortPreference = getSortPreference(state, insertId)
   const isValueEmptyOrEmojiOnly = isEmptyOrEmojiOnly(value)
+  const lastSortedChild =
+    insertNewSubthought && isValueEmptyOrEmojiOnly && sortPreference.type === 'Alphabetical'
+      ? getChildrenSorted(state, head(simplePath)).at(-1)
+      : undefined
 
   // if meta key is pressed, add a child instead of a sibling of the current thought
   // if shift key is pressed, insert the child before the current thought
-  const newRank = insertContext
-    ? getNextRank(state, ABSOLUTE_TOKEN)
+  const afterId = insertContext
+    ? (getChildrenRanked(state, ABSOLUTE_TOKEN).at(-1)?.id ?? null)
     : sortPreference.type === 'Created' || (!isValueEmptyOrEmojiOnly && sortPreference.type === 'Alphabetical')
-      ? getSortedRank(state, insertId, value, { created })
+      ? getSortedPlacement(state, insertId, value, { created })
       : insertBefore
         ? insertNewSubthought || !simplePath || isRoot(simplePath)
-          ? getPrevRank(state, insertId, { aboveMeta })
-          : getRankBefore(state, simplePath)
+          ? getFirstChildPlacement(state, insertId, { aboveMeta })
+          : getPreviousSiblingId(state, head(simplePath))
         : insertNewSubthought || !simplePath
-          ? // if inserting an empty or emoji-only thought into a sorted context via insertNewSubthought, get the rank after the last sorted child rather than incrementing the highest rank
-            // otherwise it will not retain its point of creation
-            isValueEmptyOrEmojiOnly && sortPreference.type === 'Alphabetical' && getLastSortedChildPath()
-            ? getRankAfter(state, getLastSortedChildPath()!)
-            : getNextRank(state, insertId)
-          : getRankAfter(state, simplePath)
+          ? // Empty or emoji-only thoughts in a sorted context retain their point of creation.
+            (lastSortedChild?.id ?? getChildrenRanked(state, insertId).at(-1)?.id ?? null)
+          : isRoot(simplePath)
+            ? (getChildrenRanked(state, insertId).at(-1)?.id ?? null)
+            : head(simplePath)
 
   // when creating a new context in a context view, newThoughtId is the new empty thought (a/~m/_), and newContextId is the newly added Lexeme context (/ABS/_/m)
   const newThoughtId = createId()
@@ -167,10 +161,10 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     // createThought
     createThought({
       path: insertContext ? ABSOLUTE_PATH : insertNewSubthought ? simplePath : parentPath,
-      rank: newRank,
+      afterId,
       value,
       id: newThoughtId,
-      idbSynced,
+      onPersisted,
       splitSource,
     }),
 
@@ -178,7 +172,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
     insertContext
       ? createThought({
           path: [ABSOLUTE_TOKEN, newThoughtId] as unknown as SimplePath,
-          rank: 0,
+          afterId: null,
           value: headValue(state, insertNewSubthought ? path : parentOf(path)) ?? '',
           id: newContextId!,
           splitSource,
@@ -190,11 +184,15 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
       const parentPath = !preventSetCursor ? unroot(insertNewSubthought ? path : parentOf(path)) : null
 
       return !preventSetCursor
-        ? setCursor(newState, {
-            isKeyboardOpen: true,
-            path: unroot([...parentPath!, newThoughtId]),
-            offset: offset != null ? offset : getTextContentFromHTML(value).length,
-          })
+        ? setCursor(
+            newState,
+            {
+              isKeyboardOpen: true,
+              path: unroot([...parentPath!, newThoughtId]),
+              offset: offset != null ? offset : getTextContentFromHTML(value).length,
+            },
+            document,
+          )
         : null
     },
 
@@ -213,22 +211,22 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
               : null,
   ]
 
-  return reducerFlow(reducers)(state)
+  return reducerFlow(reducers)(state, document)
 }
 
 /** Creates a new thought. */
 export const newThoughtActionCreator =
   ({
     at,
-    idbSynced,
+    onPersisted,
     insertBefore,
     insertNewSubthought,
     preventSetCursor,
     value = '',
   }: {
     at?: Path
-    /** Callback for when the updates have been synced with IDB. */
-    idbSynced?: () => void
+    /** Invoked after SQLite acknowledges the complete command. */
+    onPersisted?: () => void
     insertBefore?: boolean
     insertNewSubthought?: boolean
     preventSetCursor?: boolean
@@ -253,7 +251,7 @@ export const newThoughtActionCreator =
     dispatch({
       type: 'newThought',
       at: path,
-      idbSynced,
+      onPersisted,
       insertBefore,
       insertNewSubthought,
       preventSetCursor,
@@ -261,7 +259,7 @@ export const newThoughtActionCreator =
     })
   }
 
-export default _.curryRight(newThought)
+export default command(newThought)
 
 // Register this action's metadata
 registerActionMetadata('newThought', {

@@ -2,14 +2,19 @@ import State from '../../@types/State'
 import ThoughtId from '../../@types/ThoughtId'
 import { importText } from '../../actions'
 import { ROOT_PARENT_ID } from '../../constants'
+import initStore from '../../test-helpers/initStore'
 import prettyPath from '../../test-helpers/prettyPath'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
-import reducerFlow from '../../util/reducerFlow'
 import calculateAutofocus from '../calculateAutofocus'
 import contextToPath from '../contextToPath'
 import thoughtToPath from '../thoughtToPath'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 /** Get a map of all paths in the thoughtspace. */
 const allPaths = (state: State) =>

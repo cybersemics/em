@@ -5,14 +5,19 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import cursorBack from '../cursorBack'
 import cursorForward from '../cursorForward'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 /** Converts the multicursor set to a list of contexts in a readable way. */
 const multicursorContexts = (state: State): string[][] =>

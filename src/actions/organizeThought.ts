@@ -7,14 +7,11 @@ import Thunk from '../@types/Thunk'
 import { HOME_PATH } from '../constants'
 import canOrganizeThought from '../selectors/canOrganizeThought'
 import { getChildrenRanked } from '../selectors/getChildren'
-import getNextRank from '../selectors/getNextRank'
-import getPrevRank from '../selectors/getPrevRank'
-import getRankAfter from '../selectors/getRankAfter'
+import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import getThoughtById from '../selectors/getThoughtById'
-import isPending from '../selectors/isPending'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import someDescendants from '../selectors/someDescendants'
 import thoughtToPath from '../selectors/thoughtToPath'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -31,7 +28,6 @@ import { createThoughtActionCreator as createThought } from './createThought'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { errorActionCreator as error } from './error'
 import { moveThoughtActionCreator as moveThought } from './moveThought'
-import { pullActionCreator as pull } from './pull'
 import { setCursorActionCreator as setCursor } from './setCursor'
 import { updateThoughtsActionCreator as updateThoughts } from './updateThoughts'
 
@@ -208,10 +204,7 @@ const setGenerating =
     dispatch(
       updateThoughts({
         thoughtIndexUpdates,
-        lexemeIndexUpdates: {},
-        local: false,
-        overwritePending: true,
-        remote: false,
+        persist: false,
       }),
     )
   }
@@ -233,10 +226,11 @@ const moveToParent =
     const thought = getThoughtById(state, thoughtId)
     const destParent = getThoughtById(state, destParentId)
     if (!thought || !destParent) return
+    const predecessor = afterId ?? getFirstChildPlacement(state, destParentId)
     dispatch(
       moveThought({
         newPath: appendToPath(thoughtToPath(state, destParentId), thoughtId),
-        newRank: afterId ? getRankAfter(state, thoughtToPath(state, afterId)) : getPrevRank(state, destParentId),
+        afterId: predecessor === thoughtId ? getPreviousSiblingId(state, thoughtId) : predecessor,
         oldPath: thoughtToPath(state, thoughtId),
       }),
     )
@@ -267,7 +261,7 @@ const applyOutline =
         createThought({
           id: thoughtId,
           path: parentPath,
-          rank: getNextRank(getState(), parentId),
+          afterId: getChildrenRanked(getState(), parentId).at(-1)?.id ?? null,
           value: escapeHtml(text),
         }),
       )
@@ -290,7 +284,7 @@ const applyOutline =
       dispatch(
         moveThought({
           newPath: appendToPath(thoughtToPath(state, parentId), thoughtId),
-          newRank: getNextRank(state, parentId),
+          afterId: getChildrenRanked(state, parentId).at(-1)?.id ?? null,
           oldPath: thoughtToPath(state, thoughtId),
         }),
       )
@@ -332,7 +326,7 @@ const applyOutline =
   }
 
 /**
- * Pulls descendants of the selected sibling thoughts, asks the AI service to reorganize them, and applies the
+ * Reads descendants of the selected sibling thoughts, asks the AI service to reorganize them, and applies the
  * returned tree by moving existing thoughts and creating new ones for categories and split pieces.
  */
 const organizeThought =
@@ -345,27 +339,14 @@ const organizeThought =
     const parentId = head(rootedParentOf(state, simplePaths[0]))
     const selectedIds = new Set(simplePaths.map(path => head(path)))
     const thoughtIds = [...selectedIds]
-    const needsPull = thoughtIds.some(id =>
-      someDescendants(state, id, child => isPending(state, getThoughtById(state, child.id))),
-    )
-
-    if (needsPull) {
-      dispatch(alert('Loading thoughts...', { clearDelay: null }))
-      await dispatch(pull(thoughtIds, { maxDepth: Infinity }))
-      dispatch(alert(null))
-    }
-
-    const stateAfterPull = getState()
-    if (!canOrganizeThought(stateAfterPull, paths)) return
-
-    const { idMap, outline } = buildOutline(stateAfterPull, { parentId, selectedIds })
+    const { idMap, outline } = buildOutline(state, { parentId, selectedIds })
     const reorganizableThoughts: ReorganizableThought[] = [...idMap.values()].flatMap(thoughtId => {
-      const thought = getThoughtById(stateAfterPull, thoughtId)
+      const thought = getThoughtById(state, thoughtId)
       return thought ? [{ originalValue: thought.value, thoughtId }] : []
     })
     if (reorganizableThoughts.length !== idMap.size) return
 
-    const siblings = visibleChildren(stateAfterPull, parentId)
+    const siblings = visibleChildren(state, parentId)
     const firstSelectedIndex = siblings.findIndex(sibling => selectedIds.has(sibling.id))
     const lastBeforeId =
       firstSelectedIndex > 0

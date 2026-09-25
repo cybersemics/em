@@ -117,7 +117,7 @@ const linearizeTree = (
     // This allows the path to be accumulated correctly across the context view.
     // e.g. a/m~/b should render the children of b/m, not a/m
     const child = contextViewActive ? getThoughtById(state, filteredChild.parentId) : filteredChild
-    // Context thought may still be pending
+    // Ignore stale context references rather than rendering a missing parent.
     if (!child) return accum
     const childPath = appendToPathMemo(path, child.id)
     const lastVirtualIndex = accum.length > 0 ? accum[accum.length - 1].indexDescendant : 0

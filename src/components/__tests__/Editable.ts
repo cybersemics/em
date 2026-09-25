@@ -126,7 +126,7 @@ it.each<{ cursor: string[] | null; cursorName: string }>([
     moveThought({
       from: ['A', 'B'],
       to: ['A', 'C', 'B'],
-      newRank: 0,
+      after: null,
     }),
   )
   await act(() => fireEvent.click(staleEditable))

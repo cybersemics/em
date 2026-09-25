@@ -1,9 +1,14 @@
 import importText from '../../actions/importText'
 import toggleContextView from '../../actions/toggleContextView'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('set the cursor to a SimplePath', () => {
   const text = `

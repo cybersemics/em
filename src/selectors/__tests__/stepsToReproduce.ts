@@ -188,7 +188,7 @@ it('name each action as dispatched, preceded by the cursor it acts on', () => {
 `)
 })
 
-it('name a multicursor command by its label, preceded by the selection it acts on', () => {
+it('describes a multicursor move by its invocation and selection without inferring a single moved thought', () => {
   store.dispatch([
     importText({
       text: `
@@ -215,7 +215,7 @@ it('name a multicursor command by its label, preceded by the selection it acts o
 
 1. Set the cursor on \`a\`.
 2. Select \`a\` and \`b\`.
-3. Run Move Thought Down. Move Thought \`b\` after \`a\`.
+3. Run Move Thought Down.
 
 ## Current Behavior
 
@@ -563,12 +563,25 @@ it('describe a drag and drop by where the thought lands', () => {
         type: 'moveThought',
         oldPath,
         newPath: [...contextToPath(getState(), ['a'])!, oldPath.at(-1)!],
-        newRank: 0.5,
+        afterId: contextToPath(getState(), ['a', 'b'])!.at(-1)!,
       })
     },
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+  const state = store.getState()
+  const shiftedSiblingId = contextToPath(state, ['a', 'd'])!.at(-1)!
+  const shiftedRankPath = `/thoughts/thoughtIndex/${shiftedSiblingId}/rank`
+  // Put the derived sibling-rank change before the actual reparenting, independent of random thought ids.
+  const undoPatches = state.undoPatches.map(patch => ({
+    ...patch,
+    ops: [
+      ...patch.ops.filter(operation => operation.path === shiftedRankPath),
+      ...patch.ops.filter(operation => operation.path !== shiftedRankPath),
+    ],
+  }))
+  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedRankPath)
+
+  expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -732,7 +745,7 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
         type: 'moveThought',
         oldPath,
         newPath: [...contextToPath(getState(), ['a', 'd'])!, oldPath.at(-1)!],
-        newRank: 1,
+        afterId: contextToPath(getState(), ['a', 'd', '=archive'])!.at(-1)!,
       })
     },
   ])

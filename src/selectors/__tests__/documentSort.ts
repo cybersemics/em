@@ -1,10 +1,16 @@
 import importText from '../../actions/importText'
 import moveThought from '../../actions/moveThought'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
-import reducerFlow from '../../util/reducerFlow'
 import contextToPath from '../contextToPath'
 import documentSort from '../documentSort'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('siblings by rank', () => {
   const text = `
@@ -13,14 +19,14 @@ it('siblings by rank', () => {
     - c
   `
 
-  const state = importText(initialState(), { text })
+  const state = runDocumentCommand(importText({ text }), initialState())
 
   const a = contextToPath(state, ['a'])!
   const b = contextToPath(state, ['b'])!
   const c = contextToPath(state, ['c'])!
 
   // move b to the top of the context
-  const stateNew = moveThought(state, { oldPath: b, newPath: b, newRank: -1 })
+  const stateNew = runDocumentCommand(moveThought({ oldPath: b, newPath: b, afterId: null }), state)
 
   const pathsSorted = documentSort(stateNew, [a, b, c])
   const contextsSorted = pathsSorted.map(path => pathToContext(stateNew, path))
@@ -35,14 +41,14 @@ it('ignore order of input paths', () => {
     - c
   `
 
-  const state = importText(initialState(), { text })
+  const state = runDocumentCommand(importText({ text }), initialState())
 
   const a = contextToPath(state, ['a'])!
   const b = contextToPath(state, ['b'])!
   const c = contextToPath(state, ['c'])!
 
   // move b to the top of the context
-  const stateNew = moveThought(state, { oldPath: b, newPath: b, newRank: -1 })
+  const stateNew = runDocumentCommand(moveThought({ oldPath: b, newPath: b, afterId: null }), state)
 
   const pathsSorted = documentSort(stateNew, [c, b, a])
   const contextsSorted = pathsSorted.map(path => pathToContext(stateNew, path))
@@ -61,7 +67,7 @@ it('parents and children', () => {
     - c
   `
 
-  const state = importText(initialState(), { text })
+  const state = runDocumentCommand(importText({ text }), initialState())
 
   const a = contextToPath(state, ['a'])!
   const a1 = contextToPath(state, ['a', 'a1'])!
@@ -73,9 +79,9 @@ it('parents and children', () => {
 
   const steps = [
     // move b to the top
-    moveThought({ oldPath: b, newPath: b, newRank: -1 }),
+    moveThought({ oldPath: b, newPath: b, afterId: null }),
     // move b2 to the top of b
-    moveThought({ oldPath: b2, newPath: b2, newRank: -1 }),
+    moveThought({ oldPath: b2, newPath: b2, afterId: null }),
   ]
   const stateNew = reducerFlow(steps)(state)
 

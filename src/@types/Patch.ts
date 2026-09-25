@@ -1,3 +1,4 @@
+import type { OperationId } from '@treecrdt/interface'
 import { Operation } from 'fast-json-patch'
 import ActionType from './ActionType'
 import CommandId from './CommandId'
@@ -36,10 +37,13 @@ export type PatchMetadata = PatchMetadataInput & {
   isNavigation: boolean
 }
 
-/** An exact state diff and the user-level source that produced it. */
+/** Editor history with UI restoration, diagnostic document diffs, and engine-owned receipts. */
 interface Patch {
+  /** Restores UI state and describes document changes for reports; never authors document paths back. */
   ops: Operation[]
   metadata: PatchMetadata
+  /** Exact operations to revert; the opposite entry receives the fresh inversion receipt. */
+  documentOperationIds: readonly OperationId[]
 }
 
 export default Patch

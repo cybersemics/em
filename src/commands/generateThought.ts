@@ -108,7 +108,7 @@ const buildInput = (state: State, { simplePath, thought }: GenerationTarget): st
  * Generates a new value for the thought at each of the given paths and applies it to the thought. If a thought is
  * empty and its first child is a URL, the title of the webpage is fetched; otherwise the value is generated with AI.
  * Every thought that is generated with AI is sent in one request and one LLM completion, and every prompt is built
- * from the same pre-generation snapshot. Each thought is set to a pending value and marked as generating while its
+ * from the same pre-generation snapshot. Each thought displays a pending overlay and is marked as generating while its
  * request is in flight. Returns the new values in path order, or null for a thought that was not generated.
  *
  * Takes an explicit list of paths instead of reading state.cursor so that it can be run for every thought of a
@@ -152,15 +152,12 @@ const generateThoughtAtPathsActionCreator =
             target.thought.id,
             {
               ...target.thought,
-              value: `${target.thought.value}...`,
+              displayValue: `${target.thought.value}...`,
               generating: true,
             },
           ]),
         ),
-        lexemeIndexUpdates: {},
-        local: false,
-        remote: false,
-        overwritePending: true,
+        persist: false,
       }),
     )
 
@@ -229,26 +226,20 @@ const generateThoughtAtPathsActionCreator =
       const valueNew = valuesNew.get(thought.id)!
 
       const thoughtPending = getThoughtById(getState(), thought.id)
-      // bail if the thought was deleted while its value was being generated
-      if (!thoughtPending) return null
+      // Do not overwrite a deletion or edit made while inference was in flight.
+      if (!thoughtPending || !thoughtPending.generating || thoughtPending.value !== thought.value) return null
 
       dispatch([
-        // Restore the original value before applying the generated one. updateThoughts is not undoable, so the pending
-        // value would otherwise become the state that undo reverts to, leaving the thought at "a..." rather than "a". It
-        // is also why editThought was previously given an oldValue whose Lexeme was never created. Both updates are
-        // dispatched in the same batch, so the restored value is never rendered.
+        // Clear the transient overlay before recording the generated edit in undo history.
         updateThoughts({
           thoughtIndexUpdates: {
             [thought.id]: {
               ...thoughtPending,
-              value: thought.value,
+              displayValue: undefined,
               generating: false,
             },
           },
-          lexemeIndexUpdates: {},
-          local: false,
-          remote: false,
-          overwritePending: true,
+          persist: false,
         }),
         // editThought automatically sets Thought.generating to false
         editThought({

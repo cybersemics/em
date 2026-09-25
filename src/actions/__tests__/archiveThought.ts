@@ -1,4 +1,5 @@
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import archiveThought from '../../actions/archiveThought'
 import cursorUp from '../../actions/cursorUp'
 import newSubthought from '../../actions/newSubthought'
@@ -9,11 +10,16 @@ import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 // TODO: Why does util have to be imported before selectors and reducers?
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
   it('archive a thought', () => {
@@ -182,7 +188,8 @@ describe('normal view', () => {
         `,
       }),
       setCursor(['Five']),
-      (state: State) => archiveThought(state, { path: contextToPath(state, ['Two'])! }),
+      (state: State, document?: ThoughtspaceTransaction) =>
+        archiveThought(state, { path: contextToPath(state, ['Two'])! }, document),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -202,7 +209,8 @@ describe('normal view', () => {
         `,
       }),
       setCursor(['Five']),
-      (state: State) => archiveThought(state, { path: contextToPath(state, ['One'])! }),
+      (state: State, document?: ThoughtspaceTransaction) =>
+        archiveThought(state, { path: contextToPath(state, ['One'])! }, document),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())

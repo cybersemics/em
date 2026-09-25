@@ -12,7 +12,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
-import getPrevRank from '../selectors/getPrevRank'
+import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import selectedPaths from '../selectors/selectedPaths'
 import simplifyPath from '../selectors/simplifyPath'
@@ -77,10 +77,7 @@ const defineTermAtPaths =
             },
           ]),
         ),
-        lexemeIndexUpdates: {},
-        local: false,
-        overwritePending: true,
-        remote: false,
+        persist: false,
       }),
     )
 
@@ -136,7 +133,7 @@ const defineTermAtPaths =
         dispatch(
           createThought({
             path: simplifyPath(currentState, currentPath),
-            rank: getPrevRank(currentState, request.thought.id),
+            afterId: getFirstChildPlacement(currentState, request.thought.id),
             value: escapeHtml(definition),
           }),
         )
@@ -160,10 +157,7 @@ const defineTermAtPaths =
         dispatch(
           updateThoughts({
             thoughtIndexUpdates,
-            lexemeIndexUpdates: {},
-            local: false,
-            overwritePending: true,
-            remote: false,
+            persist: false,
           }),
         )
       }

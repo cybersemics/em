@@ -2,6 +2,7 @@ import _ from 'lodash'
 import MimeType from '../../@types/MimeType'
 import Path from '../../@types/Path'
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import cursorCleared from '../../actions/cursorCleared'
 import importText, { ImportTextPayload } from '../../actions/importText'
 import newThought from '../../actions/newThought'
@@ -15,16 +16,23 @@ import getThoughtById from '../../selectors/getThoughtById'
 import contextToThought from '../../test-helpers/contextToThought'
 import editThought from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
+import command from '../../util/command'
 import hashThought from '../../util/hashThought'
 import initialState from '../../util/initialState'
 import never from '../../util/never'
-import reducerFlow from '../../util/reducerFlow'
 import removeHome from '../../util/removeHome'
 import timestamp from '../../util/timestamp'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 /** Helper function that imports text into the root and exports it as plaintext to make easily readable assertions. */
 const importExport = (text: string, outputFormat: MimeType = 'text/plain') => {
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], outputFormat, {
     excludeMarkdownFormatting: true,
   })
@@ -34,15 +42,15 @@ const importExport = (text: string, outputFormat: MimeType = 'text/plain') => {
 /**
  * Import text reducer that imports on given unranked path first matched.
  */
-const importTextAtFirstMatch = _.curryRight(
-  (state: State, payload: Omit<ImportTextPayload, 'path'> & { at: string[] }) => {
+const importTextAtFirstMatch = command(
+  (state: State, payload: Omit<ImportTextPayload, 'path'> & { at: string[] }, document?: ThoughtspaceTransaction) => {
     const path = contextToPath(state, payload.at)
 
     if (!path) throw new Error(`Path not found for ${payload.at}`)
-    return importText(state, {
+    return importText({
       ...payload,
       path,
-    })
+    })(state, document)
   },
 )
 it('basic import with proper thought structure', () => {
@@ -53,7 +61,7 @@ it('basic import with proper thought structure', () => {
 
   const now = timestamp()
 
-  const stateNew = importText(initialState(now), { text, lastUpdated: now })
+  const stateNew = runDocumentCommand(importText({ text, lastUpdated: now }), initialState(now))
   const { thoughtIndex, lexemeIndex } = stateNew.thoughts
 
   const childAId = getAllChildrenByContext(stateNew, [HOME_TOKEN])[0]
@@ -64,8 +72,6 @@ it('basic import with proper thought structure', () => {
       id: EM_TOKEN,
       childrenMap: {},
       lastUpdated: never(),
-      // TODO: Is this expected?
-      pending: true,
     },
     [contextToThoughtId(stateNew, [HOME_TOKEN])!]: {
       childrenMap: { [childAId]: childAId },
@@ -74,7 +80,6 @@ it('basic import with proper thought structure', () => {
       id: ABSOLUTE_TOKEN,
       childrenMap: {},
       lastUpdated: never(),
-      pending: true,
     },
     [contextToThoughtId(stateNew, ['a'])!]: {
       id: childAId,
@@ -91,21 +96,6 @@ it('basic import with proper thought structure', () => {
   expect(thoughtIndex[contextToThoughtId(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
 
   expect(lexemeIndex).toMatchObject({
-    [hashThought(HOME_TOKEN)]: {
-      contexts: [],
-      created: now,
-      lastUpdated: never(),
-    },
-    [hashThought(EM_TOKEN)]: {
-      contexts: [],
-      created: now,
-      lastUpdated: never(),
-    },
-    [hashThought(ABSOLUTE_TOKEN)]: {
-      contexts: [],
-      created: now,
-      lastUpdated: never(),
-    },
     [hashThought('a')]: {
       contexts: [childAId],
       created: now,
@@ -115,6 +105,10 @@ it('basic import with proper thought structure', () => {
       created: now,
     },
   })
+
+  expect(lexemeIndex[hashThought(HOME_TOKEN)]).toBeUndefined()
+  expect(lexemeIndex[hashThought(EM_TOKEN)]).toBeUndefined()
+  expect(lexemeIndex[hashThought(ABSOLUTE_TOKEN)]).toBeUndefined()
 
   // Note: Jest doesn't have lexicographic string comparison yet :(
   expect(lexemeIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
@@ -131,14 +125,14 @@ it('duplicate thoughts', () => {
   `
 
   const now = timestamp()
-  const imported = importText(initialState(), { text, lastUpdated: now })
+  const imported = runDocumentCommand(importText({ text, lastUpdated: now }), initialState())
   const lexeme = imported.thoughts.lexemeIndex[hashThought('m')]
 
-  const childAId = lexeme.contexts[0]
-  const childBId = lexeme.contexts[1]
+  const childAId = contextToThought(imported, ['a', 'm'])!.id
+  const childBId = contextToThought(imported, ['b', 'm'])!.id
 
   expect(lexeme).toMatchObject({
-    contexts: [childAId, childBId],
+    contexts: [childAId, childBId].sort(),
     created: now,
   })
 
@@ -405,7 +399,7 @@ it('decode HTML entities', () => {
     - three &lt; four
   `
 
-  const stateNew = importText({ text: paste })(initialState())
+  const stateNew = runDocumentCommand(importText({ text: paste }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -497,7 +491,7 @@ it('allow formatting tags', () => {
     - guardians <em>of the </em><em>pricky pear </em>
   `
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   const expectedOutput = `<ul>
@@ -517,7 +511,7 @@ it('allow formatting tags', () => {
 it('import single thought into empty home context', () => {
   const text = 'a'
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -527,7 +521,7 @@ it('import single thought into empty home context', () => {
 it('import single thought with markdown into the home context', () => {
   const text = 'This is **bold** text!'
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN])
 
   expect(exported).toBe(`<ul>
@@ -544,7 +538,7 @@ it('import multiple thoughts with markdown into the home context', () => {
   const text = `- *This is a reference to a footnote.
 - This is *italic* text!`
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN])
 
   expect(exported).toBe(`<ul>
@@ -561,7 +555,7 @@ it('import single thought with invalid markdown into the home context', () => {
   // No change in text should be observed.
   const text = 'What?!?**'
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN])
 
   expect(exported).toBe(`<ul>
@@ -581,7 +575,7 @@ it('import multiple thoughts to empty home context', () => {
       - d
   `
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -617,7 +611,7 @@ edited by</span>Roger Kimball<span style="font-weight: 400;">(editor and publish
 It has sections for criticism of poetry, theater, art, music, the media, and books. It was founded in 1982 by</span>Hilton Kramer<span style="font-weight: 400;">, former art critic for</span><i>The New York Times</i><span style="font-weight: 400;">, and Samuel Lipman, a pianist and music critic.</span>  </li>
 </ul>`
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
 
   const rootChildren = getAllChildren(stateNew, HOME_TOKEN)
 
@@ -627,7 +621,7 @@ It has sections for criticism of poetry, theater, art, music, the media, and boo
 it('import single line with style attributes', () => {
   const text = `<span style="caret-color:rgb(255, 255, 255);color:rgb(255, 255, 255);font-family:Helvetica;font-size:13px;font-style:normal;font-variant-caps:normal;font-weight:bold;letter-spacing:normal;orphans:auto;text-align:left;text-indent:0px;text-transform:none;white-space:pre-wrap;widows:auto;word-spacing:0px;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);-webkit-text-size-adjust:none;-webkit-text-stroke-width:0px;background-color:rgb(0, 0, 0);text-decoration:none;display:inline;float:none">Atonement</span>`
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
@@ -642,7 +636,7 @@ it('import single line with style attributes', () => {
 it('import single line with style attributes and a single br tag', () => {
   const text = `<br><span style="color: pink;">Marcel Duchamp: The Art of the Possible</span>`
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
@@ -664,7 +658,7 @@ it('import plaintext + list as nested list', () => {
     <li>C</li>
   </ul>
 </div>`
-  const stateNew = importText(initialState(), { text: html })
+  const stateNew = runDocumentCommand(importText({ text: html }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - A
@@ -689,7 +683,7 @@ it('properly add lexeme entries for multiple thoughts with same value on import'
 
   const lexemeM = getLexeme(stateNew, 'm')
 
-  expect(lexemeM?.contexts).toMatchObject([thoughtMFirst?.id, thoughtMSecond?.id])
+  expect(lexemeM?.contexts).toEqual([thoughtMFirst!.id, thoughtMSecond!.id].sort())
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - m
@@ -701,7 +695,7 @@ it('properly add lexeme entries for multiple thoughts with same value on import'
 it(`import "${HOME_TOKEN}"`, () => {
   const text = HOME_TOKEN
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}`)
@@ -709,7 +703,7 @@ it(`import "${HOME_TOKEN}"`, () => {
 
 it(`import "- ${HOME_TOKEN}"`, () => {
   const text = `- ${HOME_TOKEN}`
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}`)
@@ -719,7 +713,7 @@ it(`import HOME token with children`, () => {
   const text = `- ${HOME_TOKEN}
   - a
     - b`
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -732,7 +726,7 @@ it(`import HTML with "${HOME_TOKEN}"`, () => {
   <li>${HOME_TOKEN}</li>
 </ul>`
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}`)
@@ -743,7 +737,7 @@ it(`import HTML with untrimmed "${HOME_TOKEN}  "`, () => {
   <li>${HOME_TOKEN}  </li>
 </ul>`
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}`)
@@ -757,7 +751,7 @@ it(`remove nested HOME token but keep descendants`, () => {
     - ${HOME_TOKEN}
       - d
   `
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -777,7 +771,7 @@ it(`import sibling empty thoughts`, () => {
     </ul>
   `
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const values = getAllChildrenByContext(stateNew, [HOME_TOKEN]).map(id => getThoughtById(stateNew, id)?.value)
 
   // empty thoughts are preserved on import. See https://github.com/cybersemics/em/issues/4448.
@@ -790,7 +784,7 @@ it(`import sibling empty thoughts`, () => {
 it('import a series of plaintext thoughts with an empty thought in the middle', () => {
   const text = `- A\n- B\n- \n- D`
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const values = getAllChildrenByContext(stateNew, [HOME_TOKEN]).map(id => getThoughtById(stateNew, id)?.value)
 
   expect(values).toEqual(['A', 'B', '', 'D'])
@@ -804,9 +798,9 @@ it('import multiple empty thoughts within a series into a non-leaf destination',
   const initialHtml = `<li>x<ul><li>y</li></ul></li>`
   const importedHtml = `<ul><li>A</li><li></li><li>B</li><li></li><li>C</li></ul>`
 
-  const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
+  const state1 = runDocumentCommand(importText({ path: HOME_PATH, text: initialHtml }), initialState())
   const simplePath = contextToPath(state1, ['x'])!
-  const state2 = importText(state1, { path: simplePath, text: importedHtml })
+  const state2 = runDocumentCommand(importText({ path: simplePath, text: importedHtml }), state1)
 
   const values = getAllChildrenByContext(state2, ['x']).map(id => getThoughtById(state2, id)?.value)
 
@@ -862,7 +856,7 @@ it.skip('encode single open angled bracket', () => {
   - e
   `
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -968,11 +962,11 @@ it('paste multiple thoughts in non-empty cursor', () => {
 <li>y</li>
 `
 
-  const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
+  const state1 = runDocumentCommand(importText({ path: HOME_PATH, text: initialHtml }), initialState())
 
   const simplePath: Path = contextToPath(state1, ['a', 'b'])!
 
-  const state2 = importText(state1, { path: simplePath, text: importedHtml })
+  const state2 = runDocumentCommand(importText({ path: simplePath, text: importedHtml }), state1)
 
   const exported = exportContext(state2, [HOME_TOKEN], 'text/plain')
 
@@ -995,10 +989,10 @@ it('set cursor on last thought after importing multiple thoughts in non-empty cu
 <li>y</li>
 `
 
-  const state1 = importText(initialState(), { path: HOME_PATH, text: initialHtml })
+  const state1 = runDocumentCommand(importText({ path: HOME_PATH, text: initialHtml }), initialState())
 
   const simplePath = contextToPath(state1, ['a', 'b'])!
-  const state2 = importText(state1, { path: simplePath, text: importedHtml })
+  const state2 = runDocumentCommand(importText({ path: simplePath, text: importedHtml }), state1)
 
   const exported = exportContext(state2, [HOME_TOKEN], 'text/plain')
 
@@ -1077,17 +1071,20 @@ describe('single-line paste into a thought', () => {
   })
 
   it('replaces a range at the beginning of a formatting tag', () => {
-    const stateBefore = newThought(initialState(), { value: '<b>hone</b>' })
+    const stateBefore = runDocumentCommand(newThought({ value: '<b>hone</b>' }), initialState())
     const thoughtId = contextToThoughtId(stateBefore, ['<b>hone</b>'])!
 
     // the "h" of the bold "hone"
-    const stateNew = importTextAtFirstMatch({
-      at: ['<b>hone</b>'],
-      text: 'st',
-      caretPosition: 1,
-      replaceStart: 0,
-      replaceEnd: 1,
-    })(stateBefore)
+    const stateNew = runDocumentCommand(
+      importTextAtFirstMatch({
+        at: ['<b>hone</b>'],
+        text: 'st',
+        caretPosition: 1,
+        replaceStart: 0,
+        replaceEnd: 1,
+      }),
+      stateBefore,
+    )
 
     // the replacement leaves no text before the offset, but the insertion still belongs to the formatting that follows it
     expect(getThoughtById(stateNew, thoughtId)!.value).toBe('<b>stone</b>')

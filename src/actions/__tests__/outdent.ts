@@ -1,14 +1,19 @@
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import outdent from '../outdent'
 import toggleContextView from '../toggleContextView'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
   it('outdent within root', () => {

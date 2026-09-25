@@ -1,13 +1,14 @@
-import _ from 'lodash'
 import Context from '../@types/Context'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import deleteThought, { deleteThoughtActionCreator } from '../actions/deleteThought'
 import contextToPath from '../selectors/contextToPath'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
+import command from '../util/command'
 
 /**
  * Get thought and context for the given unranked path.
@@ -28,13 +29,13 @@ const getThoughtAndParentPath = (state: State, at: string[]): [Thought, Path] =>
 /**
  * Delete thought at the given unranked path first matched.
  */
-const deleteThoughtAtFirstMatch = _.curryRight((state: State, at: string[]) => {
+const deleteThoughtAtFirstMatch = command((state: State, at: string[], document?: ThoughtspaceTransaction) => {
   const [thought, pathParent] = getThoughtAndParentPath(state, at)
 
-  return deleteThought(state, {
+  return deleteThought({
     pathParent,
     thoughtId: thought.id,
-  })
+  })(state, document)
 })
 
 /**

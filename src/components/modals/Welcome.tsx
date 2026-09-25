@@ -97,7 +97,7 @@ const ModalWelcome = () => {
                   css({ fontSize: 'sm', marginBottom: '-1em', paddingBottom: '1em', textDecoration: 'none' }),
                 )}
                 {...fastClick(() => {
-                  dispatch([clear({ local: true, remote: true })])
+                  dispatch([clear({ persist: true })])
                   endTutorial()
                   close()
                 })}

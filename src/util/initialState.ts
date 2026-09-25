@@ -26,7 +26,7 @@ import storage from './storage'
 //       window.location.hostname.startsWith('127.168.1.'),
 //   )
 
-/** Generates an initial ThoughtIndices with the root, em, and absolute contexts. Note that clientId will be undefined until clientIdReady resolves and initThoughts is dispatched. */
+/** Generates placeholder system roots until initialization publishes the complete document. */
 const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
@@ -38,8 +38,6 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       parentId: ROOT_PARENT_ID,
       childrenMap: {},
       created: created,
-      // start pending to trigger pull
-      pending: true,
       lastUpdated: never(),
       rank: 0,
       updatedBy: clientId,
@@ -50,8 +48,6 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       parentId: ROOT_PARENT_ID,
       childrenMap: {},
       created: created,
-      // start pending to trigger pull
-      pending: true,
       lastUpdated: never(),
       rank: 0,
       updatedBy: clientId,
@@ -62,8 +58,6 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       parentId: ROOT_PARENT_ID,
       childrenMap: {},
       created: created,
-      // start pending to trigger pull
-      pending: true,
       lastUpdated: never(),
       rank: 0,
       updatedBy: clientId,
@@ -85,8 +79,6 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       lastUpdated: never(),
       updatedBy: clientId,
     },
-    // this will get populated by importText in initThoughts
-    // unfortunately that's the best way currently to create nested thoughts and ensure that lexemeIndex and thoughtIndex are correct
     [hashThought(EM_TOKEN)]: {
       contexts: [],
       created,
@@ -125,7 +117,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     error: null,
     expanded: {},
     fontSize: storageModel.get('fontSize'),
-    importThoughtPath: null,
     invalidState: false,
     isLoading: true,
     isMulticursorExecuting: false,
@@ -161,7 +152,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     showSidebar: false,
     status: 'disconnected',
     tip: null,
-    pushQueue: [],
     thoughts: initialThoughts(created),
     undoPatches: [],
     showCommandCenter: false,

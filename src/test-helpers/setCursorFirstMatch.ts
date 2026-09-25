@@ -1,14 +1,15 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import setCursor, { setCursorActionCreator as setCursorThunk } from '../actions/setCursor'
+import command from '../util/command'
 import contextToPathOrThrow from './contextToPathOrThrow'
 
 /** A reducer that sets the cursor to the given unranked path, or clears the cursor when passed null. Throws if a non-null path does not resolve. */
-const setCursorFirstMatch = (state: State, pathUnranked: string[] | null): State =>
-  setCursor(state, {
+const setCursorFirstMatch = (state: State, pathUnranked: string[] | null, document?: ThoughtspaceTransaction): State =>
+  setCursor({
     path: pathUnranked ? contextToPathOrThrow(state, pathUnranked, 'setCursorFirstMatch') : null,
-  })
+  })(state, document)
 
 /** A Thunk that sets the cursor to the given unranked path, or clears the cursor when passed null. Throws if a non-null path does not resolve. */
 export const setCursorFirstMatchActionCreator =
@@ -20,4 +21,4 @@ export const setCursorFirstMatchActionCreator =
       }),
     )
 
-export default _.curryRight(setCursorFirstMatch)
+export default command(setCursorFirstMatch)

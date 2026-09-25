@@ -79,6 +79,8 @@ export default defineConfig({
   optimizeDeps: {
     // Avoid crawling stale local checkout directories left behind after removing the TreeCRDT submodule.
     entries: ['index.html'],
+    // Preserve the memory client's relative WASM asset URL during development.
+    exclude: ['@treecrdt/wasm'],
   },
   define: {
     __COMMIT_HASH__: JSON.stringify(commitHash),

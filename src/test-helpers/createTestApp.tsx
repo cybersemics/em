@@ -5,7 +5,7 @@ import { TestBackend } from 'react-dnd-test-backend'
 import Await from '../@types/Await'
 import { clearActionCreator as clear } from '../actions/clear'
 import App from '../components/App'
-import db from '../data-providers/thoughtspace'
+import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import { initialize } from '../initialize'
 import store from '../stores/app'
 import { resetStores } from '../stores/ministore'
@@ -82,11 +82,11 @@ export const cleanupTestApp = async () => {
 
     store.dispatch(clear({ full: true }))
 
-    // run out timers before provider clear, otherwise pending persistence calls may resolve after thoughts have been deleted.
+    // Run timers and settle persistence before dropping the thoughtspace.
     await vi.runAllTimersAsync()
     await waitForThoughtspaceIdle()
 
-    await db.clear()
+    await thoughtspaceRuntime.drop()
     await vi.runAllTimersAsync()
 
     // set url back to home

@@ -1,31 +1,24 @@
-import _ from 'lodash'
 import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildren } from '../selectors/getChildren'
-import getLexeme from '../selectors/getLexeme'
-import getMovePlacement from '../selectors/getMovePlacement'
 import getSortPreference from '../selectors/getSortPreference'
-import getSortedRank from '../selectors/getSortedRank'
+import getSortedPlacement from '../selectors/getSortedPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import addContext from '../util/addContext'
-import createChildrenMap from '../util/createChildrenMap'
-import hashThought from '../util/hashThought'
+import command from '../util/command'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDivider from '../util/isDivider'
 import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
-import removeContext from '../util/removeContext'
 import timestamp from '../util/timestamp'
 import deleteAttribute from './deleteAttribute'
 import deleteThought from './deleteThought'
@@ -50,16 +43,11 @@ export interface editThoughtPayload {
 const editThought = (
   state: State,
   { cursorOffset, force, noteOffset, oldValue, newValue, path }: editThoughtPayload,
+  document?: ThoughtspaceTransaction,
 ) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
-  // thoughts may exist for both the old value and the new value
-  const lexemeIndex = { ...state.thoughts.lexemeIndex }
   const editedThoughtId = head(path)
-  const oldKey = hashThought(oldValue)
-  const newKey = hashThought(newValue)
-  const lexemeOld = getLexeme(state, oldValue)
-  const thoughtCollision = getLexeme(state, newValue)
 
   const editedThought = getThoughtById(state, editedThoughtId)
 
@@ -72,12 +60,6 @@ const editThought = (
   if (!parentOfEditedThought) {
     console.error('Parent not found')
     return state
-  }
-
-  // guard against missing Lexeme
-  // although this should never happen, syncing issues can cause this
-  if (!lexemeOld) {
-    console.warn(`Missing Lexeme: ${oldValue}`)
   }
 
   // only calculate decendant thought when current edited thought is a metaprogramming attribute
@@ -97,52 +79,9 @@ const editThought = (
       setCursor({
         path: thoughtToPath(state, thoughtIdForExistingMetaProgrammingThought as ThoughtId),
       }),
-    ])(state)
+    ])(state, document)
   }
 
-  // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
-  // let recentlyEdited = state.recentlyEdited
-  // try {
-  //   recentlyEdited = treeChange(state.recentlyEdited, path, newPath)
-  // } catch (e) {
-  //   console.error('editThought: treeChange immer error')
-  //   console.error(e)
-  // }
-
-  // hasDescendantOfFloatingContext can be done in O(edges)
-  // eslint-disable-next-line jsdoc/require-jsdoc
-  const isThoughtOldOrphan = () => lexemeOld && (!lexemeOld.contexts || lexemeOld.contexts.length < 2)
-
-  // do not add floating thought to context
-  const lexemeNewWithoutContext: Lexeme = thoughtCollision || {
-    contexts: [],
-    created: timestamp(),
-    lastUpdated: timestamp(),
-    updatedBy: clientId,
-  }
-
-  // the old thought less the context
-  const newOldLexeme = lexemeOld && !isThoughtOldOrphan() ? removeContext(lexemeOld, editedThoughtId) : null
-
-  const lexemeNew = addContext(lexemeNewWithoutContext, { id: editedThoughtId, archived: editedThought.archived })
-
-  // update local lexemeIndex so that we do not have to wait for the remote
-  lexemeIndex[newKey] = lexemeNew
-
-  // do not do anything with old lexemeIndex if hashes match, as the above line already took care of it
-  if (oldKey !== newKey) {
-    if (newOldLexeme) {
-      lexemeIndex[oldKey] = newOldLexeme
-    } else {
-      delete lexemeIndex[oldKey]
-    }
-  }
-
-  const lexemeIndexUpdates = {
-    // if the hashes of oldValue and newValue are equal, lexemeNew takes precedence since it contains the updated thought
-    [oldKey]: newOldLexeme,
-    [newKey]: lexemeNew,
-  }
   const isNote = parentOfEditedThought.value === '=note'
   const sortPreference = getSortPreference(state, editedThought.parentId)
   const sortType = sortPreference.type
@@ -150,88 +89,50 @@ const editThought = (
 
   const thoughtNew: Thought = {
     ...editedThought,
-    ...(editedThought.generating ? { generating: false } : null),
-    // Editing a value does not change the thought's created timestamp, so under a Created sort its rank already
-    // reflects its sort key and must be preserved. Re-ranking it would move it past siblings created in the same
-    // millisecond, which sort by rank (#4085).
-    rank:
-      !isValueEmptyOrEmojiOnly && (sortType === 'Alphabetical' || sortType === 'Updated')
-        ? getSortedRank(state, editedThought.parentId, newValue, {
-            staleId: editedThought.id,
-          })
-        : editedThought.rank,
+    ...(editedThought.generating ? { generating: false, displayValue: undefined } : null),
     value: newValue,
     lastUpdated: timestamp(),
     updatedBy: clientId,
   }
 
-  // insert the new thought into the state just for createChildrenMap
-  // otherwise createChildrenMap will not be able to find the new child and thus not properly detect meta attributes which are stored differently
-  const stateWithNewThought = {
-    ...state,
-    thoughts: { ...state.thoughts, thoughtIndex: { ...state.thoughts.thoughtIndex, [editedThought.id]: thoughtNew } },
-  }
-
-  // If we're editing a note, the thought that owns the note is re-ranked, since a Note-sorted context sorts its
+  // If we're editing a note, the thought that owns the note is repositioned, since a Note-sorted context sorts its
   // children by their note value rather than their own.
   const noteParentThought = isNote ? getThoughtById(state, parentOfEditedThought.parentId) : null
   const noteParentThoughtNew =
     noteParentThought && getSortPreference(state, noteParentThought.parentId).type === 'Note'
       ? {
           ...noteParentThought,
-          rank: getSortedRank(state, noteParentThought.parentId, newValue),
           lastUpdated: timestamp(),
           updatedBy: clientId,
         }
       : null
 
   const thoughtIndexUpdates: Index<Thought | null> = {
-    ...(isAttribute(newValue)
-      ? {
-          [parentOfEditedThought.id]: {
-            ...parentOfEditedThought,
-            childrenMap: createChildrenMap(stateWithNewThought, getAllChildren(state, parentOfEditedThought.id)),
-          },
-        }
-      : null),
     [editedThought.id]: thoughtNew,
     ...(noteParentThoughtNew ? { [noteParentThoughtNew.id]: noteParentThoughtNew } : null),
   }
 
-  // A new rank is invisible to the persistence layer on its own: sibling order is stored structurally there and
-  // only changes on a move, which is minted from an explicit placement. Without one the thought keeps the position
-  // it had when it was created, so the sorted position it was given here is lost on reload (#5126).
+  // Persist sort-driven moves directly. Created sorting preserves position because editing does not change creation time.
   const movePlacements: Index<ThoughtId | null> = {
-    ...(thoughtNew.rank !== editedThought.rank
+    ...(!isValueEmptyOrEmojiOnly && (sortType === 'Alphabetical' || sortType === 'Updated')
       ? {
-          [editedThought.id]: getMovePlacement(state, editedThought.parentId, {
-            id: editedThought.id,
-            rank: thoughtNew.rank,
+          [editedThought.id]: getSortedPlacement(state, editedThought.parentId, newValue, {
+            staleId: editedThought.id,
           }),
         }
       : null),
-    ...(noteParentThoughtNew && noteParentThoughtNew.rank !== noteParentThought?.rank
+    ...(noteParentThoughtNew
       ? {
-          [noteParentThoughtNew.id]: getMovePlacement(state, noteParentThoughtNew.parentId, {
-            id: noteParentThoughtNew.id,
-            rank: noteParentThoughtNew.rank,
+          [noteParentThoughtNew.id]: getSortedPlacement(state, noteParentThoughtNew.parentId, newValue, {
+            staleId: noteParentThoughtNew.id,
           }),
         }
       : null),
   }
 
-  // preserve contextViews
-  // @MIGRATION_TODO: Since same id will be used for context views. Preserving context view may not be required.
-  const contextViewsNew = { ...state.contextViews }
-  // if (state.contextViews[contextEncodedNew] !== state.contextViews[contextEncodedOld]) {
-  //   contextViewsNew[contextEncodedNew] = state.contextViews[contextEncodedOld]
-  //   delete contextViewsNew[contextEncodedOld]
-  // }
-
   // new state
   const stateNew: State = {
     ...state,
-    contextViews: contextViewsNew,
     // clear the clearThought state on edit instead of waiting till blur
     // otherwise activating clearThought after edit will toggle it off
     ...(state.cursorCleared ? { cursorCleared: false } : null),
@@ -239,16 +140,18 @@ const editThought = (
     ...(noteOffset != null ? { noteOffset } : null),
   }
 
-  const stateAfterUpdate = updateThoughts(stateNew, {
-    cursorOffset,
-    lexemeIndexUpdates,
-    thoughtIndexUpdates,
-    movePlacements,
-    // recentlyEdited,
-  })
+  const stateAfterUpdate = updateThoughts(
+    stateNew,
+    {
+      cursorOffset,
+      thoughtIndexUpdates,
+      movePlacements,
+    },
+    document,
+  )
 
   // remove =done when thought is edited to empty to prevent strikethrough on the placeholder
-  return newValue === '' ? deleteAttribute({ path, value: '=done' })(stateAfterUpdate) : stateAfterUpdate
+  return newValue === '' ? deleteAttribute({ path, value: '=done' })(stateAfterUpdate, document) : stateAfterUpdate
 }
 
 /** Action-creator for editThought. */
@@ -257,7 +160,7 @@ export const editThoughtActionCreator =
   dispatch =>
     dispatch({ type: 'editThought', ...payload })
 
-export default _.curryRight(editThought)
+export default command(editThought)
 
 // Register this action's metadata
 registerActionMetadata('editThought', {

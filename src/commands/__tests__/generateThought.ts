@@ -712,10 +712,10 @@ test('preserve an edit made while the thought is generating as its own undo step
     executeCommand(generateThought)
   })
 
-  // Precondition: the request is in flight and the cursor thought shows the pending value.
+  // Pending text is display-only; exports continue to contain the authoritative document value.
   expect(mockFetch).toHaveBeenCalledTimes(1)
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - a...
+  - a
   - banana`)
 
   // The user deletes a character from another thought while the generation is still pending.
@@ -770,10 +770,10 @@ test('preserve an addition made while the thought is generating as its own undo 
     executeCommand(generateThought)
   })
 
-  // Precondition: the request is in flight and the cursor thought shows the pending value.
+  // Pending text is display-only; exports continue to contain the authoritative document value.
   expect(mockFetch).toHaveBeenCalledTimes(1)
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - a...
+  - a
   - b`)
 
   // The user adds characters to another thought while the generation is still pending.

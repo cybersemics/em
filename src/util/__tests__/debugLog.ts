@@ -270,7 +270,7 @@ describe('format', () => {
       thoughts: {
         thoughtIndex: {
           t1: { id: 't1', value: 'apple', rank: 1, parentId: 'root', childrenMap: {} },
-          t2: { id: 't2', value: 'banana', rank: 0, parentId: 'root', childrenMap: {}, pending: true },
+          t2: { id: 't2', value: 'banana', rank: 0, parentId: 'root', childrenMap: {} },
         },
         lexemeIndex: {},
       },
@@ -278,7 +278,7 @@ describe('format', () => {
     const text = debugLog.format(state)
     expect(text).toContain('state.thoughts: 2 thoughts, 0 lexemes')
     expect(text).toContain('t1 "apple" rank:1 parent:root')
-    expect(text).toContain('t2 "banana" rank:0 parent:root pending')
+    expect(text).toContain('t2 "banana" rank:0 parent:root')
     // siblings are ordered by rank within a parent, so banana (rank 0) precedes apple (rank 1)
     expect(text.indexOf('banana')).toBeLessThan(text.indexOf('apple'))
   })

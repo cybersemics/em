@@ -2,12 +2,17 @@ import join from '../../actions/join'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import removeHome from '../../util/removeHome'
 import importText from '../importText'
 import moveThoughtUp from '../moveThoughtUp'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('joins two simple thoughts', () => {
   const text = `

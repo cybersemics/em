@@ -1,5 +1,6 @@
 import { produce } from 'immer'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import settings from '../actions/settings'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
@@ -8,12 +9,17 @@ import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
 import heldKeysStore from '../stores/heldKeysStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import hashPath from '../util/hashPath'
 import headValue from '../util/headValue'
 import reducerFlow from '../util/reducerFlow'
 
 /** Toggles the context view on a given thought. */
-const toggleContextView = (state: State): State => {
+const toggleContextView = (
+  state: State,
+  _payload: undefined = undefined,
+  document?: ThoughtspaceTransaction,
+): State => {
   if (!state.cursor) return state
 
   return reducerFlow([
@@ -42,19 +48,23 @@ const toggleContextView = (state: State): State => {
       const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
       const cursorValue = state.cursor ? headValue(state, state.cursor) : undefined
       return Math.floor(tutorialStep) === TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE && cursorValue !== undefined
-        ? settings(state, {
-            key: 'Tutorial Step',
-            value: (tutorialStep + (getContexts(state, cursorValue).length > 1 ? 1 : 0.1)).toString(),
-          })
+        ? settings(
+            state,
+            {
+              key: 'Tutorial Step',
+              value: (tutorialStep + (getContexts(state, cursorValue).length > 1 ? 1 : 0.1)).toString(),
+            },
+            document,
+          )
         : state
     },
-  ])(state)
+  ])(state, document)
 }
 
 /** Action-creator for toggleContextView. */
 export const toggleContextViewActionCreator = (): Thunk => dispatch => dispatch({ type: 'toggleContextView' })
 
-export default toggleContextView
+export default command(toggleContextView)
 
 // Register this action's metadata
 registerActionMetadata('toggleContextView', {

@@ -8,11 +8,17 @@ import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import expandThoughts from '../../selectors/expandThoughts'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 /** Returns true if a context is expanded. */
 const isContextExpanded = (state: State, context: Context) => {
@@ -134,9 +140,9 @@ describe('normal view', () => {
       - c
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
-    const stateNew1 = setCursor(stateNew, ['<i>a</i>'])
+    const stateNew1 = runDocumentCommand(setCursor(['<i>a</i>']), stateNew)
 
     expect(isContextExpanded(stateNew1, ['<i>a</i>'])).toBeTruthy()
   })
@@ -220,14 +226,14 @@ describe('table view', () => {
           - e
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
     // cursor on row 1, column 2
-    const stateNew1 = setCursor(stateNew, ['a', 'b'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
 
     // cursor on row 2, column 2
-    const stateNew2 = setCursor(stateNew, ['a', 'd'])
+    const stateNew2 = runDocumentCommand(setCursor(['a', 'd']), stateNew)
     expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
   })
 
@@ -242,14 +248,14 @@ describe('table view', () => {
           - e
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
     // cursor on row 1, column 2
-    const stateNew1 = setCursor(stateNew, ['a', 'b', 'c'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b', 'c']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
 
     // cursor on row 2, column 2
-    const stateNew2 = setCursor(stateNew, ['a', 'd', 'e'])
+    const stateNew2 = runDocumentCommand(setCursor(['a', 'd', 'e']), stateNew)
     expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
   })
 
@@ -284,14 +290,14 @@ describe('table view', () => {
           - e
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
     // cursor on row 1, column 2
-    const stateNew1 = setCursor(stateNew, ['a', 'b'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'b', 'c'])).toBeFalsy()
 
     // cursor on row 2, column 2
-    const stateNew2 = setCursor(stateNew, ['a', 'd'])
+    const stateNew2 = runDocumentCommand(setCursor(['a', 'd']), stateNew)
     expect(isContextExpanded(stateNew2, ['a', 'b', 'c'])).toBeFalsy()
   })
 
@@ -307,14 +313,14 @@ describe('table view', () => {
           - e
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
     // cursor on row 1, column 2 (same row)
-    const stateNew1 = setCursor(stateNew, ['a', 'b', 'c'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b', 'c']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'b', 'c'])).toBeTruthy()
 
     // cursor on row 2, column 2 (different row)
-    const stateNew2 = setCursor(stateNew, ['a', 'd', 'e'])
+    const stateNew2 = runDocumentCommand(setCursor(['a', 'd', 'e']), stateNew)
     expect(isContextExpanded(stateNew2, ['a', 'b', 'c'])).toBeFalsy()
   })
 })
@@ -572,12 +578,12 @@ describe('=children/=pin/true', () => {
           - e
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
-    const stateNew1 = setCursor(stateNew, ['a', 'b'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
 
-    const stateNew2 = setCursor(stateNew, ['a', 'd'])
+    const stateNew2 = runDocumentCommand(setCursor(['a', 'd']), stateNew)
     expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
   })
 
@@ -593,12 +599,12 @@ describe('=children/=pin/true', () => {
           - e
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
-    const stateNew1 = setCursor(stateNew, ['a', 'b', 'c'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b', 'c']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
 
-    const stateNew2 = setCursor(stateNew, ['a', 'd', 'e'])
+    const stateNew2 = runDocumentCommand(setCursor(['a', 'd', 'e']), stateNew)
     expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
   })
 
@@ -612,13 +618,13 @@ describe('=children/=pin/true', () => {
           - c
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
     // not expanded when only child
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
 
     // expanded with cursor
-    const stateNew1 = setCursor(stateNew, ['a', 'b'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'b'])).toBeTruthy()
   })
 })
@@ -654,12 +660,12 @@ describe('=children/=pin', () => {
           - e
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
-    const stateNew1 = setCursor(stateNew, ['a', 'b'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
 
-    const stateNew2 = setCursor(stateNew, ['a', 'd'])
+    const stateNew2 = runDocumentCommand(setCursor(['a', 'd']), stateNew)
     expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
   })
 
@@ -674,12 +680,12 @@ describe('=children/=pin', () => {
           - e
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
-    const stateNew1 = setCursor(stateNew, ['a', 'b', 'c'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b', 'c']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'd'])).toBeTruthy()
 
-    const stateNew2 = setCursor(stateNew, ['a', 'd', 'e'])
+    const stateNew2 = runDocumentCommand(setCursor(['a', 'd', 'e']), stateNew)
     expect(isContextExpanded(stateNew2, ['a', 'b'])).toBeTruthy()
   })
 })
@@ -893,13 +899,13 @@ describe('=descendants/=pin/false', () => {
             - d
     `
 
-    const stateNew = importText(initialState(), { text })
+    const stateNew = runDocumentCommand(importText({ text }), initialState())
 
     // not expanded when only child
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
 
     // expanded with cursor, but the only child below the cursor is still not expanded
-    const stateNew1 = setCursor(stateNew, ['a', 'b'])
+    const stateNew1 = runDocumentCommand(setCursor(['a', 'b']), stateNew)
     expect(isContextExpanded(stateNew1, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew1, ['a', 'b', 'c'])).toBeFalsy()
   })

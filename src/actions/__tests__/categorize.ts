@@ -5,14 +5,20 @@ import exportContext from '../../selectors/exportContext'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import categorize from '../categorize'
 import importText from '../importText'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import toggleContextView from '../toggleContextView'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
   it('categorize a thought', () => {
@@ -470,7 +476,7 @@ describe.each([
       setCursor(['a', 'm', 'b']),
     ])(initialState())
 
-    const stateNew = categorize(state)
+    const stateNew = runDocumentCommand(categorize, state)
 
     expect(stateNew.alert).toBeUndefined()
     expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}

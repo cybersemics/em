@@ -26,15 +26,13 @@ import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
-import getNextRank from '../selectors/getNextRank'
-import getRankAfter from '../selectors/getRankAfter'
-import getRankBefore from '../selectors/getRankBefore'
+import { getChildrenRanked } from '../selectors/getChildren'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isBefore from '../selectors/isBefore'
 import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
-import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
@@ -255,7 +253,7 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
           createThought({
             value: toThought?.value ?? '',
             path: thoughtFrom,
-            rank: getNextRank(state, head(thoughtFrom)),
+            afterId: getChildrenRanked(state, head(thoughtFrom)).at(-1)?.id ?? null,
           }),
         )
       } else if (result.isValid) {
@@ -263,12 +261,9 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
           moveThought({
             oldPath: thoughtFrom,
             newPath,
-            newRank: prevPath ? getRankAfter(state, prevPath) : getRankBefore(state, props.simplePath),
-            // props.simplePath is a SimplePath, so its previous sibling must always be resolved in normal view.
-            // See the note in DropHover on why the context view would otherwise be inferred for a cyclic context.
             afterId: prevPath
               ? head(prevPath)
-              : (prevSibling(state, props.simplePath, { showContexts: false })?.id ?? null),
+              : getPreviousSiblingId(state, head(props.simplePath), { excludeId: head(thoughtFrom) }),
           }),
         )
       }

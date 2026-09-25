@@ -4,9 +4,11 @@ import exportContext from '../../selectors/exportContext'
 import { getAllChildren } from '../../selectors/getChildren'
 import { getLexeme } from '../../selectors/getLexeme'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import archiveThought from '../archiveThought'
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
@@ -16,6 +18,9 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import splitThought from '../splitThought'
 import toggleContextView from '../toggleContextView'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
   it('delete empty thought', () => {

@@ -1,11 +1,12 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import getThoughtById from '../selectors/getThoughtById'
 import selectionOffsets from '../selectors/selectionOffsets'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import splitFormattedValue from '../util/splitFormattedValue'
@@ -21,7 +22,11 @@ export interface extractCategoryPayload {
 }
 
 /** Extracts the given range of the cursor thought as a new category, moving the thought (or the selected thoughts) into it. */
-const extractCategory = (state: State, { selectionStart, selectionEnd }: extractCategoryPayload): State => {
+const extractCategory = (
+  state: State,
+  { selectionStart, selectionEnd }: extractCategoryPayload,
+  document?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
   if (!cursor) return state
 
@@ -51,19 +56,23 @@ const extractCategory = (state: State, { selectionStart, selectionEnd }: extract
   // Categorize before editing. categorize refuses to categorize in some contexts (a direct child of the home or em
   // context, a read-only or unextendable parent, thoughts from different parents), alerting instead. Stripping the
   // selection first would drop the extracted text into a category that was never created.
-  const stateCategorized = categorize(state, { value: extractedValue })
+  const stateCategorized = categorize(state, { value: extractedValue }, document)
 
   // categorize signals success by moving the cursor onto the category it created, so an unmoved cursor means it
   // refused and the thought must keep its full value.
   if (equalPath(stateCategorized.cursor, cursor)) return stateCategorized
 
-  return editThought(stateCategorized, {
-    oldValue: value,
-    newValue: remainingValue,
-    // The thought has been moved under the new category, so its path is no longer the cursor's. Its id is unchanged.
-    path: thoughtToPath(stateCategorized, head(cursor)),
-    force: true,
-  })
+  return editThought(
+    stateCategorized,
+    {
+      oldValue: value,
+      newValue: remainingValue,
+      // The thought has been moved under the new category, so its path is no longer the cursor's. Its id is unchanged.
+      path: thoughtToPath(stateCategorized, head(cursor)),
+      force: true,
+    },
+    document,
+  )
 }
 
 /**
@@ -77,7 +86,7 @@ export const extractCategoryActionCreator = (): Thunk => (dispatch, getState) =>
   dispatch({ type: 'extractCategory', selectionStart: offsets.start, selectionEnd: offsets.end })
 }
 
-export default _.curryRight(extractCategory)
+export default command(extractCategory)
 
 // Register this action's metadata
 registerActionMetadata('extractCategory', {

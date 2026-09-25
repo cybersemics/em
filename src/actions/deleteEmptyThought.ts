@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
 import deleteThoughtWithCursor from '../actions/deleteThoughtWithCursor'
@@ -8,7 +9,7 @@ import setCursor from '../actions/setCursor'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getChildren, getChildrenRanked, hasChildren } from '../selectors/getChildren'
-import getNextRank from '../selectors/getNextRank'
+import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
 import getThoughtBefore from '../selectors/getThoughtBefore'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
@@ -17,6 +18,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -30,7 +32,11 @@ import { errorActionCreator as error } from './error'
 import updateCursorAfterDelete from './updateCursorAfterDelete'
 
 /** Deletes an empty thought or merges two siblings if deleting from the beginning of a thought. */
-const deleteEmptyThought = (state: State): State => {
+const deleteEmptyThought = (
+  state: State,
+  _payload: undefined = undefined,
+  document?: ThoughtspaceTransaction,
+): State => {
   const { cursor, isKeyboardOpen } = state
 
   if (!cursor) return state
@@ -53,7 +59,7 @@ const deleteEmptyThought = (state: State): State => {
     (isEmpty || isDivider(value)) &&
     (showContexts ? allChildren.length === 1 && !hasChildren(state, allChildren[0].id) : allChildren.length === 0)
   ) {
-    return deleteThoughtWithCursor(state)
+    return deleteThoughtWithCursor(state, undefined, document)
   }
   // archive an empty thought with only hidden children
   else if (isEmpty && visibleChildren.length === 0) {
@@ -72,11 +78,15 @@ const deleteEmptyThought = (state: State): State => {
       state => {
         const childArchive = findAnyChild(state, head(cursor), child => child.value === '=archive')
         return childArchive
-          ? moveThought(state, {
-              oldPath: [...cursor, childArchive.id],
-              newPath: [...parentOf(cursor), childArchive.id],
-              newRank: childArchive.rank,
-            })
+          ? moveThought(
+              state,
+              {
+                oldPath: [...cursor, childArchive.id],
+                newPath: [...parentOf(cursor), childArchive.id],
+                afterId: getFirstChildPlacement(state, cursorThought.parentId),
+              },
+              document,
+            )
           : state
       },
       // permanently delete the empty thought
@@ -84,8 +94,8 @@ const deleteEmptyThought = (state: State): State => {
         pathParent: parentOf(cursor),
         thoughtId: head(cursor),
       }),
-      state => updateCursorAfterDelete(state, statePrev),
-    ])(state)
+      state => updateCursorAfterDelete(state, statePrev, document),
+    ])(state, document)
   }
   // delete from beginning and merge with previous sibling
   else if (!showContexts) {
@@ -108,12 +118,16 @@ const deleteEmptyThought = (state: State): State => {
 
         // merge children
         ...allChildren.map(
-          (child, i) => (state: State) =>
-            moveThought(state, {
-              oldPath: appendToPath(simplePath, child.id),
-              newPath: appendToPath(pathPrevNew, child.id),
-              newRank: getNextRank(state, head(pathPrevNew)) + i,
-            }),
+          child => (state: State) =>
+            moveThought(
+              state,
+              {
+                oldPath: appendToPath(simplePath, child.id),
+                newPath: appendToPath(pathPrevNew, child.id),
+                afterId: getChildrenRanked(state, head(pathPrevNew)).at(-1)?.id ?? null,
+              },
+              document,
+            ),
         ),
 
         // delete second thought
@@ -128,7 +142,7 @@ const deleteEmptyThought = (state: State): State => {
           offset: getTextContentFromHTML(prev.value).length,
           isKeyboardOpen,
         }),
-      ])(state)
+      ])(state, document)
     }
   }
 
@@ -159,7 +173,7 @@ export const deleteEmptyThoughtActionCreator: Thunk = (dispatch, getState) => {
   dispatch({ type: 'deleteEmptyThought' })
 }
 
-export default deleteEmptyThought
+export default command(deleteEmptyThought)
 
 // Register this action's metadata
 registerActionMetadata('deleteEmptyThought', {

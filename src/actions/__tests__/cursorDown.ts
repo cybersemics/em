@@ -1,5 +1,6 @@
 import { act } from 'react'
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import cursorDown from '../../actions/cursorDown'
 import importText from '../../actions/importText'
 import { importTextActionCreator as importTextAction } from '../../actions/importText'
@@ -15,12 +16,17 @@ import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import appendToPath from '../../util/appendToPath'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
   it('move cursor to next sibling', () => {
@@ -46,7 +52,7 @@ describe('normal view', () => {
   })
 
   it('do nothing when there are no thoughts', () => {
-    const stateNew = cursorDown(initialState())
+    const stateNew = runDocumentCommand(cursorDown, initialState())
 
     expect(stateNew.cursor).toBe(null)
   })
@@ -92,7 +98,8 @@ describe('normal view', () => {
     const secondA = children.filter(child => child.value === 'a')[1]
     const firstB = children.find(child => child.value === 'b')!
     const stateNew = reducerFlow([
-      (state: State) => setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, secondA.id) }),
+      (state: State, document?: ThoughtspaceTransaction) =>
+        setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, secondA.id) }, document),
       cursorDown,
     ])(state)
 
@@ -100,8 +107,6 @@ describe('normal view', () => {
   })
 
   describe('use store', () => {
-    beforeEach(initStore)
-
     it('work for sorted thoughts', async () => {
       act(() => {
         store.dispatch([
@@ -119,7 +124,7 @@ describe('normal view', () => {
       act(() => {
         store.dispatch([setCursorAction(['a'])])
       })
-      const stateNew = cursorDown(store.getState())
+      const stateNew = runDocumentCommand(cursorDown, store.getState())
       expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
     })
 
@@ -140,7 +145,7 @@ describe('normal view', () => {
         ])
       })
       act(() => executeCommand(newSubthoughtTopShortcut, { store }))
-      const stateNew = cursorDown(store.getState())
+      const stateNew = runDocumentCommand(cursorDown, store.getState())
       expectPathToEqual(stateNew, stateNew.cursor, ['x', 'b'])
     })
   })

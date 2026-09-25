@@ -1,5 +1,5 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import cursorHistory from '../actions/cursorHistory'
 import editThought from '../actions/editThought'
@@ -10,6 +10,7 @@ import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import splitSentence from '../util/splitSentence'
@@ -20,7 +21,11 @@ export interface splitSentencesPayload {
 }
 
 /** Split thought by sentences. Create new thought for each sentence. Thought value, on which cursor is on, replace with first sentence. */
-const splitSentences = (state: State, { caretOffset }: splitSentencesPayload): State => {
+const splitSentences = (
+  state: State,
+  { caretOffset }: splitSentencesPayload,
+  document?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
   if (!cursor) return state
   const cursorThought = getThoughtById(state, head(cursor))
@@ -44,7 +49,7 @@ const splitSentences = (state: State, { caretOffset }: splitSentencesPayload): S
     ...otherSentences.map(sentence =>
       newThought({ value: sentence.value, insertNewSubthought: sentence.insertNewSubThought }),
     ),
-  ])(state)
+  ])(state, document)
 
   const cursorForwardPath = otherSentences.some(sentence => sentence.insertNewSubThought)
     ? stateAfterSplit.cursor
@@ -61,7 +66,7 @@ const splitSentences = (state: State, { caretOffset }: splitSentencesPayload): S
     editableRender,
   ]
 
-  return reducerFlow(reducers)(stateAfterSplit)
+  return reducerFlow(reducers)(stateAfterSplit, document)
 }
 
 /** Action-creator for splitSentences. */
@@ -70,7 +75,7 @@ export const splitSentencesActionCreator =
   dispatch =>
     dispatch({ type: 'splitSentences', ...payload })
 
-export default _.curryRight(splitSentences, 2)
+export default command(splitSentences)
 
 // Register this action's metadata
 registerActionMetadata('splitSentences', {

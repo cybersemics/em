@@ -1,16 +1,16 @@
-import _ from 'lodash'
 import Index from '../@types/IndexType'
-import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import { getAllChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
+import command from '../util/command'
 import keyValueBy from '../util/keyValueBy'
 import updateThoughts from './updateThoughts'
 
 /** Sorts a context. If no sort preference is provided, sorts by its =sort attribute. */
-const sort = (state: State, id: ThoughtId, sortPreference?: SortPreference): State => {
-  sortPreference = sortPreference || getSortPreference(state, id)
+const sort = (state: State, id: ThoughtId, document?: ThoughtspaceTransaction): State => {
+  const sortPreference = getSortPreference(state, id)
   if (sortPreference?.type === 'None') return state
 
   // Empty and emoji-only thoughts are normally sorted to their point of creation, but applying the sort re-ranks
@@ -26,9 +26,9 @@ const sort = (state: State, id: ThoughtId, sortPreference?: SortPreference): Sta
   // correct relative order—do not normalize ranks unless the order itself must change.
   if (children.every((child, i) => child.id === childrenByRank[i].id)) return state
 
-  // Only include thoughts whose rank actually changes after normalization to 0, 1, 2, ...
+  // Submit only changed positions; numeric ranks are derived from the resulting tree.
   const thoughtIndexUpdates = keyValueBy(children, (child, i) =>
-    child.rank !== i ? { [child.id]: { ...child, rank: i } } : null,
+    child.id !== childrenByRank[i].id ? { [child.id]: child } : null,
   )
 
   if (Object.keys(thoughtIndexUpdates).length === 0) return state
@@ -37,12 +37,15 @@ const sort = (state: State, id: ThoughtId, sortPreference?: SortPreference): Sta
     child.id in thoughtIndexUpdates ? { [child.id]: i === 0 ? null : children[i - 1].id } : null,
   )
 
-  return updateThoughts(state, {
-    thoughtIndexUpdates,
-    lexemeIndexUpdates: {},
-    movePlacements,
-    preventExpandThoughts: true,
-  })
+  return updateThoughts(
+    state,
+    {
+      thoughtIndexUpdates,
+      movePlacements,
+      preventExpandThoughts: true,
+    },
+    document,
+  )
 }
 
-export default _.curryRight(sort, 2)
+export default command(sort)

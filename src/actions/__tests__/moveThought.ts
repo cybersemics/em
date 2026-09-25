@@ -1,28 +1,57 @@
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
+import cursorDown from '../../actions/cursorDown'
+import deleteThoughtWithCursor from '../../actions/deleteThoughtWithCursor'
 import importText from '../../actions/importText'
 import moveThought from '../../actions/moveThought'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
 import { HOME_TOKEN } from '../../constants'
-import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
-import getRankAfter from '../../selectors/getRankAfter'
 import pathToThought from '../../selectors/pathToThought'
 import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
+import initStore from '../../test-helpers/initStore'
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import appendToPath from '../../util/appendToPath'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
+it('preserves order when moving after repeated insertions and deletions', () => {
+  /** Replaces the current thought with a newly inserted preceding thought. */
+  const replacePreceding = () =>
+    reducerFlow([newThought({ value: 'c', insertBefore: true }), cursorDown, deleteThoughtWithCursor])
+
+  const steps = [
+    newThought({ value: 'a' }),
+    newThought({ value: 'b' }),
+    ...Array.from({ length: 25 }, replacePreceding),
+    newThought({ value: 'b', insertBefore: true }),
+    moveThoughtAtFirstMatch({ from: ['a'], to: ['a'], after: ['c'] }),
+  ]
+
+  const state = reducerFlow(steps)(initialState())
+
+  expect(getChildrenRankedByContext(state, [HOME_TOKEN])).toMatchObject([
+    { value: 'b', rank: 0 },
+    { value: 'c', rank: 1 },
+    { value: 'a', rank: 2 },
+  ])
+})
 
 it('move within root', () => {
   const steps = [
@@ -31,7 +60,7 @@ it('move within root', () => {
     moveThoughtAtFirstMatch({
       from: ['b'],
       to: ['b'],
-      newRank: -1,
+      after: null,
     }),
   ]
 
@@ -62,7 +91,7 @@ it('persist id on move', () => {
     moveThoughtAtFirstMatch({
       from: ['a', 'a1'],
       to: ['a1'],
-      newRank: 1,
+      after: ['a'],
     }),
   ]
 
@@ -74,7 +103,7 @@ it('persist id on move', () => {
   expect(thoughtA2New.id).toEqual(thoughtA2!.id)
 })
 
-it('move within context (rank only)', () => {
+it('move within context (order only)', () => {
   const steps = [
     newThought('a'),
     newSubthought('a1'),
@@ -82,7 +111,7 @@ it('move within context (rank only)', () => {
     moveThoughtAtFirstMatch({
       from: ['a', 'a2'],
       to: ['a', 'a2'],
-      newRank: -1,
+      after: null,
     }),
   ]
 
@@ -102,51 +131,48 @@ it('move within context (rank only)', () => {
   expect(getContexts(stateNew, 'a2')).toMatchObject([thoughtA2.id])
 })
 
-it('rank adapter placement excludes the moved thought', () => {
+it('moving after the existing predecessor preserves order', () => {
   const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
 
-  const thoughtA = contextToThought(state, ['a'])!
-  const thoughtB = contextToThought(state, ['b'])!
-  const thoughtC = contextToThought(state, ['c'])!
+  const stateNew = runDocumentCommand(
+    moveThoughtAtFirstMatch({
+      from: ['b'],
+      to: ['b'],
+      after: ['a'],
+    }),
+    state,
+  )
 
-  const stateNew = moveThoughtAtFirstMatch({
-    from: ['b'],
-    to: ['b'],
-    newRank: (thoughtB.rank + thoughtC.rank) / 2,
-  })(state)
-
-  expect(stateNew.pushQueue.at(-1)?.movePlacements?.[thoughtB.id]).toBe(thoughtA.id)
+  expect(getChildrenRankedByContext(stateNew, [HOME_TOKEN]).map(thought => thought.value)).toEqual(['a', 'b', 'c'])
 })
 
-it('explicit first placement is not inferred from rank', () => {
+it('moves to the first position with a null predecessor', () => {
   const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
 
-  const thoughtA = contextToThought(state, ['a'])!
-  const thoughtC = contextToThought(state, ['c'])!
+  const stateNew = runDocumentCommand(
+    moveThoughtAtFirstMatch({
+      from: ['c'],
+      to: ['c'],
+      after: null,
+    }),
+    state,
+  )
 
-  const stateNew = moveThoughtAtFirstMatch({
-    from: ['c'],
-    to: ['c'],
-    newRank: thoughtA.rank + 0.5,
-    afterId: null,
-  })(state)
-
-  expect(stateNew.pushQueue.at(-1)?.movePlacements).toHaveProperty(thoughtC.id)
-  expect(stateNew.pushQueue.at(-1)?.movePlacements?.[thoughtC.id]).toBeNull()
+  expect(getChildrenRankedByContext(stateNew, [HOME_TOKEN]).map(thought => thought.value)).toEqual(['c', 'a', 'b'])
 })
 
 it('rejects placement after the moved thought', () => {
   const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
 
-  const thoughtB = contextToThought(state, ['b'])!
-
   expect(() =>
-    moveThoughtAtFirstMatch({
-      from: ['b'],
-      to: ['b'],
-      newRank: thoughtB.rank,
-      afterId: thoughtB.id,
-    })(state),
+    runDocumentCommand(
+      moveThoughtAtFirstMatch({
+        from: ['b'],
+        to: ['b'],
+        after: ['b'],
+      }),
+      state,
+    ),
   ).toThrow('afterId must be null or a child of the destination context')
 })
 
@@ -162,7 +188,7 @@ it('move across contexts', () => {
     moveThoughtAtFirstMatch({
       from: ['b', 'b1'],
       to: ['a', 'b1'],
-      newRank: 1,
+      after: ['a', 'a1'],
     }),
   ]
 
@@ -198,7 +224,7 @@ it('move descendants', () => {
     moveThoughtAtFirstMatch({
       from: ['b'],
       to: ['b'],
-      newRank: -1,
+      after: null,
     }),
   ]
 
@@ -240,7 +266,7 @@ it('moving cursor thought should update cursor', () => {
     moveThoughtAtFirstMatch({
       from: ['a', 'a2'],
       to: ['a', 'a2'],
-      newRank: -1,
+      after: null,
     }),
   ]
 
@@ -258,7 +284,7 @@ it('moving ancestor of cursor should update cursor', () => {
     moveThoughtAtFirstMatch({
       from: ['b'],
       to: ['b'],
-      newRank: -1,
+      after: null,
     }),
   ]
 
@@ -277,7 +303,7 @@ it('moving unrelated thought should not update cursor', () => {
     moveThoughtAtFirstMatch({
       from: ['b'],
       to: ['b'],
-      newRank: -1,
+      after: null,
     }),
   ]
 
@@ -299,14 +325,14 @@ it('moving a context in the context view should update the cursor to the moved t
     setCursor(['a', 'm']),
     toggleContextView,
     // drag the context a/m~/a onto the subthoughts drop zone of the context a/m~/b, i.e. move a/m into b/m
-    (state: State) => {
+    (state: State, document?: ThoughtspaceTransaction) => {
       const contextA = contextToPathOrThrow(state, ['a', 'm', 'a'], 'moveThought')
       const contextB = contextToPathOrThrow(state, ['a', 'm', 'b'], 'moveThought')
-      return moveThought(state, {
+      return moveThought({
         oldPath: contextA,
         newPath: appendToPath(contextB, head(contextA)),
-        newRank: 0,
-      })
+        afterId: null,
+      })(state, document)
     },
   ]
 
@@ -321,8 +347,7 @@ it('moving a context in the context view should update the cursor to the moved t
       - m`)
 
   // The cursor is on the nominal context m (a/m~), which is the thought that was moved, so it must follow the
-  // thought to b/m/m. Otherwise it is left on a/m, which no longer exists: expandThoughts can no longer reach it,
-  // freeThoughts deallocates the thought as no longer visible, and the next expandThoughts throws "Invalid path".
+  // thought to b/m/m. Otherwise it is left on a/m, which no longer exists, and expansion cannot follow it.
   expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'm'])
 })
 
@@ -338,7 +363,7 @@ it('move root thought into another root thought', () => {
     moveThoughtAtFirstMatch({
       from: ['a'],
       to: ['x', 'a'],
-      newRank: -1,
+      after: null,
     }),
   ]
 
@@ -378,7 +403,7 @@ it('move descendants with siblings', () => {
     moveThoughtAtFirstMatch({
       from: ['a', 'b'],
       to: ['b'],
-      newRank: 1,
+      after: ['a'],
     }),
   ]
 
@@ -403,7 +428,7 @@ it('move descendants with siblings', () => {
 })
 
 // Auto-merge only applies to metaprogramming attributes (=m), which are hierarchically merged on move.
-it('merge duplicate attribute with new rank', () => {
+it('merges a duplicate attribute at the first position', () => {
   const text = `
   - a
     - =m
@@ -416,7 +441,7 @@ it('merge duplicate attribute with new rank', () => {
     moveThoughtAtFirstMatch({
       from: ['=m'],
       to: ['a', '=m'],
-      newRank: 0,
+      after: null,
     }),
   ]
 
@@ -442,7 +467,7 @@ it('merge duplicate attribute with new rank', () => {
   expect(getContexts(stateNew, '=m')).toMatchObject([thoughtM.id])
 })
 
-it('merge duplicate attribute with duplicate rank', () => {
+it('merges a duplicate attribute without duplicating its destination', () => {
   const text = `
   - a
     - =m
@@ -455,7 +480,7 @@ it('merge duplicate attribute with duplicate rank', () => {
     moveThoughtAtFirstMatch({
       from: ['=m'],
       to: ['a', '=m'],
-      newRank: 0,
+      after: null,
     }),
   ]
 
@@ -490,7 +515,7 @@ it('move with duplicate descendant', () => {
     moveThoughtAtFirstMatch({
       from: ['b'],
       to: ['a', 'b'],
-      newRank: 0,
+      after: null,
     }),
   ]
 
@@ -508,7 +533,7 @@ it('move with duplicate descendant', () => {
   const thoughtXUnderY = contextToThought(stateNew, ['a', 'b', 'y', 'x'])!
 
   // x should have contexts a/b and a/b/y
-  expect(getContexts(stateNew, 'x')).toMatchObject([thoughtXUnderB.id, thoughtXUnderY.id])
+  expect(getContexts(stateNew, 'x')).toEqual([thoughtXUnderB.id, thoughtXUnderY.id].sort())
 })
 
 it('move with hash matched descendant', () => {
@@ -523,7 +548,7 @@ it('move with hash matched descendant', () => {
     moveThoughtAtFirstMatch({
       from: ['b'],
       to: ['a', 'b'],
-      newRank: 0,
+      after: null,
     }),
   ]
 
@@ -541,7 +566,7 @@ it('move with hash matched descendant', () => {
 
   expect(thoughtNoteSecond?.parentId).toBe(thoughtNoteFirst.id)
 
-  expect(getContexts(stateNew, 'notes')).toMatchObject([thoughtNoteFirst.id, thoughtNoteSecond.id])
+  expect(getContexts(stateNew, 'notes')).toEqual([thoughtNoteFirst.id, thoughtNoteSecond.id].sort())
 })
 
 it('move with nested duplicate attributes', () => {
@@ -557,7 +582,7 @@ it('move with nested duplicate attributes', () => {
     moveThoughtAtFirstMatch({
       from: ['c', '=a'],
       to: ['=a'],
-      newRank: 0,
+      after: null,
     }),
   ]
 
@@ -589,7 +614,7 @@ it('merge attribute with duplicate parent', () => {
     moveThoughtAtFirstMatch({
       from: ['a', '=b', '=b'],
       to: ['a', '=b'],
-      newRank: 1,
+      after: ['a', '=b'],
     }),
   ]
 
@@ -629,7 +654,7 @@ it('move with nested duplicate attributes and merge their children', () => {
     moveThoughtAtFirstMatch({
       from: ['p', '=a'],
       to: ['=a'],
-      newRank: 0,
+      after: null,
     }),
   ]
 
@@ -673,13 +698,11 @@ it('consistent rank between lexemeIndex and thoughtIndex on duplicate attribute 
 
   const steps = [
     importText({ text }),
-    (newState: State) =>
-      moveThoughtAtFirstMatch(newState, {
-        from: ['a', '=b'],
-        to: ['=b'],
-        // Note: Here new rank will be 0.5 because it's calculated between a (0) and =b (1)
-        newRank: getRankAfter(newState, contextToPath(newState, ['a'])!) as number,
-      }),
+    moveThoughtAtFirstMatch({
+      from: ['a', '=b'],
+      to: ['=b'],
+      after: ['a'],
+    }),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -700,7 +723,7 @@ it('update cursor if duplicate attribute with cursor is deleted', () => {
     moveThoughtAtFirstMatch({
       from: ['=b'],
       to: ['a', '=b'],
-      newRank: 0,
+      after: null,
     }),
   ]
 
@@ -731,7 +754,7 @@ describe('duplicate normal siblings are not merged', () => {
       moveThoughtAtFirstMatch({
         from: ['AAA', 'AAA'],
         to: ['AAA'],
-        newRank: 1,
+        after: ['AAA'],
       }),
     ]
 
@@ -759,7 +782,7 @@ describe('duplicate normal siblings are not merged', () => {
       moveThoughtAtFirstMatch({
         from: ['b', 'm'],
         to: ['a', 'm'],
-        newRank: 1,
+        after: ['a', 'm'],
       }),
     ]
 
@@ -789,7 +812,7 @@ it('re-expand after moving across contexts', () => {
     moveThoughtAtFirstMatch({
       from: ['a', 'b'],
       to: ['b'],
-      newRank: 1,
+      after: ['a'],
     }),
   ]
 
@@ -821,7 +844,7 @@ it('move thought to the beginning of a sorted context', () => {
     moveThoughtAtFirstMatch({
       from: ['c', '=pin'],
       to: ['=pin'],
-      newRank: 999,
+      after: ['c'],
     }),
   ]
 
@@ -835,8 +858,7 @@ it('move thought to the beginning of a sorted context', () => {
   - a
   - c`)
 
-  // newRank should be ignored when moving into a sorted context
-  expect(contextToThought(stateNew, ['=pin'])?.rank).not.toEqual(999)
+  expect(contextToThought(stateNew, ['=pin'])?.rank).toBe(0)
 })
 
 it('move thought to the middle of a sorted context', () => {
@@ -854,7 +876,7 @@ it('move thought to the middle of a sorted context', () => {
     moveThoughtAtFirstMatch({
       from: ['c', 'b'],
       to: ['b'],
-      newRank: 999,
+      after: ['c'],
     }),
   ]
 
@@ -868,8 +890,7 @@ it('move thought to the middle of a sorted context', () => {
   - b
   - c`)
 
-  // newRank should be ignored when moving into a sorted context
-  expect(contextToThought(stateNew, ['b'])?.rank).not.toEqual(999)
+  expect(contextToThought(stateNew, ['b'])?.rank).toBe(2)
 })
 
 it('move thought to the end of a sorted context', () => {
@@ -887,7 +908,7 @@ it('move thought to the end of a sorted context', () => {
     moveThoughtAtFirstMatch({
       from: ['c', 'd'],
       to: ['d'],
-      newRank: 999,
+      after: ['c'],
     }),
   ]
 
@@ -901,11 +922,10 @@ it('move thought to the end of a sorted context', () => {
   - c
   - d`)
 
-  // newRank should be ignored when moving into a sorted context
-  expect(contextToThought(stateNew, ['d'])?.rank).not.toEqual(999)
+  expect(contextToThought(stateNew, ['d'])?.rank).toBe(3)
 })
 
-it('do not re-rank siblings in sorted context', () => {
+it('preserves sibling relative order when moving into a sorted context', () => {
   const text = `
     - =sort
       - Alphabetical
@@ -916,19 +936,20 @@ it('do not re-rank siblings in sorted context', () => {
 
   const steps = [importText({ text }), setCursor(['c', 'b'])]
   const state = reducerFlow(steps)(initialState())
-  const thoughtA1 = contextToThought(state, ['a'])!
-  const thoughtC1 = contextToThought(state, ['c'])!
+  const existingIds = getChildrenRankedByContext(state, [HOME_TOKEN]).map(thought => thought.id)
 
-  const stateNew = moveThoughtAtFirstMatch({
-    from: ['c', 'b'],
-    to: ['b'],
-    newRank: 999,
-  })(state)
-  const thoughtA2 = contextToThought(stateNew, ['a'])!
-  const thoughtC2 = contextToThought(stateNew, ['c'])!
-
-  expect(thoughtA2).toHaveProperty('rank', thoughtA1!.rank)
-  expect(thoughtC2).toHaveProperty('rank', thoughtC1!.rank)
+  const stateNew = runDocumentCommand(
+    moveThoughtAtFirstMatch({
+      from: ['c', 'b'],
+      to: ['b'],
+      after: ['c'],
+    }),
+    state,
+  )
+  const children = getChildrenRankedByContext(stateNew, [HOME_TOKEN])
+  expect(children.filter(thought => existingIds.includes(thought.id)).map(thought => thought.id)).toEqual(existingIds)
+  expect(children.map(thought => thought.value)).toEqual(['=sort', 'a', 'b', 'c'])
+  expect(children.map(thought => thought.rank)).toEqual([0, 1, 2, 3])
 })
 
 it('disable sort on move within context', () => {
@@ -945,7 +966,7 @@ it('disable sort on move within context', () => {
     moveThoughtAtFirstMatch({
       from: ['a'],
       to: ['a'],
-      newRank: 999,
+      after: ['c'],
     }),
   ]
 

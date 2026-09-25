@@ -1,21 +1,20 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import editThought, { editThoughtActionCreator } from '../actions/editThought'
 import contextToPath from '../selectors/contextToPath'
 import head from '../util/head'
 
-/**
- * Edit thought at the given Context.
- *
- * @param at: Unranked path to the thought.
- *
- */
-const editThoughtByContext = _.curryRight((state: State, context: string[], newValue: string) => {
-  const path = contextToPath(state, context)
-  if (!path) throw new Error(`Thought not found at context: ${context}`)
-  return editThought(state, { path, oldValue: head(context), newValue })
-})
+/** Edits one context through the caller's transaction, preserving value-keyed fixture composition. */
+const editThoughtByContext = (context: string[], newValue: string) =>
+  Object.assign(
+    (state: State, document?: ThoughtspaceTransaction): State => {
+      const path = contextToPath(state, context)
+      if (!path) throw new Error(`Thought not found at context: ${context}`)
+      return editThought(state, { path, oldValue: head(context), newValue }, document)
+    },
+    { requiresDocument: true as const },
+  )
 
 /**
  * Edit thought at the given unranked path first matched.

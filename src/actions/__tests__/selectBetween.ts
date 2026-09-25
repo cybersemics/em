@@ -3,13 +3,19 @@ import toggleMulticursor from '../../actions/toggleMulticursor'
 import contextToPath from '../../selectors/contextToPath'
 import getThoughtById from '../../selectors/getThoughtById'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
+import initStore from '../../test-helpers/initStore'
 import prettyPath from '../../test-helpers/prettyPath'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import toggleContextView from '../toggleContextView'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 test('select between two thoughts in the root', () => {
   const text = `
@@ -250,7 +256,7 @@ test('if no thoughts are selected and there is no cursor, select all thoughts at
 
 test('alert if there are no thoughts', () => {
   const state = initialState()
-  const stateNew = selectBetween(state)
+  const stateNew = runDocumentCommand(selectBetween, state)
   expect(stateNew).toHaveProperty('alert')
 })
 
@@ -280,10 +286,10 @@ test('adjusts the active range while preserving the original anchor', () => {
     - f
   `
 
-  let stateNew = importText(initialState(), { text })
+  let stateNew = runDocumentCommand(importText({ text }), initialState())
   stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['a'])! })
-  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['e'])! })
-  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['c'])! })
+  stateNew = runDocumentCommand(selectBetween({ path: contextToPath(stateNew, ['e'])! }), stateNew)
+  stateNew = runDocumentCommand(selectBetween({ path: contextToPath(stateNew, ['c'])! }), stateNew)
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => prettyPath(stateNew, path))
@@ -302,10 +308,10 @@ test('preserves independently selected thoughts when extending from a new anchor
     - f
   `
 
-  let stateNew = importText(initialState(), { text })
+  let stateNew = runDocumentCommand(importText({ text }), initialState())
   stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['a'])! })
   stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['c'])! })
-  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['e'])! })
+  stateNew = runDocumentCommand(selectBetween({ path: contextToPath(stateNew, ['e'])! }), stateNew)
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => prettyPath(stateNew, path))
@@ -326,11 +332,11 @@ test('preserves a committed range when selecting from a new anchor', () => {
     - h
   `
 
-  let stateNew = importText(initialState(), { text })
+  let stateNew = runDocumentCommand(importText({ text }), initialState())
   stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['b'])! })
-  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['d'])! })
+  stateNew = runDocumentCommand(selectBetween({ path: contextToPath(stateNew, ['d'])! }), stateNew)
   stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['f'])! })
-  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['h'])! })
+  stateNew = runDocumentCommand(selectBetween({ path: contextToPath(stateNew, ['h'])! }), stateNew)
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => prettyPath(stateNew, path))
@@ -348,11 +354,11 @@ test('does not use a deselected thought as the next Select Between anchor', () =
     - e
   `
 
-  let stateNew = importText(initialState(), { text })
+  let stateNew = runDocumentCommand(importText({ text }), initialState())
   stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['b'])! })
-  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['d'])! })
+  stateNew = runDocumentCommand(selectBetween({ path: contextToPath(stateNew, ['d'])! }), stateNew)
   stateNew = toggleMulticursor(stateNew, { path: contextToPath(stateNew, ['d'])! })
-  stateNew = selectBetween(stateNew, { path: contextToPath(stateNew, ['a'])! })
+  stateNew = runDocumentCommand(selectBetween({ path: contextToPath(stateNew, ['a'])! }), stateNew)
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => prettyPath(stateNew, path))

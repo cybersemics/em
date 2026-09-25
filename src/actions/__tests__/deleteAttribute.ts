@@ -1,13 +1,19 @@
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import deleteAttribute from '../deleteAttribute'
 import importText from '../importText'
 import newThought from '../newThought'
 import setDescendant from '../setDescendant'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('delete attribute', () => {
   const steps = [
@@ -15,17 +21,17 @@ it('delete attribute', () => {
     newThought('a'),
 
     // set attribute
-    (state: State) =>
-      setDescendant(state, {
+    (state: State, document?: ThoughtspaceTransaction) =>
+      setDescendant({
         path: contextToPath(state, ['a'])!,
         values: ['=test', 'hello'],
-      }),
+      })(state, document),
     // delete attribute
-    (state: State) =>
-      deleteAttribute(state, {
+    (state: State, document?: ThoughtspaceTransaction) =>
+      deleteAttribute({
         path: contextToPath(state, ['a'])!,
         value: '=test',
-      }),
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -47,11 +53,11 @@ it('delete deep attribute with descendants', () => {
       `,
     }),
 
-    (state: State) =>
-      deleteAttribute(state, {
+    (state: State, document?: ThoughtspaceTransaction) =>
+      deleteAttribute({
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
-      }),
+      })(state, document),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -75,11 +81,11 @@ it('preserve descendants with other children on delete deep', () => {
       `,
     }),
 
-    (state: State) =>
-      deleteAttribute(state, {
+    (state: State, document?: ThoughtspaceTransaction) =>
+      deleteAttribute({
         path: contextToPath(state, ['a'])!,
         values: ['w', 'x', 'y', 'z'],
-      }),
+      })(state, document),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test

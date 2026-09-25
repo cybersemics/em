@@ -7456,6 +7456,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-7bf158ba2f9cede39d4712a65e7924ef0ad9b7fe/treecrdt-wasm.tgz":
+  version: 0.0.1
+  resolution: "@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-7bf158ba2f9cede39d4712a65e7924ef0ad9b7fe/treecrdt-wasm.tgz"
+  dependencies:
+    "@treecrdt/interface": "npm:0.2.0"
+    "@treecrdt/sync-protocol": "npm:0.1.2"
+  checksum: 10c0/b4f2e9aa334302a04ad0906c81ef29d97d5965baf982a9dcdc84a60b820b7e3d8b743ab7daa7ddfdebb713780e2e5bbb773b58fb6f3e7476c9d6c6f98ef9af68
+  languageName: node
+  linkType: hard
+
 "@trickfilm400/rollup-plugin-off-main-thread@npm:^3.0.0-pre1":
   version: 3.0.0-pre1
   resolution: "@trickfilm400/rollup-plugin-off-main-thread@npm:3.0.0-pre1"
@@ -12573,6 +12583,7 @@ __metadata:
     "@treecrdt/sync-server-core": "npm:0.1.2"
     "@treecrdt/sync-sqlite": "npm:0.1.2"
     "@treecrdt/wa-sqlite": "npm:0.4.2"
+    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-7bf158ba2f9cede39d4712a65e7924ef0ad9b7fe/treecrdt-wasm.tgz"
     "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.2.0"

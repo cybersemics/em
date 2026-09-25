@@ -2,17 +2,44 @@ import { importText, toggleContextView } from '../../actions'
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import { getLexeme } from '../../selectors/getLexeme'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import newThought from '../newThought'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 describe('normal view', () => {
+  it('projects contiguous ranks while preserving repeated insert-before order', () => {
+    const steps = [
+      newThought({ value: 'a' }),
+      newThought({ value: 'e' }),
+      newThought({ value: 'd', insertBefore: true }),
+      newThought({ value: 'c', insertBefore: true }),
+      newThought({ value: 'b', insertBefore: true }),
+    ]
+
+    const state = reducerFlow(steps)(initialState())
+
+    expect(getChildrenRanked(state, HOME_TOKEN)).toMatchObject([
+      { value: 'a', rank: 0 },
+      { value: 'b', rank: 1 },
+      { value: 'c', rank: 2 },
+      { value: 'd', rank: 3 },
+      { value: 'e', rank: 4 },
+    ])
+  })
+
   it('new thought in root', () => {
-    const stateNew = newThought(initialState(), { value: 'a' })
+    const stateNew = runDocumentCommand(newThought({ value: 'a' }), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -87,7 +114,7 @@ describe('normal view', () => {
   })
 
   it('update cursor to first new thought', () => {
-    const stateNew = newThought(initialState(), { value: 'a' })
+    const stateNew = runDocumentCommand(newThought({ value: 'a' }), initialState())
 
     expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['a'])!])
   })

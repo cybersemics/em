@@ -6,10 +6,8 @@ import State from './@types/State'
 import ThoughtId from './@types/ThoughtId'
 import Thunk from './@types/Thunk'
 import { importFilesActionCreator as importFiles } from './actions/importFiles'
-import { initThoughtsActionCreator as initThoughts } from './actions/initThoughts'
-import { pullActionCreator as pull } from './actions/pull'
+import { replaceThoughtsActionCreator as replaceThoughts } from './actions/replaceThoughts'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
-import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
 import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import testFlags from './e2e/testFlags'
@@ -31,19 +29,16 @@ import debugLog from './util/debugLog'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
-import owner from './util/owner'
 
 /**
- * Decode cursor from url, pull and initialize the cursor.
+ * Decodes the URL cursor against the complete initialized document.
  */
-const initializeCursor = async () => {
+const initializeCursor = () => {
   const { path } = decodeThoughtsUrl(store.getState())
   // if no path in decoded from the url initialize the cursor with null
   if (!path || isRoot(path)) {
     store.dispatch(setCursor({ path: null }))
   } else {
-    // pull the path thoughts
-    await store.dispatch(pull(path, { maxDepth: 0 }))
     const newState = store.getState()
     const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
     store.dispatch(
@@ -59,54 +54,26 @@ type InitializeOptions = { storage: ThoughtspaceStorage }
 /** Initialize local db and window events. */
 const initializeInternal = async ({ storage }: InitializeOptions) => {
   initOfflineStatusStore(/* websocket */)
-  const eventHandlers = initEvents(store)
 
-  const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
+  const { storage: storageInUse } = await thoughtspaceRuntime.init({
     storage,
-    materialization: {
-      getSnapshot: () => {
-        const state = store.getState()
-        return {
-          thoughtIndex: state.thoughts.thoughtIndex,
-          lexemeIndex: state.thoughts.lexemeIndex,
-        }
-      },
-      apply: ({ thoughtIndex, lexemeIndex }) => {
-        store.dispatch(
-          updateThoughtsActionCreator({
-            thoughtIndexUpdates: thoughtIndex,
-            lexemeIndexUpdates: lexemeIndex,
-            local: false,
-            remote: false,
-            repairCursor: true,
-          }),
-        )
-      },
-    },
+    onError: error =>
+      store.dispatch({
+        type: 'error',
+        value: `Changes could not be saved: ${error.message}. Editing is paused; keep this tab open.`,
+      }),
+    onChange: thoughts => store.dispatch(replaceThoughts({ thoughts, repairCursor: true })),
   })
 
   storageStatusStore.update(storageInUse)
 
-  // load local state unless loading a public context
-  // await initDB()
+  // The interactive app and URL cursor must see the same complete document as the authoring engine.
+  store.dispatch(replaceThoughts({ thoughts: thoughtspaceRuntime.project() }))
+  initializeCursor()
+  const eventHandlers = initEvents(store)
 
-  const thoughtsLocalPromise =
-    owner() === '~'
-      ? // authenticated or offline user
-        Promise.resolve(store.dispatch(initThoughts(clientId)))
-      : // other user context
-        Promise.resolve()
-
-  thoughtsLocalPromise.then(() => {
-    // extra delay for good measure to not block rendering
-    setTimeout(() => {
-      store.dispatch(importFiles({ resume: true }))
-    }, 500)
-  })
-
-  await thoughtsLocalPromise
-
-  await initializeCursor()
+  // Resume incremental imports after the initial app has rendered.
+  setTimeout(() => store.dispatch(importFiles({ resume: true })), 500)
 
   return eventHandlers
 }

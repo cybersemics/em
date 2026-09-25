@@ -1,29 +1,27 @@
-import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import mergeThoughts from '../actions/mergeThoughts'
-import rerank from '../actions/rerank'
 import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
-import getMovePlacement from '../selectors/getMovePlacement'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import getSortPreference from '../selectors/getSortPreference'
-import getSortedRank from '../selectors/getSortedRank'
+import getSortedPlacement from '../selectors/getSortedPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
-import keyValueBy from '../util/keyValueBy'
 import normalizeThought from '../util/normalizeThought'
 import pathToContext from '../util/pathToContext'
 import reducerFlow from '../util/reducerFlow'
@@ -35,32 +33,17 @@ export interface MoveThoughtPayload {
   oldPath: Path
   newPath: Path
   offset?: number
-  // skip the auto rerank to prevent infinite loop
-  skipRerank?: boolean
   /** When true, skips merging with a duplicate thought in the destination context. Use when the caller manages duplicate handling itself (e.g. swapParent). */
   skipMerge?: boolean
-  /** The new rank of the destination thought. This will be ignored if the thought is moved into a sorted context. */
-  newRank: number
-  /**
-   * ID of sibling after which to place in TreeCRDT.
-   * Explicit null means first child.
-   * Undefined means derive placement from newRank for legacy em rank-based callers.
-   */
-  afterId?: ThoughtId | null
+  /** The destination predecessor, or null for first child. Sorted destinations choose their sorted placement. */
+  afterId: ThoughtId | null
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
-const moveThought = (state: State, payload: MoveThoughtPayload) => {
-  const { oldPath, newPath, offset, skipRerank, skipMerge, newRank, afterId } = payload
-  // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
+const moveThought = (state: State, payload: MoveThoughtPayload, document?: ThoughtspaceTransaction) => {
+  const { oldPath, newPath, offset, skipMerge, afterId } = payload
   const recentlyEdited = state.recentlyEdited
-  // try {
-  //   recentlyEdited = treeMove(state, state.recentlyEdited, oldPath, newPath)
-  // } catch (e) {
-  //   console.error('moveThought: treeMove immer error')
-  //   console.error(e)
-  // }
 
   const oldPathSimple = simplifyPath(state, oldPath)
   const newPathSimple = simplifyPath(state, newPath)
@@ -72,7 +55,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   const sourceThought = getThoughtById(state, sourceThoughtId)
 
   if (!sourceThought) {
-    console.error({ oldPath, newPath, offset, skipRerank, newRank })
+    console.error({ oldPath, newPath, offset, afterId })
     throw new Error(`moveThought: sourceThought not found. ${JSON.stringify({ oldPath, newPath })}`)
   }
 
@@ -97,14 +80,9 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
 
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
-  const effectiveAfterId =
-    afterId !== undefined
-      ? afterId
-      : getMovePlacement(state, destinationThoughtId, { id: sourceThought.id, rank: newRank })
-
   if (
-    effectiveAfterId === sourceThought.id ||
-    (effectiveAfterId !== null && !childrenOfDestination.some(child => child.id === effectiveAfterId))
+    afterId === sourceThought.id ||
+    (afterId !== null && !childrenOfDestination.some(child => child.id === afterId))
   ) {
     throw new Error(`moveThought: afterId must be null or a child of the destination context.`)
   }
@@ -135,8 +113,6 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   const duplicateThought =
     !sameContext && !skipMerge && sourceThought.value !== '' && isMetaMerge ? duplicateSubthought() : null
 
-  const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
-
   const isArchived = destinationContext?.indexOf('=archive') !== -1
 
   // if move is used for archive then update the archived field to latest timestamp
@@ -144,10 +120,8 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
 
   return reducerFlow([
     // disable sort when moving within the same context
-    // skip if skipRerank is set (e.g. rerank) to avoid disabling sort during internal rank normalization
     sameContext &&
-    !skipRerank &&
-    newRank !== sourceThought.rank &&
+    afterId !== getPreviousSiblingId(state, sourceThought.id) &&
     getSortPreference(state, destinationThoughtId).type !== 'None'
       ? reducerFlow([
           alert({
@@ -162,63 +136,68 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
 
     state => {
       // Note: In case of duplicate merge, the mergeThoughts handles both the merge, move logic and also calls updateThoughts. So we don't need to handle move logic if duplicate thoughts are merged.
-      if (duplicateThought && !isPendingMerge) {
-        return mergeThoughts(state, {
-          sourceThoughtPath,
-          targetThoughtPath: appendToPath(destinationThoughtPath, duplicateThought.id),
-        })
+      if (duplicateThought) {
+        return mergeThoughts(
+          state,
+          {
+            sourceThoughtPath,
+            targetThoughtPath: appendToPath(destinationThoughtPath, duplicateThought.id),
+          },
+          document,
+        )
       }
 
-      // remove sourceThought from sourceParentThought
-      const sourceParentThoughtChildrenMapNew = keyValueBy(sourceParentThought.childrenMap, (key, id) =>
-        id !== sourceThought.id ? { [key]: id } : null,
-      )
-
-      // add source thought to the destination thought children array
-      const destinationThoughtChildrenMapNew = {
-        ...destinationThought.childrenMap,
-        [isAttribute(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
-      }
-
+      const sorted = !sameContext && getSortPreference(state, destinationThoughtId).type !== 'None'
+      // Disabling sort can delete the requested predecessor (=sort). Keep the same gap after its last surviving sibling.
+      const survivingAfterId =
+        afterId === null
+          ? null
+          : (childrenOfDestination
+              .slice(0, childrenOfDestination.findIndex(child => child.id === afterId) + 1)
+              .filter(child => child.id !== sourceThought.id && getThoughtById(state, child.id))
+              .at(-1)?.id ?? null)
       const thoughtIndexUpdates: Index<Thought> = {
         ...(!sameContext
           ? {
               [sourceParentThought.id]: {
                 ...sourceParentThought,
-                childrenMap: sourceParentThoughtChildrenMapNew,
                 lastUpdated: timestamp(),
                 updatedBy: clientId,
               },
               [destinationThought.id]: {
                 ...destinationThought,
-                childrenMap: destinationThoughtChildrenMapNew,
                 lastUpdated: timestamp(),
                 updatedBy: clientId,
               },
             }
           : {}),
-        // update source thought parent id, rank and other stuffs
+        // Rank remains read metadata; the explicit placement changes canonical sibling order.
         [sourceThought.id]: {
           ...sourceThought,
           parentId: destinationThought.id,
-          rank:
-            // get updated sort preference since the context may have been unsorted
-            getSortPreference(state, destinationThoughtId).type !== 'None'
-              ? getSortedRank(state, destinationThoughtId, sourceThought.value)
-              : newRank,
           ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
           updatedBy: clientId,
         },
       }
 
-      return updateThoughts(state, {
-        thoughtIndexUpdates,
-        lexemeIndexUpdates: {},
-        recentlyEdited,
-        preventExpandThoughts: true,
-        movePlacements: { [sourceThought.id]: effectiveAfterId },
-      })
+      return updateThoughts(
+        state,
+        {
+          thoughtIndexUpdates,
+          recentlyEdited,
+          preventExpandThoughts: true,
+          movePlacements: {
+            [sourceThought.id]: sorted
+              ? getSortedPlacement(state, destinationThoughtId, sourceThought.value, {
+                  created: sourceThought.created,
+                  staleId: sourceThought.id,
+                })
+              : survivingAfterId,
+          },
+        },
+        document,
+      )
     },
     // update cursor if moved path is on the cursor
     state => {
@@ -230,8 +209,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
       // In the context view the cursor is on the nominal context (the m of a/m~), while the dragged context row is
       // the deeper Path a/m~/a that resolves to the same thought. oldPath is then not an ancestor of the cursor even
       // though the moved thought is, so the cursor has to be rebased onto the thought's new location. Otherwise it
-      // keeps naming a parent that no longer contains the thought: expandThoughts can no longer reach the cursor,
-      // freeThoughts deallocates it as no longer visible, and the next expandThoughts throws "Invalid path".
+      // keeps naming a parent that no longer contains the thought, so expansion cannot follow the cursor.
       // Skipped when the thought no longer exists, i.e. it was merged into a duplicate in the destination.
       const isMovedThoughtInCursor =
         !isPathInCursor && isDescendantPath(state.cursor, oldPathSimple) && !!getThoughtById(state, sourceThought.id)
@@ -255,24 +233,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
       ...state,
       expanded: expandThoughts(state, state.cursor),
     }),
-    // rerank context if ranks are too close
-    // skip if this moveThought originated from a rerank
-    // otherwise we get an infinite loop
-    !skipRerank
-      ? state => {
-          const rankPrecision = 10e-8
-          const children = getChildrenRanked(state, head(rootedParentOf(state, newPathSimple)))
-          const ranksTooClose = children.some((thought, i) => {
-            if (i === 0) return false
-            const secondThought = getThoughtById(state, children[i - 1].id)
-            if (!secondThought) return false
-            return Math.abs(thought.rank - secondThought.rank) < rankPrecision
-          })
-          // Rerank operates on the physical parent path, so use the simplified destination path.
-          return ranksTooClose ? rerank(state, rootedParentOf(state, newPathSimple) as SimplePath) : state
-        }
-      : null,
-  ])(state)
+  ])(state, document)
 }
 
 /** Action-creator for moveThought. */
@@ -281,7 +242,7 @@ export const moveThoughtActionCreator =
   dispatch =>
     dispatch({ type: 'moveThought', ...payload })
 
-export default _.curryRight(moveThought, 2)
+export default command(moveThought)
 
 // Register this action's metadata
 registerActionMetadata('moveThought', {

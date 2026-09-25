@@ -1,5 +1,6 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import deleteThought from '../actions/deleteThought'
 import { ABSOLUTE_TOKEN } from '../constants'
@@ -9,6 +10,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -18,14 +20,18 @@ import reducerFlow from '../util/reducerFlow'
 import updateCursorAfterDelete from './updateCursorAfterDelete'
 
 /** Given a path to a thought within the context view (a/m~/b), find the associated thought (b/m). This is nontrivial since the associated thought (b/m) is a different Lexeme instance than the context view thought (a/m). */
-const getContext = (state: State, path: Path) => {
+const getContext = (state: State, path: Path, document?: ThoughtspaceTransaction) => {
   const contextValue = headValue(state, parentOf(path))
   const contexts = contextValue !== undefined ? getContexts(state, contextValue) : []
   return contexts.find(cxid => getThoughtById(state, cxid)?.parentId === head(path))
 }
 
 /** Deletes a thought and moves the cursor to a nearby valid thought. Works in normal view and context view. */
-const deleteThoughtWithCursor = (state: State): State => {
+const deleteThoughtWithCursor = (
+  state: State,
+  _payload: undefined = undefined,
+  document?: ThoughtspaceTransaction,
+): State => {
   if (!state.cursor) return state
 
   const cursor = state.cursor
@@ -52,7 +58,7 @@ const deleteThoughtWithCursor = (state: State): State => {
   // When deleting a context from the context view, we need to delete the correct instance of the Lexeme, e.g. in a/m~/b we want to delete b/m
   // This is a problem specifically for tangential contexts, which have a different parent from the cursor.
   // i.e. The id of b/m is not contained within the cursor a/m~/b because they are different m instances.
-  const contextId = (showContexts && getContext(state, cursor)) || null
+  const contextId = (showContexts && getContext(state, cursor, document)) || null
 
   return reducerFlow([
     // delete thought
@@ -71,7 +77,7 @@ const deleteThoughtWithCursor = (state: State): State => {
     ),
 
     // move cursor
-    stateNew => updateCursorAfterDelete(stateNew, state),
+    stateNew => updateCursorAfterDelete(stateNew, state, document),
 
     /* If the second-to-last context is deleted, and it is a tangential context, we need to manually close the context view.
        Other cases are handled by deleteThought.
@@ -92,14 +98,14 @@ const deleteThoughtWithCursor = (state: State): State => {
           }
         }
       : null,
-  ])(state)
+  ])(state, document)
 }
 
 /** Action-creator for deleteThoughtWithCursor. */
 export const deleteThoughtWithCursorActionCreator = (): Thunk => dispatch =>
   dispatch({ type: 'deleteThoughtWithCursor' })
 
-export default deleteThoughtWithCursor
+export default command(deleteThoughtWithCursor)
 
 // Register this action's metadata
 registerActionMetadata('deleteThoughtWithCursor', {

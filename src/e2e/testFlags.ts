@@ -5,8 +5,6 @@ type TestFlags = {
   logMultigesture: boolean
   /** Delay in ms before expanding the hovering thought. */
   expandHoverDelay: number | null
-  /** Delay in ms to mock data replication, for simulating network latency in tests. */
-  replicationDelay: number
   /** Prevent automatic app initialization on page load. */
   preventInitialize: boolean
   /** Starts app initialization when preventInitialize is enabled. */
@@ -30,7 +28,6 @@ const testFlags: TestFlags = {
   logActions: false,
   logMultigesture: false,
   expandHoverDelay: null,
-  replicationDelay: preloadedTestFlags?.replicationDelay ?? 0,
   preventInitialize: preloadedTestFlags?.preventInitialize ?? false,
   initialize: null,
   thoughtspaceStorage: preloadedTestFlags?.thoughtspaceStorage ?? null,

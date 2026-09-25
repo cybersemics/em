@@ -1,6 +1,6 @@
-import { applyPatch } from 'fast-json-patch'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import cursorBack from '../actions/cursorBack'
 import setCursor from '../actions/setCursor'
 import getContexts from '../selectors/getContexts'
@@ -13,6 +13,7 @@ import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import once from '../util/once'
@@ -26,7 +27,7 @@ import parentOf from '../util/parentOf'
  * -   If the last action was a new subthought, i.e. newThought with insertNewSubthought: true, restore the cursor to the parent.
  * -   Restoring the cursor and making the delete action an exact inverse to newThought is more intuitive than moving the cursor elsewhere, and helps the user with error correction.
  **/
-const updateCursorAfterDelete = (state: State, statePrev: State) => {
+const updateCursorAfterDelete = (state: State, statePrev: State, document?: ThoughtspaceTransaction) => {
   const cursor = statePrev.cursor
   if (!cursor) return state
 
@@ -82,21 +83,11 @@ const updateCursorAfterDelete = (state: State, statePrev: State) => {
     if (!cursor) return null
 
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    const lastCursorOps =
+    const lastCursorOp =
       lastPatches?.metadata.actionTypes[0] === 'newThought'
-        ? lastPatches?.ops.filter(operation => operation.path.startsWith('/cursor/'))
-        : null
-
-    if (!lastCursorOps || lastCursorOps.length === 0) return null
-
-    // remove /cursor from the patch since we are applying it directly to cursor, not the full state
-    const revertCursorPatch = lastCursorOps.map(operation => ({
-      ...operation,
-      path: operation.path.replace('/cursor', ''),
-    }))
-    // apply to the cursor prior to deleteThought, not state.cursor
-    const cursorNew = applyPatch([...cursor], revertCursorPatch).newDocument as Path
-    return cursorNew
+        ? lastPatches.ops.find(patch => patch.path === '/cursor')
+        : undefined
+    return lastCursorOp && 'value' in lastCursorOp ? (lastCursorOp.value as Path | null) : null
   })
 
   const cursorNew = revertedCursor()
@@ -119,14 +110,18 @@ const updateCursorAfterDelete = (state: State, statePrev: State) => {
             null
 
   return cursorNew
-    ? setCursor(state, {
-        path: cursorNew,
-        isKeyboardOpen: state.isKeyboardOpen,
-        // If there is no next thought, or when deleting an empty thought, set the offset to the end of the previous thought.
-        // Otherwise, set the offset to the beginning of the thought.
-        offset: !next() || (thought.value === '' && prev()) ? headValue(state, cursorNew)?.length : 0,
-      })
-    : cursorBack(state)
+    ? setCursor(
+        state,
+        {
+          path: cursorNew,
+          isKeyboardOpen: state.isKeyboardOpen,
+          // If there is no next thought, or when deleting an empty thought, set the offset to the end of the previous thought.
+          // Otherwise, set the offset to the beginning of the thought.
+          offset: !next() || (thought.value === '' && prev()) ? headValue(state, cursorNew)?.length : 0,
+        },
+        document,
+      )
+    : cursorBack(state, undefined, document)
 }
 
-export default updateCursorAfterDelete
+export default command(updateCursorAfterDelete)

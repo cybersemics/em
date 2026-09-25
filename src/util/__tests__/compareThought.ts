@@ -3,6 +3,9 @@ import Timestamp from '../../@types/Timestamp'
 import importText from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import contextToThought from '../../test-helpers/contextToThought'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import timestamp from '../../util/timestamp'
 import {
   compare,
@@ -30,7 +33,9 @@ import {
 } from '../compareThought'
 import createId from '../createId'
 import initialState from '../initialState'
-import reducerFlow from '../reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 /** Build a test thought with the given value. */
 const thought = (value: string): Thought => ({

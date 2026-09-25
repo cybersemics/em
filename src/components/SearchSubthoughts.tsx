@@ -31,7 +31,7 @@ const SearchSubthoughts: FC = () => {
   const thoughtIndex = useSelector(state => state.thoughts.thoughtIndex)
 
   /**
-   * Search thoughts remotely or locally and add it to pullQueue.
+   * Placeholder for asynchronous search integration.
    */
   //ignore this line beacaue its call in useEffect Function
   const searchThoughts = async (value: string) => {

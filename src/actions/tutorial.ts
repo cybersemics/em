@@ -1,16 +1,21 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import storage from '../util/storage'
 import settings from './settings'
 
 /** Sets the Tutorial setting value. */
-const tutorial = (state: State, { value }: { value?: boolean }) => ({
-  ...settings(state, {
-    key: 'Tutorial',
-    value: value ? 'On' : 'Off',
-  }),
+const tutorial = (state: State, { value }: { value?: boolean }, document?: ThoughtspaceTransaction) => ({
+  ...settings(
+    state,
+    {
+      key: 'Tutorial',
+      value: value ? 'On' : 'Off',
+    },
+    document,
+  ),
   // disable isLoading when dismissing the tutorial, since we can assume this is a new thoughtspace or the thoughtspace has already been loaded
   isLoading: state.isLoading && value,
 })
@@ -24,7 +29,7 @@ export const tutorialActionCreator =
     dispatch({ type: 'tutorial', value })
   }
 
-export default _.curryRight(tutorial)
+export default command(tutorial)
 
 // Register this action's metadata
 registerActionMetadata('tutorial', {

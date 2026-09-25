@@ -1,14 +1,20 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import setCursor from '../actions/setCursor'
 import { HOME_TOKEN } from '../constants'
 import { getChildrenSorted } from '../selectors/getChildren'
 import prevThought from '../selectors/prevThought'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 
 /** Moves the cursor to the previous visible thought in visual order. If there is no cursor, sets the cursor on the last thought in the home context. */
-const cursorUp = (state: State, { preserveMulticursor }: { preserveMulticursor?: boolean } = {}) => {
+const cursorUp = (
+  state: State,
+  { preserveMulticursor }: { preserveMulticursor?: boolean } = {},
+  document?: ThoughtspaceTransaction,
+) => {
   const { cursor } = state
 
   const path = cursor
@@ -21,10 +27,14 @@ const cursorUp = (state: State, { preserveMulticursor }: { preserveMulticursor?:
 
   // noop if there is no previous path, i.e. the cursor is on the very first thought
   return path && path.length > 0
-    ? setCursor(state, {
-        path: path,
-        preserveMulticursor,
-      })
+    ? setCursor(
+        state,
+        {
+          path: path,
+          preserveMulticursor,
+        },
+        document,
+      )
     : state
 }
 
@@ -34,7 +44,7 @@ export const cursorUpActionCreator =
   dispatch =>
     dispatch({ type: 'cursorUp', ...payload })
 
-export default cursorUp
+export default command(cursorUp)
 
 // Register this action's metadata
 registerActionMetadata('cursorUp', {

@@ -2,13 +2,18 @@ import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
 import splitThought from '../splitThought'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('split thought', () => {
   const steps = [

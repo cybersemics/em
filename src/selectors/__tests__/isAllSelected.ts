@@ -1,10 +1,15 @@
 import importText from '../../actions/importText'
 import toggleContextView from '../../actions/toggleContextView'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import isAllSelected from '../isAllSelected'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('isAllSelected', () => {
   const text = `

@@ -1,18 +1,18 @@
-import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
-import getNextRank from '../selectors/getNextRank'
-import getRankBefore from '../selectors/getRankBefore'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import getThoughtBefore from '../selectors/getThoughtBefore'
 import prevSibling from '../selectors/prevSibling'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -24,7 +24,11 @@ export interface moveThoughtUpPayload {
 }
 
 /** Swaps the thought with its previous siblings. */
-const moveThoughtUp = (state: State, { offset }: moveThoughtUpPayload = {}): State => {
+const moveThoughtUp = (
+  state: State,
+  { offset }: moveThoughtUpPayload = {},
+  document?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -60,24 +64,21 @@ const moveThoughtUp = (state: State, { offset }: moveThoughtUpPayload = {}): Sta
     })
   }
 
-  const rankNew = prevThought
-    ? // previous thought
-      getRankBefore(state, simplifyPath(state, pathParent).concat(prevThought.id) as SimplePath)
-    : // first thought in previous uncle
-      getNextRank(state, head(prevUnclePath!))
-
   const newPathParent = prevThought ? pathParent : prevUnclePath!
   const newPath = appendToPath(newPathParent, head(cursor))
 
-  return moveThought(state, {
-    oldPath: cursor,
-    newPath,
-    ...(offset != null ? { offset } : null),
-    newRank: rankNew,
-    afterId: prevThought
-      ? (prevSibling(state, appendToPath(pathParent, prevThought.id))?.id ?? null)
-      : (getChildrenRanked(state, head(prevUnclePath!)).at(-1)?.id ?? null),
-  })
+  return moveThought(
+    state,
+    {
+      oldPath: cursor,
+      newPath,
+      ...(offset != null ? { offset } : null),
+      afterId: prevThought
+        ? getPreviousSiblingId(state, prevThought.id, { excludeId: thoughtId })
+        : (getChildrenRanked(state, head(prevUnclePath!)).at(-1)?.id ?? null),
+    },
+    document,
+  )
 }
 
 /**
@@ -87,7 +88,7 @@ const moveThoughtUp = (state: State, { offset }: moveThoughtUpPayload = {}): Sta
 export const moveThoughtUpActionCreator = (): Thunk => dispatch =>
   dispatch({ type: 'moveThoughtUp', offset: selection.offset() })
 
-export default moveThoughtUp
+export default command(moveThoughtUp)
 
 // Register this action's metadata
 registerActionMetadata('moveThoughtUp', {
