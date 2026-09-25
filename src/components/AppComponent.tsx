@@ -27,6 +27,7 @@ import DropGutter from './DropGutter'
 import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
+import HelpGenie from './HelpGenie/HelpGenie'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
 import PinnedCommand from './Learning/PinnedCommand'
 import MultiGesture from './MultiGesture'
@@ -246,6 +247,9 @@ const AppComponent: FC = () => {
           </div>
         </>
       )}
+
+      {/* Outside the modal condition so the genie keeps flying over dialogs and modals once it is out. */}
+      <HelpGenie />
     </div>
   )
 }

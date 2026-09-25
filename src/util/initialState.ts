@@ -134,6 +134,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     jumpIndex: 0,
     latestCommands: [],
     learning: storageModel.get('learning'),
+    helpGenie: { visible: false, target: null, unavailable: false },
     longPress: LongPressState.Inactive,
     manualSortMap: {},
     modals: {},

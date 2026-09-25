@@ -480,6 +480,9 @@ export default defineConfig({
         Keep these in one place to make it easier to determine interactions and prevent conflicts. */
         zIndex: {
           ...zIndexDescending([
+            // The help genie flies over everything, including the Command Universe dialog it is let out from. Its
+            // canvas ignores pointer events, so it never blocks what is beneath it.
+            'helpGenie',
             'dialog',
             'dialogContainer',
             'popup',
