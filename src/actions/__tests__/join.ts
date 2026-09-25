@@ -2,12 +2,18 @@ import join from '../../actions/join'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import removeHome from '../../util/removeHome'
 import importText from '../importText'
 import moveThoughtUp from '../moveThoughtUp'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('joins two simple thoughts', () => {
   const text = `
@@ -18,7 +24,7 @@ it('joins two simple thoughts', () => {
   `
   const steps = [importText({ text }), setCursor(['a', 'm']), join()]
 
-  const newState = reducerFlow(steps)(initialState())
+  const newState = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
   const expectedOutput = `
 - a
@@ -35,7 +41,7 @@ it('joins thoughts in the root', () => {
   `
   const steps = [importText({ text }), setCursor(['a']), join()]
 
-  const newState = reducerFlow(steps)(initialState())
+  const newState = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
   const expectedOutput = `
 - a b
@@ -51,7 +57,7 @@ it('joins thoughts in rank order', () => {
   `
   const steps = [importText({ text }), setCursor(['a', 'm']), moveThoughtUp, join()]
 
-  const newState = reducerFlow(steps)(initialState())
+  const newState = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
   const expectedOutput = `
 - a
@@ -69,7 +75,7 @@ it('ignores metaprogramming attributes', () => {
   `
   const steps = [importText({ text }), setCursor(['a', 'm']), join()]
 
-  const newState = reducerFlow(steps)(initialState())
+  const newState = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
   const expectedOutput = `
 - a
@@ -96,7 +102,7 @@ it('joins two thoughts and merges their children', () => {
   `
   const steps = [importText({ text }), setCursor(['a', 'o']), join()]
 
-  const newState = reducerFlow(steps)(initialState())
+  const newState = runDocumentCommand(reducerFlow(steps), initialState())
 
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
   const expectedOutput = `
@@ -127,7 +133,7 @@ it('generates unique and non-conflicting ranks', () => {
   `
   const steps = [importText({ text }), setCursor(['a', 'n']), join()]
 
-  const newState = reducerFlow(steps)(initialState())
+  const newState = runDocumentCommand(reducerFlow(steps), initialState())
 
   const children = getChildrenRankedByContext(newState, ['a', 'm n o'])
 
@@ -143,7 +149,7 @@ it('removes trailing hyphens', () => {
   `
   const steps = [importText({ text }), setCursor(['Manufacture -> Deposition', 'in an']), join()]
 
-  const newState = reducerFlow(steps)(initialState())
+  const newState = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(newState, [HOME_TOKEN], 'text/plain')
   const expectedOutput = `
 - Manufacture -> Deposition

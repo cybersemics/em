@@ -1,5 +1,6 @@
 import { last } from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import addMulticursor from '../actions/addMulticursor'
 import removeMulticursor from '../actions/removeMulticursor'
@@ -14,6 +15,7 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isRoot from '../util/isRoot'
@@ -21,7 +23,11 @@ import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 
 /** Replaces the multiselect with the thoughts one level forward of each selected thought, i.e. the contexts of a thought whose context view is active, otherwise its visible children. */
-const multicursorForward = (state: State): State => {
+const multicursorForward = (
+  state: State,
+  _payload: undefined = undefined,
+  document?: ThoughtspaceTransaction,
+): State => {
   const paths = Object.values(state.multicursors)
   const forwardPaths = paths.flatMap(path => {
     const contextViewValue = isContextViewActive(state, path) ? headValue(state, path) : undefined
@@ -39,7 +45,7 @@ const multicursorForward = (state: State): State => {
     // A selected thought that is also the child of another selected thought is deselected and reselected.
     ...paths.map(path => removeMulticursor({ path })),
     ...forwardPaths.map(path => addMulticursor({ path })),
-  ])(state)
+  ])(state, document)
 
   return {
     ...stateNew,
@@ -51,8 +57,8 @@ const multicursorForward = (state: State): State => {
 }
 
 /** Moves the cursor forward in the cursorHistory. When thoughts are selected, replaces the selection with the thoughts one level forward instead of moving the cursor. */
-const cursorForward = (state: State): State => {
-  if (hasMulticursor(state)) return multicursorForward(state)
+const cursorForward = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+  if (hasMulticursor(state)) return multicursorForward(state, undefined, document)
 
   const cursorFromHistory = last(state.cursorHistory)
   const cursor = state.cursor || HOME_PATH
@@ -83,20 +89,24 @@ const cursorForward = (state: State): State => {
   }
 
   return cursorNew
-    ? setCursor(state, {
-        // offset shouldn't be null if we want useEditMode to set the selection to the new thought
-        offset: 0,
-        path: cursorNew,
-        cursorHistoryPop: isValidChild,
-        preserveMulticursor: true,
-      })
+    ? setCursor(
+        state,
+        {
+          // offset shouldn't be null if we want useEditMode to set the selection to the new thought
+          offset: 0,
+          path: cursorNew,
+          cursorHistoryPop: isValidChild,
+          preserveMulticursor: true,
+        },
+        document,
+      )
     : state
 }
 
 /** Action-creator for cursorForward. */
 export const cursorForwardActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorForward' })
 
-export default cursorForward
+export default command(cursorForward)
 
 // Register this action's metadata
 registerActionMetadata('cursorForward', {

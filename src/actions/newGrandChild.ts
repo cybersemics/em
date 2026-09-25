@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import newThought from '../actions/newThought'
 import { TUTORIAL_STEP_START } from '../constants'
@@ -7,12 +8,13 @@ import getRootPath from '../selectors/getRootPath'
 import getSetting from '../selectors/getSetting'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
 
 /**
  * Creates a new grandchild at the first visible subthought of the cursor. When there is no cursor, the root stands in for it, so the new thought is created in the first visible child of the root.
  */
-const newGrandChild = (state: State): State => {
+const newGrandChild = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'
   const tutorialStep = +!getSetting(state, 'Tutorial Step')
 
@@ -25,13 +27,13 @@ const newGrandChild = (state: State): State => {
   // stop if there is no visible children
   if (!firstChild) return state
 
-  return newThought(state, { insertNewSubthought: true, at: appendToPath(path, firstChild.id) })
+  return newThought(state, { insertNewSubthought: true, at: appendToPath(path, firstChild.id) }, document)
 }
 
 /** Action-creator for newGrandChild. */
 export const newGrandChildActionCreator = (): Thunk => dispatch => dispatch({ type: 'newGrandChild' })
 
-export default newGrandChild
+export default command(newGrandChild)
 
 // Register this action's metadata
 registerActionMetadata('newGrandChild', {

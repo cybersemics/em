@@ -1,10 +1,11 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import setDescendant from '../actions/setDescendant'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import stripTags from '../util/stripTags'
 import deleteAttribute from './deleteAttribute'
 
@@ -16,13 +17,14 @@ const bulletColor = (
     color,
     fullySelected,
   }: { backgroundColor?: string; color?: string; shape?: 'bullet' | 'text'; fullySelected?: boolean },
+  document?: ThoughtspaceTransaction,
 ) => {
   if (!state.cursor) return state
   const path = state.cursor
   // set bullet to text color when the entire thought selected
   return fullySelected && ((color && color !== 'default') || (backgroundColor && backgroundColor !== 'inverse'))
-    ? setDescendant(state, { path, values: ['=bullet', '=style', 'color', backgroundColor! || color!] })
-    : deleteAttribute(state, { path, values: ['=bullet', '=style', 'color'] })
+    ? setDescendant(state, { path, values: ['=bullet', '=style', 'color', backgroundColor! || color!] }, document)
+    : deleteAttribute(state, { path, values: ['=bullet', '=style', 'color'] }, document)
 }
 
 /** Action-creator for bulletColor. */
@@ -39,7 +41,7 @@ export const bulletColorActionCreator =
     dispatch({ type: 'bulletColor', ...payload, fullySelected })
   }
 
-export default _.curryRight(bulletColor)
+export default command(bulletColor)
 
 // Register this action's metadata
 registerActionMetadata('bulletColor', {

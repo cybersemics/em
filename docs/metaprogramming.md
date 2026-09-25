@@ -91,7 +91,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 
 - **`=archive`** — marks the thought (and, semantically, its descendants) as archived. Archived thoughts are hidden from normal views but kept for recovery; the user surfaces them via the **Recently Deleted** UI. The `=archive` attribute is special-cased in many filters (e.g. it survives `isAttribute`-based hiding so the recently-deleted view can find it). See [`archiveThought`](../src/actions/archiveThought.ts) and [`isThoughtArchived`](../src/util/isThoughtArchived.ts).
 - **`=done`** — marks a thought as completed. The thought is rendered grayed out and struck through. Consumed by [`Bullet`](../src/components/Bullet.tsx), [`Editable`](../src/components/Editable.tsx), and the **Mark as done** command.
-- **`=favorite`** — marks the thought for inclusion in the Favorites panel. The Favorites Lexeme (`=favorite`) tracks every context that has this attribute.
+- **`=favorite`** — marks the thought for inclusion in the Favorites panel. The Favorites Lexeme (`=favorite`) tracks every context that has this attribute. The `Favorites Order` setting stores marker ids as JSON for panel ordering; it does not alter lexeme membership. See [Favorites drag and drop](drag-and-drop.md#favorites).
 
 ### Linking & cross-references
 
@@ -108,7 +108,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 
 ### Drag-and-drop
 
-- **`=drop`** — controls drag-and-drop behavior on the thought. Options: `top` (a thought dropped on this collapsed parent is inserted at the *top* of its children rather than the default bottom). Consumed by [`useDragAndDropSubThought`](../src/hooks/useDragAndDropSubThought.ts).
+- **`=drop`** — controls drag-and-drop behavior on the thought. Options: `top` (a thought dropped on this collapsed parent is inserted at the *top* of its children rather than the default bottom). Consumed by [`useDragAndDropSubThought`](../src/hooks/useDragAndDropSubThought.tsx).
 
 ### Constraints & validation
 
@@ -146,6 +146,6 @@ enum Settings {
 
 (See the in-app **Settings** modal for human-readable descriptions of each.)
 
-A separate set of *cached* settings — `CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']` — is also persisted to `localStorage` by the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) enhancer so they're available before the thoughtspace hydrates on first paint. See [persistence.md](persistence.md) for the caching mechanics.
+A separate set of *cached* settings — `CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']` — is also persisted to `localStorage` by [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) so they're available before the thoughtspace hydrates on first paint. See [persistence.md](persistence.md) for the caching mechanics.
 
 Reads go through [`getSetting`](../src/selectors/getSetting.ts), which first consults the in-memory thought (e.g. `[EM, 'Settings', 'Tutorial']`) and falls back to the localStorage cache when needed.

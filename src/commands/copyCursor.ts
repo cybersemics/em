@@ -1,10 +1,8 @@
 import pluralize from 'pluralize'
 import Command from '../@types/Command'
-import Dispatch from '../@types/Dispatch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { alertActionCreator as alert } from '../actions/alert'
-import { pullActionCreator as pull } from '../actions/pull'
 import SettingsIcon from '../components/icons/SettingsIcon'
 import copy from '../device/copy'
 import * as selection from '../device/selection'
@@ -12,34 +10,18 @@ import exportContext from '../selectors/exportContext'
 import getMulticursorThoughtIds from '../selectors/getMulticursorThoughtIds'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
-import isPending from '../selectors/isPending'
 import simplifyPath from '../selectors/simplifyPath'
-import someDescendants from '../selectors/someDescendants'
 import exportPhrase from '../util/exportPhrase'
 import head from '../util/head'
 import isDocumentEditable from '../util/isDocumentEditable'
 import strip from '../util/strip'
 import trimBullet from '../util/trimBullet'
 
-/** Pulls any pending descendants for the given thought IDs, exports them to plain text, copies to clipboard, and returns data for constructing the alert message. */
-const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () => State): Promise<string> => {
-  const state = getState()
-  const needsPull = ids.some(id =>
-    someDescendants(state, id, child => isPending(state, getThoughtById(state, child.id))),
-  )
-
-  if (needsPull) {
-    dispatch(alert('Loading thoughts...', { clearDelay: null }))
-    await dispatch(pull(ids, { maxDepth: Infinity }))
-  }
-
-  const stateAfterPull = getState()
-
-  const exported = ids.map(id => strip(exportContext(stateAfterPull, id, 'text/plain'))).join('\n')
-  const exportedHtml = ids.map(id => exportContext(stateAfterPull, id, 'text/html')).join('\n')
-  const exportedVisible = ids
-    .map(id => exportContext(stateAfterPull, id, 'text/plain', { excludeMeta: true }))
-    .join('\n')
+/** Copies the selected complete subtrees and returns their visible text for the alert. */
+const copyThoughts = (ids: ThoughtId[], state: State): string => {
+  const exported = ids.map(id => strip(exportContext(state, id, 'text/plain'))).join('\n')
+  const exportedHtml = ids.map(id => exportContext(state, id, 'text/html')).join('\n')
+  const exportedVisible = ids.map(id => exportContext(state, id, 'text/plain', { excludeMeta: true })).join('\n')
 
   // Write text/html and the text/em marker alongside the plain text so structured paste works even when
   // the browser does not fire a native copy event for the collapsed selection (e.g. Safari) (#3993).
@@ -58,10 +40,10 @@ const copyCursorCommand = {
     // re-add the multicursors and recompute state.expanded, and that residual change is enough to leave an
     // undo entry labeled Copy Cursor for a command that does not touch the thoughtspace.
     preventSetCursor: true,
-    execMulticursor: async (cursors, dispatch, getState) => {
+    execMulticursor: (cursors, dispatch, getState) => {
       const ids = getMulticursorThoughtIds(getState())
 
-      const exportedVisible = await copyThoughts(ids, dispatch, getState)
+      const exportedVisible = copyThoughts(ids, getState())
 
       const numThoughts = ids.length
       const numDescendants = exportedVisible.split('\n').length - numThoughts
@@ -82,11 +64,11 @@ const copyCursorCommand = {
     // do not copy cursor if there is a browser selection
     return selection.isCollapsed() && (!!state.cursor || hasMulticursor(state)) && isDocumentEditable()
   },
-  exec: async (dispatch, getState) => {
+  exec: (dispatch, getState) => {
     const state = getState()
     const simplePath = simplifyPath(state, state.cursor!)
 
-    const exportedVisible = await copyThoughts([head(simplePath)], dispatch, getState)
+    const exportedVisible = copyThoughts([head(simplePath)], state)
 
     const numDescendants = exportedVisible ? exportedVisible.split('\n').length - 1 : 0
     const phrase = exportPhrase(head(simplePath), numDescendants, {

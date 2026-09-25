@@ -4,7 +4,10 @@ import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import cursorBack from '../cursorBack'
@@ -14,11 +17,14 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import toggleContextView from '../toggleContextView'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 describe('nomal view', () => {
   it('delete thought within root', () => {
     const steps = [newThought('a'), newThought('b'), deleteThoughtWithCursor]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -28,7 +34,7 @@ describe('nomal view', () => {
   it('delete thought with no cursor should do nothing ', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(null), deleteThoughtWithCursor]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -39,7 +45,7 @@ describe('nomal view', () => {
   it('delete thought within context', () => {
     const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -49,7 +55,7 @@ describe('nomal view', () => {
   it('delete descendants', () => {
     const steps = [newThought('a'), newSubthought('a1'), newSubthought('a1.1'), cursorBack, deleteThoughtWithCursor]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -66,7 +72,7 @@ describe('nomal view', () => {
       deleteThoughtWithCursor,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a3'])!)
   })
@@ -74,7 +80,7 @@ describe('nomal view', () => {
   it('cursor should move to prev sibling when deleting the last thought in the context', () => {
     const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), newThought('a3'), deleteThoughtWithCursor]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a2'])!)
   })
@@ -82,14 +88,14 @@ describe('nomal view', () => {
   it('cursor should move to parent if the deleted thought has no siblings', () => {
     const steps = [newThought('a'), newSubthought('a1'), deleteThoughtWithCursor]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
   })
 
   it('cursor should be removed if the last thought in the thoughtspace is deleted', () => {
     const steps = [newThought('a'), deleteThoughtWithCursor]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(stateNew.cursor).toBe(null)
   })
@@ -117,7 +123,7 @@ describe('context view', () => {
       deleteThoughtWithCursor,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -154,7 +160,7 @@ describe('context view', () => {
       deleteThoughtWithCursor,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -191,7 +197,7 @@ describe('context view', () => {
       deleteThoughtWithCursor,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -229,7 +235,7 @@ describe('context view', () => {
       deleteThoughtWithCursor,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -264,7 +270,7 @@ describe('context view', () => {
       deleteThoughtWithCursor,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -294,7 +300,7 @@ describe('context view', () => {
       deleteThoughtWithCursor,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -322,7 +328,7 @@ describe('context view', () => {
       deleteThoughtWithCursor,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}

@@ -4,7 +4,13 @@ import { HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getContextsSortedAndRanked from '../../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../../selectors/getThoughtById'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 const FIXED_HOME_ROOT_VALUE = '00000000000000000000000000000001'
 
@@ -37,7 +43,7 @@ describe('getContextsSortedAndRanked', () => {
               - y
       `
 
-      const state = importText(initialState(), { text })
+      const state = runDocumentCommand((state, document) => importText(state, { text }, document), initialState())
       const vId = contextToThoughtId(state, ['v'])
       const bId = contextToThoughtId(state, ['v', 'b'])
 

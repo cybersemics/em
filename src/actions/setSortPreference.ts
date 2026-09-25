@@ -1,20 +1,20 @@
-import _ from 'lodash'
 import SimplePath from '../@types/SimplePath'
 import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import findDescendant from '../selectors/findDescendant'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 import alert from './alert'
 import deleteAttribute from './deleteAttribute'
-import rerank from './rerank'
 import sort from './sort'
 import toggleAttribute from './toggleAttribute'
 import updateThoughts from './updateThoughts'
@@ -34,6 +34,7 @@ const setSortPreference = (
     simplePath: SimplePath
     sortPreference: SortPreference
   },
+  document?: ThoughtspaceTransaction,
 ): State => {
   const id = head(simplePath)
   const currentSortPreference = getSortPreference(state, id)
@@ -64,21 +65,21 @@ const setSortPreference = (
             const manualRanks = state.manualSortMap[id]
             if (!manualRanks) return state
 
-            // get all children with manual ranks that still exist
-            const childrenWithManualRanks = getAllChildrenAsThoughts(state, id).filter(child => child.id in manualRanks)
-            return updateThoughts(state, {
-              thoughtIndexUpdates: keyValueBy(childrenWithManualRanks, child => ({
-                [child.id]: {
-                  ...child,
-                  rank: manualRanks[child.id],
-                },
-              })),
-              lexemeIndexUpdates: {},
-              preventExpandThoughts: true,
-            })
+            const children = getAllChildrenAsThoughts(state, id).sort(
+              (a, b) => (manualRanks[a.id] ?? a.rank) - (manualRanks[b.id] ?? b.rank),
+            )
+            return updateThoughts(
+              state,
+              {
+                thoughtIndexUpdates: keyValueBy(children, child => ({ [child.id]: child })),
+                movePlacements: Object.fromEntries(
+                  children.map((child, index) => [child.id, children[index - 1]?.id ?? null]),
+                ),
+                preventExpandThoughts: true,
+              },
+              document,
+            )
           },
-          // rerank in case there are any duplicate ranks
-          rerank(simplePath),
         ])
       : // Set new preference
         reducerFlow([
@@ -119,23 +120,31 @@ const setSortPreference = (
 
             if (!sortPreference.direction) {
               // Remove direction if it's null
-              return toggleAttribute(state, {
-                path: pathSort,
-                values: [sortPreference.type],
-              })
+              return toggleAttribute(
+                state,
+                {
+                  path: pathSort,
+                  values: [sortPreference.type],
+                },
+                document,
+              )
             } else {
               // Set specified direction
-              return toggleAttribute(state, {
-                path: pathSort,
-                values: [sortPreference.type, sortPreference.direction],
-              })
+              return toggleAttribute(
+                state,
+                {
+                  path: pathSort,
+                  values: [sortPreference.type, sortPreference.direction],
+                },
+                document,
+              )
             }
           },
 
           // Apply the sort
           sort(id),
         ]),
-  ])(state)
+  ])(state, document)
 }
 
 /** Action-creator for setSortPreference. */
@@ -144,7 +153,7 @@ export const setSortPreferenceActionCreator =
   dispatch =>
     dispatch({ type: 'setSortPreference', ...payload })
 
-export default _.curryRight(setSortPreference, 2)
+export default command(setSortPreference)
 
 // Register this action's metadata
 registerActionMetadata('setSortPreference', {

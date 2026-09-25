@@ -498,17 +498,8 @@ export enum Settings {
 // max time attempting to connect before moving to offline mode (milliseconds)
 export const WEBSOCKET_TIMEOUT = 3000
 
-// See: cachedSettingsIds in pushQueue
+// See: cacheSettings in undoRedoEnhancer.
 export const CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']
-
-/** The number of jumpHistory paths to preserve during deallocation. */
-export const FREE_THOUGHT_JUMPS = 3
-
-/** The number of additional thoughts to free when the threshold is reached. This provides some slack so that freeThoughts is not triggered on every action. */
-export const FREE_THOUGHTS_MARGIN = 50
-
-/** Throttle rate for the freeThoughts middleware to check memory pressure and deallocate thoughts from the thoughtIndex. */
-export const FREE_THOUGHTS_THROTTLE = 1000
 
 /** The animation duration for a toolbar button press. */
 export const TOOLBAR_PRESS_ANIMATION_DURATION = 80

@@ -76,8 +76,6 @@ export interface ThoughtContainerProps {
   env?: LazyEnv
   expandedContextThought?: Path
   hideBullet?: boolean
-  // See: ThoughtProps['isContextPending']
-  isContextPending?: boolean
   isCursorParent?: boolean
   isDeepHovering?: boolean
   isDragging?: boolean
@@ -255,7 +253,6 @@ const ThoughtContainer = ({
   depth = 0,
   env,
   hideBullet: hideBulletProp,
-  isContextPending,
   isVisible,
   leaf,
   path,
@@ -488,7 +485,6 @@ const ThoughtContainer = ({
   //   isHeader,
   //   isHovering,
   //   isMultiColumnTable,
-  //   isContextPending,
   //   isPublishChild,
   //   isVisible,
   //   leaf,
@@ -616,7 +612,6 @@ const ThoughtContainer = ({
             <Bullet
               dragSource={dragSourceBullet}
               longPressProps={dragHoldResult.props}
-              isContextPending={isContextPending}
               isDragging={isDragging}
               isEditing={isEditing}
               leaf={leaf}
@@ -643,7 +638,6 @@ const ThoughtContainer = ({
             // useDragAndDropThought that disables long press when there is a selection range.
             longPressProps={isTouch && !hasSelectionRange ? dragHoldResult.props : undefined}
             env={env}
-            isContextPending={isContextPending}
             isEditing={isEditing}
             ellipsizedUrl={!isEditing && containsURL(value)}
             isPublishChild={isPublishChild}
@@ -651,7 +645,7 @@ const ThoughtContainer = ({
             onEdit={!isTouch ? onEdit : undefined}
             path={path}
             rank={rank}
-            showContextBreadcrumbs={showContexts && value !== '__PENDING__'}
+            showContextBreadcrumbs={showContexts}
             simplePath={simplePath}
             cssRaw={cssRawThought}
             cssRawThought={cssRawThought}

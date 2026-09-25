@@ -20,6 +20,16 @@ it('delete falsey values', () => {
   })
 })
 
+it('preserves untouched entries and replaces updated records without merging their fields', () => {
+  const original = { oldField: true }
+  const replacement = { newField: true }
+  const merged = mergeUpdates<Record<string, boolean>>({ a: original, b: original, c: null }, { a: replacement })
+
+  expect(merged).toEqual({ a: replacement, b: original, c: null })
+  expect(merged.a).toBe(replacement)
+  expect(merged.b).toBe(original)
+})
+
 it('do not mutate arguments', () => {
   const mergeInto = { a: 1, b: 2 }
   const mergee = { b: null }

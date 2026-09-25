@@ -1,5 +1,6 @@
 import { act } from 'react'
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import cursorDown from '../../actions/cursorDown'
 import importText from '../../actions/importText'
 import { importTextActionCreator as importTextAction } from '../../actions/importText'
@@ -15,18 +16,23 @@ import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import appendToPath from '../../util/appendToPath'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 describe('normal view', () => {
   it('move cursor to next sibling', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(['a']), cursorDown]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
@@ -34,19 +40,19 @@ describe('normal view', () => {
   it('move cursor from parent first child', () => {
     const steps = [newThought('a'), newSubthought('b'), setCursor(['a']), cursorDown]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
   })
 
   it('move to first root child when there is no cursor', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(null), cursorDown]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
 
   it('do nothing when there are no thoughts', () => {
-    const stateNew = cursorDown(initialState())
+    const stateNew = runDocumentCommand((state, document) => cursorDown(state, document), initialState())
 
     expect(stateNew.cursor).toBe(null)
   })
@@ -54,7 +60,7 @@ describe('normal view', () => {
   it('move cursor to next uncle', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(['a']), newSubthought('a1'), cursorDown]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
@@ -70,7 +76,7 @@ describe('normal view', () => {
       cursorDown,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })
 
@@ -85,23 +91,28 @@ describe('normal view', () => {
         - b
         - c
     `
-    const state = reducerFlow([importText({ text }), setCursor(['x', 'a']), newThought({ value: 'a' })])(initialState())
+    const state = runDocumentCommand(
+      reducerFlow([importText({ text }), setCursor(['x', 'a']), newThought({ value: 'a' })]),
+      initialState(),
+    )
 
     // duplicates are rendered in rank order, so the second `a` and the first `b` are identified by rank
     const children = getChildrenRankedByContext(state, ['x'])
     const secondA = children.filter(child => child.value === 'a')[1]
     const firstB = children.find(child => child.value === 'b')!
-    const stateNew = reducerFlow([
-      (state: State) => setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, secondA.id) }),
-      cursorDown,
-    ])(state)
+    const stateNew = runDocumentCommand(
+      reducerFlow([
+        (state: State, document?: ThoughtspaceTransaction) =>
+          setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, secondA.id) }, document),
+        cursorDown,
+      ]),
+      state,
+    )
 
     expect(head(stateNew.cursor!)).toBe(firstB.id)
   })
 
   describe('use store', () => {
-    beforeEach(initStore)
-
     it('work for sorted thoughts', async () => {
       act(() => {
         store.dispatch([
@@ -119,7 +130,7 @@ describe('normal view', () => {
       act(() => {
         store.dispatch([setCursorAction(['a'])])
       })
-      const stateNew = cursorDown(store.getState())
+      const stateNew = runDocumentCommand((state, document) => cursorDown(state, document), store.getState())
       expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
     })
 
@@ -140,7 +151,7 @@ describe('normal view', () => {
         ])
       })
       act(() => executeCommand(newSubthoughtTopShortcut, { store }))
-      const stateNew = cursorDown(store.getState())
+      const stateNew = runDocumentCommand((state, document) => cursorDown(state, document), store.getState())
       expectPathToEqual(stateNew, stateNew.cursor, ['x', 'b'])
     })
   })
@@ -159,7 +170,7 @@ describe('context view', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, cursorDown]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a'])
   })
@@ -173,7 +184,7 @@ describe('context view', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, cursorDown]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'n'])
   })
@@ -196,7 +207,7 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'x'])
   })
@@ -222,7 +233,7 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['one', 'two', 'three', 'a', 'm', 'a', 'x'])
   })
@@ -245,7 +256,7 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'a', 'x'])
   })
@@ -266,7 +277,7 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
@@ -291,7 +302,7 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(stateNew.cursor).toBeDefined()
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b', 'z'])
@@ -315,7 +326,7 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
@@ -338,7 +349,7 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(stateNew.cursor).toBeDefined()
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
@@ -364,7 +375,7 @@ describe('context view', () => {
       cursorDown,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(stateNew.cursor).toBeDefined()
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'a', 'y'])
@@ -378,7 +389,7 @@ describe('context view', () => {
 
     const steps = [importText({ text }), setCursor(['b']), cursorDown]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['b'])
   })

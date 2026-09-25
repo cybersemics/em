@@ -12,15 +12,21 @@ import editThought from '../../test-helpers/editThoughtByContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import initStore from '../../test-helpers/initStore'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import { compareThought } from '../../util/compareThought'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 it('edit a thought', () => {
   const steps = [newThought({ value: 'a' }), newThought({ value: 'b' }), setCursor(['a']), editThought(['a'], 'aa')]
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -66,7 +72,7 @@ it('edit a descendant', () => {
     }),
     editThought(['a', 'a1'], 'aa1'),
   ]
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -94,7 +100,7 @@ it('edit a thought with descendants', () => {
     editThought(['a'], 'aa'),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -141,7 +147,7 @@ it('edit a thought existing in mutliple contexts', () => {
     editThought(['a', 'ab'], 'abc'),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -178,7 +184,7 @@ it('move cursor to existing meta programming thought if any', () => {
 
   const steps = [importText({ text }), setCursor(['a']), newSubthought({ value: '' }), editThought(['a', ''], '=style')]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
@@ -201,7 +207,7 @@ it('edit a thought that exists in another context', () => {
     editThought(['b', 'a'], 'ab'),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -217,7 +223,7 @@ it('edit a thought that exists in another context', () => {
   expect(thoughtInContextB).toBeTruthy()
 
   // ab should exist in both contexts a and b
-  expect(getContexts(stateNew, 'ab')).toMatchObject([thoughtInContextA!.id, thoughtInContextB!.id])
+  expect(getContexts(stateNew, 'ab')).toEqual([thoughtInContextA!.id, thoughtInContextB!.id].sort())
 
   expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
     {
@@ -236,7 +242,7 @@ it('edit a child with the same value as its parent', () => {
     editThought(['a', 'a'], 'ab'),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -264,7 +270,7 @@ it('do not duplicate children when new and old context are same', () => {
     editThought(['as'], 'a'),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -281,15 +287,14 @@ describe('sort', () => {
     - b
     - d`
 
-    const state1 = importText({ text })(initialState())
+    const state1 = runDocumentCommand(importText({ text }), initialState())
 
     const a1 = contextToThought(state1, ['a'])!
-    const b1 = contextToThought(state1, ['b'])!
     const d1 = contextToThought(state1, ['d'])!
 
     const steps = [setCursor(['a']), editThought(['a'], 'c')]
 
-    const stateNew = reducerFlow(steps)(state1)
+    const stateNew = runDocumentCommand(reducerFlow(steps), state1)
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -306,8 +311,8 @@ describe('sort', () => {
     // rank of edited thought should change
     expect(c2.rank).not.toEqual(a1.rank)
 
-    // rank of siblings should not
-    expect(b2.rank).toEqual(b1.rank)
+    // Ranks are canonical sibling indices, so the earlier sibling shifts when the edited thought moves past it.
+    expect([b2.rank, c2.rank, d2.rank]).toEqual([1, 2, 3])
     expect(d2.rank).toEqual(d1.rank)
   })
 
@@ -327,7 +332,7 @@ describe('sort', () => {
       editThought([''], 'b'),
     ]
 
-    const state = reducerFlow(steps)(initialState())
+    const state = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
 
@@ -342,9 +347,10 @@ describe('sort', () => {
 
   // https://github.com/cybersemics/em/issues/4847
   it('keep an emoji-only thought at its insertion point until text is added', () => {
-    const stateEmoji = reducerFlow([
-      importText({
-        text: `
+    const stateEmoji = runDocumentCommand(
+      reducerFlow([
+        importText({
+          text: `
           - X
             - =sort
               - Alphabetical
@@ -352,11 +358,13 @@ describe('sort', () => {
             - B
             - D
         `,
-      }),
-      setCursor(['X']),
-      newThought({ insertNewSubthought: true, value: '' }),
-      editThought(['X', ''], '🙂'),
-    ])(initialState())
+        }),
+        setCursor(['X']),
+        newThought({ insertNewSubthought: true, value: '' }),
+        editThought(['X', ''], '🙂'),
+      ]),
+      initialState(),
+    )
 
     expect(exportContext(stateEmoji, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - X
@@ -367,7 +375,7 @@ describe('sort', () => {
     - D
     - 🙂`)
 
-    const stateEmojiWithText = editThought(['X', '🙂'], '🙂C')(stateEmoji)
+    const stateEmojiWithText = runDocumentCommand(editThought(['X', '🙂'], '🙂C'), stateEmoji)
 
     expect(exportContext(stateEmojiWithText, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - X
@@ -380,9 +388,10 @@ describe('sort', () => {
   })
 
   it('keep a thought with an empty HTML tag at its insertion point until text is added', () => {
-    const stateBefore = reducerFlow([
-      importText({
-        text: `
+    const stateBefore = runDocumentCommand(
+      reducerFlow([
+        importText({
+          text: `
           - X
             - =sort
               - Alphabetical
@@ -390,11 +399,13 @@ describe('sort', () => {
             - B
             - D
         `,
-      }),
-      setCursor(['X']),
-      newThought({ insertNewSubthought: true, value: '' }),
-      editThought(['X', ''], '<b></b>'),
-    ])(initialState())
+        }),
+        setCursor(['X']),
+        newThought({ insertNewSubthought: true, value: '' }),
+        editThought(['X', ''], '<b></b>'),
+      ]),
+      initialState(),
+    )
 
     expect(exportContext(stateBefore, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - X
@@ -405,7 +416,7 @@ describe('sort', () => {
     - D
     - ****`)
 
-    const stateAfter = editThought(['X', '<b></b>'], '<b></b>C')(stateBefore)
+    const stateAfter = runDocumentCommand(editThought(['X', '<b></b>'], '<b></b>C'), stateBefore)
 
     expect(exportContext(stateAfter, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - X
@@ -425,7 +436,7 @@ describe('sort', () => {
     - b
     - c`
 
-    const state1 = importText({ text })(initialState())
+    const state1 = runDocumentCommand(importText({ text }), initialState())
 
     const a1 = contextToThought(state1, ['a'])!
     const b1 = contextToThought(state1, ['b'])!
@@ -433,7 +444,7 @@ describe('sort', () => {
 
     const steps = [setCursor(['b']), editThought(['b'], '')]
 
-    const stateNew = reducerFlow(steps)(state1)
+    const stateNew = runDocumentCommand(reducerFlow(steps), state1)
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -462,7 +473,7 @@ describe('sort', () => {
 
     const steps = [importText({ text }), newThought({ value: '' }), editThought([''], 'Two')]
 
-    const state = reducerFlow(steps)(initialState())
+    const state = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
 
@@ -488,7 +499,7 @@ describe('changing thought with duplicate descendent', () => {
       editThought(['a'], 'ac'),
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -514,7 +525,7 @@ describe('changing thought with duplicate descendent', () => {
       editThought(['a'], 'ac'),
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}

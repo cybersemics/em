@@ -1,6 +1,9 @@
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 
-type UnaryReducer<S> = (state: S) => Partial<S> | null
+type UnaryReducer<S> = ((state: S, document?: ThoughtspaceTransaction) => Partial<S> | null) & {
+  requiresDocument?: boolean
+}
 
 /**
  * Composes a list of reducers in order and merges the results.
@@ -8,19 +11,23 @@ type UnaryReducer<S> = (state: S) => Partial<S> | null
  * @param reducers      A list of unary reducers of type `oldState => newState`. Does not accept async reducers.
  * @param initialState
  */
-const reducerFlow =
-  <S = State>(reducers: (UnaryReducer<S> | null)[]) =>
-  (initialState?: S) =>
-    reducers.reduce((state, reducer) => {
-      const stateNew = reducer?.(state) || state
-      // return state reference as-is if unchanged
-      // stateNew is allowed to be partial, so we need to merge it into state
-      return stateNew === state
-        ? state
-        : {
-            ...state,
-            ...stateNew,
-          }
-    }, initialState as S)
+const reducerFlow = <S = State>(reducers: (UnaryReducer<NoInfer<S>> | null)[]) =>
+  Object.assign(
+    (initialState?: NoInfer<S>, document?: ThoughtspaceTransaction): NoInfer<S> =>
+      reducers.reduce((state, reducer) => {
+        // Lodash-curried UI reducers treat extra arguments as payload. Only explicit commands accept a transaction.
+        const stateNew =
+          (reducer && (reducer.requiresDocument || reducer.length >= 2)
+            ? reducer(state, document)
+            : reducer?.(state)) || state
+        return stateNew === state
+          ? state
+          : {
+              ...state,
+              ...stateNew,
+            }
+      }, initialState as S),
+    { requiresDocument: true as const },
+  )
 
 export default reducerFlow

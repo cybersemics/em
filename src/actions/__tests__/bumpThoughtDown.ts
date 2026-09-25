@@ -1,7 +1,10 @@
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import bumpThoughtDown from '../bumpThoughtDown'
@@ -10,10 +13,13 @@ import importText from '../importText'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 it('bump leaf', () => {
   const steps = [newThought('a'), newSubthought('b'), bumpThoughtDown({})]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -25,7 +31,7 @@ it('bump leaf', () => {
 it('cursor should stay in empty thought', () => {
   const steps = [newThought('a'), newSubthought('b'), bumpThoughtDown({})]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a', ''])
 })
@@ -33,7 +39,7 @@ it('cursor should stay in empty thought', () => {
 it('bump thought with children', () => {
   const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), cursorBack, bumpThoughtDown({})]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -53,7 +59,7 @@ it('bump thought with children multiple times', () => {
     bumpThoughtDown({}),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -67,7 +73,7 @@ it('bump thought with children multiple times', () => {
 it('bump root leaf', () => {
   const steps = [newThought('a'), bumpThoughtDown({})]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -78,7 +84,7 @@ it('bump root leaf', () => {
 it('bump root thought with children', () => {
   const steps = [newThought('a'), newSubthought('b'), cursorBack, bumpThoughtDown({})]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -102,7 +108,7 @@ it('should maintain sort order when bumping down in a sorted context', () => {
     bumpThoughtDown({}),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -118,7 +124,7 @@ it('should maintain sort order when bumping down in a sorted context', () => {
 it('bump leaf that starts with an emoji, leaving the emoji behind', () => {
   const steps = [newThought('🧠 Brain'), bumpThoughtDown({})]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -129,7 +135,7 @@ it('bump leaf that starts with an emoji, leaving the emoji behind', () => {
 it('bump thought with children that starts with an emoji, leaving the emoji behind', () => {
   const steps = [newThought('🧠 Brain'), newSubthought('b'), cursorBack, bumpThoughtDown({})]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -141,7 +147,7 @@ it('bump thought with children that starts with an emoji, leaving the emoji behi
 it('bump the whole value of a thought that is nothing but an emoji', () => {
   const steps = [newThought('🧠'), newSubthought('b'), cursorBack, bumpThoughtDown({})]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -153,7 +159,7 @@ it('bump the whole value of a thought that is nothing but an emoji', () => {
 it('cursor offset should be placed after the emoji that stays behind', () => {
   const steps = [newThought('🧠 Brain'), newSubthought('b'), cursorBack, bumpThoughtDown({})]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
   expect(stateNew.cursorOffset).toBe('🧠 '.length)
 })
@@ -174,7 +180,7 @@ it('should sort the bumped thought by its value without the emoji in a sorted co
     bumpThoughtDown({}),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}

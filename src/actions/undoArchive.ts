@@ -1,14 +1,16 @@
-import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import deleteThought from '../actions/deleteThought'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
-import { getAllChildren, getChildrenRanked } from '../selectors/getChildren'
+import { getAllChildren } from '../selectors/getChildren'
+import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
 import rootedParentOf from '../selectors/rootedParentOf'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 
@@ -16,6 +18,7 @@ import reducerFlow from '../util/reducerFlow'
 const undoArchive = (
   state: State,
   { originalPath, currPath, offset }: { originalPath: Path; currPath: Path; offset?: number },
+  document?: ThoughtspaceTransaction,
 ) => {
   const parentId = head(rootedParentOf(state, currPath))
   const originalParentId = head(rootedParentOf(state, originalPath))
@@ -23,33 +26,40 @@ const undoArchive = (
   return reducerFlow([
     // set the cursor to the original path before restoring the thought
     state =>
-      setCursor(state, {
-        path: originalPath,
-        isKeyboardOpen: state.isKeyboardOpen,
-        offset,
-      }),
+      setCursor(
+        state,
+        {
+          path: originalPath,
+          isKeyboardOpen: state.isKeyboardOpen,
+          offset,
+        },
+        document,
+      ),
 
     // move thought out of archive
     moveThought({
       oldPath: currPath,
       newPath: originalPath,
       offset,
-      // @MIGRATION_TODO: Fix rank here
-      newRank: 0,
+      afterId: getFirstChildPlacement(state, originalParentId),
     }),
 
     // delete =archive if empty
     state =>
-      !parentId || getAllChildren(state, parentId).length === 0
-        ? deleteThought(state, {
-            pathParent: rootedParentOf(state, originalPath),
-            thoughtId: getChildrenRanked(state, originalParentId)[0].id,
-          })
+      getAllChildren(state, parentId).length === 0
+        ? deleteThought(
+            state,
+            {
+              pathParent: rootedParentOf(state, originalPath),
+              thoughtId: parentId,
+            },
+            document,
+          )
         : state,
 
     // hide the undo alert
     alert({ value: null }),
-  ])(state)
+  ])(state, document)
 }
 
 /** Action-creator for undoArchive. */
@@ -58,7 +68,7 @@ export const undoArchiveActionCreator =
   dispatch =>
     dispatch({ type: 'undoArchive', ...payload })
 
-export default _.curryRight(undoArchive)
+export default command(undoArchive)
 
 // Register this action's metadata
 registerActionMetadata('undoArchive', {

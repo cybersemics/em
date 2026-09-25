@@ -1,23 +1,24 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
 import sort from '../actions/sort'
 import { getChildrenRanked } from '../selectors/getChildren'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import head from '../util/head'
-import keyValueBy from '../util/keyValueBy'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import alert from './alert'
 import setCursor from './setCursor'
 
 /** Swaps the current cursor's thought with its parent by moving nodes. */
-const swapParent = (state: State): State => {
+const swapParent = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
   const { cursor } = state
 
   // If there is no cursor, do nothing.
@@ -48,20 +49,9 @@ const swapParent = (state: State): State => {
   // Get only direct children of the child thought (grandchildren)
   const childChildren = getChildrenRanked(state, childId)
 
-  // Get siblings (other children of parent excluding the child being swapped)
+  // The parent replaces the child among the siblings that will move underneath it.
   const parentChildren = getChildrenRanked(state, parentId)
-  const siblings = parentChildren.filter(sibling => sibling.id !== childId)
-
-  // The parent and the siblings arrive under the child before the child's own children have left it, so giving them
-  // the ranks they held under the parent can collide with the ranks already in place. moveThought reranks a context
-  // whose ranks collide, and rerank resolves an exact tie in whatever order the tied thoughts happen to enumerate,
-  // reordering thoughts the swap should have left alone. Ranking them past everything the child currently holds keeps
-  // them clear of it, and once the child's own children have moved out, all that remains is their order relative to
-  // each other — the parent taking the slot the child vacated. The reverse move needs no such offset: the parent has
-  // been emptied by the time the child's children arrive, so they keep the ranks they already had.
-  const ranksUnderChild = keyValueBy(parentChildren, (parentChild, i) => ({
-    [parentChild.id === childId ? parentId : parentChild.id]: (childChildren.at(-1)?.rank ?? -1) + 1 + i,
-  }))
+  const childrenUnderChild = parentChildren.map(child => (child.id === childId ? parentThought : child))
 
   const grandparent = parentOf(parent)
   const grandparentId = head(rootedParentOf(state, parent))
@@ -71,34 +61,26 @@ const swapParent = (state: State): State => {
     moveThought({
       oldPath: simplifyPath(state, cursor),
       newPath: simplifyPath(state, parent),
-      newRank: parentThought.rank,
+      afterId: getPreviousSiblingId(state, parentId),
       skipMerge: true,
     }),
 
-    // Then move the parent under the child, into the slot the child vacated
-    moveThought({
-      oldPath: simplifyPath(state, parent),
-      newPath: simplifyPath(state, [...grandparent, childId, parentId]),
-      newRank: ranksUnderChild[parentId],
-      skipMerge: true,
-    }),
-
-    // Move siblings under the child
-    ...siblings.map(sibling =>
+    // Stable predecessor IDs preserve the order even though each move immediately normalizes ranks.
+    ...childrenUnderChild.map((child, index) =>
       moveThought({
-        oldPath: simplifyPath(state, [...parent, sibling.id]),
-        newPath: simplifyPath(state, [...grandparent, childId, sibling.id]),
-        newRank: ranksUnderChild[sibling.id],
+        oldPath: simplifyPath(state, child.id === parentId ? parent : [...parent, child.id]),
+        newPath: simplifyPath(state, [...grandparent, childId, child.id]),
+        afterId: index === 0 ? (childChildren.at(-1)?.id ?? null) : childrenUnderChild[index - 1].id,
         skipMerge: true,
       }),
     ),
 
     // Move grandchildren under the parent's new position
-    ...childChildren.map(grandchild =>
+    ...childChildren.map((grandchild, index) =>
       moveThought({
         oldPath: simplifyPath(state, [...cursor, grandchild.id]),
         newPath: simplifyPath(state, [...grandparent, childId, parentId, grandchild.id]),
-        newRank: grandchild.rank,
+        afterId: childChildren[index - 1]?.id ?? null,
         skipMerge: true,
       }),
     ),
@@ -119,13 +101,13 @@ const swapParent = (state: State): State => {
       path: [...grandparent, childId],
       offset: childThought.value.length,
     }),
-  ])(state)
+  ])(state, document)
 }
 
 /** Action-creator for swapParent. */
 export const swapParentActionCreator = (): Thunk => dispatch => dispatch({ type: 'swapParent' })
 
-export default _.curryRight(swapParent)
+export default command(swapParent)
 
 // Register this action's metadata
 registerActionMetadata('swapParent', {

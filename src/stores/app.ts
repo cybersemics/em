@@ -6,7 +6,6 @@ import _ from 'lodash'
 import { applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
 import appReducer from '../actions/app'
-import pushQueue from '../redux-enhancers/pushQueue'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import updateJumpHistory from '../redux-enhancers/updateJumpHistoryEnhancer'
@@ -14,12 +13,10 @@ import validateStateEnhancer from '../redux-enhancers/validateStateEnhancer'
 import clearSelection from '../redux-middleware/clearSelection'
 import closeDropdownsWhenCursorNull from '../redux-middleware/closeDropdownsWhenCursorNull'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
-import freeThoughts from '../redux-middleware/freeThoughts'
 import loggerMiddleware from '../redux-middleware/loggerMiddleware'
 import multi from '../redux-middleware/multi'
 import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
 import multiselectCursorMiddleware from '../redux-middleware/multiselectCursorMiddleware'
-import pullQueue from '../redux-middleware/pullQueue'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 import validateActionRegistrations from '../util/actionMetadata.registry'
@@ -38,11 +35,9 @@ const middlewareEnhancer = applyMiddleware(
   ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
   multi,
   thunk,
-  pullQueue,
   clearSelection,
   updateEditingValue,
   updateUrlHistory,
-  freeThoughts,
   loggerMiddleware,
   multicursorAlertMiddleware,
   multiselectCursorMiddleware,
@@ -60,12 +55,11 @@ const store = createStore(
     ...(validateStateEnhancerDevOnly || []),
     middlewareEnhancer,
     storageCache,
-    undoRedoEnhancer,
     updateJumpHistory,
-    // must go at the end to ensure it clears the pushQueue before other enhancers
-    pushQueue,
     // validate state again after production enhancers run
     ...(validateStateEnhancerDevOnly || []),
+    // Run commands and history before entering Redux; the Redux reducer only publishes the prepared snapshot.
+    undoRedoEnhancer,
   ),
 )
 

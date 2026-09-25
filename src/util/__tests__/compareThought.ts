@@ -3,6 +3,9 @@ import Timestamp from '../../@types/Timestamp'
 import importText from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import contextToThought from '../../test-helpers/contextToThought'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import timestamp from '../../util/timestamp'
 import {
   compare,
@@ -31,6 +34,9 @@ import {
 import createId from '../createId'
 import initialState from '../initialState'
 import reducerFlow from '../reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 /** Build a test thought with the given value. */
 const thought = (value: string): Thought => ({
@@ -715,16 +721,19 @@ describe('compareThoughtByUpdatedDescending', () => {
 
 describe('compareThoughtByNoteAndRank', () => {
   it('sorts thoughts with notes before thoughts without notes', () => {
-    const state = reducerFlow([
-      importText({
-        text: `
+    const state = runDocumentCommand(
+      reducerFlow([
+        importText({
+          text: `
           - a
             - =note
               - apple note
           - b
           `,
-      }),
-    ])(initialState())
+        }),
+      ]),
+      initialState(),
+    )
 
     const thoughtA = contextToThought(state, ['a'])!
     const thoughtB = contextToThought(state, ['b'])!
@@ -734,9 +743,10 @@ describe('compareThoughtByNoteAndRank', () => {
   })
 
   it('sorts by note value ascending when both thoughts have notes', () => {
-    const state = reducerFlow([
-      importText({
-        text: `
+    const state = runDocumentCommand(
+      reducerFlow([
+        importText({
+          text: `
           - a
             - =note
               - apple note
@@ -744,8 +754,10 @@ describe('compareThoughtByNoteAndRank', () => {
             - =note
               - banana note
           `,
-      }),
-    ])(initialState())
+        }),
+      ]),
+      initialState(),
+    )
 
     const thoughtA = contextToThought(state, ['a'])!
     const thoughtB = contextToThought(state, ['b'])!
@@ -756,9 +768,10 @@ describe('compareThoughtByNoteAndRank', () => {
   })
 
   it('falls back to rank when notes are equal', () => {
-    const state = reducerFlow([
-      importText({
-        text: `
+    const state = runDocumentCommand(
+      reducerFlow([
+        importText({
+          text: `
           - x
             - =note
               - same note
@@ -766,8 +779,10 @@ describe('compareThoughtByNoteAndRank', () => {
             - =note
               - same note
           `,
-      }),
-    ])(initialState())
+        }),
+      ]),
+      initialState(),
+    )
 
     const thoughtX = contextToThought(state, ['x'])!
     const thoughtY = contextToThought(state, ['y'])!
@@ -780,16 +795,19 @@ describe('compareThoughtByNoteAndRank', () => {
 
 describe('compareThoughtByNoteDescendingAndRank', () => {
   it('sorts thoughts with notes before thoughts without notes', () => {
-    const state = reducerFlow([
-      importText({
-        text: `
+    const state = runDocumentCommand(
+      reducerFlow([
+        importText({
+          text: `
           - a
             - =note
               - apple note
           - b
           `,
-      }),
-    ])(initialState())
+        }),
+      ]),
+      initialState(),
+    )
 
     const thoughtA = contextToThought(state, ['a'])!
     const thoughtB = contextToThought(state, ['b'])!
@@ -799,9 +817,10 @@ describe('compareThoughtByNoteDescendingAndRank', () => {
   })
 
   it('sorts by note value descending when both thoughts have notes', () => {
-    const state = reducerFlow([
-      importText({
-        text: `
+    const state = runDocumentCommand(
+      reducerFlow([
+        importText({
+          text: `
           - a
             - =note
               - apple note
@@ -809,8 +828,10 @@ describe('compareThoughtByNoteDescendingAndRank', () => {
             - =note
               - banana note
           `,
-      }),
-    ])(initialState())
+        }),
+      ]),
+      initialState(),
+    )
 
     const thoughtA = contextToThought(state, ['a'])!
     const thoughtB = contextToThought(state, ['b'])!
@@ -820,9 +841,10 @@ describe('compareThoughtByNoteDescendingAndRank', () => {
   })
 
   it('falls back to rank when notes are equal', () => {
-    const state = reducerFlow([
-      importText({
-        text: `
+    const state = runDocumentCommand(
+      reducerFlow([
+        importText({
+          text: `
           - x
             - =note
               - same note
@@ -830,8 +852,10 @@ describe('compareThoughtByNoteDescendingAndRank', () => {
             - =note
               - same note
           `,
-      }),
-    ])(initialState())
+        }),
+      ]),
+      initialState(),
+    )
 
     const thoughtX = contextToThought(state, ['x'])!
     const thoughtY = contextToThought(state, ['y'])!

@@ -5,7 +5,6 @@ import * as idb from 'idb-keyval'
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import Block from '../@types/Block'
-import Context from '../@types/Context'
 import Dispatch from '../@types/Dispatch'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
@@ -15,27 +14,20 @@ import Thunk from '../@types/Thunk'
 import { alertWithMinistore } from '../actions/alert'
 import { deleteThoughtActionCreator as deleteThought } from '../actions/deleteThought'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
-import { pullActionCreator as pull } from '../actions/pull'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild, getAllChildren } from '../selectors/getChildren'
-import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
-import isPending from '../selectors/isPending'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import abandonImportStore from '../stores/abandonImport'
 import syncStatusStore from '../stores/syncStatus'
-import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
-import hashThought from '../util/hashThought'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import isAttribute from '../util/isAttribute'
-import newLexeme from '../util/newLexeme'
 import numBlocks from '../util/numBlocks'
 import parentOf from '../util/parentOf'
 import parseJsonSafe from '../util/parseJsonSafe'
@@ -44,7 +36,6 @@ import series from '../util/series'
 import storage from '../util/storage'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
-import { setImportThoughtPathActionCreator as setImportThoughtPath } from './setImportThoughtPath'
 
 /** Represents a file that is imported with drag-and-drop. Unifies imports from the File API and Clipboard. */
 interface VirtualFile {
@@ -155,30 +146,6 @@ resumeImportsManager.getFiles = async (): Promise<ResumableFile[]> => {
   }))
 }
 
-/** Pulls the thoughts in the given context if they exist. */
-const pullDuplicateDescendants =
-  (id: ThoughtId, context: Context): Thunk =>
-  async (dispatch, getState) => {
-    const thought = getThoughtById(getState(), id)
-    if (!thought || context.length === 0) return
-
-    const stateBeforePull = getState()
-
-    // if thought is pending, pull it
-    if (isPending(stateBeforePull, thought)) {
-      // Must be forced, otherwise thoughts can be missed.
-      // (Not sure how, since pull calls getPendingDescentants, which should be the same.)
-      await dispatch(pull([id], { force: true, maxDepth: 1 }))
-    }
-
-    // if there is a duplicate, recurse
-    const stateAfterPull = getState()
-    const duplicate = findDescendant(stateAfterPull, id, context[0])
-    if (duplicate) {
-      await dispatch(pullDuplicateDescendants(duplicate, context.slice(1)))
-    }
-  }
-
 /** Returns the id of the child that was added to a thought, given its children before the addition. */
 const addedChild = (state: State, id: ThoughtId, childrenBefore: Set<ThoughtId>): ThoughtId | undefined =>
   getAllChildren(state, id).find(childId => !childrenBefore.has(childId))
@@ -274,15 +241,12 @@ export const importFilesActionCreator =
           // the relative context is appended to the base context to get the destination context
           const relativeAncestorContext = ancestors.map(block => block.scope)
 
-          // must replicate descendants before calculating baseContext and parentContext
-          await dispatch(pullDuplicateDescendants(head(path), [...relativeAncestorContext, block.scope]))
-
-          const stateAfterPull = getState()
+          const currentState = getState()
 
           // if inserting into an empty destination with a sibling afterwards, import into the parent
           const basePath =
-            insertBeforeNew || (destEmpty && ancestors.length === 0) ? rootedParentOf(stateAfterPull, path) : path
-          const baseContext = pathToContext(stateAfterPull, basePath)
+            insertBeforeNew || (destEmpty && ancestors.length === 0) ? rootedParentOf(currentState, path) : path
+          const baseContext = pathToContext(currentState, basePath)
           const parentContext =
             ancestors.length === 0 ? baseContext : [...unroot(baseContext), ...relativeAncestorContext]
           // Prefer the Path of the parent thought as it was actually imported. Fall back to walking by value when the
@@ -290,12 +254,12 @@ export const importFilesActionCreator =
           const parentPath =
             ancestors.length === 0
               ? basePath
-              : (ancestorPath ?? descendantPath(stateAfterPull, basePath, relativeAncestorContext))
+              : (ancestorPath ?? descendantPath(currentState, basePath, relativeAncestorContext))
 
           // validate parentPath
           if (!parentPath) {
             const partialPath = parentContext.map((id, i) =>
-              findDescendant(stateAfterPull, HOME_TOKEN, parentContext.slice(0, i + 1)),
+              findDescendant(currentState, HOME_TOKEN, parentContext.slice(0, i + 1)),
             )
             const errorMessage = `Error importing ${parentContext.join('/')}.`
             console.error(errorMessage, 'Missing parentPath.', {
@@ -325,15 +289,13 @@ export const importFilesActionCreator =
           const isMetaDuplicate = isAttribute(block.scope) || parentContext.some(isAttribute)
           const duplicate =
             block.scope !== '' && isMetaDuplicate
-              ? findAnyChild(stateAfterPull, id, child => child.value === block.scope)
+              ? findAnyChild(currentState, id, child => child.value === block.scope)
               : undefined
-          const lexeme = getLexeme(stateAfterPull, block.scope)
-          const hasContext = !!lexeme?.contexts.includes(id)
 
           // The id of a new thought is assigned when it is created, so the Path of the imported thought is only known
           // once the thought exists: it is the child that was added to the parent. A duplicate is merged into rather
           // than created, so no child is added and the duplicate's own id is used.
-          const childrenBefore = new Set(getAllChildren(stateAfterPull, id))
+          const childrenBefore = new Set(getAllChildren(currentState, id))
           /** Returns the Path of the imported thought, or null if it was not created. */
           const importedPath = (state: State): Path | null => {
             const idImported = duplicate ? duplicate.id : addedChild(state, id, childrenBefore)
@@ -348,9 +310,6 @@ export const importFilesActionCreator =
             }
 
             dispatch([
-              // preserve import thought path from being deallocated during import
-              setImportThoughtPath(importThoughtPath),
-
               // delete empty destination thought
               // ...unless it is a duplicate (i.e. if the pasted parent is empty), otherwise both the destination thought will be deleted and the duplicate will be skipped, leaving no parent to insert the descendants.
               i === 0 && destEmpty && !duplicate
@@ -358,26 +317,7 @@ export const importFilesActionCreator =
                 : null,
               // If the thought is a duplicate, immediately update the import progress and resolve the task.
               duplicate
-                ? // It is possible for the Lexeme to be missing if the import was interrupted after the thought was saved but before the Lexeme was saved.
-                  // In this case, recreate the Lexeme.
-                  hasContext
-                  ? updateAndResolve
-                  : updateThoughts({
-                      lexemeIndexUpdates: {
-                        [hashThought(block.scope)]: lexeme
-                          ? addContext(lexeme, {
-                              id: duplicate.id,
-                            })
-                          : newLexeme({
-                              created: duplicate.lastUpdated,
-                              id: duplicate.id,
-                              lastUpdated: duplicate.lastUpdated,
-                              value: block.scope,
-                            }),
-                      },
-                      thoughtIndexUpdates: {},
-                      idbSynced: updateAndResolve,
-                    })
+                ? updateAndResolve
                 : // import the new thought
                   // Any missing children from previously interrupted imports are cleaned up in createThought.
                   newThought({
@@ -389,7 +329,6 @@ export const importFilesActionCreator =
                     idbSynced: updateAndResolve,
                   }),
               // set the cursor to the first imported visible thought
-              // ensure the last imported thought is not deleted by freeThoughts
               (dispatch, getState) => {
                 const stateAfterImport = getState()
                 // set cursor to first imported visible thought
@@ -469,7 +408,6 @@ export const importFilesActionCreator =
       // otherwise thoughts will get imported out of order
       await importBlocks(json, [], null)
       await manager.del()
-      dispatch(setImportThoughtPath(null))
     })
 
     // import files serially

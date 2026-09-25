@@ -5,7 +5,10 @@ import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
@@ -14,6 +17,9 @@ import cursorForward from '../cursorForward'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 /** Converts the multicursor set to a list of contexts in a readable way. */
 const multicursorContexts = (state: State): string[][] =>
   Object.values(state.multicursors).map(path => childIdsToThoughts(state, path).map(thought => thought.value))
@@ -21,7 +27,7 @@ const multicursorContexts = (state: State): string[][] =>
 it('move cursor to parent', () => {
   const steps = [newThought('a'), newSubthought('b'), cursorBack]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a'])
 })
@@ -29,7 +35,7 @@ it('move cursor to parent', () => {
 it('remove cursor from root thought', () => {
   const steps = [newThought('a'), cursorBack]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
   expect(stateNew.cursor).toEqual(null)
 })
@@ -58,7 +64,7 @@ describe('multicursor', () => {
       cursorBack,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     // b and c share the parent a, which is selected only once
     expect(multicursorContexts(stateNew)).toEqual([
@@ -86,7 +92,7 @@ describe('multicursor', () => {
       cursorBack,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(multicursorContexts(stateNew)).toEqual([['a', 'm']])
   })
@@ -105,7 +111,7 @@ describe('multicursor', () => {
       cursorBack,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(multicursorContexts(stateNew)).toEqual([['x'], ['x', 'a']])
   })
@@ -117,7 +123,7 @@ describe('multicursor', () => {
     `
     const steps = [importText({ text }), setCursor(['a']), addMulticursor(['a']), addMulticursor(['b']), cursorBack]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(multicursorContexts(stateNew)).toEqual([['a'], ['b']])
   })
@@ -140,7 +146,7 @@ describe('multicursor', () => {
       cursorBack,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expect(multicursorContexts(stateNew)).toEqual([['x', 'a']])
     expect(stateNew.expanded[hashPath(contextToPath(stateNew, ['x', 'a'])!)]).toBeFalsy()

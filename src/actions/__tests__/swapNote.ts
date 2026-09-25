@@ -3,9 +3,15 @@ import swapNote from '../../actions/swapNote'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('thought to note', () => {
   const text = `
@@ -14,7 +20,7 @@ it('thought to note', () => {
   `
   const steps = [importText({ text }), setCursor(['a', 'b']), swapNote]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -33,7 +39,7 @@ it('note to thought', () => {
   `
   const steps = [importText({ text }), setCursor(['a']), swapNote]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -52,7 +58,7 @@ it('swap thought and note', () => {
   `
   const steps = [importText({ text }), setCursor(['a', 'c']), swapNote]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -72,7 +78,7 @@ it('moves grandchildren to parent when thought with children is converted to not
   `
   const steps = [importText({ text }), setCursor(['a', 'b']), swapNote]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -94,7 +100,7 @@ it('moves multiple grandchildren to parent when thought with children is convert
   `
   const steps = [importText({ text }), setCursor(['a', 'b']), swapNote]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -118,7 +124,7 @@ it('keeps duplicate siblings when note is converted to an identical thought (no 
   `
   const steps = [importText({ text }), setCursor(['a']), swapNote]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}

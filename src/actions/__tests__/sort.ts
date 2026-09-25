@@ -6,9 +6,15 @@ import exportContext from '../../selectors/exportContext'
 import { getChildrenRanked, isVisible } from '../../selectors/getChildren'
 import contextToThought from '../../test-helpers/contextToThought'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('sort', () => {
   it('no-op when context is already in sorted order', () => {
@@ -19,10 +25,10 @@ describe('sort', () => {
       - b
       - c
     `
-    const state = reducerFlow([importText({ text })])(initialState())
+    const state = runDocumentCommand(reducerFlow([importText({ text })]), initialState())
 
     // Apply sort to the home context
-    const stateAfterSort = sort(state, HOME_TOKEN)
+    const stateAfterSort = runDocumentCommand((state, document) => sort(state, HOME_TOKEN, document), state)
 
     // State reference should be the same (true no-op)
     expect(stateAfterSort).toBe(state)
@@ -40,8 +46,8 @@ describe('sort', () => {
       - b
       - c
     `
-    const stateWithPlaceholder = reducerFlow([importText({ text })])(initialState())
-    const stateWithGappedRanks = deleteThoughtAtFirstMatch(['!'])(stateWithPlaceholder)
+    const stateWithPlaceholder = runDocumentCommand(reducerFlow([importText({ text })]), initialState())
+    const stateWithGappedRanks = runDocumentCommand(deleteThoughtAtFirstMatch(['!']), stateWithPlaceholder)
 
     const a = contextToThought(stateWithGappedRanks, ['a'])!
     const b = contextToThought(stateWithGappedRanks, ['b'])!
@@ -53,7 +59,10 @@ describe('sort', () => {
     expect(c.rank).toBeGreaterThan(b.rank)
 
     // Apply sort — should be a no-op since the relative order is already correct
-    const stateAfterSort = sort(stateWithGappedRanks, HOME_TOKEN)
+    const stateAfterSort = runDocumentCommand(
+      (state, document) => sort(state, HOME_TOKEN, document),
+      stateWithGappedRanks,
+    )
 
     // State reference should be the same (true no-op)
     expect(stateAfterSort).toBe(stateWithGappedRanks)
@@ -70,14 +79,14 @@ describe('sort', () => {
       - c
       - b
     `
-    const state = reducerFlow([importText({ text })])(initialState())
+    const state = runDocumentCommand(reducerFlow([importText({ text })]), initialState())
 
     const a1 = contextToThought(state, ['a'])!
     const b1 = contextToThought(state, ['b'])!
     const c1 = contextToThought(state, ['c'])!
 
     // Apply sort in a separate step
-    const stateAfterSort = sort(state, HOME_TOKEN)
+    const stateAfterSort = runDocumentCommand((state, document) => sort(state, HOME_TOKEN, document), state)
 
     const exported = exportContext(stateAfterSort, HOME_TOKEN, 'text/plain')
 
@@ -110,11 +119,12 @@ describe('sort', () => {
       - b
       - c
     `
-    const state = reducerFlow([importText({ text }), setCursorFirstMatch(['c']), newThought({ value: '' })])(
+    const state = runDocumentCommand(
+      reducerFlow([importText({ text }), setCursorFirstMatch(['c']), newThought({ value: '' })]),
       initialState(),
     )
 
-    const stateAfterSort = sort(state, HOME_TOKEN)
+    const stateAfterSort = runDocumentCommand((state, document) => sort(state, HOME_TOKEN, document), state)
 
     // the rendered order is rank order, so assert the ranked children
     const children = getChildrenRanked(stateAfterSort, HOME_TOKEN).filter(child => isVisible(stateAfterSort, child))

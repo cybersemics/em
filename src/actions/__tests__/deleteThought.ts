@@ -9,15 +9,21 @@ import getThoughtById from '../../selectors/getThoughtById'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 it('delete', () => {
-  const state = reducerFlow([newThought('a'), newThought('b')])(initialState())
+  const state = runDocumentCommand(reducerFlow([newThought('a'), newThought('b')]), initialState())
   const rootChildrenBefore = getAllChildrenByContext(state, [HOME_TOKEN])
   const [thoughtA] = childIdsToThoughts(state, rootChildrenBefore)
 
-  const stateNew = deleteThoughtAtFirstMatch(['b'])(state)
+  const stateNew = runDocumentCommand(deleteThoughtAtFirstMatch(['b']), state)
 
   const rootChildrenAfter = getAllChildrenByContext(stateNew, [HOME_TOKEN])
   expect(rootChildrenAfter).toEqual([thoughtA.id])
@@ -29,7 +35,7 @@ it('delete', () => {
 it('delete descendants', () => {
   const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), deleteThoughtAtFirstMatch(['a'])]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
   // thoughtIndex
   expect(getThoughtById(stateNew, HOME_TOKEN)).toBeTruthy()
@@ -48,7 +54,7 @@ it('delete descendants', () => {
 it('delete thought with duplicate child', () => {
   const steps = [newThought('a'), newSubthought('a'), deleteThoughtAtFirstMatch(['a'])]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
   // thoughtIndex
   expect(getThoughtById(stateNew, HOME_TOKEN)).toBeTruthy()
@@ -64,11 +70,11 @@ it('update cursor after thought deletion', () => {
   const steps = [newThought('a'), newSubthought('b')]
 
   const state = initialState()
-  const stateNew = reducerFlow(steps)(state)
+  const stateNew = runDocumentCommand(reducerFlow(steps), state)
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
 
-  const stateAfterDeletion = reducerFlow([deleteThoughtAtFirstMatch(['a', 'b'])])(stateNew)
+  const stateAfterDeletion = runDocumentCommand(reducerFlow([deleteThoughtAtFirstMatch(['a', 'b'])]), stateNew)
 
   expectPathToEqual(stateAfterDeletion, stateAfterDeletion.cursor, ['a'])
 })
@@ -77,7 +83,7 @@ it('delete the intended empty thought when there are multiple', () => {
   const steps = [newThought(''), newThought('')]
 
   const state = initialState()
-  const stateNew = reducerFlow(steps)(state)
+  const stateNew = runDocumentCommand(reducerFlow(steps), state)
   const rootChildren = getAllChildrenByContext(stateNew, [HOME_TOKEN])
   const thoughtIdToBeDeleted = rootChildren[rootChildren.length - 1]
 
@@ -85,7 +91,7 @@ it('delete the intended empty thought when there are multiple', () => {
 
   expect(thoughtToBeDeleted).toBeDefined()
 
-  const stateAfterDeletion = reducerFlow([deleteEmptyThought])(stateNew)
+  const stateAfterDeletion = runDocumentCommand(reducerFlow([deleteEmptyThought]), stateNew)
 
   const thoughtAfterDeletion = getThoughtById(stateAfterDeletion, thoughtIdToBeDeleted)
 

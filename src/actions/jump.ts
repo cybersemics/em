@@ -1,15 +1,21 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import setCursor from './setCursor'
 
 /** Move the cursor back to the nth last edit point. */
-const jump = (state: State, { steps }: { steps: number } = { steps: -1 }): State => {
+const jump = (
+  state: State,
+  { steps }: { steps: number } = { steps: -1 },
+  document?: ThoughtspaceTransaction,
+): State => {
   // do nothing if jumping 0 steps
   // do nothing if trying to jump forward but there is no jump index (i.e. we are already at the most recent edit)
   if (steps === 0 || (steps > 0 && state.jumpIndex === 0)) return state
@@ -34,9 +40,13 @@ const jump = (state: State, { steps }: { steps: number } = { steps: -1 }): State
   const cursorNew = thoughtToPath(state, head(lastJumpCursor))
 
   return {
-    ...setCursor(state, {
-      path: cursorNew,
-    }),
+    ...setCursor(
+      state,
+      {
+        path: cursorNew,
+      },
+      document,
+    ),
     jumpIndex: state.jumpIndex - steps,
   }
 }
@@ -47,7 +57,7 @@ export const jumpActionCreator =
   dispatch =>
     dispatch({ type: 'jump', steps })
 
-export default jump
+export default command(jump)
 
 // Register this action's metadata
 registerActionMetadata('jump', {

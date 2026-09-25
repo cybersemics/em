@@ -1,12 +1,10 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
 import isVisibleContext from '../util/isVisibleContext'
-import never from '../util/never'
 import nonNull from '../util/nonNull'
 import parentOf from '../util/parentOf'
 import unroot from '../util/unroot'
@@ -16,34 +14,16 @@ import thoughtToPath from './thoughtToPath'
 
 // sort missing thoughts to end
 const MISSING_TOKEN = `${String.fromCharCode(Number.MAX_SAFE_INTEGER)}__MISSING__`
-const PENDING_TOKEN = '__PENDING__'
 
 /** Gets all contexts that the given thought is in, sorted and ranked. */
 const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
   const contexts = getContexts(state, value)
     .filter(id => isVisibleContext(state, id))
-    .map((cxid, i) => {
-      const thought = getThoughtById(state, cxid)
-      const thoughtRanked: Thought = {
-        // if the context is pending, return a pending placeholder
-        ...(thought || {
-          id: cxid,
-          childrenMap: {},
-          parentId: '' as ThoughtId, // ???
-          pending: true,
-          rank: i, // overwritten by contextSorted
-          value: PENDING_TOKEN,
-          lastUpdated: never(),
-          updatedBy: '',
-          created: never(),
-        }),
-      }
-      return thoughtRanked
-    })
+    .map(cxid => getThoughtById(state, cxid))
+    .filter(nonNull)
 
   /** Calculates a lexically sortable hash from a thought. */
   const lexicalHash = (thought: Thought) => {
-    if (!thought || thought.value === PENDING_TOKEN) return MISSING_TOKEN
     const simplePath = thoughtToPath(state, thought.id)
     if (simplePath.length > 1 && isRoot([simplePath[0]])) return MISSING_TOKEN
     const path = unroot(simplePath)

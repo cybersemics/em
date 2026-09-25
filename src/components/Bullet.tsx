@@ -24,14 +24,11 @@ import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
-import parentOf from '../util/parentOf'
 import BulletPositioner from './BulletPositioner'
 
 interface BulletProps {
   dragSource: ConnectDragSource
   longPressProps: LongPressProps
-  // See: ThoughtProps['isContextPending']
-  isContextPending?: boolean
   isDragging?: boolean
   isEditing: boolean
   leaf?: boolean
@@ -269,7 +266,6 @@ const BulletHighlightOverlay = ({
 const Bullet = ({
   dragSource,
   longPressProps,
-  isContextPending,
   isDragging,
   isEditing,
   leaf,
@@ -302,14 +298,8 @@ const Bullet = ({
     state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
   )
 
-  /** Returns true if the thought is pending. */
-  const pending = useSelector(state => {
-    const thought = getThoughtById(state, thoughtId)
-    // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
-    // (Another approach would be to pre-load the context children as soon as the context view is activated.)
-    const showContextsParent = isContextViewActive(state, parentOf(path))
-    return isContextPending || (!showContextsParent && (thought?.pending || thought?.generating))
-  })
+  /** Shows the in-flight generation indicator without treating document reads as asynchronous. */
+  const pending = useSelector(state => !!getThoughtById(state, thoughtId)?.generating)
 
   /** Returns true if the thought or its Lexeme is missing. */
   const missing = useSelector(state => {

@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import React from 'react'
 import { ConnectDragSource } from 'react-dnd'
 import { useSelector } from 'react-redux'
@@ -13,10 +12,7 @@ import { MIN_CONTENT_WIDTH_EM } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
-import isContextViewActive from '../selectors/isContextViewActive'
-import rootedParentOf from '../selectors/rootedParentOf'
 import theme from '../selectors/theme'
-import thoughtToPath from '../selectors/thoughtToPath'
 import dndRef from '../util/dndRef'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -36,11 +32,6 @@ export interface ThoughtProps {
   longPressProps?: LongPressProps
   editing?: boolean | null
   env?: LazyEnv
-  // When context view is activated, some contexts may be pending
-  // however since they were not loaded hierarchically there is not a pending thought in the thoughtIndex
-  // getContexts will return ids that do not exist in the thoughtIndex
-  // Subthoughts gets the special __PENDING__ value from getContexts and passes it through to Thought and Static Thought
-  isContextPending?: boolean
   isEditing: boolean
   ellipsizedUrl?: boolean
   isPublishChild?: boolean
@@ -97,9 +88,7 @@ const StaticThought = ({
   allowSingleContext,
   dragSource,
   longPressProps,
-  // See: ThoughtProps['isContextPending']
   env,
-  isContextPending,
   isEditing,
   ellipsizedUrl,
   isVisible,
@@ -115,31 +104,22 @@ const StaticThought = ({
   styleAnnotation,
   updateSize,
 }: ThoughtProps) => {
-  const showContexts = useSelector(state => isContextViewActive(state, rootedParentOf(state, path)))
   const fontSize = useSelector(state => state.fontSize)
   const dark = useSelector(state => theme(state) !== 'Light')
-  const homeContext = isRoot(simplePath) && !isContextPending
-  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
+  const homeContext = isRoot(simplePath)
+  const value = useSelector(state => {
+    const thought = getThoughtById(state, head(simplePath))
+    return thought?.displayValue ?? thought?.value ?? ''
+  })
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
   const placeholder = usePlaceholder({ isEditing, path, simplePath })
-
-  // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
-  // use thoughtToPath to re-calculate the SimplePath as ancestors load
-  // Editable and ContextBreadcrumbs can handle Paths with missing ancestors
-  // eventually the complete SimplePath will be loaded
-  // TODO: Should this be done in Thought so that Thought is reloaded?
-  const simplePathLive = useSelector(
-    state => (showContexts ? thoughtToPath(state, head(simplePath)) : simplePath),
-    _.isEqual,
-  )
 
   const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
   // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<StaticThought> ' + prettyPath(store.getState(), simplePath), {
   //   editing,
-  //   isContextPending,
   //   isEditing,
   //   isVisible,
   //   onEdit,
@@ -151,7 +131,6 @@ const StaticThought = ({
   //   // hooks
   //   showContexts,
   //   value,
-  //   simplePathLive: simplePathLive.join('/'),
   // })
 
   return (
@@ -188,9 +167,7 @@ const StaticThought = ({
           // left, top are eyeballed for different font sizes
           <HomeIcon className={css({ position: 'relative' })} style={{ left: fontSize - 14, top: fontSize / 4 - 1 }} />
         ) : isDivider(value) ? (
-          <Divider path={simplePathLive} />
-        ) : /* insert padding equal to the Editable height while context ancestors are loading */ isContextPending ? (
-          <div className={css({ paddingTop: '2.8em' })}></div>
+          <Divider path={simplePath} />
         ) : (
           <Editable
             editableRef={editableRef}
@@ -200,7 +177,7 @@ const StaticThought = ({
             isVisible={isVisible}
             rank={rank}
             style={style}
-            simplePath={simplePathLive}
+            simplePath={simplePath}
             onEdit={onEdit}
             className={css(
               {

@@ -1,11 +1,17 @@
 import newThought from '../../actions/newThought'
 import getThoughtFill from '../../selectors/getThoughtFill'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 /** Creates a single thought and returns its derived fill color. */
 const fillOf = (value: string) => {
-  const state = newThought(initialState(), { value })
+  const state = runDocumentCommand((state, document) => newThought(state, { value }, document), initialState())
   return getThoughtFill(state, head(state.cursor!))
 }
 

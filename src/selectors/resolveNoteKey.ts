@@ -18,10 +18,6 @@ const resolveNoteKey = (state: State, thoughtId: ThoughtId): NoteKeyResult => {
 
   if (!noteId) return { noteKey: '=note' }
 
-  const noteThought = getThoughtById(state, noteId)
-
-  if (noteThought?.pending) return { noteKey: '=note' }
-
   const notePathId = findDescendant(state, noteId, '=path')
   const noteKey = anyChild(state, notePathId)?.value ?? '=note'
 

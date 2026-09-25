@@ -23,13 +23,12 @@ const reportedDuplicateRanks = new Set<string>()
 const truncateValue = (value: string): string =>
   value.length > VALUE_MAX_LENGTH ? `${value.slice(0, VALUE_MAX_LENGTH)}…` : value
 
-/** Builds a structured summary of an updateThoughts action: per-thought id/value/rank/parentId/pending (capped at MAX_SUMMARY_THOUGHTS), plus counts and the local/remote flags. Far denser and more useful than the raw stringified action, whose truncation cuts JSON mid-field. */
+/** Builds a structured summary of an updateThoughts action: per-thought id/value/rank/parentId (capped at MAX_SUMMARY_THOUGHTS), plus counts and the local/remote flags. Far denser and more useful than the raw stringified action, whose truncation cuts JSON mid-field. */
 const summarizeUpdateThoughts = (action: UnknownAction): Record<string, unknown> => {
   const thoughtUpdates = Object.entries((action.thoughtIndexUpdates ?? {}) as Index<Thought | null>)
   return {
     actionType: 'updateThoughts',
     thoughtCount: thoughtUpdates.length,
-    lexemeCount: Object.keys((action.lexemeIndexUpdates ?? {}) as Index<unknown>).length,
     local: action.local !== false,
     remote: action.remote !== false,
     thoughts: thoughtUpdates.slice(0, MAX_SUMMARY_THOUGHTS).map(([id, thought]) =>
@@ -39,14 +38,13 @@ const summarizeUpdateThoughts = (action: UnknownAction): Record<string, unknown>
             value: truncateValue(thought.value),
             rank: thought.rank,
             parentId: thought.parentId,
-            ...(thought.pending ? { pending: true } : null),
           }
         : { id, deleted: true },
     ),
   }
 }
 
-/** Logs an integrity warning for each set of siblings that share an exact rank under the given parent. Duplicate ranks make sibling order ambiguous and are the signature of a data-integrity fault (see the safeguard in selectors/getRankAfter.ts). Warning only — the update itself is never blocked. */
+/** Logs duplicate projected sibling ranks, indicating an invalid view. Warning only — the update itself is never blocked. */
 const warnDuplicateRanks = (state: State, parentId: ThoughtId): void => {
   const children = getChildrenRanked(state, parentId)
   // children are sorted by rank, so duplicates are adjacent
@@ -144,8 +142,8 @@ const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
         debugLog.log('action', { actionType: type ?? 'unknown', payload: payloadStr })
       }
 
-      // getState() after next(action) reflects the fully reduced state, including enhancer reducers (undo patches
-      // applied, pushQueue drained), since middleware wraps dispatch outside the whole store.
+      // getState() after next(action) reflects the committed document and undo history, since middleware wraps
+      // dispatch outside the command coordinator.
       if (stateBefore) {
         const stateAfter = store.getState()
         try {

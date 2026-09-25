@@ -1,211 +1,123 @@
 # Data Storage / Persistence
 
-The persistence layer has three tiers:
+This prototype runs two TreeCRDT instances for one thoughtspace:
 
-1. **In-memory state** — Redux store (`state.thoughts.thoughtIndex` and `state.thoughts.lexemeIndex`), holding only thoughts that are currently visible.
-2. **Local persistence** — a [TreeCRDT](https://github.com/cybersemics/treecrdt) operation log materialized into SQLite, running in the browser via [`@treecrdt/wa-sqlite`](https://www.npmjs.com/package/@treecrdt/wa-sqlite) and stored in OPFS.
-3. **Remote sync** — TreeCRDT WebSocket sync ([`@treecrdt/sync`](https://www.npmjs.com/package/@treecrdt/sync)). **Opt-in** — see [Remote sync](#remote-sync-opt-in) below.
+1. **Memory engine** — synchronous Rust/WASM TreeCRDT, containing the complete document.
+2. **Persistent engine** — the full document in asynchronous SQLite, running through `@treecrdt/wa-sqlite` in an OPFS-backed worker.
 
-Two queues bridge Redux and the local TreeCRDT store:
+The memory engine owns the document and accepts local commands synchronously. Redux owns UI state and a read-only document projection. Document commands execute in one memory transaction outside Redux's reducer, reading canonical state between composed steps. Redux publishes the completed snapshot once. Network sync is disabled, including when `VITE_TREECRDT_SYNC_BASE_URL` is set.
 
-- **Push queue** ([`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts)) drains `state.pushQueue` after every action and writes to TreeCRDT.
-- **Pull queue** ([`redux-middleware/pullQueue.ts`](../src/redux-middleware/pullQueue.ts)) tracks visible thoughts and pulls any pending ones from TreeCRDT.
+[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exports `thoughtspaceRuntime`, created by [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts). The runtime supplies synchronous `project` reads, `transact`, and lifecycle methods. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project` and an `afterPersist` callback.
 
-The single point of integration with persistence is the [`DataProvider`](../src/data-providers/DataProvider.ts) interface, implemented by the active thoughtspace backend. [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exports both the active provider (`db`) and the `ThoughtspaceRuntime` that owns its lifecycle; today both are the TreeCRDT implementation.
+## Running the prototype
 
-## In-memory state (Redux)
+Run `yarn install --immutable` and `yarn start`. The experimental `@treecrdt/wasm` dependency is a prebuilt GitHub prerelease pinned in `package.json` and `yarn.lock`; no TreeCRDT checkout or Rust tooling is required. Its source is on TreeCRDT's `prototype/synchronous-wasm-view` branch.
 
-Thoughts live in `state.thoughts.thoughtIndex` (keyed by `ThoughtId`) and `state.thoughts.lexemeIndex` (keyed by hashed value). Only thoughts that are *visible* — the cursor, its ancestors, `state.expanded` paths, and any context-view contexts and their ancestors — are held in memory. Everything else has either never been pulled or was freed after going off-screen.
+The package includes browser and Node loaders and the WASM binary. It initializes explicitly; importing it does not load WASM. Keep the core version aligned with EM's SQLite package so both replicas use the same operation format.
 
-Thoughts that are known to exist but haven't been loaded yet are flagged with `pending: true` so the UI can render placeholder rows while the pull queue fetches them.
+## Document projection (Redux)
+
+The complete document snapshot is exposed through `state.thoughts.thoughtIndex` (keyed by `ThoughtId`) and `state.thoughts.lexemeIndex` (keyed by hashed value). Initialization loads the full document before enabling editing or resolving the URL cursor. Navigation, contexts, copying, and export read this immutable snapshot without loading or evicting subtrees.
+
+These indices are not an independent writable document. `project` reads canonical payload and topology from memory, preserving only transient generation text, generation flags, and split-source bookkeeping from the editor view.
 
 ## Local persistence (TreeCRDT + SQLite)
 
 ### The TreeCRDT client
 
-[`treecrdt/runtime.ts`](../src/data-providers/treecrdt/runtime.ts) owns exactly one `TreecrdtClient`, created by `createTreecrdtClient` with `docId = tsid` and a storage mode chosen at startup:
+The prototype owns one persistent `TreecrdtClient` and one synchronous `MemoryClient`, both for `docId = tsid`. `createMemorySyncBackend` from `@treecrdt/wasm/sync` connects the memory client to the existing sync protocol without duplicating its operation log in EM.
 
 | `ThoughtspaceStorage` | SQLite storage | Runtime |
 |---|---|---|
-| `'persistent'` (app default) | OPFS file `/treecrdt-em-${tsid}.db`, falling back to memory if OPFS is unavailable | `dedicated-worker` |
+| `'persistent'` (app default) | OPFS `/treecrdt-em-memory-prototype-${tsid}.db`; unavailable OPFS rejects initialization | `dedicated-worker` |
 | `'memory'` (unit tests, most e2e) | in-memory | `direct` |
 
-[`index.tsx`](../src/index.tsx) passes `testFlags.thoughtspaceStorage ?? 'persistent'`. If persistent storage was requested but the client came back with `storage === 'memory'`, the runtime logs a warning that changes will not survive a reload. `init` returns the storage the client actually opened, which [`initialize.ts`](../src/initialize.ts) puts in [`storageStatusStore`](../src/stores/storageStatus.ts); the Storage Diagnostics control in [`modals/Settings.tsx`](../src/components/modals/Settings.tsx) reports it alongside a live OPFS probe, so a browser that discards storage can be identified on a device with no reachable console. The wa-sqlite WASM assets are emitted into `public/wa-sqlite` by the `treecrdt` Vite plugin (see [`vite.config.ts`](../vite.config.ts)).
-
-The client surface em uses:
-
-- `client.tree` — the materialized read model: `children`, `parent`, `exists`, `getPayload`.
-- `client.local` — local write ops minted for a replica id: `insert`, `move`, `delete`, `payload`. Each returns an `Operation`.
-- `client.runner` — raw SQLite access, used for em's own derived tables.
-- `client.onMaterialized` — subscription fired after ops are materialized into SQLite.
-- `client.drop()` — closes the client and deletes the OPFS database file.
+The separate filename leaves the normal app database untouched. [`index.tsx`](../src/index.tsx) passes `testFlags.thoughtspaceStorage ?? 'persistent'`. Initialization reports the actual mode through [`storageStatusStore`](../src/stores/storageStatus.ts) and Storage Diagnostics. The wa-sqlite assets come from the `treecrdt` Vite plugin; the memory client's WASM asset comes from its package.
 
 ### Single-tab access
 
-The thoughtspace is opened by a single tab at a time. [`sessionLock.ts`](../src/data-providers/treecrdt/sessionLock.ts) requests an exclusive [Web Lock](https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API) named `em-treecrdt-session:${tsid}` with `ifAvailable: true`; the lock callback deliberately never resolves, so the browser holds the lock for the lifetime of the page and releases it on close or navigation. Native (Capacitor) platforms always report `acquired`, since they cannot open a second tab; a browser without `navigator.locks` reports `unsupported`.
-
-[`index.tsx`](../src/index.tsx) calls `thoughtspaceRuntime.acquireAccess()` *before* initializing or rendering the app. When access is blocked it renders [`ThoughtspaceInUse`](../src/components/ThoughtspaceInUse.tsx) instead, with copy that distinguishes `already-open` from `unsupported`.
+[`sessionLock.ts`](../src/data-providers/treecrdt/sessionLock.ts) holds the exclusive Web Lock `em-treecrdt-session:${tsid}` for the lifetime of the page. Native platforms report `acquired`; browsers without Web Locks report `unsupported`. [`index.tsx`](../src/index.tsx) checks access before initializing, and renders [`ThoughtspaceInUse`](../src/components/ThoughtspaceInUse.tsx) when blocked.
 
 ### Document model
 
-There is **one CRDT tree per thoughtspace**, not one document per parent thought:
+There is one CRDT document per thoughtspace, represented by two replicas, not one document per parent thought. Each thought is a node keyed by `ThoughtId`; the CRDT owns parent/child structure and sibling order.
 
-- Each thought is a node in that tree, keyed by its `ThoughtId`. Parent/child structure and sibling order live in the tree itself.
-- `GLOBAL_ROOT_TOKEN` is the tree root, and `ROOT_PARENT_ID` is defined as an alias for it ([`constants.ts`](../src/constants.ts)) — so the two names refer to the same node, and `treeParentId` is a no-op that documents the boundary. Reads go the other way: `getThoughtById` reports `ROOT_PARENT_ID` when the tree has no parent for a node.
-- `SYSTEM_ROOT_THOUGHT_IDS` (`HOME_TOKEN`, `EM_TOKEN`, `ABSOLUTE_TOKEN`) are inserted as children of the global root during initialization, along with `[EM, 'Settings']` at the fixed `SETTINGS_TOKEN` — see `initializeThoughtspaceStorage` in [`treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts).
+`GLOBAL_ROOT_TOKEN` is the tree root, aliased by `ROOT_PARENT_ID`. [`initializeMemoryStorage.ts`](../src/data-providers/treecrdt/initializeMemoryStorage.ts) seeds the persistent tree with `SYSTEM_ROOT_THOUGHT_IDS` (`HOME_TOKEN`, `EM_TOKEN`, `ABSOLUTE_TOKEN`) and Settings before the memory peer synchronizes the complete document.
 
-Each node carries a payload: a JSON-encoded `ThoughtPayload` ([`payload.ts`](../src/data-providers/treecrdt/payload.ts)) with `value`, `created`, `lastUpdated`, `updatedBy`, and an optional `archived` timestamp. Everything else about a `Thought` is derived on read (see below). In particular **`rank`, `parentId`, and `childrenMap` are not stored in the payload.**
+Node payloads contain only `value`, `created`, `lastUpdated`, `updatedBy`, and optional `archived` ([`payload.ts`](../src/data-providers/treecrdt/payload.ts)). `parentId`, `rank` and `childrenMap` are derived, not persisted in the payload.
 
-### Derived tables
+### Derived view
 
-Two app-owned tables live alongside the CRDT tables in the same SQLite database. Neither is part of the CRDT, so neither replicates; both are rebuilt or maintained locally.
+There are no EM-owned SQLite membership or attribute-child tables. The complete memory projection derives lexemes from thought values and derives parent/child relationships and numeric ranks from the tree. System roots are excluded from lexemes. Attribute children are keyed by value, ordinary children by id.
 
-- **`em_lexemes`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — `id` (the `hashThought(value)` key) → `payload_json` (a serialized `Lexeme`). Lexemes are written by the push queue and refreshed from materialization events.
-- **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id. A companion `em_attribute_children_meta` table records the index version; when it doesn't match `INDEX_VERSION`, `ensureAttributeChildrenIndexReady` rebuilds the index by walking the materialized tree once from the global root. After that it's maintained incrementally on every write and on every materialization batch.
-
-### Reading a thought
-
-`getThoughtByIdFromClient` assembles a `Thought` from the tree plus the attribute index:
-
-- `value` / `created` / `lastUpdated` / `updatedBy` / `archived` come from the decoded payload.
-- `parentId` is the tree parent, falling back to `ROOT_PARENT_ID` when the tree reports none.
-- `rank` is the node's **index among its siblings** (`0` when it has no parent). It is a projection of the tree's order, computed per read, not a persisted field.
-- `childrenMap` is built by `createIndexedChildrenMap`: attribute children are keyed by their value (via `childrenMapKey`, which disambiguates duplicates), all other children by their `ThoughtId`. Insertion order follows `client.tree.children`, so `Object.values(childrenMap)` is the authoritative sibling order.
-
-`testFlags.replicationDelay` injects an artificial delay into `getThoughtsByIds`, used by e2e tests that need to observe slow local materialization after a refresh.
+A projection reads the memory client's immutable node map, whose unchanged rows retain identity. Only changed payloads are decoded; affected lexeme buckets and parent child maps are recomputed. Payload-less nodes remain in canonical sibling order without becoming EM thoughts. Document reads use this projection, not SQLite. UI-only actions reuse it when neither the node map nor transient editor state changed.
 
 ### Writes
 
-`updateThoughtsForClient` applies one push-queue batch:
+`thoughtspaceRuntime.transact` authors operations synchronously in Rust for one complete dispatched command. A `null` thought deletes; a new thought inserts; an existing thought moves or changes payload as needed. Each `document.update` returns the canonical projection, including derived lexemes and child maps. Payload comparisons avoid redundant operations. Parents are restored before descendants, and moves out of a deleted subtree precede its deletion. If a command throws, the adapter restores its tree, projection and operation bookkeeping; no partial command is queued for persistence or published.
 
-1. **Lexemes first.** Each entry in `lexemeIndexUpdates` is upserted into `em_lexemes`, or deleted when `null`.
-2. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`, and the thought's row is dropped from the attribute index.
-3. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations. The attribute index is updated whenever a thought's parent or value changed.
+A serialized `persistent.ops.appendMany(ops)` stores those exact operations without minting new identities. Its promise provides the persistence acknowledgement; the protocol's transport-send promise alone would not. The returned snapshot already contains canonical memory payloads, parents, child maps and sibling-index ranks. Persistence acknowledgements do not replace it with a captured SQLite readback.
 
-The function returns the `readonly Operation[]` it minted. That array is what the runtime forwards to remote sync.
-
-`DataProvider.updateThoughts` is the public persistence entry point for push-queue thought and lexeme batches. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
+An asynchronous append or loopback failure is reported through `onError` and gates subsequent document commits. The app displays an error asking the user to keep the tab open. Already accepted memory edits are not rolled back on persistence failure, and there is no durable retry queue.
 
 #### Order and placement
 
-TreeCRDT stores sibling order directly, so a reorder is a `move` with an explicit placement (`first`, `last`, or `after: <siblingId>`) rather than a new rank number.
+`ThoughtspaceTransaction.update` accepts `movePlacements: Index<ThoughtId | null>`: the value names the preceding sibling, or `null` for first. Creates and parent changes require one; imports, moves, sorting, edits and undo/redo supply placements directly.
 
-`PushBatch.movePlacements: Index<ThoughtId | null>` carries that intent from the action layer: the key is the moved thought, the value is the sibling to place it after (`null` means first). It is produced by [`moveThought`](../src/actions/moveThought.ts), [`sort`](../src/actions/sort.ts), [`editThought`](../src/actions/editThought.ts), and the [undo/redo enhancer](../src/redux-enhancers/undoRedoEnhancer.ts). `moveThought` and `editThought` derive theirs from the rank they are about to write with [`getMovePlacement`](../src/selectors/getMovePlacement.ts), which names the last sibling ranked before it. `editThought` needs one because editing a value re-ranks the thought within a sorted context, and a rank that arrives without a placement leaves the stored order untouched.
+The transaction applies parents and placement anchors before their dependents, then deletions. Invalid anchors fail the atomic command rather than falling back to a numeric rank. Ranks are read-only sibling indices in the resulting projection. See [data-model.md → rank](data-model.md#rank).
 
-`getTreecrdtPlacement` resolves it:
+### Persistence and incoming changes
 
-- A move of an existing thought **requires** an explicit placement and throws without one.
-- A new insert, or a placement naming a sibling that is no longer there, falls back to `getRankPlacement`, which derives a placement from the thought's numeric `rank`.
+Promise tails serialize durable appends and loopback notifications. `persistent.onMaterialized` notifies the storage peer's full-document subscription. The memory adapter deduplicates operations by their replica/counter identity, applies new operations in a batch, and publishes a new immutable projection only when state changes. Storage confirmations do not overwrite newer memory edits.
 
-The rank fallback is a compatibility bridge while the app still treats `rank` as the canonical display order. It carries a `TODO` to be removed once the create/import/`newThought` paths pass explicit placement and selectors read provider-backed order. See [data-model.md → rank](data-model.md#rank).
-
-### Write barrier
-
-[`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts) serializes em → TreeCRDT persistence and exposes an idle barrier. It is a local ordering guard, not a CRDT requirement: it keeps app-state refreshes from racing local persistence, so a materialization refresh can't reapply stale rows over newer optimistic state.
-
-It also stamps every local write with a `writeId` of the form `em-local:${sourceId}:${n}`, where `sourceId` is unique per page load. `isTreecrdtLocalMaterialization` recognizes this tab's own writes by that prefix, so the materialization path can skip events the app already applied optimistically.
-
-### Change observation (materialization)
-
-`client.onMaterialized` fires after operations are materialized into SQLite — for remote ops arriving over sync as well as for local writes. Events whose changes all carry this tab's own `writeId` prefix are ignored, because the app already applied them optimistically. Everything else is handed to `enqueueMaterializedThoughtsToStore`, which serializes refreshes through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts) so overlapping async events cannot apply out of order.
-
-[`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
-
-1. Waits for the write barrier.
-2. Refreshes `em_attribute_children` from the change list.
-3. Runs [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts), which loads the affected thoughts fresh from the provider, derives Lexeme updates (every touched thought adds itself to its value's Lexeme; deletions and value changes remove the stale context; a Lexeme left with no contexts is deleted), and re-projects TreeCRDT sibling order onto `rank` for every parent whose children changed — so the render path, which still sorts by rank, reflects remote reorders.
-4. Persists the derived Lexeme updates, then applies the whole batch through the *materialization bridge*.
-
-The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
-
-### Memory management
-
-`freeThought` / `freeLexeme` are **no-ops** in the TreeCRDT provider. The whole thoughtspace is a single SQLite database, so there is no per-document cache to release — freeing memory only means dropping entries from the Redux indexes, which the `freeQueue` half of the push queue already does. [`redux-middleware/freeThoughts.ts`](../src/redux-middleware/freeThoughts.ts) dispatches `freeThoughts` once `thoughtIndex` exceeds the [`freeThoughtsThreshold`](../src/stores/freeThoughtsThreshold.ts) store's value.
-
-Deleting a thought is not a separate provider call: it is a `null` entry in `thoughtIndexUpdates`, handled by the write path above.
+Initialization and incoming snapshots use the non-undoable `replaceThoughts` action to replace document indices directly and repair cursor topology. Ordinary commands continue through the synchronous commit boundary.
 
 ### Runtime lifecycle
 
-`ThoughtspaceRuntime` ([`thoughtspace.ts`](../src/data-providers/thoughtspace.ts), implemented in [`treecrdt/runtime.ts`](../src/data-providers/treecrdt/runtime.ts)) exposes `acquireAccess`, `init`, `drop`, `waitForIdle`, and `persistPushQueueBatches`.
+- `init` opens both engines, seeds canonical system nodes, and waits for full initial synchronization. Repeated calls share initialization.
+- `index.tsx` displays startup UI until initialization succeeds. Failure closes resources without deleting the database and does not expose an editable app.
+- `waitForIdle` drains accepted writes and local loopback work, including work they schedule. It is not proof that an external peer is caught up.
+- `drop` rejects new edits, settles accepted work, then closes resources and deletes this thoughtspace's prototype database. Concurrent initialization waits for teardown.
 
-- **`init`** awaits `clientIdReady`, loads the permissions store, creates the client, binds it to the data provider (which seeds storage and subscribes to materialization), and finally tries to start WebSocket sync. It resolves to `{ clientId, storage }`, where `storage` is the storage the client actually opened rather than the one requested. `init` and `drop` are serialized on a single lifecycle tail, and adjacent `init` calls are coalesced, so teardown can never interleave with startup.
-- **`waitForIdle`** alternates between the write barrier and the materialization queue until neither version counter changes, then resolves; it rejects after `TREECRDT_IDLE_TIMEOUT = 30000` ms. Puppeteer tests reach it through the [`waitForThoughtspaceIdle`](../src/e2e/puppeteer/helpers/waitForThoughtspaceIdle.ts) helper, which calls `em.testHelpers.waitForThoughtspaceRuntimeIdle`.
+## Remote sync and limits
 
-## Remote sync (opt-in)
+Both peers run locally through `createInMemoryConnectedPeers` and the existing protobuf codec, using the standard full-document filter. No remote endpoint is opened; the retained WebSocket adapter is not started by the active factory. Authentication, network integration, and durable retries are not implemented by this prototype.
 
-Remote sync speaks the TreeCRDT sync protocol over a WebSocket ([`treecrdtWebSocketSync.ts`](../src/data-providers/treecrdt/sync/treecrdtWebSocketSync.ts)). It is **off unless `VITE_TREECRDT_SYNC_BASE_URL` is set**, and always skipped in test mode.
+The full document and its operation history must fit in memory, and startup waits for hydration. Native forward updates read affected rows; historical replay requests a full snapshot. EM still compares row references and copies index objects, and numeric-rank updates traverse affected sibling lists. Native rollback reconstructs retained history only on failure. This design deliberately has no partial-loading or migration mode.
 
-- The base URL may be a `ws://` / `wss://` endpoint or an `http(s)://` discovery URL ([`sync/config.ts`](../src/data-providers/treecrdt/sync/config.ts)).
-- On start, `connectTreecrdtWebSocketSync` runs `syncOnce()` to catch up, then `startLive()` to subscribe.
-- Outbound: `persistPushQueueBatches` forwards the `Operation[]` returned by each batch flagged `local` to `pushLocalOps`.
-- Inbound ops are materialized by the client and reach Redux through the materialization path above.
+## Command coordination and Redux publication
 
-Failures are non-fatal by design: a failed start logs a warning and em keeps running against local storage only; a failed `pushLocalOps` logs and moves on.
+[`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `thoughtspaceRuntime.transact`, then dispatches the original action with its prepared immutable state to a pure publication reducer. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
 
-## Push queue (Redux → TreeCRDT)
-
-[`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) is a Redux store enhancer that runs after every reducer. It drains `state.pushQueue` (a list of `PushBatch` objects pushed there by [`updateThoughts`](../src/actions/updateThoughts.ts) and friends) and partitions it into:
-
-- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which wraps them in the write barrier and calls the active data provider's `updateThoughts` with the batch's `thoughtIndexUpdates`, `lexemeIndexUpdates`, and `movePlacements`. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
-- **`freeQueue`** — state-only batches whose `null` thought/lexeme entries indicate they should be released from the in-memory cache. Calls `db.freeThought` / `db.freeLexeme` (no-ops for TreeCRDT; the Redux-side release is what matters).
-
-The enhancer also caches a small set of critical settings (`CACHED_SETTINGS` in [`constants.ts`](../src/constants.ts)) into `localStorage` so that things like the Tutorial setting are available during the first paint before the thoughtspace hydrates. The corresponding read path is [`selectors/getSetting.ts`](../src/selectors/getSetting.ts).
-
-When [debug logging](debug-log.md) is enabled, each flush emits a `push` entry (batch count, thought/lexeme/move counts, and a sample of the thoughts written) and then either `pushSynced` or `pushError`. A `push` with no matching `pushSynced` is a write that never completed.
-
-Once Redux dispatches a thought update, the data flow is therefore:
+`updateThoughts` changes the memory document and reads its derived indices immediately. Nonpersistent updates can change transient editor overlays, but cannot author document operations or evict canonical thoughts. There is no Redux write queue or separate lexeme derivation. Persistence callbacks run only after SQLite acknowledges the whole command. Undo/redo uses the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
 
 ```
-reducer → state.pushQueue → pushQueue enhancer
-      → thoughtspaceRuntime.persistPushQueueBatches   (write barrier)
-      → DataProvider.updateThoughts
-      → TreeCRDT local ops + derived table writes
-      → Operation[] forwarded to WebSocket sync (if connected)
-      → idbSynced callback is invoked
+command → memory transaction (update → canonical read → next step)
+          ├→ completed snapshot → undo history + one Redux publication
+          └→ asynchronous SQLite append of the same operations
+             → loopback notification → persistence callback
 ```
 
-## Pull queue (TreeCRDT → Redux)
+## Reading and exporting
 
-[`redux-middleware/pullQueue.ts`](../src/redux-middleware/pullQueue.ts) runs after every action. It computes the set of currently visible `ThoughtId`s — cursor, all ancestors, `state.expanded`, plus context-view contexts and their ancestors — and short-circuits if nothing has changed since the last flush. Otherwise it kicks off a flush:
-
-1. Debounce the visibility recompute by `updatePullQueueDelay = 10` ms.
-2. Throttle the flush by `flushPullQueueDelay = 100` ms (skipped on first load and on `authenticate`).
-3. Filter out IDs already being pulled via the `pulling: Set<Record<ThoughtId, true>>`.
-4. Dispatch the [`pull`](../src/actions/pull.ts) thunk with the remaining IDs.
-5. On the **first flush** only, also dispatch `pullFavorites` to load `=favorite` and its contexts.
-
-When the cursor moves, the previous pull's `cancelRef.canceled` is set to `true`. Already-replicating thoughts complete; their not-yet-fetched descendants are left as pending and become the responsibility of the next flush.
-
-`syncStatusStore.isPulling` tracks pull state for the UI (does not include the favorites pull, which runs in the background).
-
-### `fetchDescendants` (the actual pull engine)
-
-[`data-providers/data-helpers/fetchDescendants.ts`](../src/data-providers/data-helpers/fetchDescendants.ts) is an async iterable that does breadth-first traversal of thought IDs and yields `{ thoughtIndex, lexemeIndex }` chunks. The `pull` thunk dispatches each chunk into Redux via `updateThoughts` so the UI can paint partial results as the pull progresses.
-
-Notable behavior:
-
-- **Buffer depth.** Default `MAX_DEPTH = 100` in `fetchDescendants`, but `pull` passes `BUFFER_DEPTH = 2` for normal pulls. Beyond that depth, descendants are marked `pending: true` rather than fetched. `MAX_THOUGHTS_QUEUED = 100` is a hard cap on the BFS queue size.
-- **Cursor priority.** On every loop iteration, if the cursor has become pending mid-pull, its head is prepended to the next batch, so cursor moves don't have to wait for the BFS to drain.
-- **`=pin` pre-load.** For every thought yielded, if it has a `=pin` child, the pin and the pin's children are eagerly fetched in the same iteration to avoid a flash of expanded children before `=pin/false` resolves ([issue #3268](https://github.com/cybersemics/em/issues/3268)).
-- **Tangential contexts.** If a thought's parent isn't loaded, the parent is pushed onto the queue so the ancestor chain gets pulled.
-- **Meta attributes.** Descendants of `=`-prefixed thoughts (except `=archive`) are not buffer-truncated; they're always pulled in full so the metaprogramming layer behaves consistently.
+Selectors read the complete Redux projection synchronously. Export captures an immutable snapshot, scopes JSON to the selected subtree, and does not wait for persistence. A local UI reset does not delete the TreeCRDT document; durable deletion is explicit.
 
 ## Identity & sharing
 
-Three tokens are bootstrapped in [`data-providers/thoughtspaceSession.ts`](../src/data-providers/thoughtspaceSession.ts):
+[`thoughtspaceSession.ts`](../src/data-providers/thoughtspaceSession.ts) bootstraps:
 
-- **`accessToken`** — a per-device 21-char nanoid stored in `localStorage`. It is the device's secret: `clientId` is derived from it, and it keys the device's permissions entry. Nothing currently transmits it — the sync client connects without auth. Can be overridden by `?auth=<token>` in the URL.
-- **`tsid`** — the thoughtspace ID. Also a 21-char nanoid in `localStorage`. It is the TreeCRDT `docId`, the OPFS filename (`/treecrdt-em-${tsid}.db`), the Web Lock name, and the permissions storage key. Can be overridden by `?share=<tsid>` to switch the app onto a shared thoughtspace.
-- **`clientId`** — a public key derived as `SHA-256(accessToken)`, base64-encoded. Available asynchronously via the exported `clientIdReady` promise. Stamped on every Thought and Lexeme write as `updatedBy`, and converted by `clientIdToReplicaId` into the 32-byte replica id TreeCRDT mints local operations under.
+- `accessToken`: per-device nanoid in localStorage, also used for the permissions entry; optionally selected by `?auth=`.
+- `tsid`: thoughtspace nanoid scoping the document, prototype OPFS file, Web Lock and permissions; optionally selected by `?share=`. Selecting a thoughtspace does not enable network sharing.
+- `clientId`: base64 SHA-256 of the access token, still supplying `updatedBy`.
+
+The memory engine uses a fresh random 32-byte replica id on every opening. A fresh identity avoids reusing a writer with an uncertain durable counter. This is not authenticated device enrollment or a key-recovery flow.
 
 Device permissions live in [`permissionsStore.ts`](../src/data-providers/permissionsStore.ts): a [ministore](glossary.md#m) holding `Index<Share>` keyed by access token (one entry per device with access), persisted with `idb-keyval` under `em-permissions:${tsid}`. It is loaded during runtime initialization and skipped entirely in unit tests. CRUD lives in [`permissionsModel.ts`](../src/data-providers/permissionsModel.ts):
 
 - **add** — generates a new access token, adds a `Share`, alerts the user.
-- **delete** — removes the entry. If it's the *current* device and there are still others, dispatches `clear` (logs out). If it's the *last* device, calls `storage.clear()`, `db.clear()`, dispatches `clear`, and reloads.
+- **delete** — removes the entry. If it's the *current* device and there are still others, dispatches `clear` (logs out). If it's the *last* device, calls `storage.clear()`, `thoughtspaceRuntime.drop()`, dispatches `clear`, and reloads.
 - **update** — patches name/role.
 
 ## Cleanup
 
-`db.clear` is the runtime's `drop`. It detaches the data provider (rejecting any writes still waiting on initialization), stops WebSocket sync, unsubscribes the materialization listener, and calls `client.drop()`, which closes SQLite and — for OPFS storage — deletes the thoughtspace's database file. Used by the device-removal flow above, and by e2e tests through `em.testHelpers.dropThoughtspace`.
-
-Unit tests and most e2e runs initialize with `storage: 'memory'`, so they never touch OPFS; persistence-specific Puppeteer suites opt into OPFS explicitly. See [testing.md](testing.md).
+`thoughtspaceRuntime.drop()` drains work, stops the full-document subscription, detaches loopback peers and the materialization listener, frees WASM, and drops the prototype SQLite database. It is used by device removal and test teardown. Unit tests and most e2e runs use in-memory SQLite; persistence-specific Puppeteer suites explicitly use OPFS. See [testing.md](testing.md).

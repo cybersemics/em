@@ -2,13 +2,19 @@ import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
 import splitThought from '../splitThought'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('split thought', () => {
   const steps = [
@@ -21,7 +27,7 @@ it('split thought', () => {
     }),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -40,7 +46,7 @@ it('split thought with formatting', () => {
     }),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
@@ -64,7 +70,7 @@ it('split thought within a formatting tag', () => {
     }),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
   expect(exported).toBe(`<ul>
@@ -88,7 +94,7 @@ it('cursor moves to second thought', () => {
     }),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['ple'])
 })
@@ -117,7 +123,7 @@ it('move children to the correct sibling in a sorted context', () => {
     }),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -152,7 +158,7 @@ it('note remains on the original thought when split', () => {
     }),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -173,7 +179,7 @@ it('split thought with whitespace in HTML formatting', () => {
     }),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
   // The whitespace inside the <i> tag should be trimmed in the output
   const cursorThought = getThoughtById(stateNew, head(stateNew.cursor!))

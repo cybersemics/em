@@ -18,8 +18,8 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import MoveThoughtAlert from '../components/MoveThoughtAlert'
 import { AlertType, LongPressState } from '../constants'
 import attributeEquals from '../selectors/attributeEquals'
-import getNextRank from '../selectors/getNextRank'
-import getPrevRank from '../selectors/getPrevRank'
+import { getChildrenRanked } from '../selectors/getChildren'
+import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -230,7 +230,11 @@ const drop = (props: DroppableSubthoughts, monitor: DropTargetMonitor) => {
         moveThought({
           oldPath: item.path,
           newPath: pathTo,
-          newRank: (dropTop ? getPrevRank : getNextRank)(state, thoughtTo.id),
+          afterId: dropTop
+            ? getFirstChildPlacement(state, thoughtTo.id)
+            : (getChildrenRanked(state, thoughtTo.id)
+                .filter(child => child.id !== head(item.path))
+                .at(-1)?.id ?? null),
         }),
       )
     })

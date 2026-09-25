@@ -549,12 +549,22 @@ it('describe a drag and drop by where the thought lands', () => {
         type: 'moveThought',
         oldPath,
         newPath: [...contextToPath(getState(), ['a'])!, oldPath.at(-1)!],
-        newRank: 0.5,
+        afterId: contextToPath(getState(), ['a', 'b'])!.at(-1)!,
       })
     },
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+  const state = store.getState()
+  const shiftedSiblingId = contextToPath(state, ['a', 'd'])!.at(-1)!
+  const shiftedRankPath = `/thoughts/thoughtIndex/${shiftedSiblingId}/rank`
+  // Put the derived sibling-rank change before the actual reparenting, independent of random thought ids.
+  const undoPatches = state.undoPatches.map(patch => [
+    ...patch.filter(operation => operation.path === shiftedRankPath),
+    ...patch.filter(operation => operation.path !== shiftedRankPath),
+  ])
+  expect(undoPatches.at(-1)![0].path).toBe(shiftedRankPath)
+
+  expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -710,7 +720,7 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
         type: 'moveThought',
         oldPath,
         newPath: [...contextToPath(getState(), ['a', 'd'])!, oldPath.at(-1)!],
-        newRank: 1,
+        afterId: contextToPath(getState(), ['a', 'd', '=archive'])!.at(-1)!,
       })
     },
   ])

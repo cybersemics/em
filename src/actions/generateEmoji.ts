@@ -22,8 +22,6 @@ interface EmojiRequest {
   isCursor: boolean
   simplePath: SimplePath
   thought: Thought
-  /** The value shown while the request is in flight. */
-  valuePending: string
 }
 
 /** Adds an emoji prefix to a thought value. */
@@ -33,8 +31,7 @@ const addEmojiPrefix = (emoji: string, value: string): string => `${emoji}${valu
  * Generates emoji for the thoughts at the given paths in one request, or instantly cycles cached alternatives for
  * thoughts that the command already generated.
  *
- * The pending value is applied outside undo history and restored before the final edit so Undo returns to the actual
- * source thought rather than its temporary ellipsis state.
+ * Pending text is a display-only overlay, leaving document values and memberships unchanged during inference.
  *
  * Takes an explicit list of paths instead of reading state.cursor so that every thought of a multiselect can be
  * generated in one request and one LLM completion.
@@ -109,7 +106,6 @@ const generateEmoji =
           isCursor,
           simplePath,
           thought,
-          valuePending: `${thought.value}...`,
         } satisfies EmojiRequest
       })
 
@@ -127,13 +123,11 @@ const generateEmoji =
             {
               ...request.thought,
               generating: true,
-              value: request.valuePending,
+              displayValue: `${request.thought.value}...`,
             },
           ]),
         ),
-        lexemeIndexUpdates: {},
         local: false,
-        overwritePending: true,
         remote: false,
       }),
     )
@@ -176,13 +170,13 @@ const generateEmoji =
     }
 
     requests.forEach((request, index) => {
-      const { baseValue, cachedPrefix, isCursor, simplePath, thought, valuePending } = request
+      const { baseValue, cachedPrefix, isCursor, simplePath, thought } = request
       const thoughtPending = getThoughtById(getState(), thought.id)
       // bail if the thought was deleted while its emoji were being generated
       if (!thoughtPending) return
 
       // Do not overwrite an edit that was made while inference was in flight.
-      if (thoughtPending.value !== valuePending || !thoughtPending.generating) {
+      if (thoughtPending.value !== thought.value || !thoughtPending.generating) {
         if (thoughtPending.generating) {
           dispatch(
             updateThoughts({
@@ -190,11 +184,10 @@ const generateEmoji =
                 [thought.id]: {
                   ...thoughtPending,
                   generating: false,
+                  displayValue: undefined,
                 },
               },
-              lexemeIndexUpdates: {},
               local: false,
-              overwritePending: true,
               remote: false,
             }),
           )
@@ -209,20 +202,16 @@ const generateEmoji =
       const cursorOffsetDelta = emoji ? newPrefixLength - cachedPrefix.length : 0
 
       dispatch([
-        // Restore the original value before applying the generated one. updateThoughts is not undoable, so the pending
-        // value would otherwise become the state that undo reverts to. Both updates are dispatched in the same batch,
-        // so the restored value is never rendered.
+        // Clear the transient overlay before recording the generated edit in undo history.
         updateThoughts({
           thoughtIndexUpdates: {
             [thought.id]: {
               ...thoughtPending,
               generating: false,
-              value: thought.value,
+              displayValue: undefined,
             },
           },
-          lexemeIndexUpdates: {},
           local: false,
-          overwritePending: true,
           remote: false,
         }),
         ...(emoji

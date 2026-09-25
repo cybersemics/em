@@ -1,16 +1,16 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
-import getNextRank from '../selectors/getNextRank'
 import isContextViewActive from '../selectors/isContextViewActive'
 import prevSibling from '../selectors/prevSibling'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -24,7 +24,7 @@ export interface indentPayload {
 }
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
-const indent = (state: State, { selectionOffset }: indentPayload = {}): State => {
+const indent = (state: State, { selectionOffset }: indentPayload = {}, document?: ThoughtspaceTransaction): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -62,18 +62,16 @@ const indent = (state: State, { selectionOffset }: indentPayload = {}): State =>
 
   const cursorNew = appendToPath(parentOf(cursor), prev.id, head(cursor))
 
-  // For treecrdt: afterId must be a sibling (child of new parent), not the parent.
-  // Tab indent should place as last child of prev, so use last child of prev; undefined if prev has no children.
-  const prevChildren = getChildrenRanked(state, prev.id)
-  const lastChildOfPrev = _.last(prevChildren)
-
-  return moveThought(state, {
-    oldPath: cursor,
-    newPath: cursorNew,
-    ...(offset != null ? { offset } : null),
-    newRank: getNextRank(state, prev.id),
-    afterId: lastChildOfPrev?.id ?? null,
-  })
+  return moveThought(
+    state,
+    {
+      oldPath: cursor,
+      newPath: cursorNew,
+      ...(offset != null ? { offset } : null),
+      afterId: getChildrenRanked(state, prev.id).at(-1)?.id ?? null,
+    },
+    document,
+  )
 }
 
 /**
@@ -87,7 +85,7 @@ export const indentActionCreator = (): Thunk => (dispatch, getState) => {
   dispatch({ type: 'indent', selectionOffset })
 }
 
-export default indent
+export default command(indent)
 
 // Register this action's metadata
 registerActionMetadata('indent', {

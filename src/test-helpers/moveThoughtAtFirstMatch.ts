@@ -1,16 +1,19 @@
-import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import moveThought, { MoveThoughtPayload, moveThoughtActionCreator } from '../actions/moveThought'
 import contextToPath from '../selectors/contextToPath'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
+import contextToPathOrThrow from './contextToPathOrThrow'
 
-type Payload = Omit<MoveThoughtPayload, 'oldPath' | 'newPath'> & {
+type Payload = Omit<MoveThoughtPayload, 'oldPath' | 'newPath' | 'afterId'> & {
   from: string[]
   to: string[]
+  after: string[] | null
 }
 
 /**
@@ -34,16 +37,23 @@ const getMovePaths = (state: State, from: string[], to: string[]): [Path, Path] 
 /**
  * Moves a given thought represented by unranked path to some other context also represented by unranked path.
  *
- * @param at: Unraked path to the thought that is being moved.
+ * @param from: Unranked path to the thought that is being moved.
  * @param to: Unranked path representing which context the thoughts should be moved.
+ * @param after: Unranked path to the destination predecessor, or null to move first.
  */
-const moveThoughtAtFirstMatch = _.curryRight((state: State, payload: Payload) => {
-  const [oldPath, newPath] = getMovePaths(state, payload.from, payload.to)
-  return moveThought(state, {
-    ...payload,
-    oldPath,
-    newPath,
-  })
+const moveThoughtAtFirstMatch = command((state: State, payload: Payload, document?: ThoughtspaceTransaction) => {
+  const { from, to, after, ...options } = payload
+  const [oldPath, newPath] = getMovePaths(state, from, to)
+  return moveThought(
+    state,
+    {
+      ...options,
+      oldPath,
+      newPath,
+      afterId: after === null ? null : head(contextToPathOrThrow(state, after, 'moveThoughtAtFirstMatch')),
+    },
+    document,
+  )
 })
 
 /**
@@ -52,12 +62,15 @@ const moveThoughtAtFirstMatch = _.curryRight((state: State, payload: Payload) =>
 export const moveThoughtAtFirstMatchActionCreator =
   (payload: Payload): Thunk =>
   (dispatch, getState) => {
-    const [oldPath, newPath] = getMovePaths(getState(), payload.from, payload.to)
+    const { from, to, after, ...options } = payload
+    const state = getState()
+    const [oldPath, newPath] = getMovePaths(state, from, to)
     dispatch(
       moveThoughtActionCreator({
-        ...payload,
+        ...options,
         oldPath,
         newPath,
+        afterId: after === null ? null : head(contextToPathOrThrow(state, after, 'moveThoughtAtFirstMatch')),
       }),
     )
   }

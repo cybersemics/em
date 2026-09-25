@@ -33,6 +33,7 @@ scripts/icons/.yarn/
 
 /coverage
 /build
+/.treecrdt-wasm
 
 # Tauri
 desktop/target

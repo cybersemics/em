@@ -1,15 +1,16 @@
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import moveThought from '../actions/moveThought'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
-import getRankAfter from '../selectors/getRankAfter'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
@@ -23,7 +24,7 @@ export interface outdentPayload {
 }
 
 /** Decreases the indent level of the given thought, moving it to its parent. */
-const outdent = (state: State, { selectionOffset }: outdentPayload = {}): State => {
+const outdent = (state: State, { selectionOffset }: outdentPayload = {}, document?: ThoughtspaceTransaction): State => {
   const { cursor } = state
   if (!cursor || cursor.length <= 1) return state
 
@@ -63,13 +64,16 @@ const outdent = (state: State, { selectionOffset }: outdentPayload = {}): State 
   const cursorNew: Path = appendToPath(parentOf(parentOf(cursor)), head(cursor))
 
   const parentPath = parentOf(simplifyPath(state, cursor))
-  return moveThought(state, {
-    oldPath: cursor,
-    newPath: cursorNew,
-    ...(offset != null ? { offset } : null),
-    newRank: getRankAfter(state, parentPath),
-    afterId: head(parentPath),
-  })
+  return moveThought(
+    state,
+    {
+      oldPath: cursor,
+      newPath: cursorNew,
+      ...(offset != null ? { offset } : null),
+      afterId: head(parentPath),
+    },
+    document,
+  )
 }
 
 /**
@@ -83,7 +87,7 @@ export const outdentActionCreator = (): Thunk => (dispatch, getState) => {
   dispatch({ type: 'outdent', selectionOffset })
 }
 
-export default outdent
+export default command(outdent)
 
 // Register this action's metadata
 registerActionMetadata('outdent', {

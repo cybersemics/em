@@ -4,7 +4,6 @@ import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
 import store from '../../stores/app'
-import freeThoughtsThresholdStore from '../../stores/freeThoughtsThreshold'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -102,13 +101,8 @@ it('render home icon as breadcrumbs for each context whose parent is the home co
   ])
 })
 
-describe('freeThoughts', () => {
-  // Lower freeThoughtsThreshold to 0 so freeThoughts deallocates any thought that is not explicitly preserved. Restored by createTestApp's resetStores before the next test.
-  beforeEach(() => {
-    freeThoughtsThresholdStore.update(0)
-  })
-
-  it('Do not deallocate tangential contexts children', async () => {
+describe('complete context projection', () => {
+  it('renders tangential context children without loading', async () => {
     await dispatch([
       importText({
         text: `
@@ -130,9 +124,6 @@ describe('freeThoughts', () => {
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    // Wait for freeThoughts to run before moving the cursor to a/m~/f.
-    // Do not dispatch setCursor in the same batch.
-    // Otherwise the new state.expanded will incidentally preserve y1 and z1, resulting in a false negative
     await dispatch([setCursor(['a', 'm', 'f'])])
 
     await act(vi.runOnlyPendingTimersAsync)
@@ -141,7 +132,7 @@ describe('freeThoughts', () => {
     const y1 = await findThoughtByText('y')
     expect(y1).toBeTruthy()
 
-    // Assert that there are no pending thoughts
+    // Context navigation does not introduce loading indicators.
     expect(document.querySelectorAll('[data-pending=true]').length).toBe(0)
   })
 })

@@ -1,16 +1,6 @@
 import { Keyboard } from '@capacitor/keyboard'
 import ClipboardJS from 'clipboard'
-import React, {
-  FC,
-  PropsWithChildren,
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { extendTapRecipe } from '../../../styled-system/recipes'
@@ -18,14 +8,11 @@ import ExportOption from '../../@types/ExportOption'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
 import Thought from '../../@types/Thought'
-import ThoughtId from '../../@types/ThoughtId'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
 import { isIOS, isTouch } from '../../browser'
-import { HOME_PATH, HOME_TOKEN } from '../../constants'
-import replicateTree from '../../data-providers/data-helpers/replicateTree'
-import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
+import { HOME_PATH } from '../../constants'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import share from '../../device/share'
@@ -38,22 +25,18 @@ import hasMulticursor from '../../selectors/hasMulticursor'
 import simplifyPath from '../../selectors/simplifyPath'
 import theme from '../../selectors/theme'
 import ellipsize from '../../util/ellipsize'
-import equalPath from '../../util/equalPath'
 import exportPhrase from '../../util/exportPhrase'
 import fastClick from '../../util/fastClick'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
-import initialState from '../../util/initialState'
 import isCommandKey from '../../util/isCommandKey'
 import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
-import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
 import trimBullet from '../../util/trimBullet'
 import Checkbox from './../Checkbox'
 import ChevronImg from './../ChevronImg'
 import Dropdown from './../Dropdown'
-import LoadingEllipsis from './../LoadingEllipsis'
 import ModalComponent from './ModalComponent'
 
 /******************************************************************************
@@ -73,15 +56,6 @@ interface AdvancedSetting {
   parent?: boolean
 }
 
-interface ExportThoughtsPhraseOptions {
-  ids: ThoughtId | ThoughtId[]
-  excludeArchived: boolean
-  excludeMeta: boolean
-  /** The final number of descendants. */
-  numDescendantsFinal: number | null
-  title: string
-}
-
 interface ExportDropdownProps {
   selected: ExportOption
   onSelect?: (option: ExportOption) => void
@@ -98,124 +72,6 @@ const exportOptions: ExportOption[] = [
 ]
 
 /******************************************************************************
- * Contexts
- *****************************************************************************/
-
-const PullStatusContext = createContext<boolean>(false)
-PullStatusContext.displayName = 'PullStatusContext'
-
-/** Use the pulling status of export. */
-const usePullStatus = () => useContext(PullStatusContext)
-
-const ExportingThoughtsContext = createContext<Thought[]>([])
-ExportingThoughtsContext.displayName = 'ExportingThoughtsContext'
-
-/** A hook that returns a list of all exported thoughts updated in real-time. Used to calculate numDesendants with different settings without having to re-traverse all descendants. */
-const useExportingThoughts = () => useContext(ExportingThoughtsContext)
-
-const ExportedStateContext = createContext<State | null>(null)
-ExportedStateContext.displayName = 'ExportedStateContext'
-
-/** Use the exported state. */
-const useExportedState = () => useContext(ExportedStateContext)
-
-/******************************************************************************
- * Context Providers
- *****************************************************************************/
-
-/**
- * Context to handle pull status and number of descendants.
- */
-const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ children, simplePaths }) => {
-  const isMounted = useRef(false)
-  const [isPulling, setIsPulling] = useState<boolean>(true)
-  const [exportedState, setExportedState] = useState<State | null>(null)
-  // list of thoughts as they are exported to provide accurate numDescendants count in real-time (throttled)
-  const [exportingThoughts, setExportingThoughts] = useState<Thought[]>([])
-  // Update exportingThoughts every 100ms to throttle re-renders.
-  // This results in a ~10% decrease in pull time on 6k thoughts.
-  // There are only marginal performance gains at delays above 100ms, and steeply diminishing gains below 100ms.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const setExportingThoughtsThrottled = useCallback(
-    throttleConcat((queue: Thought[]) => setExportingThoughts(thoughtsOld => [...thoughtsOld, ...queue]), 100),
-    [],
-  )
-
-  // fetch all pending descendants of the cursor once for all components
-  // track isMounted so we can cancel the end trigger after unmount
-  useEffect(
-    () => {
-      isMounted.current = true
-
-      /** Waits for pending local persistence before reading the selected subtrees for export. */
-      const startReplicationsAfterLocalWrites = async () => {
-        await thoughtspaceRuntime.waitForIdle()
-        if (!isMounted.current) return null
-
-        const replications = simplePaths.map(simplePath => {
-          const id = head(simplePath)
-
-          return replicateTree(id, {
-            // TODO: Warn the user if offline or not fully replicated
-            remote: false,
-            onThought: thought => {
-              if (!isMounted.current) return
-              setExportingThoughtsThrottled(thought)
-            },
-          })
-        })
-
-        return {
-          replications,
-          thoughtIndicesPromise: Promise.all(replications.map(replication => replication.promise)),
-        }
-      }
-
-      const replicationsStartedPromise = startReplicationsAfterLocalWrites()
-
-      void (async () => {
-        const startedReplications = await replicationsStartedPromise
-        if (!startedReplications) return
-
-        const thoughtIndices = await startedReplications.thoughtIndicesPromise
-        if (!isMounted.current) return
-
-        setExportingThoughtsThrottled.flush()
-
-        const initial = initialState()
-        const exportedState: State = {
-          ...initial,
-          thoughts: {
-            ...initial.thoughts,
-            thoughtIndex: Object.assign({}, initial.thoughts.thoughtIndex, ...thoughtIndices),
-          },
-        }
-
-        setExportedState(exportedState)
-        setIsPulling(false)
-      })()
-
-      return () => {
-        isMounted.current = false
-        void replicationsStartedPromise.then(startedReplications => {
-          startedReplications?.replications.forEach(replication => replication.cancel())
-        })
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
-
-  return (
-    <PullStatusContext.Provider value={isPulling}>
-      <ExportedStateContext.Provider value={exportedState}>
-        <ExportingThoughtsContext.Provider value={exportingThoughts}>{children}</ExportingThoughtsContext.Provider>
-      </ExportedStateContext.Provider>
-    </PullStatusContext.Provider>
-  )
-}
-
-/******************************************************************************
  * Styles
  *****************************************************************************/
 
@@ -224,36 +80,6 @@ const rotate180Class = css.raw({ transform: 'rotate(180deg)' })
 /******************************************************************************
  * Components
  *****************************************************************************/
-
-/** A user-friendly phrase describing how many thoughts will be exported. Updated with an estimate as thoughts are pulled. */
-const ExportThoughtsPhrase = ({
-  ids,
-  excludeArchived,
-  excludeMeta,
-  numDescendantsFinal,
-  title,
-}: ExportThoughtsPhraseOptions) => {
-  const thoughts = useExportingThoughts()
-  const thoughtsFiltered = thoughts.filter(
-    exportFilter({
-      excludeMeta,
-      excludeArchived,
-    }),
-  )
-  const numDescendants = thoughtsFiltered.length + (thoughtsFiltered[0]?.id === HOME_TOKEN ? -1 : 0)
-
-  // updates with latest number of descendants
-  const n = numDescendantsFinal ?? numDescendants
-
-  const phrase =
-    numDescendantsFinal || numDescendants || ids.length > 1
-      ? exportPhrase(ids, n, { value: title })
-      : n === 0 || n === 1
-        ? '1 thought'
-        : 'thoughts'
-
-  return <span dangerouslySetInnerHTML={{ __html: phrase }} />
-}
 
 /** A dropdown menu to select an export type. */
 const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
@@ -295,104 +121,96 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 }
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
-const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
+const ModalExport: FC<{ simplePaths: SimplePath[]; exportedState: State }> = ({ simplePaths, exportedState }) => {
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   // Clears the alert ERROR_TIMEOUT after a clipboard error; cancelled by a successful copy. Scoped to this modal instance rather than a global, so it needs no reset between tests.
   const errorTimer = useRef(0)
-  const id = head(simplePaths[0])
-  const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0]))) ?? ''
+  const title = isRoot(simplePaths[0]) ? 'home' : (headValue(exportedState, simplePaths[0]) ?? '')
   const titleShort = ellipsize(title)
   // const titleMedium = ellipsize(title, 25)
 
-  const [exportContent, setExportContent] = useState<string | null>(null)
   const [shouldIncludeMetaAttributes, setShouldIncludeMetaAttributes] = useState(false)
   const [shouldIncludeArchived, setShouldIncludeArchived] = useState(false)
   const [shouldIncludeMarkdownFormatting, setShouldIncludeMarkdownFormatting] = useState(true)
   const [shouldExportFirstThought, setShouldExportFirstThought] = useState(true)
   const [shouldExportSubthoughts, setShouldExportSubthoughts] = useState(true)
   const [selected, setSelected] = useState(exportOptions[0])
-  const [numDescendantsInState, setNumDescendantsInState] = useState<number | null>(null)
-
   const exportWord = isTouch ? 'Share' : 'Download'
 
-  const isPulling = usePullStatus()
-  const exportedState = useExportedState()
-
-  // calculate the final number of descendants
-  // uses a different method for text/plain and text/html
-  // does not update in real-time (See: ExportThoughtsPhrase component)
-  const numDescendantsFinal = exportContent
-    ? selected.type === 'text/plain'
-      ? exportContent.split('\n').length - simplePaths.length
-      : (numDescendantsInState ?? 0)
-    : null
-
-  const exportThoughtsPhraseFinal = useSelector(() =>
-    exportPhrase(
-      simplePaths.map(simplePath => head(simplePath)),
-      numDescendantsFinal,
-      { value: title },
-    ),
+  // Capture only the selected subtrees in JSON, even though the read snapshot contains the complete document.
+  const selectedThoughtIds = useMemo(
+    () => [
+      ...new Set(simplePaths.flatMap(path => [head(path), ...getDescendantThoughtIds(exportedState, head(path))])),
+    ],
+    [exportedState, simplePaths],
   )
 
-  /** Sets the exported context from the cursor using the selected type and making the appropriate substitutions. */
-  const setExportContentFromCursor = () => {
-    if (!exportedState) return
-
+  const exportContent = useMemo(() => {
     if (selected.type === 'application/json') {
-      // DEBUG: Export thoughts without created, lastUpdated, and updatedBy attributes in order to try to get around Android's clipboard limit.
       const thoughtIndexCompact = Object.fromEntries<Partial<Thought>>(
-        Object.entries(exportedState.thoughts.thoughtIndex).map(([id, thought]) => {
+        selectedThoughtIds.map(id => {
+          const thought = exportedState.thoughts.thoughtIndex[id]
+          // UI overlays and metadata do not belong in the compact document export.
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { created, lastUpdated, updatedBy, ...partialThought } = thought
+          const { created, lastUpdated, updatedBy, generating, displayValue, splitSource, ...partialThought } = thought
           return [id, partialThought]
         }),
       )
-
-      // const lexemeIndexCompact = Object.fromEntries(
-      //   Object.entries(exportedState.thoughts.lexemeIndex).map(([id, lexeme]) => {
-      //     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      //     const { created, lastUpdated, updatedBy, ...partialLexeme } = lexeme
-      //     return [id, partialLexeme]
-      //   }),
-      // )
-
-      setExportContent(JSON.stringify(thoughtIndexCompact))
-    } else {
-      // Sort in document order. At this point, all thoughts are pulled and in state.
-      const sortedPaths = documentSort(exportedState, simplePaths)
-
-      // When shouldExportFirstThought is false, expand each selected path to its children's IDs.
-      // For single selection this skips the root thought; for multiple selection it skips the entire first level.
-      const exportIds = !shouldExportFirstThought
-        ? sortedPaths.flatMap(simplePath => getChildrenRanked(exportedState, head(simplePath)).map(child => child.id))
-        : sortedPaths.map(simplePath => head(simplePath))
-
-      const exported = exportIds
-        .map(thoughtId =>
-          exportContext(exportedState, thoughtId, selected.type, {
-            excludeArchived: !shouldIncludeArchived,
-            excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
-            excludeMeta: !shouldIncludeMetaAttributes,
-            // maxDepth 0 means only the thought itself with no children
-            maxDepth: !shouldExportSubthoughts ? 0 : undefined,
-          }),
-        )
-        .join('\n')
-        // Collapse contiguous <ul> tags.
-        .replace(/<\/ul>\s*<ul>/g, '')
-        // Clear empty lines
-        .replace(/\n+/g, '\n')
-
-      // - remove home token
-      // - trim leading "- " from single line text
-      // - trim leading whitespace from multiline text
-      const exportedTrimmed = removeHome(trimBullet(exported)).trimStart()
-
-      setExportContent(exportedTrimmed)
+      return JSON.stringify(thoughtIndexCompact)
     }
-  }
+
+    const sortedPaths = documentSort(exportedState, simplePaths)
+    const exportIds = !shouldExportFirstThought
+      ? sortedPaths.flatMap(path => getChildrenRanked(exportedState, head(path)).map(child => child.id))
+      : sortedPaths.map(path => head(path))
+    const exported = exportIds
+      .map(thoughtId =>
+        exportContext(exportedState, thoughtId, selected.type, {
+          excludeArchived: !shouldIncludeArchived,
+          excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
+          excludeMeta: !shouldIncludeMetaAttributes,
+          maxDepth: !shouldExportSubthoughts ? 0 : undefined,
+        }),
+      )
+      .join('\n')
+      .replace(/<\/ul>\s*<ul>/g, '')
+      .replace(/\n+/g, '\n')
+    return removeHome(trimBullet(exported)).trimStart()
+  }, [
+    exportedState,
+    selected.type,
+    selectedThoughtIds,
+    shouldExportFirstThought,
+    shouldExportSubthoughts,
+    shouldIncludeArchived,
+    shouldIncludeMarkdownFormatting,
+    shouldIncludeMetaAttributes,
+    simplePaths,
+  ])
+
+  const numDescendantsFinal =
+    selected.type === 'text/plain'
+      ? exportContent.split('\n').length - simplePaths.length
+      : !shouldExportSubthoughts
+        ? 0
+        : simplePaths.reduce(
+            (count, path) =>
+              count +
+              getDescendantThoughtIds(exportedState, head(path), {
+                filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
+                filterFunction: exportFilter({
+                  excludeArchived: !shouldIncludeArchived,
+                  excludeMeta: !shouldIncludeMetaAttributes,
+                }),
+              }).length,
+            0,
+          )
+  const exportThoughtsPhraseFinal = exportPhrase(
+    simplePaths.map(path => head(path)),
+    numDescendantsFinal,
+    { value: title },
+  )
 
   /** Show an alert and close the modal after the thoughts are copied to the clipboard. */
   const onCopyToClipboard = useCallback(() => {
@@ -403,49 +221,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
     clearTimeout(errorTimer.current)
   }, [dispatch, exportThoughtsPhraseFinal])
-
-  // Sets export content when pull is complete by useDescendants
-  useEffect(
-    () => {
-      if (!isPulling) setExportContentFromCursor()
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isPulling],
-  )
-
-  useEffect(
-    () => {
-      if (!shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
-
-      // when exporting HTML, we have to do a full traversal since the numDescendants heuristic of counting the number of lines in the exported content does not work
-      if (selected.type === 'text/html' && exportedState) {
-        // When subthoughts are excluded, there are no descendants by definition.
-        const numDescendants = !shouldExportSubthoughts
-          ? 0
-          : getDescendantThoughtIds(exportedState, id, {
-              filterAndTraverse: thought => shouldIncludeMetaAttributes || thought.value !== '=note',
-              filterFunction: exportFilter({
-                excludeArchived: !shouldIncludeArchived,
-                excludeMeta: !shouldIncludeMetaAttributes,
-              }),
-            }).length
-        setNumDescendantsInState(numDescendants)
-      }
-
-      if (!isPulling) {
-        setExportContentFromCursor()
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      selected,
-      shouldIncludeMetaAttributes,
-      shouldIncludeArchived,
-      shouldIncludeMarkdownFormatting,
-      shouldExportFirstThought,
-      shouldExportSubthoughts,
-    ],
-  )
 
   useEffect(
     () => {
@@ -535,7 +310,10 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const onAdvancedClick = () => setAdvancedSettings(!advancedSettings)
 
   /** Updates meta checkbox value when clicked and set the appropriate value in the selected option. */
-  const onChangeMetaCheckbox = () => setShouldIncludeMetaAttributes(!shouldIncludeMetaAttributes)
+  const onChangeMetaCheckbox = () => {
+    if (shouldIncludeMetaAttributes) setShouldIncludeArchived(false)
+    setShouldIncludeMetaAttributes(!shouldIncludeMetaAttributes)
+  }
 
   /** Updates archived checkbox value when clicked and set the appropriate value in the selected option. */
   const onChangeArchivedCheckbox = () => setShouldIncludeArchived(!shouldIncludeArchived)
@@ -620,17 +398,11 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           <span data-testid='export-phrase-container'>
             {exportWord}{' '}
             {
-              // application/json will ignore the cursor and downlaod the raw thought state as-is
+              // JSON exports the selected subtrees as a compact document snapshot.
               selected.type === 'application/json' ? (
                 'state'
               ) : (
-                <ExportThoughtsPhrase
-                  ids={simplePaths.map(simplePath => head(simplePath))}
-                  excludeArchived={!shouldIncludeArchived}
-                  excludeMeta={!shouldIncludeMetaAttributes}
-                  numDescendantsFinal={numDescendantsFinal}
-                  title={title}
-                />
+                <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhraseFinal }} />
               )
             }
             <span>
@@ -643,12 +415,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
       {/* Preview */}
       <div className={css({ position: 'relative' })}>
-        {exportContent === null && (
-          <div className={css({ position: 'absolute', top: 'calc(50% - 1em)', textAlign: 'center', width: ' 100%' })}>
-            <LoadingEllipsis />
-          </div>
-        )}
         <textarea
+          aria-label='Export preview'
           ref={textareaRef}
           readOnly
           className={css({
@@ -691,7 +459,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
             color: 'bg',
             backgroundColor: 'fg',
           })}
-          disabled={exportContent === null}
           {...fastClick(onExportClick)}
         >
           {exportWord}
@@ -700,11 +467,9 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
       {/* Copy to clipboard */}
       <div className={css({ marginBottom: '15px', textAlign: 'center' })}>
-        {exportContent !== null && (
-          <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTapRecipe()}>
-            Copy to clipboard
-          </a>
-        )}
+        <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTapRecipe()}>
+          Copy to clipboard
+        </a>
       </div>
 
       {/* Advanced Settings */}
@@ -759,15 +524,17 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 }
 
 /**
- * Export component wrapped with pull provider.
+ * Captures one immutable document and selection for the lifetime of the export modal.
  */
 const ModalExportWrapper = () => {
-  const simplePaths = useSelector(
-    state =>
-      hasMulticursor(state)
-        ? Object.values(state.multicursors).map(cursor => simplifyPath(state, cursor))
-        : [state.cursor ? simplifyPath(state, state.cursor) : HOME_PATH],
-    (a, b) => a.length === b.length && a.every((p, i) => equalPath(p, b[i])),
+  const dispatch = useDispatch()
+  const [exportedState] = useState<State>(() => dispatch((_, getState) => getState()))
+  const simplePaths = useMemo(
+    () =>
+      hasMulticursor(exportedState)
+        ? Object.values(exportedState.multicursors).map(cursor => simplifyPath(exportedState, cursor))
+        : [exportedState.cursor ? simplifyPath(exportedState, exportedState.cursor) : HOME_PATH],
+    [exportedState],
   )
 
   // Remove descendants of other paths, sort in document order
@@ -781,11 +548,7 @@ const ModalExportWrapper = () => {
     return paths
   }, [simplePaths])
 
-  return (
-    <PullProvider simplePaths={filteredPaths}>
-      <ModalExport simplePaths={filteredPaths} />
-    </PullProvider>
-  )
+  return <ModalExport simplePaths={filteredPaths} exportedState={exportedState} />
 }
 
 export default ModalExportWrapper

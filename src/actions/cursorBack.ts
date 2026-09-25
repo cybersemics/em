@@ -1,4 +1,5 @@
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import addMulticursor from '../actions/addMulticursor'
 import cursorHistory from '../actions/cursorHistory'
@@ -8,13 +9,14 @@ import setCursor from '../actions/setCursor'
 import expandThoughts from '../selectors/expandThoughts'
 import hasMulticursor from '../selectors/hasMulticursor'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import isAbsolute from '../util/isAbsolute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import toggleAbsoluteContext from './toggleAbsoluteContext'
 
 /** Replaces the multiselect with the parents of each selected thought. Parents shared by multiple selected thoughts are selected once, since the multicursor set is keyed by path. */
-const multicursorBack = (state: State): State => {
+const multicursorBack = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
   const paths = Object.values(state.multicursors)
 
   // Root-level thoughts contribute no parent, since the root cannot be selected.
@@ -29,7 +31,7 @@ const multicursorBack = (state: State): State => {
     // A selected thought that is also the parent of another selected thought is deselected and reselected.
     ...paths.map(path => removeMulticursor({ path })),
     ...backPaths.map(path => addMulticursor({ path })),
-  ])(state)
+  ])(state, document)
 
   return {
     ...stateNew,
@@ -41,8 +43,8 @@ const multicursorBack = (state: State): State => {
 }
 
 /** Moves the cursor up one level. When thoughts are selected, replaces the selection with their parents instead of moving the cursor. */
-const cursorBack = (state: State): State => {
-  if (hasMulticursor(state)) return multicursorBack(state)
+const cursorBack = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+  if (hasMulticursor(state)) return multicursorBack(state, undefined, document)
 
   const { cursor: cursorOld, isKeyboardOpen, search, rootContext } = state
 
@@ -79,13 +81,13 @@ const cursorBack = (state: State): State => {
               state.cursorBeforeSearch ? setCursor({ path: state.cursorBeforeSearch, isKeyboardOpen }) : null,
             ]
           : [],
-  )(state)
+  )(state, document)
 }
 
 /** Action-creator for cursorBack. */
 export const cursorBackActionCreator = (): Thunk => dispatch => dispatch({ type: 'cursorBack' })
 
-export default cursorBack
+export default command(cursorBack)
 
 // Register this action's metadata
 registerActionMetadata('cursorBack', {

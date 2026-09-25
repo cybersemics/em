@@ -61,10 +61,13 @@ describe('undo persistence', () => {
     ])
 
     // clear and call initialize again to reload from local db (simulating page refresh)
+    await waitForThoughtspaceIdle()
     store.dispatch(clear())
 
     await initialize({ storage: 'memory' })
     await vi.runAllTimersAsync()
+
+    await waitForThoughtspaceIdle()
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
 

@@ -1,26 +1,37 @@
 import { importText } from '..'
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import toggleAttribute from '../toggleAttribute'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 it('toggle on', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=test', 'hello'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=test', 'hello'],
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -38,14 +49,18 @@ it('toggle off', () => {
             - hello
       `,
     }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=test', 'hello'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=test', 'hello'],
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -61,14 +76,18 @@ it('different value should override existing value', () => {
             - hello
       `,
     }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=test', 'goodbye'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=test', 'goodbye'],
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -82,14 +101,18 @@ it('add attribute if key has already been created', () => {
     newThought('a'),
     newSubthought('=test'),
     setCursor(['a']),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=test', 'hello'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=test', 'hello'],
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -101,14 +124,18 @@ it('add attribute if key has already been created', () => {
 it('toggle nullary attribute on', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=test'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=test'],
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -119,19 +146,27 @@ it('toggle nullary attribute on', () => {
 it('toggle nullary attribute off', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=test'],
-      }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=test'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=test'],
+        },
+        document,
+      ),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=test'],
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -147,14 +182,18 @@ it('preserve existing children when toggling a nullary attribute on', () => {
         - c
     `,
     }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=test'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=test'],
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -174,14 +213,18 @@ it('preserve existing children when toggling a nullary attribute off', () => {
         - =test
     `,
     }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=test'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=test'],
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -193,15 +236,19 @@ it('preserve existing children when toggling a nullary attribute off', () => {
 it('toggle deep attribute on', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['w', 'x', 'y', 'z'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['w', 'x', 'y', 'z'],
+        },
+        document,
+      ),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -222,15 +269,19 @@ it('preserve other descendants when toggling deep attribute on', () => {
             - m
     `,
     }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['w', 'x', 'y', 'z'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['w', 'x', 'y', 'z'],
+        },
+        document,
+      ),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -253,15 +304,19 @@ it('toggle deep attribute off', () => {
               - z
     `,
     }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['w', 'x', 'y', 'z'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['w', 'x', 'y', 'z'],
+        },
+        document,
+      ),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -280,15 +335,19 @@ it('preserve other descendants when toggling deep attribute off', () => {
               - z
     `,
     }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['w', 'x', 'y', 'z'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['w', 'x', 'y', 'z'],
+        },
+        document,
+      ),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -307,14 +366,18 @@ it('preserve sorted context', () => {
           - Alphabetical
     `,
     }),
-    (state: State) =>
-      toggleAttribute(state, {
-        path: contextToPath(state, ['a']),
-        values: ['=pin', 'true'],
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      toggleAttribute(
+        state,
+        {
+          path: contextToPath(state, ['a']),
+          values: ['=pin', 'true'],
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}

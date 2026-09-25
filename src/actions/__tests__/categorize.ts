@@ -5,7 +5,10 @@ import exportContext from '../../selectors/exportContext'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import categorize from '../categorize'
@@ -14,11 +17,14 @@ import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import toggleContextView from '../toggleContextView'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 describe('normal view', () => {
   it('categorize a thought', () => {
     const steps = [newThought('a'), newSubthought('b'), categorize]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -30,7 +36,7 @@ describe('normal view', () => {
   it('categorize a thought in the root', () => {
     const steps = [newThought('a'), categorize]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -41,7 +47,7 @@ describe('normal view', () => {
   it('categorize with no cursor should do nothing', () => {
     const steps = [newThought('a'), newSubthought('b'), setCursor(null), categorize]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -52,7 +58,7 @@ describe('normal view', () => {
   it('set cursor on new empty thought', () => {
     const steps = [newThought('a'), newSubthought('b'), categorize]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', ''])
   })
@@ -73,7 +79,7 @@ describe('normal view', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -106,7 +112,7 @@ describe('context view', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -138,7 +144,7 @@ describe('context view', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -173,7 +179,7 @@ describe('context view', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -209,7 +215,7 @@ describe('context view', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -250,7 +256,7 @@ describe('context view', () => {
         categorize,
       ]
 
-      const stateNew = reducerFlow(steps)(initialState())
+      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
       expect(stateNew.alert).toMatchObject({
         alertType: AlertType.MulticursorError,
@@ -291,7 +297,7 @@ describe('context view', () => {
         categorize,
       ]
 
-      const stateNew = reducerFlow(steps)(initialState())
+      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
       expect(stateNew.alert).toMatchObject({
         alertType: AlertType.MulticursorError,
@@ -330,7 +336,7 @@ describe('context view', () => {
         categorize,
       ]
 
-      const stateNew = reducerFlow(steps)(initialState())
+      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
       expect(stateNew.alert).toMatchObject({
         alertType: AlertType.MulticursorError,
@@ -361,7 +367,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -382,7 +388,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
 
@@ -403,7 +409,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -435,7 +441,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -468,7 +474,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -500,7 +506,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -535,7 +541,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -572,7 +578,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -607,7 +613,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -640,7 +646,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -674,7 +680,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -709,7 +715,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -747,7 +753,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -783,7 +789,7 @@ describe('multicursor', () => {
       categorize,
     ]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}

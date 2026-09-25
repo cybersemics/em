@@ -1,23 +1,13 @@
-import _ from 'lodash'
 import SimplePath from '../@types/SimplePath'
 import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
-import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
-import keyValueBy from '../util/keyValueBy'
-import reducerFlow from '../util/reducerFlow'
-import unroot from '../util/unroot'
-import alert from './alert'
-import deleteAttribute from './deleteAttribute'
-import rerank from './rerank'
-import sort from './sort'
-import toggleAttribute from './toggleAttribute'
-import updateThoughts from './updateThoughts'
+import setSortPreference from './setSortPreference'
 
 /* Available sort preferences */
 
@@ -57,88 +47,17 @@ const decideNextSortPreference = (currentSortPreference: SortPreference): SortPr
 const toggleSort = (
   state: State,
   { showAlert, simplePath }: { showAlert?: boolean; simplePath: SimplePath },
+  document?: ThoughtspaceTransaction,
 ): State => {
-  const id = head(simplePath)
-  const currentSortPreference = getSortPreference(state, id)
-  const nextSortPreference = decideNextSortPreference(currentSortPreference)
-
-  return reducerFlow([
-    // alert
-    showAlert
-      ? alert({
-          value:
-            'Sort ' +
-            (nextSortPreference.type !== 'None'
-              ? `${nextSortPreference.direction === 'Asc' ? 'ascending' : 'descending'}`
-              : 'manually'),
-        })
-      : null,
-
-    // Cycling back to None removes the sort attribute and restores the manual sort order.
-    nextSortPreference.type === 'None'
-      ? // Toggle off
-        reducerFlow([
-          deleteAttribute({
-            path: simplePath,
-            value: '=sort',
-          }),
-          // restore manual ranks
-          // See: State.manualSortMap
-          state => {
-            const manualRanks = state.manualSortMap[id]
-            if (!manualRanks) return state
-
-            // get all children with manual ranks that still exist
-            const childrenWithManualRanks = getAllChildrenAsThoughts(state, id).filter(child => child.id in manualRanks)
-            return updateThoughts(state, {
-              thoughtIndexUpdates: keyValueBy(childrenWithManualRanks, child => ({
-                [child.id]: {
-                  ...child,
-                  rank: manualRanks[child.id],
-                },
-              })),
-              lexemeIndexUpdates: {},
-              preventExpandThoughts: true,
-            })
-          },
-          // rerank in case there are any duplicate ranks
-          rerank(simplePath),
-        ])
-      : // Toggle on/change
-        reducerFlow([
-          // When sorting the context for the first time, store the manual sort order so it can be restored when cycling off.
-          // See: State.manualSortMap
-          currentSortPreference.type === 'None'
-            ? state => ({
-                ...state,
-                manualSortMap: {
-                  ...state.manualSortMap,
-                  [id]: keyValueBy(getAllChildrenAsThoughts(state, id), child => ({ [child.id]: child.rank })),
-                },
-              })
-            : null,
-
-          // If next sort preference type does not equal to current sort then set =sort attribute.
-          nextSortPreference.type !== currentSortPreference.type
-            ? toggleAttribute({
-                path: simplePath,
-                values: ['=sort', nextSortPreference.type],
-              })
-            : null,
-
-          // Toggle the direction. The next sort preference always has a direction here, since a null direction only occurs with type None, which is handled by the toggle off branch above.
-          state => {
-            // use fresh state to pick up new =sort (if statement above)
-            const sortId = findDescendant(state, id, '=sort')
-            const pathSort = unroot(appendToPath(simplePath, sortId!))
-            return toggleAttribute(state, {
-              path: pathSort,
-              values: [nextSortPreference.type, nextSortPreference.direction!],
-            })
-          },
-          sort(id),
-        ]),
-  ])(state)
+  return setSortPreference(
+    state,
+    {
+      showAlert,
+      simplePath,
+      sortPreference: decideNextSortPreference(getSortPreference(state, head(simplePath))),
+    },
+    document,
+  )
 }
 
 /** Action-creator for toggleSort. */
@@ -147,7 +66,7 @@ export const toggleSortActionCreator =
   dispatch =>
     dispatch({ type: 'toggleSort', ...payload })
 
-export default _.curryRight(toggleSort, 2)
+export default command(toggleSort)
 
 // Register this action's metadata
 registerActionMetadata('toggleSort', {

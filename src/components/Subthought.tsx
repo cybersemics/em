@@ -157,7 +157,6 @@ const Subthought = ({
           depth={depth + 1}
           env={env}
           hideBullet={hideBullet}
-          isContextPending={thought.value === '__PENDING__'}
           leaf={leaf}
           // isHeader={isHeader}
           isHeader={false}

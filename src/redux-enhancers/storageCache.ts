@@ -3,6 +3,7 @@ import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import StorageCache from '../@types/StorageCache'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import ValueOf from '../@types/ValueOf'
 import { tsidShared } from '../data-providers/thoughtspaceSession'
 import { getStateSetting } from '../selectors/getSetting'
@@ -77,9 +78,15 @@ const throttledSetters = keyValueBy(cacheControllers, key => ({
 const storageCacheStoreEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> =>
-    createStore((state: State | undefined = initialState, action: A): State => {
-      const stateNew: State = reducer(state, action)
+  <A extends Action<any>>(
+    // Redux's enhancer signature accepts arbitrary state types; this app enhancer only receives State.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    reducer: (state: any, action: A, document?: ThoughtspaceTransaction) => any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initialState: any,
+  ): Store<State, A> =>
+    createStore((state: State | undefined = initialState, action: A, document?: ThoughtspaceTransaction): State => {
+      const stateNew: State = reducer(state, action, document)
 
       // initialize storage cache
       if (!state) return { ...stateNew, storageCache: initialCache }

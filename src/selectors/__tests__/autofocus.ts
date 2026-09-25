@@ -2,14 +2,20 @@ import State from '../../@types/State'
 import ThoughtId from '../../@types/ThoughtId'
 import { importText } from '../../actions'
 import { ROOT_PARENT_ID } from '../../constants'
+import initStore from '../../test-helpers/initStore'
 import prettyPath from '../../test-helpers/prettyPath'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import keyValueBy from '../../util/keyValueBy'
 import reducerFlow from '../../util/reducerFlow'
 import calculateAutofocus from '../calculateAutofocus'
 import contextToPath from '../contextToPath'
 import thoughtToPath from '../thoughtToPath'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 /** Get a map of all paths in the thoughtspace. */
 const allPaths = (state: State) =>
@@ -21,7 +27,7 @@ const allPaths = (state: State) =>
 describe('normal view', () => {
   it('show thought', () => {
     const steps = [importText({ text: 'a' })]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const path = contextToPath(stateNew, ['a'])!
     expect(calculateAutofocus(stateNew, path)).toEqual('show')
   })
@@ -33,7 +39,7 @@ describe('normal view', () => {
     - c
   `
     const steps = [importText({ text }), setCursor(['a'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -50,7 +56,7 @@ describe('normal view', () => {
       - b
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -67,7 +73,7 @@ describe('normal view', () => {
         - c
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -86,7 +92,7 @@ describe('normal view', () => {
       - d
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -105,7 +111,7 @@ describe('normal view', () => {
         - c
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -124,7 +130,7 @@ describe('normal view', () => {
           - d
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -144,7 +150,7 @@ describe('normal view', () => {
           - d
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -165,7 +171,7 @@ describe('normal view', () => {
             -e
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd', 'e'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -187,7 +193,7 @@ describe('normal view', () => {
             - e
   `
     const steps = [importText({ text })]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -207,7 +213,7 @@ describe('normal view', () => {
     - c
   `
     const steps = [importText({ text }), setCursor(['a'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -225,7 +231,7 @@ describe('normal view', () => {
     - x
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -244,7 +250,7 @@ describe('normal view', () => {
     - x
   `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -265,7 +271,7 @@ describe('normal view', () => {
     - x
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -288,7 +294,7 @@ describe('normal view', () => {
       - f
   `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -313,7 +319,7 @@ describe('normal view', () => {
         - d
     `
     const steps = [importText({ text }), setCursor(['a', 'd'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -336,7 +342,7 @@ describe('normal view', () => {
           - e
     `
     const steps = [importText({ text }), setCursor(['a', 'd', 'e'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -359,7 +365,7 @@ describe('normal view', () => {
         - d
     `
     const steps = [importText({ text }), setCursor(['c'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -383,7 +389,7 @@ describe('normal view', () => {
             - f
      `
     const steps = [importText({ text }), setCursor(['a', 'd', 'e'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -413,7 +419,7 @@ describe('normal view', () => {
                 - i
     `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -446,7 +452,7 @@ describe('table view', () => {
     `
 
     const steps = [importText({ text }), setCursor(['a', 'e', 'f'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -467,7 +473,7 @@ describe('=focus/Zoom', () => {
           - Zoom
     `
     const steps = [importText({ text }), setCursor(['b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -488,7 +494,7 @@ describe('=focus/Zoom', () => {
       - e
     `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -512,7 +518,7 @@ describe('=focus/Zoom', () => {
       - e
     `
     const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -533,7 +539,7 @@ describe('=focus/Zoom', () => {
           - Zoom
     `
     const steps = [importText({ text }), setCursor(['a'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -555,7 +561,7 @@ describe('=focus/Zoom', () => {
       - e
     `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -579,7 +585,7 @@ describe('=focus/Zoom', () => {
       - b
     `
     const steps = [importText({ text }), setCursor(['a'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -600,7 +606,7 @@ describe('=focus/Zoom', () => {
       - b
     `
     const steps = [importText({ text }), setCursor(['b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -624,7 +630,7 @@ describe('=focus/Zoom', () => {
         - =foo
     `
     const steps = [importText({ text }), setCursor(['d'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))
@@ -647,7 +653,7 @@ describe('=focus/Zoom', () => {
         - d
     `
     const steps = [importText({ text }), setCursor(['a', 'b'])]
-    const stateNew = reducerFlow(steps)(initialState())
+    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
     const autofocusMap = keyValueBy(allPaths(stateNew), (key, simplePath) => ({
       [key]: calculateAutofocus(stateNew, simplePath),
     }))

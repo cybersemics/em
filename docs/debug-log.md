@@ -2,7 +2,7 @@
 
 A rolling record of what **em** did, kept on the device so that a bug nobody can reproduce still leaves evidence behind. It exists for the failures that defeat ordinary debugging: a freeze that takes the console with it, a gesture that misfires once a week, a thought that lands under the wrong parent on someone else's phone and nowhere else.
 
-Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), and persistence ([`pushQueue`](../src/redux-enhancers/pushQueue.ts)).
+Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), and persistence ([`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts)).
 
 ## What it is
 
@@ -85,6 +85,6 @@ Some shapes worth recognizing:
 
 - **A `push` with no matching `pushSynced`** is a write that never completed. See [Persistence](persistence.md).
 - **An `integrity` entry** reports siblings sharing an exact rank, which makes their order ambiguous and is the signature of a data-integrity fault.
-- **`move` entries** are diffed out of the thought index rather than logged by any one reducer, so they catch a reorder from every source — drag and drop, sort, undo, remote sync — without special-casing any of them.
+- **`move` entries** are diffed out of the thought index rather than logged by any one reducer, so they catch a reorder from every source — drag and drop, sort, undo, incoming operations — without special-casing any of them.
 - **The log stopping while `lastFrameAt` keeps advancing** means the page was still painting: the hang is below the app.
 - **`dt` collapsing toward zero across many entries** is a tight loop.

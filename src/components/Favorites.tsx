@@ -10,7 +10,7 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/
 import { Settings } from '../constants'
 import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
-import { getLexeme } from '../selectors/getLexeme'
+import getFavoriteIds from '../selectors/getFavoriteIds'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -175,7 +175,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
   const [showOptions, setShowOptions] = useState(false)
 
   const simplePaths = useSelector(state => {
-    return (getLexeme(state, '=favorite')?.contexts || [])
+    return getFavoriteIds(state)
       .map(id => {
         const thought = getThoughtById(state, id)
         if (!thought) return null

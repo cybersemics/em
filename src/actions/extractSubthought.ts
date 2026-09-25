@@ -1,11 +1,12 @@
-import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import getThoughtById from '../selectors/getThoughtById'
 import selectionOffsets from '../selectors/selectionOffsets'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 import splitFormattedValue from '../util/splitFormattedValue'
@@ -22,7 +23,11 @@ export interface extractSubthoughtPayload {
 }
 
 /** Extract the given range of the cursor thought as a subthought. */
-const extractSubthought = (state: State, { selectionStart, selectionEnd }: extractSubthoughtPayload): State => {
+const extractSubthought = (
+  state: State,
+  { selectionStart, selectionEnd }: extractSubthoughtPayload,
+  document?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
   if (!cursor) return state
 
@@ -60,7 +65,7 @@ const extractSubthought = (state: State, { selectionStart, selectionEnd }: extra
     newThought({ value: extractedValue, insertNewSubthought: true, preventSetCursor: true }),
   ]
 
-  return reducerFlow(reducers)(state)
+  return reducerFlow(reducers)(state, document)
 }
 
 /**
@@ -74,7 +79,7 @@ export const extractSubthoughtActionCreator = (): Thunk => (dispatch, getState) 
   dispatch({ type: 'extractSubthought', selectionStart: offsets.start, selectionEnd: offsets.end })
 }
 
-export default _.curryRight(extractSubthought)
+export default command(extractSubthought)
 
 // Register this action's metadata
 registerActionMetadata('extractSubthought', {

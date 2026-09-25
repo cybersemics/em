@@ -1,10 +1,16 @@
 import importText from '../../actions/importText'
 import toggleContextView from '../../actions/toggleContextView'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import isAllSelected from '../isAllSelected'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('isAllSelected', () => {
   const text = `
@@ -21,28 +27,34 @@ describe('isAllSelected', () => {
   `
 
   it('returns true when all contexts at the cursor level are selected in a context view', () => {
-    const state = reducerFlow([
-      importText({ text }),
-      setCursor(['a', 'm']),
-      toggleContextView,
-      setCursor(['a', 'm', 'a']),
-      addMulticursor(['a', 'm', 'a']),
-      addMulticursor(['a', 'm', 'b']),
-    ])(initialState())
+    const state = runDocumentCommand(
+      reducerFlow([
+        importText({ text }),
+        setCursor(['a', 'm']),
+        toggleContextView,
+        setCursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'b']),
+      ]),
+      initialState(),
+    )
 
     expect(isAllSelected(state)).toBe(true)
   })
 
   it('returns false when only child thoughts are selected in a context view', () => {
-    const state = reducerFlow([
-      importText({ text }),
-      setCursor(['a', 'm']),
-      toggleContextView,
-      setCursor(['a', 'm', 'a']),
-      addMulticursor(['a', 'm', 'a', 'x']),
-      addMulticursor(['a', 'm', 'a', 'y']),
-      addMulticursor(['a', 'm', 'a', 'z']),
-    ])(initialState())
+    const state = runDocumentCommand(
+      reducerFlow([
+        importText({ text }),
+        setCursor(['a', 'm']),
+        toggleContextView,
+        setCursor(['a', 'm', 'a']),
+        addMulticursor(['a', 'm', 'a', 'x']),
+        addMulticursor(['a', 'm', 'a', 'y']),
+        addMulticursor(['a', 'm', 'a', 'z']),
+      ]),
+      initialState(),
+    )
 
     expect(isAllSelected(state)).toBe(false)
   })

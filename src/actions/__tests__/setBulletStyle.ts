@@ -1,25 +1,36 @@
 import { importText } from '..'
 import SimplePath from '../../@types/SimplePath'
 import State from '../../@types/State'
+import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import newThought from '../newThought'
 import setBulletStyle from '../setBulletStyle'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 it('set =children/=bullet/Ordered', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      setBulletStyle(state, {
-        simplePath: contextToPath(state, ['a']) as SimplePath,
-        value: 'Ordered',
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      setBulletStyle(
+        state,
+        {
+          simplePath: contextToPath(state, ['a']) as SimplePath,
+          value: 'Ordered',
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -32,14 +43,18 @@ it('set =children/=bullet/Ordered', () => {
 it('set =children/=bullet/Alpha', () => {
   const steps = [
     newThought('a'),
-    (state: State) =>
-      setBulletStyle(state, {
-        simplePath: contextToPath(state, ['a']) as SimplePath,
-        value: 'Alpha',
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      setBulletStyle(
+        state,
+        {
+          simplePath: contextToPath(state, ['a']) as SimplePath,
+          value: 'Alpha',
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -59,14 +74,18 @@ it('replace an existing bullet style rather than toggling it off', () => {
               - Ordered
       `,
     }),
-    (state: State) =>
-      setBulletStyle(state, {
-        simplePath: contextToPath(state, ['a']) as SimplePath,
-        value: 'None',
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      setBulletStyle(
+        state,
+        {
+          simplePath: contextToPath(state, ['a']) as SimplePath,
+          value: 'None',
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -86,14 +105,18 @@ it('setting the default (null) removes =children/=bullet and an emptied =childre
               - Ordered
       `,
     }),
-    (state: State) =>
-      setBulletStyle(state, {
-        simplePath: contextToPath(state, ['a']) as SimplePath,
-        value: null,
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      setBulletStyle(
+        state,
+        {
+          simplePath: contextToPath(state, ['a']) as SimplePath,
+          value: null,
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -112,14 +135,18 @@ it('does not clobber sibling =children attributes when setting a bullet style', 
           - b
       `,
     }),
-    (state: State) =>
-      setBulletStyle(state, {
-        simplePath: contextToPath(state, ['a']) as SimplePath,
-        value: 'Ordered',
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      setBulletStyle(
+        state,
+        {
+          simplePath: contextToPath(state, ['a']) as SimplePath,
+          value: 'Ordered',
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -147,14 +174,18 @@ it('setting the default (null) preserves sibling =children attributes', () => {
           - b
       `,
     }),
-    (state: State) =>
-      setBulletStyle(state, {
-        simplePath: contextToPath(state, ['a']) as SimplePath,
-        value: null,
-      }),
+    (state: State, document?: ThoughtspaceTransaction) =>
+      setBulletStyle(
+        state,
+        {
+          simplePath: contextToPath(state, ['a']) as SimplePath,
+          value: null,
+        },
+        document,
+      ),
   ]
 
-  const stateNew = reducerFlow(steps)(initialState())
+  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}

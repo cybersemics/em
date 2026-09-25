@@ -1,8 +1,8 @@
-import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import TutorialChoice from '../@types/TutorialChoice'
 import setTutorialStep from '../actions/tutorialStep'
@@ -21,6 +21,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import editingValueStore from '../stores/editingValue'
 import heldKeysStore from '../stores/heldKeys'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import pathToContext from '../util/pathToContext'
@@ -53,11 +54,12 @@ const setCursor = (
     replaceContextViews?: Index<boolean>
     preserveMulticursor?: boolean
   },
+  document?: ThoughtspaceTransaction,
 ): State => {
   // ✗ []
   // ✗ [HOME_TOKEN]
   if (path && (path.length === 0 || (path.length === 1 && path[0] === HOME_TOKEN))) {
-    // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
+    // Report invalid navigation without crashing rendering.
     console.error(
       new Error(
         `${JSON.stringify(pathToContext(state, path))} is not a valid cursor. The root node is represented by null.`,
@@ -67,7 +69,7 @@ const setCursor = (
   }
   // ✗ [HOME_TOKEN, ...]
   else if (path && path[0] === HOME_TOKEN) {
-    // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
+    // Report invalid navigation without crashing rendering.
     console.error(
       new Error(
         `setCursor: Invalid Path ${JSON.stringify(pathToContext(state, path))}. Non-root Paths should omit "${HOME_TOKEN}".`,
@@ -129,6 +131,7 @@ const setCursor = (
                 {
                   value: tutorialStep + 1,
                 },
+                document,
               )
             : null),
           cursor: thoughtsResolved,
@@ -176,7 +179,7 @@ export const setCursorActionCreator =
     dispatch({ type: 'setCursor', ...payload })
   }
 
-export default _.curryRight(setCursor)
+export default command(setCursor)
 
 // Register this action's metadata
 registerActionMetadata('setCursor', {

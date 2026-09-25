@@ -4,21 +4,50 @@ import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator, UnknownAction } from 'redux'
 import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
+import * as commands from '../actions'
 import { editThoughtPayload } from '../actions/editThought'
 import editableRender from '../actions/editableRender'
-import updateThoughts from '../actions/updateThoughts'
+import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
+import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
+import contextToThoughtId from '../selectors/contextToThoughtId'
+import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
+import debugLog from '../util/debugLog'
 import equalArrays from '../util/equalArrays'
 import headValue from '../util/headValue'
+import isAttribute from '../util/isAttribute'
 import reducerFlow from '../util/reducerFlow'
+import storage from '../util/storage'
 import stripTags from '../util/stripTags'
+
+/** Refreshes the read-only document view after a complete command and before recording its history. */
+const projectThoughts = (state: State, document?: ThoughtspaceTransaction): State => {
+  const thoughts = document?.project(state.thoughts) ?? thoughtspaceRuntime.project(state.thoughts)
+  if (thoughts === state.thoughts) return state
+  const projected = { ...state, thoughts }
+  return { ...projected, expanded: expandThoughts(projected, projected.cursor) }
+}
+
+/** Caches first-paint settings only after a document transaction succeeds. */
+const cacheSettings = (state: State, previous: State) => {
+  if (state.thoughts === previous.thoughts) return
+  for (const name of CACHED_SETTINGS) {
+    const settingsId = contextToThoughtId(state, [EM_TOKEN, 'Settings', name])
+    const setting = getChildrenRanked(state, settingsId).find(child => !isAttribute(child.value))
+    const previousSettingsId = contextToThoughtId(previous, [EM_TOKEN, 'Settings', name])
+    const previousSetting = getChildrenRanked(previous, previousSettingsId).find(child => !isAttribute(child.value))
+    if (setting?.value === previousSetting?.value) continue
+    if (setting?.value) storage.setItem(`Settings/${name}`, setting.value)
+    else storage.removeItem(`Settings/${name}`)
+  }
+}
 
 /** Track a stream of editThought actions so that they can be merged,
  * allowing edits to be treated as a single undo/redo step when they involve adding new characters or else removing old characters. */
@@ -105,7 +134,6 @@ const statePropertiesToOmit: (keyof State)[] = [
   'cursorCleared',
   'editableNonce',
   'isKeyboardOpen',
-  'pushQueue',
   'selectionOffsets',
 ]
 
@@ -123,10 +151,10 @@ const restoreMoveUpdatesFromThoughtUpdates = (
     if (!thought) return acc
 
     const oldThought = getThoughtById(oldState, thoughtId)
-    const moved = oldThought && (oldThought.parentId !== thought.parentId || oldThought.rank !== thought.rank)
+    const moved = !oldThought || oldThought.parentId !== thought.parentId || oldThought.rank !== thought.rank
     if (!moved) return acc
 
-    acc.add(oldThought.parentId)
+    if (oldThought) acc.add(oldThought.parentId)
     acc.add(thought.parentId)
     return acc
   }, new Set())
@@ -170,20 +198,17 @@ const restoreMoveUpdatesFromThoughtUpdates = (
 }
 
 /**
- * Manually recreate the pushQueue for thought and thought index updates from patches.
+ * Restores document changes through the same transaction API used by ordinary commands.
  */
-const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch) => {
-  const lexemeIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/lexemeIndex/'))
+const restoreThoughtsFromPatches = (
+  state: State,
+  oldState: State,
+  patch: Patch,
+  document?: ThoughtspaceTransaction,
+) => {
   const thoughtIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/thoughtIndex/'))
-
-  const lexemeIndexUpdates = lexemeIndexChanges.reduce<Index<Lexeme | null>>((acc, { path }) => {
-    const lexemeKey = path.slice('/thoughts/lexemeIndex/'.length).split('/')[0]
-    return {
-      ...acc,
-      // Patch paths may target nested lexeme properties such as contexts. Persist the full lexeme.
-      [lexemeKey]: state.thoughts.lexemeIndex[lexemeKey] || null,
-    }
-  }, {})
+  if (!thoughtIndexChanges.length) return state
+  if (!document) throw new Error('Restoring document history requires a thoughtspace transaction')
   const thoughtIndexUpdates = thoughtIndexChanges.reduce<Index<Thought | null>>((acc, { path }) => {
     const id = path.slice('/thoughts/thoughtIndex/'.length).split('/')[0]
     return {
@@ -192,27 +217,11 @@ const restorePushQueueFromPatches = (state: State, oldState: State, patch: Patch
     }
   }, {})
 
-  /*
-    Note: Computed thoughtIndexUpdates and contextIndexUpdates will take store to the identical state
-    after patches are applied by undo or redo handler. This is done to create push batches using updateThoughts generates.
-
-    However we also need to update the state like cursor that depends on the new thought indices changes. Else
-    logic depending on those states will break.
-  */
-  const oldStateWithUpdatedCursor = {
-    ...oldState,
-    cursor: state.cursor,
-    editingValue: state.cursor ? headValue(state, state.cursor) : null,
-  }
   const moveUpdates = restoreMoveUpdatesFromThoughtUpdates(state, oldState, thoughtIndexUpdates)
 
   return {
     ...state,
-    pushQueue: updateThoughts({
-      lexemeIndexUpdates,
-      thoughtIndexUpdates: moveUpdates.thoughtIndexUpdates,
-      movePlacements: moveUpdates.movePlacements,
-    })(oldStateWithUpdatedCursor).pushQueue,
+    thoughts: document.update(moveUpdates, state.thoughts),
   }
 }
 
@@ -306,6 +315,7 @@ const undoReducer = (
   state: State,
   undoPatches: Patch[],
   { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
+  document?: ThoughtspaceTransaction,
 ): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
@@ -346,7 +356,7 @@ const undoReducer = (
 
   return reducerFlow([
     ...Array.from({ length: undoCount }, () => undoOneReducer),
-    newState => restorePushQueueFromPatches(newState, state, poppedUndoPatches.flat()),
+    newState => restoreThoughtsFromPatches(newState, state, poppedUndoPatches.flat(), document),
     undoCount === 1 && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
@@ -360,6 +370,7 @@ const redoReducer = (
   state: State,
   redoPatches: Patch[],
   { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
+  document?: ThoughtspaceTransaction,
 ): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
@@ -373,20 +384,26 @@ const redoReducer = (
 
   return reducerFlow([
     ...Array.from({ length: redoCount }, () => redoOneReducer),
-    newState => restorePushQueueFromPatches(newState, state, poppedRedoPatches.flat()),
+    newState => restoreThoughtsFromPatches(newState, state, poppedRedoPatches.flat(), document),
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
 }
 
 /**
- * Store enhancer to append the ability to undo/redo for all undoable actions.
+ * Executes commands and history outside Redux, which only receives immutable prepared snapshots.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const undoRedoReducerEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> => {
+  <A extends Action<any>>(
+    // Redux's enhancer signature accepts arbitrary state types; this app enhancer only receives State.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    reducer: (state: any, action: A, document?: ThoughtspaceTransaction) => any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initialState: any,
+  ): Store<State, A> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let lastAction: Action<any> | undefined
 
@@ -396,7 +413,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
      */
-    const undoAndRedoReducer = (state: State | undefined = initialState, action: A): State => {
+    const execute = (state: State | undefined = initialState, action: A, document?: ThoughtspaceTransaction): State => {
       if (!state) return reducer(initialState, action)
       const { redoPatches, undoPatches } = state as State
       const actionType = action.type
@@ -405,7 +422,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (actionType === 'clear') {
         lastAction = undefined
         lastEditThoughtDirection = EditThoughtDirection.None
-        return reducer(state, action)
+        return projectThoughts(reducer(state, action, document), document)
       }
 
       // Handle undo and redo.
@@ -423,23 +440,22 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
         const undoOrRedoState =
           actionType === 'undo'
-            ? undoReducer(state, undoPatches, { cursorAtEnd, count })
+            ? undoReducer(state, undoPatches, { cursorAtEnd, count }, document)
             : actionType === 'redo'
-              ? redoReducer(state, redoPatches, { cursorAtEnd, count })
+              ? redoReducer(state, redoPatches, { cursorAtEnd, count }, document)
               : null
 
-        // do not omit pushQueue because that includes updates added by updateThoughts
         // do not omit editableNonce because editableRender bumps it to force ContentEditable to re-render after undo/redo
         const omitted = _.pick(
           state,
-          statePropertiesToOmit.filter(k => k !== 'pushQueue' && k !== 'editableNonce'),
+          statePropertiesToOmit.filter(k => k !== 'editableNonce'),
         )
 
-        return { ...undoOrRedoState!, ...omitted }
+        return projectThoughts({ ...undoOrRedoState!, ...omitted }, document)
       }
 
       // otherwise run the normal reducer for the action
-      const newState = reducer(state, action)
+      const newState = projectThoughts(reducer(state, action, document), document)
 
       if (
         // bail if state has not changed
@@ -547,7 +563,52 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         : newState
     }
 
-    return createStore(undoAndRedoReducer, initialState)
+    const preparedState = Symbol('prepared editor state')
+    type PreparedAction = A & { [preparedState]?: State }
+    const store = createStore((state: State | undefined, action: PreparedAction) => {
+      if (preparedState in action) return action[preparedState]!
+      // Redux initialization is pure; all ordinary action evaluation happens in dispatch below.
+      return state ?? reducer(undefined, action)
+    }, initialState)
+
+    return {
+      ...store,
+      dispatch: <T extends A>(action: T): T => {
+        const state = store.getState()
+        const previousAction = lastAction
+        const previousEditDirection = lastEditThoughtDirection
+        const handler = (commands as Index<{ requiresDocument?: boolean }>)[action.type]
+        const needsDocument = handler?.requiresDocument || action.type === 'undo' || action.type === 'redo'
+        try {
+          const result =
+            needsDocument && thoughtspaceRuntime.ready
+              ? thoughtspaceRuntime.transact(document => execute(state, action, document))
+              : undefined
+          const next = result ? result.value : execute(state, action)
+          // The document is already committed. A best-effort first-paint cache must never prevent publication.
+          try {
+            cacheSettings(next, state)
+          } catch (error) {
+            console.warn('Unable to cache first-paint settings', error)
+          }
+          if (result && next.thoughts !== state.thoughts) {
+            debugLog.log('push', { thoughtCount: Object.keys(next.thoughts.thoughtIndex).length })
+            void result.persisted
+              .then(() => debugLog.log('pushSynced'))
+              .catch(error => {
+                console.error('Thoughtspace persistence failed', error)
+                debugLog.log('pushError', { error: String(error) })
+              })
+          }
+          store.dispatch(Object.assign({}, action, { [preparedState]: next }))
+          return action
+        } catch (error) {
+          lastAction = previousAction
+          lastEditThoughtDirection = previousEditDirection
+          throw error
+        }
+      },
+    }
   }
 
 export default undoRedoReducerEnhancer

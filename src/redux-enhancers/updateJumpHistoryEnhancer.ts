@@ -2,6 +2,7 @@ import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator } from 'redux'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import storageModel from '../stores/storageModel'
 import equalPath from '../util/equalPath'
 import parentOf from '../util/parentOf'
@@ -60,12 +61,18 @@ const saveJumpHistory = _.throttle(
 const updateJumpHistoryEnhancer: StoreEnhancer<any> =
   (createStore: StoreEnhancerStoreCreator) =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  <A extends Action<any>>(reducer: (state: any, action: A) => any, initialState: any): Store<State, A> =>
-    createStore((state: State | undefined, action: A): State => {
-      const stateNew: State = reducer(state, action)
+  <A extends Action<any>>(
+    // Redux's enhancer signature accepts arbitrary state types; this app enhancer only receives State.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    reducer: (state: any, action: A, document?: ThoughtspaceTransaction) => any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    initialState: any,
+  ): Store<State, A> =>
+    createStore((state: State | undefined, action: A, document?: ThoughtspaceTransaction): State => {
+      const stateNew: State = reducer(state, action, document)
 
-      // Do not update the jumpHistory on freeThoughts, otherwise jumpIndex will get reset to 0 on jumpBack, preventing more than a single jump.
-      if (action.type !== 'freeThoughts' && stateNew.thoughts.thoughtIndex !== state?.thoughts.thoughtIndex) {
+      // Publishing a document snapshot is not a local edit and must not reset jump navigation.
+      if (action.type !== 'replaceThoughts' && stateNew.thoughts.thoughtIndex !== state?.thoughts.thoughtIndex) {
         const stateWithJumpHistory = updateJumpHistory(stateNew)
         saveJumpHistory(stateWithJumpHistory.jumpHistory)
         return stateWithJumpHistory

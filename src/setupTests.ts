@@ -1,12 +1,18 @@
 import '@testing-library/jest-dom'
+import { initializeMemoryWasm } from '@treecrdt/wasm'
 import 'fake-indexeddb/auto'
 import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
+import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import 'vi-canvas-mock'
 import { resetStores } from './stores/ministore'
 
 expect.extend(matchers)
+
+// Initialize the browser client's packaged engine with bytes because Node cannot fetch a file URL.
+await initializeMemoryWasm(readFileSync(createRequire(import.meta.url).resolve('@treecrdt/wasm/treecrdt_wasm_bg.wasm')))
 
 // add noop functions to prevent implementation error during test
 window.blur = noop

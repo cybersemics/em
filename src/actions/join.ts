@@ -1,15 +1,15 @@
-import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import getChildPath from '../selectors/getChildPath'
-import { getAllChildren, getAllChildrenSorted } from '../selectors/getChildren'
-import getNextRank from '../selectors/getNextRank'
+import { getAllChildren, getAllChildrenSorted, getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
@@ -23,7 +23,7 @@ import moveThought from './moveThought'
 const REGEX_HYPHEN = /-$/
 
 /** Join two or more thoughts split by spaces. Defaults to all non-attribute thoughts at the level of the cursor. */
-const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
+const join = (state: State, { paths }: { paths?: Path[] } = {}, document?: ThoughtspaceTransaction) => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -42,8 +42,6 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
   if (!thought) return state
   const { value } = thought
 
-  let minNextRank = getNextRank(state, parentId)
-
   const moveThoughtReducers = children
     .map(child => {
       const pathToSibling = appendToPath(parentOf(simplePath), child.id)
@@ -52,7 +50,19 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
       return grandchildren.map(child => {
         const oldPath = getChildPath(state, child, pathToSibling)
         const newPath = appendToPath(path, child)
-        return moveThought({ oldPath, newPath, newRank: (minNextRank += 1) })
+        return (state: State) =>
+          moveThought(
+            state,
+            {
+              oldPath,
+              newPath,
+              afterId:
+                getChildrenRanked(state, thoughtId)
+                  .filter(sibling => sibling.id !== child)
+                  .at(-1)?.id ?? null,
+            },
+            document,
+          )
       })
     })
     .flat()
@@ -81,7 +91,10 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}) => {
     }),
   )
 
-  return reducerFlow([...moveThoughtReducers, editThoughtReducer, ...deleteThoughtReducers, editableRender])(state)
+  return reducerFlow([...moveThoughtReducers, editThoughtReducer, ...deleteThoughtReducers, editableRender])(
+    state,
+    document,
+  )
 }
 
 /** Action-creator for join. */
@@ -90,7 +103,7 @@ export const joinActionCreator =
   dispatch =>
     dispatch({ type: 'join', ...payload })
 
-export default _.curryRight(join)
+export default command(join)
 
 // Register this action's metadata
 registerActionMetadata('join', {

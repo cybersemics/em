@@ -110,11 +110,11 @@ Distinguishing rules from `useDragAndDropThought`:
 
 ### `useDragAndDropToolbarButton`
 
-Used by toolbar buttons in the Customize Toolbar modal. Drag source + drop target in one. The drag item carries a `Command` object plus `zone: 'Toolbar'`. The drop logic dispatches `initUserToolbar` to materialize `[EM, Settings, Toolbar]` if it doesn't exist, then either inserts the dragged command (`newThought`) or moves it (`moveThought`) to its new rank. See [`useDragAndDropToolbarButton.ts`](../src/hooks/useDragAndDropToolbarButton.ts).
+Used by toolbar buttons in the Customize Toolbar modal. Drag source + drop target in one. The drag item carries a `Command` object plus `zone: 'Toolbar'`. The drop logic dispatches `initUserToolbar` to materialize `[EM, Settings, Toolbar]` if it doesn't exist, then either inserts the dragged command (`newThought`) or moves it (`moveThought`) to its new sibling position. See [`useDragAndDropToolbarButton.ts`](../src/hooks/useDragAndDropToolbarButton.ts).
 
 ### `useDragDropFavorites`
 
-Used inside [`Favorites`](../src/components/Favorites.tsx). Each entry is both a drag source and a drop target. Drops within Favorites reorder via the `=favorite` Lexeme's contexts list (mutated in-place via `updateThoughts`). See [`useDragDropFavorites.ts`](../src/hooks/useDragDropFavorites.ts).
+Used inside [`Favorites`](../src/components/Favorites.tsx). Each entry is both a drag source and a drop target. Drops within Favorites save the ordered `=favorite` marker ids as JSON in the `Favorites Order` setting, so reordering uses the normal document persistence and undo path. The panel and drop handler share [`getFavoriteIds`](../src/selectors/getFavoriteIds.ts), which ignores stale or duplicate saved ids and appends unsaved favorites by creation time, then id. A malformed setting falls back to that creation order. See [`useDragDropFavorites.ts`](../src/hooks/useDragDropFavorites.ts).
 
 Drops *from* Favorites *to* the main thoughts area are handled by the regular thought drop targets, since the dragged item carries `zone: 'Favorites'` which propagates through.
 
@@ -201,7 +201,7 @@ When a user has multiple thoughts selected via the multicursor (`state.multicurs
 
 The drop handler iterates the array and dispatches `moveThought` per item. To make undo coalesce the whole multi-move into one entry, it wraps the dispatch in `setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' })` and clears it after.
 
-A selected thought that would be a no-op at the drop position (dropping a thought on or immediately before itself — e.g. dropping the first child `b` above itself) is a valid drop target, so the drop indicator still shows and the drop is *not* aborted; that item is simply skipped while the remaining selected thoughts still move. To keep the selection in document order, the first dragged item is placed before the drop target and each subsequent item is placed after the previous one (via `getRankAfter`), so the skipped no-op still anchors the position of the items that follow it.
+A selected thought that would be a no-op at the drop position (dropping a thought on or immediately before itself — e.g. dropping the first child `b` above itself) is a valid drop target, so the drop indicator still shows and the drop is *not* aborted; that item is simply skipped while the remaining selected thoughts still move. To keep the selection in document order, the first dragged item is placed before the drop target and each subsequent item names the previous one's id as its `afterId`, so the skipped no-op still anchors the position of the items that follow it.
 
 ## Performance considerations
 

@@ -1,15 +1,15 @@
 import { deleteThought } from '.'
-import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import createThought from '../actions/createThought'
 import findDescendant from '../selectors/findDescendant'
-import { hasChildren } from '../selectors/getChildren'
-import getNextRank from '../selectors/getNextRank'
-import getPrevRank from '../selectors/getPrevRank'
+import { getChildrenRanked, hasChildren } from '../selectors/getChildren'
+import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import createId from '../util/createId'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
@@ -18,6 +18,7 @@ import isAttribute from '../util/isAttribute'
 const toggleThought = (
   state: State,
   { path, value, values }: { path: Path | null; value?: string; values?: string[] },
+  document?: ThoughtspaceTransaction,
 ): State => {
   // normalize values if user passed single value
   const _values = values || [value!]
@@ -30,29 +31,39 @@ const toggleThought = (
 
   // delete the last thought if it exists
   if (_values.length === 1 && subthoughtId) {
-    return deleteThought(state, { pathParent: path, thoughtId: subthoughtId })
+    return deleteThought(state, { pathParent: path, thoughtId: subthoughtId }, document)
   }
 
   // otherwise, create the thought if it does not exist and recurse
   const stateWithSubthought = subthoughtId
     ? state
-    : createThought(state, {
-        id: idNew,
-        path,
-        value: _values[0],
-        // meta attributes go at the top of the context
-        rank: isAttribute(_values[0]) ? getPrevRank(state, thoughtId) : getNextRank(state, thoughtId),
-      })
+    : createThought(
+        state,
+        {
+          id: idNew,
+          path,
+          value: _values[0],
+          // meta attributes go at the top of the context
+          afterId: isAttribute(_values[0])
+            ? getFirstChildPlacement(state, thoughtId)
+            : (getChildrenRanked(state, thoughtId).at(-1)?.id ?? null),
+        },
+        document,
+      )
 
   // recursion
-  const stateNew = toggleThought(stateWithSubthought, {
-    path: appendToPath(path, subthoughtId || idNew),
-    values: _values.slice(1),
-  })
+  const stateNew = toggleThought(
+    stateWithSubthought,
+    {
+      path: appendToPath(path, subthoughtId || idNew),
+      values: _values.slice(1),
+    },
+    document,
+  )
 
   // after recursion, delete empty descendants
   return values.length > 1 && subthoughtId && !hasChildren(stateNew, subthoughtId)
-    ? deleteThought(stateNew, { pathParent: path, thoughtId: subthoughtId })
+    ? deleteThought(stateNew, { pathParent: path, thoughtId: subthoughtId }, document)
     : stateNew
 }
 
@@ -62,7 +73,7 @@ export const toggleThoughtActionCreator =
   dispatch =>
     dispatch({ type: 'toggleThought', ...payload })
 
-export default _.curryRight(toggleThought)
+export default command(toggleThought)
 
 // Register this action's metadata
 registerActionMetadata('toggleThought', {

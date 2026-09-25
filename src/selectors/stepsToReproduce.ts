@@ -111,15 +111,14 @@ const attributesRemoved = (snapshot: Snapshot): ThoughtId[] =>
     isAttribute(snapshot.before.thoughts.thoughtIndex[id].value),
   )
 
-/** The id of the thought a patch moved to another parent or rank, if any. */
-const movedId = ({ patch, before, after }: Snapshot): ThoughtId | undefined =>
-  touchedIds(patch).find(id => {
-    const oldThought = before.thoughts.thoughtIndex[id]
-    const newThought = after.thoughts.thoughtIndex[id]
-    return (
-      oldThought && newThought && (oldThought.parentId !== newThought.parentId || oldThought.rank !== newThought.rank)
-    )
-  })
+/** Finds a moved thought, preferring a changed parent over the resulting shifts in sibling indices. */
+const movedId = ({ patch, before, after }: Snapshot): ThoughtId | undefined => {
+  const existing = touchedIds(patch).filter(id => before.thoughts.thoughtIndex[id] && after.thoughts.thoughtIndex[id])
+  return (
+    existing.find(id => before.thoughts.thoughtIndex[id].parentId !== after.thoughts.thoughtIndex[id].parentId) ??
+    existing.find(id => before.thoughts.thoughtIndex[id].rank !== after.thoughts.thoughtIndex[id].rank)
+  )
+}
 
 /** Describes the meta attributes that a patch set and removed, e.g. "sets `=pin/true`". Returns an empty string if it changed none. */
 const attributeChanges = (snapshot: Snapshot): string => {

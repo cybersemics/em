@@ -19,16 +19,21 @@ import { newThoughtActionCreator as newThought } from '../newThought'
 
 /** Helper function that initializes the store, imports html into the root, and exports it as plaintext to make easily readable assertions. This is async because importFiles is async. */
 const importExport = async (html: string, outputFormat: MimeType = 'text/plain') => {
-  vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
-  store.dispatch(importDataActionCreator({ html }))
   await vi.runOnlyPendingTimersAsync()
+  await store.dispatch(importDataActionCreator({ html }))
+  await vi.runAllTimersAsync()
   const exported = exportContext(store.getState(), HOME_PATH, outputFormat)
   cleanup()
   return removeHome(exported)
 }
 
-beforeEach(initStore)
+beforeEach(async () => {
+  await initStore()
+  // Keep IndexedDB and loopback protocol tasks on the same real event loop; only control UI delays.
+  vi.useRealTimers()
+  vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] })
+})
 
 it('nested lists without whitespace', async () => {
   const actual = await importExport(`<ul><li>a<ul><li>b<ul><li>c</li></ul></li></ul></li></ul>`)
@@ -1086,13 +1091,14 @@ it('empty parent', async () => {
   const text = `- ${''}
   - x`
 
-  vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  store.dispatch([
-    newThought({}),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), [''])!, text })),
-  ])
+  await Promise.all(
+    store.dispatch([
+      newThought({}),
+      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), [''])!, text })),
+    ]),
+  )
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1126,13 +1132,14 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 </body>
 </html>
 `
-  vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  store.dispatch([
-    newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
-  ])
+  await Promise.all(
+    store.dispatch([
+      newThought({ value: 'a' }),
+      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    ]),
+  )
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1145,21 +1152,22 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 })
 
 it('paste em text with browser-injected meta charset as inline, not subthought', async () => {
-  vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  store.dispatch([
-    newThought({ value: 'a' }),
-    (dispatch, getState) =>
-      dispatch(
-        importDataActionCreator({
-          path: contextToPath(getState(), ['a'])!,
-          html: `<meta charset='utf-8'>Hello`,
-          text: 'Hello',
-          isEmText: true,
-        }),
-      ),
-  ])
+  await Promise.all(
+    store.dispatch([
+      newThought({ value: 'a' }),
+      (dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['a'])!,
+            html: `<meta charset='utf-8'>Hello`,
+            text: 'Hello',
+            isEmText: true,
+          }),
+        ),
+    ]),
+  )
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1172,21 +1180,22 @@ it('paste em text with browser-injected meta charset as inline, not subthought',
 })
 
 it('paste em text with formatted html and meta charset as inline', async () => {
-  vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  store.dispatch([
-    newThought({ value: 'a' }),
-    (dispatch, getState) =>
-      dispatch(
-        importDataActionCreator({
-          path: contextToPath(getState(), ['a'])!,
-          html: `<meta charset='utf-8'><b>Hello</b>`,
-          text: 'Hello',
-          isEmText: true,
-        }),
-      ),
-  ])
+  await Promise.all(
+    store.dispatch([
+      newThought({ value: 'a' }),
+      (dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['a'])!,
+            html: `<meta charset='utf-8'><b>Hello</b>`,
+            text: 'Hello',
+            isEmText: true,
+          }),
+        ),
+    ]),
+  )
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1204,13 +1213,14 @@ it('insert single-line HTML copied from Windows desktop Chrome at end of thought
 <!--StartFragment-->foo<!--EndFragment-->
 </body>
 </html>`
-  vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  store.dispatch([
-    newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
-  ])
+  await Promise.all(
+    store.dispatch([
+      newThought({ value: 'a' }),
+      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    ]),
+  )
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1224,13 +1234,14 @@ it('insert single-line HTML copied from Windows desktop Chrome at end of thought
 
 it('insert single-line HTML copied from Mac desktop Chrome at end of thought', async () => {
   const html = `<meta charset='utf-8'>foo`
-  vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  store.dispatch([
-    newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
-  ])
+  await Promise.all(
+    store.dispatch([
+      newThought({ value: 'a' }),
+      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    ]),
+  )
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1261,13 +1272,14 @@ bar</i></p>
 </body>
 </html>
 `
-  vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  store.dispatch([
-    newThought({ value: 'a' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
-  ])
+  await Promise.all(
+    store.dispatch([
+      newThought({ value: 'a' }),
+      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
+    ]),
+  )
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1298,13 +1310,14 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 </body>
 </html>
 `
-  vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  store.dispatch([
-    newThought({ value: 'x' }),
-    (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['x'])!, html })),
-  ])
+  await Promise.all(
+    store.dispatch([
+      newThought({ value: 'x' }),
+      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['x'])!, html })),
+    ]),
+  )
 
   await vi.runOnlyPendingTimersAsync()
 

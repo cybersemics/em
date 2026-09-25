@@ -10,8 +10,6 @@ import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import asyncFocus from '../device/asyncFocus'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { getChildrenRanked } from '../selectors/getChildren'
-import getNextRank from '../selectors/getNextRank'
-import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import fastClick from '../util/fastClick'
@@ -39,8 +37,6 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
 
   /** Handles the click event. */
   const onClick = useCallback(() => {
-    const state = store.getState()
-
     // do not preventDefault or stopPropagation as it prevents cursor
 
     // do not allow clicks if hidden by autofocus
@@ -49,18 +45,17 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
       return
     }
 
-    const newRank = getNextRank(state, head(path))
-
     const newThoughtId = createId()
-
-    dispatch(
-      createThought({
-        path,
-        rank: newRank,
-        value,
-        id: newThoughtId,
-      }),
-    )
+    dispatch((dispatch, getState) => {
+      dispatch(
+        createThought({
+          path,
+          afterId: getChildrenRanked(getState(), head(path)).at(-1)?.id ?? null,
+          value,
+          id: newThoughtId,
+        }),
+      )
+    })
 
     asyncFocus()
 
