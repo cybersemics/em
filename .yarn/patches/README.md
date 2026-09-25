@@ -40,3 +40,12 @@ This patch is a result of https://github.com/cybersemics/em/pull/3138 and patche
 ### react-dnd-touch-backend-patch-2c3a2052b6.patch
 
 This patch is a result of https://github.com/cybersemics/em/pull/3161 and cancels drag-and-drop when a scroll event is detected during the initial long press.
+
+### react-modal-sheet-npm-5.6.0-f2ff243f4a.patch
+
+Keeps the sheet (used by the Command Center) from getting stuck open when it is closed right after it is opened, e.g. by a double tap.
+
+The sheet waits up to 50 ms for its container to mount before it starts the open animation. If `isOpen` goes false within that window, the close animation starts first and the late open animation then cancels it. `motion` never resolves the promise of a cancelled animation, so the sheet stayed in its `closing` state forever: fully visible, ignoring every later `isOpen` change, including the Done button.
+
+1. Skip the open animation if the sheet was closed while it waited for its container.
+2. Treat an open or close animation that is cancelled by another animation of the same value as settled, so that the sheet's state machine always advances.
