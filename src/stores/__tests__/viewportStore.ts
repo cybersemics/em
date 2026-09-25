@@ -1,4 +1,4 @@
-import viewportStore, { updateSize } from '../viewport'
+import viewportStore, { updateSize } from '../viewportStore'
 
 it('recalculates the scroll zone width when the viewport changes', () => {
   window.innerWidth = 400
