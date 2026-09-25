@@ -836,14 +836,17 @@ describe('mobile', () => {
   // https://github.com/cybersemics/em/issues/5148
   it('applies a color to every selected thought when the cursor thought already has it', async () => {
     await paste(`
-      - <font color="#00c7e6">a</font>
+      - a
       - b
       - c
     `)
 
-    await clickThought('<span style="color: #00c7e6;">a</span>')
-    await command('selectAll')
+    await clickThought('a')
     await clickToolbar('Text Color', 'text color swatches', 'blue')
+    await waitForEditable('<font color="#00c7e6">a</font>')
+
+    await command('selectAll')
+    await click('[aria-label="text color swatches"] [aria-label="blue"]')
 
     expect((await exportThoughts({ mimeType: 'text/html' })).replace(/\s*\n\s*/g, '')).toBe(
       `<ul><li>${HOME_TOKEN}<ul><li><font color="#00c7e6">a</font></li><li><font color="#00c7e6">b</font></li><li><font color="#00c7e6">c</font></li></ul></li></ul>`,
