@@ -285,16 +285,13 @@ describe('multicursor', () => {
   })
 
   it('removes the color from every selected thought when all of them have it', async () => {
+    // seeded with newThought because importText rewrites the font tag that applyColor produces into a span
     act(() => {
       store.dispatch([
-        importText({
-          text: `
-            - <font color="#00c7e6">a</font>
-            - <font color="#00c7e6">b</font>
-            - <font color="#00c7e6">c</font>
-          `,
-        }),
-        setCursor(['<span style="color: #00c7e6;">b</span>']),
+        newThought({ value: '<font color="#00c7e6">a</font>' }),
+        newThought({ value: '<font color="#00c7e6">b</font>' }),
+        newThought({ value: '<font color="#00c7e6">c</font>' }),
+        setCursor(['<font color="#00c7e6">b</font>']),
       ])
     })
     await act(vi.runOnlyPendingTimersAsync)
