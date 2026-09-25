@@ -1,7 +1,7 @@
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
 import * as selection from '../../device/selection'
 import store from '../../stores/app'
-import touchStore from '../../stores/touch'
+import touchStore from '../../stores/touchStore'
 import initStore from '../../test-helpers/initStore'
 import initEvents from '../initEvents'
 
