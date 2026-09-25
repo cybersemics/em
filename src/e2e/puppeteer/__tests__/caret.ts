@@ -563,4 +563,32 @@ describe('mobile only', () => {
     )
     expect(activeLabel).not.toMatch(/^editable-/)
   })
+
+  // https://github.com/cybersemics/em/issues/3626
+  it('tapping a disabled toolbar button should not close the keyboard', async () => {
+    await paste(`
+    - a
+      - b`)
+
+    // tap thought a to put the caret on it with the keyboard open
+    await clickThought('a')
+    await clickThought('a')
+    await waitUntil(() => !!document.activeElement?.getAttribute('aria-label')?.startsWith('editable-'))
+
+    // Swap Parent is disabled on a top-level thought, which has no grandparent to swap with
+    await clickToolbar('Swap Parent')
+
+    // the disabled button should not execute, otherwise the keyboard would stay open for the wrong reason
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+  - b
+`)
+
+    // the keyboard should stay open, so the editable should still be focused
+    const activeLabel = await page.evaluate(
+      () => document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? null,
+    )
+    expect(activeLabel).toMatch(/^editable-/)
+  })
 })
