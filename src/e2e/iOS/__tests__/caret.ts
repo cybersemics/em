@@ -407,13 +407,14 @@ describe('Caret', () => {
     const value = 'Hello beautiful people in the world'
     await newThought(value)
     const editable = await waitForEditable(value)
+    await waitUntil(isKeyboardShown)
 
     // place the caret before "the"
-    await tap(editable, { offset: 26, pointerType: 'touch' })
+    await tap(editable, { offset: 26, pointerType: 'touch', y: 60 })
     await waitForCaretOffset(26)
 
     // tap the "i" of "in", four characters to the left of the caret
-    await tap(editable, { offset: 23, pointerType: 'touch' })
+    await tap(editable, { offset: 23, pointerType: 'touch', y: 60 })
     await waitForCaretOffset(23)
   })
 })
