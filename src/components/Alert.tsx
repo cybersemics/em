@@ -7,6 +7,7 @@ import { token } from '../../styled-system/tokens'
 import { alertActionCreator } from '../actions/alert'
 import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/clearMulticursors'
 import { deleteResumableFile } from '../actions/importFiles'
+import { isTouch } from '../browser'
 import { AlertType } from '../constants'
 import alertStore from '../stores/alertStore'
 import syncStatusStore from '../stores/syncStatusStore'
@@ -75,8 +76,14 @@ const Alert: FC = () => {
       onClose={alert?.clearDelay != null ? onClose : undefined}
       value={alert ? value : null}
       icon={Icon ? <Icon cssRaw={css.raw({ cursor: 'default' })} size={iconSize} fill={token('colors.fg')} /> : null}
-      onMouseLeave={startTimer}
-      onMouseOver={clearTimer}
+      // Pause the auto-dismiss timer while the user is engaging with the alert. Touch has to be tracked
+      // separately: a touch browser synthesizes mouseover from a tap but no mouseout until the user taps
+      // elsewhere, so the mouse handlers alone would strand the alert on screen indefinitely.
+      onMouseLeave={!isTouch ? startTimer : undefined}
+      onMouseOver={!isTouch ? clearTimer : undefined}
+      onTouchStart={clearTimer}
+      onTouchEnd={startTimer}
+      onTouchCancel={startTimer}
     >
       {alert?.importFileId && (
         <a
