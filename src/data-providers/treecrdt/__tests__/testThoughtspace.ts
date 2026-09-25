@@ -147,18 +147,6 @@ it('preserves the requested sibling order when inserting a wide batch', async ()
   expect(children.map(child => child?.rank)).toEqual(childIds.map((_, index) => index))
 })
 
-it('rejects editing before initialization and accepts it once ready', async () => {
-  expect(treecrdt.ready).toBe(false)
-  expect(() =>
-    persistThoughts([thought(PARENT_ID, EM_TOKEN, 'too early', 0)], { [PARENT_ID]: SETTINGS_TOKEN }),
-  ).toThrow('not ready for editing')
-  await initTestThoughtspace()
-  expect(treecrdt.ready).toBe(true)
-  expect(treecrdt.project().thoughtIndex[PARENT_ID]).toBeUndefined()
-  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'ready', 0)], { [PARENT_ID]: SETTINGS_TOKEN })
-  expect(treecrdt.project().thoughtIndex[PARENT_ID]).toMatchObject({ value: 'ready' })
-})
-
 it('keeps separately created thoughtspace instances isolated', async () => {
   const first = createMemoryThoughtspace()
   const second = createMemoryThoughtspace()

@@ -6,7 +6,7 @@ import { isNavigation } from '../util/actionMetadata.registry'
  * Returns undefined if there is no navigation actions in patches/inversePatches.
  */
 const getLatestActionType = (patchArr: Patch[], n = 1): string | undefined => {
-  const lastActionType = patchArr[patchArr.length - n]?.[0]?.actions[0]
+  const lastActionType = patchArr[patchArr.length - n]?.metadata.actions[0]
   return isNavigation(lastActionType) ? getLatestActionType(patchArr, n + 1) : lastActionType
 }
 

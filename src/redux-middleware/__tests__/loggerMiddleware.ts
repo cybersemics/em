@@ -62,16 +62,14 @@ describe('structured updateThoughts summary', () => {
         abc: { id: 'abc', value: 'hello', rank: 2, parentId: 'root', childrenMap: {} },
         def: null,
       },
-      local: false,
-      remote: false,
+      persist: false,
     })
     const actionEntries = debugLog.read().filter(e => e.type === 'action')
     expect(actionEntries.length).toBe(1)
     expect(actionEntries[0]).toMatchObject({
       actionType: 'updateThoughts',
       thoughtCount: 2,
-      local: false,
-      remote: false,
+      persist: false,
     })
     expect(actionEntries[0].thoughts).toEqual([
       { id: 'abc', value: 'hello', rank: 2, parentId: 'root' },

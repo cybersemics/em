@@ -1,14 +1,15 @@
-import { GetOperation } from 'fast-json-patch'
+import type { OperationId } from '@treecrdt/interface'
+import type { Operation } from 'fast-json-patch'
 import ActionType from './ActionType'
 
-// Extend fast-json-patch Operation type to include actions list
-// See fast-json-patch types: https://github.com/Starcounter-Jack/JSON-Patch/blob/89a09e94e0e6500115789e33586a75c8dd1aea13/module/core.d.ts
-// TODO: This should allow any Operation, not just GetOperation. But how to extend?
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface ExtendedOperation<T = any> extends GetOperation<T> {
-  actions: ActionType[]
+/** An editor history entry with UI restoration, diagnostic document diffs, and an engine-owned receipt. */
+interface Patch {
+  /** Restores UI state and describes the document change for history reports. Document paths are never authored back. */
+  ops: Operation[]
+  /** Action names and command labels remain available even when an entry has no JSON operations. */
+  metadata: { actions: ActionType[] }
+  /** Exact operations to revert; the opposite history entry receives the fresh inversion receipt. */
+  documentOperationIds: readonly OperationId[]
 }
-
-type Patch = ExtendedOperation[]
 
 export default Patch

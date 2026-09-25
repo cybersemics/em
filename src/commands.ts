@@ -363,7 +363,7 @@ const keyboardIndexOf = (
 /** Returns the last undo patch that is not a navigation action, i.e. the patch that Undo would revert. Mirrors getLatestActionType, but returns the patch itself so that patches can be compared by identity. */
 const lastUndoablePatch = (state: State): Patch | undefined => {
   for (let i = state.undoPatches.length - 1; i >= 0; i--) {
-    if (!isNavigation(state.undoPatches[i][0]?.actions[0])) return state.undoPatches[i]
+    if (!isNavigation(state.undoPatches[i].metadata.actions[0])) return state.undoPatches[i]
   }
   return undefined
 }

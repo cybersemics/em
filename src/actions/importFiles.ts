@@ -326,7 +326,7 @@ export const importFilesActionCreator =
                     insertBefore: ancestors.length === 0 && insertBeforeNew,
                     preventSetCursor: true,
                     value: block.scope,
-                    idbSynced: updateAndResolve,
+                    onPersisted: updateAndResolve,
                   }),
               // set the cursor to the first imported visible thought
               (dispatch, getState) => {

@@ -10,7 +10,8 @@ import undoSteps from '../undoSteps'
 beforeEach(initStore)
 
 /** Returns the action types of each patch of each step. */
-const stepActions = () => undoSteps(store.getState()).steps.map(step => step.patches.map(patch => patch[0].actions))
+const stepActions = () =>
+  undoSteps(store.getState()).steps.map(step => step.patches.map(patch => patch.metadata.actions))
 
 it('group a new thought with the edit that types its value', () => {
   store.dispatch([newThought({}), editThought([''], 'a')])

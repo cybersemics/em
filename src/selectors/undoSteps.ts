@@ -16,7 +16,9 @@ const groupSteps = (patches: Patch[]): UndoStep[] =>
     const older = patches[i + 1]
     const grouped =
       !!older &&
-      (isNavigation(patch[0]?.actions[0]) ? older[0]?.actions.some(isUndoable) : older[0]?.actions[0] === 'newThought')
+      (isNavigation(patch.metadata.actions[0])
+        ? older.metadata.actions.some(isUndoable)
+        : older.metadata.actions[0] === 'newThought')
     return [...steps, { patches: grouped ? [older, patch] : [patch] }]
   }, [])
 

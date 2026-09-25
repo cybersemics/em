@@ -27,7 +27,7 @@ interface Handles {
 
 /** The name of the action that a step applied, as it appears in the undo alert, e.g. "New Thought". A navigation action is skipped in favor of the change it accompanies. */
 const stepLabel = (step: UndoStep): string => {
-  const actions = step.patches.flatMap(patch => patch[0].actions)
+  const actions = step.patches.flatMap(patch => patch.metadata.actions)
   return startCase(actions.find(action => !isNavigation(action)) ?? actions[0])
 }
 

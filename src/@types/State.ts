@@ -109,7 +109,7 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
-  /** The last undoable action that was executed. Usually this is the same as undoPatches.at(-1).actions[0]. However, on undo this will equal redoPatches.at(-1).actions[0]. This is important for special case animatons, like swapParent, that should be enabled not just when the action is originally executed, but also when it is reversed via undo. */
+  /** The last undoable action that was executed. Usually this is the same as undoPatches.at(-1).metadata.actions[0]. However, on undo this will equal redoPatches.at(-1).metadata.actions[0]. This is important for special case animatons, like swapParent, that should be enabled not just when the action is originally executed, but also when it is reversed via undo. */
   lastUndoableActionType?: ActionType
   latestCommands: Command[]
   /** Tracks the state of long press and drag-and-drop. */
@@ -127,7 +127,7 @@ interface State {
   /** NoteOffset can be used to position the caret within a note. Setting it to null disables programmatic selection using selection.set. */
   noteOffset: number | null
   recentlyEdited: RecentlyEditedTree
-  /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
+  /** Redo history. Contains UI/diagnostic diffs and the fresh document receipts authored by undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]
   remoteSearch: boolean
   rootContext: Context
@@ -180,7 +180,7 @@ interface State {
   /** Command of a toolbar button that is being long pressed in the customize modal. */
   toolbarLongPress?: Command
   transientFocus?: boolean
-  /** Undo history. Contains diffs that can be applied to State to revert actions. State.undoPatches[0] is the oldest. */
+  /** Undo history. Contains UI/diagnostic diffs and engine-owned document receipts. State.undoPatches[0] is the oldest. */
   undoPatches: Patch[]
 }
 

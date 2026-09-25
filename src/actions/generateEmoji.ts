@@ -127,8 +127,7 @@ const generateEmoji =
             },
           ]),
         ),
-        local: false,
-        remote: false,
+        persist: false,
       }),
     )
 
@@ -187,8 +186,7 @@ const generateEmoji =
                   displayValue: undefined,
                 },
               },
-              local: false,
-              remote: false,
+              persist: false,
             }),
           )
         }
@@ -211,8 +209,7 @@ const generateEmoji =
               displayValue: undefined,
             },
           },
-          local: false,
-          remote: false,
+          persist: false,
         }),
         ...(emoji
           ? [

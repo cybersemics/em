@@ -7,11 +7,11 @@ This prototype runs two TreeCRDT instances for one thoughtspace:
 
 The memory engine owns the document and accepts local commands synchronously. Redux owns UI state and a read-only document projection. Document commands execute in one memory transaction outside Redux's reducer, reading canonical state between composed steps. Redux publishes the completed snapshot once. Network sync is disabled, including when `VITE_TREECRDT_SYNC_BASE_URL` is set.
 
-[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exports `thoughtspaceRuntime`, created by [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts). The runtime supplies synchronous `project` reads, `transact`, and lifecycle methods. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project` and an `afterPersist` callback.
+[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exports `thoughtspaceRuntime`, created by [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts). The runtime supplies synchronous `project` reads, `transact`, and lifecycle methods. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project`, operation receipts and `revert`, and an `afterPersist` callback.
 
 ## Running the prototype
 
-Run `yarn install --immutable` and `yarn start`. The experimental `@treecrdt/wasm` dependency is a prebuilt GitHub prerelease pinned in `package.json` and `yarn.lock`; no TreeCRDT checkout or Rust tooling is required. Its source is on TreeCRDT's `prototype/synchronous-wasm-view` branch.
+Run `yarn install --immutable` and `yarn start`. This local undo experiment pins a locally packed `@treecrdt/wasm` tarball in `package.json` and `yarn.lock`. Its source is in the TreeCRDT `prototype/synchronous-wasm-view` worktree; build and pack that package to recreate the artifact. Before sharing the branch, replace the local file dependency with a prebuilt GitHub prerelease as used by the rest of the prototype.
 
 The package includes browser and Node loaders and the WASM binary. It initializes explicitly; importing it does not load WASM. Keep the core version aligned with EM's SQLite package so both replicas use the same operation format.
 
@@ -62,7 +62,7 @@ An asynchronous append or loopback failure is reported through `onError` and gat
 
 #### Order and placement
 
-`ThoughtspaceTransaction.update` accepts `movePlacements: Index<ThoughtId | null>`: the value names the preceding sibling, or `null` for first. Creates and parent changes require one; imports, moves, sorting, edits and undo/redo supply placements directly.
+`ThoughtspaceTransaction.update` accepts `movePlacements: Index<ThoughtId | null>`: the value names the preceding sibling, or `null` for first. Creates and parent changes require one; imports, moves, sorting and edits supply placements directly. Undo/redo instead asks TreeCRDT to revert operation IDs; EM does not reconstruct placements from Redux patches.
 
 The transaction applies parents and placement anchors before their dependents, then deletions. Invalid anchors fail the atomic command rather than falling back to a numeric rank. Ranks are read-only sibling indices in the resulting projection. See [data-model.md → rank](data-model.md#rank).
 
@@ -89,7 +89,7 @@ The full document and its operation history must fit in memory, and startup wait
 
 [`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `thoughtspaceRuntime.transact`, then dispatches the original action with its prepared immutable state to a pure publication reducer. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
 
-`updateThoughts` changes the memory document and reads its derived indices immediately. Nonpersistent updates can change transient editor overlays, but cannot author document operations or evict canonical thoughts. There is no Redux write queue or separate lexeme derivation. Persistence callbacks run only after SQLite acknowledges the whole command. Undo/redo uses the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
+`updateThoughts` changes the memory document and reads its derived indices immediately. Updates with `persist: false` can change transient editor overlays, but cannot author document operations or evict canonical thoughts. There is no Redux write queue or separate lexeme derivation. The `onPersisted` callback runs only after SQLite acknowledges the whole command. Undo/redo uses the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
 
 ```
 command → memory transaction (update → canonical read → next step)
@@ -100,7 +100,7 @@ command → memory transaction (update → canonical read → next step)
 
 ## Reading and exporting
 
-Selectors read the complete Redux projection synchronously. Export captures an immutable snapshot, scopes JSON to the selected subtree, and does not wait for persistence. A local UI reset does not delete the TreeCRDT document; durable deletion is explicit.
+Selectors read the complete Redux projection synchronously. Export captures an immutable snapshot, scopes JSON to the selected subtree, and does not wait for persistence. A `clear()` UI reset does not delete the TreeCRDT document; `clear({ persist: true })` explicitly deletes it.
 
 ## Identity & sharing
 

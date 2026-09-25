@@ -4,6 +4,7 @@ import type Thought from '../../../@types/Thought'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { HOME_TOKEN } from '../../../constants'
+import { tsid } from '../../thoughtspaceSession'
 import createMemoryThoughtspace from '../createMemoryThoughtspace'
 import { encodeThoughtPayload } from '../payload'
 
@@ -81,11 +82,8 @@ it('reopens only after a concurrent drop finishes and blocks editing during tear
 })
 
 it('reports a failed durable append and rejects later commands before authoring them', async () => {
-  let persistent!: TreecrdtClient
-  const runtime = createMemoryThoughtspace(async options => {
-    persistent = await createTreecrdtClient(options)
-    return persistent
-  })
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
   const failure = new Error('Durable append failed')
   const onError = vi.fn()
   const thought: Thought = {
@@ -122,11 +120,8 @@ it('reports a failed durable append and rejects later commands before authoring 
 })
 
 it('reports a failed loopback operation-log read and gates later edits', async () => {
-  let persistent!: TreecrdtClient
-  const runtime = createMemoryThoughtspace(async options => {
-    persistent = await createTreecrdtClient(options)
-    return persistent
-  })
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
   const failure = new Error('Operation-log read failed')
   const onError = vi.fn()
   const node = '2'.repeat(32) as ThoughtId

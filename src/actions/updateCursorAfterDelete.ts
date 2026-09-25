@@ -1,4 +1,3 @@
-import { applyPatch } from 'fast-json-patch'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
@@ -84,21 +83,11 @@ const updateCursorAfterDelete = (state: State, statePrev: State, document?: Thou
     if (!cursor) return null
 
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
-    const lastCursorOps = lastPatches?.filter(
-      patch => patch.actions[0] === 'newThought' && patch.path.startsWith('/cursor/'),
-    )
-
-    if (!lastCursorOps || lastCursorOps.length === 0) return null
-
-    // remove /cursor from the patch since we are applying it directly to cursor, not the full state
-    const revertCursorPatch = lastCursorOps.map(patch => ({
-      op: patch.op,
-      path: patch.path.replace('/cursor', ''),
-      value: patch.value,
-    }))
-    // apply to the cursor prior to deleteThought, not state.cursor
-    const cursorNew = applyPatch([...cursor], revertCursorPatch).newDocument as Path
-    return cursorNew
+    const lastCursorOp =
+      lastPatches?.metadata.actions[0] === 'newThought'
+        ? lastPatches.ops.find(patch => patch.path === '/cursor')
+        : undefined
+    return lastCursorOp && 'value' in lastCursorOp ? (lastCursorOp.value as Path | null) : null
   })
 
   const cursorNew = revertedCursor()

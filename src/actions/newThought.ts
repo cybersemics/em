@@ -53,8 +53,8 @@ import unroot from '../util/unroot'
 export interface NewThoughtPayload {
   /** The Path which the new thought is inserted after, unless insertBefore or insertNewSubthought are specified. */
   at?: Path
-  /** Callback for when the updates have been synced with IDB. */
-  idbSynced?: () => void
+  /** Invoked after SQLite acknowledges the complete command. */
+  onPersisted?: () => void
   insertNewSubthought?: boolean
   insertBefore?: boolean
   value?: string
@@ -76,7 +76,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string, document?
 
   const {
     at,
-    idbSynced,
+    onPersisted,
     insertNewSubthought,
     insertBefore,
     value = '',
@@ -164,7 +164,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string, document?
       afterId,
       value,
       id: newThoughtId,
-      idbSynced,
+      onPersisted,
       splitSource,
     }),
 
@@ -218,15 +218,15 @@ const newThought = (state: State, payload: NewThoughtPayload | string, document?
 export const newThoughtActionCreator =
   ({
     at,
-    idbSynced,
+    onPersisted,
     insertBefore,
     insertNewSubthought,
     preventSetCursor,
     value = '',
   }: {
     at?: Path
-    /** Callback for when the updates have been synced with IDB. */
-    idbSynced?: () => void
+    /** Invoked after SQLite acknowledges the complete command. */
+    onPersisted?: () => void
     insertBefore?: boolean
     insertNewSubthought?: boolean
     preventSetCursor?: boolean
@@ -251,7 +251,7 @@ export const newThoughtActionCreator =
     dispatch({
       type: 'newThought',
       at: path,
-      idbSynced,
+      onPersisted,
       insertBefore,
       insertNewSubthought,
       preventSetCursor,

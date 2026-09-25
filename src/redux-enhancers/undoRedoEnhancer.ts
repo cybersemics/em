@@ -6,8 +6,6 @@ import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import * as commands from '../actions'
 import { editThoughtPayload } from '../actions/editThought'
@@ -17,10 +15,8 @@ import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
-import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import debugLog from '../util/debugLog'
-import equalArrays from '../util/equalArrays'
 import headValue from '../util/headValue'
 import isAttribute from '../util/isAttribute'
 import reducerFlow from '../util/reducerFlow'
@@ -137,168 +133,102 @@ const statePropertiesToOmit: (keyof State)[] = [
   'selectionOffsets',
 ]
 
-/** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. */
-const restoreMoveUpdatesFromThoughtUpdates = (
-  state: State,
-  oldState: State,
-  thoughtIndexUpdates: Index<Thought | null>,
-): {
-  thoughtIndexUpdates: Index<Thought | null>
-  movePlacements: Index<ThoughtId | null>
-} => {
-  const touchedParentIds = Object.entries(thoughtIndexUpdates).reduce<Set<ThoughtId>>((acc, [id, thought]) => {
-    const thoughtId = id as ThoughtId
-    if (!thought) return acc
+/** Computes UI restoration and diagnostic document diffs, never recursively recording the history itself. */
+const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => [
+  ...compare(
+    _.omit(newValue, [...statePropertiesToOmit, 'undoPatches', 'redoPatches', 'cursor']),
+    _.omit(value, [...statePropertiesToOmit, 'undoPatches', 'redoPatches', 'cursor']),
+  ),
+  // Incoming deletion can shorten or clear the cursor without changing history. Restore its captured value atomically,
+  // not with relative array operations that assume the pre-publication path still exists.
+  ...(_.isEqual(newValue.cursor, value.cursor)
+    ? []
+    : [{ op: 'replace' as const, path: '/cursor', value: value.cursor }]),
+]
 
-    const oldThought = getThoughtById(oldState, thoughtId)
-    const moved = !oldThought || oldThought.parentId !== thought.parentId || oldThought.rank !== thought.rank
-    if (!moved) return acc
+/** Returns true if a patch represents an undoable action, including actions after a multicursor command label. */
+const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch?.metadata.actions.some(isUndoable)
 
-    if (oldThought) acc.add(oldThought.parentId)
-    acc.add(thought.parentId)
-    return acc
-  }, new Set())
-
-  const { thoughtIndexUpdates: moveThoughtIndexUpdates, movePlacements } = [...touchedParentIds].reduce<{
-    thoughtIndexUpdates: Index<Thought | null>
-    movePlacements: Index<ThoughtId | null>
-  }>(
-    (acc, parentId) => {
-      const oldChildren = getChildrenRanked(oldState, parentId).map(child => child.id)
-      const children = getChildrenRanked(state, parentId)
-      const childIds = children.map(child => child.id)
-      if (equalArrays(oldChildren, childIds)) return acc
-
-      children.forEach((child, i) => {
-        const childThought = getThoughtById(state, child.id)
-        if (!childThought) return
-
-        acc.thoughtIndexUpdates[child.id] = childThought
-        acc.movePlacements[child.id] = i === 0 ? null : childIds[i - 1]
-      })
-
-      return acc
-    },
-    { thoughtIndexUpdates: {}, movePlacements: {} },
-  )
-
-  const moveThoughtIds = new Set(Object.keys(movePlacements))
-  const nonMoveThoughtIndexUpdates = Object.entries(thoughtIndexUpdates).reduce<Index<Thought | null>>(
-    (acc, [id, thought]) => (moveThoughtIds.has(id) ? acc : { ...acc, [id]: thought }),
-    {},
-  )
-
-  return {
-    thoughtIndexUpdates: {
-      ...nonMoveThoughtIndexUpdates,
-      ...moveThoughtIndexUpdates,
-    },
-    movePlacements,
-  }
-}
-
-/**
- * Restores document changes through the same transaction API used by ordinary commands.
- */
-const restoreThoughtsFromPatches = (
-  state: State,
-  oldState: State,
-  patch: Patch,
-  document?: ThoughtspaceTransaction,
-) => {
-  const thoughtIndexChanges = patch.filter(p => p?.path.startsWith('/thoughts/thoughtIndex/'))
-  if (!thoughtIndexChanges.length) return state
-  if (!document) throw new Error('Restoring document history requires a thoughtspace transaction')
-  const thoughtIndexUpdates = thoughtIndexChanges.reduce<Index<Thought | null>>((acc, { path }) => {
-    const id = path.slice('/thoughts/thoughtIndex/'.length).split('/')[0]
-    return {
-      ...acc,
-      [id]: getThoughtById(state, id as ThoughtId) || null,
-    }
-  }, {})
-
-  const moveUpdates = restoreMoveUpdatesFromThoughtUpdates(state, oldState, thoughtIndexUpdates)
-
-  return {
-    ...state,
-    thoughts: document.update(moveUpdates, state.thoughts),
-  }
-}
-
-/**
- * Returns the diff between two states as a fast-json-patch Patch that can be applied for undo/redo functionality. Ignores ephemeral state properties such as alert which should not be recreated (defined in statePropertiesToOmit).
- */
-const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
-  compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))
-
-/**
- * Append action names to all operations of a Patch.
- */
-const addActionsToPatch = (patch: Operation[], actions: ActionType[]): Patch =>
-  // TODO: Fix Patch type to support any Operation, not just GetOperation. See Patch.ts.
-  patch.map(operation => ({ ...operation, actions })) as Patch
-
-/**
- * Gets the first action from a patch.
- */
-const getPatchAction = (patch: Patch): ActionType => patch[0]?.actions[0]
-
-/**
- * Returns true if a patch represents an undoable action. A patch's first action may be a non-action label (e.g. a multicursor command's undoLabel), so check all actions in the patch rather than only the first.
- */
-const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch?.[0]?.actions.some(isUndoable)
-
-/** Actions that mutate state.multicursors. They are not undoable on their own, since selecting thoughts should not be an undo step, but they must be tracked while a multicursor command is executing. See the bail condition in the enhancer. */
+/** Actions that mutate state.multicursors. They are not undoable on their own, but belong to an executing multicursor command's history. */
 const multicursorActionTypes: Set<ActionType> = new Set(['addMulticursor', 'clearMulticursors', 'removeMulticursor'])
 
-/**
- * Gets the nth item from the end of an array.
- */
+/** Gets the nth item from the end of an array. */
 const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
 
-/**
- * Undoes a single action. Applies the last inverse-patch to get the next state and adds a corresponding reverse-patch for the same.
- */
-const undoOneReducer = (state: State): State => {
+/** Reverts an engine receipt and UI state, returning the fresh receipt and actual diff for the opposite history stack. */
+const revertPatch = (
+  state: State,
+  patch: Patch,
+  document?: ThoughtspaceTransaction,
+): { state: State; patch: Patch } => {
+  if (patch.documentOperationIds.length && !document) {
+    throw new Error('Restoring document history requires a thoughtspace transaction')
+  }
+  const documentOperationIds = patch.documentOperationIds.length ? document!.revert(patch.documentOperationIds) : []
+  const uiState = produce(
+    state,
+    draft =>
+      applyPatch(
+        draft,
+        patch.ops.filter(op => op.path !== '/thoughts' && !op.path.startsWith('/thoughts/')),
+      ).newDocument,
+  )
+  const projected = projectThoughts(uiState, document)
+  // These three fields belong to the editor even though they live beside canonical thought fields.
+  // Restore them only on nodes the engine currently exposes; a stale history path must not resurrect a remote deletion.
+  const withOverlays = produce(projected, draft => {
+    patch.ops.forEach(op => {
+      const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)(?:\/(generating|displayValue|splitSource))?$/)
+      if (!match) return
+      const thought = draft.thoughts.thoughtIndex[match[1]]
+      if (!thought) return
+      const fields = match[2] ? [match[2]] : ['generating', 'displayValue', 'splitSource']
+      fields.forEach(field => {
+        const value = 'value' in op ? (match[2] ? op.value : op.value?.[field]) : undefined
+        if (value === undefined) delete (thought as Index)[field]
+        else (thought as Index)[field] = value
+      })
+    })
+  })
+  const newState = projectThoughts(withOverlays, document)
+  return {
+    state: newState,
+    patch: {
+      ops: diffState(newState as Index, state),
+      metadata: patch.metadata,
+      documentOperationIds,
+    },
+  }
+}
+
+/** Undoes one history entry and retains only the actual inverse UI changes and fresh engine operations for redo. */
+const undoOneReducer = (state: State, document?: ThoughtspaceTransaction): State => {
   const { redoPatches, undoPatches } = state
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
-  const newState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
-  const correspondingRedoPatch = addActionsToPatch(diffState(newState as Index, state), [
-    ...(lastUndoPatch[0]?.actions ?? []),
-  ])
+  const { state: newState, patch } = revertPatch(state, lastUndoPatch, document)
   return {
     ...newState,
-    // Do not push an empty patch. A patch that a non-undoable action has already reverted applies as a no-op, so the patch
-    // computed to redo it is empty. (The Note command is the reachable case: it is not undoable and writes back the noteFocus
-    // and noteOffset that the undoable setNoteFocus recorded.) An empty patch carries no actions, so it disables undo
-    // (getLastActionType returns undefined) and throws on the spread above the next time it is reached. Drop it instead, as
-    // both patch-creating branches of the reducer below already do; the patch restored nothing, so nothing is lost.
-    redoPatches: correspondingRedoPatch.length ? [...redoPatches, correspondingRedoPatch] : redoPatches,
+    // A UI patch already reverted by a non-undoable action (e.g. Note) must not leave an endless no-op redo step.
+    redoPatches: patch.ops.length || patch.documentOperationIds.length ? [...redoPatches, patch] : redoPatches,
     undoPatches: undoPatches.slice(0, -1),
     cursorCleared: false,
-    lastUndoableActionType: lastUndoPatch[0]?.actions[0],
+    lastUndoableActionType: lastUndoPatch.metadata.actions[0],
   }
 }
 
-/**
- * Redoes a single action. Applies the last patch to get the next state and adds a corresponding undo patch for the same.
- */
-const redoOneReducer = (state: State): State => {
+/** Redoes one entry by reverting the actual undo receipt, never by replaying the original document operations. */
+const redoOneReducer = (state: State, document?: ThoughtspaceTransaction): State => {
   const { redoPatches, undoPatches } = state
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
-  const newState = produce(state, (state: State) => applyPatch(state, lastRedoPatch).newDocument)
-  const correspondingUndoPatch = addActionsToPatch(diffState(newState as Index, state), [
-    ...(lastRedoPatch[0]?.actions ?? []),
-  ])
+  const { state: newState, patch } = revertPatch(state, lastRedoPatch, document)
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
-    // Do not push an empty patch. See undoOneReducer.
-    undoPatches: correspondingUndoPatch.length ? [...undoPatches, correspondingUndoPatch] : undoPatches,
+    undoPatches: patch.ops.length || patch.documentOperationIds.length ? [...undoPatches, patch] : undoPatches,
     cursorCleared: false,
-    lastUndoableActionType: lastRedoPatch[0]?.actions[0],
+    lastUndoableActionType: lastRedoPatch.metadata.actions[0],
   }
 }
 
@@ -318,9 +248,9 @@ const undoReducer = (
   document?: ThoughtspaceTransaction,
 ): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
-  const lastAction = lastUndoPatch && getPatchAction(lastUndoPatch)
+  const lastAction = lastUndoPatch?.metadata.actions[0]
   const penultimateUndoPatch = nthLast(undoPatches, 2)
-  const penultimateAction = penultimateUndoPatch && getPatchAction(penultimateUndoPatch)
+  const penultimateAction = penultimateUndoPatch?.metadata.actions[0]
 
   if (!undoPatches.length) return state
 
@@ -330,12 +260,12 @@ const undoReducer = (
   // stripTags(restored_value) === stripTags(current_value) — same plain text, different HTML.
   // Letter case changes (e.g. "hello" → "HELLO") are also treated as formatting since they do not
   // add or remove content, only change its presentation.
-  const lastPatchIsFormatting = !!lastUndoPatch?.some(op => {
+  const lastPatchIsFormatting = !!lastUndoPatch?.ops.some(op => {
     const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)\/value$/)
     if (!match) return false
     const id = match[1]
     const currentValue = state.thoughts.thoughtIndex[id]?.value
-    if (currentValue === undefined || op.value === undefined) return false
+    if (currentValue === undefined || !('value' in op) || op.value === undefined) return false
     const restoredPlain = stripTags(op.value as string)
     const currentPlain = stripTags(currentValue)
     return restoredPlain === currentPlain || restoredPlain.toLowerCase() === currentPlain.toLowerCase()
@@ -346,8 +276,6 @@ const undoReducer = (
     : penultimateAction === 'newThought' && !lastPatchIsFormatting
   const undoCount = count ?? (undoTwice ? 2 : 1)
 
-  const poppedUndoPatches = undoPatches.slice(-undoCount)
-
   // Capture the current cursor offset before applying the undo patch.
   // When undoing a formatting-only edit (no undoTwice), we preserve this offset
   // so the caret stays where it was at the time of undo, instead of jumping to
@@ -355,8 +283,7 @@ const undoReducer = (
   const priorCursorOffset = state.cursorOffset
 
   return reducerFlow([
-    ...Array.from({ length: undoCount }, () => undoOneReducer),
-    newState => restoreThoughtsFromPatches(newState, state, poppedUndoPatches.flat(), document),
+    ...Array.from({ length: undoCount }, () => (s: State) => undoOneReducer(s, document)),
     undoCount === 1 && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
@@ -373,18 +300,15 @@ const redoReducer = (
   document?: ThoughtspaceTransaction,
 ): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
-  const lastAction = lastRedoPatch && getPatchAction(lastRedoPatch)
+  const lastAction = lastRedoPatch?.metadata.actions[0]
 
   if (!redoPatches.length) return state
 
   const redoTwice = lastAction && (isNavigation(lastAction) || lastAction === 'newThought')
   const redoCount = count ?? (redoTwice ? 2 : 1)
 
-  const poppedRedoPatches = redoPatches.slice(-redoCount)
-
   return reducerFlow([
-    ...Array.from({ length: redoCount }, () => redoOneReducer),
-    newState => restoreThoughtsFromPatches(newState, state, poppedRedoPatches.flat(), document),
+    ...Array.from({ length: redoCount }, () => (s: State) => redoOneReducer(s, document)),
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
@@ -418,8 +342,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       const { redoPatches, undoPatches } = state as State
       const actionType = action.type
 
-      // Clear the last edit thought direction when the clear action is executed.
-      if (actionType === 'clear') {
+      // Incoming publication is not history and must not merge a later edit with a pre-publication diagnostic diff.
+      if (actionType === 'clear' || actionType === 'replaceThoughts') {
         lastAction = undefined
         lastEditThoughtDirection = EditThoughtDirection.None
         return projectThoughts(reducer(state, action, document), document)
@@ -456,10 +380,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // otherwise run the normal reducer for the action
       const newState = projectThoughts(reducer(state, action, document), document)
+      const documentOperationIds = document?.operationIds ?? []
 
       if (
         // bail if state has not changed
-        state === newState ||
+        (state === newState && !documentOperationIds.length) ||
         // Clearing a one-shot note offset after restoring the caret is ephemeral. Recording it as a navigation
         // action would clear the redo stack immediately after undo.
         isClearNoteOffsetAction(action) ||
@@ -502,13 +427,13 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         lastAction = action
         const lastUndoPatch = nthLast(state.undoPatches, 1)
         let lastState = state
-        if (lastUndoPatch && lastUndoPatch.length > 0) {
+        if (lastUndoPatch && lastUndoPatch.ops.length > 0) {
           // Add a try-catch to provide better error messaging if a patch fails.
           // The patch should always be valid, i.e. the necessary structure is in the state to apply the patch.
           // However, because non-undoable actions are skipped, it is possible that the state has shifted and the patch is no longer valid.
           // If a patch is invalid, all prior undo states will be inaccessible, so we should try to identify and fix this whenever it occurs.
           try {
-            lastState = produce(state, (state: State) => applyPatch(state, lastUndoPatch).newDocument)
+            lastState = produce(state, (state: State) => applyPatch(state, lastUndoPatch.ops).newDocument)
           } catch (e) {
             if (!(e instanceof Error)) throw e
             console.error(e.message, { state, lastUndoPatch })
@@ -516,21 +441,21 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           }
         }
         const combinedUndoPatch = diffState(newState as Index, lastState)
+        const combinedOperationIds = [...(lastUndoPatch?.documentOperationIds ?? []), ...documentOperationIds]
 
         return {
           ...newState,
           lastUndoableActionType: actionType,
-          // Guard against pushing an empty patch when the merged actions net to no change (e.g. a multicursor command that reduces to a no-op).
-          // An empty patch has no actions, which would disable undo (getLastActionType returns undefined) and crash undoOneReducer/redoOneReducer when spreading patch[0]?.actions.
-          // Instead, drop the now-superseded last patch, mirroring the non-merge branch's `undoPatch.length` guard below.
+          // Drop UI-only groups that net to no change, but retain engine receipts even without a projection diff.
           undoPatches: [
             ...newState.undoPatches.slice(0, -1),
-            ...(combinedUndoPatch.length
+            ...(combinedUndoPatch.length || combinedOperationIds.length
               ? [
-                  addActionsToPatch(combinedUndoPatch, [
-                    ...(lastUndoPatch && lastUndoPatch.length > 0 ? lastUndoPatch[0]?.actions : []),
-                    actionType,
-                  ]),
+                  {
+                    ops: combinedUndoPatch,
+                    metadata: { actions: [...(lastUndoPatch?.metadata.actions ?? []), actionType] },
+                    documentOperationIds: combinedOperationIds,
+                  },
                 ]
               : []),
           ],
@@ -546,18 +471,21 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
       const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
       const undoPatch = diffState(newState as Index, stateBeforeAction)
-      return undoPatch.length
+      return undoPatch.length || documentOperationIds.length
         ? {
             ...newState,
             lastUndoableActionType: actionType,
             redoPatches: [],
             undoPatches: [
               ...newState.undoPatches,
-              addActionsToPatch(undoPatch, [
-                // Override the action label with undoLabel so that the command label is used in the alert on undo/redo of a multicursor command.
-                // TODO: A better solution would add a label to the Patch itself.
-                isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : lastAction.type,
-              ]),
+              {
+                ops: undoPatch,
+                metadata: {
+                  // Multicursor commands use their command label in the history, followed by the actions they dispatch.
+                  actions: [isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : actionType],
+                },
+                documentOperationIds,
+              },
             ],
           }
         : newState

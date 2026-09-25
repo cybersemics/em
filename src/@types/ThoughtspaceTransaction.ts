@@ -1,3 +1,4 @@
+import type { OperationId } from '@treecrdt/interface'
 import Index from './IndexType'
 import Thought from './Thought'
 import ThoughtId from './ThoughtId'
@@ -5,6 +6,10 @@ import ThoughtIndices from './ThoughtIndices'
 
 /** Synchronous document commands scoped to one atomic editor action. */
 interface ThoughtspaceTransaction {
+  /** Identifies document operations authored so far in this transaction. */
+  readonly operationIds: readonly OperationId[]
+  /** Authors compensating operations and returns their IDs for redo. */
+  revert: (operationIds: readonly OperationId[]) => readonly OperationId[]
   /** Applies document changes and returns their canonical view before the next command runs. */
   update: (
     changes: {

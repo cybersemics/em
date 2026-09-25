@@ -124,8 +124,7 @@ it('exports document values without transient generation overlays', async () => 
       thoughtIndexUpdates: {
         [thought.id]: { ...thought, generating: true, displayValue: 'Generating…', splitSource: thought.id },
       },
-      local: false,
-      remote: false,
+      persist: false,
     }),
     showModal({ id: 'export' }),
   ])

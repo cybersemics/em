@@ -1,4 +1,4 @@
-import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
+import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import Thought from '../../../@types/Thought'
 import ThoughtId from '../../../@types/ThoughtId'
 import Timestamp from '../../../@types/Timestamp'
@@ -28,14 +28,17 @@ const second: Thought = {
 }
 
 it('exposes canonical memberships and metadata to later commands in the same transaction', async () => {
-  const runtime = createMemoryThoughtspace()
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
   try {
     await runtime.init({ storage: 'memory' })
+    const before = (await persistent.ops.all()).length
     const result = runtime.transact(document => {
       const created = document.update({
         thoughtIndexUpdates: { [first.id]: first, [second.id]: second },
         movePlacements: { [first.id]: null, [second.id]: first.id },
       })
+      const createdIds = document.operationIds
       expect(created.lexemeIndex[hashThought('shared')]).toEqual({
         contexts: [first.id, second.id],
         created: 5,
@@ -65,13 +68,90 @@ it('exposes canonical memberships and metadata to later commands in the same tra
       const deleted = document.update({ thoughtIndexUpdates: { [second.id]: null } })
       expect(deleted.lexemeIndex[hashThought('shared')]).toBeUndefined()
       expect(Object.values(deleted.thoughtIndex[HOME_TOKEN].childrenMap)).toEqual([first.id])
-      return document.project()
+      expect(createdIds).toHaveLength(2)
+      return { thoughts: document.project(), operationIds: document.operationIds }
     })
-    expect(runtime.project()).toBe(result.value)
+    expect(runtime.project()).toBe(result.value.thoughts)
     await result.persisted
+    expect((await persistent.ops.all()).slice(before).map(operation => operation.meta.id)).toEqual(
+      result.value.operationIds,
+    )
     expect(runtime.project().thoughtIndex[first.id]).toMatchObject({ value: 'renamed' })
     expect(runtime.project().thoughtIndex[second.id]).toBeUndefined()
   } finally {
+    await runtime.drop()
+  }
+})
+
+it('reverts unpersisted document receipts synchronously and persists only committed compensating operations', async () => {
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
+  let rehydrated: ReturnType<typeof createMemoryThoughtspace> | undefined
+  let release!: () => void
+  const gate = new Promise<void>(resolve => {
+    release = resolve
+  })
+  try {
+    await runtime.init({ storage: 'memory' })
+    await runtime.transact(document =>
+      document.update({
+        thoughtIndexUpdates: { [first.id]: first, [second.id]: second },
+        movePlacements: { [first.id]: null, [second.id]: first.id },
+      }),
+    ).persisted
+    const before = runtime.project()
+    const persistedBefore = await persistent.ops.all()
+    const append = persistent.ops.appendMany.bind(persistent.ops)
+    vi.spyOn(persistent.ops, 'appendMany').mockImplementationOnce(async operations => {
+      await gate
+      return append(operations)
+    })
+    const edited = runtime.transact(document => {
+      document.update({
+        thoughtIndexUpdates: { [first.id]: { ...first, parentId: second.id, value: 'edited' } },
+        movePlacements: { [first.id]: null },
+      })
+      return document.operationIds
+    })
+    const after = runtime.project()
+    const acknowledged = vi.fn()
+    expect(() =>
+      runtime.transact(document => {
+        document.revert(edited.value)
+        expect(document.project()).toEqual(before)
+        document.afterPersist(acknowledged)
+        throw new Error('Cancel undo')
+      }),
+    ).toThrow('Cancel undo')
+    expect(runtime.project()).toBe(after)
+
+    const undone = runtime.transact(document => {
+      const ids = document.revert(edited.value)
+      expect(document.operationIds).toEqual(ids)
+      return ids
+    })
+    expect(runtime.project()).toEqual(before)
+    expect(await persistent.ops.all()).toEqual(persistedBefore)
+    const redone = runtime.transact(document => document.revert(undone.value))
+    expect(runtime.project()).toEqual(after)
+    release()
+    await redone.persisted
+    await runtime.waitForIdle()
+    expect(acknowledged).not.toHaveBeenCalled()
+    expect((await persistent.ops.all()).slice(persistedBefore.length).map(operation => operation.meta.id)).toEqual([
+      ...edited.value,
+      ...undone.value,
+      ...redone.value,
+    ])
+
+    const freshClient = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+    rehydrated = createMemoryThoughtspace(async () => freshClient)
+    await freshClient.ops.appendMany(await persistent.ops.all())
+    await rehydrated.init({ storage: 'memory' })
+    expect(rehydrated.project()).toEqual(after)
+  } finally {
+    release()
+    await rehydrated?.drop()
     await runtime.drop()
   }
 })
@@ -131,11 +211,8 @@ it('restores parents and sibling anchors before their dependents in an unordered
 })
 
 it('rolls back an invalid placement before publishing, persisting, or acknowledging earlier composed writes', async () => {
-  let persistent!: TreecrdtClient
-  const runtime = createMemoryThoughtspace(async options => {
-    persistent = await createTreecrdtClient(options)
-    return persistent
-  })
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
   const onChange = vi.fn()
   const acknowledged = vi.fn()
   try {
@@ -179,11 +256,8 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
 })
 
 it('updates attribute lookup and lexeme metadata incrementally to the same result as fresh hydration', async () => {
-  let persistent!: TreecrdtClient
-  const runtime = createMemoryThoughtspace(async options => {
-    persistent = await createTreecrdtClient(options)
-    return persistent
-  })
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
   const attribute: Thought = { ...first, id: '3'.repeat(32) as ThoughtId, parentId: first.id, value: '=pin' }
   let rehydrated: ReturnType<typeof createMemoryThoughtspace> | undefined
   try {

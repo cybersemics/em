@@ -23,9 +23,8 @@ import timestamp from '../util/timestamp'
 interface Payload {
   pathParent: Path
   thoughtId: ThoughtId
-  /** Whether to persist the deletion locally. */
-  local?: boolean
-  remote?: boolean
+  /** Whether to persist the deletion. Default: true. */
+  persist?: boolean
 }
 
 interface ThoughtUpdates {
@@ -36,7 +35,7 @@ interface ThoughtUpdates {
 /** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions. */
 const deleteThought = (
   state: State,
-  { local = true, pathParent, thoughtId, remote = true }: Payload,
+  { persist = true, pathParent, thoughtId }: Payload,
   document?: ThoughtspaceTransaction,
 ) => {
   const deletedThought = getThoughtById(state, thoughtId) as Thought | undefined
@@ -120,8 +119,7 @@ const deleteThought = (
     }),
     updateThoughts({
       thoughtIndexUpdates,
-      local,
-      remote,
+      persist,
     }),
   ])(state, document)
 }

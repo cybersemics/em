@@ -9,21 +9,16 @@ import mergeUpdates from '../util/mergeUpdates'
 
 export type UpdateThoughtsOptions = Parameters<ThoughtspaceTransaction['update']>[0] & {
   /** Invoked after SQLite acknowledges the complete command. */
-  idbSynced?: () => void
-  local?: boolean
-  remote?: boolean
+  onPersisted?: () => void
+  /** Author document operations. False only updates transient editor overlays. Default: true. */
+  persist?: boolean
   cursorOffset?: number
   recentlyEdited?: RecentlyEditedTree
   /** By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought. */
   preventExpandThoughts?: boolean
 }
 
-/**
- * Updates lexemeIndex and thoughtIndex with any number of thoughts.
- *
- * @param local    If false, does not persist to local database. Default: true.
- * @param remote   If false, does not persist to remote database. Default: true.
- */
+/** Updates lexemeIndex and thoughtIndex with any number of thoughts. */
 const updateThoughts = (
   state: State,
   {
@@ -32,22 +27,20 @@ const updateThoughts = (
     recentlyEdited,
     preventExpandThoughts,
     movePlacements,
-    local = true,
-    remote = true,
-    idbSynced,
+    persist = true,
+    onPersisted,
   }: UpdateThoughtsOptions,
   document?: ThoughtspaceTransaction,
 ) => {
   if (!Object.keys(thoughtIndexUpdates).length) return state
   if (!document) throw new Error('Document updates require a thoughtspace transaction')
-  const persistent = local || remote
-  const thoughts = persistent
+  const thoughts = persist
     ? document.update({ thoughtIndexUpdates, movePlacements }, state.thoughts)
     : document.project({
         ...state.thoughts,
         thoughtIndex: mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates),
       })
-  if (persistent && idbSynced) document.afterPersist(idbSynced)
+  if (persist && onPersisted) document.afterPersist(onPersisted)
   const next = {
     ...state,
     thoughts,

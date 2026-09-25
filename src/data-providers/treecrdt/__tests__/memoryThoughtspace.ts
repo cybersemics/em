@@ -1,4 +1,4 @@
-import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
+import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import { createMemoryClient } from '@treecrdt/wasm'
 import type Thought from '../../../@types/Thought'
 import type ThoughtId from '../../../@types/ThoughtId'
@@ -14,11 +14,8 @@ import { decodeThoughtPayload, encodeThoughtPayload } from '../payload'
 import * as thoughtPayload from '../payload'
 
 it('publishes incoming edits and order, and keeps a newer memory edit while an older write is awaiting storage', async () => {
-  let persistent!: TreecrdtClient
-  const runtime = createMemoryThoughtspace(async options => {
-    persistent = await createTreecrdtClient(options)
-    return persistent
-  })
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
   let view: ThoughtIndices = { thoughtIndex: {}, lexemeIndex: {} }
   const payload = { value: 'a', created: 1 as Timestamp, lastUpdated: 1 as Timestamp, updatedBy: 'test' }
   const a: Thought = { ...payload, id: '1'.repeat(32) as ThoughtId, parentId: HOME_TOKEN, rank: 0, childrenMap: {} }
@@ -109,11 +106,8 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
 })
 
 it('publishes every newly received descendant and its current ancestor path after an incoming move', async () => {
-  let persistent!: TreecrdtClient
-  const runtime = createMemoryThoughtspace(async options => {
-    persistent = await createTreecrdtClient(options)
-    return persistent
-  })
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
   let view: ThoughtIndices = { thoughtIndex: {}, lexemeIndex: {} }
   const replica = new Uint8Array(32).fill(10)
   const parent = '3'.repeat(32) as ThoughtId
@@ -220,6 +214,8 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
       await gate
       return getOps(refs)
     })
+    expect(runtime.ready).toBe(false)
+    expect(() => runtime.transact(document => document.project())).toThrow('not ready for editing')
     const initializing = runtime.init({ storage: 'memory' })
     await loadingStarted
     expect(runtime.ready).toBe(false)

@@ -558,11 +558,14 @@ it('describe a drag and drop by where the thought lands', () => {
   const shiftedSiblingId = contextToPath(state, ['a', 'd'])!.at(-1)!
   const shiftedRankPath = `/thoughts/thoughtIndex/${shiftedSiblingId}/rank`
   // Put the derived sibling-rank change before the actual reparenting, independent of random thought ids.
-  const undoPatches = state.undoPatches.map(patch => [
-    ...patch.filter(operation => operation.path === shiftedRankPath),
-    ...patch.filter(operation => operation.path !== shiftedRankPath),
-  ])
-  expect(undoPatches.at(-1)![0].path).toBe(shiftedRankPath)
+  const undoPatches = state.undoPatches.map(patch => ({
+    ...patch,
+    ops: [
+      ...patch.ops.filter(operation => operation.path === shiftedRankPath),
+      ...patch.ops.filter(operation => operation.path !== shiftedRankPath),
+    ],
+  }))
+  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedRankPath)
 
   expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
 

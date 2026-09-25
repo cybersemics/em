@@ -204,8 +204,7 @@ const setGenerating =
     dispatch(
       updateThoughts({
         thoughtIndexUpdates,
-        local: false,
-        remote: false,
+        persist: false,
       }),
     )
   }

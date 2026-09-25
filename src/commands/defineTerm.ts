@@ -77,8 +77,7 @@ const defineTermAtPaths =
             },
           ]),
         ),
-        local: false,
-        remote: false,
+        persist: false,
       }),
     )
 
@@ -158,8 +157,7 @@ const defineTermAtPaths =
         dispatch(
           updateThoughts({
             thoughtIndexUpdates,
-            local: false,
-            remote: false,
+            persist: false,
           }),
         )
       }

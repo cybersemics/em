@@ -23,14 +23,13 @@ const reportedDuplicateRanks = new Set<string>()
 const truncateValue = (value: string): string =>
   value.length > VALUE_MAX_LENGTH ? `${value.slice(0, VALUE_MAX_LENGTH)}…` : value
 
-/** Builds a structured summary of an updateThoughts action: per-thought id/value/rank/parentId (capped at MAX_SUMMARY_THOUGHTS), plus counts and the local/remote flags. Far denser and more useful than the raw stringified action, whose truncation cuts JSON mid-field. */
+/** Builds a structured summary of an updateThoughts action: per-thought id/value/rank/parentId (capped at MAX_SUMMARY_THOUGHTS), plus counts and the persistence flag. Far denser and more useful than the raw stringified action, whose truncation cuts JSON mid-field. */
 const summarizeUpdateThoughts = (action: UnknownAction): Record<string, unknown> => {
   const thoughtUpdates = Object.entries((action.thoughtIndexUpdates ?? {}) as Index<Thought | null>)
   return {
     actionType: 'updateThoughts',
     thoughtCount: thoughtUpdates.length,
-    local: action.local !== false,
-    remote: action.remote !== false,
+    persist: action.persist !== false,
     thoughts: thoughtUpdates.slice(0, MAX_SUMMARY_THOUGHTS).map(([id, thought]) =>
       thought
         ? {
@@ -106,7 +105,7 @@ const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string):
   const stackAfter = actionType === 'undo' ? stateAfter.undoPatches : stateAfter.redoPatches
   const popped = stackBefore.slice(stackAfter.length)
   if (popped.length === 0) return
-  const actions = [...new Set(popped.flatMap(patch => patch[0]?.actions ?? []))]
+  const actions = [...new Set(popped.flatMap(patch => patch.metadata.actions))]
   debugLog.log(actionType, { steps: popped.length, actions })
 }
 

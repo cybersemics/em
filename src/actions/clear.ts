@@ -9,14 +9,12 @@ import initialState from '../util/initialState'
 import reducerFlow from '../util/reducerFlow'
 import deleteThought from './deleteThought'
 
-/** Resets UI state without deleting the document unless local or remote clearing is explicitly requested. */
+/** Resets UI state without deleting the document unless persistent clearing is explicitly requested. */
 const clear = (
   state: State,
   options: {
-    /** Clear all thoughts from IndexedDB. */
-    local?: boolean
-    /** Clear all thoughts from the server. */
-    remote?: boolean
+    /** Delete all thoughts from the document. Default: false (UI reset only). */
+    persist?: boolean
     /** Set autologin and isLoading to true. */
     full?: boolean
   },
@@ -24,8 +22,7 @@ const clear = (
 ): State => {
   // TODO: Properly type options to be optional without breaking curryReducer.
   const full = !!options?.full
-  const local = !!options?.local
-  const remote = !!options?.remote
+  const persist = !!options?.persist
 
   return reducerFlow([
     // Clear navigation selection before deleting thoughts so updateThoughts does not expand stale paths.
@@ -35,10 +32,8 @@ const clear = (
       multicursors: {},
     }),
     // A UI reset is not an eviction or document mutation.
-    ...(local || remote
-      ? getAllChildren(state, HOME_TOKEN).map(childId =>
-          deleteThought({ local, remote, pathParent: HOME_PATH, thoughtId: childId }),
-        )
+    ...(persist
+      ? getAllChildren(state, HOME_TOKEN).map(childId => deleteThought({ pathParent: HOME_PATH, thoughtId: childId }))
       : []),
     // reset state
     state => ({

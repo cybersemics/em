@@ -10,12 +10,15 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { redoActionCreator as redo } from '../../actions/redo'
+import { replaceThoughtsActionCreator as replaceThoughts } from '../../actions/replaceThoughts'
 import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
+import { updateThoughtsActionCreator as updateThoughts } from '../../actions/updateThoughts'
 import { executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
+import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
@@ -24,6 +27,7 @@ import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
@@ -244,10 +248,10 @@ describe('undo', () => {
     const { undoPatches } = store.getState()
     const lastPatch = undoPatches[undoPatches.length - 1]
 
-    const thoughtsExists = lastPatch.some(({ path }) => path.includes('/thoughts'))
+    const thoughtsExists = lastPatch.ops.some(({ path }) => path.includes('/thoughts'))
     expect(thoughtsExists).toEqual(true)
 
-    const alertExists = lastPatch.some(({ path }) => path.includes('/alert'))
+    const alertExists = lastPatch.ops.some(({ path }) => path.includes('/alert'))
     expect(alertExists).toEqual(false)
   })
 
@@ -1462,5 +1466,134 @@ describe('count', () => {
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - a`)
+  })
+})
+
+describe('operation receipts', () => {
+  it('groups typing receipts chronologically and redoes individual count boundaries with fresh receipts', () => {
+    store.dispatch([newThought({}), editThought([''], 'a')])
+    const firstEdit = store.getState().undoPatches.at(-1)!
+    expect(firstEdit.documentOperationIds).toHaveLength(1)
+
+    store.dispatch(editThought(['a'], 'ab'))
+    const groupedEdit = store.getState().undoPatches.at(-1)!
+    expect(groupedEdit.documentOperationIds).toHaveLength(2)
+    expect(groupedEdit.documentOperationIds[0]).toEqual(firstEdit.documentOperationIds[0])
+    expect(groupedEdit.metadata.actions).toEqual(['editThought', 'editThought'])
+
+    store.dispatch(undo({ count: 2 }))
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}`)
+    const redoEntries = store.getState().redoPatches
+    expect(redoEntries).toHaveLength(2)
+    expect(redoEntries[0].documentOperationIds).not.toEqual(groupedEdit.documentOperationIds)
+
+    // Recreate the empty thought separately from the grouped typing receipt.
+    store.dispatch(redo({ count: 1 }))
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - `)
+    expect(store.getState().redoPatches).toHaveLength(1)
+
+    store.dispatch(redo({ count: 1 }))
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - ab`)
+    expect(store.getState().undoPatches.at(-1)!.documentOperationIds).not.toEqual(redoEntries[0].documentOperationIds)
+    expect(store.getState().redoPatches).toHaveLength(0)
+  })
+
+  it('keeps incoming payload changes on a locally moved thought without adding history or discarding redo', () => {
+    store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a']), moveThoughtDown()])
+    const beforeIncoming = store.getState()
+    const a = contextToThought(beforeIncoming, ['a'])!
+
+    // An independently committed canonical snapshot enters Redux through the same publication boundary as sync.
+    const incoming = thoughtspaceRuntime.transact(document =>
+      document.update({ thoughtIndexUpdates: { [a.id]: { ...a, value: 'incoming a' } } }),
+    )
+    store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
+    expect(store.getState().undoPatches).toBe(beforeIncoming.undoPatches)
+    expect(store.getState().redoPatches).toBe(beforeIncoming.redoPatches)
+
+    store.dispatch(undo({ count: 1 }))
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - incoming a
+  - b`)
+
+    const beforeSecondIncoming = store.getState()
+    const b = contextToThought(beforeSecondIncoming, ['b'])!
+    const secondIncoming = thoughtspaceRuntime.transact(document =>
+      document.update({ thoughtIndexUpdates: { [b.id]: { ...b, value: 'incoming b' } } }),
+    )
+    store.dispatch(replaceThoughts({ thoughts: secondIncoming.value, repairCursor: true }))
+    expect(store.getState().undoPatches).toBe(beforeSecondIncoming.undoPatches)
+    expect(store.getState().redoPatches).toBe(beforeSecondIncoming.redoPatches)
+
+    store.dispatch(redo({ count: 1 }))
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - incoming b
+  - incoming a`)
+  })
+
+  it('undoes an edit and navigation after an incoming deletion clears the cursor', () => {
+    store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a']), editThought(['a'], 'aa'), setCursor(['b'])])
+    const b = contextToThought(store.getState(), ['b'])!
+    const incoming = thoughtspaceRuntime.transact(document =>
+      document.update({ thoughtIndexUpdates: { [b.id]: null } }),
+    )
+    store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
+    expect(store.getState().cursor).toBeNull()
+
+    store.dispatch(undo())
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a`)
+    expect(store.getState().cursor).toEqual(contextToPath(store.getState(), ['a']))
+  })
+
+  it('restores the typing merge trackers and published state when undo fails after reverting its receipt', () => {
+    store.dispatch([importText({ text: '- a' }), setCursor(['a']), editThought(['a'], 'ab')])
+    const beforeUndo = store.getState()
+    const transact = thoughtspaceRuntime.transact
+    const failure = vi.spyOn(thoughtspaceRuntime, 'transact').mockImplementationOnce(work =>
+      transact(document => {
+        work(document)
+        throw new Error('injected failure after undo')
+      }),
+    )
+
+    expect(() => store.dispatch(undo({ count: 1 }))).toThrow('injected failure after undo')
+    failure.mockRestore()
+    expect(store.getState()).toBe(beforeUndo)
+    expect(thoughtspaceRuntime.project(beforeUndo.thoughts)).toBe(beforeUndo.thoughts)
+
+    // A failed undo did not break the typing run: the next edit still merges with the original edit.
+    store.dispatch([editThought(['ab'], 'abc'), undo({ count: 1 })])
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a`)
+  })
+
+  it('restores transient generation overlays without authoring them to the document', () => {
+    store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+    const thought = contextToThought(store.getState(), ['a'])!
+    store.dispatch(
+      updateThoughts({
+        persist: false,
+        thoughtIndexUpdates: {
+          [thought.id]: { ...thought, generating: true, displayValue: 'a preview', splitSource: thought.id },
+        },
+      }),
+    )
+    store.dispatch(editThought(['a'], 'ab'))
+    const edit = store.getState().undoPatches.at(-1)!
+    expect(edit.documentOperationIds).toHaveLength(1)
+
+    store.dispatch(undo({ count: 1 }))
+    expect(contextToThought(store.getState(), ['a'])).toMatchObject({
+      generating: true,
+      displayValue: 'a preview',
+      splitSource: thought.id,
+    })
+
+    store.dispatch(redo({ count: 1 }))
+    expect(contextToThought(store.getState(), ['ab'])).toMatchObject({ generating: false, splitSource: thought.id })
+    expect(contextToThought(store.getState(), ['ab'])!.displayValue).toBeUndefined()
   })
 })

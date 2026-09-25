@@ -16,8 +16,8 @@ import timestamp from '../util/timestamp'
 
 interface Payload {
   id?: ThoughtId
-  /** Callback for when the updates have been synced with IDB. */
-  idbSynced?: () => void
+  /** Invoked after SQLite acknowledges the complete command. */
+  onPersisted?: () => void
   path: Path
   /** Preceding sibling, or null to insert first. */
   afterId: ThoughtId | null
@@ -29,7 +29,7 @@ interface Payload {
  */
 const createThought = (
   state: State,
-  { path, value, afterId, id, idbSynced, splitSource }: Payload,
+  { path, value, afterId, id, onPersisted, splitSource }: Payload,
   document?: ThoughtspaceTransaction,
 ) => {
   id = id || createId()
@@ -37,7 +37,7 @@ const createThought = (
   const parent = getThoughtById(state, parentId)
 
   if (!parent) {
-    console.error({ path, value, afterId, id, idbSynced, splitSource })
+    console.error({ path, value, afterId, id, onPersisted, splitSource })
     throw new Error(`createThought: Parent thought with id ${parentId} not found`)
   }
 
@@ -65,7 +65,7 @@ const createThought = (
     updatedBy: clientId,
   }
 
-  return updateThoughts(state, { thoughtIndexUpdates, movePlacements: { [id]: afterId }, idbSynced }, document)
+  return updateThoughts(state, { thoughtIndexUpdates, movePlacements: { [id]: afterId }, onPersisted }, document)
 }
 
 /** Action-creator for createThought. */

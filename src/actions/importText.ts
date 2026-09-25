@@ -60,8 +60,8 @@ const textOffsetToHtmlOffset = (html: string, textOffset: number): number => {
 export interface ImportTextPayload {
   caretPosition?: number
 
-  /** Callback for when the updates have been synced with IDB. */
-  idbSynced?: () => void
+  /** Invoked after SQLite acknowledges the complete command. */
+  onPersisted?: () => void
 
   path?: Path
 
@@ -95,7 +95,7 @@ const importText = (
   {
     path,
     text,
-    idbSynced,
+    onPersisted,
     lastUpdated,
     preventSetCursor,
     rawDestValue,
@@ -257,7 +257,7 @@ const importText = (
 
     return reducerFlow([
       // thoughts will be expanded by setCursor, so no need to expand them here
-      updateThoughts({ ...imported, preventExpandThoughts: true, idbSynced }),
+      updateThoughts({ ...imported, preventExpandThoughts: true, onPersisted }),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
       shouldImportIntoDummy ? uncategorize({ at: unroot(newDestinationPath) }) : null,
       // if original destination is empty then collapse once more.

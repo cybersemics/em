@@ -157,8 +157,7 @@ const generateThoughtAtPathsActionCreator =
             },
           ]),
         ),
-        local: false,
-        remote: false,
+        persist: false,
       }),
     )
 
@@ -240,8 +239,7 @@ const generateThoughtAtPathsActionCreator =
               generating: false,
             },
           },
-          local: false,
-          remote: false,
+          persist: false,
         }),
         // editThought automatically sets Thought.generating to false
         editThought({

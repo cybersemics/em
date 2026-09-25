@@ -14,8 +14,5 @@ export type ThoughtspaceRuntimeInitOptions = {
 
 export type ThoughtspaceAccessBlockedReason = 'already-open' | 'unsupported'
 
-export type ThoughtspaceAccessResult =
-  { status: 'acquired' } | { status: 'blocked'; reason: ThoughtspaceAccessBlockedReason }
-
 /** The active thoughtspace runtime implementation. */
 export const thoughtspaceRuntime = createMemoryThoughtspace()

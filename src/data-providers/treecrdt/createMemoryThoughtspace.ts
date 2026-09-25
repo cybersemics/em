@@ -1,4 +1,4 @@
-import type { Operation } from '@treecrdt/interface'
+import type { Operation, OperationId } from '@treecrdt/interface'
 import type { SyncSubscription } from '@treecrdt/sync-protocol'
 import { createInMemoryConnectedPeers } from '@treecrdt/sync-protocol/in-memory'
 import { treecrdtSyncV0ProtobufCodec } from '@treecrdt/sync-protocol/protobuf'
@@ -232,11 +232,22 @@ const createMemoryThoughtspace = (
     if (!ready || !memory || !persistent || dropping) throw new Error('Memory TreeCRDT is not ready for editing')
     if (editing) throw new Error('Use the current document transaction to compose commands')
     const callbacks: (() => void)[] = []
+    const operationIds: OperationId[] = []
     const engine = memory
     const previous = snapshot
     const previousRows = projectedRows
     let active = true
     const document: ThoughtspaceTransaction = {
+      get operationIds() {
+        if (!active) throw new Error('The document transaction has finished')
+        return operationIds.slice()
+      },
+      revert: ids => {
+        if (!active) throw new Error('The document transaction has finished')
+        const reverted = engine.revert(ids).map(operation => operation.meta.id)
+        operationIds.push(...reverted)
+        return reverted
+      },
       project: view => {
         if (!active) throw new Error('The document transaction has finished')
         return project(view)
@@ -250,7 +261,7 @@ const createMemoryThoughtspace = (
         // Moves out of a deleted subtree must precede its delete; otherwise defensive deletion restores the parent.
         const edits = Object.entries(thoughtIndexUpdates).filter((entry): entry is [string, Thought] => !!entry[1])
         const deletes = Object.entries(thoughtIndexUpdates).filter(([, thought]) => !thought)
-        // Undo supplies a final topology rather than an operation sequence. Restore parents and placement anchors
+        // Batched imports can supply an unordered topology. Restore parents and placement anchors
         // before their dependents so every insert/move has a live destination.
         const pending = new Map<string, number>()
         const dependents = new Map<string, typeof edits>()
@@ -279,7 +290,7 @@ const createMemoryThoughtspace = (
         if (ordered.length !== edits.length) throw new Error('A command cannot create a parent or placement cycle')
         for (const [id, thought] of [...ordered, ...deletes.reverse()]) {
           if (!thought) {
-            if (engine.tree.exists(id)) engine.local.delete(id)
+            if (engine.tree.exists(id)) operationIds.push(engine.local.delete(id).meta.id)
             continue
           }
           const exists = engine.tree.exists(id)
@@ -293,12 +304,13 @@ const createMemoryThoughtspace = (
           }
           const payload = thoughtPayload(thought)
           if (!exists) {
-            engine.local.insert(thought.parentId, id, after, payload)
+            operationIds.push(engine.local.insert(thought.parentId, id, after, payload).meta.id)
           } else {
             if (hasPlacement) {
-              engine.local.move(id, thought.parentId, after)
+              operationIds.push(engine.local.move(id, thought.parentId, after).meta.id)
             }
-            if (!_.isEqual(engine.tree.payload(id), payload)) engine.local.payload(id, payload)
+            if (!_.isEqual(engine.tree.payload(id), payload))
+              operationIds.push(engine.local.payload(id, payload).meta.id)
           }
         }
         return project({ ...view, thoughtIndex: { ...view.thoughtIndex, ...Object.fromEntries(edits) } })
