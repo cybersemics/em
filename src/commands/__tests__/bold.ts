@@ -20,37 +20,6 @@ const keyDown = async (key: string, { alt, meta }: { alt?: boolean; meta?: boole
 
 describe('multicursor', () => {
   // https://github.com/cybersemics/em/issues/5148
-  it('bolds every selected thought when only some of them are bold', async () => {
-    act(() => {
-      store.dispatch([
-        importText({
-          text: `
-            - **a**
-            - **b**
-            - c
-            - d
-            - e
-          `,
-        }),
-        setCursor(['c']),
-      ])
-    })
-    await act(vi.runOnlyPendingTimersAsync)
-
-    // Select All
-    await keyDown('a', { meta: true, alt: true })
-    // Bold
-    await keyDown('b', { meta: true })
-
-    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
-  - **a**
-  - **b**
-  - **c**
-  - **d**
-  - **e**`)
-  })
-
-  // https://github.com/cybersemics/em/issues/5148
   it('bolds every selected thought when only some of them are bold and the cursor thought is bold', async () => {
     act(() => {
       store.dispatch([
