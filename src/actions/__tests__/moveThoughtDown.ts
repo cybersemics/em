@@ -3,11 +3,10 @@ import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import moveThoughtDown from '../moveThoughtDown'
 import newSubthought from '../newSubthought'
@@ -19,7 +18,7 @@ afterEach(waitForThoughtspaceIdle)
 it('move within root', () => {
   const steps = [newThought('a'), newThought('b'), setCursor(['a']), moveThoughtDown]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -30,7 +29,7 @@ it('move within root', () => {
 it('move within context', () => {
   const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), setCursor(['a', 'a1']), moveThoughtDown]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -52,7 +51,7 @@ it('move to next uncle', () => {
     moveThoughtDown,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -78,7 +77,7 @@ it('remove sorting when moving within a context', () => {
     moveThoughtDown,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -106,7 +105,7 @@ it('preserve sorting when moving the last thought in a context to the next uncle
     moveThoughtDown,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -135,7 +134,7 @@ it('move descendants', () => {
     moveThoughtDown,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -150,7 +149,7 @@ it('move descendants', () => {
 it('trying to move last thought of root should do nothing', () => {
   const steps = [newThought('a'), newThought('b'), moveThoughtDown]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -168,7 +167,7 @@ it('trying to move last thought of context with no next uncle should do nothing'
     moveThoughtDown,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -181,7 +180,7 @@ it('trying to move last thought of context with no next uncle should do nothing'
 it('do nothing when there is no cursor', () => {
   const steps = [newThought('a'), newThought('b'), setCursor(null), moveThoughtDown]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -192,7 +191,7 @@ it('do nothing when there is no cursor', () => {
 it('move cursor thought should update cursor', () => {
   const steps = [newThought('a'), newSubthought('a1'), newThought('a2'), setCursor(['a', 'a1']), moveThoughtDown]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a', 'a1'])
 })

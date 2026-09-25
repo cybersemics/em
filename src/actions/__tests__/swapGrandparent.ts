@@ -2,11 +2,10 @@ import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
 import pin from '../pin'
@@ -26,7 +25,7 @@ it('no-op if cursor is not set', () => {
 
   const steps = [importText({ text }), swapGrandparent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - x
@@ -44,7 +43,7 @@ it('no-op if cursor is a root thought', () => {
 
   const steps = [importText({ text }), setCursor(['a']), swapGrandparent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - x
@@ -62,7 +61,7 @@ it('no-op if the cursor has no grandparent', () => {
 
   const steps = [importText({ text }), setCursor(['a', 'b']), swapGrandparent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - x
@@ -80,7 +79,7 @@ it('swaps child thought with grandparent, leaving the parent in between', () => 
 
   const steps = [importText({ text }), setCursor(['a', 'b', 'c']), swapGrandparent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - x
@@ -100,7 +99,7 @@ it("moves the child's children under the grandparent", () => {
 
   const steps = [importText({ text }), setCursor(['a', 'b', 'c']), swapGrandparent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - c
@@ -118,7 +117,7 @@ it("moves the grandparent's other children under the child", () => {
 
   const steps = [importText({ text }), setCursor(['a', 'b', 'c']), swapGrandparent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - c
@@ -136,7 +135,7 @@ it("preserves the parent's other children", () => {
 
   const steps = [importText({ text }), setCursor(['a', 'b', 'c']), swapGrandparent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - c
@@ -154,7 +153,7 @@ it('swapped grandparent should take the rank of the child', () => {
 
   const steps = [importText({ text }), setCursor(['a', 'b', 'f']), swapGrandparent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - f
@@ -174,7 +173,7 @@ it('swaps below the root, preserving the great-grandparent', () => {
 
   const steps = [importText({ text }), setCursor(['root', 'a', 'b', 'c']), swapGrandparent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - root
@@ -211,7 +210,7 @@ it('does not reorder the children of any context other than the two swapped thou
     swapGrandparent,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   // Only d and b change places. g in particular stays after c, where it was after b.
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -248,7 +247,7 @@ describe('context view', () => {
       swapGrandparent,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
@@ -273,32 +272,26 @@ describe('sort', () => {
     vi.useFakeTimers()
     let stateNew
     try {
-      const stateBefore = runDocumentCommand(
-        reducerFlow([
-          importText({
-            text: `
+      const stateBefore = reducerFlow([
+        importText({
+          text: `
           - a
             - b
           - x
           - z
         `,
-          }),
-          setCursor(['a', 'b']),
-          setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Asc' } }),
-        ]),
-        initialState(),
-      )
+        }),
+        setCursor(['a', 'b']),
+        setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Asc' } }),
+      ])(initialState())
 
       vi.advanceTimersByTime(1000)
 
-      stateNew = runDocumentCommand(
-        reducerFlow([
-          newThought({ value: 'c', insertNewSubthought: true }),
-          setCursor(['a', 'b', 'c']),
-          swapGrandparent,
-        ]),
-        stateBefore,
-      )
+      stateNew = reducerFlow([
+        newThought({ value: 'c', insertNewSubthought: true }),
+        setCursor(['a', 'b', 'c']),
+        swapGrandparent,
+      ])(stateBefore)
     } finally {
       vi.useRealTimers()
     }
@@ -319,35 +312,26 @@ describe('sort', () => {
     vi.useFakeTimers()
     let stateNew
     try {
-      const stateBefore = runDocumentCommand(
-        reducerFlow([
-          importText({
-            text: `
+      const stateBefore = reducerFlow([
+        importText({
+          text: `
           - root
             - z
               - b
                 - =sort
                   - Created
         `,
-          }),
-          setCursor(['root', 'z', 'b']),
-        ]),
-        initialState(),
-      )
+        }),
+        setCursor(['root', 'z', 'b']),
+      ])(initialState())
 
       vi.advanceTimersByTime(1000)
 
-      const stateA = runDocumentCommand(
-        reducerFlow([newThought({ value: 'a', insertNewSubthought: true })]),
-        stateBefore,
-      )
+      const stateA = reducerFlow([newThought({ value: 'a', insertNewSubthought: true })])(stateBefore)
 
       vi.advanceTimersByTime(1000)
 
-      stateNew = runDocumentCommand(
-        reducerFlow([newThought({ value: 'c' }), setCursor(['root', 'z', 'b', 'c']), swapGrandparent]),
-        stateA,
-      )
+      stateNew = reducerFlow([newThought({ value: 'c' }), setCursor(['root', 'z', 'b', 'c']), swapGrandparent])(stateA)
     } finally {
       vi.useRealTimers()
     }
@@ -367,32 +351,26 @@ describe('sort', () => {
     vi.useFakeTimers()
     let stateNew
     try {
-      const stateBefore = runDocumentCommand(
-        reducerFlow([
-          importText({
-            text: `
+      const stateBefore = reducerFlow([
+        importText({
+          text: `
           - a
             - =sort
               - Created
             - b
               - c
         `,
-          }),
-          setCursor(['a', 'b']),
-        ]),
-        initialState(),
-      )
+        }),
+        setCursor(['a', 'b']),
+      ])(initialState())
 
       vi.advanceTimersByTime(1000)
 
-      const stateZ = runDocumentCommand(reducerFlow([newThought({ value: 'z' })]), stateBefore)
+      const stateZ = reducerFlow([newThought({ value: 'z' })])(stateBefore)
 
       vi.advanceTimersByTime(1000)
 
-      stateNew = runDocumentCommand(
-        reducerFlow([newThought({ value: 'm' }), setCursor(['a', 'b', 'c']), swapGrandparent]),
-        stateZ,
-      )
+      stateNew = reducerFlow([newThought({ value: 'm' }), setCursor(['a', 'b', 'c']), swapGrandparent])(stateZ)
     } finally {
       vi.useRealTimers()
     }
@@ -412,35 +390,26 @@ describe('sort', () => {
     vi.useFakeTimers()
     let stateNew
     try {
-      const stateBefore = runDocumentCommand(
-        reducerFlow([
-          importText({
-            text: `
+      const stateBefore = reducerFlow([
+        importText({
+          text: `
           - a
             - b
               - c
                 - =sort
                   - Created
         `,
-          }),
-          setCursor(['a', 'b', 'c']),
-        ]),
-        initialState(),
-      )
+        }),
+        setCursor(['a', 'b', 'c']),
+      ])(initialState())
 
       vi.advanceTimersByTime(1000)
 
-      const stateZ = runDocumentCommand(
-        reducerFlow([newThought({ value: 'z', insertNewSubthought: true })]),
-        stateBefore,
-      )
+      const stateZ = reducerFlow([newThought({ value: 'z', insertNewSubthought: true })])(stateBefore)
 
       vi.advanceTimersByTime(1000)
 
-      stateNew = runDocumentCommand(
-        reducerFlow([newThought({ value: 'm' }), setCursor(['a', 'b', 'c']), swapGrandparent]),
-        stateZ,
-      )
+      stateNew = reducerFlow([newThought({ value: 'm' }), setCursor(['a', 'b', 'c']), swapGrandparent])(stateZ)
     } finally {
       vi.useRealTimers()
     }

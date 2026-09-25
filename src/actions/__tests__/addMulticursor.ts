@@ -4,12 +4,11 @@ import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import contextToPath from '../../selectors/contextToPath'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 
 beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
@@ -23,7 +22,7 @@ describe('addMulticursor', () => {
       (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])! }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const b = contextToPath(stateNew, ['b'])!
 
@@ -40,7 +39,7 @@ describe('addMulticursor', () => {
       (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])! }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const b = contextToPath(stateNew, ['b'])!
 
@@ -58,7 +57,7 @@ describe('addMulticursor', () => {
       (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const a = contextToPath(stateNew, ['a'])!
     const b = contextToPath(stateNew, ['b'])!
@@ -78,7 +77,7 @@ describe('addMulticursor', () => {
       (state: State) => addMulticursor(state, { path: contextToPath(state, ['a', 'a1'])! }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const a = contextToPath(stateNew, ['a'])!
     const a1 = contextToPath(stateNew, ['a', 'a1'])!
@@ -98,7 +97,7 @@ describe('addMulticursor', () => {
       (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])! }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const b = contextToPath(stateNew, ['b'])!
 
@@ -115,7 +114,7 @@ describe('addMulticursor', () => {
       (state: State) => addMulticursor(state, { path: contextToPath(state, ['a'])! }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const a = contextToPath(stateNew, ['a'])!
 
@@ -132,7 +131,7 @@ describe('addMulticursor', () => {
       (state: State) => addMulticursor(state, { path: contextToPath(state, ['b'])! }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const b = contextToPath(stateNew, ['b'])!
 

@@ -9,13 +9,13 @@ import contextToPath from '../../selectors/contextToPath'
 import expandThoughts from '../../selectors/expandThoughts'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
-import reducerFlow from '../../util/reducerFlow'
 
 beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
@@ -39,7 +39,7 @@ describe('normal view', () => {
   it('cursor children are expanded', () => {
     const steps = [newThought('a'), newSubthought('b'), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
   })
@@ -47,7 +47,7 @@ describe('normal view', () => {
   it('leaves are expanded', () => {
     const steps = [newThought('a'), newSubthought('b'), setCursor(['a', 'b'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
   })
@@ -62,7 +62,7 @@ describe('normal view', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'c'])).toBeFalsy()
   })
@@ -77,7 +77,7 @@ describe('normal view', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'b'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'c'])).toBeFalsy()
   })
@@ -95,7 +95,7 @@ describe('normal view', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
@@ -124,7 +124,7 @@ describe('normal view', () => {
 
     const steps = [importText({ text }), setCursor(['To Do'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const expandedPathMap = expandThoughts(stateNew, stateNew.cursor)
     const expandedContexts = Object.values(expandedPathMap).map(path => pathToContext(stateNew, path))
@@ -159,7 +159,7 @@ describe('normal view', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'b', 'c', 'd', 'e', 'f'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
@@ -183,7 +183,7 @@ describe('normal view', () => {
 
     const steps = [importText({ text }), setCursor(['c', 'd', 'e', 'f'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, [HOME_TOKEN])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
@@ -209,7 +209,7 @@ describe('table view', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
@@ -273,7 +273,7 @@ describe('table view', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
   })
@@ -340,7 +340,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
 
@@ -361,7 +361,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a', 'd'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     })
@@ -381,7 +381,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
 
@@ -401,7 +401,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a', 'd'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     })
@@ -419,7 +419,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a', 'm', 'a'])).toBeFalsy()
       expect(isContextExpanded(stateNew, ['a', 'm', 'b'])).toBeFalsy()
@@ -438,7 +438,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
@@ -460,7 +460,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
@@ -481,7 +481,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a', 'b'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
@@ -501,7 +501,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a', 'b', 'c'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
@@ -518,7 +518,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a', 'b'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     })
@@ -536,7 +536,7 @@ describe('pin', () => {
 
       const steps = [importText({ text }), setCursor(['a'])]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
       expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
@@ -560,7 +560,7 @@ describe('=children/=pin/true', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
@@ -643,7 +643,7 @@ describe('=children/=pin', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'd'])).toBeTruthy()
@@ -707,7 +707,7 @@ describe('=descendants/=pin/true', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
@@ -729,7 +729,7 @@ describe('=descendants/=pin/true', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'f'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
@@ -748,7 +748,7 @@ describe('=descendants/=pin/true', () => {
 
     const steps = [importText({ text }), setCursor(['x'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
@@ -770,7 +770,7 @@ describe('=descendants/=pin/true', () => {
 
     const steps = [importText({ text }), setCursor(['x'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
@@ -793,7 +793,7 @@ describe('=descendants/=pin/true', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
@@ -816,7 +816,7 @@ describe('=descendants/=pin/true', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
@@ -838,7 +838,7 @@ describe('=descendants/=pin/true', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeFalsy()
@@ -860,7 +860,7 @@ describe('=descendants/=pin/true', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'm', 'a'])).toBeFalsy()
     expect(isContextExpanded(stateNew, ['a', 'm', 'b'])).toBeFalsy()
@@ -880,7 +880,7 @@ describe('=descendants/=pin', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b', 'c'])).toBeTruthy()
@@ -927,7 +927,7 @@ describe('expand with : char', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['b:'])).toBeTruthy()
@@ -949,7 +949,7 @@ describe('expand with : char', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['b:'])).toBeTruthy()
@@ -971,7 +971,7 @@ describe('expand with : char', () => {
       setCursor(['a']),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', '<b>bold:</b>'])).toBeTruthy()
@@ -990,7 +990,7 @@ describe('expand with : char', () => {
 
     const steps = [importText({ text }), setCursor(['m']), toggleContextView]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['m', 'a1'])).toBeFalsy()
   })
@@ -1007,7 +1007,7 @@ describe('=done', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
@@ -1028,7 +1028,7 @@ describe('=done', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
@@ -1048,7 +1048,7 @@ describe('=done', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'b'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
@@ -1064,7 +1064,7 @@ describe('=done', () => {
 
     const steps = [importText({ text }), setCursor(['a', 'b'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
   })
@@ -1081,7 +1081,7 @@ describe('=done', () => {
 
     const steps = [importText({ text }), setCursor(['a'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeFalsy()
@@ -1100,7 +1100,7 @@ describe('multicursor', () => {
 
     const steps = [importText({ text }), setCursor(['d']), addMulticursor(['a', 'b', 'c'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(isContextExpanded(stateNew, ['a'])).toBeTruthy()
     expect(isContextExpanded(stateNew, ['a', 'b'])).toBeTruthy()
@@ -1119,7 +1119,7 @@ describe('multicursor', () => {
 
     const steps = [importText({ text }), setCursor(['d', 'e']), addMulticursor(['a', 'b', 'c'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     // cursor ancestors
     expect(isContextExpanded(stateNew, ['d'])).toBeTruthy()
@@ -1147,7 +1147,7 @@ describe('multicursor', () => {
       addMulticursor(['c']),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     // a is selected but none of its descendants are, so it must stay collapsed
     expect(isContextExpanded(stateNew, ['a'])).toBeFalsy()
@@ -1164,7 +1164,7 @@ describe('multicursor', () => {
 
     const steps = [importText({ text }), setCursor(['a']), addMulticursor(['a']), addMulticursor(['b'])]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     // the cursor is selected, so it stays collapsed like any other selected thought
     expect(isContextExpanded(stateNew, ['a'])).toBeFalsy()

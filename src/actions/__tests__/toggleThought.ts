@@ -5,10 +5,9 @@ import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import newThought from '../newThought'
 import toggleThought from '../toggleThought'
 
@@ -29,7 +28,7 @@ it('toggle on single value', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -56,7 +55,7 @@ it('toggle off single value', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -77,7 +76,7 @@ it('toggle on deep value', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -106,7 +105,7 @@ it('toggle off deep value', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -132,7 +131,7 @@ it('preserve siblings when toggling on single value', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -160,7 +159,7 @@ it('toggle on meta attribute above siblings', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -190,7 +189,7 @@ it('preserve ancestors when toggling on deep value', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -225,7 +224,7 @@ it('preserve ancestor siblings when toggling off deep value', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}

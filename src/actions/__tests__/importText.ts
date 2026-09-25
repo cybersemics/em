@@ -17,13 +17,13 @@ import contextToThought from '../../test-helpers/contextToThought'
 import editThought from '../../test-helpers/editThoughtByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
 import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import command from '../../util/command'
 import hashThought from '../../util/hashThought'
 import initialState from '../../util/initialState'
 import never from '../../util/never'
-import reducerFlow from '../../util/reducerFlow'
 import removeHome from '../../util/removeHome'
 import timestamp from '../../util/timestamp'
 
@@ -247,18 +247,15 @@ it('replace empty cursor', () => {
   - y
   `
 
-  const stateNew = runDocumentCommand(
-    reducerFlow([
-      importText({ text }),
-      // manually change `b` to empty thought since importText skips empty thoughts
-      editThought(['a', 'b'], ''),
-      importTextAtFirstMatch({
-        at: ['a', ''],
-        text: paste,
-      }),
-    ]),
-    initialState(),
-  )
+  const stateNew = reducerFlow([
+    importText({ text }),
+    // manually change `b` to empty thought since importText skips empty thoughts
+    editThought(['a', 'b'], ''),
+    importTextAtFirstMatch({
+      at: ['a', ''],
+      text: paste,
+    }),
+  ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -281,18 +278,15 @@ it('replace empty cursor without affecting siblings', () => {
   - y
   `
 
-  const stateNew = runDocumentCommand(
-    reducerFlow([
-      importText({ text }),
-      // manually change `c` to empty thought since importText skips empty thoughts
-      editThought(['a', 'c'], ''),
-      importTextAtFirstMatch({
-        at: ['a', ''],
-        text: paste,
-      }),
-    ]),
-    initialState(),
-  )
+  const stateNew = reducerFlow([
+    importText({ text }),
+    // manually change `c` to empty thought since importText skips empty thoughts
+    editThought(['a', 'c'], ''),
+    importTextAtFirstMatch({
+      at: ['a', ''],
+      text: paste,
+    }),
+  ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -315,17 +309,14 @@ it(`remove empty cursor from thoughtIndex and lexemeIndex`, () => {
   `
 
   const now = timestamp()
-  const stateNew = runDocumentCommand(
-    reducerFlow([
-      newThought(''),
-      importTextAtFirstMatch({
-        at: [''],
-        text,
-        lastUpdated: now,
-      }),
-    ]),
-    initialState(now),
-  )
+  const stateNew = reducerFlow([
+    newThought(''),
+    importTextAtFirstMatch({
+      at: [''],
+      text,
+      lastUpdated: now,
+    }),
+  ])(initialState(now))
 
   const { thoughtIndex, lexemeIndex } = stateNew.thoughts
 
@@ -341,16 +332,13 @@ it('import as subthoughts of non-empty cursor', () => {
     - y
   `
 
-  const stateNew = runDocumentCommand(
-    reducerFlow([
-      newThought('a'),
-      importTextAtFirstMatch({
-        at: ['a'],
-        text: paste,
-      }),
-    ]),
-    initialState(),
-  )
+  const stateNew = reducerFlow([
+    newThought('a'),
+    importTextAtFirstMatch({
+      at: ['a'],
+      text: paste,
+    }),
+  ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -367,16 +355,13 @@ it('set cursor to last imported subthought at first level', () => {
     - y
   `
 
-  const stateNew = runDocumentCommand(
-    reducerFlow([
-      newThought('a'),
-      importTextAtFirstMatch({
-        at: ['a'],
-        text: paste,
-      }),
-    ]),
-    initialState(),
-  )
+  const stateNew = reducerFlow([
+    newThought('a'),
+    importTextAtFirstMatch({
+      at: ['a'],
+      text: paste,
+    }),
+  ])(initialState())
 
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'y'])!)
 })
@@ -390,7 +375,7 @@ it('set cursor to last imported subthought in the root', () => {
   `
 
   // import directly into the root
-  const stateNew = runDocumentCommand(reducerFlow([importText({ text })]), initialState())
+  const stateNew = reducerFlow([importText({ text })])(initialState())
 
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['c'])!)
 })
@@ -406,16 +391,13 @@ it('do not move cursor when importing only meta attributes', () => {
         - tomato
   `
 
-  const stateNew = runDocumentCommand(
-    reducerFlow([
-      newThought('a'),
-      importTextAtFirstMatch({
-        at: ['a'],
-        text: paste,
-      }),
-    ]),
-    initialState(),
-  )
+  const stateNew = reducerFlow([
+    newThought('a'),
+    importTextAtFirstMatch({
+      at: ['a'],
+      text: paste,
+    }),
+  ])(initialState())
 
   expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
 })
@@ -443,20 +425,17 @@ it('single-line nested html tags', () => {
 
   const paste = '<b><i>A</i></b>'
 
-  const stateNew = runDocumentCommand(
-    reducerFlow([
-      // importing single-line needs an existing thought
-      importText({ text }),
+  const stateNew = reducerFlow([
+    // importing single-line needs an existing thought
+    importText({ text }),
 
-      // manually change `b` to empty thought to not see 'b' end of the new value.
-      editThought(['a', 'b'], ''),
-      importTextAtFirstMatch({
-        at: ['a', ''],
-        text: paste,
-      }),
-    ]),
-    initialState(),
-  )
+    // manually change `b` to empty thought to not see 'b' end of the new value.
+    editThought(['a', 'b'], ''),
+    importTextAtFirstMatch({
+      at: ['a', ''],
+      text: paste,
+    }),
+  ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
@@ -624,7 +603,7 @@ it('import multiple thoughts to end of home context with other thoughts', () => 
       - d
   `
 
-  const stateNew = runDocumentCommand(reducerFlow([importText({ text }), importText({ text: 'e' })]), initialState())
+  const stateNew = reducerFlow([importText({ text }), importText({ text: 'e' })])(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -706,7 +685,7 @@ it('properly add lexeme entries for multiple thoughts with same value on import'
      - y
   `
 
-  const stateNew = runDocumentCommand(reducerFlow([importText({ text })]), initialState())
+  const stateNew = reducerFlow([importText({ text })])(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   const thoughtMFirst = contextToThought(stateNew, ['a', 'm'])
@@ -847,17 +826,14 @@ it('import multiple empty thoughts within a series into a non-leaf destination',
 it('importing a normal thought that duplicates a sibling keeps both (no merge)', () => {
   const text = '- a\n  - b'
 
-  const stateNew = runDocumentCommand(
-    reducerFlow([
-      newThought('a'),
-      newThought(''),
-      importTextAtFirstMatch({
-        at: [''],
-        text,
-      }),
-    ]),
-    initialState(),
-  )
+  const stateNew = reducerFlow([
+    newThought('a'),
+    newThought(''),
+    importTextAtFirstMatch({
+      at: [''],
+      text,
+    }),
+  ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -870,17 +846,14 @@ it('importing a normal thought that duplicates a sibling keeps both (no merge)',
 it('importing a metaprogramming attribute that duplicates a sibling merges hierarchically', () => {
   const text = '- =a\n  - b'
 
-  const stateNew = runDocumentCommand(
-    reducerFlow([
-      newThought('=a'),
-      newThought(''),
-      importTextAtFirstMatch({
-        at: [''],
-        text,
-      }),
-    ]),
-    initialState(),
-  )
+  const stateNew = reducerFlow([
+    newThought('=a'),
+    newThought(''),
+    importTextAtFirstMatch({
+      at: [''],
+      text,
+    }),
+  ])(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -1060,31 +1033,28 @@ it('set cursor on last thought after importing multiple thoughts in non-empty cu
 
 describe('single-line paste into a thought', () => {
   it('inserts into an empty thought', () => {
-    const stateNew = runDocumentCommand(
-      reducerFlow([newThought({ value: '' }), importTextAtFirstMatch({ at: [''], text: 'abc', caretPosition: 0 })]),
-      initialState(),
-    )
+    const stateNew = reducerFlow([
+      newThought({ value: '' }),
+      importTextAtFirstMatch({ at: [''], text: 'abc', caretPosition: 0 }),
+    ])(initialState())
 
     expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['abc'])!)!.value).toBe('abc')
   })
 
   it('appends when the caret offset is past the end of the value', () => {
-    const stateNew = runDocumentCommand(
-      reducerFlow([newThought({ value: 'ab' }), importTextAtFirstMatch({ at: ['ab'], text: 'cd', caretPosition: 10 })]),
-      initialState(),
-    )
+    const stateNew = reducerFlow([
+      newThought({ value: 'ab' }),
+      importTextAtFirstMatch({ at: ['ab'], text: 'cd', caretPosition: 10 }),
+    ])(initialState())
 
     expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['abcd'])!)!.value).toBe('abcd')
   })
 
   it('inserts at the caret without disturbing the surrounding formatting', () => {
-    const stateNew = runDocumentCommand(
-      reducerFlow([
-        newThought({ value: 'one <b>two</b> three' }),
-        importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'X', caretPosition: 5 }),
-      ]),
-      initialState(),
-    )
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'X', caretPosition: 5 }),
+    ])(initialState())
 
     expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['one <b>tXwo</b> three'])!)!.value).toBe(
       'one <b>tXwo</b> three',
@@ -1092,19 +1062,16 @@ describe('single-line paste into a thought', () => {
   })
 
   it('replaces a range that starts at the beginning of the value', () => {
-    const stateNew = runDocumentCommand(
-      reducerFlow([
-        newThought({ value: 'one <b>two</b> three' }),
-        importTextAtFirstMatch({
-          at: ['one <b>two</b> three'],
-          text: 'ONE',
-          caretPosition: 3,
-          replaceStart: 0,
-          replaceEnd: 3,
-        }),
-      ]),
-      initialState(),
-    )
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      importTextAtFirstMatch({
+        at: ['one <b>two</b> three'],
+        text: 'ONE',
+        caretPosition: 3,
+        replaceStart: 0,
+        replaceEnd: 3,
+      }),
+    ])(initialState())
 
     expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['ONE <b>two</b> three'])!)!.value).toBe(
       'ONE <b>two</b> three',
@@ -1112,20 +1079,17 @@ describe('single-line paste into a thought', () => {
   })
 
   it('replaces a range that falls inside a formatting tag', () => {
-    const stateNew = runDocumentCommand(
-      reducerFlow([
-        newThought({ value: 'one <b>two</b> three' }),
-        // the "w" of the bold "two"
-        importTextAtFirstMatch({
-          at: ['one <b>two</b> three'],
-          text: 'X',
-          caretPosition: 6,
-          replaceStart: 5,
-          replaceEnd: 6,
-        }),
-      ]),
-      initialState(),
-    )
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      // the "w" of the bold "two"
+      importTextAtFirstMatch({
+        at: ['one <b>two</b> three'],
+        text: 'X',
+        caretPosition: 6,
+        replaceStart: 5,
+        replaceEnd: 6,
+      }),
+    ])(initialState())
 
     // Composing the halves as left + text + right would leave the text between them, outside the <b> that both carry,
     // splitting the bold run in two.
@@ -1135,15 +1099,12 @@ describe('single-line paste into a thought', () => {
   })
 
   it('replaces the whole value when the thought is cleared', () => {
-    const stateNew = runDocumentCommand(
-      reducerFlow([
-        newThought({ value: 'one <b>two</b> three' }),
-        // cursorCleared is not curried, so unlike its neighbors it cannot compose point-free
-        state => cursorCleared(state, { value: true }),
-        importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 0 }),
-      ]),
-      initialState(),
-    )
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      // cursorCleared is not curried, so unlike its neighbors it cannot compose point-free
+      state => cursorCleared(state, { value: true }),
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 0 }),
+    ])(initialState())
 
     expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')
   })

@@ -7,11 +7,11 @@ import { getChildrenRanked, isVisible } from '../../selectors/getChildren'
 import contextToThought from '../../test-helpers/contextToThought'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 
 beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
@@ -25,7 +25,7 @@ describe('sort', () => {
       - b
       - c
     `
-    const state = runDocumentCommand(reducerFlow([importText({ text })]), initialState())
+    const state = reducerFlow([importText({ text })])(initialState())
 
     // Apply sort to the home context
     const stateAfterSort = runDocumentCommand((state, document) => sort(state, HOME_TOKEN, document), state)
@@ -46,7 +46,7 @@ describe('sort', () => {
       - b
       - c
     `
-    const stateWithPlaceholder = runDocumentCommand(reducerFlow([importText({ text })]), initialState())
+    const stateWithPlaceholder = reducerFlow([importText({ text })])(initialState())
     const stateWithGappedRanks = runDocumentCommand(deleteThoughtAtFirstMatch(['!']), stateWithPlaceholder)
 
     const a = contextToThought(stateWithGappedRanks, ['a'])!
@@ -79,7 +79,7 @@ describe('sort', () => {
       - c
       - b
     `
-    const state = runDocumentCommand(reducerFlow([importText({ text })]), initialState())
+    const state = reducerFlow([importText({ text })])(initialState())
 
     const a1 = contextToThought(state, ['a'])!
     const b1 = contextToThought(state, ['b'])!
@@ -119,8 +119,7 @@ describe('sort', () => {
       - b
       - c
     `
-    const state = runDocumentCommand(
-      reducerFlow([importText({ text }), setCursorFirstMatch(['c']), newThought({ value: '' })]),
+    const state = reducerFlow([importText({ text }), setCursorFirstMatch(['c']), newThought({ value: '' })])(
       initialState(),
     )
 

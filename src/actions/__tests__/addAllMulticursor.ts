@@ -6,12 +6,11 @@ import toggleContextView from '../../actions/toggleContextView'
 import contextToPath from '../../selectors/contextToPath'
 import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 
 beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
@@ -20,7 +19,7 @@ describe('addAllMulticursor', () => {
   it('adds all siblings to multicursor when cursor is set', () => {
     const steps = [newThought('a'), newThought('b'), newThought('c'), setCursor(['b']), addAllMulticursor]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const a = contextToPath(stateNew, ['a'])!
     const b = contextToPath(stateNew, ['b'])!
@@ -36,7 +35,7 @@ describe('addAllMulticursor', () => {
   it('adds all root thoughts to multicursor when no cursor is set', () => {
     const steps = [newThought('a'), newThought('b'), newThought('c'), setCursor(null), addAllMulticursor]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const a = contextToPath(stateNew, ['a'])!
     const b = contextToPath(stateNew, ['b'])!
@@ -59,7 +58,7 @@ describe('addAllMulticursor', () => {
       addAllMulticursor,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const a = contextToPath(stateNew, ['a'])!
     const b = contextToPath(stateNew, ['b'])!
@@ -81,7 +80,7 @@ describe('addAllMulticursor', () => {
       addAllMulticursor,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const a = contextToPath(stateNew, ['a'])!
     const b = contextToPath(stateNew, ['b'])!
@@ -106,7 +105,7 @@ describe('addAllMulticursor', () => {
       addAllMulticursor,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const a1 = contextToPath(stateNew, ['a', 'a1'])!
     const a2 = contextToPath(stateNew, ['a', 'a2'])!
@@ -133,16 +132,13 @@ describe('addAllMulticursor', () => {
           - v
     `
 
-    const stateNew = runDocumentCommand(
-      reducerFlow([
-        importText({ text }),
-        setCursor(['a', 'm']),
-        toggleContextView,
-        setCursor(['a', 'm', 'a']),
-        addAllMulticursor,
-      ]),
-      initialState(),
-    )
+    const stateNew = reducerFlow([
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a']),
+      addAllMulticursor,
+    ])(initialState())
 
     const a = contextToPath(stateNew, ['a', 'm', 'a'])!
     const b = contextToPath(stateNew, ['a', 'm', 'b'])!
@@ -167,16 +163,13 @@ describe('addAllMulticursor', () => {
           - v
     `
 
-    const stateNew = runDocumentCommand(
-      reducerFlow([
-        importText({ text }),
-        setCursor(['a', 'm']),
-        toggleContextView,
-        setCursor(['a', 'm', 'b', 't']),
-        addAllMulticursor,
-      ]),
-      initialState(),
-    )
+    const stateNew = reducerFlow([
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'b', 't']),
+      addAllMulticursor,
+    ])(initialState())
 
     const t = contextToPath(stateNew, ['a', 'm', 'b', 't'])!
     const u = contextToPath(stateNew, ['a', 'm', 'b', 'u'])!
@@ -209,18 +202,15 @@ describe('addAllMulticursor', () => {
               - bs
     `
 
-    const stateNew = runDocumentCommand(
-      reducerFlow([
-        importText({ text }),
-        setCursor(['a', 'm']),
-        toggleContextView,
-        setCursor(['a', 'm', 'a', 'p', 'n']),
-        toggleContextView,
-        setCursor(['a', 'm', 'a', 'p', 'n', 'p']),
-        addAllMulticursor,
-      ]),
-      initialState(),
-    )
+    const stateNew = reducerFlow([
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'p', 'n']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'p', 'n', 'p']),
+      addAllMulticursor,
+    ])(initialState())
 
     const p = contextToPath(stateNew, ['a', 'm', 'a', 'p', 'n', 'p'])!
     const q = contextToPath(stateNew, ['a', 'm', 'a', 'p', 'n', 'q'])!

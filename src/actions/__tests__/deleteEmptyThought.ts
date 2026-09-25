@@ -5,11 +5,10 @@ import { getAllChildren } from '../../selectors/getChildren'
 import { getLexeme } from '../../selectors/getLexeme'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import archiveThought from '../archiveThought'
 import cursorBack from '../cursorBack'
 import cursorUp from '../cursorUp'
@@ -27,7 +26,7 @@ describe('normal view', () => {
   it('delete empty thought', () => {
     const steps = [newThought('a'), newThought(''), deleteEmptyThought]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -37,7 +36,7 @@ describe('normal view', () => {
   it('do not delete non-empty thought', () => {
     const steps = [newThought('a'), deleteEmptyThought]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -47,7 +46,7 @@ describe('normal view', () => {
   it('do not delete thought with children', () => {
     const steps = [newThought(''), newSubthought('1'), cursorBack, deleteEmptyThought]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -67,7 +66,7 @@ describe('normal view', () => {
       deleteEmptyThought,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -92,7 +91,7 @@ describe('normal view', () => {
       deleteEmptyThought,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -106,7 +105,7 @@ describe('normal view', () => {
   it('do nothing if there is no cursor', () => {
     const steps = [newThought('a'), newThought('b'), setCursor(null), deleteEmptyThought]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -125,7 +124,7 @@ describe('normal view', () => {
       deleteEmptyThought,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -143,7 +142,7 @@ describe('normal view', () => {
       deleteEmptyThought,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -160,7 +159,7 @@ describe('normal view', () => {
       deleteEmptyThought,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -182,7 +181,7 @@ describe('normal view', () => {
       deleteEmptyThought,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -202,7 +201,7 @@ describe('normal view', () => {
       deleteEmptyThought,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a2'])!)
   })
@@ -210,7 +209,7 @@ describe('normal view', () => {
   it('cursor should move to parent if the deleted thought has no siblings', () => {
     const steps = [newThought('a'), newSubthought(''), deleteEmptyThought]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a'])!)
   })
@@ -218,7 +217,7 @@ describe('normal view', () => {
   it('cursor should be removed if the last thought is deleted', () => {
     const steps = [newThought(''), deleteEmptyThought]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBe(null)
   })
@@ -243,7 +242,7 @@ describe('context view', () => {
       deleteEmptyThought,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     // empty context should be deleted from the Lexeme
     const lexeme = getLexeme(stateNew, 'm')
@@ -270,7 +269,7 @@ it('merge thought should respect space if any (whitespace at end of left splitte
     deleteEmptyThought,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -289,7 +288,7 @@ it('merge thought should respect space if any (whitespace at front of right spli
     deleteEmptyThought,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}

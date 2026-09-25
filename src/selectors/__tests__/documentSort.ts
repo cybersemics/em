@@ -1,11 +1,11 @@
 import importText from '../../actions/importText'
 import moveThought from '../../actions/moveThought'
 import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
 import pathToContext from '../../util/pathToContext'
-import reducerFlow from '../../util/reducerFlow'
 import contextToPath from '../contextToPath'
 import documentSort from '../documentSort'
 
@@ -89,7 +89,7 @@ it('parents and children', () => {
     // move b2 to the top of b
     moveThought({ oldPath: b2, newPath: b2, afterId: null }),
   ]
-  const stateNew = runDocumentCommand(reducerFlow(steps), state)
+  const stateNew = reducerFlow(steps)(state)
 
   const pathsSorted = documentSort(stateNew, [a2, b1, a1, c, b, b2, a])
   const contextsSorted = pathsSorted.map(path => pathToContext(stateNew, path))

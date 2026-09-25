@@ -6,10 +6,9 @@ import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import newThought from '../newThought'
 import setBulletStyle from '../setBulletStyle'
 
@@ -30,7 +29,7 @@ it('set =children/=bullet/Ordered', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -54,7 +53,7 @@ it('set =children/=bullet/Alpha', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -85,7 +84,7 @@ it('replace an existing bullet style rather than toggling it off', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -116,7 +115,7 @@ it('setting the default (null) removes =children/=bullet and an emptied =childre
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -146,7 +145,7 @@ it('does not clobber sibling =children attributes when setting a bullet style', 
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -185,7 +184,7 @@ it('setting the default (null) preserves sibling =children attributes', () => {
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}

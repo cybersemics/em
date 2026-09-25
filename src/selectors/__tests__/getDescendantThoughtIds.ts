@@ -3,12 +3,12 @@ import importText from '../../actions/importText'
 import newThought from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursorFirstMatch from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import childIdsToThoughts from '../childIdsToThoughts'
 import contextToPath from '../contextToPath'
 import getDescendantThoughtIds from '../getDescendantThoughtIds'
@@ -53,7 +53,7 @@ it('get descendants ordered by rank', () => {
 
   const steps = [importText({ text }), setCursorFirstMatch(['c']), newThought({ value: 'x', insertBefore: true })]
 
-  const state = runDocumentCommand(reducerFlow(steps), initialState())
+  const state = reducerFlow(steps)(initialState())
 
   // unordered
   const descendantsUnordered = childIdsToThoughts(state, getDescendantThoughtIds(state, HOME_TOKEN))

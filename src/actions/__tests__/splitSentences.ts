@@ -5,11 +5,10 @@ import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import cursorForward from '../cursorForward'
 import importText from '../importText'
 
@@ -25,7 +24,7 @@ afterEach(waitForThoughtspaceIdle)
 function splitThought(value: string, format: MimeType = 'text/plain') {
   const steps = [newThought(value), splitSentences({})]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], format)
   return exported
 }
@@ -128,7 +127,7 @@ describe('simple split', () => {
       splitSentences({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -694,7 +693,7 @@ describe('parenthetical content', () => {
     `
     const steps = [importText({ text }), setCursor(['One two (three four)']), splitSentences({}), cursorForward]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['One two', 'three four'])
   })
@@ -1368,7 +1367,7 @@ describe('caret', () => {
   it('splits a thought with no delimiter at the caret into a main thought and a child', () => {
     const steps = [newThought('Hello world'), splitSentences({ caretOffset: 5 })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -1379,7 +1378,7 @@ describe('caret', () => {
   it('keeps the cursor on the main thought', () => {
     const steps = [newThought('Hello world'), splitSentences({ caretOffset: 5 })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['Hello'])
   })
@@ -1387,7 +1386,7 @@ describe('caret', () => {
   it('keeps the formatting of both halves', () => {
     const steps = [newThought('<b>Hello world</b>'), splitSentences({ caretOffset: 5 })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
     expect(exported).toBe(`<ul>
@@ -1406,7 +1405,7 @@ describe('caret', () => {
   it('splits at a delimiter rather than at the caret when the thought has one', () => {
     const steps = [newThought('one, two'), splitSentences({ caretOffset: 2 })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -1417,7 +1416,7 @@ describe('caret', () => {
   it('does not split at a caret at the start of the thought', () => {
     const steps = [newThought('Hello world'), splitSentences({ caretOffset: 0 })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -1427,7 +1426,7 @@ describe('caret', () => {
   it('does not split at a caret at the end of the thought', () => {
     const steps = [newThought('Hello world'), splitSentences({ caretOffset: 11 })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -1437,7 +1436,7 @@ describe('caret', () => {
   it('does not split at a caret that would leave a blank main thought', () => {
     const steps = [newThought('<b> </b>Hello'), splitSentences({ caretOffset: 1 })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/html')
 
     expect(exported).toBe(`<ul>

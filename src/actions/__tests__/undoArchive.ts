@@ -3,10 +3,10 @@ import exportContext from '../../selectors/exportContext'
 import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import archiveThought from '../archiveThought'
 import newThought from '../newThought'
 import toggleHiddenThoughts from '../toggleHiddenThoughts'
@@ -16,9 +16,9 @@ beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
 
 it('restores the thought and removes only the empty archive when hidden thoughts are visible', () => {
-  const state = runDocumentCommand(reducerFlow([newThought('a'), newThought('b')]), initialState())
+  const state = reducerFlow([newThought('a'), newThought('b')])(initialState())
   const originalPath = contextToPathOrThrow(state, ['b'], 'undoArchive')
-  const archived = runDocumentCommand(reducerFlow([archiveThought({}), toggleHiddenThoughts]), state)
+  const archived = reducerFlow([archiveThought({}), toggleHiddenThoughts])(state)
 
   const restored = runDocumentCommand(
     undoArchive({ originalPath, currPath: contextToPathOrThrow(archived, ['=archive', 'b'], 'undoArchive') }),

@@ -5,11 +5,10 @@ import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor, { setCursorFirstMatchActionCreator as setCursorAction } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText, { importTextActionCreator as importTextAction } from '../importText'
 import newThought from '../newThought'
 import setSortPreference from '../setSortPreference'
@@ -28,7 +27,7 @@ it('no-op if cursor is not set', () => {
 
   const steps = [importText({ text }), swapParent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - x
@@ -46,7 +45,7 @@ it('no-op if cursor is a root thought', () => {
 
   const steps = [importText({ text }), setCursor(['a']), swapParent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - x
@@ -61,7 +60,7 @@ it('swaps two empty thoughts without error', () => {
   const steps = [newThought({ value: '' }), newThought({ value: '', insertNewSubthought: true }), swapParent]
 
   // Should not throw
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   // No error alert should appear
   expect(stateNew.alert?.value).toBeFalsy()
@@ -87,7 +86,7 @@ it('preserves both notes when swapping a parent and child that each have a note'
 
   const steps = [importText({ text }), setCursor(['parent', 'child']), swapParent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - child
@@ -107,7 +106,7 @@ it('swaps child thought with parent', () => {
 
   const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - x
@@ -127,7 +126,7 @@ it('swaps a leaf thought with parent', () => {
 
   const steps = [importText({ text }), setCursor(['a', 'b', 'c']), swapParent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - x
@@ -148,7 +147,7 @@ it('preserve siblings', () => {
 
   const steps = [importText({ text }), setCursor(['a', 'b']), swapParent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - b
@@ -167,7 +166,7 @@ it('swapped parent should take the rank of the child', () => {
 
   const steps = [importText({ text }), setCursor(['a', 'd']), swapParent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - d
@@ -196,7 +195,7 @@ it('does not reorder the siblings around the parent moving into the cursor thoug
 
   const steps = [importText({ text }), setCursor(['a', 'b', 'c']), swapParent]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   // b takes the slot c vacated, between w and f. f in particular stays last.
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -230,7 +229,7 @@ describe('context view', () => {
       swapParent,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
@@ -263,7 +262,7 @@ describe('context view', () => {
       swapParent,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
@@ -298,7 +297,7 @@ describe('context view', () => {
       swapParent,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
@@ -333,7 +332,7 @@ describe('sort', () => {
     ]
 
     // Should not throw
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toContain('- a')
     expect(exported).toContain('- b')
@@ -347,27 +346,25 @@ describe('sort', () => {
     vi.useFakeTimers()
     let stateNew
     try {
-      const stateBefore = runDocumentCommand(
-        reducerFlow([
-          importText({
-            text: `
+      const stateBefore = reducerFlow([
+        importText({
+          text: `
         - a
         - c
         - d
       `,
-          }),
-          setCursor(['a']),
-          setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Asc' } }),
-        ]),
-        initialState(),
-      )
+        }),
+        setCursor(['a']),
+        setSortPreference({ simplePath: HOME_PATH, sortPreference: { type: 'Created', direction: 'Asc' } }),
+      ])(initialState())
 
       vi.advanceTimersByTime(1000)
 
-      stateNew = runDocumentCommand(
-        reducerFlow([newThought({ value: 'b', insertNewSubthought: true }), setCursor(['a', 'b']), swapParent]),
-        stateBefore,
-      )
+      stateNew = reducerFlow([
+        newThought({ value: 'b', insertNewSubthought: true }),
+        setCursor(['a', 'b']),
+        swapParent,
+      ])(stateBefore)
     } finally {
       vi.useRealTimers()
     }

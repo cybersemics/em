@@ -20,13 +20,13 @@ import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByCo
 import initStore from '../../test-helpers/initStore'
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import appendToPath from '../../util/appendToPath'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 
 beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
@@ -44,7 +44,7 @@ it('preserves order when moving after repeated insertions and deletions', () => 
     moveThoughtAtFirstMatch({ from: ['a'], to: ['a'], after: ['c'] }),
   ]
 
-  const state = runDocumentCommand(reducerFlow(steps), initialState())
+  const state = reducerFlow(steps)(initialState())
 
   expect(getChildrenRankedByContext(state, [HOME_TOKEN])).toMatchObject([
     { value: 'b', rank: 0 },
@@ -64,7 +64,7 @@ it('move within root', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -81,7 +81,7 @@ it('move within root', () => {
 it('persist id on move', () => {
   const steps1 = [newThought('a'), newSubthought('a1'), newSubthought('a2')]
 
-  const stateNew1 = runDocumentCommand(reducerFlow(steps1), initialState())
+  const stateNew1 = reducerFlow(steps1)(initialState())
 
   const thoughtA2 = contextToThought(stateNew1, ['a', 'a1', 'a2'])!
 
@@ -95,7 +95,7 @@ it('persist id on move', () => {
     }),
   ]
 
-  const stateNew2 = runDocumentCommand(reducerFlow(steps2), stateNew1)
+  const stateNew2 = reducerFlow(steps2)(stateNew1)
 
   const thoughtA2New = contextToThought(stateNew2, ['a1', 'a2'])!
   expect(getLexeme(stateNew2, 'a2')!.contexts).toEqual([thoughtA2New.id])
@@ -115,7 +115,7 @@ it('move within context (order only)', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -132,7 +132,7 @@ it('move within context (order only)', () => {
 })
 
 it('moving after the existing predecessor preserves order', () => {
-  const state = runDocumentCommand(reducerFlow([newThought('a'), newThought('b'), newThought('c')]), initialState())
+  const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
 
   const stateNew = runDocumentCommand(
     moveThoughtAtFirstMatch({
@@ -147,7 +147,7 @@ it('moving after the existing predecessor preserves order', () => {
 })
 
 it('moves to the first position with a null predecessor', () => {
-  const state = runDocumentCommand(reducerFlow([newThought('a'), newThought('b'), newThought('c')]), initialState())
+  const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
 
   const stateNew = runDocumentCommand(
     moveThoughtAtFirstMatch({
@@ -162,7 +162,7 @@ it('moves to the first position with a null predecessor', () => {
 })
 
 it('rejects placement after the moved thought', () => {
-  const state = runDocumentCommand(reducerFlow([newThought('a'), newThought('b'), newThought('c')]), initialState())
+  const state = reducerFlow([newThought('a'), newThought('b'), newThought('c')])(initialState())
 
   expect(() =>
     runDocumentCommand(
@@ -192,7 +192,7 @@ it('move across contexts', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -228,7 +228,7 @@ it('move descendants', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -270,7 +270,7 @@ it('moving cursor thought should update cursor', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a', 'a2'])
 })
@@ -288,7 +288,7 @@ it('moving ancestor of cursor should update cursor', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['b', 'b1', 'b1.1'])
 })
@@ -307,7 +307,7 @@ it('moving unrelated thought should not update cursor', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a'])
 })
@@ -340,7 +340,7 @@ it('moving a context in the context view should update the cursor to the moved t
     },
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -371,7 +371,7 @@ it('move root thought into another root thought', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - x
@@ -411,7 +411,7 @@ it('move descendants with siblings', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
@@ -449,7 +449,7 @@ it('merges a duplicate attribute at the first position', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
@@ -488,7 +488,7 @@ it('merges a duplicate attribute without duplicating its destination', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -523,7 +523,7 @@ it('move with duplicate descendant', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   // thoughtIndex
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -556,7 +556,7 @@ it('move with hash matched descendant', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -590,7 +590,7 @@ it('move with nested duplicate attributes', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -622,7 +622,7 @@ it('merge attribute with duplicate parent', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -662,7 +662,7 @@ it('move with nested duplicate attributes and merge their children', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -714,7 +714,7 @@ it('consistent rank between lexemeIndex and thoughtIndex on duplicate attribute 
       ),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const contextsOfB = getContexts(stateNew, '=b')
 
   expect(contextsOfB).toHaveLength(1)
@@ -736,7 +736,7 @@ it('update cursor if duplicate attribute with cursor is deleted', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -767,7 +767,7 @@ describe('duplicate normal siblings are not merged', () => {
       }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -795,7 +795,7 @@ describe('duplicate normal siblings are not merged', () => {
       }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -825,7 +825,7 @@ it('re-expand after moving across contexts', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -857,7 +857,7 @@ it('move thought to the beginning of a sorted context', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -889,7 +889,7 @@ it('move thought to the middle of a sorted context', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -921,7 +921,7 @@ it('move thought to the end of a sorted context', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -944,7 +944,7 @@ it('preserves sibling relative order when moving into a sorted context', () => {
   `
 
   const steps = [importText({ text }), setCursor(['c', 'b'])]
-  const state = runDocumentCommand(reducerFlow(steps), initialState())
+  const state = reducerFlow(steps)(initialState())
   const existingIds = getChildrenRankedByContext(state, [HOME_TOKEN]).map(thought => thought.id)
 
   const stateNew = runDocumentCommand(
@@ -979,7 +979,7 @@ it('disable sort on move within context', () => {
     }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}

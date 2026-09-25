@@ -5,12 +5,12 @@ import getThoughtById from '../../selectors/getThoughtById'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import prettyPath from '../../test-helpers/prettyPath'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import toggleContextView from '../toggleContextView'
 
@@ -29,7 +29,7 @@ test('select between two thoughts in the root', () => {
 
   const steps = [importText({ text }), setCursor(['b']), addMulticursor(['b']), addMulticursor(['e']), selectBetween]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => prettyPath(stateNew, path))
@@ -50,7 +50,7 @@ test('ignore order of selected thoughts', () => {
 
   const steps = [importText({ text }), setCursor(['b']), addMulticursor(['e']), addMulticursor(['b']), selectBetween]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => prettyPath(stateNew, path))
@@ -80,7 +80,7 @@ test('select between two thoughts in a sorted list', () => {
     selectBetween,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => getThoughtById(stateNew, head(path))?.value)
@@ -108,7 +108,7 @@ test('select between two thoughts at the same level', () => {
     selectBetween,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => getThoughtById(stateNew, head(path))?.value)
@@ -130,7 +130,7 @@ test('if no thoughts are selected, select all thoughts at the cursor level', () 
 
   const steps = [importText({ text }), setCursor(['x', 'b']), selectBetween]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => getThoughtById(stateNew, head(path))?.value)
@@ -161,7 +161,7 @@ test('if no thoughts are selected in a context view, select all contexts at the 
     selectBetween,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => prettyPath(stateNew, path))
@@ -193,7 +193,7 @@ test('select between two contexts in a context view', () => {
     selectBetween,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => prettyPath(stateNew, path))
@@ -224,7 +224,7 @@ test('if no thoughts are selected after crossing a context view boundary, select
     selectBetween,
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => prettyPath(stateNew, path))
@@ -245,7 +245,7 @@ test('if no thoughts are selected and there is no cursor, select all thoughts at
 
   const steps = [importText({ text }), setCursor(null), selectBetween]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const selected = Object.values(stateNew.multicursors)
     .map(path => getThoughtById(stateNew, head(path))?.value)
@@ -272,7 +272,7 @@ test('alert if there is only one thought', () => {
 
   const steps = [importText({ text }), setCursor(['b']), addMulticursor(['b']), selectBetween]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   expect(stateNew).toHaveProperty('alert')
 })
 

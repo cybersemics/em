@@ -2,11 +2,10 @@ import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
@@ -20,7 +19,7 @@ describe('normal view', () => {
   it('outdent within root', () => {
     const steps = [newThought('a'), newSubthought('a1'), outdent]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -31,7 +30,7 @@ describe('normal view', () => {
   it('outdent with no cursor should do nothing ', () => {
     const steps = [newThought('a'), newSubthought('a1'), setCursor(null), outdent]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -42,7 +41,7 @@ describe('normal view', () => {
   it('outdent root thought should do nothing ', () => {
     const steps = [newThought('a'), newThought('b'), outdent]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -53,7 +52,7 @@ describe('normal view', () => {
   it('outdent grandchild', () => {
     const steps = [newThought('a'), newSubthought('a1'), newSubthought('a2'), outdent]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -65,7 +64,7 @@ describe('normal view', () => {
   it('preserve cursor', () => {
     const steps = [newThought('a'), newSubthought('a1'), newSubthought('a2'), outdent]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject(contextToPath(stateNew, ['a', 'a2'])!)
   })
@@ -83,7 +82,7 @@ describe('context view', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, outdent]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -106,7 +105,7 @@ describe('context view', () => {
     `
     const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView, setCursor(['a', 'm', 'b']), outdent]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -135,7 +134,7 @@ describe('context view', () => {
       outdent,
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}

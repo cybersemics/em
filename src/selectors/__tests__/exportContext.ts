@@ -3,11 +3,11 @@ import newThought from '../../actions/newThought'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import editThought from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import exportContext from '../exportContext'
 
 beforeEach(initStore)
@@ -25,7 +25,7 @@ it('meta and archived thoughts are included by default', () => {
 
   const steps = [importText({ text }), setCursor(['a'])]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain')
 
@@ -49,7 +49,7 @@ it('exclude archived thoughts', () => {
 
   const steps = [importText({ text }), setCursor(['a'])]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeArchived: true })
 
@@ -71,7 +71,7 @@ it('exclude meta attributes but not archived thoughts', () => {
 
   const steps = [importText({ text }), setCursor(['a'])]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMeta: true })
 
@@ -93,7 +93,7 @@ it('exclude all meta attributes, including archived thoughts', () => {
 
   const steps = [importText({ text }), setCursor(['a'])]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMeta: true, excludeArchived: true })
 
@@ -109,7 +109,7 @@ it('exported as plain text with no formatting', () => {
 
   const steps = [importText({ text }), setCursor(['a'])]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain', { excludeMarkdownFormatting: true })
 
@@ -125,7 +125,7 @@ it('exported as html', () => {
 
   const steps = [importText({ text }), setCursor(['a'])]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/html')
 
@@ -148,7 +148,7 @@ it('export multi-line thoughts as separate thoughts', () => {
   `
 
   const steps = [importText({ text }), editThought(['a', 'b', 'Hello'], 'Hello\nworld')]
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exported).toBe(`- ${HOME_TOKEN}
@@ -163,7 +163,7 @@ it('export as markdown', () => {
 
   const steps = [importText({ text }), setCursor([text])]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, [text], 'text/plain')
 
   expect(exported).toBe(`- Hello **wor*ld***`)
@@ -177,7 +177,7 @@ it('export as markdown without escaping metaprogramming attributes', () => {
 
   const steps = [importText({ text }), setCursor(['Hello <b>wor<i>ld</i></b>'])]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, ['Hello <b>wor<i>ld</i></b>'], 'text/plain')
 
   expect(exported).toBe(`- Hello **wor*ld***
@@ -195,7 +195,7 @@ it('export as plain and markdown text replacing html tags only from thoughts and
 
   const steps = [importText({ text }), setCursor(['a'])]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exportedPlain = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
   expect(exportedPlain).toBe(`- ${HOME_TOKEN}
@@ -223,7 +223,7 @@ it('decode character entities when exporting as plain text', () => {
     newThought({ value: 'one &amp; two', insertNewSubthought: true }),
   ]
 
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
 
   const exported = exportContext(stateNew, ['a'], 'text/plain')
 
@@ -256,7 +256,7 @@ it('maxDepth 0 exports only the root thought with no children', () => {
   `
 
   const steps = [importText({ text }), setCursor(['a'])]
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, ['a'], 'text/plain', { maxDepth: 0 })
 
   expect(exported).toBe(`- a`)
@@ -272,7 +272,7 @@ it('maxDepth 1 exports the root thought and its direct children only', () => {
   `
 
   const steps = [importText({ text }), setCursor(['a'])]
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, ['a'], 'text/plain', { maxDepth: 1 })
 
   expect(exported).toBe(`- a
@@ -287,7 +287,7 @@ it('maxDepth 0 exports only the root thought as HTML with no children', () => {
   `
 
   const steps = [importText({ text }), setCursor(['a'])]
-  const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+  const stateNew = reducerFlow(steps)(initialState())
   const exported = exportContext(stateNew, ['a'], 'text/html', { maxDepth: 0 })
 
   expect(exported).toBe(`<ul>

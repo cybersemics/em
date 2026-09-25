@@ -1167,7 +1167,7 @@ Test `enter` and `leave` on each of the following actions:
 
 ### Document commands
 
-Pure UI reducers can be called directly. Document commands require the real memory engine: initialize it with `initStore`, then use [`runDocumentCommand`](../src/test-helpers/runDocumentCommand.ts) to run a command or `reducerFlow` with an explicit transaction. The helper restores a supplied immutable fixture through document operations before acting, so tests can branch from separate snapshots without a JavaScript substitute for TreeCRDT. Await `waitForThoughtspaceIdle` before teardown.
+Pure UI reducers can be called directly. Document commands require the real memory engine: initialize it with `initStore`, then use the test-only [`reducerFlow`](../src/test-helpers/reducerFlow.ts) as `reducerFlow(steps)(state)`, or [`runDocumentCommand`](../src/test-helpers/runDocumentCommand.ts) for a single command. Both restore the supplied immutable fixture through document operations before acting; nested flows reuse the current transaction without restoring again. Await `waitForThoughtspaceIdle` before teardown.
 
 ### Fake timers: flush, don't poll
 

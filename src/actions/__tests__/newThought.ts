@@ -7,11 +7,11 @@ import { getLexeme } from '../../selectors/getLexeme'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import newThought from '../newThought'
 
 beforeEach(initStore)
@@ -27,7 +27,7 @@ describe('normal view', () => {
       newThought({ value: 'b', insertBefore: true }),
     ]
 
-    const state = runDocumentCommand(reducerFlow(steps), initialState())
+    const state = reducerFlow(steps)(initialState())
 
     expect(getChildrenRanked(state, HOME_TOKEN)).toMatchObject([
       { value: 'a', rank: 0 },
@@ -52,7 +52,7 @@ describe('normal view', () => {
   it('new thought after', () => {
     const steps = [newThought('a'), newThought('b')]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -63,7 +63,7 @@ describe('normal view', () => {
   it('new thought before', () => {
     const steps = [newThought('a'), newThought({ value: 'b', insertBefore: true })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -74,7 +74,7 @@ describe('normal view', () => {
   it('new subthought', () => {
     const steps = [newThought('a'), newThought({ value: 'b', insertNewSubthought: true })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -95,7 +95,7 @@ describe('normal view', () => {
       }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -108,7 +108,7 @@ describe('normal view', () => {
   it('new thought to top of home context', () => {
     const steps = [newThought('a'), setCursor(null), newThought({ value: 'b', insertBefore: true })]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -128,7 +128,7 @@ describe('normal view', () => {
   it('update cursor to new thought', () => {
     const steps = [newThought('a'), newThought('b')]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['b'])!])
   })
@@ -144,7 +144,7 @@ describe('normal view', () => {
   `
       const steps = [importText({ text }), setCursor(['c']), newThought({ value: 'e' }), newThought({ value: 'd' })]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
       expect(exportedRoot).toBe(`- ${HOME_TOKEN}
@@ -167,7 +167,7 @@ describe('normal view', () => {
       `
       const steps = [importText({ text }), setCursor(['a']), newThought({ insertNewSubthought: true, value: '=pin' })]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
       expect(exportedRoot).toBe(`- ${HOME_TOKEN}
@@ -189,7 +189,7 @@ describe('normal view', () => {
       `
       const steps = [importText({ text }), setCursor(['a']), newThought({ insertNewSubthought: true, value: 'c' })]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
       expect(exportedRoot).toBe(`- ${HOME_TOKEN}
@@ -211,7 +211,7 @@ describe('normal view', () => {
       `
       const steps = [importText({ text }), setCursor(['a']), newThought({ insertNewSubthought: true, value: 'e' })]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
       expect(exportedRoot).toBe(`- ${HOME_TOKEN}
@@ -233,7 +233,7 @@ describe('normal view', () => {
       `
       const steps = [importText({ text }), setCursor(['a']), newThought({ insertNewSubthought: true, value: '' })]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
       expect(exportedRoot).toBe(`- ${HOME_TOKEN}
@@ -260,7 +260,7 @@ describe('normal view', () => {
         newThought({ insertBefore: true, insertNewSubthought: true, value: '' }),
       ]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
       expect(exportedRoot).toBe(`- ${HOME_TOKEN}
@@ -283,7 +283,7 @@ describe('normal view', () => {
 
       const steps = [importText({ text }), setCursor(['a', 'b']), newThought({ value: '' })]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
       expect(exportedRoot).toBe(`- ${HOME_TOKEN}
@@ -306,7 +306,7 @@ describe('normal view', () => {
 
       const steps = [importText({ text }), setCursor(['a', 'c']), newThought({ value: '', insertBefore: true })]
 
-      const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+      const stateNew = reducerFlow(steps)(initialState())
 
       const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
       expect(exportedRoot).toBe(`- ${HOME_TOKEN}
@@ -337,7 +337,7 @@ describe('context view', () => {
       newThought({ insertNewSubthought: true }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     // Lexeme should be properly updated
     const lexeme = getLexeme(stateNew, 'm')
@@ -382,7 +382,7 @@ describe('context view', () => {
       newThought({ insertNewSubthought: true }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     // restore before asserting so a failure cannot leave console.warn mocked for the rest of the file
     const warnings = [...consoleWarn.mock.calls]
@@ -415,7 +415,7 @@ describe('context view', () => {
       newThought({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     // Lexeme should be properly updated
     const lexeme = getLexeme(stateNew, 'm')
@@ -458,7 +458,7 @@ describe('context view', () => {
       newThought({ insertNewSubthought: true }),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exportedRoot).toBe(`- ${HOME_TOKEN}

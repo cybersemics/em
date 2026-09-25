@@ -11,12 +11,11 @@ import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 // TODO: Why does util have to be imported before selectors and reducers?
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 
 beforeEach(initStore)
@@ -26,7 +25,7 @@ describe('normal view', () => {
   it('archive a thought', () => {
     const steps = [newThought('a'), newThought('b'), archiveThought({})]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -38,7 +37,7 @@ describe('normal view', () => {
   it('deduplicate archived thoughts with the same value', () => {
     const steps = [newThought('a'), newThought('b'), newThought('b'), archiveThought({}), archiveThought({})]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
@@ -49,7 +48,7 @@ describe('normal view', () => {
   it('do nothing if there is no cursor', () => {
     const steps = [newThought('a'), setCursor(null), archiveThought({})]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -59,7 +58,7 @@ describe('normal view', () => {
   it('move to top of archive', () => {
     const steps = [newThought('a'), newThought('b'), newThought('c'), archiveThought({}), archiveThought({})]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -72,7 +71,7 @@ describe('normal view', () => {
   it('permanently delete empty thought', () => {
     const steps = [newThought('a'), newThought(''), archiveThought({})]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -88,7 +87,7 @@ describe('normal view', () => {
       archiveThought({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -99,7 +98,7 @@ describe('normal view', () => {
   it('permanently delete archive', () => {
     const steps = [newThought('a'), newThought('b'), archiveThought({}), setCursor(['=archive']), archiveThought({})]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -119,7 +118,7 @@ describe('normal view', () => {
       archiveThought({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}`)
@@ -141,7 +140,7 @@ describe('normal view', () => {
       archiveThought({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'a1'])
   })
 
@@ -156,7 +155,7 @@ describe('normal view', () => {
       archiveThought({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'a2'])
   })
@@ -164,7 +163,7 @@ describe('normal view', () => {
   it('cursor should move to parent if the deleted thought has no siblings', () => {
     const steps = [newThought('a'), newSubthought('a1'), archiveThought({})]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a'])
   })
@@ -172,7 +171,7 @@ describe('normal view', () => {
   it('cursor should be removed if the last thought is deleted', () => {
     const steps = [newThought('a'), archiveThought({})]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toBe(null)
   })
@@ -193,7 +192,7 @@ describe('normal view', () => {
         archiveThought(state, { path: contextToPath(state, ['Two'])! }, document),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['Five'])
   })
@@ -214,7 +213,7 @@ describe('normal view', () => {
         archiveThought(state, { path: contextToPath(state, ['One'])! }, document),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['Five'])
   })
@@ -222,7 +221,7 @@ describe('normal view', () => {
   it('empty thought should be archived if it has descendants', () => {
     const steps = [newThought('a'), newThought(''), newSubthought('b'), setCursor(['']), archiveThought({})]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -253,7 +252,7 @@ describe('context view', () => {
       archiveThought({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
     const expected = `- ${HOME_TOKEN}
   - a
@@ -289,7 +288,7 @@ describe('context view', () => {
       archiveThought({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'c'])
   })
@@ -316,7 +315,7 @@ describe('context view', () => {
       archiveThought({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'b'])
   })
@@ -340,7 +339,7 @@ describe('context view', () => {
       archiveThought({}),
     ]
 
-    const stateNew = runDocumentCommand(reducerFlow(steps), initialState())
+    const stateNew = reducerFlow(steps)(initialState())
 
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
   })
