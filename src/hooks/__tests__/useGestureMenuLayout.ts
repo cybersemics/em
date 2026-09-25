@@ -4,7 +4,7 @@ import { Provider } from 'react-redux'
 import { token } from '../../../styled-system/tokens'
 import { fontSizeActionCreator } from '../../actions/fontSize'
 import store from '../../stores/app'
-import viewportStore from '../../stores/viewport'
+import viewportStore from '../../stores/viewportStore'
 import useGestureMenuLayout, {
   APPROXIMATE_ROW_HEIGHT_REM,
   CAPACITOR_TOP_PADDING_REM,

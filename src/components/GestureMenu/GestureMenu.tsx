@@ -123,7 +123,7 @@ const GestureMenu: FC<{
             <div style={{ marginBottom: `${HEADER_BLOCK_MARGIN_BOTTOM_REM}rem` }}>
               <div
                 style={{
-                  color: 'gestureMenuTitle',
+                  color: token('colors.gestureMenuLabel'),
                   marginBottom: `${HEADER_TITLE_MARGIN_BOTTOM_REM}rem`,
                   fontSize: `${HEADER_FONT_SIZE_REM}rem`,
                   fontWeight: 500,
