@@ -58,6 +58,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     const innerRef = React.useRef<HTMLDivElement>(null)
     const positionFixedStyles = usePositionFixed({
       fromBottom: anchorFromBottom,
+      ref: fullScreen ? undefined : innerRef,
       offset: anchorOffset,
       height,
     })

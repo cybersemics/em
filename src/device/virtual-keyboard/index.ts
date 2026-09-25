@@ -55,10 +55,6 @@ const virtualKeyboardHandler = {
       iOSSafariHandler.show?.(editable)
     }
   },
-  /** Align fixed controls just before an Android empty-space tap blurs the editable. */
-  prepareBlurredHide: () => {
-    if (isCapacitor() && !isIOS) androidCapacitorHandler.prepareBlurredHide()
-  },
 }
 
 export default virtualKeyboardHandler

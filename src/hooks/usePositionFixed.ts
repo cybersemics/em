@@ -1,5 +1,7 @@
 import { Capacitor } from '@capacitor/core'
+import { RefObject, useLayoutEffect } from 'react'
 import { isCapacitor, isIOS, isSafari } from '../browser'
+import androidKeyboardAnimation from '../device/virtual-keyboard/androidKeyboardAnimation'
 import viewportStore from '../stores/viewport'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import useScrollTop from './useScrollTop'
@@ -28,9 +30,12 @@ const usePositionFixed = ({
   fromBottom,
   offset = 0,
   height,
+  ref,
 }: {
   /** Anchor position for the element. */
   fromBottom?: boolean
+  /** The DOM anchor for Android compositor animation. */
+  ref?: RefObject<HTMLElement | null>
   /** Additional pixel offset from the anchored edge (top or bottom). */
   offset?: number
   /** The height of the container, used to calculate the bottom offset on mobile safari. Only use with `fromBottom`. */
@@ -40,6 +45,12 @@ const usePositionFixed = ({
   top?: string
   bottom?: string
 } => {
+  const nativeAnchor =
+    !!ref && !!fromBottom && isCapacitor() && !isIOS && Capacitor.isPluginAvailable('VirtualKeyboardTracker')
+  useLayoutEffect(() => {
+    if (nativeAnchor && ref?.current) return androidKeyboardAnimation.attach(ref.current)
+  }, [nativeAnchor, ref])
+
   const virtualKeyboard = virtualKeyboardStore.useState()
 
   // On iOS Safari, emulate `position: fixed` using absolute positioning when the virtual keyboard is open.
@@ -82,8 +93,9 @@ const usePositionFixed = ({
     if (fromBottom) {
       // The Android tracker reports the full inset (including navigation), so take the greater
       // of it and the resting safe area. Other handlers store height above the safe-area baseline.
-      bottom =
-        isCapacitor() && !isIOS && Capacitor.isPluginAvailable('VirtualKeyboardTracker')
+      bottom = nativeAnchor
+        ? `calc(env(safe-area-inset-bottom) + ${offset}px)`
+        : isCapacitor() && !isIOS && Capacitor.isPluginAvailable('VirtualKeyboardTracker')
           ? `calc(max(env(safe-area-inset-bottom), var(--virtual-keyboard-height, 0px)) + ${offset}px)`
           : `calc(env(safe-area-inset-bottom) + ${virtualKeyboard.height}px + ${offset}px)`
     } else {

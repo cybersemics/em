@@ -158,11 +158,11 @@ it('tracks the visible keyboard edge after an empty-space tap blurs the editable
   editable.blur()
   expect(document.activeElement).not.toBe(editable)
   progress({ phase: 'willHide', height: 320, shownHeight: 320, navigationInset: 39, timestampMs: 200 })
-  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('359px')
+  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('320px')
   progress({ phase: 'progress', height: 280, shownHeight: 320, navigationInset: 39, timestampMs: 210 })
-  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('255px')
+  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('280px')
   progress({ phase: 'progress', height: 100, shownHeight: 320, navigationInset: 39, timestampMs: 220 })
-  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('39px')
+  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('100px')
   progress({ phase: 'didHide', height: 0, shownHeight: 320, navigationInset: 39, timestampMs: 230 })
   expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('0px')
   expect(store.getState().isKeyboardOpen).toBe(false)
@@ -171,16 +171,16 @@ it('tracks the visible keyboard edge after an empty-space tap blurs the editable
   androidCapacitorHandler.destroy()
 })
 
-it('projects native progress from native sample times without passing the shown height', () => {
+it('keeps raw geometry available without extrapolating bridge samples', () => {
   mockState.trackerAvailable = true
   androidCapacitorHandler.init()
   const progress = mockTrackerListeners.keyboardProgress
 
   progress({ phase: 'willShow', height: 0, shownHeight: 0, navigationInset: 39, timestampMs: 100 })
   progress({ phase: 'progress', height: 100, shownHeight: 320, navigationInset: 39, timestampMs: 110 })
-  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('260px')
+  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('100px')
   progress({ phase: 'progress', height: 200, shownHeight: 320, navigationInset: 39, timestampMs: 120 })
-  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('320px')
+  expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('200px')
   progress({ phase: 'progress', height: 220, shownHeight: 320, navigationInset: 39, timestampMs: 120 })
   expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('220px')
   progress({ phase: 'didShow', height: 320, shownHeight: 320, navigationInset: 39, timestampMs: 130 })
@@ -189,7 +189,7 @@ it('projects native progress from native sample times without passing the shown 
   androidCapacitorHandler.destroy()
 })
 
-it('keeps the projected keyboard edge moving forward when native progress slows between samples', () => {
+it('keeps raw keyboard geometry monotonic when native progress slows', () => {
   mockState.trackerAvailable = true
   androidCapacitorHandler.init()
   const progress = mockTrackerListeners.keyboardProgress
