@@ -23,11 +23,7 @@ import reducerFlow from '../util/reducerFlow'
 import unroot from '../util/unroot'
 
 /** Replaces the multiselect with the thoughts one level forward of each selected thought, i.e. the contexts of a thought whose context view is active, otherwise its visible children. */
-const multicursorForward = (
-  state: State,
-  _payload: undefined = undefined,
-  document?: ThoughtspaceTransaction,
-): State => {
+const multicursorForward = (state: State): State => {
   const paths = Object.values(state.multicursors)
   const forwardPaths = paths.flatMap(path => {
     const contextViewValue = isContextViewActive(state, path) ? headValue(state, path) : undefined
@@ -45,7 +41,7 @@ const multicursorForward = (
     // A selected thought that is also the child of another selected thought is deselected and reselected.
     ...paths.map(path => removeMulticursor({ path })),
     ...forwardPaths.map(path => addMulticursor({ path })),
-  ])(state, document)
+  ])(state)
 
   return {
     ...stateNew,
@@ -58,7 +54,7 @@ const multicursorForward = (
 
 /** Moves the cursor forward in the cursorHistory. When thoughts are selected, replaces the selection with the thoughts one level forward instead of moving the cursor. */
 const cursorForward = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
-  if (hasMulticursor(state)) return multicursorForward(state, undefined, document)
+  if (hasMulticursor(state)) return multicursorForward(state)
 
   const cursorFromHistory = last(state.cursorHistory)
   const cursor = state.cursor || HOME_PATH

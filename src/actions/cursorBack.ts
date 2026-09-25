@@ -16,7 +16,7 @@ import reducerFlow from '../util/reducerFlow'
 import toggleAbsoluteContext from './toggleAbsoluteContext'
 
 /** Replaces the multiselect with the parents of each selected thought. Parents shared by multiple selected thoughts are selected once, since the multicursor set is keyed by path. */
-const multicursorBack = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+const multicursorBack = (state: State): State => {
   const paths = Object.values(state.multicursors)
 
   // Root-level thoughts contribute no parent, since the root cannot be selected.
@@ -31,7 +31,7 @@ const multicursorBack = (state: State, _payload: undefined = undefined, document
     // A selected thought that is also the parent of another selected thought is deselected and reselected.
     ...paths.map(path => removeMulticursor({ path })),
     ...backPaths.map(path => addMulticursor({ path })),
-  ])(state, document)
+  ])(state)
 
   return {
     ...stateNew,
@@ -44,7 +44,7 @@ const multicursorBack = (state: State, _payload: undefined = undefined, document
 
 /** Moves the cursor up one level. When thoughts are selected, replaces the selection with their parents instead of moving the cursor. */
 const cursorBack = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
-  if (hasMulticursor(state)) return multicursorBack(state, undefined, document)
+  if (hasMulticursor(state)) return multicursorBack(state)
 
   const { cursor: cursorOld, isKeyboardOpen, search, rootContext } = state
 

@@ -1,7 +1,7 @@
+import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import addMulticursor, { addMulticursorActionCreator } from '../actions/addMulticursor'
-import command from '../util/command'
 import contextToPathOrThrow from './contextToPathOrThrow'
 
 /** A reducer that adds a multicursor at the first match of the given unranked path. Throws if the path does not resolve. */
@@ -17,4 +17,4 @@ export const addMulticursorAtFirstMatchActionCreator =
     dispatch(addMulticursorActionCreator({ path }))
   }
 
-export default command(addMulticursorAtFirstMatch)
+export default _.curryRight(addMulticursorAtFirstMatch)
