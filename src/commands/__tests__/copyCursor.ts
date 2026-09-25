@@ -38,12 +38,12 @@ describe('copyCursor', () => {
 
     executeCommandWithMulticursor(copyCursorCommand, { store })
 
-    expect(copyModule.default).toHaveBeenCalledWith(
-      `- a
+    await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+      text: `- a
   - a1
   - a2`,
-      expect.objectContaining({ html: expect.any(String) }),
-    )
+      html: expect.any(String),
+    })
   })
 
   it('omit the bullet "-" when copying a single thought', async () => {
@@ -58,7 +58,10 @@ describe('copyCursor', () => {
 
     executeCommandWithMulticursor(copyCursorCommand, { store })
 
-    expect(copyModule.default).toHaveBeenCalledWith('a', expect.objectContaining({ html: expect.any(String) }))
+    await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+      text: 'a',
+      html: expect.any(String),
+    })
   })
 
   it('does not add an undo step', async () => {
@@ -108,15 +111,15 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      expect(copyModule.default).toHaveBeenCalledWith(
-        `- a
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+        text: `- a
   - a1
   - a2
 - c
   - c1
   - c2`,
-        expect.objectContaining({ html: expect.any(String) }),
-      )
+        html: expect.any(String),
+      })
     })
 
     it('omit the bullet "-" when copying a single thought', async () => {
@@ -134,7 +137,10 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      expect(copyModule.default).toHaveBeenCalledWith('a', expect.objectContaining({ html: expect.any(String) }))
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+        text: 'a',
+        html: expect.any(String),
+      })
     })
 
     it('only copies ancestors when both ancestor and descendant are selected', async () => {
@@ -157,13 +163,13 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      expect(copyModule.default).toHaveBeenCalledWith(
-        `- a
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+        text: `- a
   - a1
     - a1a
   - a2`,
-        expect.objectContaining({ html: expect.any(String) }),
-      )
+        html: expect.any(String),
+      })
     })
 
     it('handles mixed scenarios correctly', async () => {
@@ -191,8 +197,8 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      expect(copyModule.default).toHaveBeenCalledWith(
-        `- a
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+        text: `- a
   - a1
     - a1a
   - a2
@@ -200,8 +206,8 @@ describe('copyCursor', () => {
 - c
   - c1
   - c2`,
-        expect.objectContaining({ html: expect.any(String) }),
-      )
+        html: expect.any(String),
+      })
     })
 
     it('does not move the cursor or multicursors when copying in context view', async () => {
