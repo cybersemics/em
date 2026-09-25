@@ -3,7 +3,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import BackIcon from '../components/icons/BackIcon'
 import * as selection from '../device/selection'
 import isTableCol2 from '../selectors/isTableCol2'
-import heldKeysStore from '../stores/heldKeys'
+import heldKeysStore from '../stores/heldKeysStore'
 import headValue from '../util/headValue'
 import parentOf from '../util/parentOf'
 

@@ -7456,13 +7456,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/wasm@file:/private/tmp/treecrdt-undo-package.Da20Vm/treecrdt-wasm.tgz::locator=em%40workspace%3A.":
+"@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-7bf158ba2f9cede39d4712a65e7924ef0ad9b7fe/treecrdt-wasm.tgz":
   version: 0.0.1
-  resolution: "@treecrdt/wasm@file:/private/tmp/treecrdt-undo-package.Da20Vm/treecrdt-wasm.tgz#/private/tmp/treecrdt-undo-package.Da20Vm/treecrdt-wasm.tgz::hash=a51c9d&locator=em%40workspace%3A."
+  resolution: "@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-7bf158ba2f9cede39d4712a65e7924ef0ad9b7fe/treecrdt-wasm.tgz"
   dependencies:
     "@treecrdt/interface": "npm:0.2.0"
     "@treecrdt/sync-protocol": "npm:0.1.2"
-  checksum: 10c0/919acee723e8585daf211b8c80c90d31881936ba3e1155ff05490e5286f732e7caa10042d3d8bf3b3041d8724bf6c432e466d3753b1cf148b066a43b3c2b9e7f
+  checksum: 10c0/b4f2e9aa334302a04ad0906c81ef29d97d5965baf982a9dcdc84a60b820b7e3d8b743ab7daa7ddfdebb713780e2e5bbb773b58fb6f3e7476c9d6c6f98ef9af68
   languageName: node
   linkType: hard
 
@@ -12583,7 +12583,7 @@ __metadata:
     "@treecrdt/sync-server-core": "npm:0.1.2"
     "@treecrdt/sync-sqlite": "npm:0.1.2"
     "@treecrdt/wa-sqlite": "npm:0.4.2"
-    "@treecrdt/wasm": "file:/private/tmp/treecrdt-undo-package.Da20Vm/treecrdt-wasm.tgz"
+    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-7bf158ba2f9cede39d4712a65e7924ef0ad9b7fe/treecrdt-wasm.tgz"
     "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.2.0"

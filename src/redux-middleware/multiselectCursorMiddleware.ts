@@ -6,12 +6,13 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isTouch } from '../browser'
 import documentSort from '../selectors/documentSort'
 import getThoughtById from '../selectors/getThoughtById'
+import ministore from '../stores/ministore'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 
-/** The path the cursor was parked at when the multiselection grew past one thought, and the selection as it stood after the last action, or null if the cursor is not parked. Module state rather than Redux state, since this middleware is its only consumer and a park never outlives the multiselection that started it. */
-let parked: { parkedAt: Path; selection: Path[] } | null = null
+/** The path the cursor was parked at when the multiselection grew past one thought, and the selection as it stood after the last action, or null if the cursor is not parked. Module state rather than Redux state, since this middleware is its only consumer and a park never outlives the multiselection that started it. A ministore rather than a module variable so that resetStores restores it between tests; nothing subscribes, so a write costs one comparison. */
+const parkedStore = ministore<{ parkedAt: Path; selection: Path[] } | null>(null)
 
 /** Returns the nearest common ancestor of the given thoughts, i.e. the longest path that is a strict ancestor of every one of them. Null when that ancestor is the root, which has no Path of its own. */
 const commonAncestor = (paths: Path[]): Path | null => {
@@ -39,11 +40,12 @@ const multiselectCursorMiddleware: ThunkMiddleware<State> = ({ getState, dispatc
     if (state.isMulticursorExecuting) return
 
     const paths = Object.values(state.multicursors)
+    const parked = parkedStore.getState()
 
     if (paths.length > 0) {
       // Track the selection while it is non-empty, since the action that ends the multiselect is also the one that
       // empties it, leaving nothing to land the cursor on by the time the restore below runs.
-      if (parked) parked.selection = paths
+      if (parked) parkedStore.update({ selection: paths })
       if (paths.length < 2) return
 
       const ancestor = commonAncestor(paths)
@@ -58,7 +60,7 @@ const multiselectCursorMiddleware: ThunkMiddleware<State> = ({ getState, dispatc
       // Re-parking is what keeps the cursor an ancestor of every selected thought when the selection is extended into
       // another subtree, or replaced wholesale by cursorBack/cursorForward.
       if (ancestor && parkable && !equalPath(state.cursor, ancestor)) {
-        parked = { parkedAt: ancestor, selection: paths }
+        parkedStore.update({ parkedAt: ancestor, selection: paths })
         dispatch(setCursor({ path: ancestor, preserveMulticursor: true }))
       }
     }
@@ -67,7 +69,7 @@ const multiselectCursorMiddleware: ThunkMiddleware<State> = ({ getState, dispatc
     // it happened to be beforehand.
     else if (parked) {
       const { parkedAt, selection } = parked
-      parked = null
+      parkedStore.update(null)
       // Only move the cursor if it is still parked. If the multiselection was ended by something that moved the
       // cursor itself — a command that deletes the selected thoughts, or the blur that ends multi edit mode — that
       // cursor is the user's and must not be yanked away.

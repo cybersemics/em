@@ -78,7 +78,7 @@
       "yarn"
     ],
     "allowed-urls": [
-      "https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-31d08ee5cb88b55780fed9d56e1d515d1c046437/treecrdt-wasm.tgz"
+      "https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-7bf158ba2f9cede39d4712a65e7924ef0ad9b7fe/treecrdt-wasm.tgz"
     ],
     "path": "yarn.lock"
   },
@@ -121,7 +121,7 @@
     "@treecrdt/sync-server-core": "0.1.2",
     "@treecrdt/sync-sqlite": "0.1.2",
     "@treecrdt/wa-sqlite": "0.4.2",
-    "@treecrdt/wasm": "file:/private/tmp/treecrdt-undo-package.Da20Vm/treecrdt-wasm.tgz",
+    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-7bf158ba2f9cede39d4712a65e7924ef0ad9b7fe/treecrdt-wasm.tgz",
     "axios": "^1.20.0",
     "clipboard": "^2.0.11",
     "dnd-core": "^16.0.1",

@@ -11,7 +11,7 @@ The memory engine owns the document and accepts local commands synchronously. Re
 
 ## Running the prototype
 
-Run `yarn install --immutable` and `yarn start`. This local undo experiment pins a locally packed `@treecrdt/wasm` tarball in `package.json` and `yarn.lock`. Its source is in the TreeCRDT `prototype/synchronous-wasm-view` worktree; build and pack that package to recreate the artifact. Before sharing the branch, replace the local file dependency with a prebuilt GitHub prerelease as used by the rest of the prototype.
+Run `yarn install --immutable` and `yarn start`. The experimental `@treecrdt/wasm` dependency is a prebuilt GitHub prerelease pinned in `package.json` and `yarn.lock`; no TreeCRDT checkout or Rust tooling is required. Its source is on TreeCRDT's `prototype/synchronous-wasm-view` branch.
 
 The package includes browser and Node loaders and the WASM binary. It initializes explicitly; importing it does not load WASM. Keep the core version aligned with EM's SQLite package so both replicas use the same operation format.
 
@@ -32,7 +32,7 @@ The prototype owns one persistent `TreecrdtClient` and one synchronous `MemoryCl
 | `'persistent'` (app default) | OPFS `/treecrdt-em-memory-prototype-${tsid}.db`; unavailable OPFS rejects initialization | `dedicated-worker` |
 | `'memory'` (unit tests, most e2e) | in-memory | `direct` |
 
-The separate filename leaves the normal app database untouched. [`index.tsx`](../src/index.tsx) passes `testFlags.thoughtspaceStorage ?? 'persistent'`. Initialization reports the actual mode through [`storageStatusStore`](../src/stores/storageStatus.ts) and Storage Diagnostics. The wa-sqlite assets come from the `treecrdt` Vite plugin; the memory client's WASM asset comes from its package.
+The separate filename leaves the normal app database untouched. [`index.tsx`](../src/index.tsx) passes `testFlags.thoughtspaceStorage ?? 'persistent'`. Initialization reports the actual mode through [`storageStatusStore`](../src/stores/storageStatusStore.ts) and Storage Diagnostics. The wa-sqlite assets come from the `treecrdt` Vite plugin; the memory client's WASM asset comes from its package.
 
 ### Single-tab access
 

@@ -5,6 +5,7 @@ import { HOME_TOKEN } from '../../constants'
 import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
+import getFavoriteIds from '../../selectors/getFavoriteIds'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
 import { refreshTestApp } from '../../test-helpers/createTestApp'
@@ -103,6 +104,27 @@ it('publishes every descendant before initialization completes', async () => {
       - c
         - d
           - e`)
+})
+
+it('keeps deep favorite contexts available after reinitialization and clearing navigation', async () => {
+  await store.dispatch(importText({ text: '- x\n- a\n  - b\n    - c\n      - =favorite' }))
+  const favorite = contextToThought(store.getState(), ['a', 'b', 'c', '=favorite'])!
+  expect(favorite).toBeTruthy()
+  store.dispatch(setCursor(['x']))
+
+  await refreshTestApp()
+
+  expect(getFavoriteIds(store.getState())).toEqual([favorite.id])
+  expect(contextToThought(store.getState(), ['a', 'b', 'c'])?.id).toBe(favorite.parentId)
+
+  store.dispatch(clear())
+
+  expect(getFavoriteIds(store.getState())).toEqual([favorite.id])
+
+  await refreshTestApp()
+
+  expect(getFavoriteIds(store.getState())).toEqual([favorite.id])
+  expect(contextToThought(store.getState(), ['a', 'b', 'c'])?.id).toBe(favorite.parentId)
 })
 
 it('deletes an entire deep subtree after reinitialization', async () => {

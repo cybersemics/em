@@ -84,7 +84,7 @@ const updateCursorAfterDelete = (state: State, statePrev: State, document?: Thou
 
     const lastPatches = state.undoPatches[state.undoPatches.length - 1]
     const lastCursorOp =
-      lastPatches?.metadata.actions[0] === 'newThought'
+      lastPatches?.metadata.actionTypes[0] === 'newThought'
         ? lastPatches.ops.find(patch => patch.path === '/cursor')
         : undefined
     return lastCursorOp && 'value' in lastCursorOp ? (lastCursorOp.value as Path | null) : null

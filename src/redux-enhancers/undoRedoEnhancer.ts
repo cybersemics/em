@@ -4,7 +4,7 @@ import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator, UnknownAction } from 'redux'
 import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
-import Patch from '../@types/Patch'
+import Patch, { CommandAttributedAction, PatchMetadataInput } from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import * as commands from '../actions'
@@ -17,6 +17,7 @@ import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import debugLog from '../util/debugLog'
+import getUndoStepCount from '../util/getUndoStepCount'
 import headValue from '../util/headValue'
 import isAttribute from '../util/isAttribute'
 import reducerFlow from '../util/reducerFlow'
@@ -146,8 +147,21 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => [
     : [{ op: 'replace' as const, path: '/cursor', value: value.cursor }]),
 ]
 
-/** Returns true if a patch represents an undoable action, including actions after a multicursor command label. */
-const isPatchUndoable = (patch: Patch | undefined): boolean => !!patch?.metadata.actions.some(isUndoable)
+/** Stores user-level attribution once, independently of UI diffs and document receipts. */
+const createPatch = (
+  ops: Operation[],
+  metadata: PatchMetadataInput,
+  actionType: ActionType,
+  documentOperationIds: Patch['documentOperationIds'],
+): Patch => ({
+  ops,
+  metadata: {
+    ...metadata,
+    actionTypes: [actionType],
+    isNavigation: isNavigation(actionType),
+  },
+  documentOperationIds,
+})
 
 /** Actions that mutate state.multicursors. They are not undoable on their own, but belong to an executing multicursor command's history. */
 const multicursorActionTypes: Set<ActionType> = new Set(['addMulticursor', 'clearMulticursors', 'removeMulticursor'])
@@ -213,7 +227,7 @@ const undoOneReducer = (state: State, document?: ThoughtspaceTransaction): State
     redoPatches: patch.ops.length || patch.documentOperationIds.length ? [...redoPatches, patch] : redoPatches,
     undoPatches: undoPatches.slice(0, -1),
     cursorCleared: false,
-    lastUndoableActionType: lastUndoPatch.metadata.actions[0],
+    lastUndoableActionType: lastUndoPatch.metadata.actionTypes[0],
   }
 }
 
@@ -228,7 +242,7 @@ const redoOneReducer = (state: State, document?: ThoughtspaceTransaction): State
     redoPatches: redoPatches.slice(0, -1),
     undoPatches: patch.ops.length || patch.documentOperationIds.length ? [...undoPatches, patch] : undoPatches,
     cursorCleared: false,
-    lastUndoableActionType: lastRedoPatch.metadata.actions[0],
+    lastUndoableActionType: lastRedoPatch.metadata.actionTypes[0],
   }
 }
 
@@ -248,10 +262,7 @@ const undoReducer = (
   document?: ThoughtspaceTransaction,
 ): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
-  const lastAction = lastUndoPatch?.metadata.actions[0]
   const penultimateUndoPatch = nthLast(undoPatches, 2)
-  const penultimateAction = penultimateUndoPatch?.metadata.actions[0]
-
   if (!undoPatches.length) return state
 
   // Infer whether the last patch is a formatting-only edit by examining the diff operations.
@@ -271,13 +282,11 @@ const undoReducer = (
     return restoredPlain === currentPlain || restoredPlain.toLowerCase() === currentPlain.toLowerCase()
   })
 
-  const undoTwice = isNavigation(lastAction)
-    ? isPatchUndoable(penultimateUndoPatch)
-    : penultimateAction === 'newThought' && !lastPatchIsFormatting
-  const undoCount = count ?? (undoTwice ? 2 : 1)
+  const undoCount =
+    count ?? getUndoStepCount(lastUndoPatch, penultimateUndoPatch, { isFormatting: lastPatchIsFormatting })
 
   // Capture the current cursor offset before applying the undo patch.
-  // When undoing a formatting-only edit (no undoTwice), we preserve this offset
+  // When undoing a formatting-only edit, preserve this offset
   // so the caret stays where it was at the time of undo, instead of jumping to
   // the pre-formatting position that was stored in the patch.
   const priorCursorOffset = state.cursorOffset
@@ -300,12 +309,9 @@ const redoReducer = (
   document?: ThoughtspaceTransaction,
 ): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
-  const lastAction = lastRedoPatch?.metadata.actions[0]
-
   if (!redoPatches.length) return state
 
-  const redoTwice = lastAction && (isNavigation(lastAction) || lastAction === 'newThought')
-  const redoCount = count ?? (redoTwice ? 2 : 1)
+  const redoCount = count ?? getUndoStepCount(lastRedoPatch, nthLast(redoPatches, 2), { direction: 'redo' })
 
   return reducerFlow([
     ...Array.from({ length: redoCount }, () => (s: State) => redoOneReducer(s, document)),
@@ -341,6 +347,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (!state) return reducer(initialState, action)
       const { redoPatches, undoPatches } = state as State
       const actionType = action.type
+      const commandMetadata = (action as A & CommandAttributedAction).commandMetadata
 
       // Incoming publication is not history and must not merge a later edit with a pre-publication diagnostic diff.
       if (actionType === 'clear' || actionType === 'replaceThoughts') {
@@ -415,17 +422,28 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - Navigation actions are merged with the previous non-navigation action. This matches the behavior of most word processors where undo will revert the last destructive action, and the cursor will be restored to where it was before. For example, if the user edits 'a' to 'aa', moves the cursor to 'b', and then undoes, the cursor will be restored to 'aa' then the edit will be undone.
       // - Contiguous edits in the same direction are merged into a single edit action. For example, if the user edits 'a' to 'ab' and then 'ab' to 'abc', the undo will revert to 'a' in one step. Formatting edits (None direction) are never merged with any other edits — each formatting change (bold, italic, color) gets its own separate undo step. Edits marked preventMerge (e.g. a generated thought) are likewise never merged on either side.
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
-      // - All actions during the execution of a multicursor command will be merged together. The prevous action will always be setIsMulticursorExecuting.
-      // - Chained commands will be merged into the previous command, e.g. Select All + Categorize
-      if (
-        (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
-        shouldMergeWithLastEditThought ||
-        actionType === 'closeAlert' ||
-        state.isMulticursorExecuting ||
-        (lastAction as UnknownAction)?.mergeNext
-      ) {
+      // - All actions within an explicit command transaction are merged under that command's metadata.
+      // - Direct action batches guarded by isMulticursorExecuting are merged into one action patch.
+      const lastUndoPatch = nthLast(state.undoPatches, 1)
+      // A resumed invocation may extend its latest patch, but never reach back across another edit or undo/redo.
+      // Its identity survives await; only contiguous history is eligible for merging.
+      const continuesCommand =
+        !!lastAction &&
+        commandMetadata &&
+        lastUndoPatch?.metadata.source === 'command' &&
+        lastUndoPatch.metadata.invocationId === commandMetadata.invocationId
+      const shouldMerge = commandMetadata
+        ? continuesCommand ||
+          state.isMulticursorExecuting ||
+          (isNavigation(actionType) && isNavigation(lastAction?.type))
+        : (isNavigation(actionType) && isNavigation(lastAction?.type)) ||
+          shouldMergeWithLastEditThought ||
+          actionType === 'closeAlert' ||
+          state.isMulticursorExecuting ||
+          (lastAction as UnknownAction)?.mergeNext
+
+      if (shouldMerge) {
         lastAction = action
-        const lastUndoPatch = nthLast(state.undoPatches, 1)
         let lastState = state
         if (lastUndoPatch && lastUndoPatch.ops.length > 0) {
           // Add a try-catch to provide better error messaging if a patch fails.
@@ -443,6 +461,12 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         const combinedUndoPatch = diffState(newState as Index, lastState)
         const combinedOperationIds = [...(lastUndoPatch?.documentOperationIds ?? []), ...documentOperationIds]
 
+        const actionTypes: [ActionType, ...ActionType[]] = lastUndoPatch
+          ? lastUndoPatch.metadata.actionTypes.includes(actionType)
+            ? lastUndoPatch.metadata.actionTypes
+            : [...lastUndoPatch.metadata.actionTypes, actionType]
+          : [actionType]
+
         return {
           ...newState,
           lastUndoableActionType: actionType,
@@ -453,8 +477,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               ? [
                   {
                     ops: combinedUndoPatch,
-                    metadata: { actions: [...(lastUndoPatch?.metadata.actions ?? []), actionType] },
                     documentOperationIds: combinedOperationIds,
+                    metadata: {
+                      ...(commandMetadata ?? lastUndoPatch?.metadata ?? { source: 'action' as const }),
+                      actionTypes,
+                      isNavigation: lastUndoPatch
+                        ? lastUndoPatch.metadata.isNavigation && isNavigation(actionType)
+                        : isNavigation(actionType),
+                    },
                   },
                 ]
               : []),
@@ -478,14 +508,17 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             redoPatches: [],
             undoPatches: [
               ...newState.undoPatches,
-              {
-                ops: undoPatch,
-                metadata: {
-                  // Multicursor commands use their command label in the history, followed by the actions they dispatch.
-                  actions: [isSetIsMulticursorExecutingAction(action) ? (action.undoLabel as ActionType) : actionType],
+              createPatch(
+                undoPatch,
+                commandMetadata ?? {
+                  source: 'action',
+                  ...(isSetIsMulticursorExecutingAction(action) && action.undoLabel
+                    ? { label: action.undoLabel }
+                    : null),
                 },
+                actionType,
                 documentOperationIds,
-              },
+              ),
             ],
           }
         : newState

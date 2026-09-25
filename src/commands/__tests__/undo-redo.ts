@@ -1470,6 +1470,51 @@ describe('count', () => {
 })
 
 describe('operation receipts', () => {
+  it('retains multicursor command attribution while undo and redo replace the engine receipts', () => {
+    store.dispatch([
+      importText({ text: '- a\n- b\n- c' }),
+      setCursor(['b']),
+      addMulticursor(['b']),
+      addMulticursor(['c']),
+    ])
+
+    executeCommandWithMulticursor(indentCommand, { store, type: 'toolbar' })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c`)
+    const original = store.getState().undoPatches.at(-1)!
+    expect(original.metadata).toMatchObject({
+      source: 'command',
+      commandId: 'indent',
+      label: 'Indent',
+      type: 'toolbar',
+      isNavigation: false,
+    })
+    expect(original.metadata.actionTypes).toContain('indent')
+    expect(original.documentOperationIds.length).toBeGreaterThan(0)
+
+    store.dispatch(undo({ count: 1 }))
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+  - c`)
+    const inverse = store.getState().redoPatches.at(-1)!
+    expect(inverse.metadata).toEqual(original.metadata)
+    expect(inverse.documentOperationIds.length).toBeGreaterThan(0)
+    expect(inverse.documentOperationIds).not.toEqual(original.documentOperationIds)
+
+    store.dispatch(redo({ count: 1 }))
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c`)
+    const replayed = store.getState().undoPatches.at(-1)!
+    expect(replayed.metadata).toEqual(original.metadata)
+    expect(replayed.documentOperationIds).not.toEqual(inverse.documentOperationIds)
+  })
+
   it('groups typing receipts chronologically and redoes individual count boundaries with fresh receipts', () => {
     store.dispatch([newThought({}), editThought([''], 'a')])
     const firstEdit = store.getState().undoPatches.at(-1)!
@@ -1479,7 +1524,7 @@ describe('operation receipts', () => {
     const groupedEdit = store.getState().undoPatches.at(-1)!
     expect(groupedEdit.documentOperationIds).toHaveLength(2)
     expect(groupedEdit.documentOperationIds[0]).toEqual(firstEdit.documentOperationIds[0])
-    expect(groupedEdit.metadata.actions).toEqual(['editThought', 'editThought'])
+    expect(groupedEdit.metadata.actionTypes).toEqual(['editThought'])
 
     store.dispatch(undo({ count: 2 }))
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}`)
