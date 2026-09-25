@@ -47,7 +47,7 @@ it('when change the row, thought will be trimmed.', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/5232
-it.skip('trims a pasted trailing space when the thought is blurred', async () => {
+it('trims a pasted trailing space when the thought is blurred', async () => {
   await newThought('One two three')
   await waitForEditable('One two three')
 

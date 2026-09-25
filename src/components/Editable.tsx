@@ -834,6 +834,17 @@ const Editable = ({
       // (#4692).
       if (editableSyncStore.getState().suppressBlurSync) return
 
+      // A paste is committed by importData rather than by onChangeHandler, so its leading and trailing whitespace is
+      // never trimmed and is persisted to Redux, where it survives the blur (#5232). Trim it here so that the
+      // whitespace is preserved in the ContentEditable while the user is editing, as it is when typing, but is
+      // stripped once editing ends. A transient editable has no thought to edit: thoughtChangeHandler creates one
+      // instead, which would leave a stray thought behind.
+      const trimmedValue = trimHtml(oldValueRef.current)
+      if (!transient && trimmedValue !== oldValueRef.current) {
+        throttledChangeRef.current(trimmedValue, { rank, simplePath })
+        throttledChangeRef.current.flush()
+      }
+
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
       // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
       // oldValueRef.current is the latest value since throttledChangeRef was just flushed
