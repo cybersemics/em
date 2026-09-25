@@ -4,7 +4,7 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
-/** Set search contexts map that needs to be picked up by pull queue middleware. */
+/** Sets the search contexts map. */
 const searchContexts = (state: State, { value }: { value: Index<Context> | null }): State => ({
   ...state,
   searchContexts: value,
