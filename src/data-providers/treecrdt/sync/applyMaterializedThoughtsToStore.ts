@@ -1,79 +1,65 @@
-/* eslint-disable import/prefer-default-export -- bridge module */
 import type { MaterializationEvent } from '@treecrdt/interface/engine'
-import type { TreecrdtClient } from '@treecrdt/wa-sqlite'
+import _ from 'lodash'
 import type Index from '../../../@types/IndexType'
 import type Thought from '../../../@types/Thought'
+import type { DataProvider } from '../../DataProvider'
 import type { ThoughtspaceMaterializationBridge } from '../../thoughtspace'
-import { refreshAttributeChildrenFromChanges } from '../attributeChildren'
-import { waitForTreecrdtWriteBarrier } from '../writeBarrier'
+import {
+  getTreecrdtWriteBarrierVersion,
+  isTreecrdtLocalMaterialization,
+  waitForTreecrdtWriteBarrier,
+} from '../writeBarrier'
 import { enqueueMaterializedThoughtsToStoreWork } from './materializationQueue'
-import { type MaterializationStore, refreshThoughtsFromMaterializationChanges } from './materializationThoughtUpdates'
+import refreshThoughtsFromMaterializationChanges from './materializationThoughtUpdates'
 
-/** Dependencies captured when a client registers its materialization listener. */
-type MaterializationContext = Readonly<{
+export type MaterializationContext = {
   bridge: ThoughtspaceMaterializationBridge
-  client: TreecrdtClient
-  db: MaterializationStore
-}>
+  db: Pick<DataProvider, 'getThoughtById' | 'getLexemesByIds'>
+  pending: { event: MaterializationEvent; keys: Promise<string[]> }[]
+  isActive: () => boolean
+}
 
-/**
- * After remote TreeCRDT ops are materialized into SQLite, refresh the app-facing thoughtspace in one batch.
- * This is used for cross-tab and server sync events; same-tab local writes are already applied optimistically.
- */
-export async function applyMaterializedThoughtsToStore(
-  event: MaterializationEvent,
-  { bridge, client, db }: MaterializationContext,
-): Promise<void> {
-  if (event.changes.length === 0) return
-
-  // Local writes and materialization callbacks can race. Wait for queued em -> TreeCRDT writes before reading
-  // SQLite back into app state, otherwise a remote refresh can reapply stale rows over newer optimistic state.
-  await waitForTreecrdtWriteBarrier()
-
-  await refreshAttributeChildrenFromChanges(client, event.changes)
-
-  const snapshot = bridge.getSnapshot()
-  const { deletedIds, thoughts, lexemeIndexUpdates } = await refreshThoughtsFromMaterializationChanges(
-    event.changes,
-    db,
-    snapshot,
-  )
-
-  if (Object.keys(lexemeIndexUpdates).length > 0) {
-    await db.updateThoughts({
-      thoughtIndexUpdates: {},
-      lexemeIndexUpdates,
-    })
-  }
-
-  const thoughtIndexUpdates: Index<Thought | null> = {}
-
-  for (const id of deletedIds) {
-    thoughtIndexUpdates[id] = null
-  }
-
-  for (const latest of thoughts) {
-    const thoughtInState = snapshot.thoughtIndex[latest.id]
-    const parentInState = snapshot.thoughtIndex[latest.parentId]
-    // Pending is not part of the TreeCRDT payload. Preserve the local UI flag until auth/sync handling owns it.
-    const pending = thoughtInState?.pending || parentInState?.pending
-    const latestWithPending = {
-      ...latest,
-      ...(pending ? { pending } : null),
+/** Publishes complete memberships after persistence; local thoughts keep their optimistic view. */
+export const applyMaterializedThoughtsToStore = async (context: MaterializationContext): Promise<void> => {
+  const { bridge, db, pending, isActive } = context
+  // Without per-write confirmations, a newer edit invalidates readback. Retry after its persistence completes.
+  while (pending.length && isActive()) {
+    await waitForTreecrdtWriteBarrier()
+    const entries = pending.slice()
+    const snapshot = bridge.getSnapshot()
+    const writeVersion = getTreecrdtWriteBarrierVersion()
+    const keys = [...new Set((await Promise.all(entries.map(entry => entry.keys))).flat())]
+    const remoteChanges = entries.flatMap(({ event }) => (isTreecrdtLocalMaterialization(event) ? [] : event.changes))
+    const thoughtIndexUpdates: Index<Thought | null> = {}
+    if (remoteChanges.length) {
+      const { deletedIds, thoughts } = await refreshThoughtsFromMaterializationChanges(remoteChanges, db)
+      for (const id of deletedIds) thoughtIndexUpdates[id] = null
+      for (const latest of thoughts) {
+        const pending = snapshot.thoughtIndex[latest.id]?.pending || snapshot.thoughtIndex[latest.parentId]?.pending
+        thoughtIndexUpdates[latest.id] = { ...latest, ...(pending ? { pending } : null) }
+      }
     }
+    const values = await db.getLexemesByIds(keys)
+    const current = bridge.getSnapshot()
+    if (
+      snapshot.lexemeIndex !== current.lexemeIndex ||
+      snapshot.thoughtIndex !== current.thoughtIndex ||
+      writeVersion !== getTreecrdtWriteBarrierVersion() ||
+      entries.length !== pending.length
+    )
+      continue
+    if (!isActive()) return
 
-    thoughtIndexUpdates[latest.id] = latestWithPending
-  }
-
-  if (Object.keys(thoughtIndexUpdates).length > 0 || Object.keys(lexemeIndexUpdates).length > 0) {
-    await bridge.apply({ thoughtIndex: thoughtIndexUpdates, lexemeIndex: lexemeIndexUpdates })
+    const lexemeIndexUpdates = Object.fromEntries(
+      keys.flatMap((key, i) => (_.isEqual(values[i], snapshot.lexemeIndex[key]) ? [] : [[key, values[i] ?? null]])),
+    )
+    pending.splice(0, entries.length)
+    if (Object.keys(lexemeIndexUpdates).length || Object.keys(thoughtIndexUpdates).length) {
+      await bridge.apply({ thoughtIndex: thoughtIndexUpdates, lexemeIndex: lexemeIndexUpdates })
+    }
   }
 }
 
-/** Serializes materialization refreshes so overlapping async events cannot apply out of order. */
-export function enqueueMaterializedThoughtsToStore(
-  event: MaterializationEvent,
-  context: MaterializationContext,
-): Promise<void> {
-  return enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(event, context))
-}
+/** Coalesces materialization events behind the existing local-write barrier. */
+export const enqueueMaterializedThoughtsToStore = (context: MaterializationContext): Promise<void> =>
+  enqueueMaterializedThoughtsToStoreWork(() => applyMaterializedThoughtsToStore(context))

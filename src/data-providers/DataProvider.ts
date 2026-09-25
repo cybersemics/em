@@ -16,7 +16,6 @@ export interface DataProvider<T extends any[] = any> {
   /** Resolved value is provider-specific; the treecrdt provider returns `readonly Operation[]` for local tree mutations. */
   updateThoughts: (args: {
     thoughtIndexUpdates: Index<Thought | null>
-    lexemeIndexUpdates: Index<Lexeme | null>
     movePlacements?: Index<ThoughtId | null>
   }) => Promise<unknown>
   freeThought: (id: ThoughtId) => Promise<void>

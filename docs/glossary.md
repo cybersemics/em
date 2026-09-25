@@ -20,7 +20,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **attribute / meta-attribute** — A child thought whose value starts with `=` (e.g. `=pin`, `=style`, `=view`). Meta-attributes change app behaviour for their parent (or, with `=children`/`=grandchildren`, for descendants). Stored under their value in `childrenMap` for `O(1)` lookup. See [metaprogramming.md](metaprogramming.md).
 
-**attribute-child index** — `em_attribute_children`, an app-owned SQLite table mapping each `=attribute` child to its parent and value. It restores the value-keying half of *childrenMap*, which TreeCRDT itself does not store. Rebuilt from the tree when its version changes, then maintained on every write. See [persistence.md → Derived tables](persistence.md#derived-tables).
+**attribute-child index** — `em_attribute_children`, an app-owned SQLite table mapping each `=attribute` child to its parent and value. It restores the value-keying half of *childrenMap*, which TreeCRDT itself does not store. Rebuilt alongside lexeme memberships when their shared checkpoint is outdated, then maintained from materialization events. See [persistence.md → Derived tables](persistence.md#derived-tables).
 
 **autocrop** — Vertical: hides the empty space above a deep cursor by translating the layout container upward and counter-scrolling to keep visible thoughts stable. Horizontal: see *indent*. See [layout-rendering.md → useAutocrop](layout-rendering.md#useautocrop-vertical-autocrop).
 
@@ -122,7 +122,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## M
 
-**materialization** — TreeCRDT applying operations to its SQLite read model, after which `client.onMaterialized` fires. em ignores events produced by its own writes (identified by *writeId*) and refreshes Redux from the rest. See [persistence.md → Change observation](persistence.md#change-observation-materialization).
+**materialization** — TreeCRDT applying operations to its SQLite read model, after which `client.onMaterialized` fires. em updates derived indexes and refreshes Redux memberships for both local and incoming changes; only incoming changes refresh thoughts. See [persistence.md → Change observation](persistence.md#change-observation-materialization).
 
 **meta-attribute** — See *attribute*.
 
@@ -210,7 +210,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **undo step** — What one Undo reverts: one patch, or a directional pair when trailing navigation belongs with the preceding change or an edit gives a newly created thought its value. A command transaction may collect several underlying actions into one patch. The undo slider uses the same grouping. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
 
-**updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write. (Self-originated materialization events are filtered by *writeId*, not by this field.)
+**updatedBy** — `clientId` of the writer, stored in each thought's payload. Persisted Lexemes derive it from their most recently updated member. Local materialization is identified by *writeId*, not by this field.
 
 **updateThoughts** — The action ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that mutates Redux and queues a push. The push queue persists those batches through the active data provider's `updateThoughts`.
 
@@ -224,4 +224,4 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **write barrier** — [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts). Serializes em → TreeCRDT persistence and exposes an idle barrier, so a materialization refresh cannot reapply stale rows over newer optimistic state. Also mints each write's *writeId*.
 
-**writeId** — `em-local:${sourceId}:${n}`, attached to every local TreeCRDT write and echoed on the materialization changes it produces. Lets this tab recognize and skip its own already-applied writes.
+**writeId** — `em-local:${sourceId}:${n}`, attached to every local TreeCRDT write and echoed on the materialization changes it produces. Lets this tab refresh memberships without reading back its already-optimistic local thoughts.
