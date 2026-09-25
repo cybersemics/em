@@ -32,14 +32,10 @@ const getThoughtAndParentPath = (state: State, at: string[]): [Thought, Path] =>
 const deleteThoughtAtFirstMatch = command((state: State, at: string[], document?: ThoughtspaceTransaction) => {
   const [thought, pathParent] = getThoughtAndParentPath(state, at)
 
-  return deleteThought(
-    state,
-    {
-      pathParent,
-      thoughtId: thought.id,
-    },
-    document,
-  )
+  return deleteThought({
+    pathParent,
+    thoughtId: thought.id,
+  })(state, document)
 })
 
 /**

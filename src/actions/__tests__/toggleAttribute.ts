@@ -20,14 +20,10 @@ it('toggle on', () => {
   const steps = [
     newThought('a'),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test', 'hello'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=test', 'hello'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -49,14 +45,10 @@ it('toggle off', () => {
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test', 'hello'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=test', 'hello'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -76,14 +68,10 @@ it('different value should override existing value', () => {
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test', 'goodbye'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=test', 'goodbye'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -101,14 +89,10 @@ it('add attribute if key has already been created', () => {
     newSubthought('=test'),
     setCursor(['a']),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test', 'hello'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=test', 'hello'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -124,14 +108,10 @@ it('toggle nullary attribute on', () => {
   const steps = [
     newThought('a'),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=test'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -146,23 +126,15 @@ it('toggle nullary attribute off', () => {
   const steps = [
     newThought('a'),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=test'],
+      })(state, document),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=test'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -182,14 +154,10 @@ it('preserve existing children when toggling a nullary attribute on', () => {
     `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=test'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -213,14 +181,10 @@ it('preserve existing children when toggling a nullary attribute off', () => {
     `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=test'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -236,14 +200,10 @@ it('toggle deep attribute on', () => {
   const steps = [
     newThought('a'),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['w', 'x', 'y', 'z'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['w', 'x', 'y', 'z'],
+      })(state, document),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -269,14 +229,10 @@ it('preserve other descendants when toggling deep attribute on', () => {
     `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['w', 'x', 'y', 'z'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['w', 'x', 'y', 'z'],
+      })(state, document),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -304,14 +260,10 @@ it('toggle deep attribute off', () => {
     `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['w', 'x', 'y', 'z'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['w', 'x', 'y', 'z'],
+      })(state, document),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -335,14 +287,10 @@ it('preserve other descendants when toggling deep attribute off', () => {
     `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['w', 'x', 'y', 'z'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['w', 'x', 'y', 'z'],
+      })(state, document),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -366,14 +314,10 @@ it('preserve sorted context', () => {
     `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=pin', 'true'],
-        },
-        document,
-      ),
+      toggleAttribute({
+        path: contextToPath(state, ['a']),
+        values: ['=pin', 'true'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())

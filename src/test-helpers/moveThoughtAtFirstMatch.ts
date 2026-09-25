@@ -44,16 +44,12 @@ const getMovePaths = (state: State, from: string[], to: string[]): [Path, Path] 
 const moveThoughtAtFirstMatch = command((state: State, payload: Payload, document?: ThoughtspaceTransaction) => {
   const { from, to, after, ...options } = payload
   const [oldPath, newPath] = getMovePaths(state, from, to)
-  return moveThought(
-    state,
-    {
-      ...options,
-      oldPath,
-      newPath,
-      afterId: after === null ? null : head(contextToPathOrThrow(state, after, 'moveThoughtAtFirstMatch')),
-    },
-    document,
-  )
+  return moveThought({
+    ...options,
+    oldPath,
+    newPath,
+    afterId: after === null ? null : head(contextToPathOrThrow(state, after, 'moveThoughtAtFirstMatch')),
+  })(state, document)
 })
 
 /**

@@ -14,14 +14,10 @@ const newThoughtAtFirstMatch = (
 ): State => {
   const path = contextToPath(state, payload.at)
   if (!path) throw new Error(`Ranked thoughts not found for context: ${payload.at}`)
-  return newThought(
-    state,
-    {
-      ...payload,
-      at: path,
-    },
-    document,
-  )
+  return newThought({
+    ...payload,
+    at: path,
+  })(state, document)
 }
 
 export default command(newThoughtAtFirstMatch)

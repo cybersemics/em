@@ -328,15 +328,11 @@ it('moving a context in the context view should update the cursor to the moved t
     (state: State, document?: ThoughtspaceTransaction) => {
       const contextA = contextToPathOrThrow(state, ['a', 'm', 'a'], 'moveThought')
       const contextB = contextToPathOrThrow(state, ['a', 'm', 'b'], 'moveThought')
-      return moveThought(
-        state,
-        {
-          oldPath: contextA,
-          newPath: appendToPath(contextB, head(contextA)),
-          afterId: null,
-        },
-        document,
-      )
+      return moveThought({
+        oldPath: contextA,
+        newPath: appendToPath(contextB, head(contextA)),
+        afterId: null,
+      })(state, document)
     },
   ]
 

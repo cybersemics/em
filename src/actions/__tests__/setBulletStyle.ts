@@ -19,14 +19,10 @@ it('set =children/=bullet/Ordered', () => {
   const steps = [
     newThought('a'),
     (state: State, document?: ThoughtspaceTransaction) =>
-      setBulletStyle(
-        state,
-        {
-          simplePath: contextToPath(state, ['a']) as SimplePath,
-          value: 'Ordered',
-        },
-        document,
-      ),
+      setBulletStyle({
+        simplePath: contextToPath(state, ['a']) as SimplePath,
+        value: 'Ordered',
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -43,14 +39,10 @@ it('set =children/=bullet/Alpha', () => {
   const steps = [
     newThought('a'),
     (state: State, document?: ThoughtspaceTransaction) =>
-      setBulletStyle(
-        state,
-        {
-          simplePath: contextToPath(state, ['a']) as SimplePath,
-          value: 'Alpha',
-        },
-        document,
-      ),
+      setBulletStyle({
+        simplePath: contextToPath(state, ['a']) as SimplePath,
+        value: 'Alpha',
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -74,14 +66,10 @@ it('replace an existing bullet style rather than toggling it off', () => {
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      setBulletStyle(
-        state,
-        {
-          simplePath: contextToPath(state, ['a']) as SimplePath,
-          value: 'None',
-        },
-        document,
-      ),
+      setBulletStyle({
+        simplePath: contextToPath(state, ['a']) as SimplePath,
+        value: 'None',
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -105,14 +93,10 @@ it('setting the default (null) removes =children/=bullet and an emptied =childre
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      setBulletStyle(
-        state,
-        {
-          simplePath: contextToPath(state, ['a']) as SimplePath,
-          value: null,
-        },
-        document,
-      ),
+      setBulletStyle({
+        simplePath: contextToPath(state, ['a']) as SimplePath,
+        value: null,
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -135,14 +119,10 @@ it('does not clobber sibling =children attributes when setting a bullet style', 
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      setBulletStyle(
-        state,
-        {
-          simplePath: contextToPath(state, ['a']) as SimplePath,
-          value: 'Ordered',
-        },
-        document,
-      ),
+      setBulletStyle({
+        simplePath: contextToPath(state, ['a']) as SimplePath,
+        value: 'Ordered',
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -174,14 +154,10 @@ it('setting the default (null) preserves sibling =children attributes', () => {
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      setBulletStyle(
-        state,
-        {
-          simplePath: contextToPath(state, ['a']) as SimplePath,
-          value: null,
-        },
-        document,
-      ),
+      setBulletStyle({
+        simplePath: contextToPath(state, ['a']) as SimplePath,
+        value: null,
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())

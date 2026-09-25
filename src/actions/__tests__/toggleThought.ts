@@ -18,14 +18,10 @@ it('toggle on single value', () => {
   const steps = [
     newThought('a'),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleThought(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          value: 'b',
-        },
-        document,
-      ),
+      toggleThought({
+        path: contextToPath(state, ['a']),
+        value: 'b',
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -45,14 +41,10 @@ it('toggle off single value', () => {
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleThought(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          value: 'b',
-        },
-        document,
-      ),
+      toggleThought({
+        path: contextToPath(state, ['a']),
+        value: 'b',
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -66,14 +58,10 @@ it('toggle on deep value', () => {
   const steps = [
     newThought('a'),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleThought(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['b', 'c'],
-        },
-        document,
-      ),
+      toggleThought({
+        path: contextToPath(state, ['a']),
+        values: ['b', 'c'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -95,14 +83,10 @@ it('toggle off deep value', () => {
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleThought(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['b', 'c'],
-        },
-        document,
-      ),
+      toggleThought({
+        path: contextToPath(state, ['a']),
+        values: ['b', 'c'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -121,14 +105,10 @@ it('preserve siblings when toggling on single value', () => {
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleThought(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['c'],
-        },
-        document,
-      ),
+      toggleThought({
+        path: contextToPath(state, ['a']),
+        values: ['c'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -149,14 +129,10 @@ it('toggle on meta attribute above siblings', () => {
       `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleThought(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['=test'],
-        },
-        document,
-      ),
+      toggleThought({
+        path: contextToPath(state, ['a']),
+        values: ['=test'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -179,14 +155,10 @@ it('preserve ancestors when toggling on deep value', () => {
     `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleThought(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['b', 'c', 'e', 'f'],
-        },
-        document,
-      ),
+      toggleThought({
+        path: contextToPath(state, ['a']),
+        values: ['b', 'c', 'e', 'f'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -214,14 +186,10 @@ it('preserve ancestor siblings when toggling off deep value', () => {
     `,
     }),
     (state: State, document?: ThoughtspaceTransaction) =>
-      toggleThought(
-        state,
-        {
-          path: contextToPath(state, ['a']),
-          values: ['b', 'c', 'd', 'e'],
-        },
-        document,
-      ),
+      toggleThought({
+        path: contextToPath(state, ['a']),
+        values: ['b', 'c', 'd', 'e'],
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())

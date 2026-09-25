@@ -47,14 +47,10 @@ const importTextAtFirstMatch = command(
     const path = contextToPath(state, payload.at)
 
     if (!path) throw new Error(`Path not found for ${payload.at}`)
-    return importText(
-      state,
-      {
-        ...payload,
-        path,
-      },
-      document,
-    )
+    return importText({
+      ...payload,
+      path,
+    })(state, document)
   },
 )
 it('basic import with proper thought structure', () => {

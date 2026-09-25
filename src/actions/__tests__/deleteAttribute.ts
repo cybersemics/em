@@ -22,24 +22,16 @@ it('delete attribute', () => {
 
     // set attribute
     (state: State, document?: ThoughtspaceTransaction) =>
-      setDescendant(
-        state,
-        {
-          path: contextToPath(state, ['a'])!,
-          values: ['=test', 'hello'],
-        },
-        document,
-      ),
+      setDescendant({
+        path: contextToPath(state, ['a'])!,
+        values: ['=test', 'hello'],
+      })(state, document),
     // delete attribute
     (state: State, document?: ThoughtspaceTransaction) =>
-      deleteAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a'])!,
-          value: '=test',
-        },
-        document,
-      ),
+      deleteAttribute({
+        path: contextToPath(state, ['a'])!,
+        value: '=test',
+      })(state, document),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())
@@ -62,14 +54,10 @@ it('delete deep attribute with descendants', () => {
     }),
 
     (state: State, document?: ThoughtspaceTransaction) =>
-      deleteAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a'])!,
-          values: ['w', 'x', 'y', 'z'],
-        },
-        document,
-      ),
+      deleteAttribute({
+        path: contextToPath(state, ['a'])!,
+        values: ['w', 'x', 'y', 'z'],
+      })(state, document),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
@@ -94,14 +82,10 @@ it('preserve descendants with other children on delete deep', () => {
     }),
 
     (state: State, document?: ThoughtspaceTransaction) =>
-      deleteAttribute(
-        state,
-        {
-          path: contextToPath(state, ['a'])!,
-          values: ['w', 'x', 'y', 'z'],
-        },
-        document,
-      ),
+      deleteAttribute({
+        path: contextToPath(state, ['a'])!,
+        values: ['w', 'x', 'y', 'z'],
+      })(state, document),
   ]
 
   // run steps through reducer flow and export as plaintext for readable test
