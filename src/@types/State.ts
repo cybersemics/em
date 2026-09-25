@@ -7,6 +7,7 @@ import CommandId from './CommandId'
 import CommandUniverseNavigation from './CommandUniverseNavigation'
 import Context from './Context'
 import DragCommandZone from './DragCommandZone'
+import HelpGenieState from './HelpGenieState'
 import Index from './IndexType'
 import LearningState from './LearningState'
 import Modal from './Modal'
@@ -121,6 +122,8 @@ interface State {
   latestCommands: Command[]
   /** The learning journey: pinned command and per-command practice progress. See actions/pinCommand.ts and docs/learning.md. */
   learning: LearningState
+  /** Whether the help genie is out, where it has been sent, and whether it can run here. See actions/toggleHelpGenie.ts and docs/learning.md. */
+  helpGenie: HelpGenieState
   /** Tracks the state of long press and drag-and-drop. */
   longPress: LongPressState
   /** When a context is sorted, the manual sort order is saved so that it can be recovered when they cycle back through the sort options. If new thoughts have been added, their order relative to the original thoughts will be indeterminate, but both the old thoughts and the new thoughts will be sorted relative to themselves. The outer Index is keyed by parent ThoughtId, and the inner Index stores the manual ranks of each child at the time the context is sorted. This is stored in memory only and is lost when the app refreshes. */
