@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
+import { toggleHelpGenieActionCreator as toggleHelpGenie } from '../../actions/toggleHelpGenie'
 import { isTouch } from '../../browser'
 import { formatKeyboardShortcut, gestureString } from '../../commands'
 import { Settings } from '../../constants'
@@ -62,6 +63,9 @@ const PinnedCommandTooltip = ({
 
   // A gesture is in progress on the page beneath: the user is practicing. Dim everything but the diagram.
   const isTracing = gestureStore.useSelector(state => state.gesture !== '')
+  const dispatch = useDispatch()
+  const genieVisible = useSelector(state => state.helpGenie.visible)
+  const genieUnavailable = useSelector(state => state.helpGenie.unavailable)
 
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
 
@@ -239,14 +243,20 @@ const PinnedCommandTooltip = ({
           })}
           style={{ opacity: isTracing ? 0.5 : 1, pointerEvents: isOpen ? 'auto' : 'none' }}
         >
-          {/* The learning genie: the same button as the Command Universe header's Help. The learning portal it opens does not exist yet, so it has no action. */}
+          {/* The learning genie: the same button as the Command Universe header's Help. It lets the help genie out, or puts it back. Like any tap, pressing it also dismisses the tooltip. */}
           <div
             className={css({
               flex: 'none',
               translate: '0px 0px',
             })}
           >
-            <CircleButton ariaLabel='Help' size='1.7778rem'>
+            <CircleButton
+              ariaLabel='Help'
+              size='1.7778rem'
+              pressed={genieVisible}
+              disabled={genieUnavailable}
+              onClick={() => dispatch(toggleHelpGenie({}))}
+            >
               <InfoGenieIcon
                 size={24}
                 fill={token('colors.pinnedCommandGenieIcon')}
