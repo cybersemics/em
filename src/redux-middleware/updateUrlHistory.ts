@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { ThunkMiddleware } from 'redux-thunk'
+import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import { isTouch } from '../browser'
@@ -40,8 +41,12 @@ const historyMethod = isTouch ? 'replaceState' : 'pushState'
 /** The last path that is passed to updateUrlHistoryThrottled. Used to short circuit updateUrlHistory when the cursor hasn't changed without having to call decodeThoughtsUrl which is relatively slow. */
 const pathPrevStore = ministore<{ path: Path | null }>({ path: null })
 
-/** The last cursor and the value of its thought. Updated immediately on every action. */
-const cursorPrevStore = ministore<{ cursor: Path | null; value: string | null }>({ cursor: null, value: null })
+/** The last cursor, the value of its thought, and the last multicursors. Updated immediately on every action. The multicursors are compared by identity, since the reducers that write state.multicursors only replace it when the selection changes. */
+const cursorPrevStore = ministore<{ cursor: Path | null; value: string | null; multicursors: Index<Path> | null }>({
+  cursor: null,
+  value: null,
+  multicursors: null,
+})
 
 /** Encodes context array into a URL. */
 const pathToUrl = (state: State, path: Path) => {
@@ -151,17 +156,33 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
     next(action)
     updateUrlHistoryThrottled(getState)
 
-    // Update the command state whenever the cursor moves or the cursor thought's value changes.
+    // Update the command state whenever the selection changes or the cursor thought's value changes.
     // Otherwise the command state will not update when the cursor is moved with no selection (mobile only, when the keyboard is down), since updateCommandState is otherwise only called on selection change.
     // The value changes without a selection change when a formatting edit is undone or redone with the keyboard down, which would otherwise leave a color swatch or formatting command selected for formatting the thought no longer has (#5107).
+    // The multicursors are watched as well as the cursor, since a thought can be selected while there is no cursor at all, e.g. by long pressing it after the Home button has dismissed the cursor (#5286).
     const state = getState()
+
+    // Multicursor commands restore the multiselection one thought at a time, so wait until the batch is complete, as
+    // multiselectCursorMiddleware and multicursorAlertMiddleware do. Otherwise the command state would be recomputed
+    // for every thought that is restored, re-parsing the whole growing selection each time. The previous values are
+    // left untouched so that the change is still detected on the action that clears the flag.
+    if (state.isMulticursorExecuting) return
+
     const cursor = state.cursor
     const cursorThoughtValue = cursor ? (getThoughtById(state, head(cursor))?.value ?? null) : null
-    const { cursor: cursorPrev, value: cursorThoughtValuePrev } = cursorPrevStore.getState()
-    if (!equalPath(cursor, cursorPrev) || cursorThoughtValue !== cursorThoughtValuePrev) {
+    const {
+      cursor: cursorPrev,
+      value: cursorThoughtValuePrev,
+      multicursors: multicursorsPrev,
+    } = cursorPrevStore.getState()
+    if (
+      !equalPath(cursor, cursorPrev) ||
+      cursorThoughtValue !== cursorThoughtValuePrev ||
+      state.multicursors !== multicursorsPrev
+    ) {
       updateCommandState()
     }
-    cursorPrevStore.update({ cursor, value: cursorThoughtValue })
+    cursorPrevStore.update({ cursor, value: cursorThoughtValue, multicursors: state.multicursors })
   }
 }
 
