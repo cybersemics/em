@@ -88,22 +88,24 @@ const useAutocrop = (spaceAbove: number): number => {
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
 
-  const spaceAboveLast = useRef(spaceAboveExtended)
+  // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
+  const autocrop = -spaceAboveExtended + viewportHeight
 
-  // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
+  const autocropLast = useRef(autocrop)
+
+  // When the thoughts are shifted, scroll by the same amount so that they appear to stay in the same place.
+  // Track the shift itself rather than spaceAboveExtended, which also changes with the viewport height, e.g. on rotation (#3990).
   useEffect(
     () => {
-      const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
-      window.scrollTo({ top: scrollY - spaceAboveDelta })
-      spaceAboveLast.current = spaceAboveExtended
+      window.scrollTo({ top: scrollY + autocrop - autocropLast.current })
+      autocropLast.current = autocrop
     },
     // do not trigger effect on scrollY change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [spaceAboveExtended],
+    [autocrop],
   )
 
-  // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-  return -spaceAboveExtended + viewportHeight
+  return autocrop
 }
 
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
