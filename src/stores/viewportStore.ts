@@ -1,13 +1,16 @@
 import _ from 'lodash'
 import { isTouch } from '../browser'
+import ministore from './ministore'
 import reactMinistore from './react-ministore'
 
 /** Scroll zone as a percentage of the smaller size of the screen. */
 const SCROLL_ZONE_WIDTH = 0.25
 
-// take a guess at the height of the virtual keyboard until we can measure it directly
-let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
-let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
+/** The last measured height of the virtual keyboard in each orientation, kept while the keyboard is closed so that the store can still report its expected height. Starts from a guess until the keyboard can be measured directly. A ministore rather than module variables so that a measurement taken in one test is cleared with the store it feeds. */
+const keyboardHeightCacheStore = ministore({
+  portrait: isTouch ? window.innerHeight / 2.275 : 0,
+  landscape: isTouch ? window.innerWidth / 1.7 : 0,
+})
 
 export interface ViewportState {
   innerWidth: number
@@ -25,7 +28,9 @@ const viewportStore = reactMinistore<ViewportState>({
   scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * SCROLL_ZONE_WIDTH,
   /** Height of the virtual keyboard regardless of whether it is open or closed. Initialized to estimated height. */
   virtualKeyboardHeight:
-    window.innerHeight > window.innerWidth ? virtualKeyboardHeightPortrait : virtualKeyboardHeightLandscape,
+    window.innerHeight > window.innerWidth
+      ? keyboardHeightCacheStore.getState().portrait
+      : keyboardHeightCacheStore.getState().landscape,
   /** The y position of the layout tree element relative to the document. Includes autocrop, i.e. this value changes when space above is cropped away as you navigate deeper. This ensures that scrollCursorIntoView can properly calculate the position of the cursor relative to the viewport. */
   layoutTreeTop: 0,
 })
@@ -43,12 +48,11 @@ export const updateSize = _.throttle(
     // When the keyboard closes, currentKeyboardHeight is 0 — preserving the cache ensures
     // iOSSafariHandler can still read the last-known height for its opening animation.
     if (currentKeyboardHeight > 0) {
-      if (isPortrait) {
-        virtualKeyboardHeightPortrait = currentKeyboardHeight
-      } else {
-        virtualKeyboardHeightLandscape = currentKeyboardHeight
-      }
+      keyboardHeightCacheStore.update(
+        isPortrait ? { portrait: currentKeyboardHeight } : { landscape: currentKeyboardHeight },
+      )
     }
+    const cachedKeyboardHeight = keyboardHeightCacheStore.getState()
 
     viewportStore.update({
       innerWidth: window.innerWidth,
@@ -59,8 +63,8 @@ export const updateSize = _.throttle(
         currentKeyboardHeight > 0
           ? currentKeyboardHeight
           : isPortrait
-            ? virtualKeyboardHeightPortrait
-            : virtualKeyboardHeightLandscape,
+            ? cachedKeyboardHeight.portrait
+            : cachedKeyboardHeight.landscape,
     })
   },
   // lock to 60 fps
