@@ -24,7 +24,13 @@ interface Command {
     dispatch: Dispatch,
     getState: () => State,
     e: Event | GestureResponderEvent | KeyboardEvent | React.MouseEvent | React.TouchEvent | React.ClipboardEvent,
-    { type, keyboardIndex }: { type: CommandType; keyboardIndex?: number },
+    {
+      type,
+      keyboardIndex,
+    }: {
+      type: CommandType
+      keyboardIndex?: number
+    },
   ) => void | Promise<void>
 
   /** Short label. */
@@ -39,7 +45,7 @@ interface Command {
     | boolean
     | {
         /** Optional override for executing the command for multiple cursors. */
-        execMulticursor?: (cursors: Path[], dispatch: Dispatch, getState: () => State) => void
+        execMulticursor?: (cursors: Path[], dispatch: Dispatch, getState: () => State) => void | Promise<void>
         /** A callback that is invoked when the command finishes executing for all filtered multicursors. */
         onComplete?: (filteredCursors: Path[], dispatch: Dispatch, getState: () => State) => void
         /** Prevent the cursor from being set back at the end of the command execution. */

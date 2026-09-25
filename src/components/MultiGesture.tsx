@@ -5,8 +5,8 @@ import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import testFlags from '../e2e/testFlags'
-import { clearGesture, updateGesture } from '../stores/gesture'
-import viewportStore from '../stores/viewport'
+import { clearGesture, updateGesture } from '../stores/gestureStore'
+import viewportStore from '../stores/viewportStore'
 import debugLog from '../util/debugLog'
 import isInGestureZone from '../util/isInGestureZone'
 import GestureMenu from './GestureMenu/GestureMenu'
@@ -151,6 +151,19 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       // would set this.abandon = true, which causes onPanResponderRelease to skip props.onEnd —
       // leaving the gesture menu and transparent overlay stuck on screen. See #3887.
       if (this.currentStart) return
+
+      // Two-finger tracing must not be interpreted as a gesture. If a second finger touches down
+      // before any gesture has begun, abandon the sequence so nothing happens: onPanResponderMove
+      // and onPanResponderRelease both bail out when this.abandon is set, preventing the trace,
+      // the gesture menu, and any command from being triggered. This runs after the currentStart
+      // guard above so a stray finger during an already-recognized single-finger gesture is still
+      // ignored rather than abandoning it (see #3887). See #4233.
+      if (e.touches.length > 1) {
+        this.abandon = true
+        this.disableScroll = false
+        clearGesture()
+        return
+      }
 
       if (testFlags.logMultigesture) {
         const x = e.touches[0].clientX
