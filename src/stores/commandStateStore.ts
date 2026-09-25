@@ -62,33 +62,48 @@ const getActiveEmptySelectionColors = (state: State): Partial<CommandState> => {
   }
 }
 
-/** Reduces the command state of every selected thought to the formatting they all share. A formatting command applies to the whole selection, so a swatch that claimed a color only some of the thoughts have would clear it on the next tap rather than apply it to the rest. */
-const intersectCommandState = (commandStates: CommandState[]): CommandState =>
-  commandStates.reduce((a, b) => ({
-    bold: a.bold && b.bold,
-    italic: a.italic && b.italic,
-    underline: a.underline && b.underline,
-    strikethrough: a.strikethrough && b.strikethrough,
-    code: a.code && b.code,
-    foreColor: a.foreColor === b.foreColor ? a.foreColor : undefined,
-    backColor: a.backColor === b.backColor ? a.backColor : undefined,
-  }))
+/** Combines the command state of two thoughts, keeping only the formatting that applies to both. A command that differs between them falls back to its inactive value: false for a formatting command, and undefined for a color. */
+// The highlight this produces reads as a statement about the whole selection — Bold lit means every selected thought is
+// bold — which implies that tapping it removes bold from all of them, and that tapping an unlit button applies that mark
+// to all of them. Executing a formatting command on a multiselection does not do that yet: the multicursor loop runs the
+// command once per selected thought, so a mixed selection is inverted rather than made uniform. Toggling all selected
+// thoughts in the same direction is tracked in https://github.com/cybersemics/em/issues/5148, which will bring the
+// formatting behavior in line with what this highlighting already describes.
+const intersectCommandState = (a: CommandState, b: CommandState): CommandState =>
+  Object.fromEntries(
+    Object.values(FormattingCommand).map(command => [
+      command,
+      a[command] === b[command] ? a[command] : typeof a[command] === 'boolean' ? false : undefined,
+    ]),
+  ) as CommandState
 
-/** Updates the command state to the current selection/thought. If there is an active selection, this uses document.queryCommandState to get the command state from the DOM. This detects a formatting style that has been enabled, but not yet entered (i.e. the next character typed will be bold). If there is no selection, this parses the value of each selected thought and sets a formatting state only if it applies to all of them in their entirety. */
+/** Updates the command state to the current selection/thought. If there is an active selection, this uses document.queryCommandState to get the command state from the DOM. This detects a formatting style that has been enabled, but not yet entered (i.e. the next character typed will be bold). If there is no selection, this parses the value of each selected thought and sets a formatting state only if it applies to the entire value of every one of them. */
 export const updateCommandState = () => {
   const state = store.getState()
-  // The thoughts a formatting command will be applied to: the multiselection when there is one, which may have no
-  // cursor at all if the Home button dismissed it. There is nothing to describe when nothing is selected.
   const paths = selectedPaths(state)
-  if (!paths.length) return
-  const selectionIsActiveThought = selection.isActive() && selection.isThought()
-  const action = selectionIsActiveThought
-    ? {
-        ...getCommandState(selection.html() ?? ''),
-        ...(!selection.text()?.length ? getActiveEmptySelectionColors(state) : {}),
-      }
-    : intersectCommandState(paths.map(path => getCommandState(pathToThought(state, path)?.value ?? '')))
-  commandStateStore.update(action)
+
+  // Nothing is selected, e.g. after the Home button has dismissed the cursor, so no formatting applies. Otherwise the
+  // toolbar would keep describing the thought that was formatted last (#5286).
+  if (!paths.length) {
+    resetCommandState()
+    return
+  }
+
+  const selectionIsActiveThought = state.cursor && selection.isActive() && selection.isThought()
+  commandStateStore.update(
+    selectionIsActiveThought
+      ? // The caret is live inside a thought, so the state describes what is selected there rather than the whole
+        // thought: the marks wrapping the selected markup, or — for a collapsed caret — the marks wrapping the caret,
+        // which is what the next character typed will inherit. A collapsed caret has no markup to carry a color, so the
+        // colors come from the browser instead, which reports one that has been enabled but not yet typed.
+        {
+          ...getCommandState(selection.html() ?? ''),
+          ...(!selection.text()?.length ? getActiveEmptySelectionColors(state) : {}),
+        }
+      : // With no browser selection the command state describes the thoughts a formatting command will act on, which is
+        // the multiselection when there is one and the cursor otherwise (see selectedPaths).
+        paths.map(path => getCommandState(pathToThought(state, path)?.value ?? '')).reduce(intersectCommandState),
+  )
 }
 
 export default commandStateStore
