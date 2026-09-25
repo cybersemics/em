@@ -28,7 +28,7 @@ describe('sort', () => {
     const state = reducerFlow([importText({ text })])(initialState())
 
     // Apply sort to the home context
-    const stateAfterSort = runDocumentCommand((state, document) => sort(state, HOME_TOKEN, document), state)
+    const stateAfterSort = runDocumentCommand(sort(HOME_TOKEN), state)
 
     // State reference should be the same (true no-op)
     expect(stateAfterSort).toBe(state)
@@ -59,10 +59,7 @@ describe('sort', () => {
     expect(c.rank).toBeGreaterThan(b.rank)
 
     // Apply sort — should be a no-op since the relative order is already correct
-    const stateAfterSort = runDocumentCommand(
-      (state, document) => sort(state, HOME_TOKEN, document),
-      stateWithGappedRanks,
-    )
+    const stateAfterSort = runDocumentCommand(sort(HOME_TOKEN), stateWithGappedRanks)
 
     // State reference should be the same (true no-op)
     expect(stateAfterSort).toBe(stateWithGappedRanks)
@@ -86,7 +83,7 @@ describe('sort', () => {
     const c1 = contextToThought(state, ['c'])!
 
     // Apply sort in a separate step
-    const stateAfterSort = runDocumentCommand((state, document) => sort(state, HOME_TOKEN, document), state)
+    const stateAfterSort = runDocumentCommand(sort(HOME_TOKEN), state)
 
     const exported = exportContext(stateAfterSort, HOME_TOKEN, 'text/plain')
 
@@ -123,7 +120,7 @@ describe('sort', () => {
       initialState(),
     )
 
-    const stateAfterSort = runDocumentCommand((state, document) => sort(state, HOME_TOKEN, document), state)
+    const stateAfterSort = runDocumentCommand(sort(HOME_TOKEN), state)
 
     // the rendered order is rank order, so assert the ranked children
     const children = getChildrenRanked(stateAfterSort, HOME_TOKEN).filter(child => isVisible(stateAfterSort, child))

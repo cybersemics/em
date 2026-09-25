@@ -19,17 +19,14 @@ it('siblings by rank', () => {
     - c
   `
 
-  const state = runDocumentCommand((state, document) => importText(state, { text }, document), initialState())
+  const state = runDocumentCommand(importText({ text }), initialState())
 
   const a = contextToPath(state, ['a'])!
   const b = contextToPath(state, ['b'])!
   const c = contextToPath(state, ['c'])!
 
   // move b to the top of the context
-  const stateNew = runDocumentCommand(
-    (state, document) => moveThought(state, { oldPath: b, newPath: b, afterId: null }, document),
-    state,
-  )
+  const stateNew = runDocumentCommand(moveThought({ oldPath: b, newPath: b, afterId: null }), state)
 
   const pathsSorted = documentSort(stateNew, [a, b, c])
   const contextsSorted = pathsSorted.map(path => pathToContext(stateNew, path))
@@ -44,17 +41,14 @@ it('ignore order of input paths', () => {
     - c
   `
 
-  const state = runDocumentCommand((state, document) => importText(state, { text }, document), initialState())
+  const state = runDocumentCommand(importText({ text }), initialState())
 
   const a = contextToPath(state, ['a'])!
   const b = contextToPath(state, ['b'])!
   const c = contextToPath(state, ['c'])!
 
   // move b to the top of the context
-  const stateNew = runDocumentCommand(
-    (state, document) => moveThought(state, { oldPath: b, newPath: b, afterId: null }, document),
-    state,
-  )
+  const stateNew = runDocumentCommand(moveThought({ oldPath: b, newPath: b, afterId: null }), state)
 
   const pathsSorted = documentSort(stateNew, [c, b, a])
   const contextsSorted = pathsSorted.map(path => pathToContext(stateNew, path))
@@ -73,7 +67,7 @@ it('parents and children', () => {
     - c
   `
 
-  const state = runDocumentCommand((state, document) => importText(state, { text }, document), initialState())
+  const state = runDocumentCommand(importText({ text }), initialState())
 
   const a = contextToPath(state, ['a'])!
   const a1 = contextToPath(state, ['a', 'a1'])!

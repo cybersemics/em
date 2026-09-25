@@ -144,17 +144,12 @@ describe('duplicate rank integrity warning', () => {
   beforeEach(initStore)
   it('reports a corrupt projection without blocking the middleware consumer', () => {
     const stateBefore = runDocumentCommand(
-      (state, document) =>
-        importTextReducer(
-          state,
-          {
-            text: `
+      importTextReducer({
+        text: `
           - a
           - b
         `,
-          },
-          document,
-        ),
+      }),
       initialState(),
     )
     const a = contextToThought(stateBefore, ['a'])!

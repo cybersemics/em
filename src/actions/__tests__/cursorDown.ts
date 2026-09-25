@@ -52,7 +52,7 @@ describe('normal view', () => {
   })
 
   it('do nothing when there are no thoughts', () => {
-    const stateNew = runDocumentCommand((state, document) => cursorDown(state, document), initialState())
+    const stateNew = runDocumentCommand(cursorDown, initialState())
 
     expect(stateNew.cursor).toBe(null)
   })
@@ -124,7 +124,7 @@ describe('normal view', () => {
       act(() => {
         store.dispatch([setCursorAction(['a'])])
       })
-      const stateNew = runDocumentCommand((state, document) => cursorDown(state, document), store.getState())
+      const stateNew = runDocumentCommand(cursorDown, store.getState())
       expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm'])
     })
 
@@ -145,7 +145,7 @@ describe('normal view', () => {
         ])
       })
       act(() => executeCommand(newSubthoughtTopShortcut, { store }))
-      const stateNew = runDocumentCommand((state, document) => cursorDown(state, document), store.getState())
+      const stateNew = runDocumentCommand(cursorDown, store.getState())
       expectPathToEqual(stateNew, stateNew.cursor, ['x', 'b'])
     })
   })

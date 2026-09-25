@@ -108,7 +108,7 @@ it('add attribute if key has already been created', () => {
 })
 
 it('noop if no values are given', () => {
-  const stateStart = runDocumentCommand((state, document) => newThought(state, 'a', document), initialState())
+  const stateStart = runDocumentCommand(newThought('a'), initialState())
 
   const steps = [
     (state: State, document?: ThoughtspaceTransaction) =>

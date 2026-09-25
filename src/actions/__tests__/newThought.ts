@@ -39,10 +39,7 @@ describe('normal view', () => {
   })
 
   it('new thought in root', () => {
-    const stateNew = runDocumentCommand(
-      (state, document) => newThought(state, { value: 'a' }, document),
-      initialState(),
-    )
+    const stateNew = runDocumentCommand(newThought({ value: 'a' }), initialState())
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -117,10 +114,7 @@ describe('normal view', () => {
   })
 
   it('update cursor to first new thought', () => {
-    const stateNew = runDocumentCommand(
-      (state, document) => newThought(state, { value: 'a' }, document),
-      initialState(),
-    )
+    const stateNew = runDocumentCommand(newThought({ value: 'a' }), initialState())
 
     expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['a'])!])
   })

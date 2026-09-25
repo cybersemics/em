@@ -43,7 +43,7 @@ describe('getContextsSortedAndRanked', () => {
               - y
       `
 
-      const state = runDocumentCommand((state, document) => importText(state, { text }, document), initialState())
+      const state = runDocumentCommand(importText({ text }), initialState())
       const vId = contextToThoughtId(state, ['v'])
       const bId = contextToThoughtId(state, ['v', 'b'])
 

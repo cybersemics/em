@@ -12,15 +12,10 @@ afterEach(waitForThoughtspaceIdle)
 
 it('uses the bootstrapped Settings thought without creating a duplicate', () => {
   const stateNew = runDocumentCommand(
-    (state, document) =>
-      settings(
-        state,
-        {
-          key: 'Tutorial',
-          value: 'Off',
-        },
-        document,
-      ),
+    settings({
+      key: 'Tutorial',
+      value: 'Off',
+    }),
     initialState(),
   )
 

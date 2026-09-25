@@ -11,7 +11,7 @@ afterEach(waitForThoughtspaceIdle)
 
 /** Creates a single thought and returns its derived fill color. */
 const fillOf = (value: string) => {
-  const state = runDocumentCommand((state, document) => newThought(state, { value }, document), initialState())
+  const state = runDocumentCommand(newThought({ value }), initialState())
   return getThoughtFill(state, head(state.cursor!))
 }
 

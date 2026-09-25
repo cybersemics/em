@@ -702,16 +702,11 @@ it('consistent rank between lexemeIndex and thoughtIndex on duplicate attribute 
 
   const steps = [
     importText({ text }),
-    (newState: State, document?: ThoughtspaceTransaction) =>
-      moveThoughtAtFirstMatch(
-        newState,
-        {
-          from: ['a', '=b'],
-          to: ['=b'],
-          after: ['a'],
-        },
-        document,
-      ),
+    moveThoughtAtFirstMatch({
+      from: ['a', '=b'],
+      to: ['=b'],
+      after: ['a'],
+    }),
   ]
 
   const stateNew = reducerFlow(steps)(initialState())

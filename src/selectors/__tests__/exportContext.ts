@@ -239,7 +239,7 @@ it('export note as a normal thought if lossless not selected', () => {
     - c
   `
 
-  const stateNew = runDocumentCommand((state, document) => importText(state, { text }, document), initialState())
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
 
   expect(exported).toBe(`- ${HOME_TOKEN}

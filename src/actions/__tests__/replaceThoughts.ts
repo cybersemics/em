@@ -23,10 +23,7 @@ beforeEach(async () => {
 it('replaces the entire document and repairs a deleted cursor to its surviving parent', () => {
   const previous = store.getState()
   const deletedId = contextToThought(previous, ['a', 'b', 'c'])!.id
-  const incoming = runDocumentCommand(
-    (state, document) => deleteThoughtAtFirstMatch(state, ['a', 'b', 'c'], document),
-    previous,
-  ).thoughts
+  const incoming = runDocumentCommand(deleteThoughtAtFirstMatch(['a', 'b', 'c']), previous).thoughts
 
   const next = replaceThoughts(previous, { thoughts: incoming, repairCursor: true })
 
@@ -39,10 +36,7 @@ it('replaces the entire document and repairs a deleted cursor to its surviving p
 
 it('clears the cursor when its entire ancestry was deleted', () => {
   const previous = store.getState()
-  const incoming = runDocumentCommand(
-    (state, document) => deleteThoughtAtFirstMatch(state, ['a'], document),
-    previous,
-  ).thoughts
+  const incoming = runDocumentCommand(deleteThoughtAtFirstMatch(['a']), previous).thoughts
 
   const next = replaceThoughts(previous, { thoughts: incoming, repairCursor: true })
 
@@ -53,7 +47,7 @@ it('clears the cursor when its entire ancestry was deleted', () => {
 it('follows a surviving cursor when an ancestor moves', () => {
   const previous = store.getState()
   const incoming = runDocumentCommand(
-    (state, document) => moveThoughtAtFirstMatch(state, { from: ['a', 'b'], to: ['x', 'b'], after: null }, document),
+    moveThoughtAtFirstMatch({ from: ['a', 'b'], to: ['x', 'b'], after: null }),
     previous,
   ).thoughts
 
@@ -66,7 +60,7 @@ it('follows a surviving cursor when an ancestor moves', () => {
 it('publishes a canonical snapshot atomically without adding history or authored writes', async () => {
   const previous = store.getState()
   const incoming = runDocumentCommand(
-    (state, document) => moveThoughtAtFirstMatch(state, { from: ['a', 'b'], to: ['x', 'b'], after: null }, document),
+    moveThoughtAtFirstMatch({ from: ['a', 'b'], to: ['x', 'b'], after: null }),
     previous,
   ).thoughts
   // Incoming memory changes already exist outside Redux before its publication callback dispatches the snapshot.
