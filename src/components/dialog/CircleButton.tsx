@@ -5,6 +5,8 @@ interface CircleButtonProps {
   onClick?: () => void
   ariaLabel: string
   disabled?: boolean
+  /** Makes the button a toggle and reports whether it is on. Leave undefined for an ordinary button. */
+  pressed?: boolean
   /** Diameter as a CSS length. Defaults to the 36px header size. */
   size?: string
 }
@@ -17,6 +19,7 @@ const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({
   onClick,
   ariaLabel,
   disabled,
+  pressed,
   size,
   children,
 }) => {
@@ -25,6 +28,7 @@ const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({
       type='button'
       onClick={onClick}
       aria-label={ariaLabel}
+      aria-pressed={pressed}
       disabled={disabled}
       style={size ? { width: size, height: size, minWidth: size, minHeight: size } : undefined}
       className={css({
