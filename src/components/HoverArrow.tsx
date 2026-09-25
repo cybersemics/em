@@ -1,5 +1,5 @@
 import { css } from '../../styled-system/css'
-import scrollTopStore from '../stores/scrollTop'
+import scrollTopStore from '../stores/scrollTopStore'
 
 /** Renders upward/downward arrow when hovering over a sorted context. */
 const HoverArrow = ({
