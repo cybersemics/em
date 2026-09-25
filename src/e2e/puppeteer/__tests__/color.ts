@@ -1,11 +1,14 @@
 import { KnownDevices } from 'puppeteer'
 import colors from '../../../colors.config'
+import { HOME_TOKEN } from '../../../constants'
 import rgbToHex from '../../../util/rgbToHex'
 import rgbaToHex from '../../../util/rgbaToHex'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
+import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
 import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
@@ -828,5 +831,39 @@ describe('mobile', () => {
 
     expect(await page.$('[aria-label="text color swatches"]')).not.toBeNull()
     expect(extractColor((await getEditingText())!).color).toBe(rgbaToHex(colors.light.blue))
+  })
+
+  // https://github.com/cybersemics/em/issues/5148
+  it('applies a color to every selected thought when the cursor thought already has it', async () => {
+    await paste(`
+      - <font color="#00c7e6">a</font>
+      - b
+      - c
+    `)
+
+    await clickThought('<span style="color: #00c7e6;">a</span>')
+    await command('selectAll')
+    await clickToolbar('Text Color', 'text color swatches', 'blue')
+
+    expect((await exportThoughts({ mimeType: 'text/html' })).replace(/\s*\n\s*/g, '')).toBe(
+      `<ul><li>${HOME_TOKEN}<ul><li><font color="#00c7e6">a</font></li><li><font color="#00c7e6">b</font></li><li><font color="#00c7e6">c</font></li></ul></li></ul>`,
+    )
+  })
+
+  // https://github.com/cybersemics/em/issues/5148
+  it('applies a color to every selected thought when only a thought other than the cursor has it', async () => {
+    await paste(`
+      - <font color="#00c7e6">a</font>
+      - b
+      - c
+    `)
+
+    await clickThought('b')
+    await command('selectAll')
+    await clickToolbar('Text Color', 'text color swatches', 'blue')
+
+    expect((await exportThoughts({ mimeType: 'text/html' })).replace(/\s*\n\s*/g, '')).toBe(
+      `<ul><li>${HOME_TOKEN}<ul><li><font color="#00c7e6">a</font></li><li><font color="#00c7e6">b</font></li><li><font color="#00c7e6">c</font></li></ul></li></ul>`,
+    )
   })
 })
