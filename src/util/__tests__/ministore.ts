@@ -22,6 +22,16 @@ it('update partial', () => {
   expect(store.getState()).toEqual({ a: 3, b: 2 })
 })
 
+it('update an object from null', () => {
+  const store = ministore<{ a: number; b: number } | null>(null)
+  store.update({ a: 1, b: 2 })
+  expect(store.getState()).toEqual({ a: 1, b: 2 })
+  store.update({ b: 3 })
+  expect(store.getState()).toEqual({ a: 1, b: 3 })
+  store.update(null)
+  expect(store.getState()).toBeNull()
+})
+
 describe('reset', () => {
   it('restore the initial state', () => {
     const store = ministore({ a: 1, b: 2 })

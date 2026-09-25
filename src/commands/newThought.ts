@@ -12,7 +12,7 @@ import findDescendant from '../selectors/findDescendant'
 import isContextViewActive from '../selectors/isContextViewActive'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
-import editingValueStore from '../stores/editingValue'
+import editingValueStore from '../stores/editingValueStore'
 import ellipsize from '../util/ellipsize'
 import isDocumentEditable from '../util/isDocumentEditable'
 

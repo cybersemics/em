@@ -24,7 +24,8 @@
 #     already open.
 #
 # Follow-up:
-#   - A GitHub Copilot cloud agent task (Opus 5, the `worker-bee` agent) per issue
+#   - A GitHub Copilot cloud agent task (the `worker-bee` agent, on the COPILOT_MODEL or
+#     COPILOT_MODEL_FLAKY repository variable's model) per issue
 #     just filed or reopened, so a new flake is being worked on before anyone reads
 #     the alert. Its pull request opens with `Fixes #<issue>`, which puts the issue
 #     number at the top of the pull request and links the two.
@@ -274,6 +275,9 @@ jobs:
         # fails below on the flake itself.
         continue-on-error: true
         env:
+          # Repository variables naming the Copilot model; the specific one wins when set.
+          COPILOT_MODEL: ${{ vars.COPILOT_MODEL }}
+          COPILOT_MODEL_FLAKY: ${{ vars.COPILOT_MODEL_FLAKY }}
           COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
         run: |
           set -euo pipefail

@@ -110,6 +110,10 @@ const colors = {
     dialogSearchAccent: '#E3BECD', // Command Universe search – glyph fill, caret, and bright (left) stop of the input text gradient
     dialogSearchAccentFade: 'rgba(217, 211, 213, 0.50)', // Command Universe search – faded (right) stop of the input text gradient
     gestureMenuTitle: 'rgba(255, 255, 255, 0.7)', // gesture menu – "Gestures" header label (always renders on the dark glow overlay, so it doesn't flip with theme)
+    commandUniverseSubtitleText: '#f4f0ffd6',
+    commandUniverseGestureCaptionGradientStart: '#dbf5ff',
+    commandUniverseGestureCaptionGradientEnd: '#a9bfd6',
+    gestureMenuLabel: 'rgba(255, 255, 255, 0.7)', // gesture menu – "Gestures" header label (always renders on the dark glow overlay, so it doesn't flip with theme)
     gestureMenuDivider: 'rgba(174, 168, 214, 0.59)', // gesture menu – gradient start stop of the divider under the "Gestures" header
   },
   light: {
@@ -222,7 +226,10 @@ const colors = {
     dialogHeaderDivider: 'rgba(255, 255, 255, 0.12)',
     dialogSearchAccent: '#E3BECD',
     dialogSearchAccentFade: 'rgba(217, 211, 213, 0.50)',
-    gestureMenuTitle: 'rgba(255, 255, 255, 0.7)',
+    commandUniverseSubtitleText: '#f4f0ffd6',
+    commandUniverseGestureCaptionGradientStart: '#dbf5ff',
+    commandUniverseGestureCaptionGradientEnd: '#a9bfd6',
+    gestureMenuLabel: 'rgba(255, 255, 255, 0.7)',
     gestureMenuDivider: 'rgba(174, 168, 214, 0.59)',
   },
 } as const

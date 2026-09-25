@@ -50,11 +50,12 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import caretRectStore from '../stores/caretRectStore'
-import editableSyncStore from '../stores/editableSync'
-import editingValueStore from '../stores/editingValue'
-import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
+import editableSyncStore from '../stores/editableSyncStore'
+import editingValueStore from '../stores/editingValueStore'
+import editingValueUntrimmedStore from '../stores/editingValueUntrimmedStore'
+import multitouchStore from '../stores/multitouchStore'
 import storageModel from '../stores/storageModel'
-import touchStore from '../stores/touch'
+import touchStore from '../stores/touchStore'
 import addEmojiSpace from '../util/addEmojiSpace'
 import debugLog from '../util/debugLog'
 import ellipsize from '../util/ellipsize'
@@ -916,7 +917,7 @@ const Editable = ({
           const isDragging =
             state.longPress === LongPressState.DragHold || state.longPress === LongPressState.DragInProgress
           // A tap that moved the cursor without entering edit mode can likewise produce this focus despite
-          // preventDefault (see suppressCursorAfterTouch in stores/touch.ts). The !isKeyboardOpen check keeps
+          // preventDefault (see suppressCursorAfterTouch in stores/touchStore.ts). The !isKeyboardOpen check keeps
           // programmatic focus flows intact: commands that activate edit mode by side effect set
           // state.isKeyboardOpen before useEditMode focuses the editable.
           const isSpuriousTapFocus = touchStore.getState().suppressCursorAfterTouch && !state.isKeyboardOpen
@@ -946,7 +947,7 @@ const Editable = ({
         // would otherwise override the cursor that archiveThought placed on the previous sibling.
         // When hidden thoughts are shown, isVisible is true and the cursor can still be set. (#4077)
         // Do not activate edit mode when the focus is the tail of a tap that already moved the cursor
-        // without edit mode or a completed drag (see suppressCursorAfterTouch in stores/touch.ts); the block above dismissed it.
+        // without edit mode or a completed drag (see suppressCursorAfterTouch in stores/touchStore.ts); the block above dismissed it.
         if (
           state.longPress === LongPressState.Inactive &&
           isVisible &&
@@ -986,6 +987,14 @@ const Editable = ({
    */
   const handleTapBehavior = useCallback(
     (e: MouseEvent | TouchEvent) => {
+      // Ignore taps that are part of a multi-touch gesture (e.g. two-finger trace or pinch-to-zoom): the
+      // cursor must not move to the finger location. The multitouch latch persists through the terminating
+      // touchend/click of the gesture and is only reset by the next single-finger touchstart. See #4233.
+      if (multitouchStore.getState()) {
+        if (e.cancelable) e.preventDefault()
+        return
+      }
+
       // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
       // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268

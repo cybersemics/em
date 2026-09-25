@@ -39,6 +39,8 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
   const multicursorPaths = documentSort(state, Object.values(state.multicursors))
   const cursorParent = parentOf(multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
   const simplePath = simplifyPath(state, multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
+  // Protection belongs to the actual tree parent, which may differ from the displayed Context View parent.
+  const simpleParent = rootedParentOf(state, simplePath)
 
   // Check if all selected thoughts belong to the same parent
   const allSameParent = multicursorPaths.every(path =>
@@ -52,16 +54,16 @@ const categorize = (state: State, { value = '' }: categorizePayload = {}): State
     })
   }
   // cancel if parent is readonly
-  else if (findDescendant(state, head(cursorParent), '=readonly')) {
+  else if (findDescendant(state, head(simpleParent), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, cursorParent) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
+      value: `"${ellipsize(headValue(state, simpleParent) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
       )}" cannot be categorized.`,
     })
-  } else if (findDescendant(state, head(cursorParent), '=unextendable')) {
+  } else if (findDescendant(state, head(simpleParent), '=unextendable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, cursorParent) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
+      value: `"${ellipsize(headValue(state, simpleParent) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
         cursor,
       )}" cannot be categorized.`,

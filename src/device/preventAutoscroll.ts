@@ -1,5 +1,5 @@
 import { isCapacitor, isIOS, isTouch } from '../browser'
-import viewportStore from '../stores/viewport'
+import viewportStore from '../stores/viewportStore'
 
 /** Duration after preventAutoscroll is called before the temporary styles are reset. */
 export const PREVENT_AUTOSCROLL_TIMEOUT = 10

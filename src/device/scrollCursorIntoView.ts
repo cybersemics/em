@@ -1,7 +1,7 @@
 import { isCapacitor, isIOS, isSafari, isTouch } from '../browser'
 import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../device/preventAutoscroll'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
-import viewportStore from '../stores/viewport'
+import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
 // A scroll that is waiting for preventAutoscroll to finish. Held so that it can be cancelled, since it is a scroll that has been decided on but not yet performed.

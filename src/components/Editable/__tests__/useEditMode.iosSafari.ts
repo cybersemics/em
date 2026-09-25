@@ -3,13 +3,13 @@ import { act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
 import store from '../../../stores/app'
-import touchStore from '../../../stores/touch'
+import touchStore from '../../../stores/touchStore'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
 import useEditMode from '../useEditMode'
 
 // Emulate iOS Safari, which sometimes synthesizes the mousedown/focus of a tap even though touchend called
-// preventDefault (e.g. a non-cancelable touchend during scroll momentum). See suppressCursorAfterTouch in stores/touch.ts.
+// preventDefault (e.g. a non-cancelable touchend during scroll momentum). See suppressCursorAfterTouch in stores/touchStore.ts.
 vi.mock('../../../browser', async importOriginal => {
   const actual = await importOriginal<typeof import('../../../browser')>()
   return {

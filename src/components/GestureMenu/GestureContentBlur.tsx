@@ -2,7 +2,7 @@ import { animate, useMotionValue } from 'motion/react'
 import { FC, useEffect } from 'react'
 import { css } from '../../../styled-system/css'
 import { isAndroid } from '../../browser'
-import gestureStore from '../../stores/gesture'
+import gestureStore from '../../stores/gestureStore'
 import durations from '../../util/durations'
 import ProgressiveBlur from '../ProgressiveBlur'
 
