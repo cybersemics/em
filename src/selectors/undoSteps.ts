@@ -1,22 +1,20 @@
 import moize from 'moize'
 import Patch from '../@types/Patch'
 import State from '../@types/State'
-import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
+import getUndoStepCount from '../util/getUndoStepCount'
 
 /** A step of the undo history: the patches that are undone and redone together, in chronological order. */
 export interface UndoStep {
   patches: Patch[]
 }
 
-/** Groups patches, ordered newest first, into undo steps. Mirrors undoTwice in undoRedoEnhancer: a navigation patch is grouped with the undoable patch before it, and a patch that follows a newThought is grouped with it, e.g. typing the value of a new thought. Unlike undoReducer, a formatting-only edit of a newly created thought is also grouped with the newThought, since telling it apart would require the thought's value at that point in the history. */
+/** Groups patches, ordered newest first, into undo steps. Uses the same step-boundary policy as undoRedoEnhancer: a navigation patch is grouped with the undoable patch before it, and a patch that follows a newThought is grouped with it, e.g. typing the value of a new thought. Unlike undoReducer, a formatting-only edit of a newly created thought is also grouped with the newThought, since telling it apart would require the thought's value at that point in the history. */
 const groupSteps = (patches: Patch[]): UndoStep[] =>
   patches.reduce<UndoStep[]>((steps, patch, i) => {
     // skip a patch that was grouped with the newer patch before it
     if (steps.at(-1)?.patches[0] === patch) return steps
     const older = patches[i + 1]
-    const grouped =
-      !!older &&
-      (isNavigation(patch[0]?.actions[0]) ? older[0]?.actions.some(isUndoable) : older[0]?.actions[0] === 'newThought')
+    const grouped = getUndoStepCount(patch, older) === 2
     return [...steps, { patches: grouped ? [older, patch] : [patch] }]
   }, [])
 

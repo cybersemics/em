@@ -14,6 +14,15 @@ const cursorBackCommand = {
   id: 'cursorBack',
   label: 'Back' as const,
   description: 'Move the cursor up a level.',
+  longDescription: (
+    <>
+      <p>Move the cursor up to the parent of the currently focused thought — one level higher in the tree.</p>
+      <p>Use Back to step out of the detail you are exploring and return to its broader context.</p>
+      <p>
+        When the cursor is already at the top level, Back smoothly scrolls the view to the top of your thoughtspace.
+      </p>
+    </>
+  ),
   gesture: 'r',
   svg: BackIcon,
   hideAlert: true,

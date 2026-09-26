@@ -41,6 +41,15 @@ It is **off by default on every host**, including the ones where logging itself 
 
 Use it to watch a single interaction live, through a browser MCP's console listing. Do not use it to capture a whole reproduction: four steps of editing produce about 6 KB, and a full buffer approaches a megabyte. Dump the buffer to a file instead.
 
+## In tests
+
+Logging is off in Vitest and Puppeteer, so a test that wants entries calls `debugLog.setEnabled(true)` and usually `debugLog.clear()` right after, to drop the session marker. It cleans up nothing afterwards: the module's in-memory state is restored at every test boundary by `resetStores` (see [Isolation and cleanup](testing.md#isolation-and-cleanup)), which runs the `reset` that `debugLog.ts` registers.
+
+- **What a clean slate is.** Logging off, the frame heartbeat cancelled, the buffer and its counters empty, the console mirror off: what a module load produces against empty storage on a host that does not auto-enable. It is written out explicitly rather than derived from the values the variables were constructed with, because those are not clean — the buffer is initialized from whatever `localStorage` held at import, i.e. a previous session's log.
+- **Reset is not `clear()`.** `reset` touches memory only. `clear()` is the operation that erases the persisted log, and resetting between tests must never be able to cost a user theirs. A test owns its own `localStorage` and clears it itself.
+- **Why it has to be automatic.** The heartbeat reschedules itself through `requestAnimationFrame`, which fake timers fake. Left running by one test, it makes `vi.runAllTimersAsync` abort with `Aborting after running 100000 timers` in whichever teardown drains timers next — `cleanupTestApp` does — far from the test that enabled logging. Within a test the same applies: while logging is enabled, flush with `vi.runOnlyPendingTimersAsync`, not `vi.runAllTimersAsync`.
+- **What it does not cover.** Import-time behaviour — hydrating the previous session's entries, deciding `autoEnabled` once from the real environment, and self-enabling on an auto-enable host — is unchanged, and the tests of it still `vi.resetModules()` and import a fresh instance. A reset module graph has its own registry that no fixture reaches, so such a test stops its fresh instance itself (`fresh.setEnabled(false)`).
+
 ## Comparing two logs
 
 The reason to capture a log while reproducing a bug is to hold it against the reporter's. The entry where the two stop agreeing is the strongest lead a hard-to-identify bug offers.
