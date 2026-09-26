@@ -206,6 +206,6 @@ Device permissions live in [`permissionsStore.ts`](../src/data-providers/permiss
 
 ## Cleanup
 
-`db.clear` is the runtime's `drop`. It detaches the data provider (rejecting any writes still waiting on initialization), stops WebSocket sync, unsubscribes the materialization listener, and calls `client.drop()`, which closes SQLite and — for OPFS storage — deletes the thoughtspace's database file. Used by the device-removal flow above, and by e2e tests through `em.testHelpers.dropThoughtspace`.
+`db.clear` is the runtime's `drop`. It detaches the data provider (rejecting any writes still waiting on initialization), stops WebSocket sync, unsubscribes the materialization listener, and calls `client.drop()`, which closes SQLite and — for OPFS storage — deletes the thoughtspace's database file. Used by the device-removal flow above, and by the unit-test helpers [`initStore`](../src/test-helpers/initStore.ts) (as `thoughtspaceRuntime.drop`) and [`cleanupTestApp`](../src/test-helpers/createTestApp.tsx) (as `db.clear`) to reset the in-memory thoughtspace between tests.
 
-Unit tests and most e2e runs initialize with `storage: 'memory'`, so they never touch OPFS; persistence-specific Puppeteer suites opt into OPFS explicitly. See [testing.md](testing.md).
+Unit tests and most e2e runs initialize with `storage: 'memory'`, so they never touch OPFS; persistence-specific Puppeteer suites opt into OPFS explicitly. Puppeteer tests do not drop the thoughtspace themselves: each test runs in its own incognito browser context under a fresh `tsid`, and closing the context discards its OPFS database along with the rest of its storage. See [testing.md](testing.md).
