@@ -4,7 +4,7 @@ import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
 import 'vi-canvas-mock'
-import { resetStores } from './stores/ministore'
+import { registerReset, resetStores } from './stores/ministore'
 
 expect.extend(matchers)
 
@@ -87,41 +87,45 @@ window.addEventListener('error', e => {
 // stub jest globally. This is needed incase jest is being directly referenced in the code.
 vi.stubGlobal('jest', vi)
 
-// Fix intermittent `ReferenceError: localStorage is not defined` (#3345). jsdom installs
-// localStorage/sessionStorage as OWN globals and deletes them after each test file, but module-scoped
-// throttled writers (e.g. saveJumpHistory) can fire timers post-teardown that hit the bare identifiers.
-// Defining a fallback on the global PROTOTYPE keeps them resolvable (teardown only deletes OWN keys);
-// jsdom's own properties shadow it during tests, so in-test behavior is unchanged.
-const globalPrototype = Object.getPrototypeOf(globalThis)
-// Guard against polluting Object.prototype in the unlikely event the global's prototype is Object.prototype.
-if (globalPrototype && globalPrototype !== Object.prototype) {
-  /** Creates a minimal in-memory Storage implementation for use as a post-teardown fallback. */
-  const createStorageFallback = (): Storage => {
-    const store = new Map<string, string>()
-    return {
-      clear: () => store.clear(),
-      getItem: key => store.get(key) ?? null,
-      key: index => Array.from(store.keys())[index] ?? null,
-      removeItem: key => store.delete(key),
-      setItem: (key, value) => store.set(key, `${value}`),
-      get length() {
-        return store.size
-      },
-    }
-  }
+// Cancel every lodash throttle and debounce at each test boundary (#5257). Vitest isolates modules per file, not per
+// test, so a wrapper created at module scope outlives the test that scheduled its trailing call: the call fires into
+// the next test, or into teardown after the store and localStorage have been cleared — which is where the intermittent
+// `ReferenceError: localStorage is not defined` came from (#3345). Wrappers created inside a factory that runs once per
+// file (pullQueue's, in the middleware chain) leak the same way, so the hook is at the source rather than at any call
+// site: throttle and debounce are replaced with versions that record each wrapper they create, and registerReset
+// cancels the live ones wherever resetStores runs — initStore and createTestApp at setup, cleanupTestApp before it
+// drains timers, and the afterEach below. Cancelling goes through the wrapper rather than clearTimeout because lodash
+// keeps its own timer id: a timer cleared behind its back leaves the wrapper believing one is pending, and the next
+// test's first call is silently dropped. cancel() also reopens a leading-edge window, so the first call of the next
+// test is not suppressed by a window the previous test opened. Weak references keep per-instance wrappers from
+// pinning unmounted components for the rest of the file.
+const { throttles } = vi.hoisted(() => ({ throttles: new Set<WeakRef<{ cancel: () => void }>>() }))
 
-  ;['localStorage', 'sessionStorage'].forEach(name => {
-    // Only define the fallback once per worker; jsdom's own property shadows it during tests.
-    if (!Object.prototype.hasOwnProperty.call(globalPrototype, name)) {
-      Object.defineProperty(globalPrototype, name, {
-        value: createStorageFallback(),
-        writable: true,
-        configurable: true,
-        enumerable: false,
-      })
-    }
+vi.mock(import('lodash'), async importOriginal => {
+  const lodash = await importOriginal()
+
+  /** Wraps throttle or debounce so that every wrapper it creates is registered for cancellation. */
+  const registering = <T extends (...args: never[]) => { cancel: () => void }>(create: T): T =>
+    ((...args: Parameters<T>) => {
+      const wrapper = create(...args)
+      throttles.add(new WeakRef(wrapper))
+      return wrapper
+    }) as T
+
+  // lodash is CommonJS: the namespace's named exports are getters over the one lodash object that is also the default
+  // export, so replacing the two methods on that object covers `_.throttle` and `import { throttle }` alike. The
+  // namespace is returned as is, since spreading it would drop the getters.
+  Object.assign(lodash.default, { throttle: registering(lodash.throttle), debounce: registering(lodash.debounce) })
+  return lodash
+})
+
+registerReset(() => {
+  throttles.forEach(ref => {
+    const wrapper = ref.deref()
+    if (wrapper) wrapper.cancel()
+    else throttles.delete(ref)
   })
-}
+})
 
 // Disable the Lottie icon animations, whose 5s repeating interval never runs out of pending timers: any test that
 // mounts an animated icon (e.g. the Command Universe) would make cleanupTestApp's vi.runAllTimersAsync abort with
