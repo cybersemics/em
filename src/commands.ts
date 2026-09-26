@@ -1003,16 +1003,16 @@ export const beforeInput = (e: InputEvent) => {
   // routes cannot both fire for a single gesture.
   if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
     e.preventDefault()
-    const type = e.inputType === 'historyUndo' ? 'undo' : 'redo'
-    // Scheduled before handleNativeHistory schedules registerNativeRedoStep, so that the replay runs first: replaying
-    // after the registration would move WebKit's position across the freshly registered redo step and could leave it
-    // on the undo side.
-    recycleNativeHistory(type)
     // A three-finger swipe reaches em twice on iOS Safari: once as the touch events device/nativeHistory.ts
     // recognizes, and again here a moment later. The default is still prevented so WebKit cannot mutate the
-    // contenteditable, and WebKit's position is still recycled since the event consumed a step, but the gesture has
-    // already been applied.
+    // contenteditable, but the gesture has already been applied, and the touch route has already scheduled the step
+    // it depends on. Recycling here as well would move WebKit's position back across that step and could leave only a
+    // stale step on the undo side.
     if (Date.now() - nativeHistoryGestureStore.getState() > NATIVE_HISTORY_GESTURE_TIMEOUT) {
+      const type = e.inputType === 'historyUndo' ? 'undo' : 'redo'
+      // Scheduled before handleNativeHistory schedules registerNativeRedoStep, so that the replay runs first:
+      // replaying after the registration would move WebKit's position across the freshly registered redo step.
+      recycleNativeHistory(type)
       handleNativeHistory(type)
     }
     return
