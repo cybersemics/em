@@ -57,9 +57,47 @@ const REGEX_DATE_COMBINED = new RegExp(
 // Allows mixed separators since it's only for parsing, not validation
 const REGEX_SHORT_DATE_PARSE = new RegExp(`^(\\d{1,2}[\\/-]\\d{1,2}|(${MONTH_NAMES})\\s+\\d{1,2})$`, 'i')
 
-// Match fonts tags for color and background color
-// can be used to strip font tags before sorting (#3782)
-const FONT_TAG_REGEX = /<font color="[^"]+"\s*(?:style="[^"]+")?>|<\/font>/gm
+// Match an opening or closing font or span tag, capturing the slash of a closing tag and the attributes of an opening
+// tag. These are the only two elements that can carry a color.
+const REGEX_COLOR_WRAPPER = /<(\/?)(?:font|span)\b([^>]*)>/gi
+
+// Match the color attribute of an opening font tag, e.g. <font color="#ff573d">
+const REGEX_COLOR_ATTRIBUTE = /(^|\s)color\s*=\s*"[^"]*"/gi
+
+// Match the style attribute of an opening tag, capturing its declarations
+const REGEX_STYLE_ATTRIBUTE = /style\s*=\s*"([^"]*)"/i
+
+// Match a color or background-color style declaration, i.e. both declarations of
+// <span style="color: #000000;background-color: rgb(0, 214, 136);">
+const REGEX_COLOR_DECLARATION = /^\s*(?:background-)?color\s*:/i
+
+/** Returns true if a font or span opening tag's attributes consist of nothing but a text or background color, i.e. the element exists only to color its contents. */
+const isColorOnlyWrapper = (attributes: string): boolean =>
+  attributes
+    .replace(REGEX_COLOR_ATTRIBUTE, '')
+    .replace(REGEX_STYLE_ATTRIBUTE, (styleAttribute, declarations: string) =>
+      declarations.split(';').every(declaration => !declaration.trim() || REGEX_COLOR_DECLARATION.test(declaration))
+        ? ''
+        : styleAttribute,
+    )
+    .trim() === ''
+
+/** Removes the font and span elements that carry nothing but a color, so that coloring a thought does not change where
+ * it sorts (#3927). Both tags occur: formatSelectionHtml writes a single <font color> for a text or background color,
+ * while a thought that has been pasted or split passes through formattingNodeToHtml, which rewrites <font> as
+ * <span style>. A wrapper that carries anything else, such as the font-weight of a pasted <span>, is left in place,
+ * since compareFormatting and compareFormattingTagPriority sort on it. */
+const stripColorWrappers = (value: string): string => {
+  // whether each font/span wrapper that is currently open was removed, so that its closing tag is removed with it
+  const removed: boolean[] = []
+  return value.replace(REGEX_COLOR_WRAPPER, (tag, closingSlash: string, attributes: string) => {
+    // a closing tag is removed only if its opening tag was; an unmatched closing tag has no opening tag to pair with
+    if (closingSlash) return removed.pop() ? '' : tag
+    const isColorOnly = isColorOnlyWrapper(attributes)
+    removed.push(isColorOnly)
+    return isColorOnly ? '' : tag
+  })
+}
 
 // removeDiacritics borrowed from modern-diacritics package
 // modern-diacritics does not currently import so it is copied here
@@ -281,8 +319,8 @@ export const compareReasonable: ComparatorFunction<string> = (a: string, b: stri
     compareStringsWithEmoji,
     (a, b) => compareReadableText(normalizeCharacters(a), normalizeCharacters(b)),
   ])
-  // Ignore font tags when sorting thoughts (#3782)
-  return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
+  // Ignore color markup when sorting thoughts (#3927)
+  return comparator(stripColorWrappers(a), stripColorWrappers(b))
 }
 
 /** A comparator that sorts anything in descending order. Not a strict reversal of compareReasonable, as empty strings, formatting, punctuation, and meta attributes are still sorted above plain text.
@@ -304,8 +342,8 @@ export const compareReasonableDescending: ComparatorFunction<string> = (a: strin
     _.flip(compareStringsWithEmoji),
     (a, b) => compareReadableText(normalizeCharacters(b), normalizeCharacters(a)),
   ])
-  // Ignore font tags when sorting thoughts (#3782)
-  return comparator(a.replaceAll(FONT_TAG_REGEX, ''), b.replaceAll(FONT_TAG_REGEX, ''))
+  // Ignore color markup when sorting thoughts (#3927)
+  return comparator(stripColorWrappers(a), stripColorWrappers(b))
 }
 
 /** Compare the value of two thoughts. */
