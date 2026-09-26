@@ -42,6 +42,7 @@ import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
+import editableSyncStore from './stores/editableSyncStore'
 import editingValueStore from './stores/editingValueStore'
 import gestureStore from './stores/gestureStore'
 import heldKeysStore from './stores/heldKeysStore'
@@ -896,9 +897,9 @@ const recycleNativeHistory = (type: 'undo' | 'redo') => {
     // Anchor a step only when the replay came up empty, and only with a collapsed caret in a thought, since typing
     // over a selection would destroy the selected text rather than restore it.
     if (replayNativeHistory(type) === 0 && selection.isCollapsed() && selection.isThought()) {
-      globals.suppressChange = true
+      editableSyncStore.update({ suppressChange: true })
       if (document.execCommand('insertText', false, ' ')) document.execCommand('delete')
-      globals.suppressChange = false
+      editableSyncStore.update({ suppressChange: false })
       replayNativeHistory('undo')
     }
     recyclingNativeHistory = false
