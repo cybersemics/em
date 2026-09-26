@@ -662,7 +662,7 @@ Clears all formatting from the current thought or selected text.
 
 ### Letter Case
 
-Change the Letter case.
+Changes the letter case of the current thought or selected text.
 
 ### Text Color
 
