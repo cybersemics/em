@@ -99,6 +99,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   return (
     <div
       ref={scrollZoneRef}
+      data-testid='scroll-zone'
       className={css({
         backgroundImage: `url('/img/scroll-zone/stardust.png')`,
         backgroundRepeat: 'repeat',

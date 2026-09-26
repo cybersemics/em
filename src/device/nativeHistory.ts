@@ -71,10 +71,12 @@ const onTouchEnd = (e: TouchEvent) => {
  * In the browser these gestures surface as a `historyUndo`/`historyRedo` `beforeinput` event, which
  * `beforeInput` intercepts. WebKit only dispatches that event while its own undo stack has a step to undo,
  * and it registers a step only for edits it performed itself. Since em applies most edits by re-rendering
- * the contenteditable from Redux, WebKit's stack runs dry long before em's history does; from then on iOS
- * handles the gesture itself and reports "Nothing to Undo" while em still has plenty to undo.
+ * the contenteditable from Redux, WebKit's stack holds far fewer steps than em's history, so `beforeInput`
+ * recycles WebKit's position through the stack after each gesture to keep a step available on either side,
+ * anchoring a fresh step in the focused editable when the position has been lost along with the editable it
+ * belonged to.
  *
- * The Capacitor app closes that gap natively: `NativeHistoryWebView` hands the responder chain an undo
+ * The Capacitor app sidesteps WebKit's stack entirely: `NativeHistoryWebView` hands the responder chain an undo
  * manager that emits `nativeHistory` instead of performing the gesture, so it reaches em regardless of
  * WebKit's stack. Since the gesture is then consumed natively, no `beforeinput` is dispatched and the two
  * routes cannot both fire for a single gesture.
@@ -83,8 +85,8 @@ const onTouchEnd = (e: TouchEvent) => {
  * which iOS reads to decide whether to deliver the gesture at all. Gestures it does deliver are confirmed
  * with an "Undo"/"Redo" overlay, so without this the overlay confirms an undo or redo that does nothing.
  *
- * In Mobile Safari there is no such manager, and WebKit's own stack is empty for redo because `beforeInput`
- * prevented the undo that would have filled it — so the redo gesture is never dispatched ([#5575]). The three-finger
+ * In Mobile Safari there is no such manager, and the redo step the recycle leaves behind belongs to the editable
+ * em's undo has just re-rendered — so the redo gesture is not dispatched without a fresh step ([#5575]). The three-finger
  * swipe is therefore recognized here, from the touch events iOS delivers alongside the system gesture, which
  * depends on no browser state and works with an empty thoughtspace. Shake and the Edit menu produce no touches and
  * keep arriving through `beforeInput`.
