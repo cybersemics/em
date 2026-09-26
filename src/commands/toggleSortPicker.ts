@@ -1,7 +1,7 @@
 import Command from '../@types/Command'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import Icon from '../components/icons/SortWithPicker'
-import { getChildrenRanked, getSortComparator } from '../selectors/getChildren'
+import { getChildrenRanked, getSortComparator, isVisible } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -45,8 +45,13 @@ const toggleSortCommand = {
     const comparator = getSortComparator(state, id)
     if (!comparator) return null
 
-    // ignore empty and emoji-only thoughts since they are sorted to their point of creation rather than by the sort condition
-    const childrenRanked = getChildrenRanked(state, id).filter(child => !isEmptyOrEmojiOnly(child.value))
+    // Ignore thoughts that are placed rather than sorted: empty and emoji-only thoughts, which are sorted to their
+    // point of creation, and hidden attributes, which are inserted above their siblings by getPrevRank no matter what
+    // the sort condition says. Archiving a thought creates =archive that way, and under Updated its lastUpdated is
+    // now, so its rank inverts against every sibling in either direction (#4086).
+    const childrenRanked = getChildrenRanked(state, id).filter(
+      child => isVisible(state, child) && !isEmptyOrEmojiOnly(child.value),
+    )
 
     // The ranks match the sort condition as long as the rank order contains no strict inversion, i.e. no adjacent
     // pair where the earlier-ranked thought sorts after the later-ranked one. Thoughts with equal sort keys, e.g.

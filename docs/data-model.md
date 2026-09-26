@@ -313,6 +313,8 @@ Empty and emoji-only thoughts have no meaningful sort key, so they are sorted to
 
 The exemption only holds until the sort is applied. [`sort`](../src/actions/sort.ts) re-ranks every child of a context to match the sort condition, so it asks `getSortComparator` for the comparator *without* the exemption (`sortEmpty`) and empty thoughts float to the top, ahead of everything else in either direction (`compareEmpty` is first in both `compareReasonable` and `compareReasonableDescending`). The ranks it assigns then agree with the sort condition for every child. `sort` runs whenever the sort preference is set from the Sort Picker or the `toggleSort` command, and after [`swapParent`](../src/actions/swapParent.ts) and [`uncategorize`](../src/actions/uncategorize.ts) move thoughts into a sorted context.
 
+Hidden attributes are exempt in a different way: they are placed structurally rather than sorted. A context's `=sort`, the `=archive` that [`archiveThought`](../src/actions/archiveThought.ts) creates, and the attributes [`toggleAttribute`](../src/actions/toggleAttribute.ts) sets are inserted above their siblings by [`getPrevRank`](../src/selectors/getPrevRank.ts) in every sort preference but `Alphabetical` — which is why [`getSortedRank`](../src/selectors/getSortedRank.ts) ranks a new note against the visible children only, rather than placing it after `=sort`. Their ranks therefore say nothing about whether a context is correctly sorted, so the Sort Picker's rank-consistency check ([`toggleSortPicker`](../src/commands/toggleSortPicker.ts), which reddens the toolbar icon while a context's ranks disagree with its sort condition) skips them along with the empty and emoji-only thoughts.
+
 ## Views
 
 ### Normal view
