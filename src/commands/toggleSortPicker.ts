@@ -6,6 +6,7 @@ import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import head from '../util/head'
+import isAttribute from '../util/isAttribute'
 import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import isRoot from '../util/isRoot'
 
@@ -46,7 +47,9 @@ const toggleSortCommand = {
     if (!comparator) return null
 
     // ignore empty and emoji-only thoughts since they are sorted to their point of creation rather than by the sort condition
-    const childrenRanked = getChildrenRanked(state, id).filter(child => !isEmptyOrEmojiOnly(child.value))
+    const childrenRanked = getChildrenRanked(state, id).filter(
+      child => !isEmptyOrEmojiOnly(child.value) && !isAttribute(child.value),
+    )
 
     // The ranks match the sort condition as long as the rank order contains no strict inversion, i.e. no adjacent
     // pair where the earlier-ranked thought sorts after the later-ranked one. Thoughts with equal sort keys, e.g.
