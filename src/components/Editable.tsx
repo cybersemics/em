@@ -810,8 +810,14 @@ const Editable = ({
         }
       })
     },
+    // Every value the handler reads that can change while it is mounted is listed, so that it never acts on the
+    // thought as it was at an earlier render. A thought moved by a command keeps its Editable, so omitting path left
+    // the handler matching the multicursors — which are keyed by path — against the location the thought had before
+    // the move, and no edit was mirrored to the rest of an indented multiselection (#5288).
+    // thoughtChangeHandler and invalidStateError are redefined on every render, but read nothing beyond these values
+    // and stable refs, so the copies captured with them are equally fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [readonly, uneditable /* TODO: options */],
+    [dispatch, onEdit, options, path, rank, readonly, simplePath, transient, uneditable],
   )
 
   /** Imports text that is pasted onto the thought. */
