@@ -2,6 +2,7 @@ import CommandState from '../@types/CommandState'
 import FormattingCommand from '../@types/FormattingCommand'
 import State from '../@types/State'
 import * as selection from '../device/selection'
+import noteThought from '../selectors/noteThought'
 import pathToThought from '../selectors/pathToThought'
 import selectedPaths from '../selectors/selectedPaths'
 import themeColors from '../selectors/themeColors'
@@ -74,9 +75,25 @@ const intersectCommandState = (commandStates: CommandState[]): CommandState =>
     backColor: a.backColor === b.backColor ? a.backColor : undefined,
   }))
 
-/** Updates the command state to the current selection/thought. If there is an active selection, this uses document.queryCommandState to get the command state from the DOM. This detects a formatting style that has been enabled, but not yet entered (i.e. the next character typed will be bold). If there is no selection, this parses the value of each selected thought and sets a formatting state only if it applies to all of them in their entirety. */
+/** Updates the command state to the current selection/thought. If the cursor thought is empty and is holding formatting, this reports the formatting it holds. If there is an active selection, this uses document.queryCommandState to get the command state from the DOM. This detects a formatting style that has been enabled, but not yet entered (i.e. the next character typed will be bold). If there is no selection, this parses the value of each selected thought and sets a formatting state only if it applies to all of them in their entirety. */
 export const updateCommandState = () => {
   const state = store.getState()
+  // Formatting applied to an empty thought is held on the thought until it is typed into, so the toolbar and the
+  // bullet report it from there rather than from the (necessarily empty) value (#3910). Under noteFocus the formatting
+  // belongs to the note's own thought, not the cursor thought. The caret is on the cursor thought, so its held
+  // formatting wins over the browser's command state below, which an empty thought's active selection would otherwise
+  // report as unformatted.
+  const pendingFormatThought = state.cursor
+    ? state.noteFocus
+      ? noteThought(state, state.cursor)
+      : pathToThought(state, state.cursor)
+    : null
+  const pendingFormat = pendingFormatThought?.value.length === 0 ? pendingFormatThought.pendingFormat : undefined
+  if (pendingFormat) {
+    commandStateStore.update(getCommandState(pendingFormat))
+    return
+  }
+
   // The thoughts a formatting command will be applied to: the multiselection when there is one, which may have no
   // cursor at all if the Home button dismissed it. There is nothing to describe when nothing is selected.
   const paths = selectedPaths(state)
@@ -87,7 +104,13 @@ export const updateCommandState = () => {
         ...getCommandState(selection.html() ?? ''),
         ...(!selection.text()?.length ? getActiveEmptySelectionColors(state) : {}),
       }
-    : intersectCommandState(paths.map(path => getCommandState(pathToThought(state, path)?.value ?? '')))
+    : intersectCommandState(
+        paths.map(path => {
+          const thought = pathToThought(state, path)
+          // An empty thought's formatting is held on the thought rather than in its value (#3910).
+          return getCommandState((thought?.value.length === 0 ? thought.pendingFormat : thought?.value) ?? '')
+        }),
+      )
   commandStateStore.update(action)
 }
 

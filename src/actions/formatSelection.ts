@@ -4,6 +4,7 @@ import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import * as selection from '../device/selection'
 import hasMulticursor from '../selectors/hasMulticursor'
+import noteThought from '../selectors/noteThought'
 import noteValue from '../selectors/noteValue'
 import pathToThought from '../selectors/pathToThought'
 import resolveNotePath from '../selectors/resolveNotePath'
@@ -11,11 +12,28 @@ import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import editableSyncStore from '../stores/editableSyncStore'
-import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
+import formatSelectionHtml, { FormatCommand, FormatOptions } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
 import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
+import { setPendingFormatActionCreator as setPendingFormat } from './setPendingFormat'
+
+/** The single placeholder character that carries the formatting applied to an empty thought, whose own value has no
+ * text for the formatting tags to wrap. See setPendingFormat. */
+const PENDING_FORMAT_PLACEHOLDER = 'x'
+
+/** Composes a formatting command onto the formatting an empty thought is already holding. The formatting is
+ * accumulated on a placeholder character so that further commands compose exactly as they do on a real value. */
+const composePendingFormat = (
+  pendingFormat: string | undefined,
+  options: Pick<FormatOptions, 'command' | 'colorValue' | 'defaultColor' | 'defaultBackgroundColor'>,
+): string =>
+  formatSelectionHtml(pendingFormat ?? PENDING_FORMAT_PLACEHOLDER, {
+    start: 0,
+    end: PENDING_FORMAT_PLACEHOLDER.length,
+    ...options,
+  })
 
 /**
  * Registers a single native undo step in WKWebView for a formatSelection edit on iOS.
@@ -73,12 +91,23 @@ export const formatSelectionActionCreator =
         ...Object.values(state.multicursors).map(path => {
           const thought = pathToThought(state, path)
           if (!thought) return null
-          const newValue = formatSelectionHtml(thought.value, {
+          const formatOptions = {
             command,
             colorValue: color ? colors[color] : undefined,
             defaultColor: colors.fg,
             defaultBackgroundColor: colors.bg,
-          })
+          }
+
+          // A selected empty thought has no text to wrap, so it holds the formatting until text is typed into it, just
+          // as it does when it is the only cursor (#3910).
+          if (thought.value.length === 0) {
+            return setPendingFormat({
+              id: thought.id,
+              value: composePendingFormat(thought.pendingFormat, formatOptions),
+            })
+          }
+
+          const newValue = formatSelectionHtml(thought.value, formatOptions)
           return newValue !== thought.value
             ? editThought({
                 oldValue: thought.value,
@@ -94,8 +123,9 @@ export const formatSelectionActionCreator =
       ])
 
       // Refresh the command state from the edited thoughts so that the swatch reflects the color that was just applied,
-      // as the single thought path below does. The url history middleware only refreshes it on a cursor change, which
-      // never happens for a multiselection that has no cursor.
+      // as the single thought path below does. Nothing else refreshes it here: the url history middleware only does so
+      // on a cursor change, which never happens for a multiselection that has no cursor, and a held format changes no
+      // thought value at all.
       updateCommandState()
 
       return
@@ -116,7 +146,30 @@ export const formatSelectionActionCreator =
     // The current value of the note or thought being formatted (#3901).
     const value = state.noteFocus ? (noteValue(state, state.cursor) ?? '') : thought.value
 
-    if (value.length === 0) return
+    // An empty thought has no text to wrap, and its value must stay empty, so the formatting is held on the thought
+    // and transferred onto the text that is typed into it next (#3910). It is accumulated on a placeholder character
+    // so that further commands compose exactly as they do on a real value.
+    if (value.length === 0) {
+      // A note's formatting is held on the thought that holds its text, which noteThought resolves. It is null for a
+      // note assembled from several thoughts (=children/=note/=path), which has nowhere to hold it.
+      const target = state.noteFocus ? noteThought(state, state.cursor) : thought
+      if (!target) return
+
+      dispatch(
+        setPendingFormat({
+          id: target.id,
+          value: composePendingFormat(target.pendingFormat, {
+            command,
+            colorValue: color ? colors[color] : undefined,
+            // A note is semi-transparent by default, so its default foreground differs from a thought's (#3902).
+            defaultColor: state.noteFocus ? colors.fgNote : colors.fg,
+            defaultBackgroundColor: colors.bg,
+          }),
+        }),
+      )
+      updateCommandState()
+      return
+    }
 
     // Compute the plain-text character offsets [start, end) of the selection relative to the editable.
     const plainLength = contentEditable.textContent?.length ?? 0

@@ -13,6 +13,7 @@ import getSelection from '../helpers/getSelection'
 import getSuperscriptColor from '../helpers/getSuperScriptColor'
 import keyboard from '../helpers/keyboard'
 import multiselectThoughts from '../helpers/multiselectThoughts'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import scrollBy from '../helpers/scrollBy'
@@ -200,6 +201,46 @@ it('Set the text color of the text and bullet', async () => {
   expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.blue))
   expect(result?.color).toBe(rgbaToHex(colors.light.blue))
   expect(result?.backgroundColor).toBe(null)
+})
+
+it('Applies a text color set on an empty thought to the text typed into it', async () => {
+  await newThought()
+
+  await clickToolbar('Text Color', 'text color swatches', 'green')
+
+  // The placeholder previews the color that the typed text will take, dimmed.
+  const placeholderStyle = await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    if (!editable) throw new Error('Editing thought not found')
+    const style = getComputedStyle(editable, '::before')
+    return { color: style.color, filter: style.filter }
+  })
+  expect(rgbToHex(placeholderStyle.color)).toBe(rgbaToHex(colors.light.green))
+  expect(placeholderStyle.filter).toBe('opacity(0.5)')
+
+  await keyboard.type('Hello')
+
+  await waitForEditable(`<font color="${rgbaToHex(colors.light.green)}">Hello</font>`)
+
+  const bulletColor = await getBulletColor()
+  expect(rgbToHex(bulletColor!)).toBe(rgbaToHex(colors.light.green))
+})
+
+it('Dims a background color set on an empty thought in the placeholder (#3910)', async () => {
+  await newThought()
+
+  await clickToolbar('Text Color', 'background color swatches', 'green')
+
+  const placeholderStyle = await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    if (!editable) throw new Error('Editing thought not found')
+
+    const style = getComputedStyle(editable, '::before')
+    return { backgroundColor: style.backgroundColor, filter: style.filter }
+  })
+
+  expect(rgbToHex(placeholderStyle.backgroundColor)).toBe(rgbaToHex(colors.light.green))
+  expect(placeholderStyle.filter).toBe('opacity(0.5)')
 })
 
 it('Bullet keeps the font color after deleting all text without moving the cursor', async () => {

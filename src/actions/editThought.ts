@@ -148,8 +148,12 @@ const editThought = (
   const sortType = sortPreference.type
   const isValueEmptyOrEmojiOnly = isEmptyOrEmojiOnly(newValue)
 
+  // The new value carries any formatting that was held while the thought was empty, so the held copy is dropped. The
+  // key is omitted rather than set to undefined, which a JSON patch does not treat as a removal. See setPendingFormat.
+  const { pendingFormat: _pendingFormat, ...editedThoughtWithoutPendingFormat } = editedThought
+
   const thoughtNew: Thought = {
-    ...editedThought,
+    ...editedThoughtWithoutPendingFormat,
     ...(editedThought.generating ? { generating: false } : null),
     // Editing a value does not change the thought's created timestamp, so under a Created sort its rank already
     // reflects its sort key and must be preserved. Re-ranking it would move it past siblings created in the same

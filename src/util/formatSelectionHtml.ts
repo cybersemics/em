@@ -249,7 +249,7 @@ const applyColor = (
 }
 
 /** Options for {@link formatSelectionHtml}. */
-interface FormatOptions {
+export interface FormatOptions {
   /** Plain-text start offset of the range (inclusive). Defaults to 0, i.e. the start of the html. */
   start?: number
   /** Plain-text end offset of the range (exclusive). Defaults to the plain-text length of the html, i.e. the end. */
