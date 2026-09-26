@@ -349,6 +349,144 @@ describe('context view', () => {
   })
 })
 
+// https://github.com/cybersemics/em/issues/5134
+describe.each([
+  { attribute: '=readonly', restriction: 'read-only' },
+  { attribute: '=unextendable', restriction: 'unextendable' },
+])('parent protection ($attribute)', ({ attribute, restriction }) => {
+  it('refuses categorization under a protected parent in normal view', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - a
+            - m
+              - ${attribute}
+              - x`,
+      }),
+      setCursor(['a', 'm', 'x']),
+    ])(initialState())
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    const stateNew = categorize(state)
+
+    expect(stateNew.alert?.value).toBe(`"m" is ${restriction} so "x" cannot be categorized.`)
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(exported)
+    expect(stateNew).toEqual({ ...state, alert: stateNew.alert })
+  })
+
+  it('refuses categorization under a protected parent in the originating context', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - a
+            - m
+              - ${attribute}
+              - x
+          - b
+            - m
+              - y`,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'x']),
+    ])(initialState())
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    const stateNew = categorize(state)
+
+    expect(stateNew.alert?.value).toBe(`"m" is ${restriction} so "x" cannot be categorized.`)
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(exported)
+    // Only the alert may change: preserve the tree, cursor, selection, and active Context Views.
+    expect(stateNew).toEqual({ ...state, alert: stateNew.alert })
+  })
+
+  it('refuses categorization under a protected parent in another context', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - a
+            - m
+              - x
+          - b
+            - m
+              - ${attribute}
+              - y`,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'b', 'y']),
+    ])(initialState())
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    const stateNew = categorize(state)
+
+    expect(stateNew.alert?.value).toBe(`"m" is ${restriction} so "y" cannot be categorized.`)
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(exported)
+    expect(stateNew).toEqual({ ...state, alert: stateNew.alert })
+  })
+
+  it('refuses the entire multiselection under a protected parent in Context View', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - a
+            - m
+              - ${attribute}
+              - x
+              - z
+          - b
+            - m
+              - y`,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'a', 'x']),
+      addMulticursor(['a', 'm', 'a', 'x']),
+      addMulticursor(['a', 'm', 'a', 'z']),
+    ])(initialState())
+    const exported = exportContext(state, [HOME_TOKEN], 'text/plain')
+
+    const stateNew = categorize(state)
+
+    expect(stateNew.alert?.value).toBe(`"m" is ${restriction} so "x" cannot be categorized.`)
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(exported)
+    expect(stateNew).toEqual({ ...state, alert: stateNew.alert })
+  })
+
+  it('categorizes an unrestricted context even when the displayed parent is protected', () => {
+    const state = reducerFlow([
+      importText({
+        text: `
+          - a
+            - m
+              - ${attribute}
+              - x
+          - b
+            - m
+              - y`,
+      }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'b']),
+    ])(initialState())
+
+    const stateNew = categorize(state)
+
+    expect(stateNew.alert).toBeUndefined()
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - ${attribute}
+      - x
+  - b
+    - ${''}
+      - m
+        - y`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
+    expect(stateNew.contextViews).toEqual(state.contextViews)
+  })
+})
+
 describe('multicursor', () => {
   it('categorize multiple thoughts', () => {
     const steps = [

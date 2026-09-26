@@ -6,7 +6,7 @@ import { NATIVE_HISTORY_REGISTER_DELAY } from '../constants'
 import isRedoEnabled from '../selectors/isRedoEnabled'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import store from '../stores/app'
-import nativeHistoryGestureStore from '../stores/nativeHistoryGesture'
+import nativeHistoryGestureStore from '../stores/nativeHistoryGestureStore'
 
 /** The pending plugin listener registration, kept so that the listener can be removed on destroy. */
 let listener: Promise<PluginListenerHandle> | null = null

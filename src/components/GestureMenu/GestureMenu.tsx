@@ -13,7 +13,7 @@ import gestureStore, {
   onGestureMenuExited,
   startGestureMenuEnter,
   startGestureMenuExit,
-} from '../../stores/gesture'
+} from '../../stores/gestureStore'
 import storageModel from '../../stores/storageModel'
 import FadeTransition from '../FadeTransition'
 import PopupBase from '../PopupBase'
@@ -155,7 +155,6 @@ const GestureMenu: FC<{
 function Glow() {
   return (
     <div
-      data-testid='glow-background'
       className={css({
         position: 'absolute',
         pointerEvents: 'none',
@@ -165,6 +164,7 @@ function Glow() {
       })}
     >
       <div
+        data-testid='glow-background'
         className={css({
           backgroundImage: 'url(/img/gesture-menu/glow.avif)',
           backgroundRepeat: 'no-repeat',

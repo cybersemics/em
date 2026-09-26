@@ -305,7 +305,7 @@ describe('drag to Home with duplicate thought', () => {
     expect(await exportThoughts()).toBe(`
 - A
 - C
-- 
+- ${''}
 - B
 - C
 `)

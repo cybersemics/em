@@ -12671,7 +12671,7 @@ __metadata:
     react-dom: "npm:^19.3.0"
     react-error-boundary: "npm:^6.1.5"
     react-gravatar: "npm:^2.6.3"
-    react-modal-sheet: "npm:^5.2.1"
+    react-modal-sheet: "patch:react-modal-sheet@npm%3A5.6.0#~/.yarn/patches/react-modal-sheet-npm-5.6.0-f2ff243f4a.patch"
     react-native-web: "npm:^0.21.2"
     react-redux: "npm:^9.3.0"
     react-signature-pad-wrapper: "npm:^4.3.3"
@@ -21308,7 +21308,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-modal-sheet@npm:^5.2.1":
+"react-modal-sheet@npm:5.6.0":
   version: 5.6.0
   resolution: "react-modal-sheet@npm:5.6.0"
   dependencies:
@@ -21317,6 +21317,18 @@ __metadata:
     motion: ">=11"
     react: ">=16"
   checksum: 10c0/4a64422e273984cdafef9fc8c14a1b15faae95cd9621c033b8325f5e5e59f8df975c74e92ac1d23b52fd63518e698983c3fbdf1dfa78b28fb01856ef7b52ce58
+  languageName: node
+  linkType: hard
+
+"react-modal-sheet@patch:react-modal-sheet@npm%3A5.6.0#~/.yarn/patches/react-modal-sheet-npm-5.6.0-f2ff243f4a.patch":
+  version: 5.6.0
+  resolution: "react-modal-sheet@patch:react-modal-sheet@npm%3A5.6.0#~/.yarn/patches/react-modal-sheet-npm-5.6.0-f2ff243f4a.patch::version=5.6.0&hash=fb3a2e"
+  dependencies:
+    react-use-measure: "npm:2.1.7"
+  peerDependencies:
+    motion: ">=11"
+    react: ">=16"
+  checksum: 10c0/2de57a3c8f157eb72e3342aeff919410428aa98c463319ee051d242aeecf9c738ba9cef5f73a6a260b159975a187a9bb929605b8fce6deb4e8971667fdb0ed33
   languageName: node
   linkType: hard
 
