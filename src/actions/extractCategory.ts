@@ -25,7 +25,7 @@ export interface extractCategoryPayload {
 const extractCategory = (
   state: State,
   { selectionStart, selectionEnd }: extractCategoryPayload,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const { cursor } = state
   if (!cursor) return state
@@ -56,7 +56,7 @@ const extractCategory = (
   // Categorize before editing. categorize refuses to categorize in some contexts (a direct child of the home or em
   // context, a read-only or unextendable parent, thoughts from different parents), alerting instead. Stripping the
   // selection first would drop the extracted text into a category that was never created.
-  const stateCategorized = categorize(state, { value: extractedValue }, document)
+  const stateCategorized = categorize(state, { value: extractedValue }, transaction)
 
   // categorize signals success by moving the cursor onto the category it created, so an unmoved cursor means it
   // refused and the thought must keep its full value.
@@ -71,7 +71,7 @@ const extractCategory = (
       path: thoughtToPath(stateCategorized, head(cursor)),
       force: true,
     },
-    document,
+    transaction,
   )
 }
 

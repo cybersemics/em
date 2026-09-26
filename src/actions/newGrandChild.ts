@@ -14,7 +14,7 @@ import head from '../util/head'
 /**
  * Creates a new grandchild at the first visible subthought of the cursor. When there is no cursor, the root stands in for it, so the new thought is created in the first visible child of the root.
  */
-const newGrandChild = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+const newGrandChild = (state: State, _payload: undefined = undefined, transaction?: ThoughtspaceTransaction): State => {
   const tutorial = getSetting(state, 'Tutorial') !== 'Off'
   const tutorialStep = +!getSetting(state, 'Tutorial Step')
 
@@ -27,7 +27,7 @@ const newGrandChild = (state: State, _payload: undefined = undefined, document?:
   // stop if there is no visible children
   if (!firstChild) return state
 
-  return newThought(state, { insertNewSubthought: true, at: appendToPath(path, firstChild.id) }, document)
+  return newThought(state, { insertNewSubthought: true, at: appendToPath(path, firstChild.id) }, transaction)
 }
 
 /** Action-creator for newGrandChild. */

@@ -7,7 +7,7 @@ This prototype runs two TreeCRDT instances for one thoughtspace:
 
 The memory engine owns the document and accepts local commands synchronously. Redux owns UI state and a read-only document projection. Document commands execute in one memory transaction outside Redux's reducer, reading canonical state between composed steps. Redux publishes the completed snapshot once. Network sync is disabled, including when `VITE_TREECRDT_SYNC_BASE_URL` is set.
 
-[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exports `thoughtspaceRuntime`, created by [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts). The runtime supplies synchronous `project` reads, `transact`, and lifecycle methods. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project`, operation receipts and `revert`, and an `afterPersist` callback.
+[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exposes one implementation through two interfaces: `db: DataProvider` supplies synchronous `project` reads and `transact`; `thoughtspaceRuntime: ThoughtspaceRuntime` manages initialization, readiness, cleanup, and waiting for persistence. [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts) implements both. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project`, operation receipts and `revert`, and an `afterPersist` callback.
 
 ## Running the prototype
 
@@ -54,7 +54,7 @@ A projection reads the memory client's immutable node map, whose unchanged rows 
 
 ### Writes
 
-`thoughtspaceRuntime.transact` authors operations synchronously in Rust for one complete dispatched command. A `null` thought deletes; a new thought inserts; an existing thought moves or changes payload as needed. Each `document.update` returns the canonical projection, including derived lexemes and child maps. Payload comparisons avoid redundant operations. Parents are restored before descendants, and moves out of a deleted subtree precede its deletion. If a command throws, the adapter restores its tree, projection and operation bookkeeping; no partial command is queued for persistence or published.
+`db.transact` authors operations synchronously in Rust for one complete dispatched command. A `null` thought deletes; a new thought inserts; an existing thought moves or changes payload as needed. Each `transaction.update` returns the canonical projection, including derived lexemes and child maps. Payload comparisons avoid redundant operations. Parents are restored before descendants, and moves out of a deleted subtree precede its deletion. If a command throws, the adapter restores its tree, projection and operation bookkeeping; no partial command is queued for persistence or published.
 
 A serialized `persistent.ops.appendMany(ops)` stores those exact operations without minting new identities. Its promise provides the persistence acknowledgement; the protocol's transport-send promise alone would not. The returned snapshot already contains canonical memory payloads, parents, child maps and sibling-index ranks. Persistence acknowledgements do not replace it with a captured SQLite readback.
 
@@ -87,7 +87,7 @@ The full document and its operation history must fit in memory, and startup wait
 
 ## Command coordination and Redux publication
 
-[`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `thoughtspaceRuntime.transact`, then dispatches the original action with its prepared immutable state to a pure publication reducer. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
+[`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `db.transact`, then dispatches the original action with its prepared immutable state to a pure publication reducer. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
 
 `updateThoughts` changes the memory document and reads its derived indices immediately. Updates with `persist: false` can change transient editor overlays, but cannot author document operations or evict canonical thoughts. There is no Redux write queue or separate lexeme derivation. The `onPersisted` callback runs only after SQLite acknowledges the whole command. Undo/redo uses the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
 

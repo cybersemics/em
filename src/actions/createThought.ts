@@ -30,7 +30,7 @@ interface Payload {
 const createThought = (
   state: State,
   { path, value, afterId, id, onPersisted, splitSource }: Payload,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   id = id || createId()
   const parentId = head(path)
@@ -65,7 +65,7 @@ const createThought = (
     updatedBy: clientId,
   }
 
-  return updateThoughts(state, { thoughtIndexUpdates, movePlacements: { [id]: afterId }, onPersisted }, document)
+  return updateThoughts(state, { thoughtIndexUpdates, movePlacements: { [id]: afterId }, onPersisted }, transaction)
 }
 
 /** Action-creator for createThought. */

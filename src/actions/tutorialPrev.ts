@@ -7,12 +7,12 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import command from '../util/command'
 
 /** Disaddvances the tutorial one step (whole step by default; optional hint argument for fractional step). */
-const tutorialPrev = (state: State, { hint }: { hint?: boolean } = {}, document?: ThoughtspaceTransaction) => {
+const tutorialPrev = (state: State, { hint }: { hint?: boolean } = {}, transaction?: ThoughtspaceTransaction) => {
   // @typescript-eslint/eslint-plugin does not yet support no-extra-parens with nullish coallescing operator
   // See: https://github.com/typescript-eslint/typescript-eslint/issues/1052
   const tutorialStep = +(getSetting(state, 'Tutorial Step') ?? 0)
 
-  return tutorialStepReducer(state, { value: !hint ? Math.floor(tutorialStep) - 1 : tutorialStep - 0.1 }, document)
+  return tutorialStepReducer(state, { value: !hint ? Math.floor(tutorialStep) - 1 : tutorialStep - 0.1 }, transaction)
 }
 
 /** Action-creator for tutorialPrev. */

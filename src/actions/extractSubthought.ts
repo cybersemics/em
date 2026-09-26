@@ -26,7 +26,7 @@ export interface extractSubthoughtPayload {
 const extractSubthought = (
   state: State,
   { selectionStart, selectionEnd }: extractSubthoughtPayload,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const { cursor } = state
   if (!cursor) return state
@@ -65,7 +65,7 @@ const extractSubthought = (
     newThought({ value: extractedValue, insertNewSubthought: true, preventSetCursor: true }),
   ]
 
-  return reducerFlow(reducers)(state, document)
+  return reducerFlow(reducers)(state, transaction)
 }
 
 /**

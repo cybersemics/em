@@ -24,7 +24,11 @@ export interface indentPayload {
 }
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
-const indent = (state: State, { selectionOffset }: indentPayload = {}, document?: ThoughtspaceTransaction): State => {
+const indent = (
+  state: State,
+  { selectionOffset }: indentPayload = {},
+  transaction?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -70,7 +74,7 @@ const indent = (state: State, { selectionOffset }: indentPayload = {}, document?
       ...(offset != null ? { offset } : null),
       afterId: getChildrenRanked(state, prev.id).at(-1)?.id ?? null,
     },
-    document,
+    transaction,
   )
 }
 

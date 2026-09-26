@@ -17,14 +17,14 @@ const bulletColor = (
     color,
     fullySelected,
   }: { backgroundColor?: string; color?: string; shape?: 'bullet' | 'text'; fullySelected?: boolean },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   if (!state.cursor) return state
   const path = state.cursor
   // set bullet to text color when the entire thought selected
   return fullySelected && ((color && color !== 'default') || (backgroundColor && backgroundColor !== 'inverse'))
-    ? setDescendant(state, { path, values: ['=bullet', '=style', 'color', backgroundColor! || color!] }, document)
-    : deleteAttribute(state, { path, values: ['=bullet', '=style', 'color'] }, document)
+    ? setDescendant(state, { path, values: ['=bullet', '=style', 'color', backgroundColor! || color!] }, transaction)
+    : deleteAttribute(state, { path, values: ['=bullet', '=style', 'color'] }, transaction)
 }
 
 /** Action-creator for bulletColor. */

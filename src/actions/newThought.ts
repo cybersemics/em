@@ -68,7 +68,7 @@ export interface NewThoughtPayload {
  *
  * @param offset The focusOffset of the selection in the new thought. Defaults to end.
  */
-const newThought = (state: State, payload: NewThoughtPayload | string, document?: ThoughtspaceTransaction) => {
+const newThought = (state: State, payload: NewThoughtPayload | string, transaction?: ThoughtspaceTransaction) => {
   // optionally allow string value to be passed as entire payload
   if (typeof payload === 'string') {
     payload = { value: payload }
@@ -191,7 +191,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string, document?
               path: unroot([...parentPath!, newThoughtId]),
               offset: offset != null ? offset : getTextContentFromHTML(value).length,
             },
-            document,
+            transaction,
           )
         : null
     },
@@ -211,7 +211,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string, document?
               : null,
   ]
 
-  return reducerFlow(reducers)(state, document)
+  return reducerFlow(reducers)(state, transaction)
 }
 
 /** Creates a new thought. */

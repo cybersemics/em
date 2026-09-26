@@ -9,7 +9,7 @@ import { importFilesActionCreator as importFiles } from './actions/importFiles'
 import { replaceThoughtsActionCreator as replaceThoughts } from './actions/replaceThoughts'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { commandById, executeCommand } from './commands'
-import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
+import db, { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -68,7 +68,7 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
   storageStatusStore.update(storageInUse)
 
   // The interactive app and URL cursor must see the same complete document as the authoring engine.
-  store.dispatch(replaceThoughts({ thoughts: thoughtspaceRuntime.project() }))
+  store.dispatch(replaceThoughts({ thoughts: db.project() }))
   initializeCursor()
   const eventHandlers = initEvents(store)
 

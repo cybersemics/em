@@ -325,14 +325,14 @@ it('moving a context in the context view should update the cursor to the moved t
     setCursor(['a', 'm']),
     toggleContextView,
     // drag the context a/m~/a onto the subthoughts drop zone of the context a/m~/b, i.e. move a/m into b/m
-    (state: State, document?: ThoughtspaceTransaction) => {
+    (state: State, transaction?: ThoughtspaceTransaction) => {
       const contextA = contextToPathOrThrow(state, ['a', 'm', 'a'], 'moveThought')
       const contextB = contextToPathOrThrow(state, ['a', 'm', 'b'], 'moveThought')
       return moveThought({
         oldPath: contextA,
         newPath: appendToPath(contextB, head(contextA)),
         afterId: null,
-      })(state, document)
+      })(state, transaction)
     },
   ]
 

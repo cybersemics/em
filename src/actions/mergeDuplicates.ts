@@ -14,7 +14,11 @@ import reducerFlow from '../util/reducerFlow'
 import mergeThoughts from './mergeThoughts'
 
 /** Merges all duplicate siblings at the same level as the cursor. The first duplicate of each value is kept and the children of the others are moved into it. */
-const mergeDuplicates = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+const mergeDuplicates = (
+  state: State,
+  _payload: undefined = undefined,
+  transaction?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -50,11 +54,11 @@ const mergeDuplicates = (state: State, _payload: undefined = undefined, document
               sourceThoughtPath: appendToPath(parentPath, duplicate.id),
               targetThoughtPath: appendToPath(parentPath, target.id),
             },
-            document,
+            transaction,
           ),
       ),
     ),
-  )(state, document)
+  )(state, transaction)
 }
 
 /** Action-creator for mergeDuplicates. */

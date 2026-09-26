@@ -35,7 +35,7 @@ import updateCursorAfterDelete from './updateCursorAfterDelete'
 const deleteEmptyThought = (
   state: State,
   _payload: undefined = undefined,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const { cursor, isKeyboardOpen } = state
 
@@ -59,7 +59,7 @@ const deleteEmptyThought = (
     (isEmpty || isDivider(value)) &&
     (showContexts ? allChildren.length === 1 && !hasChildren(state, allChildren[0].id) : allChildren.length === 0)
   ) {
-    return deleteThoughtWithCursor(state, undefined, document)
+    return deleteThoughtWithCursor(state, undefined, transaction)
   }
   // archive an empty thought with only hidden children
   else if (isEmpty && visibleChildren.length === 0) {
@@ -85,7 +85,7 @@ const deleteEmptyThought = (
                 newPath: [...parentOf(cursor), childArchive.id],
                 afterId: getFirstChildPlacement(state, cursorThought.parentId),
               },
-              document,
+              transaction,
             )
           : state
       },
@@ -94,8 +94,8 @@ const deleteEmptyThought = (
         pathParent: parentOf(cursor),
         thoughtId: head(cursor),
       }),
-      state => updateCursorAfterDelete(state, statePrev, document),
-    ])(state, document)
+      state => updateCursorAfterDelete(state, statePrev, transaction),
+    ])(state, transaction)
   }
   // delete from beginning and merge with previous sibling
   else if (!showContexts) {
@@ -126,7 +126,7 @@ const deleteEmptyThought = (
                 newPath: appendToPath(pathPrevNew, child.id),
                 afterId: getChildrenRanked(state, head(pathPrevNew)).at(-1)?.id ?? null,
               },
-              document,
+              transaction,
             ),
         ),
 
@@ -142,7 +142,7 @@ const deleteEmptyThought = (
           offset: getTextContentFromHTML(prev.value).length,
           isKeyboardOpen,
         }),
-      ])(state, document)
+      ])(state, transaction)
     }
   }
 

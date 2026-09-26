@@ -28,7 +28,7 @@ import trimHtml from '../util/trimHtml'
 const splitThought = (
   state: State,
   { path, splitResult }: { path?: Path; splitResult: SplitResult },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   path = path || (state.cursor as Path)
 
@@ -81,12 +81,12 @@ const splitThought = (
             afterId: children[i - 1]?.id ?? null,
           }),
         ),
-      )(state, document)
+      )(state, transaction)
     },
 
     // render
     editableRender,
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for splitThought. */

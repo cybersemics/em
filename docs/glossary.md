@@ -182,7 +182,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **thoughtspace** — A user's complete thought tree, identified by *tsid*. The unit of sharing: switching `?share=<tsid>` switches the app onto a different thoughtspace.
 
-**thoughtspaceRuntime** — The active runtime exported by [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts). It owns the memory/persistent peers, synchronous `transact` and `project`, snapshot publication, and lifecycle methods (`acquireAccess`, `init`, `drop`, `waitForIdle`). Implemented by [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts).
+**thoughtspaceRuntime** — The lifecycle interface exported by [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts): access, initialization, readiness, cleanup, and waiting for persistence. The same implementation is exposed as `db: DataProvider` for synchronous `transact` and `project`. Implemented by [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts).
 
 **TreeCRDT** — Operation-based tree CRDT. The prototype runs a synchronous full memory replica and a full SQLite replica for one thoughtspace, joined by local full-document sync. See [persistence.md](persistence.md).
 

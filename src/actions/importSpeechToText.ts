@@ -14,7 +14,7 @@ import newThought from './newThought'
 
 /** Atomically insert multiple new thoughts. Excludes empty lines. */
 const insertMultipleThoughts = command(
-  (state: State, { lines }: { simplePath: SimplePath; lines: string[] }, document?: ThoughtspaceTransaction) =>
+  (state: State, { lines }: { simplePath: SimplePath; lines: string[] }, transaction?: ThoughtspaceTransaction) =>
     reducerFlow(
       lines
         // strip lines
@@ -22,8 +22,8 @@ const insertMultipleThoughts = command(
         // filter out empty lines
         .filter(x => x)
         // insert new thought
-        .map(line => (state: State) => newThought(state, { value: line }, document)),
-    )(state, document),
+        .map(line => (state: State) => newThought(state, { value: line }, transaction)),
+    )(state, transaction),
 )
 
 /** Imports iOS speech-to-text as sepaate thoughts. Supports spoken "newline" to create a new thought. NOOP if speech-to-text is not detected. */
@@ -31,7 +31,7 @@ const importSpeechToText = command(
   (
     state: State,
     { simplePath, value }: { simplePath: SimplePath; value: string },
-    document?: ThoughtspaceTransaction,
+    transaction?: ThoughtspaceTransaction,
   ) => {
     // check for separate lines created via speech-to-text newlines
     // only after blur can we safely convert newlines to new thoughts without interrupting speeach-to-text
@@ -56,7 +56,7 @@ const importSpeechToText = command(
       // set isKeyboardOpen to false again, since inserting thoughts opens keyboard
       // TODO: There is a call to setCursor with isKeyboardOpen: true that invalidates this line
       keyboardOpen({ value: false }),
-    ])(state, document)
+    ])(state, transaction)
   },
 )
 

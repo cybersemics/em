@@ -18,7 +18,7 @@ import { updateThoughtsActionCreator as updateThoughts } from '../../actions/upd
 import { executeCommandWithMulticursor } from '../../commands'
 import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import { HOME_TOKEN } from '../../constants'
-import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
+import db from '../../data-providers/thoughtspace'
 import { initialize } from '../../initialize'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToPath from '../../selectors/contextToPath'
@@ -1551,8 +1551,8 @@ describe('operation receipts', () => {
     const a = contextToThought(beforeIncoming, ['a'])!
 
     // An independently committed canonical snapshot enters Redux through the same publication boundary as sync.
-    const incoming = thoughtspaceRuntime.transact(document =>
-      document.update({ thoughtIndexUpdates: { [a.id]: { ...a, value: 'incoming a' } } }),
+    const incoming = db.transact(transaction =>
+      transaction.update({ thoughtIndexUpdates: { [a.id]: { ...a, value: 'incoming a' } } }),
     )
     store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
     expect(store.getState().undoPatches).toBe(beforeIncoming.undoPatches)
@@ -1565,8 +1565,8 @@ describe('operation receipts', () => {
 
     const beforeSecondIncoming = store.getState()
     const b = contextToThought(beforeSecondIncoming, ['b'])!
-    const secondIncoming = thoughtspaceRuntime.transact(document =>
-      document.update({ thoughtIndexUpdates: { [b.id]: { ...b, value: 'incoming b' } } }),
+    const secondIncoming = db.transact(transaction =>
+      transaction.update({ thoughtIndexUpdates: { [b.id]: { ...b, value: 'incoming b' } } }),
     )
     store.dispatch(replaceThoughts({ thoughts: secondIncoming.value, repairCursor: true }))
     expect(store.getState().undoPatches).toBe(beforeSecondIncoming.undoPatches)
@@ -1581,9 +1581,7 @@ describe('operation receipts', () => {
   it('undoes an edit and navigation after an incoming deletion clears the cursor', () => {
     store.dispatch([importText({ text: '- a\n- b' }), setCursor(['a']), editThought(['a'], 'aa'), setCursor(['b'])])
     const b = contextToThought(store.getState(), ['b'])!
-    const incoming = thoughtspaceRuntime.transact(document =>
-      document.update({ thoughtIndexUpdates: { [b.id]: null } }),
-    )
+    const incoming = db.transact(transaction => transaction.update({ thoughtIndexUpdates: { [b.id]: null } }))
     store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
     expect(store.getState().cursor).toBeNull()
 
@@ -1596,10 +1594,10 @@ describe('operation receipts', () => {
   it('restores the typing merge trackers and published state when undo fails after reverting its receipt', () => {
     store.dispatch([importText({ text: '- a' }), setCursor(['a']), editThought(['a'], 'ab')])
     const beforeUndo = store.getState()
-    const transact = thoughtspaceRuntime.transact
-    const failure = vi.spyOn(thoughtspaceRuntime, 'transact').mockImplementationOnce(work =>
-      transact(document => {
-        work(document)
+    const transact = db.transact
+    const failure = vi.spyOn(db, 'transact').mockImplementationOnce(work =>
+      transact(transaction => {
+        work(transaction)
         throw new Error('injected failure after undo')
       }),
     )
@@ -1607,7 +1605,7 @@ describe('operation receipts', () => {
     expect(() => store.dispatch(undo({ count: 1 }))).toThrow('injected failure after undo')
     failure.mockRestore()
     expect(store.getState()).toBe(beforeUndo)
-    expect(thoughtspaceRuntime.project(beforeUndo.thoughts)).toBe(beforeUndo.thoughts)
+    expect(db.project(beforeUndo.thoughts)).toBe(beforeUndo.thoughts)
 
     // A failed undo did not break the typing run: the next edit still merges with the original edit.
     store.dispatch([editThought(['ab'], 'abc'), undo({ count: 1 })])

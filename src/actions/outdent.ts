@@ -24,7 +24,11 @@ export interface outdentPayload {
 }
 
 /** Decreases the indent level of the given thought, moving it to its parent. */
-const outdent = (state: State, { selectionOffset }: outdentPayload = {}, document?: ThoughtspaceTransaction): State => {
+const outdent = (
+  state: State,
+  { selectionOffset }: outdentPayload = {},
+  transaction?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
   if (!cursor || cursor.length <= 1) return state
 
@@ -72,7 +76,7 @@ const outdent = (state: State, { selectionOffset }: outdentPayload = {}, documen
       ...(offset != null ? { offset } : null),
       afterId: head(parentPath),
     },
-    document,
+    transaction,
   )
 }
 

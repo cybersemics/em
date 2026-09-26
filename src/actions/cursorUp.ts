@@ -13,7 +13,7 @@ import command from '../util/command'
 const cursorUp = (
   state: State,
   { preserveMulticursor }: { preserveMulticursor?: boolean } = {},
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   const { cursor } = state
 
@@ -33,7 +33,7 @@ const cursorUp = (
           path: path,
           preserveMulticursor,
         },
-        document,
+        transaction,
       )
     : state
 }

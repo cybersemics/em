@@ -24,7 +24,7 @@ export interface moveThoughtDownPayload {
 const moveThoughtDown = (
   state: State,
   { offset }: moveThoughtDownPayload = {},
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const { cursor } = state
 
@@ -70,7 +70,7 @@ const moveThoughtDown = (
       ...(offset != null ? { offset } : null),
       afterId: nextThought ? nextThought.id : getFirstChildPlacement(state, head(nextUnclePath!)),
     },
-    document,
+    transaction,
   )
 }
 

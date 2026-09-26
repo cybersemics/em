@@ -10,7 +10,11 @@ import createThought from './createThought'
 import toggleAttribute from './toggleAttribute'
 
 /** Sets a setting thought. */
-const settings = (state: State, { key, value }: { key: string; value: string }, document?: ThoughtspaceTransaction) => {
+const settings = (
+  state: State,
+  { key, value }: { key: string; value: string },
+  transaction?: ThoughtspaceTransaction,
+) => {
   const emContext = [SETTINGS_VALUE, key, value]
   const exists = !!findDescendant(state, EM_TOKEN, emContext)
   if (exists) return state
@@ -25,10 +29,10 @@ const settings = (state: State, { key, value }: { key: string; value: string }, 
           value: SETTINGS_VALUE,
           afterId: getFirstChildPlacement(state, EM_TOKEN),
         },
-        document,
+        transaction,
       )
 
-  return toggleAttribute(stateWithSettings, { path: [EM_TOKEN], values: emContext }, document)
+  return toggleAttribute(stateWithSettings, { path: [EM_TOKEN], values: emContext }, transaction)
 }
 
 /** Action-creator for settings. */

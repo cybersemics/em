@@ -10,14 +10,14 @@ import command from '../util/command'
 const newThoughtAtFirstMatch = (
   state: State,
   payload: Omit<NewThoughtPayload, 'at'> & { at: string[] },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const path = contextToPath(state, payload.at)
   if (!path) throw new Error(`Ranked thoughts not found for context: ${payload.at}`)
   return newThought({
     ...payload,
     at: path,
-  })(state, document)
+  })(state, transaction)
 }
 
 export default command(newThoughtAtFirstMatch)

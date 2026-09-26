@@ -89,7 +89,7 @@ const importText = (
     updatedBy = clientId,
     caretPosition = 0,
   }: ImportTextPayload,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const isRoam = validateRoam(text)
 
@@ -150,7 +150,7 @@ const importText = (
             offset,
           })
         : null,
-    ])(state, document)
+    ])(state, transaction)
   } else {
     const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText) as RoamPage[]) : htmlToJson(convertedText)
 
@@ -174,7 +174,7 @@ const importText = (
             insertNewSubthought: true,
             value: dummyValue,
           },
-          document,
+          transaction,
         )
       : state
 
@@ -233,7 +233,7 @@ const importText = (
           // Note: Failing to call setCursor may not be noticeable in the app if expandThoughts gets triggered by another action, such as updateThoughts. However ommitting this will fail component tests that rely on the expanded state immediately after importText.
           state.cursor
 
-      return setCursor(state, { path: newCursor }, document)
+      return setCursor(state, { path: newCursor }, transaction)
     }
 
     const parentOfDestination = parentOf(newDestinationPath)
@@ -248,7 +248,7 @@ const importText = (
       // restore the cursor to the last imported thought on the first level
       // Note: uncategorize may be executed as part of the import. Since uncategorize moves the cursor, we need to set cursor back to the old cursor if preventSetCursor is true.
       !preventSetCursor ? setLastImportedCursor : setCursor({ path: state.cursor }),
-    ])(stateWithDummy, document)
+    ])(stateWithDummy, transaction)
   }
 }
 

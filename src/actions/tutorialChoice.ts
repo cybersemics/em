@@ -6,14 +6,14 @@ import command from '../util/command'
 import settings from './settings'
 
 /** Sets the Tutorial Choice Settings value. */
-const tutorialChoice = (state: State, { value }: { value: number }, document?: ThoughtspaceTransaction) =>
+const tutorialChoice = (state: State, { value }: { value: number }, transaction?: ThoughtspaceTransaction) =>
   settings(
     state,
     {
       key: 'Tutorial Choice',
       value: value.toString(),
     },
-    document,
+    transaction,
   )
 
 /** Action-creator for tutorialChoice. */

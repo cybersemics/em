@@ -30,7 +30,7 @@ const mergeThoughts = (
     sourceThoughtPath: Path
     targetThoughtPath: Path
   },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const sourceThought = getThoughtById(state, head(sourceThoughtPath))
   const targetThought = getThoughtById(state, head(targetThoughtPath))
@@ -70,7 +70,7 @@ const mergeThoughts = (
             newPath: appendToPath(targetThoughtPath, child.id),
             afterId: getChildrenRanked(updatedState, targetThought.id).at(-1)?.id ?? null,
           },
-          document,
+          transaction,
         ),
     ),
     (state: State) =>
@@ -82,7 +82,7 @@ const mergeThoughts = (
             editingValue: targetThought.value,
           }
         : state,
-  ])(state, document)
+  ])(state, transaction)
 
   const thoughtIndexUpdates: Index<Thought | null> = {
     [sourceParentThought.id]: {
@@ -100,7 +100,7 @@ const mergeThoughts = (
       thoughtIndexUpdates,
       preventExpandThoughts: true,
     },
-    document,
+    transaction,
   )
 }
 

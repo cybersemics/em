@@ -41,7 +41,7 @@ const getMovePaths = (state: State, from: string[], to: string[]): [Path, Path] 
  * @param to: Unranked path representing which context the thoughts should be moved.
  * @param after: Unranked path to the destination predecessor, or null to move first.
  */
-const moveThoughtAtFirstMatch = command((state: State, payload: Payload, document?: ThoughtspaceTransaction) => {
+const moveThoughtAtFirstMatch = command((state: State, payload: Payload, transaction?: ThoughtspaceTransaction) => {
   const { from, to, after, ...options } = payload
   const [oldPath, newPath] = getMovePaths(state, from, to)
   return moveThought({
@@ -49,7 +49,7 @@ const moveThoughtAtFirstMatch = command((state: State, payload: Payload, documen
     oldPath,
     newPath,
     afterId: after === null ? null : head(contextToPathOrThrow(state, after, 'moveThoughtAtFirstMatch')),
-  })(state, document)
+  })(state, transaction)
 })
 
 /**

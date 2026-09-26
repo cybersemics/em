@@ -43,7 +43,7 @@ export interface editThoughtPayload {
 const editThought = (
   state: State,
   { cursorOffset, force, noteOffset, oldValue, newValue, path }: editThoughtPayload,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   if (oldValue === newValue || isDivider(oldValue)) return state
 
@@ -79,7 +79,7 @@ const editThought = (
       setCursor({
         path: thoughtToPath(state, thoughtIdForExistingMetaProgrammingThought as ThoughtId),
       }),
-    ])(state, document)
+    ])(state, transaction)
   }
 
   const isNote = parentOfEditedThought.value === '=note'
@@ -147,11 +147,11 @@ const editThought = (
       thoughtIndexUpdates,
       movePlacements,
     },
-    document,
+    transaction,
   )
 
   // remove =done when thought is edited to empty to prevent strikethrough on the placeholder
-  return newValue === '' ? deleteAttribute({ path, value: '=done' })(stateAfterUpdate, document) : stateAfterUpdate
+  return newValue === '' ? deleteAttribute({ path, value: '=done' })(stateAfterUpdate, transaction) : stateAfterUpdate
 }
 
 /** Action-creator for editThought. */

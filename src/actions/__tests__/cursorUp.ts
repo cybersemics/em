@@ -216,8 +216,8 @@ describe('normal view', () => {
     // the duplicate `a` is rendered above the original, so the cursor is set to the first `a` in rank order
     const firstA = getChildrenRankedByContext(state, ['x']).find(child => child.value === 'a')!
     const stateNew = reducerFlow([
-      (state: State, document?: ThoughtspaceTransaction) =>
-        setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, firstA.id) }, document),
+      (state: State, transaction?: ThoughtspaceTransaction) =>
+        setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, firstA.id) }, transaction),
       cursorUp,
     ])(state)
 

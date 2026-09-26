@@ -37,8 +37,8 @@ it.each([false, true])(
       expect(initial.thoughtIndex[ids[3]].value).toBe('deep edit before startup')
 
       const deletedIds = deleteDescendants ? ids : [ids[0]]
-      const committed = runtime.transact(document =>
-        document.update({ thoughtIndexUpdates: Object.fromEntries(deletedIds.map(id => [id, null])) }),
+      const committed = runtime.transact(transaction =>
+        transaction.update({ thoughtIndexUpdates: Object.fromEntries(deletedIds.map(id => [id, null])) }),
       )
       expect(committed.value.thoughtIndex[ids[0]]).toBeUndefined()
       expect(Object.values(committed.value.thoughtIndex[HOME_TOKEN].childrenMap)).not.toContain(ids[0])

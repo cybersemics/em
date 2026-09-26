@@ -9,7 +9,7 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import command from '../util/command'
 
 /** Advances the tutorial one step (whole step by default; optional hint argument for fractional step). */
-const tutorialNext = (state: State, { hint }: { hint?: boolean }, document?: ThoughtspaceTransaction) => {
+const tutorialNext = (state: State, { hint }: { hint?: boolean }, transaction?: ThoughtspaceTransaction) => {
   const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
 
   return tutorialStep === TUTORIAL_STEP_SUCCESS || tutorialStep === TUTORIAL2_STEP_SUCCESS
@@ -19,7 +19,7 @@ const tutorialNext = (state: State, { hint }: { hint?: boolean }, document?: Tho
         {
           value: false,
         },
-        document,
+        transaction,
       )
     : // next
       tutorialStepReducer(
@@ -27,7 +27,7 @@ const tutorialNext = (state: State, { hint }: { hint?: boolean }, document?: Tho
         {
           value: !hint ? Math.floor(tutorialStep) + 1 : tutorialStep + 0.1,
         },
-        document,
+        transaction,
       )
 }
 

@@ -27,7 +27,7 @@ export interface moveThoughtUpPayload {
 const moveThoughtUp = (
   state: State,
   { offset }: moveThoughtUpPayload = {},
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const { cursor } = state
 
@@ -77,7 +77,7 @@ const moveThoughtUp = (
         ? getPreviousSiblingId(state, prevThought.id, { excludeId: thoughtId })
         : (getChildrenRanked(state, head(prevUnclePath!)).at(-1)?.id ?? null),
     },
-    document,
+    transaction,
   )
 }
 

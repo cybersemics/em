@@ -33,7 +33,7 @@ import categorize from './categorize'
 const bumpThoughtDown = (
   state: State,
   { paths, simplePath }: { paths?: Path[]; simplePath?: SimplePath },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   // the selected thoughts that are moved into the new thought, in document order
   const selection = paths && paths.length > 1 ? documentSort(state, paths) : null
@@ -46,7 +46,7 @@ const bumpThoughtDown = (
   }
 
   // The home context has no text to bump down, so simply move the selected thoughts into a new empty thought.
-  if (selection && parentOf(selection[0]).length === 0) return categorize(state, undefined, document)
+  if (selection && parentOf(selection[0]).length === 0) return categorize(state, undefined, transaction)
 
   // Bump the parent of the selected thoughts down, otherwise bump the selected thought or the cursor down.
   const path = simplePath || (selection ? parentOf(selection[0]) : paths?.[0]) || state.cursor
@@ -73,7 +73,7 @@ const bumpThoughtDown = (
   if (children.length === 0) {
     // categorize creates the new thought above and moves this thought into it, so the emoji becomes the category's
     // value and only the remaining text is left on the thought below.
-    const stateCategorized = categorize(state, { value: valuePrefix }, document)
+    const stateCategorized = categorize(state, { value: valuePrefix }, transaction)
 
     // categorize signals success by moving the cursor onto the category it created, so an unmoved cursor means it
     // refused (e.g. a read-only parent) and the thought must keep its full value.
@@ -88,7 +88,7 @@ const bumpThoughtDown = (
             path: thoughtToPath(stateCategorized, head(simplePath)),
             force: true,
           },
-          document,
+          transaction,
         )
   }
 
@@ -113,7 +113,7 @@ const bumpThoughtDown = (
             : getFirstChildPlacement(state, head(simplePath)),
           value: valueRest,
         },
-        document,
+        transaction,
       )
     },
 
@@ -137,7 +137,7 @@ const bumpThoughtDown = (
               newPath: appendToPath(simplePath, newThoughtId, head(path)),
               afterId: getChildrenRanked(state, newThoughtId).at(-1)?.id ?? null,
             },
-            document,
+            transaction,
           ),
       ),
 
@@ -150,7 +150,7 @@ const bumpThoughtDown = (
       offset: prefixLength,
     }),
     editableRender,
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for bumpThoughtDown. */

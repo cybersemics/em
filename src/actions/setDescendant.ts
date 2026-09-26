@@ -23,7 +23,7 @@ interface setDescendantPayload {
 const setDescendant = (
   state: State,
   { path, value, values }: setDescendantPayload,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   // normalize values to array
   const _values = values || [value!]
@@ -40,7 +40,7 @@ const setDescendant = (
         path: path,
         value: _values[0],
       },
-      document,
+      transaction,
     )
   }
 
@@ -58,7 +58,7 @@ const setDescendant = (
           value: _values[0],
           afterId: getFirstChildPlacement(state, thoughtId),
         },
-        document,
+        transaction,
       )
 
   // recursion
@@ -69,7 +69,7 @@ const setDescendant = (
       path: appendToPath(path, firstSubthoughtId || idNew),
       values: _values.slice(1),
     },
-    document,
+    transaction,
   )
 }
 

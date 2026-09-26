@@ -6,14 +6,14 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import command from '../util/command'
 
 /** Sets the Tutorial Step settings value. */
-const tutorialStep = (state: State, { value }: { value: number }, document?: ThoughtspaceTransaction) =>
+const tutorialStep = (state: State, { value }: { value: number }, transaction?: ThoughtspaceTransaction) =>
   settings(
     state,
     {
       key: 'Tutorial Step',
       value: value.toString(),
     },
-    document,
+    transaction,
   )
 
 /** Action-creator for tutorialStep. */

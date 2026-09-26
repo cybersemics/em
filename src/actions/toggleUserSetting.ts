@@ -12,13 +12,13 @@ import command from '../util/command'
 const toggleUserSetting = (
   state: State,
   { key, value }: { key: Settings; value?: boolean },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   const settingsId = findDescendant(state, EM_TOKEN, 'Settings')!
   const settingsPath = [EM_TOKEN, settingsId] as Path
   const exists = !!findDescendant(state, settingsId, key)
   return value === undefined || (value ? !exists : exists)
-    ? toggleThought(state, { path: settingsPath, value: key }, document)
+    ? toggleThought(state, { path: settingsPath, value: key }, transaction)
     : state
 }
 

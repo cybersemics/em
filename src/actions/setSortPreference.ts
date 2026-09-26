@@ -34,7 +34,7 @@ const setSortPreference = (
     simplePath: SimplePath
     sortPreference: SortPreference
   },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const id = head(simplePath)
   const currentSortPreference = getSortPreference(state, id)
@@ -77,7 +77,7 @@ const setSortPreference = (
                 ),
                 preventExpandThoughts: true,
               },
-              document,
+              transaction,
             )
           },
         ])
@@ -126,7 +126,7 @@ const setSortPreference = (
                   path: pathSort,
                   values: [sortPreference.type],
                 },
-                document,
+                transaction,
               )
             } else {
               // Set specified direction
@@ -136,7 +136,7 @@ const setSortPreference = (
                   path: pathSort,
                   values: [sortPreference.type, sortPreference.direction],
                 },
-                document,
+                transaction,
               )
             }
           },
@@ -144,7 +144,7 @@ const setSortPreference = (
           // Apply the sort
           sort(id),
         ]),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for setSortPreference. */

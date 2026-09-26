@@ -29,7 +29,7 @@ interface Options {
 }
 
 /** Deletes a thought and moves all its children to its parent. */
-const uncategorize = (state: State, { at }: Options, document?: ThoughtspaceTransaction): State => {
+const uncategorize = (state: State, { at }: Options, transaction?: ThoughtspaceTransaction): State => {
   const { cursor } = state
 
   const path = at || cursor
@@ -47,13 +47,13 @@ const uncategorize = (state: State, { at }: Options, document?: ThoughtspaceTran
   const isInContextView = isContextViewActive(state, parentOf(path))
   if (isInContextView) {
     return reducerFlow([
-      state => uncategorize(state, { at: rootedParentOf(state, simplePath) }, document),
+      state => uncategorize(state, { at: rootedParentOf(state, simplePath) }, transaction),
       setCursor({
         path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
         isKeyboardOpen: state.isKeyboardOpen,
         offset: 0,
       }),
-    ])(state, document)
+    ])(state, transaction)
   }
 
   /** Returns first moved child path as new cursor after uncategorize. */
@@ -133,7 +133,7 @@ const uncategorize = (state: State, { at }: Options, document?: ThoughtspaceTran
           // If a child has the same value as the category being deleted, do not merge it into the category.
           skipMerge: child.value === thought.value,
         },
-        document,
+        transaction,
       )
     }),
 
@@ -184,9 +184,9 @@ const uncategorize = (state: State, { at }: Options, document?: ThoughtspaceTran
           isKeyboardOpen: state.isKeyboardOpen,
           offset: 0,
         },
-        document,
+        transaction,
       ),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for uncategorize. */

@@ -15,8 +15,9 @@ import { GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import { childrenMapKey } from '../../util/createChildrenMap'
 import hashThought from '../../util/hashThought'
 import isAttribute from '../../util/isAttribute'
+import type DataProvider from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
-import type { ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
+import type { ThoughtspaceRuntime, ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
 import { clientIdReady, tsid } from '../thoughtspaceSession'
 import initializeMemoryStorage from './initializeMemoryStorage'
 import { decodeThoughtPayload, encodeThoughtPayload } from './payload'
@@ -33,7 +34,7 @@ const thoughtPayload = ({ value, created, lastUpdated, updatedBy, archived }: Th
 const createMemoryThoughtspace = (
   openClient: typeof createTreecrdtClient = createTreecrdtClient,
   openMemory: typeof createMemoryClient = createMemoryClient,
-) => {
+): DataProvider & ThoughtspaceRuntime => {
   let persistent: TreecrdtClient | undefined
   let memory: Awaited<ReturnType<typeof createMemoryClient>> | undefined
   let peers: ReturnType<typeof createInMemoryConnectedPeers<Operation>> | undefined
@@ -227,7 +228,7 @@ const createMemoryThoughtspace = (
   }
 
   /** Runs a complete editor command atomically, with synchronous read-your-writes and asynchronous durability. */
-  const transact = <T>(work: (document: ThoughtspaceTransaction) => T): { value: T; persisted: Promise<void> } => {
+  const transact = <T>(work: (transaction: ThoughtspaceTransaction) => T): { value: T; persisted: Promise<void> } => {
     if (failure) throw failure
     if (!ready || !memory || !persistent || dropping) throw new Error('Memory TreeCRDT is not ready for editing')
     if (editing) throw new Error('Use the current document transaction to compose commands')
@@ -237,7 +238,7 @@ const createMemoryThoughtspace = (
     const previous = snapshot
     const previousRows = projectedRows
     let active = true
-    const document: ThoughtspaceTransaction = {
+    const transaction: ThoughtspaceTransaction = {
       get operationIds() {
         if (!active) throw new Error('The document transaction has finished')
         return operationIds.slice()
@@ -319,7 +320,7 @@ const createMemoryThoughtspace = (
     let result: { value: T; operations: Operation[] }
     editing = true
     try {
-      result = engine.transact(() => work(document))
+      result = engine.transact(() => work(transaction))
     } catch (error) {
       snapshot = previous
       projectedRows = previousRows
@@ -396,10 +397,10 @@ const createMemoryThoughtspace = (
     acquireAccess: async () => {
       const status = await acquireTreecrdtSessionLock()
       return status === 'acquired'
-        ? { status: 'acquired' as const }
+        ? { status: 'acquired' }
         : {
-            status: 'blocked' as const,
-            reason: status === 'unavailable' ? ('already-open' as const) : ('unsupported' as const),
+            status: 'blocked',
+            reason: status === 'unavailable' ? 'already-open' : 'unsupported',
           }
     },
     init: function initialize(options: ThoughtspaceRuntimeInitOptions): Promise<{ clientId: string; storage: string }> {

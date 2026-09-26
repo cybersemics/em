@@ -43,14 +43,18 @@ const importExport = (text: string, outputFormat: MimeType = 'text/plain') => {
  * Import text reducer that imports on given unranked path first matched.
  */
 const importTextAtFirstMatch = command(
-  (state: State, payload: Omit<ImportTextPayload, 'path'> & { at: string[] }, document?: ThoughtspaceTransaction) => {
+  (
+    state: State,
+    payload: Omit<ImportTextPayload, 'path'> & { at: string[] },
+    transaction?: ThoughtspaceTransaction,
+  ) => {
     const path = contextToPath(state, payload.at)
 
     if (!path) throw new Error(`Path not found for ${payload.at}`)
     return importText({
       ...payload,
       path,
-    })(state, document)
+    })(state, transaction)
   },
 )
 it('basic import with proper thought structure', () => {

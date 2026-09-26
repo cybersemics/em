@@ -26,7 +26,7 @@ import setCursor from './setCursor'
 import uncategorize from './uncategorize'
 
 /** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
-const swapNote = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+const swapNote = (state: State, _payload: undefined = undefined, transaction?: ThoughtspaceTransaction): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -107,11 +107,11 @@ const swapNote = (state: State, _payload: undefined = undefined, document?: Thou
                             offset: resultChild.value.length,
                             path: appendToPath(cursor, resultChild.id),
                           },
-                          document,
+                          transaction,
                         )
                       : state
                   },
-                ])(state, document)
+                ])(state, transaction)
               : null
           },
         ]
@@ -141,7 +141,7 @@ const swapNote = (state: State, _payload: undefined = undefined, document?: Thou
                     newPath: appendToPath(parentOf(cursor), parentNoteChildId),
                     afterId: head(simplePath),
                   },
-                  document,
+                  transaction,
                 )
               : null
           },
@@ -160,7 +160,7 @@ const swapNote = (state: State, _payload: undefined = undefined, document?: Thou
                     newPath: appendToPath(parentOf(cursor), noteId, thoughtId),
                     afterId: null,
                   },
-                  document,
+                  transaction,
                 )
               : newThought(
                   state,
@@ -170,12 +170,12 @@ const swapNote = (state: State, _payload: undefined = undefined, document?: Thou
                     preventSetCursor: true,
                     value: value,
                   },
-                  document,
+                  transaction,
                 )
           },
           setCursor({ path: parentNoteChildId ? appendToPath(parentOf(cursor), parentNoteChildId) : parentOf(cursor) }),
         ],
-  )(state, document)
+  )(state, transaction)
 }
 
 /** Action-creator for swapNote. */

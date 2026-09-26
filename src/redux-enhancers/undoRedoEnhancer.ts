@@ -11,7 +11,7 @@ import * as commands from '../actions'
 import { editThoughtPayload } from '../actions/editThought'
 import editableRender from '../actions/editableRender'
 import { CACHED_SETTINGS, EM_TOKEN } from '../constants'
-import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
+import db, { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -25,8 +25,8 @@ import storage from '../util/storage'
 import stripTags from '../util/stripTags'
 
 /** Refreshes the read-only document view after a complete command and before recording its history. */
-const projectThoughts = (state: State, document?: ThoughtspaceTransaction): State => {
-  const thoughts = document?.project(state.thoughts) ?? thoughtspaceRuntime.project(state.thoughts)
+const projectThoughts = (state: State, transaction?: ThoughtspaceTransaction): State => {
+  const thoughts = transaction?.project(state.thoughts) ?? db.project(state.thoughts)
   if (thoughts === state.thoughts) return state
   const projected = { ...state, thoughts }
   return { ...projected, expanded: expandThoughts(projected, projected.cursor) }
@@ -173,12 +173,12 @@ const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
 const revertPatch = (
   state: State,
   patch: Patch,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): { state: State; patch: Patch } => {
-  if (patch.documentOperationIds.length && !document) {
+  if (patch.documentOperationIds.length && !transaction) {
     throw new Error('Restoring document history requires a thoughtspace transaction')
   }
-  const documentOperationIds = patch.documentOperationIds.length ? document!.revert(patch.documentOperationIds) : []
+  const documentOperationIds = patch.documentOperationIds.length ? transaction!.revert(patch.documentOperationIds) : []
   const uiState = produce(
     state,
     draft =>
@@ -187,7 +187,7 @@ const revertPatch = (
         patch.ops.filter(op => op.path !== '/thoughts' && !op.path.startsWith('/thoughts/')),
       ).newDocument,
   )
-  const projected = projectThoughts(uiState, document)
+  const projected = projectThoughts(uiState, transaction)
   // These three fields belong to the editor even though they live beside canonical thought fields.
   // Restore them only on nodes the engine currently exposes; a stale history path must not resurrect a remote deletion.
   const withOverlays = produce(projected, draft => {
@@ -204,7 +204,7 @@ const revertPatch = (
       })
     })
   })
-  const newState = projectThoughts(withOverlays, document)
+  const newState = projectThoughts(withOverlays, transaction)
   return {
     state: newState,
     patch: {
@@ -216,11 +216,11 @@ const revertPatch = (
 }
 
 /** Undoes one history entry and retains only the actual inverse UI changes and fresh engine operations for redo. */
-const undoOneReducer = (state: State, document?: ThoughtspaceTransaction): State => {
+const undoOneReducer = (state: State, transaction?: ThoughtspaceTransaction): State => {
   const { redoPatches, undoPatches } = state
   const lastUndoPatch = nthLast(undoPatches, 1)
   if (!lastUndoPatch) return state
-  const { state: newState, patch } = revertPatch(state, lastUndoPatch, document)
+  const { state: newState, patch } = revertPatch(state, lastUndoPatch, transaction)
   return {
     ...newState,
     // A UI patch already reverted by a non-undoable action (e.g. Note) must not leave an endless no-op redo step.
@@ -232,11 +232,11 @@ const undoOneReducer = (state: State, document?: ThoughtspaceTransaction): State
 }
 
 /** Redoes one entry by reverting the actual undo receipt, never by replaying the original document operations. */
-const redoOneReducer = (state: State, document?: ThoughtspaceTransaction): State => {
+const redoOneReducer = (state: State, transaction?: ThoughtspaceTransaction): State => {
   const { redoPatches, undoPatches } = state
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!lastRedoPatch) return state
-  const { state: newState, patch } = revertPatch(state, lastRedoPatch, document)
+  const { state: newState, patch } = revertPatch(state, lastRedoPatch, transaction)
   return {
     ...newState,
     redoPatches: redoPatches.slice(0, -1),
@@ -259,7 +259,7 @@ const undoReducer = (
   state: State,
   undoPatches: Patch[],
   { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const lastUndoPatch = nthLast(undoPatches, 1)
   const penultimateUndoPatch = nthLast(undoPatches, 2)
@@ -292,7 +292,7 @@ const undoReducer = (
   const priorCursorOffset = state.cursorOffset
 
   return reducerFlow([
-    ...Array.from({ length: undoCount }, () => (s: State) => undoOneReducer(s, document)),
+    ...Array.from({ length: undoCount }, () => (s: State) => undoOneReducer(s, transaction)),
     undoCount === 1 && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
@@ -306,7 +306,7 @@ const redoReducer = (
   state: State,
   redoPatches: Patch[],
   { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const lastRedoPatch = nthLast(redoPatches, 1)
   if (!redoPatches.length) return state
@@ -314,7 +314,7 @@ const redoReducer = (
   const redoCount = count ?? getUndoStepCount(lastRedoPatch, nthLast(redoPatches, 2), { direction: 'redo' })
 
   return reducerFlow([
-    ...Array.from({ length: redoCount }, () => (s: State) => redoOneReducer(s, document)),
+    ...Array.from({ length: redoCount }, () => (s: State) => redoOneReducer(s, transaction)),
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
@@ -330,7 +330,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
   <A extends Action<any>>(
     // Redux's enhancer signature accepts arbitrary state types; this app enhancer only receives State.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    reducer: (state: any, action: A, document?: ThoughtspaceTransaction) => any,
+    reducer: (state: any, action: A, transaction?: ThoughtspaceTransaction) => any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialState: any,
   ): Store<State, A> => {
@@ -343,7 +343,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
     /**
      * Reducer to handle undo/redo actions and add/merge inverse-redoPatches for other actions.
      */
-    const execute = (state: State | undefined = initialState, action: A, document?: ThoughtspaceTransaction): State => {
+    const execute = (
+      state: State | undefined = initialState,
+      action: A,
+      transaction?: ThoughtspaceTransaction,
+    ): State => {
       if (!state) return reducer(initialState, action)
       const { redoPatches, undoPatches } = state as State
       const actionType = action.type
@@ -353,7 +357,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       if (actionType === 'clear' || actionType === 'replaceThoughts') {
         lastAction = undefined
         lastEditThoughtDirection = EditThoughtDirection.None
-        return projectThoughts(reducer(state, action, document), document)
+        return projectThoughts(reducer(state, action, transaction), transaction)
       }
 
       // Handle undo and redo.
@@ -371,9 +375,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
         const undoOrRedoState =
           actionType === 'undo'
-            ? undoReducer(state, undoPatches, { cursorAtEnd, count }, document)
+            ? undoReducer(state, undoPatches, { cursorAtEnd, count }, transaction)
             : actionType === 'redo'
-              ? redoReducer(state, redoPatches, { cursorAtEnd, count }, document)
+              ? redoReducer(state, redoPatches, { cursorAtEnd, count }, transaction)
               : null
 
         // do not omit editableNonce because editableRender bumps it to force ContentEditable to re-render after undo/redo
@@ -382,12 +386,12 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           statePropertiesToOmit.filter(k => k !== 'editableNonce'),
         )
 
-        return projectThoughts({ ...undoOrRedoState!, ...omitted }, document)
+        return projectThoughts({ ...undoOrRedoState!, ...omitted }, transaction)
       }
 
       // otherwise run the normal reducer for the action
-      const newState = projectThoughts(reducer(state, action, document), document)
-      const documentOperationIds = document?.operationIds ?? []
+      const newState = projectThoughts(reducer(state, action, transaction), transaction)
+      const documentOperationIds = transaction?.operationIds ?? []
 
       if (
         // bail if state has not changed
@@ -543,7 +547,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         try {
           const result =
             needsDocument && thoughtspaceRuntime.ready
-              ? thoughtspaceRuntime.transact(document => execute(state, action, document))
+              ? db.transact(transaction => execute(state, action, transaction))
               : undefined
           const next = result ? result.value : execute(state, action)
           // The document is already committed. A best-effort first-paint cache must never prevent publication.

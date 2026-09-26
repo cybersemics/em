@@ -47,7 +47,7 @@ const decideNextSortPreference = (currentSortPreference: SortPreference): SortPr
 const toggleSort = (
   state: State,
   { showAlert, simplePath }: { showAlert?: boolean; simplePath: SimplePath },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   return setSortPreference(
     state,
@@ -56,7 +56,7 @@ const toggleSort = (
       simplePath,
       sortPreference: decideNextSortPreference(getSortPreference(state, head(simplePath))),
     },
-    document,
+    transaction,
   )
 }
 

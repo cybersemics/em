@@ -14,7 +14,7 @@ import setCursor from './setCursor'
 const jump = (
   state: State,
   { steps }: { steps: number } = { steps: -1 },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   // do nothing if jumping 0 steps
   // do nothing if trying to jump forward but there is no jump index (i.e. we are already at the most recent edit)
@@ -45,7 +45,7 @@ const jump = (
       {
         path: cursorNew,
       },
-      document,
+      transaction,
     ),
     jumpIndex: state.jumpIndex - steps,
   }

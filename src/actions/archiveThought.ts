@@ -39,7 +39,7 @@ import updateCursorAfterDelete from './updateCursorAfterDelete'
  *
  * @param path     Defaults to cursor.
  */
-const archiveThought = (state: State, options: { path?: Path }, document?: ThoughtspaceTransaction): State => {
+const archiveThought = (state: State, options: { path?: Path }, transaction?: ThoughtspaceTransaction): State => {
   const path = options.path || state.cursor
 
   if (!path) return state
@@ -52,9 +52,9 @@ const archiveThought = (state: State, options: { path?: Path }, document?: Thoug
   // rewrite context view operaton in terms of normal view and update cursor
   if (showContexts) {
     return reducerFlow([
-      state => archiveThought(state, { path: simplePath }, document),
-      stateNew => updateCursorAfterDelete(stateNew, state, document),
-    ])(state, document)
+      state => archiveThought(state, { path: simplePath }, transaction),
+      stateNew => updateCursorAfterDelete(stateNew, state, transaction),
+    ])(state, transaction)
   }
 
   const pathParent = simplePath.length > 1 ? parentOf(simplePath) : HOME_PATH
@@ -119,7 +119,7 @@ const archiveThought = (state: State, options: { path?: Path }, document?: Thoug
                     value: '=archive',
                     preventSetCursor: true,
                   },
-                  document,
+                  transaction,
                 )
               : null,
 
@@ -139,7 +139,7 @@ const archiveThought = (state: State, options: { path?: Path }, document?: Thoug
                 offset,
                 afterId: getFirstChildPlacement(state, archive.id),
               },
-              document,
+              transaction,
             )
           },
         ]),
@@ -151,7 +151,7 @@ const archiveThought = (state: State, options: { path?: Path }, document?: Thoug
           offset,
         })
       : null,
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for archiveThought. */

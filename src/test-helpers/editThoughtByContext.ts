@@ -8,10 +8,10 @@ import head from '../util/head'
 /** Edits one context through the caller's transaction, preserving value-keyed fixture composition. */
 const editThoughtByContext = (context: string[], newValue: string) =>
   Object.assign(
-    (state: State, document?: ThoughtspaceTransaction): State => {
+    (state: State, transaction?: ThoughtspaceTransaction): State => {
       const path = contextToPath(state, context)
       if (!path) throw new Error(`Thought not found at context: ${context}`)
-      return editThought(state, { path, oldValue: head(context), newValue }, document)
+      return editThought(state, { path, oldValue: head(context), newValue }, transaction)
     },
     { requiresDocument: true as const },
   )

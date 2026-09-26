@@ -22,7 +22,7 @@ import isAttribute from '../util/isAttribute'
 const toggleAttribute = (
   state: State,
   { path, value, values }: { path: Path | null; value?: string; values?: string[] },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   // normalize values if user passed single value
   const _values = values || [value!]
@@ -45,20 +45,20 @@ const toggleAttribute = (
     }
 
     return firstThought?.value === _values[0]
-      ? deleteThought(state, { pathParent: path, thoughtId: firstThought.id }, document)
+      ? deleteThought(state, { pathParent: path, thoughtId: firstThought.id }, transaction)
       : setFirstSubthought(
           state,
           {
             path: path,
             value: _values[0],
           },
-          document,
+          transaction,
         )
   }
 
   // toggle a nullary attribute off if it exists; otherwise it is created below
   if (_values.length === 1 && firstSubthoughtId) {
-    return deleteThought(state, { pathParent: path, thoughtId: firstSubthoughtId }, document)
+    return deleteThought(state, { pathParent: path, thoughtId: firstSubthoughtId }, transaction)
   }
 
   // otherwise, create the first subthought if it does not exist and recurse
@@ -75,7 +75,7 @@ const toggleAttribute = (
               ? getSortedPlacement(state, thoughtId, _values[0])
               : getFirstChildPlacement(state, thoughtId),
         },
-        document,
+        transaction,
       )
 
   // recursion
@@ -86,12 +86,12 @@ const toggleAttribute = (
       path: appendToPath(path, firstSubthoughtId || idNew),
       values: _values.slice(1),
     },
-    document,
+    transaction,
   )
 
   // after recursion, delete empty descendants
   return firstSubthoughtId && !hasChildren(stateNew, firstSubthoughtId)
-    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId }, document)
+    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId }, transaction)
     : stateNew
 }
 

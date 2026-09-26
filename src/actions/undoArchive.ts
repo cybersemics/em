@@ -18,7 +18,7 @@ import reducerFlow from '../util/reducerFlow'
 const undoArchive = (
   state: State,
   { originalPath, currPath, offset }: { originalPath: Path; currPath: Path; offset?: number },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   const parentId = head(rootedParentOf(state, currPath))
   const originalParentId = head(rootedParentOf(state, originalPath))
@@ -33,7 +33,7 @@ const undoArchive = (
           isKeyboardOpen: state.isKeyboardOpen,
           offset,
         },
-        document,
+        transaction,
       ),
 
     // move thought out of archive
@@ -53,13 +53,13 @@ const undoArchive = (
               pathParent: rootedParentOf(state, originalPath),
               thoughtId: parentId,
             },
-            document,
+            transaction,
           )
         : state,
 
     // hide the undo alert
     alert({ value: null }),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for undoArchive. */

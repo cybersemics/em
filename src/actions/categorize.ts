@@ -36,7 +36,7 @@ export interface categorizePayload {
 const categorize = (
   state: State,
   { value = '' }: categorizePayload = {},
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const { cursor } = state
 
@@ -136,7 +136,7 @@ const categorize = (
       offset: value.length,
       isKeyboardOpen: true,
     }),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** A Thunk that dispatches a 'categorize` action. */

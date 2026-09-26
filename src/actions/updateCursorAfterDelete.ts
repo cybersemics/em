@@ -27,7 +27,7 @@ import parentOf from '../util/parentOf'
  * -   If the last action was a new subthought, i.e. newThought with insertNewSubthought: true, restore the cursor to the parent.
  * -   Restoring the cursor and making the delete action an exact inverse to newThought is more intuitive than moving the cursor elsewhere, and helps the user with error correction.
  **/
-const updateCursorAfterDelete = (state: State, statePrev: State, document?: ThoughtspaceTransaction) => {
+const updateCursorAfterDelete = (state: State, statePrev: State, transaction?: ThoughtspaceTransaction) => {
   const cursor = statePrev.cursor
   if (!cursor) return state
 
@@ -119,9 +119,9 @@ const updateCursorAfterDelete = (state: State, statePrev: State, document?: Thou
           // Otherwise, set the offset to the beginning of the thought.
           offset: !next() || (thought.value === '' && prev()) ? headValue(state, cursorNew)?.length : 0,
         },
-        document,
+        transaction,
       )
-    : cursorBack(state, undefined, document)
+    : cursorBack(state, undefined, transaction)
 }
 
 export default command(updateCursorAfterDelete)

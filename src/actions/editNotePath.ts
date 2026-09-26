@@ -24,7 +24,7 @@ interface Payload {
 const editNotePath = (
   state: State,
   { noteOffset, path, values }: Payload,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const parentId = head(path)
   if (!getThoughtById(state, parentId)) return state
@@ -66,7 +66,7 @@ const editNotePath = (
                 oldValue: thought.value,
                 newValue: child.value,
               },
-              document,
+              transaction,
             )
           : state
       }
@@ -78,7 +78,7 @@ const editNotePath = (
           afterId: getChildrenRanked(state, parentId).at(-1)?.id ?? null,
           value: child.value,
         },
-        document,
+        transaction,
       )
     }),
     ...currentChildren
@@ -86,7 +86,7 @@ const editNotePath = (
       .filter(id => !matchedChildIds.has(id))
       .map(id => deleteThought({ pathParent: path, thoughtId: id })),
     noteOffset == null ? null : state => ({ ...state, noteOffset }),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action creator for editNotePath. */

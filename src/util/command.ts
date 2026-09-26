@@ -2,30 +2,30 @@ import State from '../@types/State'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 
 interface DocumentCommand<Payload, Result> {
-  (): (state: State, document?: ThoughtspaceTransaction) => Result
-  (payload: Payload): (state: State, document?: ThoughtspaceTransaction) => Result
-  (state: State, payload: Payload, document?: ThoughtspaceTransaction): Result
-  (state: State, document?: ThoughtspaceTransaction): Result
+  (): (state: State, transaction?: ThoughtspaceTransaction) => Result
+  (payload: Payload): (state: State, transaction?: ThoughtspaceTransaction) => Result
+  (state: State, payload: Payload, transaction?: ThoughtspaceTransaction): Result
+  (state: State, transaction?: ThoughtspaceTransaction): Result
   requiresDocument: true
 }
 
 /** Curries document commands while forwarding their explicit transaction through composed commands. */
 const command = <Payload, Result>(
-  run: (state: State, payload: Payload, document?: ThoughtspaceTransaction) => Result,
+  run: (state: State, payload: Payload, transaction?: ThoughtspaceTransaction) => Result,
 ): DocumentCommand<Payload, Result> => {
   /** Distinguishes an immediate state-first call from a payload-first composition. */
   const execute = (
     stateOrPayload?: State | Payload,
-    payloadOrDocument?: Payload | ThoughtspaceTransaction,
-    document?: ThoughtspaceTransaction,
+    payloadOrTransaction?: Payload | ThoughtspaceTransaction,
+    transaction?: ThoughtspaceTransaction,
   ) => {
     if (stateOrPayload && typeof stateOrPayload === 'object' && 'thoughts' in stateOrPayload) {
-      const isDocument =
-        payloadOrDocument && typeof payloadOrDocument === 'object' && 'afterPersist' in payloadOrDocument
+      const isTransaction =
+        payloadOrTransaction && typeof payloadOrTransaction === 'object' && 'afterPersist' in payloadOrTransaction
       return run(
         stateOrPayload as State,
-        (isDocument ? undefined : payloadOrDocument) as Payload,
-        isDocument ? (payloadOrDocument as ThoughtspaceTransaction) : document,
+        (isTransaction ? undefined : payloadOrTransaction) as Payload,
+        isTransaction ? (payloadOrTransaction as ThoughtspaceTransaction) : transaction,
       )
     }
     return Object.assign(

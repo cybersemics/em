@@ -36,7 +36,7 @@ interface ThoughtUpdates {
 const deleteThought = (
   state: State,
   { persist = true, pathParent, thoughtId }: Payload,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   const deletedThought = getThoughtById(state, thoughtId) as Thought | undefined
   if (!deletedThought) return state
@@ -121,7 +121,7 @@ const deleteThought = (
       thoughtIndexUpdates,
       persist,
     }),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for deleteThought. */

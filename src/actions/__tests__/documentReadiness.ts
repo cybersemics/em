@@ -2,7 +2,7 @@ import { clearActionCreator as clear } from '../../actions/clear'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
-import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
+import db from '../../data-providers/thoughtspace'
 import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
 import getFavoriteIds from '../../selectors/getFavoriteIds'
@@ -20,8 +20,7 @@ import initialState from '../../util/initialState'
 let cleanup: () => void
 
 /** Exports the canonical document independently of Redux's published thoughts and navigation. */
-const exportDocument = () =>
-  exportContext({ ...initialState(), thoughts: thoughtspaceRuntime.project() }, [HOME_TOKEN], 'text/plain')
+const exportDocument = () => exportContext({ ...initialState(), thoughts: db.project() }, [HOME_TOKEN], 'text/plain')
 
 beforeEach(async () => {
   await initStore()
@@ -174,7 +173,7 @@ it('moves an entire deep subtree after reinitialization', async () => {
         - c
           - d
             - e`)
-  expect(store.getState().thoughts).toEqual(thoughtspaceRuntime.project())
+  expect(store.getState().thoughts).toEqual(db.project())
 })
 
 it('edits a deep subtree root after reinitialization', async () => {
@@ -202,5 +201,5 @@ it('edits a deep subtree root after reinitialization', async () => {
       - c
         - d
           - e`)
-  expect(store.getState().thoughts).toEqual(thoughtspaceRuntime.project())
+  expect(store.getState().thoughts).toEqual(db.project())
 })

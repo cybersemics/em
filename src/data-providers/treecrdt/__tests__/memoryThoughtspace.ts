@@ -32,8 +32,8 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
       },
     })
     view.thoughtIndex = { [HOME_TOKEN]: runtime.project().thoughtIndex[HOME_TOKEN]!, [a.id]: a, [b.id]: b }
-    const initial = runtime.transact(document =>
-      document.update(
+    const initial = runtime.transact(transaction =>
+      transaction.update(
         { thoughtIndexUpdates: { [a.id]: a, [b.id]: b }, movePlacements: { [a.id]: null, [b.id]: a.id } },
         view,
       ),
@@ -72,8 +72,8 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
       await gate
       return append(ops)
     })
-    const first = runtime.transact(document =>
-      document.update(
+    const first = runtime.transact(transaction =>
+      transaction.update(
         {
           thoughtIndexUpdates: { [a.id]: { ...a, value: 'first', rank: 1 } },
         },
@@ -81,8 +81,8 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
       ),
     )
     view = first.value
-    const second = runtime.transact(document =>
-      document.update(
+    const second = runtime.transact(transaction =>
+      transaction.update(
         {
           thoughtIndexUpdates: { [a.id]: { ...a, value: 'second', rank: 1 } },
         },
@@ -215,11 +215,11 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
       return getOps(refs)
     })
     expect(runtime.ready).toBe(false)
-    expect(() => runtime.transact(document => document.project())).toThrow('not ready for editing')
+    expect(() => runtime.transact(transaction => transaction.project())).toThrow('not ready for editing')
     const initializing = runtime.init({ storage: 'memory' })
     await loadingStarted
     expect(runtime.ready).toBe(false)
-    expect(() => runtime.transact(document => document.project())).toThrow('not ready for editing')
+    expect(() => runtime.transact(transaction => transaction.project())).toThrow('not ready for editing')
     release()
     await initializing
     await runtime.waitForIdle()
@@ -255,8 +255,8 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
     expect(decoded).not.toHaveBeenCalled()
     const siblingReads = vi.spyOn(memory.tree, 'children')
     const childKeys = vi.spyOn(childrenMaps, 'childrenMapKey')
-    const changed = runtime.transact(document =>
-      document.update({
+    const changed = runtime.transact(transaction =>
+      transaction.update({
         thoughtIndexUpdates: { [grandchild]: { ...view.thoughtIndex[grandchild], value: 'edited in memory' } },
       }),
     )

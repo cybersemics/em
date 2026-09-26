@@ -12,9 +12,9 @@ import * as reducers from './index'
 const appReducer = (
   state: State = initialState(),
   action: Action<ActionType>,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State =>
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ((reducers as Index<any>)[action.type] || reducers.unknownAction)(state, action, document)
+  ((reducers as Index<any>)[action.type] || reducers.unknownAction)(state, action, transaction)
 
 export default appReducer

@@ -1,7 +1,7 @@
 import State from '../@types/State'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 
-type UnaryReducer<S> = ((state: S, document?: ThoughtspaceTransaction) => Partial<S> | null) & {
+type UnaryReducer<S> = ((state: S, transaction?: ThoughtspaceTransaction) => Partial<S> | null) & {
   requiresDocument?: boolean
 }
 
@@ -13,12 +13,12 @@ type UnaryReducer<S> = ((state: S, document?: ThoughtspaceTransaction) => Partia
  */
 const reducerFlow = <S = State>(reducers: (UnaryReducer<NoInfer<S>> | null)[]) =>
   Object.assign(
-    (initialState?: NoInfer<S>, document?: ThoughtspaceTransaction): NoInfer<S> =>
+    (initialState?: NoInfer<S>, transaction?: ThoughtspaceTransaction): NoInfer<S> =>
       reducers.reduce((state, reducer) => {
         // Lodash-curried UI reducers treat extra arguments as payload. Only explicit commands accept a transaction.
         const stateNew =
           (reducer && (reducer.requiresDocument || reducer.length >= 2)
-            ? reducer(state, document)
+            ? reducer(state, transaction)
             : reducer?.(state)) || state
         return stateNew === state
           ? state

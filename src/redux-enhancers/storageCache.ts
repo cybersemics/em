@@ -81,12 +81,12 @@ const storageCacheStoreEnhancer: StoreEnhancer<any> =
   <A extends Action<any>>(
     // Redux's enhancer signature accepts arbitrary state types; this app enhancer only receives State.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    reducer: (state: any, action: A, document?: ThoughtspaceTransaction) => any,
+    reducer: (state: any, action: A, transaction?: ThoughtspaceTransaction) => any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialState: any,
   ): Store<State, A> =>
-    createStore((state: State | undefined = initialState, action: A, document?: ThoughtspaceTransaction): State => {
-      const stateNew: State = reducer(state, action, document)
+    createStore((state: State | undefined = initialState, action: A, transaction?: ThoughtspaceTransaction): State => {
+      const stateNew: State = reducer(state, action, transaction)
 
       // initialize storage cache
       if (!state) return { ...stateNew, storageCache: initialCache }

@@ -13,7 +13,7 @@ import head from '../util/head'
 import setDescendant from './setDescendant'
 
 /** Removes `=children/=bullet` from a context, preserving other `=children` attributes and removing `=children` only if it becomes completely empty. */
-const removeBulletStyle = (state: State, simplePath: SimplePath, document?: ThoughtspaceTransaction): State => {
+const removeBulletStyle = (state: State, simplePath: SimplePath, transaction?: ThoughtspaceTransaction): State => {
   const thoughtId = head(simplePath)
   const childrenId = findDescendant(state, thoughtId, '=children')
   if (!childrenId) return state
@@ -25,12 +25,12 @@ const removeBulletStyle = (state: State, simplePath: SimplePath, document?: Thou
   const stateNew = deleteThought(
     state,
     { pathParent: appendToPath(simplePath, childrenId), thoughtId: bulletId },
-    document,
+    transaction,
   )
 
   // Remove =children if it is now completely empty (including hidden meta children).
   return getAllChildren(stateNew, childrenId).length === 0
-    ? deleteThought(stateNew, { pathParent: simplePath, thoughtId: childrenId }, document)
+    ? deleteThought(stateNew, { pathParent: simplePath, thoughtId: childrenId }, transaction)
     : stateNew
 }
 
@@ -42,11 +42,11 @@ const removeBulletStyle = (state: State, simplePath: SimplePath, document?: Thou
 const setBulletStyle = (
   state: State,
   { simplePath, value }: { simplePath: SimplePath; value: BulletStyle },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State =>
   value
-    ? setDescendant(state, { path: simplePath, values: ['=children', '=bullet', value] }, document)
-    : removeBulletStyle(state, simplePath, document)
+    ? setDescendant(state, { path: simplePath, values: ['=children', '=bullet', value] }, transaction)
+    : removeBulletStyle(state, simplePath, transaction)
 
 /** Action-creator for setBulletStyle. */
 export const setBulletStyleActionCreator =

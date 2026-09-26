@@ -23,7 +23,7 @@ import moveThought from './moveThought'
 const REGEX_HYPHEN = /-$/
 
 /** Join two or more thoughts split by spaces. Defaults to all non-attribute thoughts at the level of the cursor. */
-const join = (state: State, { paths }: { paths?: Path[] } = {}, document?: ThoughtspaceTransaction) => {
+const join = (state: State, { paths }: { paths?: Path[] } = {}, transaction?: ThoughtspaceTransaction) => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -61,7 +61,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}, document?: Thoug
                   .filter(sibling => sibling.id !== child)
                   .at(-1)?.id ?? null,
             },
-            document,
+            transaction,
           )
       })
     })
@@ -93,7 +93,7 @@ const join = (state: State, { paths }: { paths?: Path[] } = {}, document?: Thoug
 
   return reducerFlow([...moveThoughtReducers, editThoughtReducer, ...deleteThoughtReducers, editableRender])(
     state,
-    document,
+    transaction,
   )
 }
 

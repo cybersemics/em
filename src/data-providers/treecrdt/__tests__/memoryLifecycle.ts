@@ -70,7 +70,7 @@ it('reopens only after a concurrent drop finishes and blocks editing during tear
     const reopening = runtime.init({ storage: 'memory' })
     await droppingStarted
     expect(open).toHaveBeenCalledTimes(1)
-    expect(() => runtime.transact(document => document.project())).toThrow('not ready for editing')
+    expect(() => runtime.transact(transaction => transaction.project())).toThrow('not ready for editing')
     release()
     await Promise.all([dropping, reopening])
     expect(open).toHaveBeenCalledTimes(2)
@@ -100,14 +100,14 @@ it('reports a failed durable append and rejects later commands before authoring 
     await runtime.init({ storage: 'memory', onError })
     runtime.project()
     vi.spyOn(persistent.ops, 'appendMany').mockRejectedValueOnce(failure)
-    const first = runtime.transact(document =>
-      document.update({ thoughtIndexUpdates: { [thought.id]: thought }, movePlacements: { [thought.id]: null } }),
+    const first = runtime.transact(transaction =>
+      transaction.update({ thoughtIndexUpdates: { [thought.id]: thought }, movePlacements: { [thought.id]: null } }),
     )
     await expect(first.persisted).rejects.toBe(failure)
     expect(onError).toHaveBeenCalledExactlyOnceWith(failure)
     expect(() =>
-      runtime.transact(document =>
-        document.update({
+      runtime.transact(transaction =>
+        transaction.update({
           thoughtIndexUpdates: { [thought.id]: { ...thought, value: 'must not be authored' } },
         }),
       ),
@@ -138,7 +138,7 @@ it('reports a failed loopback operation-log read and gates later edits', async (
     )
     await expect(runtime.waitForIdle()).rejects.toThrow('Operation-log read failed')
     expect(onError).toHaveBeenCalledTimes(1)
-    expect(() => runtime.transact(document => document.project())).toThrow('Operation-log read failed')
+    expect(() => runtime.transact(transaction => transaction.project())).toThrow('Operation-log read failed')
     expect(await persistent.tree.exists(node)).toBe(true)
   } finally {
     await runtime.drop()
@@ -172,7 +172,7 @@ it('reports a failed incoming WASM batch and gates later edits without publishin
     )
     await expect(runtime.waitForIdle()).rejects.toThrow('Incoming batch failed')
     expect(onError).toHaveBeenCalledTimes(1)
-    expect(() => runtime.transact(document => document.project())).toThrow('Incoming batch failed')
+    expect(() => runtime.transact(transaction => transaction.project())).toThrow('Incoming batch failed')
     expect(runtime.project().thoughtIndex[node]).toBeUndefined()
     expect(await persistent.tree.exists(node)).toBe(true)
   } finally {
@@ -202,7 +202,7 @@ it('waits for initialization to settle before dropping and reopening its databas
     const dropping = runtime.drop()
     const reopening = runtime.init({ storage: 'memory' })
     expect(open).toHaveBeenCalledTimes(1)
-    expect(() => runtime.transact(document => document.project())).toThrow('not ready for editing')
+    expect(() => runtime.transact(transaction => transaction.project())).toThrow('not ready for editing')
     release()
     await Promise.all([initializing, dropping, reopening])
     expect(open).toHaveBeenCalledTimes(2)

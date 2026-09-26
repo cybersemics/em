@@ -12,7 +12,7 @@ import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
 
 /** Set or remove a heading on the cursor. */
-const heading = (state: State, { level }: { level: HeadingLevel }, document?: ThoughtspaceTransaction): State => {
+const heading = (state: State, { level }: { level: HeadingLevel }, transaction?: ThoughtspaceTransaction): State => {
   if (!state.cursor) return state
   const path = simplifyPath(state, state.cursor)
   const headingChildren = filterAllChildren(state, head(state.cursor), child => /^=heading[1-9]$/.test(child.value))
@@ -27,7 +27,7 @@ const heading = (state: State, { level }: { level: HeadingLevel }, document?: Th
 
     // set new heading
     level > 0 ? setDescendant({ path, values: [`=heading${level}`] }) : null,
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for heading. */

@@ -43,7 +43,7 @@ const multicursorBack = (state: State): State => {
 }
 
 /** Moves the cursor up one level. When thoughts are selected, replaces the selection with their parents instead of moving the cursor. */
-const cursorBack = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+const cursorBack = (state: State, _payload: undefined = undefined, transaction?: ThoughtspaceTransaction): State => {
   if (hasMulticursor(state)) return multicursorBack(state)
 
   const { cursor: cursorOld, isKeyboardOpen, search, rootContext } = state
@@ -81,7 +81,7 @@ const cursorBack = (state: State, _payload: undefined = undefined, document?: Th
               state.cursorBeforeSearch ? setCursor({ path: state.cursorBeforeSearch, isKeyboardOpen }) : null,
             ]
           : [],
-  )(state, document)
+  )(state, transaction)
 }
 
 /** Action-creator for cursorBack. */

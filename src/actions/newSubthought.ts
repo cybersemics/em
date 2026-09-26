@@ -6,13 +6,13 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import command from '../util/command'
 
 /** Alias for newThought with insertNewSubthought: true. */
-const newSubthought = (state: State, payload: NewThoughtPayload | string, document?: ThoughtspaceTransaction) => {
+const newSubthought = (state: State, payload: NewThoughtPayload | string, transaction?: ThoughtspaceTransaction) => {
   // optionally allow string value to be passed as entire payload
   if (typeof payload === 'string') {
     payload = { value: payload }
   }
 
-  return newThought(state, { ...payload, insertNewSubthought: true }, document)
+  return newThought(state, { ...payload, insertNewSubthought: true }, transaction)
 }
 
 /** Action-creator for newSubthought. */

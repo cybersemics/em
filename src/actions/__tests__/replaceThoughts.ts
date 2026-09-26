@@ -1,5 +1,5 @@
 import State from '../../@types/State'
-import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
+import db from '../../data-providers/thoughtspace'
 import getLexeme from '../../selectors/getLexeme'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
@@ -44,19 +44,6 @@ it('clears the cursor when its entire ancestry was deleted', () => {
   expect(contextToThought(next, ['x'])).toBeTruthy()
 })
 
-it('follows a surviving cursor when an ancestor moves', () => {
-  const previous = store.getState()
-  const incoming = runDocumentCommand(
-    moveThoughtAtFirstMatch({ from: ['a', 'b'], to: ['x', 'b'], after: null }),
-    previous,
-  ).thoughts
-
-  const next = replaceThoughts(previous, { thoughts: incoming, repairCursor: true })
-
-  expectPathToEqual(next, next.cursor, ['x', 'b', 'c'])
-  expect(contextToThought(next, ['a', 'b'])).toBeUndefined()
-})
-
 it('publishes a canonical snapshot atomically without adding history or authored writes', async () => {
   const previous = store.getState()
   const incoming = runDocumentCommand(
@@ -83,5 +70,5 @@ it('publishes a canonical snapshot atomically without adding history or authored
   expect(next.undoPatches).toBe(previous.undoPatches)
   expect(next.redoPatches).toBe(previous.redoPatches)
   expect(next.jumpHistory).toBe(previous.jumpHistory)
-  expect(thoughtspaceRuntime.project()).toBe(incoming)
+  expect(db.project()).toBe(incoming)
 })

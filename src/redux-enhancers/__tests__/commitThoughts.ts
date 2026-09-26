@@ -4,7 +4,7 @@ import { editThoughtActionCreator as editThought } from '../../actions/editThoug
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { settingsActionCreator as settings } from '../../actions/settings'
 import { EM_TOKEN } from '../../constants'
-import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
+import db from '../../data-providers/thoughtspace'
 import store from '../../stores/app'
 import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import initStore from '../../test-helpers/initStore'
@@ -31,11 +31,11 @@ it('publishes and persists document changes even when the first-paint settings c
 
     const path = contextToPathOrThrow(store.getState(), [EM_TOKEN, 'Settings', 'Theme', 'Dark'], 'cache failure')
     expect(published).toHaveBeenCalled()
-    expect(thoughtspaceRuntime.project().thoughtIndex[head(path)].value).toBe('Dark')
+    expect(db.project().thoughtIndex[head(path)].value).toBe('Dark')
     expect(cacheWrite).toHaveBeenCalledWith('Settings/Theme', 'Dark')
     expect(warn).toHaveBeenCalledWith('Unable to cache first-paint settings', failure)
     await waitForThoughtspaceIdle()
-    expect(thoughtspaceRuntime.project().thoughtIndex[head(path)]).toMatchObject({ value: 'Dark' })
+    expect(db.project().thoughtIndex[head(path)]).toMatchObject({ value: 'Dark' })
   } finally {
     unsubscribe()
     cacheWrite.mockRestore()

@@ -188,8 +188,8 @@ describe('normal view', () => {
         `,
       }),
       setCursor(['Five']),
-      (state: State, document?: ThoughtspaceTransaction) =>
-        archiveThought(state, { path: contextToPath(state, ['Two'])! }, document),
+      (state: State, transaction?: ThoughtspaceTransaction) =>
+        archiveThought(state, { path: contextToPath(state, ['Two'])! }, transaction),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())
@@ -209,8 +209,8 @@ describe('normal view', () => {
         `,
       }),
       setCursor(['Five']),
-      (state: State, document?: ThoughtspaceTransaction) =>
-        archiveThought(state, { path: contextToPath(state, ['One'])! }, document),
+      (state: State, transaction?: ThoughtspaceTransaction) =>
+        archiveThought(state, { path: contextToPath(state, ['One'])! }, transaction),
     ]
 
     const stateNew = reducerFlow(steps)(initialState())

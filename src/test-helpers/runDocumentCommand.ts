@@ -3,7 +3,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import { ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN } from '../constants'
-import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
+import db from '../data-providers/thoughtspace'
 
 const roots = new Set<string>([ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN])
 
@@ -14,11 +14,11 @@ const roots = new Set<string>([ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME
  * This is fixture arrangement, not a second JavaScript implementation of the document or command.
  */
 const runDocumentCommand = (
-  command: (state: State, document: ThoughtspaceTransaction) => State,
+  command: (state: State, transaction: ThoughtspaceTransaction) => State,
   state: State,
 ): State => {
-  const result = thoughtspaceRuntime.transact(document => {
-    const current = document.project()
+  const result = db.transact(transaction => {
+    const current = transaction.project()
     const target = state.thoughts.thoughtIndex
     if (current.thoughtIndex !== target) {
       const thoughtIndexUpdates = {
@@ -45,12 +45,12 @@ const runDocumentCommand = (
           )
           .filter(([id]) => id! in thoughtIndexUpdates),
       ) as Record<ThoughtId, ThoughtId | null>
-      document.update({ thoughtIndexUpdates, movePlacements }, state.thoughts)
+      transaction.update({ thoughtIndexUpdates, movePlacements }, state.thoughts)
     }
-    const thoughts = document.project(state.thoughts)
+    const thoughts = transaction.project(state.thoughts)
     const input = thoughts === state.thoughts ? state : { ...state, thoughts }
-    const next = command(input, document)
-    const projected = document.project(next.thoughts)
+    const next = command(input, transaction)
+    const projected = transaction.project(next.thoughts)
     return projected === next.thoughts ? next : { ...next, thoughts: projected }
   })
   return result.value

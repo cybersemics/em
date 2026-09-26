@@ -7,8 +7,8 @@ import runDocumentCommand from './runDocumentCommand'
 const reducerFlow = (reducers: Parameters<typeof composeReducers<State>>[0]) => {
   const command = composeReducers(reducers)
   return Object.assign(
-    (state: State, document?: ThoughtspaceTransaction): State =>
-      document ? command(state, document) : runDocumentCommand(command, state),
+    (state: State, transaction?: ThoughtspaceTransaction): State =>
+      transaction ? command(state, transaction) : runDocumentCommand(command, state),
     { requiresDocument: true as const },
   )
 }

@@ -30,17 +30,17 @@ const updateThoughts = (
     persist = true,
     onPersisted,
   }: UpdateThoughtsOptions,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   if (!Object.keys(thoughtIndexUpdates).length) return state
-  if (!document) throw new Error('Document updates require a thoughtspace transaction')
+  if (!transaction) throw new Error('Document updates require a thoughtspace transaction')
   const thoughts = persist
-    ? document.update({ thoughtIndexUpdates, movePlacements }, state.thoughts)
-    : document.project({
+    ? transaction.update({ thoughtIndexUpdates, movePlacements }, state.thoughts)
+    : transaction.project({
         ...state.thoughts,
         thoughtIndex: mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates),
       })
-  if (persist && onPersisted) document.afterPersist(onPersisted)
+  if (persist && onPersisted) transaction.afterPersist(onPersisted)
   const next = {
     ...state,
     thoughts,

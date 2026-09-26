@@ -21,7 +21,11 @@ import setCursor from './setCursor'
  * Swaps the current cursor's thought with its grandparent by moving nodes. The two thoughts exchange places in the
  * tree and each adopts the other's children, while the parent in between keeps its position under the cursor thought.
  */
-const swapGrandparent = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+const swapGrandparent = (
+  state: State,
+  _payload: undefined = undefined,
+  transaction?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
 
   // If there is no cursor, do nothing.
@@ -114,7 +118,7 @@ const swapGrandparent = (state: State, _payload: undefined = undefined, document
       path: [...greatGrandparent, childId],
       offset: childThought.value.length,
     }),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for swapGrandparent. */

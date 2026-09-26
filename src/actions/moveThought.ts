@@ -41,7 +41,7 @@ export interface MoveThoughtPayload {
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
-const moveThought = (state: State, payload: MoveThoughtPayload, document?: ThoughtspaceTransaction) => {
+const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: ThoughtspaceTransaction) => {
   const { oldPath, newPath, offset, skipMerge, afterId } = payload
   const recentlyEdited = state.recentlyEdited
 
@@ -143,7 +143,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload, document?: Thoug
             sourceThoughtPath,
             targetThoughtPath: appendToPath(destinationThoughtPath, duplicateThought.id),
           },
-          document,
+          transaction,
         )
       }
 
@@ -196,7 +196,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload, document?: Thoug
               : survivingAfterId,
           },
         },
-        document,
+        transaction,
       )
     },
     // update cursor if moved path is on the cursor
@@ -233,7 +233,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload, document?: Thoug
       ...state,
       expanded: expandThoughts(state, state.cursor),
     }),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for moveThought. */

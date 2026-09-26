@@ -1093,12 +1093,8 @@ it('empty parent', async () => {
 
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  await Promise.all(
-    store.dispatch([
-      newThought({}),
-      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), [''])!, text })),
-    ]),
-  )
+  store.dispatch(newThought({}))
+  await store.dispatch(importDataActionCreator({ path: contextToPath(store.getState(), [''])!, text }))
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1134,12 +1130,8 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 `
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  await Promise.all(
-    store.dispatch([
-      newThought({ value: 'a' }),
-      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
-    ]),
-  )
+  store.dispatch(newThought({ value: 'a' }))
+  await store.dispatch(importDataActionCreator({ path: contextToPath(store.getState(), ['a'])!, html }))
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1154,19 +1146,14 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 it('paste em text with browser-injected meta charset as inline, not subthought', async () => {
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  await Promise.all(
-    store.dispatch([
-      newThought({ value: 'a' }),
-      (dispatch, getState) =>
-        dispatch(
-          importDataActionCreator({
-            path: contextToPath(getState(), ['a'])!,
-            html: `<meta charset='utf-8'>Hello`,
-            text: 'Hello',
-            isEmText: true,
-          }),
-        ),
-    ]),
+  store.dispatch(newThought({ value: 'a' }))
+  await store.dispatch(
+    importDataActionCreator({
+      path: contextToPath(store.getState(), ['a'])!,
+      html: `<meta charset='utf-8'>Hello`,
+      text: 'Hello',
+      isEmText: true,
+    }),
   )
 
   await vi.runOnlyPendingTimersAsync()
@@ -1182,19 +1169,14 @@ it('paste em text with browser-injected meta charset as inline, not subthought',
 it('paste em text with formatted html and meta charset as inline', async () => {
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  await Promise.all(
-    store.dispatch([
-      newThought({ value: 'a' }),
-      (dispatch, getState) =>
-        dispatch(
-          importDataActionCreator({
-            path: contextToPath(getState(), ['a'])!,
-            html: `<meta charset='utf-8'><b>Hello</b>`,
-            text: 'Hello',
-            isEmText: true,
-          }),
-        ),
-    ]),
+  store.dispatch(newThought({ value: 'a' }))
+  await store.dispatch(
+    importDataActionCreator({
+      path: contextToPath(store.getState(), ['a'])!,
+      html: `<meta charset='utf-8'><b>Hello</b>`,
+      text: 'Hello',
+      isEmText: true,
+    }),
   )
 
   await vi.runOnlyPendingTimersAsync()
@@ -1215,12 +1197,8 @@ it('insert single-line HTML copied from Windows desktop Chrome at end of thought
 </html>`
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  await Promise.all(
-    store.dispatch([
-      newThought({ value: 'a' }),
-      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
-    ]),
-  )
+  store.dispatch(newThought({ value: 'a' }))
+  await store.dispatch(importDataActionCreator({ path: contextToPath(store.getState(), ['a'])!, html }))
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1236,12 +1214,8 @@ it('insert single-line HTML copied from Mac desktop Chrome at end of thought', a
   const html = `<meta charset='utf-8'>foo`
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  await Promise.all(
-    store.dispatch([
-      newThought({ value: 'a' }),
-      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
-    ]),
-  )
+  store.dispatch(newThought({ value: 'a' }))
+  await store.dispatch(importDataActionCreator({ path: contextToPath(store.getState(), ['a'])!, html }))
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1274,12 +1248,8 @@ bar</i></p>
 `
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  await Promise.all(
-    store.dispatch([
-      newThought({ value: 'a' }),
-      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['a'])!, html })),
-    ]),
-  )
+  store.dispatch(newThought({ value: 'a' }))
+  await store.dispatch(importDataActionCreator({ path: contextToPath(store.getState(), ['a'])!, html }))
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1312,12 +1282,8 @@ p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 9.0px Helvetica; color: #000000}
 `
   const { cleanup } = await initialize({ storage: 'memory' })
 
-  await Promise.all(
-    store.dispatch([
-      newThought({ value: 'x' }),
-      (dispatch, getState) => dispatch(importDataActionCreator({ path: contextToPath(getState(), ['x'])!, html })),
-    ]),
-  )
+  store.dispatch(newThought({ value: 'x' }))
+  await store.dispatch(importDataActionCreator({ path: contextToPath(store.getState(), ['x'])!, html }))
 
   await vi.runOnlyPendingTimersAsync()
 

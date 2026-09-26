@@ -15,7 +15,7 @@ import head from '../util/head'
 const deleteAttribute = (
   state: State,
   { path, value, values }: { path: Path | null; value?: string; values?: string[] },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   // normalize values if user passed single value
   const _values = values || [value!]
@@ -28,7 +28,9 @@ const deleteAttribute = (
   // base case: delete or overwrite the first subthought with the last value in the sequence
   if (_values.length === 1) {
     const firstSubthought = firstSubthoughtId && getThoughtById(state, firstSubthoughtId)
-    return firstSubthought ? deleteThought(state, { pathParent: path, thoughtId: firstSubthoughtId! }, document) : state
+    return firstSubthought
+      ? deleteThought(state, { pathParent: path, thoughtId: firstSubthoughtId! }, transaction)
+      : state
   }
 
   // otherwise, create the first subthought if it does not exist and recurse
@@ -40,13 +42,13 @@ const deleteAttribute = (
           path: appendToPath(path, firstSubthoughtId),
           values: _values.slice(1),
         },
-        document,
+        transaction,
       )
     : state
 
   // after recursion, delete empty descendants
   return firstSubthoughtId && !hasChildren(stateNew, firstSubthoughtId)
-    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId }, document)
+    ? deleteThought(stateNew, { pathParent: path, thoughtId: firstSubthoughtId }, transaction)
     : stateNew
 }
 

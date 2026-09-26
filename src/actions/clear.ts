@@ -18,7 +18,7 @@ const clear = (
     /** Set autologin and isLoading to true. */
     full?: boolean
   },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   // TODO: Properly type options to be optional without breaking curryReducer.
   const full = !!options?.full
@@ -42,7 +42,7 @@ const clear = (
       // by default, do not reset autologin and isLoading
       ...(full ? {} : { autologin: false, isLoading: false }),
     }),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for clear. */

@@ -18,7 +18,7 @@ import isAttribute from '../util/isAttribute'
 const toggleThought = (
   state: State,
   { path, value, values }: { path: Path | null; value?: string; values?: string[] },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   // normalize values if user passed single value
   const _values = values || [value!]
@@ -31,7 +31,7 @@ const toggleThought = (
 
   // delete the last thought if it exists
   if (_values.length === 1 && subthoughtId) {
-    return deleteThought(state, { pathParent: path, thoughtId: subthoughtId }, document)
+    return deleteThought(state, { pathParent: path, thoughtId: subthoughtId }, transaction)
   }
 
   // otherwise, create the thought if it does not exist and recurse
@@ -48,7 +48,7 @@ const toggleThought = (
             ? getFirstChildPlacement(state, thoughtId)
             : (getChildrenRanked(state, thoughtId).at(-1)?.id ?? null),
         },
-        document,
+        transaction,
       )
 
   // recursion
@@ -58,12 +58,12 @@ const toggleThought = (
       path: appendToPath(path, subthoughtId || idNew),
       values: _values.slice(1),
     },
-    document,
+    transaction,
   )
 
   // after recursion, delete empty descendants
   return values.length > 1 && subthoughtId && !hasChildren(stateNew, subthoughtId)
-    ? deleteThought(stateNew, { pathParent: path, thoughtId: subthoughtId }, document)
+    ? deleteThought(stateNew, { pathParent: path, thoughtId: subthoughtId }, transaction)
     : stateNew
 }
 

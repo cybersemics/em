@@ -73,9 +73,9 @@ const testData: RoamPage[] = [
 const importExport = (roamJson: RoamPage[]) => {
   const thoughtsJSON = roamJsonToBlocks(roamJson)
   const stateNew = runDocumentCommand(
-    (state, document) => ({
+    (state, transaction) => ({
       ...state,
-      thoughts: document.update(importJson(state, HOME_PATH as SimplePath, thoughtsJSON, { skipRoot: false })),
+      thoughts: transaction.update(importJson(state, HOME_PATH as SimplePath, thoughtsJSON, { skipRoot: false })),
     }),
     initialState(),
   )
@@ -204,9 +204,9 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
   const blocks = roamJsonToBlocks(testData)
 
   const state = runDocumentCommand(
-    (state, document) => ({
+    (state, transaction) => ({
       ...state,
-      thoughts: document.update(importJson(state, HOME_PATH as SimplePath, blocks, { skipRoot: false })),
+      thoughts: transaction.update(importJson(state, HOME_PATH as SimplePath, blocks, { skipRoot: false })),
     }),
     initialState(),
   )

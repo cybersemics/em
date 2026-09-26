@@ -39,8 +39,8 @@ const persistThoughtsTo = (
   thoughts: ReturnType<typeof thought>[],
   movePlacements: Record<ThoughtId, ThoughtId | null>,
 ) =>
-  runtime.transact(document =>
-    document.update({
+  runtime.transact(transaction =>
+    transaction.update({
       thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
       movePlacements,
     }),
@@ -111,8 +111,8 @@ it('projects compatibility ranks for both parents after a cross-parent move', as
   )
   const { thoughtIndex } = treecrdt.project()
   const loaded = [PARENT_ID, OTHER_PARENT_ID, THOUGHT_A_ID, THOUGHT_B_ID, THOUGHT_X_ID].map(id => thoughtIndex[id])
-  const moved = treecrdt.transact(document =>
-    document.update(
+  const moved = treecrdt.transact(transaction =>
+    transaction.update(
       {
         thoughtIndexUpdates: { [THOUGHT_A_ID]: thought(THOUGHT_A_ID, OTHER_PARENT_ID, 'a', 1) },
         movePlacements: { [THOUGHT_A_ID]: THOUGHT_X_ID },

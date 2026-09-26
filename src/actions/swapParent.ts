@@ -18,7 +18,7 @@ import alert from './alert'
 import setCursor from './setCursor'
 
 /** Swaps the current cursor's thought with its parent by moving nodes. */
-const swapParent = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+const swapParent = (state: State, _payload: undefined = undefined, transaction?: ThoughtspaceTransaction): State => {
   const { cursor } = state
 
   // If there is no cursor, do nothing.
@@ -101,7 +101,7 @@ const swapParent = (state: State, _payload: undefined = undefined, document?: Th
       path: [...grandparent, childId],
       offset: childThought.value.length,
     }),
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for swapParent. */

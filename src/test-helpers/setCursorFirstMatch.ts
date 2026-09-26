@@ -6,10 +6,14 @@ import command from '../util/command'
 import contextToPathOrThrow from './contextToPathOrThrow'
 
 /** A reducer that sets the cursor to the given unranked path, or clears the cursor when passed null. Throws if a non-null path does not resolve. */
-const setCursorFirstMatch = (state: State, pathUnranked: string[] | null, document?: ThoughtspaceTransaction): State =>
+const setCursorFirstMatch = (
+  state: State,
+  pathUnranked: string[] | null,
+  transaction?: ThoughtspaceTransaction,
+): State =>
   setCursor({
     path: pathUnranked ? contextToPathOrThrow(state, pathUnranked, 'setCursorFirstMatch') : null,
-  })(state, document)
+  })(state, transaction)
 
 /** A Thunk that sets the cursor to the given unranked path, or clears the cursor when passed null. Throws if a non-null path does not resolve. */
 export const setCursorFirstMatchActionCreator =

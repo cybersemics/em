@@ -20,7 +20,7 @@ import reducerFlow from '../util/reducerFlow'
 import updateCursorAfterDelete from './updateCursorAfterDelete'
 
 /** Given a path to a thought within the context view (a/m~/b), find the associated thought (b/m). This is nontrivial since the associated thought (b/m) is a different Lexeme instance than the context view thought (a/m). */
-const getContext = (state: State, path: Path, document?: ThoughtspaceTransaction) => {
+const getContext = (state: State, path: Path, transaction?: ThoughtspaceTransaction) => {
   const contextValue = headValue(state, parentOf(path))
   const contexts = contextValue !== undefined ? getContexts(state, contextValue) : []
   return contexts.find(cxid => getThoughtById(state, cxid)?.parentId === head(path))
@@ -30,7 +30,7 @@ const getContext = (state: State, path: Path, document?: ThoughtspaceTransaction
 const deleteThoughtWithCursor = (
   state: State,
   _payload: undefined = undefined,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   if (!state.cursor) return state
 
@@ -58,7 +58,7 @@ const deleteThoughtWithCursor = (
   // When deleting a context from the context view, we need to delete the correct instance of the Lexeme, e.g. in a/m~/b we want to delete b/m
   // This is a problem specifically for tangential contexts, which have a different parent from the cursor.
   // i.e. The id of b/m is not contained within the cursor a/m~/b because they are different m instances.
-  const contextId = (showContexts && getContext(state, cursor, document)) || null
+  const contextId = (showContexts && getContext(state, cursor, transaction)) || null
 
   return reducerFlow([
     // delete thought
@@ -77,7 +77,7 @@ const deleteThoughtWithCursor = (
     ),
 
     // move cursor
-    stateNew => updateCursorAfterDelete(stateNew, state, document),
+    stateNew => updateCursorAfterDelete(stateNew, state, transaction),
 
     /* If the second-to-last context is deleted, and it is a tangential context, we need to manually close the context view.
        Other cases are handled by deleteThought.
@@ -98,7 +98,7 @@ const deleteThoughtWithCursor = (
           }
         }
       : null,
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for deleteThoughtWithCursor. */

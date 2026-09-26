@@ -54,7 +54,7 @@ const setCursor = (
     replaceContextViews?: Index<boolean>
     preserveMulticursor?: boolean
   },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   // ✗ []
   // ✗ [HOME_TOKEN]
@@ -131,7 +131,7 @@ const setCursor = (
                 {
                   value: tutorialStep + 1,
                 },
-                document,
+                transaction,
               )
             : null),
           cursor: thoughtsResolved,

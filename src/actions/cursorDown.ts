@@ -10,7 +10,7 @@ import command from '../util/command'
 const cursorDown = (
   state: State,
   { preserveMulticursor }: { preserveMulticursor?: boolean } = {},
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   // if there is a cursor, get the next logical child, sibling, or uncle
   const path = nextThought(state)
@@ -23,7 +23,7 @@ const cursorDown = (
           isKeyboardOpen: true,
           preserveMulticursor,
         },
-        document,
+        transaction,
       )
     : state
 }

@@ -9,7 +9,7 @@ import keyValueBy from '../util/keyValueBy'
 import updateThoughts from './updateThoughts'
 
 /** Sorts a context. If no sort preference is provided, sorts by its =sort attribute. */
-const sort = (state: State, id: ThoughtId, document?: ThoughtspaceTransaction): State => {
+const sort = (state: State, id: ThoughtId, transaction?: ThoughtspaceTransaction): State => {
   const sortPreference = getSortPreference(state, id)
   if (sortPreference?.type === 'None') return state
 
@@ -44,7 +44,7 @@ const sort = (state: State, id: ThoughtId, document?: ThoughtspaceTransaction): 
       movePlacements,
       preventExpandThoughts: true,
     },
-    document,
+    transaction,
   )
 }
 

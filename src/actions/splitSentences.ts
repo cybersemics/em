@@ -24,7 +24,7 @@ export interface splitSentencesPayload {
 const splitSentences = (
   state: State,
   { caretOffset }: splitSentencesPayload,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const { cursor } = state
   if (!cursor) return state
@@ -49,7 +49,7 @@ const splitSentences = (
     ...otherSentences.map(sentence =>
       newThought({ value: sentence.value, insertNewSubthought: sentence.insertNewSubThought }),
     ),
-  ])(state, document)
+  ])(state, transaction)
 
   const cursorForwardPath = otherSentences.some(sentence => sentence.insertNewSubThought)
     ? stateAfterSplit.cursor
@@ -66,7 +66,7 @@ const splitSentences = (
     editableRender,
   ]
 
-  return reducerFlow(reducers)(stateAfterSplit, document)
+  return reducerFlow(reducers)(stateAfterSplit, transaction)
 }
 
 /** Action-creator for splitSentences. */

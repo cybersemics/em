@@ -53,7 +53,7 @@ const multicursorForward = (state: State): State => {
 }
 
 /** Moves the cursor forward in the cursorHistory. When thoughts are selected, replaces the selection with the thoughts one level forward instead of moving the cursor. */
-const cursorForward = (state: State, _payload: undefined = undefined, document?: ThoughtspaceTransaction): State => {
+const cursorForward = (state: State, _payload: undefined = undefined, transaction?: ThoughtspaceTransaction): State => {
   if (hasMulticursor(state)) return multicursorForward(state)
 
   const cursorFromHistory = last(state.cursorHistory)
@@ -94,7 +94,7 @@ const cursorForward = (state: State, _payload: undefined = undefined, document?:
           cursorHistoryPop: isValidChild,
           preserveMulticursor: true,
         },
-        document,
+        transaction,
       )
     : state
 }

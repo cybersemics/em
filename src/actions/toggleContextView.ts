@@ -18,7 +18,7 @@ import reducerFlow from '../util/reducerFlow'
 const toggleContextView = (
   state: State,
   _payload: undefined = undefined,
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   if (!state.cursor) return state
 
@@ -54,11 +54,11 @@ const toggleContextView = (
               key: 'Tutorial Step',
               value: (tutorialStep + (getContexts(state, cursorValue).length > 1 ? 1 : 0.1)).toString(),
             },
-            document,
+            transaction,
           )
         : state
     },
-  ])(state, document)
+  ])(state, transaction)
 }
 
 /** Action-creator for toggleContextView. */

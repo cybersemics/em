@@ -29,13 +29,13 @@ const getThoughtAndParentPath = (state: State, at: string[]): [Thought, Path] =>
 /**
  * Delete thought at the given unranked path first matched.
  */
-const deleteThoughtAtFirstMatch = command((state: State, at: string[], document?: ThoughtspaceTransaction) => {
+const deleteThoughtAtFirstMatch = command((state: State, at: string[], transaction?: ThoughtspaceTransaction) => {
   const [thought, pathParent] = getThoughtAndParentPath(state, at)
 
   return deleteThought({
     pathParent,
     thoughtId: thought.id,
-  })(state, document)
+  })(state, transaction)
 })
 
 /**

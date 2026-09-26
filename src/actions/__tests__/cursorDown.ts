@@ -98,8 +98,8 @@ describe('normal view', () => {
     const secondA = children.filter(child => child.value === 'a')[1]
     const firstB = children.find(child => child.value === 'b')!
     const stateNew = reducerFlow([
-      (state: State, document?: ThoughtspaceTransaction) =>
-        setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, secondA.id) }, document),
+      (state: State, transaction?: ThoughtspaceTransaction) =>
+        setCursorReducer(state, { path: appendToPath(contextToPath(state, ['x'])!, secondA.id) }, transaction),
       cursorDown,
     ])(state)
 

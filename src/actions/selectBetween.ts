@@ -14,7 +14,7 @@ import setCursor from './setCursor'
 import toggleMulticursor from './toggleMulticursor'
 
 /** Selects all thoughts between two selected thoughts, or between the active anchor and a new endpoint. */
-const selectBetween = (state: State, payload?: { path?: Path }, document?: ThoughtspaceTransaction): State => {
+const selectBetween = (state: State, payload?: { path?: Path }, transaction?: ThoughtspaceTransaction): State => {
   const { cursor } = state
   const multicursorPaths = Object.values(state.multicursors)
   const path = payload?.path
@@ -24,7 +24,10 @@ const selectBetween = (state: State, payload?: { path?: Path }, document?: Thoug
 
   // Match the existing Shift-click behavior by starting the multiselect at the clicked thought.
   if (path && !anchor) {
-    return reducerFlow([setCursor({ path, preserveMulticursor: true }), toggleMulticursor({ path })])(state, document)
+    return reducerFlow([setCursor({ path, preserveMulticursor: true }), toggleMulticursor({ path })])(
+      state,
+      transaction,
+    )
   }
 
   if (endpointPaths.length === 1) {
@@ -69,7 +72,7 @@ const selectBetween = (state: State, payload?: { path?: Path }, document?: Thoug
   const stateNew = reducerFlow([
     ...(path ? [setCursor({ path, preserveMulticursor: true })] : []),
     ...pathsToAdd.map(path => addMulticursor({ path })),
-  ])(stateRangeCleared, document)
+  ])(stateRangeCleared, transaction)
   // Direct endpoint selection preserves an existing anchor. The Select Between command establishes the first
   // selected thought as the anchor only when it was activated from explicit endpoints, not its select-all fallback.
   const rangeAnchor = path ? anchor : multicursorPaths.length >= 2 ? multicursorPaths.at(0)! : null

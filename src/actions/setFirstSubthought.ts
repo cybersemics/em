@@ -14,7 +14,7 @@ import head from '../util/head'
 const setFirstSubthought = (
   state: State,
   { path, value }: { path: Path; value: string },
-  document?: ThoughtspaceTransaction,
+  transaction?: ThoughtspaceTransaction,
 ) => {
   const id = head(path)
   const firstThoughtOld = anyChild(state, id)
@@ -33,7 +33,7 @@ const setFirstSubthought = (
           newValue: value,
           path: path.concat(firstThoughtOld.id) as SimplePath,
         },
-        document,
+        transaction,
       )
     : // context is empty and so first thought must be created
       // assume context exists
@@ -44,7 +44,7 @@ const setFirstSubthought = (
           value,
           afterId: null,
         },
-        document,
+        transaction,
       )
 }
 
