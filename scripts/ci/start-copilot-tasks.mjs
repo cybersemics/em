@@ -30,9 +30,11 @@ import { existsSync, readFileSync } from 'node:fs'
 
 /**
  * Diagnosing a race that surfaces once in fifteen runs is the hardest work in this repository, so
- * these tasks pin the strongest model rather than leaving Copilot to auto-select one.
+ * these tasks pin the strongest model rather than leaving Copilot to auto-select one: the
+ * COPILOT_MODEL repository variable, or COPILOT_MODEL_FLAKY to give these tasks their own. Either
+ * holds the ID the agent tasks API expects, e.g. `claude-opus-5.5`.
  */
-const MODEL = 'claude-opus-5'
+const MODEL = process.env.COPILOT_MODEL_FLAKY || process.env.COPILOT_MODEL
 
 /** The repository's general-purpose coding agent, `.github/agents/worker-bee.agent.md`. */
 const CUSTOM_AGENT = 'worker-bee'
@@ -59,6 +61,11 @@ const token = process.env.COPILOT_TASKS_TOKEN
 if (!token) {
   console.error('COPILOT_TASKS_TOKEN secret not set; skipping Copilot task dispatch.')
   process.exit(0)
+}
+
+if (!MODEL) {
+  console.error('Neither COPILOT_MODEL_FLAKY nor COPILOT_MODEL is set; set the COPILOT_MODEL repository variable.')
+  process.exit(1)
 }
 
 // Written only when the issue-filing step got far enough to resolve a tracking issue; absent when

@@ -37,7 +37,7 @@ import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUn
 import outdentCommand from '../../commands/outdent'
 import selectAllCommand from '../../commands/selectAll'
 import store from '../../stores/app'
-import gestureStore from '../../stores/gesture'
+import gestureStore from '../../stores/gestureStore'
 import useFilteredCommands from '../useFilteredCommands'
 
 vi.mock('../../browser')

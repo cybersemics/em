@@ -1,7 +1,7 @@
 import { importTextActionCreator as importText } from '../../../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../../actions/keyboardOpen'
 import store from '../../../../stores/app'
-import viewportStore from '../../../../stores/viewport'
+import viewportStore from '../../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../../stores/virtualKeyboardStore'
 import initStore from '../../../../test-helpers/initStore'
 import selectRange from '../../../../test-helpers/selectRange'

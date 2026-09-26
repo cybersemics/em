@@ -1,7 +1,7 @@
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { dismissKeyboardActionCreator as dismissKeyboard } from '../../../actions/dismissKeyboard'
 import store from '../../../stores/app'
-import viewportStore from '../../../stores/viewport'
+import viewportStore from '../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
 import * as selection from '../../selection'
 import getSafeAreaBottom from '../getSafeAreaBottom'

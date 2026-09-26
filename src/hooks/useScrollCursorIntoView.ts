@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import VirtualKeyboardState from '../@types/VirtualKeyboardState'
 import scheduleScrollCursorIntoView from '../device/scheduleScrollCursorIntoView'
 import scrollCursorIntoView from '../device/scrollCursorIntoView'
-import editingValueStore from '../stores/editingValue'
+import editingValueStore from '../stores/editingValueStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 
 /** Selects whether the virtual keyboard is open. */
