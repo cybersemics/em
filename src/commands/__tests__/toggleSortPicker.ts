@@ -5,8 +5,10 @@ import { executeCommand } from '../../commands'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import categorizeCommand from '../categorize'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
@@ -125,6 +127,46 @@ describe('toggleSortPicker error', () => {
       // ordered by rank. Allocating those ranks against the timestamp alone inverted them against the sort condition
       // and turned the Sort icon red (#4085).
       executeCommand(splitSentencesCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/4101
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after Categorize in a context sorted by Created %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One
+            - Two
+            - Three
+          `,
+        }),
+        setCursor(['Two']),
+      ])
+
+      // Advance the clock between each step so that the thoughts, the sort preference, and the categorized thought all
+      // have distinct created timestamps, as they do when a user sorts a context and categorizes a thought in it some
+      // time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Created', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      executeCommand(categorizeCommand, { store })
+
+      // The new parent is created empty, and empty thoughts are exempt from the sort condition, so the error can only
+      // surface once the user types into it.
+      store.dispatch(editThought([''], 'Four'))
 
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
