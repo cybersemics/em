@@ -1,0 +1,104 @@
+diff --git a/dist/index.js b/dist/index.js
+index c033003905791f5339535f7ce33b7914109c1d91..8f20dafab6b2c8a4e0e305a6e316f5923683a24e 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -111,6 +111,19 @@ var isIPad = cached(function() {
+ var isIOS = cached(function() {
+   return isIPhone() || isIPad();
+ });
++function animateUntilSettled(value, to, options) {
++  return new Promise((resolve) => {
++    const controls = react.animate(value, to, options);
++    const unsubscribe = value.on("animationCancel", () => {
++      unsubscribe();
++      resolve();
++    });
++    controls.then(() => {
++      unsubscribe();
++      resolve();
++    });
++  });
++}
+ function waitForElement(className, interval = 50, maxAttempts = 20) {
+   return new Promise((resolve) => {
+     let attempts = 0;
+@@ -1053,6 +1066,8 @@ var Sheet = React.forwardRef(
+   }, ref) => {
+     const [sheetBoundsRef, sheetBounds] = useMeasure__default.default();
+     const sheetRef = React.useRef(null);
++    const isOpenRef = React.useRef(isOpen);
++    isOpenRef.current = isOpen;
+     const sheetHeight = Math.round(sheetBounds.height);
+     const [currentSnap, setCurrentSnap] = React.useState(initialSnap);
+     const { windowHeight } = useDimensions();
+@@ -1206,15 +1221,16 @@ var Sheet = React.forwardRef(
+       onOpen: async () => {
+         onOpenStart == null ? void 0 : onOpenStart();
+         await waitForElement("react-modal-sheet-container");
++        if (!isOpenRef.current) return;
+         const initialSnapPoint = initialSnap !== void 0 ? getSnapPoint(initialSnap) : null;
+         const yTo = (initialSnapPoint == null ? void 0 : initialSnapPoint.snapValueY) ?? 0;
+-        await react.animate(y, yTo, animationOptions);
++        await animateUntilSettled(y, yTo, animationOptions);
+         if (initialSnap !== void 0) updateSnap(initialSnap);
+         onOpenEnd == null ? void 0 : onOpenEnd();
+       },
+       onClosing: async () => {
+         onCloseStart == null ? void 0 : onCloseStart();
+-        await react.animate(y, closedY, animationOptions);
++        await animateUntilSettled(y, closedY, animationOptions);
+         onCloseEnd == null ? void 0 : onCloseEnd();
+       }
+     });
+diff --git a/dist/index.mjs b/dist/index.mjs
+index cc8c3ebd67e6cdf1d8e0313a0bd036dfd82f172a..0486a0a919ed4abc4e5ca317797a35859662d77b 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -104,6 +104,19 @@ var isIPad = cached(function() {
+ var isIOS = cached(function() {
+   return isIPhone() || isIPad();
+ });
++function animateUntilSettled(value, to, options) {
++  return new Promise((resolve) => {
++    const controls = animate(value, to, options);
++    const unsubscribe = value.on("animationCancel", () => {
++      unsubscribe();
++      resolve();
++    });
++    controls.then(() => {
++      unsubscribe();
++      resolve();
++    });
++  });
++}
+ function waitForElement(className, interval = 50, maxAttempts = 20) {
+   return new Promise((resolve) => {
+     let attempts = 0;
+@@ -1046,6 +1059,8 @@ var Sheet = forwardRef(
+   }, ref) => {
+     const [sheetBoundsRef, sheetBounds] = useMeasure();
+     const sheetRef = useRef(null);
++    const isOpenRef = useRef(isOpen);
++    isOpenRef.current = isOpen;
+     const sheetHeight = Math.round(sheetBounds.height);
+     const [currentSnap, setCurrentSnap] = useState(initialSnap);
+     const { windowHeight } = useDimensions();
+@@ -1199,15 +1214,16 @@ var Sheet = forwardRef(
+       onOpen: async () => {
+         onOpenStart == null ? void 0 : onOpenStart();
+         await waitForElement("react-modal-sheet-container");
++        if (!isOpenRef.current) return;
+         const initialSnapPoint = initialSnap !== void 0 ? getSnapPoint(initialSnap) : null;
+         const yTo = (initialSnapPoint == null ? void 0 : initialSnapPoint.snapValueY) ?? 0;
+-        await animate(y, yTo, animationOptions);
++        await animateUntilSettled(y, yTo, animationOptions);
+         if (initialSnap !== void 0) updateSnap(initialSnap);
+         onOpenEnd == null ? void 0 : onOpenEnd();
+       },
+       onClosing: async () => {
+         onCloseStart == null ? void 0 : onCloseStart();
+-        await animate(y, closedY, animationOptions);
++        await animateUntilSettled(y, closedY, animationOptions);
+         onCloseEnd == null ? void 0 : onCloseEnd();
+       }
+     });

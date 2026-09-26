@@ -1,20 +1,19 @@
-import { startCase } from 'lodash'
 import Command from '../@types/Command'
 import { redoActionCreator as redo } from '../actions/redo'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import RedoIcon from '../components/RedoIcon'
 import isRedoEnabled from '../selectors/isRedoEnabled'
-import getLatestActionType from '../util/getLastActionType'
+import getLatestActionLabel from '../util/getLatestActionLabel'
 
 const redoCommand = {
   id: 'redo',
   label: 'Redo' as const,
   multicursor: false,
   description: state => {
-    const lastActionType = getLatestActionType(state.redoPatches)
+    const lastActionLabel = getLatestActionLabel(state.redoPatches)
 
-    if (lastActionType) {
-      return `Redo ${startCase(lastActionType)}`
+    if (lastActionLabel) {
+      return `Redo ${lastActionLabel}`
     }
 
     return 'Redo'
