@@ -4,7 +4,7 @@ import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator, UnknownAction } from 'redux'
 import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
-import Patch, { CommandAttributedAction, PatchMetadataInput } from '../@types/Patch'
+import Patch, { CommandAttributedAction } from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import * as commands from '../actions'
@@ -147,27 +147,8 @@ const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => [
     : [{ op: 'replace' as const, path: '/cursor', value: value.cursor }]),
 ]
 
-/** Stores user-level attribution once, independently of UI diffs and document receipts. */
-const createPatch = (
-  ops: Operation[],
-  metadata: PatchMetadataInput,
-  actionType: ActionType,
-  documentOperationIds: Patch['documentOperationIds'],
-): Patch => ({
-  ops,
-  metadata: {
-    ...metadata,
-    actionTypes: [actionType],
-    isNavigation: isNavigation(actionType),
-  },
-  documentOperationIds,
-})
-
 /** Actions that mutate state.multicursors. They are not undoable on their own, but belong to an executing multicursor command's history. */
 const multicursorActionTypes: Set<ActionType> = new Set(['addMulticursor', 'clearMulticursors', 'removeMulticursor'])
-
-/** Gets the nth item from the end of an array. */
-const nthLast = <T>(arr: T[], n: number) => arr[arr.length - n]
 
 /** Reverts an engine receipt and UI state, returning the fresh receipt and actual diff for the opposite history stack. */
 const revertPatch = (
@@ -215,34 +196,22 @@ const revertPatch = (
   }
 }
 
-/** Undoes one history entry and retains only the actual inverse UI changes and fresh engine operations for redo. */
-const undoOneReducer = (state: State, transaction?: ThoughtspaceTransaction): State => {
-  const { redoPatches, undoPatches } = state
-  const lastUndoPatch = nthLast(undoPatches, 1)
-  if (!lastUndoPatch) return state
-  const { state: newState, patch } = revertPatch(state, lastUndoPatch, transaction)
+/** Reverts one history entry, transferring its actual UI changes and fresh engine receipt to the opposite stack. */
+const revertHistoryEntry = (
+  state: State,
+  { from, transaction }: { from: 'undoPatches' | 'redoPatches'; transaction?: ThoughtspaceTransaction },
+): State => {
+  const to = from === 'undoPatches' ? 'redoPatches' : 'undoPatches'
+  const entry = state[from].at(-1)
+  if (!entry) return state
+  const { state: newState, patch } = revertPatch(state, entry, transaction)
   return {
     ...newState,
-    // A UI patch already reverted by a non-undoable action (e.g. Note) must not leave an endless no-op redo step.
-    redoPatches: patch.ops.length || patch.documentOperationIds.length ? [...redoPatches, patch] : redoPatches,
-    undoPatches: undoPatches.slice(0, -1),
+    [from]: state[from].slice(0, -1),
+    // A UI patch already reverted by a non-undoable action (e.g. Note) must not leave an endless no-op history step.
+    [to]: patch.ops.length || patch.documentOperationIds.length ? [...state[to], patch] : state[to],
     cursorCleared: false,
-    lastUndoableActionType: lastUndoPatch.metadata.actionTypes[0],
-  }
-}
-
-/** Redoes one entry by reverting the actual undo receipt, never by replaying the original document operations. */
-const redoOneReducer = (state: State, transaction?: ThoughtspaceTransaction): State => {
-  const { redoPatches, undoPatches } = state
-  const lastRedoPatch = nthLast(redoPatches, 1)
-  if (!lastRedoPatch) return state
-  const { state: newState, patch } = revertPatch(state, lastRedoPatch, transaction)
-  return {
-    ...newState,
-    redoPatches: redoPatches.slice(0, -1),
-    undoPatches: patch.ops.length || patch.documentOperationIds.length ? [...undoPatches, patch] : undoPatches,
-    cursorCleared: false,
-    lastUndoableActionType: lastRedoPatch.metadata.actionTypes[0],
+    lastUndoableActionType: entry.metadata.actionTypes[0],
   }
 }
 
@@ -261,8 +230,8 @@ const undoReducer = (
   { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
   transaction?: ThoughtspaceTransaction,
 ): State => {
-  const lastUndoPatch = nthLast(undoPatches, 1)
-  const penultimateUndoPatch = nthLast(undoPatches, 2)
+  const lastUndoPatch = undoPatches.at(-1)
+  const penultimateUndoPatch = undoPatches.at(-2)
   if (!undoPatches.length) return state
 
   // Infer whether the last patch is a formatting-only edit by examining the diff operations.
@@ -292,7 +261,10 @@ const undoReducer = (
   const priorCursorOffset = state.cursorOffset
 
   return reducerFlow([
-    ...Array.from({ length: undoCount }, () => (s: State) => undoOneReducer(s, transaction)),
+    ...Array.from(
+      { length: undoCount },
+      () => (s: State) => revertHistoryEntry(s, { from: 'undoPatches', transaction }),
+    ),
     undoCount === 1 && lastPatchIsFormatting ? (s: State) => ({ ...s, cursorOffset: priorCursorOffset }) : null,
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
@@ -308,13 +280,16 @@ const redoReducer = (
   { cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {},
   transaction?: ThoughtspaceTransaction,
 ): State => {
-  const lastRedoPatch = nthLast(redoPatches, 1)
+  const lastRedoPatch = redoPatches.at(-1)
   if (!redoPatches.length) return state
 
-  const redoCount = count ?? getUndoStepCount(lastRedoPatch, nthLast(redoPatches, 2), { direction: 'redo' })
+  const redoCount = count ?? getUndoStepCount(lastRedoPatch, redoPatches.at(-2), { direction: 'redo' })
 
   return reducerFlow([
-    ...Array.from({ length: redoCount }, () => (s: State) => redoOneReducer(s, transaction)),
+    ...Array.from(
+      { length: redoCount },
+      () => (s: State) => revertHistoryEntry(s, { from: 'redoPatches', transaction }),
+    ),
     cursorAtEnd ? cursorOffsetAtEnd : null,
     editableRender,
   ])(state)
@@ -376,9 +351,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         const undoOrRedoState =
           actionType === 'undo'
             ? undoReducer(state, undoPatches, { cursorAtEnd, count }, transaction)
-            : actionType === 'redo'
-              ? redoReducer(state, redoPatches, { cursorAtEnd, count }, transaction)
-              : null
+            : redoReducer(state, redoPatches, { cursorAtEnd, count }, transaction)
 
         // do not omit editableNonce because editableRender bumps it to force ContentEditable to re-render after undo/redo
         const omitted = _.pick(
@@ -386,7 +359,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           statePropertiesToOmit.filter(k => k !== 'editableNonce'),
         )
 
-        return projectThoughts({ ...undoOrRedoState!, ...omitted }, transaction)
+        return projectThoughts({ ...undoOrRedoState, ...omitted }, transaction)
       }
 
       // otherwise run the normal reducer for the action
@@ -428,7 +401,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions within an explicit command transaction are merged under that command's metadata.
       // - Direct action batches guarded by isMulticursorExecuting are merged into one action patch.
-      const lastUndoPatch = nthLast(state.undoPatches, 1)
+      const lastUndoPatch = state.undoPatches.at(-1)
       // A resumed invocation may extend its latest patch, but never reach back across another edit or undo/redo.
       // Its identity survives await; only contiguous history is eligible for merging.
       const continuesCommand =
@@ -512,17 +485,20 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             redoPatches: [],
             undoPatches: [
               ...newState.undoPatches,
-              createPatch(
-                undoPatch,
-                commandMetadata ?? {
-                  source: 'action',
-                  ...(isSetIsMulticursorExecutingAction(action) && action.undoLabel
-                    ? { label: action.undoLabel }
-                    : null),
+              {
+                ops: undoPatch,
+                metadata: {
+                  ...(commandMetadata ?? {
+                    source: 'action',
+                    ...(isSetIsMulticursorExecutingAction(action) && action.undoLabel
+                      ? { label: action.undoLabel }
+                      : null),
+                  }),
+                  actionTypes: [actionType],
+                  isNavigation: isNavigation(actionType),
                 },
-                actionType,
                 documentOperationIds,
-              ),
+              },
             ],
           }
         : newState

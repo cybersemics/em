@@ -87,12 +87,6 @@ const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: Th
     throw new Error(`moveThought: afterId must be null or a child of the destination context.`)
   }
 
-  /**
-   * Find first normalized duplicate thought.
-   */
-  const duplicateSubthought = () =>
-    childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
-
   const destinationContext = pathToContext(state, destinationThoughtPath)
 
   // Auto-merge duplicate siblings is limited to metaprogramming-attribute contexts.
@@ -111,7 +105,9 @@ const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: Th
   // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
   // See https://github.com/cybersemics/em/issues/4448.
   const duplicateThought =
-    !sameContext && !skipMerge && sourceThought.value !== '' && isMetaMerge ? duplicateSubthought() : null
+    !sameContext && !skipMerge && sourceThought.value !== '' && isMetaMerge
+      ? childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
+      : null
 
   const isArchived = destinationContext?.indexOf('=archive') !== -1
 
