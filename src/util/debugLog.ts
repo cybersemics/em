@@ -3,6 +3,7 @@ import { isTauri } from '@tauri-apps/api/core'
 import pkg from '../../package.json'
 import State from '../@types/State'
 import { isTouch } from '../browser'
+import { registerReset } from '../stores/ministore'
 import storage from './storage'
 
 /** The localStorage key prefix under which the rolling debug log is persisted. Entries are sharded across numbered chunk keys (`debugLog-0` … `debugLog-9`) so that appending an entry only rewrites the active chunk instead of the whole buffer. */
@@ -309,6 +310,38 @@ const clear = (): void => {
     // ignore
   }
 }
+
+/**
+ * Restores the in-memory state to a clean slate: logging off, the frame heartbeat cancelled, the buffer and its
+ * counters empty, the console mirror off. Run at test boundaries through resetStores (see registerReset); nothing in
+ * the app calls it.
+ *
+ * The clean slate is written out here rather than derived from the values these variables were constructed with,
+ * because those are not clean: `entries`, `seq` and `chunk` are initialized from whatever localStorage held at import,
+ * i.e. a previous session's log. What is restored instead is what a module load produces against empty storage on a
+ * host that does not auto-enable.
+ *
+ * Memory only. Erasing the persisted log is clear()'s job and stays a separate operation: a test owns its own
+ * localStorage, and resetting between tests must never be able to cost a user their log.
+ *
+ * The heartbeat has to be cancelled, not just forgotten. Fake timers fake requestAnimationFrame, so a loop left
+ * running makes vi.runAllTimersAsync spin until it aborts ("Aborting after running 100000 timers") — in whichever
+ * teardown drains timers next, far from the test that enabled logging. And a loop that died with a reinstalled fake
+ * clock while `frameId` stayed set could never be restarted, since startFrameHeartbeat returns early on a live handle.
+ */
+const reset = (): void => {
+  stopFrameHeartbeat()
+  enabled = false
+  consoleEnabled = false
+  entries = []
+  chunk = []
+  seq = 0
+  lastTime = 0
+  lastFrameTime = 0
+  lastMarkerWritten = 0
+}
+
+registerReset(reset)
 
 /** Returns whether logging is currently active. */
 const isEnabled = (): boolean => enabled

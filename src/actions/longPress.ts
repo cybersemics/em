@@ -9,8 +9,8 @@ import { clearMulticursorsActionCreator as clearMulticursors } from '../actions/
 import { isTouch } from '../browser'
 import { AlertText, AlertType, LongPressState } from '../constants'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import hasMulticursor from '../selectors/hasMulticursor'
+import touchStore from '../stores/touchStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import haptics from '../util/haptics'
 import head from '../util/head'
@@ -139,7 +139,7 @@ export const longPressActionCreator =
         haptics.light()
         break
       case LongPressState.Inactive:
-        globals.touching = false
+        touchStore.update({ touching: false })
         break
     }
 

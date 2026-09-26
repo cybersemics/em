@@ -18,7 +18,6 @@ import {
   acceptAiDisclosure,
   acknowledgeAiDisclosure,
   allowAiDisclosureOnce,
-  clearAiDisclosureAcknowledgement,
   hasAcknowledgedAiDisclosure,
 } from '../../util/aiDisclosure'
 import headValue from '../../util/headValue'
@@ -31,7 +30,6 @@ global.fetch = mockFetch
 beforeEach(async () => {
   await initStore()
   vi.clearAllMocks()
-  clearAiDisclosureAcknowledgement()
   // clearAllMocks does not drain queued mockResolvedValueOnce responses, which would otherwise leak into the next test
   mockFetch.mockReset()
 })
@@ -738,6 +736,7 @@ test('preserve an edit made while the thought is generating as its own undo step
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
   - banan`)
+  expect(store.getState().alert?.value).toBe('Undo: Generate Thought')
 
   vi.unstubAllEnvs()
 })

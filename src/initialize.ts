@@ -23,8 +23,8 @@ import getThoughtById from './selectors/getThoughtById'
 import thoughtToContext from './selectors/thoughtToContext'
 import store from './stores/app'
 import offlineStatusStore, { init as initOfflineStatusStore } from './stores/offlineStatusStore'
-import storageStatusStore from './stores/storageStatus'
-import syncStatusStore from './stores/syncStatus'
+import storageStatusStore from './stores/storageStatusStore'
+import syncStatusStore from './stores/syncStatusStore'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
 import debugLog from './util/debugLog'
@@ -35,9 +35,16 @@ import owner from './util/owner'
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
+ *
+ * The app is interactive while the thoughtspace is still initializing, so the user may already have set the cursor by
+ * the time this runs. In that case the live cursor wins: setCursor marks cursorInitialized, and restoring the cursor
+ * from the URL here would discard the cursor, note focus, and multiselection the user has since created.
  */
 const initializeCursor = async () => {
-  const { path } = decodeThoughtsUrl(store.getState())
+  const state = store.getState()
+  if (state.cursorInitialized) return
+
+  const { path } = decodeThoughtsUrl(state)
   // if no path in decoded from the url initialize the cursor with null
   if (!path || isRoot(path)) {
     store.dispatch(setCursor({ path: null }))
@@ -45,6 +52,8 @@ const initializeCursor = async () => {
     // pull the path thoughts
     await store.dispatch(pull(path, { maxDepth: 0 }))
     const newState = store.getState()
+    // the user may have set the cursor while the path was being pulled
+    if (newState.cursorInitialized) return
     const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
     store.dispatch(
       setCursor({

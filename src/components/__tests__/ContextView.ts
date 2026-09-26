@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
-import globals from '../../globals'
 import store from '../../stores/app'
+import freeThoughtsThresholdStore from '../../stores/freeThoughtsThresholdStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -103,13 +103,9 @@ it('render home icon as breadcrumbs for each context whose parent is the home co
 })
 
 describe('freeThoughts', () => {
-  // Mock freeThoughtsThreshold to 0 so freeThoughts deallocates any thought that is not explicitly preserved.
-  const freeThoughtsThreshold = globals.freeThoughtsThreshold
+  // Lower freeThoughtsThreshold to 0 so freeThoughts deallocates any thought that is not explicitly preserved. Restored by createTestApp's resetStores before the next test.
   beforeEach(() => {
-    globals.freeThoughtsThreshold = 0
-  })
-  afterEach(() => {
-    globals.freeThoughtsThreshold = freeThoughtsThreshold
+    freeThoughtsThresholdStore.update(0)
   })
 
   it('Do not deallocate tangential contexts children', async () => {

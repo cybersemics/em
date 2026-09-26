@@ -1,7 +1,7 @@
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
 import * as selection from '../../device/selection'
-import globals from '../../globals'
 import store from '../../stores/app'
+import touchStore from '../../stores/touchStore'
 import initStore from '../../test-helpers/initStore'
 import initEvents from '../initEvents'
 
@@ -49,16 +49,15 @@ beforeEach(async () => {
 
 afterEach(() => {
   initEvents(store).cleanup()
-  globals.suppressCursorAfterTouch = false
 })
 
 it('allows cursor events again when a new touch starts', () => {
   initEvents(store)
-  globals.suppressCursorAfterTouch = true
+  touchStore.update({ suppressCursorAfterTouch: true })
 
   window.dispatchEvent(new TouchEvent('touchstart'))
 
-  expect(globals.suppressCursorAfterTouch).toBe(false)
+  expect(touchStore.getState().suppressCursorAfterTouch).toBe(false)
 })
 
 // https://github.com/cybersemics/em/issues/1596

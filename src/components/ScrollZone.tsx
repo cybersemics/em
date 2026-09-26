@@ -2,10 +2,10 @@ import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { AlertType, Settings } from '../constants'
-import globals from '../globals'
 import useScrollTop from '../hooks/useScrollTop'
 import getUserSetting from '../selectors/getUserSetting'
-import viewportStore from '../stores/viewport'
+import touchStore from '../stores/touchStore'
+import viewportStore from '../stores/viewportStore'
 import haptics from '../util/haptics'
 import FadeTransition from './FadeTransition'
 
@@ -21,7 +21,7 @@ const useScrollHaptics = () => {
     const triggerHapticIfNeeded = (currentScrollTop: number) => {
       const diff = Math.abs(lastHapticScrollPosition.current - currentScrollTop)
       if (diff >= 5) {
-        if (globals.touching) {
+        if (touchStore.getState().touching) {
           haptics.light()
         }
         lastHapticScrollPosition.current = currentScrollTop

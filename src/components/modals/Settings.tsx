@@ -10,9 +10,9 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import download from '../../device/download'
 import share from '../../device/share'
-import globals from '../../globals'
 import getUserSetting from '../../selectors/getUserSetting'
-import storageStatusStore from '../../stores/storageStatus'
+import abandonImportStore from '../../stores/abandonImportStore'
+import storageStatusStore from '../../stores/storageStatusStore'
 import { clearAiDisclosureAcknowledgement, hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 import debugLog from '../../util/debugLog'
 import fastClick from '../../util/fastClick'
@@ -362,7 +362,7 @@ const ModalSettings = () => {
           onClick={() => {
             // Escape hatch to cancel imports when frozen.
             // This is a workaround for a bug that has not been resolved.
-            globals.abandonImport = true
+            abandonImportStore.update(true)
             setTimeout(() => {
               storage.removeItem('resume-imports')
               window.location.reload()
