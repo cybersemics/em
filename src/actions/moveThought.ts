@@ -180,6 +180,16 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         [isAttribute(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
       }
 
+      // get updated sort preference since the context may have been unsorted
+      const isDestinationSorted = getSortPreference(state, destinationThoughtId).type !== 'None'
+
+      // A moved thought keeps its created timestamp, so a Created context sorts it by that rather than by its value.
+      // Without it getSortedRank falls through to the alphabetical branch and ranks the thought against siblings it
+      // does not sort by, inverting the rank order against the sort condition (#4096).
+      const rankNew = isDestinationSorted
+        ? getSortedRank(state, destinationThoughtId, sourceThought.value, { created: sourceThought.created })
+        : newRank
+
       const thoughtIndexUpdates: Index<Thought> = {
         ...(!sameContext
           ? {
@@ -201,11 +211,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         [sourceThought.id]: {
           ...sourceThought,
           parentId: destinationThought.id,
-          rank:
-            // get updated sort preference since the context may have been unsorted
-            getSortPreference(state, destinationThoughtId).type !== 'None'
-              ? getSortedRank(state, destinationThoughtId, sourceThought.value)
-              : newRank,
+          rank: rankNew,
           ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
           updatedBy: clientId,
@@ -217,7 +223,14 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,
-        movePlacements: { [sourceThought.id]: effectiveAfterId },
+        // A sorted context ranks the thought by the sort condition rather than where the caller asked for it, so the
+        // caller's placement would store an order that disagrees with the rendered one and bring the context back
+        // unsorted after a refresh. Derive the placement from the rank that is actually written.
+        movePlacements: {
+          [sourceThought.id]: isDestinationSorted
+            ? getMovePlacement(state, destinationThoughtId, { id: sourceThought.id, rank: rankNew })
+            : effectiveAfterId,
+        },
       })
     },
     // update cursor if moved path is on the cursor

@@ -905,6 +905,32 @@ it('move thought to the end of a sorted context', () => {
   expect(contextToThought(stateNew, ['d'])?.rank).not.toEqual(999)
 })
 
+it('placement follows the sorted rank rather than the caller afterId', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - c
+      - b
+  `
+
+  const steps = [importText({ text }), setCursor(['c', 'b'])]
+  const state = reducerFlow(steps)(initialState())
+  const thoughtA = contextToThought(state, ['a'])!
+  const thoughtC = contextToThought(state, ['c'])!
+
+  // afterId places b after its old parent c, as outdent does, which contradicts the sorted rank
+  const stateNew = moveThoughtAtFirstMatch({
+    from: ['c', 'b'],
+    to: ['b'],
+    newRank: 999,
+    afterId: thoughtC.id,
+  })(state)
+  const thoughtB = contextToThought(stateNew, ['b'])!
+
+  expect(stateNew.pushQueue.at(-1)?.movePlacements?.[thoughtB.id]).toBe(thoughtA.id)
+})
+
 it('do not re-rank siblings in sorted context', () => {
   const text = `
     - =sort
