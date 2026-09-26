@@ -45,6 +45,7 @@ import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValue'
 import gestureStore from './stores/gesture'
+import nativeHistoryReplayStore from './stores/nativeHistoryReplayStore'
 import { isNavigation } from './util/actionMetadata.registry'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
@@ -783,18 +784,12 @@ export const handleNativeHistory = (type: 'undo' | 'redo') => {
   }
 }
 
-/** Whether a native undo/redo is being replayed by recycleNativeHistory, so that the `beforeinput` it dispatches is swallowed instead of routed to em's undo/redo a second time. */
-let recyclingNativeHistory = false
-
-/** How many history `beforeinput` events the replay dispatched. WebKit keeps reporting `queryCommandEnabled('undo')` as true after it has stopped dispatching the event, so the dispatch itself is the only reliable signal that a step is still there. */
-let replayedNativeHistoryEvents = 0
-
 /** Moves WebKit's position through its own history and immediately back, which is net-zero while a step is available in the replayed direction and reclaims the step the gesture consumed once it is not. Returns the number of steps the replay found. */
 const replayNativeHistory = (type: 'undo' | 'redo'): number => {
-  replayedNativeHistoryEvents = 0
+  nativeHistoryReplayStore.update({ replayedEvents: 0 })
   document.execCommand(type)
   document.execCommand(type === 'undo' ? 'redo' : 'undo')
-  return replayedNativeHistoryEvents
+  return nativeHistoryReplayStore.getState().replayedEvents
 }
 
 /**
@@ -826,7 +821,7 @@ const recycleNativeHistory = (type: 'undo' | 'redo') => {
   if (!isTouch || !isSafari()) return
   // Defer so that the replay does not re-enter the beforeinput dispatch that triggered it.
   setTimeout(() => {
-    recyclingNativeHistory = true
+    nativeHistoryReplayStore.update({ replaying: true })
     // Anchor a step only when the replay came up empty, and only with a collapsed caret in a thought, since typing
     // over a selection would destroy the selected text rather than restore it.
     if (replayNativeHistory(type) === 0 && selection.isCollapsed() && selection.isThought()) {
@@ -835,7 +830,7 @@ const recycleNativeHistory = (type: 'undo' | 'redo') => {
       globals.suppressChange = false
       replayNativeHistory('undo')
     }
-    recyclingNativeHistory = false
+    nativeHistoryReplayStore.update({ replaying: false })
   })
 }
 
@@ -850,10 +845,10 @@ export const beforeInput = (e: InputEvent) => {
   // below may act on them: undoing em a second time would consume a step of em's history that no gesture asked for,
   // and the anchored space would be read as the Android space-to-indent case. The replay is still prevented, since
   // performing it would mutate the DOM; the anchor is not, since WebKit registers the step by performing it.
-  if (recyclingNativeHistory) {
+  if (nativeHistoryReplayStore.getState().replaying) {
     if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
       e.preventDefault()
-      replayedNativeHistoryEvents++
+      nativeHistoryReplayStore.update(state => ({ replayedEvents: state.replayedEvents + 1 }))
     }
     return
   }
