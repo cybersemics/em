@@ -27,7 +27,9 @@ const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => 
   }
 
   return (
-    <FadeTransition type='fast' in={show} exit={false} unmountOnExit>
+    // nodeRef avoids FadeTransition's wrapper span, which would make this div a block-in-inline. WebKit relayouts that
+    // case inconsistently, applying marginTop above the line box and shifting the whole toolbar button down (#4263).
+    <FadeTransition type='fast' in={show} exit={false} unmountOnExit nodeRef={ref}>
       <div
         ref={ref}
         className={css({
