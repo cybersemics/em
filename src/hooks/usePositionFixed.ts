@@ -2,7 +2,7 @@ import { Capacitor } from '@capacitor/core'
 import { RefObject, useLayoutEffect } from 'react'
 import { isCapacitor, isIOS, isSafari } from '../browser'
 import androidKeyboardAnimation from '../device/virtual-keyboard/androidKeyboardAnimation'
-import viewportStore from '../stores/viewport'
+import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import useScrollTop from './useScrollTop'
 

@@ -21,7 +21,7 @@
   },
   "type": "module",
   "scripts": {
-    "browserless": "docker run -p 7566:3000 -e \"CONNECTION_TIMEOUT=-1\" browserless/chrome",
+    "browserless": "docker run -p 127.0.0.1:7566:3000 -e \"TIMEOUT=0\" ghcr.io/browserless/chromium:v2.56.2",
     "build": "yarn build:packages && yarn build:styles && vite build",
     "build:ios:browserstack": "./scripts/build-em-browserstack-ipa.sh",
     "build:packages": "yarn --cwd packages/webview build",
@@ -150,7 +150,7 @@
     "react-dom": "^19.3.0",
     "react-error-boundary": "^6.1.5",
     "react-gravatar": "^2.6.3",
-    "react-modal-sheet": "^5.2.1",
+    "react-modal-sheet": "patch:react-modal-sheet@npm%3A5.6.0#~/.yarn/patches/react-modal-sheet-npm-5.6.0-f2ff243f4a.patch",
     "react-native-web": "^0.21.2",
     "react-redux": "^9.3.0",
     "react-signature-pad-wrapper": "^4.3.3",

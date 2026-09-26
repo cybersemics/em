@@ -7,8 +7,8 @@ import useLayoutAnimationFrameEffect from '../../hooks/useLayoutAnimationFrameEf
 import useSelectorEffect from '../../hooks/useSelectorEffect'
 import getStyle from '../../selectors/getStyle'
 import getThoughtById from '../../selectors/getThoughtById'
-import editingValueStore from '../../stores/editingValue'
-import viewportStore, { ViewportState } from '../../stores/viewport'
+import editingValueStore from '../../stores/editingValueStore'
+import viewportStore, { ViewportState } from '../../stores/viewportStore'
 
 /** Selects the cursor from the state. */
 const selectCursor = (state: State) => state.cursor
