@@ -36,8 +36,10 @@ describe('MultiGesture', () => {
   beforeEach(() => {
     // touchend resets disableScroll/abandon between scenarios (window 'touchend' → reset()).
     const touchend = new Event('touchend')
-    // jsdom does not construct TouchEvent.changedTouches, which the touchend listener logs.
+    // jsdom does not construct TouchEvent.changedTouches or touches, which the touchend listener reads. An empty
+    // touches list means every finger is up.
     Object.defineProperty(touchend, 'changedTouches', { value: [] })
+    Object.defineProperty(touchend, 'touches', { value: [] })
     window.dispatchEvent(touchend)
   })
 
