@@ -17,6 +17,7 @@ import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
 import multitouchStore from '../stores/multitouchStore'
+import touchStore from '../stores/touchStore'
 import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
@@ -93,6 +94,9 @@ const shouldCancelGesture = (
     // Cancel when the touch starts on a range input (e.g. the background glow debug sliders). Otherwise the gesture disables scrolling by calling preventDefault on touchmove, which blocks the slider's native drag.
     !!(x && y && document.elementFromPoint(x, y)?.closest('input[type="range"]')) ||
     (x && y && selection.isNear(x, y, distance)) ||
+    // A touch that landed on the caret belongs to native caret repositioning. Latched at touchstart by initEvents, so
+    // it holds for the whole touch rather than only the call that carries coordinates.
+    touchStore.getState().pressOnCaret ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
