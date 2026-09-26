@@ -715,3 +715,32 @@ export const isNear = (
 
   return x >= left && y >= top && x <= right && y <= bottom
 }
+
+/** Returns true if the point lands on the word that holds the collapsed caret, so that a tap there would leave the caret where it is. A tap on a word puts the caret at that word's boundary, so a tap anywhere on the caret's own word does not move it. Returns false when there is no collapsed caret in text, or when the browser cannot resolve the point to a caret position. */
+export const isOnCaretWord = (x: number, y: number): boolean => {
+  const sel = window.getSelection()
+  if (!sel?.rangeCount || !sel.isCollapsed || !sel.focusNode) return false
+
+  // The caret may be reported against its element as a child index rather than inside the text node, e.g. at the end of the editable.
+  const focusNode = sel.focusNode
+  const before = focusNode.childNodes[sel.focusOffset - 1]
+  const after = focusNode.childNodes[sel.focusOffset]
+  const caret =
+    focusNode.nodeType === Node.TEXT_NODE
+      ? { node: focusNode, offset: sel.focusOffset }
+      : before?.nodeType === Node.TEXT_NODE
+        ? { node: before, offset: before.textContent?.length ?? 0 }
+        : after?.nodeType === Node.TEXT_NODE
+          ? { node: after, offset: 0 }
+          : null
+  if (!caret) return false
+
+  const point = document.caretRangeFromPoint?.(x, y)
+  if (!point || point.startContainer !== caret.node) return false
+
+  // the word is the run of non-whitespace characters on either side of the caret
+  const text = caret.node.textContent ?? ''
+  const wordStart = text.slice(0, caret.offset).search(/\S*$/)
+  const wordEnd = caret.offset + (text.slice(caret.offset).match(/^\S*/)?.[0].length ?? 0)
+  return point.startOffset >= wordStart && point.startOffset <= wordEnd
+}
