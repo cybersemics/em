@@ -46,7 +46,12 @@ const usePositionFixed = ({
   bottom?: string
 } => {
   const nativeAnchor =
-    !!ref && !!fromBottom && isCapacitor() && !isIOS && Capacitor.isPluginAvailable('VirtualKeyboardTracker')
+    !!ref &&
+    !!fromBottom &&
+    isCapacitor() &&
+    !isIOS &&
+    Capacitor.isPluginAvailable('VirtualKeyboardTracker') &&
+    CSS.supports('translate', '0px')
   useLayoutEffect(() => {
     if (nativeAnchor && ref?.current) return androidKeyboardAnimation.attach(ref.current)
   }, [nativeAnchor, ref])
