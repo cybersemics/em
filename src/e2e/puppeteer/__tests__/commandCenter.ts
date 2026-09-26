@@ -151,4 +151,43 @@ describe('command center', () => {
     expect(await page.$('[data-testid=command-menu-panel]')).toBeNull()
     expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(0)
   })
+
+  // https://github.com/cybersemics/em/issues/5646
+  it('does not re-enter edit mode when a focus arrives while it is shown', async () => {
+    await paste('- Hello world beautiful')
+    await clickThought('Hello world beautiful')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    // A double tap just before the swipe leaves a word selection that the browser commits asynchronously, so it
+    // focuses the editable after the Command Center has already opened. Emulation commits the selection
+    // synchronously, before the swipe, so the focus is delivered here to place it where the device places it.
+    // Re-entering edit mode raises the keyboard and closes the sheet, which is undone two animation frames later,
+    // so the sheet only dips out of 'open' — observe it across the whole window rather than reading it after.
+    const onscreen = await page.evaluate(async () => {
+      const sheet = document.querySelector('[data-testid="command-center-panel"]')!
+      const sheetStates: (string | null)[] = []
+      const observer = new MutationObserver(() => sheetStates.push(sheet.getAttribute('data-sheet-state')))
+      observer.observe(sheet, { attributeFilter: ['data-sheet-state'] })
+
+      ;(document.querySelector('[data-editable]') as HTMLElement).focus()
+
+      await new Promise(requestAnimationFrame)
+      await new Promise(requestAnimationFrame)
+      await new Promise(resolve => setTimeout(resolve))
+      observer.disconnect()
+
+      return {
+        focusedEditable: document.activeElement?.closest('[data-editable]')
+          ? document.activeElement!.getAttribute('aria-label')
+          : null,
+        sheetStates,
+      }
+    })
+
+    // Focusing an editable is what raises the keyboard on Android, so the focus has to be dismissed without the
+    // Command Center ever leaving the screen.
+    expect(onscreen).toEqual({ focusedEditable: null, sheetStates: [] })
+  })
 })
