@@ -1,3 +1,4 @@
+import { DEFAULT_FONT_SIZE } from '../../../constants'
 import { page } from '../session'
 import getEditable from './getEditable'
 import hide from './hide'
@@ -52,8 +53,8 @@ const dragAndDropThought = async (
 
   // If the position is 'child', make the initial click to the right so that it lands on the DropChild drop target.
   // Must exceed the DropChild's drop-end margin-left.
-  const fontSize = 18 // TODO: Get the font size from the CSS
-  const xOffset = position === 'child' ? fontSize * 2.9 - 2 : 0
+  // TODO: Get the font size from the CSS
+  const xOffset = position === 'child' ? DEFAULT_FONT_SIZE * 2.9 - 2 : 0
 
   // Calculate center positions of the elements
   const dragPosition = {

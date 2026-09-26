@@ -28,8 +28,8 @@ describe('Split', () => {
 
     // Tap 25px in from the left edge to land the caret between "web " and "scraping". This is the one tap in
     // the iOS suite whose x is load-bearing, so it opts out of the center default.
-    await tap(editableNodeHandle, { horizontalTapLine: 'left', y: 60, x: 25 })
-    await tap(editableNodeHandle, { horizontalTapLine: 'left', y: 60, x: 25 })
+    await tap(editableNodeHandle, { horizontalTapLine: 'left', x: 25 })
+    await tap(editableNodeHandle, { horizontalTapLine: 'left', x: 25 })
     await tapReturnKey()
 
     const offset = await getSelection()?.focusOffset

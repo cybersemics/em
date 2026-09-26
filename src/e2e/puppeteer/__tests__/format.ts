@@ -18,12 +18,13 @@ it('Apply formatting to a selected portion of a thought', async () => {
 
   const editableNodeHandle = await waitForEditable('Golden Retriever')
 
-  // Double click inside the left edge to select the first word
+  // Double click inside the first word to select it. The click is offset from the thought's left edge, which the
+  // bullet overlaps at the default font size.
   const boundingBox = await editableNodeHandle.asElement()?.boundingBox()
 
   if (!boundingBox) throw new Error('boundingBox not found')
 
-  const x = boundingBox.x + 1
+  const x = boundingBox.x + 10
   const y = boundingBox.y + boundingBox.height / 2
 
   await page.mouse.click(x, y, { count: 2 })

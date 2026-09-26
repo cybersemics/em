@@ -1,6 +1,5 @@
 import type { Element } from 'webdriverio'
-
-// import getNativeElementRect from './getNativeElementRect'
+import getScreenOffsetY from './getScreenOffsetY.js'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
@@ -14,7 +13,8 @@ interface Options {
   offset?: number
   // Number of pixels of x offset to add to the tap coordinates
   x?: number
-  // Number of pixels of y offset to add to the tap coordinates
+  // Number of pixels of y offset to add to the tap coordinates, on top of the page-to-screen conversion applied
+  // automatically. Use it to aim somewhere other than the element, e.g. the empty space below it.
   y?: number
   // Milliseconds to delay the release of the tap.
   releaseDelayMs?: number
@@ -81,16 +81,14 @@ const tap = async (
 
   if (!coordinate) throw new Error('Coordinate not found.')
 
-  // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
-  // console.log('topbarrect', topBarRect)
-
   console.info(
     `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
   )
 
   const finalCoords = {
     x: coordinate.x + x,
-    y: coordinate.y + y,
+    // element rects are viewport-relative while touches are delivered in screen coordinates
+    y: coordinate.y + y + (await getScreenOffsetY()),
   }
 
   console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)

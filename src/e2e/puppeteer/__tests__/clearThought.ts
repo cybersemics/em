@@ -81,6 +81,21 @@ const caretOffsets = () =>
     }
   })
 
+/** Asserts that every faux caret is rendered at the real caret's position, to within a pixel. A faux caret is
+ * positioned from the integer offsetLeft/offsetTop of the thought it overlays, while the real caret's rect is
+ * fractional, so the two can differ by a fraction of a pixel. */
+const expectFauxCaretsAtRealCaret = (
+  carets: { real: { x: number; y: number } | null; faux: { x: number; y: number }[] },
+  count: number,
+) => {
+  expect(carets.real).not.toBeNull()
+  expect(carets.faux).toHaveLength(count)
+  carets.faux.forEach(faux => {
+    expect(Math.abs(faux.x - carets.real!.x)).toBeLessThanOrEqual(1)
+    expect(Math.abs(faux.y - carets.real!.y)).toBeLessThanOrEqual(1)
+  })
+}
+
 /** Returns the height of each faux caret alongside the height of the thought it overlays. */
 const fauxCaretHeights = () =>
   page.$$eval('[data-testid="faux-caret-multicursor"]', els =>
@@ -128,8 +143,7 @@ describe('clearThought', () => {
     // The faux carets are rendered at the same position within their thought as the real caret is within its own.
     await nextFrame()
     const carets = await caretOffsets()
-    expect(carets.real).not.toBeNull()
-    expect(carets.faux).toEqual([carets.real, carets.real])
+    expectFauxCaretsAtRealCaret(carets, 2)
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/4519
@@ -155,8 +169,7 @@ describe('clearThought', () => {
     await nextFrame()
 
     const carets = await caretOffsets()
-    expect(carets.real).not.toBeNull()
-    expect(carets.faux).toEqual([carets.real, carets.real])
+    expectFauxCaretsAtRealCaret(carets, 2)
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/4519
