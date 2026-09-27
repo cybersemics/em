@@ -4,6 +4,7 @@
  */
 import clickThought from '../helpers/clickThought'
 import getEditingText from '../helpers/getEditingText'
+import getToolbarHeight from '../helpers/getToolbarHeight'
 import paste from '../helpers/paste'
 import tap from '../helpers/tap'
 import tapToolbar, { toolbarTapOptions } from '../helpers/tapToolbar'
@@ -43,5 +44,24 @@ describe('Color', () => {
 
     const result = await getFirstNoteText()
     expect(result).toBe('<font color="#ff573d">Multi-word note</font>')
+  })
+
+  it('Does not shift the Text Color button and its swatches down when a color is applied', async () => {
+    await paste('- some text')
+
+    await tapToolbar('Text Color')
+    await waitForElement('[aria-label="Color Picker"]')
+
+    // WebKit lays out the shift inconsistently: iOS 26.6 grows the toolbar, while 26.3 renders it unchanged. BrowserStack
+    // matches osVersion on the major only, so this only catches a regression when the pool allocates a device that relayouts.
+    const toolbarHeight = await getToolbarHeight()
+
+    // The picker is already open, so tap the swatch directly; tapToolbar would tap the Text Color button again and toggle the picker closed.
+    await tap(await waitForElement('[aria-label="text color swatches"] [aria-label="red"]'), toolbarTapOptions)
+    await waitForElement('[data-editing=true] [data-editable] font[color="#ff573d"]')
+
+    // The picker is rendered inside the Text Color button, so the toolbar growing taller moves the button's contents and
+    // the swatches down with it.
+    expect(await getToolbarHeight()).toBe(toolbarHeight)
   })
 })

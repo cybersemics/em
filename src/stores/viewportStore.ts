@@ -53,6 +53,10 @@ export const updateSize = _.throttle(
     viewportStore.update({
       innerWidth: window.innerWidth,
       innerHeight: window.innerHeight,
+      // Recompute from the new dimensions rather than leaving the value captured at module initialization.
+      // A stale width misplaces the scroll zone and desyncs isInGestureZone from where the stardust is
+      // actually drawn, which lasts until the next reload: nothing else recomputes it.
+      scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * SCROLL_ZONE_WIDTH,
       // When the keyboard is closed, fall back to the cached height so consumers
       // (e.g. iOSSafariHandler) still know the keyboard's expected height for animations.
       virtualKeyboardHeight:

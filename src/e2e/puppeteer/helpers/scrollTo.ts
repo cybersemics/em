@@ -1,16 +1,8 @@
 import { page } from '../session'
 
-/** Scrolls instantly to the given position. Cancels any pending scrollCursorIntoView first so that it does not scroll the cursor back into view afterwards. */
-const scrollTo = async (x: number, y: number) => {
-  await page.evaluate(
-    (x: number, y: number) => {
-      const em = window.em
-      em.testFlags.cancelScrollCursorIntoView?.()
-      window.scrollTo(x, y)
-    },
-    x,
-    y,
-  )
+/** Scrolls the window instantly to the given scrollTop through the production scrollTo, which supersedes any scroll the cursor had queued. */
+const scrollTo = async (y: number) => {
+  await page.evaluate((y: number) => window.em.testHelpers.scrollTo(y), y)
 }
 
 export default scrollTo
