@@ -1,4 +1,5 @@
 import { isCapacitor, isIOS, isTouch } from '../browser'
+import { registerReset } from '../stores/ministore'
 import viewportStore from '../stores/viewportStore'
 
 /** Duration after preventAutoscroll is called before the temporary styles are reset. */
@@ -107,6 +108,15 @@ const preventAutoscroll = (
   // return cleanup function
   return () => preventAutoscrollEnd(el)
 }
+
+// Restore the element preventAutoscroll is holding, if any, and cancel its timer at every test boundary, so that neither
+// its temporary styles nor the saved ones outlive the test. Only reachable where a test reports a touch device.
+registerReset(() => {
+  if (activeEl) preventAutoscrollEnd(activeEl)
+  transformOld = ''
+  paddingBottomOld = ''
+  paddingTopOld = ''
+})
 
 /** Returns true if preventAutoscroll is currently in progress. */
 export const isPreventAutoscrollInProgress = () => !!timeoutId

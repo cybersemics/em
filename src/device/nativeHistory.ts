@@ -5,6 +5,7 @@ import { handleNativeHistory } from '../commands'
 import isRedoEnabled from '../selectors/isRedoEnabled'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import store from '../stores/app'
+import { registerReset } from '../stores/ministore'
 
 /** The pending plugin listener registration, kept so that the listener can be removed on destroy. */
 let listener: Promise<PluginListenerHandle> | null = null
@@ -68,5 +69,9 @@ const nativeHistory = {
     unsubscribe = null
   },
 }
+
+// Remove the plugin listener and the store subscription at every test boundary. init is idempotent only while they are
+// held, so releasing them is what lets the next test init again.
+registerReset(nativeHistory.destroy)
 
 export default nativeHistory
