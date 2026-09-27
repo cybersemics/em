@@ -26,19 +26,10 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { showLatestCommandsActionCreator as showLatestCommands } from './actions/showLatestCommands'
 import { suppressExpansionActionCreator as suppressExpansion } from './actions/suppressExpansion'
 import { undoActionCreator as undo } from './actions/undo'
-import { isCapacitor, isMac, isSafari, isTouch } from './browser'
+import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
-import {
-  AlertType,
-  COMMAND_PALETTE_TIMEOUT,
-  HOME_PATH,
-  LongPressState,
-  NATIVE_HISTORY_GESTURE_TIMEOUT,
-  Settings,
-  noop,
-} from './constants'
-import focusNativeHistoryAnchor from './device/nativeHistoryAnchor'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
@@ -51,11 +42,9 @@ import isUndoEnabled from './selectors/isUndoEnabled'
 import splitChain from './selectors/splitChain'
 import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
-import editableSyncStore from './stores/editableSyncStore'
 import editingValueStore from './stores/editingValueStore'
 import gestureStore from './stores/gestureStore'
 import heldKeysStore from './stores/heldKeysStore'
-import nativeHistoryGestureStore from './stores/nativeHistoryGestureStore'
 import commandTransaction from './util/commandTransaction'
 import createId from './util/createId'
 import debugLog from './util/debugLog'
@@ -843,54 +832,8 @@ export const handleGestureCancel = () => {
   })
 }
 
-/** Set while the synthetic execCommands in registerNativeRedoStep are running, so that the `historyUndo` `beforeinput`
- * they dispatch is passed through to WebKit instead of being routed through em's undo a second time. */
-let registeringNativeRedoStep = false
-
-/**
- * Registers a single native redo step in WKWebView, so that the shake-to-redo gesture is delivered at all.
- *
- * WebKit offers a redo gesture only while its own redo stack has a step, and a step lands there only when WebKit
- * itself performs an undo. Since `beforeInput` prevents the native undo and performs em's undo instead, WebKit's redo
- * stack stays empty and the redo gesture never reaches em: iOS confirms the gesture with its own overlay while
- * nothing is restored (#5575). A shake reaches em through this route alone — it produces no touch events for
- * `device/nativeHistory.ts` to recognize — so without a step there is nothing to deliver.
- *
- * This inserts an empty marker and immediately undoes it natively, which moves that step onto the redo stack. Its DOM
- * effect is immaterial: the insert is undone before the function returns, and editableSync's suppressChange hides both
- * mutations from the Editable change handler, so no edit is recorded and the editable is not re-rendered. The step
- * exists only as the anchor that makes the native redo gesture fire; the `historyRedo` it eventually dispatches is
- * preventDefaulted like any other, so the step survives and further redo gestures keep firing.
- *
- * Must run after em's undo/redo has re-rendered the editable, since a step registered before the re-render points at
- * DOM that the re-render replaces — WebKit then silently discards the step when the gesture arrives, dispatching
- * nothing, which is indistinguishable from never having registered it.
- *
- * Registration needs a focused editing host, and undoing the creation of the only thought leaves none, so an insert
- * that finds no editable selection falls back to the hidden anchor. The undo runs only once an insert has succeeded,
- * since it would otherwise revert the user's own last edit.
- *
- * No-op outside iOS Mobile Safari. The Capacitor app is excluded because its gestures are consumed natively and
- * never consult WebKit's stacks (isTouch && isSafari alone would match its WKWebView too), and desktop Safari has no
- * shake or three-finger undo.
- */
-const registerNativeRedoStep = (): void => {
-  if (!isTouch || !isSafari() || isCapacitor()) return
-  editableSyncStore.update({ suppressChange: true })
-  registeringNativeRedoStep = true
-  const marker = '<span data-native-history></span>'
-  const inserted =
-    document.execCommand('insertHTML', false, marker) ||
-    (focusNativeHistoryAnchor() && document.execCommand('insertHTML', false, marker))
-  if (inserted) {
-    document.execCommand('undo')
-  }
-  registeringNativeRedoStep = false
-  editableSyncStore.update({ suppressChange: false })
-}
-
-/** Performs a native undo/redo gesture (iOS shake-to-undo, three-finger swipe, or the Edit menu) as em's own undo/redo, so that Redux remains the single source of truth. Called from every route a native gesture can arrive by: the `historyUndo`/`historyRedo` `beforeinput` event in the browser, the three-finger swipe recognized from touch events in `device/nativeHistory.ts`, and the `nativeHistory` event from the Capacitor plugin. `registerDelay` is how long to wait before refreshing WebKit's history step — see below. */
-export const handleNativeHistory = (type: 'undo' | 'redo', { registerDelay = 0 }: { registerDelay?: number } = {}) => {
+/** Performs a native undo/redo gesture (iOS shake-to-undo, three-finger swipe, or the Edit menu) as em's own undo/redo, so that Redux remains the single source of truth. Called by `device/nativeHistory.ts` from every route a native gesture can arrive by. */
+export const handleNativeHistory = (type: 'undo' | 'redo') => {
   // Flush any pending throttled edit before reading the state, mirroring keyDown. Editing dispatches editThought on a
   // throttle, so a native undo triggered mid-edit (e.g. immediately after an autocorrect) would otherwise undo the
   // previous step and let the pending edit commit afterwards, duplicating text (#4477).
@@ -904,70 +847,6 @@ export const handleNativeHistory = (type: 'undo' | 'redo', { registerDelay = 0 }
   } else if (isRedoEnabled(state)) {
     store.dispatch(redo({ cursorAtEnd: true }))
   }
-
-  // em's undo re-renders the editable WebKit recorded its step against, which leaves that step stale: WebKit
-  // discards it when the next gesture arrives and dispatches nothing, so a later shake reaches em nowhere (#5575).
-  // Register a fresh one on every native gesture em handles, whichever route it arrived by. A step registered before
-  // the re-render lands is stale on arrival, so the caller says how long that takes on its route: a `beforeinput`
-  // already arrives late enough for the next task to be clear, while the touch route runs at touchend, well before
-  // the re-render.
-  setTimeout(registerNativeRedoStep, registerDelay)
-}
-
-/** Whether a native undo/redo is being replayed by recycleNativeHistory, so that the `beforeinput` it dispatches is swallowed instead of routed to em's undo/redo a second time. */
-let recyclingNativeHistory = false
-
-/** How many history `beforeinput` events the replay dispatched. WebKit keeps reporting `queryCommandEnabled('undo')` as true after it has stopped dispatching the event, so the dispatch itself is the only reliable signal that a step is still there. */
-let replayedNativeHistoryEvents = 0
-
-/** Moves WebKit's position through its own history and immediately back, which is net-zero while a step is available in the replayed direction and reclaims the step the gesture consumed once it is not. Returns the number of steps the replay found. */
-const replayNativeHistory = (type: 'undo' | 'redo'): number => {
-  replayedNativeHistoryEvents = 0
-  document.execCommand(type)
-  document.execCommand(type === 'undo' ? 'redo' : 'undo')
-  return replayedNativeHistoryEvents
-}
-
-/**
- * Returns to WebKit's own history the step that a native undo/redo gesture consumed, so that the next gesture is still
- * dispatched.
- *
- * WebKit dispatches the `historyUndo`/`historyRedo` `beforeinput` only while its own history has a step in that
- * direction, and it registers a step only for edits it performed itself. Since em applies most edits by re-rendering
- * the editable from Redux, WebKit's history holds far fewer steps than em's — and because preventing the event still
- * advances WebKit's position, the gestures run out while em still has plenty to undo, after which iOS handles the
- * gesture itself and reports "Nothing to Undo" (#4984).
- *
- * Advancing WebKit's position is reversible, so replaying the gesture and immediately inverting it — both prevented,
- * neither routed to em — leaves a step on either side of WebKit's position for as long as it holds any step at all.
- * Unlike anchoring a step with an `insertHTML` (#4637), the replay mutates no DOM and discards no redo steps, so
- * native redo keeps working.
- *
- * The replay has nothing to recycle when the step the gesture consumed belonged to an editable that em's undo has
- * since unmounted — WebKit drops such a step instead of making it redoable — so that gesture empties the history for
- * good and every later gesture drains the steps typing registers afterwards, one per gesture, until iOS is again
- * reporting "Nothing to Undo". Anchoring a step in the editable that is focused now restores the foothold: the text is
- * typed and deleted again, so the thought is left as it was, and the replay that follows makes the anchored step
- * redoable as well as undoable.
- *
- * No-op outside iOS Safari, which is the only place a native history gesture arrives as a `beforeinput`: the Capacitor
- * app receives it as a `nativeHistory` plugin event instead, which never touches WebKit's history.
- */
-const recycleNativeHistory = (type: 'undo' | 'redo') => {
-  if (!isTouch || !isSafari()) return
-  // Defer so that the replay does not re-enter the beforeinput dispatch that triggered it.
-  setTimeout(() => {
-    recyclingNativeHistory = true
-    // Anchor a step only when the replay came up empty, and only with a collapsed caret in a thought, since typing
-    // over a selection would destroy the selected text rather than restore it.
-    if (replayNativeHistory(type) === 0 && selection.isCollapsed() && selection.isThought()) {
-      editableSyncStore.update({ suppressChange: true })
-      if (document.execCommand('insertText', false, ' ')) document.execCommand('delete')
-      editableSyncStore.update({ suppressChange: false })
-      replayNativeHistory('undo')
-    }
-    recyclingNativeHistory = false
-  })
 }
 
 /** In the specific case of the newThought and indent commands, prevent default in beforeinput event instead of keydown to preserve default iOS auto-capitalization behavior. The Enter and space characters needs to be prevented so that it doesn't get inserted into the thought (#3707).
@@ -977,47 +856,6 @@ const recycleNativeHistory = (type: 'undo' | 'redo') => {
  * a `beforeinput` insertText of a single space over an empty thought indents it instead of inserting the
  * space, mirroring the keyDown-matched path on desktop/iOS (#4178). */
 export const beforeInput = (e: InputEvent) => {
-  // Pass through the events dispatched by registerNativeRedoStep's own execCommands, including its `historyUndo`.
-  // Letting WebKit perform that undo is the entire point of the call: it is what moves a step onto the redo stack.
-  if (registeringNativeRedoStep) return
-  // recycleNativeHistory's replay and anchor are dispatched only to move WebKit's position, so none of the branches
-  // below may act on them: undoing em a second time would consume a step of em's history that no gesture asked for,
-  // and the anchored space would be read as the Android space-to-indent case. The replay is still prevented, since
-  // performing it would mutate the DOM; the anchor is not, since WebKit registers the step by performing it.
-  if (recyclingNativeHistory) {
-    if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
-      e.preventDefault()
-      replayedNativeHistoryEvents++
-    }
-    return
-  }
-
-  // Native undo/redo (iOS shake-to-undo or three-finger swipe) fires a cancelable beforeinput with inputType
-  // historyUndo/historyRedo. Left unhandled, it mutates the contenteditable DOM directly, bypassing em's undo and
-  // leaving stale formatting markup (e.g. a black font color from a removed background highlight) that renders the
-  // thought invisible (#3954). Block the native undo before it touches the DOM and route it through em's undo/redo,
-  // which reverts to the correct Redux state and re-renders the editable. Each formatSelection registers exactly one
-  // native undo step (#4637), so one native gesture maps to one em undo/redo — no dedupe is needed. The cancelable check
-  // gates on the case we can actually prevent; native browser undo is intentionally superseded by em's undo (#3879).
-  // In the Capacitor app the gesture never reaches WebKit at all and arrives via nativeHistory instead, so the two
-  // routes cannot both fire for a single gesture.
-  if ((e.inputType === 'historyUndo' || e.inputType === 'historyRedo') && e.cancelable) {
-    e.preventDefault()
-    // A three-finger swipe reaches em twice on iOS Safari: once as the touch events device/nativeHistory.ts
-    // recognizes, and again here a moment later. The default is still prevented so WebKit cannot mutate the
-    // contenteditable, but the gesture has already been applied, and the touch route has already scheduled the step
-    // it depends on. Recycling here as well would move WebKit's position back across that step and could leave only a
-    // stale step on the undo side.
-    if (Date.now() - nativeHistoryGestureStore.getState() > NATIVE_HISTORY_GESTURE_TIMEOUT) {
-      const type = e.inputType === 'historyUndo' ? 'undo' : 'redo'
-      // Scheduled before handleNativeHistory schedules registerNativeRedoStep, so that the replay runs first:
-      // replaying after the registration would move WebKit's position across the freshly registered redo step.
-      recycleNativeHistory(type)
-      handleNativeHistory(type)
-    }
-    return
-  }
-
   if (keyCommandId === 'newThought' || (keyCommandId === 'indent' && editingValueStore.getState() === '')) {
     e.preventDefault()
     return

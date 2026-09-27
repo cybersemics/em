@@ -46,8 +46,8 @@ import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
  * stack is enough — but until something registers that first step, the gesture is not dispatched at all.
  * - Registering an undo step needs a focused editable, so when there are none — as after undoing the creation of the only remaining thought — no
  * further undo step is registered. The next gesture that does reach `beforeInput` anchors a fresh step itself, so undo gestures resume once a
- * thought is focused again. Redo is unaffected: `registerNativeRedoStep` falls back to `device/nativeHistoryAnchor.ts`, a hidden editing host that
- * always exists.
+ * thought is focused again. Redo is unaffected: `device/nativeHistory.ts` registers its redo step on a hidden editing host
+ * that always exists.
  */
 const registerNativeUndoStep = (html: string): void => {
   if (!isTouch || !isSafari()) return

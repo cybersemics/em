@@ -238,6 +238,12 @@ const initEvents = (store: Store<State, any>) => {
    * the browser firing another selectionchange once the new text has been laid out. */
   const onInput = () => updateCaretRect()
 
+  /** Beforeinput event listener. Native undo/redo gestures, and the events nativeHistory dispatches to keep WebKit's history usable, are consumed by nativeHistory before em's own handling sees them. */
+  const onBeforeInput = (e: InputEvent) => {
+    if (nativeHistory.beforeInput(e)) return
+    beforeInput(e)
+  }
+
   /** MouseMove event listener. */
   const onMouseMove = _.debounce(
     () => distractionFreeTypingStore.update(false),
@@ -430,7 +436,7 @@ const initEvents = (store: Store<State, any>) => {
 
   document.addEventListener('selectionchange', onSelectionChange)
   document.addEventListener('input', onInput)
-  window.addEventListener('beforeinput', beforeInput)
+  window.addEventListener('beforeinput', onBeforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
@@ -490,7 +496,7 @@ const initEvents = (store: Store<State, any>) => {
     unsubscribeSaveErrorReload()
     document.removeEventListener('selectionchange', onSelectionChange)
     document.removeEventListener('input', onInput)
-    window.removeEventListener('beforeinput', beforeInput)
+    window.removeEventListener('beforeinput', onBeforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)
