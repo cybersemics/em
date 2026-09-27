@@ -60,8 +60,10 @@ Each node carries a payload: a JSON-encoded `ThoughtPayload` ([`payload.ts`](../
 
 Two app-owned tables live alongside the CRDT tables in the same SQLite database. Neither is part of the CRDT, so neither replicates; both are rebuilt or maintained locally.
 
-- **`em_lexemes`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — `id` (the `hashThought(value)` key) → `payload_json` (a serialized `Lexeme`). Lexemes are written by the push queue and refreshed from materialization events.
-- **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id. A companion `em_attribute_children_meta` table records the index version; when it doesn't match `INDEX_VERSION`, `ensureAttributeChildrenIndexReady` rebuilds the index by walking the materialized tree once from the global root. After that it's maintained incrementally on every write and on every materialization batch.
+- **`em_lexeme_memberships`** ([`lexemes.ts`](../src/data-providers/treecrdt/lexemes.ts)) — one row per live thought, indexed by `hashThought(value)`. The provider assembles complete Lexemes from these rows, including contexts not loaded in Redux. Timestamps and author come from the thought payloads.
+- **`em_attribute_children`** ([`attributeChildren.ts`](../src/data-providers/treecrdt/attributeChildren.ts)) — `child_id` → (`parent_id`, `value`) for `=attribute` children only, indexed by `parent_id`. This restores em's `childrenMap` contract, where meta-attributes are keyed by value rather than by id.
+
+Both indexes follow local and incoming materialization events. Their shared `em_derived_indexes_meta` checkpoint advances only after both updates succeed. On opening, a missing or outdated checkpoint rebuilds both from the tree, without changing operations. Existing databases are upgraded this way; the old `em_lexemes` cache is not read. An indexing failure rejects subsequent provider writes until reopening rebuilds the indexes.
 
 ### Reading a thought
 
@@ -78,13 +80,12 @@ Two app-owned tables live alongside the CRDT tables in the same SQLite database.
 
 `updateThoughtsForClient` applies one push-queue batch:
 
-1. **Lexemes first.** Each entry in `lexemeIndexUpdates` is upserted into `em_lexemes`, or deleted when `null`.
-2. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`, and the thought's row is dropped from the attribute index.
-3. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations. The attribute index is updated whenever a thought's parent or value changed.
+1. **Deletions.** Each `null` entry in `thoughtIndexUpdates` becomes a `client.local.delete`.
+2. **Upserts.** For a thought that doesn't exist yet, a `client.local.insert` with a resolved placement (see below); for one that does, a `client.local.move` when the parent or the order changed, and a `client.local.payload` when any payload field actually changed. Redundant payload writes are skipped so no-op edits don't mint operations.
 
 The function returns the `readonly Operation[]` it minted. That array is what the runtime forwards to remote sync.
 
-`DataProvider.updateThoughts` is the public persistence entry point for push-queue thought and lexeme batches. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
+`DataProvider.updateThoughts` accepts whole thought records and optional move placements, not derived lexeme updates. It waits for the resulting index updates before resolving. Redux still derives optimistic lexemes synchronously for the view. Writes that arrive before the client is bound wait on a readiness promise; a failed initialization or a `drop` rejects those waiters so the next initialization starts clean.
 
 #### Order and placement
 
@@ -103,18 +104,18 @@ The rank fallback is a compatibility bridge while the app still treats `rank` as
 
 [`writeBarrier.ts`](../src/data-providers/treecrdt/writeBarrier.ts) serializes em → TreeCRDT persistence and exposes an idle barrier. It is a local ordering guard, not a CRDT requirement: it keeps app-state refreshes from racing local persistence, so a materialization refresh can't reapply stale rows over newer optimistic state.
 
-It also stamps every local write with a `writeId` of the form `em-local:${sourceId}:${n}`, where `sourceId` is unique per page load. `isTreecrdtLocalMaterialization` recognizes this tab's own writes by that prefix, so the materialization path can skip events the app already applied optimistically.
+It also stamps every local write with a `writeId` of the form `em-local:${sourceId}:${n}`, where `sourceId` is unique per page load. `isTreecrdtLocalMaterialization` recognizes this tab's own writes, so publication refreshes memberships without reading back already-optimistic local thoughts.
 
 ### Change observation (materialization)
 
-`client.onMaterialized` fires after operations are materialized into SQLite — for remote ops arriving over sync as well as for local writes. Events whose changes all carry this tab's own `writeId` prefix are ignored, because the app already applied them optimistically. Everything else is handed to `enqueueMaterializedThoughtsToStore`, which serializes refreshes through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts) so overlapping async events cannot apply out of order.
+`client.onMaterialized` fires after operations are materialized into SQLite — for incoming operations as well as local writes. The provider serializes derived-index updates and buffers events for publication through [`materializationQueue.ts`](../src/data-providers/treecrdt/sync/materializationQueue.ts).
 
 [`applyMaterializedThoughtsToStore`](../src/data-providers/treecrdt/sync/applyMaterializedThoughtsToStore.ts) then:
 
-1. Waits for the write barrier.
-2. Refreshes `em_attribute_children` from the change list.
-3. Runs [`refreshThoughtsFromMaterializationChanges`](../src/data-providers/treecrdt/sync/materializationThoughtUpdates.ts), which loads the affected thoughts fresh from the provider, derives Lexeme updates (every touched thought adds itself to its value's Lexeme; deletions and value changes remove the stale context; a Lexeme left with no contexts is deleted), and re-projects TreeCRDT sibling order onto `rank` for every parent whose children changed — so the render path, which still sorts by rank, reflects remote reorders.
-4. Persists the derived Lexeme updates, then applies the whole batch through the *materialization bridge*.
+1. Waits for local writes and indexing, coalescing buffered events into one membership read.
+2. For incoming changes only, refreshes affected thoughts and projects sibling order onto numeric ranks.
+3. Reads complete memberships for affected old and new values. If the view or queued work changed during the read, retries after persistence catches up; a retired provider cannot publish.
+4. Applies changed memberships and incoming thoughts through the *materialization bridge*. Unchanged membership results do not dispatch another update.
 
 The bridge is supplied by [`initialize.ts`](../src/initialize.ts): `getSnapshot` reads the current Redux thought and lexeme indexes, and `apply` dispatches `updateThoughts` with `local: false, remote: false, repairCursor: true`. A thought's `pending` flag is preserved across the refresh, since it is UI state rather than part of the TreeCRDT payload.
 
@@ -146,7 +147,7 @@ Failures are non-fatal by design: a failed start logs a warning and em keeps run
 
 [`redux-enhancers/pushQueue.ts`](../src/redux-enhancers/pushQueue.ts) is a Redux store enhancer that runs after every reducer. It drains `state.pushQueue` (a list of `PushBatch` objects pushed there by [`updateThoughts`](../src/actions/updateThoughts.ts) and friends) and partitions it into:
 
-- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which wraps them in the write barrier and calls the active data provider's `updateThoughts` with the batch's `thoughtIndexUpdates`, `lexemeIndexUpdates`, and `movePlacements`. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
+- **`dbQueue`** — batches with `local || remote` set. Applied sequentially through `thoughtspaceRuntime.persistPushQueueBatches`, which wraps them in the write barrier and calls the provider with `thoughtIndexUpdates` and `movePlacements`. Lexeme updates remain in Redux; they are not persistence input. After provider persistence finishes, any `idbSynced` callback on the original batch is invoked.
 - **`freeQueue`** — state-only batches whose `null` thought/lexeme entries indicate they should be released from the in-memory cache. Calls `db.freeThought` / `db.freeLexeme` (no-ops for TreeCRDT; the Redux-side release is what matters).
 
 The enhancer also caches a small set of critical settings (`CACHED_SETTINGS` in [`constants.ts`](../src/constants.ts)) into `localStorage` so that things like the Tutorial setting are available during the first paint before the thoughtspace hydrates. The corresponding read path is [`selectors/getSetting.ts`](../src/selectors/getSetting.ts).

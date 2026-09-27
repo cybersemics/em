@@ -46,7 +46,6 @@ const persistThoughtsTo = (
 ) =>
   db.updateThoughts({
     thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
-    lexemeIndexUpdates: {},
     movePlacements,
   })
 
@@ -208,5 +207,77 @@ it('keeps separately created thoughtspace instances isolated', async () => {
   } finally {
     await first.drop()
     await second.drop()
+  }
+})
+
+it('rebuilds memberships from thoughts when opening a database with the old lexeme table', async () => {
+  const client = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' } })
+  const replicaId = new Uint8Array(32).fill(1)
+  const provider = createTreecrdtDataProvider()
+  const close = await provider.bindClient(client, replicaId)
+  try {
+    await persistThoughtsTo(provider.db, [thought(THOUGHT_A_ID, EM_TOKEN, 'a', 0)])
+    await close()
+    // Model an existing database: only the old, incomplete cache exists beside the authoritative tree.
+    await client.runner.exec(`
+      DROP TABLE em_lexeme_memberships;
+      DROP TABLE em_derived_indexes_meta;
+      CREATE TABLE em_lexemes (id TEXT PRIMARY KEY, payload_json TEXT NOT NULL);
+      INSERT INTO em_lexemes VALUES ('stale', '{}');
+    `)
+    const operations = await client.ops.all()
+    const reopened = createTreecrdtDataProvider()
+    const closeReopened = await reopened.bindClient(client, replicaId)
+    try {
+      await expect(reopened.db.getLexemeById(hashThought('a'))).resolves.toMatchObject({ contexts: [THOUGHT_A_ID] })
+      await expect(reopened.db.getLexemeById('stale')).resolves.toBeUndefined()
+      // Rebuilding a local index must not rewrite the replicated data.
+      await expect(client.ops.all()).resolves.toEqual(operations)
+    } finally {
+      await closeReopened()
+    }
+  } finally {
+    await close()
+    await client.drop()
+  }
+})
+
+it('does not checkpoint a partial index update and repairs both indexes on reopening', async () => {
+  const client = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' } })
+  const replicaId = new Uint8Array(32).fill(1)
+  const provider = createTreecrdtDataProvider()
+  const close = await provider.bindClient(client, replicaId)
+  const getText = client.runner.getText.bind(client.runner)
+  const report = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const runner = vi.spyOn(client.runner, 'getText').mockImplementation((sql, params) => {
+    if (sql.includes('INSERT INTO em_lexeme_memberships')) throw new Error('interrupted index update')
+    return getText(sql, params)
+  })
+  try {
+    const checkpoint = await getText('SELECT head_seq FROM em_derived_indexes_meta')
+    await expect(persistThoughtsTo(provider.db, [thought(PIN_ID, EM_TOKEN, '=pin', 0)])).rejects.toThrow(
+      'interrupted index update',
+    )
+    // Even a later event cannot mark the failed frontier complete.
+    await client.local.delete(replicaId, PIN_ID)
+    await expect(close()).rejects.toThrow('interrupted index update')
+    expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(checkpoint)
+    runner.mockRestore()
+
+    const reopened = createTreecrdtDataProvider()
+    const closeReopened = await reopened.bindClient(client, replicaId)
+    try {
+      await expect(reopened.db.getLexemeById(hashThought('=pin'))).resolves.toBeUndefined()
+      expect((await reopened.db.getThoughtById(EM_TOKEN))?.childrenMap['=pin']).toBeUndefined()
+      const { headSeq } = JSON.parse((await getText('SELECT treecrdt_ensure_materialized()'))!) as { headSeq: number }
+      expect(await getText('SELECT head_seq FROM em_derived_indexes_meta')).toBe(String(headSeq))
+    } finally {
+      await closeReopened()
+    }
+  } finally {
+    runner.mockRestore()
+    await close()
+    await client.drop()
+    report.mockRestore()
   }
 })
