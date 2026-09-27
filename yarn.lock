@@ -8969,6 +8969,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vitest/pretty-format@npm:4.1.11":
+  version: 4.1.11
+  resolution: "@vitest/pretty-format@npm:4.1.11"
+  dependencies:
+    tinyrainbow: "npm:^3.1.0"
+  checksum: 10c0/ad32525c73807c0b72f38dc29bc51fd5a17879dc650f37995a9c5adbb8526e15f787691f76aa8768448ec7ed5bf5ba2b12329eac8fda1428b4d6b8c036390f71
+  languageName: node
+  linkType: hard
+
 "@vitest/runner@npm:4.0.18":
   version: 4.0.18
   resolution: "@vitest/runner@npm:4.0.18"
@@ -9013,6 +9022,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vitest/snapshot@npm:^4.1.11":
+  version: 4.1.11
+  resolution: "@vitest/snapshot@npm:4.1.11"
+  dependencies:
+    "@vitest/pretty-format": "npm:4.1.11"
+    "@vitest/utils": "npm:4.1.11"
+    magic-string: "npm:^0.30.21"
+    pathe: "npm:^2.0.3"
+  checksum: 10c0/35d82a7c2a3e4b57529c30387d568d9106b6bf960189214e5d8cb1f5288cb042305c2e5c7b0b2f8cb56a2c814973de0310bc56d72deb79427bea272b6224190c
+  languageName: node
+  linkType: hard
+
 "@vitest/spy@npm:4.0.18":
   version: 4.0.18
   resolution: "@vitest/spy@npm:4.0.18"
@@ -9038,6 +9059,17 @@ __metadata:
     convert-source-map: "npm:^2.0.0"
     tinyrainbow: "npm:^3.1.0"
   checksum: 10c0/05b0ecec6997ec22fc08377e57dbd8fa37992e05961f3a7a916d98b1ab56d15c2a87dbd83d392b628242bdc156b1705e7fa60a3bf0c54bdb51158c153e05fc5d
+  languageName: node
+  linkType: hard
+
+"@vitest/utils@npm:4.1.11":
+  version: 4.1.11
+  resolution: "@vitest/utils@npm:4.1.11"
+  dependencies:
+    "@vitest/pretty-format": "npm:4.1.11"
+    convert-source-map: "npm:^2.0.0"
+    tinyrainbow: "npm:^3.1.0"
+  checksum: 10c0/a2c1ddc64333458c3e031465c1ee0440a7660fd1b298c54ccbf865ef1e5cf3ebdd6c5c75a5ea235d8a672498b394e7121f992b096f021f45014ab25e9abd1b52
   languageName: node
   linkType: hard
 
@@ -12608,7 +12640,7 @@ __metadata:
     eslint-plugin-react: "npm:^7.37.5"
     eslint-plugin-react-hooks: "npm:^7.1.1"
     eslint-plugin-react-refresh: "npm:^0.5.7"
-    expect-webdriverio: "npm:^6.0.10"
+    expect-webdriverio: "npm:^6.1.0"
     fake-indexeddb: "npm:^6.2.5"
     fast-json-patch: "npm:^3.1.1"
     fp-and-or: "npm:^1.0.2"
@@ -14184,29 +14216,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expect-webdriverio@npm:^6.0.10":
-  version: 6.0.10
-  resolution: "expect-webdriverio@npm:6.0.10"
-  dependencies:
-    "@vitest/snapshot": "npm:^4.1.10"
-    deep-eql: "npm:^5.0.2"
-    expect: "npm:^30.4.1"
-    jest-matcher-utils: "npm:^30.4.1"
-  peerDependencies:
-    "@wdio/globals": ^9.0.0
-    "@wdio/logger": ^9.0.0
-    webdriverio: ^9.28.0
-  peerDependenciesMeta:
-    "@wdio/globals":
-      optional: false
-    "@wdio/logger":
-      optional: false
-    webdriverio:
-      optional: false
-  checksum: 10c0/4c70362f50ece42832bd8b2333ad253af6f4521636f519931f75b09e30de43f0e2e186d018ea4ac6a100202eff474f1b6a671915e308ed3f9b73fd2d13f2a161
-  languageName: node
-  linkType: hard
-
 "expect-webdriverio@npm:^6.0.9":
   version: 6.0.9
   resolution: "expect-webdriverio@npm:6.0.9"
@@ -14227,6 +14236,29 @@ __metadata:
     webdriverio:
       optional: false
   checksum: 10c0/4a21a57a233ef74d779c43aa77441b583d0c8619ae7ff38900bebd9c97a4234101a6e30347c50774e3c019479f44f68292f20756605ae13b6a80bc65a87f0c7b
+  languageName: node
+  linkType: hard
+
+"expect-webdriverio@npm:^6.1.0":
+  version: 6.1.0
+  resolution: "expect-webdriverio@npm:6.1.0"
+  dependencies:
+    "@vitest/snapshot": "npm:^4.1.11"
+    deep-eql: "npm:^5.0.2"
+    expect: "npm:^30.4.1"
+    jest-matcher-utils: "npm:^30.4.1"
+  peerDependencies:
+    "@wdio/globals": ^9.0.0
+    "@wdio/logger": ^9.0.0
+    webdriverio: ^9.28.0
+  peerDependenciesMeta:
+    "@wdio/globals":
+      optional: false
+    "@wdio/logger":
+      optional: false
+    webdriverio:
+      optional: false
+  checksum: 10c0/b5c813049af1970d32a09a01f0ff9e87f6a49dbf62cb35eafc87b1f7e05cff533495ea8a48654ef03b7960b5b984ceb9e608d5160e97a3a23fef24f21a2ac17b
   languageName: node
   linkType: hard
 
