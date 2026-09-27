@@ -8,7 +8,7 @@ export interface UndoStep {
   patches: Patch[]
 }
 
-/** Groups patches, ordered newest first, into undo steps. Uses the same step-boundary policy as undoRedoEnhancer: a navigation patch is grouped with the undoable patch before it, and a patch that follows a newThought is grouped with it, e.g. typing the value of a new thought. Unlike undoReducer, a formatting-only edit of a newly created thought is also grouped with the newThought, since telling it apart would require the thought's value at that point in the history. */
+/** Groups patches, ordered newest first, into undo steps. Uses the same step-boundary policy as undoRedoEnhancer: a navigation patch is grouped with the undoable patch before it, and a patch that follows a newThought is grouped with it, e.g. typing the value of a new thought, unless it holds formatting for the empty thought (setPendingFormat). Unlike undoReducer, a formatting-only edit of a newly created thought is also grouped with the newThought, since telling it apart would require the thought's value at that point in the history. */
 const groupSteps = (patches: Patch[]): UndoStep[] =>
   patches.reduce<UndoStep[]>((steps, patch, i) => {
     // skip a patch that was grouped with the newer patch before it

@@ -7,6 +7,7 @@ import { clearMulticursorsActionCreator as clearMulticursors } from '../../actio
 import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { redoActionCreator as redo } from '../../actions/redo'
 import { setCursorActionCreator as setCursorPath } from '../../actions/setCursor'
 import { toggleNoteActionCreator as toggleNote } from '../../actions/toggleNote'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -315,5 +316,36 @@ describe('pending format', () => {
     const cursorValue = getThoughtById(state, head(state.cursor!))!.value
 
     expect(cursorValue).toBe('H')
+  })
+
+  // A color held for a new thought is its own undo step rather than part of the thought's creation, so undoing it
+  // leaves the empty thought in place.
+  // https://github.com/cybersemics/em/pull/5360#pullrequestreview-5328812759
+  it('undoes the color of a new empty thought without removing the thought (#3910)', async () => {
+    await dispatch(newThought({ value: '' }))
+    const id = head(store.getState().cursor!)
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    await dispatch(undo())
+
+    const thought = getThoughtById(store.getState(), id)
+    expect(thought?.value).toBe('')
+    expect(thought?.pendingFormat).toBeUndefined()
+  })
+
+  // Redo mirrors undo: redoing the thought's creation does not also redo the color held for it.
+  it('redoes a new empty thought without the color held for it (#3910)', async () => {
+    await dispatch(newThought({ value: '' }))
+    const id = head(store.getState().cursor!)
+    await dispatch(formatSelection('foreColor', 'green'))
+
+    await dispatch([undo(), undo()])
+    expect(getThoughtById(store.getState(), id)).toBeUndefined()
+
+    await dispatch(redo())
+
+    const thought = getThoughtById(store.getState(), id)
+    expect(thought?.value).toBe('')
+    expect(thought?.pendingFormat).toBeUndefined()
   })
 })
