@@ -136,9 +136,9 @@ When the press ends, `useLongPress` defers `onLongPressEnd` by 10 ms so that the
 
 ### `useDragLeave`
 
-[`useDragLeave`](../src/hooks/useDragLeave.ts) tracks how many drop targets are currently being deep-hovered (a module-level `hoverCount`). When the count drops to zero, it debounces a 50 ms clear of `state.hoveringPath`. This prevents flicker when the cursor briefly leaves one drop zone before entering an adjacent one.
+[`useDragLeave`](../src/hooks/useDragLeave.ts) tracks how many drop targets are currently being deep-hovered (a module-level ministore, `hoverCountStore`, which `resetStores` clears between tests). When the count drops to zero, it debounces a 50 ms clear of `state.hoveringPath`. This prevents flicker when the cursor briefly leaves one drop zone before entering an adjacent one.
 
-Because `hoverCount` is shared across every drop target, only a change in `isDeepHovering` may adjust it. The hook's effect also re-runs on mount and when `canDropThought` or `hoverZone` change, and treating those as hover transitions would let a thought mounting mid-drag decrement the count to zero and blank the drop indicator while a target is still hovered. A separate unmount-only effect releases a target's contribution to the count, so a thought the layout unmounts mid-drag doesn't leak one.
+Because the count is shared across every drop target, only a change in `isDeepHovering` may adjust it. The hook's effect also re-runs on mount and when `canDropThought` or `hoverZone` change, and treating those as hover transitions would let a thought mounting mid-drag decrement the count to zero and blank the drop indicator while a target is still hovered. A separate unmount-only effect releases a target's contribution to the count, so a thought the layout unmounts mid-drag doesn't leak one.
 
 ### `useDropHoverColor`
 
@@ -212,7 +212,7 @@ Drag-and-drop runs hot — `canDrop` and `hover` fire many times per second duri
 - **`DragOnly`** wraps every component that exists only to show drop targets / hover bars during a drag, so they don't mount when no drag is in progress.
 - **`canDropPath`** in `useDragAndDropThought` is `moize`-memoized with `maxSize: 50` because the same `(from, to)` pair gets re-checked on every animation frame.
 - **`throttleByMousePosition`** wraps the hover handlers so dispatches only happen when the mouse actually moves, not on every event.
-- **`useDragLeave`** debounces the clear of `state.hoveringPath` by 50 ms via a module-level `hoverCount` so brief gaps between drop zones don't blank the UI.
+- **`useDragLeave`** debounces the clear of `state.hoveringPath` by 50 ms via a module-level `hoverCountStore` so brief gaps between drop zones don't blank the UI.
 
 ## react-dnd patches
 
