@@ -2,7 +2,10 @@
  * IOS Safari native undo/redo tests.
  * Uses WDIO test runner with Mocha framework.
  */
+import { HOME_DISPLAY_VALUE } from '../../../constants.js'
 import getEditingText from '../helpers/getEditingText'
+import nativeRedo from '../helpers/nativeRedo'
+import nativeUndo from '../helpers/nativeUndo'
 import newThought from '../helpers/newThought'
 import threeFingerSwipe from '../helpers/threeFingerSwipe'
 import waitForNativeHistoryStep from '../helpers/waitForNativeHistoryStep'
@@ -17,10 +20,10 @@ describe('Native history', () => {
     // Trigger native undo and redo the way the iOS three-finger swipe and shake-to-undo do. In real WebKit,
     // document.execCommand fires the same cancelable historyUndo/historyRedo beforeinput event as the native gesture,
     // and like the gesture it is only dispatched while WebKit's own history has a step in that direction.
-    await browser.execute(() => document.execCommand('undo'))
+    await nativeUndo()
     expect(await getEditingText()).toBe('hello')
 
-    await browser.execute(() => document.execCommand('redo'))
+    await nativeRedo()
     expect(await getEditingText()).toBe('world')
   })
 
@@ -29,10 +32,10 @@ describe('Native history', () => {
     await newThought('hello')
 
     await threeFingerSwipe('l')
-    await waitForThoughts([])
+    await waitForThoughts(`- ${HOME_DISPLAY_VALUE}`)
 
     await threeFingerSwipe('r')
-    await waitForThoughts(['hello'])
+    await waitForThoughts('\n- hello\n')
   })
 
   // https://github.com/cybersemics/em/issues/5575
@@ -43,17 +46,17 @@ describe('Native history', () => {
     // one registered by the redo rather than a leftover from the undo.
     await threeFingerSwipe('l')
     await waitForNativeHistoryStep()
-    await waitForThoughts([])
+    await waitForThoughts(`- ${HOME_DISPLAY_VALUE}`)
 
     await threeFingerSwipe('r')
     await waitForNativeHistoryStep()
-    await waitForThoughts(['hello'])
+    await waitForThoughts('\n- hello\n')
 
     // Shake reaches em only as a historyUndo beforeinput, which WebKit dispatches only while its own stack holds a
     // live step. The swipe re-renders the editable that step was recorded against, so unless a fresh one is
-    // registered afterwards there is nothing to deliver and the shake does nothing. execCommand stands in for the
+    // registered afterwards there is nothing to deliver and the shake does nothing. nativeUndo stands in for the
     // shake here because it depends on that same step, and a real device cannot be shaken in a cloud test lab.
-    await browser.execute(() => document.execCommand('undo'))
-    await waitForThoughts([])
+    await nativeUndo()
+    await waitForThoughts(`- ${HOME_DISPLAY_VALUE}`)
   })
 })
