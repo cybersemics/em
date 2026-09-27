@@ -12660,7 +12660,7 @@ __metadata:
     react-dnd-test-utils: "npm:^16.0.1"
     react-dnd-touch-backend: "patch:react-dnd-touch-backend@patch%3Areact-dnd-touch-backend@patch%253Areact-dnd-touch-backend@patch%25253Areact-dnd-touch-backend@patch%2525253Areact-dnd-touch-backend@npm%252525253A16.0.1%25252523~/.yarn/patches/react-dnd-touch-backend-npm-16.0.1-2b96ba84be.patch%2525253A%2525253Aversion=16.0.1&hash=77964d%252523~/.yarn/patches/react-dnd-touch-backend-patch-0040823149.patch%25253A%25253Aversion=16.0.1&hash=33fdd5%2523~/.yarn/patches/react-dnd-touch-backend-patch-2c3a2052b6.patch%253A%253Aversion=16.0.1&hash=40a9c2%23~/.yarn/patches/react-dnd-touch-backend-patch-03e51a5757.patch%3A%3Aversion=16.0.1&hash=3c713c#~/.yarn/patches/react-dnd-touch-backend-patch-3f966b38ad.patch"
     react-dom: "npm:^19.3.0"
-    react-error-boundary: "npm:^6.1.5"
+    react-error-boundary: "npm:^6.1.6"
     react-gravatar: "npm:^2.6.3"
     react-modal-sheet: "patch:react-modal-sheet@npm%3A5.6.0#~/.yarn/patches/react-modal-sheet-npm-5.6.0-f2ff243f4a.patch"
     react-native-web: "npm:^0.21.2"
@@ -21260,16 +21260,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-error-boundary@npm:^6.1.5":
-  version: 6.1.5
-  resolution: "react-error-boundary@npm:6.1.5"
+"react-error-boundary@npm:^6.1.6":
+  version: 6.1.6
+  resolution: "react-error-boundary@npm:6.1.6"
   peerDependencies:
     "@types/react": ^18.0.0 || ^19.0.0
     react: ^18.0.0 || ^19.0.0
   peerDependenciesMeta:
     "@types/react":
       optional: true
-  checksum: 10c0/2ea1da86dd4bb71d346a0cfa2e2cc0095c9ec91882b2a9acca6f2a79a063ef1427c29d819af628ae27d41272d5b82943f737dd81cdae2d90ffd74704b377ec83
+  checksum: 10c0/b9a8c3cd8e004c33cd892b16b4dcc947ff86657a4b6133219dfa4448183ae59d14341a5fc37632646b3e53bc53131a8fd6f86df7d91b80bbf674611c0201e410
   languageName: node
   linkType: hard
 
