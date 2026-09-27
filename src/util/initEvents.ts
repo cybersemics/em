@@ -50,6 +50,12 @@ const SELECTION_CHANGE_THROTTLE = 200
 // See: onStateChange
 let passiveTimeout = 0
 
+/** How long after the app resumes to log the viewport geometry a second time. On iOS the viewport can finish resizing after the page is already active, such as when a keyboard that was open when the app was backgrounded is dismissed, and it may do so without firing a resize event, so a second snapshot shows where the viewport settled. */
+const RESUME_SETTLE_DELAY = 1000
+
+/** Timer for the settled viewport snapshot logged after the app resumes. */
+let resumeSettleTimeout = 0
+
 // cache the scroll-at-edge container on start for performance
 // if the Sidebar is open on touch start, this is set to the .sidebar element
 let scrollContainer: Window | HTMLElement = window
@@ -348,12 +354,46 @@ const initEvents = (store: Store<State, any>) => {
     if (e.pointerType !== 'touch') multitouchStore.update(false)
   }
 
+  /** The geometry of the last viewport entry written to the debug log, so that resize events that change nothing it records do not flood the log. */
+  let lastViewportLogged = ''
+
+  /** Logs the viewport geometry to the debug log. A resize entry is skipped when the geometry matches the last entry. Resume and settled entries are always written, so the geometry at every resume is on record even when nothing changed. This makes a layout that was left at the wrong size visible in the log, such as the nav bar drawn mid-screen after returning to the app because iOS kept the keyboard-open viewport height. */
+  const logViewport = (reason: 'resize' | 'resume' | 'settled') => {
+    // skip the layout reads below when nothing will be logged
+    if (!debugLog.isEnabled()) return
+    const visualViewport = window.visualViewport
+    const geometry = {
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      // height of the layout viewport, which position: fixed and position: sticky elements are laid out against
+      clientHeight: document.documentElement.clientHeight,
+      visualViewportHeight: visualViewport ? Math.round(visualViewport.height) : null,
+      visualViewportOffsetTop: visualViewport ? Math.round(visualViewport.offsetTop) : null,
+      scrollY: Math.round(window.scrollY),
+      isKeyboardOpen: store.getState().isKeyboardOpen,
+    }
+    const serialized = JSON.stringify(geometry)
+    if (reason === 'resize' && serialized === lastViewportLogged) return
+    lastViewportLogged = serialized
+    debugLog.log('viewport', { reason, ...geometry })
+  }
+
+  /** Logs the viewport geometry on resize. */
+  const onResizeLog = () => logViewport('resize')
+
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
     clearTimeout(passiveTimeout)
 
     // Log lifecycle transitions so that events can be correlated with the app being backgrounded or foregrounded, e.g. a false Command Center open right before an app switch. More direct than inferring suspension from gaps in the log timeline.
     debugLog.log('lifecycle', { oldState, newState })
+
+    // Log the viewport geometry when the app resumes and again once it has had time to settle, so that a viewport left at the wrong size by the app switch shows up in the log.
+    clearTimeout(resumeSettleTimeout)
+    if (newState === 'active') {
+      logViewport('resume')
+      resumeSettleTimeout = setTimeout(logViewport, RESUME_SETTLE_DELAY, 'settled') as unknown as number
+    }
 
     // dismiss the gesture alert on hide
     if (newState === 'hidden' || oldState === 'hidden') {
@@ -472,6 +512,7 @@ const initEvents = (store: Store<State, any>) => {
 
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
+  resizeHost.addEventListener('resize', onResizeLog)
 
   // Initialize virtual keyboard handlers
   virtualKeyboardHandler.init()
@@ -513,6 +554,8 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
+    resizeHost.removeEventListener('resize', onResizeLog)
+    clearTimeout(resumeSettleTimeout)
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
     eventHandlers = null
