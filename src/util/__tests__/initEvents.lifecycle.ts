@@ -1,8 +1,9 @@
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
 import * as selection from '../../device/selection'
-import globals from '../../globals'
 import store from '../../stores/app'
+import touchStore from '../../stores/touchStore'
 import initStore from '../../test-helpers/initStore'
+import debugLog from '../debugLog'
 import initEvents from '../initEvents'
 
 const stateChangeListenerRef = vi.hoisted(
@@ -49,16 +50,15 @@ beforeEach(async () => {
 
 afterEach(() => {
   initEvents(store).cleanup()
-  globals.suppressCursorAfterTouch = false
 })
 
 it('allows cursor events again when a new touch starts', () => {
   initEvents(store)
-  globals.suppressCursorAfterTouch = true
+  touchStore.update({ suppressCursorAfterTouch: true })
 
   window.dispatchEvent(new TouchEvent('touchstart'))
 
-  expect(globals.suppressCursorAfterTouch).toBe(false)
+  expect(touchStore.getState().suppressCursorAfterTouch).toBe(false)
 })
 
 // https://github.com/cybersemics/em/issues/1596
@@ -111,4 +111,36 @@ it('clears the selection when the app becomes passive while a thought is focused
   expect(selection.clear).toHaveBeenCalled()
   hasFocus.mockRestore()
   editable.remove()
+})
+
+// The nav bar was reported drawn mid-screen after returning to the app, and the debug log held nothing about the viewport to show whether iOS had left it at the keyboard-open size.
+it('logs the viewport geometry when the app resumes and again once it settles', async () => {
+  initEvents(store)
+  debugLog.setEnabled(true)
+  debugLog.clear()
+
+  stateChangeListenerRef.current!({ oldState: 'hidden', newState: 'passive' })
+  stateChangeListenerRef.current!({ oldState: 'passive', newState: 'active' })
+  await vi.advanceTimersByTimeAsync(1000)
+
+  const viewportEntries = debugLog.read().filter(entry => entry.type === 'viewport')
+  expect(viewportEntries.map(entry => entry.reason)).toEqual(['resume', 'settled'])
+  expect(viewportEntries[0]).toMatchObject({
+    innerWidth: window.innerWidth,
+    innerHeight: window.innerHeight,
+    clientHeight: document.documentElement.clientHeight,
+    isKeyboardOpen: store.getState().isKeyboardOpen,
+  })
+})
+
+it('logs a viewport resize only when the geometry changes', () => {
+  initEvents(store)
+  debugLog.setEnabled(true)
+  debugLog.clear()
+
+  window.dispatchEvent(new Event('resize'))
+  window.dispatchEvent(new Event('resize'))
+
+  const viewportEntries = debugLog.read().filter(entry => entry.type === 'viewport')
+  expect(viewportEntries.map(entry => entry.reason)).toEqual(['resize'])
 })

@@ -3,6 +3,7 @@ import FormattingCommand from '../@types/FormattingCommand'
 import State from '../@types/State'
 import * as selection from '../device/selection'
 import pathToThought from '../selectors/pathToThought'
+import selectedPaths from '../selectors/selectedPaths'
 import themeColors from '../selectors/themeColors'
 import getCommandState from '../util/getCommandState'
 import rgbToHex from '../util/rgbToHex'
@@ -61,17 +62,32 @@ const getActiveEmptySelectionColors = (state: State): Partial<CommandState> => {
   }
 }
 
-/** Updates the command state to the current selection/thought. If there is an active selection, this uses document.queryCommandState to get the command state from the DOM. This detects a formatting style that has been enabled, but not yet entered (i.e. the next character typed will be bold). If there is no selection, this parses the cursor thought's value and sets a formatting state only if it applies to the entire thought. */
+/** Reduces the command state of every selected thought to the formatting they all share. A formatting command applies to the whole selection, so a swatch that claimed a color only some of the thoughts have would clear it on the next tap rather than apply it to the rest. */
+const intersectCommandState = (commandStates: CommandState[]): CommandState =>
+  commandStates.reduce((a, b) => ({
+    bold: a.bold && b.bold,
+    italic: a.italic && b.italic,
+    underline: a.underline && b.underline,
+    strikethrough: a.strikethrough && b.strikethrough,
+    code: a.code && b.code,
+    foreColor: a.foreColor === b.foreColor ? a.foreColor : undefined,
+    backColor: a.backColor === b.backColor ? a.backColor : undefined,
+  }))
+
+/** Updates the command state to the current selection/thought. If there is an active selection, this uses document.queryCommandState to get the command state from the DOM. This detects a formatting style that has been enabled, but not yet entered (i.e. the next character typed will be bold). If there is no selection, this parses the value of each selected thought and sets a formatting state only if it applies to all of them in their entirety. */
 export const updateCommandState = () => {
   const state = store.getState()
-  if (!state.cursor) return
+  // The thoughts a formatting command will be applied to: the multiselection when there is one, which may have no
+  // cursor at all if the Home button dismissed it. There is nothing to describe when nothing is selected.
+  const paths = selectedPaths(state)
+  if (!paths.length) return
   const selectionIsActiveThought = selection.isActive() && selection.isThought()
   const action = selectionIsActiveThought
     ? {
         ...getCommandState(selection.html() ?? ''),
         ...(!selection.text()?.length ? getActiveEmptySelectionColors(state) : {}),
       }
-    : getCommandState(pathToThought(state, state.cursor)?.value ?? '')
+    : intersectCommandState(paths.map(path => getCommandState(pathToThought(state, path)?.value ?? '')))
   commandStateStore.update(action)
 }
 

@@ -20,7 +20,6 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import { AlertType, HOME_PATH, HOME_TOKEN } from '../constants'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
-import globals from '../globals'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, findAnyChild, getAllChildren } from '../selectors/getChildren'
 import { getLexeme } from '../selectors/getLexeme'
@@ -28,7 +27,8 @@ import getThoughtById from '../selectors/getThoughtById'
 import isPending from '../selectors/isPending'
 import nextSibling from '../selectors/nextSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
-import syncStatusStore from '../stores/syncStatus'
+import abandonImportStore from '../stores/abandonImportStore'
+import syncStatusStore from '../stores/syncStatusStore'
 import addContext from '../util/addContext'
 import appendToPath from '../util/appendToPath'
 import hashThought from '../util/hashThought'
@@ -108,7 +108,7 @@ const resumeImportsManager = (file: ResumableFile) => {
   /** Updates the persisted ResumeImport file to the latest number of imported thoughts. */
   // TODO: throttling update breaks resume file.path for some reason
   const update = async (path: Path | null, thoughtsImported: number, insertBefore?: boolean) => {
-    if (globals.abandonImport) return
+    if (abandonImportStore.getState()) return
 
     const resumeImports = parseJsonSafe<Index<ResumeImport>>(storage.getItem(RESUME_IMPORTS_KEY) || '{}', {})
     storage.setItem(

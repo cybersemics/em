@@ -6,7 +6,7 @@ import CommandId from '../@types/CommandId'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { chainCommand, gestureString, globalCommands, hashCommand, parseCommandShortcut } from '../commands'
-import gestureStore from '../stores/gesture'
+import gestureStore from '../stores/gestureStore'
 
 /** Returns true if the command can be executed. */
 const isExecutable = (state: State, command: Command) =>

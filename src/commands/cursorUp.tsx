@@ -26,6 +26,13 @@ import throttleByAnimationFrame from '../util/throttleByAnimationFrame'
 const cursorUpCommand = {
   id: 'cursorUp',
   label: 'Cursor Up' as const,
+  longDescription: (
+    <>
+      <p>Move the cursor to the previous thought at the same level.</p>
+      <p>Use Cursor Up to walk through siblings — items in a list, days in a week — without changing depth.</p>
+      <p>Hold shift while pressing Up to extend the selection through neighbouring thoughts.</p>
+    </>
+  ),
   keyboard: [{ key: 'ArrowUp' }, { key: 'ArrowUp', shift: true }],
   hideFromHelp: true,
   multicursor: false,

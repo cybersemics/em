@@ -57,7 +57,7 @@ const probeDevServer = async (): Promise<{ token: string | null } | null> => {
  * `maxInstances`, how many sessions it will open.
  */
 const browserStackLauncherHooks = {
-  onPrepare: async function (config: WebdriverIO.Config) {
+  onPrepare: async function (config: WebdriverIO.Config, capabilities: WebdriverIO.Capabilities[]) {
     // How many BrowserStack sessions this run will open at once: one per worker, and WDIO starts no
     // more workers than there are spec files. When --spec was passed (tdd.yml runs one or two changed
     // files that way), WDIO has already resolved `config.specs` to exactly the matching files, one
@@ -66,10 +66,11 @@ const browserStackLauncherHooks = {
     // (`config.spec` itself is only used as the flag: the launcher merges the CLI args into the
     // config twice, so that array lists every file twice and its length is not the file count.)
     // WDIO's Testrunner type does not declare `spec`, which only ever arrives from the CLI.
+    // A spec can run on more than one capability, so the worker count is per capability.
     const { spec: cliSpecs } = config as { spec?: string[] }
     const specCount = cliSpecs?.length && config.specs?.length ? config.specs.length : Infinity
     // The calling config's worker count, since the Android config runs one worker for its one spec.
-    const sessionsNeeded = Math.min(config.maxInstances ?? baseConfig.maxInstances, specCount)
+    const sessionsNeeded = Math.min(config.maxInstances ?? baseConfig.maxInstances, specCount * capabilities.length)
 
     try {
       // Claim a tunnel from the pool if not already set (e.g. by a CI workflow step)

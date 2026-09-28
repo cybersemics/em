@@ -24,7 +24,6 @@ import { ThoughtContainerProps } from '../components/Thought'
 import { AlertType, LongPressState } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
-import globals from '../globals'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import getNextRank from '../selectors/getNextRank'
@@ -39,7 +38,9 @@ import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
+import multitouchStore from '../stores/multitouchStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
+import touchStore from '../stores/touchStore'
 import appendToPath from '../util/appendToPath'
 import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
@@ -64,6 +65,13 @@ export type DropValidationResult = {
 const canDrag = (props: ThoughtContainerProps) => {
   const hasSelectionRange = selectionRangeStore.getState()
   if (isTouch && hasSelectionRange) return false
+
+  // Reject multi-touch input so that two-finger tracing is not interpreted as a drag-and-drop.
+  // react-dnd's TouchBackend initiates a drag from the primary touch and has no multi-touch rejection
+  // of its own, so a two-finger trace over a thought would otherwise begin a drag. The multitouch store
+  // latches while more than one finger is down and stays set until every finger lifts, so a finger lifting
+  // mid-gesture cannot re-open the drag. See #4233.
+  if (isTouch && multitouchStore.getState()) return false
 
   const state = store.getState()
   const thoughtId = head(props.simplePath)
@@ -312,7 +320,7 @@ const endDrag = () => {
 
   // A browser may dispatch the release's compatibility click or focus after drag cleanup. Keep only cursor events
   // suppressed until the next real touchstart; do not hold longPress open and block unrelated gesture state.
-  if (isTouch) globals.suppressCursorAfterTouch = true
+  if (isTouch) touchStore.update({ suppressCursorAfterTouch: true })
 
   store.dispatch([
     longPress({ value: LongPressState.Inactive }),
