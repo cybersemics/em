@@ -1,6 +1,10 @@
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../../actions/desktopCommandUniverse'
+import { longPressActionCreator as longPress } from '../../actions/longPress'
+import { LongPressState } from '../../constants'
 import * as selection from '../../device/selection'
 import store from '../../stores/app'
+import { resetStores } from '../../stores/ministore'
+import scrollContainerStore from '../../stores/scrollContainerStore'
 import touchStore from '../../stores/touchStore'
 import initStore from '../../test-helpers/initStore'
 import debugLog from '../debugLog'
@@ -143,4 +147,62 @@ it('logs a viewport resize only when the geometry changes', () => {
 
   const viewportEntries = debugLog.read().filter(entry => entry.type === 'viewport')
   expect(viewportEntries.map(entry => entry.reason)).toEqual(['resize'])
+})
+
+// https://github.com/cybersemics/em/issues/5255
+it('does not clear the selection after cleanup when the passive-state timer was armed before it', async () => {
+  const { cleanup } = initEvents(store)
+  const editable = document.createElement('input')
+  document.body.appendChild(editable)
+  editable.focus()
+  const hasFocus = vi.spyOn(document, 'hasFocus').mockReturnValue(false)
+  vi.mocked(selection.clear).mockClear()
+
+  stateChangeListenerRef.current!({ oldState: 'active', newState: 'passive' })
+  cleanup()
+  await vi.advanceTimersByTimeAsync(50)
+
+  expect(selection.clear).not.toHaveBeenCalled()
+  hasFocus.mockRestore()
+  editable.remove()
+})
+
+describe('scroll-at-edge container', () => {
+  /** Drags a thought over the given element, near enough to the top edge to start scroll-at-edge. */
+  const dragOver = (target: HTMLElement) => {
+    store.dispatch(longPress({ value: LongPressState.DragInProgress }))
+    // jsdom implements neither Touch nor touch lists, so the one touch the handler reads is defined on the event.
+    const event = new TouchEvent('touchmove', { bubbles: true })
+    Object.defineProperty(event, 'touches', { value: [{ clientX: 10, clientY: 10 }] })
+    target.dispatchEvent(event)
+  }
+
+  // https://github.com/cybersemics/em/issues/5255
+  it('releases the element it was scrolling when the drag ends', () => {
+    initEvents(store)
+    const toolbar = document.createElement('div')
+    toolbar.setAttribute('data-scroll-at-edge', '')
+    document.body.appendChild(toolbar)
+
+    dragOver(toolbar)
+    expect(scrollContainerStore.getState().element).toBe(toolbar)
+
+    window.dispatchEvent(new TouchEvent('touchend'))
+    expect(scrollContainerStore.getState().element).toBe(window)
+    toolbar.remove()
+  })
+
+  // https://github.com/cybersemics/em/issues/5255
+  it('is back to the window after a reset', () => {
+    initEvents(store)
+    const toolbar = document.createElement('div')
+    toolbar.setAttribute('data-scroll-at-edge', '')
+    document.body.appendChild(toolbar)
+
+    dragOver(toolbar)
+    resetStores()
+
+    expect(scrollContainerStore.getState().element).toBe(window)
+    toolbar.remove()
+  })
 })
