@@ -4,7 +4,7 @@ import androidCapacitorHandler from '../androidCapacitorHandler'
 
 const listeners: Record<string, (info?: { keyboardHeight: number }) => void> = {}
 vi.mock('@capacitor/core', () => ({
-  Capacitor: { isNativePlatform: () => true, isPluginAvailable: () => true },
+  Capacitor: { getPlatform: () => 'android', isNativePlatform: () => true, isPluginAvailable: () => true },
 }))
 vi.mock('@capacitor/keyboard', () => ({
   Keyboard: {
