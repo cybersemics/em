@@ -13,11 +13,11 @@ import equalPath from '../util/equalPath'
 const validateNextState = (nextState: State, action: Action): void => {
   const { isLoading, showModal, thoughts } = nextState
 
-  // Try to catch the EM_TOKEN with empty childrenMap bug
+  // Try to catch the EM_TOKEN with no children bug.
   // https://github.com/cybersemics/em/issues/2223
-  const emThought = thoughts.thoughtIndex[EM_TOKEN]
+  const emThought = thoughts.getThought(EM_TOKEN)
   if (
-    // childrenMap is expected to be empty on the loading screen, welcome screen, and beginning of tutorial
+    // EM is expected to be empty on the loading screen, welcome screen, and beginning of tutorial.
     !isLoading &&
     showModal !== 'welcome' &&
     !isTutorial(nextState) &&
@@ -26,12 +26,10 @@ const validateNextState = (nextState: State, action: Action): void => {
     // guard against EM thought not yet loaded
     emThought &&
     // after that, it should never be empty
-    Object.keys(emThought.childrenMap).length === 0
+    thoughts.getChildren(EM_TOKEN).length === 0
   ) {
     console.error(action)
-    throw new Error(
-      'EM_TOKEN with empty childrenMap detected. This should never happen after the welcome screen is closed.',
-    )
+    throw new Error('EM_TOKEN with no children detected. This should never happen after the welcome screen is closed.')
   } else if (equalPath(nextState.cursor, [HOME_TOKEN])) {
     console.error(action)
     throw new Error(`["${HOME_TOKEN}"] is not a valid cursor. The root node is represented by null.`)

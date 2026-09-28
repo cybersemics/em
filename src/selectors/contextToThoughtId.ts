@@ -5,6 +5,7 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { EM_TOKEN } from '../constants'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
+import { getAllChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
 
@@ -18,9 +19,8 @@ const recursiveThoughtFinder = (
   targetIndex = 0,
   visitedIds: Index<boolean> = {}, // keyed by ThoughtId
 ): Thought | null => {
-  if (target.length === 0 && Object.values(thought.childrenMap).length === 0) return null
-
-  const children = childIdsToThoughts(state, Object.values(thought.childrenMap))
+  const children = childIdsToThoughts(state, getAllChildren(state, thought.id))
+  if (target.length === 0 && children.length === 0) return null
   const child = children.find(child => target[targetIndex] === child.value)
 
   if (!child) return null

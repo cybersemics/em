@@ -105,14 +105,13 @@ const categorize = (
       })
     : []
 
-  // Each move immediately normalizes ranks. Preserve the original order with stable sibling IDs rather than
-  // replaying ranks captured before the preceding move changed the document.
+  // Preserve the original sibling order before the first move changes the document.
   const pathsToMove = [
     ...(multicursorPaths.length ? multicursorPaths : [simplePath]),
     ...movedAttributes.map(attribute => appendToPath(parentOf(simplePath), attribute.id)),
   ]
     .filter(path => getThoughtById(state, head(path)))
-    .sort((a, b) => getThoughtById(state, head(a))!.rank - getThoughtById(state, head(b))!.rank)
+    .sort((a, b) => (state.thoughts.getPosition(head(a)) ?? 0) - (state.thoughts.getPosition(head(b)) ?? 0))
   const destinationPath = appendToPath(isInContextView ? rootedParentOf(state, simplePath) : cursorParent, newThoughtId)
 
   return reducerFlow([

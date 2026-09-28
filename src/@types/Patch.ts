@@ -39,7 +39,7 @@ export type PatchMetadata = PatchMetadataInput & {
 
 /** Editor history with UI restoration, diagnostic document diffs, and engine-owned receipts. */
 interface Patch {
-  /** Restores UI state and describes document changes for reports; never authors document paths back. */
+  /** Restores UI state and describes document changes in keyed diagnostic format; never authors document paths back. */
   ops: Operation[]
   metadata: PatchMetadata
   /** Exact operations to revert; the opposite entry receives the fresh inversion receipt. */

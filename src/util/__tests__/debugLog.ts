@@ -262,16 +262,18 @@ describe('format', () => {
     expect(text).toContain('lastFrameAt: 2023-11-14T22:13:20.000Z')
   })
 
-  it('appends a state.thoughts dump grouped by parent and ordered by rank', () => {
+  it('appends a state.thoughts dump grouped by parent and sibling position', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     debugLog.log('x')
     const state = {
       thoughts: {
-        thoughtIndex: {
-          t1: { id: 't1', value: 'apple', rank: 1, parentId: 'root', childrenMap: {} },
-          t2: { id: 't2', value: 'banana', rank: 0, parentId: 'root', childrenMap: {} },
-        },
+        values: () =>
+          [
+            { id: 't1', value: 'apple', parentId: 'root' },
+            { id: 't2', value: 'banana', parentId: 'root' },
+          ].values(),
+        getPosition: (id: string) => (id === 't1' ? 1 : 0),
         lexemeIndex: {},
       },
     } as unknown as State

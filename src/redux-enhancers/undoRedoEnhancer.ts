@@ -6,6 +6,8 @@ import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Patch, { CommandAttributedAction } from '../@types/Patch'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import * as commands from '../actions'
 import { editThoughtPayload } from '../actions/editThought'
@@ -23,6 +25,7 @@ import isAttribute from '../util/isAttribute'
 import reducerFlow from '../util/reducerFlow'
 import storage from '../util/storage'
 import stripTags from '../util/stripTags'
+import thoughtspaceHistory from '../util/thoughtspaceHistory'
 
 /** Refreshes the read-only document view after a complete command and before recording its history. */
 const projectThoughts = (state: State, transaction?: ThoughtspaceTransaction): State => {
@@ -135,17 +138,31 @@ const statePropertiesToOmit: (keyof State)[] = [
 ]
 
 /** Computes UI restoration and diagnostic document diffs, never recursively recording the history itself. */
-const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => [
-  ...compare(
-    _.omit(newValue, [...statePropertiesToOmit, 'undoPatches', 'redoPatches', 'cursor']),
-    _.omit(value, [...statePropertiesToOmit, 'undoPatches', 'redoPatches', 'cursor']),
-  ),
-  // Incoming deletion can shorten or clear the cursor without changing history. Restore its captured value atomically,
-  // not with relative array operations that assume the pre-publication path still exists.
-  ...(_.isEqual(newValue.cursor, value.cursor)
-    ? []
-    : [{ op: 'replace' as const, path: '/cursor', value: value.cursor }]),
-]
+const diffState = (newValue: State, value: State | ReturnType<typeof thoughtspaceHistory.capture>): Operation[] => {
+  const sameThoughts = newValue.thoughts === value.thoughts
+  const omitted = [
+    ...statePropertiesToOmit,
+    'undoPatches',
+    'redoPatches',
+    'cursor',
+    ...(sameThoughts ? ['thoughts'] : []),
+  ]
+  const previous =
+    sameThoughts || !('getThought' in value.thoughts)
+      ? value
+      : thoughtspaceHistory.capture({ ...value, thoughts: value.thoughts })
+  return [
+    ...compare(
+      _.omit(sameThoughts ? newValue : thoughtspaceHistory.capture(newValue), omitted),
+      _.omit(previous, omitted),
+    ),
+    // Incoming deletion can shorten or clear the cursor without changing history. Restore its captured value atomically,
+    // not with relative array operations that assume the pre-publication path still exists.
+    ...(_.isEqual(newValue.cursor, value.cursor)
+      ? []
+      : [{ op: 'replace' as const, path: '/cursor', value: value.cursor }]),
+  ]
+}
 
 /** Actions that mutate state.multicursors. They are not undoable on their own, but belong to an executing multicursor command's history. */
 const multicursorActionTypes: Set<ActionType> = new Set(['addMulticursor', 'clearMulticursors', 'removeMulticursor'])
@@ -171,25 +188,28 @@ const revertPatch = (
   const projected = projectThoughts(uiState, transaction)
   // These three fields belong to the editor even though they live beside canonical thought fields.
   // Restore them only on nodes the engine currently exposes; a stale history path must not resurrect a remote deletion.
-  const withOverlays = produce(projected, draft => {
-    patch.ops.forEach(op => {
-      const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)(?:\/(generating|displayValue|splitSource))?$/)
-      if (!match) return
-      const thought = draft.thoughts.thoughtIndex[match[1]]
-      if (!thought) return
-      const fields = match[2] ? [match[2]] : ['generating', 'displayValue', 'splitSource']
-      fields.forEach(field => {
-        const value = 'value' in op ? (match[2] ? op.value : op.value?.[field]) : undefined
-        if (value === undefined) delete (thought as Index)[field]
-        else (thought as Index)[field] = value
-      })
+  const overlayUpdates: Index<Thought> = {}
+  patch.ops.forEach(op => {
+    const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)(?:\/(generating|displayValue|splitSource))?$/)
+    if (!match) return
+    const id = match[1] as ThoughtId
+    const thought = overlayUpdates[id] ?? projected.thoughts.getThought(id)
+    if (!thought) return
+    const restored = { ...thought }
+    const fields = match[2] ? [match[2]] : ['generating', 'displayValue', 'splitSource']
+    fields.forEach(field => {
+      const value = 'value' in op ? (match[2] ? op.value : op.value?.[field]) : undefined
+      if (value === undefined) delete (restored as Index)[field]
+      else (restored as Index)[field] = value
     })
+    overlayUpdates[id] = restored
   })
+  const withOverlays = { ...projected, thoughts: projected.thoughts.withOverlays(overlayUpdates) }
   const newState = projectThoughts(withOverlays, transaction)
   return {
     state: newState,
     patch: {
-      ops: diffState(newState as Index, state),
+      ops: diffState(newState, state),
       metadata: patch.metadata,
       documentOperationIds,
     },
@@ -243,8 +263,8 @@ const undoReducer = (
   const lastPatchIsFormatting = !!lastUndoPatch?.ops.some(op => {
     const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)\/value$/)
     if (!match) return false
-    const id = match[1]
-    const currentValue = state.thoughts.thoughtIndex[id]?.value
+    const id = match[1] as ThoughtId
+    const currentValue = state.thoughts.getThought(id)?.value
     if (currentValue === undefined || !('value' in op) || op.value === undefined) return false
     const restoredPlain = stripTags(op.value as string)
     const currentPlain = stripTags(currentValue)
@@ -421,21 +441,24 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       if (shouldMerge) {
         lastAction = action
-        let lastState = state
+        let lastState: State | ReturnType<typeof thoughtspaceHistory.capture> = state
         if (lastUndoPatch && lastUndoPatch.ops.length > 0) {
           // Add a try-catch to provide better error messaging if a patch fails.
           // The patch should always be valid, i.e. the necessary structure is in the state to apply the patch.
           // However, because non-undoable actions are skipped, it is possible that the state has shifted and the patch is no longer valid.
           // If a patch is invalid, all prior undo states will be inaccessible, so we should try to identify and fix this whenever it occurs.
           try {
-            lastState = produce(state, (state: State) => applyPatch(state, lastUndoPatch.ops).newDocument)
+            lastState = produce(
+              thoughtspaceHistory.capture(state),
+              draft => applyPatch(draft, lastUndoPatch.ops).newDocument,
+            )
           } catch (e) {
             if (!(e instanceof Error)) throw e
             console.error(e.message, { state, lastUndoPatch })
             throw new Error('Error applying patch')
           }
         }
-        const combinedUndoPatch = diffState(newState as Index, lastState)
+        const combinedUndoPatch = diffState(newState, lastState)
         const combinedOperationIds = [...(lastUndoPatch?.documentOperationIds ?? []), ...documentOperationIds]
 
         const actionTypes: [ActionType, ...ActionType[]] = lastUndoPatch
@@ -477,7 +500,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // infer the pre-edit caret so the inverse patch can restore it instead of leaving the caret at the end.
       const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
       const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
-      const undoPatch = diffState(newState as Index, stateBeforeAction)
+      const undoPatch = diffState(newState, stateBeforeAction)
       return undoPatch.length || documentOperationIds.length
         ? {
             ...newState,
@@ -533,7 +556,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             console.warn('Unable to cache first-paint settings', error)
           }
           if (result && next.thoughts !== state.thoughts) {
-            debugLog.log('push', { thoughtCount: Object.keys(next.thoughts.thoughtIndex).length })
+            if (debugLog.isEnabled()) debugLog.log('push', { thoughtCount: Array.from(next.thoughts.values()).length })
             void result.persisted
               .then(() => debugLog.log('pushSynced'))
               .catch(error => {

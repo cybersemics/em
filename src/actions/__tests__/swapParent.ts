@@ -425,9 +425,9 @@ describe('canonical document publication', () => {
     - CCC
       - BBB`)
     const [aaa, bbb, ccc] = ids.map(id => getThoughtById(after, id)!)
-    expect(aaa.childrenMap).toEqual({ [ccc.id]: ccc.id })
-    expect(ccc.childrenMap).toEqual({ [bbb.id]: bbb.id })
-    expect(bbb.childrenMap).toEqual({})
+    expect(after.thoughts.getChildren(aaa.id)).toEqual([ccc.id])
+    expect(after.thoughts.getChildren(ccc.id)).toEqual([bbb.id])
+    expect(after.thoughts.getChildren(bbb.id)).toEqual([])
     expect(ccc.parentId).toBe(aaa.id)
     expect(bbb.parentId).toBe(ccc.id)
   })

@@ -66,38 +66,23 @@ it('basic import with proper thought structure', () => {
   const now = timestamp()
 
   const stateNew = runDocumentCommand(importText({ text, lastUpdated: now }), initialState(now))
-  const { thoughtIndex, lexemeIndex } = stateNew.thoughts
+  const thoughts = stateNew.thoughts
+  const { lexemeIndex } = thoughts
 
   const childAId = getAllChildrenByContext(stateNew, [HOME_TOKEN])[0]
   const childBId = getAllChildrenByContext(stateNew, ['a'])[0]
 
-  expect(thoughtIndex).toMatchObject({
-    [contextToThoughtId(stateNew, [EM_TOKEN])!]: {
-      id: EM_TOKEN,
-      childrenMap: {},
-      lastUpdated: never(),
-    },
-    [contextToThoughtId(stateNew, [HOME_TOKEN])!]: {
-      childrenMap: { [childAId]: childAId },
-    },
-    [contextToThoughtId(stateNew, [ABSOLUTE_TOKEN])!]: {
-      id: ABSOLUTE_TOKEN,
-      childrenMap: {},
-      lastUpdated: never(),
-    },
-    [contextToThoughtId(stateNew, ['a'])!]: {
-      id: childAId,
-      value: 'a',
-      childrenMap: { [childBId]: childBId },
-    },
-    [contextToThoughtId(stateNew, ['a', 'b'])!]: {
-      id: childBId,
-      value: 'b',
-      childrenMap: {},
-    },
-  })
+  expect(thoughts.getThought(EM_TOKEN)).toMatchObject({ id: EM_TOKEN, lastUpdated: never() })
+  expect(thoughts.getThought(ABSOLUTE_TOKEN)).toMatchObject({ id: ABSOLUTE_TOKEN, lastUpdated: never() })
+  expect(thoughts.getThought(childAId)).toMatchObject({ id: childAId, value: 'a' })
+  expect(thoughts.getThought(childBId)).toMatchObject({ id: childBId, value: 'b' })
+  expect(thoughts.getChildren(EM_TOKEN)).toEqual([])
+  expect(thoughts.getChildren(HOME_TOKEN)).toEqual([childAId])
+  expect(thoughts.getChildren(ABSOLUTE_TOKEN)).toEqual([])
+  expect(thoughts.getChildren(childAId)).toEqual([childBId])
+  expect(thoughts.getChildren(childBId)).toEqual([])
 
-  expect(thoughtIndex[contextToThoughtId(stateNew, ['a'])!].lastUpdated >= now).toBeTruthy()
+  expect(thoughts.getThought(childAId)!.lastUpdated).toBeGreaterThanOrEqual(now)
 
   expect(lexemeIndex).toMatchObject({
     [hashThought('a')]: {
@@ -295,7 +280,7 @@ it('replace empty cursor without affecting siblings', () => {
 })
 
 // TODO: importText no longer handlers multiline imports
-it(`remove empty cursor from thoughtIndex and lexemeIndex`, () => {
+it('removes the empty cursor thought and its lexeme', () => {
   const text = `
     - a
       - b
@@ -312,9 +297,9 @@ it(`remove empty cursor from thoughtIndex and lexemeIndex`, () => {
     }),
   ])(initialState(now))
 
-  const { thoughtIndex, lexemeIndex } = stateNew.thoughts
+  const { lexemeIndex } = stateNew.thoughts
 
-  const emptyThought = Object.values(thoughtIndex).find(thought => thought.value === '')
+  const emptyThought = Array.from(stateNew.thoughts.values()).find(thought => thought.value === '')
   expect(emptyThought).toBeUndefined()
   expect(lexemeIndex).not.toHaveProperty(hashThought(''))
 })

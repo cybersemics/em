@@ -7,7 +7,6 @@ import toggleContextView from '../../actions/toggleContextView'
 import uncategorize from '../../actions/uncategorize'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import reducerFlow from '../../test-helpers/reducerFlow'
@@ -242,20 +241,6 @@ describe('normal view', () => {
   - d
   - e
   - f`)
-
-    const a2 = contextToThought(stateNew, ['a'])!
-    const b2 = contextToThought(stateNew, ['b'])!
-    const c2 = contextToThought(stateNew, ['c'])!
-    const d2 = contextToThought(stateNew, ['d'])!
-    const e2 = contextToThought(stateNew, ['e'])!
-    const f2 = contextToThought(stateNew, ['f'])!
-
-    // Canonical ranks are contiguous sibling positions, including the sort attribute.
-    expect([a2.rank, b2.rank, c2.rank, d2.rank, e2.rank, f2.rank]).toEqual([1, 2, 3, 4, 5, 6])
-
-    // no duplicate ranks
-    const ranks = new Set([a2.rank, b2.rank, c2.rank, d2.rank, e2.rank, f2.rank])
-    expect(ranks.size).toEqual(6)
   })
 
   it('should re-sort parent context when uncategorizing a thought with sort attribute', () => {

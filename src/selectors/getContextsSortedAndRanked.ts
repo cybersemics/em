@@ -15,7 +15,7 @@ import thoughtToPath from './thoughtToPath'
 // sort missing thoughts to end
 const MISSING_TOKEN = `${String.fromCharCode(Number.MAX_SAFE_INTEGER)}__MISSING__`
 
-/** Gets all contexts that the given thought is in, sorted and ranked. */
+/** Gets all contexts that the given thought is in, sorted by ancestor values. */
 const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
   const contexts = getContexts(state, value)
     .filter(id => isVisibleContext(state, id))
@@ -42,11 +42,7 @@ const getContextsSortedAndRanked = (state: State, value: string): Thought[] => {
   }
 
   // sort by hashed ancestor values
-  const contextsSorted: Thought[] = _.sortBy(contexts, lexicalHash)
-    // generate dynamic ranks in sort order
-    .map((thought, i) => ({ ...thought, rank: i }))
-
-  return contextsSorted
+  return _.sortBy(contexts, lexicalHash)
 }
 
 export default getContextsSortedAndRanked

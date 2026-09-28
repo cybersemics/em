@@ -5,7 +5,7 @@ Metaprogramming is **em**'s mechanism for changing app behavior from inside a th
 Three things make this work:
 
 1. Any thought value beginning with `=` is treated as a **meta-attribute** — hidden by default in normal view, and skipped during ordinary navigation.
-2. The data structure stores meta-attribute children under their *value* in `childrenMap` (e.g. `childrenMap['=pin']`), giving the lookup a constant-time fast path. See [data-model.md](data-model.md).
+2. `findDescendant` lazily caches meta-attribute children by *value* within each immutable snapshot view, making repeated attribute lookup constant-time. See [data-model.md](data-model.md).
 3. The `attribute()` / `attributeEquals()` / `findDescendant()` selectors hide the lookup behind a small API.
 
 Generally, an attribute affects *only its parent thought*. Three special attributes broadcast settings to descendants: `=children` and `=grandchildren` apply attributes one and two levels down, and `=descendants` applies recursively to the entire subtree (currently only `=pin`).
@@ -14,25 +14,15 @@ Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thou
 
 ## How attributes are stored and read
 
-`childrenMap` keys meta-attribute children by *value* rather than by `ThoughtId`. So a parent with three children `b`, `c`, and `=pin` looks like:
+Attributes are ordinary TreeCRDT children. `state.thoughts.getChildren(id)` reads their canonical order from the captured snapshot; `findDescendant` scans that list once per parent and view to cache the first child for each attribute value. Duplicate attributes remain in traversal, but lookup selects the first in sibling order. A new view gets a fresh lookup cache, so child renames cannot leave stale attribute keys.
 
-```ts
-{
-  childrenMap: {
-    '<id of b>': '<id of b>',
-    '<id of c>': '<id of c>',
-    '=pin':       '<id of pin>',
-  }
-}
-```
-
-This shape lets attribute lookups skip the linear scan that regular value-based lookups need.
+`childrenMap` is only materialized for history diagnostics and JSON export, not stored on live `Thought` records.
 
 The four selectors most code uses:
 
 - [`attribute(state, id, name)`](../src/selectors/attribute.ts) — returns the *value of the first visible child* of the named attribute, or `null`. So `attribute(state, parent.id, '=pin')` returns `'true'` (when set to `=pin/true`), `'false'`, or `null`. Use this when an attribute carries a string payload.
-- [`attributeEquals(state, id, attr, value)`](../src/selectors/attributeEquals.ts) — `O(1)` boolean check. Use over `attribute` when you only need a yes/no, since this avoids reading the full child.
-- [`findDescendant(state, id, values)`](../src/selectors/findDescendant.ts) — walks down a chain of values (e.g. `['=children', '=pin', 'true']`) and returns the deepest matching `ThoughtId`, or `null`. Uses the `childrenMap` shortcut at every meta-prefixed step. Use this for deeper checks, especially through `=children` / `=grandchildren` propagation.
+- [`attributeEquals(state, id, attr, value)`](../src/selectors/attributeEquals.ts) — boolean check for a child with the given value under the named attribute. Uses `findDescendant` and its attribute cache; regular value steps scan children.
+- [`findDescendant(state, id, values)`](../src/selectors/findDescendant.ts) — walks down a chain of values (e.g. `['=children', '=pin', 'true']`) and returns the deepest matching `ThoughtId`, or `null`. Uses the per-view cache at each meta-prefixed step. Use this for deeper checks, especially through `=children` / `=grandchildren` propagation.
 - `findAnyChild(state, id, predicate)` — generic find on regular children. Used by some bespoke attribute lookups.
 
 ## Inheritance: `=children`, `=grandchildren`, and `=descendants`
@@ -69,7 +59,7 @@ Not every attribute is propagable. Currently the `=children`/`=grandchildren` in
 ### Display & layout
 
 - **`=view`** — controls how the thought's subthoughts are laid out. Options: `List` (default), `Table`, `Prose`. Table view triggers the column-1/column-2 logic in [`linearizeTree`](../src/selectors/linearizeTree.ts) and [`usePositionedThoughts`](../src/hooks/usePositionedThoughts.ts).
-- **`=sort`** — sort the subthoughts of a context. Options: `Alphabetical`, `Created`, `Updated`, `Note`, each with a sub-`Asc`/`Desc` direction. When unset, manual rank order is used. Read by [`getSortPreference`](../src/selectors/getSortPreference.ts).
+- **`=sort`** — sort the subthoughts of a context. Options: `Alphabetical`, `Created`, `Updated`, `Note`, each with a sub-`Asc`/`Desc` direction. When unset, manual sibling order is used. Read by [`getSortPreference`](../src/selectors/getSortPreference.ts).
 - **`=style`** — CSS styles applied to the thought's text. The child of `=style` is the property name, and its child is the value: e.g. `=style/color/tomato`. Also accepts `=children/=style` and `=grandchildren/=style` for descendant propagation.
 - **`=styleAnnotation`** — same shape as `=style`, but applied only to the thought's annotation (the dim superscript / count badge).
 - **`=styleContainer`** — same shape as `=style`, but applied to the thought's outer container element rather than its text.

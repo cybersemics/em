@@ -1,5 +1,4 @@
 import State from '../../@types/State'
-import ThoughtId from '../../@types/ThoughtId'
 import { importText } from '../../actions'
 import { ROOT_PARENT_ID } from '../../constants'
 import initStore from '../../test-helpers/initStore'
@@ -18,9 +17,10 @@ afterEach(waitForThoughtspaceIdle)
 
 /** Get a map of all paths in the thoughtspace. */
 const allPaths = (state: State) =>
-  keyValueBy(state.thoughts.thoughtIndex, (id, thought) => {
-    const simplePath = thoughtToPath(state, id as ThoughtId)
-    return thought.parentId !== ROOT_PARENT_ID ? { [prettyPath(state, simplePath)]: simplePath } : null
+  keyValueBy([...state.thoughts.values()], thought => {
+    if (thought.parentId === ROOT_PARENT_ID) return null
+    const simplePath = thoughtToPath(state, thought.id)
+    return { [prettyPath(state, simplePath)]: simplePath }
   })
 
 describe('normal view', () => {

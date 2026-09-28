@@ -9,7 +9,6 @@ import { HOME_PATH } from '../constants'
 import expandThoughts from '../selectors/expandThoughts'
 import { firstVisibleChild, getChildrenSorted } from '../selectors/getChildren'
 import getContextsSortedAndRanked from '../selectors/getContextsSortedAndRanked'
-import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
@@ -73,7 +72,7 @@ const cursorForward = (state: State, _payload: undefined = undefined, transactio
   else {
     const simplePath = simplifyPath(state, cursor)
     const firstChild = firstVisibleChild(state, head(simplePath))
-    isValidChild = cursorFromHistory && !!getThoughtById(state, head(cursor))?.childrenMap[head(cursorFromHistory)]
+    isValidChild = cursorFromHistory && state.thoughts.getChildren(head(cursor)).includes(head(cursorFromHistory))
     cursorNew =
       isValidChild && cursorFromHistory
         ? appendToPath(cursor, head(cursorFromHistory))

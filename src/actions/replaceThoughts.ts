@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import ThoughtIndices from '../@types/ThoughtIndices'
+import ThoughtspaceView from '../@types/ThoughtspaceView'
 import Thunk from '../@types/Thunk'
 import expandThoughts from '../selectors/expandThoughts'
 import getThoughtById from '../selectors/getThoughtById'
@@ -16,7 +16,7 @@ import head from '../util/head'
 /** Publishes a complete canonical document without planning writes or recording undo history. */
 const replaceThoughts = (
   state: State,
-  { thoughts, repairCursor = false }: { thoughts: ThoughtIndices; repairCursor?: boolean },
+  { thoughts, repairCursor = false }: { thoughts: ThoughtspaceView; repairCursor?: boolean },
 ): State => {
   const next = { ...state, thoughts, isLoading: false }
   let cursor = state.cursor

@@ -72,7 +72,7 @@ const updateJumpHistoryEnhancer: StoreEnhancer<any> =
       const stateNew: State = reducer(state, action, transaction)
 
       // Publishing a document snapshot is not a local edit and must not reset jump navigation.
-      if (action.type !== 'replaceThoughts' && stateNew.thoughts.thoughtIndex !== state?.thoughts.thoughtIndex) {
+      if (action.type !== 'replaceThoughts' && stateNew.thoughts !== state?.thoughts) {
         const stateWithJumpHistory = updateJumpHistory(stateNew)
         saveJumpHistory(stateWithJumpHistory.jumpHistory)
         return stateWithJumpHistory

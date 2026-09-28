@@ -54,7 +54,7 @@ it('clear resets navigation without evicting the complete document', async () =>
   store.dispatch(clear())
 
   expect(store.getState().cursor).toBeNull()
-  expect(store.getState().thoughts.thoughtIndex[thoughtA.id]).toEqual(thoughtA)
+  expect(store.getState().thoughts.getThought(thoughtA.id)!).toEqual(thoughtA)
   expect(store.getState().isLoading).toBe(false)
   expect(exportDocument()).toBe(`- ${HOME_TOKEN}
   - a`)

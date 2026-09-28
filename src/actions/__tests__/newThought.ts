@@ -18,7 +18,7 @@ beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
-  it('projects contiguous ranks while preserving repeated insert-before order', () => {
+  it('reads contiguous positions while preserving repeated insert-before order', () => {
     const steps = [
       newThought({ value: 'a' }),
       newThought({ value: 'e' }),
@@ -29,12 +29,17 @@ describe('normal view', () => {
 
     const state = reducerFlow(steps)(initialState())
 
-    expect(getChildrenRanked(state, HOME_TOKEN)).toMatchObject([
-      { value: 'a', rank: 0 },
-      { value: 'b', rank: 1 },
-      { value: 'c', rank: 2 },
-      { value: 'd', rank: 3 },
-      { value: 'e', rank: 4 },
+    expect(
+      getChildrenRanked(state, HOME_TOKEN).map(thought => ({
+        value: thought.value,
+        position: state.thoughts.getPosition(thought.id),
+      })),
+    ).toEqual([
+      { value: 'a', position: 0 },
+      { value: 'b', position: 1 },
+      { value: 'c', position: 2 },
+      { value: 'd', position: 3 },
+      { value: 'e', position: 4 },
     ])
   })
 

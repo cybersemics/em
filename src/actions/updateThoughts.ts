@@ -5,7 +5,6 @@ import Thunk from '../@types/Thunk'
 import expandThoughts from '../selectors/expandThoughts'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import command from '../util/command'
-import mergeUpdates from '../util/mergeUpdates'
 
 export type UpdateThoughtsOptions = Parameters<ThoughtspaceTransaction['update']>[0] & {
   /** Invoked after SQLite acknowledges the complete command. */
@@ -18,7 +17,7 @@ export type UpdateThoughtsOptions = Parameters<ThoughtspaceTransaction['update']
   preventExpandThoughts?: boolean
 }
 
-/** Updates lexemeIndex and thoughtIndex with any number of thoughts. */
+/** Applies document edits or sparse editor overlays and publishes their resulting view. */
 const updateThoughts = (
   state: State,
   {
@@ -36,10 +35,7 @@ const updateThoughts = (
   if (!transaction) throw new Error('Document updates require a thoughtspace transaction')
   const thoughts = persist
     ? transaction.update({ thoughtIndexUpdates, movePlacements }, state.thoughts)
-    : transaction.project({
-        ...state.thoughts,
-        thoughtIndex: mergeUpdates(state.thoughts.thoughtIndex, thoughtIndexUpdates),
-      })
+    : transaction.project(state.thoughts.withOverlays(thoughtIndexUpdates))
   if (persist && onPersisted) transaction.afterPersist(onPersisted)
   const next = {
     ...state,

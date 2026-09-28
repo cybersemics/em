@@ -11,15 +11,15 @@ The memory engine owns the document and accepts local commands synchronously. Re
 
 ## Running the prototype
 
-Run `yarn install --immutable` and `yarn start`. The experimental `@treecrdt/wasm` dependency is a prebuilt GitHub prerelease pinned in `package.json` and `yarn.lock`; no TreeCRDT checkout or Rust tooling is required. Its source is on TreeCRDT's `prototype/synchronous-wasm-view` branch.
+The experimental `@treecrdt/wasm` dependency is a prebuilt GitHub prerelease pinned in `package.json` and `yarn.lock`. Its source is on TreeCRDT's `prototype/synchronous-wasm-view` branch; no local TreeCRDT build is required.
 
 The package includes browser and Node loaders and the WASM binary. It initializes explicitly; importing it does not load WASM. Keep the core version aligned with EM's SQLite package so both replicas use the same operation format.
 
 ## Document projection (Redux)
 
-The complete document snapshot is exposed through `state.thoughts.thoughtIndex` (keyed by `ThoughtId`) and `state.thoughts.lexemeIndex` (keyed by hashed value). Initialization loads the full document before enabling editing or resolving the URL cursor. Navigation, contexts, copying, and export read this immutable snapshot without loading or evicting subtrees.
+`state.thoughts` is a [`ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) captured against one immutable memory snapshot. It exposes `getThought`, `getChildren`, `getPosition`, `values`, and the derived `lexemeIndex`. Initialization loads the full document before enabling editing or resolving the URL cursor. Navigation, contexts, copying, and export read this view without loading or evicting subtrees.
 
-These indices are not an independent writable document. `project` reads canonical payload and topology from memory, preserving only transient generation text, generation flags, and split-source bookkeeping from the editor view.
+There is no maintained EM `thoughtIndex`, child map, or rank field. Decoded payloads are cached; topology stays in the native snapshot. `project` preserves only sparse transient generation text, generation flags, and split-source bookkeeping from the editor view.
 
 ## Local persistence (TreeCRDT + SQLite)
 
@@ -44,19 +44,19 @@ There is one CRDT document per thoughtspace, represented by two replicas, not on
 
 `GLOBAL_ROOT_TOKEN` is the tree root, aliased by `ROOT_PARENT_ID`. [`initializeMemoryStorage.ts`](../src/data-providers/treecrdt/initializeMemoryStorage.ts) seeds the persistent tree with `SYSTEM_ROOT_THOUGHT_IDS` (`HOME_TOKEN`, `EM_TOKEN`, `ABSOLUTE_TOKEN`) and Settings before the memory peer synchronizes the complete document.
 
-Node payloads contain only `value`, `created`, `lastUpdated`, `updatedBy`, and optional `archived` ([`payload.ts`](../src/data-providers/treecrdt/payload.ts)). `parentId`, `rank` and `childrenMap` are derived, not persisted in the payload.
+Node payloads contain only `value`, `created`, `lastUpdated`, `updatedBy`, and optional `archived` ([`payload.ts`](../src/data-providers/treecrdt/payload.ts)). `parentId` comes from the native row; child order and sibling positions are view reads, not payload fields.
 
 ### Derived view
 
-There are no EM-owned SQLite membership or attribute-child tables. The complete memory projection derives lexemes from thought values and derives parent/child relationships and numeric ranks from the tree. System roots are excluded from lexemes. Attribute children are keyed by value, ordinary children by id.
+There are no EM-owned SQLite membership or attribute-child tables. EM derives lexemes from thought values, excluding system roots. Child readers use canonical sibling order; attribute selectors resolve children by value.
 
-A projection reads the memory client's immutable node map, whose unchanged rows retain identity. Only changed payloads are decoded; affected lexeme buckets and parent child maps are recomputed. Payload-less nodes remain in canonical sibling order without becoming EM thoughts. Document reads use this projection, not SQLite. UI-only actions reuse it when neither the node map nor transient editor state changed.
+A projection uses immutable snapshots and affected-node batches from transaction reads or commit events, with a full refresh for initialization or replay resets. Changed payloads update affected lexeme buckets. Child lists and sibling-position lookups are cached lazily, with no rank rewriting on moves. Payload-less nodes occupy canonical positions without becoming EM thoughts. Document reads use memory, not SQLite. UI-only actions reuse the view when neither the tree nor editor overlays changed.
 
 ### Writes
 
-`db.transact` authors operations synchronously in Rust for one complete dispatched command. A `null` thought deletes; a new thought inserts; an existing thought moves or changes payload as needed. Each `transaction.update` returns the canonical projection, including derived lexemes and child maps. Payload comparisons avoid redundant operations. Parents are restored before descendants, and moves out of a deleted subtree precede its deletion. If a command throws, the adapter restores its tree, projection and operation bookkeeping; no partial command is queued for persistence or published.
+`db.transact` authors operations synchronously in Rust for one complete dispatched command. A `null` thought deletes; a new thought inserts; an existing thought moves or changes payload as needed. Each `transaction.update` returns the canonical view and derived lexemes. Payload comparisons avoid redundant operations. Parents are restored before descendants, and moves out of a deleted subtree precede its deletion. If a command throws, the adapter restores its tree, projection and operation bookkeeping; no partial command is queued for persistence or published.
 
-A serialized `persistent.ops.appendMany(ops)` stores those exact operations without minting new identities. Its promise provides the persistence acknowledgement; the protocol's transport-send promise alone would not. The returned snapshot already contains canonical memory payloads, parents, child maps and sibling-index ranks. Persistence acknowledgements do not replace it with a captured SQLite readback.
+A serialized `persistent.ops.appendMany(ops)` stores those exact operations without minting new identities. Its promise provides the persistence acknowledgement; the protocol's transport-send promise alone would not. The returned view already reads canonical memory payloads, parents, and child order. Persistence acknowledgements do not replace it with a captured SQLite readback.
 
 An asynchronous append or loopback failure is reported through `onError` and gates subsequent document commits. The app displays an error asking the user to keep the tab open. Already accepted memory edits are not rolled back on persistence failure, and there is no durable retry queue.
 
@@ -64,13 +64,13 @@ An asynchronous append or loopback failure is reported through `onError` and gat
 
 `ThoughtspaceTransaction.update` accepts `movePlacements: Index<ThoughtId | null>`: the value names the preceding sibling, or `null` for first. Creates and parent changes require one; imports, moves, sorting and edits supply placements directly. Undo/redo instead asks TreeCRDT to revert operation IDs; EM does not reconstruct placements from Redux patches.
 
-The transaction applies parents and placement anchors before their dependents, then deletions. Invalid anchors fail the atomic command rather than falling back to a numeric rank. Ranks are read-only sibling indices in the resulting projection. See [data-model.md → rank](data-model.md#rank).
+The transaction applies parents and placement anchors before their dependents, then deletions. Invalid anchors fail the atomic command rather than falling back to a numeric rank. `getPosition` reads a sibling's ordinal without storing it on `Thought`. See [data-model.md → rank](data-model.md#rank).
 
 ### Persistence and incoming changes
 
 Promise tails serialize durable appends and loopback notifications. `persistent.onMaterialized` notifies the storage peer's full-document subscription. The memory adapter deduplicates operations by their replica/counter identity, applies new operations in a batch, and publishes a new immutable projection only when state changes. Storage confirmations do not overwrite newer memory edits.
 
-Initialization and incoming snapshots use the non-undoable `replaceThoughts` action to replace document indices directly and repair cursor topology. Ordinary commands continue through the synchronous commit boundary.
+Initialization and incoming snapshots use the non-undoable `replaceThoughts` action to publish the captured document view and repair cursor topology. Ordinary commands continue through the synchronous commit boundary.
 
 ### Runtime lifecycle
 
@@ -83,13 +83,13 @@ Initialization and incoming snapshots use the non-undoable `replaceThoughts` act
 
 Both peers run locally through `createInMemoryConnectedPeers` and the existing protobuf codec, using the standard full-document filter. No remote endpoint is opened; the retained WebSocket adapter is not started by the active factory. Authentication, network integration, and durable retries are not implemented by this prototype.
 
-The full document and its operation history must fit in memory, and startup waits for hydration. Native forward updates read affected rows; historical replay requests a full snapshot. EM still compares row references and copies index objects, and numeric-rank updates traverse affected sibling lists. Native rollback reconstructs retained history only on failure. This design deliberately has no partial-loading or migration mode.
+The full document and its operation history must fit in memory, and startup waits for hydration. Native forward updates read affected rows; historical replay requests a full snapshot. EM still copies the lexeme index when projecting changes. Diagnostic history comparisons temporarily materialize the full document in the existing report format; removing the live structural copy does not remove that O(N) work. Native rollback reconstructs retained history only on failure. This design deliberately has no partial-loading or migration mode.
 
 ## Command coordination and Redux publication
 
 [`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `db.transact`, then dispatches the original action with its prepared immutable state to a pure publication reducer. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
 
-`updateThoughts` changes the memory document and reads its derived indices immediately. Updates with `persist: false` can change transient editor overlays, but cannot author document operations or evict canonical thoughts. There is no Redux write queue or separate lexeme derivation. The `onPersisted` callback runs only after SQLite acknowledges the whole command. Undo/redo uses the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
+`updateThoughts` changes the memory document and reads its resulting view immediately. Updates with `persist: false` can change transient editor overlays, but cannot author document operations or evict canonical thoughts. There is no Redux write queue or separate lexeme derivation. The `onPersisted` callback runs only after SQLite acknowledges the whole command. Undo/redo uses the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
 
 ```
 command → memory transaction (update → canonical read → next step)
@@ -100,7 +100,7 @@ command → memory transaction (update → canonical read → next step)
 
 ## Reading and exporting
 
-Selectors read the complete Redux projection synchronously. Export captures an immutable snapshot, scopes JSON to the selected subtree, and does not wait for persistence. A `clear()` UI reset does not delete the TreeCRDT document; `clear({ persist: true })` explicitly deletes it.
+Selectors read the captured document view synchronously. Export scopes JSON to the selected subtree and generates legacy `rank` and `childrenMap` fields only during serialization; it does not wait for persistence. A `clear()` UI reset does not delete the TreeCRDT document; `clear({ persist: true })` explicitly deletes it.
 
 ## Identity & sharing
 

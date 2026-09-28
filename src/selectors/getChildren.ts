@@ -8,13 +8,13 @@ import ThoughtContext from '../@types/ThoughtContext'
 import ThoughtId from '../@types/ThoughtId'
 import getSortPreference from '../selectors/getSortPreference'
 import appendToPath from '../util/appendToPath'
-import compareByRank from '../util/compareByRank'
 import {
+  compare,
   compareThought,
   compareThoughtByCreated,
   compareThoughtByCreatedDescending,
-  compareThoughtByNoteAndRank,
-  compareThoughtByNoteDescendingAndRank,
+  compareThoughtByNote,
+  compareThoughtByNoteDescending,
   compareThoughtByUpdated,
   compareThoughtByUpdatedDescending,
   compareThoughtDescending,
@@ -44,14 +44,12 @@ export const isVisible = _.curry((state: State, child: Thought): boolean => {
 })
 
 /** Returns the thoughts for the given thought id. If the children have not changed, returns the same object reference. If given null, returns an empty array. */
-export const getAllChildren = (state: State, thoughtId: ThoughtId | null): ThoughtId[] => {
+export const getAllChildren = (state: State, thoughtId: ThoughtId | null): readonly ThoughtId[] => {
   if (!thoughtId) return NO_THOUGHT_IDS
-  const childrenMap = getThoughtById(state, thoughtId)?.childrenMap
-  const children = childrenMap ? Object.values(childrenMap) : []
-  return children?.length > 0 ? children : NO_THOUGHT_IDS
+  return state.thoughts.getChildren(thoughtId)
 }
 
-/** Returns the subthoughts (as Thoughts) of the given ThoughtId unordered. May return a partial or empty list if any thoughts are missing. */
+/** Returns the subthoughts (as Thoughts) in canonical sibling order. */
 export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null): Thought[] => {
   const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
@@ -65,14 +63,14 @@ const getVisibleThoughtsById = _.curry(
   },
 )
 
-/** Gets all visible children of an id, unordered. */
+/** Gets all visible children of an id in canonical sibling order. */
 export const getChildren = getVisibleThoughtsById(getAllChildrenAsThoughts)
 
 /** Gets a list of all children of a context sorted by the given comparator function. */
 const getChildrenSortedBy = (state: State, id: ThoughtId, compare: ComparatorFunction<Thought>): Thought[] =>
   sort(getAllChildrenAsThoughts(state, id), compare)
 
-/** Returns the direction-aware comparator used to order the children of a context according to its sort preference, or null if the context is sorted manually (i.e. by rank). This is the single source of truth for the sort order, shared by getAllChildrenSorted and the Sort Picker's rank-consistency check. Thoughts that sort equally, such as duplicates, fall back to their rank, as do empty and emoji-only thoughts, which are sorted to their point of creation. Set sortEmpty to apply the sort condition to empty thoughts as well, which floats them to the top; this is used by the sort action when it re-ranks a context, since the resulting ranks then match the sort condition for every child. */
+/** Returns the direction-aware comparator for a context's sort preference, or null for manual order. Equal sort keys fall back to canonical sibling position, as do empty and emoji-only thoughts. Set sortEmpty to apply the sort condition to empty thoughts as well when explicitly sorting the context. */
 export const getSortComparator = (
   state: State,
   id: ThoughtId,
@@ -89,7 +87,7 @@ export const getSortComparator = (
       case 'Updated':
         return isDescending ? compareThoughtByUpdatedDescending : compareThoughtByUpdated
       case 'Note':
-        return isDescending ? compareThoughtByNoteDescendingAndRank(state) : compareThoughtByNoteAndRank(state)
+        return isDescending ? compareThoughtByNoteDescending(state) : compareThoughtByNote(state)
       default:
         return null
     }
@@ -97,21 +95,22 @@ export const getSortComparator = (
 
   if (!sortConditionComparator) return null
 
-  // Thoughts whose sort keys are equal, such as duplicate values, are ordered by rank so that the sort order matches
-  // the rendered order, which is always by rank (#5156). Otherwise their order would come from childrenMap insertion
-  // order, and sibling navigation would move the cursor between duplicates in a different order than they appear.
-  const comparator = makeOrderedComparator([sortConditionComparator, compareByRank])
+  /** Keeps ties in canonical order even under descending sorting, so navigation agrees with rendering. */
+  const comparePosition: ComparatorFunction<Thought> = (a, b) =>
+    compare(state.thoughts.getPosition(a.id) ?? 0, state.thoughts.getPosition(b.id) ?? 0)
+  const comparator = makeOrderedComparator([sortConditionComparator, comparePosition])
 
   if (sortEmpty) return comparator
 
   // Empty and emoji-only thoughts have no meaningful sort key, so newThought and editThought leave them at their point
-  // of creation, i.e. at their rank. Compare them by rank so that the sort order matches the rendered order (#4950).
+  // of creation. Compare their canonical positions so that the sort order matches the rendered order (#4950).
   // Otherwise an empty thought created at the end of an alphabetically sorted context is sorted to the beginning, and
   // sibling-relative commands such as space-to-indent look at the wrong neighbor.
-  return (a, b) => (isEmptyOrEmojiOnly(a.value) || isEmptyOrEmojiOnly(b.value) ? compareByRank(a, b) : comparator(a, b))
+  return (a, b) =>
+    isEmptyOrEmojiOnly(a.value) || isEmptyOrEmojiOnly(b.value) ? comparePosition(a, b) : comparator(a, b)
 }
 
-/** Finds any child that matches the predicate. If there is more than one child that matches the predicate, which one is returned is non-deterministic. */
+/** Finds the first child in canonical sibling order that matches the predicate. */
 export const findAnyChild = (
   state: State,
   id: ThoughtId,
@@ -127,11 +126,8 @@ export const findAnyChild = (
 export const hasChildren = (state: State, id: ThoughtId): boolean =>
   !!findAnyChild(state, id, child => state.showHiddenThoughts || isVisible(state, child))
 
-/** Gets all children of a thought sorted by rank. Returns a new object reference even if the children have not changed. */
-export const getChildrenRanked = (state: State, thoughtId: ThoughtId | null): Thought[] => {
-  const allChildren = childIdsToThoughts(state, getAllChildren(state, thoughtId))
-  return sort(allChildren, compareByRank)
-}
+/** Gets all children of a thought in canonical sibling order. */
+export const getChildrenRanked = getAllChildrenAsThoughts
 
 /** Returns any child of a thought. Only use on a thought with a single child. Also see: firstVisibleChild. */
 export const anyChild = (state: State, id: ThoughtId | undefined | null): Thought | undefined => {
@@ -140,7 +136,7 @@ export const anyChild = (state: State, id: ThoughtId | undefined | null): Though
   return children.length > 0 ? getThoughtById(state, children[0]) : undefined
 }
 
-/** Returns all child that match the predicate (unordered). */
+/** Returns all children that match the predicate in canonical sibling order. */
 export const filterAllChildren = (state: State, id: ThoughtId, predicate: (child: Thought) => boolean): Thought[] => {
   const childIds = getAllChildren(state, id).filter(childId => {
     const child = getThoughtById(state, childId)
@@ -196,13 +192,13 @@ export const childrenFilterPredicate = _.curry((state: State, parentPath: Simple
     (!isAbsolute(state.rootContext) || isCreatedAfterAbsoluteToggle(state, child.id))
   )
 }, 3)
-/** Gets all children of a Context sorted by rank or sort preference. */
+/** Gets all children of a context in canonical order or by sort preference. */
 export const getAllChildrenSorted = (state: State, id: ThoughtId, options: { sortEmpty?: boolean } = {}): Thought[] => {
   const comparator = getSortComparator(state, id, options)
   return comparator ? getChildrenSortedBy(state, id, comparator) : getChildrenRanked(state, id)
 }
 
-/** Gets all visible children of a thought sorted by rank or sort preference.
+/** Gets all visible children of a thought in canonical order or by sort preference.
  * Note: It doesn't check if thought lies within the cursor path or is descendant of meta cursor.
  */
 export const getChildrenSorted = (state: State, id: ThoughtId | null): Thought[] => {

@@ -33,20 +33,20 @@ it.each([false, true])(
       await runtime.init({ storage: 'memory' })
       expect(runtime.ready).toBe(true)
       const initial = runtime.project()
-      expect(ids.map(id => initial.thoughtIndex[id].parentId)).toEqual([HOME_TOKEN, ...ids.slice(0, -1)])
-      expect(initial.thoughtIndex[ids[3]].value).toBe('deep edit before startup')
+      expect(ids.map(id => initial.getThought(id)!.parentId)).toEqual([HOME_TOKEN, ...ids.slice(0, -1)])
+      expect(initial.getThought(ids[3])!.value).toBe('deep edit before startup')
 
       const deletedIds = deleteDescendants ? ids : [ids[0]]
       const committed = runtime.transact(transaction =>
         transaction.update({ thoughtIndexUpdates: Object.fromEntries(deletedIds.map(id => [id, null])) }),
       )
-      expect(committed.value.thoughtIndex[ids[0]]).toBeUndefined()
-      expect(Object.values(committed.value.thoughtIndex[HOME_TOKEN].childrenMap)).not.toContain(ids[0])
+      expect(committed.value.getThought(ids[0])).toBeUndefined()
+      expect(committed.value.getChildren(HOME_TOKEN)).not.toContain(ids[0])
       await committed.persisted
       await runtime.waitForIdle()
       for (const id of deletedIds) {
         expect(await persistent.tree.exists(id)).toBe(false)
-        expect(runtime.project().thoughtIndex[id]).toBeUndefined()
+        expect(runtime.project().getThought(id)).toBeUndefined()
       }
 
       // Reconstruct a fresh SQLite instance from the exact persisted log, then open a fresh memory runtime.
@@ -57,9 +57,9 @@ it.each([false, true])(
       await reloaded.init({ storage: 'memory' })
       await reloaded.waitForIdle()
       const restored = reloaded.project()
-      expect(Object.values(restored.thoughtIndex[HOME_TOKEN].childrenMap)).not.toContain(ids[0])
+      expect(restored.getChildren(HOME_TOKEN)).not.toContain(ids[0])
       for (const id of deletedIds) {
-        expect(restored.thoughtIndex[id]).toBeUndefined()
+        expect(restored.getThought(id)).toBeUndefined()
         expect(await restoredClient.tree.exists(id)).toBe(false)
       }
     } finally {

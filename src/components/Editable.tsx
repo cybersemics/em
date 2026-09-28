@@ -127,7 +127,6 @@ const TAP_CLICK_TIMEOUT = 100
 
 /**
  * An editable thought with throttled editing.
- * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
 const Editable = ({
   editableRef,
@@ -157,7 +156,7 @@ const Editable = ({
     const thought = getThoughtById(state, head(simplePath))
     return thought?.displayValue ?? thought?.value ?? ''
   })
-  const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
+  const rank = useSelector(state => state.thoughts.getPosition(head(simplePath)) ?? 0)
   const isCursorCleared = useSelector(
     // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
     // or a member of a multiselection (multiselect clear).

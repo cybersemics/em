@@ -4,18 +4,24 @@ import { createInMemoryConnectedPeers } from '@treecrdt/sync-protocol/in-memory'
 import { treecrdtSyncV0ProtobufCodec } from '@treecrdt/sync-protocol/protobuf'
 import { createTreecrdtSyncBackendFromClient } from '@treecrdt/sync-sqlite'
 import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
-import { type TreeSnapshotRow, createMemoryClient } from '@treecrdt/wasm'
+import {
+  type MemorySnapshot,
+  type MemorySnapshotChanges,
+  type MemorySnapshotRow,
+  type MemoryTransaction,
+  createMemoryClient,
+} from '@treecrdt/wasm'
 import { createMemorySyncBackend } from '@treecrdt/wasm/sync'
 import _ from 'lodash'
 import type Lexeme from '../../@types/Lexeme'
 import type Thought from '../../@types/Thought'
-import type ThoughtIndices from '../../@types/ThoughtIndices'
+import type ThoughtId from '../../@types/ThoughtId'
 import type ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
+import type ThoughtspaceView from '../../@types/ThoughtspaceView'
 import { GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID } from '../../constants'
-import { childrenMapKey } from '../../util/createChildrenMap'
 import hashThought from '../../util/hashThought'
-import isAttribute from '../../util/isAttribute'
 import type DataProvider from '../DataProvider'
+import createThoughtspaceView from '../createThoughtspaceView'
 import { initPermissionsStore } from '../permissionsStore'
 import type { ThoughtspaceRuntime, ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
 import { clientIdReady, tsid } from '../thoughtspaceSession'
@@ -25,6 +31,74 @@ import acquireTreecrdtSessionLock from './sessionLock'
 import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 
 const ROOT_IDS = new Set<string>([GLOBAL_ROOT_TOKEN, ...SYSTEM_ROOT_THOUGHT_IDS])
+const decoded = new WeakMap<MemorySnapshotRow, Thought | null>()
+const positions = new WeakMap<readonly string[], Map<string, number>>()
+
+/** Decodes content once per immutable row; structural indexes remain in the native snapshot. */
+const readThought = (row: MemorySnapshotRow | undefined): Thought | undefined => {
+  if (!row) return undefined
+  const cached = decoded.get(row)
+  if (cached !== undefined) return cached ?? undefined
+  const payload = row.payload
+  const thought =
+    payload === null
+      ? null
+      : (Object.freeze({
+          ...decodeThoughtPayload(payload),
+          id: row.id as ThoughtId,
+          parentId: (row.parentId ?? ROOT_PARENT_ID) as ThoughtId,
+        }) as Thought)
+  decoded.set(row, thought)
+  return thought ?? undefined
+}
+
+/** Captures structural reads against one immutable tree, with lazy decoding and positional caches. */
+const memoryView = (
+  rows: MemorySnapshot,
+  lexemeIndex: ThoughtspaceView['lexemeIndex'] = {},
+  overlays: ThoughtspaceView['overlays'] = {},
+): ThoughtspaceView => {
+  const children = new Map<string, readonly ThoughtId[]>()
+  return createThoughtspaceView(
+    {
+      lexemeIndex,
+      getThought: id => readThought(rows.get(id)),
+      getChildren: id => {
+        let ids = children.get(id)
+        if (!ids) {
+          const row = rows.get(id)
+          const order = readThought(row) ? row!.children : Object.freeze([])
+          // Reuse native immutable order unless payload-less children must be hidden in this snapshot.
+          ids = (
+            order.every(child => !!readThought(rows.get(child)))
+              ? order
+              : Object.freeze(order.filter(child => !!readThought(rows.get(child))))
+          ) as readonly ThoughtId[]
+          children.set(id, ids)
+        }
+        return ids
+      },
+      getPosition: id => {
+        const parent = rows.get(id)?.parentId
+        const order = parent ? rows.get(parent)?.children : undefined
+        if (!order) return undefined
+        let index = positions.get(order)
+        if (!index) {
+          index = new Map(order.map((child, i) => [child, i]))
+          positions.set(order, index)
+        }
+        return index.get(id)
+      },
+      *values() {
+        for (const row of rows.values()) {
+          const thought = readThought(row)
+          if (thought) yield thought
+        }
+      },
+    },
+    overlays,
+  )
+}
 
 /** Excludes transient editor fields and derived structure from the document payload. */
 const thoughtPayload = ({ value, created, lastUpdated, updatedBy, archived }: Thought) =>
@@ -49,8 +123,9 @@ const createMemoryThoughtspace = (
   let subscription: SyncSubscription | undefined
   let unsubscribe: (() => void) | undefined
   let unsubscribeMemory: (() => void) | undefined
-  let snapshot: ThoughtIndices = { thoughtIndex: {}, lexemeIndex: {} }
-  let projectedRows: ReadonlyMap<string, TreeSnapshotRow> = new Map()
+  let snapshot = memoryView(new Map())
+  let projectedRows: MemorySnapshot | undefined
+  let latestChanges: MemorySnapshotChanges | undefined
   let editing = false
   /** Preserves the first failure and prevents subsequent commands from authoring unsavable operations. */
   const reportFailure = (error: unknown) => {
@@ -83,29 +158,21 @@ const createMemoryThoughtspace = (
     await drainWork()
   }
 
-  /** Applies changed canonical rows to EM's indices, preserving only explicit transient editor fields. */
-  const project = (view: ThoughtIndices = snapshot): ThoughtIndices => {
+  /** Updates derived lexemes and captures canonical rows, preserving only explicit editor overlays. */
+  const project = (view: ThoughtspaceView = snapshot, batch = latestChanges): ThoughtspaceView => {
     if (!memory || !ready) return view
-    const rows = memory.getSnapshot()
+    const rows = batch?.snapshot ?? memory.getSnapshot()
     if (view === snapshot && rows === projectedRows) return snapshot
+    const reset = !projectedRows || !!batch?.reset
+    const changes = new Map(batch?.changes.map(change => [change.id, change]))
     const changed = new Set<string>()
     if (rows !== projectedRows) {
-      rows.forEach((row, id) => {
-        if (row !== projectedRows.get(id)) changed.add(id)
-      })
-      projectedRows.forEach((_, id) => {
-        if (!rows.has(id)) changed.add(id)
+      const candidates = reset ? new Set([...rows.keys(), ...(projectedRows?.keys() ?? [])]) : changes.keys()
+      Array.from(candidates).forEach(id => {
+        if (rows.get(id) !== projectedRows?.get(id)) changed.add(id)
       })
     }
-    // Transient generation/split fields can change without authoring a document operation.
-    if (view !== snapshot) {
-      Object.entries(snapshot.thoughtIndex).forEach(([id, thought]) => {
-        if (view.thoughtIndex[id] !== thought) changed.add(id)
-      })
-    }
-    const thoughtIndex = { ...snapshot.thoughtIndex }
     const lexemeIndex = { ...snapshot.lexemeIndex }
-    const parents = new Set<string>()
     const memberships = new Map<string, Set<string>>()
     /** Copies only the value buckets affected by changed payloads or visibility. */
     const members = (value: string) => {
@@ -114,79 +181,27 @@ const createMemoryThoughtspace = (
       return memberships.get(key)!
     }
     changed.forEach(id => {
-      const old = snapshot.thoughtIndex[id]
+      const old = readThought(projectedRows?.get(id))
       const row = rows.get(id)
-      const oldRow = projectedRows.get(id)
-      const payloadChanged = !old || !row || !_.isEqual(oldRow?.payload, row.payload)
+      const oldRow = projectedRows?.get(id)
+      // Flags are cumulative within a transaction; a later projection may already contain that payload change.
+      const payloadChanged =
+        !old || !row || ((reset || changes.get(id)?.payloadChanged) && !_.isEqual(oldRow?.payload, row.payload))
+      // Seed structural-only rows without replacing the decode of a restored checkpoint row.
+      if (row && old && !payloadChanged && !decoded.has(row)) {
+        decoded.set(
+          row,
+          oldRow?.parentId === row.parentId
+            ? old
+            : Object.freeze({ ...old, parentId: (row.parentId ?? ROOT_PARENT_ID) as ThoughtId }),
+        )
+      }
       if (payloadChanged && old && !ROOT_IDS.has(id)) members(old.value).delete(id)
-      if (row && !_.isEqual(oldRow?.children, row.children)) parents.add(id)
-      if (!row || row.payload === null) {
-        delete thoughtIndex[id]
-        if (old) parents.add(old.parentId)
-        return
-      }
-      const previous = view.thoughtIndex[id]
-      const {
-        generating: _generating,
-        displayValue: _displayValue,
-        splitSource: _splitSource,
-        ...canonical
-      } = old ?? {}
-      const thought = {
-        ...(payloadChanged ? decodeThoughtPayload(row.payload) : canonical),
-        id,
-        parentId: row.parentId ?? ROOT_PARENT_ID,
-        rank: old?.rank ?? 0,
-        childrenMap: old?.childrenMap ?? {},
-        ...(previous?.generating !== undefined && { generating: previous.generating }),
-        ...(previous?.generating && previous.displayValue !== undefined && { displayValue: previous.displayValue }),
-        ...(previous?.splitSource !== undefined && { splitSource: previous.splitSource }),
-      } as Thought
-      thoughtIndex[id] = thought
-      if (payloadChanged && !ROOT_IDS.has(id)) members(thought.value).add(id)
-      // Attribute renames can change lookup keys (including which duplicate owns the value key), but ordinary
-      // values are always keyed by ID. Text/metadata edits therefore do not require walking the parent's siblings.
-      const attributeKeyChanged =
-        old?.value !== thought.value && (isAttribute(old?.value ?? '') || isAttribute(thought.value))
-      if (attributeKeyChanged || old?.parentId !== thought.parentId) {
-        if (old) parents.add(old.parentId)
-        parents.add(thought.parentId)
-      }
-    })
-    parents.forEach(parentId => {
-      const parent = thoughtIndex[parentId]
-      const row = rows.get(parentId)
-      if (!row) return
-      const childrenMap: Thought['childrenMap'] = {}
-      row.children.forEach((id, rank) => {
-        const child = thoughtIndex[id]
-        if (!child) return
-        childrenMap[childrenMapKey(childrenMap, child)] = child.id
-        if (child.rank !== rank) {
-          thoughtIndex[id] = { ...child, rank }
-          changed.add(id)
-        }
-      })
-      if (parent) {
-        thoughtIndex[parentId] = { ...parent, childrenMap }
-        changed.add(parentId)
-      }
-    })
-    // Reuse untouched records and preserve childrenMap enumeration order for ranked traversal.
-    changed.forEach(id => {
-      const old = snapshot.thoughtIndex[id]
-      const next = thoughtIndex[id]
-      if (
-        old &&
-        next &&
-        _.isEqual(old, next) &&
-        _.isEqual(Object.keys(old.childrenMap), Object.keys(next.childrenMap))
-      ) {
-        thoughtIndex[id] = old
-      }
+      const thought = readThought(row)
+      if (payloadChanged && thought && !ROOT_IDS.has(id)) members(thought.value).add(id)
     })
     memberships.forEach((ids, key) => {
-      const thoughts = [...ids].sort().map(id => thoughtIndex[id])
+      const thoughts = [...ids].sort().map(id => readThought(rows.get(id))!)
       if (!thoughts.length) {
         delete lexemeIndex[key]
         return
@@ -201,22 +216,23 @@ const createMemoryThoughtspace = (
       }
       lexemeIndex[key] = _.isEqual(snapshot.lexemeIndex[key], lexeme) ? snapshot.lexemeIndex[key] : lexeme
     })
-    const next = {
-      thoughtIndex: [...changed].some(id => thoughtIndex[id] !== snapshot.thoughtIndex[id])
-        ? thoughtIndex
-        : snapshot.thoughtIndex,
-      lexemeIndex: [...memberships.keys()].some(key => lexemeIndex[key] !== snapshot.lexemeIndex[key])
-        ? lexemeIndex
-        : snapshot.lexemeIndex,
+    const overlays = Object.fromEntries(Object.entries(view.overlays).filter(([id]) => !!readThought(rows.get(id))))
+    if (rows !== projectedRows || !_.isEqual(overlays, snapshot.overlays)) {
+      snapshot = memoryView(
+        rows,
+        [...memberships.keys()].some(key => lexemeIndex[key] !== snapshot.lexemeIndex[key])
+          ? lexemeIndex
+          : snapshot.lexemeIndex,
+        overlays,
+      )
     }
-    snapshot =
-      next.thoughtIndex === snapshot.thoughtIndex && next.lexemeIndex === snapshot.lexemeIndex ? snapshot : next
     projectedRows = rows
     return snapshot
   }
 
   /** Publishes changed memory state; local commands publish synchronously through their caller. */
-  const publish = () => {
+  const publish = (batch: MemorySnapshotChanges) => {
+    latestChanges = batch
     if (!ready || editing) return
     try {
       const previous = snapshot
@@ -234,96 +250,107 @@ const createMemoryThoughtspace = (
     if (editing) throw new Error('Use the current document transaction to compose commands')
     const callbacks: (() => void)[] = []
     const operationIds: OperationId[] = []
-    const engine = memory
+    const client = memory
     const previous = snapshot
     const previousRows = projectedRows
+    const previousChanges = latestChanges
     let active = true
-    const transaction: ThoughtspaceTransaction = {
-      get operationIds() {
-        if (!active) throw new Error('The document transaction has finished')
-        return operationIds.slice()
-      },
-      revert: ids => {
-        if (!active) throw new Error('The document transaction has finished')
-        const reverted = engine.revert(ids).map(operation => operation.meta.id)
-        operationIds.push(...reverted)
-        return reverted
-      },
-      project: view => {
-        if (!active) throw new Error('The document transaction has finished')
-        return project(view)
-      },
-      afterPersist: callback => {
-        if (!active) throw new Error('The document transaction has finished')
-        callbacks.push(callback)
-      },
-      update: ({ thoughtIndexUpdates, movePlacements }, view = snapshot) => {
-        if (!active) throw new Error('The document transaction has finished')
-        // Moves out of a deleted subtree must precede its delete; otherwise defensive deletion restores the parent.
-        const edits = Object.entries(thoughtIndexUpdates).filter((entry): entry is [string, Thought] => !!entry[1])
-        const deletes = Object.entries(thoughtIndexUpdates).filter(([, thought]) => !thought)
-        // Batched imports can supply an unordered topology. Restore parents and placement anchors
-        // before their dependents so every insert/move has a live destination.
-        const pending = new Map<string, number>()
-        const dependents = new Map<string, typeof edits>()
-        const ordered: typeof edits = []
-        for (const entry of edits) {
-          const [id, thought] = entry
-          let dependencies = 0
-          for (const dependency of [thought.parentId, movePlacements?.[id]]) {
-            if (!dependency || !thoughtIndexUpdates[dependency]) continue
-            dependencies++
-            const entries = dependents.get(dependency) ?? []
-            entries.push(entry)
-            dependents.set(dependency, entries)
-          }
-          pending.set(id, dependencies)
-          if (!dependencies) ordered.push(entry)
-        }
-        // Iterate the growing queue without recursion or copying the ancestry of long sibling chains.
-        for (const [id] of ordered) {
-          for (const entry of dependents.get(id) ?? []) {
-            const remaining = pending.get(entry[0])! - 1
-            pending.set(entry[0], remaining)
-            if (!remaining) ordered.push(entry)
-          }
-        }
-        if (ordered.length !== edits.length) throw new Error('A command cannot create a parent or placement cycle')
-        for (const [id, thought] of [...ordered, ...deletes.reverse()]) {
-          if (!thought) {
-            if (engine.tree.exists(id)) operationIds.push(engine.local.delete(id).meta.id)
-            continue
-          }
-          const exists = engine.tree.exists(id)
-          const hasPlacement = !!movePlacements && id in movePlacements
-          if ((!exists || engine.tree.parent(id) !== thought.parentId) && !hasPlacement) {
-            throw new Error('Inserts and parent changes require an explicit afterId placement')
-          }
-          const after = movePlacements?.[id] ?? undefined
-          if (hasPlacement && after && (after === id || engine.tree.parent(after) !== thought.parentId)) {
-            throw new Error('afterId must name another child of the destination parent')
-          }
-          const payload = thoughtPayload(thought)
-          if (!exists) {
-            operationIds.push(engine.local.insert(thought.parentId, id, after, payload).meta.id)
-          } else {
-            if (hasPlacement) {
-              operationIds.push(engine.local.move(id, thought.parentId, after).meta.id)
+    /** Projects each composed step against its explicit, non-consuming transaction change batch. */
+    const run = (engine: MemoryTransaction) => {
+      const transaction: ThoughtspaceTransaction = {
+        get operationIds() {
+          if (!active) throw new Error('The document transaction has finished')
+          return operationIds.slice()
+        },
+        revert: ids => {
+          if (!active) throw new Error('The document transaction has finished')
+          const reverted = engine.revert(ids).map(operation => operation.meta.id)
+          operationIds.push(...reverted)
+          return reverted
+        },
+        project: view => {
+          if (!active) throw new Error('The document transaction has finished')
+          return project(view, engine.getChanges())
+        },
+        afterPersist: callback => {
+          if (!active) throw new Error('The document transaction has finished')
+          callbacks.push(callback)
+        },
+        update: ({ thoughtIndexUpdates, movePlacements }, view = snapshot) => {
+          if (!active) throw new Error('The document transaction has finished')
+          // Moves out of a deleted subtree must precede its delete; otherwise defensive deletion restores the parent.
+          const edits = Object.entries(thoughtIndexUpdates).filter((entry): entry is [string, Thought] => !!entry[1])
+          const deletes = Object.entries(thoughtIndexUpdates).filter(([, thought]) => !thought)
+          // Batched imports can supply an unordered topology. Restore parents and placement anchors
+          // before their dependents so every insert/move has a live destination.
+          const pending = new Map<string, number>()
+          const dependents = new Map<string, typeof edits>()
+          const ordered: typeof edits = []
+          for (const entry of edits) {
+            const [id, thought] = entry
+            let dependencies = 0
+            for (const dependency of [thought.parentId, movePlacements?.[id]]) {
+              if (!dependency || !thoughtIndexUpdates[dependency]) continue
+              dependencies++
+              const entries = dependents.get(dependency) ?? []
+              entries.push(entry)
+              dependents.set(dependency, entries)
             }
-            if (!_.isEqual(engine.tree.payload(id), payload))
-              operationIds.push(engine.local.payload(id, payload).meta.id)
+            pending.set(id, dependencies)
+            if (!dependencies) ordered.push(entry)
           }
-        }
-        return project({ ...view, thoughtIndex: { ...view.thoughtIndex, ...Object.fromEntries(edits) } })
-      },
+          // Iterate the growing queue without recursion or copying the ancestry of long sibling chains.
+          for (const [id] of ordered) {
+            for (const entry of dependents.get(id) ?? []) {
+              const remaining = pending.get(entry[0])! - 1
+              pending.set(entry[0], remaining)
+              if (!remaining) ordered.push(entry)
+            }
+          }
+          if (ordered.length !== edits.length) throw new Error('A command cannot create a parent or placement cycle')
+          for (const [id, thought] of [...ordered, ...deletes.reverse()]) {
+            if (!thought) {
+              if (engine.tree.exists(id)) operationIds.push(engine.local.delete(id).meta.id)
+              continue
+            }
+            const exists = engine.tree.exists(id)
+            const hasPlacement = !!movePlacements && id in movePlacements
+            if ((!exists || engine.tree.parent(id) !== thought.parentId) && !hasPlacement) {
+              throw new Error('Inserts and parent changes require an explicit afterId placement')
+            }
+            const after = movePlacements?.[id] ?? undefined
+            if (hasPlacement && after && (after === id || engine.tree.parent(after) !== thought.parentId)) {
+              throw new Error('afterId must name another child of the destination parent')
+            }
+            const payload = thoughtPayload(thought)
+            if (!exists) {
+              operationIds.push(engine.local.insert(thought.parentId, id, after, payload).meta.id)
+            } else {
+              if (hasPlacement) {
+                operationIds.push(engine.local.move(id, thought.parentId, after).meta.id)
+              }
+              if (!_.isEqual(engine.tree.payload(id), payload))
+                operationIds.push(engine.local.payload(id, payload).meta.id)
+            }
+          }
+          return project(view.withOverlays(Object.fromEntries(edits)), engine.getChanges())
+        },
+      }
+      const value = work(transaction)
+      // A command can finish with a revert after its last explicit read. Project before commit so errors still roll back.
+      project(undefined, engine.getChanges())
+      return value
     }
-    let result: { value: T; operations: Operation[] }
+    let result: { value: T; operations: Operation[]; changes: MemorySnapshotChanges }
     editing = true
     try {
-      result = engine.transact(() => work(transaction))
+      result = client.transact(run)
+      // Net-no-change commands do not notify subscribers, but their final batch still supersedes intermediate reads.
+      latestChanges = result.changes
     } catch (error) {
       snapshot = previous
       projectedRows = previousRows
+      latestChanges = previousChanges
       throw error
     } finally {
       active = false
@@ -363,8 +390,9 @@ const createMemoryThoughtspace = (
       peers = undefined
       unsubscribe = undefined
       onChange = undefined
-      snapshot = { thoughtIndex: {}, lexemeIndex: {} }
-      projectedRows = new Map()
+      snapshot = memoryView(new Map())
+      projectedRows = undefined
+      latestChanges = undefined
       initPromise = undefined
       commitTail = syncTail = Promise.resolve()
     }

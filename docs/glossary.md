@@ -18,9 +18,9 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **archived** — Soft-deletion timestamp on `Thought`. Distinct from `=archive`, the meta-attribute parent under which archived thoughts are nested.
 
-**attribute / meta-attribute** — A child thought whose value starts with `=` (e.g. `=pin`, `=style`, `=view`). Meta-attributes change app behaviour for their parent (or, with `=children`/`=grandchildren`, for descendants). Stored under their value in `childrenMap` for `O(1)` lookup. See [metaprogramming.md](metaprogramming.md).
+**attribute / meta-attribute** — A child thought whose value starts with `=` (e.g. `=pin`, `=style`, `=view`). Meta-attributes change app behaviour for their parent (or, with `=children`/`=grandchildren`, for descendants). `findDescendant` lazily caches attribute-by-value lookup within each immutable view. See [metaprogramming.md](metaprogramming.md).
 
-**attribute-child keys** — The `=attribute` keys in `childrenMap`, projected directly from the complete memory tree's child payloads. There is no separate persistent attribute-child index. See [persistence.md → Derived view](persistence.md#derived-view).
+**attribute-child keys** — The `=attribute` keys retained in serialized `childrenMap` for history diagnostics and JSON export. Live lookup uses `findDescendant`'s per-view cache; there is no separate persistent attribute-child index. See [persistence.md → Derived view](persistence.md#derived-view).
 
 **autocrop** — Vertical: hides the empty space above a deep cursor by translating the layout container upward and counter-scrolling to keep visible thoughts stable. Horizontal: see *indent*. See [layout-rendering.md → useAutocrop](layout-rendering.md#useautocrop-vertical-autocrop).
 
@@ -38,11 +38,11 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **caret** — The native browser selection (`window.getSelection()`), typically collapsed to a vertical bar. Distinct from *cursor*. Direct access is gated through [`device/selection.ts`](../src/device/selection.ts) (lint-enforced). See [cursor-and-caret.md](cursor-and-caret.md).
 
-**childrenMap** — `Thought.childrenMap: Index<ThoughtId>`. Keyed by `ThoughtId` for regular children but **keyed by value** for meta-attributes (e.g. `'=pin'`). The dual keying gives meta-attribute lookups a constant-time fast path.
+**childrenMap** — Legacy `Index<ThoughtId>` materialized only for history diagnostics and JSON export. Keyed by `ThoughtId` for regular children and duplicate attributes, but by value for the first meta-attribute (e.g. `'=pin'`). Live `Thought` records have no child map; the snapshot view provides `getChildren`.
 
 **cliff** — A drop in visible depth between consecutive thoughts. `cliff = next.depth - node.depth` when negative; `cliff = -3` means three levels shallower. Drives extra padding (`cliffPadding`) and the number of `DropEnd` zones rendered. See [`DropCliff.tsx`](../src/components/DropCliff.tsx) and [layout-rendering.md → usePositionedThoughts](layout-rendering.md#usepositionedthoughts-x-and-y).
 
-**clientId** — Public key of the writer, derived as base64(SHA-256(accessToken)). Stamped on every Thought/Lexeme write as `updatedBy`. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
+**clientId** — Writer identifier, normally derived as base64(SHA-256(accessToken)); not a signing key or authentication signature. Stored as `updatedBy` in thought payloads and derived Lexemes. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
 
 **command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, or Command Universe entry). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
 
@@ -142,7 +142,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## R
 
-**rank** — Read-only sibling index projected from the memory tree onto `Thought`. Commands place thoughts by `afterId`, not rank. A parent's `=sort` takes effect through committed placements, not render-time sorting. See [data-model.md → rank](data-model.md#rank).
+**rank** — Read-only sibling coordinate obtained through `state.thoughts.getPosition`, used by render records and serialized diagnostics rather than stored on `Thought`. Commands place thoughts by `afterId`, not rank. A parent's `=sort` takes effect through committed placements, not render-time sorting. See [data-model.md → rank](data-model.md#rank).
 
 **reducerFlow** — [`util/reducerFlow.ts`](../src/util/reducerFlow.ts) — composes a list of reducers into a single reducer. Standard pattern in `actions/`.
 
@@ -164,7 +164,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **SimplePath** — A `Path` branded as having no cycles (no context-view crossings). Required by code that needs a single contiguous context. Get one via `simplifyPath` or by structurally guaranteeing it and casting. See [data-model.md → SimplePath](data-model.md#simplepath).
 
-**=sort** — Meta-attribute that sorts a context's children, replacing their manual order by renumbering their ranks. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
+**=sort** — Meta-attribute that sorts a context's children through explicit sibling placements. Options: `Alphabetical`, `Created`, `Updated`, `Note` (sort by `=note` value), each `Asc` or `Desc`.
 
 **splitChain** — [`splitChain.ts`](../src/selectors/splitChain.ts) — splits a `Path` into `SimplePath[]` at every context-view boundary. Inverse: [`contextChainToPath`](../src/util/contextChainToPath.ts).
 
@@ -174,7 +174,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **tangential context** — In the context view, a context from a different part of the tree than the one the view was opened in — every context listed except the *cyclic context*, e.g. `b` under `a/m~`.
 
-**Thought** — Projected record under `state.thoughts.thoughtIndex`. The memory TreeCRDT owns its *ThoughtPayload* and derives `parentId`, `rank`, and `childrenMap` from the tree. Transient editor fields are not persisted. See [data-model.md → Thought](data-model.md#thought) and [persistence.md → Document model](persistence.md#document-model).
+**Thought** — Cached decoded record read through `state.thoughts.getThought(id)` from an immutable snapshot. The memory TreeCRDT owns its *ThoughtPayload*; the reader adds `id`, `parentId`, and sparse transient editor fields. Child order and positions are read separately through `getChildren` and `getPosition`. See [data-model.md → Thought](data-model.md#thought) and [persistence.md → Document model](persistence.md#document-model).
 
 **ThoughtId** — Branded string identifying a thought: 32 lowercase hex characters (128 bits), the format TreeCRDT requires for a node id. Minted by [`createId`](../src/util/createId.ts). See [`@types/ThoughtId.ts`](../src/@types/ThoughtId.ts).
 

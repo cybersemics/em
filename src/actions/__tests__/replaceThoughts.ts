@@ -28,7 +28,7 @@ it('replaces the entire document and repairs a deleted cursor to its surviving p
   const next = replaceThoughts(previous, { thoughts: incoming, repairCursor: true })
 
   expect(next.thoughts).toBe(incoming)
-  expect(next.thoughts.thoughtIndex[deletedId]).toBeUndefined()
+  expect(next.thoughts.getThought(deletedId)).toBeUndefined()
   expect(getLexeme(next, 'c')).toBeUndefined()
   expectPathToEqual(next, next.cursor, ['a', 'b'])
   expect(next.isLoading).toBe(false)

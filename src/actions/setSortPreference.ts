@@ -66,7 +66,9 @@ const setSortPreference = (
             if (!manualRanks) return state
 
             const children = getAllChildrenAsThoughts(state, id).sort(
-              (a, b) => (manualRanks[a.id] ?? a.rank) - (manualRanks[b.id] ?? b.rank),
+              (a, b) =>
+                (manualRanks[a.id] ?? state.thoughts.getPosition(a.id) ?? 0) -
+                (manualRanks[b.id] ?? state.thoughts.getPosition(b.id) ?? 0),
             )
             return updateThoughts(
               state,
@@ -90,7 +92,9 @@ const setSortPreference = (
                 ...state,
                 manualSortMap: {
                   ...state.manualSortMap,
-                  [id]: keyValueBy(getAllChildrenAsThoughts(state, id), child => ({ [child.id]: child.rank })),
+                  [id]: keyValueBy(getAllChildrenAsThoughts(state, id), child => ({
+                    [child.id]: state.thoughts.getPosition(child.id) ?? 0,
+                  })),
                 },
               })
             : null,

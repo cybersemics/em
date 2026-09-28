@@ -76,6 +76,7 @@ describe('persistent storage', () => {
     await waitForEditable('')
     await keyboard.type('b')
     await waitForEditable('b')
+    await press('Escape')
     await waitForThoughtspaceIdle()
 
     await refresh()

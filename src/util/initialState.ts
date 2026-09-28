@@ -2,9 +2,10 @@ import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtIndices from '../@types/ThoughtIndices'
+import ThoughtspaceView from '../@types/ThoughtspaceView'
 import Timestamp from '../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, LongPressState, ROOT_PARENT_ID } from '../constants'
+import createThoughtspaceView from '../data-providers/createThoughtspaceView'
 import { clientId, tsidShared } from '../data-providers/thoughtspaceSession'
 import storageModel from '../stores/storageModel'
 import hashThought from '../util/hashThought'
@@ -27,7 +28,7 @@ import storage from './storage'
 //   )
 
 /** Generates placeholder system roots until initialization publishes the complete document. */
-const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
+const initialThoughts = (created: Timestamp = timestamp()): ThoughtspaceView => {
   const HOME_TOKEN_HASH = HOME_TOKEN
   const ABSOLUTE_TOKEN_HASH = ABSOLUTE_TOKEN
   const EM_TOKEN_HASH = EM_TOKEN
@@ -36,30 +37,24 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
       id: HOME_TOKEN,
       value: HOME_TOKEN,
       parentId: ROOT_PARENT_ID,
-      childrenMap: {},
       created: created,
       lastUpdated: never(),
-      rank: 0,
       updatedBy: clientId,
     },
     [ABSOLUTE_TOKEN_HASH]: {
       id: ABSOLUTE_TOKEN,
       value: ABSOLUTE_TOKEN,
       parentId: ROOT_PARENT_ID,
-      childrenMap: {},
       created: created,
       lastUpdated: never(),
-      rank: 0,
       updatedBy: clientId,
     },
     [EM_TOKEN_HASH]: {
       id: EM_TOKEN,
       value: EM_TOKEN,
       parentId: ROOT_PARENT_ID,
-      childrenMap: {},
       created: created,
       lastUpdated: never(),
-      rank: 0,
       updatedBy: clientId,
     },
   }
@@ -87,10 +82,15 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtIndices => {
     },
   }
 
-  return {
-    thoughtIndex,
+  return createThoughtspaceView({
+    getThought: id => thoughtIndex[id],
+    getChildren: () => [],
+    getPosition: id => (thoughtIndex[id] ? 0 : undefined),
+    values: function* () {
+      yield* Object.values(thoughtIndex)
+    },
     lexemeIndex,
-  }
+  })
 }
 
 /** Generates the initial state of the application. */

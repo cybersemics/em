@@ -22,7 +22,7 @@ export interface ImportJSONOptions {
   updatedBy?: string
 }
 
-/** Converts imported blocks into one document batch; TreeCRDT derives child maps and lexemes. */
+/** Converts imported blocks into one document batch; the provider reads canonical order and derives lexemes. */
 const importJson = (
   state: State,
   simplePath: SimplePath,
@@ -33,7 +33,7 @@ const importJson = (
   const replaceEmpty = destination?.value === '' && !anyChild(state, head(simplePath))
   const importPath = replaceEmpty ? rootedParentOf(state, simplePath) : simplePath
   const parentId = head(importPath)
-  const parent = state.thoughts.thoughtIndex[parentId]
+  const parent = state.thoughts.getThought(parentId)
   const normalized = skipRoot && blocks.length ? [...blocks[0].children, ...blocks.slice(1)] : blocks
   const thoughtIndexUpdates: Index<Thought | null> = replaceEmpty ? { [destination.id]: null } : {}
   const movePlacements: Index<ThoughtId | null> = {}
@@ -57,8 +57,6 @@ const importJson = (
         id: createId(),
         value: block.scope.trim(),
         parentId: parent.id,
-        rank: 0,
-        childrenMap: {},
         created: block.created || block.children[0]?.created || lastUpdated,
         lastUpdated: inheritedUpdated,
         updatedBy,

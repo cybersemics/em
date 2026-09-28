@@ -118,7 +118,7 @@ it('joins two thoughts and merges their children', () => {
   expect(removeHome(exported)).toEqual(expectedOutput)
 })
 
-it('generates unique and non-conflicting ranks', () => {
+it('preserves descendant order when joining siblings', () => {
   const text = `
     - a
       - m
@@ -136,7 +136,7 @@ it('generates unique and non-conflicting ranks', () => {
 
   const children = getChildrenRankedByContext(newState, ['a', 'm n o'])
 
-  expect(new Set(children.map(child => child.rank)).size).toBe(4)
+  expect(children.map(child => child.value)).toEqual(['a', 'b', 'c', 'd'])
 })
 
 it('removes trailing hyphens', () => {

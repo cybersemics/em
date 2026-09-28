@@ -279,7 +279,7 @@ it('do not duplicate children when new and old context are same', () => {
 })
 
 describe('sort', () => {
-  it('rank should change when editing a thought in a sorted context', () => {
+  it('reorders an edited thought in a sorted context', () => {
     const text = `
     - =sort
       - Alphabetical
@@ -288,9 +288,6 @@ describe('sort', () => {
     - d`
 
     const state1 = runDocumentCommand(importText({ text }), initialState())
-
-    const a1 = contextToThought(state1, ['a'])!
-    const d1 = contextToThought(state1, ['d'])!
 
     const steps = [setCursor(['a']), editThought(['a'], 'c')]
 
@@ -303,17 +300,6 @@ describe('sort', () => {
   - b
   - c
   - d`)
-
-    const b2 = contextToThought(stateNew, ['b'])!
-    const c2 = contextToThought(stateNew, ['c'])!
-    const d2 = contextToThought(stateNew, ['d'])!
-
-    // rank of edited thought should change
-    expect(c2.rank).not.toEqual(a1.rank)
-
-    // Ranks are canonical sibling indices, so the earlier sibling shifts when the edited thought moves past it.
-    expect([b2.rank, c2.rank, d2.rank]).toEqual([1, 2, 3])
-    expect(d2.rank).toEqual(d1.rank)
   })
 
   it('empty thought in sorted context should be sorted on edit', () => {
@@ -422,7 +408,7 @@ describe('sort', () => {
     - D`)
   })
 
-  it('rank should not change when editing a thought to empty', () => {
+  it('preserves sibling order when editing a thought to empty', () => {
     const text = `
     - =sort
       - Alphabetical
@@ -431,10 +417,6 @@ describe('sort', () => {
     - c`
 
     const state1 = runDocumentCommand(importText({ text }), initialState())
-
-    const a1 = contextToThought(state1, ['a'])!
-    const b1 = contextToThought(state1, ['b'])!
-    const c1 = contextToThought(state1, ['c'])!
 
     const steps = [setCursor(['b']), editThought(['b'], '')]
 
@@ -447,14 +429,6 @@ describe('sort', () => {
   - a
   - 
   - c`)
-
-    const a2 = contextToThought(stateNew, ['a'])!
-    const empty2 = contextToThought(stateNew, [''])!
-    const c2 = contextToThought(stateNew, ['c'])!
-
-    expect(a2.rank).toEqual(a1.rank)
-    expect(empty2.rank).toEqual(b1.rank)
-    expect(c2.rank).toEqual(c1.rank)
   })
 
   it('edited thought that was empty should be sorted into place', () => {

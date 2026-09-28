@@ -15,7 +15,7 @@ import RecentlyEditedTree from './RecentlyEditedTree'
 import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
 import ThoughtId from './ThoughtId'
-import ThoughtIndices from './ThoughtIndices'
+import ThoughtspaceView from './ThoughtspaceView'
 import Timestamp from './Timestamp'
 import Tip from './TipId'
 
@@ -178,7 +178,7 @@ interface State {
    * See: /redux-enhancers/storageCache.ts.
    */
   storageCache?: StorageCache
-  thoughts: ThoughtIndices
+  thoughts: ThoughtspaceView
   tip: Tip | null
   /** Command of a toolbar button that is being long pressed in the customize modal. */
   toolbarLongPress?: Command

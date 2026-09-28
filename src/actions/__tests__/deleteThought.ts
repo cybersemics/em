@@ -43,7 +43,7 @@ it('delete descendants', () => {
   expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a', 'b'])!)).toBeUndefined()
   expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a', 'b', 'c'])!)).toBeUndefined()
 
-  expect(stateNew.thoughts.thoughtIndex[HOME_TOKEN].childrenMap).toBeEmpty()
+  expect(stateNew.thoughts.getChildren(HOME_TOKEN)).toEqual([])
 
   // lexemeIndex
   expect(getLexeme(stateNew, 'a')).toBeUndefined()
@@ -60,7 +60,7 @@ it('delete thought with duplicate child', () => {
   expect(getThoughtById(stateNew, HOME_TOKEN)).toBeTruthy()
   expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a'])!)).toBeUndefined()
 
-  expect(stateNew.thoughts.thoughtIndex[HOME_TOKEN].childrenMap).toBeEmpty()
+  expect(stateNew.thoughts.getChildren(HOME_TOKEN)).toEqual([])
 
   // lexemeIndex
   expect(getLexeme(stateNew, 'a')).toBeUndefined()

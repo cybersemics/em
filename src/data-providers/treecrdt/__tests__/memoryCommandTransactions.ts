@@ -1,6 +1,7 @@
 import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import Thought from '../../../@types/Thought'
 import ThoughtId from '../../../@types/ThoughtId'
+import ThoughtspaceView from '../../../@types/ThoughtspaceView'
 import Timestamp from '../../../@types/Timestamp'
 import { HOME_TOKEN } from '../../../constants'
 import hashThought from '../../../util/hashThought'
@@ -8,14 +9,27 @@ import { tsid } from '../../thoughtspaceSession'
 import createMemoryThoughtspace from '../createMemoryThoughtspace'
 import * as thoughtPayload from '../payload'
 
+/** Captures public document contents without comparing reader function identities. */
+const contents = (view: ThoughtspaceView) => ({
+  thoughts: Object.fromEntries(
+    Array.from(view.values(), thought => [
+      thought.id,
+      {
+        ...thought,
+        children: view.getChildren(thought.id),
+        position: view.getPosition(thought.id),
+      },
+    ]),
+  ),
+  lexemeIndex: view.lexemeIndex,
+})
+
 const first: Thought = {
   id: '1'.repeat(32) as ThoughtId,
   parentId: HOME_TOKEN,
-  childrenMap: {},
   created: 10 as Timestamp,
   lastUpdated: 20 as Timestamp,
   updatedBy: 'first-device',
-  rank: 0,
   value: 'shared',
 }
 const second: Thought = {
@@ -24,7 +38,6 @@ const second: Thought = {
   created: 5 as Timestamp,
   lastUpdated: 30 as Timestamp,
   updatedBy: 'second-device',
-  rank: 1,
 }
 
 it('exposes canonical memberships and metadata to later commands in the same transaction', async () => {
@@ -49,7 +62,7 @@ it('exposes canonical memberships and metadata to later commands in the same tra
 
       const renamed = transaction.update({
         thoughtIndexUpdates: {
-          [first.id]: { ...created.thoughtIndex[first.id], value: 'renamed', lastUpdated: 40 as Timestamp },
+          [first.id]: { ...created.getThought(first.id)!, value: 'renamed', lastUpdated: 40 as Timestamp },
         },
       })
       expect(renamed.lexemeIndex[hashThought('shared')]).toEqual({
@@ -67,7 +80,7 @@ it('exposes canonical memberships and metadata to later commands in the same tra
 
       const deleted = transaction.update({ thoughtIndexUpdates: { [second.id]: null } })
       expect(deleted.lexemeIndex[hashThought('shared')]).toBeUndefined()
-      expect(Object.values(deleted.thoughtIndex[HOME_TOKEN].childrenMap)).toEqual([first.id])
+      expect(deleted.getChildren(HOME_TOKEN)).toEqual([first.id])
       expect(createdIds).toHaveLength(2)
       return { thoughts: transaction.project(), operationIds: transaction.operationIds }
     })
@@ -76,8 +89,8 @@ it('exposes canonical memberships and metadata to later commands in the same tra
     expect((await persistent.ops.all()).slice(before).map(operation => operation.meta.id)).toEqual(
       result.value.operationIds,
     )
-    expect(runtime.project().thoughtIndex[first.id]).toMatchObject({ value: 'renamed' })
-    expect(runtime.project().thoughtIndex[second.id]).toBeUndefined()
+    expect(runtime.project().getThought(first.id)!).toMatchObject({ value: 'renamed' })
+    expect(runtime.project().getThought(second.id)).toBeUndefined()
   } finally {
     await runtime.drop()
   }
@@ -118,7 +131,7 @@ it('reverts unpersisted document receipts synchronously and persists only commit
     expect(() =>
       runtime.transact(transaction => {
         transaction.revert(edited.value)
-        expect(transaction.project()).toEqual(before)
+        expect(contents(transaction.project())).toEqual(contents(before))
         transaction.afterPersist(acknowledged)
         throw new Error('Cancel undo')
       }),
@@ -130,10 +143,10 @@ it('reverts unpersisted document receipts synchronously and persists only commit
       expect(transaction.operationIds).toEqual(ids)
       return ids
     })
-    expect(runtime.project()).toEqual(before)
+    expect(contents(runtime.project())).toEqual(contents(before))
     expect(await persistent.ops.all()).toEqual(persistedBefore)
     const redone = runtime.transact(transaction => transaction.revert(undone.value))
-    expect(runtime.project()).toEqual(after)
+    expect(contents(runtime.project())).toEqual(contents(after))
     release()
     await redone.persisted
     await runtime.waitForIdle()
@@ -148,10 +161,40 @@ it('reverts unpersisted document receipts synchronously and persists only commit
     rehydrated = createMemoryThoughtspace(async () => freshClient)
     await freshClient.ops.appendMany(await persistent.ops.all())
     await rehydrated.init({ storage: 'memory' })
-    expect(rehydrated.project()).toEqual(after)
+    expect(contents(rehydrated.project())).toEqual(contents(after))
   } finally {
     release()
     await rehydrated?.drop()
+    await runtime.drop()
+  }
+})
+
+it('preserves captured thought identity when composed moves restore the original parent', async () => {
+  const runtime = createMemoryThoughtspace()
+  try {
+    await runtime.init({ storage: 'memory' })
+    const before = runtime.transact(transaction =>
+      transaction.update({
+        thoughtIndexUpdates: { [first.id]: first, [second.id]: second },
+        movePlacements: { [first.id]: null, [second.id]: first.id },
+      }),
+    ).value
+    const heldThought = before.getThought(first.id)!
+    const restored = runtime.transact(transaction => {
+      const moved = transaction.update({
+        thoughtIndexUpdates: { [first.id]: { ...heldThought, parentId: second.id } },
+        movePlacements: { [first.id]: null },
+      })
+      expect(Reflect.set(moved.getThought(first.id)!, 'parentId', HOME_TOKEN)).toBe(false)
+      return transaction.update({
+        thoughtIndexUpdates: { [first.id]: heldThought },
+        movePlacements: { [first.id]: null },
+      })
+    })
+    expect(before.getThought(first.id)).toBe(heldThought)
+    expect(restored.value.getThought(first.id)).toBe(heldThought)
+    await restored.persisted
+  } finally {
     await runtime.drop()
   }
 })
@@ -189,8 +232,8 @@ it('restores parents and sibling anchors before their dependents in an unordered
         thoughtIndexUpdates: Object.fromEntries([parent, branch, ...children, leaf].map(thought => [thought.id, null])),
       }),
     )
-    expect(deleted.value.thoughtIndex[parent.id]).toBeUndefined()
-    expect(deleted.value.thoughtIndex[leaf.id]).toBeUndefined()
+    expect(deleted.value.getThought(parent.id)).toBeUndefined()
+    expect(deleted.value.getThought(leaf.id)).toBeUndefined()
     await deleted.persisted
 
     const restored = runtime.transact(transaction =>
@@ -201,10 +244,10 @@ it('restores parents and sibling anchors before their dependents in an unordered
         movePlacements: placements,
       }),
     )
-    expect(Object.values(restored.value.thoughtIndex[branch.id].childrenMap)).toEqual(children.map(child => child.id))
-    expect(children.map(child => restored.value.thoughtIndex[child.id].rank)).toEqual(children.map((_, index) => index))
-    expect(restored.value.thoughtIndex[leaf.id].parentId).toBe(children.at(-1)!.id)
-    expect(restored.value).toEqual(before)
+    expect(restored.value.getChildren(branch.id)).toEqual(children.map(child => child.id))
+    expect(children.map(child => restored.value.getPosition(child.id))).toEqual(children.map((_, index) => index))
+    expect(restored.value.getThought(leaf.id)!.parentId).toBe(children.at(-1)!.id)
+    expect(contents(restored.value)).toEqual(contents(before))
     await restored.persisted
   } finally {
     await runtime.drop()
@@ -228,7 +271,7 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
           thoughtIndexUpdates: { [first.id]: first },
           movePlacements: { [first.id]: null },
         })
-        expect(created.thoughtIndex[first.id].value).toBe('shared')
+        expect(created.getThought(first.id)!.value).toBe('shared')
         transaction.afterPersist(acknowledged)
         // The root is not its own child, so it cannot anchor a new child within itself.
         transaction.update({
@@ -241,8 +284,8 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
     expect(runtime.project()).toBe(before)
     await runtime.waitForIdle()
     expect(await persistent.opRefs.all()).toEqual(refs)
-    expect(runtime.project().thoughtIndex[first.id]).toBeUndefined()
-    expect(runtime.project().thoughtIndex[second.id]).toBeUndefined()
+    expect(runtime.project().getThought(first.id)).toBeUndefined()
+    expect(runtime.project().getThought(second.id)).toBeUndefined()
     expect(onChange).not.toHaveBeenCalled()
     expect(acknowledged).not.toHaveBeenCalled()
 
@@ -250,7 +293,7 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
       transaction.update({ thoughtIndexUpdates: { [first.id]: first }, movePlacements: { [first.id]: null } }),
     )
     await accepted.persisted
-    expect(accepted.value.thoughtIndex[first.id].value).toBe('shared')
+    expect(accepted.value.getThought(first.id)!.value).toBe('shared')
   } finally {
     await runtime.drop()
   }
@@ -274,28 +317,31 @@ it('updates attribute lookup and lexeme metadata incrementally to the same resul
       }),
     ).persisted
     const initial = runtime.project()
-    expect(initial.thoughtIndex[first.id].childrenMap).toEqual({ '=pin': attribute.id })
+    expect(initial.getChildren(first.id)).toEqual([attribute.id])
+    expect(initial.getThought(attribute.id)!.value).toBe('=pin')
     const decoded = vi.spyOn(thoughtPayload, 'decodeThoughtPayload')
     const renamed = runtime.transact(transaction =>
       transaction.update({
-        thoughtIndexUpdates: { [attribute.id]: { ...initial.thoughtIndex[attribute.id], value: '=note' } },
+        thoughtIndexUpdates: { [attribute.id]: { ...initial.getThought(attribute.id)!, value: '=note' } },
       }),
     )
     expect(decoded).toHaveBeenCalledTimes(1)
-    expect(renamed.value.thoughtIndex[first.id].childrenMap).toEqual({ '=note': attribute.id })
-    expect(renamed.value.thoughtIndex[second.id]).toBe(initial.thoughtIndex[second.id])
+    expect(renamed.value.getChildren(first.id)).toEqual([attribute.id])
+    expect(renamed.value.getThought(attribute.id)!.value).toBe('=note')
+    expect(renamed.value.getThought(first.id)).toBe(initial.getThought(first.id))
+    expect(renamed.value.getThought(second.id)!).toBe(initial.getThought(second.id)!)
     expect(renamed.value.lexemeIndex[hashThought('shared')]).toBe(initial.lexemeIndex[hashThought('shared')])
 
     decoded.mockClear()
     const moved = runtime.transact(transaction =>
       transaction.update({
-        thoughtIndexUpdates: { [attribute.id]: { ...renamed.value.thoughtIndex[attribute.id], parentId: second.id } },
+        thoughtIndexUpdates: { [attribute.id]: { ...renamed.value.getThought(attribute.id)!, parentId: second.id } },
         movePlacements: { [attribute.id]: null },
       }),
     )
     expect(decoded).not.toHaveBeenCalled()
-    expect(moved.value.thoughtIndex[first.id].childrenMap).toEqual({})
-    expect(moved.value.thoughtIndex[second.id].childrenMap).toEqual({ '=note': attribute.id })
+    expect(moved.value.getChildren(first.id)).toEqual([])
+    expect(moved.value.getChildren(second.id)).toEqual([attribute.id])
     const deleted = runtime.transact(transaction => transaction.update({ thoughtIndexUpdates: { [first.id]: null } }))
     expect(deleted.value.lexemeIndex[hashThought('shared')]).toEqual({
       contexts: [second.id],
@@ -311,7 +357,7 @@ it('updates attribute lookup and lexeme metadata incrementally to the same resul
     rehydrated = createMemoryThoughtspace(async () => freshClient)
     await freshClient.ops.appendMany(await persistent.ops.all())
     await rehydrated.init({ storage: 'memory' })
-    expect(runtime.project()).toEqual(rehydrated.project())
+    expect(contents(rehydrated.project())).toEqual(contents(runtime.project()))
   } finally {
     await rehydrated?.drop()
     await runtime.drop()
@@ -325,66 +371,63 @@ it('preserves transient overlays through canonical edits and restores them with 
     const initial = runtime.transact(transaction =>
       transaction.update({ thoughtIndexUpdates: { [first.id]: first }, movePlacements: { [first.id]: null } }),
     ).value
-    const overlay = runtime.project({
-      ...initial,
-      thoughtIndex: {
-        ...initial.thoughtIndex,
+    const overlay = runtime.project(
+      initial.withOverlays({
         [first.id]: {
-          ...initial.thoughtIndex[first.id],
+          ...initial.getThought(first.id)!,
           generating: true,
           displayValue: 'streamed',
           splitSource: second.id,
         },
-      },
-    })
-    expect(overlay.thoughtIndex[first.id]).toMatchObject({
+      }),
+    )
+    expect(overlay.getThought(first.id)!).toMatchObject({
       value: 'shared',
       generating: true,
       displayValue: 'streamed',
       splitSource: second.id,
     })
     expect(overlay.lexemeIndex).toBe(initial.lexemeIndex)
+    expect(Reflect.set(overlay.getThought(first.id)!, 'displayValue', 'corrupted')).toBe(false)
     const failure = new Error('Cancel this command')
     expect(() =>
       runtime.transact(transaction => {
         const changed = transaction.update(
           {
             thoughtIndexUpdates: {
-              [first.id]: { ...overlay.thoughtIndex[first.id], value: 'cancelled', displayValue: 'cancelled stream' },
+              [first.id]: { ...overlay.getThought(first.id)!, value: 'cancelled', displayValue: 'cancelled stream' },
             },
           },
           overlay,
         )
-        expect(changed.thoughtIndex[first.id].value).toBe('cancelled')
+        expect(changed.getThought(first.id)!.value).toBe('cancelled')
         throw failure
       }),
     ).toThrow(failure)
     expect(runtime.project()).toBe(overlay)
-    expect(runtime.project().thoughtIndex[first.id].displayValue).toBe('streamed')
+    expect(runtime.project().getThought(first.id)!.displayValue).toBe('streamed')
 
     const edited = runtime.transact(transaction =>
       transaction.update(
         {
-          thoughtIndexUpdates: { [first.id]: { ...overlay.thoughtIndex[first.id], value: 'accepted' } },
+          thoughtIndexUpdates: { [first.id]: { ...overlay.getThought(first.id)!, value: 'accepted' } },
         },
         overlay,
       ),
     )
-    expect(edited.value.thoughtIndex[first.id]).toMatchObject({
+    expect(edited.value.getThought(first.id)!).toMatchObject({
       value: 'accepted',
       generating: true,
       displayValue: 'streamed',
       splitSource: second.id,
     })
-    const cleared = runtime.project({
-      ...edited.value,
-      thoughtIndex: {
-        ...edited.value.thoughtIndex,
-        [first.id]: { ...edited.value.thoughtIndex[first.id], generating: false },
-      },
-    })
-    expect(cleared.thoughtIndex[first.id].displayValue).toBeUndefined()
-    expect(cleared.thoughtIndex[first.id].splitSource).toBe(second.id)
+    const cleared = runtime.project(
+      edited.value.withOverlays({
+        [first.id]: { ...edited.value.getThought(first.id)!, generating: false },
+      }),
+    )
+    expect(cleared.getThought(first.id)!.displayValue).toBeUndefined()
+    expect(cleared.getThought(first.id)!.splitSource).toBe(second.id)
     expect(cleared.lexemeIndex).toBe(edited.value.lexemeIndex)
     await edited.persisted
   } finally {

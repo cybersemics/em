@@ -1,7 +1,9 @@
+import importText from '../../actions/importText'
 import newThought from '../../actions/newThought'
 import toggleHiddenThoughts from '../../actions/toggleHiddenThoughts'
 import { HOME_TOKEN } from '../../constants'
-import { getChildren } from '../../selectors/getChildren'
+import { getChildren, getSortComparator } from '../../selectors/getChildren'
+import contextToThought from '../../test-helpers/contextToThought'
 import initStore from '../../test-helpers/initStore'
 import reducerFlow from '../../test-helpers/reducerFlow'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
@@ -26,4 +28,36 @@ describe('get visible children', () => {
 
     expect(getChildren(stateNew, HOME_TOKEN)).toMatchObject([{ value: 'a' }, { value: '=b' }])
   })
+})
+
+it.each([
+  ['Created', 'Asc'],
+  ['Created', 'Desc'],
+  ['Updated', 'Asc'],
+  ['Updated', 'Desc'],
+  ['Note', 'Asc'],
+  ['Note', 'Desc'],
+])('keeps canonical sibling order when %s %s sort keys are equal', (type, direction) => {
+  const state = reducerFlow([
+    importText({
+      text: `
+        - =sort
+          - ${type}
+            - ${direction}
+        - x
+          - =note
+            - same note
+        - y
+          - =note
+            - same note
+      `,
+    }),
+  ])(initialState())
+  const x = contextToThought(state, ['x'])!
+  const y = contextToThought(state, ['y'])!
+  const compare = getSortComparator(state, HOME_TOKEN)!
+
+  expect(compare(x, y)).toBe(-1)
+  expect(compare(y, x)).toBe(1)
+  expect(compare(x, x)).toBe(0)
 })

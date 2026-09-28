@@ -2,7 +2,7 @@ import Index from '../@types/IndexType'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
-import { getAllChildrenSorted } from '../selectors/getChildren'
+import { getAllChildrenAsThoughts, getAllChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import command from '../util/command'
 import keyValueBy from '../util/keyValueBy'
@@ -17,13 +17,9 @@ const sort = (state: State, id: ThoughtId, transaction?: ThoughtspaceTransaction
   // every child, so the sort condition is applied to them as well. This floats empty thoughts to the top (#4000).
   const children = getAllChildrenSorted(state, id, { sortEmpty: true })
 
-  // Get children in their current rank order to compare with the desired sorted order.
-  // Sort by rank to determine the current sequence of thoughts.
-  const childrenByRank = [...children].sort((a, b) => a.rank - b.rank)
+  const childrenByRank = getAllChildrenAsThoughts(state, id)
 
   // No-op if the children are already in the correct sorted order (same sequence of IDs).
-  // This also handles the case where ranks are non-zero or gapped (e.g. 5, 6, 7) but in the
-  // correct relative order—do not normalize ranks unless the order itself must change.
   if (children.every((child, i) => child.id === childrenByRank[i].id)) return state
 
   // Submit only changed positions; numeric ranks are derived from the resulting tree.

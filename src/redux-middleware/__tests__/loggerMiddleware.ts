@@ -1,7 +1,6 @@
-import { UnknownAction, applyMiddleware, createStore } from 'redux'
 import { vi } from 'vitest'
 import State from '../../@types/State'
-import importTextReducer, { importTextActionCreator as importText } from '../../actions/importText'
+import { importTextActionCreator as importText } from '../../actions/importText'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { updateThoughtsActionCreator as updateThoughts } from '../../actions/updateThoughts'
 import store from '../../stores/app'
@@ -9,10 +8,8 @@ import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThoughtByContext } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { moveThoughtAtFirstMatchActionCreator as moveThoughtAtFirstMatch } from '../../test-helpers/moveThoughtAtFirstMatch'
-import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import debugLog from '../../util/debugLog'
-import initialState from '../../util/initialState'
 import loggerMiddleware from '../loggerMiddleware'
 
 afterEach(waitForThoughtspaceIdle)
@@ -22,7 +19,7 @@ const next = (action: unknown) => action
 
 // a minimal fixed state for unit invocations; the same reference is returned before and after the action, so the thought diff is skipped
 const stubState = {
-  thoughts: { thoughtIndex: {}, lexemeIndex: {} },
+  thoughts: {},
   undoPatches: [],
   redoPatches: [],
 } as unknown as State
@@ -53,13 +50,13 @@ it('captures every action when debug logging is enabled', () => {
 })
 
 describe('structured updateThoughts summary', () => {
-  it('logs per-thought id/value/rank/parentId and counts instead of the raw stringified action', () => {
+  it('logs per-thought id/value/parentId and counts instead of the raw stringified action', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     invoke({
       type: 'updateThoughts',
       thoughtIndexUpdates: {
-        abc: { id: 'abc', value: 'hello', rank: 2, parentId: 'root', childrenMap: {} },
+        abc: { id: 'abc', value: 'hello', parentId: 'root' },
         def: null,
       },
       persist: false,
@@ -72,7 +69,7 @@ describe('structured updateThoughts summary', () => {
       persist: false,
     })
     expect(actionEntries[0].thoughts).toEqual([
-      { id: 'abc', value: 'hello', rank: 2, parentId: 'root' },
+      { id: 'abc', value: 'hello', parentId: 'root' },
       { id: 'def', deleted: true },
     ])
     expect(actionEntries[0].payload).toBeUndefined()
@@ -82,7 +79,7 @@ describe('structured updateThoughts summary', () => {
 describe('thought move logging', () => {
   beforeEach(initStore)
 
-  it('logs canonical rank changes for every sibling affected by a move', () => {
+  it('logs canonical position changes for every sibling affected by a move', () => {
     store.dispatch(
       importText({
         text: `
@@ -91,7 +88,7 @@ describe('thought move logging', () => {
         `,
       }),
     )
-    const oldRank = contextToThought(store.getState(), ['b'])!.rank
+    const oldRank = store.getState().thoughts.getPosition(contextToThought(store.getState(), ['b'])!.id)
 
     debugLog.setEnabled(true)
     debugLog.clear()
@@ -119,11 +116,10 @@ describe('thought move logging', () => {
 
     debugLog.setEnabled(true)
     debugLog.clear()
-    // Move the first child to the end. All eleven canonical sibling indices change, even though rank values alone
-    // are only planner hints; explicit placements are the document's ordering intent.
+    // Move the first child to the end. All eleven sibling positions change through explicit placements.
     store.dispatch(
       updateThoughts({
-        thoughtIndexUpdates: Object.fromEntries(reordered.map((thought, rank) => [thought.id, { ...thought, rank }])),
+        thoughtIndexUpdates: Object.fromEntries(reordered.map(thought => [thought.id, thought])),
         movePlacements: Object.fromEntries(
           reordered.map((thought, i) => [thought.id, i === 0 ? null : reordered[i - 1].id]),
         ),
@@ -135,56 +131,6 @@ describe('thought move logging', () => {
     expect(batches.length).toBe(1)
     expect(batches[0].count).toBe(11)
     expect((batches[0].sample as unknown[]).length).toBe(10)
-  })
-})
-
-describe('duplicate rank integrity warning', () => {
-  beforeEach(initStore)
-  it('reports a corrupt projection without blocking the middleware consumer', () => {
-    const stateBefore = runDocumentCommand(
-      importTextReducer({
-        text: `
-          - a
-          - b
-        `,
-      }),
-      initialState(),
-    )
-    const a = contextToThought(stateBefore, ['a'])!
-    const b = contextToThought(stateBefore, ['b'])!
-    const stateCorrupt = {
-      ...stateBefore,
-      thoughts: {
-        ...stateBefore.thoughts,
-        thoughtIndex: {
-          ...stateBefore.thoughts.thoughtIndex,
-          [b.id]: { ...b, rank: a.rank },
-        },
-      },
-    }
-    // A canonical TreeCRDT projection cannot produce duplicate sibling ranks. Test the logger's corruption
-    // diagnostic at its middleware boundary, independently of the document normalizer that prevents this state.
-    const diagnosticStore = createStore<State, UnknownAction>(
-      (state = stateBefore, action: UnknownAction) =>
-        action.type === 'receiveCorruptProjection' ? stateCorrupt : state,
-      applyMiddleware(loggerMiddleware),
-    )
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    debugLog.setEnabled(true)
-    debugLog.clear()
-    diagnosticStore.dispatch({ type: 'receiveCorruptProjection' })
-
-    const integrity = debugLog.read().filter(e => e.type === 'integrity')
-    expect(integrity.length).toBe(1)
-    expect(integrity[0]).toMatchObject({ issue: 'duplicateRank', rank: a.rank })
-    expect(integrity[0].thoughts).toEqual([
-      { id: a.id, value: 'a' },
-      { id: b.id, value: 'b' },
-    ])
-    expect(consoleWarn).toHaveBeenCalled()
-    // the update itself is not blocked
-    expect(contextToThought(diagnosticStore.getState(), ['b'])!.rank).toBe(a.rank)
   })
 })
 

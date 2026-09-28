@@ -160,7 +160,7 @@ const linearizeTree = (
       leaf: !hasChildren(state, filteredChild.id),
       path: childPath,
       prevChild: filteredChildren[i - 1],
-      rank: child.rank,
+      rank: state.thoughts.getPosition(child.id) ?? 0,
       showContexts: contextViewActive,
       simplePath: contextViewActive ? thoughtToPath(state, child.id) : appendToPathMemo(simplePath, child.id),
       style,

@@ -8,7 +8,6 @@ import hashThought from '../../util/hashThought'
 import removeHome from '../../util/removeHome'
 import importJson from '../importJson'
 import initialState from '../initialState'
-import keyValueBy from '../keyValueBy'
 import roamJsonToBlocks, { RoamPage } from '../roamJsonToBlocks'
 
 vi.mock('../timestamp', () => ({ default: () => '2020-11-02T01:11:58.869Z' }))
@@ -223,11 +222,9 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
     return roamBlock?.['create-time'] || null
   }
 
-  const thoughtIndexEntries = keyValueBy(state.thoughts.thoughtIndex, (key, thought) => ({
-    [thought.value]: thought,
-  }))
+  const thoughtsByValue = Object.fromEntries(Array.from(state.thoughts.values(), thought => [thought.value, thought]))
 
-  expect(thoughtIndexEntries).toMatchObject({
+  expect(thoughtsByValue).toMatchObject({
     // RoamPages acquire the edit time of their last child
     Fruits: { lastUpdated: editTimeOf('Banana') },
     Veggies: { lastUpdated: editTimeOf('Spinach') },

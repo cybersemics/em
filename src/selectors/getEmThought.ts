@@ -52,14 +52,11 @@ const getEmThought = (state: State, context: Context | string): string | undefin
   return value
 }
 
-/** Memoize getEmThought by thoughtIndex and context. */
+/** Memoize getEmThought by document view and context. */
 const getEmThoughtMemoized = moize(getEmThought, {
   maxSize: 1000,
   profileName: 'getEmThought',
-  transformArgs: ([state, context]) => [
-    state.thoughts.thoughtIndex,
-    typeof context === 'string' ? context : resolveArray(context),
-  ],
+  transformArgs: ([state, context]) => [state.thoughts, typeof context === 'string' ? context : resolveArray(context)],
 })
 
 export default getEmThoughtMemoized

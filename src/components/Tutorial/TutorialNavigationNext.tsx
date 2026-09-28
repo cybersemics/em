@@ -27,7 +27,7 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
   ({ tutorialStep }: { tutorialStep: number }, ref) => {
     const dispatch = useDispatch()
 
-    useSelector(state => state.thoughts.thoughtIndex)
+    useSelector(state => state.thoughts)
 
     const showNextButton = useSelector(state => {
       const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as keyof typeof TUTORIAL_CONTEXT

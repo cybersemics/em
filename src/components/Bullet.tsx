@@ -12,7 +12,6 @@ import { LongPressProps } from '../hooks/useLongPress'
 import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
@@ -159,7 +158,6 @@ const BulletParent = ({
   currentScale,
   done,
   fill,
-  childrenMissing,
   pending,
   showContexts,
   isBulletExpanded,
@@ -168,7 +166,6 @@ const BulletParent = ({
   done?: boolean
   fill?: string
   isHighlighted?: boolean
-  childrenMissing?: boolean
   pending?: boolean
   showContexts?: boolean
   isBulletExpanded?: boolean
@@ -190,7 +187,7 @@ const BulletParent = ({
     <path
       className={glyphFg({
         triangle: true,
-        gray: childrenMissing || done,
+        gray: done,
         graypulse: pending,
         isBulletExpanded,
         showContexts,
@@ -307,15 +304,6 @@ const Bullet = ({
     return !thought || !getLexeme(state, thought.value)
   })
 
-  // Returns true if any of the thought's children are missing. Only shown when showHiddenThoughts is true until an autorepair solution is found.
-  const childrenMissing = useSelector(state => {
-    if (!state.showHiddenThoughts) return false
-    const thought = getThoughtById(state, thoughtId)
-    if (!thought) return false
-    const children = getAllChildrenAsThoughts(state, thought.id)
-    return children.length < Object.keys(thought.childrenMap).length
-  })
-
   const persistedFill = useSelector(state => getThoughtFill(state, thoughtId))
   const isEmpty = useSelector(state => getThoughtById(state, thoughtId)?.value === '')
   const activeCommandFill = commandStateStore.useSelector(state => {
@@ -393,7 +381,6 @@ const Bullet = ({
             done={isDone}
             fill={fill}
             isHighlighted={isHighlighted}
-            childrenMissing={childrenMissing}
             pending={pending}
             showContexts={showContexts}
             isBulletExpanded={isBulletExpanded}

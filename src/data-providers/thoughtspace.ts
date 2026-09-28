@@ -1,4 +1,4 @@
-import type ThoughtIndices from '../@types/ThoughtIndices'
+import type ThoughtspaceView from '../@types/ThoughtspaceView'
 import type DataProvider from './DataProvider'
 import createMemoryThoughtspace from './treecrdt/createMemoryThoughtspace'
 
@@ -8,7 +8,7 @@ export type ThoughtspaceStorage = 'memory' | 'persistent'
 export type ThoughtspaceRuntimeInitOptions = {
   storage: ThoughtspaceStorage
   /** Publishes an immutable memory-engine projection; never a storage readback. */
-  onChange?: (thoughts: ThoughtIndices) => void
+  onChange?: (thoughts: ThoughtspaceView) => void
   /** Reports a runtime failure that prevents accepting further document edits. */
   onError?: (error: Error) => void
 }

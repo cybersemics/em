@@ -46,11 +46,7 @@ it('preserves order when moving after repeated insertions and deletions', () => 
 
   const state = reducerFlow(steps)(initialState())
 
-  expect(getChildrenRankedByContext(state, [HOME_TOKEN])).toMatchObject([
-    { value: 'b', rank: 0 },
-    { value: 'c', rank: 1 },
-    { value: 'a', rank: 2 },
-  ])
+  expect(getChildrenRankedByContext(state, [HOME_TOKEN]).map(thought => thought.value)).toEqual(['b', 'c', 'a'])
 })
 
 it('move within root', () => {
@@ -857,8 +853,6 @@ it('move thought to the beginning of a sorted context', () => {
     - Alphabetical
   - a
   - c`)
-
-  expect(contextToThought(stateNew, ['=pin'])?.rank).toBe(0)
 })
 
 it('move thought to the middle of a sorted context', () => {
@@ -889,8 +883,6 @@ it('move thought to the middle of a sorted context', () => {
   - a
   - b
   - c`)
-
-  expect(contextToThought(stateNew, ['b'])?.rank).toBe(2)
 })
 
 it('move thought to the end of a sorted context', () => {
@@ -921,8 +913,6 @@ it('move thought to the end of a sorted context', () => {
   - a
   - c
   - d`)
-
-  expect(contextToThought(stateNew, ['d'])?.rank).toBe(3)
 })
 
 it('preserves sibling relative order when moving into a sorted context', () => {
@@ -949,7 +939,6 @@ it('preserves sibling relative order when moving into a sorted context', () => {
   const children = getChildrenRankedByContext(stateNew, [HOME_TOKEN])
   expect(children.filter(thought => existingIds.includes(thought.id)).map(thought => thought.id)).toEqual(existingIds)
   expect(children.map(thought => thought.value)).toEqual(['=sort', 'a', 'b', 'c'])
-  expect(children.map(thought => thought.rank)).toEqual([0, 1, 2, 3])
 })
 
 it('disable sort on move within context', () => {

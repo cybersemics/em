@@ -24,6 +24,7 @@ import getDescendantThoughtIds from '../../selectors/getDescendantThoughtIds'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import simplifyPath from '../../selectors/simplifyPath'
 import theme from '../../selectors/theme'
+import createChildrenMap from '../../util/createChildrenMap'
 import ellipsize from '../../util/ellipsize'
 import exportPhrase from '../../util/exportPhrase'
 import fastClick from '../../util/fastClick'
@@ -162,11 +163,19 @@ const ModalExport: FC = () => {
     if (selected.type === 'application/json') {
       const thoughtIndexCompact = Object.fromEntries<Partial<Thought>>(
         selectedThoughtIds.map(id => {
-          const thought = exportedState.thoughts.thoughtIndex[id]
+          const thought = exportedState.thoughts.getThought(id)!
           // UI overlays and metadata do not belong in the compact document export.
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { created, lastUpdated, updatedBy, generating, displayValue, splitSource, ...partialThought } = thought
-          return [id, partialThought]
+          return [
+            id,
+            {
+              ...partialThought,
+              // Keep the snapshot export format; topology is derived only at this serialization boundary.
+              rank: exportedState.thoughts.getPosition(id) ?? 0,
+              childrenMap: createChildrenMap(exportedState, exportedState.thoughts.getChildren(id)),
+            },
+          ]
         }),
       )
       return JSON.stringify(thoughtIndexCompact)

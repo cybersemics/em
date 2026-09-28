@@ -19,7 +19,7 @@ Every entry shares an envelope and adds its own fields:
 
 `seq` is monotonic, so a gap means entries were dropped and a counter climbing while `dt` collapses toward zero means a runaway loop.
 
-A `format()` dump wraps the entries in three things. Above them, a `--- device` / `--- userAgent` / `--- version` / `--- commit` header, rendered at format time so it survives however much the rolling buffer has evicted. Below them, `--- lastFrameAt`, the last animation frame the page painted, and `--- state.thoughts`, every thought by id, value, rank and parent. The frame marker is what separates a freeze *in* the app from one below it — if the marker keeps advancing past the last entry, the page was still painting and the hang is at the native layer.
+A `format()` dump wraps the entries in three things. Above them, a `--- device` / `--- userAgent` / `--- version` / `--- commit` header, rendered at format time so it survives however much the rolling buffer has evicted. Below them, `--- lastFrameAt`, the last animation frame the page painted, and `--- state.thoughts`, every thought by id, value, sibling position and parent. The dump labels sibling positions `rank` for compatibility with existing log readers; they are computed from the captured document view, not stored on thoughts. The frame marker is what separates a freeze *in* the app from one below it — if the marker keeps advancing past the last entry, the page was still painting and the hang is at the native layer.
 
 Logging is **off** in production unless the user turns on **Debug Logging** in Settings. It auto-enables on localhost and `*.vercel.app`, excluding test environments (Vitest via `MODE`, Puppeteer via `navigator.webdriver`) and the native Capacitor and Tauri shells, which serve production builds from localhost-like origins. On an auto-enabled host the Settings checkbox switches a device-local opt-out instead of the synced setting, so a preview build can be aligned with production for performance testing without disabling logging on the user's other devices.
 
@@ -84,7 +84,6 @@ The procedure an agent follows — download, arm, drive, capture, compare, and h
 Some shapes worth recognizing:
 
 - **A `push` with no matching `pushSynced`** is a write that never completed. See [Persistence](persistence.md).
-- **An `integrity` entry** reports siblings sharing an exact rank, which makes their order ambiguous and is the signature of a data-integrity fault.
-- **`move` entries** are diffed out of the thought index rather than logged by any one reducer, so they catch a reorder from every source — drag and drop, sort, undo, incoming operations — without special-casing any of them.
+- **`move` entries** compare sibling positions and parents in the immutable document views before and after an action, so they catch a reorder from every source — drag and drop, sort, undo, incoming operations — without special-casing any of them. `oldRank` and `newRank` name the computed positions, even when the thought payload itself is unchanged.
 - **The log stopping while `lastFrameAt` keeps advancing** means the page was still painting: the hang is below the app.
 - **`dt` collapsing toward zero across many entries** is a tight loop.

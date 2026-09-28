@@ -530,7 +530,8 @@ describe('multicursor', () => {
 
     const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
 
-    expect(cursorThoughts).toMatchObject([{ value: '', rank: expect.any(Number) }])
+    expect(cursorThoughts).toMatchObject([{ value: '' }])
+    expect(stateNew.thoughts.getPosition(cursorThoughts[0].id)).toBe(2)
   })
 
   it('disallow subcategorizing thoughts from different parents', () => {

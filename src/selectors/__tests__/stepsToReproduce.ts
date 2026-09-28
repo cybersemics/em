@@ -4,6 +4,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { replaceThoughtsActionCreator as replaceThoughts } from '../../actions/replaceThoughts'
 import { swapParentActionCreator as swapParent } from '../../actions/swapParent'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -13,9 +14,11 @@ import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
 import newThoughtAboveCommand from '../../commands/newThoughtAbove'
 import toggleSortCommand from '../../commands/toggleSort'
-import { HOME_PATH } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import db from '../../data-providers/thoughtspace'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -186,6 +189,51 @@ it('name each action as dispatched, preceded by the cursor it acts on', () => {
 
 
 `)
+})
+
+it('retains incoming siblings and payloads while reconstructing a local reorder for a report', () => {
+  store.dispatch([importText({ text: '- a\n- b\n- c\n  - x' }), setCursor(['a']), moveThoughtDown()])
+  const b = contextToThought(store.getState(), ['b'])!
+  const x = contextToThought(store.getState(), ['c', 'x'])!
+  const incoming = db.transact(transaction =>
+    transaction.update({
+      thoughtIndexUpdates: {
+        [b.id]: { ...b, value: 'incoming b' },
+        [x.id]: { ...x, parentId: HOME_TOKEN },
+      },
+      movePlacements: { [x.id]: null },
+    }),
+  )
+  store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
+  const current = store.getState()
+
+  // Replaying relative array positions would overwrite x and duplicate a; the existing keyed history retains both.
+  expect(stepsToReproduce(current, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- x
+- a
+- incoming b
+- c
+\`\`\`
+
+1. Set the cursor on \`a\`.
+2. Move Thought Down.
+
+## Current Behavior
+
+\`\`\`
+- x
+- incoming b
+- a
+- c
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+  expect(db.project(current.thoughts)).toBe(current.thoughts)
 })
 
 it('describes a multicursor move by its invocation and selection without inferring a single moved thought', () => {

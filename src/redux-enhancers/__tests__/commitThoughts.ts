@@ -31,11 +31,11 @@ it('publishes and persists document changes even when the first-paint settings c
 
     const path = contextToPathOrThrow(store.getState(), [EM_TOKEN, 'Settings', 'Theme', 'Dark'], 'cache failure')
     expect(published).toHaveBeenCalled()
-    expect(db.project().thoughtIndex[head(path)].value).toBe('Dark')
+    expect(db.project().getThought(head(path))!.value).toBe('Dark')
     expect(cacheWrite).toHaveBeenCalledWith('Settings/Theme', 'Dark')
     expect(warn).toHaveBeenCalledWith('Unable to cache first-paint settings', failure)
     await waitForThoughtspaceIdle()
-    expect(db.project().thoughtIndex[head(path)]).toMatchObject({ value: 'Dark' })
+    expect(db.project().getThought(head(path))).toMatchObject({ value: 'Dark' })
   } finally {
     unsubscribe()
     cacheWrite.mockRestore()

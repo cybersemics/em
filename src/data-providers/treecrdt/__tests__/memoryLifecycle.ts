@@ -16,7 +16,7 @@ it('retries initialization after opening fails', async () => {
   try {
     await expect(runtime.init({ storage: 'memory', onError })).rejects.toBe(failure)
     await runtime.init({ storage: 'memory', onError })
-    expect(runtime.project().thoughtIndex[HOME_TOKEN]?.id).toBe(HOME_TOKEN)
+    expect(runtime.project().getThought(HOME_TOKEN)?.id).toBe(HOME_TOKEN)
     expect(onError).toHaveBeenCalledExactlyOnceWith(failure)
     expect(open).toHaveBeenCalledTimes(2)
   } finally {
@@ -36,7 +36,7 @@ it('closes a partially initialized client before retrying bootstrap', async () =
     await expect(runtime.init({ storage: 'memory', onError })).rejects.toBe(failure)
     expect(close).toHaveBeenCalledTimes(1)
     await runtime.init({ storage: 'memory', onError })
-    expect(runtime.project().thoughtIndex[HOME_TOKEN]?.id).toBe(HOME_TOKEN)
+    expect(runtime.project().getThought(HOME_TOKEN)?.id).toBe(HOME_TOKEN)
     expect(open).toHaveBeenCalledTimes(2)
   } finally {
     await runtime.drop()
@@ -74,7 +74,7 @@ it('reopens only after a concurrent drop finishes and blocks editing during tear
     release()
     await Promise.all([dropping, reopening])
     expect(open).toHaveBeenCalledTimes(2)
-    expect(runtime.project().thoughtIndex[HOME_TOKEN]?.id).toBe(HOME_TOKEN)
+    expect(runtime.project().getThought(HOME_TOKEN)?.id).toBe(HOME_TOKEN)
   } finally {
     release()
     await runtime.drop()
@@ -89,8 +89,6 @@ it('reports a failed durable append and rejects later commands before authoring 
   const thought: Thought = {
     id: '1'.repeat(32) as ThoughtId,
     parentId: HOME_TOKEN,
-    rank: 0,
-    childrenMap: {},
     value: 'accepted before failure',
     created: 1 as Timestamp,
     lastUpdated: 1 as Timestamp,
@@ -173,7 +171,7 @@ it('reports a failed incoming WASM batch and gates later edits without publishin
     await expect(runtime.waitForIdle()).rejects.toThrow('Incoming batch failed')
     expect(onError).toHaveBeenCalledTimes(1)
     expect(() => runtime.transact(transaction => transaction.project())).toThrow('Incoming batch failed')
-    expect(runtime.project().thoughtIndex[node]).toBeUndefined()
+    expect(runtime.project().getThought(node)).toBeUndefined()
     expect(await persistent.tree.exists(node)).toBe(true)
   } finally {
     await runtime.drop()
@@ -206,7 +204,7 @@ it('waits for initialization to settle before dropping and reopening its databas
     release()
     await Promise.all([initializing, dropping, reopening])
     expect(open).toHaveBeenCalledTimes(2)
-    expect(runtime.project().thoughtIndex[HOME_TOKEN]?.id).toBe(HOME_TOKEN)
+    expect(runtime.project().getThought(HOME_TOKEN)?.id).toBe(HOME_TOKEN)
   } finally {
     release()
     await runtime.drop()

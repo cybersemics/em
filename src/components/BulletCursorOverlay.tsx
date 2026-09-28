@@ -13,7 +13,6 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
-import equalThoughtRanked from '../util/equalThoughtRanked'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
@@ -36,10 +35,9 @@ type BulletCursorOverlayProps = {
   leaf?: boolean
 }
 
-/** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
+/** Returns true if two lists contain the same child ids and values in the same order. */
 const equalChildren = (a: Thought[], b: Thought[]) =>
-  a === b ||
-  (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
+  a === b || (a.length === b.length && a.every((thought, i) => thought.id === b[i].id && thought.value === b[i].value))
 
 /**
  * CursorOverlay is a component that renders the cursor overlay for a thought bullet.
@@ -134,7 +132,7 @@ export default function BulletCursorOverlay({
 
   const children = useSelector<Thought[]>(
     state => getChildrenRanked(state, head(simplePath)),
-    // only compare id, value, and rank for re-renders
+    // Only compare child ids, values, and order for re-renders.
     equalChildren,
   )
 

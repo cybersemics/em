@@ -28,7 +28,7 @@ const SearchSubthoughts: FC = () => {
   const search = useSelector(state => state.search)
   const remoteSearch = useSelector(state => state.remoteSearch)
   const searchLimit = useSelector(state => state.searchLimit || DEFAULT_SEARCH_LIMIT)
-  const thoughtIndex = useSelector(state => state.thoughts.thoughtIndex)
+  const thoughts = useSelector(state => state.thoughts)
 
   /**
    * Placeholder for asynchronous search integration.
@@ -90,7 +90,7 @@ const SearchSubthoughts: FC = () => {
 
   const children = search
     ? sort(
-        Object.values(thoughtIndex).filter(
+        Array.from(thoughts.values()).filter(
           thought =>
             // (archived || !isArchived(store.getState(), lexeme)) &&
             thought.value !== HOME_TOKEN && thought.value !== EM_TOKEN && searchRegexp.test(thought.value),

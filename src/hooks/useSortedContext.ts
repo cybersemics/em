@@ -49,7 +49,7 @@ const useSortedContext = () => {
     })
 
     // This number is only a view coordinate for hover arrows, never a document write target.
-    const placementRank = afterId ? getThoughtById(state, afterId)!.rank + 0.5 : -0.5
+    const placementRank = afterId ? state.thoughts.getPosition(afterId)! + 0.5 : -0.5
     return { isHoveringSorted: true, placementRank }
   }, shallowEqual)
 }

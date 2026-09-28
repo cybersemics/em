@@ -44,7 +44,7 @@ it('get descendants', () => {
   expectThoughtsUnordered(descendantsAThoughts, ['b', 'c', 'd'])
 })
 
-it('get descendants ordered by rank', () => {
+it('gets descendants in canonical sibling order after inserting between siblings', () => {
   const text = `
     - a
     - b
@@ -55,13 +55,7 @@ it('get descendants ordered by rank', () => {
 
   const state = reducerFlow(steps)(initialState())
 
-  // unordered
-  const descendantsUnordered = childIdsToThoughts(state, getDescendantThoughtIds(state, HOME_TOKEN))
-
-  expectThoughtsUnordered(descendantsUnordered, ['a', 'b', 'c', 'x'])
-
-  // ordered
-  const descendantsOrdered = childIdsToThoughts(state, getDescendantThoughtIds(state, HOME_TOKEN, { ordered: true }))
+  const descendantsOrdered = childIdsToThoughts(state, getDescendantThoughtIds(state, HOME_TOKEN))
 
   expect(descendantsOrdered.map(thought => thought.value)).toEqual(['a', 'b', 'x', 'c'])
 })

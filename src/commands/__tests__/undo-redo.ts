@@ -290,11 +290,8 @@ describe('undo', () => {
       undo(),
     ])
 
-    const expectedCursor = [{ value: 'a', rank: 0 }]
-
-    const cursorThoughts = childIdsToThoughts(store.getState(), store.getState().cursor!)
-
-    expect(cursorThoughts).toMatchObject(expectedCursor)
+    const state = store.getState()
+    expect(state.cursor).toEqual([contextToThought(state, ['a'])!.id])
   })
 
   it('cursor should restore correctly after undo archive', async () => {
@@ -302,12 +299,8 @@ describe('undo', () => {
 
     store.dispatch([newThought({ value: 'a' }), setCursor(['a']), { type: 'archiveThought' }, undo()])
 
-    const stateNew = store.getState()
-    const expectedCursor = [{ value: 'a', rank: 0 }]
-
-    const cursorThoughts = stateNew.cursor && childIdsToThoughts(stateNew, stateNew.cursor)
-
-    expect(cursorThoughts).toMatchObject(expectedCursor)
+    const state = store.getState()
+    expect(state.cursor).toEqual([contextToThought(state, ['a'])!.id])
   })
 
   it('undo should restore all thoughts after a multicursor moveThoughtDown operation', () => {

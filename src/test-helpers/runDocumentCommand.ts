@@ -19,28 +19,34 @@ const runDocumentCommand = (
 ): State => {
   const result = db.transact(transaction => {
     const current = transaction.project()
-    const target = state.thoughts.thoughtIndex
-    if (current.thoughtIndex !== target) {
+    const target = state.thoughts
+    if (current !== target) {
       const thoughtIndexUpdates = {
         ...Object.fromEntries(
-          Object.keys(current.thoughtIndex)
-            .filter(id => !roots.has(id) && !target[id])
-            .map(id => [id, null]),
+          [...current.values()]
+            .filter(thought => !roots.has(thought.id) && !target.getThought(thought.id))
+            .map(thought => [thought.id, null]),
         ),
         ...Object.fromEntries(
-          Object.entries(target).filter(([id, thought]) => !_.isEqual(thought, current.thoughtIndex[id])),
+          [...target.values()]
+            .filter(
+              thought =>
+                !_.isEqual(thought, current.getThought(thought.id)) ||
+                target.getPosition(thought.id) !== current.getPosition(thought.id),
+            )
+            .map(thought => [thought.id, thought]),
         ),
       }
       const movePlacements = Object.fromEntries(
         Object.values(
           _.groupBy(
-            Object.values(target).filter(thought => !roots.has(thought.id)),
+            [...target.values()].filter(thought => !roots.has(thought.id)),
             'parentId',
           ),
         )
           .flatMap(siblings =>
             [...siblings]
-              .sort((a, b) => a.rank - b.rank)
+              .sort((a, b) => (target.getPosition(a.id) ?? 0) - (target.getPosition(b.id) ?? 0))
               .map((thought, index, ordered) => [thought.id, index ? ordered[index - 1].id : null]),
           )
           .filter(([id]) => id! in thoughtIndexUpdates),

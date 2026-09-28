@@ -34,10 +34,7 @@ describe('sort', () => {
     expect(stateAfterSort).toBe(state)
   })
 
-  it('no-op when context is already in sorted order but has non-zero ranks', () => {
-    // Import with '!' first — punctuation sorts before letters in alphabetical order.
-    // This gives '!' a lower rank than 'a', 'b', 'c' in the thought store.
-    // After deleting '!', the remaining thoughts retain their non-zero ranks.
+  it('remains a no-op after deleting an earlier sibling', () => {
     const text = `
       - =sort
         - Alphabetical
@@ -47,28 +44,25 @@ describe('sort', () => {
       - c
     `
     const stateWithPlaceholder = reducerFlow([importText({ text })])(initialState())
-    const stateWithGappedRanks = runDocumentCommand(deleteThoughtAtFirstMatch(['!']), stateWithPlaceholder)
+    const stateAfterDelete = runDocumentCommand(deleteThoughtAtFirstMatch(['!']), stateWithPlaceholder)
 
-    const a = contextToThought(stateWithGappedRanks, ['a'])!
-    const b = contextToThought(stateWithGappedRanks, ['b'])!
-    const c = contextToThought(stateWithGappedRanks, ['c'])!
+    const a = contextToThought(stateAfterDelete, ['a'])!
+    const b = contextToThought(stateAfterDelete, ['b'])!
+    const c = contextToThought(stateAfterDelete, ['c'])!
 
-    // Verify ranks are non-zero and still in ascending order
-    expect(a.rank).toBeGreaterThan(0)
-    expect(b.rank).toBeGreaterThan(a.rank)
-    expect(c.rank).toBeGreaterThan(b.rank)
+    // The sort attribute occupies the first canonical position.
+    expect([a, b, c].map(thought => stateAfterDelete.thoughts.getPosition(thought.id))).toEqual([1, 2, 3])
 
     // Apply sort — should be a no-op since the relative order is already correct
-    const stateAfterSort = runDocumentCommand(sort(HOME_TOKEN), stateWithGappedRanks)
+    const stateAfterSort = runDocumentCommand(sort(HOME_TOKEN), stateAfterDelete)
 
     // State reference should be the same (true no-op)
-    expect(stateAfterSort).toBe(stateWithGappedRanks)
+    expect(stateAfterSort).toBe(stateAfterDelete)
   })
 
-  it('only updates thoughts whose ranks change when sorting is needed', () => {
+  it('changes sibling order without recreating unchanged thoughts', () => {
     // Import 'a', 'c', 'b' in that order with the sort preference already set.
-    // Calling sort as a separate action then demonstrates that only the thoughts
-    // whose ranks need to change are updated.
+    // Sorting changes topology without changing any child payload or parent.
     const text = `
       - =sort
         - Alphabetical
@@ -98,14 +92,13 @@ describe('sort', () => {
     const b2 = contextToThought(stateAfterSort, ['b'])!
     const c2 = contextToThought(stateAfterSort, ['c'])!
 
-    // a was already in the correct sorted position — its rank did not change
-    expect(a2.rank).toBe(a1.rank)
-    // verify the thought object itself was not recreated (it was not in thoughtIndexUpdates)
+    expect(stateAfterSort.thoughts.getPosition(a2.id)).toBe(state.thoughts.getPosition(a1.id))
     expect(a2).toBe(a1)
 
-    // b and c were out of sorted order — their ranks changed
-    expect(b2.rank).not.toBe(b1.rank)
-    expect(c2.rank).not.toBe(c1.rank)
+    expect(stateAfterSort.thoughts.getPosition(b2.id)).not.toBe(state.thoughts.getPosition(b1.id))
+    expect(stateAfterSort.thoughts.getPosition(c2.id)).not.toBe(state.thoughts.getPosition(c1.id))
+    expect(b2).toBe(b1)
+    expect(c2).toBe(c1)
   })
 
   // https://github.com/cybersemics/em/pull/4952#pullrequestreview-4993273973

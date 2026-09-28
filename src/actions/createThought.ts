@@ -44,14 +44,10 @@ const createThought = (
   const thoughtIndexUpdates: Index<Thought> = {}
 
   const thoughtNew: Thought = {
-    // A new thought has no children yet. A caller that needs children creates them with further createThought calls
-    // once this thought exists, so the parent's childrenMap never references a thought that is not in the index.
-    childrenMap: {},
     created: timestamp(),
     id,
     lastUpdated: timestamp(),
     parentId: parentId,
-    rank: 0,
     updatedBy: clientId,
     value,
     ...(splitSource ? { splitSource } : null),

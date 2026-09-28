@@ -32,14 +32,11 @@ const getSetting = (state: State, context: Context | string): string | undefined
       : undefined
 }
 
-/** Memoize getSettings by thoughtIndex and context. */
+/** Memoize getSettings by document view and context. */
 const getSettingMemoized = moize(getSetting, {
   maxSize: 1000,
   profileName: 'getSetting',
-  transformArgs: ([state, context]) => [
-    state.thoughts.thoughtIndex,
-    typeof context === 'string' ? context : resolveArray(context),
-  ],
+  transformArgs: ([state, context]) => [state.thoughts, typeof context === 'string' ? context : resolveArray(context)],
 })
 
 export default getSettingMemoized
