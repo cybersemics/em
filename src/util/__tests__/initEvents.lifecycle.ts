@@ -60,6 +60,24 @@ it('allows cursor events again when a new touch starts', () => {
   expect(touchStore.getState().suppressCursorAfterTouch).toBe(false)
 })
 
+// https://github.com/cybersemics/em/issues/4114
+it('does not throw on popstate when the URL points to a deleted thought id', () => {
+  initEvents(store)
+  vi.spyOn(window.history, 'back').mockImplementation(() => {})
+  vi.spyOn(window.history, 'forward').mockImplementation(() => {})
+  vi.mocked(selection.clear).mockClear()
+
+  window.history.pushState(2, '', '/~/k4faVMFWC15VO')
+
+  expect(() => {
+    window.dispatchEvent(new PopStateEvent('popstate', { state: 1 }))
+  }).not.toThrow()
+
+  expect(selection.clear).toHaveBeenCalled()
+  expect(store.getState().cursor).toBe(null)
+  vi.mocked(selection.clear).mockClear()
+})
+
 // https://github.com/cybersemics/em/issues/1596
 it('keeps desktop command universe open when the app is hidden and restored', () => {
   initEvents(store)
