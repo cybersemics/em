@@ -97,7 +97,7 @@ const testSuite = () => {
     await press('Escape')
 
     // scroll to top
-    await scrollTo(0, 0)
+    await scrollTo(0)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()

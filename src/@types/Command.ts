@@ -54,6 +54,8 @@ interface Command {
         reverse?: boolean
         /** Clear the multicursor after the command is executed. */
         clearMulticursor?: boolean
+        /** Toggle every selected thought in the same direction, based on isActive evaluated for each thought on its own: if the command is active on all of them, execute it on all of them (toggling them off); otherwise execute it only on the ones it is not active on (toggling them on). Requires isActive. */
+        toggle?: boolean
         /** Replace the selection with the thoughts that the command moved the cursor to, i.e. the thoughts it created. Each execution that leaves the cursor on a different thought than the one it was given contributes one, so a selected thought that the command skipped contributes none. If fewer than two thoughts were created, the selection is cleared instead, so that the command ends the same way it does without a multiselect. */
         selectNewCursors?: boolean
         /**
@@ -82,6 +84,9 @@ interface Command {
 
   /** A description of what the command does whnn it is in an inverse state. */
   descriptionInverse?: string | ((state: State) => string)
+
+  /** A richer description shown on the command detail page in Command Universe. Supports JSX for links, formatting and embedded components. */
+  longDescription?: React.ReactNode
 
   /** A function that returns an error message if the command should indicate an error. */
   error?: (state: State) => string | null
