@@ -121,8 +121,20 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 }
 
 /** A modal that allows the user to export, download, share, or publish their thoughts. */
-const ModalExport: FC<{ simplePaths: SimplePath[]; exportedState: State }> = ({ simplePaths, exportedState }) => {
+const ModalExport: FC = () => {
   const dispatch = useDispatch()
+  // Capture one immutable document and selection for the lifetime of the modal.
+  const [exportedState] = useState<State>(() => dispatch((_, getState) => getState()))
+  const simplePaths = useMemo(() => {
+    const paths = hasMulticursor(exportedState)
+      ? Object.values(exportedState.multicursors).map(cursor => simplifyPath(exportedState, cursor))
+      : [exportedState.cursor ? simplifyPath(exportedState, exportedState.cursor) : HOME_PATH]
+    // Do not export a selected descendant twice when its ancestor is also selected.
+    return paths.reduce<SimplePath[]>((selected, path) => {
+      if (selected.some(ancestor => path.includes(head(ancestor)))) return selected
+      return [...selected.filter(descendant => !descendant.includes(head(path))), path]
+    }, [])
+  }, [exportedState])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   // Clears the alert ERROR_TIMEOUT after a clipboard error; cancelled by a successful copy. Scoped to this modal instance rather than a global, so it needs no reset between tests.
   const errorTimer = useRef(0)
@@ -523,32 +535,4 @@ const ModalExport: FC<{ simplePaths: SimplePath[]; exportedState: State }> = ({ 
   )
 }
 
-/**
- * Captures one immutable document and selection for the lifetime of the export modal.
- */
-const ModalExportWrapper = () => {
-  const dispatch = useDispatch()
-  const [exportedState] = useState<State>(() => dispatch((_, getState) => getState()))
-  const simplePaths = useMemo(
-    () =>
-      hasMulticursor(exportedState)
-        ? Object.values(exportedState.multicursors).map(cursor => simplifyPath(exportedState, cursor))
-        : [exportedState.cursor ? simplifyPath(exportedState, exportedState.cursor) : HOME_PATH],
-    [exportedState],
-  )
-
-  // Remove descendants of other paths, sort in document order
-  const filteredPaths = useMemo(() => {
-    const paths = simplePaths.reduce<SimplePath[]>((acc, cur) => {
-      const hasAncestor = acc.some(p => cur.includes(head(p)))
-      if (hasAncestor) return acc
-      return [...acc.filter(p => !p.includes(head(cur))), cur]
-    }, [])
-
-    return paths
-  }, [simplePaths])
-
-  return <ModalExport simplePaths={filteredPaths} exportedState={exportedState} />
-}
-
-export default ModalExportWrapper
+export default ModalExport

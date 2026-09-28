@@ -44,9 +44,6 @@ const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
 export interface ImportTextPayload {
   caretPosition?: number
 
-  /** Invoked after SQLite acknowledges the complete command. */
-  onPersisted?: () => void
-
   path?: Path
 
   /** Set the lastUpdated timestamp on the imported thoughts. Default: now. */
@@ -79,7 +76,6 @@ const importText = (
   {
     path,
     text,
-    onPersisted,
     lastUpdated,
     preventSetCursor,
     rawDestValue,
@@ -240,7 +236,7 @@ const importText = (
 
     return reducerFlow([
       // thoughts will be expanded by setCursor, so no need to expand them here
-      updateThoughts({ ...imported, preventExpandThoughts: true, onPersisted }),
+      updateThoughts({ ...imported, preventExpandThoughts: true }),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
       shouldImportIntoDummy ? uncategorize({ at: unroot(newDestinationPath) }) : null,
       // if original destination is empty then collapse once more.
