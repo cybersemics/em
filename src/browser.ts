@@ -2,6 +2,7 @@
 /** Defines client/browser-specific variables that do not change over the course of a session. */
 import { Capacitor } from '@capacitor/core'
 import { token } from '../styled-system/tokens'
+import viewportStore from './stores/viewportStore'
 
 export const isIOS = Capacitor.getPlatform() === 'ios'
 
@@ -13,21 +14,24 @@ export const isTouch =
   (window.matchMedia?.('(pointer: coarse)').matches || Capacitor.getPlatform() === 'android')
 
 /**
- * Returns true if the device is a touchscreen whose *smaller* screen dimension is at least the `lg`
+ * Returns true if the device is a touchscreen whose *smaller* viewport dimension is at least the `lg`
  * breakpoint ("landscape mobile devices and larger", 600px — approx the short edge of an iPad).
  *
- * Reads `window.screen` rather than the viewport, so the answer describes the device and does not
- * change when it is rotated or when a browser window is resized. Taking the minimum of the two screen
- * dimensions is what excludes a phone held in landscape: an iPhone 17 Pro is 874pt wide that way and
- * clears `lg` on viewport width alone, but `min(402, 874)` does not.
+ * Reads the live viewport size from `viewportStore` on every call, so the answer updates as the store
+ * does (e.g. on rotation or window resize). Taking the minimum of the two dimensions is what excludes a
+ * phone held in landscape: an iPhone 17 Pro is 874pt wide that way and clears `lg` on viewport width
+ * alone, but `min(402, 874)` does not.
  *
- * Like `isTouch`, this is evaluated once at import, so device emulation applied after page load will
- * not change it — reload after resizing.
+ * `isTouch`, unlike this, is still evaluated once at import, so a device that gains touch support after
+ * load (rare) will not be picked up without a reload.
  */
-export const isTablet =
-  isTouch &&
+export const isTablet = () => {
+  const {innerWidth, innerHeight} = viewportStore.getState()
+
+  return isTouch &&
   typeof window !== 'undefined' &&
-  Math.min(window.screen.width, window.screen.height) >= parseInt(token('breakpoints.lg'))
+  Math.min(innerWidth, innerHeight) >= parseInt(token('breakpoints.lg'))
+}
 
 /** Returns true on Android, whether running as a native Capacitor app or in an Android browser or
  * WebView. The old check tested navigator.platform === 'Linux armv7l' (32-bit ARM only), which is

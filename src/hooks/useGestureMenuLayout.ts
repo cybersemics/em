@@ -199,7 +199,7 @@ const useGestureMenuLayout = (
   // On tablet, the command list is held to the safe zone rather than the whole screen: the hand holding the
   // device covers the bottom, so a long list is wrapped into the next column and the remainder trimmed.
   // Everywhere else this is the full viewport, leaving every phone and desktop budget unchanged.
-  const availableHeightPx = isTablet ? innerHeight * TABLET_AVAILABLE_HEIGHT_RATIO : innerHeight
+  const availableHeightPx = isTablet() ? innerHeight * TABLET_AVAILABLE_HEIGHT_RATIO : innerHeight
 
   // Get the rem basis to convert rem-based measurements to pixels.
   const remPx = useSelector(state => state.fontSize)
@@ -230,7 +230,7 @@ const useGestureMenuLayout = (
     minColumnWidthPx,
   })
 
-  const useNarrowMultiColumn = isTablet && columnsAtWidePadding === 1 && columnsAtNarrowPadding > 1
+  const useNarrowMultiColumn = isTablet() && columnsAtWidePadding === 1 && columnsAtNarrowPadding > 1
 
   // List will be always single-column in mobile portrait,
   // Otherwise, use `useNarrowMultiColumn` to determine whether to use the maximum

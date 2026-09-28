@@ -1,13 +1,19 @@
+import { Capacitor } from '@capacitor/core'
 import _ from 'lodash'
-import { isTouch } from '../browser'
 import reactMinistore from './react-ministore'
 
 /** Scroll zone as a percentage of the smaller size of the screen. */
 const SCROLL_ZONE_WIDTH = 0.25
 
+
+/** Check if the device is a touchscreen. Duplicated from src/browser.ts's isTouch to avoid circular imports. */
+const isTouchDevice =
+  typeof window !== 'undefined' &&
+  (window.matchMedia?.('(pointer: coarse)').matches || Capacitor.getPlatform() === 'android')
+
 // take a guess at the height of the virtual keyboard until we can measure it directly
-let virtualKeyboardHeightPortrait = isTouch ? window.innerHeight / 2.275 : 0
-let virtualKeyboardHeightLandscape = isTouch ? window.innerWidth / 1.7 : 0
+let virtualKeyboardHeightPortrait = isTouchDevice ? window.innerHeight / 2.275 : 0
+let virtualKeyboardHeightLandscape = isTouchDevice ? window.innerWidth / 1.7 : 0
 
 export interface ViewportState {
   innerWidth: number

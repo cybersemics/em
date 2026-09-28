@@ -21,18 +21,17 @@ import useGestureMenuLayout, {
 } from '../useGestureMenuLayout'
 
 /**
- * `isTablet` is a module-level constant in the real `browser.ts`, so it cannot be changed per test.
- * A getter over a mutable holder lets most of this file run as a non-tablet — which is what keeps the
- * pre-existing cases exercising the untouched code path — while the tablet cases flip it via `asTablet`.
+ * The real `isTablet` derives from `isTouch`, a module-level constant that jsdom always evaluates to
+ * false, so it cannot be driven to true per test. A mock over a mutable holder lets most of this file
+ * run as a non-tablet — which is what keeps the pre-existing cases exercising the untouched code path —
+ * while the tablet cases flip it via `asTablet`.
  */
 const mockBrowser = { isTablet: false, isBrowser: true }
 vi.mock('../../browser', async importOriginal => {
   const actual = await importOriginal<typeof import('../../browser')>()
   return {
     ...actual,
-    get isTablet() {
-      return mockBrowser.isTablet
-    },
+    isTablet: () => mockBrowser.isTablet,
     get isBrowser() {
       return mockBrowser.isBrowser
     },
