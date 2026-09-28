@@ -4,19 +4,9 @@ import { showModalActionCreator as showModal } from '../../actions/showModal'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
-import requestAiDisclosure, {
-  clearAiDisclosureAcknowledgement,
-  hasAcknowledgedAiDisclosure,
-} from '../../util/aiDisclosure'
+import requestAiDisclosure, { hasAcknowledgedAiDisclosure } from '../../util/aiDisclosure'
 
 beforeEach(createTestApp)
-beforeEach(() => {
-  clearAiDisclosureAcknowledgement()
-})
-
-afterEach(() => {
-  clearAiDisclosureAcknowledgement()
-})
 afterEach(cleanupTestApp)
 
 it('allows the user to cancel without acknowledging', async () => {

@@ -31,16 +31,17 @@
 - Do not wrap a store in bare getters and setters. A function whose entire body is `someStore.getState().foo` or `someStore.update({ foo })` adds no behavior; it obscures which store the value comes from and expands the module's API for nothing. Read and write the store directly at the call site. A wrapper that carries real logic — managing a timer, setting a companion flag, deriving the value from state — is not bare and earns its place.
   ```ts
   // ✗ bare getter/setter
-  export const isBatchEditing = () => batchEditing.getState().batching
-  export const setBatchEditingUndoLabel = (undoLabel: string) => batchEditing.update({ undoLabel })
+  export const isBatchEditing = () => batchEditingStore.getState().batching
+  export const setBatchEditingUndoLabel = (undoLabel: string) => batchEditingStore.update({ undoLabel })
 
   // ✓ use the store directly at the call site
-  batchEditing.getState().batching
-  batchEditing.update({ undoLabel })
+  batchEditingStore.getState().batching
+  batchEditingStore.update({ undoLabel })
   ```
 - Only a single, default export is allowed. Named exports are not allowed.
   - Exception: action-creators are co-located with reducers in `src/actions` and exported as named exports.
   - Filenames should exactly match the default export name.
+  - Name every ministore with a `Store` suffix (e.g. `viewportStore`), and name a module that default-exports one after it (`viewportStore.ts`). The `em/ministore-store-suffix` lint rule enforces both; a bare local `store` is allowed for one that is wrapped before it is exported.
 
 ### Functional Programming
 

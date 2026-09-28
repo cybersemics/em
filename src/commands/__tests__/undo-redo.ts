@@ -241,10 +241,10 @@ describe('undo', () => {
     const { undoPatches } = store.getState()
     const lastPatch = undoPatches[undoPatches.length - 1]
 
-    const thoughtsExists = lastPatch.some(({ path }) => path.includes('/thoughts'))
+    const thoughtsExists = lastPatch.ops.some(({ path }) => path.includes('/thoughts'))
     expect(thoughtsExists).toEqual(true)
 
-    const alertExists = lastPatch.some(({ path }) => path.includes('/alert'))
+    const alertExists = lastPatch.ops.some(({ path }) => path.includes('/alert'))
     expect(alertExists).toEqual(false)
   })
 

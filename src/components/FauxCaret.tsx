@@ -9,7 +9,7 @@ import { isSafari, isTouch } from '../browser'
 import { getBoundingClientRect } from '../device/selection'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import attributeEquals from '../selectors/attributeEquals'
-import editingValueStore from '../stores/editingValue'
+import editingValueStore from '../stores/editingValueStore'
 import equalPath from '../util/equalPath'
 
 /**

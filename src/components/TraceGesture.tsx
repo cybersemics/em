@@ -6,8 +6,8 @@ import { gestureString, globalCommands } from '../commands'
 import { GESTURE_GLOW_BLUR, Settings, noop } from '../constants'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
-import gestureStore from '../stores/gesture'
-import viewportStore from '../stores/viewport'
+import gestureStore from '../stores/gestureStore'
+import viewportStore from '../stores/viewportStore'
 import isInGestureZone from '../util/isInGestureZone'
 
 interface TraceGestureProps {

@@ -247,6 +247,16 @@ describe('formatSelection color', () => {
     expect(cursorValue()).toBe('X<font color="#00c7e6"><b>ab</b></font>Y')
   })
 
+  // https://github.com/cybersemics/em/issues/5507
+  it('keeps the formatting of a colored substring at the start of a thought', async () => {
+    await dispatch([newThought({ value: '<b>ab</b>c' })])
+
+    selectRange(0, 2)
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6"><b>ab</b></font>c')
+  })
+
   // https://github.com/cybersemics/em/pull/4032#pullrequestreview-5149433775
   // The color must stay outside the decoration so that <u>/<strike> inherit it and draw their line in it, since
   // text-decoration-color resolves to the currentColor of the decorating element rather than of its children.
@@ -357,6 +367,40 @@ describe('formatSelection color', () => {
     await dispatch(formatSelection('foreColor', 'fg'))
 
     expect(cursorValue()).toBe('Golden Retriever')
+  })
+
+  // https://github.com/cybersemics/em/issues/5505
+  it('clears the color of a selected substring inside a colored thought', async () => {
+    await dispatch([newThought({ value: 'as' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    selectRange(1, 2)
+    await dispatch(formatSelection('foreColor', 'fg'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6">a</font>s')
+  })
+
+  it('clears the color of a selected substring in the middle of a colored thought', async () => {
+    await dispatch([newThought({ value: 'asd' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    selectRange(1, 2)
+    await dispatch(formatSelection('foreColor', 'fg'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6">a</font>s<font color="#00c7e6">d</font>')
+  })
+
+  it('recolors a selected substring inside a colored thought without nesting', async () => {
+    await dispatch([newThought({ value: 'as' })])
+
+    await dispatch(formatSelection('foreColor', 'blue'))
+
+    selectRange(1, 2)
+    await dispatch(formatSelection('foreColor', 'red'))
+
+    expect(cursorValue()).toBe('<font color="#00c7e6">a</font><font color="#ff573d">s</font>')
   })
 
   // color.ts > "Can change the color of a thought that already has the same color applied to part of its text"
