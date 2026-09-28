@@ -78,9 +78,12 @@ const intersectCommandState = (commandStates: CommandState[]): CommandState =>
 export const updateCommandState = () => {
   const state = store.getState()
   // The thoughts a formatting command will be applied to: the multiselection when there is one, which may have no
-  // cursor at all if the Home button dismissed it. There is nothing to describe when nothing is selected.
+  // cursor at all if the Home button dismissed it. When nothing is selected, no formatting applies (#5286).
   const paths = selectedPaths(state)
-  if (!paths.length) return
+  if (!paths.length) {
+    resetCommandState()
+    return
+  }
   const selectionIsActiveThought = selection.isActive() && selection.isThought()
   const action = selectionIsActiveThought
     ? {

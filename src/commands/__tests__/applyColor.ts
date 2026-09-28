@@ -283,4 +283,32 @@ describe('multicursor', () => {
   </li>
 </ul>`)
   })
+
+  it('removes the color from every selected thought when all of them have it', async () => {
+    // seeded with newThought because importText rewrites the font tag that applyColor produces into a span
+    act(() => {
+      store.dispatch([
+        newThought({ value: '<font color="#00c7e6">a</font>' }),
+        newThought({ value: '<font color="#00c7e6">b</font>' }),
+        newThought({ value: '<font color="#00c7e6">c</font>' }),
+        setCursor(['<font color="#00c7e6">b</font>']),
+      ])
+    })
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // Select All
+    await keyDown('a', { meta: true, alt: true })
+    // Command + Option + 5 is the sixth swatch, blue
+    await keyDown('5', { meta: true, alt: true })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toBe(`<ul>
+  <li>${HOME_TOKEN}${EMPTY_SPACE}
+    <ul>
+      <li>a</li>
+      <li>b</li>
+      <li>c</li>
+    </ul>
+  </li>
+</ul>`)
+  })
 })

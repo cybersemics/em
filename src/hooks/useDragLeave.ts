@@ -3,9 +3,14 @@ import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Thunk from '../@types/Thunk'
 import { updateHoveringPathActionCreator as updateHoveringPath } from '../actions/updateHoveringPath'
+import ministore from '../stores/ministore'
 
 const DEBOUNCE_DELAY = 50
-let hoverCount = 0
+
+/** The number of drop targets currently deep-hovered, shared by every drop target. A ministore rather than a module variable so that resetStores clears it between tests. Read imperatively; nothing subscribes, so a pointer event never re-renders. */
+const hoverCountStore = ministore(0)
+
+/** The debounced clear of state.hoveringPath, created on the first render. Its pending call is cancelled at every test boundary with the rest of lodash's throttles and debounces (see setupTests). */
 let debouncedSetHoveringPath: ReturnType<typeof debounce> | null = null
 
 /** Clears state.hoveringPath if it is set. */
@@ -56,14 +61,14 @@ const useDragLeave = ({ isDeepHovering, canDropThought }: { isDeepHovering: bool
       isCountedRef.current = isDeepHovering
       if (isDeepHovering) {
         // Cursor has entered a drop target, increase hover count
-        hoverCount += 1
+        hoverCountStore.update(hoverCountStore.getState() + 1)
 
         // Cancel any pending debounce since we're over a drop target
         debouncedSetHoveringPath?.cancel()
       } else {
         // Cursor has left a drop target, decrease hover count
-        hoverCount = Math.max(hoverCount - 1, 0)
-        if (hoverCount === 0) {
+        hoverCountStore.update(Math.max(hoverCountStore.getState() - 1, 0))
+        if (hoverCountStore.getState() === 0) {
           // No drop targets are being hovered over; start debounce
           debouncedSetHoveringPath?.()
         }
@@ -81,8 +86,8 @@ const useDragLeave = ({ isDeepHovering, canDropThought }: { isDeepHovering: bool
     () => () => {
       if (!isCountedRef.current) return
       isCountedRef.current = false
-      hoverCount = Math.max(hoverCount - 1, 0)
-      if (hoverCount === 0) {
+      hoverCountStore.update(Math.max(hoverCountStore.getState() - 1, 0))
+      if (hoverCountStore.getState() === 0) {
         debouncedSetHoveringPath?.()
       }
     },
