@@ -47,6 +47,9 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       textAlign,
       onMouseOver,
       onMouseLeave,
+      onTouchStart,
+      onTouchEnd,
+      onTouchCancel,
     },
     ref,
   ) => {
@@ -75,6 +78,9 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       },
       swipeDown: true,
     })
+
+    // disable swipe-to-dismiss when multicursor is active
+    const swipeProps: typeof useSwipeToDismissProps = multicursor ? {} : useSwipeToDismissProps
 
     const borderStyles = border
       ? {
@@ -121,8 +127,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           /** It should be possible to drag elements through a popup without interference. */
           pointerEvents: { _dragHold: 'none' },
         })}
-        // disable swipe-to-dismiss when multicursor is active
-        {...(!multicursor && useSwipeToDismissProps)}
+        {...swipeProps}
+        // the hook measures the element whether or not swipe-to-dismiss is enabled, so its ref is always attached
         ref={useCombinedRefs([ref, innerRef, useSwipeToDismissProps.ref])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
@@ -131,11 +137,23 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           background,
           fontSize,
           padding,
-          // disable swipe-to-dismiss when multicursor is active
-          ...(!multicursor && useSwipeToDismissProps.style),
+          ...swipeProps.style,
         }}
         onMouseOver={onMouseOver}
         onMouseLeave={onMouseLeave}
+        // chained rather than spread, since swipeProps binds the same three events
+        onTouchStart={e => {
+          swipeProps.onTouchStart?.(e)
+          onTouchStart?.(e)
+        }}
+        onTouchEnd={e => {
+          swipeProps.onTouchEnd?.(e)
+          onTouchEnd?.(e)
+        }}
+        onTouchCancel={e => {
+          swipeProps.onTouchCancel?.(e)
+          onTouchCancel?.(e)
+        }}
       >
         {children}
         {onClose ? (
