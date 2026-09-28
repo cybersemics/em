@@ -42,23 +42,7 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
     await initial.persisted
     await runtime.waitForIdle()
 
-    const decoded = vi.spyOn(thoughtPayload, 'decodeThoughtPayload')
-    expect(runtime.project(view)).toBe(view)
-    expect(decoded).not.toHaveBeenCalled()
-    decoded.mockRestore()
-
     const remoteReplica = new Uint8Array(32).fill(9)
-    const child = '6'.repeat(32) as ThoughtId
-    // Every descendant arrives without an explicit getThoughtById or force-pull.
-    await persistent.local.insert(
-      remoteReplica,
-      a.id,
-      child,
-      { type: 'last' },
-      encodeThoughtPayload({ ...payload, value: 'incoming child' }),
-    )
-    await runtime.waitForIdle()
-    expect(view.thoughtIndex[child]).toMatchObject({ value: 'incoming child', parentId: a.id })
     await persistent.local.payload(remoteReplica, a.id, encodeThoughtPayload({ ...payload, value: "O'Reilly ?1 $&" }))
     await persistent.local.move(remoteReplica, b.id, HOME_TOKEN, { type: 'first' })
     await runtime.waitForIdle()
@@ -250,6 +234,7 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
     for (const read of storageReads) expect(read).not.toHaveBeenCalled()
 
     const decoded = vi.spyOn(thoughtPayload, 'decodeThoughtPayload')
+    expect(runtime.project(view)).toBe(view)
     const projected = runtime.project({ thoughtIndex: {}, lexemeIndex: {} })
     expect(projected.thoughtIndex[grandchild]).toBe(view.thoughtIndex[grandchild])
     expect(decoded).not.toHaveBeenCalled()

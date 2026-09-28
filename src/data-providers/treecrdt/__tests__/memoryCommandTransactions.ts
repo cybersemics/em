@@ -202,6 +202,7 @@ it('restores parents and sibling anchors before their dependents in an unordered
       }),
     )
     expect(Object.values(restored.value.thoughtIndex[branch.id].childrenMap)).toEqual(children.map(child => child.id))
+    expect(children.map(child => restored.value.thoughtIndex[child.id].rank)).toEqual(children.map((_, index) => index))
     expect(restored.value.thoughtIndex[leaf.id].parentId).toBe(children.at(-1)!.id)
     expect(restored.value).toEqual(before)
     await restored.persisted

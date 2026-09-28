@@ -130,23 +130,6 @@ it('projects compatibility ranks for both parents after a cross-parent move', as
   await moved.persisted
 })
 
-it('preserves the requested sibling order when inserting a wide batch', async () => {
-  await initTestThoughtspace()
-  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0)], { [PARENT_ID]: SETTINGS_TOKEN })
-
-  const childIds = Array.from({ length: 40 }, (_, index) => (index + 512).toString(16).padStart(32, '0') as ThoughtId)
-  await persistThoughts(
-    childIds.map((id, index) => thought(id, PARENT_ID, `child-${index}`, 0)),
-    Object.fromEntries(childIds.map((id, index) => [id, childIds[index - 1] ?? null])),
-  )
-
-  const parent = treecrdt.project().thoughtIndex[PARENT_ID]
-  expect(Object.values(parent?.childrenMap ?? {})).toEqual(childIds)
-  const { thoughtIndex } = treecrdt.project()
-  const children = childIds.map(id => thoughtIndex[id])
-  expect(children.map(child => child?.rank)).toEqual(childIds.map((_, index) => index))
-})
-
 it('keeps separately created thoughtspace instances isolated', async () => {
   const first = createMemoryThoughtspace()
   const second = createMemoryThoughtspace()

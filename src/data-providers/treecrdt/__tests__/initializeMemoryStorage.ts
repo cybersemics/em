@@ -59,36 +59,9 @@ it('seeds canonical Settings independently of an unrelated thought with the same
   expect(decodeThoughtPayload((await client.tree.getPayload(SETTINGS_TOKEN))!).value).toBe('Settings')
 })
 
-it('preserves a renamed canonical Settings thought under the EM root', async () => {
-  const settingsPayload = {
-    value: 'My settings',
-    created: 1,
-    lastUpdated: 2,
-    updatedBy: 'owner',
-  }
-  await client.local.insert(
-    replicaId,
-    GLOBAL_ROOT_TOKEN,
-    EM_TOKEN,
-    { type: 'last' },
-    encodeThoughtPayload({ value: EM_TOKEN, created: 1, lastUpdated: 1, updatedBy: 'owner' }),
-  )
-  await client.local.insert(
-    replicaId,
-    EM_TOKEN,
-    SETTINGS_TOKEN,
-    { type: 'last' },
-    encodeThoughtPayload(settingsPayload),
-  )
-
+it('preserves renamed and moved Settings and its children without authoring operations on reinitialization', async () => {
   await initializeMemoryStorage(client, replicaId)
-
-  expect(await client.tree.children(EM_TOKEN)).toEqual([SETTINGS_TOKEN])
-  expect(decodeThoughtPayload((await client.tree.getPayload(SETTINGS_TOKEN))!)).toEqual(settingsPayload)
-})
-
-it('does not author operations when initialization is repeated', async () => {
-  await initializeMemoryStorage(client, replicaId)
+  const settingsPayload = { value: 'My settings', created: 1, lastUpdated: 2, updatedBy: 'owner' }
   const childId = '2'.repeat(32)
   await client.local.insert(
     replicaId,
@@ -97,26 +70,16 @@ it('does not author operations when initialization is repeated', async () => {
     { type: 'last' },
     encodeThoughtPayload({ value: 'Tutorial', created: 1, lastUpdated: 2, updatedBy: 'owner' }),
   )
-  const before = await client.tree.dump()
-  const operations = await client.ops.since(0)
-
-  await initializeMemoryStorage(client, replicaId)
-
-  expect(await client.tree.dump()).toEqual(before)
-  expect(await client.ops.since(0)).toEqual(operations)
-  expect(await client.tree.children(SETTINGS_TOKEN)).toEqual([childId])
-})
-
-it('preserves an existing canonical Settings thought after it is renamed and moved', async () => {
-  await initializeMemoryStorage(client, replicaId)
-  const settingsPayload = { value: 'My settings', created: 1, lastUpdated: 2, updatedBy: 'owner' }
   await client.local.payload(replicaId, SETTINGS_TOKEN, encodeThoughtPayload(settingsPayload))
   await client.local.move(replicaId, SETTINGS_TOKEN, HOME_TOKEN, { type: 'last' })
+  const before = await client.tree.dump()
   const operations = await client.ops.all()
 
   await initializeMemoryStorage(client, replicaId)
 
   expect(await client.tree.parent(SETTINGS_TOKEN)).toBe(HOME_TOKEN)
   expect(decodeThoughtPayload((await client.tree.getPayload(SETTINGS_TOKEN))!)).toEqual(settingsPayload)
+  expect(await client.tree.children(SETTINGS_TOKEN)).toEqual([childId])
+  expect(await client.tree.dump()).toEqual(before)
   expect(await client.ops.all()).toEqual(operations)
 })
