@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import RecentlyEditedTree from '../@types/RecentlyEditedTree'
 import State from '../@types/State'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
@@ -33,13 +34,22 @@ const updateThoughts = (
 ) => {
   if (!Object.keys(thoughtIndexUpdates).length) return state
   if (!transaction) throw new Error('Document updates require a thoughtspace transaction')
-  const thoughts = persist
-    ? transaction.update({ thoughtIndexUpdates, movePlacements }, state.thoughts)
-    : transaction.project(state.thoughts.withOverlays(thoughtIndexUpdates))
+  const thoughts = persist ? transaction.update({ thoughtIndexUpdates, movePlacements }) : transaction.project()
+  const thoughtUi = { ...state.thoughtUi }
+  Object.entries(thoughtIndexUpdates).forEach(([id, thought]) => {
+    const ui = {
+      ...(thought?.generating !== undefined && { generating: thought.generating }),
+      ...(thought?.generating && thought.displayValue !== undefined && { displayValue: thought.displayValue }),
+      ...(thought?.splitSource !== undefined && { splitSource: thought.splitSource }),
+    }
+    if (!thought || !thoughts.getThought(thought.id) || !Object.keys(ui).length) delete thoughtUi[id]
+    else if (!_.isEqual(ui, thoughtUi[id])) thoughtUi[id] = Object.freeze(ui)
+  })
   if (persist && onPersisted) transaction.afterPersist(onPersisted)
   const next = {
     ...state,
     thoughts,
+    thoughtUi: _.isEqual(thoughtUi, state.thoughtUi) ? state.thoughtUi : thoughtUi,
     ...(cursorOffset != null ? { cursorOffset } : null),
     recentlyEdited: recentlyEdited || state.recentlyEdited,
   }

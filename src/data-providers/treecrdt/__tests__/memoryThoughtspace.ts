@@ -31,10 +31,10 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
       },
     })
     const initial = runtime.transact(transaction =>
-      transaction.update(
-        { thoughtIndexUpdates: { [a.id]: a, [b.id]: b }, movePlacements: { [a.id]: null, [b.id]: a.id } },
-        view,
-      ),
+      transaction.update({
+        thoughtIndexUpdates: { [a.id]: a, [b.id]: b },
+        movePlacements: { [a.id]: null, [b.id]: a.id },
+      }),
     )
     view = initial.value
     await initial.persisted
@@ -56,21 +56,15 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
       return append(ops)
     })
     const first = runtime.transact(transaction =>
-      transaction.update(
-        {
-          thoughtIndexUpdates: { [a.id]: { ...a, value: 'first' } },
-        },
-        view,
-      ),
+      transaction.update({
+        thoughtIndexUpdates: { [a.id]: { ...a, value: 'first' } },
+      }),
     )
     view = first.value
     const second = runtime.transact(transaction =>
-      transaction.update(
-        {
-          thoughtIndexUpdates: { [a.id]: { ...a, value: 'second' } },
-        },
-        view,
-      ),
+      transaction.update({
+        thoughtIndexUpdates: { [a.id]: { ...a, value: 'second' } },
+      }),
     )
     view = second.value
     expect(view.getThought(a.id)!.value).toBe('second')
@@ -230,7 +224,7 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
     for (const read of storageReads) expect(read).not.toHaveBeenCalled()
 
     const decoded = vi.spyOn(thoughtPayload, 'decodeThoughtPayload')
-    expect(runtime.project(view)).toBe(view)
+    expect(runtime.project()).toBe(view)
     const projected = runtime.project()
     expect(projected.getThought(grandchild)!).toBe(view.getThought(grandchild)!)
     expect(decoded).not.toHaveBeenCalled()

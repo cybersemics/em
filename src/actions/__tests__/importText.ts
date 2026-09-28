@@ -6,6 +6,7 @@ import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import cursorCleared from '../../actions/cursorCleared'
 import importText, { ImportTextPayload } from '../../actions/importText'
 import newThought from '../../actions/newThought'
+import updateThoughts from '../../actions/updateThoughts'
 import { ABSOLUTE_TOKEN, EMPTY_SPACE, EM_TOKEN, HOME_PATH, HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
@@ -102,6 +103,25 @@ it('basic import with proper thought structure', () => {
   // Note: Jest doesn't have lexicographic string comparison yet :(
   expect(lexemeIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
   expect(lexemeIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
+})
+
+it('preserves the destination parent thought UI when importing children', () => {
+  const initial = runDocumentCommand(importText({ text: '- parent' }), initialState())
+  const parent = contextToThought(initial, ['parent'])!
+  const pending = runDocumentCommand(
+    updateThoughts({
+      persist: false,
+      thoughtIndexUpdates: {
+        [parent.id]: { ...parent, generating: true, displayValue: 'preview', splitSource: parent.id },
+      },
+    }),
+    initial,
+  )
+
+  const next = runDocumentCommand(importText({ path: [parent.id], text: '- child\n- sibling' }), pending)
+
+  expect(contextToThought(next, ['parent', 'child'])).toBeTruthy()
+  expect(next.thoughtUi[parent.id]).toBe(pending.thoughtUi[parent.id])
 })
 
 // TODO: importText no longer handlers multiline imports

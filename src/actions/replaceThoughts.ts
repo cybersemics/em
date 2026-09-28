@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceView from '../@types/ThoughtspaceView'
 import Thunk from '../@types/Thunk'
 import expandThoughts from '../selectors/expandThoughts'
@@ -18,7 +19,13 @@ const replaceThoughts = (
   state: State,
   { thoughts, repairCursor = false }: { thoughts: ThoughtspaceView; repairCursor?: boolean },
 ): State => {
-  const next = { ...state, thoughts, isLoading: false }
+  const thoughtUi = _.pickBy(state.thoughtUi, (_, id) => !!thoughts.getThought(id as ThoughtId))
+  const next = {
+    ...state,
+    thoughts,
+    thoughtUi: _.isEqual(thoughtUi, state.thoughtUi) ? state.thoughtUi : thoughtUi,
+    isLoading: false,
+  }
   let cursor = state.cursor
   if (repairCursor && cursor) {
     // Resolve context-view paths against the previous complete document before replacing their topology.

@@ -233,7 +233,7 @@ it('retains incoming siblings and payloads while reconstructing a local reorder 
 
 
 `)
-  expect(db.project(current.thoughts)).toBe(current.thoughts)
+  expect(db.project()).toBe(current.thoughts)
 })
 
 it('describes a multicursor move by its invocation and selection without inferring a single moved thought', () => {

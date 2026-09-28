@@ -3,8 +3,6 @@ import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
-import ThoughtspaceView from '../@types/ThoughtspaceView'
-import createThoughtspaceView from '../data-providers/createThoughtspaceView'
 import createChildrenMap from './createChildrenMap'
 
 /** Serializable editor diagnostics, never a second live document or an input to engine undo. */
@@ -32,30 +30,12 @@ const restore = (state: DiagnosticState): State => {
   const { thoughtIndex, lexemeIndex } = state.thoughts
   const thoughts = new Map<ThoughtId, Thought>()
   const children = new Map<ThoughtId, readonly ThoughtId[]>()
-  const overlays: ThoughtspaceView['overlays'] = {}
-  Object.values(thoughtIndex).forEach(({ id, generating, displayValue, splitSource }) => {
-    if (generating !== undefined || displayValue !== undefined || splitSource !== undefined) {
-      overlays[id] = {
-        ...(generating !== undefined && { generating }),
-        ...(displayValue !== undefined && { displayValue }),
-        ...(splitSource !== undefined && { splitSource }),
-      }
-    }
-  })
-
-  /** Reuses diagnostic payloads independently of legacy rank, child-map, and transient editor fields. */
+  /** Reuses diagnostic payloads independently of legacy rank and child-map fields. */
   const getThought = (id: ThoughtId): Thought | undefined => {
     const thought = thoughtIndex[id]
     if (!thought) return
     if (!thoughts.has(id)) {
-      const {
-        rank: _rank,
-        childrenMap: _childrenMap,
-        generating: _generating,
-        displayValue: _displayValue,
-        splitSource: _splitSource,
-        ...canonical
-      } = thought
+      const { rank: _rank, childrenMap: _childrenMap, ...canonical } = thought
       thoughts.set(id, canonical)
     }
     return thoughts.get(id)
@@ -63,33 +43,30 @@ const restore = (state: DiagnosticState): State => {
 
   return {
     ...state,
-    thoughts: createThoughtspaceView(
-      {
-        getThought,
-        /** Preserves historical rank ties and incoming siblings when reading keyed diagnostic patches. */
-        getChildren: id => {
-          if (!children.has(id)) {
-            children.set(
-              id,
-              Object.freeze(
-                Object.values(thoughtIndex[id]?.childrenMap ?? {})
-                  .filter(child => !!thoughtIndex[child])
-                  .sort((a, b) => thoughtIndex[a].rank - thoughtIndex[b].rank),
-              ),
-            )
-          }
-          return children.get(id)!
-        },
-        /** Reads patched ranks, including gaps and ties that a freshly indexed array would lose. */
-        getPosition: id => thoughtIndex[id]?.rank,
-        /** Iterates the reconstructed diagnostic payloads. */
-        values: function* () {
-          for (const id of Object.keys(thoughtIndex)) yield getThought(id as ThoughtId)!
-        },
-        lexemeIndex,
+    thoughts: {
+      getThought,
+      /** Preserves historical rank ties and incoming siblings when reading keyed diagnostic patches. */
+      getChildren: id => {
+        if (!children.has(id)) {
+          children.set(
+            id,
+            Object.freeze(
+              Object.values(thoughtIndex[id]?.childrenMap ?? {})
+                .filter(child => !!thoughtIndex[child])
+                .sort((a, b) => thoughtIndex[a].rank - thoughtIndex[b].rank),
+            ),
+          )
+        }
+        return children.get(id)!
       },
-      overlays,
-    ),
+      /** Reads patched ranks, including gaps and ties that a freshly indexed array would lose. */
+      getPosition: id => thoughtIndex[id]?.rank,
+      /** Iterates the reconstructed diagnostic payloads. */
+      values: function* () {
+        for (const id of Object.keys(thoughtIndex)) yield getThought(id as ThoughtId)!
+      },
+      lexemeIndex,
+    },
   }
 }
 

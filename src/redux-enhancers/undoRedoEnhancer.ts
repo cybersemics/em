@@ -6,7 +6,6 @@ import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Patch, { CommandAttributedAction } from '../@types/Patch'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import * as commands from '../actions'
@@ -29,9 +28,12 @@ import thoughtspaceHistory from '../util/thoughtspaceHistory'
 
 /** Refreshes the read-only document view after a complete command and before recording its history. */
 const projectThoughts = (state: State, transaction?: ThoughtspaceTransaction): State => {
-  const thoughts = transaction?.project(state.thoughts) ?? db.project(state.thoughts)
-  if (thoughts === state.thoughts) return state
-  const projected = { ...state, thoughts }
+  if (!transaction && !thoughtspaceRuntime.ready) return state
+  const thoughts = transaction?.project() ?? db.project()
+  const thoughtUi = _.pickBy(state.thoughtUi, (_, id) => !!thoughts.getThought(id as ThoughtId))
+  const sameUi = _.isEqual(thoughtUi, state.thoughtUi)
+  if (thoughts === state.thoughts && sameUi) return state
+  const projected = { ...state, thoughts, thoughtUi: sameUi ? state.thoughtUi : thoughtUi }
   return { ...projected, expanded: expandThoughts(projected, projected.cursor) }
 }
 
@@ -145,6 +147,7 @@ const diffState = (newValue: State, value: State | ReturnType<typeof thoughtspac
     'undoPatches',
     'redoPatches',
     'cursor',
+    'thoughtUi',
     ...(sameThoughts ? ['thoughts'] : []),
   ]
   const previous =
@@ -155,6 +158,14 @@ const diffState = (newValue: State, value: State | ReturnType<typeof thoughtspac
     ...compare(
       _.omit(sameThoughts ? newValue : thoughtspaceHistory.capture(newValue), omitted),
       _.omit(previous, omitted),
+    ),
+    // A remote deletion may have pruned an entry since history was recorded. Restore each entry atomically.
+    ...Object.keys({ ...newValue.thoughtUi, ...value.thoughtUi }).flatMap<Operation>(id =>
+      _.isEqual(newValue.thoughtUi[id], value.thoughtUi[id])
+        ? []
+        : value.thoughtUi[id]
+          ? [{ op: 'add', path: `/thoughtUi/${id}`, value: value.thoughtUi[id] }]
+          : [{ op: 'remove', path: `/thoughtUi/${id}` }],
     ),
     // Incoming deletion can shorten or clear the cursor without changing history. Restore its captured value atomically,
     // not with relative array operations that assume the pre-publication path still exists.
@@ -185,27 +196,7 @@ const revertPatch = (
         patch.ops.filter(op => op.path !== '/thoughts' && !op.path.startsWith('/thoughts/')),
       ).newDocument,
   )
-  const projected = projectThoughts(uiState, transaction)
-  // These three fields belong to the editor even though they live beside canonical thought fields.
-  // Restore them only on nodes the engine currently exposes; a stale history path must not resurrect a remote deletion.
-  const overlayUpdates: Index<Thought> = {}
-  patch.ops.forEach(op => {
-    const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)(?:\/(generating|displayValue|splitSource))?$/)
-    if (!match) return
-    const id = match[1] as ThoughtId
-    const thought = overlayUpdates[id] ?? projected.thoughts.getThought(id)
-    if (!thought) return
-    const restored = { ...thought }
-    const fields = match[2] ? [match[2]] : ['generating', 'displayValue', 'splitSource']
-    fields.forEach(field => {
-      const value = 'value' in op ? (match[2] ? op.value : op.value?.[field]) : undefined
-      if (value === undefined) delete (restored as Index)[field]
-      else (restored as Index)[field] = value
-    })
-    overlayUpdates[id] = restored
-  })
-  const withOverlays = { ...projected, thoughts: projected.thoughts.withOverlays(overlayUpdates) }
-  const newState = projectThoughts(withOverlays, transaction)
+  const newState = projectThoughts(uiState, transaction)
   return {
     state: newState,
     patch: {

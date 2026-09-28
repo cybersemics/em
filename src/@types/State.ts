@@ -14,6 +14,7 @@ import Path from './Path'
 import RecentlyEditedTree from './RecentlyEditedTree'
 import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
+import Thought from './Thought'
 import ThoughtId from './ThoughtId'
 import ThoughtspaceView from './ThoughtspaceView'
 import Timestamp from './Timestamp'
@@ -179,6 +180,8 @@ interface State {
    */
   storageCache?: StorageCache
   thoughts: ThoughtspaceView
+  /** Temporary per-thought editor state, never persisted or synchronized. */
+  thoughtUi: Index<Pick<Thought, 'generating' | 'displayValue' | 'splitSource'>>
   tip: Tip | null
   /** Command of a toolbar button that is being long pressed in the customize modal. */
   toolbarLongPress?: Command

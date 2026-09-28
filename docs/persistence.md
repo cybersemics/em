@@ -19,7 +19,7 @@ The package includes browser and Node loaders and the WASM binary. It initialize
 
 `state.thoughts` is a [`ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) captured against one immutable memory snapshot. It exposes `getThought`, `getChildren`, `getPosition`, `values`, and the derived `lexemeIndex`. Initialization loads the full document before enabling editing or resolving the URL cursor. Navigation, contexts, copying, and export read this view without loading or evicting subtrees.
 
-There is no maintained EM `thoughtIndex`, child map, or rank field. Decoded payloads are cached; topology stays in the native snapshot. `project` preserves only sparse transient generation text, generation flags, and split-source bookkeeping from the editor view.
+There is no maintained EM `thoughtIndex`, child map, or rank field. Decoded payloads are cached; topology stays in the native snapshot. `project()` reads only the document. Redux keeps temporary generation text, generation flags, and split-source bookkeeping in `state.thoughtUi`; `getThoughtById` combines them with canonical content for editor consumers.
 
 ## Local persistence (TreeCRDT + SQLite)
 
@@ -50,7 +50,7 @@ Node payloads contain only `value`, `created`, `lastUpdated`, `updatedBy`, and o
 
 There are no EM-owned SQLite membership or attribute-child tables. EM derives lexemes from thought values, excluding system roots. Child readers use canonical sibling order; attribute selectors resolve children by value.
 
-A projection uses immutable snapshots and affected-node batches from transaction reads or commit events, with a full refresh for initialization or replay resets. Changed payloads update affected lexeme buckets. Child lists and sibling-position lookups are cached lazily, with no rank rewriting on moves. Payload-less nodes occupy canonical positions without becoming EM thoughts. Document reads use memory, not SQLite. UI-only actions reuse the view when neither the tree nor editor overlays changed.
+A projection uses immutable snapshots and affected-node batches from transaction reads or commit events, with a full refresh for initialization or replay resets. Changed payloads update affected lexeme buckets. Child lists and sibling-position lookups are cached lazily, with no rank rewriting on moves. Payload-less nodes occupy canonical positions without becoming EM thoughts. Document reads use memory, not SQLite. UI-only changes reuse the document view.
 
 ### Writes
 
@@ -89,7 +89,7 @@ The full document and its operation history must fit in memory, and startup wait
 
 [`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `db.transact`, then dispatches the original action with its prepared immutable state to a pure publication reducer. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
 
-`updateThoughts` changes the memory document and reads its resulting view immediately. Updates with `persist: false` can change transient editor overlays, but cannot author document operations or evict canonical thoughts. There is no Redux write queue or separate lexeme derivation. The `onPersisted` callback runs only after SQLite acknowledges the whole command. Undo/redo uses the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
+`updateThoughts` changes the memory document and reads its resulting view immediately. Temporary editor fields stay in Redux; updates with `persist: false` change only those fields. Document publication prunes editor entries for deleted thoughts, and UI reset clears them. There is no Redux write queue or separate lexeme derivation. The `onPersisted` callback runs only after SQLite acknowledges the whole command. Undo/redo restores editor fields through UI patches and document content through the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
 
 ```
 command → memory transaction (update → canonical read → next step)

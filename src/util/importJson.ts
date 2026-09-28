@@ -8,6 +8,7 @@ import Timestamp from '../@types/Timestamp'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import { anyChild, getChildrenRanked } from '../selectors/getChildren'
+import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
 import appendToPath from './appendToPath'
@@ -33,7 +34,7 @@ const importJson = (
   const replaceEmpty = destination?.value === '' && !anyChild(state, head(simplePath))
   const importPath = replaceEmpty ? rootedParentOf(state, simplePath) : simplePath
   const parentId = head(importPath)
-  const parent = state.thoughts.getThought(parentId)
+  const parent = getThoughtById(state, parentId)
   const normalized = skipRoot && blocks.length ? [...blocks[0].children, ...blocks.slice(1)] : blocks
   const thoughtIndexUpdates: Index<Thought | null> = replaceEmpty ? { [destination.id]: null } : {}
   const movePlacements: Index<ThoughtId | null> = {}

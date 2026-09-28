@@ -107,13 +107,10 @@ it('reads both parents and positions from captured snapshots after a cross-paren
   )
   const before = treecrdt.project()
   const moved = treecrdt.transact(transaction =>
-    transaction.update(
-      {
-        thoughtIndexUpdates: { [THOUGHT_A_ID]: thought(THOUGHT_A_ID, OTHER_PARENT_ID, 'a') },
-        movePlacements: { [THOUGHT_A_ID]: THOUGHT_X_ID },
-      },
-      before,
-    ),
+    transaction.update({
+      thoughtIndexUpdates: { [THOUGHT_A_ID]: thought(THOUGHT_A_ID, OTHER_PARENT_ID, 'a') },
+      movePlacements: { [THOUGHT_A_ID]: THOUGHT_X_ID },
+    }),
   )
   const projected = moved.value
   expect(projected.getChildren(PARENT_ID)).toEqual([THOUGHT_B_ID])

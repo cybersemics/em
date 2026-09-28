@@ -21,7 +21,6 @@ import type ThoughtspaceView from '../../@types/ThoughtspaceView'
 import { GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID } from '../../constants'
 import hashThought from '../../util/hashThought'
 import type DataProvider from '../DataProvider'
-import createThoughtspaceView from '../createThoughtspaceView'
 import { initPermissionsStore } from '../permissionsStore'
 import type { ThoughtspaceRuntime, ThoughtspaceRuntimeInitOptions } from '../thoughtspace'
 import { clientIdReady, tsid } from '../thoughtspaceSession'
@@ -53,54 +52,47 @@ const readThought = (row: MemorySnapshotRow | undefined): Thought | undefined =>
 }
 
 /** Captures structural reads against one immutable tree, with lazy decoding and positional caches. */
-const memoryView = (
-  rows: MemorySnapshot,
-  lexemeIndex: ThoughtspaceView['lexemeIndex'] = {},
-  overlays: ThoughtspaceView['overlays'] = {},
-): ThoughtspaceView => {
+const memoryView = (rows: MemorySnapshot, lexemeIndex: ThoughtspaceView['lexemeIndex'] = {}): ThoughtspaceView => {
   const children = new Map<string, readonly ThoughtId[]>()
-  return createThoughtspaceView(
-    {
-      lexemeIndex,
-      getThought: id => readThought(rows.get(id)),
-      getChildren: id => {
-        let ids = children.get(id)
-        if (!ids) {
-          const row = rows.get(id)
-          const order = readThought(row) ? row!.children : Object.freeze([])
-          // Reuse native immutable order unless payload-less children must be hidden in this snapshot.
-          ids = (
-            order.every(child => !!readThought(rows.get(child)))
-              ? order
-              : Object.freeze(order.filter(child => !!readThought(rows.get(child))))
-          ) as readonly ThoughtId[]
-          children.set(id, ids)
-        }
-        return ids
-      },
-      getPosition: id => {
-        const parent = rows.get(id)?.parentId
-        const order = parent ? rows.get(parent)?.children : undefined
-        if (!order) return undefined
-        let index = positions.get(order)
-        if (!index) {
-          index = new Map(order.map((child, i) => [child, i]))
-          positions.set(order, index)
-        }
-        return index.get(id)
-      },
-      *values() {
-        for (const row of rows.values()) {
-          const thought = readThought(row)
-          if (thought) yield thought
-        }
-      },
+  return {
+    lexemeIndex,
+    getThought: id => readThought(rows.get(id)),
+    getChildren: id => {
+      let ids = children.get(id)
+      if (!ids) {
+        const row = rows.get(id)
+        const order = readThought(row) ? row!.children : Object.freeze([])
+        // Reuse native immutable order unless payload-less children must be hidden in this snapshot.
+        ids = (
+          order.every(child => !!readThought(rows.get(child)))
+            ? order
+            : Object.freeze(order.filter(child => !!readThought(rows.get(child))))
+        ) as readonly ThoughtId[]
+        children.set(id, ids)
+      }
+      return ids
     },
-    overlays,
-  )
+    getPosition: id => {
+      const parent = rows.get(id)?.parentId
+      const order = parent ? rows.get(parent)?.children : undefined
+      if (!order) return undefined
+      let index = positions.get(order)
+      if (!index) {
+        index = new Map(order.map((child, i) => [child, i]))
+        positions.set(order, index)
+      }
+      return index.get(id)
+    },
+    *values() {
+      for (const row of rows.values()) {
+        const thought = readThought(row)
+        if (thought) yield thought
+      }
+    },
+  }
 }
 
-/** Excludes transient editor fields and derived structure from the document payload. */
+/** Encodes canonical content separately from the engine-owned structure. */
 const thoughtPayload = ({ value, created, lastUpdated, updatedBy, archived }: Thought) =>
   encodeThoughtPayload({ value, created, lastUpdated, updatedBy, ...(archived !== undefined && { archived }) })
 
@@ -158,20 +150,18 @@ const createMemoryThoughtspace = (
     await drainWork()
   }
 
-  /** Updates derived lexemes and captures canonical rows, preserving only explicit editor overlays. */
-  const project = (view: ThoughtspaceView = snapshot, batch = latestChanges): ThoughtspaceView => {
-    if (!memory || !ready) return view
+  /** Updates derived lexemes and captures canonical rows. */
+  const project = (batch = latestChanges): ThoughtspaceView => {
+    if (!memory || !ready) return snapshot
     const rows = batch?.snapshot ?? memory.getSnapshot()
-    if (view === snapshot && rows === projectedRows) return snapshot
+    if (rows === projectedRows) return snapshot
     const reset = !projectedRows || !!batch?.reset
     const changes = new Map(batch?.changes.map(change => [change.id, change]))
     const changed = new Set<string>()
-    if (rows !== projectedRows) {
-      const candidates = reset ? new Set([...rows.keys(), ...(projectedRows?.keys() ?? [])]) : changes.keys()
-      Array.from(candidates).forEach(id => {
-        if (rows.get(id) !== projectedRows?.get(id)) changed.add(id)
-      })
-    }
+    const candidates = reset ? new Set([...rows.keys(), ...(projectedRows?.keys() ?? [])]) : changes.keys()
+    Array.from(candidates).forEach(id => {
+      if (rows.get(id) !== projectedRows?.get(id)) changed.add(id)
+    })
     const lexemeIndex = { ...snapshot.lexemeIndex }
     const memberships = new Map<string, Set<string>>()
     /** Copies only the value buckets affected by changed payloads or visibility. */
@@ -216,16 +206,12 @@ const createMemoryThoughtspace = (
       }
       lexemeIndex[key] = _.isEqual(snapshot.lexemeIndex[key], lexeme) ? snapshot.lexemeIndex[key] : lexeme
     })
-    const overlays = Object.fromEntries(Object.entries(view.overlays).filter(([id]) => !!readThought(rows.get(id))))
-    if (rows !== projectedRows || !_.isEqual(overlays, snapshot.overlays)) {
-      snapshot = memoryView(
-        rows,
-        [...memberships.keys()].some(key => lexemeIndex[key] !== snapshot.lexemeIndex[key])
-          ? lexemeIndex
-          : snapshot.lexemeIndex,
-        overlays,
-      )
-    }
+    snapshot = memoryView(
+      rows,
+      [...memberships.keys()].some(key => lexemeIndex[key] !== snapshot.lexemeIndex[key])
+        ? lexemeIndex
+        : snapshot.lexemeIndex,
+    )
     projectedRows = rows
     return snapshot
   }
@@ -268,15 +254,15 @@ const createMemoryThoughtspace = (
           operationIds.push(...reverted)
           return reverted
         },
-        project: view => {
+        project: () => {
           if (!active) throw new Error('The document transaction has finished')
-          return project(view, engine.getChanges())
+          return project(engine.getChanges())
         },
         afterPersist: callback => {
           if (!active) throw new Error('The document transaction has finished')
           callbacks.push(callback)
         },
-        update: ({ thoughtIndexUpdates, movePlacements }, view = snapshot) => {
+        update: ({ thoughtIndexUpdates, movePlacements }) => {
           if (!active) throw new Error('The document transaction has finished')
           // Moves out of a deleted subtree must precede its delete; otherwise defensive deletion restores the parent.
           const edits = Object.entries(thoughtIndexUpdates).filter((entry): entry is [string, Thought] => !!entry[1])
@@ -333,12 +319,12 @@ const createMemoryThoughtspace = (
                 operationIds.push(engine.local.payload(id, payload).meta.id)
             }
           }
-          return project(view.withOverlays(Object.fromEntries(edits)), engine.getChanges())
+          return project(engine.getChanges())
         },
       }
       const value = work(transaction)
       // A command can finish with a revert after its last explicit read. Project before commit so errors still roll back.
-      project(undefined, engine.getChanges())
+      project(engine.getChanges())
       return value
     }
     let result: { value: T; operations: Operation[]; changes: MemorySnapshotChanges }
@@ -418,7 +404,7 @@ const createMemoryThoughtspace = (
 
   return {
     transact,
-    project,
+    project: () => project(),
     get ready() {
       return ready
     },

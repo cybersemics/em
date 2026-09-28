@@ -5,7 +5,6 @@ import Thought from '../@types/Thought'
 import ThoughtspaceView from '../@types/ThoughtspaceView'
 import Timestamp from '../@types/Timestamp'
 import { ABSOLUTE_TOKEN, EM_TOKEN, HOME_TOKEN, LongPressState, ROOT_PARENT_ID } from '../constants'
-import createThoughtspaceView from '../data-providers/createThoughtspaceView'
 import { clientId, tsidShared } from '../data-providers/thoughtspaceSession'
 import storageModel from '../stores/storageModel'
 import hashThought from '../util/hashThought'
@@ -82,7 +81,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtspaceView => 
     },
   }
 
-  return createThoughtspaceView({
+  return {
     getThought: id => thoughtIndex[id],
     getChildren: () => [],
     getPosition: id => (thoughtIndex[id] ? 0 : undefined),
@@ -90,7 +89,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtspaceView => 
       yield* Object.values(thoughtIndex)
     },
     lexemeIndex,
-  })
+  }
 }
 
 /** Generates the initial state of the application. */
@@ -153,6 +152,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     status: 'disconnected',
     tip: null,
     thoughts: initialThoughts(created),
+    thoughtUi: {},
     undoPatches: [],
     showCommandCenter: false,
   }

@@ -13,8 +13,9 @@ state.thoughts: {
   getPosition(id: ThoughtId): number | undefined
   values(): IterableIterator<Thought>
   lexemeIndex: Index<Lexeme> // keyed by hashThought(value)
-  overlays: Index<Pick<Thought, 'generating' | 'displayValue' | 'splitSource'>>
 }
+
+state.thoughtUi: Index<Pick<Thought, 'generating' | 'displayValue' | 'splitSource'>>
 ```
 
 Initialization hydrates the complete document before editing begins. Navigation and context views read the snapshot synchronously; thoughts are not loaded or evicted by visibility. Document commands submit changes through an explicit transaction and read the canonical snapshot after each update. Redux publishes once after the whole command succeeds. Incoming engine snapshots use the non-undoable [`replaceThoughts`](../src/actions/replaceThoughts.ts) action.
@@ -55,7 +56,7 @@ interface Thought {
 }
 ```
 
-See [Thought.ts](../src/@types/Thought.ts). TreeCRDT stores a `ThoughtPayload` (`value`, `created`, `lastUpdated`, `updatedBy`, `archived`) on each node; the reader adds `id`, `parentId`, and any sparse editor overlay. Payload decoding is cached by immutable row identity. See [persistence.md → Document model](persistence.md#document-model).
+See [Thought.ts](../src/@types/Thought.ts). TreeCRDT stores a `ThoughtPayload` (`value`, `created`, `lastUpdated`, `updatedBy`, `archived`) on each node; the document reader adds `id` and `parentId`. The `getThoughtById` selector combines that content with temporary fields from `state.thoughtUi`, which are never persisted or synchronized. Payload decoding is cached by immutable row identity. See [persistence.md → Document model](persistence.md#document-model).
 
 #### rank
 

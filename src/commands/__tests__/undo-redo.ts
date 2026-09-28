@@ -1585,8 +1585,17 @@ describe('operation receipts', () => {
   })
 
   it('restores the typing merge trackers and published state when undo fails after reverting its receipt', () => {
-    store.dispatch([importText({ text: '- a' }), setCursor(['a']), editThought(['a'], 'ab')])
+    store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+    const thought = contextToThought(store.getState(), ['a'])!
+    store.dispatch([
+      updateThoughts({
+        persist: false,
+        thoughtIndexUpdates: { [thought.id]: { ...thought, generating: true, displayValue: 'preview' } },
+      }),
+      editThought(['a'], 'ab'),
+    ])
     const beforeUndo = store.getState()
+    expect(beforeUndo.thoughtUi[thought.id]).toEqual({ generating: false })
     const transact = db.transact
     const failure = vi.spyOn(db, 'transact').mockImplementationOnce(work =>
       transact(transaction => {
@@ -1598,7 +1607,8 @@ describe('operation receipts', () => {
     expect(() => store.dispatch(undo({ count: 1 }))).toThrow('injected failure after undo')
     failure.mockRestore()
     expect(store.getState()).toBe(beforeUndo)
-    expect(db.project(beforeUndo.thoughts)).toBe(beforeUndo.thoughts)
+    expect(db.project()).toBe(beforeUndo.thoughts)
+    expect(store.getState().thoughtUi[thought.id]).toEqual({ generating: false })
 
     // A failed undo did not break the typing run: the next edit still merges with the original edit.
     store.dispatch([editThought(['ab'], 'abc'), undo({ count: 1 })])
@@ -1606,7 +1616,7 @@ describe('operation receipts', () => {
   - a`)
   })
 
-  it('restores transient generation overlays without authoring them to the document', () => {
+  it('restores transient thought UI without authoring it to the document', () => {
     store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
     const thought = contextToThought(store.getState(), ['a'])!
     store.dispatch(
@@ -1620,6 +1630,7 @@ describe('operation receipts', () => {
     store.dispatch(editThought(['a'], 'ab'))
     const edit = store.getState().undoPatches.at(-1)!
     expect(edit.documentOperationIds).toHaveLength(1)
+    expect(store.getState().thoughtUi[thought.id]).toEqual({ generating: false, splitSource: thought.id })
 
     store.dispatch(undo({ count: 1 }))
     expect(contextToThought(store.getState(), ['a'])).toMatchObject({
@@ -1627,9 +1638,36 @@ describe('operation receipts', () => {
       displayValue: 'a preview',
       splitSource: thought.id,
     })
+    expect(store.getState().thoughts.getThought(thought.id)!.displayValue).toBeUndefined()
 
     store.dispatch(redo({ count: 1 }))
     expect(contextToThought(store.getState(), ['ab'])).toMatchObject({ generating: false, splitSource: thought.id })
     expect(contextToThought(store.getState(), ['ab'])!.displayValue).toBeUndefined()
+  })
+
+  it('restores thought UI history after an incoming deletion prunes its entry', () => {
+    store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+    const thought = contextToThought(store.getState(), ['a'])!
+    store.dispatch([
+      updateThoughts({
+        persist: false,
+        thoughtIndexUpdates: { [thought.id]: { ...thought, generating: true, displayValue: 'preview' } },
+      }),
+      editThought(['a'], 'ab'),
+    ])
+    const incoming = db.transact(transaction => transaction.update({ thoughtIndexUpdates: { [thought.id]: null } }))
+    store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
+    expect(store.getState().thoughtUi[thought.id]).toBeUndefined()
+
+    store.dispatch(undo({ count: 1 }))
+
+    // The engine receipt restores the edited node; its UI patch must not depend on the pruned entry still existing.
+    expect(contextToThought(store.getState(), ['a'])).toMatchObject({ generating: true, displayValue: 'preview' })
+    expect(store.getState().thoughts.getThought(thought.id)!.displayValue).toBeUndefined()
+
+    store.dispatch(redo({ count: 1 }))
+
+    expect(store.getState().thoughts.getThought(thought.id)).toBeUndefined()
+    expect(store.getState().thoughtUi[thought.id]).toBeUndefined()
   })
 })

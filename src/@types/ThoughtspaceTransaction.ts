@@ -11,15 +11,12 @@ interface ThoughtspaceTransaction {
   /** Authors compensating operations and returns their IDs for redo. */
   revert: (operationIds: readonly OperationId[]) => readonly OperationId[]
   /** Applies document changes and returns their canonical view before the next command runs. */
-  update: (
-    changes: {
-      thoughtIndexUpdates: Index<Thought | null>
-      movePlacements?: Index<ThoughtId | null>
-    },
-    view?: ThoughtspaceView,
-  ) => ThoughtspaceView
-  /** Reads the current document while preserving transient editor overlays. */
-  project: (view?: ThoughtspaceView) => ThoughtspaceView
+  update: (changes: {
+    thoughtIndexUpdates: Index<Thought | null>
+    movePlacements?: Index<ThoughtId | null>
+  }) => ThoughtspaceView
+  /** Reads the current canonical document and its derived lexemes. */
+  project: () => ThoughtspaceView
   /** Runs only after this whole transaction has been durably persisted. */
   afterPersist: (callback: () => void) => void
 }

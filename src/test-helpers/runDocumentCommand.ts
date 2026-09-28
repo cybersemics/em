@@ -51,12 +51,12 @@ const runDocumentCommand = (
           )
           .filter(([id]) => id! in thoughtIndexUpdates),
       ) as Record<ThoughtId, ThoughtId | null>
-      transaction.update({ thoughtIndexUpdates, movePlacements }, state.thoughts)
+      transaction.update({ thoughtIndexUpdates, movePlacements })
     }
-    const thoughts = transaction.project(state.thoughts)
+    const thoughts = transaction.project()
     const input = thoughts === state.thoughts ? state : { ...state, thoughts }
     const next = command(input, transaction)
-    const projected = transaction.project(next.thoughts)
+    const projected = transaction.project()
     return projected === next.thoughts ? next : { ...next, thoughts: projected }
   })
   return result.value

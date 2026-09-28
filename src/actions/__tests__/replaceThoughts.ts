@@ -1,6 +1,7 @@
 import State from '../../@types/State'
 import db from '../../data-providers/thoughtspace'
 import getLexeme from '../../selectors/getLexeme'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
@@ -12,6 +13,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import { importTextActionCreator as importText } from '../importText'
 import replaceThoughts, { replaceThoughtsActionCreator } from '../replaceThoughts'
+import { updateThoughtsActionCreator as updateThoughts } from '../updateThoughts'
 
 afterEach(waitForThoughtspaceIdle)
 
@@ -42,6 +44,42 @@ it('clears the cursor when its entire ancestry was deleted', () => {
 
   expect(next.cursor).toBeNull()
   expect(contextToThought(next, ['x'])).toBeTruthy()
+})
+
+it('preserves surviving thought UI across canonical replacement and prunes deleted thought UI', () => {
+  const a = contextToThought(store.getState(), ['a'])!
+  const c = contextToThought(store.getState(), ['a', 'b', 'c'])!
+  store.dispatch(
+    updateThoughts({
+      persist: false,
+      thoughtIndexUpdates: {
+        [a.id]: { ...a, generating: true, displayValue: 'preview', splitSource: c.id },
+        [c.id]: { ...c, generating: true, displayValue: 'deleted preview' },
+      },
+    }),
+  )
+  const previous = store.getState()
+  const rendered = getThoughtById(previous, a.id)!
+  const incoming = db.transact(transaction =>
+    transaction.update({ thoughtIndexUpdates: { [a.id]: { ...a, value: 'incoming a' }, [c.id]: null } }),
+  ).value
+
+  store.dispatch(replaceThoughtsActionCreator({ thoughts: incoming, repairCursor: true }))
+
+  const next = store.getState()
+  expect(next.thoughts).toBe(incoming)
+  expect(next.thoughtUi[a.id]).toBe(previous.thoughtUi[a.id])
+  expect(getThoughtById(next, a.id)).toMatchObject({
+    value: 'incoming a',
+    generating: true,
+    displayValue: 'preview',
+    splitSource: c.id,
+  })
+  expect(next.thoughtUi[c.id]).toBeUndefined()
+  expect(getThoughtById(next, c.id)).toBeUndefined()
+  expect(previous.thoughtUi[c.id]).toEqual({ generating: true, displayValue: 'deleted preview' })
+  expect(getThoughtById(previous, a.id)).toBe(rendered)
+  expect(rendered).toMatchObject({ value: 'a', displayValue: 'preview' })
 })
 
 it('publishes a canonical snapshot atomically without adding history or authored writes', async () => {
