@@ -62,9 +62,10 @@ const composePendingFormat = (
  * - The only way to intercept a native undo gesture is via the `beforeinput` event, which is only dispatched when the native undo stack has a step
  * to undo. `beforeInput` keeps a step available by recycling WebKit's position through the stack after each gesture, so one step anywhere in the
  * stack is enough — but until something registers that first step, the gesture is not dispatched at all.
- * - If there are no editables, such as after undoing the creation of the only remaining thought, then there will be no `beforeinput` event and native
- * undo/redo behavior will stop having an effect. Technically, native undo is still running, but it doesn't know how to re-create a deleted thought.
- * The next gesture that does reach `beforeInput` anchors a fresh step itself, so the gestures resume once a thought is focused again.
+ * - Registering an undo step needs a focused editable, so when there are none — as after undoing the creation of the only remaining thought — no
+ * further undo step is registered. The next gesture that does reach `beforeInput` anchors a fresh step itself, so undo gestures resume once a
+ * thought is focused again. Redo is unaffected: `device/nativeHistory.ts` registers its redo step on a hidden editing host
+ * that always exists.
  */
 const registerNativeUndoStep = (html: string): void => {
   if (!isTouch || !isSafari()) return
@@ -124,10 +125,9 @@ export const formatSelectionActionCreator =
         setIsMulticursorExecuting({ value: false }),
       ])
 
-      // Refresh the command state from the edited thoughts so that the swatch reflects the color that was just applied,
-      // as the single thought path below does. Nothing else refreshes it here: the url history middleware only does so
-      // on a cursor change, which never happens for a multiselection that has no cursor, and a held format changes no
-      // thought value at all.
+      // The edits change neither the cursor nor the multicursors, so updateUrlHistoryMiddleware does not detect them,
+      // and a held format changes no thought value at all. Update the command state directly, otherwise the swatch of
+      // the color that was just applied would not be selected and tapping it again would not toggle the color off.
       updateCommandState()
 
       return
