@@ -53,6 +53,7 @@ import caretRectStore from '../stores/caretRectStore'
 import editableSyncStore from '../stores/editableSyncStore'
 import editingValueStore from '../stores/editingValueStore'
 import editingValueUntrimmedStore from '../stores/editingValueUntrimmedStore'
+import ministore from '../stores/ministore'
 import multitouchStore from '../stores/multitouchStore'
 import storageModel from '../stores/storageModel'
 import touchStore from '../stores/touchStore'
@@ -98,9 +99,8 @@ interface EditableProps {
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
 }
 
-/** Descends a chain of formatting elements that each wrap the whole thought, returning the innermost one. */
-// this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
-let cursorOffsetInitialized = false
+/** Whether the cursor offset restored from storage has been applied, so that it is applied only on the initial setCursorOnThought. A ministore rather than a module variable so that each test starts with the restore still pending, as a fresh page load does. Read imperatively; nothing subscribes. */
+const cursorOffsetInitializedStore = ministore(false)
 
 // Maximum time between a tap's touchend and the click that the browser synthesizes from it. Debug logs of taps on
 // iOS Safari put that delay at 1-64 ms, and the fastest measured double tap at 100 ms, so this is long enough to
@@ -282,7 +282,7 @@ const Editable = ({
         let offset = null
 
         // if running for the first time, restore the offset if the path matches the restored cursor
-        if (!cursorOffsetInitialized) {
+        if (!cursorOffsetInitializedStore.getState()) {
           const restored: { path: Path | null; offset: number | null } = storageModel.get('cursor')
           if (path && restored.offset && equalPath(restored.path, path)) {
             offset = restored.offset || null
@@ -290,7 +290,7 @@ const Editable = ({
         }
 
         // Prevent the cursor offset from being restored after the initial setCursorOnThought.
-        cursorOffsetInitialized = true
+        cursorOffsetInitializedStore.update(true)
 
         dispatch(
           setCursor({
