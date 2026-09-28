@@ -8,6 +8,7 @@ import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import splitSentencesCommand from '../splitSentences'
+import toggleDoneCommand from '../toggleDone'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
 beforeEach(initStore)
@@ -94,6 +95,38 @@ describe('toggleSortPicker error', () => {
 
     expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
+
+  // https://github.com/cybersemics/em/issues/4083
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when toggling done on a non-first thought under Updated %s sort',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One
+            - Two
+            - Three
+          `,
+        }),
+        setCursor(['One']),
+      ])
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['Two']))
+      executeCommand(toggleDoneCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
 
   it.each(['Asc', 'Desc'] as const)(
     'does not report an error after Split Sentences in a context sorted by Created %s',

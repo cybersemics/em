@@ -1,7 +1,10 @@
 import Command from '../@types/Command'
+import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { toggleThoughtActionCreator as toggleThought } from '../actions/toggleThought'
 import Icon from '../components/icons/Check'
 import findDescendant from '../selectors/findDescendant'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import hasMulticursor from '../selectors/hasMulticursor'
 import head from '../util/head'
@@ -34,6 +37,25 @@ const toggleDone = {
       toggleThought({
         path: cursor,
         values: ['=done'],
+      }),
+    )
+
+    const stateAfterToggle = getState()
+    const cursorAfterToggle = stateAfterToggle.cursor
+    if (!cursorAfterToggle) return
+
+    const thought = getThoughtById(stateAfterToggle, head(cursorAfterToggle))
+    if (!thought) return
+    if (getSortPreference(stateAfterToggle, thought.parentId).type !== 'Updated') return
+
+    const newRank = getSortedRank(stateAfterToggle, thought.parentId, thought.value)
+    if (newRank === thought.rank) return
+
+    dispatch(
+      moveThought({
+        oldPath: cursorAfterToggle,
+        newPath: cursorAfterToggle,
+        newRank,
       }),
     )
   },
