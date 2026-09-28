@@ -93,12 +93,11 @@ const useAutocrop = (spaceAbove: number): number => {
 
   const autocropLast = useRef(autocrop)
 
-  // Counter-scroll by the delta of the offset that actually shifts the thoughts, not by the delta of spaceAboveExtended.
-  // The two are equivalent when only spaceAbove changes, but a viewport-only change (e.g. the Android keyboard shrinking
-  // the WebView) moves spaceAboveExtended without moving the offset, which would otherwise scroll the caret out of view.
+  // When the thoughts are shifted, scroll by the same amount so that they appear to stay in the same place.
+  // Track the shift itself rather than spaceAboveExtended, which also changes with the viewport height, e.g. on rotation (#3990) or when the Android keyboard resizes the WebView (#5670).
   useEffect(
     () => {
-      window.scrollTo({ top: scrollY + (autocrop - autocropLast.current) })
+      window.scrollTo({ top: scrollY + autocrop - autocropLast.current })
       autocropLast.current = autocrop
     },
     // do not trigger effect on scrollY change

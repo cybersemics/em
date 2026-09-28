@@ -6,6 +6,7 @@ import isRedoEnabled from '../selectors/isRedoEnabled'
 import isUndoEnabled from '../selectors/isUndoEnabled'
 import store from '../stores/app'
 import editableSyncStore from '../stores/editableSyncStore'
+import { registerReset } from '../stores/ministore'
 import * as selection from './selection'
 
 /** How long after a three-finger swipe recognized from touch events the matching `historyUndo`/`historyRedo` `beforeinput` is treated as the same gesture rather than a new one. */
@@ -347,5 +348,9 @@ const nativeHistory = {
     unsubscribe = null
   },
 }
+
+// Remove the plugin listener and the store subscription at every test boundary. init is idempotent only while they are
+// held, so releasing them is what lets the next test init again.
+registerReset(nativeHistory.destroy)
 
 export default nativeHistory

@@ -2,7 +2,6 @@ import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { undoActionCreator as undo } from '../../actions/undo'
-import { resetLastCommand } from '../../commands'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
@@ -12,10 +11,7 @@ import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import head from '../../util/head'
 
-beforeEach(async () => {
-  await createTestApp()
-  resetLastCommand()
-})
+beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 /** Presses a keyboard shortcut on the window, where the global keyDown handler picks it up and executes the matching command. */
