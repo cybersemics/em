@@ -4,8 +4,9 @@ name: BrowserStack Android
 # unrelated workflow files cannot change what this workflow tests, so a change set confined to them
 # has nothing for a real device to exercise. Nor can the code that is outside the web build:
 # packages/ai is a separate Vercel service reached over HTTP, eslint-plugin-em is loaded only by
-# eslint.config.js, the scripts/ workspaces are CI automation, and src/e2e/puppeteer belongs to
-# Puppeteer. Test filters none of those — it collects their unit tests — so the two lists differ
+# eslint.config.js, the scripts/ workspaces are CI automation, src/e2e/puppeteer belongs to
+# Puppeteer, and src/e2e/iOS/__tests__ holds the iOS specs, which this suite's config never runs.
+# Test filters none of those — it collects their unit tests — so the two lists differ
 # deliberately; see docs/testing.md § Path filtering.
 # Skipping is worth more here than in a cheap workflow: every run occupies a slot in the shared
 # BrowserStack session pool, so one pointless run delays every other PR's device tests behind it.
@@ -89,6 +90,8 @@ on:
       - 'scripts/issue-classifier/**'
       # The other browser suite. The two share no imports.
       - 'src/e2e/puppeteer/**'
+      # The iOS specs. This suite imports the iOS helpers and config, so only the specs are filtered.
+      - 'src/e2e/iOS/__tests__/**'
   pull_request_target:
     types: [opened, synchronize, reopened]
     # GitHub Actions does not support YAML anchors, so this list is duplicated from `push` above.
@@ -140,6 +143,7 @@ on:
       - 'scripts/estimate/**'
       - 'scripts/issue-classifier/**'
       - 'src/e2e/puppeteer/**'
+      - 'src/e2e/iOS/__tests__/**'
   workflow_dispatch:
     inputs:
       rerun_id:
