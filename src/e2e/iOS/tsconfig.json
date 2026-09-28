@@ -1,6 +1,6 @@
 {
-  // Typechecks the WebdriverIO (iOS Safari) tests. This is the only program that declares WebdriverIO's
-  // globals — browser, $, $$, and expect from @wdio/globals/types, mocha's describe/it via
+  // Typechecks the WebdriverIO (iOS Safari) tests. This and src/e2e/android/tsconfig.json are the only programs
+  // that declare WebdriverIO's globals — browser, $, $$, and expect from @wdio/globals/types, mocha's describe/it via
   // @wdio/mocha-framework — and @wdio/browserstack-service's global interfaces (State, GRRUrls, …).
   // The root tsconfig excludes this directory so that none of those leak into app code. Modules shared
   // with the app (e.g. src/util/consoleProxy.ts) are pulled in here by import and are therefore checked
