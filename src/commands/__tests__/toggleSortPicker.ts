@@ -1,12 +1,15 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { outdentActionCreator as outdent } from '../../actions/outdent'
 import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
 import { executeCommand } from '../../commands'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import categorizeCommand from '../categorize'
 import outdentCommand from '../outdent'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
@@ -96,6 +99,42 @@ describe('toggleSortPicker error', () => {
     expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
 
+  // https://github.com/cybersemics/em/issues/4097
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when a subthought is outdented into a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One
+              - Four
+            - Two
+            - Three
+          `,
+        }),
+        setCursor(['One']),
+      ])
+
+      // Advance the clock between each step so that the imported thoughts, the sort preference, and the outdent all
+      // have distinct updated timestamps, as they do when a user sorts a context and outdents a thought some time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch([setCursor(['One', 'Four']), outdent()])
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
   it.each(['Asc', 'Desc'] as const)(
     'does not report an error after Split Sentences in a context sorted by Created %s',
     direction => {
@@ -174,4 +213,44 @@ describe('toggleSortPicker error', () => {
 
     expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
+
+  // https://github.com/cybersemics/em/issues/4101
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after Categorize in a context sorted by Created %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One
+            - Two
+            - Three
+          `,
+        }),
+        setCursor(['Two']),
+      ])
+
+      // Advance the clock between each step so that the thoughts, the sort preference, and the categorized thought all
+      // have distinct created timestamps, as they do when a user sorts a context and categorizes a thought in it some
+      // time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Created', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      executeCommand(categorizeCommand, { store })
+
+      // The new parent is created empty, and empty thoughts are exempt from the sort condition, so the error can only
+      // surface once the user types into it.
+      store.dispatch(editThought([''], 'Four'))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
 })

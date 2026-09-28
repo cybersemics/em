@@ -72,10 +72,12 @@ const ministore = <T>(initialState: T, { dispose }: MinistoreOptions<T> = {}): M
   const update = (updatesOrUpdater: Partial<T> | ((state: T) => Partial<T>)) => {
     const updates = typeof updatesOrUpdater === 'function' ? updatesOrUpdater(state) : updatesOrUpdater
 
-    // short circuit if value(s) are unchanged
+    // short circuit if value(s) are unchanged; a null state can transition to an object
     if (
       updates && typeof updates === 'object'
-        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ? state !== null &&
+          typeof state === 'object' &&
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           Object.entries(updates).every(([key, value]) => value === (state as any)[key])
         : updates === state
     )

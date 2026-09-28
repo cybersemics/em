@@ -50,6 +50,19 @@ const newSubthoughtCommand = {
   id: 'newSubthought',
   label: 'New Subthought' as const,
   description: 'Create a new subthought in the current thought. Adds it to the bottom of any existing subthoughts.',
+  longDescription: (
+    <>
+      <p>
+        Subthoughts are how a thought grows depth. A subthought lives one level inside its parent and shares its
+        context.
+      </p>
+      <p>
+        Use subthoughts to break a thought into the parts that make it up — chapters of a book, steps in a plan, members
+        of a list.
+      </p>
+      <p>Every subthought is itself a thought, with the same powers as any other. Nest as deeply as you need.</p>
+    </>
+  ),
   gesture: 'rdr',
   keyboard: { key: 'Enter', meta: true },
   multicursor,
