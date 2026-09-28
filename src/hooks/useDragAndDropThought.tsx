@@ -74,6 +74,13 @@ const canDrag = (props: ThoughtContainerProps) => {
   if (isTouch && multitouchStore.getState()) return false
 
   const state = store.getState()
+
+  // A press that landed on the caret belongs to native caret repositioning, so it must not become a drag when it moves
+  // past the touch slop (#3763). This reads the flag latched by the capture-phase touchstart listener in initEvents
+  // rather than state.longPress, because react-dnd's timer can begin a drag before DragHold is dispatched (see the
+  // longPress reducer).
+  if (touchStore.getState().pressOnCaret) return false
+
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
   const isDraggable = props.isVisible || props.isCursorParent
