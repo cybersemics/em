@@ -213,6 +213,7 @@ On touch, the cursor is parked outside the selection for as long as more than on
 | `reverse` | Iterate cursors in reverse document order (matters for ops like move). |
 | `clearMulticursor` | Clear the multicursor selection after execution. |
 | `selectNewCursors` | Select the thoughts the executions moved the cursor to instead of restoring the original selection. |
+| `toggle` | Toggle every selected thought in the same direction, based on `isActive` evaluated for each thought on its own (as the cursor, with nothing else selected — the state `exec` runs in). If the command is active on all of them, it executes on all of them; otherwise only on the ones it is not active on. The formatting commands (Bold, Italic, Underline, Strikethrough, Code) set it, with an `isActive` that matches the toolbar highlight — every selected thought formatted in its entirety — so a highlighted button removes the formatting from the whole selection and an unhighlighted one applies it to the whole selection. |
 | `filter` | One of `'all'` (default), `'first-sibling'`, `'last-sibling'`, `'prefer-ancestor'`, applied by [`filterCursors`](../src/selectors/filterCursors.ts). |
 
 `executeCommandWithMulticursor` walks the filtered cursors in document order (`documentSort`), `setCursor`s each path in turn, calls the regular `exec`, and finally restores the original cursor (unless `preventSetCursor` is set) and the multicursors themselves (unless `clearMulticursor` is set). The command executor passes one transaction-scoped dispatch through the synchronous loop, so the entire multi-step operation produces one undo patch with the command's metadata.
@@ -468,7 +469,7 @@ Create a thought within the first subthought. With a multiselect, a new grandchi
 
 ### Categorize
 
-Move the current thought into a new, empty thought at the same level. With a multiselect, every selected thought moves into the new category — and when every visible sibling is selected, the meta attributes that describe the parent's children — `=view`, `=sort`, and the `=children`, `=grandchildren`, and `=descendants` containers — follow them into the category, each moving whole with everything it holds. The parent's own direct `=pin` stays, since it pins the parent itself rather than the wrapped children.
+Move the current thought into a new, empty thought at the same level. With a multiselect, every selected thought moves into the new category — and when every visible sibling is selected, the meta attributes that describe the parent's children — `=view`, `=sort`, and the `=children`, `=grandchildren`, and `=descendants` containers — follow them into the category, each moving whole with everything it holds. The parent's own direct `=pin` stays, since it pins the parent itself rather than the wrapped children. The category takes the place of the thought it wraps, except in a sorted context, where it is ranked by the sort condition like any other newly created thought — so a `Created` context puts it at the end, newest last. See [data-model.md → Visibility and sorting](data-model.md#visibility-and-sorting).
 
 <kbd>Command + Option + o</kbd> or <kbd>Command + ]</kbd>
 

@@ -507,6 +507,15 @@ export const executeCommandWithMulticursor = (
   const canExecute = filteredPaths.every(path => !command.canExecute || command.canExecute({ ...state, cursor: path }))
   if (!canExecute) return
 
+  /** Whether the command is active on the thought alone, i.e. in the state that exec will see after setCursor clears the multicursors. */
+  const isActiveOnPath = (path: Path) => !!command.isActive?.({ ...state, cursor: path, multicursors: {} })
+
+  // Toggle all selected thoughts in the same direction by skipping the ones that are already in the target state.
+  const execPaths =
+    multicursor.toggle && !filteredPaths.every(isActiveOnPath)
+      ? filteredPaths.filter(path => !isActiveOnPath(path))
+      : filteredPaths
+
   const commandMetadata = createCommandMetadata(command, { type: inputMethod, event, keyboardIndex })
   return commandStore.dispatch(
     commandTransaction(commandMetadata, (dispatch, metadata) => {
@@ -515,7 +524,7 @@ export const executeCommandWithMulticursor = (
 
       // Reverse the order of the cursors if the command has reverse multicursor mode enabled.
       if (multicursor.reverse) {
-        filteredPaths.reverse()
+        execPaths.reverse()
       }
 
       // Keep direct multicursor action-creators grouped while command metadata identifies this transaction.
@@ -584,7 +593,7 @@ export const executeCommandWithMulticursor = (
           }
         }
 
-        multicursor.onComplete?.(filteredPaths, dispatch, commandStore.getState)
+        multicursor.onComplete?.(execPaths, dispatch, commandStore.getState)
 
         // The cleared state is preserved while the cursor is set to each selected thought (see setCursor), so reset it now
         // that the command has completed, just as setCursor resets it when a command moves the cursor off a single cleared
@@ -602,7 +611,7 @@ export const executeCommandWithMulticursor = (
         // Custom execution may settle asynchronously; record Repeat once its attributed work is complete.
         let result: void | Promise<void>
         try {
-          result = multicursor.execMulticursor(filteredPaths, dispatch, commandStore.getState)
+          result = multicursor.execMulticursor(execPaths, dispatch, commandStore.getState)
         } catch (error) {
           completeMulticursorExecution()
           throw error
@@ -616,7 +625,7 @@ export const executeCommandWithMulticursor = (
         }
       } else {
         try {
-          for (const path of filteredPaths) {
+          for (const path of execPaths) {
             // Make sure we have the correct path to the thought in case it was moved during execution.
             const recomputedPath = recomputePath(commandStore.getState(), path)
             if (!recomputedPath) continue
