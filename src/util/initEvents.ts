@@ -4,6 +4,7 @@ import { Store } from 'redux'
 import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import Timer from '../@types/Timer'
 import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
@@ -22,7 +23,9 @@ import store from '../stores/app'
 import { updateCaretRect } from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
+import ministore from '../stores/ministore'
 import multitouchStore, { updateMultitouch } from '../stores/multitouchStore'
+import scrollContainerStore from '../stores/scrollContainerStore'
 import { updateScrollTop } from '../stores/scrollTopStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import storageModel from '../stores/storageModel'
@@ -47,19 +50,20 @@ const WINDOW_SCROLLATEDGE_SPEED = 2
 /** How often to save the selection offset to storage when it changes. */
 const SELECTION_CHANGE_THROTTLE = 200
 
-// Store a timeout to determine if the device stays in the passive state.
-// See: onStateChange
-let passiveTimeout = 0
+/** The pending selection.clear that fires if the device stays in the passive state (see onStateChange). A ministore whose dispose clears the timer, so that cleanup and a reset between tests cancel it rather than leaving it to fire later. */
+const passiveTimeoutStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
 
 /** How long after the app resumes to log the viewport geometry a second time. On iOS the viewport can finish resizing after the page is already active, such as when a keyboard that was open when the app was backgrounded is dismissed, and it may do so without firing a resize event, so a second snapshot shows where the viewport settled. */
 const RESUME_SETTLE_DELAY = 1000
 
-/** Timer for the settled viewport snapshot logged after the app resumes. */
-let resumeSettleTimeout = 0
-
-// cache the scroll-at-edge container on start for performance
-// if the Sidebar is open on touch start, this is set to the .sidebar element
-let scrollContainer: Window | HTMLElement = window
+/** Timer for the settled viewport snapshot logged after the app resumes. A ministore whose dispose clears the timer, like passiveTimeoutStore. */
+const resumeSettleTimeoutStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
 
 /** An scroll-at-edge function that will continue scrolling smoothly in a given direction until scroll-at-edge.stop is called. Takes a number of pixels to scroll each iteration. */
 const scrollAtEdge = (() => {
@@ -74,6 +78,7 @@ const scrollAtEdge = (() => {
 
   /** Scroll vertically in the direction given by rate until stop is called. Defaults to scrolling the window, or you can pass an element to scroll. */
   const scroll = () => {
+    const scrollContainer = scrollContainerStore.getState().element
     const el = scrollContainer || window
 
     const scrollLeft = (scrollContainer as HTMLElement).scrollLeft ?? document.documentElement.scrollLeft
@@ -134,38 +139,6 @@ const onBeforeUnload = (e: BeforeUnloadEvent) => {
     e.preventDefault()
     e.returnValue = ''
     return ''
-  }
-}
-
-/** Time to wait for save to complete. */
-const SAVE_ERROR_TIME = 3000
-
-/** Time to show error message before reload. */
-const SAVE_ERROR_RELOAD_TIME = 3000
-
-/** Save error timer id. */
-let saveTimer: NodeJS.Timeout
-
-/**
- * There is a known issue where saving gets stuck after and/redo and further edits are not saved.
- * If it takes longer than 3 seconds to save [to IndexedDB], then there is a major problem!
- * Show an error for three seconds then force a reload to prevent data loss.
- */
-const saveErrorReload = (savingProgress: number) => {
-  if (savingProgress === 1) {
-    clearTimeout(saveTimer)
-  }
-  // Only set timer if one is not already running.
-  // i.e. start timing from the first savingProgress < 1
-  else if (!saveTimer) {
-    saveTimer = setTimeout(() => {
-      store.dispatch(error({ value: 'Save error detected. Reloading to prevent data loss...' }))
-      setTimeout(() => {
-        // remove onBeforeUnload listener to prevent the confirmation dialog and force a reload
-        window.removeEventListener('beforeunload', onBeforeUnload)
-        window.location.reload()
-      }, SAVE_ERROR_RELOAD_TIME)
-    }, SAVE_ERROR_TIME)
   }
 }
 
@@ -290,7 +263,7 @@ const initEvents = (store: Store<State, any>) => {
       !(state.alert?.alertType === AlertType.DeleteDropHint)
     ) {
       const y = e.touches[0].clientY
-      scrollContainer = (target.closest('[data-scroll-at-edge]') as HTMLElement) || window
+      scrollContainerStore.update({ element: (target.closest('[data-scroll-at-edge]') as HTMLElement) || window })
 
       // start scrolling up when within 120px of the top edge of the screen
       if (y < WINDOW_SCROLLATEDGE_UP_SIZE) {
@@ -312,9 +285,10 @@ const initEvents = (store: Store<State, any>) => {
     }
   }
 
-  /** Stops the scroll-at-edge when dragging stops. */
+  /** Stops the scroll-at-edge when dragging stops, and releases the element it was scrolling. */
   const onTouchEnd = () => {
     scrollAtEdge.stop()
+    scrollContainerStore.reset()
   }
 
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
@@ -390,16 +364,16 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
-    clearTimeout(passiveTimeout)
+    passiveTimeoutStore.reset()
 
     // Log lifecycle transitions so that events can be correlated with the app being backgrounded or foregrounded, e.g. a false Command Center open right before an app switch. More direct than inferring suspension from gaps in the log timeline.
     debugLog.log('lifecycle', { oldState, newState })
 
     // Log the viewport geometry when the app resumes and again once it has had time to settle, so that a viewport left at the wrong size by the app switch shows up in the log.
-    clearTimeout(resumeSettleTimeout)
+    resumeSettleTimeoutStore.reset()
     if (newState === 'active') {
       logViewport('resume')
-      resumeSettleTimeout = setTimeout(logViewport, RESUME_SETTLE_DELAY, 'settled') as unknown as number
+      resumeSettleTimeoutStore.update({ timer: setTimeout(logViewport, RESUME_SETTLE_DELAY, 'settled') })
     }
 
     // dismiss the gesture alert on hide
@@ -427,7 +401,7 @@ const initEvents = (store: Store<State, any>) => {
       document.activeElement !== document.body &&
       !document.hasFocus()
     ) {
-      passiveTimeout = setTimeout(selection.clear, 10) as unknown as number
+      passiveTimeoutStore.update({ timer: setTimeout(selection.clear, 10) })
     }
   }
   /** Drag leave handler for file drag-and-drop. Does not handle drag end. */
@@ -532,11 +506,9 @@ const initEvents = (store: Store<State, any>) => {
   // https://github.com/cybersemics/em/issues/1030
   lifecycle.addEventListener('statechange', onStateChange)
 
-  const unsubscribeSaveErrorReload = syncStatusStore.subscribeSelector(state => state.savingProgress, saveErrorReload)
-
   /** Remove window event handlers. */
   const cleanup = () => {
-    unsubscribeSaveErrorReload()
+    passiveTimeoutStore.reset()
     document.removeEventListener('selectionchange', onSelectionChange)
     document.removeEventListener('input', onInput)
     window.removeEventListener('beforeinput', onBeforeInput)
@@ -563,7 +535,7 @@ const initEvents = (store: Store<State, any>) => {
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
     resizeHost.removeEventListener('resize', onResizeLog)
-    clearTimeout(resumeSettleTimeout)
+    resumeSettleTimeoutStore.reset()
     unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
