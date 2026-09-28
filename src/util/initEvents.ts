@@ -33,6 +33,7 @@ import pathToContext from '../util/pathToContext'
 import debugLog from './debugLog'
 import durations from './durations'
 import equalPath from './equalPath'
+import storeSession from './storeSession'
 
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
@@ -49,8 +50,11 @@ const SELECTION_CHANGE_THROTTLE = 200
 /** A touchstart this soon after the last touchend means that touchend was withheld until the touchstart (#5660). A lift and a new touch are never this close together, while the withheld touchend arrives within the same millisecond. */
 const TOUCHEND_WITHHELD_MS = 10
 
-/** The longest gap between the two taps of a double tap. Matches the iOS double tap interval. */
-const DOUBLE_TAP_MS = 350
+/** The longest time from one touchstart to the next for the two to be a double tap. Measured on iOS 27, a pair 222ms apart was a double tap and pairs 617ms or more apart never were. Unlike the gap from the last touchend, this cannot be faked by a withheld touchend, whose arrival is delayed until the next touchstart. */
+const DOUBLE_TAP_MS = 500
+
+/** The storeSession key recording that iOS has been seen withholding a touchend. The stuck state outlives the page, so the knowledge of it has to survive a reload too (#5660). */
+const TOUCHEND_WITHHELD_KEY = 'touchEndWithheld'
 
 // Store a timeout to determine if the device stays in the passive state.
 // See: onStateChange
@@ -310,36 +314,79 @@ const initEvents = (store: Store<State, any>) => {
     scrollAtEdge.stop()
   }
 
+  // the identifier of the last touch, so that the touchstart that flushes its withheld touchend can name it in the log
+  let lastTouchId: number | undefined
+
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
    * the completed touch. Also decides whether this touch's touchend can be trusted (#5660). Registered in the capture
    * phase because touchstart propagation is unreliable in the bubble phase (see the note on the touchmove listener
    * below). */
   const onTouchStart = (e: TouchEvent) => {
-    const { touchEndTimeStamp, touchGap: previousTouchGap, touchEndWithheld: withheldBefore } = touchStore.getState()
+    const {
+      touchEndTimeStamp,
+      touchStartTimeStamp,
+      secondTap: previousSecondTap,
+      touchEndUnreliable: previousUnreliable,
+    } = touchStore.getState()
+    const withheldBefore =
+      touchStore.getState().touchEndWithheld || storeSession.getItem(TOUCHEND_WITHHELD_KEY) === 'true'
     const touchGap = e.timeStamp - touchEndTimeStamp
     // iOS 27 withholds the touchend of a tap and dispatches it immediately before the next touchstart, with the same
     // timeStamp. No finger can lift and touch down again within a few milliseconds, so a gap that short means the
-    // touchend was withheld. iOS does not leave that state for the life of the page, even across blur and refocus.
+    // touchend was withheld. iOS does not leave that state for the rest of the session, even across a reload.
     const touchEndWithheld = withheldBefore || touchGap < TOUCHEND_WITHHELD_MS
-    // The first withheld tap follows the double tap that caused it and has no withheld touchend before it, so it can
-    // only be recognized by the double tap. Only WebKit is affected.
-    const afterDoubleTap = isSafari() && previousTouchGap < DOUBLE_TAP_MS
-    // iOS withholds only the touchend of a tap that leaves the caret where it is. A tap that moves the caret or focus
-    // is delivered on time, so only a touch on the caret's own word is suspect.
+    // iOS may never end the second tap of a double tap, wherever it lands, even on another thought. Only WebKit is
+    // affected.
+    const secondTap = isSafari() && e.timeStamp - touchStartTimeStamp < DOUBLE_TAP_MS
+    // The touch after a double tap is withheld wherever it lands, and iOS may move the caret or focus too late to end
+    // the press.
+    const afterDoubleTap = previousSecondTap
+    // Otherwise only a tap that does nothing, such as one on the caret's own word, turns a withheld touchend into a
+    // long press. A tap that moves the caret or focus ends the press even when its touchend is withheld.
     const touch = e.touches[0]
-    const touchEndUnreliable =
-      (touchEndWithheld || afterDoubleTap) && !!touch && selection.isOnCaretWord(touch.clientX, touch.clientY)
+    const onCaretWord = !!touch && selection.isOnCaretWord(touch.clientX, touch.clientY)
+    const touchEndUnreliable = secondTap || afterDoubleTap || (touchEndWithheld && onCaretWord)
 
-    if (touchEndWithheld && !withheldBefore) {
-      // Log it so that a long press that did not start can be traced back to the stuck state in the debug log.
-      debugLog.log('touchEndWithheld', { touchGap: Math.round(touchGap) })
+    // One entry per stuck touch, so that it can be counted without reading the pointer events around it.
+    if (touchGap < TOUCHEND_WITHHELD_MS) {
+      debugLog.log('touchEndWithheld', {
+        id: lastTouchId,
+        heldFor: Math.round(touchEndTimeStamp - touchStartTimeStamp),
+        guarded: previousUnreliable,
+      })
     }
-    if (touchEndUnreliable) {
-      debugLog.log('touchEndUnreliable', { afterDoubleTap })
-    }
+    lastTouchId = touch?.identifier
 
-    touchStore.update({ suppressCursorAfterTouch: false, touchGap, touchEndWithheld, touchEndUnreliable })
+    // Every input to the guard, on every touch, so that a long press that did or did not start can be traced to it.
+    debugLog.log('touchGuard', {
+      id: touch?.identifier,
+      touchGap: Math.round(touchGap),
+      touchInterval: Math.round(e.timeStamp - touchStartTimeStamp),
+      touchEndWithheld,
+      secondTap,
+      afterDoubleTap,
+      onCaretWord,
+      touchEndUnreliable,
+    })
+
+    if (touchEndWithheld && !withheldBefore) storeSession.setItem(TOUCHEND_WITHHELD_KEY, 'true')
+    touchStore.update({
+      suppressCursorAfterTouch: false,
+      touchStartTimeStamp: e.timeStamp,
+      secondTap,
+      touchEndWithheld,
+      touchEndUnreliable,
+    })
   }
+
+  /** Logs touch pointer events. A touch whose pointerdown is never followed by pointerup or pointercancel is one whose end iOS withheld (#5660). */
+  const onTouchPointer = (e: PointerEvent) => {
+    if (e.pointerType !== 'touch') return
+    debugLog.log(e.type, { id: e.pointerId, x: Math.round(e.clientX), y: Math.round(e.clientY) })
+  }
+
+  /** Logs the touch backend's long-press timer, which it dispatches on document once per press, and whether the #5660 guard refused the press. A timer that is not refused is followed by longPressStart. */
+  const onLongPressTimer = () => debugLog.log('longPressTimer', { refused: touchStore.getState().touchEndUnreliable })
 
   /** Records when the touch ended, so that the next touchstart can tell whether its touchend was withheld (#5660). Registered in the capture phase so that a handler that stops propagation cannot hide it. */
   const onTouchEndCapture = (e: TouchEvent) => {
@@ -472,6 +519,10 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('mousemove', onMouseMove)
   // Note: touchstart may not be propagated after dragHold
   window.addEventListener('touchstart', onTouchStart, { capture: true })
+  for (const type of ['pointerdown', 'pointerup', 'pointercancel'] as const) {
+    window.addEventListener(type, onTouchPointer, { capture: true, passive: true })
+  }
+  window.addEventListener('dragStart', onLongPressTimer, { capture: true })
   window.addEventListener('touchend', onTouchEndCapture, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
@@ -532,6 +583,10 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('touchstart', onTouchStart, { capture: true })
+    for (const type of ['pointerdown', 'pointerup', 'pointercancel'] as const) {
+      window.removeEventListener(type, onTouchPointer, { capture: true })
+    }
+    window.removeEventListener('dragStart', onLongPressTimer, { capture: true })
     window.removeEventListener('touchend', onTouchEndCapture, { capture: true })
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)

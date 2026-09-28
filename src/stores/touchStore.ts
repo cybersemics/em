@@ -8,9 +8,11 @@ const touchStore = ministore({
   suppressCursorAfterTouch: false,
   /** The timeStamp of the last touchend, so that the next touchstart can tell whether that touchend was withheld. */
   touchEndTimeStamp: -Infinity,
-  /** Milliseconds from the last touchend to the touchstart that followed it, so that the touchstart after that can tell whether the two touches before it were a double tap. */
-  touchGap: Infinity,
-  /** Set once iOS has been seen withholding a touchend, and kept for the life of the page. After a double tap on the caret of an editable, iOS 27 stops dispatching touchend and pointerup at the end of a tap that leaves the caret where it is, and flushes them only when the next touch begins (#5660). */
+  /** The timeStamp of the last touchstart, so that the next touchstart can tell whether the two are a double tap. */
+  touchStartTimeStamp: -Infinity,
+  /** Set on touchstart when this touch is the second tap of a double tap, so that the next touchstart knows it follows one. */
+  secondTap: false,
+  /** Set once iOS has been seen withholding a touchend, and kept for the rest of the tab session (also in storeSession, since the state survives a reload). After a double tap on a focused editable, iOS 27 stops dispatching touchend and pointerup at the end of later taps on it, and flushes the touchend only when the next touch begins (#5660). */
   touchEndWithheld: false,
   /** Set on touchstart when this touch's touchend may be withheld, and recomputed on the next touchstart. Such a tap looks exactly like a finger still held down, so while this is set the touch must not start a long press. */
   touchEndUnreliable: false,

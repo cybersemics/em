@@ -118,7 +118,7 @@ let lastFrameTime = 0
 // performance.now() of the last frame marker write, used to throttle it
 let lastMarkerWritten = 0
 
-/** True when the app is served from a development or preview host, where logging defaults to on (disableable per device — see setAutoOptOut): localhost (or another loopback address, matching serviceWorkerRegistration.ts) and Vercel preview deployments (*.vercel.app). Excludes the test environments that also run on localhost — Vitest via MODE, Puppeteer via navigator.webdriver — so tests keep explicit setEnabled semantics and production timing, and excludes the native Capacitor and Tauri shells, which serve production builds from localhost-like origins (capacitor://localhost, https://localhost, tauri://localhost). */
+/** True when the app is served from a development or preview host, where logging defaults to on (disableable per device — see setAutoOptOut): localhost (or another loopback address, matching serviceWorkerRegistration.ts), a private LAN address or mDNS .local name (a phone on the dev server, which `yarn start` exposes with --host), and Vercel preview deployments (*.vercel.app). Excludes the test environments that also run on localhost — Vitest via MODE, Puppeteer via navigator.webdriver — so tests keep explicit setEnabled semantics and production timing, and excludes the native Capacitor and Tauri shells, which serve production builds from localhost-like origins (capacitor://localhost, https://localhost, tauri://localhost). */
 const autoEnabled =
   typeof window !== 'undefined' &&
   typeof navigator !== 'undefined' &&
@@ -129,6 +129,10 @@ const autoEnabled =
   (window.location.hostname === 'localhost' ||
     window.location.hostname === '[::1]' ||
     /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/.test(window.location.hostname) ||
+    /^(?:10(?:\.\d{1,3}){3}|172\.(?:1[6-9]|2\d|3[01])(?:\.\d{1,3}){2}|192\.168(?:\.\d{1,3}){2})$/.test(
+      window.location.hostname,
+    ) ||
+    window.location.hostname.endsWith('.local') ||
     window.location.hostname.endsWith('.vercel.app'))
 
 /** Truncates over-long string fields so a single pathological value cannot exhaust the localStorage quota. */

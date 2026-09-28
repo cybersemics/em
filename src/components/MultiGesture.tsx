@@ -177,7 +177,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
-        debugLog.log('touchstart', { x: Math.round(x), y: Math.round(y) })
+        debugLog.log('touchstart', { id: e.touches[0].identifier, x: Math.round(x), y: Math.round(y) })
         this.clientStart = { x, y }
         // Remember the element the browser pinned this touch to, so a release can still be detected
         // if that element unmounts mid-gesture. See the pointerup listener below.
@@ -199,7 +199,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         console.info('touchend')
       }
       const touch = e.changedTouches[0]
-      debugLog.log('touchend', touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {})
+      debugLog.log(
+        'touchend',
+        touch ? { id: touch.identifier, x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {},
+      )
       this.reset()
     })
 

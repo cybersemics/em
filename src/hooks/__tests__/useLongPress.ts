@@ -29,6 +29,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   document.caretRangeFromPoint = caretRangeFromPoint!
+  sessionStorage.clear()
   await cleanupTestApp()
 })
 
@@ -112,7 +113,38 @@ it('taps on the caret keep not activating drag and drop after taps elsewhere', a
   expect(hasMulticursor(store.getState())).toBe(false)
 })
 
-it('a long press away from the caret activates drag and drop after a double tap', async () => {
+it('a quick second tap on another thought does not activate drag and drop', async () => {
+  await dispatch(importText({ text: '- One\n- Two' }))
+  await act(vi.runOnlyPendingTimersAsync)
+  const bullet = getBulletByContext(['Two'])
+  selection.set(await findThoughtByText('One'), { offset: 3 })
+  await touchesLandOn('Two', 1)
+
+  // a tap, then a second touch 130ms after it lifts, whose touchend iOS withholds
+  await tap(bullet, { hold: 90 })
+  await act(() => vi.advanceTimersByTimeAsync(130))
+  await touchStart(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
+
+  expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
+})
+
+it('a tap on the caret after a reload does not activate drag and drop once iOS has withheld a touchend', async () => {
+  await dispatch(importText({ text: '- One' }))
+  await act(vi.runOnlyPendingTimersAsync)
+  const bullet = getBulletByContext(['One'])
+  selection.set(await findThoughtByText('One'), { offset: 3 })
+  await touchesLandOn('One', 3)
+  // what an earlier page in this tab recorded before the reload
+  sessionStorage.setItem('touchEndWithheld', 'true')
+
+  await touchStart(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
+
+  expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
+})
+
+it('a tap on another thought after a double tap does not activate drag and drop', async () => {
   await dispatch(importText({ text: '- One\n- Two' }))
   await act(vi.runOnlyPendingTimersAsync)
   const bullet = getBulletByContext(['One'])
@@ -124,6 +156,34 @@ it('a long press away from the caret activates drag and drop after a double tap'
   await act(() => vi.advanceTimersByTimeAsync(50))
   await tap(bullet)
   await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  // a tap on another thought, whose touchend iOS withholds
+  await touchesLandOn('Two', 1)
+  await touchStart(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
+
+  expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
+})
+
+it('a long press away from the caret activates drag and drop once iOS is stuck', async () => {
+  await dispatch(importText({ text: '- One\n- Two' }))
+  await act(vi.runOnlyPendingTimersAsync)
+  const bullet = getBulletByContext(['One'])
+  selection.set(await findThoughtByText('One'), { offset: 3 })
+  await touchesLandOn('One', 3)
+
+  // double tap
+  await tap(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(50))
+  await tap(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  // a tap on the caret, whose touchend iOS withholds until the next touchstart
+  await touchStart(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+  await act(async () => {
+    fireEvent.touchEnd(bullet)
+  })
 
   // long press on another thought
   await touchesLandOn('Two', 1)
