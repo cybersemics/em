@@ -21,6 +21,8 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
+const deviceName = process.env.IOS_DEVICE_NAME || 'iPhone 15 Plus'
+const osVersion = process.env.IOS_PLATFORM_VERSION || '17'
 
 let tunnelProcess: ChildProcess | null = null
 
@@ -93,11 +95,11 @@ export const config: WebdriverIO.Config = {
   capabilities: [
     {
       ...baseConfig.baseCapabilities,
-      'appium:deviceName': 'iPhone 15 Plus',
-      'appium:platformVersion': '17',
+      'appium:deviceName': deviceName,
+      'appium:platformVersion': osVersion,
       'bstack:options': {
-        deviceName: 'iPhone 15 Plus',
-        osVersion: '17',
+        deviceName,
+        osVersion,
         projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
         buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
         sessionName: 'iOS Safari Tests',
