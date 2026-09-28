@@ -31,38 +31,38 @@ const modalSnapshots = async (id: Modal) => {
 
 it('modal', async () => {
   const customizeToolbarImages = await modalSnapshots('customizeToolbar')
-  expect(customizeToolbarImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-customizeToolbar` })
-  expect(customizeToolbarImages.light).toMatchImageSnapshot({
+  expect.soft(customizeToolbarImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-customizeToolbar` })
+  expect.soft(customizeToolbarImages.light).toMatchImageSnapshot({
     customSnapshotIdentifier: 'modal-customizeToolbar-light',
   })
 
   const devicesImages = await modalSnapshots('devices')
-  expect(devicesImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-devices` })
-  expect(devicesImages.light).toMatchImageSnapshot({
+  expect.soft(devicesImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-devices` })
+  expect.soft(devicesImages.light).toMatchImageSnapshot({
     customSnapshotIdentifier: 'modal-devices-light',
   })
 
   const exportImages = await modalSnapshots('export')
-  expect(exportImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-export` })
-  expect(exportImages.light).toMatchImageSnapshot({
+  expect.soft(exportImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-export` })
+  expect.soft(exportImages.light).toMatchImageSnapshot({
     customSnapshotIdentifier: 'modal-export-light',
   })
 
   const helpImages = await modalSnapshots('help')
-  expect(helpImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-help` })
-  expect(helpImages.light).toMatchImageSnapshot({
+  expect.soft(helpImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-help` })
+  expect.soft(helpImages.light).toMatchImageSnapshot({
     customSnapshotIdentifier: 'modal-help-light',
   })
 
   const settingsImages = await modalSnapshots('settings')
-  expect(settingsImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-settings` })
-  expect(settingsImages.light).toMatchImageSnapshot({
+  expect.soft(settingsImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-settings` })
+  expect.soft(settingsImages.light).toMatchImageSnapshot({
     customSnapshotIdentifier: 'modal-settings-light',
   })
 
   const welcomeImages = await modalSnapshots('welcome')
-  expect(welcomeImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-welcome` })
-  expect(welcomeImages.light).toMatchImageSnapshot({
+  expect.soft(welcomeImages.dark).toMatchImageSnapshot({ customSnapshotIdentifier: `modal-welcome` })
+  expect.soft(welcomeImages.light).toMatchImageSnapshot({
     customSnapshotIdentifier: 'modal-welcome-light',
   })
 })
