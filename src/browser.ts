@@ -26,11 +26,11 @@ export const isTouch =
  * load (rare) will not be picked up without a reload.
  */
 export const isTablet = () => {
-  const {innerWidth, innerHeight} = viewportStore.getState()
+  const { innerWidth, innerHeight } = viewportStore.getState()
 
-  return isTouch &&
-  typeof window !== 'undefined' &&
-  Math.min(innerWidth, innerHeight) >= parseInt(token('breakpoints.lg'))
+  return (
+    isTouch && typeof window !== 'undefined' && Math.min(innerWidth, innerHeight) >= parseInt(token('breakpoints.lg'))
+  )
 }
 
 /** Returns true on Android, whether running as a native Capacitor app or in an Android browser or
