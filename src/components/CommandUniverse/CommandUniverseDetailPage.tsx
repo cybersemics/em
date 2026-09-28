@@ -29,8 +29,9 @@ const useCommandLabels = (command: Command) => {
 
 /**
  * Level 1 of the Command Universe — the per-command detail page reached by tapping a
- * grid cell. Layout: icon + title + subtitle row, and an optional gesture row showing
- * the diagram with a short caption to its right.
+ * grid cell. Layout: icon + title + subtitle row, optional React content
+ * (`command.longDescription`), and an optional gesture row showing the diagram with a
+ * short caption to its right.
  *
  * This page owns its content and scroller. Navigation, focus, and motion live outside it.
  */
@@ -96,13 +97,37 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
           </div>
         </header>
 
+        {command.longDescription ? (
+          <div
+            className={css({
+              color: 'commandUniverseLongDescriptionText',
+              fontSize: '0.8rem',
+              fontWeight: 300,
+              letterSpacing: '0.075px',
+              lineHeight: 1.5,
+              '& > *': { margin: 0 },
+              '& > * + *': { marginTop: '0.5rem' },
+              '& ul, & ol': { paddingInlineStart: '1.25rem' },
+              '& li + li': { marginTop: '0.25rem' },
+              '& code': {
+                fontFamily: 'inherit',
+                backgroundColor: 'codeBg',
+                padding: '0 0.25em',
+                borderRadius: '0.2em',
+              },
+            })}
+          >
+            {command.longDescription}
+          </div>
+        ) : null}
+
         {command.gesture ? (
           <div
             className={css({
               display: 'flex',
               alignItems: 'center',
               gap: '0.625rem',
-              paddingTop: 0,
+              paddingTop: command.longDescription ? '0.775rem' : 0,
               paddingBottom: '1.45rem',
             })}
           >
