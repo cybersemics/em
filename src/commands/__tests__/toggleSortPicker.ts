@@ -217,12 +217,19 @@ describe('toggleSortPicker error', () => {
         importText({
           text: `
             - One
-            - Two
-            - Three
           `,
         }),
         setCursor(['One']),
       ])
+
+      vi.advanceTimersByTime(1000)
+      store.dispatch(newThought({ value: 'Two' }))
+      vi.advanceTimersByTime(1000)
+      store.dispatch(newThought({ value: 'Three' }))
+
+      store.dispatch(setCursor(['One']))
+
+      vi.advanceTimersByTime(1000)
 
       const state = store.getState()
       store.dispatch(
@@ -231,6 +238,8 @@ describe('toggleSortPicker error', () => {
           sortPreference: { type: 'Created', direction },
         }),
       )
+
+      vi.advanceTimersByTime(1000)
 
       executeCommand(pinAllCommand, { store })
 
