@@ -47,8 +47,8 @@ const toggleSortCommand = {
 
     // Ignore thoughts that are placed rather than sorted: empty and emoji-only thoughts, which are sorted to their
     // point of creation, and hidden attributes, which are inserted above their siblings by getPrevRank no matter what
-    // the sort condition says. Archiving a thought creates =archive that way, and under Updated its lastUpdated is
-    // now, so its rank inverts against every sibling in either direction (#4086).
+    // the sort condition says. toggleAttribute creates =pin, =view, etc. that way, and under Updated their lastUpdated
+    // is now, so their rank inverts against every sibling in either direction (#4086).
     const childrenRanked = getChildrenRanked(state, id).filter(
       child => isVisible(state, child) && !isEmptyOrEmojiOnly(child.value),
     )
