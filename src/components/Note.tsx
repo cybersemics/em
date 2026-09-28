@@ -18,7 +18,7 @@ import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import useFreshCallback from '../hooks/useFreshCallback'
-import { firstVisibleChild } from '../selectors/getChildren'
+import { firstVisibleChild, getChildrenSorted } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import noteValue from '../selectors/noteValue'
 import resolveNoteKey from '../selectors/resolveNoteKey'
@@ -29,6 +29,7 @@ import appendToPath from '../util/appendToPath'
 import equalPathHead from '../util/equalPathHead'
 import head from '../util/head'
 import strip from '../util/strip'
+import trimHtml from '../util/trimHtml'
 import useCaretRestore from './Editable/useCaretRestore'
 import useOnCut from './Editable/useOnCut'
 import FauxCaret from './FauxCaret'
@@ -48,7 +49,9 @@ const Note = React.memo(
     const fontSize = useSelector(state => state.fontSize)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
-    const [noteDraft, setNoteDraft] = useState<string | null>(null)
+    // A draft preserves the user's comma spacing while typing. A forced editor refresh (e.g. undo/redo)
+    // invalidates it in the same render, before the caret effect runs, so it cannot mask the restored value.
+    const [noteDraft, setNoteDraft] = useState<{ value: string; editableNonce: number } | null>(null)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
     const note = useSelector(state => noteValue(state, path))
@@ -66,7 +69,7 @@ const Note = React.memo(
       const targetPath = resolveNotePath(state, path)
       const { noteId } = resolveNoteKey(state, head(path))
       if (targetPath && !noteId) {
-        setNoteDraft(noteValue(state, path) ?? '')
+        setNoteDraft({ value: noteValue(state, path) ?? '', editableNonce: state.editableNonce })
       }
       // Bail if state already has the caret on this note. Then the focus did not come from the user: it came from the
       // effect below placing the caret, which focuses the note as a side effect. There is no cursor to move, but
@@ -170,7 +173,7 @@ const Note = React.memo(
           if (!noteId && resolvedTargetPath) {
             const values = value.split(',').map(value => value.trim())
 
-            setNoteDraft(value)
+            setNoteDraft({ value, editableNonce: state.editableNonce })
             dispatch(
               editNotePath({
                 noteOffset: noteOffset ?? undefined,
@@ -205,9 +208,40 @@ const Note = React.memo(
       [dispatch, path, justPasted],
     )
 
-    /** Set state.noteFocus if Note lost focus and did not move to another Note. Set state.keyboardOpen if keyboard is closed. */
-    const onBlur = useCallback(
+    /** Trims the saved note and updates focus and keyboard state when editing ends. */
+    const onBlur = useFreshCallback(
       (e: React.FocusEvent) => {
+        if (editableSyncStore.getState().suppressBlurSync || editableSyncStore.getState().suppressChange) return
+
+        // Input saves synchronously. Trim fresh state rather than replaying the DOM, which may be stale after a
+        // command or undo. Only update an existing note so blur cannot recreate one that was just deleted.
+        dispatch((dispatch, getState) => {
+          const state = getState()
+          const targetPath = resolveNotePath(state, path)
+          if (!targetPath) return
+
+          const { noteId } = resolveNoteKey(state, head(path))
+          if (noteId) {
+            const thought = firstVisibleChild(state, head(targetPath))
+            if (!thought) return
+            const value = trimHtml(thought.value)
+            if (value !== thought.value) {
+              dispatch(
+                editThought({
+                  path: appendToPath(targetPath, thought.id) as SimplePath,
+                  oldValue: thought.value,
+                  newValue: value,
+                }),
+              )
+            }
+          } else {
+            const children = getChildrenSorted(state, head(targetPath))
+            const values = children.map(child => trimHtml(child.value))
+            if (values.some((value, index) => value !== children[index].value)) {
+              dispatch(editNotePath({ path: targetPath, values }))
+            }
+          }
+        })
         setNoteDraft(null)
         if (!selection.isNote(e.relatedTarget)) {
           dispatch(setNoteFocus({ value: false }))
@@ -216,7 +250,7 @@ const Note = React.memo(
           dispatch(keyboardOpen({ value: false }))
         }
       },
-      [dispatch],
+      [dispatch, path],
     )
 
     const onMouseDown = useCallback(() => preventAutoscroll(noteRef.current), [noteRef])
@@ -261,7 +295,7 @@ const Note = React.memo(
           <FauxCaret caretType='noteStart' />
         </span>
         <ContentEditable
-          html={noteDraft ?? note ?? ''}
+          html={(noteDraft?.editableNonce === editableNonce ? noteDraft.value : note) ?? ''}
           innerRef={noteRef as React.RefObject<HTMLElement>}
           aria-label='note-editable'
           data-thought-id={head(path)}

@@ -1,4 +1,4 @@
-/** Trims leading and trailing whitespace from an HTML string. */
+/** Trims boundary whitespace, including encoded spaces, while preserving HTML and interior whitespace. */
 const trimHtml = (input: string): string => {
   let startTags = ''
   let content = input
@@ -7,7 +7,7 @@ const trimHtml = (input: string): string => {
   // Trim leading whitespace
   while (content.length > 0) {
     const tagMatch = content.match(/^<[^>]*>/)
-    const whitespaceMatch = content.match(/^\s+/)
+    const whitespaceMatch = content.match(/^(?:\s|&nbsp;|&#(?:0*(?:32|160)|x0*(?:20|a0));)+/i)
 
     if (tagMatch) {
       startTags += tagMatch[0]
@@ -22,7 +22,7 @@ const trimHtml = (input: string): string => {
   // Trim trailing whitespace
   while (content.length > 0) {
     const tagMatch = content.match(/<[^>]*>$/)
-    const whitespaceMatch = content.match(/\s+$/)
+    const whitespaceMatch = content.match(/(?:\s|&nbsp;|&#(?:0*(?:32|160)|x0*(?:20|a0));)+$/i)
 
     if (tagMatch) {
       endTags = tagMatch[0] + endTags
