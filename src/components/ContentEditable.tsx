@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { isTouch } from '../browser'
-import editableSyncStore from '../stores/editableSync'
+import editableSyncStore from '../stores/editableSyncStore'
 
 interface ContentEditableProps extends Omit<React.HTMLProps<HTMLDivElement>, 'onChange'> {
   style?: React.CSSProperties

@@ -5,8 +5,8 @@ import Gesture from '../@types/Gesture'
 import { noop } from '../constants'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import testFlags from '../e2e/testFlags'
-import { clearGesture, updateGesture } from '../stores/gesture'
-import viewportStore from '../stores/viewport'
+import { clearGesture, updateGesture } from '../stores/gestureStore'
+import viewportStore from '../stores/viewportStore'
 import debugLog from '../util/debugLog'
 import isInGestureZone from '../util/isInGestureZone'
 import GestureMenu from './GestureMenu/GestureMenu'
@@ -105,6 +105,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
   currentStart: Point | null = null
   leftHanded = false
   minDistanceSquared = 0
+  multitouch = false
   scrollYStart: number | null = null
   disableScroll = false
   panResponder: PanResponderInstance
@@ -146,11 +147,30 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // enable/disable scrolling based on where the user clicks
     // TODO: Could this be moved to onMoveShouldSetResponder?
     document.body.addEventListener('touchstart', e => {
+      // Latch as soon as a second finger lands, before the in-progress check below, so that a finger joining a
+      // gesture already underway is caught too. It stays latched until every finger is up.
+      if (e.touches.length > 1) {
+        this.multitouch = true
+      }
+
       // If a gesture is already in progress (this.currentStart is set in onPanResponderMove),
       // ignore additional touchstarts. Otherwise a stray finger landing outside the gesture zone
       // would set this.abandon = true, which causes onPanResponderRelease to skip props.onEnd —
       // leaving the gesture menu and transparent overlay stuck on screen. See #3887.
       if (this.currentStart) return
+
+      // Two-finger tracing must not be interpreted as a gesture. If a second finger touches down
+      // before any gesture has begun, abandon the sequence so nothing happens: onPanResponderMove
+      // and onPanResponderRelease both bail out when this.abandon is set, preventing the trace,
+      // the gesture menu, and any command from being triggered. This runs after the currentStart
+      // guard above so a stray finger during an already-recognized single-finger gesture is still
+      // ignored rather than abandoning it (see #3887). See #4233.
+      if (e.touches.length > 1) {
+        this.abandon = true
+        this.disableScroll = false
+        clearGesture()
+        return
+      }
 
       if (testFlags.logMultigesture) {
         const x = e.touches[0].clientX
@@ -187,6 +207,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       }
       const touch = e.changedTouches[0]
       debugLog.log('touchend', touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {})
+      // Only clear the multitouch latch once every finger is up. Fingers leave one at a time, so clearing it on the
+      // first touchend would let the last finger still down be tracked as a new single-finger gesture.
+      if (e.touches.length === 0) {
+        this.multitouch = false
+      }
       this.reset()
     })
 
@@ -203,6 +228,9 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         safeAreaBottom: getSafeAreaBottom(),
       })
       this.props.onCancel?.({ clientStart: this.clientStart, e })
+      if (e.touches.length === 0) {
+        this.multitouch = false
+      }
       this.reset()
     })
 
@@ -268,6 +296,16 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         }
 
         if (this.abandon) {
+          return
+        }
+
+        // A gesture is always a single finger. iOS reports its own multi-finger system gestures — notably the
+        // three-finger swipe that undoes and redoes — to the page as ordinary touch events, and tracking the first
+        // of those fingers would commit them as em gestures: a three-finger swipe left matches cursorForward and a
+        // swipe right matches cursorBack. Both are undoable, so each one clears the redo stack and the redo half of
+        // the gesture it was meant to be finds nothing to restore (#5575). device/nativeHistory.ts recognizes the
+        // swipe for what it is.
+        if (this.multitouch) {
           return
         }
 

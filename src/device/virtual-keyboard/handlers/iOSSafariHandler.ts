@@ -3,7 +3,7 @@ import _ from 'lodash'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
-import viewportStore, { updateSize } from '../../../stores/viewport'
+import viewportStore, { updateSize } from '../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
 import getSafeAreaBottom from '../getSafeAreaBottom'
 
