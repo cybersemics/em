@@ -10,7 +10,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 - [`/src/components`](../src/components) — React components.
 - [`/src/data-providers`](../src/data-providers) — Storage and sync backends implementing the [`DataProvider`](../src/data-providers/DataProvider.ts) interface. The live implementation is TreeCRDT in [`treecrdt/thoughtspace.ts`](../src/data-providers/treecrdt/thoughtspace.ts). See [persistence.md](persistence.md).
 - [`/src/device`](../src/device) — Device/DOM-level helpers for selection, scrolling, clipboard, focus, and platform detection. The selection wrapper [`device/selection.ts`](../src/device/selection.ts) is the single point of access to `window.getSelection()` (enforced by lint). See [cursor-and-caret.md](cursor-and-caret.md).
-- [`/src/e2e`](../src/e2e) — End-to-end test setup, including Puppeteer and iOS environments. See [testing.md](testing.md).
+- [`/src/e2e`](../src/e2e) — End-to-end test setup, including the Puppeteer, iOS, and Android environments. See [testing.md](testing.md).
 - [`/src/hooks`](../src/hooks) — React hooks.
 - [`/src/recipes`](../src/recipes) — Panda CSS recipes that define styled component variants. New components should use these or inline styles.
 - [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers (e.g. the [`pushQueue`](../src/redux-enhancers/pushQueue.ts) that flushes state mutations to thoughtspace persistence).

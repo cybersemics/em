@@ -36,15 +36,18 @@ import { setNoteFocusActionCreator as setNoteFocus } from './setNoteFocus'
  *
  * In order to avoid keyboard focus messiness, this is only called when the keyboard is open and the caret is on a thought.
  * This means that when the keyboard is closed, a native undo step will not be registered and the native undo stack will drift out of sync.
- * The native undo stack will already drift out of sync for unrelated reasons such as `undoTwice` behavior, and non-editing actions that are
- * undoable.
+ * The native undo stack can already drift out of sync because non-editing actions may be undoable without creating a
+ * native editing step.
  *
  * Limitations:
  *
  * - The only way to intercept a native undo gesture is via the `beforeinput` event, which is only dispatched when the native undo stack has a step
- * to undo. When the stack drifts out of sync, the native dialog will not display an option to undo or redo past a certain point.
- * - If there are no editables, such as after undoing the creation of the only remaining thought, then there will be no `beforeinput` event and native
- * undo/redo behavior will stop having an effect. Technically, native undo is still running, but it doesn't know how to re-create a deleted thought.
+ * to undo. `beforeInput` keeps a step available by recycling WebKit's position through the stack after each gesture, so one step anywhere in the
+ * stack is enough — but until something registers that first step, the gesture is not dispatched at all.
+ * - Registering an undo step needs a focused editable, so when there are none — as after undoing the creation of the only remaining thought — no
+ * further undo step is registered. The next gesture that does reach `beforeInput` anchors a fresh step itself, so undo gestures resume once a
+ * thought is focused again. Redo is unaffected: `device/nativeHistory.ts` registers its redo step on a hidden editing host
+ * that always exists.
  */
 const registerNativeUndoStep = (html: string): void => {
   if (!isTouch || !isSafari()) return
@@ -93,9 +96,9 @@ export const formatSelectionActionCreator =
         setIsMulticursorExecuting({ value: false }),
       ])
 
-      // Refresh the command state from the edited thoughts so that the swatch reflects the color that was just applied,
-      // as the single thought path below does. The url history middleware only refreshes it on a cursor change, which
-      // never happens for a multiselection that has no cursor.
+      // The edits change neither the cursor nor the multicursors, so updateUrlHistoryMiddleware does not detect them.
+      // Update the command state directly, otherwise the swatch of the color that was just applied would not be
+      // selected and tapping it again would not toggle the color off.
       updateCommandState()
 
       return

@@ -1,6 +1,6 @@
 import reactMinistore from './react-ministore'
 
-/** A store that tracks state related to syncing. Updated by the treecrdt thoughtspace data provider. */
+/** A store that tracks state related to syncing. The pull queue updates isPulling and file import updates importProgress. Nothing has written savingProgress since the treecrdt thoughtspace, so it stays at 1. */
 const syncStatusStore = reactMinistore<{
   /** Tracks if the pullQueue is currently pulling. */
   isPulling: boolean

@@ -46,7 +46,7 @@ const touchesLandOn = async (text: string, offset: number) => {
 /** Starts a touch on an element. */
 const touchStart = (el: HTMLElement) =>
   act(async () => {
-    fireEvent.touchStart(el, { touches: [{ clientX: 0, clientY: 0 }] })
+    fireEvent.touchStart(el, { touches: [{ clientX: 0, clientY: 0 }], changedTouches: [{ clientX: 0, clientY: 0 }] })
   })
 
 /** Touches an element, lifting the finger after the given number of milliseconds. */

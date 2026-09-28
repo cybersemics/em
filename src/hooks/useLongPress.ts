@@ -89,10 +89,18 @@ const useLongPress = (
    * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
+      if (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2) return
+
+      // A press that lands on the caret is the user reaching for native caret repositioning, not the start of a drag.
+      // Never marking the press keeps the rest of the chain — haptics, the scroll lock, DragHold — from running (#3763).
+      // The flag is latched by the capture-phase touchstart listener in initEvents, which runs first.
+      if (touchStore.getState().pressOnCaret) return
+
       // While iOS is withholding touchend, a tap cannot be told apart from a finger held down, so any touch would
       // reach the long press delay. Not pressing is what keeps the long press from starting (#5660).
       if ('touches' in e.nativeEvent && touchStore.getState().touchEndUnreliable) return
-      if ('touches' in e.nativeEvent || e.nativeEvent.button !== 2) setPressing(true)
+
+      setPressing(true)
     },
     [setPressing],
   )
