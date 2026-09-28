@@ -13,6 +13,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
+import initKeyboardSelection from '../device/initKeyboardSelection'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
@@ -216,6 +217,12 @@ const initEvents = (store: Store<State, any>) => {
   /** Input event listener. The caret is measured again after the text changes, since a deletion moves the caret without
    * the browser firing another selectionchange once the new text has been laid out. */
   const onInput = () => updateCaretRect()
+
+  /** Beforeinput event listener. Native undo/redo gestures, and the events nativeHistory dispatches to keep WebKit's history usable, are consumed by nativeHistory before em's own handling sees them. */
+  const onBeforeInput = (e: InputEvent) => {
+    if (nativeHistory.beforeInput(e)) return
+    beforeInput(e)
+  }
 
   /** MouseMove event listener. */
   const onMouseMove = _.debounce(
@@ -444,7 +451,7 @@ const initEvents = (store: Store<State, any>) => {
 
   document.addEventListener('selectionchange', onSelectionChange)
   document.addEventListener('input', onInput)
-  window.addEventListener('beforeinput', beforeInput)
+  window.addEventListener('beforeinput', onBeforeInput)
   window.addEventListener('keydown', keyDown)
   window.addEventListener('keyup', keyUp)
   window.addEventListener('popstate', onPopstate)
@@ -489,6 +496,7 @@ const initEvents = (store: Store<State, any>) => {
   resizeHost.addEventListener('resize', onResizeLog)
 
   // Initialize virtual keyboard handlers
+  const unsubscribeKeyboardSelection = initKeyboardSelection()
   virtualKeyboardHandler.init()
 
   // Route iOS native undo/redo gestures through em's undo/redo in the Capacitor app
@@ -503,7 +511,7 @@ const initEvents = (store: Store<State, any>) => {
     passiveTimeoutStore.reset()
     document.removeEventListener('selectionchange', onSelectionChange)
     document.removeEventListener('input', onInput)
-    window.removeEventListener('beforeinput', beforeInput)
+    window.removeEventListener('beforeinput', onBeforeInput)
     window.removeEventListener('keydown', keyDown)
     window.removeEventListener('keyup', keyUp)
     window.removeEventListener('popstate', onPopstate)
@@ -528,6 +536,7 @@ const initEvents = (store: Store<State, any>) => {
     resizeHost.removeEventListener('resize', updateSize)
     resizeHost.removeEventListener('resize', onResizeLog)
     resumeSettleTimeoutStore.reset()
+    unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
     eventHandlers = null
