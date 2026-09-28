@@ -1,7 +1,13 @@
-import preventAutoscroll, { PREVENT_AUTOSCROLL_TIMEOUT, preventAutoscrollEnd } from '../preventAutoscroll'
+import { resetStores } from '../../stores/ministore'
+import preventAutoscroll, {
+  PREVENT_AUTOSCROLL_TIMEOUT,
+  isPreventAutoscrollInProgress,
+  preventAutoscrollEnd,
+} from '../preventAutoscroll'
 
-vi.mock('../../browser', async () => {
-  const actual = await vi.importActual<typeof import('../../browser')>('../../browser')
+// preventAutoscroll does nothing on desktop, which is what jsdom reports.
+vi.mock('../../browser', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../browser')>()
   return { ...actual, isTouch: true }
 })
 
@@ -12,6 +18,23 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers()
   document.body.innerHTML = ''
+})
+
+// https://github.com/cybersemics/em/issues/5251
+it('restores the held element and cancels its timer when the stores are reset', () => {
+  const el = document.createElement('div')
+  el.style.paddingBottom = '3px'
+  document.body.appendChild(el)
+
+  preventAutoscroll(el)
+  expect(el.hasAttribute('data-prevent-autoscroll')).toBe(true)
+
+  resetStores()
+
+  expect(el.hasAttribute('data-prevent-autoscroll')).toBe(false)
+  expect(el.style.paddingBottom).toBe('3px')
+  expect(isPreventAutoscrollInProgress()).toBe(false)
+  el.remove()
 })
 
 it('restores the padded element after the timeout even when another element ends first', () => {
