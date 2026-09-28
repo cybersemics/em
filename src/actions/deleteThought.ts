@@ -12,6 +12,8 @@ import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import { getChildrenRanked } from '../selectors/getChildren'
 import { getLexeme } from '../selectors/getLexeme'
+import getMovePlacement from '../selectors/getMovePlacement'
+import getSortPreference from '../selectors/getSortPreference'
 import getThoughtById from '../selectors/getThoughtById'
 import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -42,6 +44,33 @@ interface ThoughtUpdates {
   thoughtIndex: Index<Thought | null>
   lexemeIndex: Index<Lexeme | null>
   pendingDeletes?: PushBatch['pendingDeletes']
+}
+
+/** Re-ranks a thought whose lastUpdated was just bumped so that its rank still matches Updated sorting in the parent context. */
+const rerankUpdated = (state: State, id: ThoughtId): State => {
+  const thought = getThoughtById(state, id)
+  if (!thought) return state
+
+  const sortPreference = getSortPreference(state, thought.parentId)
+  if (sortPreference.type !== 'Updated') return state
+
+  const siblings = getChildrenRanked(state, thought.parentId).filter(child => child.id !== id)
+  if (siblings.length === 0) return state
+
+  const rank = sortPreference.direction === 'Desc' ? siblings[0].rank - 1 : siblings[siblings.length - 1].rank + 1
+  if (rank === thought.rank) return state
+
+  return updateThoughts(state, {
+    thoughtIndexUpdates: {
+      [id]: {
+        ...thought,
+        rank,
+      },
+    },
+    lexemeIndexUpdates: {},
+    movePlacements: { [id]: getMovePlacement(state, thought.parentId, { id, rank }) },
+    preventExpandThoughts: true,
+  })
 }
 
 /** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions. */
@@ -253,6 +282,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
       remote,
       overwritePending: !persist,
     }),
+    persist ? state => rerankUpdated(state, parent.id) : null,
   ])(state)
 }
 
