@@ -1,16 +1,26 @@
 import keyboard from '../helpers/keyboard'
 import press from '../helpers/press'
 import waitForSelector from '../helpers/waitForSelector'
-import { page } from '../session'
-import { usePersistentTreecrdtStorage } from '../setup'
+import { page, setPage } from '../session'
+import { createTreecrdtTestPage } from '../setup'
 
 vi.setConfig({ testTimeout: 60000 })
-usePersistentTreecrdtStorage()
+
+/** Arranges a real OPFS file-open failure without replacing the provider or relying on path-length limits. */
+const createThoughtspaceStorageConflict = async (thoughtspaceId: string): Promise<void> => {
+  await page.evaluate(async id => {
+    const root = await navigator.storage.getDirectory()
+    await root.getDirectoryHandle(`treecrdt-em-memory-prototype-${id}.db`, { create: true })
+  }, thoughtspaceId)
+}
 
 it('shows a startup error and keeps editing disabled when persistent storage cannot open', async () => {
-  // Exceed SQLite's path capacity so the real dedicated-worker OPFS open fails deterministically.
+  const thoughtspaceId = 'startup-failure'
+  await createThoughtspaceStorageConflict(thoughtspaceId)
   const url = new URL(page.url())
-  url.searchParams.set('share', 'x'.repeat(512))
+  url.searchParams.set('share', thoughtspaceId)
+  // Open the conflicted storage cold; the arrange page uses memory and has no persistent worker to tear down.
+  setPage(await createTreecrdtTestPage(page.browserContext(), 'persistent'))
   await page.goto(url.href, { waitUntil: 'load' })
   await waitForSelector('[aria-label=thoughtspace-startup-error]')
 

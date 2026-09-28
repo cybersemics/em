@@ -422,6 +422,8 @@ const ModalExport: FC = () => {
               // JSON exports the selected subtrees as a compact document snapshot.
               selected.type === 'application/json' ? (
                 'state'
+              ) : simplePaths.length === 1 && isRoot(simplePaths[0]) && numDescendantsFinal === 0 ? (
+                '1 thought'
               ) : (
                 <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhraseFinal }} />
               )
