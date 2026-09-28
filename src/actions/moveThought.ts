@@ -39,6 +39,28 @@ export interface MoveThoughtPayload {
   afterId: ThoughtId | null
 }
 
+/** Repositions a thought whose lastUpdated was bumped within its own Updated-sorted context. Other sort conditions use values or immutable timestamps, so a bump cannot invalidate their order. */
+const repositionUpdated = (state: State, id: ThoughtId, transaction?: ThoughtspaceTransaction): State => {
+  const thought = getThoughtById(state, id)
+  if (!thought) return state
+
+  const sortPreference = getSortPreference(state, thought.parentId)
+  if (sortPreference.type !== 'Updated') return state
+
+  const afterId = getSortedPlacement(state, thought.parentId, thought.value, { staleId: id })
+  if (afterId === getPreviousSiblingId(state, id)) return state
+
+  return updateThoughts(
+    state,
+    {
+      thoughtIndexUpdates: { [id]: thought },
+      movePlacements: { [id]: afterId },
+      preventExpandThoughts: true,
+    },
+    transaction,
+  )
+}
+
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
 const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: ThoughtspaceTransaction) => {
@@ -195,6 +217,11 @@ const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: Th
         transaction,
       )
     },
+    // A cross-context move bumps lastUpdated on both parents. In a context sorted by Updated that is the sort key, so
+    // each parent's own sibling position has to be restored to match the sort condition (#4097).
+    !sameContext ? (state: State) => repositionUpdated(state, sourceParentThought.id, transaction) : null,
+    !sameContext ? (state: State) => repositionUpdated(state, destinationThought.id, transaction) : null,
+
     // update cursor if moved path is on the cursor
     state => {
       if (!state.cursor) return state

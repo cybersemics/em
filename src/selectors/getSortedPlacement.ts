@@ -1,7 +1,6 @@
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { compareReasonable, compareReasonableDescending } from '../util/compareThought'
-import isAttribute from '../util/isAttribute'
 import { getChildrenRanked, getSortComparator, isVisible } from './getChildren'
 import getSortPreference from './getSortPreference'
 import noteValue from './noteValue'
@@ -21,8 +20,8 @@ const getSortedPlacement = (
   const { type, direction } = getSortPreference(state, id)
   const descending = direction === 'Desc'
   if (type === 'Updated') {
-    const firstVisible = children.findIndex(child => !isAttribute(child.value))
-    return (descending && firstVisible !== -1 ? children[firstVisible - 1] : children.at(-1))?.id ?? null
+    // Updated sorting compares attribute timestamps too, so a newly updated thought precedes every sibling in Desc.
+    return descending ? null : (children.at(-1)?.id ?? null)
   }
   const compare = descending ? compareReasonableDescending : compareReasonable
   const candidates = type === 'Note' ? children.filter(isVisible(state)) : children

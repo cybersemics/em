@@ -2,7 +2,7 @@
 
 A rolling record of what **em** did, kept on the device so that a bug nobody can reproduce still leaves evidence behind. It exists for the failures that defeat ordinary debugging: a freeze that takes the console with it, a gesture that misfires once a week, a thought that lands under the wrong parent on someone else's phone and nowhere else.
 
-Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), and persistence ([`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts)).
+Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), app switching and viewport resizes ([`initEvents`](../src/util/initEvents.ts)), and persistence ([`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts)).
 
 ## What it is
 
@@ -87,3 +87,4 @@ Some shapes worth recognizing:
 - **`move` entries** compare sibling positions and parents in the immutable document views before and after an action, so they catch a reorder from every source — drag and drop, sort, undo, incoming operations — without special-casing any of them. `oldRank` and `newRank` name the computed positions, even when the thought payload itself is unchanged.
 - **The log stopping while `lastFrameAt` keeps advancing** means the page was still painting: the hang is below the app.
 - **`dt` collapsing toward zero across many entries** is a tight loop.
+- **`viewport` entries** record the window, layout viewport (`clientHeight`) and visual viewport sizes, the scroll position and whether the keyboard is open. One is written on every resize that changes them, one when the app becomes active (`resume`), and one a second later (`settled`), since iOS can finish resizing after the page is active without firing a resize event. A `clientHeight` or `visualViewportHeight` well below `innerHeight` while `isKeyboardOpen` is false means the page is still laid out for a keyboard that is gone: fixed and sticky elements such as the nav bar are then pinned mid-screen.

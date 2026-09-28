@@ -17,8 +17,6 @@ type TestFlags = {
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
-  /** Cancels a pending scrollCursorIntoView. Exposed so that tests can stop a scroll that the cursor has queued from moving the page after they set the scroll position. */
-  cancelScrollCursorIntoView: (() => void) | null
 }
 
 const preloadedTestFlags = typeof window === 'undefined' ? null : (window.em?.testFlags ?? null)
@@ -34,7 +32,6 @@ const testFlags: TestFlags = {
   pinDropHovers: false,
   simulateDrag: false,
   simulateDrop: false,
-  cancelScrollCursorIntoView: null,
 }
 
 export default testFlags

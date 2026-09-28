@@ -6,6 +6,8 @@ import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
 import { getChildren } from '../selectors/getChildren'
 import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedPlacement from '../selectors/getSortedPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -19,9 +21,11 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
+import timestamp from '../util/timestamp'
 import alert from './alert'
 import createThought from './createThought'
 import moveThought from './moveThought'
@@ -83,7 +87,19 @@ const categorize = (
     })
   }
 
-  const afterId = getPreviousSiblingId(state, head(simplePath))
+  const parentId = head(rootedParentOf(state, simplePath))
+  const sortPreference = getSortPreference(state, parentId)
+
+  // A thought created in a sorted context is placed by the sort condition rather than by its position on screen, as in
+  // newThought. Under Created the new category is the newest thought in the context, so leaving it where the
+  // categorized thought was inverts the sibling order against the sort condition — invisibly at first, since an empty thought
+  // is exempt from it, then visibly as soon as the user types into the category (#4101). An empty category has no
+  // alphabetical sort key, so under Alphabetical it stays at its point of creation.
+  const afterId =
+    sortPreference.type === 'Created' || (!isEmptyOrEmojiOnly(value) && sortPreference.type === 'Alphabetical')
+      ? getSortedPlacement(state, parentId, value, { created: timestamp() })
+      : getPreviousSiblingId(state, head(simplePath))
+
   const newThoughtId = createId()
   const isInContextView = isContextViewActive(state, parentOf(cursor))
 
@@ -93,7 +109,6 @@ const categorize = (
   // parent itself rather than describing the wrapped children. A partial selection leaves everything on the parent,
   // which keeps unselected children. An attribute that is itself selected (visible via showHiddenThoughts) is already
   // moved by the selection.
-  const parentId = head(rootedParentOf(state, simplePath))
   const selectedIds = new Set(multicursorPaths.map(path => head(simplifyPath(state, path))))
   const allSelected =
     multicursorPaths.length > 0 && getChildren(state, parentId).every(child => selectedIds.has(child.id))

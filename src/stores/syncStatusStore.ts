@@ -1,6 +1,6 @@
 import reactMinistore from './react-ministore'
 
-/** A store that tracks state related to syncing. Updated by the treecrdt thoughtspace data provider. */
+/** A store that tracks state related to syncing. File import updates importProgress; savingProgress has no writer and stays at 1. */
 const syncStatusStore = reactMinistore<{
   /**
    * Progress of replicating all thoughts for offline editing (between 0–1).

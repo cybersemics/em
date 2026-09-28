@@ -10,6 +10,7 @@ import { replaceThoughtsActionCreator as replaceThoughts } from './actions/repla
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { commandById, executeCommand } from './commands'
 import db, { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
+import scrollTo from './device/scrollTo'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -32,15 +33,19 @@ import isRoot from './util/isRoot'
 
 /**
  * Decodes the URL cursor against the complete initialized document.
+ *
+ * Preserve an already initialized live cursor, note focus, and multiselection rather than replacing them with the URL.
  */
 const initializeCursor = () => {
-  const { path } = decodeThoughtsUrl(store.getState())
+  const state = store.getState()
+  if (state.cursorInitialized) return
+
+  const { path } = decodeThoughtsUrl(state)
   // if no path in decoded from the url initialize the cursor with null
   if (!path || isRoot(path)) {
     store.dispatch(setCursor({ path: null }))
   } else {
-    const newState = store.getState()
-    const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
+    const isCursorLoaded = path.every(thoughtId => getThoughtById(state, thoughtId))
     store.dispatch(
       setCursor({
         path: isCursorLoaded ? path : null,
@@ -128,6 +133,9 @@ const testHelpers = {
   waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
   importToContext: withDispatch(importToContext),
+  // The production scroll, so that a test's explicit scroll supersedes a scroll the cursor had queued exactly as the
+  // app's own do (see device/scrollTo.ts), instead of the helper cancelling the pending cursor scroll by hand.
+  scrollTo,
 }
 
 // add useful functions to window.em for debugging
