@@ -8,6 +8,7 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForThoughtspaceIdle from '../helpers/waitForThoughtspaceIdle'
+import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
@@ -52,6 +53,28 @@ it('a thought formatted with multiple styles is given greater priority than thou
   // D and B both have two formats, so they outrank the singly-bold E and C; D's bold outranks B's italic within the pair
   const exported = await exportThoughts()
   expect(getLetterOrder(exported)).toEqual(['D', 'E', 'C', 'B', 'A'])
+})
+
+// https://github.com/cybersemics/em/issues/4083
+it('marking a thought as done keeps Updated sort active', async () => {
+  await paste(`
+    - One
+    - Two
+    - Three
+  `)
+
+  await clickThought('One')
+  await clickToolbar('Sort Picker', 'Updated')
+  await clickThought('Two')
+  await clickToolbar('Mark as done')
+
+  const homeChildren = await page.evaluate(() =>
+    Object.values(window.em.store.getState().thoughts.thoughtIndex['00000000000000000000000000000001'].childrenMap).map(
+      id => window.em.getThoughtById(id)?.value,
+    ),
+  )
+
+  expect(homeChildren).toContain('=sort')
 })
 
 describe('persistent storage', () => {

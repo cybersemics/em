@@ -56,6 +56,7 @@ const toggleDone = {
         oldPath: cursorAfterToggle,
         newPath: cursorAfterToggle,
         newRank,
+        skipRerank: true,
       }),
     )
   },
