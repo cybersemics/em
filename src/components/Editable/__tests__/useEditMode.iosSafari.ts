@@ -6,6 +6,7 @@ import store from '../../../stores/app'
 import touchStore from '../../../stores/touchStore'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
+import lastTouch from '../lastTouch'
 import useEditMode from '../useEditMode'
 
 // Emulate iOS Safari, which sometimes synthesizes the mousedown/focus of a tap even though touchend called
@@ -20,6 +21,34 @@ vi.mock('../../../browser', async importOriginal => {
 })
 
 beforeEach(initStore)
+
+// Deliberately first: it leaves a touchend recorded against its own editable, which is what the tests after it must
+// not observe. https://github.com/cybersemics/em/issues/5252
+it('record the touchend of a tap on a thought', () => {
+  store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+
+  const editable = document.createElement('div')
+  editable.setAttribute('contenteditable', 'true')
+  document.body.appendChild(editable)
+
+  renderHook(
+    () =>
+      useEditMode({
+        contentRef: { current: editable as unknown as HTMLInputElement },
+        isEditing: true,
+        path: store.getState().cursor!,
+        style: undefined,
+        transient: undefined,
+      }),
+    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+  )
+
+  act(() => {
+    editable.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true }))
+  })
+
+  expect(lastTouch.isRecent()).toBe(true)
+})
 
 it('suppress the synthesized mousedown of a tap that already moved the cursor without entering edit mode', () => {
   store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
