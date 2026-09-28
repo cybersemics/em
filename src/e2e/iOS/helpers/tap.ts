@@ -1,4 +1,5 @@
 import type { Element } from 'webdriverio'
+import getTextOffsetCoordinates from './getTextOffsetCoordinates.js'
 
 // import getNativeElementRect from './getNativeElementRect'
 
@@ -45,27 +46,6 @@ const tap = async (
   const boundingBox = await browser.getElementRect(elementId)
   if (!boundingBox) throw new Error('Bounding box of editable not found.')
 
-  /** Get cordinates for specific text node if the given node has text child. */
-  const offsetCoordinates = () =>
-    browser.execute(
-      function (ele, offset) {
-        // Element does not contain native properties like nodeName, textContent, etc
-        // Not sure what the actual WebDriverIO type that is returned by findElement
-        // Node does not contain property elementId; it is only a Node inside browser.execute, so we cannot change the typeo of the nodeHandle argument
-        const textNode = (ele as unknown as Node).firstChild
-        if (!textNode || textNode.nodeName !== '#text') return
-        const range = document.createRange()
-        range.setStart(textNode, offset ?? 0)
-        const { right, top, height } = range.getBoundingClientRect()
-        return {
-          x: right,
-          y: top + height / 2,
-        }
-      },
-      nodeHandle,
-      offset,
-    )
-
   const coordinate = !offset
     ? {
         x:
@@ -77,7 +57,7 @@ const tap = async (
               : boundingBox.width / 2),
         y: boundingBox.y + boundingBox.height / 2,
       }
-    : await offsetCoordinates()
+    : await getTextOffsetCoordinates(nodeHandle, offset)
 
   if (!coordinate) throw new Error('Coordinate not found.')
 

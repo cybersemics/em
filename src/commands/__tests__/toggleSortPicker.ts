@@ -2,6 +2,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { outdentActionCreator as outdent } from '../../actions/outdent'
 import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
+import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { executeCommand } from '../../commands'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import simplifyPath from '../../selectors/simplifyPath'
@@ -164,6 +165,38 @@ describe('toggleSortPicker error', () => {
       // ordered by rank. Allocating those ranks against the timestamp alone inverted them against the sort condition
       // and turned the Sort icon red (#4085).
       executeCommand(splitSentencesCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/4086
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after pinning a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One.
+            - Two.
+            - Three.
+          `,
+        }),
+        setCursor(['One.']),
+      ])
+
+      // Advance the clock between each step so that the thoughts, the sort preference, and =pin all have distinct
+      // timestamps, as they do when a user sorts a context and pins it some time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      const simplePath = simplifyPath(state, rootedParentOf(state, state.cursor!))
+      store.dispatch(setSortPreference({ simplePath, sortPreference: { type: 'Updated', direction } }))
+
+      vi.advanceTimersByTime(1000)
+
+      // toggleAttribute inserts =pin above its siblings with getPrevRank, while its lastUpdated is now.
+      store.dispatch(toggleAttribute({ path: simplePath, values: ['=pin'] }))
 
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },

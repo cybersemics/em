@@ -295,6 +295,8 @@ Empty and emoji-only thoughts have no meaningful text sort key, so creation pres
 
 The exemption only holds until the sort is applied. [`sort`](../src/actions/sort.ts) uses `sortEmpty` to apply the sort condition to empty thoughts too, floating them to the top in either direction. It runs when a sort preference is set and after [`swapParent`](../src/actions/swapParent.ts) and [`uncategorize`](../src/actions/uncategorize.ts) move thoughts into a sorted context.
 
+Hidden attributes are exempt in a different way: they are placed structurally rather than sorted. A context's `=sort` and the attributes [`toggleAttribute`](../src/actions/toggleAttribute.ts) sets are inserted above their siblings by [`getPrevRank`](../src/selectors/getPrevRank.ts) in every sort preference but `Alphabetical` — which is why [`getSortedRank`](../src/selectors/getSortedRank.ts) ranks a new note against the visible children only, rather than placing it after `=sort`. Their ranks therefore say nothing about whether a context is correctly sorted, so the Sort Picker's rank-consistency check ([`toggleSortPicker`](../src/commands/toggleSortPicker.ts), which reddens the toolbar icon while a context's ranks disagree with its sort condition) skips them along with the empty and emoji-only thoughts.
+
 ## Views
 
 ### Normal view
