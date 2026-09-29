@@ -379,7 +379,6 @@ export const importFilesActionCreator =
                       idbSynced: updateAndResolve,
                     })
                 : // import the new thought
-                  // Any missing children from previously interrupted imports are cleaned up in createThought.
                   newThought({
                     at: importThoughtPath,
                     insertNewSubthought: ancestors.length > 0 || !insertBeforeNew,

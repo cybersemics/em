@@ -142,7 +142,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **Path** — `[ThoughtId, ...ThoughtId[]]` — non-empty sequence of thought ids from root to a thought. Root itself is implied (`[HOME_TOKEN]` is the special case). May contain cycles when traversing context views. See [data-model.md → Path](data-model.md#path).
 
-**pending** — Flag on `Thought` indicating the id is known to exist (`thoughtIndex[id]` is set) but the real data hasn't been pulled from local/remote storage yet. UI renders placeholders; the pull queue fetches based on visible pending IDs.
+**pending** — Flag on `Thought` set while the thought is not fully in memory: either the thought itself hasn't been loaded yet, or it is loaded but some children in its `childrenMap` are not in `thoughtIndex` — cut off at the *buffer depth*, or freed by `freeThoughts`. The map keeps naming the absent children so the pull queue can restore them. UI renders placeholders; the pull queue fetches based on visible pending IDs. See [data-model.md → pending](data-model.md#pending).
 
 **permissionsStore** — Ministore holding `Index<Share>` keyed by access token (one entry per device with access), persisted with `idb-keyval` under `em-permissions:${tsid}`. See [`permissionsStore.ts`](../src/data-providers/permissionsStore.ts); CRUD in [`permissionsModel.ts`](../src/data-providers/permissionsModel.ts).
 

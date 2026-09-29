@@ -44,7 +44,7 @@ interface ThoughtUpdates {
   pendingDeletes?: PushBatch['pendingDeletes']
 }
 
-/** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions. */
+/** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions. */
 const deleteThought = (state: State, { local = true, pathParent, thoughtId, remote = true }: Payload) => {
   const deletedThought = getThoughtById(state, thoughtId) as Thought | undefined
   if (!deletedThought) return state

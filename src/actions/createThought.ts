@@ -15,7 +15,6 @@ import { childrenMapKey } from '../util/createChildrenMap'
 import createId from '../util/createId'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
-import keyValueBy from '../util/keyValueBy'
 import timestamp from '../util/timestamp'
 
 interface Payload {
@@ -64,7 +63,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, splitSo
 
   const thoughtNew: Thought = {
     // A new thought has no children yet. A caller that needs children creates them with further createThought calls
-    // once this thought exists, so the parent's childrenMap never references a thought that is not in the index.
+    // once this thought exists.
     childrenMap: {},
     created: timestamp(),
     id,
@@ -81,16 +80,13 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, splitSo
     ...parent,
     id: parentId,
     childrenMap: {
-      // Use this opportunity to delete any children that are missing.
-      // This was done for the missing children that are created by multiple refreshes during a large import.
-      // If any abberant behavior is observed, try reverting to the previous implementation in importFiles.
-      ...keyValueBy(parent.childrenMap, (key, childId) => {
-        const child = getThoughtById(state, childId)
-        if (!child) {
-          console.warn(`Sibling ${childId} with missing thought found while creating new thought ${value} (${id})`)
-        }
-        return child ? { [key]: childId } : null
-      }),
+      // Keep the parent's childrenMap as-is rather than rebuilding it from the thoughts in memory. A pending parent
+      // references children that are not in the thoughtIndex: freeThoughts deallocates thoughts without deleting them
+      // (deleteThought with local: false and remote: false), and fetchDescendants stops fetching at the buffer depth.
+      // Dropping those entries would hide the children until reload, since mergeUpdates clears pending once every
+      // remaining child exists and the pull queue only re-pulls pending thoughts. Storage cannot produce a dangling
+      // entry: TreeCRDT derives childrenMap on read, and a create is a single atomic insert.
+      ...parent.childrenMap,
       [childrenMapKey(parent.childrenMap, thoughtNew)]: id,
     },
     lastUpdated: timestamp(),
