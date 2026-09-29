@@ -11,6 +11,7 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import categorizeCommand from '../categorize'
+import pinCommand from '../pin'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
@@ -197,6 +198,42 @@ describe('toggleSortPicker error', () => {
 
       // toggleAttribute inserts =pin above its siblings with getPrevRank, while its lastUpdated is now.
       store.dispatch(toggleAttribute({ path: simplePath, values: ['=pin'] }))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/5736
+  it.skip.each(['Asc', 'Desc'] as const)(
+    'does not report an error after pinning a thought in a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - aaa
+            - bbb
+              - ccc
+            - ddd
+          `,
+        }),
+        setCursor(['bbb']),
+      ])
+
+      // Advance the clock between each step so that the thoughts, the sort preference, and the pin all have distinct
+      // timestamps, as they do when a user sorts a context and pins a thought in it some time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      executeCommand(pinCommand, { store })
 
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
