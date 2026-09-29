@@ -12,6 +12,7 @@ import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
 import waitForSelector from '../helpers/waitForSelector'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
@@ -55,4 +56,18 @@ it('a collapsed caret survives a command run from the Command Universe', async (
   // still lands correctly because the Command Universe saves and restores it around the input focus, so this pins the
   // save/restore round-trip rather than anything in moveThoughtUp.
   expect(await getCaretOffset()).toBe(1)
+})
+
+// https://github.com/cybersemics/em/issues/5733
+it.skip('Note keeps the caret in the new note when invoked from the Command Universe', async () => {
+  await paste('- hello world')
+  await clickThought('hello world')
+
+  await command('Note', { inputType: 'commandPalette' })
+
+  // the Command Universe restores focus when it unmounts, so wait for it to leave the DOM before reading the focus
+  await waitForSelector('[data-testid=desktop-command-universe]', { hidden: true })
+
+  const focused = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'))
+  expect(focused).toBe('note-editable')
 })
