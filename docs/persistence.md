@@ -7,7 +7,7 @@ This prototype runs two TreeCRDT instances for one thoughtspace:
 
 The memory engine owns the document and accepts local commands synchronously. Redux owns UI state and a read-only document projection. Document commands execute in one memory transaction outside Redux's reducer, reading canonical state between composed steps. Redux publishes the completed snapshot once. Network sync is disabled, including when `VITE_TREECRDT_SYNC_BASE_URL` is set.
 
-[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exposes one implementation through two interfaces: `db: DataProvider` supplies synchronous `project` reads and `transact`; `thoughtspaceRuntime: ThoughtspaceRuntime` manages initialization, readiness, cleanup, and waiting for persistence. [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts) implements both. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project`, operation receipts and `revert`, and an `afterPersist` callback.
+[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exposes one implementation through two interfaces: `db: DataProvider` supplies synchronous `project` reads and `transact`; `thoughtspaceRuntime: ThoughtspaceRuntime` manages initialization, readiness, cleanup, and waiting for persistence. [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts) implements both. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project`, cumulative invalidations through `getChanges`, operation receipts and `revert`, and an `afterPersist` callback.
 
 ## Running the prototype
 
@@ -83,7 +83,7 @@ Initialization and incoming snapshots use the non-undoable `replaceThoughts` act
 
 Both peers run locally through `createInMemoryConnectedPeers` and the existing protobuf codec, using the standard full-document filter. No remote endpoint is opened; the retained WebSocket adapter is not started by the active factory. Authentication, network integration, and durable retries are not implemented by this prototype.
 
-The full document and its operation history must fit in memory, and startup waits for hydration. Native forward updates read affected rows; historical replay requests a full snapshot. EM still copies the lexeme index when projecting changes. Diagnostic history comparisons temporarily materialize the full document in the existing report format; removing the live structural copy does not remove that O(N) work. Native rollback reconstructs retained history only on failure. This design deliberately has no partial-loading or migration mode.
+The full document and its operation history must fit in memory, and startup waits for hydration. Native forward updates read affected rows; historical replay requests a full snapshot. EM still copies the lexeme index when projecting changes. History recording compares affected records and sibling positions; whole-document diagnostic capture remains for reports and reset/replay fallbacks. Native rollback reconstructs retained history only on failure. This design deliberately has no partial-loading or migration mode.
 
 ## Command coordination and Redux publication
 

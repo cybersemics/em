@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import State from '../@types/State'
@@ -11,17 +12,26 @@ type DiagnosticState = Omit<State, 'thoughts'> & {
   thoughts: { thoughtIndex: Index<DiagnosticThought>; lexemeIndex: Index<Lexeme> }
 }
 
-/** Materializes the existing history format only while comparing or replaying diagnostic patches. */
-const capture = (state: State): DiagnosticState => ({
+/** Captures selected diagnostic records, or the whole document for reports and reset fallbacks. */
+const capture = (
+  state: State,
+  scope?: { thoughtIds: ReadonlySet<ThoughtId>; lexemeKeys: ReadonlySet<string> },
+): DiagnosticState => ({
   ...state,
   thoughts: {
     thoughtIndex: Object.fromEntries(
-      Array.from(state.thoughts.values(), thought => {
+      (scope
+        ? Array.from(scope.thoughtIds).flatMap(id => {
+            const thought = state.thoughts.getThought(id)
+            return thought ? [thought] : []
+          })
+        : Array.from(state.thoughts.values())
+      ).map(thought => {
         const childrenMap = createChildrenMap(state, state.thoughts.getChildren(thought.id))
         return [thought.id, { ...thought, rank: state.thoughts.getPosition(thought.id) ?? 0, childrenMap }]
       }),
     ),
-    lexemeIndex: state.thoughts.lexemeIndex,
+    lexemeIndex: scope ? _.pick(state.thoughts.lexemeIndex, [...scope.lexemeKeys]) : state.thoughts.lexemeIndex,
   },
 })
 

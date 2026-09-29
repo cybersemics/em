@@ -1,3 +1,4 @@
+import { applyPatch } from 'fast-json-patch'
 import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../../actions/deleteThoughtWithCursor'
 import { importTextActionCreator as importText } from '../../actions/importText'
@@ -22,6 +23,7 @@ import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import thoughtspaceHistory from '../../util/thoughtspaceHistory'
 import contextToPath from '../contextToPath'
 import stepsToReproduce from '../stepsToReproduce'
 
@@ -234,6 +236,27 @@ it('retains incoming siblings and payloads while reconstructing a local reorder 
 
 `)
   expect(db.project()).toBe(current.thoughts)
+})
+
+it.each([
+  ['ordinary', '=renamed'],
+  ['=attribute', 'renamed'],
+  ['ordinary', '=attribute'],
+])('restores diagnostic child keys when renaming %s to %s', (oldValue, newValue) => {
+  store.dispatch([
+    importText({ text: '- parent\n  - ordinary\n  - =attribute\n    - child' }),
+    setCursor(['parent', oldValue]),
+  ])
+  const before = thoughtspaceHistory.capture(store.getState())
+
+  store.dispatch(editThought(['parent', oldValue], newValue))
+
+  const state = store.getState()
+  const after = thoughtspaceHistory.capture(state)
+  const restored = applyPatch(after, state.undoPatches.at(-1)!.ops, false, false).newDocument
+
+  // Attribute names key the parent's child map; exporting the outline alone would not detect stale keys.
+  expect(restored.thoughts).toEqual(before.thoughts)
 })
 
 it('describes a multicursor move by its invocation and selection without inferring a single moved thought', () => {

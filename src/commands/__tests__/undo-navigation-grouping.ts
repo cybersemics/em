@@ -9,8 +9,26 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'
+import thoughtspaceHistory from '../../util/thoughtspaceHistory'
 
 beforeEach(initStore)
+afterEach(vi.restoreAllMocks)
+
+it('merges navigation-only history without capturing the document', () => {
+  store.dispatch(importText({ text: '- a\n- b\n- c' }))
+  const beforeNavigation = store.getState()
+  store.dispatch(setCursor(['a']))
+  const capture = vi.spyOn(thoughtspaceHistory, 'capture')
+
+  store.dispatch([cursorDown(), cursorDown()])
+
+  expect(headValue(store.getState(), store.getState().cursor!)).toBe('c')
+  expect(capture).not.toHaveBeenCalled()
+  expect(store.getState().undoPatches).toHaveLength(beforeNavigation.undoPatches.length + 1)
+
+  store.dispatch(undo({ count: 1 }))
+  expect(store.getState().cursor).toEqual(beforeNavigation.cursor)
+})
 
 it('undoes a trailing navigation action together with the navigation action before it', () => {
   store.dispatch([

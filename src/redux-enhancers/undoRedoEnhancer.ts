@@ -1,5 +1,5 @@
-import { Operation, applyPatch, compare } from 'fast-json-patch'
-import { produce } from 'immer'
+import { Operation, applyPatch, compare, unescapePathComponent } from 'fast-json-patch'
+import { Immer, produce } from 'immer'
 import _ from 'lodash'
 import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator, UnknownAction } from 'redux'
 import ActionType from '../@types/ActionType'
@@ -19,12 +19,16 @@ import { getChildrenRanked } from '../selectors/getChildren'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import debugLog from '../util/debugLog'
 import getUndoStepCount from '../util/getUndoStepCount'
+import hashThought from '../util/hashThought'
 import headValue from '../util/headValue'
 import isAttribute from '../util/isAttribute'
 import reducerFlow from '../util/reducerFlow'
 import storage from '../util/storage'
 import stripTags from '../util/stripTags'
 import thoughtspaceHistory from '../util/thoughtspaceHistory'
+
+// Temporary comparison baselines need copy-on-write, but are never published as editor state.
+const produceHistoryBaseline = new Immer({ autoFreeze: false }).produce
 
 /** Refreshes the read-only document view after a complete command and before recording its history. */
 const projectThoughts = (state: State, transaction?: ThoughtspaceTransaction): State => {
@@ -140,8 +144,71 @@ const statePropertiesToOmit: (keyof State)[] = [
 ]
 
 /** Computes UI restoration and diagnostic document diffs, never recursively recording the history itself. */
-const diffState = (newValue: State, value: State | ReturnType<typeof thoughtspaceHistory.capture>): Operation[] => {
-  const sameThoughts = newValue.thoughts === value.thoughts
+const diffState = (
+  newValue: State,
+  value: State,
+  { transaction, mergeWith = [] }: { transaction?: ThoughtspaceTransaction; mergeWith?: readonly Operation[] } = {},
+): Operation[] => {
+  const sameThoughts =
+    newValue.thoughts === value.thoughts &&
+    !mergeWith.some(op => op.path === '/thoughts' || op.path.startsWith('/thoughts/'))
+  const changes = sameThoughts ? undefined : transaction?.getChanges()
+  let scope =
+    !sameThoughts && (newValue.thoughts === value.thoughts || (changes && !changes.reset))
+      ? { thoughtIds: new Set(changes?.thoughtIds), lexemeKeys: new Set<string>() }
+      : undefined
+
+  if (scope) {
+    const { thoughtIds, lexemeKeys } = scope
+    // Native child order includes payload-less nodes: visible siblings can change rank without changing their own rows.
+    for (const id of changes?.childrenChangedIds ?? []) {
+      thoughtIds.add(id)
+      value.thoughts.getChildren(id).forEach(child => thoughtIds.add(child))
+      newValue.thoughts.getChildren(id).forEach(child => thoughtIds.add(child))
+    }
+    for (const id of changes?.thoughtIds ?? []) {
+      const before = value.thoughts.getThought(id)
+      const after = newValue.thoughts.getThought(id)
+      // Visibility and attribute names affect the parent's child map; ordinary text edits need no parent capture.
+      if (
+        !!before !== !!after ||
+        (before?.value !== after?.value && (isAttribute(before?.value ?? '') || isAttribute(after?.value ?? '')))
+      ) {
+        if (before) thoughtIds.add(before.parentId)
+        if (after) thoughtIds.add(after.parentId)
+      }
+    }
+    for (const op of mergeWith) {
+      if (op.path !== '/thoughts' && !op.path.startsWith('/thoughts/')) continue
+      const [, , index, key] = op.path.split('/')
+      if (!key || (index !== 'thoughtIndex' && index !== 'lexemeIndex')) {
+        scope = undefined
+        break
+      }
+      if (index === 'thoughtIndex') thoughtIds.add(unescapePathComponent(key) as ThoughtId)
+      else lexemeKeys.add(unescapePathComponent(key))
+    }
+    scope?.thoughtIds.forEach(id => {
+      const before = value.thoughts.getThought(id)
+      const after = newValue.thoughts.getThought(id)
+      if (before) lexemeKeys.add(hashThought(before.value))
+      if (after) lexemeKeys.add(hashThought(after.value))
+    })
+  }
+
+  let previous: State | ReturnType<typeof thoughtspaceHistory.capture> = sameThoughts
+    ? value
+    : thoughtspaceHistory.capture(value, scope)
+  if (mergeWith.length) {
+    // Reconstruct only records touched by this group, retaining the existing keyed patch/report semantics.
+    try {
+      previous = produceHistoryBaseline(previous, draft => applyPatch(draft, mergeWith).newDocument)
+    } catch (error) {
+      if (!(error instanceof Error)) throw error
+      console.error(error.message, { state: value, mergeWith })
+      throw new Error('Error applying patch')
+    }
+  }
   const omitted = [
     ...statePropertiesToOmit,
     'undoPatches',
@@ -150,28 +217,24 @@ const diffState = (newValue: State, value: State | ReturnType<typeof thoughtspac
     'thoughtUi',
     ...(sameThoughts ? ['thoughts'] : []),
   ]
-  const previous =
-    sameThoughts || !('getThought' in value.thoughts)
-      ? value
-      : thoughtspaceHistory.capture({ ...value, thoughts: value.thoughts })
   return [
     ...compare(
-      _.omit(sameThoughts ? newValue : thoughtspaceHistory.capture(newValue), omitted),
+      _.omit(sameThoughts ? newValue : thoughtspaceHistory.capture(newValue, scope), omitted),
       _.omit(previous, omitted),
     ),
     // A remote deletion may have pruned an entry since history was recorded. Restore each entry atomically.
-    ...Object.keys({ ...newValue.thoughtUi, ...value.thoughtUi }).flatMap<Operation>(id =>
-      _.isEqual(newValue.thoughtUi[id], value.thoughtUi[id])
+    ...Object.keys({ ...newValue.thoughtUi, ...previous.thoughtUi }).flatMap<Operation>(id =>
+      _.isEqual(newValue.thoughtUi[id], previous.thoughtUi[id])
         ? []
-        : value.thoughtUi[id]
-          ? [{ op: 'add', path: `/thoughtUi/${id}`, value: value.thoughtUi[id] }]
+        : previous.thoughtUi[id]
+          ? [{ op: 'add', path: `/thoughtUi/${id}`, value: previous.thoughtUi[id] }]
           : [{ op: 'remove', path: `/thoughtUi/${id}` }],
     ),
     // Incoming deletion can shorten or clear the cursor without changing history. Restore its captured value atomically,
     // not with relative array operations that assume the pre-publication path still exists.
-    ...(_.isEqual(newValue.cursor, value.cursor)
+    ...(_.isEqual(newValue.cursor, previous.cursor)
       ? []
-      : [{ op: 'replace' as const, path: '/cursor', value: value.cursor }]),
+      : [{ op: 'replace' as const, path: '/cursor', value: previous.cursor }]),
   ]
 }
 
@@ -200,7 +263,7 @@ const revertPatch = (
   return {
     state: newState,
     patch: {
-      ops: diffState(newState, state),
+      ops: diffState(newState, state, { transaction }),
       metadata: patch.metadata,
       documentOperationIds,
     },
@@ -432,24 +495,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       if (shouldMerge) {
         lastAction = action
-        let lastState: State | ReturnType<typeof thoughtspaceHistory.capture> = state
-        if (lastUndoPatch && lastUndoPatch.ops.length > 0) {
-          // Add a try-catch to provide better error messaging if a patch fails.
-          // The patch should always be valid, i.e. the necessary structure is in the state to apply the patch.
-          // However, because non-undoable actions are skipped, it is possible that the state has shifted and the patch is no longer valid.
-          // If a patch is invalid, all prior undo states will be inaccessible, so we should try to identify and fix this whenever it occurs.
-          try {
-            lastState = produce(
-              thoughtspaceHistory.capture(state),
-              draft => applyPatch(draft, lastUndoPatch.ops).newDocument,
-            )
-          } catch (e) {
-            if (!(e instanceof Error)) throw e
-            console.error(e.message, { state, lastUndoPatch })
-            throw new Error('Error applying patch')
-          }
-        }
-        const combinedUndoPatch = diffState(newState, lastState)
+        const combinedUndoPatch = diffState(newState, state, { transaction, mergeWith: lastUndoPatch?.ops })
         const combinedOperationIds = [...(lastUndoPatch?.documentOperationIds ?? []), ...documentOperationIds]
 
         const actionTypes: [ActionType, ...ActionType[]] = lastUndoPatch
@@ -491,7 +537,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // infer the pre-edit caret so the inverse patch can restore it instead of leaving the caret at the end.
       const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
       const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
-      const undoPatch = diffState(newState, stateBeforeAction)
+      const undoPatch = diffState(newState, stateBeforeAction, { transaction })
       return undoPatch.length || documentOperationIds.length
         ? {
             ...newState,

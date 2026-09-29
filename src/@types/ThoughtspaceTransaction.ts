@@ -8,6 +8,13 @@ import ThoughtspaceView from './ThoughtspaceView'
 interface ThoughtspaceTransaction {
   /** Identifies document operations authored so far in this transaction. */
   readonly operationIds: readonly OperationId[]
+  /** Reads cumulative invalidations; reset requires comparing the complete document. */
+  getChanges: () => {
+    thoughtIds: readonly ThoughtId[]
+    /** Parents whose raw child order changed, including payload-less children. */
+    childrenChangedIds: readonly ThoughtId[]
+    reset: boolean
+  }
   /** Authors compensating operations and returns their IDs for redo. */
   revert: (operationIds: readonly OperationId[]) => readonly OperationId[]
   /** Applies document changes and returns their canonical view before the next command runs. */

@@ -248,6 +248,15 @@ const createMemoryThoughtspace = (
           if (!active) throw new Error('The document transaction has finished')
           return operationIds.slice()
         },
+        getChanges: () => {
+          if (!active) throw new Error('The document transaction has finished')
+          const { changes, reset } = engine.getChanges()
+          return {
+            thoughtIds: changes.map(change => change.id as ThoughtId),
+            childrenChangedIds: changes.filter(change => change.childrenChanged).map(change => change.id as ThoughtId),
+            reset,
+          }
+        },
         revert: ids => {
           if (!active) throw new Error('The document transaction has finished')
           const reverted = engine.revert(ids).map(operation => operation.meta.id)
