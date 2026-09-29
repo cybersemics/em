@@ -1,7 +1,7 @@
 import Command from '../@types/Command'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import Icon from '../components/icons/SortWithPicker'
-import { getChildrenRanked, getSortComparator } from '../selectors/getChildren'
+import { getChildrenRanked, getSortComparator, isVisible } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -46,10 +46,11 @@ const toggleSortCommand = {
     const comparator = getSortComparator(state, id)
     if (!comparator) return null
 
-    // ignore empty and emoji-only thoughts since they are sorted to their point of creation rather than by the sort condition
-    // ignore meta attributes since they do not participate in user-facing sort order
+    // Ignore thoughts that are placed rather than sorted: empty and emoji-only thoughts, hidden attributes, and
+    // meta attributes. Hidden attributes are inserted above siblings by getPrevRank regardless of sort condition, and
+    // meta attributes can be present in showHiddenThoughts mode but still do not participate in user-facing ordering.
     const childrenRanked = getChildrenRanked(state, id).filter(
-      child => !isEmptyOrEmojiOnly(child.value) && !isAttribute(child.value),
+      child => isVisible(state, child) && !isEmptyOrEmojiOnly(child.value) && !isAttribute(child.value),
     )
 
     // The ranks match the sort condition as long as the rank order contains no strict inversion, i.e. no adjacent
