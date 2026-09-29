@@ -1,0 +1,84 @@
+import { Capacitor } from '@capacitor/core'
+import _ from 'lodash'
+import ministore from './ministore'
+import reactMinistore from './react-ministore'
+
+/** Scroll zone as a percentage of the smaller size of the screen. */
+const SCROLL_ZONE_WIDTH = 0.25
+
+/** Check if the device is a touchscreen. Duplicated from src/browser.ts's isTouch to avoid circular imports. */
+const isTouchDevice =
+  typeof window !== 'undefined' &&
+  (window.matchMedia?.('(pointer: coarse)').matches || Capacitor.getPlatform() === 'android')
+
+/** The last measured height of the virtual keyboard in each orientation, kept while the keyboard is closed so that the store can still report its expected height. Starts from a guess until the keyboard can be measured directly. A ministore rather than module variables so that a measurement taken in one test is cleared with the store it feeds. */
+const keyboardHeightCacheStore = ministore({
+  portrait: isTouchDevice ? window.innerHeight / 2.275 : 0,
+  landscape: isTouchDevice ? window.innerWidth / 1.7 : 0,
+})
+
+export interface ViewportState {
+  innerWidth: number
+  innerHeight: number
+  layoutTreeTop: number
+  scrollZoneWidth: number
+  virtualKeyboardHeight: number
+}
+
+/** A store that tracks the viewport dimensions, including the nontrivial virtual keyboard height. */
+const viewportStore = reactMinistore<ViewportState>({
+  innerWidth: window.innerWidth,
+  /** Height of the viewport, including the virtual keyboard (i.e. does not change when the virtual keyboard is opened/closed). */
+  innerHeight: window.innerHeight,
+  scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * SCROLL_ZONE_WIDTH,
+  /** Height of the virtual keyboard regardless of whether it is open or closed. Initialized to estimated height. */
+  virtualKeyboardHeight:
+    window.innerHeight > window.innerWidth
+      ? keyboardHeightCacheStore.getState().portrait
+      : keyboardHeightCacheStore.getState().landscape,
+  /** The y position of the layout tree element relative to the document. Includes autocrop, i.e. this value changes when space above is cropped away as you navigate deeper. This ensures that scrollCursorIntoView can properly calculate the position of the cursor relative to the viewport. */
+  layoutTreeTop: 0,
+})
+
+/** Throttled update of viewport height. Invoked on window resize. */
+export const updateSize = _.throttle(
+  () => {
+    // There is a bug in iOS Safari where visualViewport.height is incorrect if the phone is rotated with the keyboard up, rotated back, and the keyboard is closed.
+    // It can be detected by ensuring the visualViewport portrait mode matches window portrait mode.
+    // If it is invalid, go back to the default
+    const isPortrait = window.innerHeight > window.innerWidth
+    const currentKeyboardHeight = window.visualViewport ? window.innerHeight - window.visualViewport.height : 0
+
+    // Only update the cached keyboard height when the keyboard is actually open (nonzero height).
+    // When the keyboard closes, currentKeyboardHeight is 0 — preserving the cache ensures
+    // iOSSafariHandler can still read the last-known height for its opening animation.
+    if (currentKeyboardHeight > 0) {
+      keyboardHeightCacheStore.update(
+        isPortrait ? { portrait: currentKeyboardHeight } : { landscape: currentKeyboardHeight },
+      )
+    }
+    const cachedKeyboardHeight = keyboardHeightCacheStore.getState()
+
+    viewportStore.update({
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      // Recompute from the new dimensions rather than leaving the value captured at module initialization.
+      // A stale width misplaces the scroll zone and desyncs isInGestureZone from where the stardust is
+      // actually drawn, which lasts until the next reload: nothing else recomputes it.
+      scrollZoneWidth: Math.min(window.innerWidth, window.innerHeight) * SCROLL_ZONE_WIDTH,
+      // When the keyboard is closed, fall back to the cached height so consumers
+      // (e.g. iOSSafariHandler) still know the keyboard's expected height for animations.
+      virtualKeyboardHeight:
+        currentKeyboardHeight > 0
+          ? currentKeyboardHeight
+          : isPortrait
+            ? cachedKeyboardHeight.portrait
+            : cachedKeyboardHeight.landscape,
+    })
+  },
+  // lock to 60 fps
+  16.666,
+  { leading: true },
+)
+
+export default viewportStore

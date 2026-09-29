@@ -1,7 +1,8 @@
 import { errorActionCreator as error } from '../../actions/error'
 import store from '../../stores/app'
+import multitouchStore, { updateMultitouch } from '../../stores/multitouchStore'
 // Importing initEvents registers the global window 'error' listener as a side effect.
-import '../initEvents'
+import initEvents from '../initEvents'
 
 beforeEach(() => {
   store.dispatch(error({ value: null }))
@@ -18,4 +19,66 @@ it('shows an error banner for genuine errors with an error object', () => {
 it('ignores opaque cross-origin "Script error." events', () => {
   window.dispatchEvent(new ErrorEvent('error', { message: 'Script error.', error: null, filename: '', lineno: 0 }))
   expect(store.getState().error).toBe(null)
+})
+
+// iOS Safari ignores the viewport user-scalable=no / maximum-scale=1 settings and still allows native
+// pinch-to-zoom and two-finger page panning, which should be inert in the app. initEvents prevents this by
+// calling preventDefault on the Safari-only gesturestart/gesturechange/gestureend events — but only on a touch
+// device. macOS Safari fires the same events for a trackpad pinch, where zooming the page is legitimate browser
+// behavior. See #4233.
+it('does not prevent pinch-to-zoom gestures on a non-touch device', () => {
+  initEvents(store)
+
+  const gestureNames = ['gesturestart', 'gesturechange', 'gestureend']
+  gestureNames.forEach(name => {
+    const e = new Event(name, { cancelable: true })
+    document.dispatchEvent(e)
+    expect(e.defaultPrevented).toBe(false)
+  })
+})
+
+// A non-passive (blocking) touchmove listener on window marks the entire viewport as a blocking touch-handler
+// region, which changes Chrome's compositing and shifts the subpixel anti-aliasing of composited elements
+// (it broke the render-thoughts image snapshots). It suppresses the native caret/selection during a
+// multi-touch gesture, which can only occur on a touch device, so it must not be registered otherwise.
+// See #4233.
+it('does not block touchmove on a non-touch device', () => {
+  initEvents(store)
+
+  // latch multitouch, which is the only condition under which touchmove is blocked
+  updateMultitouch({ type: 'touchstart', touches: { length: 2 } } as TouchEvent)
+
+  const e = new Event('touchmove', { cancelable: true })
+  window.dispatchEvent(e)
+  expect(e.defaultPrevented).toBe(false)
+
+  // reset the latch with a fresh single-finger touchstart
+  updateMultitouch({ type: 'touchstart', touches: { length: 1 } } as TouchEvent)
+})
+
+// The multitouch latch is otherwise only reset by a fresh single-finger touchstart, so on a device that has
+// both a touchscreen and a pointer it would survive a two-finger touch indefinitely and every subsequent click
+// would be rejected by the tap and mousedown handlers, leaving the cursor unmovable. See #4233.
+it('clears the multitouch latch on a mouse pointerdown', () => {
+  initEvents(store)
+
+  updateMultitouch({ type: 'touchstart', touches: { length: 2 } } as TouchEvent)
+  expect(multitouchStore.getState()).toBe(true)
+
+  window.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'mouse' }))
+  expect(multitouchStore.getState()).toBe(false)
+})
+
+// The compatibility mousedown/click that terminates a touch gesture must still read the latch as set, so a
+// pointerdown from a finger must not clear it. See #4233.
+it('does not clear the multitouch latch on a touch pointerdown', () => {
+  initEvents(store)
+
+  updateMultitouch({ type: 'touchstart', touches: { length: 2 } } as TouchEvent)
+
+  window.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch' }))
+  expect(multitouchStore.getState()).toBe(true)
+
+  // reset the latch with a fresh single-finger touchstart
+  updateMultitouch({ type: 'touchstart', touches: { length: 1 } } as TouchEvent)
 })

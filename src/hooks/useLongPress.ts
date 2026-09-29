@@ -7,6 +7,8 @@ import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import multitouchStore from '../stores/multitouchStore'
+import touchStore from '../stores/touchStore'
 import haptics from '../util/haptics'
 
 export interface LongPressProps {
@@ -38,6 +40,12 @@ const useLongPress = (
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
       if (!pressing) return
+
+      // Reject long-press / drag initiation during a multi-touch gesture (e.g. two-finger trace or pinch-to-zoom).
+      // The patched TouchBackend arms its drag timer from the primary touch and fires dragStart independently of
+      // react-dnd's canDrag, so this second guard is required to stop a two-finger gesture from beginning a drag.
+      // The multitouch latch stays set until every finger lifts. See #4233.
+      if (multitouchStore.getState()) return
 
       // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
       // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
@@ -78,7 +86,14 @@ const useLongPress = (
    * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      if ('touches' in e.nativeEvent || e.nativeEvent.button !== 2) setPressing(true)
+      if (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2) return
+
+      // A press that lands on the caret is the user reaching for native caret repositioning, not the start of a drag.
+      // Never marking the press keeps the rest of the chain — haptics, the scroll lock, DragHold — from running (#3763).
+      // The flag is latched by the capture-phase touchstart listener in initEvents, which runs first.
+      if (touchStore.getState().pressOnCaret) return
+
+      setPressing(true)
     },
     [setPressing],
   )

@@ -1076,12 +1076,40 @@ describe('single-line paste into a thought', () => {
     )
   })
 
+  it('replaces a range at the beginning of a formatting tag', () => {
+    const stateBefore = newThought(initialState(), { value: '<b>hone</b>' })
+    const thoughtId = contextToThoughtId(stateBefore, ['<b>hone</b>'])!
+
+    // the "h" of the bold "hone"
+    const stateNew = importTextAtFirstMatch({
+      at: ['<b>hone</b>'],
+      text: 'st',
+      caretPosition: 1,
+      replaceStart: 0,
+      replaceEnd: 1,
+    })(stateBefore)
+
+    // the replacement leaves no text before the offset, but the insertion still belongs to the formatting that follows it
+    expect(getThoughtById(stateNew, thoughtId)!.value).toBe('<b>stone</b>')
+  })
+
   it('replaces the whole value when the thought is cleared', () => {
     const stateNew = reducerFlow([
       newThought({ value: 'one <b>two</b> three' }),
       // cursorCleared is not curried, so unlike its neighbors it cannot compose point-free
       state => cursorCleared(state, { value: true }),
       importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 0 }),
+    ])(initialState())
+
+    expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')
+  })
+
+  it('replaces the whole value when the thought is cleared and the caret is past the beginning', () => {
+    const stateNew = reducerFlow([
+      newThought({ value: 'one <b>two</b> three' }),
+      state => cursorCleared(state, { value: true }),
+      // a cleared thought still shows its text, so the caret can sit at an offset the emptied value cannot resolve
+      importTextAtFirstMatch({ at: ['one <b>two</b> three'], text: 'fresh', caretPosition: 5 }),
     ])(initialState())
 
     expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['fresh'])!)!.value).toBe('fresh')

@@ -5,7 +5,7 @@ import State from '../@types/State'
 import { Thunk } from '../@types/Thunk'
 import { freeThoughtsActionCreator as freeThoughts } from '../actions/freeThoughts'
 import { FREE_THOUGHTS_THROTTLE } from '../constants'
-import freeThoughtsThresholdStore from '../stores/freeThoughtsThreshold'
+import freeThoughtsThresholdStore from '../stores/freeThoughtsThresholdStore'
 
 /** Checks if the thought cache has exceeded its memory limit. If so, dispatches freeThoughts which frees Redux indexes and provider cache. */
 const checkThreshold: Thunk = (dispatch, getState): void => {

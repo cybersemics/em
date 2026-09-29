@@ -1,6 +1,6 @@
 import lifecycle from 'page-lifecycle'
 import { FC, PropsWithChildren, useEffect } from 'react'
-import touchStore from '../stores/touch'
+import touchStore from '../stores/touchStore'
 
 /** Turns off touching when app becomes hidden. */
 const onStateChange = ({ newState }: { oldState: string; newState: string }) => {

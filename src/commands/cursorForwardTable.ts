@@ -6,7 +6,7 @@ import attributeEquals from '../selectors/attributeEquals'
 import { firstVisibleChild } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
-import heldKeysStore from '../stores/heldKeys'
+import heldKeysStore from '../stores/heldKeysStore'
 import head from '../util/head'
 import headValue from '../util/headValue'
 

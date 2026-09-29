@@ -50,11 +50,13 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import caretRectStore from '../stores/caretRectStore'
-import editableSyncStore from '../stores/editableSync'
-import editingValueStore from '../stores/editingValue'
-import editingValueUntrimmedStore from '../stores/editingValueUntrimmed'
+import editableSyncStore from '../stores/editableSyncStore'
+import editingValueStore from '../stores/editingValueStore'
+import editingValueUntrimmedStore from '../stores/editingValueUntrimmedStore'
+import ministore from '../stores/ministore'
+import multitouchStore from '../stores/multitouchStore'
 import storageModel from '../stores/storageModel'
-import touchStore from '../stores/touch'
+import touchStore from '../stores/touchStore'
 import addEmojiSpace from '../util/addEmojiSpace'
 import debugLog from '../util/debugLog'
 import ellipsize from '../util/ellipsize'
@@ -116,8 +118,8 @@ const applyOuterTags = (newValue: string, oldValue: string): string => {
   return div.firstChild.outerHTML
 }
 
-// this flag is used to ensure that the browser selection is not restored after the initial setCursorOnThought
-let cursorOffsetInitialized = false
+/** Whether the cursor offset restored from storage has been applied, so that it is applied only on the initial setCursorOnThought. A ministore rather than a module variable so that each test starts with the restore still pending, as a fresh page load does. Read imperatively; nothing subscribes. */
+const cursorOffsetInitializedStore = ministore(false)
 
 // Maximum time between a tap's touchend and the click that the browser synthesizes from it. Debug logs of taps on
 // iOS Safari put that delay at 1-64 ms, and the fastest measured double tap at 100 ms, so this is long enough to
@@ -293,7 +295,7 @@ const Editable = ({
         let offset = null
 
         // if running for the first time, restore the offset if the path matches the restored cursor
-        if (!cursorOffsetInitialized) {
+        if (!cursorOffsetInitializedStore.getState()) {
           const restored: { path: Path | null; offset: number | null } = storageModel.get('cursor')
           if (path && restored.offset && equalPath(restored.path, path)) {
             offset = restored.offset || null
@@ -301,7 +303,7 @@ const Editable = ({
         }
 
         // Prevent the cursor offset from being restored after the initial setCursorOnThought.
-        cursorOffsetInitialized = true
+        cursorOffsetInitializedStore.update(true)
 
         dispatch(
           setCursor({
@@ -898,32 +900,35 @@ const Editable = ({
   const onFocus = useCallback(
     () => {
       /**
-       * On iOS, a long press between 415–650ms will trigger onFocus even when preventDefault is called in touchend, thus opening the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
+       * A touch device can deliver a native focus that preventDefault cannot stop, which opens the virtual keyboard on top of the Command Center. There appears to be no way to prevent focus in this case. Therefore, we clear the selection and disable edit mode manually as soon as the focus triggers.
        *
        * Unfortunatly, doing this synchronously results in 1) iOS Writing Tools getting stuck open, and 2) the selection gets restored after the Command Center is closed (presumably because state.isKeyboardOpen is incorrectly set to true at some point). Clearing the selection after two animation frames fixes the issue.
        *
        * See: https://github.com/cybersemics/em/issues/3387.
        * */
-      if (isTouch && isSafari()) {
+      if (isTouch) {
         dispatch((dispatch, getState) => {
           const state = getState()
-          // On iOS a long press (~415–650ms) triggers this native onFocus and reopens the virtual keyboard
-          // even when preventDefault was called in touchend — there is no way to prevent the focus itself.
-          // Dismiss the keyboard again here when the Command Center is open (#3387) or a drag gesture is in
-          // progress (#4683), otherwise the keyboard reopens on top of the drag-and-drop hint after it was
-          // dismissed at drag start. Clearing after two animation frames (rather than synchronously) avoids
-          // iOS Writing Tools getting stuck open and the selection being restored.
+          // The Command Center dismissal (#3387) applies to every touch platform. On iOS a long press
+          // (~415–650ms) triggers this native onFocus even when preventDefault was called in touchend; on
+          // Android the browser commits a double tap's word selection asynchronously, so its focus arrives
+          // after a quick swipe up has already opened the Command Center (#5646). Neither focus can be
+          // prevented, so dismiss the keyboard again here. Clearing after two animation frames (rather than
+          // synchronously) avoids iOS Writing Tools getting stuck open and the selection being restored.
           const isDragging =
             state.longPress === LongPressState.DragHold || state.longPress === LongPressState.DragInProgress
           // A tap that moved the cursor without entering edit mode can likewise produce this focus despite
-          // preventDefault (see suppressCursorAfterTouch in stores/touch.ts). The !isKeyboardOpen check keeps
+          // preventDefault (see suppressCursorAfterTouch in stores/touchStore.ts). The !isKeyboardOpen check keeps
           // programmatic focus flows intact: commands that activate edit mode by side effect set
           // state.isKeyboardOpen before useEditMode focuses the editable.
           const isSpuriousTapFocus = touchStore.getState().suppressCursorAfterTouch && !state.isKeyboardOpen
           if (isSpuriousTapFocus) {
             debugLog.log('guard', { step: 'suppressCursorAfterTouch' })
           }
-          if (state.showCommandCenter || isDragging || isSpuriousTapFocus) {
+          // The drag (#4683) and spurious tap dismissals stay iOS-only. They exist because iOS reopens the
+          // keyboard on top of the drag-and-drop hint after it was dismissed at drag start, which has not been
+          // observed elsewhere.
+          if (state.showCommandCenter || (isSafari() && (isDragging || isSpuriousTapFocus))) {
             selection.clear()
             dispatch(keyboardOpenActionCreator({ value: false }))
             requestAnimationFrame(() => {
@@ -946,10 +951,14 @@ const Editable = ({
         // would otherwise override the cursor that archiveThought placed on the previous sibling.
         // When hidden thoughts are shown, isVisible is true and the cursor can still be set. (#4077)
         // Do not activate edit mode when the focus is the tail of a tap that already moved the cursor
-        // without edit mode or a completed drag (see suppressCursorAfterTouch in stores/touch.ts); the block above dismissed it.
+        // without edit mode or a completed drag (see suppressCursorAfterTouch in stores/touchStore.ts), or arrived
+        // while the Command Center is shown; the block above dismissed it. Entering edit mode anyway raises the
+        // virtual keyboard (useEditMode calls virtualKeyboard.show) and closes the Command Center, which the
+        // multicursors then re-open two animation frames later — leaving the keyboard under the sheet. (#5646)
         if (
           state.longPress === LongPressState.Inactive &&
           isVisible &&
+          !state.showCommandCenter &&
           !(touchStore.getState().suppressCursorAfterTouch && !state.isKeyboardOpen)
         ) {
           setCursorOnThought({ isKeyboardOpen: true })
@@ -986,6 +995,14 @@ const Editable = ({
    */
   const handleTapBehavior = useCallback(
     (e: MouseEvent | TouchEvent) => {
+      // Ignore taps that are part of a multi-touch gesture (e.g. two-finger trace or pinch-to-zoom): the
+      // cursor must not move to the finger location. The multitouch latch persists through the terminating
+      // touchend/click of the gesture and is only reset by the next single-finger touchstart. See #4233.
+      if (multitouchStore.getState()) {
+        if (e.cancelable) e.preventDefault()
+        return
+      }
+
       // When MultiGesture is below the gesture threshold it is possible that onClick and onTouchEnd
       // both trigger. Prevent handleTapBehavior from running a second time via touchend in that case.
       // https://github.com/cybersemics/em/issues/1268
