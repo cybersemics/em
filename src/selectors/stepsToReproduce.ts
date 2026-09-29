@@ -145,13 +145,32 @@ const attributesRemoved = (snapshot: Snapshot): ThoughtId[] =>
     isAttribute(snapshot.before.thoughts.getThought(id)!.value),
   )
 
-/** Finds a moved thought, preferring a changed parent over the resulting shifts in sibling indices. */
+/** Finds a reparented thought or a single sibling move that reproduces the recorded order. */
 const movedId = ({ patch, before, after }: Snapshot): ThoughtId | undefined => {
   const existing = touchedIds(patch).filter(id => before.thoughts.getThought(id) && after.thoughts.getThought(id))
-  return (
-    existing.find(id => before.thoughts.getThought(id)!.parentId !== after.thoughts.getThought(id)!.parentId) ??
-    existing.find(id => before.thoughts.getPosition(id) !== after.thoughts.getPosition(id))
+  const reparented = existing.find(
+    id => before.thoughts.getThought(id)!.parentId !== after.thoughts.getThought(id)!.parentId,
   )
+  if (reparented) return reparented
+
+  return uniq(existing.map(id => before.thoughts.getThought(id)!.parentId))
+    .flatMap(parentId => {
+      const previous = before.thoughts.getChildren(parentId)
+      const current = after.thoughts.getChildren(parentId)
+      const firstMismatch = previous.findIndex((id, i) => id !== current[i])
+      // A single move changes one of the two thoughts at the first mismatch. Its other siblings keep their order;
+      // merely taking the first changed position can describe a shifted sibling whose reported move is a no-op.
+      return [previous[firstMismatch], current[firstMismatch]].filter(
+        id =>
+          id &&
+          existing.includes(id) &&
+          isEqual(
+            previous.filter(sibling => sibling !== id),
+            current.filter(sibling => sibling !== id),
+          ),
+      )
+    })
+    .at(0)
 }
 
 /** Describes the meta attributes that a patch set and removed, e.g. "sets `=pin/true`". Returns an empty string if it changed none. */

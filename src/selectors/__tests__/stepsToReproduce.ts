@@ -22,6 +22,7 @@ import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../..
 import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
+import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import thoughtspaceHistory from '../../util/thoughtspaceHistory'
 import contextToPath from '../contextToPath'
@@ -608,6 +609,53 @@ it('describe a single-line paste by the pasted text', () => {
 
 \`\`\`
 - xyza
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('describes a same-parent drag across siblings by the thought that reproduces the reorder', () => {
+  store.dispatch([
+    importText({ text: '- x\n- a\n- b\n- c' }),
+    setCursor(['x']),
+    moveThought({ from: ['a'], to: ['a'], after: ['c'] }),
+  ])
+
+  const state = store.getState()
+  const shiftedSibling = contextToThought(state, ['c'])!
+  const shiftedRankPath = `/thoughts/thoughtIndex/${shiftedSibling.id}/rank`
+  // Position shifts also touch c, but moving c after b would not reproduce the recorded reorder.
+  const undoPatches = state.undoPatches.map(patch => ({
+    ...patch,
+    ops: [
+      ...patch.ops.filter(operation => operation.path === shiftedRankPath),
+      ...patch.ops.filter(operation => operation.path !== shiftedRankPath),
+    ],
+  }))
+  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedRankPath)
+
+  expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- x
+- a
+- b
+- c
+\`\`\`
+
+1. Set the cursor on \`x\`.
+2. Move Thought \`a\` after \`c\`.
+
+## Current Behavior
+
+\`\`\`
+- x
+- b
+- c
+- a
 \`\`\`
 
 ## Expected Behavior
