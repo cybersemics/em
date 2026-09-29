@@ -11,6 +11,7 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import categorizeCommand from '../categorize'
+import favoriteCommand from '../favorite'
 import outdentCommand from '../outdent'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
@@ -211,6 +212,73 @@ describe('toggleSortPicker error', () => {
     store.dispatch(setCursor(['One', 'Four']))
 
     executeCommand(outdentCommand, { store })
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
+
+  // https://github.com/cybersemics/em/issues/4098
+  it('does not report an error when a thought is favorited under updated sort', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - One
+          - Two
+          - Three
+        `,
+      }),
+      setCursor(['One']),
+    ])
+
+    const state = store.getState()
+    // Enable updated ascending sort on the home context.
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Updated', direction: 'Asc' },
+      }),
+    )
+
+    // Advance the clock so that favoriting One updates it to a later timestamp than its siblings, as it does when a
+    // user favorites a thought some time after sorting the context.
+    vi.advanceTimersByTime(1000)
+
+    executeCommand(favoriteCommand, { store })
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
+
+  // https://github.com/cybersemics/em/issues/4098
+  it('does not report an error when a thought is unfavorited under updated sort', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - One
+          - Two
+          - Three
+        `,
+      }),
+      setCursor(['One']),
+    ])
+
+    const state = store.getState()
+    // Enable updated ascending sort on the home context.
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Updated', direction: 'Asc' },
+      }),
+    )
+
+    vi.advanceTimersByTime(1000)
+    executeCommand(favoriteCommand, { store })
+
+    // Update a sibling after One is favorited, so that unfavoriting One has to move it past Two again.
+    vi.advanceTimersByTime(1000)
+    store.dispatch([setCursor(['Two']), editThought(['Two'], 'Two!')])
+
+    vi.advanceTimersByTime(1000)
+    store.dispatch(setCursor(['One']))
+    executeCommand(favoriteCommand, { store })
 
     expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
