@@ -18,6 +18,8 @@ const touchStore = ministore({
   touchStartTimeStamp: -Infinity,
   /** Whether the last touch has ended. Cleared on touchstart and set on touchend, so that a click can tell whether it arrived before its touch's touchend, which iOS 27 can withhold (#5660). */
   touchEnded: true,
+  /** Set from the mousedown to the mouseup or click that iOS fires for a touch whose touchend has not arrived, i.e. while iOS is still placing the caret for a tap whose touchend it withheld (#5660). Changing the selection in this window makes iOS swallow the next quick tap. Cleared on every touchstart and touchend. */
+  nativeTapPending: false,
   /** Set on touchstart when this touch is the second tap of a double tap, so that the next touchstart knows it follows one. */
   secondTap: false,
   /** Set once iOS has been seen withholding a touchend, and kept for the rest of the tab session (also in storeSession, since the state survives a reload). After a double tap on a focused editable, iOS 27 stops dispatching touchend and pointerup at the end of later taps on it, and flushes the touchend only when the next touch begins (#5660). */

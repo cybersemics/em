@@ -369,6 +369,7 @@ const initEvents = (store: Store<State, any>) => {
       suppressCursorAfterTouch: false,
       touchStartTimeStamp: e.timeStamp,
       touchEnded: false,
+      nativeTapPending: false,
       secondTap,
       touchEndWithheld,
       touchEndUnreliable,
@@ -395,10 +396,11 @@ const initEvents = (store: Store<State, any>) => {
     )
   }
 
-  /** Logs a mouse event that arrives before its touch's touchend, and the thought it targets. When iOS withholds the touchend, these are the only sign that the finger has lifted, and iOS can retarget them to the thought it left (#5660). */
+  /** Logs a mouse event that arrives before its touch's touchend, and the thought it targets, and tracks whether iOS is between that touch's mousedown and mouseup. When iOS withholds the touchend, these are the only sign that the finger has lifted, and iOS can retarget them to the thought it left (#5660). */
   const onMouseBeforeTouchEnd = (e: MouseEvent) => {
-    if (!touchStore.getState().touchEnded)
-      debugLog.log(`${e.type}BeforeTouchEnd`, { thought: editableThought(e.target) })
+    if (touchStore.getState().touchEnded) return
+    debugLog.log(`${e.type}BeforeTouchEnd`, { thought: editableThought(e.target) })
+    touchStore.update({ nativeTapPending: e.type === 'mousedown' })
   }
 
   let caretThought: string | null = null
@@ -413,7 +415,7 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Records when the touch ended, so that the next touchstart can tell whether its touchend was withheld (#5660). Registered in the capture phase so that a handler that stops propagation cannot hide it. */
   const onTouchEndCapture = (e: TouchEvent) => {
-    touchStore.update({ touchEndTimeStamp: e.timeStamp, touchEnded: true })
+    touchStore.update({ touchEndTimeStamp: e.timeStamp, touchEnded: true, nativeTapPending: false })
   }
 
   /**

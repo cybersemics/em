@@ -19,6 +19,7 @@ import ministore from '../../stores/ministore'
 import multitouchStore from '../../stores/multitouchStore'
 import touchStore from '../../stores/touchStore'
 import equalPath from '../../util/equalPath'
+import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
 import logProgrammaticSelection from '../../util/logProgrammaticSelection'
 import lastTouch from './lastTouch'
@@ -111,6 +112,25 @@ const useEditMode = ({
       }
 
       // allow transient editable to have focus on render
+      /** Places the caret after the pending native tap's mouseup, if iOS did not place it in this thought itself. */
+      const placeCaretIfNativeTapDoesNot = () => {
+        const { touchStartTimeStamp } = touchStore.getState()
+        /** Checks the caret once iOS has finished the tap. */
+        const onMouseUp = () =>
+          setTimeout(() => {
+            const state = store.getState()
+            if (
+              touchStore.getState().touchStartTimeStamp === touchStartTimeStamp &&
+              equalPath(state.cursor, path) &&
+              !selection.isOnEditable(head(path))
+            ) {
+              setSelectionToCursorOffset()
+            }
+          })
+        window.addEventListener('mouseup', onMouseUp, { capture: true, once: true })
+      }
+
+      // allow transient editable to have focus on render
       const shouldSetSelection =
         transient ||
         (isEditing &&
@@ -127,6 +147,13 @@ const useEditMode = ({
           !disabledRef.current)
 
       if (shouldSetSelection) {
+        // iOS 27: setting the selection between the mousedown and mouseup of a tap whose touchend is withheld overrides
+        // the caret iOS is placing and makes it swallow the next quick tap (#5660), so leave the caret to iOS.
+        if (isSafari27OrLater && touchStore.getState().nativeTapPending) {
+          placeCaretIfNativeTapDoesNot()
+          return
+        }
+
         preventAutoscroll(contentRef.current)
 
         /*
