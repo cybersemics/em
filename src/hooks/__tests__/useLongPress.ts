@@ -172,14 +172,18 @@ it('a tap on another thought after a double tap does not activate drag and drop 
   selection.set(await findThoughtByText('One'), { offset: 3 })
   await touchesLandOn('One', 3)
 
-  // double tap
+  // double tap, whose second touchend iOS withholds
   await tap(bullet)
   await act(() => vi.advanceTimersByTimeAsync(50))
-  await tap(bullet)
+  await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(1000))
 
-  // a tap on another thought: iOS fires click when the finger lifts, but withholds the touchend
+  // a tap on another thought, which flushes the withheld touchend in the same instant: iOS fires click when the
+  // finger lifts, but withholds the touchend again
   await touchesLandOn('Two', 1)
+  await act(async () => {
+    fireEvent.touchEnd(bullet)
+  })
   await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(100))
   await act(async () => {
@@ -197,14 +201,18 @@ it('a long press ends when the finger lifts even if iOS withholds its touchend',
   selection.set(await findThoughtByText('One'), { offset: 3 })
   await touchesLandOn('One', 3)
 
-  // double tap
+  // double tap, whose second touchend iOS withholds
   await tap(bullet)
   await act(() => vi.advanceTimersByTimeAsync(50))
-  await tap(bullet)
+  await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(1000))
 
-  // a long press on another thought: iOS fires click when the finger lifts, but withholds the touchend
+  // a long press on another thought, which flushes the withheld touchend in the same instant: iOS fires click when
+  // the finger lifts, but withholds the touchend again
   await touchesLandOn('Two', 1)
+  await act(async () => {
+    fireEvent.touchEnd(bullet)
+  })
   await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
   await act(async () => {

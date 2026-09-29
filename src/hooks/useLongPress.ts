@@ -136,8 +136,7 @@ const useLongPress = (
 
     /** Ends the press on a click that arrives before its touchend. */
     const onClick = (e: MouseEvent) => {
-      const { touchStartTimeStamp, touchEndTimeStamp } = touchStore.getState()
-      if (touchStartTimeStamp > touchEndTimeStamp) stop(e)
+      if (!touchStore.getState().touchEnded) stop(e)
     }
 
     window.addEventListener('click', onClick, { capture: true })

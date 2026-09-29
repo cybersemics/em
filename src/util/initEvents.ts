@@ -368,6 +368,7 @@ const initEvents = (store: Store<State, any>) => {
       pressOnCaret: isTouch && isSafari() && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
       suppressCursorAfterTouch: false,
       touchStartTimeStamp: e.timeStamp,
+      touchEnded: false,
       secondTap,
       touchEndWithheld,
       touchEndUnreliable,
@@ -383,9 +384,14 @@ const initEvents = (store: Store<State, any>) => {
   /** Logs the touch backend's long-press timer, which it dispatches on document once per press, and whether the #5660 guard refused the press. A timer that is not refused is followed by longPressStart. */
   const onLongPressTimer = () => debugLog.log('longPressTimer', { refused: touchStore.getState().touchEndUnreliable })
 
+  /** Logs a mouse event that arrives before its touch's touchend. When iOS withholds the touchend, these are the only sign that the finger has lifted (#5660). */
+  const onMouseBeforeTouchEnd = (e: MouseEvent) => {
+    if (!touchStore.getState().touchEnded) debugLog.log(`${e.type}BeforeTouchEnd`)
+  }
+
   /** Records when the touch ended, so that the next touchstart can tell whether its touchend was withheld (#5660). Registered in the capture phase so that a handler that stops propagation cannot hide it. */
   const onTouchEndCapture = (e: TouchEvent) => {
-    touchStore.update({ touchEndTimeStamp: e.timeStamp })
+    touchStore.update({ touchEndTimeStamp: e.timeStamp, touchEnded: true })
   }
 
   /**
@@ -551,6 +557,9 @@ const initEvents = (store: Store<State, any>) => {
   for (const type of ['pointerdown', 'pointerup', 'pointercancel'] as const) {
     window.addEventListener(type, onTouchPointer, { capture: true, passive: true })
   }
+  for (const type of ['mousedown', 'mouseup', 'click'] as const) {
+    window.addEventListener(type, onMouseBeforeTouchEnd, { capture: true, passive: true })
+  }
   window.addEventListener('dragStart', onLongPressTimer, { capture: true })
   window.addEventListener('touchend', onTouchEndCapture, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
@@ -614,6 +623,9 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('touchstart', onTouchStart, { capture: true })
     for (const type of ['pointerdown', 'pointerup', 'pointercancel'] as const) {
       window.removeEventListener(type, onTouchPointer, { capture: true })
+    }
+    for (const type of ['mousedown', 'mouseup', 'click'] as const) {
+      window.removeEventListener(type, onMouseBeforeTouchEnd, { capture: true })
     }
     window.removeEventListener('dragStart', onLongPressTimer, { capture: true })
     window.removeEventListener('touchend', onTouchEndCapture, { capture: true })
