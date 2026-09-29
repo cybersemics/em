@@ -1,8 +1,9 @@
 import scheduleScrollCursorIntoView from './scheduleScrollCursorIntoView'
 
-/** Scrolls the content to the top or bottom. Always scrolls instantly in integration tests, ignoring the passed behavior. */
-const scrollTo = (target: 'top' | 'bottom', behavior?: ScrollBehavior) => {
-  const top = target === 'top' ? 0 : target === 'bottom' ? document.body.scrollHeight : null
+/** Scrolls the content to the top, the bottom, or a given scrollTop. Always scrolls instantly in integration tests, ignoring the passed behavior. */
+const scrollTo = (target: 'top' | 'bottom' | number, behavior?: ScrollBehavior) => {
+  const top =
+    typeof target === 'number' ? target : target === 'top' ? 0 : target === 'bottom' ? document.body.scrollHeight : null
 
   if (top === null) {
     throw new Error('Unrecognized scrollTo target: ' + target)
