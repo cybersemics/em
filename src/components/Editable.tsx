@@ -532,9 +532,9 @@ const Editable = ({
       return { tag: el?.tagName ?? null, testid: el?.getAttribute?.('data-testid') ?? null }
     }
     /** Logs when the editable gains focus, recording which element is now active. */
-    const onEditableFocus = () => debugLog.log('focus', describeActiveElement())
+    const onEditableFocus = () => debugLog.log('focus', { ...describeActiveElement(), thought: thoughtId })
     /** Logs when the editable loses focus, recording which element is now active (reveals the asyncFocus retarget target). */
-    const onEditableBlur = () => debugLog.log('blur', describeActiveElement())
+    const onEditableBlur = () => debugLog.log('blur', { ...describeActiveElement(), thought: thoughtId })
 
     /** Logs caret movement ONLY during the ~250ms autocomplete window (pendingAutocompleteAt != null) to trace the caret
      * entering the touch dead zone without flooding the log with every ordinary selection change. */
@@ -565,7 +565,7 @@ const Editable = ({
       editable.removeEventListener('blur', onEditableBlur)
       document.removeEventListener('selectionchange', onSelectionChange)
     }
-  }, [contentRef, rank, simplePath])
+  }, [contentRef, rank, simplePath, thoughtId])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef

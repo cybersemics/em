@@ -205,6 +205,20 @@ export const isOnEditable = (thoughtId: string): boolean => {
   return focusElement?.closest('[data-editable]')?.getAttribute('aria-label') === `editable-${thoughtId}`
 }
 
+/** Returns the id of the thought whose editable holds the browser selection, or null. */
+export const thought = (): string | null => {
+  const focusNode = window.getSelection()?.focusNode
+  const focusElement =
+    focusNode instanceof Element ? focusNode : focusNode?.parentNode instanceof Element ? focusNode.parentNode : null
+
+  return (
+    focusElement
+      ?.closest('[data-editable]')
+      ?.getAttribute('aria-label')
+      ?.replace(/^editable-/, '') ?? null
+  )
+}
+
 /** Returns true if the browser selection is on an element node and focus offset is 0.
  * This represents a case where the browser will render the caret at the start of the text node's content.
  */

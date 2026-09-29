@@ -384,9 +384,31 @@ const initEvents = (store: Store<State, any>) => {
   /** Logs the touch backend's long-press timer, which it dispatches on document once per press, and whether the #5660 guard refused the press. A timer that is not refused is followed by longPressStart. */
   const onLongPressTimer = () => debugLog.log('longPressTimer', { refused: touchStore.getState().touchEndUnreliable })
 
-  /** Logs a mouse event that arrives before its touch's touchend. When iOS withholds the touchend, these are the only sign that the finger has lifted (#5660). */
+  /** Returns the id of the thought whose editable contains the node, or null. */
+  const editableThought = (node: EventTarget | Node | null): string | null => {
+    const el = node instanceof Element ? node : node instanceof Node ? node.parentElement : null
+    return (
+      el
+        ?.closest('[data-editable]')
+        ?.getAttribute('aria-label')
+        ?.replace(/^editable-/, '') ?? null
+    )
+  }
+
+  /** Logs a mouse event that arrives before its touch's touchend, and the thought it targets. When iOS withholds the touchend, these are the only sign that the finger has lifted, and iOS can retarget them to the thought it left (#5660). */
   const onMouseBeforeTouchEnd = (e: MouseEvent) => {
-    if (!touchStore.getState().touchEnded) debugLog.log(`${e.type}BeforeTouchEnd`)
+    if (!touchStore.getState().touchEnded)
+      debugLog.log(`${e.type}BeforeTouchEnd`, { thought: editableThought(e.target) })
+  }
+
+  let caretThought: string | null = null
+
+  /** Logs the thought that holds the caret whenever the caret moves into a different thought, so that where a tap actually put the caret can be read from the log (#5660). */
+  const onCaretMove = () => {
+    const thought = selection.thought()
+    if (thought === caretThought) return
+    caretThought = thought
+    debugLog.log('caret', { thought, offset: thought ? selection.offset() : null })
   }
 
   /** Records when the touch ended, so that the next touchstart can tell whether its touchend was withheld (#5660). Registered in the capture phase so that a handler that stops propagation cannot hide it. */
@@ -546,6 +568,7 @@ const initEvents = (store: Store<State, any>) => {
   window.history.scrollRestoration = 'manual'
 
   document.addEventListener('selectionchange', onSelectionChange)
+  document.addEventListener('selectionchange', onCaretMove)
   document.addEventListener('input', onInput)
   window.addEventListener('beforeinput', onBeforeInput)
   window.addEventListener('keydown', keyDown)
@@ -614,6 +637,7 @@ const initEvents = (store: Store<State, any>) => {
   const cleanup = () => {
     passiveTimeoutStore.reset()
     document.removeEventListener('selectionchange', onSelectionChange)
+    document.removeEventListener('selectionchange', onCaretMove)
     document.removeEventListener('input', onInput)
     window.removeEventListener('beforeinput', onBeforeInput)
     window.removeEventListener('keydown', keyDown)
