@@ -1,14 +1,18 @@
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { replaceThoughtsActionCreator as replaceThoughts } from '../../actions/replaceThoughts'
 import { toggleHiddenThoughtsActionCreator as toggleHiddenThoughts } from '../../actions/toggleHiddenThoughts'
 import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
+import db from '../../data-providers/thoughtspace'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import exportContext from '../../selectors/exportContext'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import contextToThought from '../../test-helpers/contextToThought'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -645,6 +649,100 @@ test('continues the current request after allowing AI once', async () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - AI generated text
     - Not a URL`)
+  vi.unstubAllEnvs()
+})
+
+test('clear the pending overlay without overwriting an incoming edit', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+
+  /** Resolves the in-flight generation after the incoming document edit. */
+  let resolveAiRequest!: (response: { json: () => Promise<{ thoughts: string[] }> }) => void
+  mockFetch.mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        resolveAiRequest = resolve
+      }),
+  )
+
+  await dispatch([importText({ text: '- a' }), setCursor(['a'])])
+  const thought = contextToThought(store.getState(), ['a'])!
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+  expect(getThoughtById(store.getState(), thought.id)).toMatchObject({ generating: true, displayValue: 'a...' })
+
+  const incoming = db.transact(transaction =>
+    transaction.update({ thoughtIndexUpdates: { [thought.id]: { ...thought, value: 'incoming a' } } }),
+  ).value
+  await dispatch(replaceThoughts({ thoughts: incoming, repairCursor: true }))
+
+  await act(async () => {
+    resolveAiRequest({ json: () => Promise.resolve({ thoughts: ['generated a'] }) })
+  })
+
+  expect(getThoughtById(store.getState(), thought.id)).toMatchObject({ value: 'incoming a', generating: false })
+  expect(getThoughtById(store.getState(), thought.id)?.displayValue).toBeUndefined()
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - incoming a`)
+
+  vi.unstubAllEnvs()
+})
+
+test('leave a newer generation untouched when an older request completes', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+
+  /** Resolves the superseded generation. */
+  let resolveOldRequest!: (response: { json: () => Promise<{ thoughts: string[] }> }) => void
+  /** Resolves the generation started after editing the thought. */
+  let resolveNewRequest!: (response: { json: () => Promise<{ thoughts: string[] }> }) => void
+  mockFetch
+    .mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveOldRequest = resolve
+        }),
+    )
+    .mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          resolveNewRequest = resolve
+        }),
+    )
+
+  await dispatch([importText({ text: '- a' }), setCursor(['a'])])
+  const thought = contextToThought(store.getState(), ['a'])!
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+  expect(mockFetch).toHaveBeenCalledTimes(1)
+
+  // Returning to the same value must not let the older response claim the new request's overlay.
+  await dispatch([editThought(['a'], 'b'), editThought(['b'], 'a')])
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+  expect(mockFetch).toHaveBeenCalledTimes(2)
+
+  await act(async () => {
+    resolveOldRequest({ json: () => Promise.resolve({ thoughts: ['stale a'] }) })
+  })
+  expect(getThoughtById(store.getState(), thought.id)).toMatchObject({
+    value: 'a',
+    generating: true,
+    displayValue: 'a...',
+  })
+
+  await act(async () => {
+    resolveNewRequest({ json: () => Promise.resolve({ thoughts: ['fresh a'] }) })
+  })
+  expect(getThoughtById(store.getState(), thought.id)).toMatchObject({ value: 'fresh a', generating: false })
+  expect(getThoughtById(store.getState(), thought.id)?.displayValue).toBeUndefined()
+
   vi.unstubAllEnvs()
 })
 

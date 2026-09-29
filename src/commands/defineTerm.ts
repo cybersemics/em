@@ -80,6 +80,8 @@ const defineTermAtPaths =
         persist: false,
       }),
     )
+    // Other AI commands share these overlays but not the Define Term request registry.
+    const pendingThoughtUi = getState().thoughtUi
 
     try {
       if (!import.meta.env.VITE_AI_URL) {
@@ -122,6 +124,7 @@ const defineTermAtPaths =
           !currentThought ||
           currentThought.value !== request.originalValue ||
           !currentThought.generating ||
+          currentState.thoughtUi[request.thought.id] !== pendingThoughtUi[request.thought.id] ||
           pendingDefinitions.get(request.thought.id) !== request.requestId
         )
           return
@@ -147,7 +150,9 @@ const defineTermAtPaths =
           if (pendingDefinitions.get(request.thought.id) !== request.requestId) return []
           pendingDefinitions.delete(request.thought.id)
           const currentThought = getThoughtById(currentState, request.thought.id)
-          return currentThought?.generating && currentThought.value === request.originalValue
+          // Incoming edits preserve our overlay; a newer AI command replaces it and owns its own cleanup.
+          return currentThought?.generating &&
+            currentState.thoughtUi[request.thought.id] === pendingThoughtUi[request.thought.id]
             ? [[request.thought.id, { ...currentThought, generating: false }]]
             : []
         }),

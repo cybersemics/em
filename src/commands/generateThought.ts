@@ -160,6 +160,8 @@ const generateThoughtAtPathsActionCreator =
         persist: false,
       }),
     )
+    // Each immutable overlay belongs to this request, even if a later generation starts from the same text.
+    const pendingThoughtUi = getState().thoughtUi
 
     /** Fetches the webpage title for a target, or an empty string when it cannot be fetched. */
     const generateTitle = async (target: GenerationTarget & { url: string }): Promise<string> => {
@@ -223,11 +225,13 @@ const generateThoughtAtPathsActionCreator =
     return targets.map(target => {
       if (!target) return null
       const { simplePath, thought } = target
-      const valueNew = valuesNew.get(thought.id)!
 
-      const thoughtPending = getThoughtById(getState(), thought.id)
-      // Do not overwrite a deletion or edit made while inference was in flight.
-      if (!thoughtPending || !thoughtPending.generating || thoughtPending.value !== thought.value) return null
+      const statePending = getState()
+      const thoughtPending = getThoughtById(statePending, thought.id)
+      // A deletion, local edit, or newer generation releases this request's ownership.
+      if (!thoughtPending || statePending.thoughtUi[thought.id] !== pendingThoughtUi[thought.id]) return null
+      // Incoming edits preserve overlays. Release ours without overwriting the new canonical value.
+      const valueNew = thoughtPending.value === thought.value ? valuesNew.get(thought.id)! : null
 
       dispatch([
         // Clear the transient overlay before recording the generated edit in undo history.
@@ -241,17 +245,20 @@ const generateThoughtAtPathsActionCreator =
           },
           persist: false,
         }),
-        // editThought automatically sets Thought.generating to false
-        editThought({
-          cursorOffset: getState().isMulticursorExecuting ? undefined : valueNew.length,
-          force: true,
-          oldValue: thought.value,
-          newValue: valueNew,
-          path: simplePath,
-          // The generation completes whenever the request returns, not as part of a typing stream, so it must never
-          // merge with a user edit that happens to be contiguous in the same direction.
-          preventMerge: true,
-        }),
+        ...(valueNew === null
+          ? []
+          : [
+              editThought({
+                cursorOffset: statePending.isMulticursorExecuting ? undefined : valueNew.length,
+                force: true,
+                oldValue: thought.value,
+                newValue: valueNew,
+                path: simplePath,
+                // The generation completes whenever the request returns, not as part of a typing stream, so it must never
+                // merge with a user edit that happens to be contiguous in the same direction.
+                preventMerge: true,
+              }),
+            ]),
       ])
 
       return valueNew
