@@ -187,7 +187,7 @@ const initEvents = (store: Store<State, any>) => {
   const decodeThoughtIdsFromPathname = (pathname: string): Path | null => {
     const [, ...segments] = pathname.split('/').filter(Boolean)
     const thoughtIds = segments.map(segment => segment.replace(/~$/, '')) as ThoughtId[]
-    return thoughtIds.length > 0 ? thoughtIds : null
+    return thoughtIds.length > 0 ? (thoughtIds as Path) : null
   }
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
