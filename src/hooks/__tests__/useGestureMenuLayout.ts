@@ -36,8 +36,8 @@ vi.mock('../../browser', async importOriginal => {
     },
   }
 })
-vi.mock('../../platform', async importOriginal => {
-  const actual = await importOriginal<typeof import('../../platform')>()
+vi.mock('../../stores/viewportStore', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../stores/viewportStore')>()
   return {
     ...actual,
     isTablet: () => mockBrowser.isTablet,
