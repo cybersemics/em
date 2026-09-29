@@ -2,9 +2,9 @@ import { cursorPrevActionCreator as cursorPrev } from '../../actions/cursorPrev'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
-import globals from '../../globals'
 import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
+import heldKeysStore from '../../stores/heldKeysStore'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -195,10 +195,6 @@ describe('context view', () => {
 })
 
 describe('global suppress expansion', () => {
-  beforeEach(() => {
-    globals.suppressExpansion = false
-  })
-
   it('suppress expansion path on cursor prev', async () => {
     const text = `
     - a
@@ -216,7 +212,7 @@ describe('global suppress expansion', () => {
       cursorPrev(),
     ])
 
-    expect(globals.suppressExpansion).toBe(true)
+    expect(heldKeysStore.getState().suppressExpansion).toBe(true)
   })
 
   it('do not activate suppress expansion on cursorPrev if new cursor is pinned', async () => {
@@ -238,7 +234,7 @@ describe('global suppress expansion', () => {
       cursorPrev(),
     ])
 
-    expect(globals.suppressExpansion).toBe(false)
+    expect(heldKeysStore.getState().suppressExpansion).toBe(false)
   })
 
   it('do not activate suppress expansion on cursorPrev if new cursor parent has pinned children', async () => {
@@ -261,6 +257,6 @@ describe('global suppress expansion', () => {
       cursorPrev(),
     ])
 
-    expect(globals.suppressExpansion).toBe(false)
+    expect(heldKeysStore.getState().suppressExpansion).toBe(false)
   })
 })

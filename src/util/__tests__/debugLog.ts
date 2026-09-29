@@ -1,19 +1,84 @@
 import { vi } from 'vitest'
 import pkg from '../../../package.json'
 import State from '../../@types/State'
+import { resetStores } from '../../stores/ministore'
 import debugLog from '../debugLog'
 import storage from '../storage'
 
+// debugLog's in-memory state is restored after every test by setupTests (see reset in debugLog.ts). Storage is this
+// suite's own: reset deliberately leaves it alone, so it is cleared here.
 beforeEach(() => {
   localStorage.clear()
-  debugLog.setEnabled(false)
-  debugLog.clear()
 })
 
 afterEach(() => {
-  debugLog.setEnabled(false)
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+})
+
+// https://github.com/cybersemics/em/issues/5258
+describe('isolation between tests', () => {
+  // The two tests are a pair: the first leaves logging enabled with an entry in the buffer and cleans up nothing, and
+  // the second passes only if that did not reach it.
+  it('a test may leave logging enabled', () => {
+    debugLog.setEnabled(true)
+    debugLog.log('leak')
+    expect(debugLog.read().length).toBeGreaterThan(0)
+  })
+
+  it('the next test starts with logging off and an empty buffer', () => {
+    expect(debugLog.isEnabled()).toBe(false)
+    expect(debugLog.read()).toEqual([])
+  })
+})
+
+describe('reset', () => {
+  it('turns logging off and empties the buffer without erasing the persisted log', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('x')
+    expect(storage.getItem('debugLog-0')).not.toBeNull()
+
+    resetStores()
+
+    expect(debugLog.isEnabled()).toBe(false)
+    expect(debugLog.read()).toEqual([])
+    // Unlike clear(), which exists to erase the log.
+    expect(storage.getItem('debugLog-0')).not.toBeNull()
+  })
+
+  it('turns the console mirror off', () => {
+    debugLog.setConsole(true)
+
+    resetStores()
+
+    expect(debugLog.isConsole()).toBe(false)
+  })
+
+  it('cancels the frame heartbeat, so that draining fake timers terminates', async () => {
+    vi.useFakeTimers()
+    debugLog.setEnabled(true)
+    // the heartbeat is a self-rescheduling requestAnimationFrame, which fake timers fake
+    expect(vi.getTimerCount()).toBe(1)
+
+    resetStores()
+
+    expect(vi.getTimerCount()).toBe(0)
+    await vi.runAllTimersAsync()
+    vi.useRealTimers()
+  })
+
+  it('lets the heartbeat start again afterwards', () => {
+    vi.useFakeTimers()
+    debugLog.setEnabled(true)
+    resetStores()
+
+    debugLog.setEnabled(true)
+
+    expect(vi.getTimerCount()).toBe(1)
+    expect(debugLog.read().filter(entry => entry.type === 'session')).toHaveLength(1)
+    vi.useRealTimers()
+  })
 })
 
 describe('enabled gate', () => {

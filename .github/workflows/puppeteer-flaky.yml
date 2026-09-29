@@ -24,7 +24,8 @@
 #     already open.
 #
 # Follow-up:
-#   - A GitHub Copilot cloud agent task (Opus 5, the `worker-bee` agent) per issue
+#   - A GitHub Copilot cloud agent task (the `worker-bee` agent, on the COPILOT_MODEL or
+#     COPILOT_MODEL_FLAKY repository variable's model) per issue
 #     just filed or reopened, so a new flake is being worked on before anyone reads
 #     the alert. Its pull request opens with `Fixes #<issue>`, which puts the issue
 #     number at the top of the pull request and links the two.
@@ -126,14 +127,17 @@ jobs:
         iteration: ${{ fromJSON(needs.setup.outputs.matrix) }}
     services:
       browserless:
-        image: browserless/chrome:latest
+        image: ghcr.io/browserless/chromium:v2.56.2
         ports:
           - 7566:3000
         env:
-          CONNECTION_TIMEOUT: -1
+          TIMEOUT: 0
     steps:
       - name: Clone repository
         uses: actions/checkout@v6
+
+      - name: Install Microsoft Core Fonts
+        run: ./src/e2e/puppeteer/install-browserless-fonts.sh '${{ job.services.browserless.id }}'
 
       - name: Enable Corepack
         run: corepack enable
@@ -274,6 +278,9 @@ jobs:
         # fails below on the flake itself.
         continue-on-error: true
         env:
+          # Repository variables naming the Copilot model; the specific one wins when set.
+          COPILOT_MODEL: ${{ vars.COPILOT_MODEL }}
+          COPILOT_MODEL_FLAKY: ${{ vars.COPILOT_MODEL_FLAKY }}
           COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
         run: |
           set -euo pipefail

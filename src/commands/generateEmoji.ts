@@ -36,10 +36,10 @@ const generateEmoji = {
           dispatch(showModal({ id: 'aiDisclosure' }))
           return
         }
-        generateAll()
+        return generateAll()
       }
 
-      generateAllWithDisclosure()
+      return generateAllWithDisclosure()
     },
   },
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),

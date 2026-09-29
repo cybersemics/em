@@ -51,7 +51,10 @@ const SortOption: FC<SortOptionProps> = ({ type, supportsDirection, label, sortP
       })}
       aria-label={type}
       {...fastClick(e => e.stopPropagation())}
-      onTouchStart={e => onClick(type, e)}
+      // Apply the option on touchend rather than touchstart. React registers touchstart passively, so the handler's
+      // preventDefault is a no-op there and the browser goes on to synthesize mouse events from the tap, which
+      // land on the thought under the dropdown (#5608).
+      onTouchEnd={e => isTouch && onClick(type, e)}
       onMouseDown={e => !isTouch && onClick(type, e)}
     >
       {isSelected && supportsDirection && (

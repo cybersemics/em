@@ -102,6 +102,7 @@ const rules = {
   'arrow-body-style': 0,
   'prefer-arrow-callback': 0,
   'em/no-direct-durations-config-import': 2,
+  'em/ministore-store-suffix': 2,
 }
 
 export default [
@@ -113,7 +114,8 @@ export default [
       'packages/**/.build/**/*',
       '**/styled-system/*',
       '**/ios/*',
-      '**/android/**',
+      // The Capacitor project at the repo root, anchored so that src/e2e/android is still linted.
+      'android/**',
       '**/desktop/**',
       '**/build/*',
       '**/docs/*',
@@ -228,9 +230,9 @@ export default [
       },
     },
   },
-  // The iOS WebdriverIO tests are typechecked by their own tsconfig, the only program that declares
+  // The WebdriverIO tests (iOS and Android) are typechecked by their own tsconfigs, the only programs that declare
   // WebdriverIO's globals (browser, $, expect) and @wdio/browserstack-service's global interfaces. The root
-  // tsconfig excludes src/e2e/iOS, so type-aware linting of those files has to use theirs.
+  // tsconfig excludes src/e2e/iOS and src/e2e/android, so type-aware linting of those files has to use theirs.
   {
     files: ['./src/e2e/iOS/**/*.ts'],
     languageOptions: {
@@ -240,6 +242,18 @@ export default [
         ecmaVersion: 2018,
         sourceType: 'module',
         project: './src/e2e/iOS/tsconfig.json',
+      },
+    },
+  },
+  {
+    files: ['./src/e2e/android/**/*.ts'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        ecmaVersion: 2018,
+        sourceType: 'module',
+        project: './src/e2e/android/tsconfig.json',
       },
     },
   },

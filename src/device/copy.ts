@@ -2,6 +2,7 @@ import { Clipboard } from '@capacitor/clipboard'
 import { Capacitor } from '@capacitor/core'
 import ClipboardJS from 'clipboard'
 import { isSafari, isTouch } from '../browser'
+import { registerReset } from '../stores/ministore'
 import * as selection from './selection'
 
 interface CopyOptions {
@@ -83,6 +84,10 @@ const clearPendingSafariCopy = (): void => {
   document.removeEventListener('copy', pendingSafariCopy.onCopy, true)
   pendingSafariCopy = null
 }
+
+// A pending listener outlives the test that registered it, and jsdom takes the Safari path, so remove it at every test
+// boundary rather than let it intercept a copy event in the next test.
+registerReset(clearPendingSafariCopy)
 
 /** Copies text and html to the clipboard on Safari/WebKit via a capture-phase document copy listener (see comment above). */
 const copyRichSafari = (text: string, html: string): void => {

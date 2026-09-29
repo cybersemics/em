@@ -1,9 +1,14 @@
+import { KnownDevices } from 'puppeteer'
 import colors from '../../../colors.config'
+import { HOME_TOKEN } from '../../../constants'
 import rgbToHex from '../../../util/rgbToHex'
 import rgbaToHex from '../../../util/rgbaToHex'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
+import command from '../helpers/command'
+import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
 import extractColor from '../helpers/extractColor'
 import getBulletColor from '../helpers/getBulletColor'
 import getEditingText from '../helpers/getEditingText'
@@ -102,6 +107,31 @@ const getColorPickerGeometry = () =>
       toolbarRight: toolbarRect.right,
     }
   })
+
+/** Returns the y position of the Text Color toolbar button once it has come to rest, i.e. once it has not moved for ten consecutive frames. */
+const restingTextColorButtonTop = () =>
+  page.evaluate(
+    () =>
+      new Promise<number>((resolve, reject) => {
+        const button = document.querySelector('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+        if (!button) throw new Error('Text Color button not found.')
+
+        const deadline = Date.now() + 5000
+        let previousTop = NaN
+        let stableFrames = 0
+
+        /** Samples the button's y position once per frame until it stops changing. */
+        const sample = () => {
+          const top = button.getBoundingClientRect().top
+          stableFrames = top === previousTop ? stableFrames + 1 : 0
+          previousTop = top
+          if (stableFrames === 10) resolve(top)
+          else if (Date.now() > deadline) reject(new Error(`The Text Color button is still moving (y=${top}).`))
+          else requestAnimationFrame(sample)
+        }
+        requestAnimationFrame(sample)
+      }),
+  )
 
 vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 })
 
@@ -796,4 +826,68 @@ it('underline applied after a text color draws its line in that color', async ()
   await clickToolbar('Underline')
 
   expect(rgbToHex(await decorationColor())).toBe(rgbaToHex(colors.light.red))
+})
+
+describe('mobile', () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  // https://github.com/cybersemics/em/issues/4263
+  it('does not move the Text Color button when a color is selected', async () => {
+    await paste('- One')
+    await clickThought('One')
+
+    const topBeforeSelection = await restingTextColorButtonTop()
+
+    await clickToolbar('Text Color', 'text color swatches', 'blue')
+    await waitForEditable(`<font color="${rgbaToHex(colors.light.blue)}">One</font>`)
+
+    expect(await restingTextColorButtonTop()).toBe(topBeforeSelection)
+  })
+
+  // https://github.com/cybersemics/em/issues/4264
+  it('tapping the empty space around a color swatch applies the color of that swatch', async () => {
+    await paste(`
+      - One
+    `)
+
+    await clickThought('One')
+    await clickToolbar('Text Color')
+    await waitForSelector('[aria-label="text color swatches"]')
+
+    // the empty space at the top of the row of text color swatches, directly above the blue swatch
+    const emptySpace = await page.evaluate(() => {
+      const row = document.querySelector('[aria-label="text color swatches"]')
+      const blue = row?.querySelector('[aria-label="blue"] svg')
+      if (!row || !blue) throw new Error('Blue text color swatch not found.')
+
+      const rowRect = row.getBoundingClientRect()
+      const blueRect = blue.getBoundingClientRect()
+      return { x: blueRect.left + blueRect.width / 2, y: rowRect.top + 1 }
+    })
+    await page.touchscreen.tap(emptySpace.x, emptySpace.y)
+    await nextFrame()
+
+    expect(await page.$('[aria-label="text color swatches"]')).not.toBeNull()
+    expect(extractColor((await getEditingText())!).color).toBe(rgbaToHex(colors.light.blue))
+  })
+
+  // https://github.com/cybersemics/em/issues/5148
+  it('applies a color to every selected thought when the cursor thought already has it', async () => {
+    await paste(`
+      - a
+      - b
+      - c
+    `)
+
+    await clickThought('a')
+    await clickToolbar('Text Color', 'text color swatches', 'blue')
+    await waitForEditable('<font color="#00c7e6">a</font>')
+
+    await command('selectAll')
+    await click('[aria-label="text color swatches"] [aria-label="blue"]')
+
+    expect((await exportThoughts({ mimeType: 'text/html' })).replace(/\s*\n\s*/g, '')).toBe(
+      `<ul><li>${HOME_TOKEN}<ul><li><font color="#00c7e6">a</font></li><li><font color="#00c7e6">b</font></li><li><font color="#00c7e6">c</font></li></ul></li></ul>`,
+    )
+  })
 })
