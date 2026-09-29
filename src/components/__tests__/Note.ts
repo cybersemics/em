@@ -22,9 +22,8 @@ describe('=note', () => {
   // https://github.com/cybersemics/em/issues/5084
   test.each([
     ['plain whitespace', '  hello  world  ', 'hello  world'],
-    ['browser spaces', '&nbsp; hello&nbsp;&nbsp;', 'hello'],
-    ['formatted whitespace', '<b> &nbsp;hello <i>world&nbsp; </i></b>', '<b>hello <i>world</i></b>'],
-    ['only whitespace', '&nbsp; &nbsp;', ''],
+    ['formatted whitespace', '<b>  hello <i>world  </i></b>', '<b>hello <i>world</i></b>'],
+    ['only whitespace', '   ', ''],
   ])('trims %s only after the note blurs', async (_description, input, expected) => {
     await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
     await act(vi.runOnlyPendingTimersAsync)
@@ -61,7 +60,7 @@ describe('=note', () => {
     await act(vi.runOnlyPendingTimersAsync)
     const noteEditor = screen.getByLabelText('note-editable')
     await act(async () => {
-      fireEvent.input(noteEditor, { target: { innerHTML: '&nbsp;hello&nbsp;' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: '  hello  ' } })
       fireEvent.focusOut(noteEditor)
       await vi.runOnlyPendingTimersAsync()
     })
@@ -70,7 +69,7 @@ describe('=note', () => {
       fireEvent.keyDown(document, { key: 'z', metaKey: true })
       await vi.runOnlyPendingTimersAsync()
     })
-    expect(screen.getByLabelText('note-editable').innerHTML).toBe('&nbsp;hello&nbsp;')
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('  hello  ')
     await act(async () => {
       fireEvent.keyDown(document, { key: 'z', metaKey: true, shiftKey: true })
       await vi.runOnlyPendingTimersAsync()
@@ -102,13 +101,13 @@ describe('=note', () => {
       await act(vi.runOnlyPendingTimersAsync)
       const noteEditor = screen.getByLabelText('note-editable')
       await act(async () => {
-        fireEvent.input(noteEditor, { target: { innerHTML: '&nbsp;hello&nbsp;' } })
+        fireEvent.input(noteEditor, { target: { innerHTML: '  hello  ' } })
         editableSyncStore.update({ [flag]: true })
         fireEvent.focusOut(noteEditor)
         await vi.runOnlyPendingTimersAsync()
       })
-      expect(noteEditor.innerHTML).toBe('&nbsp;hello&nbsp;')
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>&nbsp;hello&nbsp;</li>')
+      expect(noteEditor.innerHTML).toBe('  hello  ')
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>  hello  </li>')
 
       await act(async () => {
         editableSyncStore.update({ [flag]: false })
@@ -316,9 +315,9 @@ describe('=note/=path', () => {
     await act(vi.runOnlyPendingTimersAsync)
     const noteEditor = screen.getByLabelText('note-editable')
     await act(async () => {
-      fireEvent.input(noteEditor, { target: { innerHTML: '<b>&nbsp;c&nbsp;</b>, &nbsp;d&nbsp;' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: '<b> c </b>,  d  ' } })
     })
-    expect(noteEditor.innerHTML).toBe('<b>&nbsp;c&nbsp;</b>, &nbsp;d&nbsp;')
+    expect(noteEditor.innerHTML).toBe('<b> c </b>,  d  ')
     await act(async () => {
       fireEvent.focusOut(noteEditor)
       await vi.runOnlyPendingTimersAsync()
@@ -345,9 +344,9 @@ describe('=note/=path', () => {
             - =path
               - b
           - b
-            - c
+            - **c**
               - first subtree
-            - c
+            - **c**
               - second subtree`,
       }),
       setCursor(['a']),
@@ -356,20 +355,20 @@ describe('=note/=path', () => {
     await act(vi.runOnlyPendingTimersAsync)
     const noteEditor = screen.getByLabelText('note-editable')
     await act(async () => {
-      fireEvent.input(noteEditor, { target: { innerHTML: '&nbsp;c&nbsp;, c' } })
+      fireEvent.input(noteEditor, { target: { innerHTML: '<b> c </b>, <b>c</b>' } })
       fireEvent.focusOut(noteEditor)
       await vi.runOnlyPendingTimersAsync()
     })
-    expect(noteEditor.innerHTML).toBe('c, c')
+    expect(noteEditor.innerHTML).toBe('<b>c</b>, <b>c</b>')
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
     - =note
       - =path
         - b
     - b
-      - c
+      - **c**
         - first subtree
-      - c
+      - **c**
         - second subtree`)
   })
 

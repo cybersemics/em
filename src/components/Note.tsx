@@ -303,6 +303,8 @@ const Note = React.memo(
           className={css({
             display: 'inline-block',
             padding: '0 1em 0 0.333em',
+            // Match thoughts so the browser keeps typed spaces as whitespace that trimHtml can trim.
+            whiteSpace: 'pre-wrap',
           })}
           // For some reason, pointerEvents: 'none' on ContentEditable or its parent does prevent onFocus.
           // This is strange, as it seems to prevent onFocus in Subthought.tsx.

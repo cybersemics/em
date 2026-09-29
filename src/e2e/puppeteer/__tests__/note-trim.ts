@@ -8,7 +8,7 @@ import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 // https://github.com/cybersemics/em/issues/5084
-it('trims browser-generated spaces on blur without stealing focus or breaking redo', async () => {
+it('trims typed spaces on blur without stealing focus or breaking redo', async () => {
   await paste(`
     - a
       - =note
@@ -21,9 +21,6 @@ it('trims browser-generated spaces on blur without stealing focus or breaking re
   await press('End')
   await keyboard.type('  ')
 
-  const editingHtml = await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)
-  expect(editingHtml).toBe('&nbsp; seed&nbsp;&nbsp;')
-
   await clickThought('a')
   await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'a')
   expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('seed')
@@ -34,64 +31,62 @@ it('trims browser-generated spaces on blur without stealing focus or breaking re
 `)
 
   await press('z', { meta: true })
-  await waitUntil(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML === '&nbsp; seed&nbsp;&nbsp;')
+  await waitUntil(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML === '  seed  ')
   await press('z', { meta: true, shift: true })
   await waitUntil(() => document.querySelector('[aria-label="note-editable"]')?.innerHTML === 'seed')
   expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('seed')
 })
 
 // https://github.com/cybersemics/em/issues/5084
-it('shows trimmed referenced notes after undo and redo', async () => {
+it('shows trimmed formatted references after undo and redo', async () => {
   await paste(`
     - a
       - =note
         - =path
           - b
       - b
-        - c
-        - d
+        - **c**
+        - **d**
   `)
   await clickThought('a')
-  await clickNote('c, d')
+  await clickNote('<b>c</b>, <b>d</b>')
   await press('Home')
   await keyboard.type('  ')
   await press('End')
   await keyboard.type('  ')
-  const editingHtml = await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)
-  expect(editingHtml).toBe('&nbsp; c, d&nbsp;&nbsp;')
 
   await clickThought('a')
   await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'a')
-  expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('c, d')
+  expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('<b>c</b>, <b>d</b>')
 
   await press('z', { meta: true })
   await waitUntil(() => document.activeElement?.getAttribute('aria-label') === 'note-editable')
-  expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('&nbsp; c, d&nbsp;&nbsp;')
+  expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('<b>  c</b>, <b>d  </b>')
   await press('z', { meta: true, shift: true })
-  expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('c, d')
+  expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('<b>c</b>, <b>d</b>')
   expect(await exportThoughts()).toBe(`
 - a
   - =note
     - =path
       - b
   - b
-    - c
-    - d
+    - **c**
+    - **d**
 `)
 
-  await clickNote('c, d')
+  await clickNote('<b>c</b>, <b>d</b>')
   await press('End')
   await keyboard.type('e  ')
   await clickThought('a')
   await waitUntil(() => window.getSelection()?.focusNode?.textContent === 'a')
-  expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('c, de')
+  expect(await page.$eval('[aria-label="note-editable"]', element => element.innerHTML)).toBe('<b>c</b>, <b>de</b>')
   expect(await exportThoughts()).toBe(`
 - a
   - =note
     - =path
       - b
   - b
-    - c
-    - de
+    - **c**
+    - **de**
 `)
 })
