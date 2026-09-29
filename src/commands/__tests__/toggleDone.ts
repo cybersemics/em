@@ -1,10 +1,14 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
+import rootedParentOf from '../../selectors/rootedParentOf'
+import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import attributeByContext from '../../test-helpers/attributeByContext'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -82,6 +86,34 @@ describe('toggleDone', () => {
   - a
     - b
     - c`)
+  })
+
+  it.each(['Asc', 'Desc'] as const)('keeps Updated %s sorting active when toggling done', direction => {
+    store.dispatch([
+      importText({
+        text: `
+            - One
+            - Two
+            - Three
+          `,
+      }),
+      setCursor(['One']),
+    ])
+
+    const state = store.getState()
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Updated', direction },
+      }),
+    )
+
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(setCursor(['Three']))
+    executeCommand(toggleDoneCommand, { store })
+
+    expect(attributeByContext(store.getState(), [HOME_TOKEN], '=sort')).toBe('Updated')
   })
 
   describe('multicursor', () => {
