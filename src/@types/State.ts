@@ -4,6 +4,7 @@ import ActionType from './ActionType'
 import Alert from './Alert'
 import Command from './Command'
 import CommandId from './CommandId'
+import CommandUniverseNavigation from './CommandUniverseNavigation'
 import Context from './Context'
 import DragCommandZone from './DragCommandZone'
 import Index from './IndexType'
@@ -14,6 +15,7 @@ import PushBatch from './PushBatch'
 import RecentlyEditedTree from './RecentlyEditedTree'
 import SimplePath from './SimplePath'
 import StorageCache from './StorageCache'
+import ThoughtId from './ThoughtId'
 import ThoughtIndices from './ThoughtIndices'
 import Timestamp from './Timestamp'
 import Tip from './TipId'
@@ -25,6 +27,8 @@ interface State {
   archived?: boolean
   authenticated: boolean
   autologin: boolean
+  /** Page history for the current Command Universe session. */
+  commandUniverseNavigation: CommandUniverseNavigation
   /** Key: hashPath(path). */
   contextViews: Index<boolean>
   cursor: Path | null
@@ -45,8 +49,9 @@ interface State {
   cursorInitialized: boolean
   /**
    * The offset of the caret within the cursor, relative to the start of the thought.
-   * Currently only 0 and n are used, where n is the length of the thought.
    * A value of null means that the caret is not forcefully set on re-render, allowing the device to set it, e.g. on click.
+   * This is a request to place the caret, not a record of where it is: useEditMode reads it non-reactively and collapses
+   * the selection onto it. To record where a selection was, see selectionOffsets.
    */
   cursorOffset: number | null
   /** SimplePath of thought with drag hold activated. */
@@ -102,7 +107,7 @@ interface State {
   /**
    * History of edit points that can be navigated with the jump command.
    * New edit points are added to the beginning of the list.
-   * Cannot use undoHistory because it omits the cursor from some edits.
+   * Cannot use the undo history because it omits the cursor from some edits.
    * i.e. It causes the 'jump after new subthought' to fail.
    */
   jumpHistory: (Path | null)[]
@@ -110,7 +115,7 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
-  /** The last undoable action that was executed. Usually this is the same as undoPatches.at(-1).actions[0]. However, on undo this will equal redoPatches.at(-1).actions[0]. This is important for special case animatons, like swapParent, that should be enabled not just when the action is originally executed, but also when it is reversed via undo. */
+  /** The underlying action type of the last undoable change. On undo this is the first action type of the corresponding redo patch. Used by special-case animations that also run when a change is reversed. */
   lastUndoableActionType?: ActionType
   latestCommands: Command[]
   /** Tracks the state of long press and drag-and-drop. */
@@ -129,7 +134,7 @@ interface State {
   noteOffset: number | null
   /**
    * Temporarily stores updates that need to be persisted.
-   * Passed to Yjs and cleared on every action.
+   * Passed to the data provider and cleared on every action.
    * See: /redux-enhancers/pushQueue.ts.
    */
   pushQueue: PushBatch[]
@@ -137,19 +142,27 @@ interface State {
   /** Redo history. Contains diffs that can be applied to State to restore actions that were reverted with undo. State.redoPatches[0] is the oldest action that was undone. */
   redoPatches: Patch[]
   remoteSearch: boolean
-  resourceCache: Index<string>
   rootContext: Context
-  schemaVersion: number
   search: string | null
   searchContexts: Index<Context> | null
   searchLimit?: number
-  showBulletPicker?: boolean
-  showColorPicker?: boolean
-  showLetterCase?: boolean
+  /**
+   * A snapshot of the browser text selection within a thought, taken at the moment a UI is about to take the focus away
+   * from the editable that owns it. The document has exactly one selection, so a UI with an input of its own (the
+   * Command Universe search box) destroys the only record of what the user had selected; commands that operate on the
+   * selected text read this back instead. See selectors/selectionOffsets.
+   *
+   * Never updated in real time. Nothing subscribes to it reactively, and it is written only when a Command Universe
+   * opens, so it does not participate in the render cycle.
+   */
+  selectionOffsets: { thoughtId: ThoughtId; start: number; end: number } | null
+  showBulletPicker: boolean
+  showColorPicker: boolean
+  showLetterCase: boolean
   showDesktopCommandUniverse: boolean
   showGestureMenu: boolean
   showHiddenThoughts: boolean
-  showSortPicker?: boolean
+  showSortPicker: boolean
   showCommandCenter: boolean
   /**
    * The currently shown modal dialog box.
@@ -159,7 +172,7 @@ interface State {
   showModal?: Modal | null
   showSidebar: boolean
   showMobileCommandUniverse?: boolean
-  showUndoSlider?: boolean
+  showUndoSlider: boolean
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.

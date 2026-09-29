@@ -44,10 +44,12 @@ So the key is the concatenation of every context-view boundary's `id` plus the t
 
 Important behaviors:
 
+- **Sibling order comes from `rank`.** Children are read with [`getChildrenRanked`](../src/selectors/getChildren.ts), never re-sorted during the walk. A context's `=sort` preference is materialized into its children's ranks when the preference is set — see [data-model.md → Visibility and sorting](data-model.md#visibility-and-sorting).
 - **Visibility gating.** A subtree is skipped entirely unless `state.expanded[hashPath(path)]` is set, so collapsed branches don't appear in `treeThoughts` at all. (The expansion model itself lives in [`expandThoughts`](../src/selectors/expandThoughts.ts).)
 - **Context-view pivot.** When a thought has its context view active, the recursion pivots from "render this thought's children" to "render the *contexts* in which this thought appears" via [`getContextsSortedAndRanked`](../src/selectors/getContextsSortedAndRanked.ts). The `contextChain` accumulator is updated, which feeds `crossContextualKey`. A special early-return: if the context view has only one context, the `NoOtherContexts` placeholder is rendered instead.
 - **`belowCursor` propagation.** Once the cursor's `Path` is encountered during the walk, every subsequent `TreeThought` gets `belowCursor: true`. `LayoutTree` later uses this flag to exclude hidden-below-cursor thoughts from `totalHeight` so the document doesn't have a giant trailing dead zone.
 - **Style inheritance.** `=children/=style` and `=grandchildren/=style` are merged into `styleAccum` (current level) and `styleFromGrandparent` (skips one level). Specific positioning properties (`marginLeft`, `paddingLeft`) accumulate down the tree so descendants stay aligned with their ancestors.
+- **`=let` environment accumulation.** A context's `=let` bindings ([`parseLet`](../src/util/parseLet.ts)) are merged into the `env` that is passed down the recursion and carried on every `TreeThought`, so a descendant can name a binding defined by any ancestor and a nearer `=let` shadows an outer one. A level that defines no bindings passes the inherited `env` through by reference, so trees without `=let` never allocate one and `TreeNode`'s memoization is unaffected. See [metaprogramming.md → `=let`](metaprogramming.md#linking--cross-references).
 - **Table cell flags.** Each thought is tagged with `isTableCol1` / `isTableCol2` / `isTableCol2Child` based on `=view/Table` on its parent / grandparent / great-grandparent, plus `visibleChildrenKeys` is populated on table parents so col1 width can later be computed from the children's measured widths.
 
 The result is a flat array, in document order, with one entry per visible thought.
@@ -101,8 +103,8 @@ When the cursor is deep, many ancestors and ancestor-siblings are hidden by auto
 
 1. `LayoutTree` sums the heights of every thought above the cursor where `sizes[key].isVisible === false && !belowCursor`. Result: `spaceAbove`.
 2. `useAutocrop` extends that to at least one viewport height (so there's still room to scroll up): `spaceAboveExtended = max(spaceAbove, viewportHeight)`.
-3. When `spaceAboveExtended` changes, `window.scrollTo({ top: window.scrollY - delta })` keeps visible thoughts positionally stable.
-4. The hook returns `-spaceAboveExtended + viewportHeight`, applied as `transform: translateY(...)` on the outer container.
+3. The hook returns `autocrop = -spaceAboveExtended + viewportHeight`, applied as `transform: translateY(...)` on the outer container.
+4. When `autocrop` changes, `window.scrollTo({ top: window.scrollY + delta })` keeps visible thoughts positionally stable. The counter-scroll tracks the translation, not `spaceAboveExtended`: a viewport height change (e.g. rotating the device) moves `spaceAboveExtended` without shifting the thoughts when `spaceAbove` is less than the viewport, and scrolling by it would push the cursor off screen ([#3990](https://github.com/cybersemics/em/issues/3990)).
 
 Net effect: the outer container is shifted up off-screen by exactly enough that one viewport's worth of empty space sits above the cursor. The user can scroll into that empty space; visible thoughts don't jump.
 
@@ -124,15 +126,16 @@ The indent is applied as `transform: translateX(${1.5 - indent}em)` on the inner
 
 ## Virtualization
 
-`LayoutTree` virtualizes the bottom of the list. The virtualization boundary is:
+`LayoutTree` computes `viewportBottomOffset = spaceAbove + singleLineHeight * 5` and passes it with `innerHeight`. Each `TreeNode` combines those stable values with the current `scrollTop` to get the bottom virtualization boundary:
 
 ```ts
-viewportBottom = viewportBottomState (= scrollTop + innerHeight)
+viewportBottom = max(scrollTop, 0)
+               + innerHeight
                + spaceAbove
-               + (singleLineHeight * 5)   // overshoot, so a small scroll doesn't reveal blanks
+               + (singleLineHeight * 5) // overshoot, so a small scroll doesn't reveal blanks
 ```
 
-Thoughts whose `y > viewportBottom` are still in `treeThoughtsPositioned` but rendered with `height: 0` if both `belowCursor` and `!isVisible`. (Above the cursor, the autocrop already takes care of the blank.)
+Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
 
 ## `useSizeTracking` and the `sizes` map
 
@@ -205,3 +208,11 @@ When `b` is positioned, `yaccum` is *not* incremented; `b1` is placed at `(x = f
 ## `useLayoutTreeTop`
 
 A small effect that writes the LayoutTree's top y (offset + autocrop) into `viewportStore.layoutTreeTop`. Used by `scrollCursorIntoView` to figure out where thoughts actually start on the page (vs. the toolbar above).
+
+## Scrolling the cursor into view
+
+[`scrollCursorIntoView`](../src/device/scrollCursorIntoView.ts) scrolls the minimum amount needed to clear the toolbar above and the navbar (or virtual keyboard) below. [`useScrollCursorIntoView`](../src/hooks/useScrollCursorIntoView.ts) calls it two ways: directly when the cursor's `y` or `height` changes, and through [`scheduleScrollCursorIntoView`](../src/device/scheduleScrollCursorIntoView.ts) when the editing value changes — the cursor's rank can move as it is edited, e.g. toggling bold in a long, sorted context.
+
+The scheduled path defers to the next tick before reading the cursor's size, because `editingValueStore` subscribers run synchronously and would otherwise close over a size from before the render ([#3083](https://github.com/cybersemics/em/issues/3083)), and then throttles to 400 ms. A cursor scroll can therefore be waiting in three places at once: the tick before it reaches the throttle, the throttle's trailing call, and the 10 ms retry that `scrollIntoViewIfNeeded` arms while `preventAutoscroll` is in progress (see [cursor-and-caret.md → `preventAutoscroll.ts`](cursor-and-caret.md#preventautoscrollts)). `scheduleScrollCursorIntoView.cancel()` clears all three; cancelling the throttle alone leaves a timer that has not fired yet free to re-arm it.
+
+[`scrollTo`](../src/device/scrollTo.ts) cancels before it scrolls. Its callers — Escape, Home, opening a modal, the footer, the tutorial's scroll-up button — are all deliberate moves of the viewport, so a cursor scroll queued before one of them is stale; without the cancel it lands up to 400 ms later and undoes the scroll that was just asked for. Escape and Home are the sharp cases, since clearing the cursor is itself what schedules the pending scroll. New code that repositions the viewport on purpose should go through `scrollTo` for the same reason. The autocrop compensation in [`LayoutTree`](../src/components/LayoutTree.tsx) is not such a case and correctly bypasses it: it holds the viewport still while content shifts underneath, so it has no pending cursor scroll to supersede.

@@ -21,8 +21,10 @@ on:
 # it, which would break the `ghworkflow` flake hunt (docs/testing.md § Triggering GitHub Actions
 # workflows manually) that fans out many runs on one ref.
 #
-# This group is separate from ios.yml's `browserstack` one, so the contention noted on the ios job
-# below is unchanged; cancelling a superseded run only ever reduces the draw on that shared pool.
+# This group is separate from ios.yml's per-PR one, so the two workflows never queue behind each
+# other; both wait in-process for real BrowserStack session headroom instead (see
+# waitForBrowserStackSlots.ts), and cancelling a superseded run only ever reduces the draw on that
+# shared pool.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: true
@@ -35,7 +37,7 @@ env:
   CI: true
   COPILOT_AGENT_FIREWALL_ALLOW_LIST_ADDITIONS: googlechromelabs.github.io,storage.googleapis.com
   # Skip Puppeteer's Chrome download on install — none of this workflow's jobs uses the bundled
-  # browser (Puppeteer tests attach to the browserless/chrome service via CDP; only
+  # browser (Puppeteer tests attach to the browserless/chromium service via CDP; only
   # agent-scripts.yml launches the bundled browser), saving ~20s per install.
   PUPPETEER_SKIP_DOWNLOAD: true
 
@@ -344,7 +346,7 @@ jobs:
 
       - name: Restore GitHub Actions files from PR HEAD
         if: github.event_name == 'pull_request'
-        run: git checkout FETCH_HEAD -- .github/actions/
+        run: git checkout FETCH_HEAD -- .github/actions/ .github/scripts/
 
       - name: Checkout test files from PR head
         id: patch
@@ -361,20 +363,32 @@ jobs:
             exit 0
           fi
 
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
+
           # Check out each test file directly from the PR head. This reliably handles
           # both modified files and brand-new test files (including new directories),
           # where git apply --3way can fail because there is no base blob to merge.
           echo "=== Checking out test files from PR head ==="
           for f in $UNIT_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           # Test infrastructure the changed tests may depend on, e.g. a new helper.
           HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
           for f in $HELPER_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           echo "empty=false" >> "$GITHUB_OUTPUT"
@@ -430,6 +444,12 @@ jobs:
             echo "❌ TDD flagged: changed tests PASS on the base branch."
             echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
             echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
+
+            # Emit GitHub diff annotations for each added it()/test() call so the
+            # TDD violation is highlighted directly in the PR file changes view.
+            git diff "${{ needs.detect.outputs.merge_base }}" "${{ github.event.pull_request.head.sha }}" -- $UNIT_FILES > /tmp/test.patch
+            sh .github/scripts/annotate-tdd-violations.sh /tmp/test.patch
+
             exit 1
           fi
 
@@ -443,11 +463,11 @@ jobs:
     runs-on: ubuntu-latest
     services:
       browserless:
-        image: browserless/chrome:latest
+        image: ghcr.io/browserless/chromium:v2.56.2
         ports:
           - 7566:3000
         env:
-          CONNECTION_TIMEOUT: -1
+          TIMEOUT: 0
 
     steps:
       - name: Clone repository
@@ -459,9 +479,9 @@ jobs:
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
 
-      - name: Restore GitHub Actions files from PR HEAD
+      - name: Restore test infrastructure from PR HEAD
         if: github.event_name == 'pull_request'
-        run: git checkout FETCH_HEAD -- .github/actions/
+        run: git checkout FETCH_HEAD -- .github/actions/ .github/scripts/ src/e2e/puppeteer/install-browserless-fonts.sh
 
       - name: Checkout test files and support from PR head
         id: patch
@@ -481,22 +501,38 @@ jobs:
             exit 0
           fi
 
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
+
           # Test support is part of the test, not the application fix. Check it out
           # with the test so the base-branch run reaches the behavioral assertion.
           echo "=== Checking out puppeteer test files and support from PR head ==="
           for f in $PUPPETEER_FILES $PUPPETEER_SUPPORT_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           # Test infrastructure the changed tests may depend on, e.g. a new helper.
           HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
           for f in $HELPER_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           echo "empty=false" >> "$GITHUB_OUTPUT"
+
+      - name: Install Microsoft Core Fonts
+        if: steps.patch.outputs.empty != 'true'
+        run: ./src/e2e/puppeteer/install-browserless-fonts.sh '${{ job.services.browserless.id }}'
 
       - name: Enable Corepack
         if: steps.patch.outputs.empty != 'true'
@@ -559,6 +595,12 @@ jobs:
             echo "❌ TDD flagged: changed puppeteer tests PASS on the base branch."
             echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
             echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
+
+            # Emit GitHub diff annotations for each added it()/test() call so the
+            # TDD violation is highlighted directly in the PR file changes view.
+            git diff "${{ needs.detect.outputs.merge_base }}" "${{ github.event.pull_request.head.sha }}" -- $PUPPETEER_FILES > /tmp/test.patch
+            sh .github/scripts/annotate-tdd-violations.sh /tmp/test.patch
+
             exit 1
           fi
 
@@ -610,19 +652,31 @@ jobs:
             exit 0
           fi
 
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
+
           # Test support is part of the test, not the application fix. Check it out
           # with the test so the base-branch run reaches the behavioral assertion.
           echo "=== Checking out iOS test files and support from PR head ==="
           for f in $IOS_FILES $IOS_SUPPORT_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           # Test infrastructure the changed tests may depend on, e.g. a new helper.
           HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
           for f in $HELPER_FILES; do
-            echo "Checking out: $f"
-            git checkout FETCH_HEAD -- "$f"
+            sync_from_head "$f"
           done
 
           echo "empty=false" >> "$GITHUB_OUTPUT"

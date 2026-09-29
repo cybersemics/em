@@ -1,5 +1,5 @@
 import { isEqual, throttle } from 'lodash'
-import { RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css, cx } from '../../styled-system/css'
@@ -14,9 +14,7 @@ import fauxCaretTreeProvider from '../recipes/fauxCaretTreeProvider'
 import { hasChildren } from '../selectors/getChildren'
 import linearizeTree from '../selectors/linearizeTree'
 import nextSibling from '../selectors/nextSibling'
-import reactMinistore from '../stores/react-ministore'
-import scrollTopStore from '../stores/scrollTop'
-import viewportStore from '../stores/viewport'
+import viewportStore from '../stores/viewportStore'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import BulletCursorOverlay from './BulletCursorOverlay'
@@ -25,12 +23,6 @@ import TreeNode from './TreeNode'
 
 /** The padding-bottom of the .content element. Make sure it matches the CSS. */
 const CONTENT_PADDING_BOTTOM = 153
-
-/** A computed store that tracks the bottom of the viewport. Used for list virtualization. Does not include overscroll, i.e. if the user scrolls past the top of the document viewportBottom will not change. */
-const viewportBottomStore = reactMinistore.compose(
-  (viewport, scrollTop) => Math.max(scrollTop, 0) + viewport.innerHeight,
-  [viewportStore, scrollTopStore],
-)
 
 /** Calculates the height of a single-line thought. Initially uses an estimated height, then uses the height measured from thn DOM. */
 const useSingleLineHeight = (sizes: Index<{ height: number; width?: number; isVisible: boolean }>) => {
@@ -96,22 +88,24 @@ const useAutocrop = (spaceAbove: number): number => {
   // extend spaceAbove to be at least the height of the viewport so that there is room to scroll up
   const spaceAboveExtended = Math.max(spaceAbove, viewportHeight)
 
-  const spaceAboveLast = useRef(spaceAboveExtended)
+  // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
+  const autocrop = -spaceAboveExtended + viewportHeight
 
-  // when spaceAbove changes, scroll by the same amount so that the thoughts appear to stay in the same place
+  const autocropLast = useRef(autocrop)
+
+  // When the thoughts are shifted, scroll by the same amount so that they appear to stay in the same place.
+  // Track the shift itself rather than spaceAboveExtended, which also changes with the viewport height, e.g. on rotation (#3990).
   useEffect(
     () => {
-      const spaceAboveDelta = spaceAboveExtended - spaceAboveLast.current
-      window.scrollTo({ top: scrollY - spaceAboveDelta })
-      spaceAboveLast.current = spaceAboveExtended
+      window.scrollTo({ top: scrollY + autocrop - autocropLast.current })
+      autocropLast.current = autocrop
     },
     // do not trigger effect on scrollY change
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [spaceAboveExtended],
+    [autocrop],
   )
 
-  // add a full viewport height's space above to ensure that there is room to scroll by the same amount as spaceAbove
-  return -spaceAboveExtended + viewportHeight
+  return autocrop
 }
 
 /** A hook that returns a ref to the content div and updates the viewport store's layoutTreeTop property on mount. */
@@ -215,17 +209,9 @@ const LayoutTree = () => {
     },
   )
 
-  // The bottom of all visible thoughts in a virtualized list where thoughts below the viewport are hidden (relative to document coordinates; changes with scroll position).
-  const viewportBottom = viewportBottomStore.useSelector(
-    useCallback(
-      viewportBottomState => {
-        // the number of additional thoughts below the bottom of the screen that are rendered
-        const overshoot = singleLineHeight * 5
-        return viewportBottomState + spaceAbove + overshoot
-      },
-      [singleLineHeight, spaceAbove],
-    ),
-  )
+  // Offset the virtualization boundary by hidden space above the cursor and five additional thoughts below the
+  // viewport. TreeNode combines this stable offset with scrollTop so that LayoutTree does not rerender on scroll.
+  const viewportBottomOffset = spaceAbove + singleLineHeight * 5
 
   const { footerHeight, navbarHeight } = useNavAndFooterHeight()
   const navAndFooterHeight = navbarHeight + footerHeight
@@ -328,7 +314,8 @@ const LayoutTree = () => {
               thoughtKey={thought.key}
               editing={editing || false}
               {...{
-                viewportBottom,
+                viewportHeight,
+                viewportBottomOffset,
                 treeThoughtsPositioned,
                 bulletWidth,
                 cursorUncleId,

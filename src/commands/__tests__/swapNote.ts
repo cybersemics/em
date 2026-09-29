@@ -5,19 +5,12 @@ import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
+import multicursorValues from '../../test-helpers/multicursorValues'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'
 import swapNoteCommand from '../swapNote'
 
 beforeEach(initStore)
-
-/** Returns the sorted values of the current multicursor set. */
-const multicursorValues = (): (string | undefined)[] => {
-  const state = store.getState()
-  return Object.values(state.multicursors)
-    .map(path => headValue(state, path))
-    .sort()
-}
 
 describe('swapNote', () => {
   it('converts a thought to a note', () => {
@@ -34,7 +27,7 @@ describe('swapNote', () => {
     executeCommand(swapNoteCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =note
       - b`)
@@ -56,7 +49,7 @@ describe('swapNote', () => {
     executeCommand(swapNoteCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
   - c`)
@@ -83,7 +76,7 @@ describe('swapNote', () => {
       executeCommandWithMulticursor(swapNoteCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =note
       - b

@@ -9,13 +9,14 @@ import { AuthenticateAction } from '../actions/authenticate'
 import { pullActionCreator as pull } from '../actions/pull'
 import { pullAncestorsActionCreator as pullAncestors } from '../actions/pullAncestors'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
-import db from '../data-providers/yjs/thoughtspace'
+import db from '../data-providers/thoughtspace'
 import { getChildren } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import thoughtToPath from '../selectors/thoughtToPath'
-import syncStatusStore from '../stores/syncStatus'
+import ministore from '../stores/ministore'
+import syncStatusStore from '../stores/syncStatusStore'
 import equalArrays from '../util/equalArrays'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
@@ -27,8 +28,8 @@ const updatePullQueueDelay = 10
 /** Limit frequency of fetching pull queue contexts. Ignored on first flush. */
 const flushPullQueueDelay = 100
 
-/** Tracks if any pulls have executed yet. Used to pull favorites only on the first pull. */
-let pulled = false
+/** Tracks if any pulls have executed yet. Used to pull favorites only on the first pull. A ministore rather than a module variable so that resetStores restores it between tests; nothing subscribes, so a write costs one comparison. Not reset by the clear action, so favorites are still pulled once per session. */
+const favoritesPulledStore = ministore(false)
 
 /** Creates the initial pullQueue with only the em and root contexts. */
 const initialPullQueue = (): Record<ThoughtId, true> => ({
@@ -164,9 +165,9 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // pull favorites in the background on the first pull
     // note that syncStatusStore.isPulling does not include favorites because we want them to load in the background and not block push
-    if (!pulled) {
+    if (!favoritesPulledStore.getState()) {
       dispatch(pullFavorites())
-      pulled = true
+      favoritesPulledStore.update(true)
     }
   }
 
@@ -218,7 +219,10 @@ const pullQueueMiddleware: ThunkMiddleware<State> = ({ getState, dispatch }) => 
 
     // reset internal pullQueue when clear action is dispatched
     if (isAction(action) && action.type === 'clear') {
+      updatePullQueueDebounced.cancel()
+      flushPullQueueThrottled.cancel()
       pullQueue = initialPullQueue()
+      lastExpandedPullQueue = {}
     }
     // Update pullQueue and flush on authenticate to force a remote fetch and make remote-only updates.
     // Otherwise, because thoughts are previously loaded from local storage which turns off pending on the root context, a normal pull will short circuit and remote thoughts will not be loaded.

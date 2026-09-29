@@ -1,6 +1,6 @@
 import _ from 'lodash'
-import Player, { LottieRefCurrentProps } from 'lottie-react'
-import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { Lottie, LottieHandle } from 'lottie-react'
+import React, { useMemo, useRef } from 'react'
 import AnimatedColor from '../../@types/lottie/AnimatedColor'
 import ColorProperty from '../../@types/lottie/ColorProperty'
 import LottieData from '../../@types/lottie/LottieData'
@@ -124,7 +124,7 @@ const changeLineColor = (data: LottieData, newColor: string): LottieData => {
 /**
  * LottieAnimation Component.
  *
- * This component utilizes the 'lottie-react' Player to render a Lottie animation.
+ * This component utilizes the 'lottie-react' Lottie component to render a Lottie animation.
  * It accepts animation data and supports customizable speed and color properties,
  * allowing for dynamic control over the animation's playback rate and the stroke
  * and fill colors of its elements.
@@ -137,45 +137,43 @@ const changeLineColor = (data: LottieData, newColor: string): LottieData => {
  * This does not affect the Lottie animation's JSON content or alter its visual elements.
  */
 const LottieAnimation: React.FC<LottieAnimationProps> = ({ animationData, speed = 1, color, onComplete }) => {
-  const lottieRef = useRef<LottieRefCurrentProps | null>(null)
+  const lottieRef = useRef<LottieHandle>(null)
 
   const animationDataWithColor = useMemo(() => {
     return animationData ? changeLineColor(animationData, color) : null
   }, [animationData, color])
 
-  // skip the animation in Puppeteer tests to avoid inconsistent snapshots
-  if (navigator.webdriver) {
-    useLayoutEffect(() => {
-      if (!lottieRef.current) return
-
-      const lastFrame = lottieRef.current.getDuration(true)! - 1
-      lottieRef.current.goToAndStop(lastFrame)
-      onComplete?.()
-    }, [onComplete])
-  }
-
-  useEffect(() => {
-    if (lottieRef.current && animationDataWithColor) {
-      lottieRef.current.setSpeed(speed)
-    }
-  }, [speed, animationDataWithColor])
+  const subscriptions = useMemo(
+    () => ({
+      complete: onComplete,
+      // skip the animation in Puppeteer tests to avoid inconsistent snapshots
+      ...(navigator.webdriver && {
+        ready: () => {
+          lottieRef.current?.seek({ percent: 100 })
+          onComplete?.()
+        },
+      }),
+    }),
+    [onComplete],
+  )
 
   if (!animationDataWithColor) {
     return null
   }
 
   return (
-    <Player
+    <Lottie
       style={{
         width: '100%',
         height: '100%',
       }}
-      animationData={animationDataWithColor}
+      src={animationDataWithColor}
       lottieRef={lottieRef}
+      speed={speed}
       // turn off autoplay in puppeteer tests
       autoplay={!navigator.webdriver}
       loop={false}
-      onComplete={onComplete}
+      subscriptions={subscriptions}
     />
   )
 }

@@ -19,7 +19,7 @@ describe('toggleDone', () => {
     executeCommand(toggleDoneCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - `)
   })
 
@@ -36,7 +36,7 @@ describe('toggleDone', () => {
     ])
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - `)
   })
 
@@ -55,7 +55,7 @@ describe('toggleDone', () => {
     executeCommand(toggleDoneCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - =done
@@ -78,7 +78,7 @@ describe('toggleDone', () => {
     executeCommand(toggleDoneCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
     - c`)
@@ -105,7 +105,7 @@ describe('toggleDone', () => {
       executeCommandWithMulticursor(toggleDoneCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - =done
@@ -139,7 +139,7 @@ describe('toggleDone', () => {
       executeCommandWithMulticursor(toggleDoneCommand, { store })
 
       const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-      expect(exported).toBe(`- __ROOT__
+      expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
     - c

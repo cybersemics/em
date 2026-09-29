@@ -115,6 +115,32 @@ it('omit value to set only attribute', () => {
     - =test`)
 })
 
+it('preserve existing children when setting a nullary attribute', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - b
+        - c
+    `,
+    }),
+    (state: State) =>
+      setDescendant(state, {
+        path: contextToPath(state, ['a'])!,
+        value: '=test',
+      }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =test
+    - b
+    - c`)
+})
+
 it('set empty attribute', () => {
   const steps = [
     newThought('a'),

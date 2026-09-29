@@ -1,10 +1,15 @@
 import Capacitor
 import Foundation
 import WebKit
+import WebviewBackground
 
 /// Storyboard-referenced bridge view controller, included in both debug and release builds.
 ///
-/// In debug (development) builds it registers `DevServerCertPlugin`, which trusts the
+/// It supplies the app's web view: a `NativeHistoryWebView`, which routes iOS native undo/redo gestures
+/// (three-finger swipe, shake-to-undo, and the Edit menu) to the web layer as a `nativeHistory` event
+/// rather than letting them run against WebKit's own undo stack.
+///
+/// In debug (development) builds it also registers `DevServerCertPlugin`, which trusts the
 /// development server's self-signed certificate. Registration happens in
 /// `capacitorDidLoad()` — which Capacitor calls from `loadView()`, *before* the web view
 /// loads the server URL in `viewDidLoad()` — so the plugin is in place for the very first
@@ -13,6 +18,10 @@ import WebKit
 /// In release builds the debug-only code is compiled out by `#if DEBUG`, so production
 /// certificate handling remains strict (the dev server is never used in release).
 class DevServerViewController: CAPBridgeViewController {
+
+    override func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
+        return NativeHistoryWebView(frame: frame, configuration: configuration)
+    }
 
     #if DEBUG
     override func capacitorDidLoad() {

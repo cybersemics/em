@@ -2,21 +2,19 @@ import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import removeMulticursor, { removeMulticursorActionCreator } from '../actions/removeMulticursor'
-import contextToPath from '../selectors/contextToPath'
+import contextToPathOrThrow from './contextToPathOrThrow'
 
-/** A reducer that removes a multicursor at the first match of the given unranked path. Uses contextToPath. */
-const removeMulticursorAtFirstMatch = (state: State, pathUnranked: string[] | null): State => {
-  const path = pathUnranked ? contextToPath(state, pathUnranked) : null
-  return path ? removeMulticursor(state, { path }) : state
-}
+/** A reducer that removes a multicursor at the first match of the given unranked path. Throws if the path does not resolve. */
+const removeMulticursorAtFirstMatch = (state: State, pathUnranked: string[]): State =>
+  removeMulticursor(state, { path: contextToPathOrThrow(state, pathUnranked, 'removeMulticursorAtFirstMatch') })
 
-/** A Thunk that removes a multicursor at the first match of the given unranked path. */
+/** A Thunk that removes a multicursor at the first match of the given unranked path. Throws if the path does not resolve. */
 export const removeMulticursorAtFirstMatchActionCreator =
-  (pathUnranked: string[] | null): Thunk =>
+  (pathUnranked: string[]): Thunk =>
   (dispatch, getState) => {
-    const path = pathUnranked ? contextToPath(getState(), pathUnranked!) : null
+    const path = contextToPathOrThrow(getState(), pathUnranked, 'removeMulticursorAtFirstMatch')
 
-    if (path) dispatch(removeMulticursorActionCreator({ path }))
+    dispatch(removeMulticursorActionCreator({ path }))
   }
 
 export default _.curryRight(removeMulticursorAtFirstMatch)

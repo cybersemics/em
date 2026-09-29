@@ -7,7 +7,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-describe.skip('let-style', () => {
+describe('let-style', () => {
   it('define =style in a =let expressions and apply it to a child of the parent context', async () => {
     await dispatch([
       importText({

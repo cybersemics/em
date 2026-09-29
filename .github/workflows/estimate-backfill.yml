@@ -44,9 +44,12 @@ jobs:
           # backfill.ts runs `git log` to compute the prompt version; a shallow
           # clone would make it resolve to "unknown", so fetch full history.
           fetch-depth: 0
+      - name: Enable Corepack
+        run: corepack enable
       - uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: 'yarn'
       - run: yarn install --immutable
       - name: Build estimate workspace
         run: yarn workspace em-estimate build
@@ -54,7 +57,9 @@ jobs:
         run: node scripts/estimate/src/backfill.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # OpenAI API key used for issue estimation inference (backfill.ts).
+          # OpenAI API key used for issue estimation inference (backfill.ts). The estimate key bills this
+          # workflow separately in the OpenAI dashboard; the shared key is the fallback.
+          OPENAI_API_KEY_ESTIMATE: ${{ secrets.OPENAI_API_KEY_ESTIMATE }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           EVERHOUR_API_KEY: ${{ secrets.EVERHOUR_API_KEY }}
           # An EVERHOUR_PROJECT_ID secret must be configured in repo settings.

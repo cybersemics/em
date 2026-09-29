@@ -1,4 +1,12 @@
-import { formatKeyboardShortcut, hashCommand, parseCommandShortcut } from '../commands'
+import {
+  beforeInput,
+  formatKeyboardShortcut,
+  handleGestureSegment,
+  hashCommand,
+  keyDown,
+  parseCommandShortcut,
+} from '../commands'
+import initStore from '../test-helpers/initStore'
 
 describe('parseCommandShortcut', () => {
   it('parses a space-separated shortcut', () => {
@@ -65,7 +73,7 @@ describe('parseCommandShortcut', () => {
   })
 
   it('finds a command by typing the shortcut exactly as it is displayed', () => {
-    // extractThought is bound to { key: 'e', control: true, meta: true }, i.e. Command + Control + e on Mac and
+    // extractSubthought is bound to { key: 'e', control: true, meta: true }, i.e. Command + Control + e on Mac and
     // Ctrl + Shift + e elsewhere, since Ctrl is already the meta modifier on non-Mac platforms
     const extractKeyboard = { key: 'e', control: true, meta: true }
     expect(parseCommandShortcut(formatKeyboardShortcut(extractKeyboard))).toBe(hashCommand(extractKeyboard))
@@ -100,6 +108,48 @@ describe('parseCommandShortcut', () => {
 
     it('a plain multi-word label', () => {
       expect(parseCommandShortcut('new thought')).toBeNull()
+    })
+  })
+})
+
+// Each pair below depends on its order: the first test leaves module state behind in commands.ts, and the second checks
+// that it did not reach it. The store is initialized and the fake clock installed once per describe, so no test
+// reinstalls the clock and discards what the last one left; the only thing between the two tests is the reset that
+// setupTests runs after every test.
+// https://github.com/cybersemics/em/issues/5247
+describe('isolation between tests', () => {
+  afterAll(() => {
+    vi.useRealTimers()
+  })
+
+  describe('gesture menu timer', () => {
+    beforeAll(async () => {
+      await initStore()
+      // settle what initStore scheduled, so that the only timer counted is the gesture menu
+      await vi.runAllTimersAsync()
+    })
+
+    it('schedule the gesture menu and end without advancing the clock', () => {
+      handleGestureSegment({ gesture: 'r', sequence: 'r' })
+      expect(vi.getTimerCount()).toBe(1)
+    })
+
+    it('start the next test with no gesture menu pending', () => {
+      expect(vi.getTimerCount()).toBe(0)
+    })
+  })
+
+  describe('key command', () => {
+    beforeAll(() => initStore())
+
+    it('press Enter without releasing it', () => {
+      keyDown(new KeyboardEvent('keydown', { key: 'Enter' }))
+    })
+
+    it('do not treat input in the next test as the held Enter', () => {
+      const e = new InputEvent('beforeinput', { inputType: 'insertText', data: 'a', cancelable: true })
+      beforeInput(e)
+      expect(e.defaultPrevented).toBe(false)
     })
   })
 })

@@ -55,3 +55,46 @@ describe('HTML-tagged values (e.g. from background color formatting)', () => {
     expect(applyLetterCase('UpperCase', value)).toBe('<b>HELLO <font color="#00FF00">GREEN</font> WORLD</b>')
   })
 })
+
+describe('transforms that change the length of the text', () => {
+  // https://github.com/cybersemics/em/pull/4858#pullrequestreview-4893666301
+  it('applies UpperCase to a value containing ß without truncating the text', () => {
+    expect(applyLetterCase('UpperCase', '"Straße" means "Street" in German')).toBe('"STRASSE" MEANS "STREET" IN GERMAN')
+  })
+
+  it('applies UpperCase to a value containing ß in a tag without truncating the text', () => {
+    expect(applyLetterCase('UpperCase', '<b>Straße</b> means street')).toBe('<b>STRASSE</b> MEANS STREET')
+  })
+
+  // title case does not capitalize a token that contains a period, so the transform of a prefix can be longer than the
+  // transform of the whole value
+  it('applies TitleCase across tags without duplicating text', () => {
+    /** Extracts the plain text of an html string. */
+    const textContent = (html: string) => new DOMParser().parseFromString(html, 'text/html').body.textContent
+    expect(textContent(applyLetterCase('TitleCase', 'ᾷßx<b>.</b>ß<b>B</b>'))).toBe('ᾷßx.ßb')
+  })
+})
+
+describe('a selected range', () => {
+  // https://github.com/cybersemics/em/issues/4281
+  it('transforms only the range, leaving the rest of the value unchanged', () => {
+    expect(applyLetterCase('UpperCase', 'Welcome to the world of beautiful people', { start: 24, end: 33 })).toBe(
+      'Welcome to the world of BEAUTIFUL people',
+    )
+  })
+
+  it('transforms a range that spans tags while preserving the markup', () => {
+    const value = '<b>hello <font color="#00FF00">green</font> world</b>'
+    expect(applyLetterCase('UpperCase', value, { start: 6, end: 11 })).toBe(
+      '<b>hello <font color="#00FF00">GREEN</font> world</b>',
+    )
+  })
+
+  it('transforms a range whose transform changes the length of the text', () => {
+    expect(applyLetterCase('UpperCase', 'Straße x', { start: 0, end: 6 })).toBe('STRASSE x')
+  })
+
+  it('transforms to the end of the value when no end is given', () => {
+    expect(applyLetterCase('LowerCase', 'HELLO WORLD', { start: 6 })).toBe('HELLO world')
+  })
+})

@@ -114,3 +114,75 @@ it('should maintain sort order when bumping down in a sorted context', () => {
     - B
     - C`)
 })
+
+it('bump leaf that starts with an emoji, leaving the emoji behind', () => {
+  const steps = [newThought('🧠 Brain'), bumpThoughtDown({})]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - 🧠 ${''}
+    - Brain`)
+})
+
+it('bump thought with children that starts with an emoji, leaving the emoji behind', () => {
+  const steps = [newThought('🧠 Brain'), newSubthought('b'), cursorBack, bumpThoughtDown({})]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - 🧠 ${''}
+    - Brain
+    - b`)
+})
+
+it('bump the whole value of a thought that is nothing but an emoji', () => {
+  const steps = [newThought('🧠'), newSubthought('b'), cursorBack, bumpThoughtDown({})]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - ${''}
+    - 🧠
+    - b`)
+})
+
+it('cursor offset should be placed after the emoji that stays behind', () => {
+  const steps = [newThought('🧠 Brain'), newSubthought('b'), cursorBack, bumpThoughtDown({})]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursorOffset).toBe('🧠 '.length)
+})
+
+it('should sort the bumped thought by its value without the emoji in a sorted context', () => {
+  const steps = [
+    importText({
+      text: `
+        - 🧠 C
+          - =sort
+            - Alphabetical
+              - Asc
+          - A
+          - B
+      `,
+    }),
+    setCursor(['🧠 C']),
+    bumpThoughtDown({}),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - 🧠 ${''}
+    - =sort
+      - Alphabetical
+        - Asc
+    - A
+    - B
+    - C`)
+})

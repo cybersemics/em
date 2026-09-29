@@ -2,9 +2,9 @@ import Command from '../@types/Command'
 import { desktopCommandUniverseActionCreator as desktopCommandUniverse } from '../actions/desktopCommandUniverse'
 import CommandUniverseIcon from '../components/icons/CommandUniverseIcon'
 
-const openDesktopCommandUniverseCommand: Command = {
+const openDesktopCommandUniverseCommand = {
   id: 'openDesktopCommandUniverse',
-  label: 'Command Universe',
+  label: 'Command Universe' as const,
   description: 'Opens the Command Universe.',
   hideFromDesktopCommandUniverse: true,
   multicursor: false,
@@ -12,6 +12,6 @@ const openDesktopCommandUniverseCommand: Command = {
   keyboard: { key: 'p', meta: true },
   exec: dispatch => dispatch(desktopCommandUniverse()),
   allowExecuteFromModal: true,
-}
+} satisfies Command
 
 export default openDesktopCommandUniverseCommand

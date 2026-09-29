@@ -330,6 +330,41 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
   })
 
+  // https://github.com/cybersemics/em/issues/5445
+  it.skip('new subthought on a context view does not warn about a missing sibling', () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      newThought({ insertNewSubthought: true }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // restore before asserting so a failure cannot leave console.warn mocked for the rest of the file
+    const warnings = [...consoleWarn.mock.calls]
+    consoleWarn.mockRestore()
+
+    // createThought's missing-children sweep must not report the context that newThought is in the middle of creating
+    expect(warnings).toEqual([])
+
+    // the new context must still be created, otherwise the absence of a warning proves nothing
+    const exportedAbs = exportContext(stateNew, [ABSOLUTE_TOKEN], 'text/plain')
+    expect(exportedAbs).toBe(`- ${ABSOLUTE_TOKEN}
+  - ${''}
+    - m`)
+  })
+
   it('new thought on a context adds a a new sibling context in the absolute context', () => {
     const text = `
       - a

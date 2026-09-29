@@ -8,23 +8,29 @@ const PuppeteerEnvironment: Environment = {
   async setup(global, options) {
     builtinEnvironments['happy-dom'].setup(global, options)
 
-    // Disable Chrome features that crash GitHub Actions with "Protocol error (Target.createTarget): Target closed."
-    // See: https://stackoverflow.com/a/66994528/480608
     // List of Chromium switches: https://peter.sh/experiments/chromium-command-line-switches/
     const args = [
       '--deterministic-fetch',
       '--disable-dev-shm-usage',
-      '--disable-features=IsolateOrigins',
+      '--disable-http2',
       '--disable-setuid-sandbox',
-      '--disable-site-isolation-trials',
       '--no-first-run',
       '--no-sandbox',
       '--no-zygote',
       '--ignore-certificate-errors',
     ]
 
+    const launch = Buffer.from(
+      JSON.stringify({
+        args,
+        // Only our test client should set the viewport. Browserless's own Page otherwise saves
+        // competing desktop metrics that Chromium's RenderDocument can reapply on navigation.
+        defaultViewport: null,
+      }),
+    ).toString('base64')
+
     const browser = await puppeteer
-      .connect({ browserWSEndpoint: `ws://localhost:7566?${args.join('&')}` })
+      .connect({ browserWSEndpoint: `ws://localhost:7566/chromium?launch=${encodeURIComponent(launch)}` })
       // catch and log a launch error, otherwise it will not appear in the CI logs
       .catch((err: Error) => {
         // using `console.log` here to avoid errors or logs being swallowed by vitest

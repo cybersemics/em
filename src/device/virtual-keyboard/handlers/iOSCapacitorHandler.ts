@@ -4,7 +4,7 @@ import { AnimationPlaybackControls, animate } from 'framer-motion'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { LongPressState } from '../../../constants'
 import store from '../../../stores/app'
-import viewportStore from '../../../stores/viewport'
+import viewportStore from '../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
 import getSafeAreaBottom from '../getSafeAreaBottom'
 
@@ -75,6 +75,14 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
   },
   destroy: () => {
     Keyboard.removeAllListeners()
+  },
+  show: editable => {
+    // WKWebView usually focuses the editing host when the browser selection is set, but not once the keyboard
+    // has been dismissed programmatically, e.g. by the selection.clear() that runs when undo removes the cursor
+    // thought. The selection is then applied without focus and is wiped again as soon as the hidden asyncFocus
+    // input blurs, leaving the new thought with no caret and no keyboard (#4869). A script-initiated focus
+    // restores both. Keyboard.show() is not an option: the Capacitor plugin only implements it on Android.
+    editable.focus()
   },
 }
 

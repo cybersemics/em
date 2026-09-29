@@ -1,0 +1,253 @@
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import GestureDiagram from '../GestureDiagram'
+import getGestureGeometry from '../GestureDiagram/getGestureGeometry'
+
+/** Renders a gesture diagram to static SVG markup. */
+const render = (props: Parameters<typeof GestureDiagram>[0]) =>
+  renderToStaticMarkup(createElement(GestureDiagram, props))
+
+/** Returns the path data rendered outside the defs block. */
+const renderedPathData = (markup: string) =>
+  [...markup.replace(/<defs>.*?<\/defs>/gs, '').matchAll(/ d="([^"]+)"/g)].map(([, pathData]) => pathData)
+
+/** Parses the coordinates from a path containing only move and line commands. */
+const pointsOf = (pathData: string) => {
+  const values = pathData.match(/-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/gi)!.map(Number)
+  return Array.from({ length: values.length / 2 }, (_, index) => ({
+    x: values[index * 2],
+    y: values[index * 2 + 1],
+  }))
+}
+
+describe('GestureDiagram rendering modes', () => {
+  it('renders a solid gesture as one combined path', () => {
+    const markup = render({ path: 'rdr', size: 100, arrowhead: 'none', useGradient: false })
+
+    expect(renderedPathData(markup)).toEqual(['M 0 0 L 50 0 L 50 50 L 100 50'])
+  })
+
+  it('splits a partially highlighted solid gesture at the semantic segment boundary', () => {
+    const markup = render({ path: 'rdr', size: 100, arrowhead: 'none', useGradient: false, highlight: 1 })
+
+    expect(renderedPathData(markup)).toEqual(['M 0 0 L 50 0', 'M 50 0 L 50 50 L 100 50'])
+  })
+
+  it('keeps synthetic geometry with the semantic direction it extends', () => {
+    const markup = render({ path: 'rdl', size: 100, arrowhead: 'none', useGradient: false, highlight: 2 })
+
+    expect(renderedPathData(markup)).toEqual(['M 0 0 L 50 0 L 50 50 L 50 100', 'M 50 100 L 0 100'])
+  })
+
+  it('preserves the rdld Bezier geometry in solid mode', () => {
+    const markup = render({ path: 'rdld', arrowhead: 'none', useGradient: false })
+
+    const paths = renderedPathData(markup)
+    expect(paths).toHaveLength(1)
+    expect(paths[0].match(/[MQL]/g)).toEqual(['M', 'Q', 'Q', 'Q', 'L'])
+  })
+
+  it('preserves segmented gradients when no custom ramp is supplied', () => {
+    const markup = render({ path: 'rdl', arrowhead: 'none' })
+
+    expect(renderedPathData(markup)).toHaveLength(4)
+    expect(markup).toContain('rddl-gradient-3')
+    expect(markup).not.toContain('-piece-3-color')
+  })
+
+  it('paints partial continuous-gradient highlighting as a solid semantic prefix', () => {
+    const markup = render({
+      path: 'rdl',
+      size: 100,
+      arrowhead: 'none',
+      highlight: 2,
+      gradient: { from: '#111', to: '#eee' },
+    })
+
+    expect(renderedPathData(markup).at(-1)).toBe('M 0 0 L 50 0 L 50 50 L 50 100')
+  })
+})
+
+describe('continuous path-length gradient', () => {
+  const props = { size: 150, strokeWidth: 12, arrowhead: 'none' as const }
+  const gradient = { from: '#111', to: '#eee' }
+
+  /** Returns the color stops of every visible gradient piece. */
+  const gradientStops = (markup: string) =>
+    [
+      ...markup.matchAll(
+        /<linearGradient id="[^"]+-piece-\d+-color"[^>]*>.*?stop-color:([^;"]+).*?stop-color:([^;"]+).*?<\/linearGradient>/gs,
+      ),
+    ].map(([, start, end]) => ({ start: start.trim(), end: end.trim() }))
+
+  /** Extracts the percentage of the end color from a color-mix value. */
+  const mixOf = (color: string) => +color.match(/ ([\d.]+)%/)![1]
+
+  it('spends the whole ramp along a gesture whose end is close to its start', () => {
+    const stops = gradientStops(render({ ...props, path: 'rdlu', gradient }))
+
+    expect(stops.length).toBeGreaterThan(1)
+    expect(mixOf(stops[0].start)).toBe(0)
+    expect(mixOf(stops.at(-1)!.end)).toBe(100)
+  })
+
+  it('blends across the complete gesture by default', () => {
+    const stops = gradientStops(render({ ...props, path: 'rd', gradient }))
+
+    expect(stops).toHaveLength(2)
+    expect(mixOf(stops[0].end)).toBe(50)
+  })
+
+  it('uses a luminance mask so translucent piece caps do not accumulate alpha', () => {
+    const markup = render({
+      ...props,
+      path: 'rd',
+      gradient: { from: 'rgba(88, 181, 212, 0.45)', to: '#fff' },
+    })
+
+    expect(markup).toContain('mask-type:luminance')
+    expect(markup).toContain('color-interpolation:sRGB')
+    expect(markup).toContain('color(from rgba(88, 181, 212, 0.45) srgb alpha alpha alpha / 1)')
+  })
+
+  it('flattens canonical arcs and quadratics without shape-specific gradient routines', () => {
+    const roundedStops = gradientStops(render({ ...props, path: 'lurd', gradient, rounded: true }))
+    const glyphStops = gradientStops(render({ ...props, path: 'rdld', gradient }))
+
+    expect(roundedStops.length).toBeGreaterThan(20)
+    expect(glyphStops.length).toBeGreaterThan(20)
+  })
+
+  // https://github.com/cybersemics/em/pull/5318
+  it('matches the circular shaft and chevron colors where they join', () => {
+    const markup = render({ ...props, path: 'rul', rounded: true, arrowhead: 'outlined-wide', gradient })
+    const arcEnd = getGestureGeometry('rul', { rounded: true, size: props.size, reversalOffset: 45 }).segments.at(
+      -1,
+    )!.to
+    const shaftPaths = renderedPathData(markup).slice(0, -1)
+    const joinIndex = shaftPaths.findIndex(pathData => {
+      const end = pointsOf(pathData).at(-1)!
+      return Math.hypot(end.x - arcEnd.x, end.y - arcEnd.y) < 1e-6
+    })
+    const document = new DOMParser().parseFromString(markup, 'text/html')
+    const chevronStops = Array.from(document.querySelectorAll('linearGradient[id$="-chevron-color"] stop')).map(stop =>
+      mixOf(stop.getAttribute('style')!),
+    )
+    const shaftStops = gradientStops(markup)
+
+    expect(joinIndex).toBeGreaterThanOrEqual(0)
+    expect(chevronStops).toHaveLength(2)
+    // The original arc endpoint is halfway between the chevron's mouth and apex.
+    expect(mixOf(shaftStops[joinIndex].end)).toBeCloseTo((chevronStops[0] + chevronStops[1]) / 2, 1)
+    expect(mixOf(shaftStops.at(-1)!.end)).toBe(100)
+  })
+})
+
+describe('gesture shape', () => {
+  const gradient = { from: '#111', to: '#eee' }
+
+  it('samples softened corners into additional gradient pieces', () => {
+    const sharp = render({ path: 'rdr', gradient, arrowhead: 'none' })
+    const soft = render({ path: 'rdr', gradient, arrowhead: 'none', cornerRadius: 5 })
+
+    expect(soft.match(/-piece-\d+-color/g)!.length).toBeGreaterThan(sharp.match(/-piece-\d+-color/g)!.length)
+  })
+
+  it('draws an outlined-wide chevron at the requested apex angle', () => {
+    const markup = render({
+      path: 'rdr',
+      gradient,
+      arrowhead: 'outlined-wide',
+      chevronApexAngle: 60,
+      chevronSize: 2.2,
+    })
+    const chevron = pointsOf(renderedPathData(markup).at(-1)!)
+    const [leg1, apex, leg2] = chevron
+    const a = { x: leg1.x - apex.x, y: leg1.y - apex.y }
+    const b = { x: leg2.x - apex.x, y: leg2.y - apex.y }
+    const cosine = (a.x * b.x + a.y * b.y) / (Math.hypot(a.x, a.y) * Math.hypot(b.x, b.y))
+
+    expect(markup).not.toContain('marker-end')
+    expect((Math.acos(cosine) * 180) / Math.PI).toBeCloseTo(60)
+  })
+
+  it('keeps the rdld glyph arrowhead-free', () => {
+    const markup = render({ path: 'rdld', gradient, arrowhead: 'outlined-wide' })
+    const gradientPieceCount = [...markup.matchAll(/<linearGradient id="[^"]+-piece-\d+-color"/g)].length
+
+    expect(markup).not.toContain('marker-end')
+    expect(renderedPathData(markup)).toHaveLength(gradientPieceCount)
+  })
+
+  // https://github.com/cybersemics/em/pull/5318
+  it('preserves circular arcs and connects their endpoint to the chevron apex', () => {
+    const options = { rounded: true, size: 150, reversalOffset: 45 }
+    const circular = getGestureGeometry('rul', options)
+    const geometry = getGestureGeometry('rul', { ...options, chevron: { apexAngle: 80, halfSpan: 39.6 } })
+
+    expect(geometry.segments.slice(0, -1)).toEqual(circular.segments)
+    expect(geometry.segments.at(-1)).toEqual({
+      kind: 'line',
+      from: circular.segments.at(-1)!.to,
+      to: geometry.chevron![1],
+      gestureIndex: 2,
+    })
+  })
+})
+
+describe('geometry-based framing', () => {
+  const props = {
+    size: 150,
+    arrowSize: 1,
+    strokeWidth: 12,
+    arrowhead: 'outlined-wide' as const,
+    gradient: { from: '#111', to: '#eee' },
+  }
+
+  it('preserves the requested display dimensions independently of geometry size', () => {
+    const markup = render({ ...props, path: 'rdr', maxWidth: 70, maxHeight: 50 })
+
+    expect(markup).toContain('width="70" height="50"')
+    expect(markup).toContain('aspect-ratio:70 / 50')
+  })
+
+  it('renders rdld geometry without a transform or stroke compensation', () => {
+    const markup = render({ ...props, path: 'rdld' })
+    const renderedStrokeWidth = Math.max(
+      ...[...markup.matchAll(/<path[^>]*stroke-width="([^"]+)"/g)].map(([, value]) => +value),
+    )
+
+    expect(markup).not.toContain('transform="scale(')
+    expect(renderedStrokeWidth).toBe(12 * 1.5)
+  })
+})
+
+describe('automatic viewBox', () => {
+  it('includes geometry-derived framing in static markup', () => {
+    const props = { arrowhead: 'none' as const, strokeWidth: 2, useGradient: false as const }
+    expect(render({ ...props, path: 'r' })).toContain('viewBox="-1.5 -26.5 53 53"')
+    expect(render({ ...props, path: 'd' })).toContain('viewBox="-26.5 -1.5 53 53"')
+  })
+
+  it('honors an explicit viewBox', () => {
+    expect(render({ path: 'rdld', viewBox: '1 2 300 200' })).toContain('viewBox="1 2 300 200"')
+  })
+})
+
+it('applies the same geometry and framing independently of the paint renderer', () => {
+  const props = { path: 'rdld' as const, size: 150, strokeWidth: 12, arrowSize: 1 }
+  const markups = [
+    render({ ...props, useGradient: false }),
+    render(props),
+    render({ ...props, gradient: { from: '#000', to: '#fff' } }),
+  ]
+
+  markups.forEach(markup => {
+    const viewBox = markup
+      .match(/viewBox="([^"]+)"/)![1]
+      .split(' ')
+      .map(Number)
+    expect(viewBox[0]).toBeCloseTo(((29.7 + 36.3 / 2) / 67.5) * 150 - 124)
+    expect(viewBox.slice(1)).toEqual([-39, 248, 248])
+  })
+})

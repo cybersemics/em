@@ -3,9 +3,9 @@ import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse
 import CommandUniverseIcon from '../components/icons/CommandUniverseIcon'
 import isDocumentEditable from '../util/isDocumentEditable'
 
-const openMobileCommandUniverseCommand: Command = {
+const openMobileCommandUniverseCommand = {
   id: 'openMobileCommandUniverse',
-  label: 'Command Universe',
+  label: 'Command Universe' as const,
   description: 'Opens the Command Universe.',
   gesture: 'rdld',
   multicursor: false,
@@ -16,6 +16,6 @@ const openMobileCommandUniverseCommand: Command = {
   exec: dispatch => {
     dispatch(toggleMobileCommandUniverse({ value: true }))
   },
-}
+} satisfies Command
 
 export default openMobileCommandUniverseCommand

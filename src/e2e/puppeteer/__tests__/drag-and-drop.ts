@@ -1,17 +1,19 @@
 import path from 'path'
-import { WindowEm } from '../../../initialize'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
+import command from '../helpers/command'
 import dragAndDropThought from '../helpers/dragAndDropThought'
+import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
-import waitForAlertContent from '../helpers/waitForAlertContent'
+import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
@@ -108,6 +110,40 @@ describe('drag', () => {
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
+  })
+
+  // https://github.com/cybersemics/em/issues/5229
+  it('cancels a drop on the dragged thought own position', async () => {
+    await paste(`
+      - aaa
+      - bbb
+      - ccc
+    `)
+
+    await clickThought('aaa')
+
+    // hover the drop target directly below aaa, i.e. aaa's own position
+    await dragAndDropThought('aaa', 'aaa', { hold: true, position: 'after' })
+
+    // the drop hover is still shown at the thought's own position; only the drop is cancelled
+    // (.drop-hover is the class that dropHoverRecipe gives every drop hover bar)
+    await waitUntil(() => !!document.querySelector('.drop-hover'), { timeout: 6000 })
+
+    // release on the same drop target
+    await dragAndDropThought('aaa', 'aaa', { position: 'after', skipMouseDown: true })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- aaa
+- bbb
+- ccc
+`)
+
+    // moveThought throws "afterId must be null or a child of the destination context" if the no-op drop is not
+    // cancelled. The error escapes to the window and is shown in the error banner, and the outline above is unchanged
+    // either way, so also check that no banner is showing now that the drop has been processed.
+    const errorBanner = await page.evaluate(() => document.querySelector('[role="alert"]')?.textContent ?? null)
+    expect(errorBanner).toBeNull()
   })
 
   it('DropChild', async () => {
@@ -341,7 +377,7 @@ describe('drag', () => {
       showAlert: true,
     })
 
-    await waitForAlertContent('"d" moved to "a"')
+    await waitForAlert('"d" moved to "a"')
 
     const destinationLinkText = await page.$eval(
       '[data-testid=alert-content] [data-thought-link]',
@@ -375,6 +411,31 @@ describe('drag', () => {
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
+  })
+
+  it('holding the mouse on a bullet highlights it, ready to drag', async () => {
+    await paste('- a')
+    await waitForEditable('a')
+
+    // Only the bullet carries longPressProps on desktop — Thought gives them to the editable just when isTouch — so
+    // this is the whole of the mouse route into DragHold, and nothing else covered it.
+    const bullet = await page.$('[aria-label="bullet"]')
+    if (!bullet) throw new Error('Bullet not found.')
+    const boundingBox = await bullet.boundingBox()
+    if (!boundingBox) throw new Error('Bullet has no bounding box.')
+
+    await page.mouse.move(boundingBox.x + boundingBox.width / 2, boundingBox.y + boundingBox.height / 2)
+    await page.mouse.down()
+    // waitForFunction resolves to a JSHandle, so collapse it to a boolean rather than asserting on the handle
+    const highlighted = await page.waitForFunction(
+      (el: Element) => el.getAttribute('data-highlighted') === 'true',
+      { timeout: 5000 },
+      bullet,
+    )
+
+    await page.mouse.up()
+
+    expect(highlighted).toBeTruthy()
   })
 })
 
@@ -449,6 +510,37 @@ describe('drop', () => {
       })
     })
   })
+
+  // https://github.com/cybersemics/em/issues/5089
+  it('drops a thought dragged out of a cyclic context', async () => {
+    await paste(`
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `)
+
+    await clickThought('a')
+    await clickThought('m')
+    await command('toggleContextView')
+    // move the cursor to the cyclic context a/m~/a so that x is rendered
+    await press('ArrowDown')
+    await waitForEditable('x')
+
+    await dragAndDropThought('x', 'm', { position: 'before' })
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- a
+  - x
+  - m
+- b
+  - m
+    - y
+`)
+  })
 })
 
 /* Multiple drop hovers pinned in a single snapshot for comparison of their relative position and width.
@@ -513,9 +605,8 @@ describe('hover expansion', () => {
     await hideHUD()
 
     // inject MOCK_EXPAND_HOVER_DELAY
-    const em = window.em as WindowEm
     await page.evaluate(value => {
-      em.testFlags.expandHoverDelay = value
+      window.em.testFlags.expandHoverDelay = value
     }, MOCK_EXPAND_HOVER_DELAY)
   })
 

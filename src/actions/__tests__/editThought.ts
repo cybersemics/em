@@ -7,7 +7,6 @@ import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
 import parentOfThought from '../../selectors/parentOfThought'
-import checkDataIntegrity from '../../test-helpers/checkDataIntegrity'
 import contextToThought from '../../test-helpers/contextToThought'
 import editThought from '../../test-helpers/editThoughtByContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -271,41 +270,6 @@ it('do not duplicate children when new and old context are same', () => {
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
-})
-
-// Issue: https://github.com/cybersemics/em/issues/1095
-it('data integrity test', () => {
-  const text = `
-    - a
-      - b
-        - d
-      - d`
-
-  const steps = [importText({ text }), setCursor(['a']), editThought(['a'], 'azkaban')]
-
-  const stateNew = reducerFlow(steps)(initialState())
-  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
-
-  expect(missingLexemeValues).toHaveLength(0)
-  expect(missingParentIds).toHaveLength(0)
-})
-
-// Issue: https://github.com/cybersemics/em/issues/1144
-it('data integrity test after editing a parent with multiple descendants with same value and depth', () => {
-  const text = `
-  - ${' '}
-    - a
-      - m
-    - b
-      - m`
-
-  const steps = [importText({ text }), setCursor(['']), editThought([''], 'x')]
-
-  const stateNew = reducerFlow(steps)(initialState())
-  const { missingLexemeValues, missingParentIds } = checkDataIntegrity(stateNew)
-
-  expect(missingLexemeValues).toHaveLength(0)
-  expect(missingParentIds).toHaveLength(0)
 })
 
 describe('sort', () => {

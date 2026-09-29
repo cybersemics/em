@@ -48,12 +48,16 @@ const copyThoughts = async (ids: ThoughtId[], dispatch: Dispatch, getState: () =
   return exportedVisible
 }
 
-const copyCursorCommand: Command = {
+const copyCursorCommand = {
   id: 'copyCursor',
-  label: 'Copy Cursor',
+  label: 'Copy Cursor' as const,
   description: 'Copies the cursor and all descendants.',
   keyboard: { key: 'c', meta: true },
   multicursor: {
+    // Copying never moves the cursor, so there is nothing to restore. Restoring it anyway would clear and
+    // re-add the multicursors and recompute state.expanded, and that residual change is enough to leave an
+    // undo entry labeled Copy Cursor for a command that does not touch the thoughtspace.
+    preventSetCursor: true,
     execMulticursor: async (cursors, dispatch, getState) => {
       const ids = getMulticursorThoughtIds(getState())
 
@@ -91,6 +95,6 @@ const copyCursorCommand: Command = {
 
     dispatch(alert(`Copied ${phrase} to the clipboard`))
   },
-}
+} satisfies Command
 
 export default copyCursorCommand

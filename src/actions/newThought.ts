@@ -166,7 +166,6 @@ const newThought = (state: State, payload: NewThoughtPayload | string) => {
   const reducers = [
     // createThought
     createThought({
-      ...(insertContext ? { children: [newContextId!] } : null),
       path: insertContext ? ABSOLUTE_PATH : insertNewSubthought ? simplePath : parentPath,
       rank: newRank,
       value,

@@ -26,13 +26,22 @@ const iconMap = {
   4: Heading4Icon,
   5: Heading5Icon,
 }
+
+// The command label for each heading level. Written out rather than derived from the level so that each label is a literal type, which is what CommandLabel is built from.
+const commandLabels = {
+  0: 'Normal Text',
+  1: 'Heading 1',
+  2: 'Heading 2',
+  3: 'Heading 3',
+  4: 'Heading 4',
+  5: 'Heading 5',
+} as const
+
 export type HeadingLevel = 0 | 1 | 2 | 3 | 4 | 5
 
-/** Creates a heading command at a given level (h1, h2, etc). */
-const headingCommand = (level: HeadingLevel): Command => ({
-  id: `heading${level}`,
-  label: level === 0 ? 'Normal Text' : `Heading ${level}`,
-  description: level
+/** Returns the description of the heading command at a given level. Kept out of the command factory, which is generic over the level and so cannot narrow it enough to index headingLabels. */
+const commandDescription = (level: HeadingLevel) =>
+  level
     ? `Turns the thought into a ${headingLabels[level]} heading.${
         level === 3
           ? ' Perhaps a pattern is emerging?'
@@ -42,17 +51,24 @@ const headingCommand = (level: HeadingLevel): Command => ({
               ? ' Impressive that you read this far.'
               : ''
       }`
-    : 'Sets a heading to normal text.',
-  keyboard: { key: level.toString(), meta: true, alt: true, control: true },
-  multicursor: true,
-  svg: iconMap[level], // Assign the icon based on the level
-  canExecute: state => {
-    return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
-  },
-  exec: dispatch => {
-    dispatch(heading({ level }))
-  },
-})
+    : 'Sets a heading to normal text.'
+
+/** Creates a heading command at a given level (h1, h2, etc). Generic over the level so that each command carries its own id and label rather than the union of all of them. */
+const headingCommand = <L extends HeadingLevel>(level: L) =>
+  ({
+    id: `heading${level}`,
+    label: commandLabels[level],
+    description: commandDescription(level),
+    keyboard: { key: level.toString(), meta: true, alt: true, control: true },
+    multicursor: true,
+    svg: iconMap[level], // Assign the icon based on the level
+    canExecute: state => {
+      return isDocumentEditable() && (!!state.cursor || hasMulticursor(state))
+    },
+    exec: dispatch => {
+      dispatch(heading({ level }))
+    },
+  }) satisfies Command
 
 export const heading0 = headingCommand(0)
 export const heading1 = headingCommand(1)

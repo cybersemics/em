@@ -21,9 +21,9 @@ const colorShortcuts: ColorShortcut[] = [
 ]
 
 /** Applies a text color or background color to the cursor thought or all selected thoughts via a keyboard shortcut, equivalent to tapping the corresponding swatch in the color picker. */
-const applyColor: Command = {
+const applyColor = {
   id: 'applyColor',
-  label: 'Apply Color',
+  label: 'Apply Color' as const,
   description: `Applies a text color to the cursor: ${swatchColors
     .map((color, i) => `${i} ${i === 0 ? 'default' : color}`)
     .join(', ')}. Use Option/Alt + the same number to apply a background color.`,
@@ -34,7 +34,7 @@ const applyColor: Command = {
   // multicursor branch, which brackets the edits with setIsMulticursorExecuting so they collapse into a single undo
   // step — the same path as tapping a swatch in the ColorPicker on a multiselect. A single dispatch therefore covers
   // the whole multiselect. The per-cursor loop of multicursor: true would re-enter that branch once per selected
-  // thought and prematurely end its undo bracket after the first iteration.
+  // thought unnecessarily.
   multicursor: false,
   hideFromGestureMenu: true,
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
@@ -44,6 +44,6 @@ const applyColor: Command = {
     if (!shortcut) return
     dispatch(formatSelectionColor({ color: shortcut.color, backgroundColor: shortcut.backgroundColor }))
   },
-}
+} satisfies Command
 
 export default applyColor

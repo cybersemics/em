@@ -1,9 +1,12 @@
-import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import exportThoughts from '../helpers/exportThoughts'
 import getEditingText from '../helpers/getEditingText'
+import longPressBullet from '../helpers/longPressBullet'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
+import waitForAlert from '../helpers/waitForAlert'
+import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import { page } from '../session'
 
@@ -27,13 +30,30 @@ it('Apply formatting to a selected portion of a thought', async () => {
 
   await page.mouse.click(x, y, { count: 2 })
 
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await clickToolbar('Bold')
 
   // get exported html and compress all indentation (whitespace before/after newline)
   const output = await exportThoughts()
   expect(output).toBe(`
 - **Golden** Retriever
 `)
+})
+
+it('Apply code formatting to a thought with the toolbar button', async () => {
+  const importText = `
+  - Golden Retriever`
+
+  await paste(importText)
+
+  await clickThought('Golden Retriever')
+
+  await clickToolbar('Code')
+  await waitForEditable('<code>Golden Retriever</code>')
+
+  // exportThoughts cannot assert code formatting: plaintext export only converts bold and italic to markdown, and
+  // strips every other tag, so <code> would not appear in the output.
+  const result = await getEditingText()
+  expect(result).toBe('<code>Golden Retriever</code>')
 })
 
 it('Apply text color to an uppercase formatting tag', async () => {
@@ -44,24 +64,28 @@ it('Apply text color to an uppercase formatting tag', async () => {
 
   await clickThought('Hello World')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="background color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'background color swatches', 'blue')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
-  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+  await clickToolbar('Letter Case', 'UpperCase')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-  await click('[aria-label="text color swatches"] [aria-label="blue"]')
+  await clickToolbar('Text Color', 'text color swatches', 'blue')
 
   const result = await getEditingText()
   expect(result).toBe('<font color="#00c7e6">HELLO WORLD</font>')
 })
 
-/** Returns whether the Bold toolbar button is rendered in its active state. */
-const isBoldButtonActive = () =>
+/** Returns whether each of the given text formatting toolbar buttons is rendered in its active state. */
+const formattingButtonStates = (labels: string[]) =>
   page.evaluate(
-    () =>
-      document.querySelector('[data-testid="toolbar-icon"][aria-label="Bold"]')?.getAttribute('data-active') === 'true',
+    labels =>
+      Object.fromEntries(
+        labels.map(label => [
+          label,
+          document.querySelector(`[data-testid="toolbar-icon"][aria-label="${label}"]`)?.getAttribute('data-active') ===
+            'true',
+        ]),
+      ),
+    labels,
   )
 
 // Regression test for #3912: the Bold/Italic/Underline/Strikethrough buttons flickered back to their inactive
@@ -76,12 +100,12 @@ it('Bold button stays active when the cursor is moved to a fully-bold thought vi
 
   // format the whole first thought as bold
   await clickThought('One')
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
+  await clickToolbar('Bold')
   await waitForEditable('<b>One</b>')
 
   // move the cursor to the plain thought: the Bold button should be inactive
   await clickThought('Two')
-  expect(await isBoldButtonActive()).toBe(false)
+  expect(await formattingButtonStates(['Bold'])).toEqual({ Bold: false })
 
   // move the cursor back to the bold thought by tapping its bullet.
   // NOTE: the clickBullet helper is not reused here because it locates the thought via getEditable, whose XPath
@@ -104,7 +128,7 @@ it('Bold button stays active when the cursor is moved to a fully-bold thought vi
   await page.waitForFunction(() => (window.getSelection()?.focusOffset ?? -1) === 0)
 
   // the Bold button should reflect the thought's bold formatting rather than flickering back to inactive
-  expect(await isBoldButtonActive()).toBe(true)
+  expect(await formattingButtonStates(['Bold'])).toEqual({ Bold: true })
 })
 
 it('Clear Thought placeholder inherits whole-thought formatting (#4612)', async () => {
@@ -114,15 +138,15 @@ it('Clear Thought placeholder inherits whole-thought formatting (#4612)', async 
   await paste(importText)
   await clickThought('hello')
 
-  await click('[data-testid="toolbar-icon"][aria-label="Bold"]')
-  await click('[data-testid="toolbar-icon"][aria-label="Underline"]')
+  await clickToolbar('Bold')
+  await clickToolbar('Underline')
   await page.waitForFunction(() => {
     const html = document.querySelector('[data-editing=true] [data-editable]')?.innerHTML || ''
     return html.includes('<b>') && html.includes('<u>') && html.includes('hello')
   })
 
   await press('c', { ctrl: true, alt: true, shift: true })
-  await page.waitForFunction(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '')
+  await waitForCursor('')
 
   const placeholderStyle = await page.evaluate(() => {
     const editable = document.querySelector('[data-editing=true] [data-editable]')
@@ -141,12 +165,51 @@ it('Clear Thought placeholder inherits whole-thought formatting (#4612)', async 
   expect(placeholderStyle.textDecorationLine).toContain('underline')
 })
 
+it('Clear Thought placeholder inherits whole-thought color (#4282)', async () => {
+  await paste(`
+  - hello`)
+  await clickThought('hello')
+
+  await clickToolbar('Text Color', 'text color swatches', 'red')
+  await page.waitForFunction(() => {
+    const html = document.querySelector('[data-editing=true] [data-editable]')?.innerHTML || ''
+    return html.includes('<font') && html.includes('hello')
+  })
+
+  // The color that the thought text renders in, which the placeholder must inherit.
+  const thoughtColor = await page.evaluate(() => {
+    const font = document.querySelector('[data-editing=true] [data-editable] font')
+    if (!font) throw new Error('Colored thought text not found')
+    return getComputedStyle(font).color
+  })
+
+  await press('c', { ctrl: true, alt: true, shift: true })
+  await waitForCursor('')
+
+  const placeholderStyle = await page.evaluate(() => {
+    const editable = document.querySelector('[data-editing=true] [data-editable]')
+    if (!editable) throw new Error('Editing thought not found')
+
+    const style = getComputedStyle(editable, '::before')
+    return {
+      content: style.content,
+      color: style.color,
+      filter: style.filter,
+    }
+  })
+
+  expect(placeholderStyle.content).toContain('hello')
+  // The placeholder keeps the thought's color, dimmed rather than replaced with gray.
+  expect(placeholderStyle.color).toBe(thoughtColor)
+  expect(placeholderStyle.filter).toBe('opacity(0.5)')
+})
+
 it('Clear Thought dims emoji in the placeholder (#4671)', async () => {
   await paste('- 👋 Hello')
   await clickThought('👋 Hello')
 
   await press('c', { ctrl: true, alt: true, shift: true })
-  await page.waitForFunction(() => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === '')
+  await waitForCursor('')
 
   const placeholderStyle = await page.evaluate(() => {
     const editable = document.querySelector('[data-editing=true] [data-editable]')
@@ -163,4 +226,31 @@ it('Clear Thought dims emoji in the placeholder (#4671)', async () => {
   expect(placeholderStyle.content).toContain('👋 Hello')
   expect(placeholderStyle.filter).toBe('opacity(0.5)')
   expect(placeholderStyle.opacity).toBe('1')
+})
+
+// https://github.com/cybersemics/em/issues/5286
+it('formatting buttons reflect a long-pressed thought rather than a previously formatted thought', async () => {
+  await paste(`
+    - aaa
+    - bbb
+    - ccc
+  `)
+
+  await clickThought('aaa')
+  await clickToolbar('Bold')
+  await clickToolbar('Italic')
+  await clickToolbar('Underline')
+  await clickToolbar('Strikethrough')
+  await waitForEditable('<strike><u><i><b>aaa</b></i></u></strike>')
+
+  // long press selects ccc without moving the cursor off the formatted thought
+  await longPressBullet(await waitForEditable('ccc'))
+  await waitForAlert('1 thought selected')
+
+  expect(await formattingButtonStates(['Bold', 'Italic', 'Underline', 'Strikethrough'])).toEqual({
+    Bold: false,
+    Italic: false,
+    Underline: false,
+    Strikethrough: false,
+  })
 })

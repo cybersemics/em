@@ -1,5 +1,6 @@
 /** Defines app-wide constants. */
 import CommandId from './@types/CommandId'
+import DropdownType from './@types/DropdownType'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
@@ -96,30 +97,24 @@ export const TUTORIAL_CONTEXT2_PARENT = {
   [TUTORIAL_VERSION_BOOK]: 'Books',
 }
 
-// constants for different schema versions
-export const SCHEMA_INITIAL = 0 // DEPRECATED
-export const SCHEMA_CONTEXTCHILDREN = 1 // DEPRECATED
-export const SCHEMA_ROOT = 2 // change root → __ROOT__
-export const SCHEMA_HASHKEYS = 3 // hash lexemeIndex keys
-export const SCHEMA_META_SETTINGS = 4 // load settings from hidden thoughts via metaprogramming
-export const SCHEMA_UNIQUE_IDS = 5 // add unique ids to thoughts for independent editing (#1495)
-export const SCHEMA_CHILDREN_MAP = 6 // convert children array to childrenMap object (#1587)
-export const SCHEMA_THOUGHT_WITH_CHILDREN = 7 // store all children in the Thought Object to allow O(1) lookup (#1592)
-// 1. lexeme.lemma renamed to Lexeme.lemma
-// 2. Lexeme.contexts changed from array to object
-// 3. lexemeIndex re-keyed with new hashing function to differentiate =archive and =archive
-export const SCHEMA_LEMMA = 8
-export const SCHEMA_LATEST = 8
+export const GLOBAL_ROOT_TOKEN = '00000000000000000000000000000000' as ThoughtId
 
-// store the root string as a token that is not likely to be written by the user (bad things will happen)
-export const HOME_TOKEN = '__ROOT__' as ThoughtId
+export const ROOT_PARENT_ID = GLOBAL_ROOT_TOKEN
 
-export const ROOT_PARENT_ID = '__ROOT_PARENT_ID__' as ThoughtId
+export const HOME_TOKEN = '00000000000000000000000000000001' as ThoughtId
 
-// token for hidden system context
-export const EM_TOKEN = '__EM__' as ThoughtId
+// Display/export-only label for the fixed Home root. Do not store this as the root thought value.
+export const HOME_DISPLAY_VALUE = '__ROOT__'
 
-export const ABSOLUTE_TOKEN = '__ABSOLUTE__' as ThoughtId
+export const EM_TOKEN = '00000000000000000000000000000002' as ThoughtId
+
+export const ABSOLUTE_TOKEN = '00000000000000000000000000000003' as ThoughtId
+
+// Fixed /EM/Settings identity used by system thought bootstrap and the TreeCRDT-backed thoughtspace.
+export const SETTINGS_TOKEN = '00000000000000000000000000000004' as ThoughtId
+export const SETTINGS_VALUE = 'Settings'
+
+export const TRANSIENT_THOUGHT_ID = '00000000000000000000000000ffffff' as ThoughtId
 
 export const ROOT_CONTEXTS = [HOME_TOKEN, ABSOLUTE_TOKEN]
 
@@ -193,6 +188,7 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   'italic',
   'underline',
   'strikethrough',
+  'code',
   'textColor',
   'letterCase',
   'toggleContextView',
@@ -218,7 +214,8 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'cursorUp',
   // 'deleteEmptyThoughtOrOutdent',
   // 'deleteThoughtWithCursor',
-  // 'extractThought',
+  // 'extractCategory',
+  // 'extractSubthought',
   // 'help',
   // 'home',
   // 'join',
@@ -231,7 +228,6 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'newThoughtAbove',
   // 'newUncle',
   // 'proseView',
-  // 'search',
   // 'textColor',
   // 'toggleDone',
   // 'toggleSort',
@@ -259,8 +255,6 @@ export const REGEX_NONFORMATTING_HTML = /<(html|\!doctype|li|meta|ol|ul)/i
 // '*'' must be followed by a whitespace character to avoid matching *footnotes or *markdown italic*
 export const REGEX_PLAINTEXT_BULLET = /^\s*(?:[-—▪◦•]|\*\s)/m
 
-export const IPFS_GATEWAY = 'ipfs.infura.io'
-
 // delay before long press is activated
 // also used for react-dnd's delayTouchStart
 export const TIMEOUT_LONG_PRESS_THOUGHT = 400
@@ -283,6 +277,21 @@ export const EMOJI_REGEX = emojiRegex
   See: https://stackoverflow.com/a/30887581/10168748
  */
 export const REGEX_EMOJI_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
+
+/*
+  Matches a group of one or more emoji at the start of a string.
+
+  Note: Some emoji end with a zero width joiner or zero width space which don't actually give any visible whitespace.
+        So optionally including them at the end of the regex.
+
+  Note: The above regex uses unicode property escape to match emojis https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions/Unicode_Property_Escapes.
+        However these emoji property escapes don't account for emoji variant selector (\ufe0f) which can be found in many emojis (example: 🖼️, 🖥️).
+        So we add \ufe0f as optional match and also prevent it from being detected as non emoji character.
+ */
+export const REGEX_EMOJI_GROUP = new RegExp(`^(?:${EMOJI_REGEX.source})+\u200D?\u200B?`)
+
+/** Matches a group of one or more emoji at the start of a string, including the whitespace that separates it from the rest of the string. */
+export const REGEX_EMOJI_PREFIX = new RegExp(`${REGEX_EMOJI_GROUP.source}\\s*`)
 
 export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code', 'font']
 
@@ -351,10 +360,6 @@ export const META_PROGRAMMING_HELP = [
   {
     code: 'readonly',
     description: 'The thought cannot be edited, moved, or extended. Excellent for frustrating oneself.',
-  },
-  {
-    code: 'src',
-    description: 'Import thoughts from a given URL. Accepts plaintext, markdown, and HTML. Very buggy, trust me.',
   },
   {
     code: 'style',
@@ -511,110 +516,149 @@ export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 export const GESTURE_GLOW_BLUR = 10
 export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
 
-// define the grouping and ordering of commands
-export const COMMAND_GROUPS: {
+/** Defines command difficulties and categories in presentation order. IDs remain stable when titles or positions change. */
+export const COMMAND_DIFFICULTIES = [
+  {
+    id: 'beginner',
+    title: 'Beginner',
+    groups: [
+      {
+        id: 'creatingThoughts',
+        title: 'Creating Thoughts',
+        commands: ['newThought', 'newThoughtAbove', 'newSubthought', 'newSubthoughtTop'],
+      },
+      {
+        id: 'navigation',
+        title: 'Navigation',
+        commands: [
+          'cursorBack',
+          'cursorForward',
+          'cursorNext',
+          'cursorPrev',
+          'jumpBack',
+          'jumpForward',
+          'moveCursorBackward',
+          'moveCursorForward',
+          'navigateBack',
+          'navigateForward',
+          'openDesktopCommandUniverse',
+          'home',
+          'selectAll',
+          'selectBetween',
+          'closeCommandCenter',
+          'openCommandCenter',
+          'help',
+          'openMobileCommandUniverse',
+          'cancel',
+        ],
+      },
+      {
+        id: 'contexts',
+        title: 'Contexts',
+        commands: ['toggleContextView'],
+      },
+    ],
+  },
+  {
+    id: 'intermediate',
+    title: 'Intermediate',
+    groups: [
+      {
+        id: 'categorizing',
+        title: 'Categorizing',
+        commands: ['categorize', 'uncategorize', 'extractSubthought', 'extractCategory'],
+      },
+      {
+        id: 'nudging',
+        title: 'Nudging',
+        commands: [
+          'indent',
+          'outdent',
+          'bumpThoughtDown',
+          'moveThoughtDown',
+          'moveThoughtUp',
+          'swapParent',
+          'swapGrandparent',
+        ],
+      },
+      {
+        id: 'deleting',
+        title: 'Deleting',
+        commands: ['delete', 'archive', 'clearThought'],
+      },
+    ],
+  },
+  {
+    id: 'advanced',
+    title: 'Advanced',
+    groups: [
+      {
+        id: 'creatingThoughtsII',
+        title: 'Creating Thoughts II',
+        commands: [
+          'newUncle',
+          'newGrandChild',
+          'defineTerm',
+          'generateEmoji',
+          'generateThought',
+          'organizeThought',
+          'join',
+          'mergeDuplicates',
+          'splitSentences',
+          'bold',
+          'italic',
+          'strikethrough',
+          'underline',
+          'code',
+          'copyCursor',
+          'removeFormat',
+          'textColor',
+          'applyColor',
+        ],
+      },
+      {
+        id: 'editHistory',
+        title: 'Edit History',
+        commands: ['undo', 'redo', 'repeat'],
+      },
+      {
+        id: 'notes',
+        title: 'Notes',
+        commands: ['note', 'swapNote'],
+      },
+      {
+        id: 'views',
+        title: 'Views',
+        commands: [
+          'proseView',
+          'toggleTableView',
+          'toggleSort',
+          'heading0',
+          'heading1',
+          'heading2',
+          'heading3',
+          'heading4',
+          'heading5',
+          'pin',
+          'pinAll',
+          'pinDescendants',
+          'toggleDone',
+          'toggleHiddenThoughts',
+          'settings',
+          'customizeToolbar',
+        ],
+      },
+    ],
+  },
+] as const satisfies readonly {
+  id: string
   title: string
-  commands: CommandId[]
-}[] = [
-  {
-    title: 'Navigation',
-    commands: [
-      'cursorBack',
-      'cursorForward',
-      'cursorNext',
-      'cursorPrev',
-      'jumpBack',
-      'jumpForward',
-      'moveCursorBackward',
-      'moveCursorForward',
-      'navigateBack',
-      'navigateForward',
-      'openDesktopCommandUniverse',
-      'home',
-      'search',
-      'selectAll',
-      'selectBetween',
-    ],
-  },
-  {
-    title: 'Creating thoughts',
-    commands: [
-      'categorize',
-      'newThought',
-      'newThoughtAbove',
-      'newSubthought',
-      'newSubthoughtTop',
-      'newUncle',
-      'newGrandChild',
-      'extractThought',
-      'generateThought',
-    ],
-  },
-  {
-    title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'uncategorize', 'clearThought'],
-  },
-  {
-    title: 'Moving thoughts',
-    commands: ['indent', 'outdent', 'bumpThoughtDown', 'moveThoughtDown', 'moveThoughtUp', 'swapParent'],
-  },
-  {
-    title: 'Editing thoughts',
-    commands: [
-      'join',
-      'mergeDuplicates',
-      'splitSentences',
-      'bold',
-      'italic',
-      'strikethrough',
-      'underline',
-      'code',
-      'copyCursor',
-      'closeCommandCenter',
-      'openCommandCenter',
-      'removeFormat',
-      'textColor',
-      'applyColor',
-    ],
-  },
-  {
-    title: 'Oops',
-    commands: ['undo', 'redo', 'repeat'],
-  },
-  {
-    title: 'Special Views',
-    commands: [
-      'note',
-      'swapNote',
-      'toggleContextView',
-      'proseView',
-      'toggleTableView',
-      'toggleSort',
-      'heading0',
-      'heading1',
-      'heading2',
-      'heading3',
-      'heading4',
-      'heading5',
-    ],
-  },
-  {
-    title: 'Visibility',
-    commands: ['pin', 'pinAll', 'toggleDone', 'toggleHiddenThoughts'],
-  },
-  {
-    title: 'Settings',
-    commands: ['settings', 'customizeToolbar'],
-  },
-  {
-    title: 'Help',
-    commands: ['help', 'openMobileCommandUniverse'],
-  },
-  {
-    title: 'Cancel',
-    commands: ['cancel'],
-  },
-]
+  groups: readonly {
+    id: string
+    title: string
+    commands: readonly CommandId[]
+  }[]
+}[]
 
 /** The duration of the haptics vibrate on delete or archive non-empty thought. */
 export const DELETE_VIBRATE_DURATION = 80
@@ -622,3 +666,16 @@ export const DELETE_VIBRATE_DURATION = 80
 /** Right padding and Left padding of the Content component in px. */
 export const CONTENT_BOX_PADDING_RIGHT = 10
 export const CONTENT_BOX_PADDING_LEFT = 50
+
+type DropdownStateKeys =
+  'showBulletPicker' | 'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandCenter' | 'showUndoSlider'
+
+/** Maps dropdown types to their corresponding State keys. */
+export const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
+  bulletPicker: 'showBulletPicker',
+  colorPicker: 'showColorPicker',
+  letterCase: 'showLetterCase',
+  sortPicker: 'showSortPicker',
+  commandCenter: 'showCommandCenter',
+  undoSlider: 'showUndoSlider',
+}

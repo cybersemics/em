@@ -14,9 +14,10 @@ import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { selectBetweenActionCreator as selectBetween } from '../actions/selectBetween'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { isMac, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import { AlertType, REGEX_TAGS } from '../constants'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
+import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
 import useDragHold from '../hooks/useDragHold'
@@ -32,9 +33,10 @@ import getChildren, { getAllChildrenAsThoughts, getChildrenRanked } from '../sel
 import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
+import isMultiEditing from '../selectors/isMultiEditing'
 import rootedParentOf from '../selectors/rootedParentOf'
 import col1MaxWidthStore from '../stores/col1MaxWidthStore'
-import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
 import containsURL from '../util/containsURL'
 import dndRef from '../util/dndRef'
@@ -44,6 +46,7 @@ import equalThoughtRanked from '../util/equalThoughtRanked'
 import getBulletWidth from '../util/getBulletWidth'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
+import isCommandKey from '../util/isCommandKey'
 import isDescendantPath from '../util/isDescendantPath'
 import isDivider from '../util/isDivider'
 import isRoot from '../util/isRoot'
@@ -170,10 +173,7 @@ const useCol1Alignment = ({ path, value, isTableCol1 }: UseCol1AlignParams) => {
     return cursorParentId ? getChildren(state, cursorParentId).map(t => t.value) : []
   }, shallowEqual)
 
-  type TransitionStyle = {
-    transform: string
-    transition: string
-  }
+  type TransitionStyle = Pick<React.CSSProperties, 'transform' | 'transition'>
 
   const [alignmentTransition, setAlignmentTransition] = useState<{
     bullet: TransitionStyle
@@ -353,11 +353,9 @@ const ThoughtContainer = ({
     toggleMulticursorOnLongPress: true,
   })
 
-  const homeContext = useSelector(state => {
-    const pathParent = rootedParentOf(state, path)
-    const showContexts = isContextViewActive(state, path)
-    return showContexts && isRoot(pathParent)
-  })
+  // The ancestors of the context that are rendered as breadcrumbs in the context view.
+  // A context that is a direct child of the home context has a simplePath of length 1, so rootedParentOf returns HOME_PATH and ContextBreadcrumbs renders the HomeLink.
+  const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
   // true if the thought has an invalid option
   const invalidOption = useSelector(state => {
@@ -512,7 +510,6 @@ const ThoughtContainer = ({
   //   styleContainer,
   //   thought,
   //   grandparent,
-  //   homeContext,
   //   isTable,
   //   invalidOption,
   //   isChildHovering,
@@ -528,18 +525,25 @@ const ThoughtContainer = ({
 
       const mouseEvent = e as React.MouseEvent
 
-      // Shift + Click selects all thoughts between the clicked thought and the previously selected thought.
-      if (mouseEvent.shiftKey) {
-        e.preventDefault()
-        dispatch(selectBetween({ path }))
-        return
-      }
+      if (!mouseEvent.shiftKey && !isCommandKey(mouseEvent)) return
 
-      // Cmd/Ctrl + Click toggles the clicked thought in the multicursor selection.
-      if (isMac ? mouseEvent.metaKey : mouseEvent.ctrlKey) {
-        e.preventDefault()
-        dispatch(toggleMulticursor({ path }))
-      }
+      e.preventDefault()
+
+      dispatch((dispatch, getState) => {
+        // An ordinary multiselection leaves the caret outside any editable, which is how isMultiEditing tells it apart
+        // from a multiselection that is being edited (Clear Thought), as Select All does when it selects the thoughts.
+        // A caret left behind in the clicked thought would otherwise be restored by any surface that saves and restores
+        // the selection — the Command Universe on close, or Copy Cursor around the clipboard write — re-focusing the
+        // editable and rendering a faux caret on every selected thought (#5405).
+        // Checked before the dispatch below, since afterwards the clicked thought is a multicursor and the caret still
+        // in it would itself read as multi edit mode. Not while the multiselection is being edited, since clearing the
+        // caret would blur the thought being edited and exit the cleared state (see onBlur in Editable).
+        if (!isMultiEditing(getState())) selection.clear()
+
+        // Shift + Click selects all thoughts between the clicked thought and the previously selected thought, while
+        // Cmd/Ctrl + Click toggles the clicked thought in the multicursor selection.
+        dispatch(mouseEvent.shiftKey ? selectBetween({ path }) : toggleMulticursor({ path }))
+      })
     },
     [dispatch, path],
   )
@@ -590,7 +594,7 @@ const ThoughtContainer = ({
         }),
       )}
     >
-      {showContexts && simplePath.length > 1 && (
+      {showContexts && !isRoot(simplePath) && (
         <div
           className={css({
             /* Tighten up the space between the context-breadcrumbs and the thought (similar to the space above a note). */
@@ -602,7 +606,7 @@ const ThoughtContainer = ({
             marginTop: '0.462rem',
           })}
         >
-          <ContextBreadcrumbs path={parentOf(simplePath)} homeContext={homeContext} />
+          <ContextBreadcrumbs path={contextBreadcrumbsAncestors} />
         </div>
       )}
 

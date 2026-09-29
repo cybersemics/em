@@ -1,7 +1,6 @@
-import { type ChildProcess } from 'child_process'
 import dotenv from 'dotenv'
 import path from 'path'
-import { findFirstAvailableTunnel, parseTunnelPool } from './cloudflareTunnelPool'
+import browserStackLauncherHooks from './browserStackLauncherHooks'
 import baseConfig from './wdio.base.conf.js'
 
 // Load .env.test.local before checking env vars since this file is imported
@@ -19,51 +18,88 @@ if (!process.env.BROWSERSTACK_ACCESS_KEY) {
 const user = process.env.BROWSERSTACK_USERNAME
 const date = new Date().toISOString().slice(0, 10)
 
-let tunnelProcess: ChildProcess | null = null
+/** The colors spec asserts a WebKit layout bug (#4263) that only a recent WebKit exhibits, so it is the one spec that runs on a newer OS than the rest of the suite. */
+const modernWebKitSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/color.ts')
+
+/** Builds a BrowserStack device capability, optionally restricting which specs run on it. */
+const deviceCapability = ({
+  deviceName,
+  osVersion,
+  specs,
+  exclude,
+}: {
+  /** The BrowserStack device name, e.g. 'iPhone 15 Plus'. */
+  deviceName: string
+  /** The iOS version to run on the device, e.g. '17'. */
+  osVersion: string
+  /** Specs to run on this device instead of the suite's. */
+  specs?: string[]
+  /** Specs to omit from the suite's on this device. */
+  exclude?: string[]
+}): WebdriverIO.Capabilities => ({
+  ...baseConfig.baseCapabilities,
+  'appium:deviceName': deviceName,
+  'appium:platformVersion': osVersion,
+  ...(specs ? { specs } : null),
+  ...(exclude ? { exclude } : null),
+  'bstack:options': {
+    deviceName,
+    osVersion,
+    projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
+    buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
+    sessionName: `iOS ${osVersion} Safari Tests`,
+    // The device reaches the dev server over the public cloudflared HTTPS URL (onPrepare), so
+    // BrowserStack Local (`local: true`) is not used on this path. These flags collect diagnostic
+    // data on BrowserStack's web dashboard, which we don't need/use.
+    debug: false,
+    networkLogs: false,
+    consoleLogs: 'errors',
+    idleTimeout: 60,
+  },
+})
+
+// Most specs run on iOS 17, which the suite's screen coordinates are calibrated for, and the one spec
+// that needs a newer WebKit runs on iOS 26. Both devices are 430x932, so only the OS varies.
+const capabilities = [
+  // The suite's default device. Its coordinates are the reason the OS is not simply moved forward:
+  // taps and gestures are performed in screen coordinates derived from page coordinates by a fixed
+  // Safari chrome offset (toolbarTapOptions), and on iOS 26 four caret tests fail because taps and
+  // gestures aimed at the lower half of the page no longer land where that arithmetic says. Moving
+  // the whole suite forward means deriving those coordinates from the webview rect first.
+  deviceCapability({ deviceName: 'iPhone 15 Plus', osVersion: '17', exclude: [modernWebKitSpec] }),
+  // A WebKit recent enough to exhibit the bug the spec assigned here covers. A device suite pinned to
+  // an OS that predates the bug under test reports green while users hit it: the Popover margin
+  // relayout in #4263 grows the toolbar by 11.6px on iOS 26 and does not reproduce at all on 17, so
+  // its regression test passed on the base branch and TDD correctly flagged it as covering nothing.
+  deviceCapability({ deviceName: 'iPhone 15 Pro Max', osVersion: '26', specs: [modernWebKitSpec] }),
+]
 
 /**
  * WDIO configuration for BrowserStack iOS testing.
  * Uses a pool of named Cloudflare Tunnels (see cloudflareTunnelPool.ts) to expose the local
- * HTTPS dev server via a public URL with a real CA-signed cert, avoiding Safari's self-signed
+ * dev server via a public HTTPS URL with a real CA-signed cert, avoiding Safari's self-signed
  * cert restrictions.
  *
  * Prerequisites:
  * 1. Set BROWSERSTACK_USERNAME and BROWSERSTACK_ACCESS_KEY env vars.
  * 2. Set CLOUDFLARE_TUNNEL_POOL to a JSON array of { name, hostname, token } (provisioned out-of-band — see docs/testing.md).
- * 3. Set TUNNEL_TOKEN to a per-run secret (the Vite app-gate token — see vite.config.ts).
- * 4. Start the app: yarn start (on port 3000).
+ * 3. Start the app with `yarn start` (on port 3000, in the default HTTPS mode — the dev pool's
+ * ingress connects to https://localhost:3000 with No TLS Verify, so Vite's self-signed cert is
+ * accepted). The Vite app-gate token needs no setup: the server generates one and onPrepare
+ * discovers it via the gate's /__tunnel-token route (see tunnelTokenGate in vite.config.ts).
  *
  * Run: yarn test:ios:browserstack.
  */
 export const config: WebdriverIO.Config = {
   ...baseConfig,
+  // onPrepare (dev-server probe, slot wait, tunnel claim, origin check) and onComplete (kill the connector).
+  ...browserStackLauncherHooks,
 
   // BrowserStack Configuration
   user,
   key: process.env.BROWSERSTACK_ACCESS_KEY,
 
-  // Capabilities
-  capabilities: [
-    {
-      ...baseConfig.baseCapabilities,
-      'appium:deviceName': 'iPhone 15 Plus',
-      'appium:platformVersion': '17',
-      'bstack:options': {
-        deviceName: 'iPhone 15 Plus',
-        osVersion: '17',
-        projectName: process.env.BROWSERSTACK_PROJECT_NAME || 'em',
-        buildName: process.env.BROWSERSTACK_BUILD_NAME || `Local - ${user} - ${date}`,
-        sessionName: 'iOS Safari Tests',
-        // The device reaches the dev server over the public cloudflared HTTPS URL (onPrepare), so
-        // BrowserStack Local (`local: true`) is not used on this path. These flags collect diagnostic
-        // data on BrowserStack's web dashboard, which we don't need/use.
-        debug: false,
-        networkLogs: false,
-        consoleLogs: 'errors',
-        idleTimeout: 60,
-      },
-    },
-  ],
+  capabilities,
 
   // Services
   services: [
@@ -74,54 +110,6 @@ export const config: WebdriverIO.Config = {
       },
     ],
   ],
-
-  onPrepare: async function () {
-    try {
-      // Claim a tunnel from the pool if not already set (e.g. by a CI workflow step)
-      if (!process.env.CLOUDFLARED_URL) {
-        if (!process.env.CLOUDFLARE_TUNNEL_POOL) {
-          throw new Error(
-            'CLOUDFLARE_TUNNEL_POOL is not set. The pool is provisioned out-of-band by whoever administers ' +
-              'it; set CLOUDFLARE_TUNNEL_POOL to that JSON output (see docs/testing.md).',
-          )
-        }
-        if (!process.env.TUNNEL_TOKEN) {
-          throw new Error('TUNNEL_TOKEN (the per-run Vite app-gate token) must be set to claim a tunnel from the pool.')
-        }
-
-        const pool = parseTunnelPool(process.env.CLOUDFLARE_TUNNEL_POOL)
-        const claimed = await findFirstAvailableTunnel(pool, process.env.TUNNEL_TOKEN)
-        tunnelProcess = claimed.process
-        process.env.CLOUDFLARED_URL = claimed.url
-        console.info(`cloudflared tunnel: ${claimed.name} (${claimed.url})`)
-      }
-
-      // Append tunnel token to the URL so the Vite token gate allows access
-      if (process.env.TUNNEL_TOKEN && process.env.CLOUDFLARED_URL) {
-        const sep = process.env.CLOUDFLARED_URL.includes('?') ? '&' : '?'
-        process.env.CLOUDFLARED_URL = `${process.env.CLOUDFLARED_URL}${sep}__token=${process.env.TUNNEL_TOKEN}`
-      }
-
-      await baseConfig.onPrepare()
-    } catch (err) {
-      // Exit rather than rethrow. WebdriverIO logs a failed launcher hook and then starts the
-      // workers regardless, so a misconfigured run proceeds to open a device against a URL that
-      // was never set — every spec then fails on an opaque origin ("The operation is insecure",
-      // "em.testHelpers is undefined", editable timeouts), each retried, burning a full ~20 min
-      // BrowserStack build. All of it traces back to here, but the real cause ends up buried at
-      // the top of a thousand lines of consequences. Exiting makes it the last thing printed.
-      if (tunnelProcess) tunnelProcess.kill()
-      console.error(`\niOS test setup failed: ${err instanceof Error ? err.message : String(err)}\n`)
-      process.exit(1)
-    }
-  },
-
-  onComplete: function () {
-    if (tunnelProcess) {
-      tunnelProcess.kill()
-      tunnelProcess = null
-    }
-  },
 }
 
 export default config

@@ -138,6 +138,58 @@ it('toggle nullary attribute off', () => {
   - a`)
 })
 
+it('preserve existing children when toggling a nullary attribute on', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - b
+        - c
+    `,
+    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        values: ['=test'],
+      }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =test
+    - b
+    - c`)
+})
+
+it('preserve existing children when toggling a nullary attribute off', () => {
+  const steps = [
+    importText({
+      text: `
+      - a
+        - b
+        - c
+        - =test
+    `,
+    }),
+    (state: State) =>
+      toggleAttribute(state, {
+        path: contextToPath(state, ['a']),
+        values: ['=test'],
+      }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+    - c`)
+})
+
 it('toggle deep attribute on', () => {
   const steps = [
     newThought('a'),

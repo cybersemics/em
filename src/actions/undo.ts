@@ -1,21 +1,26 @@
 /* eslint-disable import/prefer-default-export */
-import { startCase } from 'lodash'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
-import getLatestActionType from '../util/getLastActionType'
+import getLatestActionLabel from '../util/getLatestActionLabel'
 import { alertActionCreator as alert } from './alert'
 
-/** Action-creator for undo. */
-export const undoActionCreator = (): Thunk => (dispatch, getState) => {
-  const lastActionType = getLatestActionType(getState().undoPatches)
+/** Action-creator for undo.
+ *
+ * @param cursorAtEnd  Place the caret at the end of the restored thought instead of restoring the cursor offset captured before the undone action. Used by native undo (iOS three-finger swipe / shake-to-undo), which is expected to leave the caret at the end of the restored word.
+ * @param count  The exact number of patches to revert instead of one step. Used by the undo slider to move through the history by whole steps (see selectors/undoSteps).
+ */
+export const undoActionCreator =
+  ({ cursorAtEnd, count }: { cursorAtEnd?: boolean; count?: number } = {}): Thunk =>
+  (dispatch, getState) => {
+    const lastActionLabel = getLatestActionLabel(getState().undoPatches)
 
-  dispatch({ type: 'undo' })
+    dispatch({ type: 'undo', cursorAtEnd, count })
 
-  if (!lastActionType) return
+    if (!lastActionLabel) return
 
-  dispatch(
-    alert(`Undo: ${startCase(lastActionType)}`, {
-      alertType: AlertType.Undo,
-    }),
-  )
-}
+    dispatch(
+      alert(`Undo: ${lastActionLabel}`, {
+        alertType: AlertType.Undo,
+      }),
+    )
+  }

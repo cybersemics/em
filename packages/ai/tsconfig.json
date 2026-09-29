@@ -2,6 +2,8 @@
   "extends": "../../tsconfig.json",
   "include": ["src/**/*.ts"],
   "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "noEmit": true
   }
 }

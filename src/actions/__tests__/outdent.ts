@@ -125,7 +125,7 @@ describe('context view', () => {
       importText({ text }),
       setCursor(['a', 'm']),
       toggleContextView,
-      setCursor(['a', 'm', 'b', 'x']),
+      setCursor(['a', 'm', 'b', 'y']),
       outdent,
     ]
 

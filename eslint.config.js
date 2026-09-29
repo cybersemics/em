@@ -26,6 +26,19 @@ const rules = {
         "Use the storage abstraction (import storage from '../util/storage') instead of accessing localStorage directly. This ensures cross-platform compatibility.",
     },
   ],
+  'no-restricted-syntax': [
+    2,
+    {
+      selector: 'MemberExpression[object.name="expect"][property.name="poll"]',
+      message:
+        'expect.poll runs its callback in node, so every attempt is a devtools round trip on an interval. Wait in the page with page.waitForFunction (or a waitFor* helper) instead, which polls on every animation frame for a fixed handful of protocol messages. To report the value that was actually rendered, catch the wait and read it once — see docs/testing.md § Never wait for wall-clock time.',
+    },
+    {
+      selector: 'MemberExpression[object.name="vi"][property.name=/^(waitFor|waitUntil)$/]',
+      message:
+        'vi.waitFor polls on a real-time interval. In store and JSDOM tests, initStore and createTestApp already enable fake timers, so flush them instead — await vi.runAllTimersAsync() (wrapped in act when it causes React updates), then assert — which settles the work in one step and fails immediately rather than after the poll timeout. In Puppeteer, wait in the page with page.waitForFunction or a waitFor* helper. See docs/testing.md § Never wait for wall-clock time.',
+    },
+  ],
   'no-restricted-properties': [
     2,
     {
@@ -89,6 +102,7 @@ const rules = {
   'arrow-body-style': 0,
   'prefer-arrow-callback': 0,
   'em/no-direct-durations-config-import': 2,
+  'em/ministore-store-suffix': 2,
 }
 
 export default [
@@ -100,11 +114,13 @@ export default [
       'packages/**/.build/**/*',
       '**/styled-system/*',
       '**/ios/*',
-      '**/android/**',
+      // The Capacitor project at the repo root, anchored so that src/e2e/android is still linted.
+      'android/**',
       '**/desktop/**',
       '**/build/*',
       '**/docs/*',
       '**/functions/*',
+      'public/wa-sqlite/**',
     ],
   },
   {
@@ -214,6 +230,33 @@ export default [
       },
     },
   },
+  // The WebdriverIO tests (iOS and Android) are typechecked by their own tsconfigs, the only programs that declare
+  // WebdriverIO's globals (browser, $, expect) and @wdio/browserstack-service's global interfaces. The root
+  // tsconfig excludes src/e2e/iOS and src/e2e/android, so type-aware linting of those files has to use theirs.
+  {
+    files: ['./src/e2e/iOS/**/*.ts'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        ecmaVersion: 2018,
+        sourceType: 'module',
+        project: './src/e2e/iOS/tsconfig.json',
+      },
+    },
+  },
+  {
+    files: ['./src/e2e/android/**/*.ts'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        ecmaVersion: 2018,
+        sourceType: 'module',
+        project: './src/e2e/android/tsconfig.json',
+      },
+    },
+  },
   {
     files: ['./src/e2e/**/*.ts'],
     rules: {
@@ -225,6 +268,22 @@ export default [
     files: ['./src/util/storage.ts'],
     rules: {
       'no-restricted-globals': 0,
+    },
+  },
+  // actions/github-script evaluates its `script:` body in a CommonJS context and resolves relative
+  // require() paths against the workspace, so the scripts it loads must be CommonJS. package.json
+  // sets "type": "module", hence the .cjs extension.
+  {
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        module: 'writable',
+        process: 'readonly',
+        require: 'readonly',
+      },
     },
   },
   // A constants module is a collection of peer values with no primary export, so there is no

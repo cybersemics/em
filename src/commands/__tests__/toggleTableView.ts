@@ -192,7 +192,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(toggleTableViewCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - =view
       - Table
@@ -238,7 +238,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(toggleTableViewCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - a1
     - a2
@@ -275,7 +275,7 @@ describe('multicursor', () => {
     executeCommandWithMulticursor(toggleTableViewCommand, { store })
 
     const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-    expect(exported).toBe(`- __ROOT__
+    expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b
       - =view

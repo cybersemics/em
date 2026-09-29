@@ -1,8 +1,8 @@
 import path from 'path'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
-import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import hideVisibility from '../helpers/hideVisibility'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
@@ -19,7 +19,7 @@ it.skip('ColorPicker', async () => {
   await paste('Hello world')
 
   await clickThought('Hello world')
-  await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
+  await clickToolbar('Text Color')
 
   await hideVisibility('[aria-label="menu"]')
   await hideVisibility('[aria-label="nav"]')

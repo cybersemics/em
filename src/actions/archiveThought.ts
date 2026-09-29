@@ -62,8 +62,9 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
 
   if (!path) return state
 
-  const showContexts = isContextViewActive(state, rootedParentOf(state, path))
   const contextChain = splitChain(state, path)
+  // Only rewrite the operation if the path actually crosses the context view. A SimplePath such as a/m/x is not rewritten even though a context view is active on its parent a/m, otherwise the rewrite would recurse infinitely on the same path.
+  const showContexts = contextChain.length > 1 && isContextViewActive(state, rootedParentOf(state, path))
   const simplePath = contextChain.length > 1 ? lastThoughtsFromContextChain(state, contextChain) : (path as SimplePath)
 
   // rewrite context view operaton in terms of normal view and update cursor

@@ -108,7 +108,7 @@ it('moves multiple grandchildren to parent when thought with children is convert
   expectPathToEqual(stateNew, stateNew.cursor, ['a'])
 })
 
-it('merges note into an existing identical sibling when note is converted to thought', () => {
+it('keeps duplicate siblings when note is converted to an identical thought (no merge)', () => {
   const text = `
     - a
       - =note
@@ -123,6 +123,7 @@ it('merges note into an existing identical sibling when note is converted to tho
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
+    - b
     - b
     - c`)
 

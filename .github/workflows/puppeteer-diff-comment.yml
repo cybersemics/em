@@ -9,7 +9,8 @@
 #
 # SECURITY: the triggering run's artifacts are produced by untrusted fork code, so
 # every value read from them is untrusted input. This job therefore:
-#   - never checks out or executes PR code (data only);
+#   - checks out only the base repo's own code, never the PR's, and executes none of the
+#     triggering run's code (its artifacts are data only);
 #   - uses least-privilege permissions;
 #   - verifies the PR head sha matches the workflow_run head sha (anti-spoofing);
 #   - safely extracts artifacts (no path traversal, PNG-only, size/count caps);
@@ -42,6 +43,15 @@ jobs:
       (github.event.workflow_run.conclusion == 'success' || github.event.workflow_run.conclusion == 'failure')
 
     steps:
+      # workflow_run resolves `github.ref` to the default branch, so this checks out the base
+      # repo's own code — never the PR's — solely to make scripts/ci/ available to the
+      # github-script steps below. It must precede the artifact download, which lands untrusted
+      # data in the same workspace that checkout cleans.
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
       # Download ALL artifacts from the triggering run. Cross-run download requires
       # run-id + github-token. pr-number is always present for PR runs; __diff_output__
       # is present only when a snapshot test failed.
@@ -56,35 +66,10 @@ jobs:
       # workflow_run head sha so a crafted pr-number.txt cannot target another PR.
       - name: Resolve and verify PR number
         id: pr
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
-            const fs = require('fs')
-            const file = 'artifacts/pr-number/pr-number.txt'
-            if (!fs.existsSync(file)) {
-              core.info('No pr-number artifact found; nothing to do.')
-              return
-            }
-            const raw = fs.readFileSync(file, 'utf8').trim()
-            if (!/^[0-9]+$/.test(raw)) {
-              core.setFailed(`Refusing to proceed: pr-number artifact is not a plain integer (${JSON.stringify(raw)}).`)
-              return
-            }
-            const prNumber = Number(raw)
-            const headSha = context.payload.workflow_run.head_sha
-            const { owner, repo } = context.repo
-            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber })
-            // Anti-spoofing: the PR the images claim to belong to must be the one
-            // whose head commit actually triggered the test run.
-            if (pr.head.sha !== headSha) {
-              core.setFailed(
-                `Aborting: PR #${prNumber} head sha ${pr.head.sha} does not match the ` +
-                  `workflow_run head sha ${headSha}. This likely indicates a spoofed pr-number artifact.`,
-              )
-              return
-            }
-            core.setOutput('number', String(prNumber))
-            core.setOutput('author', pr.user ? pr.user.login : '')
+            await require('./scripts/ci/resolve-diff-pr.cjs')({ github, context, core })
 
       # Safely stage diff PNGs, host them on the snapshot-diffs orphan branch, and
       # emit a manifest for the comment step. Only this PR's folder is touched; on
@@ -197,7 +182,7 @@ jobs:
       # resolved message when the latest run had no diffs.
       - name: Upsert PR comment
         if: steps.pr.outputs.number
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           PR: ${{ steps.pr.outputs.number }}
           AUTHOR: ${{ steps.pr.outputs.author }}
@@ -206,69 +191,4 @@ jobs:
           COLLECTED: ${{ steps.publish.outputs.collected }}
         with:
           script: |
-            const fs = require('fs')
-            const { owner, repo } = context.repo
-            const marker = '<!-- puppeteer-diff -->'
-            const prNumber = Number(process.env.PR)
-            const runId = process.env.RUN_ID
-            const runUrl = process.env.RUN_URL
-            const author = process.env.AUTHOR
-            const collected = Number(process.env.COLLECTED || '0')
-
-            // HTML-escape defensively (filenames are already allowlisted upstream).
-            const esc = s =>
-              String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
-
-            let body
-            if (collected > 0) {
-              const manifest = fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/committed-images.txt`, 'utf8')
-              const rels = manifest.split('\n').map(l => l.trim()).filter(Boolean)
-              const base = `https://raw.githubusercontent.com/${owner}/${repo}/snapshot-diffs/pr-${prNumber}/${runId}`
-              const blocks = rels
-                .map(rel => {
-                  const url = `${base}/${rel.split('/').map(encodeURIComponent).join('/')}`
-                  const label = esc(rel.replace('/__diff_output__/', ' / '))
-                  return `**${label}**\n\n<img src="${url}" alt="${label}" width="900" />`
-                })
-                .join('\n\n')
-              const authorMention = author ? `@${esc(author)}` : ''
-              // The first path segment of each diff is the test file name (snapshots live in
-              // __image_snapshots__/{testFile}/). Derive the unique set to emit a single
-              // targeted update command scoped to the affected test files.
-              const testFiles = [...new Set(rels.map(rel => rel.split('/')[0]))].filter(Boolean).sort()
-              const updateCommand = `yarn test:puppeteer -u ${testFiles.map(esc).join(' ')}`
-              body = [
-                marker,
-                '### 🖼️ Puppeteer snapshot diffs',
-                '',
-                `${authorMention}: These snapshot tests failed, which indicates a visual regression. Please review your changes. If the visual changes are intentional, update the snapshots for the affected test files:`,
-                '',
-                `\`\`\`\n${updateCommand}\n\`\`\``,
-                '',
-                `<details open><summary>${rels.length} broken snapshot${rels.length === 1 ? '' : 's'}</summary>`,
-                '',
-                `Left: Expected (base branch) | Right: Actual (PR branch)`,
-                blocks,
-                '',
-                '</details>',
-                '',
-                `[View workflow run](${runUrl})`,
-              ].join('\n')
-            } else {
-              body = [
-                marker,
-                '### 🖼️ Puppeteer snapshot diffs',
-                '',
-                `✅ No snapshot diffs in the latest run (${runId}). Any previously reported diffs have been cleared.`,
-                '',
-                `[View workflow run](${runUrl})`,
-              ].join('\n')
-            }
-
-            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number: prNumber })
-            const existing = comments.find(c => c.body && c.body.includes(marker))
-            if (existing) {
-              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body })
-            } else {
-              await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body })
-            }
+            await require('./scripts/ci/upsert-diff-comment.cjs')({ github, context })

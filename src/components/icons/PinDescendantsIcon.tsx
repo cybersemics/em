@@ -1,0 +1,66 @@
+import IconType from '../../@types/IconType'
+import AnimatedIcon from './AnimatedIcon'
+import animationData from './animations/08-pin-subthought_3.json'
+
+/** PinDescendants Icon with Conditional Lottie Animation. */
+const PinDescendantsIcon = ({ fill, size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
+  return (
+    <AnimatedIcon {...{ fill, size, style, cssRaw, animated, animationData, animationComplete }}>
+      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' style={{ ...style, width: '100%', height: '100%' }}>
+        <rect width='24' height='24' fill='none' />
+        <g transform='scale(0.66)'>
+          <ellipse
+            stroke='currentColor'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            fill='none'
+            cx='17.66'
+            cy='6.04'
+            rx='2.33'
+            ry='4.94'
+            transform='translate(0.9 14.26) rotate(-45)'
+          />
+          <path
+            stroke='currentColor'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            fill='none'
+            d='M14,14a6.58,6.58,0,0,1-1.65,6.57h0A21.55,21.55,0,0,1,3,11.21H3A6.59,6.59,0,0,1,9.66,9.6'
+          />
+          <line
+            stroke='currentColor'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            x1='13.82'
+            y1='5.45'
+            x2='9.65'
+            y2='9.62'
+          />
+          <line
+            stroke='currentColor'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            x1='18.16'
+            y1='9.78'
+            x2='13.99'
+            y2='13.95'
+          />
+          <line
+            stroke='currentColor'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            x1='6.92'
+            y1='16.6'
+            x2='2.47'
+            y2='21.05'
+          />
+        </g>
+        <line stroke='currentColor' strokeLinecap='round' strokeLinejoin='round' x1='13' y1='16' x2='21.5' y2='16' />
+        <line stroke='currentColor' strokeLinecap='round' strokeLinejoin='round' x1='15.5' y1='19' x2='21.5' y2='19' />
+        <line stroke='currentColor' strokeLinecap='round' strokeLinejoin='round' x1='18' y1='22' x2='21.5' y2='22' />
+      </svg>
+    </AnimatedIcon>
+  )
+}
+
+export default PinDescendantsIcon

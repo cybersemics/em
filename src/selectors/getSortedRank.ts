@@ -7,11 +7,11 @@ import noteValue from './noteValue'
 import thoughtToPath from './thoughtToPath'
 
 /** Calculates the rank for a value to be inserted at the given index of a comparator-sorted array of thoughts.
- * The array is sorted by the sort comparator, not by rank, so its ranks are not necessarily monotonic: duplicate (tie)
- * values are ordered by childrenMap insertion order, which can differ from their rank order (#4483). The interior rank
- * is therefore placed above every rank that sorts before the value and below every rank that sorts at or after it —
- * rather than between adjacent array positions — so that the resulting rank order contains no inversion relative to the
- * sort condition. For a well-formed monotonic array this is equivalent to the midpoint between the neighboring ranks. */
+ * The array is sorted by the sort comparator, not by rank, so its ranks are not necessarily monotonic. The interior
+ * rank is therefore placed above every rank that sorts before the value and below every rank that sorts at or after it
+ * — rather than between adjacent array positions — so that the resulting rank order contains no inversion relative to
+ * the sort condition. For a well-formed monotonic array this is equivalent to the midpoint between the neighboring
+ * ranks. */
 const calculateRank = (thoughts: { rank: number }[], index: number): number => {
   // if there is no such child, return the rank of the last child + 1
   if (index === -1) {
@@ -57,9 +57,12 @@ const getSortedRank = (
   const { created } = options
 
   // Handle Created sorting (#3782)
+  // A thought created now is newer than every sibling created in the same millisecond, so under an ascending sort it
+  // belongs after them rather than before. Splitting a thought creates all of the resulting siblings within a single
+  // millisecond, so inserting each one ahead of its tied siblings would reverse them (#4085).
   if (created && sortPreference.type === 'Created') {
     const index = children.findIndex(child =>
-      isDescending ? compare(created, child.created) !== -1 : compare(child.created, created) !== -1,
+      isDescending ? compare(created, child.created) !== -1 : compare(child.created, created) === 1,
     )
     return calculateRank(children, index)
   }

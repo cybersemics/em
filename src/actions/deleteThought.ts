@@ -9,7 +9,7 @@ import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import updateThoughts from '../actions/updateThoughts'
 import { HOME_PATH } from '../constants'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../data-providers/thoughtspaceSession'
 import { getChildrenRanked } from '../selectors/getChildren'
 import { getLexeme } from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
@@ -32,8 +32,6 @@ import timestamp from '../util/timestamp'
 interface Payload {
   pathParent: Path
   thoughtId: ThoughtId
-  /** In pending deletes situation, the parent is already deleted, so at such case parent doesn't need to be updated. */
-  orphaned?: boolean
   /** If both local and remote are false, only deallocate thoughts from State, but do not delete them permanently. This is used by freeThoughts. The parent is marked as pending so that the thought will be automatically restored if it becomes visible again. */
   local?: boolean
   remote?: boolean
@@ -47,8 +45,7 @@ interface ThoughtUpdates {
 }
 
 /** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions. */
-// @MIGRATION_TODO: Maybe deleteThought doesn't need to know about the orhapned logic directly. Find a better way to handle this.
-const deleteThought = (state: State, { local = true, pathParent, thoughtId, orphaned, remote = true }: Payload) => {
+const deleteThought = (state: State, { local = true, pathParent, thoughtId, remote = true }: Payload) => {
   const deletedThought = getThoughtById(state, thoughtId) as Thought | undefined
   if (!deletedThought) return state
 
@@ -66,10 +63,9 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
   const key = deletedThought ? hashThought(value!) : null
   const lexeme = deletedThought ? getLexeme(state, value!) : null
 
-  const parent = orphaned ? null : getThoughtById(state, deletedThought ? deletedThought.parentId : head(pathParent))
+  const parent = getThoughtById(state, deletedThought ? deletedThought.parentId : head(pathParent))
 
-  // Note: When a thought is deleted and there are pending deletes, then on flushing the deletes, the parent won't be available in the tree. So for orphaned thoughts deletion we use special orphaned param
-  if (!orphaned && !parent) {
+  if (!parent) {
     console.error('Parent not found!', thoughtId, deletedThought?.value)
     return state
   }
@@ -214,21 +210,16 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, orph
 
   const thoughtIndexUpdates = {
     // Deleted thought's parent
-    // Note: Thoughts in pending deletes won't have their parent in the state. So orphaned thoughts doesn't need to care about its parent update.
-    ...(parent && {
-      [parent.id]: {
-        ...parent,
-        ...(persist
-          ? {
-              childrenMap: keyValueBy(parent?.childrenMap || {}, (key, id) =>
-                id !== thoughtId ? { [key]: id } : null,
-              ),
-              lastUpdated: timestamp(),
-              updatedBy: clientId,
-            }
-          : { pending: true }),
-      } as Thought,
-    }),
+    [parent.id]: {
+      ...parent,
+      ...(persist
+        ? {
+            childrenMap: keyValueBy(parent.childrenMap || {}, (key, id) => (id !== thoughtId ? { [key]: id } : null)),
+            lastUpdated: timestamp(),
+            updatedBy: clientId,
+          }
+        : { pending: true }),
+    } as Thought,
     [thoughtId]: null,
     // descendants
     ...descendantUpdatesResult.thoughtIndex,

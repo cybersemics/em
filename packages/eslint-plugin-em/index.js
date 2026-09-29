@@ -38,6 +38,75 @@ const plugin = {
         }
       },
     },
+    'ministore-store-suffix': {
+      meta: {
+        type: 'suggestion',
+        docs: {
+          description:
+            'Require ministores to be named with a Store suffix, and a module that default-exports a ministore to be named after it.',
+        },
+        schema: [],
+        messages: {
+          variableSuffix: "Ministore '{{name}}' must be named with a Store suffix, e.g. '{{name}}Store'.",
+          fileName: "A module that default-exports the ministore '{{name}}' must be named '{{name}}.{{ext}}'.",
+        },
+      },
+      /**
+       * Reports ministores whose variable name lacks the Store suffix, and store modules whose file name does not match their default-exported store.
+       *
+       * @param context
+       */
+      create(context) {
+        const filename = context.filename.replaceAll('\\', '/')
+        if (filename.includes('/__tests__/')) return {}
+
+        const isStoresFile = filename.includes('/src/stores/')
+        const basename = path.basename(filename)
+        const ext = path.extname(basename).slice(1)
+        const moduleName = path.basename(basename, path.extname(basename))
+
+        const ministoreFactories = new Set(['ministore', 'reactMinistore'])
+        /** Names of the variables in this module that are bound to a ministore. */
+        const ministoreVariables = new Set()
+
+        /**
+         * Detects ministore(...), reactMinistore(...), and their .compose(...) calls.
+         *
+         * @param node
+         */
+        const isMinistoreCall = node => {
+          if (!node || node.type !== 'CallExpression') return false
+          const { callee } = node
+          if (callee.type === 'Identifier') return ministoreFactories.has(callee.name)
+          return (
+            callee.type === 'MemberExpression' &&
+            callee.object.type === 'Identifier' &&
+            ministoreFactories.has(callee.object.name) &&
+            callee.property.type === 'Identifier' &&
+            callee.property.name === 'compose'
+          )
+        }
+
+        return {
+          VariableDeclarator(node) {
+            if (node.id.type !== 'Identifier' || !isMinistoreCall(node.init)) return
+            const { name } = node.id
+            ministoreVariables.add(name)
+            // A bare `store` is allowed for a local that is wrapped or enhanced before it is exported.
+            if (name === 'store' || name.endsWith('Store')) return
+            context.report({ node: node.id, messageId: 'variableSuffix', data: { name } })
+          },
+          'Program:exit'(program) {
+            const exportDefault = program.body.find(node => node.type === 'ExportDefaultDeclaration')
+            if (!exportDefault || exportDefault.declaration.type !== 'Identifier') return
+            const { name } = exportDefault.declaration
+            const isStore = name.endsWith('Store') && (ministoreVariables.has(name) || isStoresFile)
+            if (!isStore || name === moduleName) return
+            context.report({ node: exportDefault.declaration, messageId: 'fileName', data: { name, ext } })
+          },
+        }
+      },
+    },
     'no-store-subscribe-in-components': {
       meta: {
         type: 'problem',

@@ -82,6 +82,12 @@ const uncategorize = (state: State, { at }: Options): State => {
   const childrenPinAttributeId = childrenAttributeId ? findDescendant(state, childrenAttributeId, '=pin') : null
   const shouldDeleteChildrenAttribute =
     childrenAttributeId && !findAnyChild(state, childrenAttributeId, thought => thought.value !== '=pin')
+  const descendantsAttributeId = findDescendant(state, head(simplePath), '=descendants')
+  const descendantsPinAttributeId = descendantsAttributeId
+    ? findDescendant(state, descendantsAttributeId, '=pin')
+    : null
+  const shouldDeleteDescendantsAttribute =
+    descendantsAttributeId && !findAnyChild(state, descendantsAttributeId, thought => thought.value !== '=pin')
 
   /** Calculates the new rank for a child when moved to the parent. */
   const getNewRank = (state: State, child: Thought) => {
@@ -147,6 +153,19 @@ const uncategorize = (state: State, { at }: Options): State => {
       ? deleteThought({
           pathParent: parentOf(simplePath),
           thoughtId: childrenAttributeId,
+        })
+      : null,
+    // delete =descendants/=pin
+    descendantsPinAttributeId &&
+      deleteThought({
+        pathParent: parentOf(simplePath),
+        thoughtId: descendantsPinAttributeId,
+      }),
+    // delete =descendants if it has no remaining children after uncategorizing
+    descendantsAttributeId && shouldDeleteDescendantsAttribute
+      ? deleteThought({
+          pathParent: parentOf(simplePath),
+          thoughtId: descendantsAttributeId,
         })
       : null,
 

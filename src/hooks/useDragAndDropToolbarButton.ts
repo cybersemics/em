@@ -4,13 +4,13 @@ import Command from '../@types/Command'
 import CommandId from '../@types/CommandId'
 import DragAndDropType from '../@types/DragAndDropType'
 import DragCommandZone from '../@types/DragCommandZone'
+import SimplePath from '../@types/SimplePath'
 import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { initUserToolbarActionCreator as initUserToolbar } from '../actions/initUserToolbar'
 import { moveThoughtActionCreator as moveThought } from '../actions/moveThought'
 import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { commandById } from '../commands'
 import { EM_TOKEN } from '../constants'
-import contextToPath from '../selectors/contextToPath'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
@@ -34,18 +34,22 @@ const drop = (commandId: CommandId, monitor: DropTargetMonitor) => {
     initUserToolbar(),
     (dispatch, getState) => {
       const state = getState()
-      const userToolbarThoughtId = findDescendant(state, EM_TOKEN, ['Settings', 'Toolbar'])
+      const settingsId = findDescendant(state, EM_TOKEN, ['Settings'])
+      const userToolbarThoughtId = findDescendant(state, settingsId, 'Toolbar')
       const userCommandChildren = getChildrenRanked(state, userToolbarThoughtId)
       const userCommandIds = userCommandChildren.map(subthought => subthought.value)
 
-      // user commands must exist since it was created above
-      const userCommandsPath = contextToPath(state, [EM_TOKEN, 'Settings', 'Toolbar'])!
       const fromIndex = userCommandIds.indexOf(from.id)
       const toIndex = userCommandIds.indexOf(to.id)
-      if (toIndex === -1) {
+      // settingsId and userToolbarThoughtId cannot be null once toIndex has been found, since userCommandIds is
+      // empty otherwise. They are checked anyway to narrow the type.
+      if (toIndex === -1 || !settingsId || !userToolbarThoughtId) {
         console.error('Missing toIndex for', to.id)
         return
       }
+
+      // EM/Settings/Toolbar. The EM token is omitted, reproducing the rootless path contextToPath returned here.
+      const userCommandsPath = [settingsId, userToolbarThoughtId] as unknown as SimplePath
 
       const toThoughtId = userCommandChildren[toIndex].id
       const toPath = appendToPath(userCommandsPath, toThoughtId)

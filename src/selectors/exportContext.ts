@@ -35,7 +35,6 @@ interface Options {
   /** Replaces the value of the root thought with a new title. */
   title?: string
   excludeMarkdownFormatting?: boolean
-  excludeSrc?: boolean
   /** Exclude meta attributes, except archived thoughts unless excludeArchived is true. */
   excludeMeta?: boolean
   /** Exclude archived thoughts. */
@@ -54,7 +53,7 @@ export const exportContext = (
   state: State,
   contextOrThoughtId: Context | ThoughtId,
   format: MimeType = 'text/html',
-  { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeSrc, excludeArchived, maxDepth }: Options = {},
+  { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeArchived, maxDepth }: Options = {},
 ): string => {
   const linePostfix = format === 'text/html' ? (indent === 0 ? '  ' : '') + '</li>' : ''
   const tab0 = Array(indent).fill('').join('  ')
@@ -79,7 +78,6 @@ export const exportContext = (
   const exportChild = (child: Thought) =>
     (isNoteAndMetaExcluded ? '' : '  ') +
     exportContext(state, child.id, format, {
-      excludeSrc,
       excludeMeta,
       excludeArchived,
       excludeMarkdownFormatting,

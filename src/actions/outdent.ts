@@ -17,8 +17,13 @@ import isEM from '../util/isEM'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 
+export interface outdentPayload {
+  /** The caret offset within the cursor thought, read from the document before the move. Null when the caret is not in the thought's text, in which case state.cursorOffset is used instead. */
+  selectionOffset?: number | null
+}
+
 /** Decreases the indent level of the given thought, moving it to its parent. */
-const outdent = (state: State): State => {
+const outdent = (state: State, { selectionOffset }: outdentPayload = {}): State => {
   const { cursor } = state
   if (!cursor || cursor.length <= 1) return state
 
@@ -53,22 +58,30 @@ const outdent = (state: State): State => {
     })
   }
 
-  // calculate offset value based upon selection node before moveThought is dispatched
-  const offset =
-    (selection.isOnEditable(head(cursor)) && selection.isText() ? selection.offset() || 0 : state.cursorOffset) || 0
+  const offset = (selectionOffset ?? state.cursorOffset) || 0
 
   const cursorNew: Path = appendToPath(parentOf(parentOf(cursor)), head(cursor))
 
+  const parentPath = parentOf(simplifyPath(state, cursor))
   return moveThought(state, {
     oldPath: cursor,
     newPath: cursorNew,
     ...(offset != null ? { offset } : null),
-    newRank: getRankAfter(state, parentOf(simplifyPath(state, cursor))),
+    newRank: getRankAfter(state, parentPath),
+    afterId: head(parentPath),
   })
 }
 
-/** Action-creator for outdent. */
-export const outdentActionCreator = (): Thunk => dispatch => dispatch({ type: 'outdent' })
+/**
+ * Action-creator for outdent. Reads the caret offset from the document, which the reducer cannot do itself without
+ * reaching outside of state. It must be read before the move, since moveThought re-renders the editable.
+ */
+export const outdentActionCreator = (): Thunk => (dispatch, getState) => {
+  const { cursor } = getState()
+  const selectionOffset =
+    cursor && selection.isOnEditable(head(cursor)) && selection.isText() ? (selection.offset() ?? 0) : null
+  dispatch({ type: 'outdent', selectionOffset })
+}
 
 export default outdent
 

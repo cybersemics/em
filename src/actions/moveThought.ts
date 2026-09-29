@@ -4,13 +4,15 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
+import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
 import mergeThoughts from '../actions/mergeThoughts'
 import rerank from '../actions/rerank'
 import updateThoughts from '../actions/updateThoughts'
-import { clientId } from '../data-providers/yjs'
+import { clientId } from '../data-providers/thoughtspaceSession'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
+import getMovePlacement from '../selectors/getMovePlacement'
 import getSortPreference from '../selectors/getSortPreference'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -39,14 +41,45 @@ export interface MoveThoughtPayload {
   skipMerge?: boolean
   /** The new rank of the destination thought. This will be ignored if the thought is moved into a sorted context. */
   newRank: number
+  /**
+   * ID of sibling after which to place in TreeCRDT.
+   * Explicit null means first child.
+   * Undefined means derive placement from newRank for legacy em rank-based callers.
+   */
+  afterId?: ThoughtId | null
+}
+
+/** Re-ranks a thought whose lastUpdated was just bumped so that its rank still matches its context's sort condition. Only a context sorted by Updated is affected, since lastUpdated is its sort key; the bumped thought becomes the most recently updated of its siblings, which is last in rank order when ascending and first when descending. Other sort conditions compare values or immutable timestamps, so a bump cannot invalidate their ranks. */
+const rerankUpdated = (state: State, id: ThoughtId): State => {
+  const thought = getThoughtById(state, id)
+  if (!thought) return state
+
+  const sortPreference = getSortPreference(state, thought.parentId)
+  if (sortPreference.type !== 'Updated') return state
+
+  const siblings = getChildrenRanked(state, thought.parentId).filter(child => child.id !== id)
+  if (siblings.length === 0) return state
+
+  const rank = sortPreference.direction === 'Desc' ? siblings[0].rank - 1 : siblings[siblings.length - 1].rank + 1
+  if (rank === thought.rank) return state
+
+  return updateThoughts(state, {
+    thoughtIndexUpdates: {
+      [id]: {
+        ...thought,
+        rank,
+      },
+    },
+    lexemeIndexUpdates: {},
+    movePlacements: { [id]: getMovePlacement(state, thought.parentId, { id, rank }) },
+    preventExpandThoughts: true,
+  })
 }
 
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
-const moveThought = (
-  state: State,
-  { oldPath, newPath, offset, skipRerank, skipMerge, newRank }: MoveThoughtPayload,
-) => {
+const moveThought = (state: State, payload: MoveThoughtPayload) => {
+  const { oldPath, newPath, offset, skipRerank, skipMerge, newRank, afterId } = payload
   // Uncaught TypeError: Cannot perform 'IsArray' on a proxy that has been revoked at Function.isArray (#417)
   const recentlyEdited = state.recentlyEdited
   // try {
@@ -91,6 +124,17 @@ const moveThought = (
 
   const sameContext = sourceParentThought.id === destinationThoughtId
   const childrenOfDestination = getChildrenRanked(state, destinationThoughtId)
+  const effectiveAfterId =
+    afterId !== undefined
+      ? afterId
+      : getMovePlacement(state, destinationThoughtId, { id: sourceThought.id, rank: newRank })
+
+  if (
+    effectiveAfterId === sourceThought.id ||
+    (effectiveAfterId !== null && !childrenOfDestination.some(child => child.id === effectiveAfterId))
+  ) {
+    throw new Error(`moveThought: afterId must be null or a child of the destination context.`)
+  }
 
   /**
    * Find first normalized duplicate thought.
@@ -98,17 +142,27 @@ const moveThought = (
   const duplicateSubthought = () =>
     childrenOfDestination.find(child => normalizeThought(child.value) === normalizeThought(sourceThought.value))
 
-  // if thought is being moved to the same context that is not a duplicate case
+  const destinationContext = pathToContext(state, destinationThoughtPath)
+
+  // Auto-merge duplicate siblings is limited to metaprogramming-attribute contexts.
+  // Attribute subtrees (e.g. =children, =style) must be hierarchically merged on move/paste so a
+  // context never ends up with two of the same attribute. Normal thoughts are NOT merged, so
+  // duplicate siblings coexist rather than silently disappearing (see
+  // https://github.com/cybersemics/em/issues/3621).
+  // isAttribute(sourceThought.value) merges the attribute node itself; destinationContext.some(isAttribute)
+  // detects that the destination is inside a meta subtree, which drives the hierarchical recursion as
+  // mergeThoughts moves each descendant back through moveThought.
+  const isMetaMerge = isAttribute(sourceThought.value) || !!destinationContext?.some(isAttribute)
+
   // skipMerge bypasses the auto-merge when the caller intentionally moves a thought to a context
-  // that already contains a thought with the same value (e.g. swapParent with two empty thoughts).
+  // that already contains a thought with the same value (e.g. swapParent).
   // Do not treat empty thoughts as duplicates: an empty thought is a placeholder with no identity, so merging
   // it into an existing empty sibling would silently drop it (e.g. pasting a series with multiple empty thoughts).
   // See https://github.com/cybersemics/em/issues/4448.
-  const duplicateThought = !sameContext && !skipMerge && sourceThought.value !== '' ? duplicateSubthought() : null
+  const duplicateThought =
+    !sameContext && !skipMerge && sourceThought.value !== '' && isMetaMerge ? duplicateSubthought() : null
 
   const isPendingMerge = duplicateThought && (sourceThought.pending || duplicateThought.pending)
-
-  const destinationContext = pathToContext(state, destinationThoughtPath)
 
   const isArchived = destinationContext?.indexOf('=archive') !== -1
 
@@ -190,19 +244,37 @@ const moveThought = (
         lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,
+        movePlacements: { [sourceThought.id]: effectiveAfterId },
       })
     },
+    // A cross-context move bumps lastUpdated on both parents. In a context sorted by Updated that is the sort key, so
+    // each parent's own rank no longer matches the sort condition and has to be restored (#4097).
+    !sameContext ? (state: State) => rerankUpdated(state, sourceParentThought.id) : null,
+    !sameContext ? (state: State) => rerankUpdated(state, destinationThought.id) : null,
+
     // update cursor if moved path is on the cursor
     state => {
       if (!state.cursor) return state
 
       const isPathInCursor = isDescendantPath(state.cursor, oldPath)
       const isCursorAtOldPath = state.cursor.length === oldPath.length
+
+      // In the context view the cursor is on the nominal context (the m of a/m~), while the dragged context row is
+      // the deeper Path a/m~/a that resolves to the same thought. oldPath is then not an ancestor of the cursor even
+      // though the moved thought is, so the cursor has to be rebased onto the thought's new location. Otherwise it
+      // keeps naming a parent that no longer contains the thought: expandThoughts can no longer reach the cursor,
+      // freeThoughts deallocates it as no longer visible, and the next expandThoughts throws "Invalid path".
+      // Skipped when the thought no longer exists, i.e. it was merged into a duplicate in the destination.
+      const isMovedThoughtInCursor =
+        !isPathInCursor && isDescendantPath(state.cursor, oldPathSimple) && !!getThoughtById(state, sourceThought.id)
+
       const newCursorPath = isPathInCursor
         ? isCursorAtOldPath
           ? newPath
           : ([...newPath, ...state.cursor.slice(newPath.length)] as Path)
-        : state.cursor
+        : isMovedThoughtInCursor
+          ? ([...destinationThoughtPath, sourceThought.id, ...state.cursor.slice(oldPathSimple.length)] as Path)
+          : state.cursor
 
       return {
         ...state,

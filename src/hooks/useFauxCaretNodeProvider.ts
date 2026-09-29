@@ -4,7 +4,7 @@ import FauxCaretType from '../@types/FauxCaretType'
 import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
 import { isEndOfElementNode, isStartOfElementNode } from '../device/selection'
-import editingValueStore from '../stores/editingValue'
+import editingValueStore from '../stores/editingValueStore'
 
 /** Returns CSS variables that will suppress faux carets at the start or end of thoughts or notes.
  * */

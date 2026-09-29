@@ -122,7 +122,7 @@ const StaticThought = ({
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
-  const placeholder = usePlaceholder({ isEditing, simplePath })
+  const placeholder = usePlaceholder({ isEditing, path, simplePath })
 
   // if this thought is in the context view, simplePath may be incomplete as ancestors are partially loaded
   // use thoughtToPath to re-calculate the SimplePath as ancestors load

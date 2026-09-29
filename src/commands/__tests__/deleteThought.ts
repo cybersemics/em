@@ -61,7 +61,7 @@ describe('mount', () => {
 // TODO: Fix test
 it.skip('delete pending descendants', async () => {
   timer.useFakeTimer()
-  initialize()
+  initialize({ storage: 'memory' })
   await timer.runAllAsync()
 
   // c will be pending after refresh
@@ -111,7 +111,7 @@ it.skip('delete pending descendants', async () => {
 
   // clear and call initialize again to reload from local db (simulating page refresh)
   store.dispatch(clear())
-  initialize()
+  initialize({ storage: 'memory' })
   await timer.runAllAsync()
 
   store.dispatch([setCursor(['a'])])
@@ -182,10 +182,10 @@ it.skip('delete pending descendants', async () => {
   })
 })
 
-// TODO: y-indexeddb breaks tests so it is disabled
+// TODO: IndexedDB in tests is disabled where it breaks fake-indexeddb
 it.skip('delete many pending descendants', async () => {
   timer.useFakeTimer()
-  initialize()
+  initialize({ storage: 'memory' })
   await timer.runAllAsync()
 
   const text = `
@@ -268,7 +268,7 @@ it.skip('delete many pending descendants', async () => {
 
   // clear and call initialize again to reload from local db (simulating page refresh)
   store.dispatch(clear())
-  initialize()
+  initialize({ storage: 'memory' })
   await timer.runAllAsync()
 
   store.dispatch([setCursor(['Cybersemics'])])

@@ -13,13 +13,13 @@ import {
   TUTORIAL_CONTEXT,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
-import globals from '../globals'
 import chain from '../selectors/chain'
 import expandThoughts from '../selectors/expandThoughts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
-import editingValueStore from '../stores/editingValue'
+import editingValueStore from '../stores/editingValueStore'
+import heldKeysStore from '../stores/heldKeysStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -65,7 +65,7 @@ const setCursor = (
     )
     return state
   }
-  // ✗ ["__ROOT__", ...]
+  // ✗ [HOME_TOKEN, ...]
   else if (path && path[0] === HOME_TOKEN) {
     // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
     console.error(
@@ -99,17 +99,9 @@ const setCursor = (
     })
   }
 
-  // TODO
-  // load =src
-  // setTimeout(() => {
-  //   if (thoughtsResolved) {
-  //     dispatch(loadResource(thoughtsResolved))
-  //   }
-  // })
-
   // If expansion is suppressed, use existing expansion.
   // setCursor will be re-triggered after expansion is unsuppressed.
-  const expanded = globals.suppressExpansion
+  const expanded = heldKeysStore.getState().suppressExpansion
     ? state.expanded
     : expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
 
@@ -152,8 +144,11 @@ const setCursor = (
       : null),
     // this is needed in particular for creating a new note, otherwise the cursor will disappear
     isKeyboardOpen: isKeyboardOpen != null ? isKeyboardOpen : state.isKeyboardOpen,
-    // reset cursorCleared on navigate
-    cursorCleared: false,
+    // Reset cursorCleared on navigate, except while a multicursor command is executing, which sets the cursor to each
+    // selected thought in turn rather than navigating. The cleared state applies to the whole multiselection, so it
+    // must survive the traversal, e.g. so that Backspace deletes every cleared thought rather than merging the ones it
+    // no longer sees as cleared. It is reset when the command completes (see executeCommandWithMulticursor).
+    cursorCleared: state.isMulticursorExecuting ? state.cursorCleared : false,
     cursorOffset: updatedOffset,
     expanded,
     noteFocus,

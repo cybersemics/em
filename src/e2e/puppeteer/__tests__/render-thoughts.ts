@@ -1,7 +1,9 @@
 import path from 'path'
+import { HOME_TOKEN } from '../../../constants'
 import configureSnapshots from '../configureSnapshots'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import command from '../helpers/command'
 import exportThoughts from '../helpers/exportThoughts'
 import hide from '../helpers/hide'
@@ -13,6 +15,8 @@ import screenshot from '../helpers/screenshot'
 import scroll from '../helpers/scroll'
 import scrollTo from '../helpers/scrollTo'
 import setTheme from '../helpers/setTheme'
+import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 expect.extend({
@@ -93,7 +97,7 @@ const testSuite = () => {
     await press('Escape')
 
     // scroll to top
-    await scrollTo(0, 0)
+    await scrollTo(0)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
@@ -217,8 +221,7 @@ describe('Color Theme', () => {
     await paste(importText)
 
     await clickThought('Golden Retriever')
-    await click('[data-testid="toolbar-icon"][aria-label="Text Color"]')
-    await click('[aria-label="background color swatches"] [aria-label="green"]')
+    await clickToolbar('Text Color', 'background color swatches', 'green')
 
     await clickThought('Labrador')
     await click('[aria-label="text color swatches"] [aria-label="purple"]')
@@ -292,8 +295,69 @@ describe('Superscripts', () => {
     // get exported html and compress all indentation (whitespace before/after newline)
     const output = (await exportThoughts({ mimeType: 'text/html' })).replace(/\s*\n\s*/g, '')
 
-    const expected = `<ul><li>__ROOT__<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
+    const expected = `<ul><li>${HOME_TOKEN}<ul><li>This is a Thisthought<ul><li>=note<ul><li>This is a note</li></ul></li></ul></li></ul></li></ul>`
 
     expect(output).toBe(expected)
+  })
+
+  // https://github.com/cybersemics/em/pull/4539#issuecomment-5167203257
+  it('paste duplicate thought into an empty sibling at the same level', async () => {
+    await paste(`
+      - AAA
+    `)
+
+    await clickThought('AAA')
+    await press('c', { ctrl: true })
+
+    // clickThought hits the center of AAA, so Enter would split it; click the end so it creates a sibling
+    const editableNodeHandle = await waitForEditable('AAA')
+    await click(editableNodeHandle, { edge: 'right' })
+    await press('Enter')
+    await waitForEditable('')
+
+    await press('v', { ctrl: true })
+
+    // the import is asynchronous; it is complete when the empty thought has been replaced by the pasted thought
+    await waitUntil(() => !Array.from(document.querySelectorAll('[data-editable]')).some(el => el.innerHTML === ''))
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- AAA
+- AAA
+`)
+  })
+
+  // https://github.com/cybersemics/em/pull/4539#issuecomment-5178983042
+  it('paste into a subthought of the second of two duplicate thoughts', async () => {
+    await paste(`
+      - AAA
+      - BBB
+      - CCC
+      - AAA
+    `)
+
+    await clickThought('AAA')
+    await press('c', { ctrl: true })
+
+    // move the cursor to the second AAA, which follows CCC
+    await clickThought('CCC')
+    await press('ArrowDown')
+
+    await press('Enter', { meta: true })
+    await waitForEditable('')
+
+    await press('v', { ctrl: true })
+
+    // the import is asynchronous; it is complete when the empty thought has been replaced by the pasted thought
+    await waitUntil(() => !Array.from(document.querySelectorAll('[data-editable]')).some(el => el.innerHTML === ''))
+
+    const exported = await exportThoughts()
+    expect(exported).toBe(`
+- AAA
+- BBB
+- CCC
+- AAA
+  - AAA
+`)
   })
 })

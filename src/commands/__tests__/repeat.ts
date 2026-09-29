@@ -1,11 +1,13 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { executeCommandWithMulticursor, resetLastCommand } from '../../commands'
+import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
+import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'
+import bumpThoughtDownCommand from '../bumpThoughtDown'
 import cursorDownCommand from '../cursorDown'
 import exportContextCommand from '../exportContext'
 import moveThoughtDownCommand from '../moveThoughtDown'
@@ -19,11 +21,7 @@ vi.mock('../../util/throttleByAnimationFrame', () => ({
   default: (f: (...args: any[]) => void) => f,
 }))
 
-beforeEach(() => {
-  initStore()
-  // lastCommand is module-level state in commands.ts that is not reset by initStore
-  resetLastCommand()
-})
+beforeEach(initStore)
 
 it('execute the last command again', () => {
   store.dispatch([
@@ -41,7 +39,7 @@ it('execute the last command again', () => {
   executeCommandWithMulticursor(repeatCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - b
   - c
   - a`)
@@ -65,7 +63,7 @@ it('repeat does not repeat itself', () => {
   executeCommandWithMulticursor(repeatCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - b
   - c
   - d
@@ -86,7 +84,7 @@ it('do nothing when no command has been executed', () => {
   executeCommandWithMulticursor(repeatCommand, { store })
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
   - b`)
 })
@@ -111,7 +109,7 @@ it('ignore navigation commands', () => {
   expect(headValue(store.getState(), store.getState().cursor!)).toEqual('b')
 
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =pin
   - b
@@ -136,9 +134,42 @@ it('ignore commands that do not dispatch an undoable action', () => {
 
   // pin is repeated, toggling it back off
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
   - b`)
+})
+
+it('repeat a command that handles the multiselect itself', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+          - c
+        - d
+          - e
+    `,
+    }),
+    setCursor(['a', 'b']),
+    addMulticursor(['a', 'b']),
+    addMulticursor(['a', 'c']),
+  ])
+
+  // Bump Thought Down defines execMulticursor, so it is executed once with the whole selection rather than once per selected thought.
+  executeCommandWithMulticursor(bumpThoughtDownCommand, { store })
+
+  store.dispatch(setCursor(['d']))
+  executeCommandWithMulticursor(repeatCommand, { store })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - ${''}
+    - a
+      - b
+      - c
+  - ${''}
+    - d
+    - e`)
 })
 
 it('ignore undo', () => {
@@ -158,7 +189,7 @@ it('ignore undo', () => {
 
   // pin is repeated rather than undone a second time
   const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- __ROOT__
+  expect(exported).toEqual(`- ${HOME_TOKEN}
   - a
     - =pin
   - b`)

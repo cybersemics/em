@@ -3,7 +3,10 @@ import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
 import documentSort from '../selectors/documentSort'
 import findDescendant from '../selectors/findDescendant'
+import { getChildren } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -16,16 +19,23 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isEM from '../util/isEM'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
+import timestamp from '../util/timestamp'
 import alert from './alert'
 import createThought from './createThought'
 import moveThought from './moveThought'
 import setCursor from './setCursor'
 
+export interface categorizePayload {
+  /** The value of the new category. Default: '' (an empty category for the user to fill in). */
+  value?: string
+}
+
 /** Inserts a new thought and adds the given thought as a subthought. */
-const categorize = (state: State): State => {
+const categorize = (state: State, { value = '' }: categorizePayload = {}): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -33,9 +43,13 @@ const categorize = (state: State): State => {
   const multicursorPaths = documentSort(state, Object.values(state.multicursors))
   const cursorParent = parentOf(multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
   const simplePath = simplifyPath(state, multicursorPaths.length > 0 ? multicursorPaths[0] : cursor)
+  // Protection belongs to the actual tree parent, which may differ from the displayed Context View parent.
+  const simpleParent = rootedParentOf(state, simplePath)
 
   // Check if all selected thoughts belong to the same parent
-  const allSameParent = multicursorPaths.every(path => equalPath(parentOf(path), parentOf(simplePath)))
+  const allSameParent = multicursorPaths.every(path =>
+    equalPath(parentOf(simplifyPath(state, path)), parentOf(simplePath)),
+  )
 
   // cancel if a direct child of EM_TOKEN or HOME_TOKEN
   if (isEM(cursorParent) || isRoot(cursorParent)) {
@@ -44,16 +58,16 @@ const categorize = (state: State): State => {
     })
   }
   // cancel if parent is readonly
-  else if (findDescendant(state, head(cursorParent), '=readonly')) {
+  else if (findDescendant(state, head(simpleParent), '=readonly')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, cursorParent) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
+      value: `"${ellipsize(headValue(state, simpleParent) ?? 'MISSING_THOUGHT')}" is read-only so "${headValue(
         state,
         cursor,
       )}" cannot be categorized.`,
     })
-  } else if (findDescendant(state, head(cursorParent), '=unextendable')) {
+  } else if (findDescendant(state, head(simpleParent), '=unextendable')) {
     return alert(state, {
-      value: `"${ellipsize(headValue(state, cursorParent) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
+      value: `"${ellipsize(headValue(state, simpleParent) ?? 'MISSING_THOUGHT')}" is unextendable so "${headValue(
         state,
         cursor,
       )}" cannot be categorized.`,
@@ -67,15 +81,49 @@ const categorize = (state: State): State => {
     })
   }
 
+  const parentId = head(rootedParentOf(state, simplePath))
+  const sortPreference = getSortPreference(state, parentId)
+
+  // A rank just before the categorized thought among its siblings. It places the new category at the categorized
+  // thought's position in an unsorted context, and is given to the categorized thought as it moves into the new
+  // category, where it is the only child.
   const newRank = getRankBefore(state, simplePath)
+
+  // A thought created in a sorted context is ranked by the sort condition rather than by its position on screen, as in
+  // newThought. Under Created the new category is the newest thought in the context, so leaving it where the
+  // categorized thought was inverts the ranks against the sort condition — invisibly at first, since an empty thought
+  // is exempt from it, then visibly as soon as the user types into the category (#4101). An empty category has no
+  // alphabetical sort key, so under Alphabetical it stays at its point of creation.
+  const categoryRank =
+    sortPreference.type === 'Created' || (!isEmptyOrEmojiOnly(value) && sortPreference.type === 'Alphabetical')
+      ? getSortedRank(state, parentId, value, { created: timestamp() })
+      : newRank
+
   const newThoughtId = createId()
   const isInContextView = isContextViewActive(state, parentOf(cursor))
+
+  // When every visible sibling is selected, the meta attributes that describe the parent's children — =view, =sort,
+  // and the =children, =grandchildren, and =descendants containers — follow the wrapped thoughts into the new
+  // category, each moving whole with everything it holds. The parent's own direct =pin stays, since it pins the
+  // parent itself rather than describing the wrapped children. A partial selection leaves everything on the parent,
+  // which keeps unselected children. An attribute that is itself selected (visible via showHiddenThoughts) is already
+  // moved by the selection.
+  const selectedIds = new Set(multicursorPaths.map(path => head(simplifyPath(state, path))))
+  const allSelected =
+    multicursorPaths.length > 0 && getChildren(state, parentId).every(child => selectedIds.has(child.id))
+  const movedAttributes = allSelected
+    ? ['=view', '=sort', '=children', '=grandchildren', '=descendants'].flatMap(value => {
+        const id = findDescendant(state, parentId, value)
+        const thought = id && !selectedIds.has(id) ? getThoughtById(state, id) : null
+        return thought ? [thought] : []
+      })
+    : []
 
   return reducerFlow([
     createThought({
       path: rootedParentOf(state, simplePath),
-      value: '',
-      rank: newRank,
+      value,
+      rank: categoryRank,
       id: newThoughtId,
     }),
     ...(multicursorPaths.length === 0
@@ -101,16 +149,28 @@ const categorize = (state: State): State => {
               newRank: getThoughtById(state, head(path))!.rank,
             }),
           )),
+    ...movedAttributes.map(attribute =>
+      moveThought({
+        oldPath: appendToPath(parentOf(simplePath), attribute.id),
+        newPath: appendToPath(parentOf(simplePath), newThoughtId, attribute.id),
+        newRank: attribute.rank,
+      }),
+    ),
     setCursor({
       path: appendToPath(cursorParent, newThoughtId),
-      offset: 0,
+      // Place the caret at the end of the category so the user can keep typing where its value leaves off. For the
+      // default empty category this is the usual offset 0.
+      offset: value.length,
       isKeyboardOpen: true,
     }),
   ])(state)
 }
 
 /** A Thunk that dispatches a 'categorize` action. */
-export const categorizeActionCreator = (): Thunk => dispatch => dispatch({ type: 'categorize' })
+export const categorizeActionCreator =
+  (payload?: categorizePayload): Thunk =>
+  dispatch =>
+    dispatch({ type: 'categorize', ...payload })
 
 export default categorize
 

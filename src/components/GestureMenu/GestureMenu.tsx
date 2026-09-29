@@ -3,16 +3,16 @@ import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
-import { isBrowser } from '../../browser'
 import { gestureString } from '../../commands'
 import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
+import * as selection from '../../device/selection'
 import useFilteredCommands from '../../hooks/useFilteredCommands'
 import useGestureMenuLayout, {
-  GESTURE_MENU_COLUMN_GAP_REM,
-  GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM,
-  GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM,
-  GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM,
-  GESTURE_MENU_ROW_GAP_REM,
+  COLUMN_GAP_REM,
+  HEADER_BLOCK_MARGIN_BOTTOM_REM,
+  HEADER_FONT_SIZE_REM,
+  HEADER_TITLE_MARGIN_BOTTOM_REM,
+  ROW_GAP_REM,
   fogDepthAt,
 } from '../../hooks/useGestureMenuLayout'
 import gestureStore, {
@@ -20,7 +20,7 @@ import gestureStore, {
   onGestureMenuExited,
   startGestureMenuEnter,
   startGestureMenuExit,
-} from '../../stores/gesture'
+} from '../../stores/gestureStore'
 import storageModel from '../../stores/storageModel'
 import FadeTransition from '../FadeTransition'
 import PopupBase from '../PopupBase'
@@ -40,22 +40,16 @@ const GestureMenu: FC<{
 
   const hasMatchingCommand = commands.some(cmd => (gestureInProgress as string) === gestureString(cmd))
 
-  const { columnCount, maxColumns, horizontalPaddingRem, verticalPaddingRem, rowsPerColumn, visibleCommandCount } =
-    useGestureMenuLayout(commands.length)
-
-  // Both paddings come from the hook rather than being re-derived here, so what the panel renders is
-  // always what the hook's width and height budgets were computed against. They key on how many columns
-  // *fit* — never on how many the commands happen to need — so refining a gesture (r → rdl) can drop a
-  // column without shifting the panel's padding.
-  const horizontalPadding = `${horizontalPaddingRem}rem`
-  const verticalPadding = `${verticalPaddingRem}rem`
-
-  const isSingleColumnMobile = maxColumns === 1 && !isBrowser
-
-  // The width of one column, derived from how many columns *fit* rather than how many are in use, so it
-  // is constant for a given viewport. This is what keeps the menu from resizing as a gesture narrows the
-  // command list: `r` may fill two columns and `rdl` only one, but each column is the same width in both.
-  const columnWidth = `calc((100% - ${(maxColumns - 1) * GESTURE_MENU_COLUMN_GAP_REM}rem) / ${maxColumns})`
+  const {
+    columnCount,
+    maxColumns,
+    columnWidth,
+    horizontalPaddingRem,
+    paddingTopRem,
+    verticalPaddingRem,
+    rowsPerColumn,
+    visibleCommandCount,
+  } = useGestureMenuLayout(commands.length)
 
   // The layout caps instead of scrolling, so it trims to what the hook budgeted.
   const visibleCommands = commands.slice(0, visibleCommandCount)
@@ -131,22 +125,21 @@ const GestureMenu: FC<{
       >
         {gestureInProgress && (
           <div
+            data-testid='gesture-menu-content'
             style={{
-              paddingBlock: verticalPadding,
-
-              paddingInline: horizontalPadding,
-              paddingTop: isSingleColumnMobile ? '0.75rem' : undefined,
+              paddingBlock: `${verticalPaddingRem}rem`,
+              paddingInline: `${horizontalPaddingRem}rem`,
+              paddingTop: `${paddingTopRem}rem`,
+              paddingLeft: `calc(${horizontalPaddingRem}rem + ${token.var('spacing.safeAreaLeft')})`,
             }}
           >
             {/* Header */}
-            <div style={{ marginBottom: `${GESTURE_MENU_HEADER_MARGIN_BOTTOM_REM}rem` }}>
+            <div style={{ marginBottom: `${HEADER_BLOCK_MARGIN_BOTTOM_REM}rem` }}>
               <div
-                className={css({
-                  color: 'gestureMenuLabel',
-                })}
                 style={{
-                  marginBottom: `${GESTURE_MENU_HEADER_LABEL_MARGIN_BOTTOM_REM}rem`,
-                  fontSize: `${GESTURE_MENU_HEADER_LABEL_FONT_SIZE_REM}rem`,
+                  color: token('colors.gestureMenuLabel'),
+                  marginBottom: `${HEADER_TITLE_MARGIN_BOTTOM_REM}rem`,
+                  fontSize: `${HEADER_FONT_SIZE_REM}rem`,
                   fontWeight: 500,
                 }}
               >
@@ -175,7 +168,7 @@ const GestureMenu: FC<{
                 // Track count comes from what fits, not what's used, so the tracks keep their width
                 // as commands drop away; unused tracks simply render empty.
                 gridTemplateColumns: `repeat(${maxColumns}, minmax(0, 1fr))`,
-                columnGap: `${GESTURE_MENU_COLUMN_GAP_REM}rem`,
+                columnGap: `${COLUMN_GAP_REM}rem`,
               }}
             >
               {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)
@@ -192,7 +185,7 @@ const GestureMenu: FC<{
                       // Auto rows (rather than a fixed repeat(rowsPerColumn)) so a short last column
                       // is only as tall as its own items, with no trailing empty tracks.
                       gridAutoRows: 'min-content',
-                      rowGap: `${GESTURE_MENU_ROW_GAP_REM}rem`,
+                      rowGap: `${ROW_GAP_REM}rem`,
                     }}
                   >
                     {renderCommands(columnCommands, { fog: fogsOverflow })}
@@ -211,7 +204,6 @@ const GestureMenu: FC<{
 function Glow() {
   return (
     <div
-      data-testid='glow-background'
       className={css({
         position: 'absolute',
         pointerEvents: 'none',
@@ -221,6 +213,7 @@ function Glow() {
       })}
     >
       <div
+        data-testid='glow-background'
         className={css({
           backgroundImage: 'url(/img/gesture-menu/glow.avif)',
           backgroundRepeat: 'no-repeat',
@@ -259,6 +252,23 @@ function Overlay() {
   )
 }
 
+/** Hides the native text selection (and the iOS selection callout / edit menu) while the gesture menu is onscreen, then restores it when the menu is dismissed. The range is removed rather than cleared so that focus and the editor state (e.g. the mobile keyboard) are preserved, and saved so a cancelled gesture leaves the selection exactly as it was. */
+const useHideSelection = (hide: boolean) => {
+  // Holds the text selection range while the gesture menu is open so it can be restored when the menu is dismissed.
+  const savedRangeRef = useRef<selection.SavedRange | null>(null)
+
+  useEffect(() => {
+    if (hide) {
+      // Only a non-collapsed selection renders the callout. Removing a collapsed caret would disturb the editor mid-gesture, which on iOS aborts the gesture before its command executes.
+      savedRangeRef.current = selection.isCollapsed() ? null : selection.saveRange()
+      if (savedRangeRef.current) selection.removeRanges()
+    } else if (savedRangeRef.current) {
+      selection.restoreRange(savedRangeRef.current)
+      savedRangeRef.current = null
+    }
+  }, [hide])
+}
+
 /** A GestureMenu component that fades in and out based on state.showGestureMenu. */
 const GestureMenuWithTransition: FC = () => {
   const popupRef = useRef<HTMLDivElement>(null)
@@ -275,6 +285,8 @@ const GestureMenuWithTransition: FC = () => {
   })
 
   const [isGlowBackgroundLoaded, setIsGlowBackgroundLoaded] = useState(false)
+
+  useHideSelection(showGestureMenu)
 
   // Sync Redux showGestureMenu to gestureStore animation state
   useEffect(() => {

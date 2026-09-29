@@ -9,6 +9,10 @@ import CircleButton from './CircleButton'
 
 interface DialogHeaderProps {
   onClose: () => void
+  onBack?: () => void
+  onForward?: () => void
+  canGoBack?: boolean
+  canGoForward?: boolean
 }
 
 /**
@@ -16,9 +20,16 @@ interface DialogHeaderProps {
  * right button cluster (Help/Close). The flex:1 cluster wrappers balance the row so
  * the title stays optically centered.
  *
- * Back / Forward / Help are visual-only per the spec — they don't dispatch yet.
+ * Back and Forward navigate the dialog history. Help remains visual-only.
  */
-const DialogHeader: React.FC<PropsWithChildren<DialogHeaderProps>> = ({ children, onClose }) => {
+const DialogHeader: React.FC<PropsWithChildren<DialogHeaderProps>> = ({
+  children,
+  onClose,
+  onBack,
+  onForward,
+  canGoBack = false,
+  canGoForward = false,
+}) => {
   const iconFill = token('colors.dialogHeaderButtonIcon')
   // Left/right header cluster wrapper — the flex container that holds the circular header buttons.
   // `flex: 1` lets each cluster claim half the row so the centered title sits in the middle.
@@ -45,10 +56,10 @@ const DialogHeader: React.FC<PropsWithChildren<DialogHeaderProps>> = ({ children
       })}
     >
       <div className={headerSide}>
-        <CircleButton ariaLabel='Back'>
+        <CircleButton ariaLabel='Back' onClick={onBack} disabled={!canGoBack}>
           <ArrowLeftIcon size={24} fill={iconFill} />
         </CircleButton>
-        <CircleButton ariaLabel='Forward'>
+        <CircleButton ariaLabel='Forward' onClick={onForward} disabled={!canGoForward}>
           <ArrowRightIcon size={24} fill={iconFill} />
         </CircleButton>
       </div>

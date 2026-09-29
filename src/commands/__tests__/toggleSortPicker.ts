@@ -1,18 +1,20 @@
-import State from '../../@types/State'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { outdentActionCreator as outdent } from '../../actions/outdent'
 import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
+import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
+import { executeCommand } from '../../commands'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
+import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import categorizeCommand from '../categorize'
+import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
 beforeEach(initStore)
-
-/** Returns the error string reported by the Sort Picker command for the current state. */
-const sortPickerError = (state: State) => toggleSortPickerCommand.error?.(state)
 
 describe('toggleSortPicker error', () => {
   it('does not report an error when a duplicate thought is created under alphabetical sort', () => {
@@ -37,7 +39,7 @@ describe('toggleSortPicker error', () => {
     // Create a duplicate thought with the same value.
     store.dispatch(newThought({ value: 'One' }))
 
-    expect(sortPickerError(store.getState())).toBeNull()
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
 
   it('does not report an error when duplicate thoughts are created among other thoughts under alphabetical sort', () => {
@@ -69,6 +71,174 @@ describe('toggleSortPicker error', () => {
       newThought({ value: 'b' }),
     ])
 
-    expect(sortPickerError(store.getState())).toBeNull()
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
+
+  // https://github.com/cybersemics/em/issues/4084
+  it('does not report an error when a thought is split into sentences under updated sort', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - One. Two. Three.
+        `,
+      }),
+      setCursor(['One. Two. Three.']),
+    ])
+
+    const state = store.getState()
+    // Enable updated ascending sort on the home context.
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Updated', direction: 'Asc' },
+      }),
+    )
+
+    executeCommand(splitSentencesCommand, { store })
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
+
+  // https://github.com/cybersemics/em/issues/4097
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when a subthought is outdented into a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One
+              - Four
+            - Two
+            - Three
+          `,
+        }),
+        setCursor(['One']),
+      ])
+
+      // Advance the clock between each step so that the imported thoughts, the sort preference, and the outdent all
+      // have distinct updated timestamps, as they do when a user sorts a context and outdents a thought some time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch([setCursor(['One', 'Four']), outdent()])
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after Split Sentences in a context sorted by Created %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One. Two. Three. Four. Five. Six.
+          `,
+        }),
+        setCursor(['One. Two. Three. Four. Five. Six.']),
+      ])
+
+      // Advance the clock between each step so that the thought, the sort preference, and the split thoughts all have
+      // distinct created timestamps, as they do when a user sorts a context and splits a thought in it some time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Created', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      // Split Sentences creates every thought within the same millisecond, so they tie on the sort condition and are
+      // ordered by rank. Allocating those ranks against the timestamp alone inverted them against the sort condition
+      // and turned the Sort icon red (#4085).
+      executeCommand(splitSentencesCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/4086
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after pinning a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One.
+            - Two.
+            - Three.
+          `,
+        }),
+        setCursor(['One.']),
+      ])
+
+      // Advance the clock between each step so that the thoughts, the sort preference, and =pin all have distinct
+      // timestamps, as they do when a user sorts a context and pins it some time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      const simplePath = simplifyPath(state, rootedParentOf(state, state.cursor!))
+      store.dispatch(setSortPreference({ simplePath, sortPreference: { type: 'Updated', direction } }))
+
+      vi.advanceTimersByTime(1000)
+
+      // toggleAttribute inserts =pin above its siblings with getPrevRank, while its lastUpdated is now.
+      store.dispatch(toggleAttribute({ path: simplePath, values: ['=pin'] }))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/4101
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after Categorize in a context sorted by Created %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One
+            - Two
+            - Three
+          `,
+        }),
+        setCursor(['Two']),
+      ])
+
+      // Advance the clock between each step so that the thoughts, the sort preference, and the categorized thought all
+      // have distinct created timestamps, as they do when a user sorts a context and categorizes a thought in it some
+      // time later.
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Created', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      executeCommand(categorizeCommand, { store })
+
+      // The new parent is created empty, and empty thoughts are exempt from the sort condition, so the error can only
+      // surface once the user types into it.
+      store.dispatch(editThought([''], 'Four'))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
 })

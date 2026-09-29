@@ -22,12 +22,14 @@ import ThoughtId from '../../@types/ThoughtId'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { errorActionCreator as error } from '../../actions/error'
-import { isIOS, isMac, isTouch } from '../../browser'
+import { isIOS, isTouch } from '../../browser'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import replicateTree from '../../data-providers/data-helpers/replicateTree'
+import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
-import globals from '../../globals'
+import share from '../../device/share'
+import useOnClickOutside from '../../hooks/useOnClickOutside'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
 import { getChildrenRanked } from '../../selectors/getChildren'
@@ -42,6 +44,7 @@ import fastClick from '../../util/fastClick'
 import head from '../../util/head'
 import headValue from '../../util/headValue'
 import initialState from '../../util/initialState'
+import isCommandKey from '../../util/isCommandKey'
 import isRoot from '../../util/isRoot'
 import removeHome from '../../util/removeHome'
 import throttleConcat from '../../util/throttleConcat'
@@ -144,20 +147,37 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
     () => {
       isMounted.current = true
 
-      const replications = simplePaths.map(simplePath => {
-        const id = head(simplePath)
+      /** Waits for pending local persistence before reading the selected subtrees for export. */
+      const startReplicationsAfterLocalWrites = async () => {
+        await thoughtspaceRuntime.waitForIdle()
+        if (!isMounted.current) return null
 
-        return replicateTree(id, {
-          // TODO: Warn the user if offline or not fully replicated
-          remote: false,
-          onThought: thought => {
-            if (!isMounted.current) return
-            setExportingThoughtsThrottled(thought)
-          },
+        const replications = simplePaths.map(simplePath => {
+          const id = head(simplePath)
+
+          return replicateTree(id, {
+            // TODO: Warn the user if offline or not fully replicated
+            remote: false,
+            onThought: thought => {
+              if (!isMounted.current) return
+              setExportingThoughtsThrottled(thought)
+            },
+          })
         })
-      })
 
-      Promise.all(replications.map(replication => replication.promise)).then(thoughtIndices => {
+        return {
+          replications,
+          thoughtIndicesPromise: Promise.all(replications.map(replication => replication.promise)),
+        }
+      }
+
+      const replicationsStartedPromise = startReplicationsAfterLocalWrites()
+
+      void (async () => {
+        const startedReplications = await replicationsStartedPromise
+        if (!startedReplications) return
+
+        const thoughtIndices = await startedReplications.thoughtIndicesPromise
         if (!isMounted.current) return
 
         setExportingThoughtsThrottled.flush()
@@ -173,11 +193,13 @@ const PullProvider: FC<PropsWithChildren<{ simplePaths: SimplePath[] }>> = ({ ch
 
         setExportedState(exportedState)
         setIsPulling(false)
-      })
+      })()
 
       return () => {
         isMounted.current = false
-        replications.forEach(replication => replication.cancel())
+        void replicationsStartedPromise.then(startedReplications => {
+          startedReplications?.replications.forEach(replication => replication.cancel())
+        })
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -245,20 +267,8 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 
   const dropDownRef = React.useRef<HTMLDivElement>(null)
 
-  // Close the dropdown when clicking outside of it. Inlined from the unmaintained use-onclickoutside package.
-  useEffect(() => {
-    /** Closes the dropdown on mousedown/touchstart outside the dropdown element. */
-    const listener = (e: MouseEvent | TouchEvent) => {
-      if (!dropDownRef.current || dropDownRef.current.contains(e.target as Node)) return
-      closeDropdown()
-    }
-    document.addEventListener('mousedown', listener)
-    document.addEventListener('touchstart', listener, { passive: true })
-    return () => {
-      document.removeEventListener('mousedown', listener)
-      document.removeEventListener('touchstart', listener)
-    }
-  }, [closeDropdown])
+  // Close the dropdown when clicking outside of it.
+  useOnClickOutside(dropDownRef, closeDropdown)
 
   return (
     <span ref={dropDownRef} className={css({ position: 'relative', whiteSpace: 'nowrap', userSelect: 'none' })}>
@@ -288,6 +298,8 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  // Clears the alert ERROR_TIMEOUT after a clipboard error; cancelled by a successful copy. Scoped to this modal instance rather than a global, so it needs no reset between tests.
+  const errorTimer = useRef(0)
   const id = head(simplePaths[0])
   const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0]))) ?? ''
   const titleShort = ellipsize(title)
@@ -389,7 +401,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
     dispatch([closeModal(), alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`)])
 
-    clearTimeout(globals.errorTimer)
+    clearTimeout(errorTimer.current)
   }, [dispatch, exportThoughtsPhraseFinal])
 
   // Sets export content when pull is complete by useDescendants
@@ -445,8 +457,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         console.error(e)
         dispatch(error({ value: 'Error copying thoughts' }))
 
-        clearTimeout(globals.errorTimer)
-        globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
+        clearTimeout(errorTimer.current)
+        errorTimer.current = window.setTimeout(() => dispatch(alert(null)), 10000)
       })
 
       return () => {
@@ -462,7 +474,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     (e: KeyboardEvent) => {
       if (
         e.key === 'c' &&
-        (isMac ? e.metaKey : e.ctrlKey) &&
+        isCommandKey(e) &&
         exportContent &&
         // do not override copy shortcut if user has text selected
         selection.isCollapsed() !== false &&
@@ -486,11 +498,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     }
   }, [onKeyDown])
 
-  // const [publishing, setPublishing] = useState(false)
-  // const [publishedCIDs, setPublishedCIDs] = useState([] as string[])
-
   /** Shares or downloads when the export button is clicked. */
-  const onExportClick = () => {
+  const onExportClick = async () => {
     // On the iOS Capacitor app, the native share sheet can open while the software keyboard is
     // still visible, causing the two to overlap (#4294). Blur the focused editable and dismiss
     // the keyboard before presenting the share sheet. This is done synchronously (no await) so
@@ -500,15 +509,14 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
       Keyboard.hide()
     }
 
-    // use mobile share if it is available
-    if (navigator.share) {
-      navigator.share({
-        text: exportContent!,
-        title: titleShort,
-      })
-    }
+    // use the native or mobile share dialog if it is available
+    const shared = await share({
+      text: exportContent!,
+      title: titleShort,
+    })
+
     // otherwise download the data with createObjectURL
-    else {
+    if (!shared) {
       try {
         download(exportContent!, `em-${title}-${timestamp()}.${selected.extension}`, selected.type)
       } catch (err) {
@@ -520,42 +528,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
     dispatch(closeModal())
   }
-
-  /** Publishes the thoughts to IPFS. */
-  // const publish = async () => {
-  //   setPublishing(true)
-  //   setPublishedCIDs([])
-  //   const cids = []
-
-  //   const { default: IpfsHttpClient } = await import('ipfs-http-client')
-  //   const ipfs = IpfsHttpClient({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' })
-
-  //   // export without =src content
-  //   const exported = exportContext(store.getState(), context, selected.type, {
-  //     excludeSrc: true,
-  //     excludeMeta: !shouldIncludeMetaAttributes,
-  //     excludeArchived: !shouldIncludeArchived,
-  //     excludeMarkdownFormatting: !shouldIncludeMarkdownFormatting,
-  //     title: titleChild ? titleChild.value : undefined,
-  //   })
-
-  //   for await (const result of ipfs.add(exported)) {
-  //     if (result && result.path) {
-  //       const cid = result.path
-  //       // TODO: prependRevision is currently broken
-  //       // dispatch(prependRevision({ path: cursor, cid }))
-  //       cids.push(cid)
-  //       setPublishedCIDs(cids)
-  //     } else {
-  //       setPublishing(false)
-  //       setPublishedCIDs([])
-  //       dispatch(error({ value: 'Publish Error' }))
-  //       console.error('Publish Error', result)
-  //     }
-  //   }
-
-  //   setPublishing(false)
-  // }
 
   const [advancedSettings, setAdvancedSettings] = useState(false)
 
@@ -782,103 +754,6 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
           ))}
         </div>
       )}
-
-      {/* Publish */}
-
-      {/* isDocumentEditable() && (
-        <>
-          <div className={css({
-            borderTop: "solid 1px {colors.modalExportUnused}",
-            marginTop: "30px",
-            marginBottom: "20px",
-            paddingTop: "40px",
-            textAlign: "center"
-          })}>
-            {publishedCIDs.length > 0 ? (
-              <div>
-                Published:{' '}
-                {publishedCIDs.map(cid => (
-                  <a
-                    key={cid}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    href={getPublishUrl(cid)}
-                    dangerouslySetInnerHTML={{ __html: titleMedium }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div>
-                <p>
-                  {publishing ? (
-                    'Publishing...'
-                  ) : (
-                    <span>
-                      Publish <span dangerouslySetInnerHTML={{ __html: exportThoughtsPhrase }} />.
-                    </span>
-                  )}
-                </p>
-                <p className={css({color: 'dim'})}>
-                  <i>
-                    Note: These thoughts are published permanently. <br />
-                    This action cannot be undone.
-                  </i>
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className={css({
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            })}
-          >
-            <button
-              className={css({
-                fontFamily: 'Helvetica',
-                textAlign: 'center',
-                cursor: 'pointer',
-                outline: 'none',
-                padding: '2px 30px',
-                minWidth: '90px',
-                display: 'inline-block',
-                borderRadius: '99px',
-                margin: '0 5px 15px 5px',
-                whiteSpace: 'nowrap',
-                lineHeight: 2,
-                textDecoration: 'none',
-                border: 'none',
-              })}
-              disabled={!exportContent || publishing || publishedCIDs.length > 0}
-              {...fastClick(publish))}
-              style={{ color: colors.bg, backgroundColor: colors.fg }}
-            >
-              Publish
-            </button>
-
-            {(publishing || publishedCIDs.length > 0) && (
-              <button
-                className={css({
-                  cursor: "pointer",
-                  border: "none",
-                  outline: "none",
-                  background: "none"
-                })}
-                {...fastClick(()) => {
-                  dispatch([alert(null), closeModal()])
-                })}
-                style={{
-                  color: colors.fg,
-                  fontSize: '14px',
-                }}
-              >
-                Close
-              </button>
-            )}
-          </div>
-        </>
-      ) */}
     </ModalComponent>
   )
 }
