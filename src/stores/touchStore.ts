@@ -18,7 +18,7 @@ const touchStore = ministore({
   touchStartTimeStamp: -Infinity,
   /** Whether the last touch has ended. Cleared on touchstart and set on touchend, so that a click can tell whether it arrived before its touch's touchend, which iOS 27 can withhold (#5660). */
   touchEnded: true,
-  /** Set from the mousedown to the mouseup or click that iOS fires for a touch whose touchend has not arrived, i.e. while iOS is still placing the caret for a tap whose touchend it withheld (#5660). Changing the selection in this window makes iOS swallow the next quick tap. Cleared on every touchstart and touchend. */
+  /** Set from the mousedown to the mouseup or click that iOS fires for a touch whose touchend has not arrived, i.e. while iOS is still placing the caret for a tap whose touchend it withheld (#5660). Setting the selection in this window would override that caret with the start of the thought. Cleared on every touchstart and touchend. */
   nativeTapPending: false,
   /** Set on touchstart when this touch is the second tap of a double tap, so that the next touchstart knows it follows one. */
   secondTap: false,

@@ -148,7 +148,7 @@ const useEditMode = ({
 
       if (shouldSetSelection) {
         // iOS 27: setting the selection between the mousedown and mouseup of a tap whose touchend is withheld overrides
-        // the caret iOS is placing and makes it swallow the next quick tap (#5660), so leave the caret to iOS.
+        // the caret iOS is placing with the start of the thought (#5660), so leave the caret to iOS.
         if (isSafari27OrLater && touchStore.getState().nativeTapPending) {
           placeCaretIfNativeTapDoesNot()
           return

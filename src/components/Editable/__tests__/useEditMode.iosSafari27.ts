@@ -99,7 +99,7 @@ it('leaves the caret to iOS while it is handling a tap whose touchend is withhel
     store.dispatch(setCursor(['Two']))
   })
 
-  // em setting the selection now would make iOS swallow the next quick tap
+  // em setting the selection now would override the caret iOS is about to place
   expect(selection.isOnEditable(head(contextToPath(store.getState(), ['Two'])!))).toBe(false)
 
   act(() => {

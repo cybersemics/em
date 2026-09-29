@@ -14,7 +14,7 @@ const caller = (): string | null => {
   return frames.length ? frames.join(' < ') : null
 }
 
-/** Logs a selection or focus change that em makes itself while a touch has not ended. On iOS 27 a touch's touchend can be withheld, and em moving the selection or focus while that touch is still open is suspected of making iOS swallow the next quick tap (#5660). */
+/** Logs a selection or focus change that em makes itself while a touch has not ended. On iOS 27 a touch's touchend can be withheld, so this tells em's own selection changes during such a touch apart from the ones iOS makes (#5660). */
 const logProgrammaticSelection = (op: string, target?: Node | null): void => {
   if (!debugLog.isEnabled() || touchStore.getState().touchEnded) return
   const el = target instanceof Element ? target : (target?.parentElement ?? null)
