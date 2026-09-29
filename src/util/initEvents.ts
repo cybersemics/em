@@ -181,6 +181,14 @@ const initEvents = (store: Store<State, any>) => {
   let lastState: number
   let lastPath: Path | null
   let lastFocusedEditablePath: Path | null = null
+  let lastLocationPathname = window.location.pathname
+
+  /** Decodes thought ids from a URL pathname, ignoring user id and context view markers. */
+  const decodeThoughtIdsFromPathname = (pathname: string): Path | null => {
+    const [, ...segments] = pathname.split('/').filter(Boolean)
+    const thoughtIds = segments.map(segment => segment.replace(/~$/, '')) as ThoughtId[]
+    return thoughtIds.length > 0 ? thoughtIds : null
+  }
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
@@ -190,15 +198,24 @@ const initEvents = (store: Store<State, any>) => {
 
     const { path, contextViews } = decodeThoughtsUrl(state, { exists: true })
     const pathExistsInState = path ? pathExists(state, pathToContext(state, path)) : false
+    const previousUrlPath = decodeThoughtIdsFromPathname(lastLocationPathname)
+    const previousUrlWasDeleted = !!previousUrlPath && !hasAllThoughts(previousUrlPath)
     const focusedEditableThoughtId = document
       .querySelector('[data-editing=true] [data-editable]')
       ?.getAttribute('aria-label')
       ?.replace(/^editable-/, '') as ThoughtId | undefined
     const focusedEditablePath = focusedEditableThoughtId ? thoughtToPath(state, focusedEditableThoughtId) : null
+    const hasValidCursor =
+      hasAllThoughts(state.cursor) && !!state.cursor && pathExists(state, pathToContext(state, state.cursor))
     const fallbackPath =
-      [focusedEditablePath, lastFocusedEditablePath, lastPath, _.last(state.cursorHistory), storageModel.get('cursor')?.path].find(
-        candidate => hasAllThoughts(candidate) && pathExists(state, pathToContext(state, candidate)),
-      ) || null
+      [
+        state.cursor,
+        focusedEditablePath,
+        lastFocusedEditablePath,
+        lastPath,
+        _.last(state.cursorHistory),
+        storageModel.get('cursor')?.path,
+      ].find(candidate => hasAllThoughts(candidate) && pathExists(state, pathToContext(state, candidate))) || null
     const cursorPathHasMissingThought = !!state.cursor && !hasAllThoughts(state.cursor)
 
     if (!lastPath) {
@@ -207,13 +224,27 @@ const initEvents = (store: Store<State, any>) => {
 
     if (!pathExistsInState) {
       lastState = e.state
+      lastLocationPathname = window.location.pathname
 
       if (!fallbackPath || isRoot(fallbackPath)) {
         selection.clear()
       }
 
       lastFocusedEditablePath = fallbackPath
-      store.dispatch(setCursor({ path: fallbackPath && !isRoot(fallbackPath) ? fallbackPath : null, replaceContextViews: contextViews }))
+      store.dispatch(
+        setCursor({
+          path: fallbackPath && !isRoot(fallbackPath) ? fallbackPath : null,
+          replaceContextViews: contextViews,
+        }),
+      )
+      return
+    }
+
+    if (previousUrlWasDeleted && hasValidCursor && (!path || !equalPath(path, state.cursor))) {
+      lastPath = state.cursor
+      lastFocusedEditablePath = state.cursor
+      lastState = e.state
+      lastLocationPathname = window.location.pathname
       return
     }
 
@@ -232,6 +263,7 @@ const initEvents = (store: Store<State, any>) => {
     lastPath = path
     lastFocusedEditablePath = path
     lastState = e.state
+    lastLocationPathname = window.location.pathname
 
     const toRoot = !path || isRoot(path)
 
@@ -275,6 +307,7 @@ const initEvents = (store: Store<State, any>) => {
     if (focusedEditablePath && pathExists(state, pathToContext(state, focusedEditablePath))) {
       lastFocusedEditablePath = focusedEditablePath
     }
+    lastLocationPathname = window.location.pathname
 
     // update command state store
     updateCommandState()

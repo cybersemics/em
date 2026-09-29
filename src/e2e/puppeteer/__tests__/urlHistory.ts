@@ -36,7 +36,7 @@ describe('url history', () => {
   })
 
   // https://github.com/cybersemics/em/pull/5689#pullrequestreview-5353939972
-  it('skips deleted history targets and restores the last valid cursor location', async () => {
+  it('skips deleted history targets and preserves the last valid cursor location', async () => {
     await paste(`
       - One
       - Two
@@ -52,13 +52,24 @@ describe('url history', () => {
     await clickThought('One')
     await clickToolbar('Delete')
 
+    const cursorBeforeBack = await page.evaluate(
+      () => document.querySelector('[data-editing=true] [data-editable]')?.textContent?.trim() ?? '',
+    )
     const pathnameBeforeBack = await page.evaluate(() => window.location.pathname)
     await page.goBack()
     await waitForUrlChange(pathnameBeforeBack)
 
-    const breadcrumbs = await page.evaluate(
-      () => document.querySelector('[aria-label="context-breadcrumbs"]')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+    const cursorAfterBack = await page.evaluate(
+      () => document.querySelector('[data-editing=true] [data-editable]')?.textContent?.trim() ?? '',
     )
-    expect(breadcrumbs).toContain('Two')
+    const uncaughtErrorBanner = await page.evaluate(
+      () =>
+        document
+          .querySelector('[aria-label="alert"]')
+          ?.textContent?.includes('pathToContext: Missing thought with id') ?? false,
+    )
+
+    expect(cursorAfterBack).toBe(cursorBeforeBack)
+    expect(uncaughtErrorBanner).toBe(false)
   })
 })
