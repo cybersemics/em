@@ -4,6 +4,7 @@ import { Store } from 'redux'
 import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
@@ -16,7 +17,9 @@ import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import getThoughtById from '../selectors/getThoughtById'
 import pathExists from '../selectors/pathExists'
+import thoughtToPath from '../selectors/thoughtToPath'
 import store from '../stores/app'
 import { updateCaretRect } from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
@@ -177,22 +180,57 @@ const initEvents = (store: Store<State, any>) => {
 
   let lastState: number
   let lastPath: Path | null
+  let lastFocusedEditablePath: Path | null = null
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
     const state = store.getState()
+    const hasAllThoughts = (candidate?: Path | null): candidate is Path =>
+      !!candidate && candidate.every(thoughtId => !!getThoughtById(state, thoughtId))
 
     const { path, contextViews } = decodeThoughtsUrl(state, { exists: true })
+    const pathExistsInState = path ? pathExists(state, pathToContext(state, path)) : false
+    const focusedEditableThoughtId = document
+      .querySelector('[data-editing=true] [data-editable]')
+      ?.getAttribute('aria-label')
+      ?.replace(/^editable-/, '') as ThoughtId | undefined
+    const focusedEditablePath = focusedEditableThoughtId ? thoughtToPath(state, focusedEditableThoughtId) : null
+    const fallbackPath =
+      [focusedEditablePath, lastFocusedEditablePath, lastPath, _.last(state.cursorHistory), storageModel.get('cursor')?.path].find(
+        candidate => hasAllThoughts(candidate) && pathExists(state, pathToContext(state, candidate)),
+      ) || null
+    const cursorPathHasMissingThought = !!state.cursor && !hasAllThoughts(state.cursor)
 
     if (!lastPath) {
-      lastPath = state.cursor
+      lastPath = fallbackPath
     }
 
-    if (!path || !pathExists(state, pathToContext(state, path)) || equalPath(lastPath, path)) {
+    if (!pathExistsInState) {
+      lastState = e.state
+
+      if (!fallbackPath || isRoot(fallbackPath)) {
+        selection.clear()
+      }
+
+      lastFocusedEditablePath = fallbackPath
+      store.dispatch(setCursor({ path: fallbackPath && !isRoot(fallbackPath) ? fallbackPath : null, replaceContextViews: contextViews }))
+      return
+    }
+
+    if (path && isRoot(path) && cursorPathHasMissingThought && fallbackPath && !isRoot(fallbackPath)) {
+      lastState = e.state
+      lastPath = fallbackPath
+      lastFocusedEditablePath = fallbackPath
+      store.dispatch(setCursor({ path: fallbackPath, replaceContextViews: contextViews }))
+      return
+    }
+
+    if (equalPath(lastPath, path)) {
       window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
     }
 
-    lastPath = path && pathExists(state, pathToContext(state, path)) ? path : lastPath
+    lastPath = path
+    lastFocusedEditablePath = path
     lastState = e.state
 
     const toRoot = !path || isRoot(path)
@@ -227,6 +265,16 @@ const initEvents = (store: Store<State, any>) => {
   const onSelectionChange = () => {
     // save selection offset to storage, throttled
     saveSelectionOffset()
+
+    const state = store.getState()
+    const focusedEditableThoughtId = document
+      .querySelector('[data-editing=true] [data-editable]')
+      ?.getAttribute('aria-label')
+      ?.replace(/^editable-/, '') as ThoughtId | undefined
+    const focusedEditablePath = focusedEditableThoughtId ? thoughtToPath(state, focusedEditableThoughtId) : null
+    if (focusedEditablePath && pathExists(state, pathToContext(state, focusedEditablePath))) {
+      lastFocusedEditablePath = focusedEditablePath
+    }
 
     // update command state store
     updateCommandState()

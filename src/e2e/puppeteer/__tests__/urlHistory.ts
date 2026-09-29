@@ -1,5 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import deviceEmulation from '../helpers/deviceEmulation'
 import paste from '../helpers/paste'
 import { page } from '../session'
@@ -32,5 +33,32 @@ describe('url history', () => {
     // Each cursor move used to push an entry, giving Mobile Safari's edge swipe a stale rendering of
     // em to navigate back to — which is what painted a second gesture menu over the live one.
     expect(entriesAfter).toBe(entriesBefore)
+  })
+
+  // https://github.com/cybersemics/em/pull/5689#pullrequestreview-5353939972
+  it('skips deleted history targets and restores the last valid cursor location', async () => {
+    await paste(`
+      - One
+      - Two
+      - Three
+      - Four
+      - Five
+    `)
+
+    await clickThought('Five')
+    await clickToolbar('Indent')
+    await clickThought('Two')
+    await clickToolbar('Indent')
+    await clickThought('One')
+    await clickToolbar('Delete')
+
+    const pathnameBeforeBack = await page.evaluate(() => window.location.pathname)
+    await page.goBack()
+    await waitForUrlChange(pathnameBeforeBack)
+
+    const breadcrumbs = await page.evaluate(
+      () => document.querySelector('[aria-label="context-breadcrumbs"]')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+    )
+    expect(breadcrumbs).toContain('Two')
   })
 })
