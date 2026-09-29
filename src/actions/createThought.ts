@@ -23,6 +23,8 @@ interface Payload {
   /** Callback for when the updates have been synced with IDB. */
   idbSynced?: () => void
   path: Path
+  /** Skips the expandThoughts recalculation in updateThoughts. Use when a later reducer in the same reducerFlow recalculates expansion anyway, such as the setCursor in newThought. See updateThoughts. */
+  preventExpandThoughts?: boolean
   rank: number
   splitSource?: ThoughtId
   value: string
@@ -30,7 +32,10 @@ interface Payload {
 /**
  * Creates a new thought with a known context and rank. Does not update the cursor. Use the newThought reducer for a higher level function.
  */
-const createThought = (state: State, { path, value, rank, id, idbSynced, splitSource }: Payload) => {
+const createThought = (
+  state: State,
+  { path, value, rank, id, idbSynced, preventExpandThoughts, splitSource }: Payload,
+) => {
   id = id || createId()
   const lexemeOld = getLexeme(state, value)
 
@@ -101,7 +106,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, splitSo
     [hashThought(value)]: lexemeNew,
   }
 
-  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced })
+  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced, preventExpandThoughts })
 }
 
 /** Action-creator for createThought. */

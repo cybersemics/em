@@ -1,11 +1,13 @@
 import { importText, toggleContextView } from '../../actions'
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 import newThought from '../newThought'
@@ -98,6 +100,39 @@ describe('normal view', () => {
     const stateNew = reducerFlow(steps)(initialState())
 
     expect(stateNew.cursor).toMatchObject([contextToThoughtId(stateNew, ['b'])!])
+  })
+
+  it('expand the new thought and collapse the children of the previous cursor', () => {
+    const text = `
+      - a
+        - b
+    `
+    const steps = [importText({ text }), setCursor(['a']), newThought({ value: 'c' })]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // expansion is recalculated for the new cursor, so a, the previous cursor, is no longer expanded
+    expect(stateNew.expanded[hashPath(contextToPath(stateNew, ['c'])!)]).toBeTruthy()
+    expect(stateNew.expanded[hashPath(contextToPath(stateNew, ['a'])!)]).toBeFalsy()
+  })
+
+  it('recalculate expansion for the unchanged cursor when preventSetCursor is set', () => {
+    const text = `
+      - a
+        - b
+          - c
+    `
+    const stateBefore = reducerFlow([importText({ text }), setCursor(['a'])])(initialState())
+
+    // b is expanded as the only child of the cursor that has a child of its own
+    expect(stateBefore.expanded[hashPath(contextToPath(stateBefore, ['a', 'b'])!)]).toBeTruthy()
+
+    const stateNew = newThought(stateBefore, { value: 'd', insertNewSubthought: true, preventSetCursor: true })
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+    expect(stateNew.expanded[hashPath(contextToPath(stateNew, ['a'])!)]).toBeTruthy()
+    // b is no longer an only child, so a stale expansion from before the new thought would leave it expanded
+    expect(stateNew.expanded[hashPath(contextToPath(stateNew, ['a', 'b'])!)]).toBeFalsy()
   })
 
   describe('sorted', () => {
@@ -328,6 +363,28 @@ describe('context view', () => {
 
     // cursor should be on the new context
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', ''])
+  })
+
+  it('expand the new context', () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      newThought({ insertNewSubthought: true }),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    // the new context is the cursor, so it is expanded once both createThought reducers have run and setCursor has recalculated expansion
+    expect(stateNew.expanded[hashPath(contextToPath(stateNew, ['a', 'm', ''])!)]).toBeTruthy()
   })
 
   // https://github.com/cybersemics/em/issues/5445
