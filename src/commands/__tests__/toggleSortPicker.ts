@@ -205,7 +205,7 @@ describe('toggleSortPicker error', () => {
   )
 
   // https://github.com/cybersemics/em/issues/5736
-  it.skip.each(['Asc', 'Desc'] as const)(
+  it.each(['Asc', 'Desc'] as const)(
     'does not report an error after pinning a thought in a context sorted by Updated %s',
     direction => {
       store.dispatch([
@@ -244,7 +244,7 @@ describe('toggleSortPicker error', () => {
     },
   )
 
-  it.skip.each(['Asc', 'Desc'] as const)(
+  it.each(['Asc', 'Desc'] as const)(
     'does not report an error after unpinning a thought in a context sorted by Updated %s',
     direction => {
       store.dispatch([

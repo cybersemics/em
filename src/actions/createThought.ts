@@ -6,6 +6,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
+import rerankUpdated from '../actions/rerankUpdated'
 import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import getLexeme from '../selectors/getLexeme'
@@ -16,6 +17,7 @@ import createId from '../util/createId'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
 import keyValueBy from '../util/keyValueBy'
+import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
 
 interface Payload {
@@ -101,7 +103,12 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, splitSo
     [hashThought(value)]: lexemeNew,
   }
 
-  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced })
+  return reducerFlow([
+    updateThoughts({ lexemeIndexUpdates, thoughtIndexUpdates, idbSynced }),
+    // Creating a child bumps lastUpdated on the parent. In a context sorted by Updated that is the parent's sort key, so
+    // its rank has to be restored, e.g. when a thought in a sorted context is pinned (#5736).
+    state => rerankUpdated(state, parentId),
+  ])(state)
 }
 
 /** Action-creator for createThought. */

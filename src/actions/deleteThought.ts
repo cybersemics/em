@@ -7,6 +7,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
+import rerankUpdated from '../actions/rerankUpdated'
 import updateThoughts from '../actions/updateThoughts'
 import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/thoughtspaceSession'
@@ -253,6 +254,9 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
       remote,
       overwritePending: !persist,
     }),
+    // Deleting a child bumps lastUpdated on the parent. In a context sorted by Updated that is the parent's sort key, so
+    // its rank has to be restored, e.g. when a thought in a sorted context is unpinned (#5736).
+    persist ? state => rerankUpdated(state, parent.id) : null,
   ])(state)
 }
 
