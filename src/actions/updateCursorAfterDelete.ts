@@ -13,7 +13,6 @@ import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
 import appendToPath from '../util/appendToPath'
-import command from '../util/command'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import once from '../util/once'
@@ -124,4 +123,4 @@ const updateCursorAfterDelete = (state: State, statePrev: State, transaction?: T
     : cursorBack(state, undefined, transaction)
 }
 
-export default command(updateCursorAfterDelete)
+export default updateCursorAfterDelete

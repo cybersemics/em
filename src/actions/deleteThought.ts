@@ -25,11 +25,6 @@ interface Payload {
   thoughtId: ThoughtId
 }
 
-interface ThoughtUpdates {
-  path: Path
-  thoughtIndex: Index<Thought | null>
-}
-
 /** Removes a child from a thought and the corresponding Lexeme context. If it was the last instance of the Lexeme, removes it completely from the lexemeIndex. Removes the id from the parent thought event if the thought itself does not exist (See: importFiles > missingChildren). Does not update the cursor. Use deleteThoughtWithCursor or archiveThought for higher-level functions. */
 const deleteThought = (state: State, { pathParent, thoughtId }: Payload, transaction?: ThoughtspaceTransaction) => {
   const deletedThought = getThoughtById(state, thoughtId) as Thought | undefined
@@ -43,43 +38,7 @@ const deleteThought = (state: State, { pathParent, thoughtId }: Payload, transac
   }
 
   const simplePath = thoughtToPath(state, thoughtId)
-  const path = [...pathParent, thoughtId] as Path
-
-  // disable context view
   const contextViewsNew = { ...state.contextViews }
-  delete contextViewsNew[hashPath(path)]
-
-  /** Generates an update object that can be used to delete/update all descendants and delete/update thoughtIndex. */
-  const recursiveDeletes = (thought: Thought, accumRecursive = {} as ThoughtUpdates): ThoughtUpdates => {
-    const children = getChildrenRanked(state, thought.id)
-    return children.reduce(
-      (accum, child) => {
-        delete contextViewsNew[hashPath(accum.path)]
-
-        // RECURSION
-        const recursiveResults = recursiveDeletes(child, accum)
-
-        return {
-          ...accum,
-          path: [...accum.path, child.id],
-          thoughtIndex: {
-            ...accum.thoughtIndex,
-            ...recursiveResults.thoughtIndex,
-          },
-        }
-      },
-      {
-        path: pathParent,
-        thoughtIndex: {
-          ...accumRecursive.thoughtIndex,
-          [thought.id]: null,
-        },
-      } as ThoughtUpdates,
-    )
-  }
-
-  const descendantUpdatesResult = recursiveDeletes(deletedThought)
-
   const thoughtIndexUpdates: Index<Thought | null> = {
     // Deleted thought's parent
     [parent.id]: {
@@ -87,10 +46,15 @@ const deleteThought = (state: State, { pathParent, thoughtId }: Payload, transac
       lastUpdated: timestamp(),
       updatedBy: clientId,
     } as Thought,
-    [thoughtId]: null,
-    // descendants
-    ...descendantUpdatesResult.thoughtIndex,
   }
+
+  /** Collects explicit descendant deletes and clears their context views without copying the growing batch. */
+  const collectDeletes = (id: ThoughtId, path: Path) => {
+    thoughtIndexUpdates[id] = null
+    delete contextViewsNew[hashPath(path)]
+    getChildrenRanked(state, id).forEach(child => collectDeletes(child.id, [...path, child.id]))
+  }
+  collectDeletes(thoughtId, [...pathParent, thoughtId])
 
   const isDeletedThoughtCursor = equalPathHead(simplePath, state.cursor)
 

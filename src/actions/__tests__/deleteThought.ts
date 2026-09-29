@@ -33,15 +33,15 @@ it('delete', () => {
 })
 
 it('delete descendants', () => {
-  const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), deleteThoughtAtFirstMatch(['a'])]
-
-  const stateNew = reducerFlow(steps)(initialState())
+  const state = reducerFlow([newThought('a'), newSubthought('b'), newSubthought('c'), newThought('d')])(initialState())
+  const deletedIds = [['a'], ['a', 'b'], ['a', 'b', 'c'], ['a', 'b', 'd']].map(context =>
+    contextToThoughtId(state, context)!,
+  )
+  const stateNew = runDocumentCommand(deleteThoughtAtFirstMatch(['a']), state)
 
   // thoughtIndex
   expect(getThoughtById(stateNew, HOME_TOKEN)).toBeTruthy()
-  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a'])!)).toBeUndefined()
-  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a', 'b'])!)).toBeUndefined()
-  expect(getThoughtById(stateNew, contextToThoughtId(stateNew, ['a', 'b', 'c'])!)).toBeUndefined()
+  expect(deletedIds.map(id => getThoughtById(stateNew, id))).toEqual([undefined, undefined, undefined, undefined])
 
   expect(stateNew.thoughts.getChildren(HOME_TOKEN)).toEqual([])
 
@@ -49,6 +49,7 @@ it('delete descendants', () => {
   expect(getLexeme(stateNew, 'a')).toBeUndefined()
   expect(getLexeme(stateNew, 'b')).toBeUndefined()
   expect(getLexeme(stateNew, 'c')).toBeUndefined()
+  expect(getLexeme(stateNew, 'd')).toBeUndefined()
 })
 
 it('delete thought with duplicate child', () => {

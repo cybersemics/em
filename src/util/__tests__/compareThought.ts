@@ -34,9 +34,6 @@ import {
 import createId from '../createId'
 import initialState from '../initialState'
 
-beforeEach(initStore)
-afterEach(waitForThoughtspaceIdle)
-
 /** Build a test thought with the given value. */
 const thought = (value: string): Thought => ({
   id: createId(),
@@ -681,6 +678,9 @@ describe('compareThoughtByUpdatedDescending', () => {
 })
 
 describe('compareThoughtByNote', () => {
+  beforeEach(initStore)
+  afterEach(waitForThoughtspaceIdle)
+
   it('sorts thoughts with notes before thoughts without notes', () => {
     const state = reducerFlow([
       importText({
@@ -724,6 +724,9 @@ describe('compareThoughtByNote', () => {
 })
 
 describe('compareThoughtByNoteDescending', () => {
+  beforeEach(initStore)
+  afterEach(waitForThoughtspaceIdle)
+
   it('sorts thoughts with notes before thoughts without notes', () => {
     const state = reducerFlow([
       importText({

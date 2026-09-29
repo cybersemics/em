@@ -151,16 +151,12 @@ const ModalExport: FC = () => {
   const [selected, setSelected] = useState(exportOptions[0])
   const exportWord = isTouch ? 'Share' : 'Download'
 
-  // Capture only the selected subtrees in JSON, even though the read snapshot contains the complete document.
-  const selectedThoughtIds = useMemo(
-    () => [
-      ...new Set(simplePaths.flatMap(path => [head(path), ...getDescendantThoughtIds(exportedState, head(path))])),
-    ],
-    [exportedState, simplePaths],
-  )
-
   const exportContent = useMemo(() => {
     if (selected.type === 'application/json') {
+      // Capture only the selected subtrees in JSON, even though the read snapshot contains the complete document.
+      const selectedThoughtIds = [
+        ...new Set(simplePaths.flatMap(path => [head(path), ...getDescendantThoughtIds(exportedState, head(path))])),
+      ]
       const thoughtIndexCompact = Object.fromEntries<Partial<Thought>>(
         selectedThoughtIds.map(id => {
           const thought = exportedState.thoughts.getThought(id)!
@@ -201,7 +197,6 @@ const ModalExport: FC = () => {
   }, [
     exportedState,
     selected.type,
-    selectedThoughtIds,
     shouldExportFirstThought,
     shouldExportSubthoughts,
     shouldIncludeArchived,
