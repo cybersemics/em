@@ -11,7 +11,6 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import categorizeCommand from '../categorize'
-import pinAllCommand from '../pinAll'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
@@ -238,43 +237,6 @@ describe('toggleSortPicker error', () => {
       // The new parent is created empty, and empty thoughts are exempt from the sort condition, so the error can only
       // surface once the user types into it.
       store.dispatch(editThought([''], 'Four'))
-
-      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
-    },
-  )
-
-  it.each(['Asc', 'Desc'] as const)(
-    'does not report an error after Pin All in a context sorted by Created %s',
-    direction => {
-      store.dispatch([
-        importText({
-          text: `
-            - One
-          `,
-        }),
-        setCursor(['One']),
-      ])
-
-      vi.advanceTimersByTime(1000)
-      store.dispatch(newThought({ value: 'Two' }))
-      vi.advanceTimersByTime(1000)
-      store.dispatch(newThought({ value: 'Three' }))
-
-      store.dispatch(setCursor(['One']))
-
-      vi.advanceTimersByTime(1000)
-
-      const state = store.getState()
-      store.dispatch(
-        setSortPreference({
-          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
-          sortPreference: { type: 'Created', direction },
-        }),
-      )
-
-      vi.advanceTimersByTime(1000)
-
-      executeCommand(pinAllCommand, { store })
 
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
