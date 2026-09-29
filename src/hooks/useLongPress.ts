@@ -28,7 +28,7 @@ export interface LongPressProps {
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent) => void) | null = noop,
+  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent | MouseEvent) => void) | null = noop,
   delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
 ) => {
   const [pressing, setPressing] = useState(false)
@@ -109,7 +109,7 @@ const useLongPress = (
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
-    (e?: React.MouseEvent | React.TouchEvent) => {
+    (e?: React.MouseEvent | React.TouchEvent | MouseEvent) => {
       setPressing(false)
 
       // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
@@ -129,6 +129,20 @@ const useLongPress = (
     },
     [onLongPressEnd, setPressing],
   )
+
+  // iOS 27 can withhold a press's touchend until the next touch, but still fires click when the finger lifts (#5660).
+  useEffect(() => {
+    if (!pressing) return
+
+    /** Ends the press on a click that arrives before its touchend. */
+    const onClick = (e: MouseEvent) => {
+      const { touchStartTimeStamp, touchEndTimeStamp } = touchStore.getState()
+      if (touchStartTimeStamp > touchEndTimeStamp) stop(e)
+    }
+
+    window.addEventListener('click', onClick, { capture: true })
+    return () => window.removeEventListener('click', onClick, { capture: true })
+  }, [pressing, stop])
 
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
   // Allow double tap to open the context menu as usual.

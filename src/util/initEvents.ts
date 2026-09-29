@@ -331,16 +331,15 @@ const initEvents = (store: Store<State, any>) => {
     // iOS may never end the second tap of a double tap, wherever it lands, even on another thought. Only WebKit is
     // affected.
     const secondTap = isSafari() && e.timeStamp - touchStartTimeStamp < DOUBLE_TAP_MS
-    // The touch after a double tap is withheld wherever it lands, and iOS may move the caret or focus too late to end
-    // the press.
+    // The first withheld tap after a double tap has no withheld touchend before it, so only the double tap gives it away.
     const afterDoubleTap = previousSecondTap
-    // Otherwise only a tap that does nothing, such as one on the caret's own word, turns a withheld touchend into a
-    // long press. A tap that moves the caret or focus ends the press even when its touchend is withheld.
+    // Only a tap that does nothing, such as one on the caret's own word, gives no sign that the finger has lifted.
+    // Elsewhere iOS still fires click at the lift, which ends the press in useLongPress.
     // changedTouches is the finger that just landed; touches[0] is the first one still down, which a second finger
     // arriving mid-edit would measure instead.
     const touch = e.changedTouches[0]
     const onCaretWord = !!touch && selection.isOnCaretWord(touch.clientX, touch.clientY)
-    const touchEndUnreliable = secondTap || afterDoubleTap || (touchEndWithheld && onCaretWord)
+    const touchEndUnreliable = secondTap || ((touchEndWithheld || afterDoubleTap) && onCaretWord)
 
     // One entry per stuck touch, so that it can be counted without reading the pointer events around it.
     if (touchGap < TOUCHEND_WITHHELD_MS) {
