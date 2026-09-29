@@ -1,24 +1,15 @@
-/**
- * Tests for the device constants in src/browser.ts.
- *
- * `isTouch` is a module-level constant evaluated once at import, so varying it means stubbing the
- * globals and re-importing the module with `vi.resetModules()` — the same trap the app has at runtime:
- * emulating touch support after page load does not change it. `isTablet` is a function that reads the
- * viewport dimensions from `viewportStore` on every call, so each case sets those via
- * `viewportStore.update()` after importing rather than stubbing a global.
- */
 import { token } from '../../styled-system/tokens'
 
 /** The `lg` breakpoint in px, read from the same token the implementation compares against. */
 const LG = parseInt(token('breakpoints.lg'))
 
-/** Re-imports src/browser.ts (and the viewportStore it reads) against a stubbed pointer type. */
+/** Re-imports src/platform.ts (and the viewportStore it reads) against a stubbed pointer type. */
 const importBrowserWith = async (touch: boolean) => {
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: touch && query === '(pointer: coarse)' }))
   vi.resetModules()
-  const browser = await import('../browser')
+  const platform = await import('../platform')
   const { default: viewportStore } = await import('../stores/viewportStore')
-  return { ...browser, viewportStore }
+  return { ...platform, viewportStore }
 }
 
 afterEach(() => {

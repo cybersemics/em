@@ -31,10 +31,16 @@ vi.mock('../../browser', async importOriginal => {
   const actual = await importOriginal<typeof import('../../browser')>()
   return {
     ...actual,
-    isTablet: () => mockBrowser.isTablet,
     get isBrowser() {
       return mockBrowser.isBrowser
     },
+  }
+})
+vi.mock('../../platform', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../platform')>()
+  return {
+    ...actual,
+    isTablet: () => mockBrowser.isTablet,
   }
 })
 

@@ -1,6 +1,7 @@
 import { useSelector } from 'react-redux'
 import { token } from '../../styled-system/tokens'
-import { isBrowser, isTablet } from '../browser'
+import { isBrowser } from '../browser'
+import { isTablet } from '../platform'
 import viewportStore from '../stores/viewportStore'
 
 /**************************************************************

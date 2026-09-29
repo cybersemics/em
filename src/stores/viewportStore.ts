@@ -1,20 +1,15 @@
-import { Capacitor } from '@capacitor/core'
 import _ from 'lodash'
+import { isTouch } from '../browser'
 import ministore from './ministore'
 import reactMinistore from './react-ministore'
 
 /** Scroll zone as a percentage of the smaller size of the screen. */
 const SCROLL_ZONE_WIDTH = 0.25
 
-/** Check if the device is a touchscreen. Duplicated from src/browser.ts's isTouch to avoid circular imports. */
-const isTouchDevice =
-  typeof window !== 'undefined' &&
-  (window.matchMedia?.('(pointer: coarse)').matches || Capacitor.getPlatform() === 'android')
-
 /** The last measured height of the virtual keyboard in each orientation, kept while the keyboard is closed so that the store can still report its expected height. Starts from a guess until the keyboard can be measured directly. A ministore rather than module variables so that a measurement taken in one test is cleared with the store it feeds. */
 const keyboardHeightCacheStore = ministore({
-  portrait: isTouchDevice ? window.innerHeight / 2.275 : 0,
-  landscape: isTouchDevice ? window.innerWidth / 1.7 : 0,
+  portrait: isTouch ? window.innerHeight / 2.275 : 0,
+  landscape: isTouch ? window.innerWidth / 1.7 : 0,
 })
 
 export interface ViewportState {
