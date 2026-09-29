@@ -20,6 +20,12 @@ import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
   finger, is supplied by the test.
 */
 
+// Emulate Safari on iOS 27, where the press ends on the mouseup at the lift when the touchend is withheld.
+vi.mock('../../browser', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../browser')>()
+  return { ...actual, isSafari27OrLater: true }
+})
+
 let caretRangeFromPoint: Document['caretRangeFromPoint'] | undefined
 
 beforeEach(async () => {
@@ -178,7 +184,7 @@ it('a tap on another thought after a double tap does not activate drag and drop 
   await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(1000))
 
-  // a tap on another thought, which flushes the withheld touchend in the same instant: iOS fires click when the
+  // a tap on another thought, which flushes the withheld touchend in the same instant: iOS fires mouseup when the
   // finger lifts, but withholds the touchend again
   await touchesLandOn('Two', 1)
   await act(async () => {
@@ -187,7 +193,8 @@ it('a tap on another thought after a double tap does not activate drag and drop 
   await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(100))
   await act(async () => {
-    fireEvent.click(bullet)
+    // iOS retargets the mouse events of a rapid tap to another element
+    fireEvent.mouseUp(document.body)
   })
   await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
 
@@ -207,7 +214,7 @@ it('a long press ends when the finger lifts even if iOS withholds its touchend',
   await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(1000))
 
-  // a long press on another thought, which flushes the withheld touchend in the same instant: iOS fires click when
+  // a long press on another thought, which flushes the withheld touchend in the same instant: iOS fires mouseup when
   // the finger lifts, but withholds the touchend again
   await touchesLandOn('Two', 1)
   await act(async () => {
@@ -216,7 +223,8 @@ it('a long press ends when the finger lifts even if iOS withholds its touchend',
   await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
   await act(async () => {
-    fireEvent.click(bullet)
+    // iOS retargets the mouse events of a rapid tap to another element
+    fireEvent.mouseUp(document.body)
   })
   await act(() => vi.advanceTimersByTimeAsync(100))
 

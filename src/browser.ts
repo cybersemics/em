@@ -48,6 +48,9 @@ export const isiPhone = typeof navigator !== 'undefined' && navigator.platform =
 /** Returns true if the navigator vendor contains 'Apple'. */
 export const isSafari = () => typeof navigator !== 'undefined' && navigator.vendor.includes('Apple')
 
+/** True in Safari 27 or later, which can withhold a touch's touchend (#5660). Safari's user agent reports iOS 27 only as `Version/27`, since the OS token is frozen at 18. A WKWebView, such as the Capacitor app, reports no `Version/`. */
+export const isSafari27OrLater = isSafari() && Number(navigator.userAgent.match(/Version\/(\d+)/)?.[1] ?? 0) >= 27
+
 /** Returns true if the navigator user agent contains 'Android'. */
 export const isAndroidWebView = () => typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent)
 

@@ -3,7 +3,7 @@ import { useDragDropManager } from 'react-dnd'
 import { useDispatch } from 'react-redux'
 import { useSelector } from 'react-redux'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
-import { isTouch } from '../browser'
+import { isSafari27OrLater, isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
@@ -130,17 +130,17 @@ const useLongPress = (
     [onLongPressEnd, setPressing],
   )
 
-  // iOS 27 can withhold a press's touchend until the next touch, but still fires click when the finger lifts (#5660).
+  // iOS 27 can withhold a press's touchend until the next touch, but still fires mouseup when the finger lifts (#5660).
   useEffect(() => {
-    if (!pressing) return
+    if (!pressing || !isSafari27OrLater) return
 
-    /** Ends the press on a click that arrives before its touchend. */
-    const onClick = (e: MouseEvent) => {
+    /** Ends the press on a mouseup that arrives before its touchend. */
+    const onMouseUp = (e: MouseEvent) => {
       if (!touchStore.getState().touchEnded) stop(e)
     }
 
-    window.addEventListener('click', onClick, { capture: true })
-    return () => window.removeEventListener('click', onClick, { capture: true })
+    window.addEventListener('mouseup', onMouseUp, { capture: true })
+    return () => window.removeEventListener('mouseup', onMouseUp, { capture: true })
   }, [pressing, stop])
 
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
