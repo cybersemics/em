@@ -59,7 +59,7 @@ it('a collapsed caret survives a command run from the Command Universe', async (
 })
 
 // https://github.com/cybersemics/em/issues/5733
-it.skip('Note keeps the caret in the new note when invoked from the Command Universe', async () => {
+it('Note keeps the caret in the new note when invoked from the Command Universe', async () => {
   await paste('- hello world')
   await clickThought('hello world')
 
