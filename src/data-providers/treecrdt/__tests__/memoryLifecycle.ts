@@ -43,6 +43,30 @@ it('closes a partially initialized client before retrying bootstrap', async () =
   }
 })
 
+it('rejects initialization when the automatic subscription push fails before hydration succeeds', async () => {
+  const failure = new Error('Initial subscription push failed')
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const close = vi.spyOn(persistent, 'close')
+  const listOpRefs = persistent.opRefs.all.bind(persistent.opRefs)
+  // Subscription setup succeeds; its automatic push fails, while the following hydration read succeeds.
+  vi.spyOn(persistent.opRefs, 'all').mockImplementationOnce(listOpRefs).mockRejectedValueOnce(failure)
+  const onError = vi.fn()
+  const open = vi.fn(createTreecrdtClient).mockResolvedValueOnce(persistent)
+  const runtime = createMemoryThoughtspace(open)
+  try {
+    await expect(runtime.init({ storage: 'memory', onError })).rejects.toBe(failure)
+    expect(runtime.ready).toBe(false)
+    expect(close).toHaveBeenCalledTimes(1)
+    expect(onError).toHaveBeenCalledExactlyOnceWith(failure)
+
+    await runtime.init({ storage: 'memory', onError })
+    expect(runtime.ready).toBe(true)
+    expect(runtime.project().getThought(HOME_TOKEN)?.id).toBe(HOME_TOKEN)
+  } finally {
+    await runtime.drop()
+  }
+})
+
 it('reopens only after a concurrent drop finishes and blocks editing during teardown', async () => {
   let persistent!: TreecrdtClient
   const open = vi.fn(async options => {

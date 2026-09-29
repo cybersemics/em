@@ -19,6 +19,7 @@ import type ThoughtId from '../../@types/ThoughtId'
 import type ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import type ThoughtspaceView from '../../@types/ThoughtspaceView'
 import { GLOBAL_ROOT_TOKEN, ROOT_PARENT_ID } from '../../constants'
+import createId from '../../util/createId'
 import hashThought from '../../util/hashThought'
 import type DataProvider from '../DataProvider'
 import { initPermissionsStore } from '../permissionsStore'
@@ -101,6 +102,7 @@ const createMemoryThoughtspace = (
   openClient: typeof createTreecrdtClient = createTreecrdtClient,
   openMemory: typeof createMemoryClient = createMemoryClient,
 ): DataProvider & ThoughtspaceRuntime => {
+  const localWriteId = `em-memory:${createId()}`
   let persistent: TreecrdtClient | undefined
   let memory: Awaited<ReturnType<typeof createMemoryClient>> | undefined
   let peers: ReturnType<typeof createInMemoryConnectedPeers<Operation>> | undefined
@@ -355,7 +357,7 @@ const createMemoryThoughtspace = (
     commitTail = commitTail.then(async () => {
       if (!result.operations.length) return
       // Transport.send does not acknowledge durable storage. Append these exact operations explicitly.
-      await target.ops.appendMany(result.operations)
+      await target.ops.appendMany(result.operations, { writeId: localWriteId })
     })
     void commitTail.catch(reportFailure)
     const persisted = callbacks.length ? commitTail.then(() => callbacks.forEach(callback => callback())) : commitTail
@@ -461,13 +463,25 @@ const createMemoryThoughtspace = (
           },
           codec: treecrdtSyncV0ProtobufCodec,
         })
-        unsubscribe = persistent.onMaterialized(() => {
+        unsubscribe = persistent.onMaterialized(event => {
+          // Memory already owns these operations. Provenance, not append timing, distinguishes delayed local
+          // acknowledgements from incoming changes; mixed or unidentified events still notify the sync peer.
+          if (
+            event.changes.length &&
+            event.changes.every(change => {
+              const writeIds = change.source?.writeIds
+              return !!writeIds?.length && writeIds.every(id => id === localWriteId)
+            })
+          )
+            return
           syncTail = syncTail.then(() => peers!.peerB.notifyLocalUpdate())
           void syncTail.catch(reportFailure)
         })
         subscription = peers.peerA.subscribe(peers.transportA, { all: {} })
         void subscription.done.catch(reportFailure)
         await subscription.ready
+        // The subscription's best-effort initial push may fail even when reconciliation resolves readiness.
+        if (failure) throw failure
         ready = !dropping
         return { clientId, storage: persistent.storage }
       })().catch(async error => {

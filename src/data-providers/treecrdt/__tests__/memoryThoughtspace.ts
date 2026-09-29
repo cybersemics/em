@@ -12,6 +12,160 @@ import initializeMemoryStorage from '../initializeMemoryStorage'
 import { decodeThoughtPayload, encodeThoughtPayload } from '../payload'
 import * as thoughtPayload from '../payload'
 
+it('avoids scanning history for its own writes without suppressing incoming changes during a pending append', async () => {
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const onChange = vi.fn()
+  const runtime = createMemoryThoughtspace(async () => persistent)
+  const own: Thought = {
+    id: '1'.repeat(32) as ThoughtId,
+    parentId: HOME_TOKEN,
+    value: 'local',
+    created: 1 as Timestamp,
+    lastUpdated: 1 as Timestamp,
+    updatedBy: 'local',
+  }
+  const incoming = '2'.repeat(32) as ThoughtId
+  let release!: () => void
+  const gate = new Promise<void>(resolve => {
+    release = resolve
+  })
+  let started!: () => void
+  const appendStarted = new Promise<void>(resolve => {
+    started = resolve
+  })
+  try {
+    await runtime.init({ storage: 'memory', onChange })
+    await runtime.waitForIdle()
+    const scans = vi.spyOn(persistent.opRefs, 'all')
+    await runtime.transact(transaction =>
+      transaction.update({ thoughtIndexUpdates: { [own.id]: own }, movePlacements: { [own.id]: null } }),
+    ).persisted
+    await runtime.waitForIdle()
+    expect(scans).not.toHaveBeenCalled()
+    expect(onChange).not.toHaveBeenCalled()
+
+    const append = persistent.ops.appendMany.bind(persistent.ops)
+    vi.spyOn(persistent.ops, 'appendMany').mockImplementationOnce(async (ops, options) => {
+      started()
+      await gate
+      return append(ops, options)
+    })
+    const pending = runtime.transact(transaction =>
+      transaction.update({ thoughtIndexUpdates: { [own.id]: { ...own, value: 'pending local edit' } } }),
+    )
+    await appendStarted
+    const received = new Promise<ThoughtspaceView>(resolve => onChange.mockImplementationOnce(resolve))
+    await persistent.local.insert(
+      new Uint8Array(32).fill(9),
+      HOME_TOKEN,
+      incoming,
+      { type: 'last' },
+      encodeThoughtPayload({ value: 'incoming', created: 1, lastUpdated: 1, updatedBy: 'remote' }),
+      { writeId: 'another-provider' },
+    )
+    const view = await received
+    expect(view.getThought(incoming)?.value).toBe('incoming')
+    expect(view.getThought(own.id)?.value).toBe('pending local edit')
+
+    release()
+    await pending.persisted
+    await runtime.waitForIdle()
+    expect(scans).toHaveBeenCalledTimes(1)
+    expect(onChange).toHaveBeenCalledTimes(1)
+    expect(decodeThoughtPayload((await persistent.tree.getPayload(own.id))!).value).toBe('pending local edit')
+  } finally {
+    release()
+    await runtime.drop()
+  }
+})
+
+it.each(['foreign', 'mixed', 'mixed changes', 'missing', 'empty'] as const)(
+  'synchronizes a materialization event with %s write provenance',
+  async provenance => {
+    const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+    const foreign = await createMemoryClient()
+    const subscribe = persistent.onMaterialized.bind(persistent)
+    let incoming = false
+    let ownWriteId: string | undefined
+    // The dependency may coalesce changes with multiple owners or omit provenance during recovery.
+    vi.spyOn(persistent, 'onMaterialized').mockImplementation(listener =>
+      subscribe(event =>
+        listener(
+          incoming
+            ? {
+                ...event,
+                changes: event.changes.map((change, index) => ({
+                  ...change,
+                  source: {
+                    ...change.source,
+                    writeIds:
+                      provenance === 'foreign'
+                        ? ['another-provider']
+                        : provenance === 'mixed'
+                          ? [ownWriteId!, 'another-provider']
+                          : provenance === 'mixed changes'
+                            ? [index === 0 ? ownWriteId! : 'another-provider']
+                            : provenance === 'empty'
+                              ? []
+                              : undefined,
+                  },
+                })),
+              }
+            : event,
+        ),
+      ),
+    )
+    const runtime = createMemoryThoughtspace(async () => persistent)
+    const own: Thought = {
+      id: '3'.repeat(32) as ThoughtId,
+      parentId: HOME_TOKEN,
+      value: 'local',
+      created: 1 as Timestamp,
+      lastUpdated: 1 as Timestamp,
+      updatedBy: 'local',
+    }
+    const remote = '4'.repeat(32) as ThoughtId
+    const remoteSibling = '5'.repeat(32) as ThoughtId
+    try {
+      await runtime.init({ storage: 'memory' })
+      const append = persistent.ops.appendMany.bind(persistent.ops)
+      vi.spyOn(persistent.ops, 'appendMany').mockImplementationOnce((ops, options) => {
+        ownWriteId = options?.writeId
+        return append(ops, options)
+      })
+      await runtime.transact(transaction =>
+        transaction.update({ thoughtIndexUpdates: { [own.id]: own }, movePlacements: { [own.id]: null } }),
+      ).persisted
+      await runtime.waitForIdle()
+      expect(ownWriteId).toEqual(expect.any(String))
+      foreign.appendOperations(await persistent.ops.all())
+      const { operations } = foreign.transact(transaction => {
+        transaction.local.insert(
+          HOME_TOKEN,
+          remote,
+          own.id,
+          encodeThoughtPayload({ value: 'remote', created: 1, lastUpdated: 1, updatedBy: 'remote' }),
+        )
+        transaction.local.insert(
+          HOME_TOKEN,
+          remoteSibling,
+          remote,
+          encodeThoughtPayload({ value: 'remote sibling', created: 1, lastUpdated: 1, updatedBy: 'remote' }),
+        )
+      })
+      incoming = true
+      await persistent.ops.appendMany(operations)
+      await runtime.waitForIdle()
+      expect(runtime.project().getThought(remote)?.value).toBe('remote')
+      expect(runtime.project().getThought(remoteSibling)?.value).toBe('remote sibling')
+      expect(runtime.project().getThought(own.id)?.value).toBe('local')
+    } finally {
+      foreign.close()
+      await runtime.drop()
+    }
+  },
+)
+
 it('publishes incoming edits and order, and keeps a newer memory edit while an older write is awaiting storage', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
   const runtime = createMemoryThoughtspace(async () => persistent)

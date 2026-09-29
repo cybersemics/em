@@ -68,7 +68,7 @@ The transaction applies parents and placement anchors before their dependents, t
 
 ### Persistence and incoming changes
 
-Promise tails serialize durable appends and loopback notifications. `persistent.onMaterialized` notifies the storage peer's full-document subscription. The memory adapter deduplicates operations by their replica/counter identity, applies new operations in a batch, and publishes a new immutable projection only when state changes. Storage confirmations do not overwrite newer memory edits.
+Promise tails serialize durable appends and loopback notifications. `persistent.onMaterialized` notifies the storage peer's full-document subscription, except when every change is tagged as this memory provider's own write. Foreign, mixed, or unidentified changes still synchronize. The memory adapter deduplicates operations by their replica/counter identity, applies new operations in a batch, and publishes a new immutable projection only when state changes. Storage confirmations do not overwrite newer memory edits.
 
 Initialization and incoming snapshots use the non-undoable `replaceThoughts` action to publish the captured document view and repair cursor topology. Ordinary commands continue through the synchronous commit boundary.
 
@@ -95,7 +95,7 @@ The full document and its operation history must fit in memory, and startup wait
 command → memory transaction (update → canonical read → next step)
           ├→ completed snapshot → undo history + one Redux publication
           └→ asynchronous SQLite append of the same operations
-             → loopback notification → persistence callback
+             → persistence callback
 ```
 
 ## Reading and exporting
