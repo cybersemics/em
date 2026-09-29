@@ -11,6 +11,7 @@ import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
+import addAllMulticursor from '../addAllMulticursor'
 import categorize from '../categorize'
 import importText from '../importText'
 import newSubthought from '../newSubthought'
@@ -21,6 +22,27 @@ beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
+  it('categorize later siblings after merging duplicates', () => {
+    const stateNew = reducerFlow([
+      importText({
+        text: `
+          - =note
+            - A
+            - A
+            - B`,
+      }),
+      setCursor(['=note', 'A']),
+      addAllMulticursor,
+      categorize({ value: 'group' }),
+    ])(initialState())
+
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - =note
+    - group
+      - A
+      - B`)
+  })
+
   it('categorize a thought', () => {
     const steps = [newThought('a'), newSubthought('b'), categorize]
 

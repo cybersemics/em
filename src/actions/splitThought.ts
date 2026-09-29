@@ -74,12 +74,18 @@ const splitThought = (
       const children = getChildrenRanked(state, head(pathLeft)).filter(child => !isAttribute(child.value))
 
       return reducerFlow(
-        children.map((child, i) =>
-          moveThought({
-            oldPath: appendToPath(pathLeft, child.id),
-            newPath: appendToPath(pathRight, child.id),
-            afterId: children[i - 1]?.id ?? null,
-          }),
+        children.map(
+          child => (state: State) =>
+            moveThought(
+              state,
+              {
+                oldPath: appendToPath(pathLeft, child.id),
+                newPath: appendToPath(pathRight, child.id),
+                // A preceding move may have merged away the original sibling.
+                afterId: state.thoughts.getChildren(childNew.id).at(-1) ?? null,
+              },
+              transaction,
+            ),
         ),
       )(state, transaction)
     },

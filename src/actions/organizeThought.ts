@@ -364,6 +364,8 @@ const organizeThought =
         true,
       ),
     )
+    // Other AI commands share these overlays but not the Organize Thoughts request registry.
+    const pendingThoughtUi = getState().thoughtUi
 
     try {
       if (!import.meta.env.VITE_AI_URL) {
@@ -407,6 +409,7 @@ const organizeThought =
           !thought ||
           thought.value !== originalValue ||
           !thought.generating ||
+          currentState.thoughtUi[thoughtId] !== pendingThoughtUi[thoughtId] ||
           pendingOrganizations.get(thoughtId) !== requestId
         )
       })
@@ -439,7 +442,11 @@ const organizeThought =
       thoughtIdsToClear.forEach(thoughtId => pendingOrganizations.delete(thoughtId))
       dispatch(
         setGenerating(
-          thoughtIdsToClear.filter(thoughtId => getThoughtById(currentState, thoughtId)?.generating),
+          thoughtIdsToClear.filter(
+            thoughtId =>
+              currentState.thoughtUi[thoughtId] === pendingThoughtUi[thoughtId] &&
+              getThoughtById(currentState, thoughtId)?.generating,
+          ),
           false,
         ),
       )

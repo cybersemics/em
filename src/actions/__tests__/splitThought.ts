@@ -138,6 +138,28 @@ it('move children to the correct sibling in a sorted context', () => {
       - C`)
 })
 
+it('move later children after merging duplicate siblings when splitting', () => {
+  const stateNew = reducerFlow([
+    importText({
+      text: `
+        - =note
+          - hello world
+            - A
+            - A
+            - B`,
+    }),
+    setCursor(['=note', 'hello world']),
+    splitThought({ splitResult: { left: 'hello', right: 'world' } }),
+  ])(initialState())
+
+  expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - =note
+    - hello
+    - world
+      - A
+      - B`)
+})
+
 // https://github.com/cybersemics/em/issues/4582
 it('note remains on the original thought when split', () => {
   const steps = [

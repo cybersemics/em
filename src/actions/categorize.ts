@@ -136,12 +136,18 @@ const categorize = (
       afterId,
       id: newThoughtId,
     }),
-    ...pathsToMove.map((path, index) =>
-      moveThought({
-        oldPath: path,
-        newPath: appendToPath(destinationPath, head(path)),
-        afterId: index === 0 ? null : head(pathsToMove[index - 1]),
-      }),
+    ...pathsToMove.map(
+      path => (state: State) =>
+        moveThought(
+          state,
+          {
+            oldPath: path,
+            newPath: appendToPath(destinationPath, head(path)),
+            // A preceding move may have merged away the original sibling.
+            afterId: state.thoughts.getChildren(newThoughtId).at(-1) ?? null,
+          },
+          transaction,
+        ),
     ),
     setCursor({
       path: appendToPath(cursorParent, newThoughtId),
