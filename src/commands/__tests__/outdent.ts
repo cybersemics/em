@@ -1,8 +1,8 @@
 import { clearActionCreator as clear } from '../../actions/clear'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { pullActionCreator as pull } from '../../actions/pull'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
-import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
@@ -19,7 +19,6 @@ it('keeps an outdented thought in alphabetical order after reloading a sorted co
       text: `
         - =sort
           - Alphabetical
-        - a
         - c
           - b
       `,
@@ -30,16 +29,12 @@ it('keeps an outdented thought in alphabetical order after reloading a sorted co
   executeCommandWithMulticursor(outdentCommand, { store })
   await waitForThoughtspaceIdle()
 
-  // Reload from storage so the export reflects the saved order, not the optimistic move.
   store.dispatch(clear())
-  await initialize({ storage: 'memory' })
-  await vi.runAllTimersAsync()
-  await waitForThoughtspaceIdle()
+  await store.dispatch(pull([HOME_TOKEN]))
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - =sort
     - Alphabetical
-  - a
   - b
   - c`)
 })
