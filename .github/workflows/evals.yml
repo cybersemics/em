@@ -101,7 +101,8 @@ jobs:
           done < <(grep -oE '^packages/ai/src/(prompts|evals)/[^/]+\.ts$' <<< "$changed" \
             | sed -E 's#^packages/ai/src/(prompts|evals)/#packages/ai/src/evals/#' \
             | sort -u)
-          echo "files=${files# }" >> "$GITHUB_OUTPUT"
+          files="${files# }"
+          echo "files=$files" >> "$GITHUB_OUTPUT"
           echo "Selected: ${files:-nothing}"
 
       - name: Enable Corepack
