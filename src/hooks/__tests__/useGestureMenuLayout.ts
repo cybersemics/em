@@ -10,6 +10,7 @@ import useGestureMenuLayout, {
   COLUMN_GAP_REM,
   ESTIMATED_HEADER_HEIGHT_REM,
   ESTIMATED_SELECTED_ITEM_EXTRA_HEIGHT_REM,
+  GESTURE_MENU_FOG_ROW_COUNT,
   MIN_COLUMN_WIDTH_REM,
   MULTI_COLUMN_BLOCK_PADDING_REM,
   MULTI_COLUMN_INLINE_PADDING_REM,
@@ -17,6 +18,7 @@ import useGestureMenuLayout, {
   SINGLE_COLUMN_BLOCK_PADDING_REM,
   SINGLE_COLUMN_INLINE_PADDING_REM,
   TABLET_AVAILABLE_HEIGHT_RATIO,
+  fogDepthAt,
 } from '../useGestureMenuLayout'
 
 /**
@@ -319,9 +321,9 @@ describe('useGestureMenuLayout', () => {
     expect(visibleCommandCount).toBe(0)
   })
 
-  // --- Single-column cap and fog -------------------------------------------------------------------
-  // The single column caps at the same `rowsPerColumn` the grid uses; the component fogs the trailing
-  // rows rather than scrolling, so `visibleCommandCount < commandCount` is what drives the fog.
+  // --- Single-column cap: the grid trims commands the viewport can't hold -------------------------
+  // The single column caps at the same `rowsPerColumn` the grid uses, so
+  // `visibleCommandCount < commandCount` is what signals an overflowing list.
 
   it('caps single-column visible commands on a short portrait viewport', () => {
     // Narrow portrait → single column. A short viewport with many commands must hide some.
@@ -334,11 +336,30 @@ describe('useGestureMenuLayout', () => {
   })
 
   it('shows all single-column commands without overflow when they fit', () => {
-    // Tall portrait viewport, few commands → everything fits, no fog.
+    // Tall portrait viewport, few commands → everything fits, no overflow.
     setViewport(390, TALL)
     const { columnCount, visibleCommandCount } = layout(4)
     expect(columnCount).toBe(1)
     expect(visibleCommandCount).toBe(4)
+  })
+
+  // --- Gesture Menu fog: the trailing rows fade instead of scrolling -------------------------------
+  // GestureMenu calls fogDepthAt(distanceFromEnd) to fade the last GESTURE_MENU_FOG_ROW_COUNT visible
+  // rows, signalling that the list was trimmed rather than exhausted.
+
+  it('fogs the last visible row at the deepest depth', () => {
+    expect(fogDepthAt(0)).toBe(GESTURE_MENU_FOG_ROW_COUNT)
+  })
+
+  it('fades the depth by one for each row further from the end', () => {
+    for (let distanceFromEnd = 0; distanceFromEnd <= GESTURE_MENU_FOG_ROW_COUNT; distanceFromEnd++) {
+      expect(fogDepthAt(distanceFromEnd)).toBe(GESTURE_MENU_FOG_ROW_COUNT - distanceFromEnd)
+    }
+  })
+
+  it('never fogs a row further than GESTURE_MENU_FOG_ROW_COUNT from the end', () => {
+    expect(fogDepthAt(GESTURE_MENU_FOG_ROW_COUNT + 1)).toBe(0)
+    expect(fogDepthAt(100)).toBe(0)
   })
 
   it('scales the column count with the runtime font size', () => {

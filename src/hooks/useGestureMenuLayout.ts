@@ -114,7 +114,7 @@ export type GestureMenuFogDepth = 0 | 1 | 2 | 3 | 4
 
 const FOG_DEPTHS = [0, 1, 2, 3, 4] as const satisfies readonly GestureMenuFogDepth[]
 
-/** Number of trailing single-column rows that fade into the fog when the list overflows (issue #3801 §4). */
+/** Number of trailing single-column rows that fade into the fog when the list overflows. */
 export const GESTURE_MENU_FOG_ROW_COUNT = FOG_DEPTHS.length - 1
 
 /** The fog depth of a row, given how many rows separate it from the last visible one. Rows further than GESTURE_MENU_FOG_ROW_COUNT from the end are not fogged. */
