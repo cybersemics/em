@@ -60,28 +60,19 @@ const deviceCapability = ({
 
 // Most specs run on iOS 17, which the suite's screen coordinates are calibrated for, and the one spec
 // that needs a newer WebKit runs on iOS 26. Both devices are 430x932, so only the OS varies.
-// IOS_DEVICE_NAME or IOS_PLATFORM_VERSION runs every spec on one device instead.
-const capabilities =
-  process.env.IOS_DEVICE_NAME || process.env.IOS_PLATFORM_VERSION
-    ? [
-        deviceCapability({
-          deviceName: process.env.IOS_DEVICE_NAME || 'iPhone 15 Plus',
-          osVersion: process.env.IOS_PLATFORM_VERSION || '17',
-        }),
-      ]
-    : [
-        // The suite's default device. Its coordinates are the reason the OS is not simply moved forward:
-        // taps and gestures are performed in screen coordinates derived from page coordinates by a fixed
-        // Safari chrome offset (toolbarTapOptions), and on iOS 26 four caret tests fail because taps and
-        // gestures aimed at the lower half of the page no longer land where that arithmetic says. Moving
-        // the whole suite forward means deriving those coordinates from the webview rect first.
-        deviceCapability({ deviceName: 'iPhone 15 Plus', osVersion: '17', exclude: [modernWebKitSpec] }),
-        // A WebKit recent enough to exhibit the bug the spec assigned here covers. A device suite pinned to
-        // an OS that predates the bug under test reports green while users hit it: the Popover margin
-        // relayout in #4263 grows the toolbar by 11.6px on iOS 26 and does not reproduce at all on 17, so
-        // its regression test passed on the base branch and TDD correctly flagged it as covering nothing.
-        deviceCapability({ deviceName: 'iPhone 15 Pro Max', osVersion: '26', specs: [modernWebKitSpec] }),
-      ]
+const capabilities = [
+  // The suite's default device. Its coordinates are the reason the OS is not simply moved forward:
+  // taps and gestures are performed in screen coordinates derived from page coordinates by a fixed
+  // Safari chrome offset (toolbarTapOptions), and on iOS 26 four caret tests fail because taps and
+  // gestures aimed at the lower half of the page no longer land where that arithmetic says. Moving
+  // the whole suite forward means deriving those coordinates from the webview rect first.
+  deviceCapability({ deviceName: 'iPhone 15 Plus', osVersion: '17', exclude: [modernWebKitSpec] }),
+  // A WebKit recent enough to exhibit the bug the spec assigned here covers. A device suite pinned to
+  // an OS that predates the bug under test reports green while users hit it: the Popover margin
+  // relayout in #4263 grows the toolbar by 11.6px on iOS 26 and does not reproduce at all on 17, so
+  // its regression test passed on the base branch and TDD correctly flagged it as covering nothing.
+  deviceCapability({ deviceName: 'iPhone 15 Pro Max', osVersion: '26', specs: [modernWebKitSpec] }),
+]
 
 /**
  * WDIO configuration for BrowserStack iOS testing.

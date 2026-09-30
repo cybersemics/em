@@ -506,12 +506,6 @@ A device suite pinned to an OS that predates the bug under test reports green wh
 
 The rest of the suite stays on iOS 17 because its coordinates are calibrated there: taps and gestures are performed in screen coordinates derived from page coordinates by a fixed Safari chrome offset (`toolbarTapOptions` in [`tapToolbar`](../src/e2e/iOS/helpers/tapToolbar.ts), and the start point in [`gesture`](../src/e2e/iOS/helpers/gesture.ts)), and on iOS 26 four `caret.ts` tests fail because taps and gestures aimed at the lower half of the page no longer land where that arithmetic says. Moving the whole suite forward means deriving those coordinates from the webview rect rather than hardcoding the offset. Either way a device change is validated by a full [`ios.yml`](../.github/workflows/ios.yml) run rather than by the changed spec alone, and holds the screen geometry so that only the OS varies. The local Simulator config is pinned separately and is not a substitute: a simulator does not reproduce every device behavior (see [Cursor and Caret](cursor-and-caret.md)).
 
-Setting `IOS_DEVICE_NAME` or `IOS_PLATFORM_VERSION` replaces both pins with a single device for every spec, for a local run on a specific iOS release:
-
-```sh
-IOS_DEVICE_NAME='iPhone 15' IOS_PLATFORM_VERSION='27' yarn test:ios:browserstack --spec src/e2e/iOS/__tests__/caret.ts
-```
-
 #### Android
 
 [`src/e2e/android`](../src/e2e/android) runs Chrome on a real Android device through BrowserStack Automate, the same product, tunnel pool, slot wait, and launcher hooks as the iOS suite. Its [config](../src/e2e/android/config/wdio.browserstack.conf.ts) spreads the iOS base config and launcher hooks and changes only the specs, the worker count, and the device: a Google Pixel 8 on Android 14, chosen for stock Chrome and GBoard with no OEM keyboard between the test and the VirtualKeyboard API the app relies on. It runs one worker (`maxInstances: 1`), so an Android run takes one of the account's parallels rather than two.
