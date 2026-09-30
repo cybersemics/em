@@ -411,8 +411,7 @@ describe('undo', () => {
   })
 
   // The Letter Case picker edits every selected thought without going through its toolbar command, so
-  // formatLetterCase brackets the edits with setIsMulticursorExecuting itself and names the undo step with a camel
-  // case undoLabel. The alert has to render its display form.
+  // formatLetterCase names the undo step itself with a camel case undoLabel. The alert has to render its display form.
   it('name a multicursor letter case change in the undo alert', () => {
     store.dispatch([
       importText({

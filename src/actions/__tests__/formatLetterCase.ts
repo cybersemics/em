@@ -79,3 +79,20 @@ it('preserves note focus after applying letter case to the note', async () => {
 
   expect(store.getState().noteFocus).toBe(true)
 })
+
+it('applies letter case to only the given range of the cursor thought', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - hello world
+      `,
+    }),
+    setCursorFirstMatch(['hello world']),
+  ])
+
+  await dispatch({ type: 'formatLetterCase', command: 'UpperCase', range: { start: 6, end: 11 } })
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - hello WORLD`)
+})
