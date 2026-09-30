@@ -8,7 +8,6 @@ import selectedPaths from '../selectors/selectedPaths'
 import themeColors from '../selectors/themeColors'
 import getCommandState from '../util/getCommandState'
 import rgbToHex from '../util/rgbToHex'
-import store from './app'
 import reactMinistore from './react-ministore'
 
 /** A store that tracks the document's command state (e.g. bold, italic, underline, strikethrough). */
@@ -75,9 +74,8 @@ const intersectCommandState = (commandStates: CommandState[]): CommandState =>
     backColor: a.backColor === b.backColor ? a.backColor : undefined,
   }))
 
-/** Updates the command state to the current selection/thought. If the cursor thought is empty and is holding formatting, this reports the formatting it holds. If there is an active selection, this uses document.queryCommandState to get the command state from the DOM. This detects a formatting style that has been enabled, but not yet entered (i.e. the next character typed will be bold). If there is no selection, this parses the value of each selected thought and sets a formatting state only if it applies to all of them in their entirety. */
-export const updateCommandState = () => {
-  const state = store.getState()
+/** Updates the command state to the current selection/thought. If the cursor thought is empty and is holding formatting, this reports the formatting it holds. If there is an active selection, this uses document.queryCommandState to get the command state from the DOM. This detects a formatting style that has been enabled, but not yet entered (i.e. the next character typed will be bold). If there is no selection, this parses the value of each selected thought and sets a formatting state only if it applies to all of them in their entirety. Takes the state rather than reading the app store, so that the formatSelection reducer module, which the app store imports, can call it without an import cycle. */
+export const updateCommandState = (state: State) => {
   // Formatting applied to an empty thought is held on the thought until it is typed into, so the toolbar and the
   // bullet report it from there rather than from the (necessarily empty) value (#3910). Under noteFocus the formatting
   // belongs to the note's own thought, not the cursor thought. The caret is on the cursor thought, so its held

@@ -209,7 +209,7 @@ const initEvents = (store: Store<State, any>) => {
     saveSelectionOffset()
 
     // update command state store
-    updateCommandState()
+    updateCommandState(store.getState())
 
     updateCaretRect()
   }
