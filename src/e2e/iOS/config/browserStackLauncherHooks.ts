@@ -1,7 +1,12 @@
 import { type ChildProcess } from 'child_process'
 import http, { type IncomingMessage } from 'http'
 import https from 'https'
-import { findFirstAvailableTunnel, parseTunnelPool } from './cloudflareTunnelPool'
+import {
+  CloudflareEdgeUnreachableError,
+  EDGE_UNREACHABLE_EXIT_CODE,
+  findFirstAvailableTunnel,
+  parseTunnelPool,
+} from './cloudflareTunnelPool'
 import waitForBrowserStackSlots from './waitForBrowserStackSlots'
 import baseConfig from './wdio.base.conf.js'
 
@@ -147,9 +152,11 @@ const browserStackLauncherHooks = {
       // "em.testHelpers is undefined", editable timeouts), each retried, burning a full ~20 min
       // BrowserStack build. All of it traces back to here, but the real cause ends up buried at
       // the top of a thousand lines of consequences. Exiting makes it the last thing printed.
+      // An unreachable Cloudflare edge gets its own exit code, so the workflow can retry exactly that
+      // case on a fresh runner — see EDGE_UNREACHABLE_EXIT_CODE.
       if (tunnelProcess) tunnelProcess.kill()
       console.error(`\nBrowserStack test setup failed: ${err instanceof Error ? err.message : String(err)}\n`)
-      process.exit(1)
+      process.exit(err instanceof CloudflareEdgeUnreachableError ? EDGE_UNREACHABLE_EXIT_CODE : 1)
     }
   },
 

@@ -335,9 +335,21 @@ jobs:
         if: env.BROWSERSTACK_USERNAME == '' || env.BROWSERSTACK_ACCESS_KEY == ''
         run: echo "Skipping BrowserStack because credentials are not configured."
 
+      # The launcher exits with EDGE_UNREACHABLE_EXIT_CODE (75, see cloudflareTunnelPool.ts) when this
+      # runner cannot reach the Cloudflare edge at all, a failure of the runner's network rather than
+      # of the code under test. The exit status is recorded as a step output so the step below can
+      # mark exactly that case for browserstack-retry.yml; every other status passes through as is.
       - name: Test iOS on BrowserStack
+        id: test
         if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
-        run: yarn test:ios
+        run: |
+          set +e
+          yarn test:ios
+          STATUS=$?
+          if [ "$STATUS" -eq 75 ]; then
+            echo "edge_unreachable=true" >> "$GITHUB_OUTPUT"
+          fi
+          exit "$STATUS"
         env:
           BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
           BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
@@ -350,6 +362,13 @@ jobs:
           # busy — so a dead or already-claimed tunnel doesn't block the run.
           CLOUDFLARE_TUNNEL_POOL: ${{secrets.CLOUDFLARE_TUNNEL_POOL}}
 
+      # browserstack-retry.yml re-runs a failed run on a fresh runner only when this step ran and
+      # succeeded, which it does only for the unreachable-edge failure above. It matches this step by
+      # its exact name, so keep the two in sync.
+      - name: Flag unreachable Cloudflare edge for retry
+        if: failure() && steps.test.outputs.edge_unreachable == 'true'
+        run: echo "::error::This runner could not reach the Cloudflare edge. A first attempt is re-run once on a fresh runner by browserstack-retry.yml."
+
       # Best-effort cleanup on the ephemeral runner: stop the manually-started app and preserve
       # the named connector's log for diagnosis. The connector process itself is killed by the
       # wdio config's onComplete hook.
@@ -360,8 +379,10 @@ jobs:
             kill "$APP_PID" 2>/dev/null || true
           fi
 
+      # Also on cancel: a run stuck waiting for a tunnel is usually cancelled by hand, and that is
+      # exactly the run whose connector log is needed to tell why.
       - name: Upload cloudflared connector log
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: cloudflared-browserstack-log

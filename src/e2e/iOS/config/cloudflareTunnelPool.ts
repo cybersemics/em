@@ -30,6 +30,50 @@ const TUNNEL_STATUS_PATH = '/__tunnel-status'
 // more than one of those, so a ceiling near 20 min would expire just as a slot came free.
 const POOL_WAIT_TIMEOUT_MS = 45 * 60 * 1000
 const POOL_RESCAN_INTERVAL_MS = 10000
+// How long the pool may go without a single sign of contention before the run stops waiting and
+// fails as a network problem instead. The 45-min wait above is only worth sitting through when
+// something is actually holding the tunnels: a busy pre-check, or another run's server answering
+// our probes. A runner whose own connection to Cloudflare is failing produces none of that — every
+// pre-check times out, and every claim gets at most a stray answer from our own server before it
+// goes silent again — so it would otherwise spend the full 45 min rescanning a pool that was never
+// busy (run 36739868119 did exactly this until it was cancelled by hand). One pass over a silent
+// pool of five takes ~3 min (a 5s pre-check timeout plus a 30s claim per tunnel), so this allows
+// about two full passes before concluding the edge is unreachable. Any contention seen restarts
+// the window, so a genuinely busy pool still gets the long wait.
+const EDGE_SILENCE_TIMEOUT_MS = 5 * 60 * 1000
+
+/**
+ * Exit code for a run that failed because the runner cannot reach the Cloudflare edge, as opposed
+ * to any other setup or test failure. The value is EX_TEMPFAIL from sysexits.h, a temporary
+ * failure worth retrying. The workflows ios.yml and android.yml translate it into a step marker that
+ * browserstack-retry.yml looks for, so that exactly this failure — and never a real test failure —
+ * earns a re-run on a fresh runner.
+ */
+export const EDGE_UNREACHABLE_EXIT_CODE = 75
+
+/** Thrown when a pool scan saw no contention at all, only silence, for EDGE_SILENCE_TIMEOUT_MS. */
+export class CloudflareEdgeUnreachableError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'CloudflareEdgeUnreachableError'
+  }
+}
+
+/**
+ * Why a claim failed. `contended` means something else answered on the hostname — another run's
+ * server rejecting our token, or a status only another connector could produce — which is evidence
+ * the pool is busy. `silent` means nothing did: requests timed out or failed to connect, or the
+ * edge reported no connector at all (530), which cannot be anyone else's.
+ */
+class TunnelClaimError extends Error {
+  constructor(
+    message: string,
+    readonly kind: 'contended' | 'silent',
+  ) {
+    super(message)
+    this.name = 'TunnelClaimError'
+  }
+}
 
 /** Parses the CLOUDFLARE_TUNNEL_POOL env var: a JSON array of `{ name, hostname, token }`. */
 export function parseTunnelPool(json: string): TunnelCandidate[] {
@@ -92,14 +136,25 @@ async function requestOnce(url: string): Promise<{ statusCode: number; body: str
   })
 }
 
-/** Sends one app-gate-token request and reports whether it got a genuine 200. */
-async function probeOnce(checkUrl: string): Promise<boolean> {
+/**
+ * Sends one app-gate-token request and returns its status code, or null if nothing answered.
+ * The caller has to tell those apart: a status other than 200 means some server answered and was
+ * not ours, while null means the request never got an answer at all.
+ */
+async function probeOnce(checkUrl: string): Promise<number | null> {
   const res = await requestOnce(checkUrl)
-  return res?.statusCode === 200
+  return res ? res.statusCode : null
 }
 
-/** What a pre-attach probe found on a hostname. `unknown` means the edge answered in a way we can't classify. */
-type Occupancy = { state: 'free' } | { state: 'taken'; reason: string } | { state: 'unknown'; reason: string }
+/**
+ * What a pre-attach probe found on a hostname. `unreachable` means nothing answered at all;
+ * `unknown` means the edge answered in a way we can't classify.
+ */
+type Occupancy =
+  | { state: 'free' }
+  | { state: 'taken'; reason: string }
+  | { state: 'unreachable'; reason: string }
+  | { state: 'unknown'; reason: string }
 
 /**
  * Asks whether a tunnel is already in use — WITHOUT attaching our own connector first.
@@ -115,7 +170,7 @@ type Occupancy = { state: 'free' } | { state: 'taken'; reason: string } | { stat
  */
 async function checkOccupancy(hostname: string): Promise<Occupancy> {
   const res = await requestOnce(`https://${hostname}${TUNNEL_STATUS_PATH}`)
-  if (!res) return { state: 'unknown', reason: 'no response from the Cloudflare edge' }
+  if (!res) return { state: 'unreachable', reason: 'no response from the Cloudflare edge' }
   // 530/1033: the tunnel exists but has no connector attached.
   if (res.statusCode === 530) return { state: 'free' }
   if (res.statusCode === 200) {
@@ -147,9 +202,15 @@ async function checkOccupancy(hostname: string): Promise<Occupancy> {
  * exclusively ours: the very next request could land on a different run's connector instead.
  * Confirmed empirically — two real concurrent runs both got an initial 200 on the same tunnel,
  * then had real cross-talk for the rest of their sessions. So after the first success we require
- * VERIFY_BURST_COUNT more consecutive successes before trusting the claim; any failure among
- * them means another connector is live here too, and we give up on this candidate entirely
- * (not retry it — we already have proof it's shared).
+ * VERIFY_BURST_COUNT more consecutive successes before trusting the claim, and give up on this
+ * candidate entirely at the first failure among them (not retry it).
+ *
+ * What a failure proves depends on what came back, so the error says which it was. Another status
+ * — a foreign server's 403, most often — means another connector is live here too. No answer at all
+ * proves nothing about other connectors: a request that times out or fails to connect never reached
+ * one, and a 530 means the edge has no connector for this tunnel, ours included. Those are the
+ * runner's connection to Cloudflare failing, and are thrown as `silent` so the pool scan can tell a
+ * busy pool from an unreachable one.
  */
 async function claim(
   candidate: TunnelCandidate,
@@ -196,27 +257,61 @@ async function claim(
 
   const checkUrl = `https://${candidate.hostname}/?__token=${appGateToken}`
   const start = Date.now()
+  // A status other than 200 or 530 before our first success — typically a different run's 403 —
+  // is the only thing that makes a timed-out claim evidence of contention rather than of silence.
+  let foreignStatus: number | null = null
   try {
     while (Date.now() - start < CLAIM_TIMEOUT_MS) {
       if (exited) {
-        throw new Error(`connector for ${candidate.name} exited before claim`)
+        throw new TunnelClaimError(`connector for ${candidate.name} exited before claim`, 'silent')
       }
-      if (await probeOnce(checkUrl)) {
+      const status = await probeOnce(checkUrl)
+      if (status === 200) {
         for (let i = 0; i < VERIFY_BURST_COUNT; i++) {
           await new Promise(resolve => setTimeout(resolve, VERIFY_INTERVAL_MS))
-          if (!(await probeOnce(checkUrl))) {
-            throw new Error(
-              `${candidate.name} answered once but failed verification ${i + 1}/${VERIFY_BURST_COUNT} — ` +
-                `another connector is live on this hostname too (Cloudflare is load-balancing between them)`,
+          const verifyStatus = await probeOnce(checkUrl)
+          if (verifyStatus === 200) continue
+          const attempt = `${i + 1}/${VERIFY_BURST_COUNT}`
+          if (verifyStatus === null) {
+            throw new TunnelClaimError(
+              `${candidate.name} answered once but then stopped responding at verification ${attempt} — ` +
+                `the request got no response from the Cloudflare edge, which points at this runner's network ` +
+                `connection rather than another connector`,
+              'silent',
             )
           }
+          if (verifyStatus === 530) {
+            throw new TunnelClaimError(
+              `${candidate.name} answered once but the edge reported no connector at verification ${attempt} (530) — ` +
+                `this run's own connector dropped off Cloudflare's edge`,
+              'silent',
+            )
+          }
+          throw new TunnelClaimError(
+            `${candidate.name} answered once but failed verification ${attempt} with status ${verifyStatus} — ` +
+              `another connector is live on this hostname too (Cloudflare is load-balancing between them)`,
+            'contended',
+          )
         }
         return { url: `https://${candidate.hostname}/`, process: proc }
       }
-      // Any other status (a different run's 403, a 404, etc.) means occupied or not ready yet.
+      // Any other status (a different run's 403, a 404, etc.) means occupied or not ready yet. A 530
+      // is the edge not having registered our connector yet, which says nothing about anyone else.
+      if (status !== null && status !== 530) foreignStatus = status
       await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS))
     }
-    throw new Error(`timed out waiting for ${candidate.hostname} to answer with this run's app-gate token`)
+    if (foreignStatus !== null) {
+      throw new TunnelClaimError(
+        `timed out waiting for ${candidate.hostname} to answer with this run's app-gate token ` +
+          `(it answered ${foreignStatus}, so another run's server is live on it)`,
+        'contended',
+      )
+    }
+    throw new TunnelClaimError(
+      `timed out waiting for ${candidate.hostname} to answer with this run's app-gate token ` +
+        `(no server ever answered — the Cloudflare edge gave no response or reported no connector)`,
+      'silent',
+    )
   } catch (err) {
     if (!proc.killed) proc.kill()
     throw err
@@ -235,6 +330,12 @@ async function claim(
  * attach. The verification burst inside claim() is the backstop for that narrow race — the
  * pre-check does the routine work, the burst catches the straggler.
  *
+ * Waiting has two ceilings. A pool that shows contention — a busy pre-check, or a claim that met
+ * another run's server — gets up to POOL_WAIT_TIMEOUT_MS, since that is someone else's run holding
+ * a tunnel and it will let go. A pool that shows none for EDGE_SILENCE_TIMEOUT_MS is not busy: the
+ * runner cannot reach Cloudflare's edge, and waiting longer on the same runner will not change
+ * that, so it throws CloudflareEdgeUnreachableError for the workflow to retry on a fresh one.
+ *
  * Candidates are visited from a run-varying offset so simultaneous runs don't queue up in the same
  * order. Returns the winning candidate's public URL and its connector process; the caller is
  * responsible for killing that process on completion.
@@ -245,6 +346,9 @@ export async function findFirstAvailableTunnel(
 ): Promise<{ url: string; name: string; process: ChildProcess }> {
   const offset = startingOffset(pool.length)
   const deadline = Date.now() + POOL_WAIT_TIMEOUT_MS
+  // When the pool last showed any sign of contention. Starts at now, so a runner that is cut off
+  // from the very first request still gets the full silence window before giving up.
+  let lastContention = Date.now()
   let errors: string[] = []
   let waiting = false
 
@@ -260,15 +364,19 @@ export async function findFirstAvailableTunnel(
       if (occupancy.state === 'taken') {
         console.info(`cloudflared tunnel: ${candidate.name} busy (${occupancy.reason}), skipping`)
         errors.push(`${candidate.name}: ${occupancy.reason}`)
+        lastContention = Date.now()
         continue
       }
-      if (occupancy.state === 'unknown') {
+      if (occupancy.state === 'unreachable' || occupancy.state === 'unknown') {
         // Don't let an unclassifiable edge response deadlock the whole pool — attempt the claim and
         // let the verification burst be the judge.
         console.info(
           `cloudflared tunnel: ${candidate.name} pre-check inconclusive (${occupancy.reason}), trying anyway`,
         )
       }
+      // An unexpected status is still something answering on the hostname, most likely another
+      // run's connector in front of a server that has gone away, so it counts as contention.
+      if (occupancy.state === 'unknown') lastContention = Date.now()
 
       try {
         const { url, process: proc } = await claim(candidate, appGateToken)
@@ -278,14 +386,23 @@ export async function findFirstAvailableTunnel(
         const message = err instanceof Error ? err.message : String(err)
         console.info(`cloudflared tunnel: ${candidate.name} unavailable (${message}), trying next candidate...`)
         errors.push(`${candidate.name}: ${message}`)
+        if (!(err instanceof TunnelClaimError) || err.kind === 'contended') lastContention = Date.now()
       }
     }
 
+    if (Date.now() - lastContention >= EDGE_SILENCE_TIMEOUT_MS) {
+      throw new CloudflareEdgeUnreachableError(
+        `This runner cannot reach the Cloudflare edge: for ${Math.round(EDGE_SILENCE_TIMEOUT_MS / 60000)} min ` +
+          `no tunnel in the pool was busy and no other run answered on any of them — requests either got no ` +
+          `response at all or found no connector. That is this runner's network, not contention for the pool, ` +
+          `so waiting longer here will not help. Last pass:\n${errors.join('\n')}`,
+      )
+    }
     if (Date.now() >= deadline) break
 
     if (!waiting) {
       console.info(
-        `cloudflared tunnel: all ${pool.length} tunnels in the pool are busy — waiting up to ` +
+        `cloudflared tunnel: no tunnel in the pool of ${pool.length} could be claimed — waiting up to ` +
           `${Math.round(POOL_WAIT_TIMEOUT_MS / 60000)} min for one to free up...`,
       )
       waiting = true
