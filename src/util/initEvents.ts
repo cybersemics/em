@@ -341,20 +341,13 @@ const initEvents = (store: Store<State, any>) => {
       suppressCursorAfterTouch: false,
       touchStartTimeStamp: e.timeStamp,
       touchEnded: false,
-      nativeTapPending: false,
       touchEndUnreliable,
     })
   }
 
-  /** Tracks whether iOS is between the mousedown and the mouseup or click of a touch whose touchend has not arrived. When iOS withholds the touchend, these are the only sign that the finger has lifted (#5660). */
-  const onMouseBeforeTouchEnd = (e: MouseEvent) => {
-    if (touchStore.getState().touchEnded) return
-    touchStore.update({ nativeTapPending: e.type === 'mousedown' })
-  }
-
   /** Records when the touch ended, so that the next touchstart can tell whether its touchend was withheld (#5660). Registered in the capture phase so that a handler that stops propagation cannot hide it. */
   const onTouchEndCapture = (e: TouchEvent) => {
-    touchStore.update({ touchEndTimeStamp: e.timeStamp, touchEnded: true, nativeTapPending: false })
+    touchStore.update({ touchEndTimeStamp: e.timeStamp, touchEnded: true })
   }
 
   /**
@@ -517,9 +510,6 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('mousemove', onMouseMove)
   // Note: touchstart may not be propagated after dragHold
   window.addEventListener('touchstart', onTouchStart, { capture: true })
-  for (const type of ['mousedown', 'mouseup', 'click'] as const) {
-    window.addEventListener(type, onMouseBeforeTouchEnd, { capture: true, passive: true })
-  }
   window.addEventListener('touchend', onTouchEndCapture, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
@@ -580,9 +570,6 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('touchstart', onTouchStart, { capture: true })
-    for (const type of ['mousedown', 'mouseup', 'click'] as const) {
-      window.removeEventListener(type, onMouseBeforeTouchEnd, { capture: true })
-    }
     window.removeEventListener('touchend', onTouchEndCapture, { capture: true })
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)

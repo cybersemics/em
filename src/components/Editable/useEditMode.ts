@@ -15,21 +15,12 @@ import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
-import ministore from '../../stores/ministore'
 import multitouchStore from '../../stores/multitouchStore'
 import touchStore from '../../stores/touchStore'
-import webKit27Store from '../../stores/webKit27Store'
 import equalPath from '../../util/equalPath'
-import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
 import lastTouch from './lastTouch'
 import useCaretRestore from './useCaretRestore'
-
-/** Removes the mouseup listener waiting for the lift of the tap in progress on iOS 27 (#5660). Only one touch is in progress at a time, so the next touchstart replaces it. A ministore so that resetStores removes a leftover listener between tests. */
-const pendingTapStore = ministore<{ remove: (() => void) | null }>(
-  { remove: null },
-  { dispose: ({ remove }) => remove?.() },
-)
 
 /** Automatically sets the selection on the given contentRef element when the thought should be selected. Handles a variety of conditions that determine whether this should occur. */
 const useEditMode = ({
@@ -65,9 +56,6 @@ const useEditMode = ({
   const store = useStore()
   const dispatch = useDispatch()
   const pressingRef = useRef(false)
-  // On iOS 27, whether the touch in progress on this editable fits the profile of a retargeted rapid tap, evaluated at
-  // its touchstart, since its touchend can be withheld until after the retargeted mouse events (#5660).
-  const willRetargetRef = useRef(false)
 
   // focus on the ContentEditable element if editing or on desktop
   const editMode = !isTouch || editing
@@ -110,24 +98,6 @@ const useEditMode = ({
         }
       }
 
-      /** Places the caret after the pending native tap's mouseup, if iOS did not place it in this thought itself. */
-      const placeCaretIfNativeTapDoesNot = () => {
-        const { touchStartTimeStamp } = touchStore.getState()
-        /** Checks the caret once iOS has finished the tap. */
-        const onMouseUp = () =>
-          setTimeout(() => {
-            const state = store.getState()
-            if (
-              touchStore.getState().touchStartTimeStamp === touchStartTimeStamp &&
-              equalPath(state.cursor, path) &&
-              !selection.isOnEditable(head(path))
-            ) {
-              setSelectionToCursorOffset()
-            }
-          })
-        window.addEventListener('mouseup', onMouseUp, { capture: true, once: true })
-      }
-
       // allow transient editable to have focus on render
       const shouldSetSelection =
         transient ||
@@ -145,13 +115,6 @@ const useEditMode = ({
           !disabledRef.current)
 
       if (shouldSetSelection) {
-        // iOS 27: setting the selection between the mousedown and mouseup of a tap whose touchend is withheld overrides
-        // the caret iOS is placing with the start of the thought (#5660), so leave the caret to iOS.
-        if (webKit27Store.getState() && touchStore.getState().nativeTapPending) {
-          placeCaretIfNativeTapDoesNot()
-          return
-        }
-
         preventAutoscroll(contentRef.current)
 
         /*
@@ -238,12 +201,22 @@ const useEditMode = ({
       dispatch(setCursor({ path, offset, cursorHistoryClear, preserveMulticursor }))
     }
 
-    /** Moves the cursor to a tap on this thought whose synthesized mousedown/focus iOS retargeted to the
-     * previously-focused thought (onMouseDown suppresses that ghost), since onFocus cannot be relied on to move it (#4173). */
-    const moveCursorToTap = (clientX: number, clientY: number) => {
+    /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
+    const onTouchStart = () => (pressingRef.current = true)
+
+    /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
+    const onTouchEnd = (e: TouchEvent) => {
+      pressingRef.current = false
+      // Evaluate against the PREVIOUS touchend before overwriting it below.
+      const willRetarget = lastTouch.isRetargeted(editable)
+      lastTouch.record(editable)
+      // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
+      // retargets the synthesized mousedown/focus to the previously-focused thought (onMouseDown suppresses
+      // that ghost), so onFocus cannot be relied on to move the cursor. Set the cursor here.
       dispatch((dispatch, getState) => {
         const state = getState()
         const move =
+          willRetarget &&
           state.isKeyboardOpen &&
           !equalPath(state.cursor, path) &&
           !hasMulticursor(state) &&
@@ -258,7 +231,10 @@ const useEditMode = ({
 
         // Place the caret where the user tapped. getCaretOffset is coordinate-based, so it resolves the offset
         // even though the synthesized mousedown/focus retargeted away.
-        const { offset } = getCaretOffset(editable, { clientX, clientY })
+        const { offset } = getCaretOffset(editable, {
+          clientX: e.changedTouches[0].clientX,
+          clientY: e.changedTouches[0].clientY,
+        })
 
         // Dispatch only the Redux cursor; the declarative selection effect places the caret on the next render.
         // Calling selection.set() synchronously during touchend triggers iOS's text-selection machinery, which
@@ -273,54 +249,6 @@ const useEditMode = ({
           }),
         )
       })
-    }
-
-    /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. On iOS 27,
-     * also records the tap and waits for its lift (#5660). */
-    const onTouchStart = (e: TouchEvent) => {
-      pressingRef.current = true
-      if (!webKit27Store.getState()) return
-
-      // iOS 27 can withhold this tap's touchend until the next touch, after the retargeted mousedown has already
-      // arrived on the previously-focused thought, so the tap is recorded here for onMouseDown to drop that ghost.
-      willRetargetRef.current = lastTouch.isRetargeted(editable)
-      lastTouch.record(editable)
-
-      // The mouseup that iOS fires at the lift is retargeted too, so it only marks when the tap ended; the touch says
-      // where it landed.
-      const touch = e.changedTouches[0]
-      const touchStartTimeStamp = e.timeStamp
-      pendingTapStore.getState().remove?.()
-      /** Moves the cursor to the tap once it has lifted, unless its touchend has already done so. */
-      const onMouseUp = () => {
-        pendingTapStore.getState().remove?.()
-        const { touchEnded, touchStartTimeStamp: currentTouchStartTimeStamp } = touchStore.getState()
-        // a touch that began off any thought does not replace the listener, so make sure the mouseup is this tap's
-        if (touchEnded || currentTouchStartTimeStamp !== touchStartTimeStamp || !willRetargetRef.current || !touch)
-          return
-        willRetargetRef.current = false
-        moveCursorToTap(touch.clientX, touch.clientY)
-      }
-      window.addEventListener('mouseup', onMouseUp, { capture: true })
-      /** Stops waiting for this tap's lift. */
-      const remove = () => {
-        window.removeEventListener('mouseup', onMouseUp, { capture: true })
-        pendingTapStore.update({ remove: null })
-      }
-      pendingTapStore.update({ remove })
-    }
-
-    /** Ends the touch, records it for ghost-click detection, and sets the cursor on the tapped thought. */
-    const onTouchEnd = (e: TouchEvent) => {
-      pressingRef.current = false
-      // Evaluate against the PREVIOUS touch before overwriting it below.
-      const willRetarget = webKit27Store.getState() ? willRetargetRef.current : lastTouch.isRetargeted(editable)
-      willRetargetRef.current = false
-      pendingTapStore.getState().remove?.()
-      lastTouch.record(editable)
-      // #4173: touchend is the only event iOS reliably delivers to the tapped thought — on a rapid tap it
-      // retargets the synthesized mousedown/focus to the previously-focused thought, so set the cursor here.
-      if (willRetarget) moveCursorToTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY)
     }
 
     /**
