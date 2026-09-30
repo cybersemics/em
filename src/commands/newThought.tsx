@@ -69,6 +69,16 @@ const newThoughtCommand = {
   id: 'newThought',
   label: 'New Thought' as const,
   description: 'Create a shiny new thought.',
+  longDescription: (
+    <>
+      <p>Thoughts are the fractal starting point for everything you do in em.</p>
+      <p>
+        A thought can be an individual item in a list — like a film you want to watch — or a point that stands alone,
+        waiting to be explored.
+      </p>
+      <p>Whether a thought has one subthought or one thousand, it behaves identically.</p>
+    </>
+  ),
   // Support multiple keyboard shortcuts
   // on mobile, the shift key should cause a normal newThought, not newThoughtAbove
   keyboard: [{ key: 'Enter' }, ...(isTouch ? [{ key: 'Enter', shift: true }] : [])],

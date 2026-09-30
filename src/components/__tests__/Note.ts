@@ -555,7 +555,48 @@ describe('=children/=note', () => {
 })
 
 describe('=children/=note/=path', () => {
-  test('basic', async () => {
+  // https://github.com/cybersemics/em/issues/5303
+  test('renders and edits an inherited path note on the existing formatted target', async () => {
+    await dispatch([
+      importText({
+        text: `
+          - Group
+            - =children
+              - =note
+                - =path
+                  - names
+            - Reify
+              - *Names*
+                - Bind Thought
+                - Canonize`,
+      }),
+      setCursor(['Group', 'Reify']),
+    ])
+    await act(vi.runAllTimersAsync)
+
+    expect(screen.queryByLabelText('note-editable')?.textContent).toBe('Bind Thought, Canonize')
+
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.focus(noteEditor)
+      fireEvent.input(noteEditor, { target: { innerHTML: 'Updated, Canonize' } })
+      fireEvent.blur(noteEditor)
+      await vi.runAllTimersAsync()
+    })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Group
+    - =children
+      - =note
+        - =path
+          - names
+    - Reify
+      - *Names*
+        - Updated
+        - Canonize`)
+  })
+
+  test('renders inherited path notes regardless of target case', async () => {
     await dispatch([
       importText({
         text: `
@@ -578,19 +619,19 @@ describe('=children/=note/=path', () => {
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    // Should render two notes (for children 'a' and 'b' which have 'Year' subthoughts)
+    // All three targets match, including lowercase 'year'.
     const noteElements = screen.queryAllByLabelText('note')
-    expect(noteElements).toHaveLength(2)
+    expect(noteElements).toHaveLength(3)
 
     // Verify the note content
     const year1 = screen.getAllByText('2009')
     const year2 = screen.getAllByText('2010')
-    const year3 = screen.queryByText('2011')
+    const year3 = screen.getAllByText('2011')
 
     // We expect each year to be rendered in the note once: as a note value
     expect(year1).toHaveLength(1)
     expect(year2).toHaveLength(1)
-    expect(year3).toBeNull() // lowercase 'year' doesn't match 'Year' path
+    expect(year3).toHaveLength(1)
   })
 
   test('update the target thought when the note is edited and vice versa', async () => {
@@ -658,7 +699,7 @@ describe('=children/=note/=path', () => {
               - 2009
           - b
           - c
-           - year
+           - Years
               - 2011`,
       }),
     ])
@@ -674,9 +715,9 @@ describe('=children/=note/=path', () => {
     expect(noteWithContent)
 
     // Child 'b' has no Year subthought, so no note should be rendered for it
-    // Child 'c' has lowercase 'year' which doesn't match 'Year' path, so no note either
+    // Child 'c' has plural 'Years' which doesn't match 'Year', so no note either.
     const year2011 = screen.queryByText('2011')
-    expect(year2011).toBeNull() // lowercase 'year' doesn't match 'Year' path
+    expect(year2011).toBeNull()
   })
 
   test('allow adding a missing note via =children/=note/=path', async () => {

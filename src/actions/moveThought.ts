@@ -49,6 +49,33 @@ export interface MoveThoughtPayload {
   afterId?: ThoughtId | null
 }
 
+/** Re-ranks a thought whose lastUpdated was just bumped so that its rank still matches its context's sort condition. Only a context sorted by Updated is affected, since lastUpdated is its sort key; the bumped thought becomes the most recently updated of its siblings, which is last in rank order when ascending and first when descending. Other sort conditions compare values or immutable timestamps, so a bump cannot invalidate their ranks. */
+const rerankUpdated = (state: State, id: ThoughtId): State => {
+  const thought = getThoughtById(state, id)
+  if (!thought) return state
+
+  const sortPreference = getSortPreference(state, thought.parentId)
+  if (sortPreference.type !== 'Updated') return state
+
+  const siblings = getChildrenRanked(state, thought.parentId).filter(child => child.id !== id)
+  if (siblings.length === 0) return state
+
+  const rank = sortPreference.direction === 'Desc' ? siblings[0].rank - 1 : siblings[siblings.length - 1].rank + 1
+  if (rank === thought.rank) return state
+
+  return updateThoughts(state, {
+    thoughtIndexUpdates: {
+      [id]: {
+        ...thought,
+        rank,
+      },
+    },
+    lexemeIndexUpdates: {},
+    movePlacements: { [id]: getMovePlacement(state, thought.parentId, { id, rank }) },
+    preventExpandThoughts: true,
+  })
+}
+
 // @MIGRATION_TODO: use (sourceId and destinationId) or simplePath instead of passing paths. Should low level handle context view logic ??
 /** Moves a thought from one context to another, or within the same context. */
 const moveThought = (state: State, payload: MoveThoughtPayload) => {
@@ -220,6 +247,11 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         movePlacements: { [sourceThought.id]: effectiveAfterId },
       })
     },
+    // A cross-context move bumps lastUpdated on both parents. In a context sorted by Updated that is the sort key, so
+    // each parent's own rank no longer matches the sort condition and has to be restored (#4097).
+    !sameContext ? (state: State) => rerankUpdated(state, sourceParentThought.id) : null,
+    !sameContext ? (state: State) => rerankUpdated(state, destinationThought.id) : null,
+
     // update cursor if moved path is on the cursor
     state => {
       if (!state.cursor) return state
