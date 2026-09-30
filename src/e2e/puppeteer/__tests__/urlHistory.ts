@@ -39,7 +39,7 @@ describe('url history on touch devices', () => {
 
 describe('url history on desktop', () => {
   // https://github.com/cybersemics/em/issues/4114
-  it.skip('browser back skips history entries of a deleted thought', async () => {
+  it('browser back skips history entries of a deleted thought', async () => {
     await paste(`
       - One
       - Two
