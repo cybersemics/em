@@ -693,6 +693,8 @@ https://github.com/user-attachments/assets/60f34371-9fac-4394-a4fd-6f9ccd0f363d
 
 When activated on a thought that already has a note, converts the note to a thought instead.
 
+Swap Note only converts literal notes. Path-based notes reference existing thoughts and cannot be swapped; use Note to edit their content. A thought in the home context with a path-based note retains the home-context conversion restriction.
+
 https://github.com/user-attachments/assets/f25656ff-c347-4543-9da6-f47a46c656ef
 
 ### Context View
