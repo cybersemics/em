@@ -4,6 +4,7 @@ import { css } from '../../styled-system/css'
 import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
+import { commandEmitter } from '../commands'
 import getThoughtById from '../selectors/getThoughtById'
 import selectedPaths from '../selectors/selectedPaths'
 import applyLetterCase from '../util/applyLetterCase'
@@ -26,6 +27,8 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
   const toggleLetterCase = (command: LetterCaseType, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
     e.preventDefault()
+    // A swatch dispatches formatLetterCase directly rather than executing a command, so nothing else flushes for it (#4774).
+    commandEmitter.trigger('command')
     dispatch(formatLetterCase(command))
   }
   const selected = useSelector(state => {

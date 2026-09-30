@@ -31,7 +31,7 @@ it('flushes pending edits before executing a toolbar command', async () => {
 })
 
 // A picker swatch dispatches its action creator directly, so the next two cover the flushes in formatSelectionColor
-// and formatLetterCase rather than the one in executeCommandWithMulticursor. The edit is queued after the picker is
+// and LetterCasePicker rather than the one in executeCommandWithMulticursor. The edit is queued after the picker is
 // opened, since opening it is itself a toolbar command that flushes.
 // https://github.com/cybersemics/em/issues/4774
 it('flushes pending edits before applying a color from the picker', async () => {
