@@ -6,6 +6,7 @@ import { keyboardOpenActionCreator as keyboardOpen } from '../../../actions/keyb
 import * as selection from '../../../device/selection'
 import contextToPath from '../../../selectors/contextToPath'
 import store from '../../../stores/app'
+import webKit27Store from '../../../stores/webKit27Store'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
 import equalPath from '../../../util/equalPath'
@@ -21,7 +22,6 @@ vi.mock('../../../browser', async importOriginal => {
     ...actual,
     isTouch: true,
     isSafari: () => true,
-    isSafari27OrLater: true,
   }
 })
 
@@ -29,6 +29,7 @@ let cleanupEvents: () => void
 
 beforeEach(async () => {
   await initStore()
+  webKit27Store.update(true)
   cleanupEvents = initEvents(store).cleanup
 })
 

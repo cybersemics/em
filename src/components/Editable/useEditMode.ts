@@ -4,7 +4,7 @@ import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
-import { isSafari, isSafari27OrLater, isTouch } from '../../browser'
+import { isSafari, isTouch } from '../../browser'
 import { LongPressState } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import getCaretOffset from '../../device/getCaretOffset'
@@ -18,6 +18,7 @@ import isMulticursorPath from '../../selectors/isMulticursorPath'
 import ministore from '../../stores/ministore'
 import multitouchStore from '../../stores/multitouchStore'
 import touchStore from '../../stores/touchStore'
+import webKit27Store from '../../stores/webKit27Store'
 import equalPath from '../../util/equalPath'
 import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
@@ -146,7 +147,7 @@ const useEditMode = ({
       if (shouldSetSelection) {
         // iOS 27: setting the selection between the mousedown and mouseup of a tap whose touchend is withheld overrides
         // the caret iOS is placing with the start of the thought (#5660), so leave the caret to iOS.
-        if (isSafari27OrLater && touchStore.getState().nativeTapPending) {
+        if (webKit27Store.getState() && touchStore.getState().nativeTapPending) {
           placeCaretIfNativeTapDoesNot()
           return
         }
@@ -278,7 +279,7 @@ const useEditMode = ({
      * also records the tap and waits for its lift (#5660). */
     const onTouchStart = (e: TouchEvent) => {
       pressingRef.current = true
-      if (!isSafari27OrLater) return
+      if (!webKit27Store.getState()) return
 
       // iOS 27 can withhold this tap's touchend until the next touch, after the retargeted mousedown has already
       // arrived on the previously-focused thought, so the tap is recorded here for onMouseDown to drop that ghost.
@@ -313,7 +314,7 @@ const useEditMode = ({
     const onTouchEnd = (e: TouchEvent) => {
       pressingRef.current = false
       // Evaluate against the PREVIOUS touch before overwriting it below.
-      const willRetarget = isSafari27OrLater ? willRetargetRef.current : lastTouch.isRetargeted(editable)
+      const willRetarget = webKit27Store.getState() ? willRetargetRef.current : lastTouch.isRetargeted(editable)
       willRetargetRef.current = false
       pendingTapStore.getState().remove?.()
       lastTouch.record(editable)

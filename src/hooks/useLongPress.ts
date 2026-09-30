@@ -3,12 +3,13 @@ import { useDragDropManager } from 'react-dnd'
 import { useDispatch } from 'react-redux'
 import { useSelector } from 'react-redux'
 import { keyboardOpenActionCreator as keyboardOpen } from '../actions/keyboardOpen'
-import { isSafari27OrLater, isTouch } from '../browser'
+import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
 import multitouchStore from '../stores/multitouchStore'
 import touchStore from '../stores/touchStore'
+import webKit27Store from '../stores/webKit27Store'
 import haptics from '../util/haptics'
 
 export interface LongPressProps {
@@ -129,7 +130,7 @@ const useLongPress = (
 
   // iOS 27 can withhold a press's touchend until the next touch, but still fires mouseup when the finger lifts (#5660).
   useEffect(() => {
-    if (!pressing || !isSafari27OrLater) return
+    if (!pressing || !webKit27Store.getState()) return
 
     /** Ends the press on a mouseup that arrives before its touchend. */
     const onMouseUp = (e: MouseEvent) => {

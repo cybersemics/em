@@ -5,6 +5,7 @@ import { AlertText, TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
 import * as selection from '../../device/selection'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import store from '../../stores/app'
+import webKit27Store from '../../stores/webKit27Store'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
@@ -20,22 +21,16 @@ import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
   finger, is supplied by the test.
 */
 
-// Emulate Safari on iOS 27, where the press ends on the mouseup at the lift when the touchend is withheld.
-vi.mock('../../browser', async importOriginal => {
-  const actual = await importOriginal<typeof import('../../browser')>()
-  return { ...actual, isSafari27OrLater: true }
-})
-
 let caretRangeFromPoint: Document['caretRangeFromPoint'] | undefined
 
 beforeEach(async () => {
   await createTestApp()
+  webKit27Store.update(true)
   caretRangeFromPoint = document.caretRangeFromPoint
 })
 
 afterEach(async () => {
   document.caretRangeFromPoint = caretRangeFromPoint!
-  sessionStorage.clear()
   await cleanupTestApp()
 })
 
@@ -135,19 +130,34 @@ it('a quick second tap on another thought does not activate drag and drop', asyn
   expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
 })
 
-it('a tap on the caret after a reload does not activate drag and drop once iOS has withheld a touchend', async () => {
+it('a tap on the caret does not activate drag and drop before any double tap', async () => {
   await dispatch(importText({ text: '- One' }))
   await act(vi.runOnlyPendingTimersAsync)
   const bullet = getBulletByContext(['One'])
   selection.set(await findThoughtByText('One'), { offset: 3 })
   await touchesLandOn('One', 3)
-  // what an earlier page in this tab recorded before the reload
-  sessionStorage.setItem('touchEndWithheld', 'true')
 
+  // iOS stays stuck across a reload, so the double tap may have been on an earlier page
   await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
 
   expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
+})
+
+it('a quick press after a tap activates drag and drop before WebKit 27', async () => {
+  webKit27Store.update(false)
+  await dispatch(importText({ text: '- One\n- Two' }))
+  await act(vi.runOnlyPendingTimersAsync)
+  const bullet = getBulletByContext(['Two'])
+  selection.set(await findThoughtByText('One'), { offset: 3 })
+  await touchesLandOn('Two', 1)
+
+  await tap(bullet, { hold: 90 })
+  await act(() => vi.advanceTimersByTimeAsync(130))
+  await touchStart(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
+
+  expect(screen.queryByText(AlertText.DragAndDrop)).not.toBeNull()
 })
 
 it('a long press on another thought more than 500ms after a double tap activates drag and drop', async () => {

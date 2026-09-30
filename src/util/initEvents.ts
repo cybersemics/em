@@ -32,12 +32,12 @@ import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatusStore'
 import touchStore from '../stores/touchStore'
 import { updateSize } from '../stores/viewportStore'
+import webKit27Store from '../stores/webKit27Store'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import debugLog from './debugLog'
 import durations from './durations'
 import equalPath from './equalPath'
-import storeSession from './storeSession'
 
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
@@ -56,9 +56,6 @@ const TOUCHEND_WITHHELD_MS = 10
 
 /** The longest time from one touchstart to the next for the two to be a double tap. Measured on iOS 27, a pair 222ms apart was a double tap and pairs 617ms or more apart never were. Unlike the gap from the last touchend, this cannot be faked by a withheld touchend, whose arrival is delayed until the next touchstart. */
 const DOUBLE_TAP_MS = 500
-
-/** The storeSession key recording that iOS has been seen withholding a touchend. The stuck state outlives the page, so the knowledge of it has to survive a reload too (#5660). */
-const TOUCHEND_WITHHELD_KEY = 'touchEndWithheld'
 
 /** The pending selection.clear that fires if the device stays in the passive state (see onStateChange). A ministore whose dispose clears the timer, so that cleanup and a reset between tests cancel it rather than leaving it to fire later. */
 const passiveTimeoutStore = ministore<{ timer: Timer | null }>(
@@ -315,33 +312,21 @@ const initEvents = (store: Store<State, any>) => {
    * phase because touchstart propagation is unreliable in the bubble phase (see the note on the touchmove listener
    * below); capture also puts it ahead of every reader. */
   const onTouchStart = (e: TouchEvent) => {
-    const {
-      touchEndTimeStamp,
-      touchStartTimeStamp,
-      secondTap: previousSecondTap,
-      touchEndUnreliable: previousUnreliable,
-    } = touchStore.getState()
-    const withheldBefore =
-      touchStore.getState().touchEndWithheld || storeSession.getItem(TOUCHEND_WITHHELD_KEY) === 'true'
+    const { touchEndTimeStamp, touchStartTimeStamp, touchEndUnreliable: previousUnreliable } = touchStore.getState()
     const touchGap = e.timeStamp - touchEndTimeStamp
-    // iOS 27 withholds the touchend of a tap and dispatches it immediately before the next touchstart, with the same
-    // timeStamp. No finger can lift and touch down again within a few milliseconds, so a gap that short means the
-    // touchend was withheld. iOS does not leave that state for the rest of the session, even across a reload.
-    const touchEndWithheld = withheldBefore || touchGap < TOUCHEND_WITHHELD_MS
-    // iOS may never end the second tap of a double tap, wherever it lands, even on another thought. Only WebKit is
-    // affected.
-    const secondTap = isSafari() && e.timeStamp - touchStartTimeStamp < DOUBLE_TAP_MS
-    // The first withheld tap after a double tap has no withheld touchend before it, so only the double tap gives it away.
-    const afterDoubleTap = previousSecondTap
-    // Only a tap that does nothing, such as one on the caret's own word, gives no sign that the finger has lifted.
-    // Elsewhere iOS still fires click at the lift, which ends the press in useLongPress.
     // changedTouches is the finger that just landed; touches[0] is the first one still down, which a second finger
     // arriving mid-edit would measure instead.
     const touch = e.changedTouches[0]
-    const onCaretWord = !!touch && selection.isOnCaretWord(touch.clientX, touch.clientY)
-    const touchEndUnreliable = secondTap || ((touchEndWithheld || afterDoubleTap) && onCaretWord)
+    // Two kinds of tap on WebKit 27 give no sign that the finger has lifted: the second tap of a double tap, wherever
+    // it lands, and a tap on the caret's own word, which does nothing. The latter is guarded before iOS starts
+    // withholding too, since that cannot be known in time. Other withheld taps still fire mouseup at the lift.
+    const touchEndUnreliable =
+      webKit27Store.getState() &&
+      (e.timeStamp - touchStartTimeStamp < DOUBLE_TAP_MS ||
+        (!!touch && selection.isOnCaretWord(touch.clientX, touch.clientY)))
 
-    // One entry per stuck touch, so that it can be counted without reading the pointer events around it.
+    // iOS 27 dispatches a withheld touchend immediately before the next touchstart, with the same timeStamp. One entry
+    // per stuck touch, so that a log shows whether the device was stuck.
     if (touchGap < TOUCHEND_WITHHELD_MS) {
       debugLog.log('touchEndWithheld', {
         id: lastTouchId,
@@ -351,20 +336,17 @@ const initEvents = (store: Store<State, any>) => {
     }
     lastTouchId = touch?.identifier
 
-    if (touchEndWithheld && !withheldBefore) storeSession.setItem(TOUCHEND_WITHHELD_KEY, 'true')
     touchStore.update({
       pressOnCaret: isTouch && isSafari() && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
       suppressCursorAfterTouch: false,
       touchStartTimeStamp: e.timeStamp,
       touchEnded: false,
       nativeTapPending: false,
-      secondTap,
-      touchEndWithheld,
       touchEndUnreliable,
     })
   }
 
-  /** Tracks whether iOS is between the mousedown and mouseup of a touch whose touchend has not arrived. When iOS withholds the touchend, these are the only sign that the finger has lifted (#5660). */
+  /** Tracks whether iOS is between the mousedown and the mouseup or click of a touch whose touchend has not arrived. When iOS withholds the touchend, these are the only sign that the finger has lifted (#5660). */
   const onMouseBeforeTouchEnd = (e: MouseEvent) => {
     if (touchStore.getState().touchEnded) return
     touchStore.update({ nativeTapPending: e.type === 'mousedown' })
@@ -535,7 +517,7 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('mousemove', onMouseMove)
   // Note: touchstart may not be propagated after dragHold
   window.addEventListener('touchstart', onTouchStart, { capture: true })
-  for (const type of ['mousedown', 'mouseup'] as const) {
+  for (const type of ['mousedown', 'mouseup', 'click'] as const) {
     window.addEventListener(type, onMouseBeforeTouchEnd, { capture: true, passive: true })
   }
   window.addEventListener('touchend', onTouchEndCapture, { capture: true })
@@ -598,7 +580,7 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('touchstart', onTouchStart, { capture: true })
-    for (const type of ['mousedown', 'mouseup'] as const) {
+    for (const type of ['mousedown', 'mouseup', 'click'] as const) {
       window.removeEventListener(type, onMouseBeforeTouchEnd, { capture: true })
     }
     window.removeEventListener('touchend', onTouchEndCapture, { capture: true })
