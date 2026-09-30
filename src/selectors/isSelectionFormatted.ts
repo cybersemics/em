@@ -13,7 +13,7 @@ const isSelectionFormatted = (
     paths.length > 0 &&
     paths.every(path => {
       const thought = pathToThought(state, path)
-      // An empty thought holds its formatting as a pending format until text is typed into it (see setPendingFormat).
+      // An empty thought holds its formatting as a pending format until text is typed into it (see formatSelection).
       return !!getCommandState((thought?.value.length === 0 ? thought.pendingFormat : thought?.value) ?? '')[command]
     })
   )

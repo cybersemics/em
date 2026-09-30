@@ -1,12 +1,10 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
-import { setPendingFormatActionCreator as setPendingFormat } from '../../actions/setPendingFormat'
 import { undoActionCreator as undo } from '../../actions/undo'
 import store from '../../stores/app'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import head from '../../util/head'
 import undoSteps from '../undoSteps'
 
 beforeEach(initStore)
@@ -28,9 +26,10 @@ it('group a new thought with the edit that types its value', () => {
 
 it('keep formatting held for a new empty thought as its own step', () => {
   store.dispatch(newThought({}))
-  store.dispatch(setPendingFormat({ id: head(store.getState().cursor!), value: '<b>x</b>' }))
+  // The reducer holds the formatting of an empty thought without reading the DOM, so it can be dispatched directly.
+  store.dispatch({ type: 'formatSelection', command: 'bold' })
 
-  expect(stepSources()).toEqual([['setPendingFormat'], ['newThought']])
+  expect(stepSources()).toEqual([['formatSelection'], ['newThought']])
 })
 
 it('group a cursor move with the edit before it', () => {
