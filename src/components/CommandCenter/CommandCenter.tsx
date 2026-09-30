@@ -22,7 +22,7 @@ import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
-import ChevronImg from '../ChevronImg'
+import ChevronIcon from '../icons/ChevronIcon'
 import CommandTable from '../CommandTable'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
@@ -441,7 +441,7 @@ const CommandCenter = () => {
                     padding: '0.556rem 1.333rem',
                   })}
                 >
-                  <ChevronImg
+                  <ChevronIcon
                     direction='down'
                     width={CHEVRON_WIDTH}
                     height={CHEVRON_HEIGHT}
@@ -583,7 +583,7 @@ const CommandCenter = () => {
                       padding: '0.222rem 1.333rem',
                     })}
                   >
-                    <ChevronImg
+                    <ChevronIcon
                       direction='up'
                       width={CHEVRON_WIDTH}
                       height={CHEVRON_HEIGHT}

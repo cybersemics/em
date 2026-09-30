@@ -1,8 +1,8 @@
 import { CSSProperties } from 'react'
-import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens'
-import { SystemStyleObject } from '../../styled-system/types'
-import fastClick from '../util/fastClick'
+import { css } from '../../../styled-system/css'
+import { token } from '../../../styled-system/tokens'
+import { SystemStyleObject } from '../../../styled-system/types'
+import fastClick from '../../util/fastClick'
 
 const PATHS = {
   down: 'M14.83 16.42l9.17 9.17 9.17-9.17 2.83 2.83-12 12-12-12z',
@@ -20,7 +20,7 @@ const roundedPath = (direction: 'up' | 'down', width: number, height: number, st
   return `M${inset} ${yEnds}L${width / 2} ${yApex}L${width - inset} ${yEnds}`
 }
 
-interface ChevronImgProps {
+interface ChevronIconProps {
   /** Makes the chevron itself clickable. Omit when an ancestor already handles the click, so that the svg does not become a nested role='button'. */
   onClickHandle?: () => void
   cssRaw?: SystemStyleObject
@@ -40,7 +40,7 @@ interface ChevronImgProps {
 }
 
 /** A downward facing chevron. */
-const ChevronImg = ({
+const ChevronIcon = ({
   onClickHandle,
   cssRaw,
   additonalStyle,
@@ -50,7 +50,7 @@ const ChevronImg = ({
   width = 22,
   rounded,
   stretch,
-}: ChevronImgProps) => {
+}: ChevronIconProps) => {
   const color = fill || token('colors.fg')
   const path = PATHS[direction]
   const roundedStrokeWidth = height * ROUNDED_STROKE_RATIO
@@ -81,4 +81,4 @@ const ChevronImg = ({
   )
 }
 
-export default ChevronImg
+export default ChevronIcon
