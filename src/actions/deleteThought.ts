@@ -7,12 +7,14 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import Thunk from '../@types/Thunk'
-import rerankUpdated from '../actions/rerankUpdated'
 import updateThoughts from '../actions/updateThoughts'
 import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import { getChildrenRanked } from '../selectors/getChildren'
 import { getLexeme } from '../selectors/getLexeme'
+import getMovePlacement from '../selectors/getMovePlacement'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import hasLexeme from '../selectors/hasLexeme'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -25,6 +27,7 @@ import hashThought from '../util/hashThought'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isDescendant from '../util/isDescendant'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import keyValueBy from '../util/keyValueBy'
 import reducerFlow from '../util/reducerFlow'
 import removeContext from '../util/removeContext'
@@ -209,6 +212,14 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
       }
     : {}
 
+  // Removing a child moves the parent's lastUpdated to now, which is its sort key in a context sorted by Updated, so
+  // the parent is re-ranked among its siblings to keep their ranks matching the sort condition (#4098). Empty and
+  // emoji-only thoughts are sorted to their point of creation, so they keep the rank they have.
+  const parentRank =
+    persist && getSortPreference(state, parent.parentId).type === 'Updated' && !isEmptyOrEmojiOnly(parent.value)
+      ? getSortedRank(state, parent.parentId, parent.value, { staleId: parent.id })
+      : parent.rank
+
   const thoughtIndexUpdates = {
     // Deleted thought's parent
     [parent.id]: {
@@ -217,6 +228,7 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
         ? {
             childrenMap: keyValueBy(parent.childrenMap || {}, (key, id) => (id !== thoughtId ? { [key]: id } : null)),
             lastUpdated: timestamp(),
+            rank: parentRank,
             updatedBy: clientId,
           }
         : { pending: true }),
@@ -225,6 +237,13 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
     // descendants
     ...descendantUpdatesResult.thoughtIndex,
   }
+
+  // A new rank is invisible to the persistence layer on its own: sibling order is stored structurally there and only
+  // changes on a move, which is minted from an explicit placement (#5126).
+  const movePlacements: Index<ThoughtId | null> =
+    parentRank !== parent.rank
+      ? { [parent.id]: getMovePlacement(state, parent.parentId, { id: parent.id, rank: parentRank }) }
+      : {}
 
   const isDeletedThoughtCursor = equalPathHead(simplePath, state.cursor)
 
@@ -248,15 +267,13 @@ const deleteThought = (state: State, { local = true, pathParent, thoughtId, remo
     updateThoughts({
       thoughtIndexUpdates,
       lexemeIndexUpdates,
+      movePlacements,
       // recentlyEdited,
       pendingDeletes: descendantUpdatesResult.pendingDeletes,
       local,
       remote,
       overwritePending: !persist,
     }),
-    // Deleting a child bumps lastUpdated on the parent. In a context sorted by Updated that is the parent's sort key, so
-    // its rank has to be restored, e.g. when a thought in a sorted context is unpinned (#5736).
-    persist ? state => rerankUpdated(state, parent.id) : null,
   ])(state)
 }
 
