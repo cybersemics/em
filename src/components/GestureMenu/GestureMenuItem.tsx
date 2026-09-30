@@ -28,7 +28,7 @@ const GestureMenuItem: FC<{
   selected: boolean
   gestureInProgress: string
   isFirstCommand?: boolean
-  /** Fog depth applied to trailing single-column rows when the list overflows. 0/undefined = no fog. */
+  /** Fog depth for trailing rows when the list overflows; 0 = no fog. */
   fogDepth?: GestureMenuFogDepth
 }> = ({ command, selected, gestureInProgress, isFirstCommand, fogDepth = 0 }) => {
   const disabled = useSelector((state: State) => !isExecutable(state, command))

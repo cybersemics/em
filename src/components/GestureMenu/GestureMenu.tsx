@@ -54,11 +54,7 @@ const GestureMenu: FC<{
   // The layout caps instead of scrolling, so it trims to what the hook budgeted.
   const visibleCommands = commands.slice(0, visibleCommandCount)
 
-  // Fog the trailing rows when one column is all that *fits* and the cap is hiding commands (issue #3801
-  // §4). Keyed on maxColumns rather than columnCount for the reason the paddings are: if the viewport
-  // could open another column, the overflow would go there instead of into the fog. Under overflow the
-  // two are equal anyway — overflow means packing was capped by width — so this is the same condition
-  // stated as its cause. A grid that fits more than one column never fogs; it drops the overflow.
+  // Fog trailing rows only when a single column is all the viewport fits and commands are capped. Uses maxColumns, not columnCount, so a wider viewport gets another column instead of fog.
   const fogsOverflow = maxColumns === 1 && visibleCommandCount < commands.length
 
   /**
@@ -77,11 +73,7 @@ const GestureMenu: FC<{
     return false
   }
 
-  /**
-   * Renders command rows. The layout caps its visible rows instead of scrolling, so no row scrolls itself
-   * into view. When `fog` is set, the last GESTURE_MENU_FOG_ROW_COUNT rows fade into the fog to signal
-   * hidden commands.
-   */
+  /** Renders command rows. When `fog` is set, the last GESTURE_MENU_FOG_ROW_COUNT rows fade to signal hidden commands. */
   const renderCommands = (items: Command[], { fog = false }: { fog?: boolean } = {}) =>
     items.map((command, index) => {
       const distanceFromEnd = items.length - 1 - index
@@ -150,18 +142,10 @@ const GestureMenu: FC<{
                   height: '1px',
                   background: 'linear-gradient(90deg, {colors.gestureMenuDivider} 0%, {colors.bgTransparent} 100%)',
                 })}
-                // The divider always spans exactly one column, matching the Figma frames. Where only one
-                // column fits, columnWidth already resolves to the full panel width, so the same
-                // expression covers both cases.
                 style={{ width: columnWidth }}
               />
             </div>
 
-            {/* One grid at every viewport. Commands flow top-to-bottom then left-to-right and own every
-                column; Cancel and Command Universe are simply the last two entries, so they land wherever
-                the packing puts them — including split across a column boundary. A single column is this
-                same grid with one occupied track, not a separate flex stack: the track supplies exactly
-                the width the stack used to set by hand, so the two are the same layout and cannot drift. */}
             <div
               style={{
                 display: 'grid',
@@ -171,7 +155,7 @@ const GestureMenu: FC<{
                 columnGap: `${COLUMN_GAP_REM}rem`,
               }}
             >
-              {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)
+              {/* Split the commands into column chunks (top-to-bottom then left-to-right)
                  and render each column as its own nested grid. Per-column row tracks — rather
                  than one shared set of tracks — keep a selected command's description from
                  inflating the matching row in sibling columns. */}
@@ -182,8 +166,9 @@ const GestureMenu: FC<{
                   <div
                     style={{
                       display: 'grid',
-                      // Auto rows (rather than a fixed repeat(rowsPerColumn)) so a short last column
-                      // is only as tall as its own items, with no trailing empty tracks.
+                      // The last column can have fewer items than rowsPerColumn, so size rows to fit the
+                      // actual items ('min-content') instead of always reserving rowsPerColumn rows —
+                      // otherwise a short last column would have empty space at the bottom.
                       gridAutoRows: 'min-content',
                       rowGap: `${ROW_GAP_REM}rem`,
                     }}

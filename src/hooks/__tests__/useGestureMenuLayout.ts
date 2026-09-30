@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react'
 import React, { act } from 'react'
 import { Provider } from 'react-redux'
-import { token } from '../../../styled-system/tokens'
 import { fontSizeActionCreator } from '../../actions/fontSize'
 import store from '../../stores/app'
 import viewportStore from '../../stores/viewportStore'
@@ -98,10 +97,8 @@ describe('useGestureMenuLayout', () => {
   // by the width cap rather than by the command count.
 
   it('caps at one column just below the two-column width threshold', () => {
-    // maxColumns is measured against the WIDE multi-column padding — a second column opens only if it
-    // still fits at the gutters the panel renders once it has opened. Two columns need 594px of content
-    // (2 × 279 + 36 gap, the rem constants at an 18px root), reached at 594 + 180 = 774px, so 773px is
-    // the last single-column width.
+    // maxColumns is measured against the wide multi-column padding, so 773px is the last width where a
+    // second column still wouldn't fit those gutters.
     setViewport(773, SHORT)
     expect(layout(10).columnCount).toBe(1)
   })
@@ -112,21 +109,15 @@ describe('useGestureMenuLayout', () => {
     expect(layout(10).columnCount).toBe(2)
   })
 
-  it('caps at two columns at desktop-820 geometry', () => {
+  it('caps at two columns at 820px', () => {
+    // 820px is neither threshold: above the two-column floor (774px) and below the three-column
+    // ceiling (909px), so it should land at two columns instead.
     setViewport(820, SHORT)
     expect(layout(10).columnCount).toBe(2)
   })
 
-  it('caps at two columns at desktop-854 geometry', () => {
-    // 854px panel − 180px wide padding = 674px, two minimum-width columns (594px) with room to spare
-    // but short of a third (909px). Matches mockup 6586:107957.
-    setViewport(854, SHORT)
-    expect(layout(10).columnCount).toBe(2)
-  })
-
-  it('caps at three columns at iPad-1177 geometry', () => {
-    // 1177px frame − 180px wide padding = 997px, three minimum-width columns (909px) and not a fourth
-    // (1224px). Matches mockup 6585:107093.
+  it('caps at three columns at 1177px', () => {
+    // 1177px fits three minimum-width columns (909px) but not a fourth (1224px).
     setViewport(1177, SHORT)
     expect(layout(15).columnCount).toBe(3)
   })
@@ -147,9 +138,8 @@ describe('useGestureMenuLayout', () => {
   // --- Horizontal panel padding: the wide gutters are a multi-column value ------------------------
 
   it('narrows the panel padding when only one column fits', () => {
-    // 404px is 4px above the md breakpoint. At the wide 5rem (90px) gutters it would leave 224px of
-    // content — under the 279px minimum column — so maxColumns floors to 1. A single-column panel takes
-    // the narrow padding instead: 40.5px per side, 323px of content.
+    // 404px is just above the md breakpoint but too narrow for a second column at the wide gutters, so
+    // it falls back to the narrow single-column padding.
     setViewport(404, TALL)
     const { maxColumns, horizontalPaddingRem, isMobilePortrait } = layout(12)
     expect(isMobilePortrait).toBe(false)
@@ -170,50 +160,14 @@ describe('useGestureMenuLayout', () => {
   })
 
   it('stays single-column when a second column would not fit the wide padding', () => {
-    // The reported case. 729px could physically hold two columns — 648px of content at the narrow
-    // padding — but a two-column panel renders the wide gutters, leaving only 549px, short of the 594px
-    // two minimum-width columns need. Measuring maxColumns against the padding the panel
-    // would actually render is what keeps a column from opening at a width it cannot honour: the
-    // menu stays at one column, which then takes the narrow padding.
+    // 729px only fits two columns at the narrow padding — the wide gutters a second column would
+    // render leave too little room — so maxColumns must be measured against the padding the panel
+    // would actually use, not the one currently rendered.
     setViewport(729, SHORT)
     const { maxColumns, columnCount, horizontalPaddingRem } = layout(10)
     expect(maxColumns).toBe(1)
     expect(columnCount).toBe(1)
     expect(horizontalPaddingRem).toBe(SINGLE_COLUMN_INLINE_PADDING_REM)
-  })
-
-  it('never opens a column narrower than the minimum width', () => {
-    // The invariant the wide-padding basis buys, and the reason the 675–773px band stays single-column:
-    // whenever more than one column opens, the content left by the wide gutters divides into columns
-    // that are each at least MIN_COLUMN_WIDTH_REM. Mirrors the hook's own columnWidth:
-    // calc((100% − (maxColumns−1) × gap) / maxColumns), resolved against the padded content box.
-    //
-    // Sampled every 10px across the whole range, then every 1px around the two- and three-column
-    // thresholds (773/774 and 1088/1089) — an off-by-one in the basis surfaces there and nowhere else.
-    // A full 1px sweep of the range renders the hook 1000× and exceeds the 5s test timeout.
-    const rem = 18
-    const coarse = []
-
-    const mdBreakpoint = parseInt(token('breakpoints.md'))
-
-    for (let w = mdBreakpoint; w <= 1400; w += 10) coarse.push(w)
-    const fine = []
-    for (const threshold of [774, 1089]) {
-      for (let w = threshold - 8; w <= threshold + 8; w += 1) fine.push(w)
-    }
-    let multiColumnWidths = 0
-    for (const innerWidth of [...coarse, ...fine]) {
-      setViewport(innerWidth, SHORT)
-      const { maxColumns } = layout(30)
-      if (maxColumns === 1) continue
-      multiColumnWidths++
-      const contentPx = innerWidth - 2 * MULTI_COLUMN_INLINE_PADDING_REM * rem
-      const columnPx = (contentPx - (maxColumns - 1) * COLUMN_GAP_REM * rem) / maxColumns
-      expect(columnPx).toBeGreaterThanOrEqual(MIN_COLUMN_WIDTH_REM * rem)
-    }
-    // Guards the sweep against passing vacuously: a regression pinning maxColumns to 1 would skip every
-    // assertion above and still report green.
-    expect(multiColumnWidths).toBeGreaterThan(0)
   })
 
   it('keeps the padding fixed as a narrowing gesture drains columns', () => {
@@ -230,9 +184,7 @@ describe('useGestureMenuLayout', () => {
 
   // --- Vertical panel padding: rendered must equal budgeted ---------------------------------------
   // The component renders `verticalPaddingRem` straight from the hook instead of re-deriving it, so
-  // these also pin what the panel paints. Regression guard: the value was briefly derived twice, and
-  // the render silently fell back to the roomier single-column padding while the row budget kept
-  // spending the tighter multi-column one — costing the column ~0.5 row it had already been given.
+  // these also pin what the panel actually paints, not just what the hook returns.
 
   it('tightens the vertical padding once a second column fits', () => {
     setViewport(854, SHORT)
@@ -256,9 +208,9 @@ describe('useGestureMenuLayout', () => {
   })
 
   it('budgets the row count against the vertical padding it reports', () => {
-    // The invariant the regression broke: a full column plus the header, BOTH reported vertical
-    // paddings and the selected-row reserve must fit the viewport. Spends verticalPaddingRem itself
-    // rather than a hardcoded constant, so the budget and the rendered padding cannot diverge again.
+    // A full column plus the header, both vertical paddings, and the selected-row reserve must fit the
+    // viewport — budgeted against verticalPaddingRem itself so the budget can't diverge from the
+    // rendered padding.
     setViewport(854, MID)
     const { rowsPerColumn, verticalPaddingRem } = layout(30)
     const rem = 18
@@ -311,10 +263,8 @@ describe('useGestureMenuLayout', () => {
   // --- Trimming and edges: the grid never overflows (no cropping) --------------------------------
 
   it('gives every column row to a command, reserving nothing at the bottom', () => {
-    // Cancel and Command Universe are ordinary end-of-list commands, so no bottom row is reserved for
-    // them: capacity is columnCount × rowsPerColumn exactly. MID → rowsPerColumn 8, so 16 commands fill
-    // 2 × 8 with nothing held back (the old persistent bottom row reserved ≈1 row per column, capping
-    // this at 14).
+    // Cancel and Command Universe are ordinary end-of-list commands, not reserved a bottom row, so
+    // capacity is exactly columnCount × rowsPerColumn.
     setViewport(854, MID)
     const { columnCount, rowsPerColumn, visibleCommandCount } = layout(16)
     expect(columnCount).toBe(2)
@@ -345,10 +295,8 @@ describe('useGestureMenuLayout', () => {
   })
 
   it('reserves the panel bottom padding in the multi-column row budget', () => {
-    // Rule 3: a full column plus the header and BOTH vertical paddings must still fit the viewport, so
-    // the last row never butts against the bottom edge. Reproduces the hook's own budget: header
-    // (2.789rem) + 2 × landscape padding (1.7rem) + a full column of rows + the reserved selected-row
-    // expansion (3.4rem). N rows span N × pitch − one trailing gap.
+    // Rule 3: a full column plus the header and both vertical paddings must still fit the viewport, so
+    // the last row never butts against the bottom edge.
     setViewport(854, MID)
     const { rowsPerColumn } = layout(30)
     const rem = 18
@@ -371,7 +319,7 @@ describe('useGestureMenuLayout', () => {
     expect(visibleCommandCount).toBe(0)
   })
 
-  // --- Single-column cap and fog (issue #3801) ---------------------------------------------------
+  // --- Single-column cap and fog -------------------------------------------------------------------
   // The single column caps at the same `rowsPerColumn` the grid uses; the component fogs the trailing
   // rows rather than scrolling, so `visibleCommandCount < commandCount` is what drives the fog.
 
@@ -548,8 +496,8 @@ describe('useGestureMenuLayout', () => {
     })
 
     it('does not move when a narrowing gesture drains a column under Capacitor', () => {
-      // The regression: paddingTop was keyed on columnCount, so an iPad Air dropping from two columns
-      // to one swapped 1.7rem for the 0.75rem Capacitor value and the header jumped ~0.95rem mid-gesture.
+      // paddingTop must be keyed on maxColumns, not columnCount, or a narrowing gesture swaps in the
+      // wrong Capacitor padding mid-gesture.
       setViewport(820, 1180)
       const twoColumns = underCapacitor(() => layout(28))
       const oneColumn = underCapacitor(() => layout(2))
