@@ -135,13 +135,8 @@ const useLongPress = (
   useEffect(() => {
     if (!pressing || !webKit27Store.getState()) return
 
-    /** Ends the press on a mouseup that arrives before its touchend. */
-    const onMouseUp = (e: MouseEvent) => {
-      if (!touchStore.getState().touchEnded) stop(e)
-    }
-
-    window.addEventListener('mouseup', onMouseUp, { capture: true })
-    return () => window.removeEventListener('mouseup', onMouseUp, { capture: true })
+    window.addEventListener('mouseup', stop, { capture: true })
+    return () => window.removeEventListener('mouseup', stop, { capture: true })
   }, [pressing, stop])
 
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.

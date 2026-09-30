@@ -53,9 +53,6 @@ const WINDOW_SCROLLATEDGE_SPEED = 2
 /** How often to save the selection offset to storage when it changes. */
 const SELECTION_CHANGE_THROTTLE = 200
 
-/** A touchstart this soon after the last touchend means that touchend was withheld until the touchstart (#5660). A lift and a new touch are never this close together, while the withheld touchend arrives within the same millisecond. */
-const TOUCHEND_WITHHELD_MS = 10
-
 /** The longest time from one touchstart to the next for the two to be a double tap. Measured on iOS 27, a pair 222ms apart was a double tap and pairs 617ms or more apart never were. Unlike the gap from the last touchend, this cannot be faked by a withheld touchend, whose arrival is delayed until the next touchstart. */
 const DOUBLE_TAP_MS = 500
 
@@ -303,9 +300,6 @@ const initEvents = (store: Store<State, any>) => {
     touchStore.update({ pressOnCaret: false })
   }
 
-  // the identifier of the last touch, so that the touchstart that flushes its withheld touchend can name it in the log
-  let lastTouchId: number | undefined
-
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
    * the completed touch. Also latches whether the touch landed on the caret, i.e. whether the user is reaching for
    * native caret repositioning rather than starting a drag or a gesture (#3763): on iOS Safari the text magnifier, on
@@ -315,8 +309,7 @@ const initEvents = (store: Store<State, any>) => {
    * (#5660). Registered in the capture phase because touchstart propagation is unreliable in the bubble phase (see the
    * note on the touchmove listener below); capture also puts it ahead of every reader. */
   const onTouchStart = (e: TouchEvent) => {
-    const { touchEndTimeStamp, touchStartTimeStamp, touchEndUnreliable: previousUnreliable } = touchStore.getState()
-    const touchGap = e.timeStamp - touchEndTimeStamp
+    const { touchStartTimeStamp } = touchStore.getState()
     // changedTouches is the finger that just landed; touches[0] is the first one still down, which a second finger
     // arriving mid-edit would measure instead.
     const touch = e.changedTouches[0]
@@ -328,17 +321,6 @@ const initEvents = (store: Store<State, any>) => {
       (e.timeStamp - touchStartTimeStamp < DOUBLE_TAP_MS ||
         (!!touch && selection.isOnCaretWord(touch.clientX, touch.clientY)))
 
-    // iOS 27 dispatches a withheld touchend immediately before the next touchstart, with the same timeStamp. One entry
-    // per stuck touch, so that a log shows whether the device was stuck.
-    if (touchGap < TOUCHEND_WITHHELD_MS) {
-      debugLog.log('touchEndWithheld', {
-        id: lastTouchId,
-        heldFor: Math.round(touchEndTimeStamp - touchStartTimeStamp),
-        guarded: previousUnreliable,
-      })
-    }
-    lastTouchId = touch?.identifier
-
     const state = store.getState()
     const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
     touchStore.update({
@@ -349,14 +331,8 @@ const initEvents = (store: Store<State, any>) => {
        * phase (see the note on the touchmove listener below). */
       suppressCursorAfterTouch: false,
       touchStartTimeStamp: e.timeStamp,
-      touchEnded: false,
       touchEndUnreliable,
     })
-  }
-
-  /** Records when the touch ended, so that the next touchstart can tell whether its touchend was withheld (#5660). Registered in the capture phase so that a handler that stops propagation cannot hide it. */
-  const onTouchEndCapture = (e: TouchEvent) => {
-    touchStore.update({ touchEndTimeStamp: e.timeStamp, touchEnded: true })
   }
 
   /**
@@ -519,7 +495,6 @@ const initEvents = (store: Store<State, any>) => {
   window.addEventListener('mousemove', onMouseMove)
   // Note: touchstart may not be propagated after dragHold
   window.addEventListener('touchstart', onTouchStart, { capture: true })
-  window.addEventListener('touchend', onTouchEndCapture, { capture: true })
   window.addEventListener('touchmove', onTouchMove)
   window.addEventListener('touchend', onTouchEnd)
   // track the number of active touch points so that multi-touch input can be rejected (e.g. two-finger
@@ -579,7 +554,6 @@ const initEvents = (store: Store<State, any>) => {
     window.removeEventListener('popstate', onPopstate)
     window.removeEventListener('mousemove', onMouseMove)
     window.removeEventListener('touchstart', onTouchStart, { capture: true })
-    window.removeEventListener('touchend', onTouchEndCapture, { capture: true })
     window.removeEventListener('touchmove', onTouchMove)
     window.removeEventListener('touchend', onTouchEnd)
     window.removeEventListener('touchstart', updateMultitouch, { capture: true })
