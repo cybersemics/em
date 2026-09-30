@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux'
 import { token } from '../../styled-system/tokens'
-import { isBrowser, isTablet } from '../browser'
-import viewportStore from '../stores/viewportStore'
+import { isBrowser } from '../browser'
+import viewportStore, { isTablet } from '../stores/viewportStore'
 
 /**************************************************************
  * Width capacity

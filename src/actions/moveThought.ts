@@ -45,6 +45,7 @@ export interface MoveThoughtPayload {
    * ID of sibling after which to place in TreeCRDT.
    * Explicit null means first child.
    * Undefined means derive placement from newRank for legacy em rank-based callers.
+   * If the destination remains sorted, its sort order determines placement instead.
    */
   afterId?: ThoughtId | null
 }
@@ -127,7 +128,11 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
   const effectiveAfterId =
     afterId !== undefined
       ? afterId
-      : getMovePlacement(state, destinationThoughtId, { id: sourceThought.id, rank: newRank })
+      : getMovePlacement(state, destinationThoughtId, {
+          id: sourceThought.id,
+          rank: newRank,
+          rankedChildren: childrenOfDestination,
+        })
 
   if (
     effectiveAfterId === sourceThought.id ||
@@ -207,6 +212,16 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         [isAttribute(sourceThought.value) ? sourceThought.value : sourceThought.id]: sourceThought.id,
       }
 
+      // Moving within this context may have disabled sorting above.
+      const isSorted = getSortPreference(state, destinationThoughtId).type !== 'None'
+
+      // A moved thought keeps its created timestamp, so a Created context sorts it by that rather than by its value.
+      // Without it getSortedRank falls through to the alphabetical branch and ranks the thought against siblings it
+      // does not sort by, inverting the rank order against the sort condition (#4096).
+      const rank = isSorted
+        ? getSortedRank(state, destinationThoughtId, sourceThought.value, { created: sourceThought.created })
+        : newRank
+
       const thoughtIndexUpdates: Index<Thought> = {
         ...(!sameContext
           ? {
@@ -228,11 +243,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         [sourceThought.id]: {
           ...sourceThought,
           parentId: destinationThought.id,
-          rank:
-            // get updated sort preference since the context may have been unsorted
-            getSortPreference(state, destinationThoughtId).type !== 'None'
-              ? getSortedRank(state, destinationThoughtId, sourceThought.value)
-              : newRank,
+          rank,
           ...(archived ? { archived } : null),
           lastUpdated: timestamp(),
           updatedBy: clientId,
@@ -244,7 +255,18 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
         lexemeIndexUpdates: {},
         recentlyEdited,
         preventExpandThoughts: true,
-        movePlacements: { [sourceThought.id]: effectiveAfterId },
+        // A sorted context ranks the thought by the sort condition rather than where the caller asked for it, so the
+        // caller's placement would store an order that disagrees with the rendered one and bring the context back
+        // unsorted after a refresh. Derive the placement from the rank that is actually written.
+        movePlacements: {
+          [sourceThought.id]: isSorted
+            ? getMovePlacement(state, destinationThoughtId, {
+                id: sourceThought.id,
+                rank,
+                rankedChildren: childrenOfDestination,
+              })
+            : effectiveAfterId,
+        },
       })
     },
     // A cross-context move bumps lastUpdated on both parents. In a context sorted by Updated that is the sort key, so

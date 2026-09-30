@@ -18,6 +18,7 @@ import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import getThoughtById from '../selectors/getThoughtById'
 import pathExists from '../selectors/pathExists'
 import store from '../stores/app'
 import { updateCaretRect } from '../stores/caretRectStore'
@@ -38,6 +39,7 @@ import pathToContext from '../util/pathToContext'
 import debugLog from './debugLog'
 import durations from './durations'
 import equalPath from './equalPath'
+import head from './head'
 
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
@@ -305,12 +307,13 @@ const initEvents = (store: Store<State, any>) => {
   let lastTouchId: number | undefined
 
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
-   * the completed touch. Also latches whether the touch landed on the caret, i.e. whether the user is reaching for the
-   * iOS text magnifier rather than starting a drag or a gesture (#3763). Latching here rather than in each reader gives
-   * the flag a single writer per touch, measures the caret once, and covers touches that never reach an element that
-   * mounts useLongPress. Also decides whether this touch's touchend can be trusted (#5660). Registered in the capture
-   * phase because touchstart propagation is unreliable in the bubble phase (see the note on the touchmove listener
-   * below); capture also puts it ahead of every reader. */
+   * the completed touch. Also latches whether the touch landed on the caret, i.e. whether the user is reaching for
+   * native caret repositioning rather than starting a drag or a gesture (#3763): on iOS Safari the text magnifier, on
+   * any caret; elsewhere only on an empty thought, where the context menu is the only route to paste. Latching here
+   * rather than in each reader gives the flag a single writer per touch, measures the caret once, and covers touches
+   * that never reach an element that mounts useLongPress. Also decides whether this touch's touchend can be trusted
+   * (#5660). Registered in the capture phase because touchstart propagation is unreliable in the bubble phase (see the
+   * note on the touchmove listener below); capture also puts it ahead of every reader. */
   const onTouchStart = (e: TouchEvent) => {
     const { touchEndTimeStamp, touchStartTimeStamp, touchEndUnreliable: previousUnreliable } = touchStore.getState()
     const touchGap = e.timeStamp - touchEndTimeStamp
@@ -336,8 +339,14 @@ const initEvents = (store: Store<State, any>) => {
     }
     lastTouchId = touch?.identifier
 
+    const state = store.getState()
+    const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
     touchStore.update({
-      pressOnCaret: isTouch && isSafari() && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+      pressOnCaret:
+        isTouch && (isSafari() || isEmptyThought) && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+      /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
+       * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
+       * phase (see the note on the touchmove listener below). */
       suppressCursorAfterTouch: false,
       touchStartTimeStamp: e.timeStamp,
       touchEnded: false,
