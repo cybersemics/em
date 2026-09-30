@@ -6,7 +6,6 @@ import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
 import { ALLOWED_FORMATTING_TAGS, DEFAULT_FONT_SIZE } from '../constants'
 import isFormattingElement from '../util/isFormattingElement'
-import logProgrammaticSelection from '../util/logProgrammaticSelection'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -46,7 +45,6 @@ const getElementPaddings = (element: HTMLElement): [number, number, number, numb
 /** Clears the selection. */
 export const clear = (): void => {
   const focusNode = window.getSelection()?.focusNode
-  logProgrammaticSelection('clear', focusNode)
 
   // we need to blur the element otherwise onBlur is not called (#1466)
   // if the selection is on a text node, blur its parent
@@ -96,7 +94,6 @@ export const selectNode = (node: Node): void => {
 export const collapse = (): void => {
   const sel = window.getSelection()
   if (!sel || sel.isCollapsed) return
-  logProgrammaticSelection('collapse', sel.focusNode)
   sel.collapseToEnd()
 }
 
@@ -206,20 +203,6 @@ export const isOnEditable = (thoughtId: string): boolean => {
     focusNode instanceof Element ? focusNode : focusNode?.parentNode instanceof Element ? focusNode.parentNode : null
 
   return focusElement?.closest('[data-editable]')?.getAttribute('aria-label') === `editable-${thoughtId}`
-}
-
-/** Returns the id of the thought whose editable holds the browser selection, or null. */
-export const thought = (): string | null => {
-  const focusNode = window.getSelection()?.focusNode
-  const focusElement =
-    focusNode instanceof Element ? focusNode : focusNode?.parentNode instanceof Element ? focusNode.parentNode : null
-
-  return (
-    focusElement
-      ?.closest('[data-editable]')
-      ?.getAttribute('aria-label')
-      ?.replace(/^editable-/, '') ?? null
-  )
 }
 
 /** Returns true if the browser selection is on an element node and focus offset is 0.
@@ -478,7 +461,6 @@ export const set = (
   { offset = 0, end = false }: SelectionOptionsType = { offset: 0, end: false },
 ): void => {
   if (!node) return
-  logProgrammaticSelection('set', node)
 
   // if a numeric offset is given, convert the outer offset (relative to the thought) to the inner offset (relative to the nearest ancestor of the new selection) which is expected by Range
   // this handles nested HTML elements such as <b> or <i>.
@@ -527,7 +509,6 @@ export const set = (
  */
 export const setRange = (node: Node | null, { start, end }: { start: number; end: number }): void => {
   if (!node) return
-  logProgrammaticSelection('setRange', node)
 
   // convert the outer offsets (relative to the thought) to inner offsets (relative to the nearest ancestor of each end of the new selection), which is what Range expects
   // this handles nested HTML elements such as <b> or <i>

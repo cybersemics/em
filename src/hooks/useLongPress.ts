@@ -9,7 +9,6 @@ import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
 import multitouchStore from '../stores/multitouchStore'
 import touchStore from '../stores/touchStore'
-import debugLog from '../util/debugLog'
 import haptics from '../util/haptics'
 
 export interface LongPressProps {
@@ -47,8 +46,6 @@ const useLongPress = (
       // react-dnd's canDrag, so this second guard is required to stop a two-finger gesture from beginning a drag.
       // The multitouch latch stays set until every finger lifts. See #4233.
       if (multitouchStore.getState()) return
-
-      debugLog.log('longPressStart')
 
       // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
       // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)

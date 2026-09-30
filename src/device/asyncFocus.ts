@@ -1,6 +1,5 @@
 import { isTouch } from '../browser'
 import { noop } from '../constants'
-import logProgrammaticSelection from '../util/logProgrammaticSelection'
 import * as selection from './selection'
 
 /**
@@ -36,7 +35,6 @@ export const AsyncFocus: () => (options?: { force?: boolean }) => void = () => {
     // do not set the selection if it is already on a thought or a note
     // provide the option to force the focus in order to retarget focus and prevent an iOS Safari bug (#4222)
     if (options.force || !selection.isThought()) {
-      logProgrammaticSelection('asyncFocus', hiddenInput)
       hiddenInput.disabled = false
       hiddenInput.focus()
       // the hidden input should not be a valid focus target unless this function was invoked

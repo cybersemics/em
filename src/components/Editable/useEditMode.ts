@@ -21,7 +21,6 @@ import touchStore from '../../stores/touchStore'
 import equalPath from '../../util/equalPath'
 import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
-import logProgrammaticSelection from '../../util/logProgrammaticSelection'
 import lastTouch from './lastTouch'
 import useCaretRestore from './useCaretRestore'
 
@@ -103,7 +102,6 @@ const useEditMode = ({
           // transition into the cleared state; focusing on any other run blurs the previously focused editable
           // before the selection is set, which recomputes the cursor offset and ends the editing session.
           if (isCursorCleared && wasCursorCleared === false && contentRef.current) {
-            logProgrammaticSelection('focus', contentRef.current)
             contentRef.current.focus()
           }
 
@@ -111,7 +109,6 @@ const useEditMode = ({
         }
       }
 
-      // allow transient editable to have focus on render
       /** Places the caret after the pending native tap's mouseup, if iOS did not place it in this thought itself. */
       const placeCaretIfNativeTapDoesNot = () => {
         const { touchStartTimeStamp } = touchStore.getState()
@@ -188,10 +185,7 @@ const useEditMode = ({
           // Not in the cleared state, which setSelectionToCursorOffset focuses itself on the transition into it
           // (#4519). Focusing on its later runs would leave the editable focused for the next run's asyncFocus to
           // blur, which ends the editing session and closes the keyboard mid-edit.
-          if (!isCursorCleared) {
-            logProgrammaticSelection('focus', contentRef.current)
-            contentRef.current?.focus()
-          }
+          if (!isCursorCleared) contentRef.current?.focus()
         }
 
         setSelectionToCursorOffset()
