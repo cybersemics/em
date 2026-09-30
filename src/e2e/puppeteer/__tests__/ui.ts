@@ -39,37 +39,75 @@ it('DesktopCommandUniverse', async () => {
   })
 })
 
-describe('mobile', () => {
-  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+describe('GestureMenu', () => {
+  describe('smaller viewport (< 400px)', () => {
+    deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
 
-  it('GestureMenu', async () => {
-    await hideHUD()
+    it('render 1 column at max', async () => {
+      await hideHUD()
 
-    await paste('Hello')
+      await paste('Hello')
 
-    // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
-    await clickThought('Hello')
+      // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
+      await clickThought('Hello')
 
-    // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Command Universe and does not need to be updated every time a gesture is added or changed.
-    await gesture('rdldrd', { hold: true })
+      // swipe and hold an invalid gesture so that the snapshot just includes Cancel and Command Universe and does not need to be updated every time a gesture is added or changed.
+      await gesture('rdldrd', { hold: true })
 
-    // wait for the gesture menu to appear
-    await waitForSelector('[data-testid=popup-value]')
+      // wait for the gesture menu to appear
+      await waitForSelector('[data-testid=popup-value]')
 
-    // wait for the glow background image to be decoded and painted before taking the snapshot. The element is in the
-    // DOM before its image is available to the renderer, so a screenshot taken as soon as it appears can be missing
-    // the glow entirely.
-    await waitForBackgroundImage('[data-testid=glow-background]')
+      // wait for the glow background image to be decoded and painted before taking the snapshot. The element is in the
+      // DOM before its image is available to the renderer, so a screenshot taken as soon as it appears can be missing
+      // the glow entirely.
+      await waitForBackgroundImage('[data-testid=glow-background]')
 
-    // Hide the gesture trace before taking the snapshot. Its glow is drawn on a canvas and can render slightly
-    // differently across environments, causing flaky snapshot diffs. The trace is not relevant to this snapshot,
-    // so we hide it to keep the result consistent.
-    await hide('[data-testid=gesture-trace]')
+      // Hide the gesture trace before taking the snapshot. Its glow is drawn on a canvas and can render slightly
+      // differently across environments, causing flaky snapshot diffs. The trace is not relevant to this snapshot,
+      // so we hide it to keep the result consistent.
+      await hide('[data-testid=gesture-trace]')
 
-    expect(await screenshot()).toMatchImageSnapshot()
+      expect(await screenshot()).toMatchImageSnapshot()
+    })
   })
 
-  it('CommandCenter', async () => {
+  describe('wider viewport (>= 400px)', () => {
+    // Use iPad Mini landscape to test a viewport wide enough for multiple columns
+    deviceEmulation.useForSuite(KnownDevices['iPad Mini landscape'])
+
+    it('render possible commands in multiple columns', async () => {
+      await hideHUD()
+
+      await paste('Hello')
+
+      // When cursor is on the thought, gesture menu is rendered with two new options. When cursor is null, those options are not shown. Hence always be consistent and set cursor to the thought.
+      await clickThought('Hello')
+
+      // swipe and hold r gesture so that the snapshot shows the gesture menu commands in multiple columns
+      await gesture('r', { hold: true })
+
+      // wait for the gesture menu to appear
+      await waitForSelector('[data-testid=popup-value]')
+
+      // wait for the glow background image to be decoded and painted before taking the snapshot. The element is in the
+      // DOM before its image is available to the renderer, so a screenshot taken as soon as it appears can be missing
+      // the glow entirely.
+      await waitForBackgroundImage('[data-testid=glow-background]')
+
+      // Hide the gesture trace before taking the snapshot. Its glow is drawn on a canvas and can render slightly
+      // differently across environments, causing flaky snapshot diffs. The trace is not relevant to this snapshot,
+      // so we hide it to keep the result consistent.
+      await hide('[data-testid=gesture-trace]')
+
+      expect(await screenshot()).toMatchImageSnapshot()
+    })
+  })
+})
+
+describe('CommandCenter', async () => {
+  deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
+
+  it('standard view', async () => {
     // the undo button toggles between active and inactive states for some reason. Hence hide the HUD to ensure the undo button is not visible.
     await hideHUD()
 

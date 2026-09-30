@@ -107,6 +107,8 @@ A gesture is a string of swipe directions, where each character is one of `'l'`,
 
 A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/util/isInGestureZone.ts), enforced by [`MultiGesture`](../src/components/MultiGesture.tsx)): the screen minus the scroll zone (a strip on the right, or on the left for left-handed users), the toolbar at the top, and — on devices with a home indicator (nonzero `safe-area-inset-bottom`) — a strip at the bottom where the OS recognizes system gestures. Without the bottom exclusion, the upward app switcher swipe is committed as the Open Command Center gesture right before the app suspends. Single-finger touches that start outside the zone scroll the page as usual; multi-finger touches are inert everywhere (see [Multi-touch rejection](#multi-touch-rejection)).
 
+`shouldCancelGesture` in [`AppComponent`](../src/components/AppComponent.tsx) abandons a gesture that starts on the toolbar, on a selected text range, on the caret (see [Cursor and Caret](cursor-and-caret.md#selectionrangestore)), or while a press, modal, or sidebar is active. It is evaluated with the touch point at touchstart and again without one during the gesture, so only the point-dependent checks are limited to the first call.
+
 A gesture is also always a **single finger**. `MultiGesture` latches as soon as a second touch is down and ignores movement until every finger is up again, because iOS reports its own multi-finger system gestures to the page as ordinary touch events: tracking the first finger of a three-finger undo swipe would commit it as `cursorForward`, and the redo swipe as `cursorBack`. Both are undoable, so each would clear the redo stack and leave the redo half of the gesture with nothing to restore ([issue #5575](https://github.com/cybersemics/em/issues/5575)).
 
 `handleGestureSegment` is called incrementally as the user swipes; it triggers a haptic for each new segment and, after `COMMAND_PALETTE_TIMEOUT`, opens the gesture menu so the user can see all commands reachable from the current sequence.
@@ -245,7 +247,7 @@ Three fields shape what happens when the command might not be runnable:
 
 ### Repeat
 
-`repeat` (Command/Ctrl + .) has no behavior of its own — its `exec` is a noop. `executeCommand` records the last command it executed in a module-level `lastCommand` variable, and both `executeCommand` and `executeCommandWithMulticursor` resolve `repeat` to it before executing, so the repeated command runs through the normal path with its own `canExecute` and multicursor handling. Resolving before execution (rather than executing from within `repeat.exec`) also keeps `repeat.ts` free of an import of `commands.ts`, which would be circular.
+`repeat` (Command/Ctrl + .) has no behavior of its own — its `exec` is a noop. `executeCommand` records the last command it executed in `lastCommandStore`, a private ministore in `commands.ts`, and both `executeCommand` and `executeCommandWithMulticursor` resolve `repeat` to it before executing, so the repeated command runs through the normal path with its own `canExecute` and multicursor handling. Resolving before execution (rather than executing from within `repeat.exec`) also keeps `repeat.ts` free of an import of `commands.ts`, which would be circular.
 
 `keyboardIndex` is recorded alongside the command and restored when it is repeated, since it cannot be derived from the Command/Ctrl + . keypress — that keypress matches none of the repeated command's own shortcuts. Without it, repeating `applyColor` would have no swatch to apply and would silently do nothing. `executeCommandWithMulticursor` resolves `repeat` itself and then delegates an already-resolved command, so it forwards the recorded index through executeCommand's `keyboardIndex` option.
 
@@ -690,6 +692,8 @@ Convert a thought to a note.
 https://github.com/user-attachments/assets/60f34371-9fac-4394-a4fd-6f9ccd0f363d
 
 When activated on a thought that already has a note, converts the note to a thought instead.
+
+Swap Note only converts literal notes. Path-based notes reference existing thoughts and cannot be swapped; use Note to edit their content. A thought in the home context with a path-based note retains the home-context conversion restriction.
 
 https://github.com/user-attachments/assets/f25656ff-c347-4543-9da6-f47a46c656ef
 

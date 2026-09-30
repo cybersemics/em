@@ -98,9 +98,7 @@ const SolidGestureRenderer = ({
     const remaining = segments.slice(highlighted.length)
     return (
       <>
-        {highlighted.length > 0 && (
-          <path d={serializeGesturePath(highlighted)} stroke={activeColor} {...commonPathProps} />
-        )}
+        <path d={serializeGesturePath(highlighted)} stroke={activeColor} {...commonPathProps} />
         <path d={serializeGesturePath(remaining)} stroke={inactiveColor} {...commonPathProps} />
       </>
     )
