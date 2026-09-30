@@ -180,7 +180,7 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
       cursorThoughtValue !== cursorThoughtValuePrev ||
       state.multicursors !== multicursorsPrev
     ) {
-      updateCommandState()
+      updateCommandState(state)
     }
     cursorPrevStore.update({ cursor, value: cursorThoughtValue, multicursors: state.multicursors })
   }

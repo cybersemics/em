@@ -1,6 +1,11 @@
 import Patch from '../@types/Patch'
 import { isUndoable } from './actionMetadata.registry'
 
+/** Formatting held for an empty thought gives it no value, so it is never grouped with the thought's creation. It is the
+ * only formatSelection patch that touches a pendingFormat. */
+const isPendingFormat = (patch: Patch | undefined) =>
+  !!patch?.metadata.actionTypes.includes('formatSelection') && patch.ops.some(op => op.path.endsWith('/pendingFormat'))
+
 /** Determines a history step's size from action semantics. Undo and the slider traverse newest first; Redo traverses
  * forward and attaches navigation to the following patch. The slider preserves its existing structural grouping of
  * formatting with a new thought; keyboard Undo supplies the live formatting classification to keep it separate. */
@@ -11,12 +16,13 @@ const getUndoStepCount = (
 ): number => {
   const grouped =
     direction === 'redo'
-      ? !!patch && (patch.metadata.isNavigation || patch.metadata.actionTypes[0] === 'newThought')
+      ? !!patch &&
+        (patch.metadata.isNavigation || (patch.metadata.actionTypes[0] === 'newThought' && !isPendingFormat(adjacent)))
       : !!patch &&
         !!adjacent &&
         (patch.metadata.isNavigation
           ? adjacent.metadata.actionTypes.some(isUndoable)
-          : adjacent.metadata.actionTypes[0] === 'newThought' && !isFormatting)
+          : adjacent.metadata.actionTypes[0] === 'newThought' && !isFormatting && !isPendingFormat(patch))
   return grouped ? 2 : 1
 }
 
