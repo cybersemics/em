@@ -9,6 +9,7 @@ import contextToThoughtId from '../../selectors/contextToThoughtId'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenSorted } from '../../selectors/getChildren'
 import store from '../../stores/app'
+import editableSyncStore from '../../stores/editableSyncStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
@@ -18,6 +19,120 @@ beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
 describe('=note', () => {
+  // https://github.com/cybersemics/em/issues/5084
+  test.each([
+    ['plain whitespace', '  hello  world  ', 'hello  world'],
+    ['formatted whitespace', '<b>  hello <i>world  </i></b>', '<b>hello <i>world</i></b>'],
+    ['only whitespace', '   ', ''],
+  ])('trims %s only after the note blurs', async (_description, input, expected) => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: input } })
+    })
+    expect(noteEditor.innerHTML).toBe(input)
+
+    await act(async () => {
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(noteEditor.innerHTML).toBe(expected)
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain(`<li>${expected}</li>`)
+  })
+
+  test('preserves internal whitespace and line breaks when a note blurs', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: '<b>one&nbsp; two</b><br>three' } })
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(noteEditor.innerHTML).toBe('<b>one&nbsp; two</b><br>three')
+  })
+
+  test('undoes and redoes trimming without losing the note edit', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: '  hello  ' } })
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(noteEditor.innerHTML).toBe('hello')
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true })
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('  hello  ')
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true, shiftKey: true })
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('hello')
+  })
+
+  test('does not add a content undo step when blur leaves the value unchanged', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: 'hello' } })
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(noteEditor.innerHTML).toBe('hello')
+    await act(async () => {
+      fireEvent.keyDown(document, { key: 'z', metaKey: true })
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.getByLabelText('note-editable').innerHTML).toBe('seed')
+  })
+
+  test.each(['suppressBlurSync', 'suppressChange'] as const)(
+    'leaves temporary blur untouched while %s is active',
+    async flag => {
+      await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
+      await act(vi.runOnlyPendingTimersAsync)
+      const noteEditor = screen.getByLabelText('note-editable')
+      await act(async () => {
+        fireEvent.input(noteEditor, { target: { innerHTML: '  hello  ' } })
+        editableSyncStore.update({ [flag]: true })
+        fireEvent.focusOut(noteEditor)
+        await vi.runOnlyPendingTimersAsync()
+      })
+      expect(noteEditor.innerHTML).toBe('  hello  ')
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>  hello  </li>')
+
+      await act(async () => {
+        editableSyncStore.update({ [flag]: false })
+        fireEvent.focusOut(noteEditor)
+        await vi.runOnlyPendingTimersAsync()
+      })
+      expect(noteEditor.innerHTML).toBe('hello')
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>hello</li>')
+    },
+  )
+
+  test('does not recreate an empty note deleted immediately before blur', async () => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - ' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.keyDown(noteEditor, { key: 'Backspace' })
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(screen.queryByLabelText('note-editable')).toBeNull()
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a`)
+  })
+
   test('basic', async () => {
     await dispatch([
       importText({
@@ -188,6 +303,75 @@ describe('=note', () => {
 })
 
 describe('=note/=path', () => {
+  // https://github.com/cybersemics/em/issues/5084
+  test('trims each referenced value on blur without losing its descendants', async () => {
+    await dispatch([
+      importText({
+        text: '- a\n  - =note\n    - =path\n      - b\n  - b\n    - c\n      - child of c\n    - d\n      - child of d',
+      }),
+      setCursor(['a']),
+      toggleNote(),
+    ])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: '<b> c </b>,  d  ' } })
+    })
+    expect(noteEditor.innerHTML).toBe('<b> c </b>,  d  ')
+    await act(async () => {
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(noteEditor.innerHTML).toBe('<b>c</b>, d')
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - =path
+        - b
+    - b
+      - **c**
+        - child of c
+      - d
+        - child of d`)
+  })
+
+  test('preserves both referenced subtrees when trimming creates duplicate values', async () => {
+    await dispatch([
+      importText({
+        text: `
+        - a
+          - =note
+            - =path
+              - b
+          - b
+            - **c**
+              - first subtree
+            - **c**
+              - second subtree`,
+      }),
+      setCursor(['a']),
+      toggleNote(),
+    ])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: '<b> c </b>, <b>c</b>' } })
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(noteEditor.innerHTML).toBe('<b>c</b>, <b>c</b>')
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - a
+    - =note
+      - =path
+        - b
+    - b
+      - **c**
+        - first subtree
+      - **c**
+        - second subtree`)
+  })
+
   // https://github.com/cybersemics/em/issues/4845
   test('renders all path target children as comma-delimited note text', async () => {
     await dispatch([
@@ -555,7 +739,48 @@ describe('=children/=note', () => {
 })
 
 describe('=children/=note/=path', () => {
-  test('basic', async () => {
+  // https://github.com/cybersemics/em/issues/5303
+  test('renders and edits an inherited path note on the existing formatted target', async () => {
+    await dispatch([
+      importText({
+        text: `
+          - Group
+            - =children
+              - =note
+                - =path
+                  - names
+            - Reify
+              - *Names*
+                - Bind Thought
+                - Canonize`,
+      }),
+      setCursor(['Group', 'Reify']),
+    ])
+    await act(vi.runAllTimersAsync)
+
+    expect(screen.queryByLabelText('note-editable')?.textContent).toBe('Bind Thought, Canonize')
+
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.focus(noteEditor)
+      fireEvent.input(noteEditor, { target: { innerHTML: 'Updated, Canonize' } })
+      fireEvent.blur(noteEditor)
+      await vi.runAllTimersAsync()
+    })
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - Group
+    - =children
+      - =note
+        - =path
+          - names
+    - Reify
+      - *Names*
+        - Updated
+        - Canonize`)
+  })
+
+  test('renders inherited path notes regardless of target case', async () => {
     await dispatch([
       importText({
         text: `
@@ -578,19 +803,19 @@ describe('=children/=note/=path', () => {
 
     await act(vi.runOnlyPendingTimersAsync)
 
-    // Should render two notes (for children 'a' and 'b' which have 'Year' subthoughts)
+    // All three targets match, including lowercase 'year'.
     const noteElements = screen.queryAllByLabelText('note')
-    expect(noteElements).toHaveLength(2)
+    expect(noteElements).toHaveLength(3)
 
     // Verify the note content
     const year1 = screen.getAllByText('2009')
     const year2 = screen.getAllByText('2010')
-    const year3 = screen.queryByText('2011')
+    const year3 = screen.getAllByText('2011')
 
     // We expect each year to be rendered in the note once: as a note value
     expect(year1).toHaveLength(1)
     expect(year2).toHaveLength(1)
-    expect(year3).toBeNull() // lowercase 'year' doesn't match 'Year' path
+    expect(year3).toHaveLength(1)
   })
 
   test('update the target thought when the note is edited and vice versa', async () => {
@@ -658,7 +883,7 @@ describe('=children/=note/=path', () => {
               - 2009
           - b
           - c
-           - year
+           - Years
               - 2011`,
       }),
     ])
@@ -674,9 +899,9 @@ describe('=children/=note/=path', () => {
     expect(noteWithContent)
 
     // Child 'b' has no Year subthought, so no note should be rendered for it
-    // Child 'c' has lowercase 'year' which doesn't match 'Year' path, so no note either
+    // Child 'c' has plural 'Years' which doesn't match 'Year', so no note either.
     const year2011 = screen.queryByText('2011')
-    expect(year2011).toBeNull() // lowercase 'year' doesn't match 'Year' path
+    expect(year2011).toBeNull()
   })
 
   test('allow adding a missing note via =children/=note/=path', async () => {

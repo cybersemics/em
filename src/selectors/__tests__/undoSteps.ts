@@ -24,6 +24,14 @@ it('group a new thought with the edit that types its value', () => {
   expect(undoSteps(store.getState()).position).toBe(0)
 })
 
+it('keep formatting held for a new empty thought as its own step', () => {
+  store.dispatch(newThought({}))
+  // The reducer holds the formatting of an empty thought without reading the DOM, so it can be dispatched directly.
+  store.dispatch({ type: 'formatSelection', command: 'bold' })
+
+  expect(stepSources()).toEqual([['formatSelection'], ['newThought']])
+})
+
 it('group a cursor move with the edit before it', () => {
   store.dispatch([
     importText({

@@ -1,4 +1,6 @@
+import { clearActionCreator as clear } from '../../actions/clear'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { pullActionCreator as pull } from '../../actions/pull'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -6,9 +8,36 @@ import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import outdentCommand from '../outdent'
 
 beforeEach(initStore)
+
+it('keeps an outdented thought in alphabetical order after reloading a sorted context', async () => {
+  store.dispatch([
+    importText({
+      text: `
+        - =sort
+          - Alphabetical
+        - c
+          - b
+      `,
+    }),
+    setCursor(['c', 'b']),
+  ])
+
+  executeCommandWithMulticursor(outdentCommand, { store })
+  await waitForThoughtspaceIdle()
+
+  store.dispatch(clear())
+  await store.dispatch(pull([HOME_TOKEN]))
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - b
+  - c`)
+})
 
 describe('multicursor', () => {
   it('outdents multiple thoughts', async () => {
