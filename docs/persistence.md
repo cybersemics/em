@@ -62,7 +62,7 @@ An asynchronous append or loopback failure is reported through `onError` and gat
 
 #### Order and placement
 
-`ThoughtspaceTransaction.update` accepts `movePlacements: Index<ThoughtId | null>`: the value names the preceding sibling, or `null` for first. Creates and parent changes require one; imports, moves, sorting and edits supply placements directly. Undo/redo instead asks TreeCRDT to revert operation IDs; EM does not reconstruct placements from Redux patches.
+`ThoughtspaceTransaction.update` accepts `movePlacements: Index<ThoughtId | null>`: the value names the preceding sibling, or `null` for first. Creates and parent changes require one; imports, moves, sorting and edits supply placements directly. Adding or removing a child also repositions its nonempty, non-emoji-only parent when its context is sorted by `Updated`. Undo/redo instead asks TreeCRDT to revert operation IDs; EM does not reconstruct placements from Redux patches.
 
 The transaction applies parents and placement anchors before their dependents, then deletions. Invalid anchors fail the atomic command rather than falling back to a numeric rank. `getPosition` reads a sibling's ordinal without storing it on `Thought`. See [data-model.md → rank](data-model.md#rank).
 

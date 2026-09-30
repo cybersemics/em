@@ -7,6 +7,7 @@ import getThoughtById from './getThoughtById'
 interface NoteKeyResult {
   noteKey: string
   noteId?: ThoughtId
+  notePathId?: ThoughtId
 }
 
 /** Resolves note key and note id by checking for note thoughts. */
@@ -23,7 +24,7 @@ const resolveNoteKey = (state: State, thoughtId: ThoughtId): NoteKeyResult => {
 
   return {
     noteKey,
-    ...(notePathId ? {} : { noteId }),
+    ...(notePathId ? { notePathId } : { noteId }),
   }
 }
 

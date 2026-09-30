@@ -7,11 +7,15 @@ import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedPlacement from '../selectors/getSortedPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import command from '../util/command'
 import createId from '../util/createId'
 import head from '../util/head'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import timestamp from '../util/timestamp'
 
 interface Payload {
@@ -61,7 +65,14 @@ const createThought = (
     updatedBy: clientId,
   }
 
-  return updateThoughts(state, { thoughtIndexUpdates, movePlacements: { [id]: afterId }, onPersisted }, transaction)
+  // A child change updates the parent's timestamp, so keep its Updated-sorted context in order.
+  const movePlacements: Index<ThoughtId | null> = { [id]: afterId }
+  if (getSortPreference(state, parent.parentId).type === 'Updated' && !isEmptyOrEmojiOnly(parent.value)) {
+    const parentAfterId = getSortedPlacement(state, parent.parentId, parent.value, { staleId: parent.id })
+    if (parentAfterId !== getPreviousSiblingId(state, parent.id)) movePlacements[parent.id] = parentAfterId
+  }
+
+  return updateThoughts(state, { thoughtIndexUpdates, movePlacements, onPersisted }, transaction)
 }
 
 /** Action-creator for createThought. */

@@ -8,6 +8,9 @@ import Thunk from '../@types/Thunk'
 import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import { getChildrenRanked } from '../selectors/getChildren'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedPlacement from '../selectors/getSortedPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import thoughtToPath from '../selectors/thoughtToPath'
@@ -17,6 +20,7 @@ import equalPathHead from '../util/equalPathHead'
 import hashPath from '../util/hashPath'
 import headValue from '../util/headValue'
 import isDescendant from '../util/isDescendant'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import reducerFlow from '../util/reducerFlow'
 import timestamp from '../util/timestamp'
 
@@ -56,6 +60,13 @@ const deleteThought = (state: State, { pathParent, thoughtId }: Payload, transac
   }
   collectDeletes(thoughtId, [...pathParent, thoughtId])
 
+  // A child change updates the parent's timestamp, so keep its Updated-sorted context in order.
+  const movePlacements: Index<ThoughtId | null> = {}
+  if (getSortPreference(state, parent.parentId).type === 'Updated' && !isEmptyOrEmojiOnly(parent.value)) {
+    const parentAfterId = getSortedPlacement(state, parent.parentId, parent.value, { staleId: parent.id })
+    if (parentAfterId !== getPreviousSiblingId(state, parent.id)) movePlacements[parent.id] = parentAfterId
+  }
+
   const isDeletedThoughtCursor = equalPathHead(simplePath, state.cursor)
 
   const isCursorDescendantOfDeletedThought = !!simplePath && !!state.cursor && isDescendant(simplePath, state.cursor)
@@ -77,6 +88,7 @@ const deleteThought = (state: State, { pathParent, thoughtId }: Payload, transac
     }),
     updateThoughts({
       thoughtIndexUpdates,
+      movePlacements,
     }),
   ])(state, transaction)
 }
