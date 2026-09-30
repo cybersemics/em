@@ -12,7 +12,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import editableSyncStore from '../stores/editableSyncStore'
-import formatSelectionHtml, { FormatCommand, FormatOptions } from '../util/formatSelectionHtml'
+import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import { editThoughtActionCreator as editThought } from './editThought'
 import { setDescendantActionCreator as setDescendant } from './setDescendant'
 import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from './setIsMulticursorExecuting'
@@ -22,18 +22,6 @@ import { setPendingFormatActionCreator as setPendingFormat } from './setPendingF
 /** The single placeholder character that carries the formatting applied to an empty thought, whose own value has no
  * text for the formatting tags to wrap. See setPendingFormat. */
 const PENDING_FORMAT_PLACEHOLDER = 'x'
-
-/** Composes a formatting command onto the formatting an empty thought is already holding. The formatting is
- * accumulated on a placeholder character so that further commands compose exactly as they do on a real value. */
-const composePendingFormat = (
-  pendingFormat: string | undefined,
-  options: Pick<FormatOptions, 'command' | 'colorValue' | 'defaultColor' | 'defaultBackgroundColor'>,
-): string =>
-  formatSelectionHtml(pendingFormat ?? PENDING_FORMAT_PLACEHOLDER, {
-    start: 0,
-    end: PENDING_FORMAT_PLACEHOLDER.length,
-    ...options,
-  })
 
 /**
  * Registers a single native undo step in WKWebView for a formatSelection edit on iOS.
@@ -106,7 +94,7 @@ export const formatSelectionActionCreator =
           if (thought.value.length === 0) {
             return setPendingFormat({
               id: thought.id,
-              value: composePendingFormat(thought.pendingFormat, formatOptions),
+              value: formatSelectionHtml(thought.pendingFormat ?? PENDING_FORMAT_PLACEHOLDER, formatOptions),
             })
           }
 
@@ -160,7 +148,7 @@ export const formatSelectionActionCreator =
       dispatch(
         setPendingFormat({
           id: target.id,
-          value: composePendingFormat(target.pendingFormat, {
+          value: formatSelectionHtml(target.pendingFormat ?? PENDING_FORMAT_PLACEHOLDER, {
             command,
             colorValue: color ? colors[color] : undefined,
             // A note is semi-transparent by default, so its default foreground differs from a thought's (#3902).
