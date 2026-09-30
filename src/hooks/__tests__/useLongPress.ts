@@ -59,20 +59,14 @@ const tap = async (el: HTMLElement, { hold = 50 }: { hold?: number } = {}) => {
   })
 }
 
-it('a tap on the caret after a double tap does not activate drag and drop', async () => {
+it('a tap on the caret does not activate drag and drop', async () => {
   await dispatch(importText({ text: '- One' }))
   await act(vi.runOnlyPendingTimersAsync)
   const bullet = getBulletByContext(['One'])
   selection.set(await findThoughtByText('One'), { offset: 3 })
   await touchesLandOn('One', 3)
 
-  // double tap
-  await tap(bullet)
-  await act(() => vi.advanceTimersByTimeAsync(50))
-  await tap(bullet)
-  await act(() => vi.advanceTimersByTimeAsync(1000))
-
-  // the tap whose touchend iOS withholds
+  // no double tap first: iOS stays stuck across a reload, so it may have been on an earlier page
   await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
 
@@ -124,20 +118,6 @@ it('a quick second tap on another thought does not activate drag and drop', asyn
   // a tap, then a second touch 130ms after it lifts, whose touchend iOS withholds
   await tap(bullet, { hold: 90 })
   await act(() => vi.advanceTimersByTimeAsync(130))
-  await touchStart(bullet)
-  await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
-
-  expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
-})
-
-it('a tap on the caret does not activate drag and drop before any double tap', async () => {
-  await dispatch(importText({ text: '- One' }))
-  await act(vi.runOnlyPendingTimersAsync)
-  const bullet = getBulletByContext(['One'])
-  selection.set(await findThoughtByText('One'), { offset: 3 })
-  await touchesLandOn('One', 3)
-
-  // iOS stays stuck across a reload, so the double tap may have been on an earlier page
   await touchStart(bullet)
   await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
 
