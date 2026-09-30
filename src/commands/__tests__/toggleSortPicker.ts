@@ -11,6 +11,7 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import categorizeCommand from '../categorize'
+import deleteCommand from '../delete'
 import favoriteCommand from '../favorite'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
@@ -131,6 +132,41 @@ describe('toggleSortPicker error', () => {
       vi.advanceTimersByTime(1000)
 
       store.dispatch([setCursor(['One', 'Four']), outdent()])
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/5695
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when deleting a subthought in a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One
+              - Four
+            - Two
+            - Three
+          `,
+        }),
+        setCursor(['One']),
+      ])
+
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['One', 'Four']))
+      executeCommand(deleteCommand, { store })
 
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
