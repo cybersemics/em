@@ -1,6 +1,8 @@
 import { KnownDevices } from 'puppeteer'
 import clearThoughtCommand from '../../../commands/clearThought'
 import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import getSelection from '../helpers/getSelection'
@@ -9,6 +11,7 @@ import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -426,5 +429,45 @@ describe('mobile', () => {
     await waitForFirstEditable('hello')
     expect(await editableValues()).toEqual(['hello', 'hello', 'hello'])
     expect(await multiselectSize()).toBe(3)
+  })
+
+  // https://github.com/cybersemics/em/issues/5288
+  it('mirrors typing across the multiselection after the selected thoughts are indented', async () => {
+    await paste(`
+      - aaa
+      - bbb
+      - ccc
+      - =children
+        - =pin
+          - true
+    `)
+
+    const bbb = await waitForEditable('bbb')
+    const ccc = await waitForEditable('ccc')
+
+    await clickThought('ccc')
+    await longPressThought(bbb, { edge: 'right' })
+    await longPressThought(ccc, { edge: 'right' })
+
+    // Wait for the Command Center to reflect the full selection before acting (see multiselect.ts).
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid=command-center-panel]')?.textContent?.includes('2 thoughts selected') ??
+        false,
+      { timeout: 6000 },
+    )
+
+    await clickToolbar('Indent')
+
+    // Indent moves both selected thoughts into aaa, which becomes a parent.
+    await waitUntil(() => !!document.querySelector('[data-bullet="parent"]'), { timeout: 6000 })
+
+    await gesture(clearThoughtCommand)
+    await waitForEditable('')
+
+    // Typing mirrors the new value across the selected thoughts even though they were moved while selected.
+    await page.keyboard.type('Test')
+    await waitForEditable('Test')
+    expect(await editableValues()).toEqual(['aaa', 'Test', 'Test'])
   })
 })

@@ -7,8 +7,12 @@ import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import getThoughtById from '../selectors/getThoughtById'
+import store from '../stores/app'
 import multitouchStore from '../stores/multitouchStore'
+import touchStore from '../stores/touchStore'
 import haptics from '../util/haptics'
+import head from '../util/head'
 
 export interface LongPressProps {
   onContextMenu: (e: React.MouseEvent | React.PointerEvent) => void
@@ -85,7 +89,14 @@ const useLongPress = (
    * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      if ('touches' in e.nativeEvent || e.nativeEvent.button !== 2) setPressing(true)
+      if (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2) return
+
+      // A press that lands on the caret is the user reaching for native caret repositioning, not the start of a drag.
+      // Never marking the press keeps the rest of the chain — haptics, the scroll lock, DragHold — from running (#3763).
+      // The flag is latched by the capture-phase touchstart listener in initEvents, which runs first.
+      if (touchStore.getState().pressOnCaret) return
+
+      setPressing(true)
     },
     [setPressing],
   )
@@ -116,15 +127,26 @@ const useLongPress = (
   )
 
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
-  // Allow double tap to open the context menu as usual.
+  // A press on the caret of an *empty* thought is exempt, where the menu is the only way to reach paste: every other
+  // route to it goes through selecting a word, and an empty thought has none.
   // Android passes React.PointerEvent
   // Web passes React.MouseEvent
   const onContextMenu = useCallback(
     (e: React.MouseEvent | React.PointerEvent) => {
       // On Android, double tap activation of context menu produces a pointerType of `mouse` whereas long press produces `touch`
       if ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch') {
+        const state = store.getState()
+        const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
+        const { pressOnCaret } = touchStore.getState()
+        if (pressOnCaret && isEmptyThought) return
+
         e.preventDefault()
         e.stopPropagation()
+
+        // The cleanup below closes the keyboard on the way into a drag. A press on the caret never becomes one, so
+        // running it would blur the editable and destroy the caret the press was aimed at.
+        if (pressOnCaret) return
+
         selection.clear()
         dispatch(keyboardOpen({ value: false }))
       }
