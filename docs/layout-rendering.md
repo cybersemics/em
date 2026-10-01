@@ -95,24 +95,29 @@ After the loop:
 - `indentCursorAncestorTables` — captured when the cursor node is visited; drives the global horizontal autocrop (see [Indent](#indent-horizontal-autocrop)).
 - `hoverArrowVisibility` — `'above' | 'below' | null`, set when the user is dragging into a sorted context and the drop position is outside the currently-rendered range. Drives the [`HoverArrow`](../src/components/HoverArrow.tsx) component.
 
-## `useAutocrop` (vertical autocrop)
+## Scroll clamp for visible thoughts
 
-When the cursor is deep, many ancestors and ancestor-siblings are hidden by autofocus. Their hidden heights still occupy the document's y-coordinate space, leaving a tall blank region above the cursor. If you scroll up, the entire viewport is empty.
+When the cursor is deep, many ancestors and ancestor-siblings are hidden by autofocus. Their hidden heights still occupy the document's y-coordinate space, leaving large blank regions that native scrolling can move into.
 
-[`useAutocrop`](../src/components/LayoutTree.tsx) crops this empty space and counter-scrolls so the visible thoughts stay put under the user's finger:
+`LayoutTree` keeps hidden heights in the document and clamps scrolling to the autofocus-visible thought band:
 
-1. `LayoutTree` sums the heights of every thought above the cursor where `sizes[key].isVisible === false && !belowCursor`. Result: `spaceAbove`.
-2. `useAutocrop` extends that to at least one viewport height (so there's still room to scroll up): `spaceAboveExtended = max(spaceAbove, viewportHeight)`.
-3. The hook returns `autocrop = -spaceAboveExtended + viewportHeight`, applied as `transform: translateY(...)` on the outer container.
-4. When `autocrop` changes, `window.scrollTo({ top: window.scrollY + delta })` keeps visible thoughts positionally stable. The counter-scroll tracks the translation, not `spaceAboveExtended`: a viewport height change (e.g. rotating the device) moves `spaceAboveExtended` without shifting the thoughts when `spaceAbove` is less than the viewport, and scrolling by it would push the cursor off screen ([#3990](https://github.com/cybersemics/em/issues/3990)).
+1. `usePositionedThoughts` provides `y` and `height` for each thought, and marks autofocus state (`show`, `dim`, `hide`, `hide-parent`).
+2. `LayoutTree` reduces those positioned thoughts to the minimum top and maximum bottom among `show`/`dim` entries.
+3. The clamp bounds are computed within the usable viewport between the toolbar bottom (`viewportTopBoundary`) and the sticky nav top (`viewportBottomBoundary`). A symmetric allowance (`viewportAllowance`) is measured within that usable height. The lower content extent is the greater of the last visible thought and the normal-flow footer, so the clamp does not prevent scrolling to footer controls and build information:
+   - `minScrollY = max(0, layoutTreeTop + visibleTop - (viewportTopBoundary + viewportAllowance))`
+   - `maxScrollY = max(minScrollY, visibleContentBottom - (viewportBottomBoundary - viewportAllowance))`
+4. Both bounds are limited to the physical document's scroll range. Desktop and Android immediately clamp out-of-range scrolling. Only iOS (including iPadOS desktop-mode Safari) adds a temporary vertical transform for elastic overscroll at interior bounds. Physical page edges that coincide with a clamp bound retain their native bounce.
+5. After native pan recognition, unresisted finger travel drives the custom resistance curve, even when the browser reaches a physical page edge. For distance `x` beyond the visible boundary and viewport height `d`, displacement is `0.55 * x * d / (d + 0.55 * x)`. It keeps yielding with progressively greater resistance, without a hard cap. The temporary transform compensates for the actual native scroll position, so native page-edge resistance is not applied twice.
+6. Release preserves the visible position while rebasing `window.scrollY` to the boundary. A critically damped 2 Hz spring returns the transform to zero; the derivative of the resistance curve converts finger velocity into the spring's initial visible velocity. In-range scrolling keeps native momentum through thought-height and viewport measurements. If that momentum crosses an interior boundary, its current displacement and speed transfer directly to the spring, preserving motion through the handoff.
+7. A new touch stops the animation at its current position. Inverting the resistance curve lets further finger travel continue from that stretch, including reversing direction. Bounds and viewport updates preserve the active touch. If an interrupted drag returns inside the range, rebasing cancels native momentum, so Motion continues its inertia using the normal UIScrollView decay (`0.998` per millisecond, approximately a 499.5 ms time constant). That coast checks current bounds on each frame, so measurement updates preserve its motion and its speed transfers to the spring at the current boundary. Wheel, keyboard, and deliberate viewport navigation cancel the custom animation. Window-directed drag edge autoscrolling emits the same `em-scroll` handoff so a suspended touch cannot pin that deliberate movement.
 
-Net effect: the outer container is shifted up off-screen by exactly enough that one viewport's worth of empty space sits above the cursor. The user can scroll into that empty space; visible thoughts don't jump.
+The resistance formula is the [observed UIScrollView curve reproduced with UIKit Dynamics](https://holko.pl/2014/07/06/inertia-bouncing-rubber-banding-uikit-dynamics/). The spring preserves position and velocity as recommended in [Apple's Designing Fluid Interfaces](https://developer.apple.com/videos/play/wwdc2018/803/). UIKit's complete bounce implementation and spring parameters are private: the 2 Hz return is an approximation, and Chrome device emulation cannot validate native Safari bounce or exact iOS feel.
 
-History: the original autocrop work is [issue #1751](https://github.com/cybersemics/em/issues/1751); the uncle-handling refinement is [issue #3055](https://github.com/cybersemics/em/issues/3055).
+Users can scroll to any displayed thought, the footer, and approximately `0.8 * usableViewportHeight` beyond the visible thought band.
 
 ## Indent (horizontal autocrop)
 
-The same idea applied horizontally. As the cursor descends, the entire tree slides left so the cursor stays roughly center-screen, and table-col1 widths are absorbed.
+As the cursor descends, the entire tree slides left so the cursor stays roughly center-screen, and table-col1 widths are absorbed.
 
 ```ts
 indent = indentDepth * 0.9 + indentCursorAncestorTables / fontSize
@@ -135,7 +140,7 @@ viewportBottom = max(scrollTop, 0)
                + (singleLineHeight * 5) // overshoot, so a small scroll doesn't reveal blanks
 ```
 
-Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable. (Above the cursor, autocrop already handles the blank space.)
+Each `TreeNode` subscribes to `scrollTopStore` with a selector that returns only whether that thought is beyond the boundary. Most scroll updates leave this boolean unchanged, so they do not rerender `LayoutTree`, `TransitionGroup`, or the full thought list. A `TreeNode` returns `null` only when it is below the cursor, is not the cursor itself, and its `y` is more than one estimated thought height beyond `viewportBottom`. It remains in `treeThoughtsPositioned` so crossing the boundary can render it without rebuilding the list, while the fixed container height keeps the document height stable.
 
 ## `useSizeTracking` and the `sizes` map
 
@@ -164,7 +169,7 @@ Two details:
 ## Render tree
 
 ```
-div                                              (outer; translateY for autocrop)
+div                                              (outer)
   HoverArrow                                     (drop arrow when dragging into a sorted context off-screen)
   div                                            (inner; translateX for indent, slow CSS transition)
     BulletCursorOverlay                          (rendered separately so cursor moves don't re-render every thought)
@@ -207,7 +212,7 @@ When `b` is positioned, `yaccum` is *not* incremented; `b1` is placed at `(x = f
 
 ## `useLayoutTreeTop`
 
-A small effect that writes the LayoutTree's top y (offset + autocrop) into `viewportStore.layoutTreeTop`. Used by `scrollCursorIntoView` to figure out where thoughts actually start on the page (vs. the toolbar above).
+A small effect that writes the LayoutTree's top y into `viewportStore.layoutTreeTop`. Used by `scrollCursorIntoView` and visible-thought scroll clamping to convert layout-local thought `y` coordinates into document coordinates.
 
 ## Scrolling the cursor into view
 
@@ -215,4 +220,4 @@ A small effect that writes the LayoutTree's top y (offset + autocrop) into `view
 
 The scheduled path defers to the next tick before reading the cursor's size, because `editingValueStore` subscribers run synchronously and would otherwise close over a size from before the render ([#3083](https://github.com/cybersemics/em/issues/3083)), and then throttles to 400 ms. A cursor scroll can therefore be waiting in three places at once: the tick before it reaches the throttle, the throttle's trailing call, and the 10 ms retry that `scrollIntoViewIfNeeded` arms while `preventAutoscroll` is in progress (see [cursor-and-caret.md → `preventAutoscroll.ts`](cursor-and-caret.md#preventautoscrollts)). `scheduleScrollCursorIntoView.cancel()` clears all three; cancelling the throttle alone leaves a timer that has not fired yet free to re-arm it.
 
-[`scrollTo`](../src/device/scrollTo.ts) cancels before it scrolls. Its callers — Escape, Home, opening a modal, the footer, the tutorial's scroll-up button — are all deliberate moves of the viewport, so a cursor scroll queued before one of them is stale; without the cancel it lands up to 400 ms later and undoes the scroll that was just asked for. Escape and Home are the sharp cases, since clearing the cursor is itself what schedules the pending scroll. New code that repositions the viewport on purpose should go through `scrollTo` for the same reason. The autocrop compensation in [`LayoutTree`](../src/components/LayoutTree.tsx) is not such a case and correctly bypasses it: it holds the viewport still while content shifts underneath, so it has no pending cursor scroll to supersede.
+[`scrollTo`](../src/device/scrollTo.ts) cancels before it scrolls. Its callers — Escape, Home, opening a modal, the footer, the tutorial's scroll-up button — are all deliberate moves of the viewport, so a cursor scroll queued before one of them is stale; without the cancel it lands up to 400 ms later and undoes the scroll that was just asked for. Escape and Home are the sharp cases, since clearing the cursor is itself what schedules the pending scroll. New code that repositions the viewport on purpose should go through `scrollTo` for the same reason. Both `scrollTo` and an actual `scrollCursorIntoView` navigation emit `em-scroll` before moving the window, allowing an active elastic animation to yield instead of restoring its previous anchor. The visible-thought clamp in [`LayoutTree`](../src/components/LayoutTree.tsx) correctly bypasses that cancel path because it is not an intentful navigation command; it only corrects out-of-range native scrolling.
