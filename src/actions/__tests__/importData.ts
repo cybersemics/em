@@ -1257,6 +1257,28 @@ it('insert single-line HTML copied from Mac desktop Chrome at end of thought', a
   - afoo`)
 })
 
+// https://github.com/cybersemics/em/issues/4073
+it.skip('paste a word copied from em in Mobile Safari into the iOS app without its inline black text color', async () => {
+  const html = `<span style="font-style: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); font-size: medium; float: none; display: inline !important;">One</span>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    newThought({ value: '' }),
+    (dispatch, getState) =>
+      dispatch(importDataActionCreator({ path: contextToPath(getState(), [''])!, html, text: 'One' })),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const state = store.getState()
+  const value = getThoughtById(state, head(state.cursor!))?.value
+
+  cleanup()
+
+  expect(value).toBe('One')
+})
+
 it('do not insert html with newlines as a single-line', async () => {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
