@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropHoverRecipe } from '../../styled-system/recipes'
 import { token } from '../../styled-system/tokens'
@@ -10,6 +10,7 @@ import { toggleUserSettingActionCreator as toggleUserSetting } from '../actions/
 import { Settings } from '../constants'
 import useDragAndDropFavorites from '../hooks/useDragDropFavorites'
 import useDragHold from '../hooks/useDragHold'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getFavoriteIds from '../selectors/getFavoriteIds'
 import getThoughtById from '../selectors/getThoughtById'
 import getUserSetting from '../selectors/getUserSetting'
@@ -112,7 +113,7 @@ const FavoritesOptions = ({
   showOptions?: boolean
 }) => {
   const dispatch = useDispatch()
-  const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
+  const hideContexts = useEditorSelector(getUserSetting(Settings.favoritesHideContexts))
   const formRef = useRef<HTMLFormElement>(null)
 
   return (
@@ -174,7 +175,7 @@ const FavoritesOptions = ({
 const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => {
   const [showOptions, setShowOptions] = useState(false)
 
-  const simplePaths = useSelector(state => {
+  const simplePaths = useEditorSelector(state => {
     return getFavoriteIds(state)
       .map(id => {
         const thought = getThoughtById(state, id)
@@ -185,7 +186,7 @@ const Favorites = ({ disableDragAndDrop }: { disableDragAndDrop?: boolean }) => 
       .filter(nonNull)
   }, _.isEqual)
 
-  const hideContexts = useSelector(getUserSetting(Settings.favoritesHideContexts))
+  const hideContexts = useEditorSelector(getUserSetting(Settings.favoritesHideContexts))
 
   return (
     <div className='favorites' data-testid='favorites'>

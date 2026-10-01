@@ -1,6 +1,6 @@
 import { isEqual, sortBy } from 'lodash'
-import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getChildPath from '../selectors/getChildPath'
 import { getAllChildren } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
@@ -13,7 +13,7 @@ import ThoughtLink from './ThoughtLink'
 /** Recently deleted thoughts derived from archive contexts in the complete document. */
 const RecentlyDeleted = () => {
   // list of paths of all deleted thoughts
-  const paths = useSelector(state => {
+  const paths = useEditorSelector(state => {
     const lexeme = getLexeme(state, '=archive')
     // paths of all =archive instances
     const archivePaths = lexeme?.contexts.map(cxid => thoughtToPath(state, cxid)) ?? []

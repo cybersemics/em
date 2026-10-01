@@ -20,7 +20,7 @@ The estimate is rarely far enough off to be visible, so the user almost never se
 
 Each render produces two parallel lists, both indexed by the same key:
 
-- **`treeThoughts: TreeThought[]`** — produced by the [`linearizeTree`](../src/selectors/linearizeTree.ts) selector. An in-order traversal of all currently visible thoughts. Each entry carries depth, table-cell flags, autofocus state, the `Path` and `SimplePath`, accumulated styles, etc. Recalculated whenever Redux state changes.
+- **`treeThoughts: TreeThought[]`** — produced by the [`linearizeTree`](../src/selectors/linearizeTree.ts) selector. An in-order traversal of all currently visible thoughts. Each entry carries depth, table-cell flags, autofocus state, the `Path` and `SimplePath`, accumulated styles, etc. Selected from the captured editor context when document or UI state changes.
 - **`treeThoughtsPositioned: TreeThoughtPositioned[]`** — produced by `usePositionedThoughts`. Same shape but with `x`, `y`, `width`, `height`, `cliff`, `isLastVisible`. Recalculated when widths or heights change in the `sizes` map.
 
 The render walks `treeThoughtsPositioned`, wrapping each entry in a `TreeNode` (which mounts a `VirtualThought` plus the appropriate drop targets) inside a `TransitionGroup` so removed thoughts can fade out.

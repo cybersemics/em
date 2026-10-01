@@ -1,7 +1,7 @@
 import { Keyboard } from '@capacitor/keyboard'
 import ClipboardJS from 'clipboard'
 import React, { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { extendTapRecipe } from '../../../styled-system/recipes'
 import ExportOption from '../../@types/ExportOption'
@@ -16,6 +16,7 @@ import { HOME_PATH } from '../../constants'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import share from '../../device/share'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
@@ -86,7 +87,7 @@ const rotate180Class = css.raw({ transform: 'rotate(180deg)' })
 const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
   const [isOpen, setIsOpen] = useState(false)
 
-  const dark = useSelector(state => theme(state) !== 'Light')
+  const dark = useEditorSelector(state => theme(state) !== 'Light')
 
   const closeDropdown = useCallback(() => {
     setIsOpen(false)

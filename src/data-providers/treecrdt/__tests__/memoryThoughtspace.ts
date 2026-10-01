@@ -14,8 +14,9 @@ import * as thoughtPayload from '../payload'
 
 it('avoids scanning history for its own writes without suppressing incoming changes during a pending append', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
-  const onChange = vi.fn()
   const runtime = createMemoryThoughtspace(async () => persistent)
+  const subscribed = vi.fn()
+  const unsubscribe = runtime.subscribe(subscribed)
   const own: Thought = {
     id: '1'.repeat(32) as ThoughtId,
     parentId: HOME_TOKEN,
@@ -34,15 +35,18 @@ it('avoids scanning history for its own writes without suppressing incoming chan
     started = resolve
   })
   try {
-    await runtime.init({ storage: 'memory', onChange })
+    await runtime.init({ storage: 'memory' })
     await runtime.waitForIdle()
     const scans = vi.spyOn(persistent.opRefs, 'all')
-    await runtime.transact(transaction =>
+    const committed = runtime.transact(transaction =>
       transaction.update({ thoughtIndexUpdates: { [own.id]: own }, movePlacements: { [own.id]: null } }),
-    ).persisted
+    )
+    expect(subscribed).toHaveBeenCalledExactlyOnceWith()
+    subscribed.mockClear()
+    await committed.persisted
     await runtime.waitForIdle()
     expect(scans).not.toHaveBeenCalled()
-    expect(onChange).not.toHaveBeenCalled()
+    expect(subscribed).not.toHaveBeenCalled()
 
     const append = persistent.ops.appendMany.bind(persistent.ops)
     vi.spyOn(persistent.ops, 'appendMany').mockImplementationOnce(async (ops, options) => {
@@ -53,8 +57,12 @@ it('avoids scanning history for its own writes without suppressing incoming chan
     const pending = runtime.transact(transaction =>
       transaction.update({ thoughtIndexUpdates: { [own.id]: { ...own, value: 'pending local edit' } } }),
     )
+    expect(subscribed).toHaveBeenCalledExactlyOnceWith()
+    subscribed.mockClear()
     await appendStarted
-    const received = new Promise<ThoughtspaceView>(resolve => onChange.mockImplementationOnce(resolve))
+    const received = new Promise<ThoughtspaceView>(resolve =>
+      subscribed.mockImplementationOnce(() => resolve(runtime.project())),
+    )
     await persistent.local.insert(
       new Uint8Array(32).fill(9),
       HOME_TOKEN,
@@ -71,10 +79,12 @@ it('avoids scanning history for its own writes without suppressing incoming chan
     await pending.persisted
     await runtime.waitForIdle()
     expect(scans).toHaveBeenCalledTimes(1)
-    expect(onChange).toHaveBeenCalledTimes(1)
+    expect(subscribed).toHaveBeenCalledExactlyOnceWith()
+    expect(runtime.project()).toBe(view)
     expect(decodeThoughtPayload((await persistent.tree.getPayload(own.id))!).value).toBe('pending local edit')
   } finally {
     release()
+    unsubscribe()
     await runtime.drop()
   }
 })
@@ -170,6 +180,9 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
   const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
   const runtime = createMemoryThoughtspace(async () => persistent)
   let view: ThoughtspaceView = runtime.project()
+  const unsubscribe = runtime.subscribe(() => {
+    view = runtime.project()
+  })
   const payload = { value: 'a', created: 1 as Timestamp, lastUpdated: 1 as Timestamp, updatedBy: 'test' }
   const a: Thought = { ...payload, id: '1'.repeat(32) as ThoughtId, parentId: HOME_TOKEN }
   const b: Thought = { ...a, id: '2'.repeat(32) as ThoughtId, value: 'b' }
@@ -178,19 +191,13 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
     release = resolve
   })
   try {
-    await runtime.init({
-      storage: 'memory',
-      onChange: thoughts => {
-        view = thoughts
-      },
-    })
+    await runtime.init({ storage: 'memory' })
     const initial = runtime.transact(transaction =>
       transaction.update({
         thoughtIndexUpdates: { [a.id]: a, [b.id]: b },
         movePlacements: { [a.id]: null, [b.id]: a.id },
       }),
     )
-    view = initial.value
     await initial.persisted
     await runtime.waitForIdle()
 
@@ -214,13 +221,11 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
         thoughtIndexUpdates: { [a.id]: { ...a, value: 'first' } },
       }),
     )
-    view = first.value
     const second = runtime.transact(transaction =>
       transaction.update({
         thoughtIndexUpdates: { [a.id]: { ...a, value: 'second' } },
       }),
     )
-    view = second.value
     expect(view.getThought(a.id)!.value).toBe('second')
     expect(view.lexemeIndex[hashThought('second')].contexts).toEqual([a.id])
     // Memory queries see the latest edit without waiting for SQLite.
@@ -232,6 +237,7 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
     expect(decodeThoughtPayload((await persistent.tree.getPayload(a.id))!).value).toBe('second')
   } finally {
     release()
+    unsubscribe()
     await runtime.drop()
   }
 })
@@ -240,18 +246,16 @@ it('publishes every newly received descendant and its current ancestor path afte
   const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
   const runtime = createMemoryThoughtspace(async () => persistent)
   let view: ThoughtspaceView = runtime.project()
+  const unsubscribe = runtime.subscribe(() => {
+    view = runtime.project()
+  })
   const replica = new Uint8Array(32).fill(10)
   const parent = '3'.repeat(32) as ThoughtId
   const child = '4'.repeat(32) as ThoughtId
   const destination = '5'.repeat(32) as ThoughtId
   const payload = { created: 1 as Timestamp, lastUpdated: 1 as Timestamp, updatedBy: 'remote' }
   try {
-    await runtime.init({
-      storage: 'memory',
-      onChange: thoughts => {
-        view = thoughts
-      },
-    })
+    await runtime.init({ storage: 'memory' })
     view = runtime.project()
     await persistent.local.insert(
       replica,
@@ -287,6 +291,7 @@ it('publishes every newly received descendant and its current ancestor path afte
     await runtime.waitForIdle()
     expect(view.getThought(child)).toBeUndefined()
   } finally {
+    unsubscribe()
     await runtime.drop()
   }
 })

@@ -1,5 +1,5 @@
 import React, { FC, PropsWithChildren, useEffect, useId, useRef, useState } from 'react'
-import { shallowEqual, useDispatch, useSelector } from 'react-redux'
+import { shallowEqual, useDispatch } from 'react-redux'
 import pkg from '../../package.json'
 import { css, cx } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
@@ -12,6 +12,7 @@ import { showModalActionCreator as showModal } from '../actions/showModal'
 import { TUTORIAL2_STEP_SUCCESS } from '../constants'
 import { tsid } from '../data-providers/thoughtspaceSession'
 import scrollTo from '../device/scrollTo'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
 import backgroundGlowStore from '../stores/backgroundGlowStore'
@@ -21,7 +22,7 @@ import fastClick from '../util/fastClick'
 
 /** Helper hook that allows web and native to share selectors for the footer component. */
 const useFooterUseSelectors = () => {
-  return useSelector(
+  return useEditorSelector(
     state => ({
       authenticated: state.authenticated,
       tutorialStep: +(getSetting(state, 'Tutorial Step') || 1),

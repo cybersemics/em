@@ -1,5 +1,5 @@
 import { useDragDropManager } from 'react-dnd'
-import { shallowEqual, useSelector } from 'react-redux'
+import { shallowEqual } from 'react-redux'
 import DragThoughtItem from '../@types/DragThoughtItem'
 import DropThoughtZone from '../@types/DropThoughtZone'
 import attributeEquals from '../selectors/attributeEquals'
@@ -7,12 +7,13 @@ import getSortedPlacement from '../selectors/getSortedPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
+import useEditorSelector from './useEditorSelector'
 
 /** Checks whether a dragged thought hovers over a sorted context and projects its insertion gap for hover arrows. */
 const useSortedContext = () => {
   const dragDropManager = useDragDropManager()
 
-  return useSelector(state => {
+  return useEditorSelector(state => {
     if (!state.hoveringPath) {
       return { isHoveringSorted: false, placementRank: -1 }
     }

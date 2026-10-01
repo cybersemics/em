@@ -44,7 +44,8 @@ const replaceThoughts = (
     }
   }
   const repaired = { ...next, cursor }
-  return { ...repaired, expanded: expandThoughts(repaired, cursor) }
+  const expanded = expandThoughts(repaired, cursor)
+  return { ...repaired, expanded: _.isEqual(expanded, state.expanded) ? state.expanded : expanded }
 }
 
 /** Publishes the runtime's complete document snapshot. */

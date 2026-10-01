@@ -5,7 +5,10 @@ import { composeWithDevTools } from '@redux-devtools/extension'
 import _ from 'lodash'
 import { applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
+import EditorStore from '../@types/EditorStore'
 import appReducer from '../actions/app'
+import { replaceThoughtsActionCreator as replaceThoughts } from '../actions/replaceThoughts'
+import db from '../data-providers/thoughtspace'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import updateJumpHistory from '../redux-enhancers/updateJumpHistoryEnhancer'
@@ -48,7 +51,7 @@ const middlewareEnhancer = applyMiddleware(
 const validateStateEnhancerDevOnly =
   import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [validateStateEnhancer] : null
 
-const store = createStore(
+const editorStore = createStore(
   appReducer,
   composeEnhancers(
     // validate state before production enhancers run
@@ -58,10 +61,23 @@ const store = createStore(
     updateJumpHistory,
     // validate state again after production enhancers run
     ...(validateStateEnhancerDevOnly || []),
-    // Run commands and history before entering Redux; the Redux reducer only publishes the prepared snapshot.
+    // Run commands and history before entering Redux; Redux only publishes UI state.
     undoRedoEnhancer,
   ),
-)
+) as unknown as EditorStore
+
+const store = {
+  ...editorStore,
+  // React Redux dispatch still enters the complete command/middleware pipeline.
+  uiStore: { ...editorStore.uiStore, dispatch: editorStore.dispatch },
+}
+
+db.subscribe(() => {
+  const thoughts = db.project()
+  if (thoughts !== store.getState().thoughts) {
+    store.dispatch(replaceThoughts({ thoughts, repairCursor: true }))
+  }
+})
 
 // Run validation
 if (import.meta.env.MODE === 'development') {

@@ -38,6 +38,7 @@ import {
 import asyncFocus from '../device/asyncFocus'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
+import useEditorSelector from '../hooks/useEditorSelector'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
@@ -144,21 +145,21 @@ const Editable = ({
 }: EditableProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
-  const parentId = useSelector(state => head(rootedParentOf(state, simplePath)))
-  const readonly = useSelector(state => findDescendant(state, thoughtId, '=readonly'))
-  const uneditable = useSelector(state => findDescendant(state, thoughtId, '=uneditable'))
-  const optionsId = useSelector(state => findDescendant(state, parentId, '=options'))
-  const options = useSelector(state => {
+  const parentId = useEditorSelector(state => head(rootedParentOf(state, simplePath)))
+  const readonly = useEditorSelector(state => findDescendant(state, thoughtId, '=readonly'))
+  const uneditable = useEditorSelector(state => findDescendant(state, thoughtId, '=uneditable'))
+  const optionsId = useEditorSelector(state => findDescendant(state, parentId, '=options'))
+  const options = useEditorSelector(state => {
     const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
     return childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
-  const value = useSelector(state => {
+  const value = useEditorSelector(state => {
     const thought = getThoughtById(state, head(simplePath))
     return thought?.displayValue ?? thought?.value ?? ''
   })
-  const rank = useSelector(state => state.thoughts.getPosition(head(simplePath)) ?? 0)
-  const isCursorCleared = useSelector(
+  const rank = useEditorSelector(state => state.thoughts.getPosition(head(simplePath)) ?? 0)
+  const isCursorCleared = useEditorSelector(
     // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
     // or a member of a multiselection (multiselect clear).
     state => state.cursorCleared && (!!isEditing || isMulticursorPath(state, path)),
@@ -168,7 +169,7 @@ const Editable = ({
   // first/cursor thought). The cursor thought shows the real caret via useEditMode. This outlives the cleared state:
   // clearThought preserves the multicursors so that typed edits keep mirroring, and the faux carets must keep tracking
   // the real caret for as long as they do.
-  const isMulticursorFauxCaretPath = useSelector(
+  const isMulticursorFauxCaretPath = useEditorSelector(
     state =>
       isMulticursorPath(state, path) &&
       !equalPath(state.cursor, path) &&
@@ -203,7 +204,7 @@ const Editable = ({
     [placeholderBackColor, placeholderForeColor, style],
   )
 
-  const hasMulticursor = useSelector(hasMulticursorSelector)
+  const hasMulticursor = useEditorSelector(hasMulticursorSelector)
   // A non-null caret rect means the multiselection is being edited (Clear Thought), where a click places the caret as
   // usual. It is the only reactive signal that distinguishes an edited multiselection from an idle one, since the
   // browser selection that isMultiEditing consults is not part of the Redux state (see caretRectStore).
@@ -242,7 +243,7 @@ const Editable = ({
   //   isCursorCleared,
   // })
 
-  const childrenLabel = useSelector(state => {
+  const childrenLabel = useEditorSelector(state => {
     const labelId = findDescendant(state, parentId, '=label')
     return anyChild(state, labelId)?.value
   })

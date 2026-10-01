@@ -9,6 +9,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { MAX_DISTANCE_FROM_CURSOR } from '../constants'
 import asyncFocus from '../device/asyncFocus'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
+import useEditorSelector from '../hooks/useEditorSelector'
 import { getChildrenRanked } from '../selectors/getChildren'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -30,7 +31,7 @@ const NewThought = ({ path, showContexts, label, value = '', type = 'bullet' }: 
   const cursor = useSelector(state => state.cursor)
   const distance = cursor ? Math.max(0, Math.min(MAX_DISTANCE_FROM_CURSOR, cursor.length - depth - 1)) : 0
   const dispatch = useDispatch()
-  const show = useSelector(state => {
+  const show = useEditorSelector(state => {
     const children = getChildrenRanked(state, head(path))
     return !children.length || children[children.length - 1].value !== ''
   })

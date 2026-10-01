@@ -8,6 +8,7 @@ import Thought from '../@types/Thought'
 import { errorActionCreator as error } from '../actions/error'
 import { searchLimitActionCreator as setSearchLimit } from '../actions/searchLimit'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import hasLexeme from '../selectors/hasLexeme'
 import store from '../stores/app'
 import escapeRegex from '../util/escapeRegex'
@@ -28,7 +29,7 @@ const SearchSubthoughts: FC = () => {
   const search = useSelector(state => state.search)
   const remoteSearch = useSelector(state => state.remoteSearch)
   const searchLimit = useSelector(state => state.searchLimit || DEFAULT_SEARCH_LIMIT)
-  const thoughts = useSelector(state => state.thoughts)
+  const thoughts = useEditorSelector(state => state.thoughts)
 
   /**
    * Placeholder for asynchronous search integration.

@@ -1,7 +1,7 @@
-import { Provider } from 'react-redux'
 import store from '../stores/app'
 import AppComponent from './AppComponent'
 import DragAndDropContext from './DragAndDropContext'
+import EditorProvider from './EditorProvider'
 import ErrorBoundaryContainer from './ErrorBoundaryContainer'
 import TouchMonitor from './TouchMonitor'
 
@@ -10,13 +10,13 @@ import TouchMonitor from './TouchMonitor'
  */
 const App = () => (
   <DragAndDropContext>
-    <Provider store={store}>
+    <EditorProvider store={store}>
       <ErrorBoundaryContainer>
         <TouchMonitor>
           <AppComponent />
         </TouchMonitor>
       </ErrorBoundaryContainer>
-    </Provider>
+    </EditorProvider>
   </DragAndDropContext>
 )
 

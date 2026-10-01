@@ -9,6 +9,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import { isSafari, isTouch } from '../browser'
 import { MIN_CONTENT_WIDTH_EM } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import { LongPressProps } from '../hooks/useLongPress'
 import attributeEquals from '../selectors/attributeEquals'
 import getThoughtById from '../selectors/getThoughtById'
@@ -105,9 +106,9 @@ const StaticThought = ({
   updateSize,
 }: ThoughtProps) => {
   const fontSize = useSelector(state => state.fontSize)
-  const dark = useSelector(state => theme(state) !== 'Light')
+  const dark = useEditorSelector(state => theme(state) !== 'Light')
   const homeContext = isRoot(simplePath)
-  const value = useSelector(state => {
+  const value = useEditorSelector(state => {
     const thought = getThoughtById(state, head(simplePath))
     return thought?.displayValue ?? thought?.value ?? ''
   })
@@ -115,7 +116,7 @@ const StaticThought = ({
   const editableRef = React.useRef<HTMLInputElement>(null)
   const placeholder = usePlaceholder({ isEditing, path, simplePath })
 
-  const isTableCol1 = useSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
+  const isTableCol1 = useEditorSelector(state => attributeEquals(state, head(parentOf(simplePath)), '=view', 'Table'))
 
   // console.info('<StaticThought> ' + prettyPath(store.getState(), simplePath))
   // useWhyDidYouUpdate('<StaticThought> ' + prettyPath(store.getState(), simplePath), {

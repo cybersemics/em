@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { useStore } from 'react-redux'
 import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
@@ -11,6 +10,8 @@ import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
 import * as selection from '../../device/selection'
 import virtualKeyboard from '../../device/virtual-keyboard'
+import useEditorSelector from '../../hooks/useEditorSelector'
+import useEditorStore from '../../hooks/useEditorStore'
 import usePrevious from '../../hooks/usePrevious'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import isMultiEditing from '../../selectors/isMultiEditing'
@@ -41,7 +42,7 @@ const useEditMode = ({
   // must re-render when noteFocus changes in order to set the selection
   const hasNoteFocus = useSelector(state => state.noteFocus && equalPath(state.cursor, path))
   const editing = useSelector(state => state.isKeyboardOpen)
-  const isMulticursor = useSelector(hasMulticursor)
+  const isMulticursor = useEditorSelector(hasMulticursor)
   const isCursorCleared = useSelector(state => state.cursorCleared)
   const wasCursorCleared = usePrevious(isCursorCleared)
   const noteFocus = useSelector(state => state.noteFocus)
@@ -53,7 +54,7 @@ const useEditMode = ({
   const fontSize = useSelector(state => state.fontSize)
   const isCursor = useSelector(state => equalPath(path, state.cursor))
   const hadSidebar = usePrevious(showSidebar)
-  const store = useStore()
+  const store = useEditorStore()
   const dispatch = useDispatch()
   const pressingRef = useRef(false)
 

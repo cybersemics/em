@@ -1,6 +1,6 @@
 # Understanding the Data Model
 
-The thoughtspace is a tree of thoughts. Every thought has a stable `ThoughtId`, a `value` (its text), and a `parentId`. The synchronous memory TreeCRDT owns the complete document; Redux holds an immutable snapshot-bound reader alongside UI state. An asynchronous SQLite replica persists the same operations. See [persistence.md](persistence.md).
+The thoughtspace is a tree of thoughts. Every thought has a stable `ThoughtId`, a `value` (its text), and a `parentId`. The synchronous memory TreeCRDT owns the complete document; Redux holds UI state. Selectors receive a captured editor context combining that UI state with an immutable TreeCRDT view. An asynchronous SQLite replica persists the same operations. See [persistence.md](persistence.md).
 
 A second index, `lexemeIndex`, runs orthogonal to the tree: it maps a *normalized* hash of a thought's value to a `Lexeme` that lists every `ThoughtId` in the thoughtspace whose value hashes to the same key. This is what makes the Context View and search-style features possible.
 
@@ -18,7 +18,7 @@ state.thoughts: {
 state.thoughtUi: Index<Pick<Thought, 'generating' | 'displayValue' | 'splitSource'>>
 ```
 
-Initialization hydrates the complete document before editing begins. Navigation and context views read the snapshot synchronously; thoughts are not loaded or evicted by visibility. Document commands submit changes through an explicit transaction and read the canonical snapshot after each update. Redux publishes once after the whole command succeeds. Incoming engine snapshots use the non-undoable [`replaceThoughts`](../src/actions/replaceThoughts.ts) action.
+Initialization hydrates the complete document before editing begins. Navigation and context views read the snapshot synchronously; thoughts are not loaded or evicted by visibility. Document commands submit changes through an explicit transaction and read the canonical snapshot after each update. The editor publishes after the whole command succeeds; Redux is notified only when UI state changes. Incoming engine snapshots use the non-undoable [`replaceThoughts`](../src/actions/replaceThoughts.ts) to repair dependent UI state.
 
 ## Tree topology
 

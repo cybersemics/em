@@ -1,9 +1,9 @@
 import { FC, useRef } from 'react'
-import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
 import { gestureString } from '../../commands'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import GestureDiagram from '../GestureDiagram'
 import DialogContent from '../dialog/DialogContent'
 import SettingsIcon from '../icons/SettingsIcon'
@@ -18,9 +18,9 @@ interface CommandUniverseDetailPageProps {
  * command's `isActive` selector is true.
  */
 const useCommandLabels = (command: Command) => {
-  const isActive = useSelector(state => command.isActive?.(state))
+  const isActive = useEditorSelector(state => command.isActive?.(state))
   const label = command.labelInverse && isActive ? command.labelInverse : command.label
-  const description = useSelector(state => {
+  const description = useEditorSelector(state => {
     const value = (isActive && command.descriptionInverse) || command.description
     return typeof value === 'function' ? value(state) : value
   })

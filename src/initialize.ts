@@ -67,7 +67,6 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
         type: 'error',
         value: `Changes could not be saved: ${error.message}. Editing is paused; keep this tab open.`,
       }),
-    onChange: thoughts => store.dispatch(replaceThoughts({ thoughts, repairCursor: true })),
   })
 
   storageStatusStore.update(storageInUse)

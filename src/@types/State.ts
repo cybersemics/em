@@ -20,6 +20,7 @@ import ThoughtspaceView from './ThoughtspaceView'
 import Timestamp from './Timestamp'
 import Tip from './TipId'
 
+/** A captured editor read context: Redux UI state and an immutable TreeCRDT view. */
 interface State {
   absoluteContextTime?: Timestamp
   /** A dismissable informational popup. See actions/alert.ts and components/Alert.tsx. */

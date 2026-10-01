@@ -2,7 +2,6 @@ import { fireEvent } from '@testing-library/dom'
 import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act, createElement } from 'react'
-import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
@@ -18,6 +17,7 @@ import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import windowEvent from '../../test-helpers/windowEvent'
 import Editable from '../Editable'
+import EditorProvider from '../EditorProvider'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -109,7 +109,7 @@ it.each<{ cursor: string[] | null; cursorName: string }>([
   const stalePath = contextToPath(store.getState(), ['A', 'B']) as SimplePath
   const cursorBefore = store.getState().cursor
   const { container } = render(
-    createElement(Provider, {
+    createElement(EditorProvider, {
       store,
       children: createElement(Editable, {
         isEditing: false,

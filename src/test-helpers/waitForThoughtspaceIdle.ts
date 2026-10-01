@@ -1,6 +1,9 @@
 import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
+import commandThoughtspace from './commandThoughtspace'
 
-/** Waits for accepted document writes to finish persistence. */
-const waitForThoughtspaceIdle = (): Promise<void> => thoughtspaceRuntime.waitForIdle()
+/** Waits for accepted live-editor and isolated-fixture writes to finish persistence. */
+const waitForThoughtspaceIdle = async (): Promise<void> => {
+  await Promise.all([thoughtspaceRuntime.waitForIdle(), commandThoughtspace.waitForIdle()])
+}
 
 export default waitForThoughtspaceIdle

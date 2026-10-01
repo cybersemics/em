@@ -1,7 +1,6 @@
 import { fireEvent, screen } from '@testing-library/dom'
 import { render, renderHook } from '@testing-library/react'
 import { PropsWithChildren, act, createElement } from 'react'
-import { Provider } from 'react-redux'
 import DragThoughtItem from '../../@types/DragThoughtItem'
 import DragThoughtZone from '../../@types/DragThoughtZone'
 import DropThoughtZone from '../../@types/DropThoughtZone'
@@ -10,6 +9,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { longPressActionCreator as longPress } from '../../actions/longPress'
 import Alert from '../../components/Alert'
 import Editable from '../../components/Editable'
+import EditorProvider from '../../components/EditorProvider'
 import { LongPressState } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
@@ -44,7 +44,7 @@ vi.mock('../../browser', async importOriginal => {
 })
 
 /** Provides the Redux store to hooks and components under test. */
-const wrapper = ({ children }: PropsWithChildren) => createElement(Provider, { store, children })
+const wrapper = ({ children }: PropsWithChildren) => createElement(EditorProvider, { store, children })
 
 beforeEach(async () => {
   await initStore()
@@ -67,7 +67,7 @@ it('preserves an unrelated cursor when a trailing click fires after drag cleanup
 
   const pathB = contextToPath(store.getState(), ['a', 'b']) as SimplePath
   const { container } = render(
-    createElement(Provider, {
+    createElement(EditorProvider, {
       store,
       children: createElement(Editable, {
         isEditing: false,
@@ -122,7 +122,7 @@ it('renders home as the destination in the move alert when a thought is dropped 
   const pathB = contextToPath(state, ['a', 'b']) as SimplePath
   const pathC = contextToPath(state, ['c']) as SimplePath
 
-  render(createElement(Provider, { store, children: createElement(Alert) }))
+  render(createElement(EditorProvider, { store, children: createElement(Alert) }))
 
   // wire the drop target onto c, the root-level thought that b is dropped at
   renderHook(

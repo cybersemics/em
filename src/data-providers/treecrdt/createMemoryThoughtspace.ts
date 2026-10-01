@@ -103,10 +103,10 @@ const createMemoryThoughtspace = (
   openMemory: typeof createMemoryClient = createMemoryClient,
 ): DataProvider & ThoughtspaceRuntime => {
   const localWriteId = `em-memory:${createId()}`
+  const listeners = new Set<() => void>()
   let persistent: TreecrdtClient | undefined
   let memory: Awaited<ReturnType<typeof createMemoryClient>> | undefined
   let peers: ReturnType<typeof createInMemoryConnectedPeers<Operation>> | undefined
-  let onChange: ThoughtspaceRuntimeInitOptions['onChange']
   let onError: ThoughtspaceRuntimeInitOptions['onError']
   let failure: Error | undefined
   let initPromise: Promise<{ clientId: string; storage: string }> | undefined
@@ -131,6 +131,18 @@ const createMemoryThoughtspace = (
     } catch (callbackError) {
       console.error('Memory TreeCRDT error reporting failed', callbackError)
     }
+  }
+
+  /** Invalidates subscribers, which always read the latest document even when an earlier listener commits again. */
+  const notify = () => {
+    Array.from(listeners).forEach(listener => {
+      try {
+        listener()
+      } catch (error) {
+        // A subscriber cannot roll back a committed document or prevent its other consumers from updating.
+        console.error('Memory TreeCRDT subscriber failed', error)
+      }
+    })
   }
 
   /** Settles accepted writes and their loopback notifications before releasing resources. */
@@ -218,28 +230,31 @@ const createMemoryThoughtspace = (
     return snapshot
   }
 
-  /** Publishes changed memory state; local commands publish synchronously through their caller. */
+  /** Publishes incoming memory changes; local transactions notify only after their persistence is queued. */
   const publish = (batch: MemorySnapshotChanges) => {
     latestChanges = batch
     if (!ready || editing) return
     try {
       const previous = snapshot
       const next = project()
-      if (next !== previous) onChange?.(next)
+      if (next !== previous) notify()
     } catch (error) {
       reportFailure(error)
     }
   }
 
   /** Runs a complete editor command atomically, with synchronous read-your-writes and asynchronous durability. */
-  const transact = <T>(work: (transaction: ThoughtspaceTransaction) => T): { value: T; persisted: Promise<void> } => {
+  const transact = <T>(
+    work: (transaction: ThoughtspaceTransaction) => T,
+    onCommit?: (value: T, persisted: Promise<void>) => void,
+  ): { value: T; persisted: Promise<void> } => {
     if (failure) throw failure
     if (!ready || !memory || !persistent || dropping) throw new Error('Memory TreeCRDT is not ready for editing')
     if (editing) throw new Error('Use the current document transaction to compose commands')
     const callbacks: (() => void)[] = []
     const operationIds: OperationId[] = []
     const client = memory
-    const previous = snapshot
+    const previous = project()
     const previousRows = projectedRows
     const previousChanges = latestChanges
     let active = true
@@ -361,6 +376,13 @@ const createMemoryThoughtspace = (
     })
     void commitTail.catch(reportFailure)
     const persisted = callbacks.length ? commitTail.then(() => callbacks.forEach(callback => callback())) : commitTail
+    const changed = result.changes.snapshot !== previousRows
+    // Queue persistence first: a subscriber may author another command, whose operations must follow this one.
+    try {
+      onCommit?.(result.value, persisted)
+    } finally {
+      if (changed) notify()
+    }
     return { value: result.value, persisted }
   }
 
@@ -386,7 +408,6 @@ const createMemoryThoughtspace = (
       persistent = undefined
       peers = undefined
       unsubscribe = undefined
-      onChange = undefined
       snapshot = memoryView(new Map())
       projectedRows = undefined
       latestChanges = undefined
@@ -416,6 +437,12 @@ const createMemoryThoughtspace = (
   return {
     transact,
     project: () => project(),
+    subscribe: listener => {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
     get ready() {
       return ready
     },
@@ -430,7 +457,6 @@ const createMemoryThoughtspace = (
     },
     init: function initialize(options: ThoughtspaceRuntimeInitOptions): Promise<{ clientId: string; storage: string }> {
       if (dropping) return dropping.then(() => initialize(options))
-      onChange = options.onChange ?? onChange
       onError = options.onError ?? onError
       if (initPromise) return initPromise
       failure = undefined

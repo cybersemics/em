@@ -3,21 +3,22 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import { ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN } from '../constants'
-import db from '../data-providers/thoughtspace'
+import commandThoughtspace from './commandThoughtspace'
 
 const roots = new Set<string>([ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN])
 
 /**
- * Runs a command once against the real memory engine initialized by initStore.
+ * Runs a command once against the isolated fixture engine initialized by initStore.
  * A test may branch from an earlier immutable snapshot or construct a separate fixture. Restore that explicit
  * input through real document operations before the act, then give the command the engine's canonical projection.
- * This is fixture arrangement, not a second JavaScript implementation of the document or command.
+ * Fixture changes never publish into the live editor's unrelated UI state. Both providers use the same production
+ * document engine and transaction implementation.
  */
 const runDocumentCommand = (
   command: (state: State, transaction: ThoughtspaceTransaction) => State,
   state: State,
 ): State => {
-  const result = db.transact(transaction => {
+  const result = commandThoughtspace.transact(transaction => {
     const current = transaction.project()
     const target = state.thoughts
     if (current !== target) {

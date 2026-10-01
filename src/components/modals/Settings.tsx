@@ -10,6 +10,7 @@ import { DEFAULT_FONT_SIZE, MAX_FONT_SIZE, MIN_FONT_SIZE, Settings } from '../..
 import copy from '../../device/copy'
 import download from '../../device/download'
 import share from '../../device/share'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import getUserSetting from '../../selectors/getUserSetting'
 import abandonImportStore from '../../stores/abandonImportStore'
 import storageStatusStore from '../../stores/storageStatusStore'
@@ -37,8 +38,8 @@ const Setting: FC<
     title: string
   }>
 > = ({ children, dependee, dependsOn, invert, settingsKey, title }) => {
-  const value = useSelector(getUserSetting(settingsKey))
-  const disabled = useSelector(state => dependsOn && getUserSetting(state, dependsOn))
+  const value = useEditorSelector(getUserSetting(settingsKey))
+  const disabled = useEditorSelector(state => dependsOn && getUserSetting(state, dependsOn))
   const dispatch = useDispatch()
   return (
     <Checkbox
@@ -123,7 +124,7 @@ const FontSize = () => {
 
 /** The Debug Logging setting together with the debug log save/copy/clear controls. On development and preview hosts (debugLog.autoEnabled), logging defaults to on and the checkbox controls a device-local opt-out instead of the synced user setting, so this device can be aligned with production (e.g. for performance testing) without enabling logging on the user's other devices. */
 const DebugLogging = () => {
-  const settingEnabled = useSelector(getUserSetting(Settings.debugCrashLog))
+  const settingEnabled = useEditorSelector(getUserSetting(Settings.debugCrashLog))
   // the device-local state on auto-enabled hosts; the logger has already applied any persisted opt-out at module load
   const [localEnabled, setLocalEnabled] = useState(debugLog.isEnabled)
   const dispatch = useDispatch()

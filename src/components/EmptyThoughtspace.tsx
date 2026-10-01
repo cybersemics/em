@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import newThoughtCommand from '../commands/newThought'
 import { TUTORIAL_STEP_FIRSTTHOUGHT } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getSetting from '../selectors/getSetting'
 import offlineStatusStore from '../stores/offlineStatusStore'
 import GestureDiagram from './GestureDiagram'
@@ -18,7 +19,7 @@ const EmptyThoughtspace = ({ isTutorial }: { isTutorial?: boolean }) => {
   const isLoading = useSelector(state => state.isLoading)
   const status = offlineStatusStore.useState()
 
-  const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 0))
+  const tutorialStep = useEditorSelector(state => +(getSetting(state, 'Tutorial Step') || 0))
 
   return (
     <div

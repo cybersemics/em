@@ -26,7 +26,6 @@
  */
 import { renderHook } from '@testing-library/react'
 import React, { act } from 'react'
-import { Provider } from 'react-redux'
 import Command from '../../@types/Command'
 import CommandId from '../../@types/CommandId'
 import * as browser from '../../browser'
@@ -36,6 +35,7 @@ import newThoughtCommand from '../../commands/newThought'
 import openMobileCommandUniverseCommand from '../../commands/openMobileCommandUniverse'
 import outdentCommand from '../../commands/outdent'
 import selectAllCommand from '../../commands/selectAll'
+import EditorProvider from '../../components/EditorProvider'
 import store from '../../stores/app'
 import gestureStore from '../../stores/gestureStore'
 import useFilteredCommands from '../useFilteredCommands'
@@ -170,14 +170,14 @@ vi.mock('../../commands', async () => {
 })
 
 /**
- * Test wrapper component that provides Redux store context.
- * Required for testing hooks that depend on Redux state.
+ * Test wrapper component that provides the captured editor context and Redux UI store.
+ * Required for testing hooks that read document and UI state together.
  *
- * @param children - React components to wrap with the Redux Provider.
- * @returns JSX element with Redux Provider wrapping the children.
+ * @param children - React components to wrap with the EditorProvider.
+ * @returns JSX element with EditorProvider wrapping the children.
  */
 const wrapper = ({ children }: { children: React.ReactNode }) => {
-  return React.createElement(Provider, { store, children })
+  return React.createElement(EditorProvider, { store, children })
 }
 
 describe('useFilteredCommands', () => {

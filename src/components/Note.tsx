@@ -17,6 +17,7 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useFreshCallback from '../hooks/useFreshCallback'
 import { firstVisibleChild } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -51,7 +52,7 @@ const Note = React.memo(
     const [noteDraft, setNoteDraft] = useState<string | null>(null)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
-    const note = useSelector(state => noteValue(state, path))
+    const note = useEditorSelector(state => noteValue(state, path))
     const editableNonce = useSelector(state => state.editableNonce)
 
     // A note is short enough that the trackpad's hit test lands outside it from the moment the space bar is

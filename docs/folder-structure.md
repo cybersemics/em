@@ -13,9 +13,9 @@ The main directory structure is organized as follows. Tests are located in a sub
 - [`/src/e2e`](../src/e2e) — End-to-end test setup, including the Puppeteer, iOS, and Android environments. See [testing.md](testing.md).
 - [`/src/hooks`](../src/hooks) — React hooks.
 - [`/src/recipes`](../src/recipes) — Panda CSS recipes that define styled component variants. New components should use these or inline styles.
-- [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers and their helpers. [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) coordinates command transactions and history outside Redux's reducer, then publishes the completed immutable state.
+- [`/src/redux-enhancers`](../src/redux-enhancers) — Redux enhancers and their helpers. [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) coordinates command transactions and history, then publishes the captured editor context separately from Redux's UI-only state.
 - [`/src/redux-middleware`](../src/redux-middleware) — Redux middleware (e.g. [`clearSelection`](../src/redux-middleware/clearSelection.ts), which clears the browser caret on cursor changes). Document snapshots arrive through [`replaceThoughts`](../src/actions/replaceThoughts.ts), not loading middleware.
-- [`/src/selectors`](../src/selectors) — Pure functions that compute (and often memoize) slices from the Redux state. See [data-model.md](data-model.md) for the canonical traversal selectors.
+- [`/src/selectors`](../src/selectors) — Pure functions that compute (and often memoize) slices from the captured editor context (UI state and immutable document view). React consumers use `useEditorSelector` for these reads and React Redux `useSelector` for UI-only fields. See [data-model.md](data-model.md) for the canonical traversal selectors.
 - [`/src/stores`](../src/stores) — Lightweight non-Redux ministores for ephemeral UI state. Examples: [`editingValueStore`](../src/stores/editingValueStore.ts) (the in-progress thought text), [`viewportStore`](../src/stores/viewportStore.ts), [`scrollTopStore`](../src/stores/scrollTopStore.ts), [`gestureStore`](../src/stores/gestureStore.ts), [`syncStatusStore`](../src/stores/syncStatusStore.ts), [`selectionRangeStore`](../src/stores/selectionRangeStore.ts). Also home to the mutable flags that must stay out of Redux for performance and used to live in a globals module — [`touchStore`](../src/stores/touchStore.ts) (`touching`, `suppressCursorAfterTouch`), [`editableSyncStore`](../src/stores/editableSyncStore.ts) (`suppressChange`, `suppressBlurSync`), [`heldKeysStore`](../src/stores/heldKeysStore.ts) (`suppressExpansion`, `arrowKeyBoundaryCross`), and [`abandonImportStore`](../src/stores/abandonImportStore.ts). A `getState()` read subscribes to nothing, so writing one never re-renders, and `resetStores` clears them between tests.
 - [`/src/test-helpers`](../src/test-helpers) — Helpers used in unit, store, and JSDOM tests. See [testing.md](testing.md).
 - [`/src/util`](../src/util) — Pure utility functions. No React, no Redux access.
@@ -34,7 +34,7 @@ The main directory structure is organized as follows. Tests are located in a sub
 
 | Concept | Location |
 |---|---|
-| Redux state shape | [`@types/State.ts`](../src/@types/State.ts) |
+| Redux UI state / captured editor context | [`@types/UiState.ts`](../src/@types/UiState.ts) / [`@types/State.ts`](../src/@types/State.ts) |
 | Thought / Path / Lexeme types | [`@types/`](../src/@types) |
 | UI state updates and document command planning (reducer or thunk) | [`actions/`](../src/actions) |
 | Synchronous document transaction and Redux publication/history | [`redux-enhancers/undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) |

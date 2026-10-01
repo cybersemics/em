@@ -82,31 +82,25 @@ it('preserves surviving thought UI across canonical replacement and prunes delet
   expect(rendered).toMatchObject({ value: 'a', displayValue: 'preview' })
 })
 
-it('publishes a canonical snapshot atomically without adding history or authored writes', async () => {
+it('publishes a provider event atomically without adding history or authored writes', () => {
   const previous = store.getState()
-  const incoming = runDocumentCommand(
-    moveThoughtAtFirstMatch({ from: ['a', 'b'], to: ['x', 'b'], after: null }),
-    previous,
-  ).thoughts
-  // Incoming memory changes already exist outside Redux before its publication callback dispatches the snapshot.
-  await waitForThoughtspaceIdle()
-
   const observed: State[] = []
   const unsubscribe = store.subscribe(() => observed.push(store.getState()))
   try {
-    store.dispatch(replaceThoughtsActionCreator({ thoughts: incoming, repairCursor: true }))
+    db.transact(transaction =>
+      moveThoughtAtFirstMatch({ from: ['a', 'b'], to: ['x', 'b'], after: null })(previous, transaction),
+    )
   } finally {
     unsubscribe()
   }
 
   expect(observed).toHaveLength(1)
   const next = observed[0]
-  expect(next.thoughts).toBe(incoming)
+  expect(next.thoughts).toBe(db.project())
   expectPathToEqual(next, next.cursor, ['x', 'b', 'c'])
   expect(contextToThought(next, ['a', 'b'])).toBeUndefined()
   expect(contextToThought(next, ['x', 'b', 'c'])).toBeTruthy()
   expect(next.undoPatches).toBe(previous.undoPatches)
   expect(next.redoPatches).toBe(previous.redoPatches)
   expect(next.jumpHistory).toBe(previous.jumpHistory)
-  expect(db.project()).toBe(incoming)
 })

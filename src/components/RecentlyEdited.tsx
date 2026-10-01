@@ -1,13 +1,13 @@
 import { isEqual, uniqBy } from 'lodash'
-import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import useEditorSelector from '../hooks/useEditorSelector'
 import recentlyEdited from '../selectors/recentlyEdited'
 import hashPath from '../util/hashPath'
 import ThoughtLink from './ThoughtLink'
 
 /** Recently edited thoughts derived from the jump history. */
 const RecentlyEdited = () => {
-  const jumpHistory = useSelector(recentlyEdited, isEqual)
+  const jumpHistory = useEditorSelector(recentlyEdited, isEqual)
 
   // remove duplicates
   const paths = uniqBy(jumpHistory, hashPath)

@@ -1,9 +1,10 @@
-import { shallowEqual, useSelector } from 'react-redux'
+import { shallowEqual } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useHideBullet from '../hooks/useHideBullet'
 import useScrollCursorIntoView from '../hooks/useScrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
@@ -100,26 +101,26 @@ export default function BulletCursorOverlay({
   showContexts,
   leaf,
 }: BulletCursorOverlayProps) {
-  const value: string | undefined = useSelector(state => {
+  const value: string | undefined = useEditorSelector(state => {
     const thought = getThoughtById(state, head(path))
     return thought?.value || ''
   })
 
-  const isMulticursorActive = useSelector(hasMulticursor)
+  const isMulticursorActive = useEditorSelector(hasMulticursor)
 
-  const childrenAttributeId = useSelector(
+  const childrenAttributeId = useEditorSelector(
     state => (value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) || null,
   )
   const grandparentId = simplePath[simplePath.length - 3]
 
-  const grandchildrenAttributeId = useSelector(
+  const grandchildrenAttributeId = useEditorSelector(
     state =>
       (value !== '=style' && findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) || null,
   )
 
-  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
+  const isInContextView = useEditorSelector(state => isContextViewActive(state, parentOf(path)))
 
-  const hideBulletProp = useSelector(state => {
+  const hideBulletProp = useEditorSelector(state => {
     // A context view entry is rendered in place of its context, so the =children/=bullet of its real parent must not hide its bullet.
     if (isInContextView) return false
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
@@ -130,7 +131,7 @@ export default function BulletCursorOverlay({
     return false
   })
 
-  const children = useSelector<Thought[]>(
+  const children = useEditorSelector<Thought[]>(
     state => getChildrenRanked(state, head(simplePath)),
     // Only compare child ids, values, and order for re-renders.
     equalChildren,
@@ -148,7 +149,7 @@ export default function BulletCursorOverlay({
   })
 
   // Must match the breadcrumbs rendered by Thought so that the cursor overlay is aligned with the thought.
-  const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
+  const contextBreadcrumbsAncestors = useEditorSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
   useScrollCursorIntoView(y, height)
 

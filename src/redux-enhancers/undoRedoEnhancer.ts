@@ -1,13 +1,15 @@
 import { Operation, applyPatch, compare, unescapePathComponent } from 'fast-json-patch'
 import { Immer, produce } from 'immer'
 import _ from 'lodash'
-import { Action, Store, StoreEnhancer, StoreEnhancerStoreCreator, UnknownAction } from 'redux'
+import { shallowEqual } from 'react-redux'
+import { Action, StoreEnhancer, StoreEnhancerStoreCreator, UnknownAction } from 'redux'
 import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Patch, { CommandAttributedAction } from '../@types/Patch'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
+import UiState from '../@types/UiState'
 import * as commands from '../actions'
 import { editThoughtPayload } from '../actions/editThought'
 import editableRender from '../actions/editableRender'
@@ -370,7 +372,7 @@ const redoReducer = (
 }
 
 /**
- * Executes commands and history outside Redux, which only receives immutable prepared snapshots.
+ * Executes commands and history outside Redux, which only receives prepared UI state.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const undoRedoReducerEnhancer: StoreEnhancer<any> =
@@ -382,7 +384,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
     reducer: (state: any, action: A, transaction?: ThoughtspaceTransaction) => any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     initialState: any,
-  ): Store<State, A> => {
+  ) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let lastAction: Action<any> | undefined
 
@@ -564,50 +566,75 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         : newState
     }
 
-    const preparedState = Symbol('prepared editor state')
-    type PreparedAction = A & { [preparedState]?: State }
-    const store = createStore((state: State | undefined, action: PreparedAction) => {
+    let editorState: State = initialState
+    const listeners = new Set<() => void>()
+    const preparedState = Symbol('prepared UI state')
+    type PreparedAction = A & { [preparedState]?: UiState }
+    const store = createStore((state: UiState | undefined, action: PreparedAction): UiState => {
       if (preparedState in action) return action[preparedState]!
-      // Redux initialization is pure; all ordinary action evaluation happens in dispatch below.
-      return state ?? reducer(undefined, action)
-    }, initialState)
+      if (state) return state
+      editorState = editorState ?? reducer(undefined, action)
+      const { thoughts: _thoughts, ...ui } = editorState
+      return ui
+    })
 
     return {
       ...store,
+      uiStore: store,
+      getState: () => editorState,
+      subscribe: (listener: () => void) => {
+        listeners.add(listener)
+        return () => {
+          listeners.delete(listener)
+        }
+      },
       dispatch: <T extends A>(action: T): T => {
-        const state = store.getState()
+        const state = editorState
         const previousAction = lastAction
         const previousEditDirection = lastEditThoughtDirection
         const handler = (commands as Index<{ requiresDocument?: boolean }>)[action.type]
         const needsDocument = handler?.requiresDocument || action.type === 'undo' || action.type === 'redo'
-        try {
-          const result =
-            needsDocument && thoughtspaceRuntime.ready
-              ? db.transact(transaction => execute(state, action, transaction))
-              : undefined
-          const next = result ? result.value : execute(state, action)
+        let committed = false
+        /** Publishes committed document and UI state before provider observers can start another command. */
+        const publish = (next: State, persisted?: Promise<void>) => {
+          committed = true
           // The document is already committed. A best-effort first-paint cache must never prevent publication.
           try {
             cacheSettings(next, state)
           } catch (error) {
             console.warn('Unable to cache first-paint settings', error)
           }
-          if (result && next.thoughts !== state.thoughts) {
+          if (persisted && next.thoughts !== state.thoughts) {
             if (debugLog.isEnabled()) debugLog.log('push', { thoughtCount: Array.from(next.thoughts.values()).length })
-            void result.persisted
+            void persisted
               .then(() => debugLog.log('pushSynced'))
               .catch(error => {
                 console.error('Thoughtspace persistence failed', error)
                 debugLog.log('pushError', { error: String(error) })
               })
           }
-          store.dispatch(Object.assign({}, action, { [preparedState]: next }))
-          return action
+          const { thoughts, ...ui } = next
+          const sameUi = shallowEqual(store.getState(), ui)
+          // Stage the combined read before Redux notifies UI subscribers, so a cursor never reads an older tree.
+          editorState = sameUi && thoughts === state.thoughts ? state : next
+          if (!sameUi) store.dispatch(Object.assign({}, action, { [preparedState]: ui }))
+          if (editorState !== state) Array.from(listeners).forEach(listener => listener())
+        }
+        try {
+          if (needsDocument && thoughtspaceRuntime.ready) {
+            db.transact(transaction => execute(state, action, transaction), publish)
+          } else {
+            publish(execute(state, action))
+          }
         } catch (error) {
-          lastAction = previousAction
-          lastEditThoughtDirection = previousEditDirection
+          // A post-commit observer failure cannot undo history that has already been published.
+          if (!committed) {
+            lastAction = previousAction
+            lastEditThoughtDirection = previousEditDirection
+          }
           throw error
         }
+        return action
       },
     }
   }

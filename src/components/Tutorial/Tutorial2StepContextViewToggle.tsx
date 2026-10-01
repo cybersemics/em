@@ -1,8 +1,8 @@
-import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
 import { formatKeyboardShortcut } from '../../commands'
 import toggleContextViewCommand from '../../commands/toggleContextView'
 import { TUTORIAL_CONTEXT } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import getContexts from '../../selectors/getContexts'
 import getSetting from '../../selectors/getSetting'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
@@ -11,15 +11,15 @@ import TutorialGestureDiagram from './TutorialGestureDiagram'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewToggle = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
-  const caseSensitiveValue = useSelector(state =>
+  const tutorialChoice = useEditorSelector(selectTutorialChoice)
+  const caseSensitiveValue = useEditorSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase(),
   )
-  const notSelected = useSelector(state => !state.cursor || headValue(state, state.cursor) !== caseSensitiveValue)
+  const notSelected = useEditorSelector(state => !state.cursor || headValue(state, state.cursor) !== caseSensitiveValue)
 
-  const isHint = useSelector(state => {
+  const isHint = useEditorSelector(state => {
     const tutorialStep = +(getSetting(state, 'Tutorial Step') || 0)
     return tutorialStep !== Math.floor(tutorialStep)
   })

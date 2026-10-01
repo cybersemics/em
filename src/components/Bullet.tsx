@@ -8,6 +8,7 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { AlertType } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import { LongPressProps } from '../hooks/useLongPress'
 import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
@@ -278,13 +279,13 @@ const Bullet = ({
   // debugIndex,
 }: BulletProps) => {
   const svgElement = useRef<SVGSVGElement>(null)
-  const showContexts = useSelector(state => isContextViewActive(state, path))
+  const showContexts = useEditorSelector(state => isContextViewActive(state, path))
 
-  const isTableCol1 = useSelector(state =>
+  const isTableCol1 = useEditorSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
-  const isDone = useSelector(state => !!findDescendant(state, thoughtId, '=done'))
-  const isMulticursor = useSelector(state => isMulticursorPath(state, path))
+  const isDone = useEditorSelector(state => !!findDescendant(state, thoughtId, '=done'))
+  const isMulticursor = useEditorSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging || isMulticursor
@@ -296,16 +297,16 @@ const Bullet = ({
   )
 
   /** Shows the in-flight generation indicator without treating document reads as asynchronous. */
-  const pending = useSelector(state => !!getThoughtById(state, thoughtId)?.generating)
+  const pending = useEditorSelector(state => !!getThoughtById(state, thoughtId)?.generating)
 
   /** Returns true if the thought or its Lexeme is missing. */
-  const missing = useSelector(state => {
+  const missing = useEditorSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     return !thought || !getLexeme(state, thought.value)
   })
 
-  const persistedFill = useSelector(state => getThoughtFill(state, thoughtId))
-  const isEmpty = useSelector(state => getThoughtById(state, thoughtId)?.value === '')
+  const persistedFill = useEditorSelector(state => getThoughtFill(state, thoughtId))
+  const isEmpty = useEditorSelector(state => getThoughtById(state, thoughtId)?.value === '')
   const activeCommandFill = commandStateStore.useSelector(state => {
     if (!isEditing || !isEmpty) return undefined
 
@@ -315,7 +316,7 @@ const Bullet = ({
   const fill = persistedFill || activeCommandFill
 
   /** The 1-based ordinal and style of an ordered list item, or null if the thought is not in an ordered context. A thought is ordered when its parent has =children/=bullet/Ordered|Alpha or its grandparent has =grandchildren/=bullet/Ordered|Alpha. */
-  const ordered = useSelector((state): { index: number; style: 'Ordered' | 'Alpha' } | null => {
+  const ordered = useEditorSelector((state): { index: number; style: 'Ordered' | 'Alpha' } | null => {
     // Ordered numbering does not apply in the context view. A context view entry is rendered in place of its
     // context, so the =children/=bullet of its real parent must not number it.
     if (showContexts || isInContextView) return null

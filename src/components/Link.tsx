@@ -1,6 +1,6 @@
 import { unescape as decodeCharacterEntities } from 'lodash'
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { SystemStyleObject } from '../../styled-system/types'
 import SimplePath from '../@types/SimplePath'
@@ -10,6 +10,7 @@ import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
 import { EM_TOKEN } from '../constants'
 import * as selection from '../device/selection'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getThoughtById from '../selectors/getThoughtById'
 import ellipsize from '../util/ellipsize'
 import fastClick from '../util/fastClick'
@@ -28,7 +29,7 @@ interface LinkProps {
 /** Renders a link to a thought. */
 const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, className }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
-  const value = useSelector(state => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
+  const value = useEditorSelector(state => strip(label || getThoughtById(state, head(simplePath))?.value || ''))
   const dispatch = useDispatch()
 
   return (

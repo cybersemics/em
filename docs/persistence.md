@@ -5,9 +5,9 @@ This prototype runs two TreeCRDT instances for one thoughtspace:
 1. **Memory engine** — synchronous Rust/WASM TreeCRDT, containing the complete document.
 2. **Persistent engine** — the full document in asynchronous SQLite, running through `@treecrdt/wa-sqlite` in an OPFS-backed worker.
 
-The memory engine owns the document and accepts local commands synchronously. Redux owns UI state and a read-only document projection. Document commands execute in one memory transaction outside Redux's reducer, reading canonical state between composed steps. Redux publishes the completed snapshot once. Network sync is disabled, including when `VITE_TREECRDT_SYNC_BASE_URL` is set.
+The memory engine owns the document and accepts local commands synchronously. Redux owns UI state; an external editor store publishes a captured read context combining UI state and the read-only document view. Document commands execute in one memory transaction outside Redux's reducer, reading canonical state between composed steps. The completed editor state is published synchronously. Network sync is disabled, including when `VITE_TREECRDT_SYNC_BASE_URL` is set.
 
-[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exposes one implementation through two interfaces: `db: DataProvider` supplies synchronous `project` reads and `transact`; `thoughtspaceRuntime: ThoughtspaceRuntime` manages initialization, readiness, cleanup, and waiting for persistence. [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts) implements both. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project`, cumulative invalidations through `getChanges`, operation receipts and `revert`, and an `afterPersist` callback.
+[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exposes one implementation through two interfaces: `db: DataProvider` supplies synchronous `project` reads, `transact`, and `subscribe` invalidations after committed changes; `thoughtspaceRuntime: ThoughtspaceRuntime` manages initialization, readiness, cleanup, and waiting for persistence. [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts) implements both. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project`, cumulative invalidations through `getChanges`, operation receipts and `revert`, and an `afterPersist` callback.
 
 ## Running the prototype
 
@@ -15,9 +15,11 @@ The experimental `@treecrdt/wasm` dependency is a prebuilt GitHub prerelease pin
 
 The package includes browser and Node loaders and the WASM binary. It initializes explicitly; importing it does not load WASM. Keep the core version aligned with EM's SQLite package so both replicas use the same operation format.
 
-## Document projection (Redux)
+## Document projection and React subscriptions
 
-`state.thoughts` is a [`ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) captured against one immutable memory snapshot. It exposes `getThought`, `getChildren`, `getPosition`, `values`, and the derived `lexemeIndex`. Initialization loads the full document before enabling editing or resolving the URL cursor. Navigation, contexts, copying, and export read this view without loading or evicting subtrees.
+The editor's `state.thoughts` is a [`ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) captured against one immutable memory snapshot, not a field in the Redux store. It exposes `getThought`, `getChildren`, `getPosition`, `values`, and the derived `lexemeIndex`. Initialization loads the full document before enabling editing or resolving the URL cursor. Navigation, contexts, copying, and export read this view without loading or evicting subtrees.
+
+[`useEditorSelector`](../src/hooks/useEditorSelector.ts) uses `useSyncExternalStoreWithSelector` to select from a stable editor context combining the captured document and UI state. Ordinary React Redux `useSelector` reads only UI fields. [`EditorProvider`](../src/components/EditorProvider.tsx) supplies both interfaces; both dispatch through the same middleware and command boundary. Unchanged selections retain identity through the selector's equality function. A document-only event does not require a Redux state update.
 
 There is no maintained EM `thoughtIndex`, child map, or rank field. Decoded payloads are cached; topology stays in the native snapshot. `project()` reads only the document. Redux keeps temporary generation text, generation flags, and split-source bookkeeping in `state.thoughtUi`; `getThoughtById` combines them with canonical content for editor consumers.
 
@@ -70,7 +72,7 @@ The transaction applies parents and placement anchors before their dependents, t
 
 Promise tails serialize durable appends and loopback notifications. `persistent.onMaterialized` notifies the storage peer's full-document subscription, except when every change is tagged as this memory provider's own write. Foreign, mixed, or unidentified changes still synchronize. The memory adapter deduplicates operations by their replica/counter identity, applies new operations in a batch, and publishes a new immutable projection only when state changes. Storage confirmations do not overwrite newer memory edits.
 
-Initialization and incoming snapshots use the non-undoable `replaceThoughts` action to publish the captured document view and repair cursor topology. Ordinary commands continue through the synchronous commit boundary.
+Initialization explicitly publishes the initial view. `db.subscribe` invalidates the view on subsequent local and incoming commits; subscribers read the latest `project()` rather than replaying event payloads. Changes outside a dispatched command use non-undoable `replaceThoughts` to repair cursor topology. Ordinary commands publish their completed document and UI state together rather than exposing the provider notification mid-command.
 
 ### Runtime lifecycle
 
@@ -87,13 +89,14 @@ The full document and its operation history must fit in memory, and startup wait
 
 ## Command coordination and Redux publication
 
-[`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `db.transact`, then dispatches the original action with its prepared immutable state to a pure publication reducer. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
+[`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `db.transact`, then uses the transaction's synchronous commit callback to stage the captured editor context before provider subscribers run. Editor and Redux UI subscribers therefore read a completed command, without waiting for SQLite acknowledgement. The pure Redux publication reducer receives only `UiState`, excluding `thoughts`, and only when UI fields change. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
 
 `updateThoughts` changes the memory document and reads its resulting view immediately. Temporary editor fields stay in Redux; updates with `persist: false` change only those fields. Document publication prunes editor entries for deleted thoughts, and UI reset clears them. There is no Redux write queue or separate lexeme derivation. The `onPersisted` callback runs only after SQLite acknowledges the whole command. Undo/redo restores editor fields through UI patches and document content through the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
 
 ```
 command → memory transaction (update → canonical read → next step)
-          ├→ completed snapshot → undo history + one Redux publication
+          ├→ completed snapshot → undo history + coherent editor publication
+          │                      └→ Redux publication only for changed UI state
           └→ asynchronous SQLite append of the same operations
              → persistence callback
 ```

@@ -1,6 +1,5 @@
 import React, { FC, useEffect, useRef } from 'react'
 import { DragSourceMonitor, useDrag } from 'react-dnd'
-import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
@@ -12,6 +11,7 @@ import { dragCommandActionCreator as dragCommand } from '../actions/dragCommand'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
 import { noop } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useLottieIntervalAnimation from '../hooks/useLottieIntervalAnimation'
 import store from '../stores/app'
 import CommandKeyboardShortcut from './CommandKeyboardShortcut'
@@ -74,9 +74,9 @@ const CommandTableItem: FC<CommandTableItemProps> = ({
   })
 
   const isActive = command.isActive?.(store.getState())
-  const disabled = useSelector(state => !isExecutable(state, command))
+  const disabled = useEditorSelector(state => !isExecutable(state, command))
   const label = command.labelInverse && isActive ? command.labelInverse : command.label
-  const description = useSelector(state => {
+  const description = useEditorSelector(state => {
     const descriptionStringOrFunction = (isActive && command.descriptionInverse) || command.description
     return typeof descriptionStringOrFunction === 'function'
       ? descriptionStringOrFunction(state)

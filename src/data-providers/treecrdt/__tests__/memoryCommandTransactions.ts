@@ -1,3 +1,4 @@
+import type { OperationId } from '@treecrdt/interface'
 import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import Thought from '../../../@types/Thought'
 import ThoughtId from '../../../@types/ThoughtId'
@@ -39,6 +40,174 @@ const second: Thought = {
   lastUpdated: 30 as Timestamp,
   updatedBy: 'second-device',
 }
+
+it('notifies subscribers once per completed local change and stops notifying an unsubscribed listener', async () => {
+  const runtime = createMemoryThoughtspace()
+  const onCommit = vi.fn()
+  const subscribed = vi.fn()
+  const otherSubscriber = vi.fn()
+  const unsubscribe = runtime.subscribe(subscribed)
+  const unsubscribeOther = runtime.subscribe(otherSubscriber)
+  try {
+    await runtime.init({ storage: 'memory' })
+    const unchanged = runtime.transact(transaction => transaction.project(), onCommit)
+    expect(onCommit).toHaveBeenCalledExactlyOnceWith(unchanged.value, unchanged.persisted)
+    expect(subscribed).not.toHaveBeenCalled()
+    expect(otherSubscriber).not.toHaveBeenCalled()
+
+    const committed = runtime.transact(transaction => {
+      transaction.update({ thoughtIndexUpdates: { [first.id]: first }, movePlacements: { [first.id]: null } })
+      const completed = transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'completed' } } })
+      expect(subscribed).not.toHaveBeenCalled()
+      expect(otherSubscriber).not.toHaveBeenCalled()
+      return completed
+    })
+
+    expect(subscribed).toHaveBeenCalledExactlyOnceWith()
+    expect(otherSubscriber).toHaveBeenCalledExactlyOnceWith()
+    expect(runtime.project()).toBe(committed.value)
+    await committed.persisted
+    await runtime.waitForIdle()
+    expect(subscribed).toHaveBeenCalledTimes(1)
+
+    unsubscribe()
+    const edited = runtime.transact(transaction =>
+      transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'edited' } } }),
+    )
+    expect(subscribed).toHaveBeenCalledTimes(1)
+    expect(otherSubscriber).toHaveBeenCalledTimes(2)
+    expect(runtime.project()).toBe(edited.value)
+    expect(committed.value.getThought(first.id)!.value).toBe('completed')
+    expect(edited.value.getThought(first.id)!.value).toBe('edited')
+    await edited.persisted
+  } finally {
+    unsubscribe()
+    unsubscribeOther()
+    await runtime.drop()
+  }
+})
+
+it('preserves persistence order and latest reads when a subscriber authors another transaction', async () => {
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
+  const observed: ThoughtspaceView[] = []
+  const phases: string[] = []
+  let captured: ThoughtspaceView
+  let nested: { value: readonly OperationId[]; persisted: Promise<void> }
+  try {
+    await runtime.init({ storage: 'memory' })
+    const before = (await persistent.ops.all()).length
+    const unsubscribeWriter = runtime.subscribe(() => {
+      unsubscribeWriter()
+      phases.push('listener: shared')
+      nested = runtime.transact(
+        transaction => {
+          transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'reentrant edit' } } })
+          return transaction.operationIds
+        },
+        () => phases.push('commit: reentrant edit'),
+      )
+    })
+    const unsubscribeObserver = runtime.subscribe(() => observed.push(runtime.project()))
+    const initial = runtime.transact(
+      transaction => {
+        transaction.update({ thoughtIndexUpdates: { [first.id]: first }, movePlacements: { [first.id]: null } })
+        return transaction.operationIds
+      },
+      () => {
+        captured = runtime.project()
+        phases.push('commit: shared')
+      },
+    )
+    unsubscribeObserver()
+
+    expect(observed.map(view => view.getThought(first.id)!.value)).toEqual(['reentrant edit', 'reentrant edit'])
+    expect(captured!.getThought(first.id)!.value).toBe('shared')
+    expect(phases).toEqual(['commit: shared', 'listener: shared', 'commit: reentrant edit'])
+    expect(runtime.project()).toBe(observed[1])
+    await Promise.all([initial.persisted, nested!.persisted])
+    await runtime.waitForIdle()
+    expect((await persistent.ops.all()).slice(before).map(operation => operation.meta.id)).toEqual([
+      ...initial.value,
+      ...nested!.value,
+    ])
+  } finally {
+    await runtime.drop()
+  }
+})
+
+it('stages reentrant commit callbacks synchronously before invalidating latest document reads', async () => {
+  const runtime = createMemoryThoughtspace()
+  const phases: string[] = []
+  const unsubscribe = runtime.subscribe(() => phases.push(`listener: ${runtime.project().getThought(first.id)!.value}`))
+  try {
+    await runtime.init({ storage: 'memory' })
+    runtime.transact(
+      transaction =>
+        transaction.update({ thoughtIndexUpdates: { [first.id]: first }, movePlacements: { [first.id]: null } }),
+      value => {
+        phases.push(`commit: ${value.getThought(first.id)!.value}`)
+        runtime.transact(
+          transaction =>
+            transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'reentrant edit' } } }),
+          nested => phases.push(`commit: ${nested.getThought(first.id)!.value}`),
+        )
+        phases.push('outer callback completed')
+      },
+    )
+
+    expect(phases).toEqual([
+      'commit: shared',
+      'commit: reentrant edit',
+      'listener: reentrant edit',
+      'outer callback completed',
+      'listener: reentrant edit',
+    ])
+    expect(runtime.project().getThought(first.id)!.value).toBe('reentrant edit')
+    await runtime.waitForIdle()
+  } finally {
+    unsubscribe()
+    await runtime.drop()
+  }
+})
+
+it('publishes and persists committed changes when their commit callback throws', async () => {
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
+  const subscribed = vi.fn()
+  const unsubscribe = runtime.subscribe(subscribed)
+  const failure = new Error('Commit consumer failed')
+  let committed: { value: ThoughtspaceView; persisted: Promise<void> }
+  try {
+    await runtime.init({ storage: 'memory' })
+    expect(() =>
+      runtime.transact(
+        transaction =>
+          transaction.update({ thoughtIndexUpdates: { [first.id]: first }, movePlacements: { [first.id]: null } }),
+        (value, persisted) => {
+          committed = { value, persisted }
+          throw failure
+        },
+      ),
+    ).toThrow(failure)
+
+    expect(subscribed).toHaveBeenCalledExactlyOnceWith()
+    expect(runtime.project()).toBe(committed!.value)
+    await committed!.persisted
+    await runtime.waitForIdle()
+    expect(thoughtPayload.decodeThoughtPayload((await persistent.tree.getPayload(first.id))!).value).toBe('shared')
+
+    const edited = runtime.transact(transaction =>
+      transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'still editable' } } }),
+    )
+    expect(subscribed).toHaveBeenCalledTimes(2)
+    expect(edited.value.getThought(first.id)!.value).toBe('still editable')
+    await edited.persisted
+  } finally {
+    unsubscribe()
+    await runtime.drop()
+  }
+})
 
 it('exposes canonical memberships and metadata to later commands in the same transaction', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
@@ -257,12 +426,13 @@ it('restores parents and sibling anchors before their dependents in an unordered
 it('rolls back an invalid placement before publishing, persisting, or acknowledging earlier composed writes', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
   const runtime = createMemoryThoughtspace(async () => persistent)
-  const onChange = vi.fn()
+  const onCommit = vi.fn()
+  const subscribed = vi.fn()
+  const unsubscribe = runtime.subscribe(subscribed)
   const acknowledged = vi.fn()
   try {
-    await runtime.init({ storage: 'memory', onChange })
+    await runtime.init({ storage: 'memory' })
     await runtime.waitForIdle()
-    onChange.mockClear()
     const before = runtime.project()
     const refs = await persistent.opRefs.all()
     expect(() =>
@@ -278,7 +448,7 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
           thoughtIndexUpdates: { [second.id]: second },
           movePlacements: { [second.id]: HOME_TOKEN },
         })
-      }),
+      }, onCommit),
     ).toThrow('afterId must name another child of the destination parent')
 
     expect(runtime.project()).toBe(before)
@@ -286,7 +456,8 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
     expect(await persistent.opRefs.all()).toEqual(refs)
     expect(runtime.project().getThought(first.id)).toBeUndefined()
     expect(runtime.project().getThought(second.id)).toBeUndefined()
-    expect(onChange).not.toHaveBeenCalled()
+    expect(onCommit).not.toHaveBeenCalled()
+    expect(subscribed).not.toHaveBeenCalled()
     expect(acknowledged).not.toHaveBeenCalled()
 
     const accepted = runtime.transact(transaction =>
@@ -295,6 +466,7 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
     await accepted.persisted
     expect(accepted.value.getThought(first.id)!.value).toBe('shared')
   } finally {
+    unsubscribe()
     await runtime.drop()
   }
 })

@@ -1,4 +1,3 @@
-import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import newSubthoughtCommand from '../../commands/newSubthought'
 import {
@@ -9,6 +8,7 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
@@ -17,13 +17,13 @@ import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1 = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
+  const tutorialChoice = useEditorSelector(selectTutorialChoice)
   const chosenTutorialText = TUTORIAL_CONTEXT1_PARENT[tutorialChoice]
-  const context1Exists = useSelector(state => {
+  const context1Exists = useEditorSelector(state => {
     const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
     return rootChildren.find(child => child.value.toLowerCase() === chosenTutorialText.toLowerCase())
   })
-  const readyToSelect = useSelector(
+  const readyToSelect = useEditorSelector(
     state => !state.cursor || headValue(state, state.cursor)?.toLowerCase() !== chosenTutorialText.toLowerCase(),
   )
 

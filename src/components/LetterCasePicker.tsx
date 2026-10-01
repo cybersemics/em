@@ -4,6 +4,7 @@ import { css } from '../../styled-system/css'
 import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getThoughtById from '../selectors/getThoughtById'
 import selectedPaths from '../selectors/selectedPaths'
 import applyLetterCase from '../util/applyLetterCase'
@@ -28,7 +29,7 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
     e.preventDefault()
     dispatch(formatLetterCase(command))
   }
-  const selected = useSelector(state => {
+  const selected = useEditorSelector(state => {
     // The swatches are only rendered while the picker is open, and deriving the letter case of a large multiselection
     // is not free, so there is nothing to derive until then.
     if (!state.showLetterCase) return ''

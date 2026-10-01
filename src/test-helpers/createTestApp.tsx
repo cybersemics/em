@@ -10,6 +10,7 @@ import { initialize } from '../initialize'
 import store from '../stores/app'
 import { resetStores } from '../stores/ministore'
 import storage from '../util/storage'
+import commandThoughtspace from './commandThoughtspace'
 import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
@@ -86,7 +87,7 @@ export const cleanupTestApp = async () => {
     await vi.runAllTimersAsync()
     await waitForThoughtspaceIdle()
 
-    await thoughtspaceRuntime.drop()
+    await Promise.all([thoughtspaceRuntime.drop(), commandThoughtspace.drop()])
     await vi.runAllTimersAsync()
 
     // set url back to home

@@ -10,7 +10,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **accessToken** — Per-device 21-char nanoid stored in `localStorage`. The device's secret: *clientId* is derived from it, and it keys the device's entry in *permissionsStore*. The memory engine's *replicaId* is independent. Override with `?auth=<token>`. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
 
-**action** — A UI reducer, document command or action creator under [`/src/actions`](../src/actions). Document commands execute in an explicit memory transaction before Redux publishes the result. UI reducers remain pure. Compose with [`util/reducerFlow`](../src/util/reducerFlow.ts).
+**action** — A UI reducer, document command or action creator under [`/src/actions`](../src/actions). Document commands execute in an explicit memory transaction before the editor publishes the result; Redux stores only UI state. UI reducers remain pure. Compose with [`util/reducerFlow`](../src/util/reducerFlow.ts).
 
 **agent session** — One execution of a Copilot cloud agent: an ephemeral, isolated environment with its own workspace, prompt, model, and history, destroyed when it ends. A pair of `copilot_work_started` / `copilot_work_finished` timeline events brackets one, and an *agent task* can run several — a follow-up prompt on the pull request starts another. This is the sense the automations use for the agent *working*: [`pr-ready.yml`](../.github/workflows/pr-ready.yml) reads the newest of those two events to tell work in progress from work that finished, and [`copilot-setup-steps.yml`](../.github/workflows/copilot-setup-steps.yml) builds the environment one wakes up in. Distinct from *session lock*, and from a local Claude Code or Codex session.
 
