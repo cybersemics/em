@@ -1,5 +1,4 @@
 import { throttle } from 'lodash'
-import testFlags from '../e2e/testFlags'
 import scrollCursorIntoView from './scrollCursorIntoView'
 
 const throttledScrollCursorIntoView = throttle((y: number, height: number) => scrollCursorIntoView(y, height), 400)
@@ -27,8 +26,5 @@ scheduleScrollCursorIntoView.cancel = () => {
   throttledScrollCursorIntoView.cancel()
   scrollCursorIntoView.cancel()
 }
-
-// Expose the cancel so that tests can stop a scroll that the cursor has queued from moving the page after they set the scroll position.
-testFlags.cancelScrollCursorIntoView = scheduleScrollCursorIntoView.cancel
 
 export default scheduleScrollCursorIntoView

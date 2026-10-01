@@ -1,5 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { executeCommandWithMulticursor, resetLastCommand } from '../../commands'
+import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
@@ -21,11 +21,7 @@ vi.mock('../../util/throttleByAnimationFrame', () => ({
   default: (f: (...args: any[]) => void) => f,
 }))
 
-beforeEach(async () => {
-  await initStore()
-  // lastCommand is module-level state in commands.ts that is not reset by initStore
-  resetLastCommand()
-})
+beforeEach(initStore)
 
 it('execute the last command again', () => {
   store.dispatch([

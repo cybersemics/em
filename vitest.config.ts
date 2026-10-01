@@ -15,8 +15,8 @@ export default defineConfig({
           name: 'unit',
           globals: true,
           include: ['**/__tests__/**/*.ts'],
-          // The two e2e spec directories run in their own runners (Puppeteer below, WebdriverIO via
-          // yarn test:ios), so they are excluded here — but only those two directories, not all of
+          // The three e2e spec directories run in their own runners (Puppeteer below, WebdriverIO via
+          // yarn test:ios and yarn test:android), so they are excluded here — but only those directories, not all of
           // src/e2e: the e2e harness itself has plain unit tests (src/e2e/iOS/config/__tests__, the
           // BrowserStack slot waiter's mocked-fetch tests), which no other runner would collect.
           // .claude/worktrees holds agent worktrees, i.e. full checkouts of this repo. Without this the
@@ -26,6 +26,7 @@ export default defineConfig({
             'node_modules/**',
             'src/e2e/puppeteer/__tests__/**',
             'src/e2e/iOS/__tests__/**',
+            'src/e2e/android/__tests__/**',
             '**/evals/**',
             '.claude/**',
           ],

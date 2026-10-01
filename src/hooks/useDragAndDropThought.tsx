@@ -38,8 +38,9 @@ import prevSibling from '../selectors/prevSibling'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
+import multitouchStore from '../stores/multitouchStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
-import touchStore from '../stores/touch'
+import touchStore from '../stores/touchStore'
 import appendToPath from '../util/appendToPath'
 import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
@@ -65,7 +66,21 @@ const canDrag = (props: ThoughtContainerProps) => {
   const hasSelectionRange = selectionRangeStore.getState()
   if (isTouch && hasSelectionRange) return false
 
+  // Reject multi-touch input so that two-finger tracing is not interpreted as a drag-and-drop.
+  // react-dnd's TouchBackend initiates a drag from the primary touch and has no multi-touch rejection
+  // of its own, so a two-finger trace over a thought would otherwise begin a drag. The multitouch store
+  // latches while more than one finger is down and stays set until every finger lifts, so a finger lifting
+  // mid-gesture cannot re-open the drag. See #4233.
+  if (isTouch && multitouchStore.getState()) return false
+
   const state = store.getState()
+
+  // A press that landed on the caret belongs to native caret repositioning, so it must not become a drag when it moves
+  // past the touch slop (#3763). This reads the flag latched by the capture-phase touchstart listener in initEvents
+  // rather than state.longPress, because react-dnd's timer can begin a drag before DragHold is dispatched (see the
+  // longPress reducer).
+  if (touchStore.getState().pressOnCaret) return false
+
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
   const isDraggable = props.isVisible || props.isCursorParent

@@ -38,10 +38,10 @@ const organizeThought = {
           dispatch(showModal({ id: 'aiDisclosure' }))
           return
         }
-        organizeAll()
+        return organizeAll()
       }
 
-      organizeAllWithDisclosure()
+      return organizeAllWithDisclosure()
     },
   },
   canExecute: state => isDocumentEditable() && canOrganizeThought(state, selectedPaths(state)),

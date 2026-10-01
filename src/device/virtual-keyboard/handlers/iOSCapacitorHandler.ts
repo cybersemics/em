@@ -4,7 +4,7 @@ import { AnimationPlaybackControls, animate } from 'framer-motion'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { LongPressState } from '../../../constants'
 import store from '../../../stores/app'
-import viewportStore from '../../../stores/viewport'
+import viewportStore from '../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
 import getSafeAreaBottom from '../getSafeAreaBottom'
 

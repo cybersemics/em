@@ -1,5 +1,5 @@
 import { RefObject, useEffect, useRef, useState } from 'react'
-import scrollTopStore from '../stores/scrollTop'
+import scrollTopStore from '../stores/scrollTopStore'
 
 /**
  * Determines if an element is partially visible in the viewport.

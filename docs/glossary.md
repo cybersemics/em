@@ -92,7 +92,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## G
 
-**generating** — Flag on `Thought` set while content is being produced by AI. Distinct from `pending` (loading from storage).
+**generating** — Flag on `Thought` set while content is being produced by AI. Distinct from `pending` (loading from storage). Generate Thought, Generate Emoji, Organize Thoughts, and Define Term use it as a display-only signal: empty thoughts show a command-specific placeholder ("Generating Thought", "Generating Emoji", or "Reorganizing Thought") and all generating thoughts and their notes shimmer in their own text color, preserving background highlights, without writing a pending value. The shimmer animates a gradient mask over the existing rendering so colors, backgrounds, native emoji and editable HTML stay intact. Emoji wrappers exist only in the displayed HTML and are not stored. **generatingPlaceholder** is the in-memory label for that empty-thought placeholder and is not persisted.
 
 **GLOBAL_ROOT_TOKEN** — The root node of the TreeCRDT tree, and the value `ROOT_PARENT_ID` aliases. `HOME_TOKEN`, `EM_TOKEN`, and `ABSOLUTE_TOKEN` are inserted as its children during initialization. See [`constants.ts`](../src/constants.ts).
 
@@ -126,7 +126,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **meta-attribute** — See *attribute*.
 
-**ministore** — Lightweight non-Redux store for ephemeral UI state, in [`/src/stores`](../src/stores). Used when the value doesn't need to participate in undo/redo, persistence, or selectors (e.g. `editingValue`, `viewport`, `scrollTop`). A module may also create one for its own bookkeeping that must reset between tests — the pull queue's once-per-session favorites flag, the URL middleware's last path and cursor, the multiselect middleware's parked cursor — since every store the factory creates is restored by `resetStores`, while a module-level `let` would carry its value from one test into the next.
+**ministore** — Lightweight non-Redux store for ephemeral UI state, in [`/src/stores`](../src/stores). Used when the value doesn't need to participate in undo/redo, persistence, or selectors (e.g. `editingValueStore`, `viewportStore`, `scrollTopStore`). A module may also create one for its own bookkeeping that must reset between tests — the pull queue's once-per-session favorites flag, the URL middleware's last path and cursor, the multiselect middleware's parked cursor — since every store the factory creates is restored by `resetStores`, while a module-level `let` would carry its value from one test into the next.
 
 **movePlacements** — `Index<ThoughtId | null>` on `PushBatch`. Keyed by moved thought; the value is the sibling to place it after (`null` = first). Carries reorder intent from the action layer to TreeCRDT, which stores sibling order directly instead of by rank. See [persistence.md → Order and placement](persistence.md#order-and-placement).
 
@@ -208,7 +208,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## U
 
-**undo step** — What one Undo reverts: a single patch on `state.undoPatches`, or two when a navigation action follows an undoable action or an edit follows a `newThought`. The undo slider moves by undo steps. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
+**undo step** — What one Undo reverts: one patch, or a directional pair when trailing navigation belongs with the preceding change or an edit gives a newly created thought its value. A command transaction may collect several underlying actions into one patch. The undo slider uses the same grouping. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
 
 **updatedBy** — `clientId` of the writer. Stamped on every Thought and Lexeme write. (Self-originated materialization events are filtered by *writeId*, not by this field.)
 

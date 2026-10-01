@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
+import haptics from '../util/haptics'
 import isColorSelected from '../util/isColorSelected'
 import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
@@ -40,12 +41,22 @@ const ColorSwatch: FC<{
     dispatch(formatSelectionColor({ color, backgroundColor }))
   }
 
+  /** Suppresses the Text Color toolbar button's press, which starts on tap down. The picker is rendered inside that button, so a tap that reaches it dips the button by 0.25em, and the tap up that would undo the dip is stopped below. On desktop it also preserves the browser selection, which the toolbar button's own tap down was preventing default to do. */
+  const tapDown = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation()
+    // Only on desktop, since preventing default on touchstart would stop the toolbar from being scrolled by a swipe that starts on a swatch.
+    if (!isTouch) {
+      e.preventDefault()
+    }
+  }
+
   /** Toggles the text color onTouchEnd or onClick on desktop. */
   const tapUp = (e: React.MouseEvent | React.TouchEvent) => {
-    // stop toolbar button dip and click empty space
+    // stop toolbar button command and click empty space
     e.stopPropagation()
     e.preventDefault()
 
+    haptics.light()
     toggleTextColor()
   }
 
@@ -53,6 +64,8 @@ const ColorSwatch: FC<{
     <span
       aria-label={label || color || backgroundColor}
       data-selected={selected ? 'true' : 'false'}
+      onMouseDown={isTouch ? undefined : tapDown}
+      onTouchStart={isTouch ? tapDown : undefined}
       onClick={isTouch ? undefined : tapUp}
       onTouchEnd={isTouch ? tapUp : undefined}
       className={css({

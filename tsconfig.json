@@ -1,9 +1,9 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.js", "styled-system"],
-  // The iOS WebdriverIO tests are typechecked by src/e2e/iOS/tsconfig.json, the only program that declares
-  // WebdriverIO's globals. Excluding them here keeps browser, $, expect, and @wdio/browserstack-service's
-  // global interfaces (State, GRRUrls, …) out of app code.
-  "exclude": ["src/e2e/iOS"],
+  // The WebdriverIO tests are typechecked by src/e2e/iOS/tsconfig.json and src/e2e/android/tsconfig.json, the only
+  // programs that declare WebdriverIO's globals. Excluding them here keeps browser, $, expect, and
+  // @wdio/browserstack-service's global interfaces (State, GRRUrls, …) out of app code.
+  "exclude": ["src/e2e/iOS", "src/e2e/android"],
   "compilerOptions": {
     "allowJs": true,
     "allowSyntheticDefaultImports": true,

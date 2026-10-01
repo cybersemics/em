@@ -103,8 +103,8 @@ When the cursor is deep, many ancestors and ancestor-siblings are hidden by auto
 
 1. `LayoutTree` sums the heights of every thought above the cursor where `sizes[key].isVisible === false && !belowCursor`. Result: `spaceAbove`.
 2. `useAutocrop` extends that to at least one viewport height (so there's still room to scroll up): `spaceAboveExtended = max(spaceAbove, viewportHeight)`.
-3. When `spaceAboveExtended` changes, `window.scrollTo({ top: window.scrollY - delta })` keeps visible thoughts positionally stable.
-4. The hook returns `-spaceAboveExtended + viewportHeight`, applied as `transform: translateY(...)` on the outer container.
+3. The hook returns `autocrop = -spaceAboveExtended + viewportHeight`, applied as `transform: translateY(...)` on the outer container.
+4. When `autocrop` changes, `window.scrollTo({ top: window.scrollY + delta })` keeps visible thoughts positionally stable. The counter-scroll tracks the translation, not `spaceAboveExtended`: a viewport height change (e.g. rotating the device) moves `spaceAboveExtended` without shifting the thoughts when `spaceAbove` is less than the viewport, and scrolling by it would push the cursor off screen ([#3990](https://github.com/cybersemics/em/issues/3990)).
 
 Net effect: the outer container is shifted up off-screen by exactly enough that one viewport's worth of empty space sits above the cursor. The user can scroll into that empty space; visible thoughts don't jump.
 

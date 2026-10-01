@@ -1,6 +1,6 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { setNoteFocusActionCreator as setNoteFocus } from '../../actions/setNoteFocus'
-import { executeCommand, resetLastCommand } from '../../commands'
+import { executeCommand } from '../../commands'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
@@ -14,11 +14,7 @@ vi.mock('../../util/throttleByAnimationFrame', () => ({
   default: (f: (...args: any[]) => void) => f,
 }))
 
-beforeEach(async () => {
-  await initStore()
-  // lastCommand is module-level state in commands.ts that is not reset by initStore
-  resetLastCommand()
-})
+beforeEach(initStore)
 
 it('ignore a navigation command that is the first change in the undo history', () => {
   // Blurring a note while there is no cursor is undoable and navigational, but every property it touches is already at
