@@ -44,3 +44,28 @@ it('set url to home after deleting last empty thought', async () => {
 
   expect(window.location.pathname).toBe('/')
 })
+
+// https://github.com/cybersemics/em/issues/5747
+it.skip('preserve forward history after navigating back to the home page', async () => {
+  await dispatch(newThought({ value: 'aaa' }))
+  await act(() => vi.runAllTimersAsync())
+  await dispatch(newThought({ value: 'bbb' }))
+  await act(() => vi.runAllTimersAsync())
+  await dispatch(newThought({ value: 'ccc' }))
+  await act(() => vi.runAllTimersAsync())
+
+  window.history.back()
+  await act(() => vi.runAllTimersAsync())
+  window.history.back()
+  await act(() => vi.runAllTimersAsync())
+  window.history.back()
+  await act(() => vi.runAllTimersAsync())
+
+  expect(window.location.pathname).toBe('/')
+
+  window.history.forward()
+  await act(() => vi.runAllTimersAsync())
+
+  const thoughtA = contextToThought(store.getState(), ['aaa'])!
+  expect(window.location.pathname).toBe(`/~/${thoughtA.id}`)
+})
