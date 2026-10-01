@@ -4,7 +4,7 @@
 import { EventEmitter } from 'events'
 import { PassThrough } from 'stream'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-import { CloudflareEdgeUnreachableError, findFirstAvailableTunnel } from '../cloudflareTunnelPool'
+import { findFirstAvailableTunnel } from '../cloudflareTunnelPool'
 
 /**
  * What the Cloudflare edge answers for one request: a status code, or null for a request that
@@ -13,6 +13,7 @@ import { CloudflareEdgeUnreachableError, findFirstAvailableTunnel } from '../clo
 type Respond = (url: string) => number | null
 
 const edge = vi.hoisted(() => ({ respond: (() => null) as (url: string) => number | null }))
+const appendFileSync = vi.hoisted(() => vi.fn())
 
 // Every request the pool makes goes through https.request; answer each from the test's `respond`.
 vi.mock('https', () => {
@@ -54,7 +55,7 @@ vi.mock('cloudflared', () => ({ bin: '/nonexistent/cloudflared', install: async 
 vi.mock('fs', async importOriginal => {
   const actual = await importOriginal<typeof import('fs')>()
   return {
-    default: { ...actual, existsSync: () => true, createWriteStream: () => new PassThrough() },
+    default: { ...actual, existsSync: () => true, createWriteStream: () => new PassThrough(), appendFileSync },
   }
 })
 
@@ -86,70 +87,94 @@ const rejectionAfter = async (ms: number): Promise<unknown> => {
 beforeEach(() => {
   vi.useFakeTimers()
   vi.spyOn(console, 'info').mockImplementation(() => {})
+  // These tests run in GitHub Actions too, where an outage would otherwise be written to the real run.
+  vi.stubEnv('GITHUB_ACTIONS', '')
+  appendFileSync.mockClear()
 })
 
 afterEach(() => {
   vi.restoreAllMocks()
+  vi.unstubAllEnvs()
   vi.useRealTimers()
 })
 
-it('fails fast as an unreachable edge when no request ever gets an answer', async () => {
+it("fails naming the runner's network when no request ever gets an answer", async () => {
   edge.respond = edgeAnswering(null, [null])
 
-  const err = await rejectionAfter(10 * 60 * 1000)
+  const err = await rejectionAfter(46 * 60 * 1000)
 
-  expect(err).toBeInstanceOf(CloudflareEdgeUnreachableError)
-  expect((err as Error).message).toMatch(/cannot reach the Cloudflare edge/)
+  expect((err as Error).message).toMatch(/could not reach the Cloudflare edge for the last/)
+  expect((err as Error).message).not.toMatch(/another connector is live/)
+})
+
+it('backs off between passes while nothing answers', async () => {
+  let statusRequests = 0
+  edge.respond = url => {
+    if (url.includes('/__tunnel-status')) statusRequests++
+    return null
+  }
+
+  const claiming = findFirstAvailableTunnel(pool, 'app-gate-token').catch(() => {})
+  await vi.advanceTimersByTimeAsync(10 * 60 * 1000)
+
+  // Silent passes start at 0, then 1, 2 and 4 min after each one ends. A 10s rescan would have made
+  // about 15 passes in the same time.
+  expect(statusRequests).toBe(4)
+
+  await vi.advanceTimersByTimeAsync(40 * 60 * 1000)
+  await claiming
 })
 
 it('reports a verification probe that gets no answer as the edge going silent, not as another connector', async () => {
   // The tunnel looks free, this run's server answers once, and then nothing answers at all.
   edge.respond = edgeAnswering(530, [200, null])
 
-  const err = await rejectionAfter(10 * 60 * 1000)
+  const err = await rejectionAfter(46 * 60 * 1000)
 
-  expect(err).toBeInstanceOf(CloudflareEdgeUnreachableError)
   expect((err as Error).message).toMatch(/stopped responding at verification 1\/5/)
   expect((err as Error).message).not.toMatch(/another connector is live/)
 })
 
-it('reports a verification probe answered by another server as another connector, and keeps waiting', async () => {
+it('reports a verification probe answered by another server as another connector', async () => {
   edge.respond = edgeAnswering(530, [200, 403])
 
   const err = await rejectionAfter(46 * 60 * 1000)
 
-  expect(err).not.toBeInstanceOf(CloudflareEdgeUnreachableError)
   expect((err as Error).message).toMatch(/still unavailable after waiting 45 min/)
   expect((err as Error).message).toMatch(/failed verification 1\/5 with status 403 — another connector is live/)
 })
 
-it('keeps waiting the full 45 min while a tunnel is busy with another run', async () => {
-  edge.respond = edgeAnswering(403, [null])
+it('keeps rescanning every 10s while a tunnel is busy with another run', async () => {
+  let statusRequests = 0
+  edge.respond = url => {
+    if (url.includes('/__tunnel-status')) statusRequests++
+    return 403
+  }
 
   const err = await rejectionAfter(46 * 60 * 1000)
 
-  expect(err).not.toBeInstanceOf(CloudflareEdgeUnreachableError)
   expect((err as Error).message).toMatch(/still unavailable after waiting 45 min/)
+  expect(statusRequests).toBeGreaterThan(200)
 })
 
-it('restarts the silence window whenever the pool shows contention', async () => {
-  // Busy for the first 4 min, then nothing answers at all. The silence window has to be counted
-  // from the last busy answer, not from the start of the wait.
+it('records how long the edge was unreachable once it answers again', async () => {
+  vi.stubEnv('GITHUB_ACTIONS', 'true')
+  vi.stubEnv('GITHUB_STEP_SUMMARY', '/github/step-summary')
   const start = Date.now()
+  // Nothing answers for the first 10 min; after that the tunnel is free and this run's server answers.
   edge.respond = url => {
-    if (Date.now() - start < 4 * 60 * 1000) return url.includes('/__tunnel-status') ? 403 : null
-    return null
+    if (Date.now() - start < 10 * 60 * 1000) return null
+    return url.includes('/__tunnel-status') ? 530 : 200
   }
 
-  let rejection: unknown = undefined
-  const claiming = findFirstAvailableTunnel(pool, 'app-gate-token').catch(err => {
-    rejection = err
-  })
+  const claiming = findFirstAvailableTunnel(pool, 'app-gate-token')
+  await vi.advanceTimersByTimeAsync(20 * 60 * 1000)
+  const claimed = await claiming
 
-  await vi.advanceTimersByTimeAsync(8 * 60 * 1000)
-  expect(rejection).toBeUndefined()
-
-  await vi.advanceTimersByTimeAsync(3 * 60 * 1000)
-  await claiming
-  expect(rejection).toBeInstanceOf(CloudflareEdgeUnreachableError)
+  expect(claimed.name).toBe('em-browserstack-0')
+  expect(appendFileSync).toHaveBeenCalledWith(
+    '/github/step-summary',
+    expect.stringMatching(/unreachable from this runner for 1[0-9]m \d+s before it answered again/),
+  )
+  expect(console.info).toHaveBeenCalledWith(expect.stringMatching(/^::warning title=Cloudflare edge unreachable::/))
 })

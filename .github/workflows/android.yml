@@ -336,21 +336,9 @@ jobs:
         if: env.BROWSERSTACK_USERNAME == '' || env.BROWSERSTACK_ACCESS_KEY == ''
         run: echo "Skipping BrowserStack because credentials are not configured."
 
-      # The launcher exits with EDGE_UNREACHABLE_EXIT_CODE (75, see cloudflareTunnelPool.ts) when this
-      # runner cannot reach the Cloudflare edge at all, a failure of the runner's network rather than
-      # of the code under test. The exit status is recorded as a step output so the step below can
-      # mark exactly that case for browserstack-retry.yml; every other status passes through as is.
       - name: Test Android on BrowserStack
-        id: test
         if: env.BROWSERSTACK_USERNAME != '' && env.BROWSERSTACK_ACCESS_KEY != ''
-        run: |
-          set +e
-          yarn test:android
-          STATUS=$?
-          if [ "$STATUS" -eq 75 ]; then
-            echo "edge_unreachable=true" >> "$GITHUB_OUTPUT"
-          fi
-          exit "$STATUS"
+        run: yarn test:android
         env:
           BROWSERSTACK_USERNAME: ${{secrets.BROWSERSTACK_USERNAME}}
           BROWSERSTACK_ACCESS_KEY: ${{secrets.BROWSERSTACK_ACCESS_KEY}}
@@ -362,13 +350,6 @@ jobs:
           # to it, claims the first one that is genuinely free, and waits for a slot if they are all
           # busy — so a dead or already-claimed tunnel doesn't block the run.
           CLOUDFLARE_TUNNEL_POOL: ${{secrets.CLOUDFLARE_TUNNEL_POOL}}
-
-      # browserstack-retry.yml re-runs a failed run on a fresh runner only when this step ran and
-      # succeeded, which it does only for the unreachable-edge failure above. It matches this step by
-      # its exact name, so keep the two in sync.
-      - name: Flag unreachable Cloudflare edge for retry
-        if: failure() && steps.test.outputs.edge_unreachable == 'true'
-        run: echo "::error::This runner could not reach the Cloudflare edge. A first attempt is re-run once on a fresh runner by browserstack-retry.yml."
 
       # Best-effort cleanup on the ephemeral runner: stop the manually-started app and preserve
       # the named connector's log for diagnosis. The connector process itself is killed by the
