@@ -34,6 +34,7 @@ const calculateRank = (thoughts: { rank: number }[], index: number): number => {
  *
  * If the sort preference is Alphabetical, the old value will be represented in the list of children.
  * The staleId option can filter out that child so that the new value is not compared against the old value (#3983).
+ * Under Updated it identifies the thought being re-placed, which is otherwise inferred from the cursor.
  */
 const getSortedRank = (
   state: State,
@@ -47,11 +48,14 @@ const getSortedRank = (
 
   const sortPreference = getSortPreference(state, id)
   const isDescending = sortPreference.direction === 'Desc'
-  const thoughts = children.filter(thought => !state.cursor || thought.id !== state.cursor[state.cursor.length - 1])
+  // Exclude the thought being placed so that it is not compared against its own stale position. The caller names it
+  // with staleId; where it does not, it is the thought the cursor is on.
+  const staleIdOrCursor = options.staleId ?? (state.cursor ? state.cursor[state.cursor.length - 1] : null)
+  const thoughts = children.filter(thought => thought.id !== staleIdOrCursor)
 
   // Handle Updated sorting
   if (sortPreference.type === 'Updated') {
-    return isDescending ? thoughts[0].rank - 1 : (thoughts[thoughts.length - 1]?.rank || 0) + 1
+    return isDescending ? (thoughts[0]?.rank ?? 0) - 1 : (thoughts[thoughts.length - 1]?.rank || 0) + 1
   }
 
   const { created } = options

@@ -1,20 +1,16 @@
-import { Capacitor } from '@capacitor/core'
 import _ from 'lodash'
+import { token } from '../../styled-system/tokens'
+import { isTouch } from '../browser'
 import ministore from './ministore'
 import reactMinistore from './react-ministore'
 
 /** Scroll zone as a percentage of the smaller size of the screen. */
 const SCROLL_ZONE_WIDTH = 0.25
 
-/** Check if the device is a touchscreen. Duplicated from src/browser.ts's isTouch to avoid circular imports. */
-const isTouchDevice =
-  typeof window !== 'undefined' &&
-  (window.matchMedia?.('(pointer: coarse)').matches || Capacitor.getPlatform() === 'android')
-
 /** The last measured height of the virtual keyboard in each orientation, kept while the keyboard is closed so that the store can still report its expected height. Starts from a guess until the keyboard can be measured directly. A ministore rather than module variables so that a measurement taken in one test is cleared with the store it feeds. */
 const keyboardHeightCacheStore = ministore({
-  portrait: isTouchDevice ? window.innerHeight / 2.275 : 0,
-  landscape: isTouchDevice ? window.innerWidth / 1.7 : 0,
+  portrait: isTouch ? window.innerHeight / 2.275 : 0,
+  landscape: isTouch ? window.innerWidth / 1.7 : 0,
 })
 
 export interface ViewportState {
@@ -80,5 +76,22 @@ export const updateSize = _.throttle(
   16.666,
   { leading: true },
 )
+
+/**
+ * Returns true if the device is a touchscreen whose *smaller* viewport dimension is at least the `lg`
+ * breakpoint ("landscape mobile devices and larger", 600px — approx the short edge of an iPad).
+ *
+ * Reads the live viewport size from `viewportStore` on every call, so the answer updates as the store
+ * does (e.g. on rotation or window resize). Taking the minimum of the two dimensions is what excludes a
+ * phone held in landscape: an iPhone 17 Pro is 874pt wide that way and clears `lg` on viewport width
+ * alone, but `min(402, 874)` does not.
+ */
+export const isTablet = () => {
+  const { innerWidth, innerHeight } = viewportStore.getState()
+
+  return (
+    isTouch && typeof window !== 'undefined' && Math.min(innerWidth, innerHeight) >= parseInt(token('breakpoints.lg'))
+  )
+}
 
 export default viewportStore

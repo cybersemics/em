@@ -1,4 +1,6 @@
+import _ from 'lodash'
 import State from '../@types/State'
+import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import { getChildrenRanked } from './getChildren'
 
@@ -9,15 +11,15 @@ const getMovePlacement = (
   {
     id,
     rank,
+    rankedChildren = getChildrenRanked(state, parentId),
   }: {
     /** The thought being placed. It is excluded from its siblings so that it is never placed after itself. */
     id: ThoughtId
     /** The rank the thought is being given. */
     rank: number
+    /** Reuses the parent's children when the caller has already read them in rank order. */
+    rankedChildren?: readonly Thought[]
   },
-): ThoughtId | null =>
-  getChildrenRanked(state, parentId)
-    .filter(child => child.id !== id && child.rank < rank)
-    .at(-1)?.id ?? null
+): ThoughtId | null => _.findLast(rankedChildren, child => child.id !== id && child.rank < rank)?.id ?? null
 
 export default getMovePlacement

@@ -1,0 +1,129 @@
+name: Evals
+
+run-name: Evals
+
+# Runs the live model evaluations in packages/ai/src/evals against the real OpenAI API when a pull
+# request changes what they measure. The deterministic tests in packages/ai/src/__tests__ mock
+# completeChat, so the Test workflow covers filtering and validation and nothing about what the
+# model returns; without this, a prompt change can degrade its output with nothing to show it.
+#
+# Each prompt is evaluated on its own. A change to a prompt or to its eval runs that eval; a change
+# to what every prompt shares (completeChat, the model and reasoning-effort enums) runs them all.
+# An emoji prompt change is therefore never failed by a Generate Thought flake. The evaluations are
+# nondeterministic — no seed, and a fuzzy match against a hand-written corpus — so a run will
+# sometimes fail a prompt that did not regress. That is accepted: the alternative, reporting without
+# failing, was considered and rejected in #5236.
+#
+# pull_request_target runs in the base repo's context, so the OpenAI key is available even for fork
+# PRs. GitHub's "require approval for outside collaborators" setting is the trust gate, not a
+# sandbox: approving a run allows the checked-out PR code to execute with the key. Here the changed
+# file IS the code that runs, so the OPENAI_API_KEY repository secret must be a dedicated, tightly
+# budgeted key, never a production one. Review fork changes for exfiltration paths before approving
+# them.
+#
+# `paths` means a non-matching PR reports no check at all — not a skipped one — so this workflow
+# must never be made a required status check on main (see § Path filtering in docs/testing.md).
+# Dependency bumps (yarn.lock) and vitest.config.ts are deliberately not listed: an openai SDK bump
+# can change behaviour, but running paid evaluations on every lockfile change is not worth it.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - packages/ai/src/prompts/**
+      - packages/ai/src/evals/**
+      - packages/ai/src/completeChat.ts
+      - packages/ai/src/@types/**
+      - .github/workflows/evals.yml
+  # Runs every evaluation against the chosen branch, for checking a prompt without a local key.
+  workflow_dispatch:
+
+# A new push supersedes the run in progress. Keyed on the PR number rather than github.ref because
+# pull_request_target sets github.ref to the *base* branch — every open PR against main would
+# otherwise share one group and cancel each other. workflow_dispatch runs key on the run id, so
+# manual runs never cancel one another.
+concurrency:
+  group: evals-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read # list the pull request's changed files
+
+env:
+  # Skip Puppeteer's Chrome download on install — nothing here launches a browser.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
+jobs:
+  evals:
+    name: Evals
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          # v6 refuses to check out fork PR code from a pull_request_target workflow unless this is
+          # set. See the header comment for why running fork code in this context is gated.
+          # https://gh.io/securely-using-pull_request_target
+          allow-unsafe-pr-checkout: true
+
+      # The file list comes from the API rather than from git, and the checkout above is only
+      # consulted for whether an evaluation file exists, so selecting what to run executes no pull
+      # request code. Only the evaluation itself does, after the trust gate above.
+      - name: Select evaluations
+        id: select
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$PR" ]; then
+            echo 'files=packages/ai/src/evals' >> "$GITHUB_OUTPUT"
+            echo 'Manual run: every evaluation'
+            exit 0
+          fi
+
+          changed=$(gh api "repos/${{ github.repository }}/pulls/$PR/files" --paginate --jq '.[].filename')
+
+          # Anything every prompt goes through runs every evaluation.
+          if grep -qE '^packages/ai/src/(completeChat\.ts|@types/)|^\.github/workflows/evals\.yml$' <<< "$changed"; then
+            echo 'files=packages/ai/src/evals' >> "$GITHUB_OUTPUT"
+            echo 'Shared input changed: every evaluation'
+            exit 0
+          fi
+
+          # Otherwise a prompt or its evaluation runs that evaluation alone. A prompt with no
+          # evaluation of its own (defineTerm) selects nothing.
+          files=''
+          while read -r file; do
+            if [ -f "$file" ]; then files="$files $file"; fi
+          done < <(grep -oE '^packages/ai/src/(prompts|evals)/[^/]+\.ts$' <<< "$changed" \
+            | sed -E 's#^packages/ai/src/(prompts|evals)/#packages/ai/src/evals/#' \
+            | sort -u)
+          files="${files# }"
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+          echo "Selected: ${files:-nothing}"
+
+      - name: Enable Corepack
+        if: steps.select.outputs.files != ''
+        run: corepack enable
+
+      - name: Set Node.js version
+        if: steps.select.outputs.files != ''
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        if: steps.select.outputs.files != ''
+        uses: ./.github/actions/install
+
+      # test:evals loads packages/ai/.env.local only if it exists, so the key arrives through the
+      # environment here. It is exported as the shared fallback so that every service resolves to it.
+      - name: Run evaluations
+        if: steps.select.outputs.files != ''
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: yarn test:evals ${{ steps.select.outputs.files }}
