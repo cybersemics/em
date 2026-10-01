@@ -424,7 +424,7 @@ const globalCss = defineGlobalStyles({
     fontFamily: 'monospace',
   },
   /* Sweep a highlight across existing paint, preserving rich-text colors, backgrounds and native emoji. */
-  '[data-generating]': {
+  '[data-generating], [data-generating-note] [aria-label="note-editable"]': {
     maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, black 50%, rgba(0, 0, 0, 0.5) 100%)',
     maskSize: '250% 100%',
     animation: 'shimmerText 4s linear infinite',
