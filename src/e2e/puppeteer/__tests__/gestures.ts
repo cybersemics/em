@@ -14,6 +14,7 @@ import scrollTo from '../helpers/scrollTo'
 import setConnectionStatus from '../helpers/setConnectionStatus'
 import setSelection from '../helpers/setSelection'
 import waitForAlert from '../helpers/waitForAlert'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
@@ -82,10 +83,12 @@ describe('alerts', () => {
 
     await gesture(swapNoteCommand)
 
-    await waitForAlert('Thoughts in the home context cannot be converted to a note.').catch(async () => {
-      const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent).catch(() => null)
-      throw new Error(`Swiping Swap Note on a thought in the home context showed the alert "${alertText}".`)
-    })
+    // Let the task deferred from the end of the gesture run before asserting which alert remains, so that an error
+    // alert that is shown only momentarily before the gesture hint replaces it does not pass the test.
+    await waitForBrowserSettled()
+
+    const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
+    expect(alertText).toBe('Thoughts in the home context cannot be converted to a note.')
   })
 })
 
