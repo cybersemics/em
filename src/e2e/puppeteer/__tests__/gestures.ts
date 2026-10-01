@@ -1,6 +1,7 @@
 import { type ConsoleMessage, ElementHandle, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
+import swapNoteCommand from '../../../commands/swapNote'
 import $ from '../helpers/$'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
@@ -68,6 +69,23 @@ describe('alerts', () => {
     // Verify alert content contains gesture hint text
     const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
     expect(alertText).toBeTruthy()
+  })
+
+  // https://github.com/cybersemics/em/issues/5735
+  it.skip('shows the error alert when Swap Note is swiped on a thought in the home context', async () => {
+    await paste(`
+      - aaa
+        - bbb
+    `)
+    await clickThought('aaa')
+    await waitForCursor('aaa')
+
+    await gesture(swapNoteCommand)
+
+    await waitForAlert('Thoughts in the home context cannot be converted to a note.').catch(async () => {
+      const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent).catch(() => null)
+      throw new Error(`Swiping Swap Note on a thought in the home context showed the alert "${alertText}".`)
+    })
   })
 })
 
