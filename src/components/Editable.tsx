@@ -127,8 +127,7 @@ const getVisibleText = (html: string): { charStarts: number[]; text: string } =>
 }
 
 /**
- * Wraps each emoji in a temporary span so the generating shimmer can restore an opaque fill. The stored thought value
- * is not changed. Indices are applied from the end so earlier source offsets stay valid.
+ * Wraps each emoji in a display-only span during generation. The stored thought value is not changed. Indices are applied from the end so earlier source offsets stay valid.
  */
 const wrapGeneratingEmoji = (html: string): string => {
   const { charStarts, text } = getVisibleText(html)
@@ -1214,7 +1213,7 @@ const Editable = ({
 
   // The html that is rendered in the editable. Note that it is empty while the thought is cleared, even though the
   // thought still has its value, which is shown as a placeholder.
-  // Emoji are wrapped only while generating so the shimmer can restore an opaque fill. The stored value is unchanged.
+  // Emoji spans are display-only and removed before the value is stored.
   // See wrapGeneratingEmoji and unwrapGeneratingEmoji.
   const displayedValue = isEditing ? value : (childrenLabel ?? value)
   const html =

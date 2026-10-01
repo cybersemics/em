@@ -156,10 +156,10 @@ const keyframes = defineKeyframes({
   },
   shimmerText: {
     from: {
-      backgroundPosition: '200% 0',
+      maskPosition: '200% 0',
     },
     to: {
-      backgroundPosition: '-200% 0',
+      maskPosition: '-200% 0',
     },
   },
   tofg: {
@@ -423,37 +423,14 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
     fontFamily: 'monospace',
   },
-  /* Sweep a highlight across thought text (and the empty-thought placeholder) while an AI request is in flight. */
-  '[data-generating], [data-generating] *': {
-    // Paint above inline background colors, while the final layer keeps their background-color unclipped.
-    backgroundImage:
-      'linear-gradient(90deg, {colors.dim} 0%, {colors.fg} 50%, {colors.dim} 100%), linear-gradient(transparent, transparent)',
-    backgroundSize: '250% 100%, 100% 100%',
-    backgroundClip: 'text, border-box',
-    WebkitBackgroundClip: 'text, border-box',
-    WebkitTextFillColor: 'transparent',
-    color: 'transparent',
+  /* Sweep a highlight across existing paint, preserving rich-text colors, backgrounds and native emoji. */
+  '[data-generating]': {
+    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, black 50%, rgba(0, 0, 0, 0.5) 100%)',
+    maskSize: '250% 100%',
     animation: 'shimmerText 4s linear infinite',
-    // color: transparent hides the caret; restore it so a focused generating thought stays editable.
-    caretColor: 'fg',
-  },
-  // Apple Color Emoji are images, not fillable glyphs. A transparent fill hides them on iOS and can leave them
-  // unpainted after generating ends. Restore an opaque fill on the temporary display wrap so they stay visible.
-  '[data-generating] [data-generating-emoji]': {
-    WebkitTextFillColor: 'fg',
-    color: 'fg',
-    backgroundImage: 'none',
-    backgroundClip: 'unset',
-    WebkitBackgroundClip: 'unset',
   },
   '[placeholder][data-generating]:empty::before': {
-    backgroundImage: 'linear-gradient(90deg, {colors.dim} 0%, {colors.fg} 50%, {colors.dim} 100%)',
-    backgroundSize: '250% 100%',
-    backgroundClip: 'text',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-    color: 'transparent',
-    animation: 'shimmerText 4s linear infinite',
+    color: 'var(--placeholder-color, {colors.fg})',
   },
   ':root': {
     '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
