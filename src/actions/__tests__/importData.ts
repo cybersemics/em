@@ -1258,7 +1258,7 @@ it('insert single-line HTML copied from Mac desktop Chrome at end of thought', a
 })
 
 // https://github.com/cybersemics/em/issues/4073
-it.skip('paste a word copied from em in Mobile Safari into the iOS app without its inline black text color', async () => {
+it('paste a word copied from em in Mobile Safari into the iOS app without its inline black text color', async () => {
   const html = `<span style="font-style: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-tap-highlight-color: rgba(26, 26, 26, 0.3); -webkit-text-size-adjust: auto; -webkit-text-stroke-width: 0px; text-decoration: none; caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); font-size: medium; float: none; display: inline !important;">One</span>`
   vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })

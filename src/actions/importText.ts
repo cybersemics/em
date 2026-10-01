@@ -22,6 +22,7 @@ import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import importJson from '../util/importJson'
 import insertHtmlAtTextOffset from '../util/insertHtmlAtTextOffset'
+import isHTML from '../util/isHTML'
 import isMarkdown from '../util/isMarkdown'
 import isRoot from '../util/isRoot'
 import markdownToText from '../util/markdownToText'
@@ -30,6 +31,7 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
 import splitHtmlAtTextOffset from '../util/splitHtmlAtTextOffset'
+import strip from '../util/strip'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
@@ -120,11 +122,13 @@ const importText = (
           )
         : destValue
 
+    // Strip the inline styles that html copied from a web page carries, such as the source's black text color, which is invisible on em's black background (#4073). The multiline branch strips them in htmlToJson.
+    const insertedHtml = isHTML(text) ? strip(text, { preserveFormatting: true, preventTrim: true }) : text
     const insertOffset = replaceStart ?? caretPosition
-    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, text)
+    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedHtml)
     const newValue = addEmojiSpace(combinedValue)
     // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
-    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(text).length
+    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(insertedHtml).length
     const emojiSpaceInsertionOffset = newValue === combinedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
     const offset =
       emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset
