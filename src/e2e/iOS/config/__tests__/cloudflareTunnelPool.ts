@@ -98,6 +98,15 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+it('claims a free tunnel that answers every verification probe with this run token', async () => {
+  edge.respond = edgeAnswering(530, [200])
+
+  const claiming = findFirstAvailableTunnel(pool, 'app-gate-token')
+  await vi.advanceTimersByTimeAsync(60 * 1000)
+
+  expect(await claiming).toMatchObject({ name: 'em-browserstack-0', url: 'https://em-browserstack-0.example.test/' })
+})
+
 it("fails naming the runner's network when no request ever gets an answer", async () => {
   edge.respond = edgeAnswering(null, [null])
 
