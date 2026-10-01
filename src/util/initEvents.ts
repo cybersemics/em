@@ -33,7 +33,6 @@ import storageModel from '../stores/storageModel'
 import syncStatusStore from '../stores/syncStatusStore'
 import touchStore from '../stores/touchStore'
 import { updateSize } from '../stores/viewportStore'
-import webKit27Store from '../stores/webKit27Store'
 import isRoot from '../util/isRoot'
 import pathToContext from '../util/pathToContext'
 import debugLog from './debugLog'
@@ -52,9 +51,6 @@ const WINDOW_SCROLLATEDGE_SPEED = 2
 
 /** How often to save the selection offset to storage when it changes. */
 const SELECTION_CHANGE_THROTTLE = 200
-
-/** The longest time from one touchstart to the next for the two to be a double tap. Measured on iOS 27, a pair 222ms apart was a double tap and pairs 617ms or more apart never were. Unlike the gap from the last touchend, this cannot be faked by a withheld touchend, whose arrival is delayed until the next touchstart. */
-const DOUBLE_TAP_MS = 500
 
 /** The pending selection.clear that fires if the device stays in the passive state (see onStateChange). A ministore whose dispose clears the timer, so that cleanup and a reset between tests cancel it rather than leaving it to fire later. */
 const passiveTimeoutStore = ministore<{ timer: Timer | null }>(
@@ -305,22 +301,13 @@ const initEvents = (store: Store<State, any>) => {
    * native caret repositioning rather than starting a drag or a gesture (#3763): on iOS Safari the text magnifier, on
    * any caret; elsewhere only on an empty thought, where the context menu is the only route to paste. Latching here
    * rather than in each reader gives the flag a single writer per touch, measures the caret once, and covers touches
-   * that never reach an element that mounts useLongPress. Also decides whether this touch's touchend can be trusted
-   * (#5660). Registered in the capture phase because touchstart propagation is unreliable in the bubble phase (see the
-   * note on the touchmove listener below); capture also puts it ahead of every reader. */
+   * that never reach an element that mounts useLongPress. Registered in the capture phase because touchstart
+   * propagation is unreliable in the bubble phase (see the note on the touchmove listener below); capture also puts it
+   * ahead of every reader. */
   const onTouchStart = (e: TouchEvent) => {
-    const { touchStartTimeStamp } = touchStore.getState()
     // changedTouches is the finger that just landed; touches[0] is the first one still down, which a second finger
     // arriving mid-edit would measure instead.
     const touch = e.changedTouches[0]
-    // Two kinds of tap on WebKit 27 give no sign that the finger has lifted: the second tap of a double tap, wherever
-    // it lands, and a tap on the caret's own word, which does nothing. The latter is guarded before iOS starts
-    // withholding too, since that cannot be known in time. Other withheld taps still fire mouseup at the lift.
-    const touchEndUnreliable =
-      webKit27Store.getState() &&
-      (e.timeStamp - touchStartTimeStamp < DOUBLE_TAP_MS ||
-        (!!touch && selection.isOnCaretWord(touch.clientX, touch.clientY)))
-
     const state = store.getState()
     const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
     touchStore.update({
@@ -330,8 +317,6 @@ const initEvents = (store: Store<State, any>) => {
        * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
        * phase (see the note on the touchmove listener below). */
       suppressCursorAfterTouch: false,
-      touchStartTimeStamp: e.timeStamp,
-      touchEndUnreliable,
     })
   }
 

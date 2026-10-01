@@ -13,10 +13,6 @@ const touchStore = ministore({
   touching: false,
   /** Set when a completed touch has already handled its intended cursor behavior, and cleared on the next touchstart. While set, cursor-producing events on an editable belong to the completed touch: browsers can synthesize them after touchend called preventDefault, or after drag cleanup has finished. A legitimate tap always begins with a new touchstart, which clears the flag first. */
   suppressCursorAfterTouch: false,
-  /** The timeStamp of the last touchstart, so that the next touchstart can tell whether the two are a double tap. */
-  touchStartTimeStamp: -Infinity,
-  /** Set on touchstart when this touch's touchend may be withheld, and recomputed on the next touchstart. Such a tap looks exactly like a finger still held down, so while this is set the touch must not start a long press. */
-  touchEndUnreliable: false,
 })
 
 export default touchStore

@@ -97,10 +97,6 @@ const useLongPress = (
       // The flag is latched by the capture-phase touchstart listener in initEvents, which runs first.
       if (touchStore.getState().pressOnCaret) return
 
-      // While iOS is withholding touchend, a tap cannot be told apart from a finger held down, so any touch would
-      // reach the long press delay. Not pressing is what keeps the long press from starting (#5660).
-      if ('touches' in e.nativeEvent && touchStore.getState().touchEndUnreliable) return
-
       setPressing(true)
     },
     [setPressing],
