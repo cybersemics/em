@@ -4,9 +4,6 @@ import Thunk from '../@types/Thunk'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 
 interface Options {
-  // used by the pullQueue to detect if the authenticated user is connected and thus able to pull
-  // detected directly by the middleware, so not needed in State
-  connected?: boolean
   value: boolean
 }
 

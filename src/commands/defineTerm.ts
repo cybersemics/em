@@ -12,7 +12,7 @@ import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } f
 import { showModalActionCreator as showModal } from '../actions/showModal'
 import { updateThoughtsActionCreator as updateThoughts } from '../actions/updateThoughts'
 import GenerateThoughtIcon from '../components/icons/GenerateThoughtIcon'
-import getPrevRank from '../selectors/getPrevRank'
+import getFirstChildPlacement from '../selectors/getFirstChildPlacement'
 import getThoughtById from '../selectors/getThoughtById'
 import selectedPaths from '../selectors/selectedPaths'
 import simplifyPath from '../selectors/simplifyPath'
@@ -77,12 +77,11 @@ const defineTermAtPaths =
             },
           ]),
         ),
-        lexemeIndexUpdates: {},
-        local: false,
-        overwritePending: true,
-        remote: false,
+        persist: false,
       }),
     )
+    // Other AI commands share these overlays but not the Define Term request registry.
+    const pendingThoughtUi = getState().thoughtUi
 
     try {
       if (!import.meta.env.VITE_AI_URL) {
@@ -125,6 +124,7 @@ const defineTermAtPaths =
           !currentThought ||
           currentThought.value !== request.originalValue ||
           !currentThought.generating ||
+          currentState.thoughtUi[request.thought.id] !== pendingThoughtUi[request.thought.id] ||
           pendingDefinitions.get(request.thought.id) !== request.requestId
         )
           return
@@ -136,7 +136,7 @@ const defineTermAtPaths =
         dispatch(
           createThought({
             path: simplifyPath(currentState, currentPath),
-            rank: getPrevRank(currentState, request.thought.id),
+            afterId: getFirstChildPlacement(currentState, request.thought.id),
             value: escapeHtml(definition),
           }),
         )
@@ -150,7 +150,9 @@ const defineTermAtPaths =
           if (pendingDefinitions.get(request.thought.id) !== request.requestId) return []
           pendingDefinitions.delete(request.thought.id)
           const currentThought = getThoughtById(currentState, request.thought.id)
-          return currentThought?.generating && currentThought.value === request.originalValue
+          // Incoming edits preserve our overlay; a newer AI command replaces it and owns its own cleanup.
+          return currentThought?.generating &&
+            currentState.thoughtUi[request.thought.id] === pendingThoughtUi[request.thought.id]
             ? [[request.thought.id, { ...currentThought, generating: false }]]
             : []
         }),
@@ -160,10 +162,7 @@ const defineTermAtPaths =
         dispatch(
           updateThoughts({
             thoughtIndexUpdates,
-            lexemeIndexUpdates: {},
-            local: false,
-            overwritePending: true,
-            remote: false,
+            persist: false,
           }),
         )
       }

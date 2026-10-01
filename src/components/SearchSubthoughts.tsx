@@ -8,6 +8,7 @@ import Thought from '../@types/Thought'
 import { errorActionCreator as error } from '../actions/error'
 import { searchLimitActionCreator as setSearchLimit } from '../actions/searchLimit'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import hasLexeme from '../selectors/hasLexeme'
 import store from '../stores/app'
 import escapeRegex from '../util/escapeRegex'
@@ -28,10 +29,10 @@ const SearchSubthoughts: FC = () => {
   const search = useSelector(state => state.search)
   const remoteSearch = useSelector(state => state.remoteSearch)
   const searchLimit = useSelector(state => state.searchLimit || DEFAULT_SEARCH_LIMIT)
-  const thoughtIndex = useSelector(state => state.thoughts.thoughtIndex)
+  const thoughts = useEditorSelector(state => state.thoughts)
 
   /**
-   * Search thoughts remotely or locally and add it to pullQueue.
+   * Placeholder for asynchronous search integration.
    */
   //ignore this line beacaue its call in useEffect Function
   const searchThoughts = async (value: string) => {
@@ -90,7 +91,7 @@ const SearchSubthoughts: FC = () => {
 
   const children = search
     ? sort(
-        Object.values(thoughtIndex).filter(
+        Array.from(thoughts.values()).filter(
           thought =>
             // (archived || !isArchived(store.getState(), lexeme)) &&
             thought.value !== HOME_TOKEN && thought.value !== EM_TOKEN && searchRegexp.test(thought.value),

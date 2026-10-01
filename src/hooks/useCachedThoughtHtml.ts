@@ -18,12 +18,12 @@ const useCachedThoughtHtml = ({
   // Cache the DOM before it is deleted
   const cachedHTMLRef = useRef<string | null>(null)
 
-  // Capture the static innerHTML of the thought container whenever the thought changes
+  // Capture each live render: structural changes can alter the HTML without changing the thought object.
   useEffect(() => {
     if (thought && elementRef.current) {
       cachedHTMLRef.current = elementRef.current.innerHTML.trim()
     }
-  }, [thought, elementRef])
+  })
 
   return cachedHTMLRef
 }

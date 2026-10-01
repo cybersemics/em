@@ -1,13 +1,13 @@
 import { isEqual } from 'lodash'
-import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
 import { HOME_TOKEN } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import { getAllChildren, getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
 import ellipsize from '../../util/ellipsize'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepAutoExpandExpand = () => {
-  const uncle = useSelector(state => {
+  const uncle = useEditorSelector(state => {
     const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
     const noCursorThoughts = state.cursor ? rootChildren.filter(c => c.id !== state.cursor![0]) : rootChildren
     // The array that holds all the thoughts that that don't have a cursor, but have children.
@@ -16,7 +16,7 @@ const TutorialStepAutoExpandExpand = () => {
   }, isEqual)
 
   /** Gets the first child of the first thought in the root that is not the cursor. */
-  const childWithNoCursorParent = useSelector(state => (uncle ? getChildrenRanked(state, uncle.id)[0] : null))
+  const childWithNoCursorParent = useEditorSelector(state => (uncle ? getChildrenRanked(state, uncle.id)[0] : null))
 
   const hiddenChild = (childWithNoCursorParent && ellipsize(childWithNoCursorParent?.value)) || ''
 

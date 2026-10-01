@@ -17,6 +17,7 @@ import {
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 import * as selection from '../device/selection'
+import useEditorSelector from '../hooks/useEditorSelector'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -42,10 +43,10 @@ const TransientEditable = (
 /** The main content section of em. */
 const Content: FC = () => {
   const dispatch = useDispatch()
-  const tutorial = useSelector(isTutorial)
-  const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
+  const tutorial = useEditorSelector(isTutorial)
+  const tutorialStep = useEditorSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
   const search = useSelector(state => state.search)
-  const rootThoughtsLength = useSelector(state => {
+  const rootThoughtsLength = useEditorSelector(state => {
     const rankedRoot = isAbsolute(state.rootContext) ? ABSOLUTE_PATH : HOME_PATH
     const children = filterAllChildren(state, head(rankedRoot), childrenFilterPredicate(state, rankedRoot))
     return children.length

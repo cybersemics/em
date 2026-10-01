@@ -13,7 +13,7 @@ import { commandById } from '../commands'
 import { EM_TOKEN } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { getChildrenRanked } from '../selectors/getChildren'
-import getRankBefore from '../selectors/getRankBefore'
+import getPreviousSiblingId from '../selectors/getPreviousSiblingId'
 import store from '../stores/app'
 import appendToPath from '../util/appendToPath'
 import haptics from '../util/haptics'
@@ -70,7 +70,7 @@ const drop = (commandId: CommandId, monitor: DropTargetMonitor) => {
           moveThought({
             oldPath: fromPath,
             newPath: fromPath,
-            newRank: getRankBefore(state, toPath),
+            afterId: getPreviousSiblingId(state, toThoughtId, { excludeId: fromThoughtId }),
           }),
         )
       }

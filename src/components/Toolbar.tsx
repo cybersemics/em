@@ -24,6 +24,7 @@ import {
   TOOLBAR_DEFAULT_COMMANDS,
   TOOLBAR_PRESS_ANIMATION_DURATION,
 } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import usePositionFixed from '../hooks/usePositionFixed'
 import getUserToolbar from '../selectors/getUserToolbar'
 import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
@@ -211,7 +212,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
 
   // custom user toolbar
   // fall back to defaults if user does not have Settings defined
-  const commandIds = useSelector(state => {
+  const commandIds = useEditorSelector(state => {
     const userCommandIds = getUserToolbar(state)
     return userCommandIds || state.storageCache?.userToolbar || TOOLBAR_DEFAULT_COMMANDS
   }, shallowEqual)

@@ -8,11 +8,11 @@ import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
 import { isMac, isSafari, isTouch, isiPhone } from '../browser'
 import { AlertType } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import { LongPressProps } from '../hooks/useLongPress'
 import attribute from '../selectors/attribute'
 import attributeEquals from '../selectors/attributeEquals'
 import findDescendant from '../selectors/findDescendant'
-import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getLexeme from '../selectors/getLexeme'
 import getThoughtById from '../selectors/getThoughtById'
 import getThoughtFill from '../selectors/getThoughtFill'
@@ -25,14 +25,11 @@ import getCommandState from '../util/getCommandState'
 import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
-import parentOf from '../util/parentOf'
 import BulletPositioner from './BulletPositioner'
 
 interface BulletProps {
   dragSource: ConnectDragSource
   longPressProps: LongPressProps
-  // See: ThoughtProps['isContextPending']
-  isContextPending?: boolean
   isDragging?: boolean
   isEditing: boolean
   leaf?: boolean
@@ -163,7 +160,6 @@ const BulletParent = ({
   currentScale,
   done,
   fill,
-  childrenMissing,
   pending,
   showContexts,
   isBulletExpanded,
@@ -172,7 +168,6 @@ const BulletParent = ({
   done?: boolean
   fill?: string
   isHighlighted?: boolean
-  childrenMissing?: boolean
   pending?: boolean
   showContexts?: boolean
   isBulletExpanded?: boolean
@@ -194,7 +189,7 @@ const BulletParent = ({
     <path
       className={glyphFg({
         triangle: true,
-        gray: childrenMissing || done,
+        gray: done,
         graypulse: pending,
         isBulletExpanded,
         showContexts,
@@ -270,7 +265,6 @@ const BulletHighlightOverlay = ({
 const Bullet = ({
   dragSource,
   longPressProps,
-  isContextPending,
   isDragging,
   isEditing,
   leaf,
@@ -286,13 +280,13 @@ const Bullet = ({
   // debugIndex,
 }: BulletProps) => {
   const svgElement = useRef<SVGSVGElement>(null)
-  const showContexts = useSelector(state => isContextViewActive(state, path))
+  const showContexts = useEditorSelector(state => isContextViewActive(state, path))
 
-  const isTableCol1 = useSelector(state =>
+  const isTableCol1 = useEditorSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, simplePath)), '=view', 'Table'),
   )
-  const isDone = useSelector(state => !!findDescendant(state, thoughtId, '=done'))
-  const isMulticursor = useSelector(state => isMulticursorPath(state, path))
+  const isDone = useEditorSelector(state => !!findDescendant(state, thoughtId, '=done'))
+  const isMulticursor = useEditorSelector(state => isMulticursorPath(state, path))
   const isHighlighted = useSelector(state => {
     const isHolding = state.draggedSimplePath && head(state.draggedSimplePath) === head(simplePath)
     return isHolding || isDragging || isMulticursor
@@ -303,36 +297,21 @@ const Bullet = ({
     state => isDragging && state.alert?.alertType === AlertType.DeleteDropHint,
   )
 
-  /** Returns true if the thought is pending. */
-  const pending = useSelector(state => {
-    const thought = getThoughtById(state, thoughtId)
-    // Do not show context as pending since it will remain pending until expanded, and the context value is already loaded so there is nothing missing from the context view UI.
-    // (Another approach would be to pre-load the context children as soon as the context view is activated.)
-    const showContextsParent = isContextViewActive(state, parentOf(path))
-    return isContextPending || (!showContextsParent && (thought?.pending || thought?.generating))
-  })
+  /** Shows the in-flight generation indicator without treating document reads as asynchronous. */
+  const pending = useEditorSelector(state => !!getThoughtById(state, thoughtId)?.generating)
 
   /** Returns true if the thought or its Lexeme is missing. */
-  const missing = useSelector(state => {
+  const missing = useEditorSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     return !thought || !getLexeme(state, thought.value)
   })
 
-  // Returns true if any of the thought's children are missing. Only shown when showHiddenThoughts is true until an autorepair solution is found.
-  const childrenMissing = useSelector(state => {
-    if (!state.showHiddenThoughts) return false
-    const thought = getThoughtById(state, thoughtId)
-    if (!thought) return false
-    const children = getAllChildrenAsThoughts(state, thought.id)
-    return children.length < Object.keys(thought.childrenMap).length
-  })
-
-  const persistedFill = useSelector(state => getThoughtFill(state, thoughtId))
-  const isEmpty = useSelector(state => getThoughtById(state, thoughtId)?.value === '')
+  const persistedFill = useEditorSelector(state => getThoughtFill(state, thoughtId))
+  const isEmpty = useEditorSelector(state => getThoughtById(state, thoughtId)?.value === '')
   // Formatting applied to an empty thought is held on the thought until it is typed into, so the bullet takes its
   // color from there. Read from the thought rather than the cursor-scoped commandStateStore, so that the color
   // survives the cursor moving away, as the pending formatting itself does (#3910).
-  const pendingFormatFill = useSelector(state => {
+  const pendingFormatFill = useEditorSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     if (thought?.value !== '' || !thought.pendingFormat) return undefined
 
@@ -352,7 +331,7 @@ const Bullet = ({
   const fill = persistedFill || pendingFormatFill || activeCommandFill
 
   /** The 1-based ordinal and style of an ordered list item, or null if the thought is not in an ordered context. A thought is ordered when its parent has =children/=bullet/Ordered|Alpha or its grandparent has =grandchildren/=bullet/Ordered|Alpha. */
-  const ordered = useSelector((state): { index: number; style: 'Ordered' | 'Alpha' } | null => {
+  const ordered = useEditorSelector((state): { index: number; style: 'Ordered' | 'Alpha' } | null => {
     // Ordered numbering does not apply in the context view. A context view entry is rendered in place of its
     // context, so the =children/=bullet of its real parent must not number it.
     if (showContexts || isInContextView) return null
@@ -418,7 +397,6 @@ const Bullet = ({
             done={isDone}
             fill={fill}
             isHighlighted={isHighlighted}
-            childrenMissing={childrenMissing}
             pending={pending}
             showContexts={showContexts}
             isBulletExpanded={isBulletExpanded}

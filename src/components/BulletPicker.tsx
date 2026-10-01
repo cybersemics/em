@@ -5,6 +5,7 @@ import BulletStyle from '../@types/BulletStyle'
 import { setBulletStyleActionCreator as setBulletStyle } from '../actions/setBulletStyle'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getBulletStyle from '../selectors/getBulletStyle'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -65,7 +66,7 @@ const BulletPicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
   const showBulletPicker = useSelector(state => state.showBulletPicker)
 
-  const bulletStyle = useSelector(state => {
+  const bulletStyle = useEditorSelector(state => {
     if (!state.cursor || isRoot(state.cursor)) return null
     const simplePath = simplifyPath(state, rootedParentOf(state, state.cursor))
     return getBulletStyle(state, head(simplePath))

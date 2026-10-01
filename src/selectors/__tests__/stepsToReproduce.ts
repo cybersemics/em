@@ -1,9 +1,11 @@
+import { applyPatch } from 'fast-json-patch'
 import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../../actions/deleteThoughtWithCursor'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { replaceThoughtsActionCreator as replaceThoughts } from '../../actions/replaceThoughts'
 import { swapParentActionCreator as swapParent } from '../../actions/swapParent'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -13,12 +15,16 @@ import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
 import newThoughtAboveCommand from '../../commands/newThoughtAbove'
 import toggleSortCommand from '../../commands/toggleSort'
-import { HOME_PATH } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import db from '../../data-providers/thoughtspace'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
+import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import thoughtspaceHistory from '../../util/thoughtspaceHistory'
 import contextToPath from '../contextToPath'
 import stepsToReproduce from '../stepsToReproduce'
 
@@ -188,7 +194,73 @@ it('name each action as dispatched, preceded by the cursor it acts on', () => {
 `)
 })
 
-it('name a multicursor command by its label, preceded by the selection it acts on', () => {
+it('retains incoming siblings and payloads while reconstructing a local reorder for a report', () => {
+  store.dispatch([importText({ text: '- a\n- b\n- c\n  - x' }), setCursor(['a']), moveThoughtDown()])
+  const b = contextToThought(store.getState(), ['b'])!
+  const x = contextToThought(store.getState(), ['c', 'x'])!
+  const incoming = db.transact(transaction =>
+    transaction.update({
+      thoughtIndexUpdates: {
+        [b.id]: { ...b, value: 'incoming b' },
+        [x.id]: { ...x, parentId: HOME_TOKEN },
+      },
+      movePlacements: { [x.id]: null },
+    }),
+  )
+  store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
+  const current = store.getState()
+
+  // Replaying relative array positions would overwrite x and duplicate a; the existing keyed history retains both.
+  expect(stepsToReproduce(current, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- x
+- a
+- incoming b
+- c
+\`\`\`
+
+1. Set the cursor on \`a\`.
+2. Move Thought Down.
+
+## Current Behavior
+
+\`\`\`
+- x
+- incoming b
+- a
+- c
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+  expect(db.project()).toBe(current.thoughts)
+})
+
+it.each([
+  ['ordinary', '=renamed'],
+  ['=attribute', 'renamed'],
+  ['ordinary', '=attribute'],
+])('restores diagnostic child keys when renaming %s to %s', (oldValue, newValue) => {
+  store.dispatch([
+    importText({ text: '- parent\n  - ordinary\n  - =attribute\n    - child' }),
+    setCursor(['parent', oldValue]),
+  ])
+  const before = thoughtspaceHistory.capture(store.getState())
+
+  store.dispatch(editThought(['parent', oldValue], newValue))
+
+  const state = store.getState()
+  const after = thoughtspaceHistory.capture(state)
+  const restored = applyPatch(after, state.undoPatches.at(-1)!.ops, false, false).newDocument
+
+  // Attribute names key the parent's child map; exporting the outline alone would not detect stale keys.
+  expect(restored.thoughts).toEqual(before.thoughts)
+})
+
+it('describes a multicursor move by its invocation and selection without inferring a single moved thought', () => {
   store.dispatch([
     importText({
       text: `
@@ -215,7 +287,7 @@ it('name a multicursor command by its label, preceded by the selection it acts o
 
 1. Set the cursor on \`a\`.
 2. Select \`a\` and \`b\`.
-3. Run Move Thought Down. Move Thought \`b\` after \`a\`.
+3. Run Move Thought Down.
 
 ## Current Behavior
 
@@ -545,6 +617,53 @@ it('describe a single-line paste by the pasted text', () => {
 `)
 })
 
+it('describes a same-parent drag across siblings by the thought that reproduces the reorder', () => {
+  store.dispatch([
+    importText({ text: '- x\n- a\n- b\n- c' }),
+    setCursor(['x']),
+    moveThought({ from: ['a'], to: ['a'], after: ['c'] }),
+  ])
+
+  const state = store.getState()
+  const shiftedSibling = contextToThought(state, ['c'])!
+  const shiftedRankPath = `/thoughts/thoughtIndex/${shiftedSibling.id}/rank`
+  // Position shifts also touch c, but moving c after b would not reproduce the recorded reorder.
+  const undoPatches = state.undoPatches.map(patch => ({
+    ...patch,
+    ops: [
+      ...patch.ops.filter(operation => operation.path === shiftedRankPath),
+      ...patch.ops.filter(operation => operation.path !== shiftedRankPath),
+    ],
+  }))
+  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedRankPath)
+
+  expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- x
+- a
+- b
+- c
+\`\`\`
+
+1. Set the cursor on \`x\`.
+2. Move Thought \`a\` after \`c\`.
+
+## Current Behavior
+
+\`\`\`
+- x
+- b
+- c
+- a
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
 it('describe a drag and drop by where the thought lands', () => {
   store.dispatch([
     importText({
@@ -563,12 +682,25 @@ it('describe a drag and drop by where the thought lands', () => {
         type: 'moveThought',
         oldPath,
         newPath: [...contextToPath(getState(), ['a'])!, oldPath.at(-1)!],
-        newRank: 0.5,
+        afterId: contextToPath(getState(), ['a', 'b'])!.at(-1)!,
       })
     },
   ])
 
-  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+  const state = store.getState()
+  const shiftedSiblingId = contextToPath(state, ['a', 'd'])!.at(-1)!
+  const shiftedRankPath = `/thoughts/thoughtIndex/${shiftedSiblingId}/rank`
+  // Put the derived sibling-rank change before the actual reparenting, independent of random thought ids.
+  const undoPatches = state.undoPatches.map(patch => ({
+    ...patch,
+    ops: [
+      ...patch.ops.filter(operation => operation.path === shiftedRankPath),
+      ...patch.ops.filter(operation => operation.path !== shiftedRankPath),
+    ],
+  }))
+  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedRankPath)
+
+  expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a
@@ -732,7 +864,7 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
         type: 'moveThought',
         oldPath,
         newPath: [...contextToPath(getState(), ['a', 'd'])!, oldPath.at(-1)!],
-        newRank: 1,
+        afterId: contextToPath(getState(), ['a', 'd', '=archive'])!.at(-1)!,
       })
     },
   ])

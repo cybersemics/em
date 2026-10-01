@@ -1,5 +1,5 @@
 import React from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { tutorialNextActionCreator as tutorialNext } from '../../actions/tutorialNext'
 import {
@@ -17,6 +17,7 @@ import {
   TUTORIAL_STEP_SUBTHOUGHT_ENTER,
   TUTORIAL_STEP_SUCCESS,
 } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import getSetting from '../../selectors/getSetting'
 import headValue from '../../util/headValue'
 import TutorialNavigationButton from './TutorialNavigationButton'
@@ -27,9 +28,9 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
   ({ tutorialStep }: { tutorialStep: number }, ref) => {
     const dispatch = useDispatch()
 
-    useSelector(state => state.thoughts.thoughtIndex)
+    useEditorSelector(state => state.thoughts)
 
-    const showNextButton = useSelector(state => {
+    const showNextButton = useEditorSelector(state => {
       const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as keyof typeof TUTORIAL_CONTEXT
       const cursorValue = state.cursor ? headValue(state, state.cursor) : null
       const expanded = state.expanded

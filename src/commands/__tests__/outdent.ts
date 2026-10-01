@@ -1,19 +1,17 @@
-import { clearActionCreator as clear } from '../../actions/clear'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { pullActionCreator as pull } from '../../actions/pull'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import outdentCommand from '../outdent'
 
 beforeEach(initStore)
 
-it('keeps an outdented thought in alphabetical order after reloading a sorted context', async () => {
+it('keeps an outdented thought in canonical alphabetical order', () => {
   store.dispatch([
     importText({
       text: `
@@ -27,10 +25,12 @@ it('keeps an outdented thought in alphabetical order after reloading a sorted co
   ])
 
   executeCommandWithMulticursor(outdentCommand, { store })
-  await waitForThoughtspaceIdle()
 
-  store.dispatch(clear())
-  await store.dispatch(pull([HOME_TOKEN]))
+  expect(getChildrenRankedByContext(store.getState(), [HOME_TOKEN]).map(thought => thought.value)).toEqual([
+    '=sort',
+    'b',
+    'c',
+  ])
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - =sort

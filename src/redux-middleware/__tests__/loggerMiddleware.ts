@@ -8,15 +8,18 @@ import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThoughtByContext } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
 import { moveThoughtAtFirstMatchActionCreator as moveThoughtAtFirstMatch } from '../../test-helpers/moveThoughtAtFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import debugLog from '../../util/debugLog'
 import loggerMiddleware from '../loggerMiddleware'
+
+afterEach(waitForThoughtspaceIdle)
 
 /** A pass-through next handler for the middleware. */
 const next = (action: unknown) => action
 
 // a minimal fixed state for unit invocations; the same reference is returned before and after the action, so the thought diff is skipped
 const stubState = {
-  thoughts: { thoughtIndex: {}, lexemeIndex: {} },
+  thoughts: {},
   undoPatches: [],
   redoPatches: [],
 } as unknown as State
@@ -47,30 +50,26 @@ it('captures every action when debug logging is enabled', () => {
 })
 
 describe('structured updateThoughts summary', () => {
-  it('logs per-thought id/value/rank/parentId and counts instead of the raw stringified action', () => {
+  it('logs per-thought id/value/parentId and counts instead of the raw stringified action', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     invoke({
       type: 'updateThoughts',
       thoughtIndexUpdates: {
-        abc: { id: 'abc', value: 'hello', rank: 2, parentId: 'root', childrenMap: {}, pending: true },
+        abc: { id: 'abc', value: 'hello', parentId: 'root' },
         def: null,
       },
-      lexemeIndexUpdates: { lex1: {} },
-      local: false,
-      remote: false,
+      persist: false,
     })
     const actionEntries = debugLog.read().filter(e => e.type === 'action')
     expect(actionEntries.length).toBe(1)
     expect(actionEntries[0]).toMatchObject({
       actionType: 'updateThoughts',
       thoughtCount: 2,
-      lexemeCount: 1,
-      local: false,
-      remote: false,
+      persist: false,
     })
     expect(actionEntries[0].thoughts).toEqual([
-      { id: 'abc', value: 'hello', rank: 2, parentId: 'root', pending: true },
+      { id: 'abc', value: 'hello', parentId: 'root' },
       { id: 'def', deleted: true },
     ])
     expect(actionEntries[0].payload).toBeUndefined()
@@ -80,7 +79,7 @@ describe('structured updateThoughts summary', () => {
 describe('thought move logging', () => {
   beforeEach(initStore)
 
-  it('logs a move entry with the old and new rank when a thought is reordered', () => {
+  it('logs canonical position changes for every sibling affected by a move', () => {
     store.dispatch(
       importText({
         text: `
@@ -89,20 +88,20 @@ describe('thought move logging', () => {
         `,
       }),
     )
-    const oldRank = contextToThought(store.getState(), ['b'])!.rank
+    const oldRank = store.getState().thoughts.getPosition(contextToThought(store.getState(), ['b'])!.id)
 
     debugLog.setEnabled(true)
     debugLog.clear()
-    store.dispatch(moveThoughtAtFirstMatch({ from: ['b'], to: ['b'], newRank: -1 }))
+    store.dispatch(moveThoughtAtFirstMatch({ from: ['b'], to: ['b'], after: null }))
 
     const moves = debugLog.read().filter(e => e.type === 'move')
-    expect(moves.length).toBe(1)
-    expect(moves[0]).toMatchObject({
-      actionType: 'moveThought',
-      value: 'b',
-      oldRank,
-      newRank: -1,
-    })
+    expect(moves).toHaveLength(2)
+    expect(moves).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ actionType: 'moveThought', value: 'a', oldRank: 0, newRank: 1 }),
+        expect.objectContaining({ actionType: 'moveThought', value: 'b', oldRank, newRank: 0 }),
+      ]),
+    )
   })
 
   it('logs a single moveBatch entry when one action reorders more than 10 thoughts', () => {
@@ -113,17 +112,17 @@ describe('thought move logging', () => {
       }),
     )
     const thoughts = values.map(value => contextToThought(store.getState(), [value])!)
+    const reordered = [...thoughts.slice(1), thoughts[0]]
 
     debugLog.setEnabled(true)
     debugLog.clear()
-    // dispatched as a local update; a non-local (reconcile) update with an unchanged lastUpdated would be dropped by
-    // updateThoughts' last-write-wins guard and never reach the state
+    // Move the first child to the end. All eleven sibling positions change through explicit placements.
     store.dispatch(
       updateThoughts({
-        thoughtIndexUpdates: Object.fromEntries(
-          thoughts.map(thought => [thought.id, { ...thought, rank: thought.rank + 100 }]),
+        thoughtIndexUpdates: Object.fromEntries(reordered.map(thought => [thought.id, thought])),
+        movePlacements: Object.fromEntries(
+          reordered.map((thought, i) => [thought.id, i === 0 ? null : reordered[i - 1].id]),
         ),
-        lexemeIndexUpdates: {},
       }),
     )
 
@@ -132,46 +131,6 @@ describe('thought move logging', () => {
     expect(batches.length).toBe(1)
     expect(batches[0].count).toBe(11)
     expect((batches[0].sample as unknown[]).length).toBe(10)
-  })
-})
-
-describe('duplicate rank integrity warning', () => {
-  beforeEach(initStore)
-
-  it('logs an integrity entry and warns when siblings end up with the same rank, without blocking the update', () => {
-    store.dispatch(
-      importText({
-        text: `
-          - a
-          - b
-        `,
-      }),
-    )
-    const a = contextToThought(store.getState(), ['a'])!
-    const b = contextToThought(store.getState(), ['b'])!
-    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-    debugLog.setEnabled(true)
-    debugLog.clear()
-    // dispatched as a local update; a non-local (reconcile) update with an unchanged lastUpdated would be dropped by
-    // updateThoughts' last-write-wins guard and never reach the state
-    store.dispatch(
-      updateThoughts({
-        thoughtIndexUpdates: { [b.id]: { ...b, rank: a.rank } },
-        lexemeIndexUpdates: {},
-      }),
-    )
-
-    const integrity = debugLog.read().filter(e => e.type === 'integrity')
-    expect(integrity.length).toBe(1)
-    expect(integrity[0]).toMatchObject({ issue: 'duplicateRank', rank: a.rank })
-    expect(integrity[0].thoughts).toEqual([
-      { id: a.id, value: 'a' },
-      { id: b.id, value: 'b' },
-    ])
-    expect(consoleWarn).toHaveBeenCalled()
-    // the update itself is not blocked
-    expect(contextToThought(store.getState(), ['b'])!.rank).toBe(a.rank)
   })
 })
 

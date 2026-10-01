@@ -6,6 +6,7 @@ import SortPreference from '../@types/SortPreference'
 import { setSortPreferenceActionCreator as setSortPreference } from '../actions/setSortPreference'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getSortPreference from '../selectors/getSortPreference'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
@@ -73,7 +74,7 @@ const SortPicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
   const showSortPicker = useSelector(state => state.showSortPicker)
 
-  const sortPreference = useSelector(state => {
+  const sortPreference = useEditorSelector(state => {
     if (!state.cursor || isRoot(state.cursor)) return { type: 'None', direction: null }
 
     const path = rootedParentOf(state, state.cursor)

@@ -9,6 +9,7 @@ import { redoActionCreator as redo } from '../actions/redo'
 import { undoActionCreator as undo } from '../actions/undo'
 import { commandEmitter } from '../commands'
 import copy from '../device/copy'
+import useEditorSelector from '../hooks/useEditorSelector'
 import stepsToReproduce from '../selectors/stepsToReproduce'
 import undoSteps, { UndoStep } from '../selectors/undoSteps'
 import FadeTransition from './FadeTransition'
@@ -37,7 +38,7 @@ const UndoRange: FC<{ handles: Handles | null; setHandles: (handles: { end: numb
   setHandles,
 }) => {
   const dispatch = useDispatch()
-  const { steps, position } = useSelector(undoSteps)
+  const { steps, position } = useEditorSelector(undoSteps)
   const max = Math.min(MAX_STEPS, steps.length)
   // Both handles are at the current state until the user moves one. They are clamped to the history, which can be regrouped
   // into fewer steps while they are set.

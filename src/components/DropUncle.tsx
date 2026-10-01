@@ -1,5 +1,4 @@
 import React from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -7,6 +6,7 @@ import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropThought from '../hooks/useDragAndDropThought'
+import useEditorSelector from '../hooks/useEditorSelector'
 import dropHoverColor from '../selectors/dropHoverColor'
 import getThoughtById from '../selectors/getThoughtById'
 import calculateCliffDropTargetHeight from '../util/calculateCliffDropTargetHeight'
@@ -26,8 +26,8 @@ const DropUncle = ({
   simplePath: SimplePath
   cliff?: number
 }) => {
-  const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth || 0))
-  const value = useSelector(state =>
+  const dropHoverColorValue = useEditorSelector(state => dropHoverColor(state, depth || 0))
+  const value = useEditorSelector(state =>
     testFlags.simulateDrop ? getThoughtById(state, head(simplePath))?.value || '' : '',
   )
 

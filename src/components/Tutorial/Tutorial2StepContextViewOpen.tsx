@@ -1,5 +1,5 @@
-import { useSelector } from 'react-redux'
 import { TUTORIAL_CONTEXT, TUTORIAL_CONTEXT1_PARENT, TUTORIAL_CONTEXT2_PARENT } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import childIdsToThoughts from '../../selectors/childIdsToThoughts'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getContexts from '../../selectors/getContexts'
@@ -9,13 +9,13 @@ import thoughtToPath from '../../selectors/thoughtToPath'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContextViewOpen = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
-  const caseSensitiveValue = useSelector(state =>
+  const tutorialChoice = useEditorSelector(selectTutorialChoice)
+  const caseSensitiveValue = useEditorSelector(state =>
     getContexts(state, TUTORIAL_CONTEXT[tutorialChoice]).length > 0
       ? TUTORIAL_CONTEXT[tutorialChoice]
       : (TUTORIAL_CONTEXT[tutorialChoice] || '').toLowerCase(),
   )
-  const cursorLost = useSelector(state => {
+  const cursorLost = useEditorSelector(state => {
     const cursorThoughts = state.cursor ? childIdsToThoughts(state, state.cursor) : null
     return (
       !cursorThoughts ||
@@ -27,7 +27,7 @@ const Tutorial2StepContextViewOpen = () => {
       )
     )
   })
-  const contextViewClosed = useSelector(state => {
+  const contextViewClosed = useEditorSelector(state => {
     const cursorThoughts = state.cursor ? childIdsToThoughts(state, state.cursor) : null
     const thoughtId = contextToThoughtId(state, [
       (cursorThoughts &&

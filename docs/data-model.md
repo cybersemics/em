@@ -1,45 +1,36 @@
 # Understanding the Data Model
 
-The thoughtspace is a tree of thoughts. Every thought has a stable `ThoughtId`, a `value` (its text), a `parentId`, and a `childrenMap` of its direct children. There is no global tree object — the tree is reconstructed from the parent/child pointers stored on each `Thought`.
+The thoughtspace is a tree of thoughts. Every thought has a stable `ThoughtId`, a `value` (its text), and a `parentId`. The synchronous memory TreeCRDT owns the complete document; Redux holds UI state. Selectors receive a captured editor context combining that UI state with an immutable TreeCRDT view. An asynchronous SQLite replica persists the same operations. See [persistence.md](persistence.md).
 
 A second index, `lexemeIndex`, runs orthogonal to the tree: it maps a *normalized* hash of a thought's value to a `Lexeme` that lists every `ThoughtId` in the thoughtspace whose value hashes to the same key. This is what makes the Context View and search-style features possible.
 
-Both indices live on `state.thoughts`:
+[`state.thoughts: ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) reads one captured document snapshot:
 
 ```ts
 state.thoughts: {
-  thoughtIndex: Index<Thought>      // keyed by ThoughtId
-  lexemeIndex:  Index<Lexeme>       // keyed by hashThought(value)
+  getThought(id: ThoughtId): Thought | undefined
+  getChildren(id: ThoughtId): readonly ThoughtId[]
+  getPosition(id: ThoughtId): number | undefined
+  values(): IterableIterator<Thought>
+  lexemeIndex: Index<Lexeme> // keyed by hashThought(value)
 }
+
+state.thoughtUi: Index<Pick<Thought, 'generating' | 'displayValue' | 'splitSource'>>
 ```
 
-Only thoughts that are *currently visible* (cursor + ancestors + expanded paths + context-view contexts) are kept in `thoughtIndex`. Everything else is loaded on demand by the pull queue (see [persistence.md](persistence.md)) and freed when no longer visible.
+Initialization hydrates the complete document before editing begins. Navigation and context views read the snapshot synchronously; thoughts are not loaded or evicted by visibility. Document commands submit changes through an explicit transaction and read the canonical snapshot after each update. The editor publishes after the whole command succeeds; Redux is notified only when UI state changes. Incoming engine snapshots use the non-undoable [`replaceThoughts`](../src/actions/replaceThoughts.ts) to repair dependent UI state.
 
 ## Tree topology
 
-Thoughts are linked bidirectionally:
+Topology comes from the captured TreeCRDT snapshot:
 
 - `Thought.parentId` — the parent's `ThoughtId`. `ROOT_PARENT_ID` for the root contexts.
-- `Thought.childrenMap: Index<ThoughtId>` — a flat object mapping a key to each child's `ThoughtId`.
+- `state.thoughts.getChildren(id)` — payload-bearing children in canonical sibling order. Missing or payload-less parents return no EM children.
+- `state.thoughts.getPosition(id)` — the zero-based position in the raw sibling order, including payload-less siblings. It also works when a thought's parent has no EM payload.
 
-`childrenMap` has a deliberate dual-keying scheme:
+Meta-attribute lookup (values starting with `=`, e.g. `=pin`, `=note`) is cached lazily by [`findDescendant`](../src/selectors/findDescendant.ts) within each immutable view. It chooses the first matching sibling; traversal still includes every duplicate attribute. Renaming a child invalidates the view's lookup without rebuilding a parent child map.
 
-- **Meta-attribute children** (values starting with `=`, e.g. `=pin`, `=note`) are keyed by the attribute value itself. This makes attribute lookup O(1): given a parent thought, you can ask `parent.childrenMap['=pin']` to get the pin attribute's ThoughtId without iterating children.
-- **Regular children** are keyed by their own `ThoughtId`.
-
-So a parent with `b`, `c`, and `=pin` looks like:
-
-```ts
-{
-  childrenMap: {
-    '<id of b>': '<id of b>',
-    '<id of c>': '<id of c>',
-    '=pin':       '<id of pin>',
-  }
-}
-```
-
-`Thought.rank` (a `number`) determines sort order among siblings — see [Rank](#rank) below.
+Thoughts do not store child maps or numeric ranks. Unchanged decoded thoughts can retain identity when sibling order changes, and held views keep their original ordering.
 
 ## Data Types
 
@@ -50,18 +41,16 @@ interface Thought {
   id: ThoughtId
   value: string
   parentId: ThoughtId
-  rank: number
-  childrenMap: Index<ThoughtId>
   created: Timestamp
   lastUpdated: Timestamp
-  /** Public key of the writer; SHA-256(accessToken). See data-providers/thoughtspaceSession.ts. */
+  /** Writer/client identifier, not an authentication signature. See data-providers/thoughtspaceSession.ts. */
   updatedBy: string
   /** Set when archived. Undefined for live thoughts. */
   archived?: Timestamp
-  /** True when the thought is known to exist but not yet loaded from local/remote storage. */
-  pending?: boolean
   /** True while the thought is being dynamically generated by AI. */
   generating?: boolean
+  /** Transient display text while generating; never a document payload or exported value. */
+  displayValue?: string
   /** Formatting applied while the thought was empty, held until text is typed into it. In-memory only. */
   pendingFormat?: string
   /** Used to track if a space is required when merging two siblings/thoughts. */
@@ -69,27 +58,17 @@ interface Thought {
 }
 ```
 
-See [Thought.ts](../src/@types/Thought.ts). Only part of this shape is persisted: TreeCRDT stores a `ThoughtPayload` (`value`, `created`, `lastUpdated`, `updatedBy`, `archived`) on each node and derives `parentId`, `rank`, and `childrenMap` from the tree on read — see [persistence.md → Document model](persistence.md#document-model). `pending`, `generating`, `splitSource`, and `pendingFormat` are likewise in-memory only.
+See [Thought.ts](../src/@types/Thought.ts). TreeCRDT stores a `ThoughtPayload` (`value`, `created`, `lastUpdated`, `updatedBy`, `archived`) on each node; the document reader adds `id` and `parentId`. The `getThoughtById` selector combines that content with temporary fields from `state.thoughtUi`, which are never persisted or synchronized. Payload decoding is cached by immutable row identity. See [persistence.md → Document model](persistence.md#document-model).
 
 #### rank
 
-`rank` is a `number` that determines a thought's sort order among its siblings.
+The view resolves numeric positions through `getPosition`, caching them by immutable child-array identity. Render records and hover gaps still use numeric `rank` coordinates, but canonical `Thought` records do not. Payload-less siblings occupy positions even though they are not rendered.
 
-Ranks are unique within a single context, but unrelated across contexts. Only the *relative* ordering matters; absolute values are arbitrary. New thoughts are assigned ranks that avoid renumbering siblings:
+Document commands specify `afterId`: a preceding sibling's id, or `null` for first. Creates and moves never accept numeric ranks. The returned view reads the resulting canonical order immediately.
 
-- inserted at the end of a context → `rank of last thought + 1`
-- inserted at the beginning → `rank of first thought - 1` (may be negative)
-- inserted in the middle → halfway between the surrounding siblings (may be fractional)
+`importJson` supplies explicit preceding-sibling ids for the imported blocks, preserving their order without constructing child maps or lexemes.
 
-So `[1, 2, 5, 6]` becomes `[1, 2, 5, 5.5, 6]` when a thought is inserted between rank 5 and rank 6. This is O(1) regardless of how many siblings there are.
-
-`importJSON` autoincrements ranks across all imported thoughts (for efficiency), so the absolute ranks may differ from what manual insertion would have produced — but sibling-relative ordering is preserved.
-
-Rank is an in-memory ordering only. TreeCRDT stores sibling order in the tree itself, so `rank` is not persisted: it is re-projected from the stored child order (0, 1, 2, …) every time a thought is read back. Reorders are sent to storage as explicit placements rather than as new rank numbers — see [persistence.md → Order and placement](persistence.md#order-and-placement).
-
-#### pending
-
-A thought with `pending: true` is known to exist (its `id` is in `thoughtIndex`) but its real data has not yet been pulled from local/remote storage. The UI renders pending thoughts with placeholders, and the pull queue ([`pullQueue.ts`](../src/redux-middleware/pullQueue.ts)) drives fetches based on visible pending IDs. See [persistence.md](persistence.md).
+Existing thoughts are reordered by explicit `movePlacements`. A dispatched action's subscribers and undo history see the canonical memory ordering, without waiting for SQLite. See [persistence.md → Order and placement](persistence.md#order-and-placement).
 
 ### ThoughtId
 
@@ -156,6 +135,8 @@ interface Lexeme {
 
 A `Lexeme` lists every `ThoughtId` whose value hashes to the same normalized key. It does **not** store the value text itself — the key in `lexemeIndex` is the hash; the value is recovered from any of the listed `Thought`s.
 
+Lexemes are derived from the complete memory document, not independently authored records or SQLite membership queries. Every context in a lexeme resolves through `getThought`. Each document transaction update returns a view with current memberships, so composed commands need no separate draft index.
+
 The hashing function [`hashThought`](../src/util/hashThought.ts) normalizes the value before hashing:
 
 - case-insensitive
@@ -207,11 +188,11 @@ There are several common patterns for traversing and manipulating thoughts. Cons
 |---|---|
 | Parent thought of `c` | `getThoughtById(state, thoughtC.parentId)` |
 | Parent path of `a/b/c` | [`rootedParentOf(state, pathABC)`](../src/selectors/rootedParentOf.ts) |
-| All children of `c` (unsorted, ids) | [`getAllChildren(state, thoughtC.id)`](../src/selectors/getChildren.ts) |
+| All children of `c` (canonical order, ids) | [`getAllChildren(state, thoughtC.id)`](../src/selectors/getChildren.ts) |
 | Visible children of `c` (filtered, sorted) | [`getChildren(state, thoughtC.id)`](../src/selectors/getChildren.ts) |
 | Next sibling of `y` | [`nextSibling(state, thoughtY.id)`](../src/selectors/nextSibling.ts) |
 | Previous sibling of `y` | [`prevSibling(state, pathY)`](../src/selectors/prevSibling.ts) |
-| Has a `=pin` child? | `parent.childrenMap['=pin'] !== undefined` (or [`findDescendant(state, parent.id, '=pin')`](../src/selectors/findDescendant.ts) for nested) |
+| Has a `=pin` child? | [`findDescendant(state, parent.id, '=pin')`](../src/selectors/findDescendant.ts) |
 
 A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/rootedParentOf.ts) always returns a valid `Path` — if you ask for the parent of a root child, it returns `[HOME_TOKEN]` (or `[ABSOLUTE_TOKEN]`). [`parentOf`](../src/util/parentOf.ts) returns an empty array in that case, which is not a valid `Path`. Use `parentOf` only when you're going to immediately re-append, e.g. `appendToPath(parentOf(path), thoughtId)`.
 
@@ -227,11 +208,11 @@ A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/ro
 
 #### Children
 
-- [`getAllChildren`](../src/selectors/getChildren.ts) — `ThoughtId`s, unsorted. Returns the same array reference if children haven't changed.
-- [`getAllChildrenAsThoughts`](../src/selectors/getChildren.ts) — `Thought`s, unsorted.
-- [`getChildren`](../src/selectors/getChildren.ts) — visible (non-meta unless `showHiddenThoughts`) children, unsorted.
-- [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts) — sorted by the parent's `=sort` preference (Alphabetical / Created / Updated / Note) or by `rank`.
-- [`getChildrenRanked`](../src/selectors/getChildren.ts) — sorted purely by `rank`. Returns a fresh array each call.
+- [`getAllChildren`](../src/selectors/getChildren.ts) — readonly `ThoughtId`s in canonical sibling order.
+- [`getAllChildrenAsThoughts`](../src/selectors/getChildren.ts) — `Thought`s in canonical sibling order.
+- [`getChildren`](../src/selectors/getChildren.ts) — visible (non-meta unless `showHiddenThoughts`) children in canonical order.
+- [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts) — sorted by the parent's `=sort` preference (Alphabetical / Created / Updated / Note), falling back to canonical order.
+- [`getChildrenRanked`](../src/selectors/getChildren.ts) — canonical-order alias of `getAllChildrenAsThoughts`; no numeric-rank sort is needed.
 - [`hasChildren`](../src/selectors/getChildren.ts) — boolean, has any visible child.
 - [`anyChild`](../src/selectors/getChildren.ts) / [`findAnyChild`](../src/selectors/getChildren.ts) — pick any child / pick a child matching a predicate.
 
@@ -259,7 +240,7 @@ A note on `parentOf` vs `rootedParentOf`: [`rootedParentOf`](../src/selectors/ro
 - [`isHome`](../src/util/isHome.ts) — at the home context.
 - [`isRoot`](../src/util/isRoot.ts) — one of the root contexts.
 - [`hasLexeme`](../src/selectors/hasLexeme.ts).
-- [`equalPath`](../src/util/equalPath.ts), [`equalThoughtRanked`](../src/util/equalThoughtRanked.ts), [`equalThoughtSorted`](../src/util/equalThoughtSorted.ts), [`equalThoughtValue`](../src/util/equalThoughtValue.ts).
+- [`equalPath`](../src/util/equalPath.ts), [`equalThoughtSorted`](../src/util/equalThoughtSorted.ts), [`equalThoughtValue`](../src/util/equalThoughtValue.ts).
 
 #### Attributes
 
@@ -292,34 +273,33 @@ The predicate is [`childrenFilterPredicate`](../src/selectors/getChildren.ts). I
 
 **Sort order** is a property of each context, declared by its `=sort` attribute and read via [`getSortPreference`](../src/selectors/getSortPreference.ts). Options:
 
-- (none, default) — manual ordering by `rank`.
+- (none, default) — canonical manual sibling order.
 - `Alphabetical` (Asc/Desc).
 - `Created` (Asc/Desc).
 - `Updated` (Asc/Desc).
 - `Note` (sort by the `=note` value of each child).
 
-There is no global or default sort preference: a context without `=sort` is sorted manually. This is why fractional ranks matter: dragging a thought between two siblings is a single rank update, not a sibling-wide reshuffle.
+There is no global or default sort preference: a context without `=sort` is sorted manually. Dragging supplies an explicit placement; the next view reads the resulting sibling order.
 
-**A sort preference is materialized into `rank`, not applied at render time.** The render path ([`linearizeTree`](../src/selectors/linearizeTree.ts)) reads children with [`getChildrenRanked`](../src/selectors/getChildren.ts), so what you see on screen is always `rank` order. `=sort` reaches the screen because the actions that set it renumber the context's children to match:
+**A sort preference is committed into tree order, not applied at render time.** The render path ([`linearizeTree`](../src/selectors/linearizeTree.ts)) reads children with [`getChildrenRanked`](../src/selectors/getChildren.ts), so what you see on screen is always canonical sibling order. The actions that set `=sort` plan the order and supply placements:
 
-- [`toggleSort`](../src/actions/toggleSort.ts) (cycles the preference) and [`setSortPreference`](../src/actions/setSortPreference.ts) (sets a specific one, from the Sort Picker) both end in the [`sort`](../src/actions/sort.ts) action, which renumbers the children to `0, 1, 2, …` in sorted order. [`uncategorize`](../src/actions/uncategorize.ts), [`swapParent`](../src/actions/swapParent.ts), and [`swapGrandparent`](../src/actions/swapGrandparent.ts) call it too, since they all move children into a context that may be sorted.
-- Thoughts created afterwards are given a rank that keeps the context sorted, via [`getSortedRank`](../src/selectors/getSortedRank.ts) — a fractional rank between the neighbors the new value sorts between. Under `Created` a thought created in the same millisecond as its siblings is still the newest of them, so an ascending context ranks it after them; this is what keeps the sentences of a split thought, which are all created within one millisecond, in order. A newly created thought needs no placement, since the insert path derives one from its rank.
-- A thought moved into a sorted context is ranked by the sort condition rather than by where it was dropped, via the same [`getSortedRank`](../src/selectors/getSortedRank.ts). [`moveThought`](../src/actions/moveThought.ts) passes the thought's `created` timestamp along with its value, since a moved thought keeps the timestamp it was created with and a `Created` context sorts it by that; without it the rank would come from the value and disagree with the sort condition. The placement it stores is derived from that rank rather than from the caller's, so the stored order matches the rendered one — see [persistence.md → Order and placement](persistence.md#order-and-placement).
-- An edit re-ranks the thought only when it changes the thought's sort key: under `Alphabetical`, where the key is the value, and under `Updated`, where the edit moves `lastUpdated` to now. A `Created` context leaves the edited thought's rank alone, since editing does not change when the thought was created. Under `Updated` a thought's sort key also moves when it is not itself edited: adding or removing a child moves the parent's `lastUpdated` to now, so [`createThought`](../src/actions/createThought.ts) and [`deleteThought`](../src/actions/deleteThought.ts) re-rank the parent among its siblings. A new rank alone reorders the thought on screen but not in storage, which keeps sibling order structurally, so [`editThought`](../src/actions/editThought.ts), `createThought`, and `deleteThought` also name the sibling to place it after — see [persistence.md → Order and placement](persistence.md#order-and-placement).
-- A cross-context move bumps `lastUpdated` on the source and destination parents as well as on the moved thought, since the children of each one changed. Under `Updated` that is their sort key, so [`moveThought`](../src/actions/moveThought.ts) re-ranks each bumped parent within its own context — the most recently updated sibling ranks last when ascending and first when descending — in addition to the sorted rank it gives the moved thought in its new context. No other sort condition is affected, since a move changes neither a value nor a creation timestamp.
-- Toggling sort back off restores the pre-sort manual order from `state.manualSortMap`, which records each child's rank at the moment the context was first sorted.
+- [`toggleSort`](../src/actions/toggleSort.ts) (cycles the preference) and [`setSortPreference`](../src/actions/setSortPreference.ts) (sets a specific one, from the Sort Picker) both end in the [`sort`](../src/actions/sort.ts) action, which submits changed positions as explicit placements. [`uncategorize`](../src/actions/uncategorize.ts), [`swapParent`](../src/actions/swapParent.ts), and [`swapGrandparent`](../src/actions/swapGrandparent.ts) call it too, since they all move children into a context that may be sorted.
+- [`getSortedPlacement`](../src/selectors/getSortedPlacement.ts) finds a preceding sibling from the sort key. Under ascending `Created`, a newly created thought goes after siblings created in the same millisecond, preserving the order of split sentences.
+- [`moveThought`](../src/actions/moveThought.ts) uses the destination's sort condition instead of the requested drop position, retaining the thought's original `created` timestamp when calculating its placement.
+- [`editThought`](../src/actions/editThought.ts) submits a placement when its sort key changes: text under `Alphabetical`, timestamps under `Updated`, or the owning thought's note under `Note`. `Created` preserves position because editing does not change creation time. See [persistence.md → Order and placement](persistence.md#order-and-placement).
+- Adding or removing a child also bumps the parent's `lastUpdated`. [`createThought`](../src/actions/createThought.ts) and [`deleteThought`](../src/actions/deleteThought.ts) reposition that parent within an `Updated` context, except when its value is empty or emoji-only.
+- A cross-context move bumps `lastUpdated` on the source and destination parents as well as on the moved thought, since their children changed. Under `Updated` that is their sort key, so [`moveThought`](../src/actions/moveThought.ts) also repositions each bumped parent within its own context. The most recently updated sibling belongs last when ascending and first when descending. Other sort conditions are unaffected, since a move changes neither a value nor a creation timestamp.
+- Toggling sort back off restores the pre-sort manual order from `state.manualSortMap`, which records each child's position at the moment the context was first sorted.
 
-The comparator itself lives in [`getSortComparator`](../src/selectors/getChildren.ts) and is applied directly by [`getAllChildrenSorted`](../src/selectors/getChildren.ts) / [`getChildrenSorted`](../src/selectors/getChildren.ts). Those are the selectors that compute the desired order (for `sort`, for insertion points, for sibling navigation); they agree with the rendered order only because the ranks are kept materialized. Thoughts whose sort keys and existing fallbacks are equal — duplicate values under Alphabetical sorting, or thoughts created in the same millisecond under Created sorting — are ordered by `rank`, the last fallback of every comparator. Without it their order would come from `childrenMap` insertion order, which can disagree with their rank order, so sibling navigation would move the cursor between duplicates in a different order than they appear on screen.
+[`getSortComparator`](../src/selectors/getChildren.ts) computes the desired order for sorting, insertion points, and sibling navigation. It adds canonical-position fallback to the primary comparators, keeping equal values, timestamps, or notes in rendered order. Descending sort reverses only the primary condition, never this position fallback.
 
-Descending sort reverses the sort condition only, never the `rank` fallback: `Created`/`Updated` Desc use dedicated descending comparators ([`compareThoughtByCreatedDescending`](../src/util/compareThought.ts), [`compareThoughtByUpdatedDescending`](../src/util/compareThought.ts)) so that thoughts sharing a timestamp stay in ascending `rank` order, matching the rendered order.
+Empty and emoji-only thoughts have no meaningful text sort key, so creation preserves the requested position and editing to an empty value does not reposition them. [`getSortComparator`](../src/selectors/getChildren.ts) compares them by canonical position so sibling navigation agrees with rendering.
 
-Empty and emoji-only thoughts have no meaningful sort key, so they are sorted to their point of creation, i.e. by `rank`, in every sort preference. [`newThought`](../src/actions/newThought.ts), [`categorize`](../src/actions/categorize.ts), [`editThought`](../src/actions/editThought.ts), [`createThought`](../src/actions/createThought.ts), and [`deleteThought`](../src/actions/deleteThought.ts) leave their rank alone rather than calling [`getSortedRank`](../src/selectors/getSortedRank.ts) — a thought you have just created stays where you created it while you type into it — and [`getSortComparator`](../src/selectors/getChildren.ts) compares them by rank so that the sorted order matches the rendered order — the tree is always rendered in rank order via [`getChildrenRanked`](../src/selectors/getChildren.ts).
+`Created` is the exception: even an empty thought has a creation timestamp, so [`newThought`](../src/actions/newThought.ts) and [`categorize`](../src/actions/categorize.ts) use [`getSortedPlacement`](../src/selectors/getSortedPlacement.ts) to place it by creation time rather than at the cursor. This matters because editing later preserves its position under `Created`; typing into an empty thought must not leave it permanently out of order.
 
-`Created` is the exception, because there the point of creation *is* the sort key: an empty thought has a created timestamp like any other, so `newThought` and `categorize` do rank it with `getSortedRank`, placing it at the end of an ascending context rather than wherever the cursor was. The exemption would otherwise be a trap — `editThought` deliberately preserves a rank under `Created`, since editing a value does not change when the thought was created, so a rank that disagreed with the sort condition while the thought was empty would still disagree once it was typed into and the exemption lapsed.
+The exemption only holds until the sort is applied. [`sort`](../src/actions/sort.ts) uses `sortEmpty` to apply the sort condition to empty thoughts too, floating them to the top in either direction. It runs when a sort preference is set and after [`swapParent`](../src/actions/swapParent.ts) and [`uncategorize`](../src/actions/uncategorize.ts) move thoughts into a sorted context.
 
-The exemption only holds until the sort is applied. [`sort`](../src/actions/sort.ts) re-ranks every child of a context to match the sort condition, so it asks `getSortComparator` for the comparator *without* the exemption (`sortEmpty`) and empty thoughts float to the top, ahead of everything else in either direction (`compareEmpty` is first in both `compareReasonable` and `compareReasonableDescending`). The ranks it assigns then agree with the sort condition for every child. `sort` runs whenever the sort preference is set from the Sort Picker or the `toggleSort` command, and after [`swapParent`](../src/actions/swapParent.ts) and [`uncategorize`](../src/actions/uncategorize.ts) move thoughts into a sorted context.
-
-Hidden attributes are exempt in a different way: they are placed structurally rather than sorted. A context's `=sort` and the attributes [`toggleAttribute`](../src/actions/toggleAttribute.ts) sets are inserted above their siblings by [`getPrevRank`](../src/selectors/getPrevRank.ts) in every sort preference but `Alphabetical` — which is why [`getSortedRank`](../src/selectors/getSortedRank.ts) ranks a new note against the visible children only, rather than placing it after `=sort`. Their ranks therefore say nothing about whether a context is correctly sorted, so the Sort Picker's rank-consistency check ([`toggleSortPicker`](../src/commands/toggleSortPicker.ts), which reddens the toolbar icon while a context's ranks disagree with its sort condition) skips them along with the empty and emoji-only thoughts.
+Hidden attributes are placed structurally rather than sorted. Attribute creation supplies explicit placements, and [`getSortedPlacement`](../src/selectors/getSortedPlacement.ts) compares note values against visible children only. The Sort Picker's order-consistency check ([`toggleSortPicker`](../src/commands/toggleSortPicker.ts)) skips hidden attributes along with empty and emoji-only thoughts.
 
 ## Views
 
@@ -357,7 +337,7 @@ Default mode. A thought's children are rendered as a collapsible tree:
 
 `a` and `b` are listed under `a/m~` because they are the *contexts* in which `m` appears (i.e. the parents of every "m" Lexeme entry). They are the inbound links to `m`, the dual of the outbound parent → child links rendered in normal view.
 
-The context view is gated by `state.contextViews`, an object keyed by `hashPath(path)` — see [`isContextViewActive`](../src/selectors/isContextViewActive.ts). The ranks of the contexts listed under `m~` are autogenerated and reflect their sorted order in the context view, **not** the rank of `m` within each context.
+The context view is gated by `state.contextViews`, an object keyed by `hashPath(path)` — see [`isContextViewActive`](../src/selectors/isContextViewActive.ts). Its entries are sorted by ancestor values, independently of each matching thought's position within its own parent.
 
 **Usage tip:** [`getContexts(state, value)`](../src/selectors/getContexts.ts) returns the live list. Internally that's just the `Lexeme.contexts` array.
 
@@ -400,7 +380,7 @@ Given:
     - y
 ```
 
-When `cursor` is `a/m~/b/y`, then `contextChain` is (ranks omitted for readability):
+When `cursor` is `a/m~/b/y`, then `contextChain` is:
 
 ```js
 [

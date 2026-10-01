@@ -1,15 +1,13 @@
-import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
+import findDescendant from '../../../selectors/findDescendant'
 import hashThought from '../../../util/hashThought'
-import type { DataProvider } from '../../DataProvider'
-import createTreecrdtThoughtspace from '../runtime'
-import createTreecrdtDataProvider, { createIndexedChildrenMap } from '../thoughtspace'
+import initialState from '../../../util/initialState'
+import createMemoryThoughtspace from '../createMemoryThoughtspace'
 
 /** Initializes an isolated in-memory TreeCRDT client and thoughtspace for unit tests. */
-const treecrdt = createTreecrdtThoughtspace()
-const treecrdtThoughtspace = treecrdt.db
+const treecrdt = createMemoryThoughtspace()
 
 /** Initializes the bound in-memory test runtime. */
 const initTestThoughtspace = async (): Promise<void> => {
@@ -22,39 +20,35 @@ const PIN_DUPLICATE_ID = '00000000000000000000000000000103' as ThoughtId
 const PARENT_ID = '00000000000000000000000000000110' as ThoughtId
 const OTHER_PARENT_ID = '00000000000000000000000000000111' as ThoughtId
 const THOUGHT_A_ID = '00000000000000000000000000000112' as ThoughtId
-const THOUGHT_Y_ID = '00000000000000000000000000000113' as ThoughtId
 const THOUGHT_B_ID = '00000000000000000000000000000114' as ThoughtId
 const THOUGHT_X_ID = '00000000000000000000000000000115' as ThoughtId
 
 /** Creates a minimal thought fixture for provider-level ordering tests. */
-const thought = (id: ThoughtId, parentId: ThoughtId, value: string, rank: number) => ({
+const thought = (id: ThoughtId, parentId: ThoughtId, value: string) => ({
   id,
   parentId,
   value,
-  rank,
-  childrenMap: {},
   created: 1 as Timestamp,
   lastUpdated: 1 as Timestamp,
   updatedBy: 'test',
 })
 
-/** Persists thoughts through the real TreeCRDT data provider. */
+/** Persists thoughts through the real TreeCRDT document transaction. */
 const persistThoughtsTo = (
-  db: Pick<DataProvider, 'updateThoughts'>,
+  runtime: ReturnType<typeof createMemoryThoughtspace>,
   thoughts: ReturnType<typeof thought>[],
-  movePlacements?: Record<ThoughtId, ThoughtId | null>,
+  movePlacements: Record<ThoughtId, ThoughtId | null>,
 ) =>
-  db.updateThoughts({
-    thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
-    lexemeIndexUpdates: {},
-    movePlacements,
-  })
+  runtime.transact(transaction =>
+    transaction.update({
+      thoughtIndexUpdates: Object.fromEntries(thoughts.map(thought => [thought.id, thought])),
+      movePlacements,
+    }),
+  ).persisted
 
 /** Persists thoughts through the shared test thoughtspace. */
-const persistThoughts = (
-  thoughts: ReturnType<typeof thought>[],
-  movePlacements?: Record<ThoughtId, ThoughtId | null>,
-) => persistThoughtsTo(treecrdtThoughtspace, thoughts, movePlacements)
+const persistThoughts = (thoughts: ReturnType<typeof thought>[], movePlacements: Record<ThoughtId, ThoughtId | null>) =>
+  persistThoughtsTo(treecrdt, thoughts, movePlacements)
 
 afterEach(async () => {
   await treecrdt.drop()
@@ -63,174 +57,86 @@ afterEach(async () => {
 it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
   await initTestThoughtspace()
 
-  const em = await treecrdtThoughtspace.getThoughtById(EM_TOKEN)
-  expect(em?.childrenMap[SETTINGS_TOKEN]).toBe(SETTINGS_TOKEN)
+  expect(treecrdt.project().getChildren(EM_TOKEN)).toContain(SETTINGS_TOKEN)
 
-  const settings = await treecrdtThoughtspace.getThoughtById(SETTINGS_TOKEN)
+  const settings = treecrdt.project().getThought(SETTINGS_TOKEN)!
   expect(settings).toMatchObject({
     id: SETTINGS_TOKEN,
     parentId: EM_TOKEN,
     value: SETTINGS_VALUE,
   })
 
-  const settingsLexeme = await treecrdtThoughtspace.getLexemeById(hashThought(SETTINGS_VALUE))
+  const settingsLexeme = treecrdt.project().lexemeIndex[hashThought(SETTINGS_VALUE)]
   expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
 })
 
-it('preserves requested order, duplicates, and missing entries when reading persisted thoughts and lexemes', async () => {
+it('finds the first duplicate attribute in canonical order without changing node ids', async () => {
   await initTestThoughtspace()
-  await treecrdtThoughtspace.updateThoughts({
-    thoughtIndexUpdates: { [PARENT_ID]: thought(PARENT_ID, EM_TOKEN, 'parent', 0) },
-    lexemeIndexUpdates: {
-      [hashThought('parent')]: {
-        contexts: [PARENT_ID],
-        created: 1 as Timestamp,
-        lastUpdated: 1 as Timestamp,
-        updatedBy: 'test',
-      },
-    },
-  })
-
-  await expect(treecrdtThoughtspace.getThoughtById(OTHER_PARENT_ID)).resolves.toBeUndefined()
-  await expect(treecrdtThoughtspace.getLexemeById(hashThought('missing'))).resolves.toBeUndefined()
-
-  const thoughts = await treecrdtThoughtspace.getThoughtsByIds([PARENT_ID, OTHER_PARENT_ID, SETTINGS_TOKEN, PARENT_ID])
-  expect(thoughts.map(thought => thought?.id)).toEqual([PARENT_ID, undefined, SETTINGS_TOKEN, PARENT_ID])
-
-  const lexemes = await treecrdtThoughtspace.getLexemesByIds(
-    ['parent', 'missing', SETTINGS_VALUE, 'parent'].map(hashThought),
+  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent')], { [PARENT_ID]: SETTINGS_TOKEN })
+  await persistThoughts(
+    [
+      thought(PIN_ID, PARENT_ID, '=pin'),
+      thought(PIN_DUPLICATE_ID, PARENT_ID, '=pin'),
+      thought(FALSE_ID, PARENT_ID, 'false'),
+    ],
+    { [PIN_ID]: null, [PIN_DUPLICATE_ID]: PIN_ID, [FALSE_ID]: PIN_DUPLICATE_ID },
   )
-  expect(lexemes.map(lexeme => lexeme?.contexts)).toEqual([[PARENT_ID], undefined, [SETTINGS_TOKEN], [PARENT_ID]])
+  const state = { ...initialState(), thoughts: treecrdt.project() }
+  expect(findDescendant(state, PARENT_ID, '=pin')).toBe(PIN_ID)
+  expect(findDescendant(state, PARENT_ID, 'false')).toBe(FALSE_ID)
+  expect(state.thoughts.getChildren(PARENT_ID)).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
 })
 
-it('does not delete persisted lexemes when freeing cache', async () => {
+it('reads both parents and positions from captured snapshots after a cross-parent move', async () => {
   await initTestThoughtspace()
-
-  const settingsKey = hashThought(SETTINGS_VALUE)
-  await treecrdtThoughtspace.freeLexeme(settingsKey)
-
-  const settingsLexeme = await treecrdtThoughtspace.getLexemeById(settingsKey)
-  expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
-})
-
-it('does not require an initialized TreeCRDT client when freeing lexeme cache', async () => {
-  await expect(treecrdtThoughtspace.freeLexeme(hashThought('missing'))).resolves.toBeUndefined()
-})
-
-it('uses indexed attribute values as childrenMap keys without changing TreeCRDT node ids', async () => {
-  const valueById = {
-    [PIN_ID]: '=pin',
-    [PIN_DUPLICATE_ID]: '=pin',
-  }
-
-  const childrenMap = createIndexedChildrenMap([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID], valueById)
-
-  expect(childrenMap['=pin']).toBe(PIN_ID)
-  expect(childrenMap[PIN_DUPLICATE_ID]).toBe(PIN_DUPLICATE_ID)
-  expect(childrenMap[FALSE_ID]).toBe(FALSE_ID)
-  expect(childrenMap.false).toBeUndefined()
-  expect(Object.values(childrenMap)).toEqual([PIN_ID, PIN_DUPLICATE_ID, FALSE_ID])
-})
-
-it('falls back to rank placement when explicit afterId is stale', async () => {
-  await initTestThoughtspace()
-
-  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
-  await persistThoughts([thought(THOUGHT_A_ID, PARENT_ID, 'a', 0)])
-  await persistThoughts([thought(THOUGHT_Y_ID, PARENT_ID, 'y', 1)])
-  await persistThoughts([thought(THOUGHT_B_ID, PARENT_ID, 'b', 2)])
-  await persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 3)])
-
-  await persistThoughts([thought(THOUGHT_Y_ID, OTHER_PARENT_ID, 'y', 0)], {
-    [THOUGHT_Y_ID]: null,
-  })
-
-  await expect(
-    persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 1)], {
-      [THOUGHT_X_ID]: THOUGHT_Y_ID,
+  await persistThoughts(
+    [
+      thought(PARENT_ID, EM_TOKEN, 'parent'),
+      thought(OTHER_PARENT_ID, EM_TOKEN, 'other'),
+      thought(THOUGHT_A_ID, PARENT_ID, 'a'),
+      thought(THOUGHT_B_ID, PARENT_ID, 'b'),
+      thought(THOUGHT_X_ID, OTHER_PARENT_ID, 'x'),
+    ],
+    {
+      [PARENT_ID]: SETTINGS_TOKEN,
+      [OTHER_PARENT_ID]: PARENT_ID,
+      [THOUGHT_A_ID]: null,
+      [THOUGHT_B_ID]: THOUGHT_A_ID,
+      [THOUGHT_X_ID]: null,
+    },
+  )
+  const before = treecrdt.project()
+  const moved = treecrdt.transact(transaction =>
+    transaction.update({
+      thoughtIndexUpdates: { [THOUGHT_A_ID]: thought(THOUGHT_A_ID, OTHER_PARENT_ID, 'a') },
+      movePlacements: { [THOUGHT_A_ID]: THOUGHT_X_ID },
     }),
-  ).resolves.toBeDefined()
-
-  const parent = await treecrdtThoughtspace.getThoughtById(PARENT_ID)
-  expect(Object.values(parent?.childrenMap ?? {})).toEqual([THOUGHT_A_ID, THOUGHT_X_ID, THOUGHT_B_ID])
-})
-
-it('excludes the moving thought from stale rank placement', async () => {
-  await initTestThoughtspace()
-
-  await persistThoughts([thought(PARENT_ID, EM_TOKEN, 'parent', 0), thought(OTHER_PARENT_ID, EM_TOKEN, 'other', 1)])
-  await persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 0)])
-  await persistThoughts([thought(THOUGHT_Y_ID, PARENT_ID, 'y', 1)])
-  await persistThoughts([thought(THOUGHT_A_ID, PARENT_ID, 'a', 2)])
-
-  await persistThoughts([thought(THOUGHT_Y_ID, OTHER_PARENT_ID, 'y', 0)], {
-    [THOUGHT_Y_ID]: null,
-  })
-
-  await expect(
-    persistThoughts([thought(THOUGHT_X_ID, PARENT_ID, 'x', 1)], {
-      [THOUGHT_X_ID]: THOUGHT_Y_ID,
-    }),
-  ).resolves.toBeDefined()
-
-  const parent = await treecrdtThoughtspace.getThoughtById(PARENT_ID)
-  expect(Object.values(parent?.childrenMap ?? {})).toEqual([THOUGHT_X_ID, THOUGHT_A_ID])
-})
-
-// https://github.com/cybersemics/em/pull/4325#issuecomment-5248342036
-it('reads sibling order once per thought when inserting a wide batch', async () => {
-  const client = await createTreecrdtClient({
-    storage: { type: 'memory' },
-    runtime: { type: 'direct' },
-  })
-  const provider = createTreecrdtDataProvider()
-
-  try {
-    await provider.bindClient(client, new Uint8Array(32).fill(1))
-    await persistThoughtsTo(provider.db, [thought(PARENT_ID, EM_TOKEN, 'parent', 0)])
-
-    const childIds = Array.from({ length: 40 }, (_, index) => (index + 512).toString(16).padStart(32, '0') as ThoughtId)
-    const childrenSpy = vi.spyOn(client.tree, 'children')
-
-    await persistThoughtsTo(
-      provider.db,
-      childIds.map((id, index) => thought(id, PARENT_ID, `child-${index}`, index + 0.5)),
-    )
-
-    expect(childrenSpy).toHaveBeenCalledTimes(childIds.length)
-    await expect(client.tree.children(PARENT_ID)).resolves.toEqual(childIds)
-  } finally {
-    await client.drop()
-  }
-})
-
-it('queues writes issued before initialization and applies them to the bound client', async () => {
-  let writeSettled = false
-  const write = persistThoughts([thought(PARENT_ID, EM_TOKEN, 'queued', 0)]).finally(() => {
-    writeSettled = true
-  })
-
-  await Promise.resolve()
-  expect(writeSettled).toBe(false)
-
-  await initTestThoughtspace()
-  await expect(write).resolves.toBeDefined()
-  await expect(treecrdtThoughtspace.getThoughtById(PARENT_ID)).resolves.toMatchObject({ value: 'queued' })
+  )
+  const projected = moved.value
+  expect(projected.getChildren(PARENT_ID)).toEqual([THOUGHT_B_ID])
+  expect(projected.getChildren(OTHER_PARENT_ID)).toEqual([THOUGHT_X_ID, THOUGHT_A_ID])
+  expect(projected.getPosition(THOUGHT_B_ID)).toBe(0)
+  expect(projected.getPosition(THOUGHT_A_ID)).toBe(1)
+  expect(projected.getThought(THOUGHT_A_ID)).toMatchObject({ parentId: OTHER_PARENT_ID })
+  expect(before.getChildren(PARENT_ID)).toEqual([THOUGHT_A_ID, THOUGHT_B_ID])
+  expect(before.getPosition(THOUGHT_B_ID)).toBe(1)
+  expect(projected.getThought(THOUGHT_B_ID)).toBe(before.getThought(THOUGHT_B_ID))
+  await moved.persisted
 })
 
 it('keeps separately created thoughtspace instances isolated', async () => {
-  const first = createTreecrdtThoughtspace()
-  const second = createTreecrdtThoughtspace()
+  const first = createMemoryThoughtspace()
+  const second = createMemoryThoughtspace()
 
   try {
     await first.init({ storage: 'memory' })
     await second.init({ storage: 'memory' })
 
-    await persistThoughtsTo(first.db, [thought(PARENT_ID, EM_TOKEN, 'first', 0)])
-    await persistThoughtsTo(second.db, [thought(PARENT_ID, EM_TOKEN, 'second', 0)])
+    await persistThoughtsTo(first, [thought(PARENT_ID, EM_TOKEN, 'first')], { [PARENT_ID]: SETTINGS_TOKEN })
+    await persistThoughtsTo(second, [thought(PARENT_ID, EM_TOKEN, 'second')], { [PARENT_ID]: SETTINGS_TOKEN })
 
-    await expect(first.db.getThoughtById(PARENT_ID)).resolves.toMatchObject({ value: 'first' })
-    await expect(second.db.getThoughtById(PARENT_ID)).resolves.toMatchObject({ value: 'second' })
+    expect(first.project().getThought(PARENT_ID)!).toMatchObject({ value: 'first' })
+    expect(second.project().getThought(PARENT_ID)!).toMatchObject({ value: 'second' })
   } finally {
     await first.drop()
     await second.drop()

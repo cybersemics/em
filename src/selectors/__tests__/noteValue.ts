@@ -2,6 +2,9 @@ import editThought from '../../actions/editThought'
 import importText from '../../actions/importText'
 import moveThought from '../../actions/moveThought'
 import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import appendToPath from '../../util/appendToPath'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
@@ -12,6 +15,8 @@ import * as childrenSelectors from '../getChildren'
 import noteValue from '../noteValue'
 import resolveNotePath from '../resolveNotePath'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 afterEach(vi.restoreAllMocks)
 
 // https://github.com/cybersemics/em/issues/5303
@@ -23,8 +28,9 @@ it.each([
   ['<b><i>NAMES</i></b>', 'Names'],
   ['<i>names</i>', '<b>Names</b>'],
 ])('resolves the note target %s against %s', (key, target) => {
-  const state = importText(initialState(), {
-    text: `
+  const state = runDocumentCommand(
+    importText({
+      text: `
       - Reify
         - =note
           - =path
@@ -32,24 +38,29 @@ it.each([
         - ${target}
           - Bind Thought
           - Canonize`,
-  })
+    }),
+    initialState(),
+  )
 
   const path = contextToPathOrThrow(state, ['Reify'], 'noteValue')
   expect(noteValue(state, path)).toBe('Bind Thought, Canonize')
 })
 
 it('matches the visible text of an edited target containing an HTML entity', () => {
-  const state = importText(initialState(), {
-    text: `
+  const state = runDocumentCommand(
+    importText({
+      text: `
       - Reify
         - =note
           - =path
             - A & B
         - Target
           - Content`,
-  })
+    }),
+    initialState(),
+  )
   const path = contextToPathOrThrow(state, ['Reify', 'Target'], 'noteValue')
-  const edited = editThought(state, { path, oldValue: 'Target', newValue: '<b>A &amp; B</b>' })
+  const edited = runDocumentCommand(editThought({ path, oldValue: 'Target', newValue: '<b>A &amp; B</b>' }), state)
 
   expect(noteValue(edited, parentOf(path))).toBe('Content')
 })
@@ -62,23 +73,27 @@ it.each([
   ['AB', 'A B'],
   ['Names', 'Names😀'],
 ])('keeps the note target %s distinct from %s', (key, target) => {
-  const state = importText(initialState(), {
-    text: `
+  const state = runDocumentCommand(
+    importText({
+      text: `
       - Reify
         - =note
           - =path
             - ${key}
         - ${target}
           - Unrelated`,
-  })
+    }),
+    initialState(),
+  )
 
   const path = contextToPathOrThrow(state, ['Reify'], 'noteValue')
   expect(noteValue(state, path)).toBeNull()
 })
 
-it.each(['names', 'Names'])('resolves %s to the first equivalent target by rank', key => {
-  const state = importText(initialState(), {
-    text: `
+it.each(['names', 'Names'])('resolves %s to the first equivalent target in canonical order', key => {
+  const state = runDocumentCommand(
+    importText({
+      text: `
       - Reify
         - =note
           - =path
@@ -87,21 +102,24 @@ it.each(['names', 'Names'])('resolves %s to the first equivalent target by rank'
           - First
         - ${key}
           - Second`,
-  })
+    }),
+    initialState(),
+  )
   const path = contextToPathOrThrow(state, ['Reify'], 'noteValue')
   const target = childrenSelectors
     .getAllChildrenAsThoughts(state, head(path))
     .find(child => findDescendant(state, child.id, 'Second'))
   expect(target).toBeDefined()
   const targetPath = appendToPath(path, target!.id)
-  const reordered = moveThought(state, { oldPath: targetPath, newPath: targetPath, newRank: -1 })
+  const reordered = runDocumentCommand(moveThought({ oldPath: targetPath, newPath: targetPath, afterId: null }), state)
 
   expect(noteValue(reordered, path)).toBe('Second')
 })
 
 it('resolves equivalent targets in the configured note sort order', () => {
-  const state = importText(initialState(), {
-    text: `
+  const state = runDocumentCommand(
+    importText({
+      text: `
       - Reify
         - =sort
           - Note
@@ -116,7 +134,9 @@ it('resolves equivalent targets in the configured note sort order', () => {
           - =note
             - A
           - Second`,
-  })
+    }),
+    initialState(),
+  )
 
   const path = contextToPathOrThrow(state, ['Reify'], 'noteValue')
   expect(noteValue(state, path)).toBe('Second')
@@ -126,8 +146,9 @@ it.each([
   { key: 'Missing', expected: null },
   { key: 'names', expected: ['Root', 'Names'] },
 ])('resolves $key without sorting unrelated notes', ({ key, expected }) => {
-  const state = importText(initialState(), {
-    text: `
+  const state = runDocumentCommand(
+    importText({
+      text: `
       - Root
         - =sort
           - Note
@@ -144,7 +165,9 @@ it.each([
               - Missing
           - A
           - B`,
-  })
+    }),
+    initialState(),
+  )
   const path = contextToPathOrThrow(state, ['Root'], 'resolveNotePath')
   const sorted = vi.spyOn(childrenSelectors, 'getAllChildrenSorted')
 
@@ -156,12 +179,15 @@ it.each([
 })
 
 it('does not interpret a formatted attribute name as a literal note', () => {
-  const state = importText(initialState(), {
-    text: `
+  const state = runDocumentCommand(
+    importText({
+      text: `
       - Reify
         - <b>=note</b>
           - Unrelated`,
-  })
+    }),
+    initialState(),
+  )
 
   const path = contextToPathOrThrow(state, ['Reify'], 'noteValue')
   expect(noteValue(state, path)).toBeNull()

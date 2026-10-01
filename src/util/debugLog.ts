@@ -237,19 +237,13 @@ const stopFrameHeartbeat = (): void => {
 const read = (): DebugLogEntry[] => [...entries]
 
 /** Renders one thought of the format() state dump as a single line. */
-const formatThought = (thought: {
-  id: string
-  value: string
-  rank: number
-  parentId: string
-  pending?: boolean
-}): string => {
+const formatThought = (thought: { id: string; value: string; parentId: string }, position: number): string => {
   const value =
     thought.value.length > DUMP_VALUE_MAX_LENGTH ? `${thought.value.slice(0, DUMP_VALUE_MAX_LENGTH)}…` : thought.value
-  return `${thought.id} ${JSON.stringify(value)} rank:${thought.rank} parent:${thought.parentId}${thought.pending ? ' pending' : ''}`
+  return `${thought.id} ${JSON.stringify(value)} rank:${position} parent:${thought.parentId}`
 }
 
-/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, and build commit. Appends the last-frame marker and, when state is provided, a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
+/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, and build commit. Appends the last-frame marker and, when state is provided, a compact document dump grouped by parent and sibling position so entry ids can be resolved to values and current sibling order is visible. */
 const format = (state?: State): string => {
   // The device: the navigator platform, the shell em is served through (web, ios, android, or tauri), the screen
   // dimensions, and the pointer type. The shell is worth naming separately because it is not recoverable from the user
@@ -284,12 +278,24 @@ const format = (state?: State): string => {
     // ignore
   }
 
+  const thoughts = state
+    ? Array.from(state.thoughts.values(), thought => ({
+        thought,
+        position: state.thoughts.getPosition(thought.id) ?? 0,
+      }))
+    : []
   const dump = state
     ? [
-        `\n--- state.thoughts: ${Object.keys(state.thoughts.thoughtIndex).length} thoughts, ${Object.keys(state.thoughts.lexemeIndex).length} lexemes`,
-        ...Object.values(state.thoughts.thoughtIndex)
-          .sort((a, b) => (a.parentId < b.parentId ? -1 : a.parentId > b.parentId ? 1 : a.rank - b.rank))
-          .map(formatThought),
+        `\n--- state.thoughts: ${thoughts.length} thoughts, ${Object.keys(state.thoughts.lexemeIndex).length} lexemes`,
+        ...thoughts
+          .sort((a, b) =>
+            a.thought.parentId < b.thought.parentId
+              ? -1
+              : a.thought.parentId > b.thought.parentId
+                ? 1
+                : a.position - b.position,
+          )
+          .map(({ thought, position }) => formatThought(thought, position)),
       ].join('\n')
     : ''
 

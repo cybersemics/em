@@ -1,10 +1,10 @@
 import { FC, useEffect, useRef } from 'react'
-import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
 import State from '../../@types/State'
 import { gestureString } from '../../commands'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import useGestureHighlight from '../../hooks/useGestureHighlight'
 import {
   SELECTED_ITEM_DESCRIPTION_LINE_HEIGHT_REM,
@@ -31,9 +31,9 @@ const GestureMenuItem: FC<{
   autoScroll?: boolean
 }> = ({ command, selected, gestureInProgress, isFirstCommand, isLastCommand, autoScroll = true }) => {
   const ref = useRef<HTMLDivElement | null>(null)
-  const disabled = useSelector((state: State) => !isExecutable(state, command))
+  const disabled = useEditorSelector((state: State) => !isExecutable(state, command))
   const isActive = command.isActive?.(store.getState())
-  const description = useSelector((state: State) => {
+  const description = useEditorSelector((state: State) => {
     const descFn = (isActive && command.descriptionInverse) || command.description
     return typeof descFn === 'function' ? descFn(state) : descFn
   })

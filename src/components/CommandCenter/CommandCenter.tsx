@@ -18,6 +18,7 @@ import note from '../../commands/note'
 import outdent from '../../commands/outdent'
 import swapParent from '../../commands/swapParent'
 import uncategorize from '../../commands/uncategorize'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
@@ -125,7 +126,7 @@ const CommandCenter = () => {
   const dispatch = useDispatch()
   const showCommandCenter = useSelector(state => state.showCommandCenter)
   const showSidebar = useSelector(state => state.showSidebar)
-  const isTutorialOn = useSelector(isTutorial)
+  const isTutorialOn = useEditorSelector(isTutorial)
   const sheetRef = useRef<SheetRef>(null)
   const { height, opacity, blurHeight } = useSheetTransforms(sheetRef)
   const backgroundGlow = backgroundGlowStore.useState()

@@ -1,6 +1,6 @@
-import _ from 'lodash'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import { isSafari, isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
@@ -16,6 +16,7 @@ import themeColors from '../selectors/themeColors'
 import { updateCommandState } from '../stores/commandStateStore'
 import editableSyncStore from '../stores/editableSyncStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
+import command from '../util/command'
 import formatSelectionHtml, { FormatCommand } from '../util/formatSelectionHtml'
 import reducerFlow from '../util/reducerFlow'
 import editThought from './editThought'
@@ -61,22 +62,26 @@ const formatOptions = (
  * empty, so the formatting has nowhere to live in the value itself. It is accumulated on a placeholder character so
  * that further commands compose exactly as they do on a real value, and editThought drops it once the value carries
  * the formatting itself. */
-const holdFormat = (state: State, id: ThoughtId, options: ReturnType<typeof formatOptions>): State => {
+const holdFormat = (
+  state: State,
+  id: ThoughtId,
+  options: ReturnType<typeof formatOptions>,
+  transaction?: ThoughtspaceTransaction,
+): State => {
   const thought = getThoughtById(state, id)
   if (!thought) return state
   const pendingFormat = formatSelectionHtml(thought.pendingFormat ?? PENDING_FORMAT_PLACEHOLDER, options)
   if (pendingFormat === thought.pendingFormat) return state
 
-  return updateThoughts(state, {
-    thoughtIndexUpdates: { [id]: { ...thought, pendingFormat } },
-    lexemeIndexUpdates: {},
-    // pendingFormat is not part of the persisted ThoughtPayload, so there is nothing to write or sync
-    local: false,
-    remote: false,
-    // Holding formatting is not an edit, so lastUpdated does not advance. Without this the update looks like a stale
-    // echo from another device and is discarded. Same reason generateEmoji sets it for `generating`.
-    overwritePending: true,
-  })
+  return updateThoughts(
+    state,
+    {
+      thoughtIndexUpdates: { [id]: { ...thought, pendingFormat } },
+      // The held format only changes the editor overlay, never the document or its lastUpdated timestamp.
+      persist: false,
+    },
+    transaction,
+  )
 }
 
 /** Formats the cursor thought or note, over the given range or in full, or colors every thought of a multiselection in
@@ -84,6 +89,7 @@ const holdFormat = (state: State, id: ThoughtId, options: ReturnType<typeof form
 const formatSelection = (
   state: State,
   { command, color, range, cursorOffset, noteOffset }: formatSelectionPayload,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   // Multicursor: apply the color to each selected thought in full, since there is no browser selection. A single
   // action is a single undo step, so the selected thoughts do not have to be undone individually (#4841).
@@ -95,7 +101,9 @@ const formatSelection = (
         if (!thought) return null
 
         // A selected empty thought holds the formatting, just as it does when it is the only cursor.
-        if (thought.value.length === 0) return (state: State) => holdFormat(state, thought.id, options)
+        if (thought.value.length === 0)
+          return (state: State, transaction?: ThoughtspaceTransaction) =>
+            holdFormat(state, thought.id, options, transaction)
 
         const newValue = formatSelectionHtml(thought.value, options)
         return newValue !== thought.value
@@ -108,7 +116,7 @@ const formatSelection = (
             })
           : null
       }),
-    )(state)
+    )(state, transaction)
   }
 
   if (!state.cursor) return state
@@ -123,7 +131,7 @@ const formatSelection = (
     // A note's formatting is held on the thought that holds its text, which noteThought resolves. It is null for a
     // note assembled from several thoughts (=children/=note/=path), which has nowhere to hold it.
     const target = state.noteFocus ? noteThought(state, state.cursor) : thought
-    return target ? holdFormat(state, target.id, options) : state
+    return target ? holdFormat(state, target.id, options, transaction) : state
   }
 
   const newValue = formatSelectionHtml(value, { ...range, ...options })
@@ -144,7 +152,7 @@ const formatSelection = (
             force: !range,
           }),
         ],
-  )(state)
+  )(state, transaction)
 }
 
 /**
@@ -274,7 +282,7 @@ export const formatSelectionActionCreator =
     if (range || !state.isKeyboardOpen) updateCommandState(getState())
   }
 
-export default _.curryRight(formatSelection)
+export default command(formatSelection)
 
 // Register this action's metadata
 registerActionMetadata('formatSelection', {

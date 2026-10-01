@@ -5,6 +5,7 @@ import { token } from '../../styled-system/tokens'
 import { formatSelectionColorActionCreator as formatSelectionColor } from '../actions/formatSelectionColor'
 import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
+import useEditorSelector from '../hooks/useEditorSelector'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
 import haptics from '../util/haptics'
@@ -28,7 +29,7 @@ const ColorSwatch: FC<{
 
   size = size || fontSize * 1.2
 
-  const selected = useSelector(state =>
+  const selected = useEditorSelector(state =>
     isColorSelected(
       themeColors(state),
       { foreColor: commandStateForeColor, backColor: commandStateBackColor },

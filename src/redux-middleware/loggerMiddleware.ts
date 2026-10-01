@@ -2,9 +2,7 @@ import { Dispatch, Middleware, UnknownAction } from 'redux'
 import Index from '../@types/IndexType'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
 import testFlags from '../e2e/testFlags'
-import { getChildrenRanked } from '../selectors/getChildren'
 import debugLog from '../util/debugLog'
 
 /** Maximum number of thought summaries included in a structured updateThoughts entry. */
@@ -16,69 +14,47 @@ const MAX_MOVES = 10
 /** Maximum characters of a thought value included in a log entry. */
 const VALUE_MAX_LENGTH = 100
 
-// Duplicate sibling ranks already reported, keyed by `${parentId}:${rank}`, so a persisting duplicate is warned about once rather than on every subsequent action that touches its parent.
-const reportedDuplicateRanks = new Set<string>()
-
 /** Truncates a thought value for compact log output. */
 const truncateValue = (value: string): string =>
   value.length > VALUE_MAX_LENGTH ? `${value.slice(0, VALUE_MAX_LENGTH)}…` : value
 
-/** Builds a structured summary of an updateThoughts action: per-thought id/value/rank/parentId/pending (capped at MAX_SUMMARY_THOUGHTS), plus counts and the local/remote flags. Far denser and more useful than the raw stringified action, whose truncation cuts JSON mid-field. */
+/** Builds a structured summary of an updateThoughts action: per-thought id/value/parentId (capped at MAX_SUMMARY_THOUGHTS), plus counts and the persistence flag. Far denser and more useful than the raw stringified action, whose truncation cuts JSON mid-field. */
 const summarizeUpdateThoughts = (action: UnknownAction): Record<string, unknown> => {
   const thoughtUpdates = Object.entries((action.thoughtIndexUpdates ?? {}) as Index<Thought | null>)
   return {
     actionType: 'updateThoughts',
     thoughtCount: thoughtUpdates.length,
-    lexemeCount: Object.keys((action.lexemeIndexUpdates ?? {}) as Index<unknown>).length,
-    local: action.local !== false,
-    remote: action.remote !== false,
+    persist: action.persist !== false,
     thoughts: thoughtUpdates.slice(0, MAX_SUMMARY_THOUGHTS).map(([id, thought]) =>
       thought
         ? {
             id,
             value: truncateValue(thought.value),
-            rank: thought.rank,
             parentId: thought.parentId,
-            ...(thought.pending ? { pending: true } : null),
           }
         : { id, deleted: true },
     ),
   }
 }
 
-/** Logs an integrity warning for each set of siblings that share an exact rank under the given parent. Duplicate ranks make sibling order ambiguous and are the signature of a data-integrity fault (see the safeguard in selectors/getRankAfter.ts). Warning only — the update itself is never blocked. */
-const warnDuplicateRanks = (state: State, parentId: ThoughtId): void => {
-  const children = getChildrenRanked(state, parentId)
-  // children are sorted by rank, so duplicates are adjacent
-  children.forEach((child, i) => {
-    if (i === 0 || children[i - 1].rank !== child.rank) return
-    const key = `${parentId}:${child.rank}`
-    if (reportedDuplicateRanks.has(key)) return
-    reportedDuplicateRanks.add(key)
-    const duplicates = children
-      .filter(sibling => sibling.rank === child.rank)
-      .map(sibling => ({ id: sibling.id, value: truncateValue(sibling.value) }))
-    debugLog.log('integrity', { issue: 'duplicateRank', parentId, rank: child.rank, thoughts: duplicates })
-    console.warn(`Duplicate sibling rank ${child.rank} under thought ${parentId}`, duplicates)
-  })
-}
-
-/** Diffs the thoughtIndex across one action and logs a self-describing `move` entry for every thought whose rank or parentId changed (loads and frees, where only one side exists, are skipped). Catches moves from every source — moveThought and the reducers that compose it, drag-and-drop, sort reranking, undo/redo, and remote sync — without special-casing any of them. Also runs the duplicate-rank integrity check on the parents of changed or added thoughts. */
+/** Diffs immutable document views and logs a self-describing `move` entry for every thought whose sibling position or parent changed. Loads and deletions, where only one side exists, are skipped. */
 const logThoughtMoves = (stateBefore: State, stateAfter: State, actionType: string): void => {
-  const indexBefore = stateBefore.thoughts.thoughtIndex
-  const indexAfter = stateAfter.thoughts.thoughtIndex
-  if (indexBefore === indexAfter) return
+  const before = stateBefore.thoughts
+  const after = stateAfter.thoughts
+  if (before === after) return
 
-  const moves = Object.values(indexAfter).flatMap(thought => {
-    const old = indexBefore[thought.id]
-    return old && old !== thought && (old.rank !== thought.rank || old.parentId !== thought.parentId)
+  const moves = Array.from(after.values()).flatMap(thought => {
+    const old = before.getThought(thought.id)
+    const oldRank = before.getPosition(thought.id)
+    const newRank = after.getPosition(thought.id)
+    return old && (oldRank !== newRank || old.parentId !== thought.parentId)
       ? [
           {
             actionType,
             id: thought.id,
             value: truncateValue(thought.value),
-            oldRank: old.rank,
-            newRank: thought.rank,
+            oldRank,
+            newRank,
             ...(old.parentId !== thought.parentId
               ? { oldParentId: old.parentId, newParentId: thought.parentId }
               : { parentId: thought.parentId }),
@@ -92,13 +68,6 @@ const logThoughtMoves = (stateBefore: State, stateAfter: State, actionType: stri
   } else {
     debugLog.log('moveBatch', { actionType, count: moves.length, sample: moves.slice(0, MAX_MOVES) })
   }
-
-  const changedParentIds = new Set(
-    Object.values(indexAfter)
-      .filter(thought => indexBefore[thought.id] !== thought)
-      .map(thought => thought.parentId),
-  )
-  changedParentIds.forEach(parentId => warnDuplicateRanks(stateAfter, parentId))
 }
 
 /** Logs which original action types an undo or redo reverted or replayed, read from the patches popped off the undo/redo stack, so a move restored by undo is distinguishable from a fresh user move. */
@@ -112,7 +81,7 @@ const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string):
   debugLog.log(actionType, { steps: popped.length, actions })
 }
 
-/** Redux Middleware for logging all actions. Logs to the console when testFlags.logActions is set (useful for e2e/remote debugging when Redux Developer Tools are not available), and captures every action into the persistent debugLog when it is enabled (via the Debug Logging setting, or automatically on development and preview hosts) — along with derived forensics: structured updateThoughts summaries, a `move` entry for every rank or parent change, duplicate-sibling-rank integrity warnings, and undo/redo attribution. */
+/** Redux Middleware for logging all actions. Logs to the console when testFlags.logActions is set (useful for e2e/remote debugging when Redux Developer Tools are not available), and captures every action into the persistent debugLog when it is enabled (via the Debug Logging setting, or automatically on development and preview hosts) — along with structured updateThoughts summaries, sibling-position and parent changes, and undo/redo attribution. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
   return next => action => {
@@ -144,8 +113,8 @@ const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
         debugLog.log('action', { actionType: type ?? 'unknown', payload: payloadStr })
       }
 
-      // getState() after next(action) reflects the fully reduced state, including enhancer reducers (undo patches
-      // applied, pushQueue drained), since middleware wraps dispatch outside the whole store.
+      // getState() after next(action) reflects the committed document and undo history, since middleware wraps
+      // dispatch outside the command coordinator.
       if (stateBefore) {
         const stateAfter = store.getState()
         try {

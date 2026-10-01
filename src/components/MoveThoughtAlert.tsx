@@ -1,7 +1,7 @@
 import { FC } from 'react'
-import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getThoughtById from '../selectors/getThoughtById'
 import ellipsize from '../util/ellipsize'
 import head from '../util/head'
@@ -25,8 +25,8 @@ interface MoveThoughtAlertProps {
 /** Alert shown after drag-and-drop moves a thought to another context. */
 const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numThoughts = 1, toPath, top }) => {
   const isRootPath = isRoot(toPath)
-  const to = useSelector(state => (isRootPath ? 'home' : getThoughtById(state, head(toPath))?.value || ''))
-  const context = useSelector(state => (contextPath ? headValue(state, contextPath) : null))
+  const to = useEditorSelector(state => (isRootPath ? 'home' : getThoughtById(state, head(toPath))?.value || ''))
+  const context = useEditorSelector(state => (contextPath ? headValue(state, contextPath) : null))
   const alertFrom = numThoughts === 1 ? `"${ellipsize(from)}"` : `${numThoughts} thoughts`
 
   return (

@@ -1,4 +1,3 @@
-import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
 import newThoughtCommand from '../../commands/newThought'
 import {
@@ -9,6 +8,7 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import headValue from '../../util/headValue'
 import TutorialGestureDiagram from './TutorialGestureDiagram'
@@ -22,9 +22,9 @@ const tutorialChoiceMap = {
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext2Parent = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
-  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor)?.startsWith('"'))
-  const readyToSelect = useSelector(
+  const tutorialChoice = useEditorSelector(selectTutorialChoice)
+  const hasQuotes = useEditorSelector(state => state.cursor && headValue(state, state.cursor)?.startsWith('"'))
+  const readyToSelect = useEditorSelector(
     state =>
       !state.cursor ||
       headValue(state, state.cursor)?.toLowerCase() !== TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),

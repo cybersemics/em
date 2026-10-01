@@ -79,6 +79,9 @@
       "npm",
       "yarn"
     ],
+    "allowed-urls": [
+      "https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-d2dba212358c2cf4197f6b0c2915170efd768cd3/treecrdt-wasm.tgz"
+    ],
     "path": "yarn.lock"
   },
   "jest": {
@@ -120,6 +123,7 @@
     "@treecrdt/sync-server-core": "0.1.2",
     "@treecrdt/sync-sqlite": "0.1.2",
     "@treecrdt/wa-sqlite": "0.4.2",
+    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/wasm-preview-d2dba212358c2cf4197f6b0c2915170efd768cd3/treecrdt-wasm.tgz",
     "axios": "^1.20.0",
     "clipboard": "^2.0.11",
     "dnd-core": "^16.0.1",
@@ -164,6 +168,7 @@
     "title-case": "^4.3.2",
     "truncate-html": "^1.2.2",
     "ts-key-enum": "^3.0.13",
+    "use-sync-external-store": "^1.4.0",
     "vite-plugin-html": "^3.2.2",
     "webview-background": "workspace:*",
     "workbox-build": "^7.4.1",
@@ -211,6 +216,7 @@
     "@types/sanitize-html": "^2.16.1",
     "@types/sinonjs__fake-timers": "^15.0.1",
     "@types/tcp-port-used": "^1.0.4",
+    "@types/use-sync-external-store": "^0.0.6",
     "@typescript-eslint/eslint-plugin": "^8.70.1",
     "@typescript-eslint/parser": "^8.70.1",
     "@typescript/native": "npm:typescript@7.0.2",

@@ -1,5 +1,5 @@
-import { useSelector } from 'react-redux'
 import IconType from '../../@types/IconType'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import getCursorSortDirection from '../../util/getCursorSortDirection'
 import AnimatedIcon from './AnimatedIcon'
 import animationData from './animations/10-sort_4.json'
@@ -153,7 +153,7 @@ const IconDesc = ({ fill, size = 18, style = {}, cssRaw, animated, animationComp
 
 /** Sort Icon Component with Conditional Lottie Animation. */
 const SortIcon = ({ size = 18, style = {}, cssRaw, animated, animationComplete }: IconType) => {
-  const direction = useSelector(getCursorSortDirection)
+  const direction = useEditorSelector(getCursorSortDirection)
 
   const Component = direction === 'Desc' ? IconDesc : IconAsc
 

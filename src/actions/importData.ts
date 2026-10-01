@@ -58,7 +58,7 @@ export const importDataActionCreator = ({
   transient,
   // TODO: May need to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
   isEmText = false,
-}: ImportDataPayload): Thunk => {
+}: ImportDataPayload): Thunk<void | Promise<void>> => {
   return (dispatch, getState) => {
     const state = getState()
 
@@ -99,7 +99,7 @@ export const importDataActionCreator = ({
       // Measured against the destination editable so that the offsets index into its whole value rather than into the text node the selection starts in (#5154).
       const replaceRange = path ? selection.offsetRangeThought(head(path)) : null
 
-      dispatch(
+      return dispatch(
         importText({
           // use caret position to correctly track the last navigated point for caret
           // offsetThought returns the offset relative to the entire thought's text content, not just the current text node.
@@ -123,7 +123,7 @@ export const importDataActionCreator = ({
       // importFiles passes preventSetCursor: true to newThought so the selection will stay disabled
       selection.clear()
 
-      dispatch(
+      return dispatch(
         importFiles({
           path,
           files: [

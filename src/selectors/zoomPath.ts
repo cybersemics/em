@@ -20,7 +20,7 @@ const isZoomed = (state: State, path: Path, env: LazyEnv): boolean =>
 
 /** Returns the deepest ancestor-or-self of the cursor that =focus/Zoom applies to, or null if the cursor is not zoomed. Every thought outside the returned path's subtree is hidden by calculateAutofocus.
  *
- * Memoized on the whole state rather than on narrower slices the way getSetting is, since calculateAutofocus calls this once per visible thought and the point is to collapse those into one walk per render. Keying on the state object achieves that without having to enumerate every slice the walk reads (thoughtIndex, cursor, rootContext); the cost is only that an unrelated state change re-walks. */
+ * Memoized on the whole state rather than on narrower slices the way getSetting is, since calculateAutofocus calls this once per visible thought and the point is to collapse those into one walk per render. Keying on the state object achieves that without having to enumerate every slice the walk reads (thoughts, cursor, rootContext); the cost is only that an unrelated state change re-walks. */
 const zoomPath = moize(
   (state: State): Path | null => {
     if (!state.cursor) return null

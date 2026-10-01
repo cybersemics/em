@@ -1,12 +1,18 @@
 import '@testing-library/jest-dom'
+import { initializeMemoryWasm } from '@treecrdt/wasm'
 import 'fake-indexeddb/auto'
 import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4
 import { noop } from 'lodash'
+import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import 'vi-canvas-mock'
 import { registerReset, resetStores } from './stores/ministore'
 
 expect.extend(matchers)
+
+// Initialize the browser client's packaged engine with bytes because Node cannot fetch a file URL.
+await initializeMemoryWasm(readFileSync(createRequire(import.meta.url).resolve('@treecrdt/wasm/treecrdt_wasm_bg.wasm')))
 
 // add noop functions to prevent implementation error during test
 window.blur = noop
@@ -91,7 +97,7 @@ vi.stubGlobal('jest', vi)
 // test, so a wrapper created at module scope outlives the test that scheduled its trailing call: the call fires into
 // the next test, or into teardown after the store and localStorage have been cleared — which is where the intermittent
 // `ReferenceError: localStorage is not defined` came from (#3345). Wrappers created inside a factory that runs once per
-// file (pullQueue's, in the middleware chain) leak the same way, so the hook is at the source rather than at any call
+// file leak the same way, so the hook is at the source rather than at any call
 // site: throttle and debounce are replaced with versions that record each wrapper they create, and registerReset
 // cancels the live ones wherever resetStores runs — initStore and createTestApp at setup, cleanupTestApp before it
 // drains timers, and the afterEach below. Cancelling goes through the wrapper rather than clearTimeout because lodash

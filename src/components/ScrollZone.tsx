@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { AlertType, Settings } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useScrollTop from '../hooks/useScrollTop'
 import getUserSetting from '../selectors/getUserSetting'
 import touchStore from '../stores/touchStore'
@@ -88,7 +89,7 @@ const ScrollZone = ({ leftHanded }: { leftHanded?: boolean } = {}) => {
   const scrollZoneRef = useRef<HTMLDivElement>(null)
   const highlightRef = useRef<HTMLDivElement>(null)
   const scrollZoneWidth = viewportStore.useSelector(state => state.scrollZoneWidth)
-  const hideScrollZone = useSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
+  const hideScrollZone = useEditorSelector(state => state.showModal || getUserSetting(state, Settings.hideScrollZone))
   const showScrollZoneHelpAlert = useSelector(state => state.alert?.alertType === AlertType.ScrollZoneHelp)
 
   useScrollHaptics()

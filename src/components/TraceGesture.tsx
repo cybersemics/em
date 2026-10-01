@@ -4,6 +4,7 @@ import SignaturePad from 'react-signature-pad-wrapper'
 import { css } from '../../styled-system/css'
 import { gestureString, globalCommands } from '../commands'
 import { GESTURE_GLOW_BLUR, Settings, noop } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getUserSetting from '../selectors/getUserSetting'
 import themeColors from '../selectors/themeColors'
 import gestureStore from '../stores/gestureStore'
@@ -45,8 +46,8 @@ const useGestureCancelled = () => {
 
 /** Draws a gesture as it is being performed onto a canvas. */
 const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
-  const colors = useSelector(themeColors)
-  const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
+  const colors = useEditorSelector(themeColors)
+  const leftHanded = useEditorSelector(getUserSetting(Settings.leftHanded))
   const show = gestureStore.useSelector(
     state => state.gesture.length > 0 && state.gestureMenuAnimationState !== 'exiting',
   )
