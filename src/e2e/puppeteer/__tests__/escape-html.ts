@@ -41,6 +41,21 @@ it.skip('preserves pasted HTML as text/html with text color and background color
   expect(editable).toBeTruthy()
 })
 
+// https://github.com/cybersemics/em/issues/4161
+it.skip('strips formatting from HTML copied from a web page', async () => {
+  await press('Enter', { delay: 10 })
+  await waitForEditable('')
+  // the text/html that Chrome writes to the clipboard when a code block on a web page is copied
+  await setClipboard({
+    html: '<pre style="color: rgb(31, 35, 40); font-style: normal; font-weight: 400; text-align: start; padding: 16px; background-color: rgb(246, 248, 250); border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13.6px;"><code>Hello world of beautiful people</code></pre>',
+    text: 'Hello world of beautiful people',
+  })
+  await press('Insert', { shift: true })
+
+  await waitForEditingTextChange('')
+  expect(await getEditingText()).toBe('Hello world of beautiful people')
+})
+
 it('escapes pasted HTML as text/plain', async () => {
   await press('Enter', { delay: 10 })
   await setClipboard({ text: 'hello <b>world</b>' })
