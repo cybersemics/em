@@ -69,6 +69,37 @@ it('a long press ends when the finger lifts even if iOS withholds its touchend',
   expect(hasMulticursor(store.getState())).toBe(true)
 })
 
+it('a tap whose touchend and mouseup iOS withholds does not activate drag and drop once it moves the caret', async () => {
+  await dispatch(importText({ text: '- One' }))
+  await act(vi.runOnlyPendingTimersAsync)
+  const bullet = getBulletByContext(['One'])
+
+  await touchStart(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(100))
+  await act(async () => {
+    document.dispatchEvent(new Event('selectionchange'))
+  })
+  await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
+
+  expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
+})
+
+it('a selection change after a long press begins does not end it', async () => {
+  await dispatch(importText({ text: '- One' }))
+  await act(vi.runOnlyPendingTimersAsync)
+  const bullet = getBulletByContext(['One'])
+
+  await touchStart(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
+  // DragHold blurs the editable, which changes the selection
+  await act(async () => {
+    document.dispatchEvent(new Event('selectionchange'))
+  })
+  await act(() => vi.advanceTimersByTimeAsync(100))
+
+  expect(screen.queryByText(AlertText.DragAndDrop)).not.toBeNull()
+})
+
 it('a mouseup does not end a touch press before WebKit 27', async () => {
   webKit27Store.update(false)
   await dispatch(importText({ text: '- One' }))

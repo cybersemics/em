@@ -135,6 +135,17 @@ const useLongPress = (
     return () => window.removeEventListener('mouseup', stop, { capture: true })
   }, [pressing, stop])
 
+  // A withheld tap can get no mouseup either, but iOS still moves the caret when it lifts (#5660). A finger still down
+  // does not move the caret before the long press delay, and once DragHold begins em blurs the editable itself.
+  useEffect(() => {
+    if (!pressing || longPressState !== LongPressState.Inactive || !webKit27Store.getState()) return
+
+    /** Ends the press. */
+    const onSelectionChange = () => stop()
+    document.addEventListener('selectionchange', onSelectionChange)
+    return () => document.removeEventListener('selectionchange', onSelectionChange)
+  }, [longPressState, pressing, stop])
+
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
   // A press on the caret of an *empty* thought is exempt, where the menu is the only way to reach paste: every other
   // route to it goes through selecting a word, and an empty thought has none.
