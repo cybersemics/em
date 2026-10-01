@@ -323,11 +323,13 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   // uses a different method for text/plain and text/html
   // does not update in real-time (See: ExportThoughtsPhrase component)
   const numDescendantsFinal =
-    exportContent !== null
-      ? selected.type === 'text/plain'
-        ? exportContent.split('\n').length - simplePaths.length
-        : (numDescendantsInState ?? 0)
-      : null
+    exportContent === null
+      ? null
+      : exportContent === ''
+        ? 0
+        : selected.type === 'text/plain'
+          ? exportContent.split('\n').length - simplePaths.length
+          : (numDescendantsInState ?? 0)
 
   const exportThoughtsPhraseFinal = useSelector(() =>
     exportPhrase(
