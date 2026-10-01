@@ -45,6 +45,8 @@ flowchart TD
 
 `AGENTS.md` is the canonical local entry point and `.agents/skills/` the canonical local skill directory. Claude Code's `CLAUDE.md` and `.claude/skills` are symlinks onto them, so a Claude Code session and a Codex session read byte-identical instructions. Both tools follow symlinks.
 
+Local Cursor Agent also uses the repo's `.cursor/hooks.json` project hook. Before an agent shell `git commit`, it checks Cursor's active model ID and optional effort parameter against the `Co-Authored-By` trailer required by `AGENTS.md`. It rejects Auto because Cursor's selected-model hook field does not establish which model served an Auto-routed request. The check covers the commit turn, so the agent must use a fixed model for the work being attributed, not switch models only to commit. This hook does not run for a developer's ordinary Git commands or for commits made through the IDE's Git UI.
+
 The `CLAUDE.md` symlink is required, not decorative: Claude Code does **not** read `AGENTS.md` natively, and `ln -s AGENTS.md CLAUDE.md` is Anthropic's own documented workaround.
 
 ## Copilot reads AGENTS.md too
