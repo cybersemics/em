@@ -42,7 +42,17 @@ name: Dependabot Fix
 on:
   workflow_run:
     workflows:
-      ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'BrowserStack Android', 'Vercel Preview', 'TDD', 'Agent Scripts']
+      [
+        'Lint',
+        'Test',
+        'Puppeteer',
+        'BrowserStack',
+        'BrowserStack Android',
+        'Vercel Preview',
+        'TDD',
+        'TDD iOS',
+        'Agent Scripts',
+      ]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -69,7 +79,7 @@ jobs:
   task:
     name: Start fix task
     runs-on: ubuntu-latest
-    # Cheap gate so the six other completions on a normal pull request cost nothing. Everything
+    # Cheap gate so the seven other completions on a normal pull request cost nothing. Everything
     # this cannot see from the event payload — author, checks, dedupe — is checked in the step below.
     if: >-
       github.event_name == 'workflow_dispatch' ||

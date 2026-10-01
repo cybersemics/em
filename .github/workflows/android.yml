@@ -79,6 +79,7 @@ on:
       - '.github/workflows/preview-qr.yml'
       - '.github/workflows/tauri-release-*.yml'
       - '.github/workflows/tdd.yml'
+      - '.github/workflows/tdd-ios.yml'
       - '.github/workflows/update-browserslist.yml'
       - '.github/workflows/vercel-*.yml'
       # Outside the web build: packages/ai is a separate Vercel service the app reaches over HTTP,
@@ -137,6 +138,7 @@ on:
       - '.github/workflows/preview-qr.yml'
       - '.github/workflows/tauri-release-*.yml'
       - '.github/workflows/tdd.yml'
+      - '.github/workflows/tdd-ios.yml'
       - '.github/workflows/update-browserslist.yml'
       - '.github/workflows/vercel-*.yml'
       - 'packages/ai/**'
