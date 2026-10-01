@@ -10,7 +10,7 @@ import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isSafari, isTouch } from '../browser'
+import { isCapacitor, isIOS, isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
@@ -329,6 +329,15 @@ const initEvents = (store: Store<State, any>) => {
   const onSafariGesture = (e: Event) => e.preventDefault()
 
   /**
+   * Cancels native drag-and-drop in the Android app. A long press on selected text starts a native drag, but the
+   * Android WebView never delivers its dragover, drop, or dragend to the page, nor the touchend that would finish
+   * the press, so the dragged word can never be dropped and the native text selection menu stays on screen over it.
+   * Nothing in em relies on a native drag there: thoughts are dragged by react-dnd's TouchBackend, which signals with
+   * its own dragStart event. Android Chrome is not affected, since its native text drag completes. See #4225.
+   */
+  const onAndroidAppDragStart = (e: Event) => e.preventDefault()
+
+  /**
    * Prevents native behavior during a two-finger gesture (e.g. two-finger tracing or pinch). While the
    * multitouch latch is set, this preventDefaults touchmove so the browser does not move the contentEditable
    * caret / extend the text selection to follow the fingers (observed on iOS Safari) or scroll the page. It is
@@ -507,6 +516,9 @@ const initEvents = (store: Store<State, any>) => {
     document.addEventListener('gesturechange', onSafariGesture)
     document.addEventListener('gestureend', onSafariGesture)
   }
+  if (isCapacitor() && !isIOS) {
+    window.addEventListener('dragstart', onAndroidAppDragStart)
+  }
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
   window.addEventListener('dragenter', dragEnter)
@@ -549,6 +561,7 @@ const initEvents = (store: Store<State, any>) => {
     document.removeEventListener('gesturestart', onSafariGesture)
     document.removeEventListener('gesturechange', onSafariGesture)
     document.removeEventListener('gestureend', onSafariGesture)
+    window.removeEventListener('dragstart', onAndroidAppDragStart)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener('dragenter', dragEnter)

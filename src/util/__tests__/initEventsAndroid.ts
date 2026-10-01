@@ -32,7 +32,7 @@ beforeEach(() => {
 afterEach(() => cleanup())
 
 // https://github.com/cybersemics/em/issues/4225
-it.skip('cancels the native drag of selected text', () => {
+it('cancels the native drag of selected text', () => {
   const editable = document.createElement('div')
   editable.setAttribute('contenteditable', 'true')
   editable.textContent = 'Sed et fringilla lacus'
