@@ -195,7 +195,7 @@ describe('command center', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5755
-  it.skip('closes when the Note command enters edit mode', async () => {
+  it('closes when the Note command enters edit mode', async () => {
     await paste('- a')
     await clickThought('a')
 
