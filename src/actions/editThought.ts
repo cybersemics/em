@@ -87,8 +87,12 @@ const editThought = (
   const sortType = sortPreference.type
   const isValueEmptyOrEmojiOnly = isEmptyOrEmojiOnly(newValue)
 
+  // The new value carries any formatting that was held while the thought was empty, so the held copy is dropped. The
+  // key is omitted rather than set to undefined, which a JSON patch does not treat as a removal. See formatSelection.
+  const { pendingFormat: _pendingFormat, ...editedThoughtWithoutPendingFormat } = editedThought
+
   const thoughtNew: Thought = {
-    ...editedThought,
+    ...editedThoughtWithoutPendingFormat,
     ...(editedThought.generating ? { generating: false, displayValue: undefined } : null),
     value: newValue,
     lastUpdated: timestamp(),

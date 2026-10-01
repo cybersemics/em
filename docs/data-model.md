@@ -51,6 +51,8 @@ interface Thought {
   generating?: boolean
   /** Transient display text while generating; never a document payload or exported value. */
   displayValue?: string
+  /** Formatting applied while the thought was empty, held until text is typed into it. In-memory only. */
+  pendingFormat?: string
   /** Used to track if a space is required when merging two siblings/thoughts. */
   splitSource?: ThoughtId
 }
@@ -283,6 +285,7 @@ There is no global or default sort preference: a context without `=sort` is sort
 
 - [`toggleSort`](../src/actions/toggleSort.ts) (cycles the preference) and [`setSortPreference`](../src/actions/setSortPreference.ts) (sets a specific one, from the Sort Picker) both end in the [`sort`](../src/actions/sort.ts) action, which submits changed positions as explicit placements. [`uncategorize`](../src/actions/uncategorize.ts), [`swapParent`](../src/actions/swapParent.ts), and [`swapGrandparent`](../src/actions/swapGrandparent.ts) call it too, since they all move children into a context that may be sorted.
 - [`getSortedPlacement`](../src/selectors/getSortedPlacement.ts) finds a preceding sibling from the sort key. Under ascending `Created`, a newly created thought goes after siblings created in the same millisecond, preserving the order of split sentences.
+- [`moveThought`](../src/actions/moveThought.ts) uses the destination's sort condition instead of the requested drop position, retaining the thought's original `created` timestamp when calculating its placement.
 - [`editThought`](../src/actions/editThought.ts) submits a placement when its sort key changes: text under `Alphabetical`, timestamps under `Updated`, or the owning thought's note under `Note`. `Created` preserves position because editing does not change creation time. See [persistence.md → Order and placement](persistence.md#order-and-placement).
 - Adding or removing a child also bumps the parent's `lastUpdated`. [`createThought`](../src/actions/createThought.ts) and [`deleteThought`](../src/actions/deleteThought.ts) reposition that parent within an `Updated` context, except when its value is empty or emoji-only.
 - A cross-context move bumps `lastUpdated` on the source and destination parents as well as on the moved thought, since their children changed. Under `Updated` that is their sort key, so [`moveThought`](../src/actions/moveThought.ts) also repositions each bumped parent within its own context. The most recently updated sibling belongs last when ascending and first when descending. Other sort conditions are unaffected, since a move changes neither a value nor a creation timestamp.

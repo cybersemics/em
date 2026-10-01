@@ -105,9 +105,9 @@ it('reopens only after a concurrent drop finishes and blocks editing during tear
   }
 })
 
-it('reports a failed durable append and rejects later commands before authoring them', async () => {
+it('reports a failed durable append, blocks later commands, and clears the failure on drop', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
-  const runtime = createMemoryThoughtspace(async () => persistent)
+  const runtime = createMemoryThoughtspace(vi.fn(createTreecrdtClient).mockResolvedValueOnce(persistent))
   const failure = new Error('Durable append failed')
   const onError = vi.fn()
   const thought: Thought = {
@@ -136,6 +136,16 @@ it('reports a failed durable append and rejects later commands before authoring 
     ).toThrow(failure)
     await expect(runtime.waitForIdle()).rejects.toBe(failure)
     expect(await persistent.tree.exists(thought.id)).toBe(false)
+
+    await runtime.drop()
+    await runtime.init({ storage: 'memory', onError })
+    const retried = runtime.transact(transaction =>
+      transaction.update({ thoughtIndexUpdates: { [thought.id]: thought }, movePlacements: { [thought.id]: null } }),
+    )
+    await retried.persisted
+    await runtime.waitForIdle()
+    expect(runtime.project().getThought(thought.id)?.value).toBe(thought.value)
+    expect(onError).toHaveBeenCalledTimes(1)
   } finally {
     await runtime.drop()
   }

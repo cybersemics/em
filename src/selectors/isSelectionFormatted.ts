@@ -9,7 +9,14 @@ const isSelectionFormatted = (
   command: 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code',
 ): boolean => {
   const paths = selectedPaths(state)
-  return paths.length > 0 && paths.every(path => !!getCommandState(pathToThought(state, path)?.value ?? '')[command])
+  return (
+    paths.length > 0 &&
+    paths.every(path => {
+      const thought = pathToThought(state, path)
+      // An empty thought holds its formatting as a pending format until text is typed into it (see formatSelection).
+      return !!getCommandState((thought?.value.length === 0 ? thought.pendingFormat : thought?.value) ?? '')[command]
+    })
+  )
 }
 
 export default isSelectionFormatted

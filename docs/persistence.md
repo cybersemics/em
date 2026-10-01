@@ -21,7 +21,7 @@ The editor's `state.thoughts` is a [`ThoughtspaceView`](../src/@types/Thoughtspa
 
 [`useEditorSelector`](../src/hooks/useEditorSelector.ts) uses `useSyncExternalStoreWithSelector` to select from a stable editor context combining the captured document and UI state. Ordinary React Redux `useSelector` reads only UI fields. [`EditorProvider`](../src/components/EditorProvider.tsx) supplies both interfaces; both dispatch through the same middleware and command boundary. Unchanged selections retain identity through the selector's equality function. A document-only event does not require a Redux state update.
 
-There is no maintained EM `thoughtIndex`, child map, or rank field. Decoded payloads are cached; topology stays in the native snapshot. `project()` reads only the document. Redux keeps temporary generation text, generation flags, and split-source bookkeeping in `state.thoughtUi`; `getThoughtById` combines them with canonical content for editor consumers.
+There is no maintained EM `thoughtIndex`, child map, or rank field. Decoded payloads are cached; topology stays in the native snapshot. `project()` reads only the document. Redux keeps temporary generation text, generation flags, pending formatting, and split-source bookkeeping in `state.thoughtUi`; `getThoughtById` combines them with canonical content for editor consumers.
 
 ## Local persistence (TreeCRDT + SQLite)
 

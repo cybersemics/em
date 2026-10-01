@@ -4,11 +4,40 @@ import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import outdentCommand from '../outdent'
 
 beforeEach(initStore)
+
+it('keeps an outdented thought in canonical alphabetical order', () => {
+  store.dispatch([
+    importText({
+      text: `
+        - =sort
+          - Alphabetical
+        - c
+          - b
+      `,
+    }),
+    setCursor(['c', 'b']),
+  ])
+
+  executeCommandWithMulticursor(outdentCommand, { store })
+
+  expect(getChildrenRankedByContext(store.getState(), [HOME_TOKEN]).map(thought => thought.value)).toEqual([
+    '=sort',
+    'b',
+    'c',
+  ])
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - =sort
+    - Alphabetical
+  - b
+  - c`)
+})
 
 describe('multicursor', () => {
   it('outdents multiple thoughts', async () => {

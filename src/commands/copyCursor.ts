@@ -23,8 +23,8 @@ const copyThoughts = (ids: ThoughtId[], state: State): string => {
   const exportedHtml = ids.map(id => exportContext(state, id, 'text/html')).join('\n')
   const exportedVisible = ids.map(id => exportContext(state, id, 'text/plain', { excludeMeta: true })).join('\n')
 
-  // Write text/html and the text/em marker alongside the plain text so structured paste works even when
-  // the browser does not fire a native copy event for the collapsed selection (e.g. Safari) (#3993).
+  // The complete snapshot is available synchronously, so mobile WebKit receives its rich clipboard write
+  // in the same user gesture without deferring the content or losing the Capacitor WebView's activation.
   copy(trimBullet(exported), { html: exportedHtml })
 
   return exportedVisible

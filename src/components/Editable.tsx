@@ -59,6 +59,7 @@ import multitouchStore from '../stores/multitouchStore'
 import storageModel from '../stores/storageModel'
 import touchStore from '../stores/touchStore'
 import addEmojiSpace from '../util/addEmojiSpace'
+import applyOuterTags from '../util/applyOuterTags'
 import debugLog from '../util/debugLog'
 import ellipsize from '../util/ellipsize'
 import equalPath from '../util/equalPath'
@@ -68,7 +69,6 @@ import head from '../util/head'
 import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import isDocumentEditable from '../util/isDocumentEditable'
-import isFormattingElement from '../util/isFormattingElement'
 import lastURL from '../util/lastURL'
 import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
@@ -98,25 +98,6 @@ interface EditableProps {
   */
   transient?: boolean
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
-}
-
-/** Descends a chain of formatting elements that each wrap the whole thought, returning the innermost one. */
-const innermostWrapper = (element: HTMLElement): HTMLElement =>
-  element.childNodes.length === 1 && isFormattingElement(element.firstChild)
-    ? innermostWrapper(element.firstChild)
-    : element
-
-/** If oldValue is wrapped in formatting nodes, transfer those wrappers to the new value. Every wrapper in the chain is
- * preserved, so a thought formatted with several marks (e.g. bold + underline + text color) keeps all of them. */
-const applyOuterTags = (newValue: string, oldValue: string): string => {
-  const div = document.createElement('div')
-  div.innerHTML = oldValue
-
-  if (div.childNodes.length > 1 || !isFormattingElement(div.firstChild)) return newValue
-
-  innermostWrapper(div.firstChild).innerHTML = newValue
-
-  return div.firstChild.outerHTML
 }
 
 /** Whether the cursor offset restored from storage has been applied, so that it is applied only on the initial setCursorOnThought. A ministore rather than a module variable so that each test starts with the restore still pending, as a fresh page load does. Read imperatively; nothing subscribes. */
@@ -177,9 +158,14 @@ const Editable = ({
       isMulticursorPath(state, state.cursor),
   )
 
+  // Formatting applied to the thought while it was empty is held on the thought until the user types (#3910). Style
+  // the placeholder with it so that the empty thought previews the formatting the typed text will take. A cleared
+  // thought keeps its own value's formatting, but only when it has a value to take it from — an empty thought that is
+  // also cleared has none, so the held formatting is used instead.
+  const pendingFormat = useEditorSelector(state => getThoughtById(state, thoughtId)?.pendingFormat)
   const placeholderCommandState = useMemo(
-    () => (isCursorCleared ? getCommandState(value) : null),
-    [isCursorCleared, value],
+    () => (isCursorCleared && value ? getCommandState(value) : pendingFormat ? getCommandState(pendingFormat) : null),
+    [isCursorCleared, pendingFormat, value],
   )
   // Whether the cleared placeholder contains an emoji, which is the only case that takes the geometric slant instead of
   // font-style (see panda.config.ts). The placeholder is derived from the thought in state, so it follows the throttled
@@ -199,6 +185,7 @@ const Editable = ({
             ...(style || {}),
             ...(placeholderForeColor ? { '--placeholder-color': placeholderForeColor } : null),
             ...(placeholderBackColor ? { '--placeholder-background-color': placeholderBackColor } : null),
+            ...(placeholderForeColor || placeholderBackColor ? { '--placeholder-opacity': 0.5 } : null),
           }
         : style,
     [placeholderBackColor, placeholderForeColor, style],
@@ -626,7 +613,19 @@ const Editable = ({
         // When the cursor is cleared, there may be an existing style that wraps the entire thought.
         // That style should be re-applied once they type something. (#3673)
 
-        const wrappedValue = state.cursorCleared ? applyOuterTags(e.target.value, oldValue) : e.target.value
+        // Formatting applied to the thought while it was empty is held on the thought, since an empty value has no
+        // text to wrap. Transfer it onto the first text typed into the thought (#3910); editThought drops the held
+        // copy once the value carries it. The wrapped value takes the immediate, forced branch below, which re-renders
+        // the editable with the formatting so that the browser carries it through the rest of the typing.
+        // A cleared thought is handled first, but only when it has a value whose tags can be re-applied — an empty
+        // thought that is also cleared has none, so it falls through to the formatting held for it.
+        const pendingFormatValue = getThoughtById(state, head(simplePath))?.pendingFormat
+        const wrappedValue =
+          state.cursorCleared && oldValue.length > 0
+            ? applyOuterTags(e.target.value, oldValue)
+            : pendingFormatValue && oldValue.length === 0 && e.target.value.length > 0
+              ? applyOuterTags(e.target.value, pendingFormatValue)
+              : e.target.value
         const trimmedWrappedValue = trimHtml(wrappedValue)
         const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
         const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)

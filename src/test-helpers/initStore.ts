@@ -4,7 +4,6 @@ import store from '../stores/app'
 import { resetStores } from '../stores/ministore'
 import storage from '../util/storage'
 import commandThoughtspace from './commandThoughtspace'
-import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
 interface Params {
   /**
@@ -22,7 +21,6 @@ const initStore = async ({ allowTutorial }: Params = {}) => {
   // This makes tests deterministic and prevents post-teardown access to window/localStorage.
   vi.useFakeTimers()
 
-  await waitForThoughtspaceIdle()
   await Promise.all([thoughtspaceRuntime.drop(), commandThoughtspace.drop()])
   await Promise.all([thoughtspaceRuntime.init({ storage: 'memory' }), commandThoughtspace.init({ storage: 'memory' })])
   store.dispatch(clear())

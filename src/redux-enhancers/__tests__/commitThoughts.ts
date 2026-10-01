@@ -77,6 +77,21 @@ it('keeps transient thought UI in Redux without changing the canonical view or a
   expect(rendered.displayValue).toBe('preview')
 })
 
+it('holds an empty thought format without changing the canonical view or authoring document operations', () => {
+  store.dispatch(importText({ text: '- ' }))
+  const before = store.getState()
+  const thought = contextToThought(before, [''])!
+
+  store.dispatch({ type: 'formatSelection', command: 'bold' })
+
+  const formatted = store.getState()
+  expect(getThoughtById(formatted, thought.id)).toMatchObject({ value: '', pendingFormat: '<b>x</b>' })
+  expect(formatted.thoughts).toBe(before.thoughts)
+  expect(db.project()).toBe(before.thoughts)
+  expect(db.project().getThought(thought.id)).toBe(thought)
+  expect(formatted.undoPatches.at(-1)!.documentOperationIds).toEqual([])
+})
+
 it('publishes and persists document changes even when the first-paint settings cache throws', async () => {
   const failure = new Error('Settings cache is unavailable')
   const originalSetItem = storage.setItem

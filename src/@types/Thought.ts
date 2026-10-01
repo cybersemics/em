@@ -12,6 +12,8 @@ interface Thought {
   id: ThoughtId
   lastUpdated: Timestamp
   parentId: ThoughtId
+  /** Formatting applied to the thought while it was empty, held until text is typed into it. In-memory only: it is not part of the persisted ThoughtPayload. See actions/formatSelection. */
+  pendingFormat?: string
   /** Used to track if a space is required when merging two siblings/thoughts. */
   splitSource?: ThoughtId
   /** Writer identifier derived from the access token, not an authenticated public key. See: clientId (thoughtspaceSession). */

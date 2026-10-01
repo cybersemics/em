@@ -165,7 +165,8 @@ const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: Th
         )
       }
 
-      const sorted = !sameContext && getSortPreference(state, destinationThoughtId).type !== 'None'
+      // Moving within this context may have disabled sorting above.
+      const sorted = getSortPreference(state, destinationThoughtId).type !== 'None'
       // Disabling sort can delete the requested predecessor (=sort). Keep the same gap after its last surviving sibling.
       const survivingAfterId =
         afterId === null
@@ -189,7 +190,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: Th
               },
             }
           : {}),
-        // Rank remains read metadata; the explicit placement changes canonical sibling order.
+        // The explicit placement changes canonical sibling order without writing numeric ranks.
         [sourceThought.id]: {
           ...sourceThought,
           parentId: destinationThought.id,

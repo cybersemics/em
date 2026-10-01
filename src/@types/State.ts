@@ -182,7 +182,7 @@ interface State {
   storageCache?: StorageCache
   thoughts: ThoughtspaceView
   /** Temporary per-thought editor state, never persisted or synchronized. */
-  thoughtUi: Index<Pick<Thought, 'generating' | 'displayValue' | 'splitSource'>>
+  thoughtUi: Index<Pick<Thought, 'generating' | 'displayValue' | 'pendingFormat' | 'splitSource'>>
   tip: Tip | null
   /** Command of a toolbar button that is being long pressed in the customize modal. */
   toolbarLongPress?: Command

@@ -1,3 +1,4 @@
+import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import State from '../../@types/State'
 import ThoughtspaceTransaction from '../../@types/ThoughtspaceTransaction'
 import cursorDown from '../../actions/cursorDown'
@@ -8,6 +9,8 @@ import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
 import { HOME_TOKEN } from '../../constants'
+import { tsid } from '../../data-providers/thoughtspaceSession'
+import createMemoryThoughtspace from '../../data-providers/treecrdt/createMemoryThoughtspace'
 import exportContext from '../../selectors/exportContext'
 import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
@@ -913,6 +916,57 @@ it('move thought to the end of a sorted context', () => {
   - a
   - c
   - d`)
+})
+
+it('persists sorted placement instead of the caller predecessor across a fresh runtime', async () => {
+  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const runtime = createMemoryThoughtspace(async () => persistent)
+  const restoredClient = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const reloaded = createMemoryThoughtspace(async () => restoredClient)
+
+  try {
+    await runtime.init({ storage: 'memory' })
+    const imported = runtime.transact(transaction =>
+      importText({
+        text: `
+          - =sort
+            - Alphabetical
+          - a
+          - c
+            - b
+        `,
+      })({ ...initialState(), thoughts: transaction.project() }, transaction),
+    )
+
+    // Outdent asks to place b after its old parent c, but the destination's sort order takes precedence.
+    const moved = runtime.transact(transaction =>
+      moveThoughtAtFirstMatch({ from: ['c', 'b'], to: ['b'], after: ['c'] })(imported.value, transaction),
+    )
+    expect(getChildrenRankedByContext(moved.value, [HOME_TOKEN]).map(thought => thought.value)).toEqual([
+      '=sort',
+      'a',
+      'b',
+      'c',
+    ])
+    await moved.persisted
+    await runtime.waitForIdle()
+
+    // Rebuild SQLite and the memory runtime from the persisted operation log, without copying the current snapshot.
+    await restoredClient.ops.appendMany(await persistent.ops.all())
+    await reloaded.init({ storage: 'memory' })
+    await reloaded.waitForIdle()
+    const restored = { ...initialState(), thoughts: reloaded.project() }
+
+    expect(getChildrenRankedByContext(restored, [HOME_TOKEN]).map(thought => thought.value)).toEqual([
+      '=sort',
+      'a',
+      'b',
+      'c',
+    ])
+  } finally {
+    await reloaded.drop()
+    await runtime.drop()
+  }
 })
 
 it('preserves sibling relative order when moving into a sorted context', () => {

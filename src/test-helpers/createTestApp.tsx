@@ -81,19 +81,20 @@ export const cleanupTestApp = async () => {
       cleanup()
     }
 
-    store.dispatch(clear({ full: true }))
+    try {
+      // Report persistence failures, but still release resources before the next test.
+      await vi.runAllTimersAsync()
+      await waitForThoughtspaceIdle()
+    } finally {
+      await Promise.all([thoughtspaceRuntime.drop(), commandThoughtspace.drop()])
+      store.dispatch(clear({ full: true }))
+      await vi.runAllTimersAsync()
 
-    // Run timers and settle persistence before dropping the thoughtspace.
-    await vi.runAllTimersAsync()
-    await waitForThoughtspaceIdle()
+      // set url back to home
+      window.history.pushState({}, '', '/')
 
-    await Promise.all([thoughtspaceRuntime.drop(), commandThoughtspace.drop()])
-    await vi.runAllTimersAsync()
-
-    // set url back to home
-    window.history.pushState({}, '', '/')
-
-    await vi.runAllTimersAsync()
+      await vi.runAllTimersAsync()
+    }
   })
 }
 

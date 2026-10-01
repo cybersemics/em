@@ -40,6 +40,7 @@ const updateThoughts = (
     const ui = {
       ...(thought?.generating !== undefined && { generating: thought.generating }),
       ...(thought?.generating && thought.displayValue !== undefined && { displayValue: thought.displayValue }),
+      ...(thought?.pendingFormat !== undefined && { pendingFormat: thought.pendingFormat }),
       ...(thought?.splitSource !== undefined && { splitSource: thought.splitSource }),
     }
     if (!thought || !thoughts.getThought(thought.id) || !Object.keys(ui).length) delete thoughtUi[id]
