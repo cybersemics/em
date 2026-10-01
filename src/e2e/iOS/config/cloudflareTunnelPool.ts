@@ -34,9 +34,11 @@ const POOL_RESCAN_INTERVAL_MS = 10000
 // How many consecutive passes may go by with no tunnel showing any sign of another run before the
 // wait is abandoned. The long POOL_WAIT_TIMEOUT_MS only makes sense while tunnels are genuinely
 // held — a busy status answer, or a foreign em rejecting this run's token. When the edge instead
-// times out or refuses every request, no run is holding anything and nothing will free up; waiting
-// 45 min just burns a runner (run 36739868119 spent ten minutes this way before it was cancelled
-// by hand). A pass over an unresponsive pool costs 1-3 min (5s per timed-out pre-check, up to
+// times out or refuses every request, no run is holding anything, so there is no slot to wait for.
+// An edge outage could still clear on its own, but the one observed was this runner's path alone:
+// run 36739868119 got no answers for ten minutes while an Android run started in the same second
+// claimed a tunnel normally, and a re-run of the same job claimed one at once. Failing fast hands
+// that case to a re-run on a fresh runner instead of burning 45 min on a broken one. A pass over an unresponsive pool costs 1-3 min (5s per timed-out pre-check, up to
 // CLAIM_TIMEOUT_MS per failed claim), so two passes give a blip at a pass boundary room to clear
 // while still failing within a few minutes.
 const UNRESPONSIVE_PASS_LIMIT = 2
@@ -368,7 +370,8 @@ export async function findFirstAvailableTunnel(
       throw new Error(
         `No tunnel in the pool could be claimed in ${unresponsivePasses} consecutive passes, and none ` +
           `showed another run holding it — the Cloudflare edge (or this runner's connection to it) is ` +
-          `not responding, so waiting for a tunnel to free up would not help:\n${errors.join('\n')}`,
+          `not responding. No tunnel is held, so there is nothing to wait out; re-running the job ` +
+          `gets a fresh runner and connection:\n${errors.join('\n')}`,
       )
     }
 
