@@ -57,7 +57,7 @@ flowchart TD
 
 So **"CI failed" does not on its own mean the bug is unfixed.** You have to look at which check failed:
 
-- **The TDD check is red** — the new test passes on code without the fix. The test is not actually testing the reported bug. Fix the test.
+- **The TDD check is red** — the new test passes on code without the fix, so it is not actually testing the reported bug, or it never ran to a failure there (it could not be imported, the runner crashed). The job log says which. Fix the test.
 - **The normal suite is red** — something is genuinely broken. Fix the code.
 
 Both prompt files and the [`tdd-write-failing-test`](skills.md#tdd-write-failing-test) skill spell this out, because an agent that misreads it will "fix" a perfectly good test until it stops catching anything.
@@ -92,11 +92,15 @@ It then decides whether to skip. It skips if no test files changed; if the pull 
 1. Check out the base branch — the code *without* the fix.
 2. Copy the changed test files across from the pull request, along with any changed test infrastructure they may depend on — helpers, config/setup directories, and shared `src/e2e/*.ts` files.
 3. Switch any newly-added skipped tests back on, via [`.github/actions/unskip-added-tests`](../../.github/actions/unskip-added-tests/action.yml).
-4. Run them, and **require them to fail.**
+4. Run them, and **require at least one of them to execute and fail.**
 
 Step 2 copies the files individually rather than applying a patch, because a brand-new test file has nothing on the base branch to patch against. Test infrastructure comes across too, since a test that calls a new helper cannot even compile on the base branch without it. A path the pull request *deleted* is removed from the base branch rather than copied — there is no blob at the head to copy, and a deletion is as much a part of the change under test as an edit.
 
-**summary** collapses the three into a single check, so branch protection has one thing to require.
+Step 4 reads the runner's report rather than its exit code, because a nonzero exit proves very little. A config that throws on a missing secret, a test file that cannot be imported, and a browser session that never opens all exit nonzero without running a test, and all of them used to be counted as the test failing — so a run that proved nothing reported success. [`.github/scripts/tdd-verdict.cjs`](../../.github/scripts/tdd-verdict.cjs) turns the report into one of three verdicts: *validated* when a test executed and failed, *flagged* when the tests ran and passed, and *inconclusive* when nothing executed or the run failed without a failing test. Only the first passes the job. It still cannot tell an assertion from an error thrown in a hook, since both runners count a failing hook as a failing test, so read the failure a validated run reports before trusting it.
+
+The workflow triggers on `pull_request_target`, because the iOS job needs the BrowserStack secrets and a fork's `pull_request` run never receives them. That is the same trade [`ios.yml`](../../.github/workflows/ios.yml) makes: the workflow file is read from the base branch, no pull request code becomes the workspace (jobs check out the base branch and copy in only test files and their support), and the iOS step runs the pull request's tests with the secrets in its environment. When a run has no credentials at all, as Dependabot's do not, the iOS job is skipped with a warning and the summary says so.
+
+**summary** collapses the three into a single check, so branch protection has one thing to require. It reports each job's verdict separately, so a run that never reached a test is not reported as one whose tests passed, and it fails if a job succeeded without a verdict at all, or if detection itself failed and left nothing to validate.
 
 ### Escape hatches
 

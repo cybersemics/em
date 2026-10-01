@@ -22,7 +22,7 @@ The failing test ships **`it.skip`** so the normal suite and CI stay green while
 
 **`run-test` always runs the test regardless of `.skip`** (it un-skips for the run), so your local validation is never fooled into reading a skipped test as a pass.
 
-> **Failure semantics — a TDD failure and a test failure mean opposite things.** When the TDD workflow runs your skipped test on base, **failing is good** (captures the bug → TDD passes) and **passing is bad** (doesn't test the bug → TDD fails). After the skip is removed, the normal suite inverts it: passing is good, failing means the bug isn't fixed. So "CI failed" does **not** by itself mean "bug not fixed" — read *which* check failed.
+> **Failure semantics — a TDD failure and a test failure mean opposite things.** When the TDD workflow runs your skipped test on base, **failing is good** (captures the bug → TDD passes) and **passing is bad** (doesn't test the bug → TDD fails), and so is a run that never reaches a failing assertion (a crash or an unresolvable import — TDD fails as inconclusive). After the skip is removed, the normal suite inverts it: passing is good, failing means the bug isn't fixed. So "CI failed" does **not** by itself mean "bug not fixed" — read *which* check failed.
 
 ## The core idea: derive the test from the reproduction
 

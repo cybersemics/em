@@ -103,7 +103,7 @@ The one legitimate exit with a `.skip` still present is an escalation where the 
 
 Use `ci-monitor`. Wait for every run on the branch to complete; do not report on a partial set.
 
-- **Read which check failed.** A red `TDD` check and a red normal suite mean opposite things. `tdd.yml` un-skips your new test on the base branch and *expects it to fail*, so a red TDD check usually means the test wrongly **passes** on base — it does not capture the bug. A red normal suite means the code is broken. "CI failed" alone is not a diagnosis.
+- **Read which check failed.** A red `TDD` check and a red normal suite mean opposite things. `tdd.yml` un-skips your new test on the base branch and *expects it to fail*, so a red TDD check usually means the test wrongly **passes** on base — it does not capture the bug — or that it never ran to a failure there, which the job log will say. A red normal suite means the code is broken. "CI failed" alone is not a diagnosis.
 - If anything is red, this is not an ending. Diagnose with `test-diagnosis`, fix, and return to Step 3 — pushing restarts CI and restarts this checklist. Stop only at 5 fix-push cycles, and then as an escalation.
 - Never claim checks pass without having seen them pass. Hallucinated test results are the worst failure mode available to you.
 

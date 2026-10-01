@@ -1,7 +1,22 @@
 name: TDD
 
+# Triggers on pull_request_target, not pull_request, because the iOS job needs the BROWSERSTACK_*
+# secrets and a pull_request run from a fork never receives them. Before this the job crashed loading
+# its config on every fork PR, and the workflow counted the crash as proof the tests fail (#4744).
+# ios.yml makes the same trade for the same reason.
+#
+# What that changes:
+#   - The workflow file is read from the base branch, so an edit to it takes effect only once merged.
+#   - No pull request code is ever the workspace. Each job checks out the base commit and copies in
+#     only the changed test files and the test support they depend on, and the CI scaffolding
+#     (.github/actions, .github/scripts) is restored from the commit this file was read from, never
+#     from the pull request.
+#   - GitHub's approval gate for first-time contributors does not apply to this trigger. The iOS test
+#     step runs the pull request's test files with the BrowserStack secrets in its environment, which
+#     is the same exposure ios.yml already accepts.
+#   - The run reports on conflicting pull requests too, since there is no merge ref to build.
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - '**'
   workflow_dispatch:
@@ -11,9 +26,9 @@ on:
         required: false
 
 # Supersede the in-progress run when a pull request is pushed again; its result is about to be
-# replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
-# so it is already per-PR. (vercel-preview.yml must key on the PR number instead because
-# pull_request_target sets github.ref to the base branch.)
+# replaced anyway. Keyed on the PR number rather than github.ref because pull_request_target sets
+# github.ref to the base branch — every open PR against main would otherwise share one group and
+# cancel each other (evals.yml and vercel-preview.yml do the same).
 #
 # workflow_dispatch falls back to github.run_id, which is unique per run and therefore never
 # collides. That is deliberate, and not the same as cancel-in-progress: false — a shared group with
@@ -26,7 +41,7 @@ on:
 # waitForBrowserStackSlots.ts), and cancelling a superseded run only ever reduces the draw on that
 # shared pool.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 permissions:
@@ -48,9 +63,10 @@ jobs:
   detect:
     name: Detect changed tests
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.changed_files > 0
+    if: github.event_name != 'pull_request_target' || github.event.pull_request.changed_files > 0
     outputs:
       has_unit: ${{ steps.classify.outputs.has_unit }}
+      ios_credentials: ${{ steps.credentials.outputs.available }}
       has_puppeteer: ${{ steps.classify.outputs.has_puppeteer }}
       has_ios: ${{ steps.classify.outputs.has_ios }}
       has_skipped_unit: ${{ steps.classify.outputs.has_skipped_unit }}
@@ -76,6 +92,13 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 999
+
+      # pull_request_target checks out the base branch, which has none of the pull request's commits
+      # (a pull_request run would have checked out a merge ref containing them). Classifying needs
+      # both ends of the diff, and validating a /tdd commit needs the pull request's history.
+      - name: Fetch PR commits
+        if: github.event_name == 'pull_request_target'
+        run: git fetch --no-tags origin ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
 
       - name: Classify changed files
         id: classify
@@ -325,6 +348,22 @@ jobs:
           echo "Skip puppeteer: $SKIP_PUPPETEER"
           echo "Skip ios: $SKIP_IOS"
 
+      # Whether the iOS job can authenticate with BrowserStack. Decided here because a job-level `if`
+      # cannot read secrets. Only their presence is compared; the values never reach this step. A run
+      # has none when the event reads a different secret store (Dependabot) or the repository lacks
+      # them, and the iOS job is skipped with a warning then rather than left to crash in its config.
+      - name: Check BrowserStack credentials
+        id: credentials
+        env:
+          AVAILABLE: ${{ secrets.BROWSERSTACK_USERNAME != '' && secrets.BROWSERSTACK_ACCESS_KEY != '' }}
+          IOS_EXPECTED: ${{ steps.classify.outputs.has_ios == 'true' && steps.skip.outputs.skip != 'true' && steps.skip.outputs.skip_ios != 'true' }}
+        run: |
+          echo "available=$AVAILABLE" >> "$GITHUB_OUTPUT"
+
+          if [ "$AVAILABLE" != "true" ] && [ "$IOS_EXPECTED" = "true" ]; then
+            echo "::warning title=TDD iOS tests not validated::BrowserStack credentials are not available to this run, so the changed iOS tests were not run on the base branch. The iOS job is skipped, not passed."
+          fi
+
   # ---------------------------------------------------------------------------
   # Unit: apply changed unit test diff to base, run them, expect failure.
   # ---------------------------------------------------------------------------
@@ -333,6 +372,8 @@ jobs:
     needs: detect
     if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_unit != 'true' && needs.detect.outputs.has_unit == 'true'
     runs-on: ubuntu-latest
+    outputs:
+      verdict: ${{ steps.run_tests.outputs.verdict }}
 
     steps:
       - name: Clone repository
@@ -341,12 +382,18 @@ jobs:
           ref: ${{ needs.detect.outputs.tdd_commit }}
           fetch-depth: 999
 
+      # The scaffolding comes from the commit this workflow file was read from (the base branch), never
+      # from the pull request: the base checkout above can predate it when /tdd selects an old commit,
+      # and the pull request's copy is code from a fork. This runs before `Fetch PR head` because both
+      # fetch into FETCH_HEAD, which the steps after that one read.
+      - name: Restore GitHub Actions files from the workflow commit
+        if: github.event_name == 'pull_request_target'
+        run: |
+          git fetch --no-tags origin ${{ github.sha }}
+          git checkout ${{ github.sha }} -- .github/actions/ .github/scripts/
+
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
-
-      - name: Restore GitHub Actions files from PR HEAD
-        if: github.event_name == 'pull_request'
-        run: git checkout FETCH_HEAD -- .github/actions/ .github/scripts/
 
       - name: Checkout test files from PR head
         id: patch
@@ -428,30 +475,27 @@ jobs:
 
           # Run only the changed test files
           # vitest accepts file paths as positional args
+          # The JSON report is what the verdict is read from: the exit code alone cannot tell a failing
+          # test from a test file that would not load (#4744). The path is absolute because vitest
+          # resolves a relative one against its root.
+          REPORT="$RUNNER_TEMP/tdd-report.json"
           set +e
-          yarn vitest run --project unit $UNIT_FILES 2>&1
+          yarn vitest run --project unit --reporter=default --reporter=json --outputFile.json="$REPORT" $UNIT_FILES 2>&1
           TEST_EXIT=$?
+          node .github/scripts/tdd-verdict.cjs --runner vitest --exit-code "$TEST_EXIT" --report "$REPORT" --name unit --skip-label skip-tdd-unit
+          VERDICT_EXIT=$?
           set -e
 
           echo "test_exit=$TEST_EXIT" >> "$GITHUB_OUTPUT"
 
-          if [ "$TEST_EXIT" -ne 0 ]; then
-            echo ""
-            echo "✅ TDD validated: changed tests FAIL on the base branch (exit code $TEST_EXIT)."
-            echo "This means the tests are genuinely covering new behavior."
-          else
-            echo ""
-            echo "❌ TDD flagged: changed tests PASS on the base branch."
-            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
-            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
-
-            # Emit GitHub diff annotations for each added it()/test() call so the
-            # TDD violation is highlighted directly in the PR file changes view.
+          # Exit code 1 means the tests passed on base. Emit GitHub diff annotations for each added
+          # it()/test() call so the TDD violation is highlighted directly in the PR file changes view.
+          if [ "$VERDICT_EXIT" -eq 1 ]; then
             git diff "${{ needs.detect.outputs.merge_base }}" "${{ github.event.pull_request.head.sha }}" -- $UNIT_FILES > /tmp/test.patch
             sh .github/scripts/annotate-tdd-violations.sh /tmp/test.patch
-
-            exit 1
           fi
+
+          exit "$VERDICT_EXIT"
 
   # ---------------------------------------------------------------------------
   # Puppeteer: apply changed puppeteer test diff to base, run them, expect failure.
@@ -461,6 +505,8 @@ jobs:
     needs: detect
     if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_puppeteer != 'true' && needs.detect.outputs.has_puppeteer == 'true'
     runs-on: ubuntu-latest
+    outputs:
+      verdict: ${{ steps.run_tests.outputs.verdict }}
     services:
       browserless:
         image: ghcr.io/browserless/chromium:v2.56.2
@@ -476,12 +522,15 @@ jobs:
           ref: ${{ needs.detect.outputs.tdd_commit }}
           fetch-depth: 999
 
+      # See the unit job: scaffolding comes from the workflow commit, before `Fetch PR head`.
+      - name: Restore test infrastructure from the workflow commit
+        if: github.event_name == 'pull_request_target'
+        run: |
+          git fetch --no-tags origin ${{ github.sha }}
+          git checkout ${{ github.sha }} -- .github/actions/ .github/scripts/ src/e2e/puppeteer/install-browserless-fonts.sh
+
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
-
-      - name: Restore test infrastructure from PR HEAD
-        if: github.event_name == 'pull_request'
-        run: git checkout FETCH_HEAD -- .github/actions/ .github/scripts/ src/e2e/puppeteer/install-browserless-fonts.sh
 
       - name: Checkout test files and support from PR head
         id: patch
@@ -579,42 +628,44 @@ jobs:
           echo "=== Running changed puppeteer tests ==="
           echo "$PUPPETEER_FILES"
 
+          # The verdict is read from the JSON report rather than the exit code — see the unit job.
+          REPORT="$RUNNER_TEMP/tdd-report.json"
           set +e
-          yarn vitest run --project puppeteer-e2e $PUPPETEER_FILES 2>&1
+          yarn vitest run --project puppeteer-e2e --reporter=default --reporter=json --outputFile.json="$REPORT" $PUPPETEER_FILES 2>&1
           TEST_EXIT=$?
+          node .github/scripts/tdd-verdict.cjs --runner vitest --exit-code "$TEST_EXIT" --report "$REPORT" --name puppeteer --skip-label skip-tdd-puppeteer
+          VERDICT_EXIT=$?
           set -e
 
           echo "test_exit=$TEST_EXIT" >> "$GITHUB_OUTPUT"
 
-          if [ "$TEST_EXIT" -ne 0 ]; then
-            echo ""
-            echo "✅ TDD validated: changed puppeteer tests FAIL on the base branch (exit code $TEST_EXIT)."
-            echo "This means the tests are genuinely covering new behavior."
-          else
-            echo ""
-            echo "❌ TDD flagged: changed puppeteer tests PASS on the base branch."
-            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
-            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-unit' label to the PR to skip this workflow."
-
-            # Emit GitHub diff annotations for each added it()/test() call so the
-            # TDD violation is highlighted directly in the PR file changes view.
+          # Exit code 1 means the tests passed on base. Emit GitHub diff annotations for each added
+          # it()/test() call so the TDD violation is highlighted directly in the PR file changes view.
+          if [ "$VERDICT_EXIT" -eq 1 ]; then
             git diff "${{ needs.detect.outputs.merge_base }}" "${{ github.event.pull_request.head.sha }}" -- $PUPPETEER_FILES > /tmp/test.patch
             sh .github/scripts/annotate-tdd-violations.sh /tmp/test.patch
-
-            exit 1
           fi
+
+          exit "$VERDICT_EXIT"
 
   # ---------------------------------------------------------------------------
   # iOS BrowserStack: check out the changed iOS test diff onto base, run on
   # BrowserStack, expect failure. Real device time — gate independently with the
-  # `skip-tdd-ios` label. Requires BROWSERSTACK_* secrets (available on same-repo
-  # PRs; fork PRs do not receive them and this job will be unable to authenticate).
+  # `skip-tdd-ios` label. Requires the BROWSERSTACK_* secrets, which this workflow's
+  # pull_request_target trigger gives fork PRs. When a run has none (Dependabot), `detect`
+  # leaves this job skipped and warns, rather than letting it crash in the wdio config.
   # ---------------------------------------------------------------------------
   ios:
     name: TDD — iOS tests
     needs: detect
-    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_ios != 'true' && needs.detect.outputs.has_ios == 'true'
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_ios != 'true' && needs.detect.outputs.has_ios == 'true' && needs.detect.outputs.ios_credentials == 'true'
     runs-on: ubuntu-latest
+    # pull_request_target gives the token write access by default, and this job runs the pull
+    # request's test files with secrets in the environment. Nothing here needs more than a checkout.
+    permissions:
+      contents: read
+    outputs:
+      verdict: ${{ steps.run_tests.outputs.verdict }}
     env:
       # Activates the console proxy (src/util/consoleProxy.ts) at build time; BrowserStack can't access
       # iOS console logs, and the wdio config's beforeTest waits for the proxy. Mirrors ios.yml.
@@ -627,12 +678,15 @@ jobs:
           ref: ${{ needs.detect.outputs.tdd_commit }}
           fetch-depth: 999
 
+      # See the unit job: scaffolding comes from the workflow commit, before `Fetch PR head`.
+      - name: Restore GitHub Actions files from the workflow commit
+        if: github.event_name == 'pull_request_target'
+        run: |
+          git fetch --no-tags origin ${{ github.sha }}
+          git checkout ${{ github.sha }} -- .github/actions/ .github/scripts/
+
       - name: Fetch PR head
         run: git fetch origin ${{ github.event.pull_request.head.sha }}
-
-      - name: Restore GitHub Actions files from PR HEAD
-        if: github.event_name == 'pull_request'
-        run: git checkout FETCH_HEAD -- .github/actions/
 
       - name: Checkout test files and support from PR head
         id: patch
@@ -748,24 +802,20 @@ jobs:
           SPEC_ARGS=""
           for f in $IOS_FILES; do SPEC_ARGS="$SPEC_ARGS --spec $f"; done
 
+          # The verdict is read from the wdio log rather than the exit code: a config that fails to load
+          # exits nonzero without running a test, and used to be counted as validation (#4744). The
+          # exit code is the pipeline's first command, not tee's.
+          LOG="$RUNNER_TEMP/tdd-report.log"
           set +e
-          yarn test:ios $SPEC_ARGS 2>&1
-          TEST_EXIT=$?
+          yarn test:ios $SPEC_ARGS 2>&1 | tee "$LOG"
+          TEST_EXIT=${PIPESTATUS[0]}
+          node .github/scripts/tdd-verdict.cjs --runner wdio --exit-code "$TEST_EXIT" --report "$LOG" --name iOS --skip-label skip-tdd-ios
+          VERDICT_EXIT=$?
           set -e
 
           echo "test_exit=$TEST_EXIT" >> "$GITHUB_OUTPUT"
 
-          if [ "$TEST_EXIT" -ne 0 ]; then
-            echo ""
-            echo "✅ TDD validated: changed iOS tests FAIL on the base branch (exit code $TEST_EXIT)."
-            echo "This means the tests are genuinely covering new behavior."
-          else
-            echo ""
-            echo "❌ TDD flagged: changed iOS tests PASS on the base branch."
-            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
-            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-ios' label to the PR to skip this workflow."
-            exit 1
-          fi
+          exit "$VERDICT_EXIT"
 
   # ---------------------------------------------------------------------------
   # Summary: single status check that downstream branch protection can require.
@@ -783,12 +833,23 @@ jobs:
           SKIP_REASON="${{ needs.detect.outputs.skip_reason }}"
           SKIP_UNIT="${{ needs.detect.outputs.skip_unit }}"
           SKIP_PUPPETEER="${{ needs.detect.outputs.skip_puppeteer }}"
+          HAS_IOS="${{ needs.detect.outputs.has_ios }}"
+          SKIP_IOS="${{ needs.detect.outputs.skip_ios }}"
+          IOS_CREDENTIALS="${{ needs.detect.outputs.ios_credentials }}"
 
           echo "=== TDD Validation Summary ==="
 
           if [ "$DETECT_RESULT" = "skipped" ]; then
             echo "⏭️  Skipped: No file changes"
             exit 0
+          fi
+
+          # Every job below is skipped when detection fails, which would otherwise read as a pass: with
+          # nothing classified there is nothing to have validated. Only `failure`, so that a run
+          # superseded by a newer push, whose jobs are cancelled, does not report red.
+          if [ "$DETECT_RESULT" = "failure" ]; then
+            echo "❌ TDD could not classify the changed files, so nothing was validated."
+            exit 1
           fi
 
           if [ "$SKIP" = "true" ]; then
@@ -812,23 +873,37 @@ jobs:
 
           FAILED="false"
 
-          # A job result of "failure" means the tests passed on base (TDD violation)
-          # A job result of "success" means the tests failed on base (TDD validated)
-          # A job result of "skipped" means no changed tests of that type
+          # A job's result says whether it reached a conclusion, and its verdict output says which one
+          # (see .github/scripts/tdd-verdict.cjs). The result alone cannot: a job also fails when its
+          # tests never ran, and counting that as "tests passed on base" is the confusion #4744 fixed
+          # from the other side. A job that succeeds without a verdict is a bug here, not a pass.
+          #   success + validated    the tests executed and failed on base
+          #   failure + flagged      the tests executed and passed on base (TDD violation)
+          #   failure + inconclusive the tests did not run to a failure (config, setup, infrastructure)
+          #   failure + no verdict   the job failed before the tests ran
+          #   skipped                no changed tests of that type
+          evaluate() {
+            local name="$1" result="$2" verdict="$3"
+            case "$result:$verdict" in
+              skipped:*) ;;
+              success:validated) echo "✅ $name tests failed on base branch — TDD validated" ;;
+              failure:flagged) echo "❌ $name tests passed on base branch — TDD flagged"; FAILED="true" ;;
+              failure:inconclusive) echo "❌ $name tests did not run to a failure on base branch — TDD could not validate"; FAILED="true" ;;
+              failure:*) echo "❌ $name job failed before its tests ran — TDD could not validate"; FAILED="true" ;;
+              success:*) echo "❌ $name job succeeded without a verdict — TDD could not validate"; FAILED="true" ;;
+              *) echo "⚠️  $name job $result" ;;
+            esac
+          }
 
-          if [ "$UNIT_RESULT" = "failure" ]; then
-            echo "❌ Unit tests passed on base branch — TDD flagged"
-            FAILED="true"
-          fi
+          evaluate Unit "$UNIT_RESULT" "${{ needs.unit.outputs.verdict }}"
+          evaluate Puppeteer "$PUPPETEER_RESULT" "${{ needs.puppeteer.outputs.verdict }}"
+          evaluate iOS "$IOS_RESULT" "${{ needs.ios.outputs.verdict }}"
 
-          if [ "$PUPPETEER_RESULT" = "failure" ]; then
-            echo "❌ Puppeteer tests passed on base branch — TDD flagged"
-            FAILED="true"
-          fi
-
-          if [ "$IOS_RESULT" = "failure" ]; then
-            echo "❌ iOS tests passed on base branch — TDD flagged"
-            FAILED="true"
+          # Skipped for want of credentials is not a pass, and the check must not read as one.
+          IOS_UNVALIDATED="false"
+          if [ "$HAS_IOS" = "true" ] && [ "$SKIP_IOS" != "true" ] && [ "$IOS_CREDENTIALS" != "true" ]; then
+            echo "⏭️  iOS tests were NOT validated: BrowserStack credentials are not available to this run."
+            IOS_UNVALIDATED="true"
           fi
 
           if [ "$FAILED" = "true" ]; then
@@ -836,9 +911,13 @@ jobs:
             echo "TDD validation failed. Changed tests should fail on the base branch"
             echo "to prove they cover new functionality. If this is intentional, add the"
             echo "'skip-tdd' label to skip all TDD checks, or use 'skip-tdd-unit' /"
-            echo "'skip-tdd-puppeteer' to skip only the relevant job."
+            echo "'skip-tdd-puppeteer' / 'skip-tdd-ios' to skip only the relevant job."
             exit 1
           fi
 
           echo ""
-          echo "✅ TDD validation passed!"
+          if [ "$IOS_UNVALIDATED" = "true" ]; then
+            echo "✅ TDD validation passed, except the iOS tests, which were not validated."
+          else
+            echo "✅ TDD validation passed!"
+          fi
