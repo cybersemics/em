@@ -46,7 +46,7 @@ it('set url to home after deleting last empty thought', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/5747
-it.skip('preserve forward history after navigating back to the home page', async () => {
+it('preserve forward history after navigating back to the home page', async () => {
   await dispatch(newThought({ value: 'aaa' }))
   await act(() => vi.runAllTimersAsync())
   await dispatch(newThought({ value: 'bbb' }))
