@@ -3,6 +3,7 @@ import clearThoughtCommand from '../../../commands/clearThought'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
@@ -10,9 +11,11 @@ import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
 import waitForAlert from '../helpers/waitForAlert'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForNoteFocus from '../helpers/waitForNoteFocus'
 import waitForSelector from '../helpers/waitForSelector'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
@@ -189,5 +192,22 @@ describe('command center', () => {
     // Focusing an editable is what raises the keyboard on Android, so the focus has to be dismissed without the
     // Command Center ever leaving the screen.
     expect(onscreen).toEqual({ focusedEditable: null, sheetStates: [] })
+  })
+
+  // https://github.com/cybersemics/em/issues/5755
+  it.skip('closes when the Note command enters edit mode', async () => {
+    await paste('- a')
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    await clickToolbar('Note')
+    await waitForNoteFocus()
+    await waitForBrowserSettled()
+
+    // the note has the keyboard, so the thought is no longer selected and the sheet is dismissed
+    expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(0)
+    await waitForCommandCenterClosed()
   })
 })
