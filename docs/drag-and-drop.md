@@ -54,6 +54,8 @@ Three companion fields ride alongside it:
 
 These are what `DropHover` and other UI components subscribe to.
 
+Dragging near a screen edge starts frame-driven autoscrolling in [`initEvents`](../src/util/initEvents.ts), even while long press prevents native touch scrolling. When the target is the window, each edge scroll emits `em-scroll` first so the iOS elastic controller yields instead of pinning the viewport. Scrolling a nested container leaves the window's elastic controller alone.
+
 ### Drag sources
 
 There are four drag sources in the app, each implemented as a hook:

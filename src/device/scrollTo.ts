@@ -13,6 +13,8 @@ const scrollTo = (target: 'top' | 'bottom' | number, behavior?: ScrollBehavior) 
   // a cursor scroll that is still pending lands up to 400 ms later and undoes the scroll that was just asked for, e.g.
   // Escape and Home both clear the cursor (which schedules a cursor scroll) and then scroll to the top.
   scheduleScrollCursorIntoView.cancel()
+  // Let an active elastic return yield before moving the viewport, so it cannot undo this navigation.
+  window.dispatchEvent(new Event('em-scroll'))
 
   window.scrollTo({
     top,

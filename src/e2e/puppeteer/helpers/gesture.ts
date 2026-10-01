@@ -16,10 +16,9 @@ interface Point {
  * @param y1 - Starting Y coordinate.
  * @param x2 - Ending X coordinate.
  * @param y2 - Ending Y coordinate.
+ * @param stepSize - Distance between successive touch points.
  */
-const getMovePoints = (x1: number, y1: number, x2: number, y2: number): Point[] => {
-  const stepSize = 10
-
+const getMovePoints = (x1: number, y1: number, x2: number, y2: number, stepSize: number): Point[] => {
   // Calculate total distance and number of steps
   const deltaX = x2 - x1
   const deltaY = y2 - y1
@@ -54,6 +53,8 @@ interface GesturePositionOptions {
 interface GestureMoveOptions {
   /** Distance in pixels to move for each direction in the gesture. */
   segmentLength?: number
+  /** Distance between successive touch events. Larger steps produce faster flicks with fewer browser round trips. */
+  stepSize?: number
 }
 
 interface ActiveGesture {
@@ -101,10 +102,10 @@ export const startGesture = async ({ target, xStart, yStart }: GesturePositionOp
     y = rect.top + rect.height / 2
   }
 
-  await page.touchscreen.touchStart(x, y)
+  const touch = await page.touchscreen.touchStart(x, y)
 
   return {
-    move: async (gestureOrCommand, { segmentLength = 80 }: GestureMoveOptions = {}) => {
+    move: async (gestureOrCommand, { segmentLength = 80, stepSize = 10 }: GestureMoveOptions = {}) => {
       for (const direction of getDirections(gestureOrCommand)) {
         const previous = { x, y }
         switch (direction) {
@@ -122,12 +123,12 @@ export const startGesture = async ({ target, xStart, yStart }: GesturePositionOp
             break
         }
 
-        for (const point of getMovePoints(previous.x, previous.y, x, y)) {
-          await page.touchscreen.touchMove(point.x, point.y)
+        for (const point of getMovePoints(previous.x, previous.y, x, y, stepSize)) {
+          await touch.move(point.x, point.y)
         }
       }
     },
-    end: () => page.touchscreen.touchEnd(),
+    end: () => touch.end(),
   }
 }
 

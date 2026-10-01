@@ -95,6 +95,8 @@ const scrollAtEdge = (() => {
       return
     }
 
+    // Drag edge scrolling deliberately moves the viewport even while native touch scrolling is disabled.
+    if (el === window) window.dispatchEvent(new Event('em-scroll'))
     el.scrollTo(scrollLeftNew, scrollTopNew)
     window.requestAnimationFrame(() => {
       if (autoscrolling) {

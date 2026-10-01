@@ -406,6 +406,8 @@ Browserless Chromium runs with HTTP/2 disabled because current Chromium can rese
 
 High level helper functions are available for executing common user interactions: [/src/e2e/puppeteer/helpers](../src/e2e/puppeteer/helpers)
 
+`startGesture` holds a real touch across multiple `move` calls before `end`. Its `stepSize` option controls the distance between input events; larger steps allow a faster flick for momentum tests without artificial delays. Browser device emulation exercises the app's scroll controller, but does not reproduce UIKit's native physics.
+
 Mobile devices can be emulated in puppeteer. This is good for testing non-platform specific mobile functionality, such as gestures. If you can test it with the Chrome Device Toolbar, you can emulate it in puppeteer. Select the device at suite scope so that shared setup applies it before navigation. This is the only supported way to emulate a device, because `page.emulate` reloads the page whenever mobile or touch emulation changes, restarting app initialization and discarding whatever the test had already set up. A test that needs a different viewport or orientation without changing touch support can call `page.setViewport`, which does not reload.
 
 ```ts
@@ -688,6 +690,7 @@ Puppeteer input is coordinated through the helpers in [`../src/e2e/puppeteer/hel
 | Swipe/command gesture | [`gesture`](../src/e2e/puppeteer/helpers/gesture.ts) | Emits `touchStart`, stepped `touchMove` events, and `touchEnd` for the supplied direction path or command gesture. |
 | Long press | [`longPressThought`](../src/e2e/puppeteer/helpers/longPressThought.ts), [`longPressBullet`](../src/e2e/puppeteer/helpers/longPressBullet.ts) | Holds a touch on the thought, or the mouse on its bullet, until the bullet reports the long-press highlight, then releases. Long press is bound to the bullet on every platform but to the thought itself only on touch, so `longPressBullet` is how a thought is long pressed on desktop, without emulating a device. |
 | Drag and drop | [`dragAndDropThought`](../src/e2e/puppeteer/helpers/dragAndDropThought.ts), [`dragAndDropFavorite`](../src/e2e/puppeteer/helpers/dragAndDropFavorite.ts), [`dragAndDrop`](../src/e2e/puppeteer/helpers/dragAndDrop.ts) | Drives real mouse down/move/up input and waits for drag-specific visible conditions. |
+| Inspect scroll geometry | [`getThoughtTop`](../src/e2e/puppeteer/helpers/getThoughtTop.ts), [`getVisibleThoughtBounds`](../src/e2e/puppeteer/helpers/getVisibleThoughtBounds.ts) | Read visible positions and clamp bounds from DOM geometry. Query bounds only after elastic transforms have settled. |
 | Scroll | [`scroll`](../src/e2e/puppeteer/helpers/scroll.ts), [`scrollBy`](../src/e2e/puppeteer/helpers/scrollBy.ts), [`scrollIntoView`](../src/e2e/puppeteer/helpers/scrollIntoView.ts), [`scrollTo`](../src/e2e/puppeteer/helpers/scrollTo.ts) | Scrolls the window or a named container; use the narrowest helper that expresses the intent. |
 | Emulate a mobile device | [`deviceEmulation.useForSuite`](../src/e2e/puppeteer/helpers/deviceEmulation.ts) | Selects a Puppeteer device profile at suite scope, which `setup` applies before navigation. There is no mid-session equivalent; see the emulation note above. |
 
