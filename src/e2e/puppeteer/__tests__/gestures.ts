@@ -72,7 +72,7 @@ describe('alerts', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5735
-  it.skip('shows the error alert when Swap Note is swiped on a thought in the home context', async () => {
+  it('shows the error alert when Swap Note is swiped on a thought in the home context', async () => {
     await paste(`
       - aaa
         - bbb
