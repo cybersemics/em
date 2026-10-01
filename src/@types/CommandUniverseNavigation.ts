@@ -12,13 +12,6 @@ interface CommandUniverseNavigation {
     } | null
   }[]
   index: number
-  transition: {
-    id: string
-    fromEntryId: string
-    toEntryId: string
-    zoom: 'in' | 'out'
-    origin: Pick<DOMRectReadOnly, 'x' | 'y' | 'width' | 'height'> | null
-  } | null
 }
 
 export default CommandUniverseNavigation

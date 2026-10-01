@@ -9,7 +9,6 @@ const commandUniverseReset = (state: State, { entryId = 'root' }: { entryId?: st
   commandUniverseNavigation: {
     entries: [{ entryId, page: { pageId: 'grid', props: {} }, arrival: null }],
     index: 0,
-    transition: null,
   },
 })
 

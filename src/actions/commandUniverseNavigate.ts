@@ -39,12 +39,6 @@ const commandUniverseNavigate = (
     commandUniverseNavigation: {
       entries,
       index: entries.length - 1,
-      transition: {
-        id: entryId,
-        fromEntryId: state.commandUniverseNavigation.entries[state.commandUniverseNavigation.index].entryId,
-        toEntryId: entryId,
-        ...arrival,
-      },
     },
   }
 }

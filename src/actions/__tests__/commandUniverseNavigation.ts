@@ -5,7 +5,6 @@ import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
 import initialState from '../../util/initialState'
 import commandUniverseBack from '../commandUniverseBack'
-import commandUniverseFinishTransition from '../commandUniverseFinishTransition'
 import commandUniverseForward from '../commandUniverseForward'
 import commandUniverseNavigate, { commandUniverseNavigateActionCreator } from '../commandUniverseNavigate'
 import toggleMobileCommandUniverse, { toggleMobileCommandUniverseActionCreator } from '../toggleMobileCommandUniverse'
@@ -25,47 +24,34 @@ it('derives page ids, props, and navigation options from the registered componen
   expectTypeOf<['missing', Record<string, never>]>().not.toMatchTypeOf<NavigateArguments>()
 })
 
-it('starts at the grid root with no history or transition', () => {
+it('starts at the grid root with no history', () => {
   const state = toggleMobileCommandUniverse(initialState(), { value: true })
   expect(commandUniverseBack(state)).toBe(state)
   expect(commandUniverseForward(state)).toBe(state)
   expect(state.commandUniverseNavigation).toEqual({
     entries: [{ entryId: 'root', page: { pageId: 'grid', props: {} }, arrival: null }],
     index: 0,
-    transition: null,
   })
 })
 
-it('reverses an entry arrival on Back and replays it on Forward', () => {
+it('records each entry arrival and keeps it through Back and Forward', () => {
   const state = toggleMobileCommandUniverse(initialState(), { value: true })
   const visited = commandUniverseNavigate(state, {
     entryId: 'detail-a',
     page: { pageId: 'detail', props: { command } },
     arrival: { zoom: 'out', origin },
   })
-  expect(visited.commandUniverseNavigation.transition).toEqual({
-    id: 'detail-a',
-    fromEntryId: 'root',
-    toEntryId: 'detail-a',
-    zoom: 'out',
-    origin,
+  expect(visited.commandUniverseNavigation.entries[1]).toMatchObject({
+    entryId: 'detail-a',
+    arrival: { zoom: 'out', origin },
   })
 
-  const settled = commandUniverseFinishTransition(visited, { transitionId: 'detail-a' })
-  const back = commandUniverseBack(settled, { transitionId: 'back' })
+  const back = commandUniverseBack(visited)
   expect(back.commandUniverseNavigation.index).toBe(0)
-  expect(back.commandUniverseNavigation.transition).toEqual({
-    id: 'back',
-    fromEntryId: 'detail-a',
-    toEntryId: 'root',
-    zoom: 'in',
-    origin,
-  })
 
-  const settledBack = commandUniverseFinishTransition(back, { transitionId: 'back' })
-  const forward = commandUniverseForward(settledBack, { transitionId: 'forward' })
+  const forward = commandUniverseForward(back)
   expect(forward.commandUniverseNavigation.index).toBe(1)
-  expect(forward.commandUniverseNavigation.transition?.zoom).toBe('out')
+  expect(forward.commandUniverseNavigation.entries).toBe(visited.commandUniverseNavigation.entries)
 })
 
 it('drops the abandoned forward branch while keeping the reachable history', () => {
@@ -75,16 +61,13 @@ it('drops the abandoned forward branch while keeping the reachable history', () 
     page: { pageId: 'detail', props: { command: { ...command, label: 'A' } } },
     arrival: { zoom: 'in', origin: null },
   })
-  const firstSettled = commandUniverseFinishTransition(first, { transitionId: 'first' })
-  const second = commandUniverseNavigate(firstSettled, {
+  const second = commandUniverseNavigate(first, {
     entryId: 'second',
     page: { pageId: 'detail', props: { command: { ...command, label: 'B' } } },
     arrival: { zoom: 'in', origin: null },
   })
-  const secondSettled = commandUniverseFinishTransition(second, { transitionId: 'second' })
-  const back = commandUniverseBack(secondSettled, { transitionId: 'back' })
-  const backSettled = commandUniverseFinishTransition(back, { transitionId: 'back' })
-  const branched = commandUniverseNavigate(backSettled, {
+  const back = commandUniverseBack(second)
+  const branched = commandUniverseNavigate(back, {
     entryId: 'branch',
     page: { pageId: 'detail', props: { command: { ...command, label: 'C' } } },
     arrival: { zoom: 'out', origin: null },
@@ -98,21 +81,6 @@ it('drops the abandoned forward branch while keeping the reachable history', () 
   expect(commandUniverseForward(branched)).toBe(branched)
 })
 
-it('lets navigation interrupt the transition still running', () => {
-  const state = toggleMobileCommandUniverse(initialState(), { value: true })
-  const visited = commandUniverseNavigate(state, {
-    entryId: 'detail-a',
-    page: { pageId: 'detail', props: { command } },
-    arrival: { zoom: 'in', origin: null },
-  })
-  const back = commandUniverseBack(visited, { transitionId: 'back' })
-
-  expect(back.commandUniverseNavigation.index).toBe(0)
-  expect(back.commandUniverseNavigation.transition?.id).toBe('back')
-  expect(back.commandUniverseNavigation.transition?.zoom).toBe('out')
-  expect(commandUniverseFinishTransition(back, { transitionId: 'detail-a' })).toBe(back)
-})
-
 it('routes page visits through the global Redux store with distinct entry ids', async () => {
   await initStore()
   store.dispatch(toggleMobileCommandUniverseActionCreator({ value: true }))
@@ -124,10 +92,10 @@ it('routes page visits through the global Redux store with distinct entry ids', 
   expect(navigation.index).toBe(1)
   expect(navigation.entries.map(entry => entry.page.pageId)).toEqual(['grid', 'detail'])
   expect(navigation.entries[1].entryId).not.toBe(rootId)
-  expect(navigation.transition?.origin).toEqual(origin)
+  expect(navigation.entries[1].arrival).toEqual({ zoom: 'in', origin })
 })
 
-it('ignores navigation while closed and resets history and motion when reopened', () => {
+it('ignores navigation while closed and resets history when reopened', () => {
   const closed = initialState()
   expect(
     commandUniverseNavigate(closed, {
@@ -151,6 +119,5 @@ it('ignores navigation while closed and resets history and motion when reopened'
   expect(reopened.commandUniverseNavigation).toEqual({
     entries: [{ entryId: 'second-root', page: { pageId: 'grid', props: {} }, arrival: null }],
     index: 0,
-    transition: null,
   })
 })
