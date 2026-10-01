@@ -42,8 +42,6 @@ beforeEach(() => {
 
 beforeEach(initStore)
 
-afterEach(() => nativeHistory.destroy())
-
 it('undoes and redoes an edit when iOS emits a native history gesture', () => {
   store.dispatch([importText({ text: '- Makre' }), setCursor(['Makre'])])
 

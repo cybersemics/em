@@ -1,5 +1,7 @@
 import OfflineStatus from '../@types/OfflineStatus'
+import Timer from '../@types/Timer'
 import { WEBSOCKET_TIMEOUT } from '../constants'
+import ministore from './ministore'
 import reactMinistore from './react-ministore'
 
 /** A store that tracks a derived websocket connection status that includes special statuses for initialization (preconnecting), the first connection attempt (connecting), and offline mode (offline). There are a couple places where offlineStatusStore.update is called directly in order to skip preconnecting. See: OfflineStatus type for description of all possible statuses. */
@@ -11,11 +13,15 @@ const preconnectingTimeout = navigator.webdriver ? 0 : 500
 /** Amount of time trying to connect before changint to offline status. Disabled during E2E tests. */
 const offlineTimeout = navigator.webdriver ? 0 : WEBSOCKET_TIMEOUT
 
-let offlineTimer: ReturnType<typeof setTimeout> | null = null
+/** The pending step of the connection sequence: the preconnect delay armed by init, then the offline timeout armed by startConnecting. A ministore whose dispose clears the timer, so that a reset between tests cancels the step rather than leaving it to walk the restored status forward. */
+const offlineTimerStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
+
 /** Clears the timer, indicating either that we have connected to the websocket server, or have entered offline mode as the client continues connecting in the background. */
 const stopConnecting = () => {
-  clearTimeout(offlineTimer!)
-  offlineTimer = null
+  offlineTimerStore.reset()
 }
 /** Enter a connecting state and then switch to offline after a delay. */
 const startConnecting = () => {
@@ -24,10 +30,12 @@ const startConnecting = () => {
   offlineStatusStore.update(statusOld =>
     statusOld !== 'synced' && statusOld !== 'reconnecting' ? 'connecting' : statusOld,
   )
-  offlineTimer = setTimeout(() => {
-    offlineTimer = null
-    offlineStatusStore.update('offline')
-  }, offlineTimeout)
+  offlineTimerStore.update({
+    timer: setTimeout(() => {
+      offlineTimerStore.update({ timer: null })
+      offlineStatusStore.update('offline')
+    }, offlineTimeout),
+  })
 }
 
 /** Initializes offline / connection status (e.g. preconnect timer). */
@@ -63,7 +71,7 @@ export const init = () => {
   // Start connecting to populate offlineStatusStore.
   // This must done in an init function that is called in app initalize, otherwise @sinonjs/fake-timers are not yet set and createTestApp tests break.
   // TODO: Why does deferring websocketProviderPermissions.connect() to init break tests?
-  offlineTimer = setTimeout(startConnecting, preconnectingTimeout)
+  offlineTimerStore.update({ timer: setTimeout(startConnecting, preconnectingTimeout) })
 }
 
 export default offlineStatusStore

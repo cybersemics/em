@@ -198,7 +198,7 @@ describe('scroll clamp', () => {
     await clickThought('m')
 
     // scroll down so that deep descendants are rendered and visible
-    await scrollTo(0, 200)
+    await scrollTo(200)
 
     await clickThought('z')
     await waitForCursor('z')
@@ -227,7 +227,7 @@ describe('scroll clamp', () => {
       yStart: viewport.height / 3,
     })
 
-    await scrollTo(0, 0)
+    await scrollTo(0)
     await waitForBrowserSettled()
     const scrollTopWhileTouching = await page.evaluate(() => window.scrollY)
     expect(scrollTopWhileTouching).toBeLessThan(minScrollY - 1)
@@ -302,7 +302,7 @@ describe('scroll clamp', () => {
     const topThoughtAfterClamp = await getThoughtTop('1')
     expect(topThoughtAfterClamp).toBeLessThanOrEqual(viewportTopBoundary + viewportAllowance + 2)
 
-    await scrollTo(0, 100000)
+    await scrollTo(100000)
     await waitForBrowserSettled()
     const footerRect = await page.$eval('[aria-label="footer"]', element => {
       const rect = element.getBoundingClientRect()
