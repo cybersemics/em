@@ -94,7 +94,7 @@ it('Export buffered thoughts', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/4078
-it.skip('Show a message instead of the root when all thoughts are archived', async () => {
+it('Show a message instead of the root when all thoughts are archived', async () => {
   await dispatch([
     importText({
       text: `
