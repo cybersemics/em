@@ -11,11 +11,14 @@ import initStore from '../../test-helpers/initStore'
 import findCursor from '../../test-helpers/queries/findCursor'
 import selectRange from '../../test-helpers/selectRange'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import removeHome from '../../util/removeHome'
+import { clearActionCreator as clear } from '../clear'
 import importDataActionCreator from '../importData'
 import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
+import { pullActionCreator as pull } from '../pull'
 
 /** Helper function that initializes the store, imports html into the root, and exports it as plaintext to make easily readable assertions. This is async because importFiles is async. */
 const importExport = async (html: string, outputFormat: MimeType = 'text/plain') => {
@@ -446,8 +449,7 @@ it('should paste text with an improperly nested meta tag', async () => {
 `)
 })
 
-// TODO: Should be imported as siblings, not parent-child
-it.skip('simple duplicate', async () => {
+it('simple duplicate', async () => {
   const text = `
     - a
     - a
@@ -461,8 +463,7 @@ it.skip('simple duplicate', async () => {
   expect(exported.trim()).toBe(expectedExport.trim())
 })
 
-// TODO: No longer working as it did in importText. What should we expect?
-it.skip('multiple duplicates', async () => {
+it('multiple duplicates', async () => {
   const text = `
     - a
       - b
@@ -501,6 +502,152 @@ it('keeps children under each duplicate ancestor', async () => {
 - foo
   - baz
 `)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+it('does not merge a pasted thought into a duplicate sibling', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+        - x
+      `,
+    }),
+    setCursor(['x']),
+    newThought({}),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), [''])!,
+          text: `
+- a
+  - b
+    - c
+- y`,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - b
+- x
+- a
+  - b
+    - c
+- y
+`)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+it('does not merge pasted children into duplicate descendants of the destination', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+            - c
+      `,
+    }),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), ['a'])!,
+          text: `
+- b
+  - d
+- e`,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - b
+    - c
+  - b
+    - d
+  - e
+`)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// Merging duplicates required the descendants of each duplicate at the destination to be loaded before every imported
+// thought, which made importing slow. Since duplicates are no longer merged, a pending duplicate must be left pending.
+it.skip('does not load the pending descendants of a duplicate at the destination', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(
+    importText({
+      text: `
+        - a
+          - b
+            - c
+        - x
+      `,
+    }),
+  )
+  await waitForThoughtspaceIdle()
+
+  // reload from storage one level deep, so that a/b is pending
+  store.dispatch(clear())
+  await store.dispatch(pull([HOME_TOKEN], { maxDepth: 1 }))
+  expect(getThoughtById(store.getState(), head(contextToPath(store.getState(), ['a', 'b'])!))?.pending).toBe(true)
+
+  store.dispatch([
+    setCursor(['x']),
+    newThought({}),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), [''])!,
+          text: `
+- a
+  - b
+    - d
+- y`,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const state = store.getState()
+  const exported = exportContext(state, HOME_PATH, 'text/plain')
+  const pending = getThoughtById(state, head(contextToPath(state, ['a', 'b'])!))?.pending
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - b
+- x
+- a
+  - b
+    - d
+- y
+`)
+  expect(pending).toBe(true)
 })
 
 it('two root thoughts', async () => {
