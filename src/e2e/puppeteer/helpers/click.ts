@@ -61,21 +61,26 @@ const click = async (
       offset || 0,
     )
 
-  /** Returns the first x at which the editable is the topmost element, starting from its inside left edge. The bullet
-   * is absolutely positioned and overlaps the left edge of the editable at font sizes below 18, so clicking the very
-   * edge would hit the bullet instead of the text. */
-  const leftEdgeX = (): Promise<number> =>
-    page.evaluate(
-      (node: HTMLElement, startX: number, y: number) => {
-        const maxX = startX + 20
-        let x = startX
-        while (x < maxX && !node.contains(document.elementFromPoint(x, y))) x++
-        return x
+  /** Returns the x just inside the editable's left edge, stepping past the thought's bullet, which is absolutely
+   * positioned and overlaps the editable by 18 - fontSize px at font sizes below 18. */
+  const leftEdgeX = async (): Promise<number> => {
+    const result = await page.evaluate(
+      (node: HTMLElement, y: number) => {
+        const bullet = node.closest('[aria-label="thought-container"]')?.querySelector('[aria-label="bullet"]')
+        const x = Math.max(node.getBoundingClientRect().left, bullet?.getBoundingClientRect().right ?? -Infinity) + 1
+        const hit = document.elementFromPoint(x, y)
+        return { x, hit: node.contains(hit) ? null : (hit?.getAttribute('aria-label') ?? hit?.tagName ?? 'nothing') }
       },
       nodeHandle as unknown as HTMLElement,
-      boundingBox.x + 1,
       boundingBox.y + boundingBox.height / 2,
     )
+    if (result.hit) {
+      throw new Error(
+        `The left edge of the element is covered by ${result.hit} at x ${result.x}, so the click would miss it.`,
+      )
+    }
+    return result.x
+  }
 
   const coordinate = !offset
     ? {
