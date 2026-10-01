@@ -1257,6 +1257,26 @@ it('insert single-line HTML copied from Mac desktop Chrome at end of thought', a
   - afoo`)
 })
 
+// https://github.com/cybersemics/em/issues/4161
+it.skip('strip formatting from single-line HTML copied from a web page', async () => {
+  // the text/html that Chrome writes to the clipboard when a code block on a web page is copied
+  const html = `<pre style="color: rgb(31, 35, 40); font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; padding: 16px; background-color: rgb(246, 248, 250); border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13.6px;"><code>Hello world of beautiful people</code></pre>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: 'Hello world of beautiful people' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const value = getThoughtById(store.getState(), head(path)).value
+
+  cleanup()
+
+  expect(value).toBe('aHello world of beautiful people')
+})
+
 it('do not insert html with newlines as a single-line', async () => {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
