@@ -424,19 +424,18 @@ const globalCss = defineGlobalStyles({
     fontFamily: 'monospace',
   },
   /* Sweep a highlight across thought text (and the empty-thought placeholder) while an AI request is in flight. */
-  '[data-generating]': {
-    backgroundImage: 'linear-gradient(90deg, {colors.dim} 0%, {colors.fg} 50%, {colors.dim} 100%)',
-    backgroundSize: '250% 100%',
-    backgroundClip: 'text',
-    WebkitBackgroundClip: 'text',
+  '[data-generating], [data-generating] *': {
+    // Paint above inline background colors, while the final layer keeps their background-color unclipped.
+    backgroundImage:
+      'linear-gradient(90deg, {colors.dim} 0%, {colors.fg} 50%, {colors.dim} 100%), linear-gradient(transparent, transparent)',
+    backgroundSize: '250% 100%, 100% 100%',
+    backgroundClip: 'text, border-box',
+    WebkitBackgroundClip: 'text, border-box',
     WebkitTextFillColor: 'transparent',
     color: 'transparent',
     animation: 'shimmerText 4s linear infinite',
     // color: transparent hides the caret; restore it so a focused generating thought stays editable.
     caretColor: 'fg',
-  },
-  '[data-generating] *': {
-    WebkitTextFillColor: 'transparent',
   },
   // Apple Color Emoji are images, not fillable glyphs. A transparent fill hides them on iOS and can leave them
   // unpainted after generating ends. Restore an opaque fill on the temporary display wrap so they stay visible.
