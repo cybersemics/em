@@ -2,7 +2,9 @@
 """Require the active Cursor model in agent-authored commit commands."""
 
 import json
+import pathlib
 import re
+import subprocess
 import sys
 
 
@@ -15,9 +17,37 @@ def decision(permission, message=None):
     return response
 
 
+def record_model_fields(payload):
+    """Record selected hook fields when local diagnostics are enabled."""
+    try:
+        git_path = subprocess.check_output(
+            ["git", "rev-parse", "--git-path", "cursor-attribution-debug"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        diagnostic_path = pathlib.Path(git_path)
+        if not diagnostic_path.with_suffix(".enabled").exists():
+            return
+        record = {
+            "event": "prompt" if len(sys.argv) > 1 and sys.argv[1] == "prompt" else "commit",
+            "model": payload.get("model"),
+            "model_id": payload.get("model_id"),
+            "model_params": payload.get("model_params"),
+            "cursor_version": payload.get("cursor_version"),
+        }
+        with diagnostic_path.with_suffix(".jsonl").open("a", encoding="utf-8") as output:
+            output.write(json.dumps(record) + "\n")
+    except (OSError, subprocess.CalledProcessError):
+        # Diagnostics must not interrupt a prompt or a commit.
+        pass
+
+
 def main():
     """Check a Cursor shell hook payload for a complete commit trailer."""
     payload = json.load(sys.stdin)
+    record_model_fields(payload)
+
+    if len(sys.argv) > 1 and sys.argv[1] == "prompt":
+        return {"continue": True}
+
     command = payload.get("command", "")
 
     # The project hook only governs commits run by Cursor's agent shell.

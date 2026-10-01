@@ -1,6 +1,11 @@
 {
   "version": 1,
   "hooks": {
+    "beforeSubmitPrompt": [
+      {
+        "command": "python3 .cursor/hooks/check-commit-attribution.py prompt"
+      }
+    ],
     "beforeShellExecution": [
       {
         "command": "python3 .cursor/hooks/check-commit-attribution.py",

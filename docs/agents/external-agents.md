@@ -47,6 +47,8 @@ flowchart TD
 
 Local Cursor Agent also uses the repo's `.cursor/hooks.json` project hook. Before an agent shell `git commit`, it checks Cursor's active model ID and optional effort parameter against the `Co-Authored-By` trailer required by `AGENTS.md`. It rejects Auto because Cursor's selected-model hook field does not establish which model served an Auto-routed request. The check covers the commit turn, so the agent must use a fixed model for the work being attributed, not switch models only to commit. This hook does not run for a developer's ordinary Git commands or for commits made through the IDE's Git UI.
 
+For local diagnosis, enable recording with `touch "$(git rev-parse --git-path cursor-attribution-debug.enabled)"`. While that file exists, the same hook records only Cursor's model fields and version from prompt and commit events in `cursor-attribution-debug.jsonl` beside it. Neither file is tracked. Remove the enabled file when the comparison is complete.
+
 The `CLAUDE.md` symlink is required, not decorative: Claude Code does **not** read `AGENTS.md` natively, and `ln -s AGENTS.md CLAUDE.md` is Anthropic's own documented workaround.
 
 ## Copilot reads AGENTS.md too
