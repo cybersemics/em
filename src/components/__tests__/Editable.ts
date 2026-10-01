@@ -68,6 +68,37 @@ it('"paste" from clipboard app into non-empty thought', async () => {
         - c`)
 })
 
+// https://github.com/cybersemics/em/issues/5232
+it('trims a pasted trailing space when the thought is blurred', async () => {
+  await dispatch([importText({ text: '- One two' }), setCursor(['One two'])])
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const editable = (await findThoughtByText('One two'))!
+  act(() => {
+    editable.focus()
+  })
+  // importData reads the caret from a text node, which selection.set only selects at its end with end: true.
+  selection.set(editable.firstChild, { end: true })
+
+  // importData trims a plain text paste, but inserts single-line HTML as is.
+  act(() => {
+    fireEvent.paste(editable, {
+      clipboardData: { getData: (type: string) => (type === 'text/html' ? "<meta charset='utf-8'> One " : ' One ') },
+    })
+  })
+  await act(vi.runAllTimersAsync)
+  expect(editable.textContent).toBe('One two One ')
+
+  act(() => {
+    editable.blur()
+  })
+  await act(vi.runAllTimersAsync)
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - One two One`)
+})
+
 it('inserts emoji spacing immediately and allows Backspace at the emoji boundary', async () => {
   act(() => {
     windowEvent('keydown', { key: 'Enter' })
