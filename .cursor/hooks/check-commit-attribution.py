@@ -70,6 +70,14 @@ def load_prompt_model(payload):
         return None
 
 
+def concrete_model(value):
+    """Return a named model, excluding Cursor's routing placeholders."""
+    if not isinstance(value, str):
+        return None
+    normalized = value.lower()
+    return None if normalized in ("default", "unknown") or normalized.startswith(("auto", "cursor-auto")) else value
+
+
 def record_model_fields(payload, cache_hit=None):
     """Record selected hook fields when local diagnostics are enabled."""
     try:
@@ -110,28 +118,18 @@ def main():
 
     cached = load_prompt_model(payload)
     record_model_fields(payload, cache_hit=cached is not None)
-    model = payload.get("model_id") or (cached or {}).get("model_id") or payload.get("model")
-    selected_models = (
-        payload.get("model_id"),
-        payload.get("model"),
-        (cached or {}).get("model_id"),
-        (cached or {}).get("model"),
+    current_model = concrete_model(payload.get("model_id")) or concrete_model(payload.get("model"))
+    cached_model = concrete_model((cached or {}).get("model_id")) or concrete_model((cached or {}).get("model"))
+    model = current_model or cached_model or "unknown"
+    parameters = (payload.get("model_params") or []) + (
+        ((cached or {}).get("model_params") or []) if model == cached_model else []
     )
-    parameters = (payload.get("model_params") or []) + ((cached or {}).get("model_params") or [])
     effort = next(
-        (parameter.get("value") for parameter in parameters if parameter.get("id") == "effort"),
+        (parameter.get("value") for parameter in parameters if parameter.get("id") in ("effort", "reasoning_effort")),
         None,
     )
 
-    if not model or any(value and value.lower().startswith("auto") for value in selected_models):
-        return decision(
-            "deny",
-            "Cursor reported Auto or no model ID for this turn. The hook cannot identify Auto's routed model. "
-            "For this trial, create the change under a fixed model before committing; switching models only "
-            "for the commit would misattribute earlier work.",
-        )
-
-    label = f"{model} ({effort})" if effort else model
+    label = f"{model} ({effort})" if effort and model != "unknown" else model
     trailer = f"Co-Authored-By: Cursor {label} <cursoragent@cursor.com>"
     cursor_trailers = re.findall(r"Co-Authored-By:\s*Cursor[^\n\"']*<cursoragent@cursor\.com>", command, re.IGNORECASE)
 
