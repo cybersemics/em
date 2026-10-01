@@ -2,7 +2,7 @@
 
 A rolling record of what **em** did, kept on the device so that a bug nobody can reproduce still leaves evidence behind. It exists for the failures that defeat ordinary debugging: a freeze that takes the console with it, a gesture that misfires once a week, a thought that lands under the wrong parent on someone else's phone and nowhere else.
 
-Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), and persistence ([`pushQueue`](../src/redux-enhancers/pushQueue.ts)).
+Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), app switching and viewport resizes ([`initEvents`](../src/util/initEvents.ts)), and persistence ([`pushQueue`](../src/redux-enhancers/pushQueue.ts)).
 
 ## What it is
 
@@ -40,6 +40,15 @@ A reporter attaches the downloaded file to an issue under a `## Debug Log` headi
 It is **off by default on every host**, including the ones where logging itself auto-enables. The log captures every `selectionchange` and every input event, so mirroring it buries the console for anyone not specifically reading it.
 
 Use it to watch a single interaction live, through a browser MCP's console listing. Do not use it to capture a whole reproduction: four steps of editing produce about 6 KB, and a full buffer approaches a megabyte. Dump the buffer to a file instead.
+
+## In tests
+
+Logging is off in Vitest and Puppeteer, so a test that wants entries calls `debugLog.setEnabled(true)` and usually `debugLog.clear()` right after, to drop the session marker. It cleans up nothing afterwards: the module's in-memory state is restored at every test boundary by `resetStores` (see [Isolation and cleanup](testing.md#isolation-and-cleanup)), which runs the `reset` that `debugLog.ts` registers.
+
+- **What a clean slate is.** Logging off, the frame heartbeat cancelled, the buffer and its counters empty, the console mirror off: what a module load produces against empty storage on a host that does not auto-enable. It is written out explicitly rather than derived from the values the variables were constructed with, because those are not clean — the buffer is initialized from whatever `localStorage` held at import, i.e. a previous session's log.
+- **Reset is not `clear()`.** `reset` touches memory only. `clear()` is the operation that erases the persisted log, and resetting between tests must never be able to cost a user theirs. A test owns its own `localStorage` and clears it itself.
+- **Why it has to be automatic.** The heartbeat reschedules itself through `requestAnimationFrame`, which fake timers fake. Left running by one test, it makes `vi.runAllTimersAsync` abort with `Aborting after running 100000 timers` in whichever teardown drains timers next — `cleanupTestApp` does — far from the test that enabled logging. Within a test the same applies: while logging is enabled, flush with `vi.runOnlyPendingTimersAsync`, not `vi.runAllTimersAsync`.
+- **What it does not cover.** Import-time behaviour — hydrating the previous session's entries, deciding `autoEnabled` once from the real environment, and self-enabling on an auto-enable host — is unchanged, and the tests of it still `vi.resetModules()` and import a fresh instance. A reset module graph has its own registry that no fixture reaches, so such a test stops its fresh instance itself (`fresh.setEnabled(false)`).
 
 ## Comparing two logs
 
@@ -79,3 +88,4 @@ Some shapes worth recognizing:
 - **`move` entries** are diffed out of the thought index rather than logged by any one reducer, so they catch a reorder from every source — drag and drop, sort, undo, remote sync — without special-casing any of them.
 - **The log stopping while `lastFrameAt` keeps advancing** means the page was still painting: the hang is below the app.
 - **`dt` collapsing toward zero across many entries** is a tight loop.
+- **`viewport` entries** record the window, layout viewport (`clientHeight`) and visual viewport sizes, the scroll position and whether the keyboard is open. One is written on every resize that changes them, one when the app becomes active (`resume`), and one a second later (`settled`), since iOS can finish resizing after the page is active without firing a resize event. A `clientHeight` or `visualViewportHeight` well below `innerHeight` while `isKeyboardOpen` is false means the page is still laid out for a keyboard that is gone: fixed and sticky elements such as the nav bar are then pinned mid-screen.

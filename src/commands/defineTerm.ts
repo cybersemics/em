@@ -201,10 +201,10 @@ const defineTerm = {
           dispatch(showModal({ id: 'aiDisclosure' }))
           return
         }
-        defineAll()
+        return defineAll()
       }
 
-      defineAllWithDisclosure()
+      return defineAllWithDisclosure()
     },
   },
   canExecute: state => {

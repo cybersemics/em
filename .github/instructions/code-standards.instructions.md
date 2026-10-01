@@ -31,16 +31,17 @@
 - Do not wrap a store in bare getters and setters. A function whose entire body is `someStore.getState().foo` or `someStore.update({ foo })` adds no behavior; it obscures which store the value comes from and expands the module's API for nothing. Read and write the store directly at the call site. A wrapper that carries real logic — managing a timer, setting a companion flag, deriving the value from state — is not bare and earns its place.
   ```ts
   // ✗ bare getter/setter
-  export const isBatchEditing = () => batchEditing.getState().batching
-  export const setBatchEditingUndoLabel = (undoLabel: string) => batchEditing.update({ undoLabel })
+  export const isBatchEditing = () => batchEditingStore.getState().batching
+  export const setBatchEditingUndoLabel = (undoLabel: string) => batchEditingStore.update({ undoLabel })
 
   // ✓ use the store directly at the call site
-  batchEditing.getState().batching
-  batchEditing.update({ undoLabel })
+  batchEditingStore.getState().batching
+  batchEditingStore.update({ undoLabel })
   ```
 - Only a single, default export is allowed. Named exports are not allowed.
   - Exception: action-creators are co-located with reducers in `src/actions` and exported as named exports.
   - Filenames should exactly match the default export name.
+  - Name every ministore with a `Store` suffix (e.g. `viewportStore`), and name a module that default-exports one after it (`viewportStore.ts`). The `em/ministore-store-suffix` lint rule enforces both; a bare local `store` is allowed for one that is wrapped before it is exported.
 
 ### Functional Programming
 
@@ -68,6 +69,7 @@
 - Write a JSDOC comment for each function definition.
 - Add descriptive comments to code that is counterintuitive, non-obvious, or requires explanation.
 - JSDOC prose must be complete sentences (`jsdoc/require-description-complete-sentence`). Put shell commands, which are neither capitalized nor sentence-terminated, in a fenced code block, and end the lead-in line with a period rather than a colon — a colon merges the fence into the preceding paragraph and the rule then demands a period after the command. For a single command, inline code inside a sentence reads better than a fence: ``Run manually with `node scripts/estimate/src/backfill.ts`.`` Never let the rule's autofixer capitalize a command, path, or identifier.
+  - A sentence that opens with anything other than a letter — an issue reference such as `#5560`, a figure, a backticked identifier — fails the rule with no way to satisfy it, and the reported line is not the offending one: the position is an offset into the description block, so it can land paragraphs away from the text `--fix` will actually rewrite. Read the fix before taking it. Left to itself the autofixer capitalizes the first word it can reach, which on a multi-line description means an ordinary word in the middle of a sentence. Reword the opening instead: "That is how #5560 landed" passes where "#5560 landed" cannot.
 - Prefer an options object over a long list of positional arguments. A call like `useGestureHighlight(command, gestureInProgress, true, false)` is unreadable at the call site — the booleans and bare strings say nothing about what they mean, and their order is only recoverable by opening the definition. Destructure a single object instead and document each property inline with the type, which puts the names at the call site and makes the order irrelevant:
   ```ts
   // ✗ opaque at the call site

@@ -7,6 +7,7 @@ import { isTouch } from '../browser'
 import { ColorToken } from '../colors.config'
 import themeColors from '../selectors/themeColors'
 import commandStateStore from '../stores/commandStateStore'
+import haptics from '../util/haptics'
 import isColorSelected from '../util/isColorSelected'
 import Popover from './Popover'
 import TextColorIcon from './icons/TextColor'
@@ -40,27 +41,46 @@ const ColorSwatch: FC<{
     dispatch(formatSelectionColor({ color, backgroundColor }))
   }
 
+  /** Suppresses the Text Color toolbar button's press, which starts on tap down. The picker is rendered inside that button, so a tap that reaches it dips the button by 0.25em, and the tap up that would undo the dip is stopped below. On desktop it also preserves the browser selection, which the toolbar button's own tap down was preventing default to do. */
+  const tapDown = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation()
+    // Only on desktop, since preventing default on touchstart would stop the toolbar from being scrolled by a swipe that starts on a swatch.
+    if (!isTouch) {
+      e.preventDefault()
+    }
+  }
+
   /** Toggles the text color onTouchEnd or onClick on desktop. */
   const tapUp = (e: React.MouseEvent | React.TouchEvent) => {
-    // stop toolbar button dip and click empty space
+    // stop toolbar button command and click empty space
     e.stopPropagation()
     e.preventDefault()
 
+    haptics.light()
     toggleTextColor()
   }
 
   return (
     <span
       aria-label={label || color || backgroundColor}
+      data-selected={selected ? 'true' : 'false'}
+      onMouseDown={isTouch ? undefined : tapDown}
+      onTouchStart={isTouch ? tapDown : undefined}
       onClick={isTouch ? undefined : tapUp}
       onTouchEnd={isTouch ? tapUp : undefined}
-      className={css({ cursor: 'pointer' })}
+      className={css({
+        alignItems: 'center',
+        cursor: 'pointer',
+        // fill the swatch's cell so that the tap targets tile the row, otherwise a tap on the space around the icon falls through to the toolbar button that contains the picker and closes it (#4264)
+        display: 'flex',
+        // the space around the icon, as padding rather than a margin on the icon so that it is part of the tap target
+        padding: '3px 5px 5px',
+      })}
     >
       {shape === 'bullet' ? (
         <span
           className={css({
             display: 'inline-block',
-            margin: '3px 5px 5px',
             textAlign: 'center',
           })}
           style={{
@@ -80,7 +100,6 @@ const ColorSwatch: FC<{
             // See: https://github.com/cybersemics/em/issues/2508
             // border: selected ? `solid 1px {colors.fg}` : `solid 1px transparent`,
             fontWeight: selected ? 'bold' : 'normal',
-            margin: '3px 5px 5px',
           })}
           size={size}
           style={{
@@ -102,7 +121,7 @@ const ColorPicker: FC<{ size?: number }> = ({ size }) => {
   return (
     <Popover ariaLabel='Color Picker' show={showColorPicker} size={size}>
       {/* Text Color */}
-      <div aria-label='text color swatches' className={css({ whiteSpace: 'nowrap' })}>
+      <div aria-label='text color swatches' className={css({ display: 'flex' })}>
         <ColorSwatch color='fg' label='default' />
         <ColorSwatch color='gray' label='gray' />
         <ColorSwatch color='orange' label='orange' />
@@ -115,7 +134,7 @@ const ColorPicker: FC<{ size?: number }> = ({ size }) => {
       </div>
 
       {/* Background Color */}
-      <div aria-label='background color swatches' className={css({ whiteSpace: 'nowrap' })}>
+      <div aria-label='background color swatches' className={css({ display: 'flex' })}>
         <ColorSwatch backgroundColor='fg' label='inverse' />
         <ColorSwatch backgroundColor='gray' label='gray' />
         <ColorSwatch backgroundColor='orange' label='orange' />

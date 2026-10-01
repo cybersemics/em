@@ -1,7 +1,7 @@
 import State from '../@types/State'
-import getLatestActionType from '../util/getLastActionType'
+import getLatestActionLabel from '../util/getLatestActionLabel'
 
 /** Determines if undo is enabled. */
 export default function isUndoEnabled(state: State) {
-  return !!getLatestActionType(state.undoPatches)
+  return !!getLatestActionLabel(state.undoPatches)
 }
