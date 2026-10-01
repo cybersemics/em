@@ -30,6 +30,7 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
 import splitHtmlAtTextOffset from '../util/splitHtmlAtTextOffset'
+import strip from '../util/strip'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
@@ -39,6 +40,10 @@ import uncategorize from './uncategorize'
 
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
+
+/** Matches the closing tag of a block element. */
+const REGEX_BLOCK_END_TAG =
+  /<\/(address|article|aside|blockquote|dd|div|dl|dt|figcaption|figure|footer|h[1-6]|header|li|ol|p|pre|section|table|td|th|tr|ul)>/gi
 
 export interface ImportTextPayload {
   caretPosition?: number
@@ -65,6 +70,9 @@ export interface ImportTextPayload {
 
   skipRoot?: boolean
 
+  /** Strips the formatting from HTML that is inserted inside the thought (single line only), such as text copied from a web page. Multiline imports are unaffected. */
+  stripFormatting?: boolean
+
   /** Text or HTML that will be inserted below the thought (if multiline) or inside the thought (singl line only). */
   text: string
 
@@ -85,6 +93,7 @@ const importText = (
     replaceEnd,
     replaceStart,
     skipRoot,
+    stripFormatting,
     updatedBy = clientId,
     caretPosition = 0,
   }: ImportTextPayload,
@@ -120,11 +129,15 @@ const importText = (
           )
         : destValue
 
+    // separate the text of adjacent block elements, which strip would otherwise run together, and join them with a space since a thought is a single line
+    const insertedText = stripFormatting
+      ? strip(text.replace(REGEX_BLOCK_END_TAG, '$&\n')).replace(/\s*\n\s*/g, ' ')
+      : text
     const insertOffset = replaceStart ?? caretPosition
-    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, text)
+    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedText)
     const newValue = addEmojiSpace(combinedValue)
     // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
-    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(text).length
+    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(insertedText).length
     const emojiSpaceInsertionOffset = newValue === combinedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
     const offset =
       emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset
