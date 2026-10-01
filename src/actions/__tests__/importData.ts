@@ -595,7 +595,7 @@ it('does not merge pasted children into duplicate descendants of the destination
 // https://github.com/cybersemics/em/issues/2712
 // Merging duplicates required the descendants of each duplicate at the destination to be loaded before every imported
 // thought, which made importing slow. Since duplicates are no longer merged, a pending duplicate must be left pending.
-it.skip('does not load the pending descendants of a duplicate at the destination', async () => {
+it('does not load the pending descendants of a duplicate at the destination', async () => {
   vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
