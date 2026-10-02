@@ -22,8 +22,8 @@ import isTutorial from '../../selectors/isTutorial'
 import backgroundGlowStore from '../../stores/backgroundGlowStore'
 import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
-import ChevronIcon from '../icons/ChevronIcon'
 import CommandTable from '../CommandTable'
+import ChevronIcon from '../icons/ChevronIcon'
 import PanelCommand from './PanelCommand'
 import PanelCommandGroup from './PanelCommandGroup'
 
@@ -137,7 +137,7 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
     return ref.current?.yInverted.get() ?? 0
   })
   /**
-   * Controls the overlay opacity and the blur height.
+   * Controls the blur height, and the overlay opacity outside a collapse.
    *
    * The value is 0 when the drawer is closed and 1 when the drawer is open. Both drawer stages,
    * standard and expanded, count as open, so the overlay height stays the same at either stage.
@@ -148,6 +148,13 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
     if (standardHeight <= 0) return 0
     return Math.min(Math.max(yInverted / standardHeight, 0), 1)
   })
+
+  /**
+   * Tracks whether a downward drag started from the expanded stage. The same position can mean
+   * either dismissal or a return to the standard stage, so this determines whether the overlay
+   * stays visible or fades.
+   */
+  const isSnappingFromExpandedRef = useRef(false)
 
   const blurHeight = useTransform(height, height => {
     // Start at 0, then smoothly grow with progress
@@ -162,7 +169,25 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
     return Math.min(Math.max(1 - y / stageOffset, 0), 1)
   })
 
-  return { height, opacity: sheetProgress, blurHeight, stageProgress }
+  /** Fades the overlay only while opening or closing. Keep it opaque when collapsing from expanded. */
+  const overlayOpacity = useTransform(() => {
+    const progress = sheetProgress.get()
+    return isSnappingFromExpandedRef.current ? 1 : progress
+  })
+
+  /** Remember whether a drag started closer to the expanded stage than the standard stage. */
+  const onDragStart = useCallback(() => {
+    const sheet = ref.current
+    const standardY = sheet?.snapPoints[SNAP_STANDARD]?.snapValueY ?? 0
+    isSnappingFromExpandedRef.current = standardY > 0 && (sheet?.y.get() ?? Infinity) < standardY / 2
+  }, [ref])
+
+  /** Clear the expanded-origin snap state so a dismissal fades the overlay as designed. */
+  const clearExpandedSnap = useCallback(() => {
+    isSnappingFromExpandedRef.current = false
+  }, [])
+
+  return { height, opacity: overlayOpacity, blurHeight, stageProgress, onDragStart, clearExpandedSnap }
 }
 
 /**
@@ -175,7 +200,7 @@ const CommandCenter = () => {
   const isTutorialOn = useSelector(isTutorial)
   const fontSize = useSelector(state => state.fontSize)
   const sheetRef = useRef<SheetRef>(null)
-  const { height, opacity, blurHeight, stageProgress } = useSheetTransforms(sheetRef)
+  const { height, opacity, blurHeight, stageProgress, onDragStart, clearExpandedSnap } = useSheetTransforms(sheetRef)
 
   const backgroundGlow = backgroundGlowStore.useState()
 
@@ -326,6 +351,9 @@ const CommandCenter = () => {
           onSnap={onSnap}
           onOpenEnd={onOpenEnd}
           onCloseEnd={onCloseEnd}
+          onDragStart={onDragStart}
+          /** Must be onCloseStart rather than onClose: the Done button and the swipe-down gesture dismiss the drawer by clearing the multicursors in Redux and never call onClose, so releasing the hold there would leave the overlay at full opacity for the whole dismiss animation. */
+          onCloseStart={clearExpandedSnap}
           disableDismiss={stage === 'expanded'}
           /** The expanded stage's search field would otherwise auto-snap the sheet and disable dragging while the keyboard is open. Em manages the virtual keyboard itself. */
           avoidKeyboard={false}
