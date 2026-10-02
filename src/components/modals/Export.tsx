@@ -322,11 +322,14 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   // calculate the final number of descendants
   // uses a different method for text/plain and text/html
   // does not update in real-time (See: ExportThoughtsPhrase component)
-  const numDescendantsFinal = exportContent
-    ? selected.type === 'text/plain'
-      ? exportContent.split('\n').length - simplePaths.length
-      : (numDescendantsInState ?? 0)
-    : null
+  const numDescendantsFinal =
+    exportContent === null
+      ? null
+      : exportContent === ''
+        ? 0
+        : selected.type === 'text/plain'
+          ? exportContent.split('\n').length - simplePaths.length
+          : (numDescendantsInState ?? 0)
 
   const exportThoughtsPhraseFinal = useSelector(() =>
     exportPhrase(
@@ -362,6 +365,18 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
     } else {
       // Sort in document order. At this point, all thoughts are pulled and in state.
       const sortedPaths = documentSort(exportedState, simplePaths)
+
+      // The root has nothing to export when none of its children pass the export filter, e.g. when they are all archived. Otherwise the bare root would be rendered as the HOME_DISPLAY_VALUE placeholder.
+      if (
+        sortedPaths.length === 1 &&
+        isRoot(sortedPaths[0]) &&
+        !getChildrenRanked(exportedState, HOME_TOKEN).some(
+          exportFilter({ excludeArchived: !shouldIncludeArchived, excludeMeta: !shouldIncludeMetaAttributes }),
+        )
+      ) {
+        setExportContent('')
+        return
+      }
 
       // When shouldExportFirstThought is false, expand each selected path to its children's IDs.
       // For single selection this skips the root thought; for multiple selection it skips the entire first level.
@@ -646,6 +661,21 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         {exportContent === null && (
           <div className={css({ position: 'absolute', top: 'calc(50% - 1em)', textAlign: 'center', width: ' 100%' })}>
             <LoadingEllipsis />
+          </div>
+        )}
+        {exportContent === '' && isRoot(simplePaths[0]) && (
+          <div
+            className={css({
+              position: 'absolute',
+              top: '60px',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center',
+              width: '260px',
+            })}
+          >
+            There are no unarchived thoughts to {exportWord.toLowerCase()}. Archived thoughts can be included in the
+            Advanced settings.
           </div>
         )}
         <textarea
