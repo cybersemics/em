@@ -6,7 +6,7 @@ Making that work takes more than a prompt. It takes a described environment, a b
 
 We targeted Copilot specifically because the project already runs on GitHub — issues, pull requests, and CI are all here, so the agent lives where the work already is.
 
-> Agents running on a developer's own machine — Codex, Claude Code — share a subset of these skills through symlinks. Local Cursor Agent uses a project hook to check commit attribution. See [External agents](external-agents.md).
+> Agents running on a developer's own machine — Codex, Claude Code — share a subset of these skills through symlinks. Codex commits use a Git hook for attribution, while local Cursor Agent uses a project hook. See [External agents](external-agents.md).
 
 | Document                              | What it covers                                                                     |
 | ------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -173,6 +173,8 @@ CLAUDE.md            → AGENTS.md
 .agents/skills/                      The shared subset, one symlink each
 └── <name>           → .github/skills/<name>
 .claude/skills       → .agents/skills
+.hooks/commit-msg                    Codex commit attribution when its session marker is present
+.cursor/hooks.json                   Cursor Agent commit attribution
 ```
 
 Three workflows are part of this system rather than ordinary CI:
