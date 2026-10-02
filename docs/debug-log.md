@@ -43,6 +43,8 @@ Use it to watch a single interaction live, through a browser MCP's console listi
 
 ## In tests
 
+In Puppeteer, a test under investigation for a flake is wrapped in [`withDebugLog`](../src/e2e/puppeteer/helpers/withDebugLog.ts), which records the log and appends it to the error if the test fails.
+
 Logging is off in Vitest and Puppeteer, so a test that wants entries calls `debugLog.setEnabled(true)` and usually `debugLog.clear()` right after, to drop the session marker. It cleans up nothing afterwards: the module's in-memory state is restored at every test boundary by `resetStores` (see [Isolation and cleanup](testing.md#isolation-and-cleanup)), which runs the `reset` that `debugLog.ts` registers.
 
 - **What a clean slate is.** Logging off, the frame heartbeat cancelled, the buffer and its counters empty, the console mirror off: what a module load produces against empty storage on a host that does not auto-enable. It is written out explicitly rather than derived from the values the variables were constructed with, because those are not clean — the buffer is initialized from whatever `localStorage` held at import, i.e. a previous session's log.
