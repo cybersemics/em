@@ -255,7 +255,9 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>, bounceY: Moti
  * The Sheet clamps its own `y` at the expanded stage, so the drawer can neither be dragged above it nor
  * animated above it. `bounceY` is an extra translate the Sheet never touches, which does both: the drag
  * handler feeds it the part of a swipe the Sheet refuses, so the drawer stays with the thumb up to the
- * ceiling, and the snap runs it up to that same ceiling and back, alongside the Sheet's own travel.
+ * ceiling, and the release runs it back onto the target — climbing to the ceiling first when the swipe was
+ * let go before reaching it. Only a swipe lifts the drawer: a chevron tap carries no momentum, so it snaps
+ * plainly, the way the collapse chevron already does.
  */
 const useExpandOvershoot = ({
   bounceY,
@@ -296,6 +298,8 @@ const useExpandOvershoot = ({
     (travel: number) => {
       rawRef.current = 0
       if (isLiftingRef.current) return
+      // nothing lifted and nothing left to climb: a chevron tap, which carries no momentum to answer
+      if (!bounceY.get() && travel <= OVERSHOOT_MIN_RISE) return
       const settleDuration = durations.get('commandCenter') / 1000
       // durations are zero in e2e, where an animated lift would only add flakiness
       if (!settleDuration || prefersReducedMotion) {
@@ -381,7 +385,7 @@ const useExpandOvershoot = ({
     rawRef.current = 0
   }, [bounceY])
 
-  return { expand, onDrag, onDragStart, onSnap, reset }
+  return { onDrag, onDragStart, onSnap, reset }
 }
 
 /**
@@ -432,7 +436,6 @@ const CommandCenter = () => {
   )
 
   const {
-    expand,
     onDrag: onOvershootDrag,
     onDragStart: onOvershootDragStart,
     onSnap: onOvershootSnap,
@@ -833,11 +836,7 @@ const CommandCenter = () => {
                     style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
                   >
                     <button
-                      {...fastClick(() => {
-                        // the lift starts in the same tick as the travel, so the two add up to one movement
-                        expand(sheetRef.current?.y.get() ?? 0)
-                        sheetRef.current?.snapTo(SNAP_EXPANDED)
-                      })}
+                      {...fastClick(() => sheetRef.current?.snapTo(SNAP_EXPANDED))}
                       data-testid='command-center-expand'
                       aria-label='Expand Command Center'
                       className={css({
