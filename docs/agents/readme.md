@@ -170,8 +170,9 @@ And the local half, which is almost entirely symlinks into the above — see [Ex
 ```
 AGENTS.md                            Read by Codex and Claude Code
 CLAUDE.md            → AGENTS.md
-.agents/skills/                      The shared subset, one symlink each
-└── <name>           → .github/skills/<name>
+.agents/skills/                      Shared skills and local skills
+├── <name>           → .github/skills/<name>   Shared skill symlink
+└── design-dials/                       Local visual tuning skill
 .claude/skills       → .agents/skills
 ```
 
