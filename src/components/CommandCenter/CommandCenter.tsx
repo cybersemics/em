@@ -68,8 +68,19 @@ const BOUNCE_PEAK_PER_VELOCITY = 0.023
 /** Below this release speed the gesture is a deliberate placement rather than a fling, and does not bounce. */
 const BOUNCE_MIN_VELOCITY = 300
 
-/** Seed for the expand chevron, which has no gesture velocity of its own. Sized for a ~30px peak. */
-const TAP_SEED_VELOCITY = -30 / BOUNCE_PEAK_PER_VELOCITY
+/** How close to the expanded stage a release must be, in px, for the bounce to take over the arrival. Releasing further down leaves travel for the Sheet's own tween, and a bounce layered on top of that reads as a second movement. */
+const BOUNCE_AT_TOP_EPSILON = 1
+
+/**
+ * Expand curve for the chevron. Rises to ~1.62 of the travel before settling at 1, so the drawer sails
+ * past the expanded stage and comes back down in one continuous motion.
+ *
+ * It has to be the easing of the travel itself rather than a separate animation that follows it: an
+ * ease-out tween stops dead at its target, so a bounce bolted onto the end reads as a second movement.
+ * Overshoot is a fraction of the travel, which for the chevron is always one stage offset — 1.72rem,
+ * inside the lift budget, and proportional to the font size like everything else here.
+ */
+const easeExpandOvershoot = [0.3, 2.2, 0.6, 1.75] as const
 
 /** Asymptotic resistance. Maps an unbounded drag past the expanded stage onto [0, max), so that the drawer keeps answering the finger without ever reaching the gap budget. */
 const rubberBand = (raw: number, max: number) => max * (1 - 1 / (raw / max + 1))
@@ -289,11 +300,6 @@ const useExpandBounce = ({
     [bounceY, maxLift, prefersReducedMotion],
   )
 
-  /** Arms a bounce for the next snap. Used by the expand chevron, whose tap carries no velocity. */
-  const seedBounce = useCallback((seed: number) => {
-    seedRef.current = seed
-  }, [])
-
   /** Classifies the gesture, so that scrolling the command list cannot be mistaken for dragging the drawer. */
   const onDragStart = useCallback(
     (e: MouseEvent | TouchEvent | PointerEvent) => {
@@ -341,10 +347,11 @@ const useExpandBounce = ({
       const seed = seedRef.current
       seedRef.current = 0
       rawRef.current = 0
-      const isFling = snapIndex === SNAP_EXPANDED && seed < -BOUNCE_MIN_VELOCITY
+      const isAtTop = (sheetRef.current?.y.get() ?? Infinity) <= BOUNCE_AT_TOP_EPSILON
+      const isFling = snapIndex === SNAP_EXPANDED && isAtTop && seed < -BOUNCE_MIN_VELOCITY
       if (isFling || bounceY.get() !== 0) bounce(isFling ? seed : 0)
     },
-    [bounce, bounceY],
+    [bounce, bounceY, sheetRef],
   )
 
   /** Clears the lift so that a reopen starts flat. */
@@ -354,7 +361,7 @@ const useExpandBounce = ({
     seedRef.current = 0
   }, [bounceY])
 
-  return { onDrag, onDragEnd, onDragStart, onSnap, reset, seedBounce }
+  return { onDrag, onDragEnd, onDragStart, onSnap, reset }
 }
 
 /**
@@ -387,6 +394,17 @@ const CommandCenter = () => {
   const snapPoints = useMemo(() => [0, -stageOffset, 1], [stageOffset])
 
   const [stage, setStage] = useState<'standard' | 'expanded'>('standard')
+  /**
+   * Whether the expand chevron is driving the current snap, which gives the travel an overshooting curve
+   * instead of the usual ease-out. The Sheet reads tweenConfig at the moment snapTo is called, so the flag
+   * has to land a render before the snap — hence the effect below rather than one tap handler.
+   */
+  const [isTapExpanding, setIsTapExpanding] = useState(false)
+
+  useEffect(() => {
+    if (isTapExpanding) sheetRef.current?.snapTo(SNAP_EXPANDED)
+  }, [isTapExpanding])
+
   const [isCommandTableMounted, setIsCommandTableMounted] = useState(false)
 
   /*
@@ -410,7 +428,6 @@ const CommandCenter = () => {
     onDragStart: onBounceDragStart,
     onSnap: onBounceSnap,
     reset: resetBounce,
-    seedBounce,
   } = useExpandBounce({ bounceY, fontSize, scrollerRef, sheetRef })
 
   // Disabling drag-to-collapse when the CommandTable's scroll position is not at the top.
@@ -460,6 +477,7 @@ const CommandCenter = () => {
     (snapIndex: number) => {
       setStage(snapIndex === SNAP_EXPANDED ? 'expanded' : 'standard')
       if (snapIndex !== SNAP_EXPANDED) scrollerRef.current?.scrollTo({ top: 0 })
+      setIsTapExpanding(false)
       onBounceSnap(snapIndex)
     },
     [onBounceSnap],
@@ -489,6 +507,7 @@ const CommandCenter = () => {
   const onCloseEnd = useCallback(() => {
     setIsCommandTableMounted(false)
     setStage('standard')
+    setIsTapExpanding(false)
     resetBounce()
   }, [resetBounce])
 
@@ -556,7 +575,7 @@ const CommandCenter = () => {
           avoidKeyboard={false}
           tweenConfig={{
             duration: durations.get('commandCenter') / 1000,
-            ease: isOpen ? easeOpen : easeClose,
+            ease: isTapExpanding ? easeExpandOvershoot : isOpen ? easeOpen : easeClose,
           }}
           style={{
             /** Override default Sheet zIndex. */
@@ -808,11 +827,7 @@ const CommandCenter = () => {
                     style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
                   >
                     <button
-                      {...fastClick(() => {
-                        // snapTo reports the snap on completion, so the armed seed fires once the drawer has arrived
-                        seedBounce(TAP_SEED_VELOCITY)
-                        sheetRef.current?.snapTo(SNAP_EXPANDED)
-                      })}
+                      {...fastClick(() => setIsTapExpanding(true))}
                       data-testid='command-center-expand'
                       aria-label='Expand Command Center'
                       className={css({
