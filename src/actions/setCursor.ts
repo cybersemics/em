@@ -140,6 +140,7 @@ const setCursor = (
           // set cursorOffset to null if editingValue is null
           // (prevents Editable from calling selection.set on click since we want the default cursor placement in that case)
           contextViews: newContextViews,
+          untrimmedCursorValue: null,
         }
       : null),
     // this is needed in particular for creating a new note, otherwise the cursor will disappear

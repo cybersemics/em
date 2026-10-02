@@ -75,7 +75,7 @@ it('"paste" from clipboard app into non-empty thought', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/5232
-it('trims a pasted trailing space when the thought is blurred', async () => {
+it('never stores a pasted trailing space, and shows it only until the thought is blurred', async () => {
   await dispatch([importText({ text: '- One two' })])
   await act(vi.runOnlyPendingTimersAsync)
 
@@ -94,14 +94,16 @@ it('trims a pasted trailing space when the thought is blurred', async () => {
   })
   await act(vi.runAllTimersAsync)
   expect(editable.textContent).toBe('One One ')
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - One One`)
 
   act(() => {
     editable.blur()
   })
   await act(vi.runAllTimersAsync)
 
-  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
-  expect(exported).toEqual(`- ${HOME_TOKEN}
+  expect(editable.textContent).toBe('One One')
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
   - One One`)
 })
 
