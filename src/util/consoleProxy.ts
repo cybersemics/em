@@ -6,7 +6,7 @@
  *
  * This is the app side, imported first by src/index.tsx. The WebdriverIO side — draining the buffer
  * and waiting for the proxy to install — lives in src/e2e/iOS/config/wdio.base.conf.ts, because it
- * needs WebdriverIO's global `browser`, whose types are declared only for src/e2e/iOS. The two sides
+ * needs WebdriverIO's global `browser`, whose types are declared only for the WebdriverIO programs (src/e2e/iOS, src/e2e/android). The two sides
  * share nothing but the storage key and the record shape exported here.
  */
 

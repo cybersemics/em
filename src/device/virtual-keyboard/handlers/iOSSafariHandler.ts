@@ -3,6 +3,7 @@ import _ from 'lodash'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
+import { registerReset } from '../../../stores/ministore'
 import viewportStore, { updateSize } from '../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
 import getSafeAreaBottom from '../getSafeAreaBottom'
@@ -101,5 +102,14 @@ const iOSSafariHandler: VirtualKeyboardHandler = {
     currentTargetHeight = null
   },
 }
+
+// Stop a running spring and forget its target at every test boundary. The listeners are left alone: they belong to
+// initEvents, whose cleanup calls destroy, and removing them here would leave its cached handlers believing they are
+// still registered.
+registerReset(() => {
+  controls?.stop()
+  controls = null
+  currentTargetHeight = null
+})
 
 export default iOSSafariHandler
