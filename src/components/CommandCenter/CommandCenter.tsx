@@ -1,5 +1,14 @@
 import _ from 'lodash'
-import { MotionValue, motion, useMotionTemplate, useTransform } from 'motion/react'
+import {
+  MotionValue,
+  PanInfo,
+  animate,
+  motion,
+  useMotionTemplate,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+} from 'motion/react'
 import pluralize from 'pluralize'
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Sheet, SheetRef, useScrollPosition } from 'react-modal-sheet'
@@ -42,6 +51,45 @@ const SNAP_EXPANDED = 2
 
 /** The height offset between the standard and expanded stages. */
 const STAGE_OFFSET_REM = 2.78
+
+/**************************************************************
+ * Expand bounce constants
+ **************************************************************/
+
+/** Peak lift a bounce may reach. The expanded stage's command list already extends CHEVRON_SECTION_HEIGHT_REM + STAGE_OFFSET_REM below the viewport, so staying under that budget lifts the drawer without opening a gap beneath it. */
+const BOUNCE_MAX_REM = 2
+
+/** The bounce spring. Physics keys rather than visualDuration/bounce: motion discards the inherited velocity for time-defined springs, which would make a velocity-seeded bounce a silent no-op. A damping ratio of ~0.7 gives one soft overshoot and no ringing. */
+const BOUNCE_SPRING = { type: 'spring', stiffness: 400, damping: 28, mass: 1 } as const
+
+/** Peak lift in px per px/s of seed velocity under BOUNCE_SPRING, from its analytic solution. Converts the lift budget into a velocity ceiling. */
+const BOUNCE_PEAK_PER_VELOCITY = 0.023
+
+/** Below this release speed the gesture is a deliberate placement rather than a fling, and does not bounce. */
+const BOUNCE_MIN_VELOCITY = 300
+
+/** Seed for the expand chevron, which has no gesture velocity of its own. Sized for a ~30px peak. */
+const TAP_SEED_VELOCITY = -30 / BOUNCE_PEAK_PER_VELOCITY
+
+/** Asymptotic resistance. Maps an unbounded drag past the expanded stage onto [0, max), so that the drawer keeps answering the finger without ever reaching the gap budget. */
+const rubberBand = (raw: number, max: number) => max * (1 - 1 / (raw / max + 1))
+
+/**
+ * Splits one drag frame into the part taken up as lift and the part that still moves the drawer.
+ *
+ * `raw` is the cumulative unresisted distance dragged past the expanded stage, and `deltaY` is this
+ * frame's finger movement, negative upward.
+ */
+const applyOvershootDrag = ({ deltaY, raw, y }: { deltaY: number; raw: number; y: number }) => {
+  if (deltaY < 0) {
+    const next = y + deltaY
+    // above the expanded stage the drawer absorbs y down to 0 and the lift takes the remainder
+    return next >= 0 ? { deltaY, raw } : { deltaY: -y, raw: raw - next }
+  }
+  // moving back down unwinds the lift before it moves the drawer again
+  const consumed = Math.min(deltaY, raw)
+  return { deltaY: deltaY - consumed, raw: raw - consumed }
+}
 
 /**************************************************************
  * Chevron section constants
@@ -119,7 +167,7 @@ const HiddenOverlay = () => {
  * calculated from `y` alone, and so is every animation. That way, the drawer can follow the finger
  * movement.
  */
-const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
+const useSheetTransforms = (ref: React.RefObject<SheetRef | null>, bounceY: MotionValue<number>) => {
   /*
    * Force a re-render once the Sheet ref is attached so that the motion transforms below re-run
    * their compute functions while ref.current is set, allowing them to subscribe to the sheet's
@@ -133,8 +181,10 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
     if (ref.current) setSheetReady(true)
   }, [ref])
 
+  // Subtracting the bounce lift (which is negative) keeps the falloff gradient and the blur glued to the
+  // drawer's top edge while it overshoots the expanded stage.
   const height = useTransform(() => {
-    return ref.current?.yInverted.get() ?? 0
+    return (ref.current?.yInverted.get() ?? 0) - bounceY.get()
   })
   /**
    * Controls the blur height, and the overlay opacity outside a collapse.
@@ -191,6 +241,123 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>) => {
 }
 
 /**
+ * The upward counterpart to the drawer's existing drag-past-the-snap bounce.
+ *
+ * The Sheet clamps its own `y` at the expanded stage, so the drawer cannot overshoot upward and has
+ * nothing to animate back from. `bounceY` is an extra translate that the Sheet never touches. The drag
+ * handler feeds it the part of the swipe the Sheet refuses, under rubber-band resistance, so the drawer
+ * stays with the finger above the expanded stage; the release springs it back, seeded with the gesture's
+ * own velocity so that a fling carries past 0 even when the finger never overshot.
+ */
+const useExpandBounce = ({
+  bounceY,
+  fontSize,
+  scrollerRef,
+  sheetRef,
+}: {
+  bounceY: MotionValue<number>
+  fontSize: number
+  scrollerRef: React.RefObject<HTMLDivElement | null>
+  sheetRef: React.RefObject<SheetRef | null>
+}) => {
+  const prefersReducedMotion = useReducedMotion()
+
+  /** Seed velocity for the bounce, held between the release and the snap that decides whether it fires. */
+  const seedRef = useRef(0)
+
+  /** Cumulative unresisted distance dragged past the expanded stage. The visible lift is this run through rubberBand. */
+  const rawRef = useRef(0)
+
+  /** Whether the current gesture started inside the expanded stage's command list. An upward swipe there scrolls the list, but the Sheet reports drag events for it all the same, so the drawer must not lift. */
+  const isListScrollRef = useRef(false)
+
+  const maxLift = Math.round(fontSize * BOUNCE_MAX_REM)
+
+  /** Springs the lift back to 0, seeded with an upward (negative) velocity so that it travels past 0 before settling. */
+  const bounce = useCallback(
+    (seed: number) => {
+      // durations are zero in e2e, where an animated bounce would only add flakiness
+      if (!durations.get('commandCenter') || prefersReducedMotion) {
+        bounceY.set(0)
+        return
+      }
+      // The budget left for the spring shrinks by whatever lift is already applied, so that a drag-time
+      // lift and the spring cannot stack past maxLift.
+      const ceiling = Math.max(maxLift - Math.abs(bounceY.get()), 0) / BOUNCE_PEAK_PER_VELOCITY
+      animate(bounceY, 0, { ...BOUNCE_SPRING, velocity: -Math.min(Math.abs(seed), ceiling) })
+    },
+    [bounceY, maxLift, prefersReducedMotion],
+  )
+
+  /** Arms a bounce for the next snap. Used by the expand chevron, whose tap carries no velocity. */
+  const seedBounce = useCallback((seed: number) => {
+    seedRef.current = seed
+  }, [])
+
+  /** Classifies the gesture, so that scrolling the command list cannot be mistaken for dragging the drawer. */
+  const onDragStart = useCallback(
+    (e: MouseEvent | TouchEvent | PointerEvent) => {
+      isListScrollRef.current = e.target instanceof Node && !!scrollerRef.current?.contains(e.target)
+      // the drag writes the lift directly, so a spring still settling from the last release must let go of it
+      bounceY.stop()
+    },
+    [bounceY, scrollerRef],
+  )
+
+  /**
+   * Lets the drawer follow the finger above the expanded stage.
+   *
+   * The Sheet clamps its own `y` at 0, so the part of the drag past that point is taken up as lift
+   * instead. The Sheet applies `y.set(y.get() + info.delta.y)` immediately after this handler returns,
+   * which is what the pre-compensation below accounts for: writing `y` here decides where that addition
+   * lands.
+   */
+  const onDrag = useCallback(
+    (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      const sheetY = sheetRef.current?.y
+      if (!sheetY || isListScrollRef.current) return
+      const y = sheetY.get()
+      const next = applyOvershootDrag({ deltaY: info.delta.y, raw: rawRef.current, y })
+      if (next.deltaY !== info.delta.y) sheetY.set(y + next.deltaY - info.delta.y)
+      rawRef.current = next.raw
+      bounceY.set(-rubberBand(next.raw, maxLift))
+    },
+    [bounceY, maxLift, sheetRef],
+  )
+
+  /** Holds the release velocity until the snap reports which stage the gesture landed on. */
+  const onDragEnd = useCallback((_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    seedRef.current = isListScrollRef.current ? 0 : info.velocity.y
+  }, [])
+
+  /**
+   * Settles the lift on release, carrying it past 0 when the gesture both expanded the drawer and was
+   * fast enough to read as a fling. A slow release still has to unwind whatever lift the finger left.
+   * The Sheet calls onSnap once the destination stage is decided and before it animates there, which is
+   * both the earliest point at which the destination is known and late enough to need no scheduling.
+   */
+  const onSnap = useCallback(
+    (snapIndex: number) => {
+      const seed = seedRef.current
+      seedRef.current = 0
+      rawRef.current = 0
+      const isFling = snapIndex === SNAP_EXPANDED && seed < -BOUNCE_MIN_VELOCITY
+      if (isFling || bounceY.get() !== 0) bounce(isFling ? seed : 0)
+    },
+    [bounce, bounceY],
+  )
+
+  /** Clears the lift so that a reopen starts flat. */
+  const reset = useCallback(() => {
+    bounceY.set(0)
+    rawRef.current = 0
+    seedRef.current = 0
+  }, [bounceY])
+
+  return { onDrag, onDragEnd, onDragStart, onSnap, reset, seedBounce }
+}
+
+/**
  * A panel that displays the Command Center.
  */
 const CommandCenter = () => {
@@ -200,7 +367,12 @@ const CommandCenter = () => {
   const isTutorialOn = useSelector(isTutorial)
   const fontSize = useSelector(state => state.fontSize)
   const sheetRef = useRef<SheetRef>(null)
-  const { height, opacity, blurHeight, stageProgress, onDragStart, clearExpandedSnap } = useSheetTransforms(sheetRef)
+  /** Lift above the expanded stage, driven by the bounce. Owned here because the falloff gradient derives from it as well. */
+  const bounceY = useMotionValue(0)
+  const { height, opacity, blurHeight, stageProgress, onDragStart, clearExpandedSnap } = useSheetTransforms(
+    sheetRef,
+    bounceY,
+  )
 
   const backgroundGlow = backgroundGlowStore.useState()
 
@@ -231,6 +403,15 @@ const CommandCenter = () => {
     },
     [scrollRef],
   )
+
+  const {
+    onDrag: onBounceDrag,
+    onDragEnd: onBounceDragEnd,
+    onDragStart: onBounceDragStart,
+    onSnap: onBounceSnap,
+    reset: resetBounce,
+    seedBounce,
+  } = useExpandBounce({ bounceY, fontSize, scrollerRef, sheetRef })
 
   // Disabling drag-to-collapse when the CommandTable's scroll position is not at the top.
   // This ensures that the drag-to-collapse gesture does not conflict with scrolling the list.
@@ -275,10 +456,23 @@ const CommandCenter = () => {
   }, [dispatch])
 
   /** Records the stage the drawer settled on, and reset the command list's scroll position so the next expand starts at the top. */
-  const onSnap = useCallback((snapIndex: number) => {
-    setStage(snapIndex === SNAP_EXPANDED ? 'expanded' : 'standard')
-    if (snapIndex !== SNAP_EXPANDED) scrollerRef.current?.scrollTo({ top: 0 })
-  }, [])
+  const onSnap = useCallback(
+    (snapIndex: number) => {
+      setStage(snapIndex === SNAP_EXPANDED ? 'expanded' : 'standard')
+      if (snapIndex !== SNAP_EXPANDED) scrollerRef.current?.scrollTo({ top: 0 })
+      onBounceSnap(snapIndex)
+    },
+    [onBounceSnap],
+  )
+
+  /** The overlay hold and the bounce's gesture classifier both key off where the drag began. */
+  const onSheetDragStart = useCallback(
+    (e: MouseEvent | TouchEvent | PointerEvent) => {
+      onDragStart()
+      onBounceDragStart(e)
+    },
+    [onBounceDragStart, onDragStart],
+  )
 
   // mount the CommandTable only when the Command Center is open, to avoid unnecessary renders and state updates when it is closed
   const onOpenEnd = useCallback(() => {
@@ -295,7 +489,8 @@ const CommandCenter = () => {
   const onCloseEnd = useCallback(() => {
     setIsCommandTableMounted(false)
     setStage('standard')
-  }, [])
+    resetBounce()
+  }, [resetBounce])
 
   useEffect(() => {
     if (isTouch && showCommandCenter && showSidebar) onClose()
@@ -351,7 +546,9 @@ const CommandCenter = () => {
           onSnap={onSnap}
           onOpenEnd={onOpenEnd}
           onCloseEnd={onCloseEnd}
-          onDragStart={onDragStart}
+          onDragStart={onSheetDragStart}
+          onDrag={onBounceDrag}
+          onDragEnd={onBounceDragEnd}
           /** Must be onCloseStart rather than onClose: the Done button and the swipe-down gesture dismiss the drawer by clearing the multicursors in Redux and never call onClose, so releasing the hold there would leave the overlay at full opacity for the whole dismiss animation. */
           onCloseStart={clearExpandedSnap}
           disableDismiss={stage === 'expanded'}
@@ -440,179 +637,47 @@ const CommandCenter = () => {
               zIndex: 'auto',
             }}
           >
-            <Sheet.Header
+            <motion.div
+              /** Carries the expand bounce. Sheet.Container cannot: the Sheet overwrites its transform. Repeats the container's flex column so the layout is unchanged, and keeps its own compositor layer, since this subtree has blanked for a frame on Android WebView when animated beside a backdrop-filter. */
               className={css({
-                position: 'relative',
-                marginBottom: '0.889rem',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: 0,
+                width: '100%',
               })}
+              style={{ y: bounceY, willChange: 'transform' }}
             >
-              <motion.div
-                /** The chevron strip, floating above the drawer's top edge over the falloff gradient. Full width so that it is part of the band rather than a button-sized island in it, and inert in the standard stage, where it would otherwise eat taps on the thoughtspace behind it. */
-                className={css({
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  bottom: '100%',
-                  display: 'flex',
-                  justifyContent: 'center',
-                })}
-                style={{ opacity: expandedViewOpacity, pointerEvents: expandedPointerEvents }}
-              >
-                <button
-                  {...fastClick(() => sheetRef.current?.snapTo(SNAP_STANDARD))}
-                  data-testid='command-center-collapse'
-                  aria-label='Collapse Command Center'
-                  className={css({
-                    all: 'unset',
-                    display: 'block',
-                    cursor: 'pointer',
-                    padding: '0.556rem 1.333rem',
-                  })}
-                >
-                  <ChevronIcon
-                    direction='down'
-                    width={CHEVRON_WIDTH}
-                    height={CHEVRON_HEIGHT}
-                    fill={CHEVRON_COLOR}
-                    rounded
-                    stretch
-                  />
-                </button>
-              </motion.div>
-              <div
-                className={css({
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                  justifyContent: 'space-between',
-                  /** The inset the row used to inherit from the content root, which it no longer lives in. It sits here rather than on the band so the band stays full-bleed. */
-                  margin: '0 1.333rem',
-                })}
-              >
-                <MultiselectMessage />
-                <motion.button
-                  {...fastClick(onClose)}
-                  data-testid='command-center-done'
-                  className={css({
-                    all: 'unset',
-                    fontSize: '0.85em',
-                    fontWeight: 500,
-                    letterSpacing: '-0.011em',
-                    color: 'fg',
-                    opacity: 0.5,
-                    borderRadius: 46,
-                    cursor: 'pointer',
-                    padding: '8px 16px',
-                    background: 'commandCenterDoneButton',
-                  })}
-                  style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
-                >
-                  Done
-                </motion.button>
-              </div>
-            </Sheet.Header>
-            <Sheet.Content
-              className={css({
-                overflow: 'visible',
-              })}
-              disableDrag={isDragDisabled}
-              /** The Sheet's own scroller is not used, and its default `pan-down` would intersect with the expanded stage's scroll container and stop it scrolling upward. */
-              scrollStyle={{ touchAction: 'auto' }}
-            >
-              <div
+              <Sheet.Header
                 className={css({
                   position: 'relative',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  margin: '0 1.333rem',
-                  gap: '0.889rem',
+                  marginBottom: '0.889rem',
                 })}
-                style={{
-                  // Apply extra padding to the bottom of the content to account for the safe area and the chevron section.
-                  // However, safeAreaBottom is not always available (e.g, in a browser).
-                  // So we use `max()` to apply a minimum padding to prevent the chevron from sitting too close
-                  // to the bottom of the screen.
-                  paddingBottom: `calc(1.333rem + max(${token('spacing.safeAreaBottom')}, 0.889rem) + ${CHEVRON_SECTION_HEIGHT_REM}rem)`,
-                }}
               >
-                <div className={css({ position: 'relative' })}>
-                  <motion.div
-                    className={css({
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(4, 1fr)',
-                      gridTemplateRows: 'auto',
-                      gridAutoFlow: 'row',
-                      gap: '0.622rem',
-                      gridRowGap: '0.889rem',
-                    })}
-                    style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
-                  >
-                    <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
-                    <PanelCommand command={note} size='small' />
-                    <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
-                    <PanelCommand command={deleteCommand} size='small' />
-                    <PanelCommandGroup commandSize='small' commandCount={2}>
-                      <PanelCommand command={{ ...outdent, label: '' }} size='small' />
-                      <PanelCommand command={{ ...indent, label: '' }} size='small' />
-                    </PanelCommandGroup>
-                    <PanelCommand command={swapParent} size='medium' />
-                    <PanelCommand command={categorize} size='medium' />
-                    <PanelCommand command={uncategorize} size='medium' />
-                  </motion.div>
-                  <motion.div
-                    /** Overlays the command grid, extending down over the chevron band and into the region that the standard stage leaves below the screen. Absolutely positioned so that it cannot change the measured sheet height, which the snap points are computed from. */
-                    className={css({
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      display: 'flex',
-                      minHeight: 0,
-                    })}
-                    style={{
-                      opacity: expandedViewOpacity,
-                      pointerEvents: expandedPointerEvents,
-                      // Set a negative bottom value to allow content to extend into the hidden chevron
-                      // area instead of stopping at the visible edge.
-                      bottom: `calc(-1 * (${CHEVRON_SECTION_HEIGHT_REM}rem + ${STAGE_OFFSET_REM}rem))`,
-                    }}
-                  >
-                    <div
-                      ref={setScrollerRef}
-                      data-testid='command-center-expanded-content'
-                      className={css({
-                        flex: 1,
-                        minHeight: 0,
-                        overflowY: 'auto',
-                        /** Keeps an overscroll here from chaining to the page body, which preventTouchMoveRef no longer guards. */
-                        overscrollBehavior: 'contain',
-                      })}
-                    >
-                      {isCommandTableMounted && <CommandTable />}
-                    </div>
-                  </motion.div>
-                </div>
                 <motion.div
-                  /** The chevron band: the full-width strip at the bottom edge of the standard stage, just above the safe area inset. It is full width rather than just the button so that a thumb swipe landing beside the arrow still falls on the band, which is where the expand affordance reads as being. */
+                  /** The chevron strip, floating above the drawer's top edge over the falloff gradient. Full width so that it is part of the band rather than a button-sized island in it, and inert in the standard stage, where it would otherwise eat taps on the thoughtspace behind it. */
                   className={css({
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: '100%',
                     display: 'flex',
-                    alignItems: 'center',
                     justifyContent: 'center',
                   })}
-                  style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
+                  style={{ opacity: expandedViewOpacity, pointerEvents: expandedPointerEvents }}
                 >
                   <button
-                    {...fastClick(() => sheetRef.current?.snapTo(SNAP_EXPANDED))}
-                    data-testid='command-center-expand'
-                    aria-label='Expand Command Center'
+                    {...fastClick(() => sheetRef.current?.snapTo(SNAP_STANDARD))}
+                    data-testid='command-center-collapse'
+                    aria-label='Collapse Command Center'
                     className={css({
                       all: 'unset',
                       display: 'block',
                       cursor: 'pointer',
-                      padding: '0.222rem 1.333rem',
+                      padding: '0.556rem 1.333rem',
                     })}
                   >
                     <ChevronIcon
-                      direction='up'
+                      direction='down'
                       width={CHEVRON_WIDTH}
                       height={CHEVRON_HEIGHT}
                       fill={CHEVRON_COLOR}
@@ -621,8 +686,155 @@ const CommandCenter = () => {
                     />
                   </button>
                 </motion.div>
-              </div>
-            </Sheet.Content>
+                <div
+                  className={css({
+                    display: 'flex',
+                    alignItems: 'flex-end',
+                    justifyContent: 'space-between',
+                    /** The inset the row used to inherit from the content root, which it no longer lives in. It sits here rather than on the band so the band stays full-bleed. */
+                    margin: '0 1.333rem',
+                  })}
+                >
+                  <MultiselectMessage />
+                  <motion.button
+                    {...fastClick(onClose)}
+                    data-testid='command-center-done'
+                    className={css({
+                      all: 'unset',
+                      fontSize: '0.85em',
+                      fontWeight: 500,
+                      letterSpacing: '-0.011em',
+                      color: 'fg',
+                      opacity: 0.5,
+                      borderRadius: 46,
+                      cursor: 'pointer',
+                      padding: '8px 16px',
+                      background: 'commandCenterDoneButton',
+                    })}
+                    style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
+                  >
+                    Done
+                  </motion.button>
+                </div>
+              </Sheet.Header>
+              <Sheet.Content
+                className={css({
+                  overflow: 'visible',
+                })}
+                disableDrag={isDragDisabled}
+                /** The Sheet's own scroller is not used, and its default `pan-down` would intersect with the expanded stage's scroll container and stop it scrolling upward. */
+                scrollStyle={{ touchAction: 'auto' }}
+              >
+                <div
+                  className={css({
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    margin: '0 1.333rem',
+                    gap: '0.889rem',
+                  })}
+                  style={{
+                    // Apply extra padding to the bottom of the content to account for the safe area and the chevron section.
+                    // However, safeAreaBottom is not always available (e.g, in a browser).
+                    // So we use `max()` to apply a minimum padding to prevent the chevron from sitting too close
+                    // to the bottom of the screen.
+                    paddingBottom: `calc(1.333rem + max(${token('spacing.safeAreaBottom')}, 0.889rem) + ${CHEVRON_SECTION_HEIGHT_REM}rem)`,
+                  }}
+                >
+                  <div className={css({ position: 'relative' })}>
+                    <motion.div
+                      className={css({
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(4, 1fr)',
+                        gridTemplateRows: 'auto',
+                        gridAutoFlow: 'row',
+                        gap: '0.622rem',
+                        gridRowGap: '0.889rem',
+                      })}
+                      style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
+                    >
+                      <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
+                      <PanelCommand command={note} size='small' />
+                      <PanelCommand command={{ ...favorite, label: 'Favorite' }} size='small' />
+                      <PanelCommand command={deleteCommand} size='small' />
+                      <PanelCommandGroup commandSize='small' commandCount={2}>
+                        <PanelCommand command={{ ...outdent, label: '' }} size='small' />
+                        <PanelCommand command={{ ...indent, label: '' }} size='small' />
+                      </PanelCommandGroup>
+                      <PanelCommand command={swapParent} size='medium' />
+                      <PanelCommand command={categorize} size='medium' />
+                      <PanelCommand command={uncategorize} size='medium' />
+                    </motion.div>
+                    <motion.div
+                      /** Overlays the command grid, extending down over the chevron band and into the region that the standard stage leaves below the screen. Absolutely positioned so that it cannot change the measured sheet height, which the snap points are computed from. */
+                      className={css({
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        display: 'flex',
+                        minHeight: 0,
+                      })}
+                      style={{
+                        opacity: expandedViewOpacity,
+                        pointerEvents: expandedPointerEvents,
+                        // Set a negative bottom value to allow content to extend into the hidden chevron
+                        // area instead of stopping at the visible edge.
+                        bottom: `calc(-1 * (${CHEVRON_SECTION_HEIGHT_REM}rem + ${STAGE_OFFSET_REM}rem))`,
+                      }}
+                    >
+                      <div
+                        ref={setScrollerRef}
+                        data-testid='command-center-expanded-content'
+                        className={css({
+                          flex: 1,
+                          minHeight: 0,
+                          overflowY: 'auto',
+                          /** Keeps an overscroll here from chaining to the page body, which preventTouchMoveRef no longer guards. */
+                          overscrollBehavior: 'contain',
+                        })}
+                      >
+                        {isCommandTableMounted && <CommandTable />}
+                      </div>
+                    </motion.div>
+                  </div>
+                  <motion.div
+                    /** The chevron band: the full-width strip at the bottom edge of the standard stage, just above the safe area inset. It is full width rather than just the button so that a thumb swipe landing beside the arrow still falls on the band, which is where the expand affordance reads as being. */
+                    className={css({
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    })}
+                    style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
+                  >
+                    <button
+                      {...fastClick(() => {
+                        // snapTo reports the snap on completion, so the armed seed fires once the drawer has arrived
+                        seedBounce(TAP_SEED_VELOCITY)
+                        sheetRef.current?.snapTo(SNAP_EXPANDED)
+                      })}
+                      data-testid='command-center-expand'
+                      aria-label='Expand Command Center'
+                      className={css({
+                        all: 'unset',
+                        display: 'block',
+                        cursor: 'pointer',
+                        padding: '0.222rem 1.333rem',
+                      })}
+                    >
+                      <ChevronIcon
+                        direction='up'
+                        width={CHEVRON_WIDTH}
+                        height={CHEVRON_HEIGHT}
+                        fill={CHEVRON_COLOR}
+                        rounded
+                        stretch
+                      />
+                    </button>
+                  </motion.div>
+                </div>
+              </Sheet.Content>
+            </motion.div>
           </Sheet.Container>
         </Sheet>
       </>
