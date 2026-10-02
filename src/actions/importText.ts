@@ -51,8 +51,12 @@ const htmlToSingleLineText = (html: string): string => {
   template.innerHTML = html
   template.content.querySelectorAll('script, style').forEach(element => element.remove())
   template.content.querySelectorAll(SEPARATING_ELEMENTS).forEach(element => element.after(' '))
-  // collapse the whitespace in the extracted text, including the newlines of a <pre>, since a thought is a single line
-  const text = (template.content.textContent ?? '').replace(/\s+/g, ' ').trim()
+  // Collapse the whitespace that HTML collapses, including the newlines of a <pre>, since a thought is a single line.
+  // Other Unicode spaces, such as an ideographic or narrow no-break space, are text and are kept. Each no-break space becomes a normal space, as in strip.
+  const text = (template.content.textContent ?? '')
+    .replace(/[ \t\n\r\f]+/g, ' ')
+    .replaceAll('\u00a0', ' ')
+    .trim()
   return escapeHtml(text)
 }
 

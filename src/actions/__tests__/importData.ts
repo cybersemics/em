@@ -1323,6 +1323,27 @@ it('keep escaped markup as text when stripping formatting from single-line HTML'
   expect(value).toBe('a&lt;b&gt;bold&lt;/b&gt; &amp; more')
 })
 
+// https://github.com/cybersemics/em/issues/4161
+it('keep the spacing of the text when stripping formatting from single-line HTML', async () => {
+  const html = `<p style="font-family: sans-serif;">東京\u3000大阪 a&nbsp;&nbsp;b 10\u202f%</p>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: '東京\u3000大阪 a\u00a0\u00a0b 10\u202f%' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('a東京\u3000大阪 a  b 10\u202f%')
+})
+
 it('do not insert html with newlines as a single-line', async () => {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
