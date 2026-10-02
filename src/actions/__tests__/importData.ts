@@ -1301,6 +1301,28 @@ it('separate the text of adjacent block elements when stripping formatting from 
   expect(value).toBe('aHeading here Some para text')
 })
 
+// https://github.com/cybersemics/em/issues/4161
+it('keep escaped markup as text when stripping formatting from single-line HTML', async () => {
+  // a code block on a web page that shows HTML source, as Chrome writes it to the clipboard
+  const html = `<pre style="background-color: rgb(246, 248, 250);"><code>&lt;b&gt;bold&lt;/b&gt; &amp; more</code></pre>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: '&lt;b&gt;bold&lt;/b&gt; &amp; more' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('a&lt;b&gt;bold&lt;/b&gt; &amp; more')
+})
+
 it('do not insert html with newlines as a single-line', async () => {
   const html = `<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>

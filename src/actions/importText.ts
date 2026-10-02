@@ -1,3 +1,4 @@
+import { escape as escapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -30,7 +31,6 @@ import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
 import splitHtmlAtTextOffset from '../util/splitHtmlAtTextOffset'
-import strip from '../util/strip'
 import textToHtml from '../util/textToHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
@@ -41,9 +41,20 @@ import uncategorize from './uncategorize'
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
 
-/** Matches the closing tag of a block element. */
-const REGEX_BLOCK_END_TAG =
-  /<\/(address|article|aside|blockquote|dd|div|dl|dt|figcaption|figure|footer|h[1-6]|header|li|ol|p|pre|section|table|td|th|tr|ul)>/gi
+/** Elements that separate the text on either side of them, so their text must not run into that of their siblings when the formatting is stripped. */
+const SEPARATING_ELEMENTS =
+  'address, article, aside, blockquote, br, dd, div, dl, dt, figcaption, figure, footer, h1, h2, h3, h4, h5, h6, header, hr, li, ol, p, pre, section, table, td, th, tr, ul'
+
+/** Reduces an HTML fragment to its escaped text on a single line. The fragment is parsed into an inert template, so that its scripts do not run and its images do not load, and the text is read from the parsed nodes rather than matched out of the markup. */
+const htmlToSingleLineText = (html: string): string => {
+  const template = document.createElement('template')
+  template.innerHTML = html
+  template.content.querySelectorAll('script, style').forEach(element => element.remove())
+  template.content.querySelectorAll(SEPARATING_ELEMENTS).forEach(element => element.after(' '))
+  // collapse the whitespace in the extracted text, including the newlines of a <pre>, since a thought is a single line
+  const text = (template.content.textContent ?? '').replace(/\s+/g, ' ').trim()
+  return escapeHtml(text)
+}
 
 export interface ImportTextPayload {
   caretPosition?: number
@@ -129,10 +140,7 @@ const importText = (
           )
         : destValue
 
-    // separate the text of adjacent block elements, which strip would otherwise run together, and join them with a space since a thought is a single line
-    const insertedText = stripFormatting
-      ? strip(text.replace(REGEX_BLOCK_END_TAG, '$&\n')).replace(/\s*\n\s*/g, ' ')
-      : text
+    const insertedText = stripFormatting ? htmlToSingleLineText(text) : text
     const insertOffset = replaceStart ?? caretPosition
     const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedText)
     const newValue = addEmojiSpace(combinedValue)
