@@ -89,7 +89,8 @@ function getEditThoughtDirection(action: UnknownAction): EditThoughtDirection {
  * dismissKeyboard paths may.
  * The selectionOffsets snapshot is likewise device state: it records where the browser selection was before a UI took
  * the focus, so restoring the one that happened to be current when an action was undone would resurrect a selection
- * the user has long since moved on from. */
+ * the user has long since moved on from.
+ * The untrimmedCursorValue is a render-only overlay on the cursor thought's value, not part of it. */
 const statePropertiesToOmit: (keyof State)[] = [
   'alert',
   'cursorCleared',
@@ -97,6 +98,7 @@ const statePropertiesToOmit: (keyof State)[] = [
   'isKeyboardOpen',
   'pushQueue',
   'selectionOffsets',
+  'untrimmedCursorValue',
 ]
 
 /** Reconstructs TreeCRDT move updates and placement metadata from the final state produced by an undo/redo patch. */

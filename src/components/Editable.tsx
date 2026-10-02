@@ -19,6 +19,7 @@ import { newThoughtActionCreator as newThought } from '../actions/newThought'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
 import { tutorialNextActionCreator as tutorialNext } from '../actions/tutorialNext'
+import { untrimmedCursorValueActionCreator as untrimmedCursorValue } from '../actions/untrimmedCursorValue'
 import { isSafari, isTouch } from '../browser'
 import { commandEmitter } from '../commands'
 import {
@@ -197,6 +198,12 @@ const Editable = ({
   }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
+  // A paste's leading and trailing whitespace, which is shown while editing but trimmed from the value (#5232).
+  const untrimmedValue = useSelector(state =>
+    isEditing && state.untrimmedCursorValue !== null && trimHtml(state.untrimmedCursorValue) === value
+      ? state.untrimmedCursorValue
+      : null,
+  )
   const generating = useSelector(state => !!getThoughtById(state, head(simplePath))?.generating)
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const isCursorCleared = useSelector(
@@ -904,6 +911,10 @@ const Editable = ({
       // (#4692).
       if (editableSyncStore.getState().suppressBlurSync) return
 
+      // Pasted whitespace is shown only until editing ends, after which the editable is resynced to the trimmed value
+      // below (#5232).
+      dispatch(untrimmedCursorValue({ value: null }))
+
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
       // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
       // oldValueRef.current is the latest value since throttledChangeRef was just flushed
@@ -1221,7 +1232,7 @@ const Editable = ({
   // thought still has its value, which is shown as a placeholder.
   // Emoji spans are display-only and removed before the value is stored.
   // See wrapGeneratingEmoji and unwrapGeneratingEmoji.
-  const displayedValue = isEditing ? value : (childrenLabel ?? value)
+  const displayedValue = isEditing ? (untrimmedValue ?? value) : (childrenLabel ?? value)
   const html =
     value === EM_TOKEN
       ? '<b>em</b>'

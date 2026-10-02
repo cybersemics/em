@@ -31,11 +31,13 @@ import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
 import splitHtmlAtTextOffset from '../util/splitHtmlAtTextOffset'
 import textToHtml from '../util/textToHtml'
+import trimHtml from '../util/trimHtml'
 import unroot from '../util/unroot'
 import validateRoam from '../util/validateRoam'
 import editableRender from './editableRender'
 import newThought from './newThought'
 import uncategorize from './uncategorize'
+import untrimmedCursorValue from './untrimmedCursorValue'
 
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
@@ -123,6 +125,7 @@ const importText = (
     const insertOffset = replaceStart ?? caretPosition
     const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, text)
     const newValue = addEmojiSpace(combinedValue)
+    const trimmedValue = trimHtml(newValue)
     // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
     const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(text).length
     const emojiSpaceInsertionOffset = newValue === combinedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
@@ -138,7 +141,7 @@ const importText = (
       editableRender,
       editThought({
         oldValue: destValue,
-        newValue,
+        newValue: trimmedValue,
         path: simplePath,
       }),
 
@@ -148,6 +151,9 @@ const importText = (
             offset,
           })
         : null,
+
+      // The caret offset is measured against the untrimmed value, which the editable keeps showing until editing ends.
+      !preventSetCursor && path ? untrimmedCursorValue({ value: trimmedValue !== newValue ? newValue : null }) : null,
     ])(state)
   } else {
     const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText) as RoamPage[]) : htmlToJson(convertedText)

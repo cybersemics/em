@@ -194,6 +194,13 @@ interface State {
   transientFocus?: boolean
   /** Undo history. Contains diffs that can be applied to State to revert actions. State.undoPatches[0] is the oldest. */
   undoPatches: Patch[]
+  /**
+   * Set by a single-line paste whose value was trimmed before it was stored. The cursor thought's editable renders it
+   * in place of the thought's value, so that the pasted leading and trailing whitespace stays visible while editing
+   * but never enters the thought (#5232). Ignored once the thought's value no longer matches it, and cleared when the
+   * cursor moves or the editable blurs.
+   */
+  untrimmedCursorValue: string | null
 }
 
 export default State
