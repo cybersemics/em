@@ -9,6 +9,7 @@ const virtualKeyboardStore = reactMinistore<VirtualKeyboardState>({
   height: 0,
   openPercent: 0,
   phase: undefined,
+  motion: undefined,
 })
 
 // Sync the store's height to CSS custom properties outside of React, so

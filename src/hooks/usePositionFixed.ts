@@ -1,3 +1,4 @@
+import { RefObject, useLayoutEffect } from 'react'
 import { isCapacitor, isSafari } from '../browser'
 import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
@@ -27,6 +28,7 @@ const usePositionFixed = ({
   fromBottom,
   offset = 0,
   height,
+  elementRefs,
 }: {
   /** Anchor position for the element. */
   fromBottom?: boolean
@@ -34,22 +36,43 @@ const usePositionFixed = ({
   offset?: number
   /** The height of the container, used to calculate the bottom offset on mobile safari. Only use with `fromBottom`. */
   height?: number
+  /** Elements positioned with these styles. Enables timed compositor motion when the keyboard supplies it. */
+  elementRefs?: readonly RefObject<HTMLElement | null>[]
 } = {}): {
   position: 'fixed' | 'absolute'
   top?: string
   bottom?: string
+  translate?: string
+  willChange?: string
 } => {
-  const virtualKeyboard = virtualKeyboardStore.useState()
+  const keyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
+  const motion = virtualKeyboardStore.useSelector(state => (fromBottom && elementRefs ? state.motion : undefined))
 
   // On iOS Safari, emulate `position: fixed` using absolute positioning when the virtual keyboard is open.
-  const position = virtualKeyboard.open && isSafari() && !isCapacitor() ? 'absolute' : 'fixed'
+  const position = keyboardOpen && isSafari() && !isCapacitor() ? 'absolute' : 'fixed'
 
   // Only subscribe to scroll events when emulating with position: fixed. mode — in fixed mode, scroll position
   // is irrelevant and listening would cause unnecessary re-renders.
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
   const { innerHeight } = viewportStore.useState()
 
-  let top, bottom
+  useLayoutEffect(() => {
+    if (!motion || !elementRefs || position !== 'fixed' || motion.duration <= 0) return
+    const frames = motion.heights.map((height, index) => ({
+      offset: index / (motion.heights.length - 1),
+      translate: `0 ${-height}px`,
+    }))
+    const startedAt = performance.now() - (Date.now() - motion.startedAt)
+    const animations = elementRefs.flatMap(ref => {
+      if (!ref.current) return []
+      const animation = ref.current.animate(frames, { duration: motion.duration, fill: 'both' })
+      animation.startTime = startedAt
+      return [animation]
+    })
+    return () => animations.forEach(animation => animation.cancel())
+  }, [elementRefs, motion, position])
+
+  let top, bottom, translate
 
   // Calculate `top` values for absolute positioning (emulating `position: fixed`)
   if (position === 'absolute') {
@@ -65,8 +88,9 @@ const usePositionFixed = ({
       // Then subtract the element's own height and offset if provided by the caller, and subtract the
       // safe-area-bottom inset so the element doesn't overlap the rounded-screen home indicator.
       //
-      const visibleBottom = Math.min(document.body.scrollHeight, scrollTop + innerHeight - virtualKeyboard.height)
-      top = `calc(${visibleBottom - (height ?? 0) - offset}px - env(safe-area-inset-bottom))`
+      // Read animated height from CSS so each keyboard frame can move the element without a React render.
+      const visibleBottom = `min(${document.body.scrollHeight}px, ${scrollTop + innerHeight}px - var(--virtual-keyboard-height, 0px))`
+      top = `calc(${visibleBottom} - ${(height ?? 0) + offset}px - env(safe-area-inset-bottom))`
     } else {
       // fromTop
       // Position the element at the top of the visible area.
@@ -82,7 +106,9 @@ const usePositionFixed = ({
       // Normal fixed positioning anchored to the bottom — safe-area-bottom keeps the element
       // above the home indicator on rounded screens, and virtualKeyboard.height pushes it
       // above the keyboard when open.
-      bottom = `calc(env(safe-area-inset-bottom) + ${virtualKeyboard.height}px + ${offset}px)`
+      bottom = `calc(env(safe-area-inset-bottom) + ${offset}px)`
+      // Translation can run on the compositor; changing bottom requires layout on every keyboard frame.
+      translate = '0 calc(-1 * var(--virtual-keyboard-height, 0px))'
     } else {
       // fromTop
       // Normal fixed positioning anchored to the top — safe-area-top keeps the element
@@ -95,6 +121,10 @@ const usePositionFixed = ({
     position: position ?? 'fixed',
     top,
     bottom,
+    ...(translate && {
+      translate,
+      willChange: 'transform',
+    }),
   }
 }
 

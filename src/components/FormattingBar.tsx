@@ -1,5 +1,5 @@
 import { animate, useMotionValue, useTransform } from 'motion/react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { toggleFormattingBarActionCreator as toggleFormattingBar } from '../actions/toggleFormattingBar'
@@ -66,6 +66,73 @@ const keepEditableFocused = (handler: () => void) =>
         onMouseDown: (e: React.MouseEvent) => e.preventDefault(),
       }
 
+/** Displays keyboard diagnostics without re-rendering the Formatting Bar on every animation frame. */
+const VirtualKeyboardDebugOverlay = ({ isOpen, isAnimating }: { isOpen: boolean; isAnimating: boolean }) => {
+  const vkState = virtualKeyboardStore.useState()
+  return (
+    <div
+      className={css({
+        position: 'fixed',
+        top: '0.5rem',
+        left: '0.5rem',
+        zIndex: 'dialog',
+        pointerEvents: 'none',
+        fontFamily: 'monospace',
+        fontSize: '11px',
+        lineHeight: '1.4',
+        padding: '0.5rem',
+        borderRadius: '6px',
+      })}
+      style={{
+        background: 'rgba(0, 0, 0, 0.75)',
+        color: 'rgba(255, 255, 255, 0.85)',
+      }}
+    >
+      <div
+        style={{
+          marginBottom: 2,
+          fontWeight: 'bold',
+          color: 'rgba(150, 200, 255, 0.9)',
+        }}
+      >
+        VirtualKeyboardStore
+      </div>
+      <div>open: {String(vkState.open)}</div>
+      <div>height: {vkState.height.toFixed(1)}px</div>
+      <div>openPercent: {vkState.openPercent.toFixed(2)}</div>
+      <div
+        style={{
+          marginTop: 4,
+          borderTop: '1px solid rgba(255,255,255,0.2)',
+          paddingTop: 4,
+          fontWeight: 'bold',
+          color: 'rgba(150, 200, 255, 0.9)',
+        }}
+      >
+        CSS Custom Properties
+      </div>
+      <div>
+        --virtual-keyboard-height:{' '}
+        {document.documentElement.style.getPropertyValue('--virtual-keyboard-height') || '(unset)'}
+      </div>
+      <div>
+        --virtual-keyboard-open-percent:{' '}
+        {document.documentElement.style.getPropertyValue('--virtual-keyboard-open-percent') || '(unset)'}
+      </div>
+      <div
+        style={{
+          marginTop: 4,
+          borderTop: '1px solid rgba(255,255,255,0.2)',
+          paddingTop: 4,
+        }}
+      >
+        barOpen: {String(isOpen)}
+      </div>
+      <div>animating: {String(isAnimating)}</div>
+    </div>
+  )
+}
+
 /** The Formatting Bar is a mobile-only component displayed above the virtual keyboard.
  * When "open" it shows the bar, glow and falloff layers.
  * When "closed" it shows only a small overflow (...) button. */
@@ -74,28 +141,55 @@ const FormattingBar = () => {
   const isOpen = useSelector(state => state.showFormattingBar)
   const [isAnimating, setIsAnimating] = useState(false)
 
-  const keyboardHeight = virtualKeyboardStore.useSelector(state => state.height)
   const keyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
-  const keyboardOpenPercent = virtualKeyboardStore.useSelector(state => state.openPercent)
+
+  const barShapeRef = useRef<HTMLDivElement>(null)
+  const barContentRef = useRef<HTMLDivElement>(null)
+  const overflowRef = useRef<HTMLDivElement>(null)
+  const glowRef = useRef<HTMLDivElement>(null)
+  const falloffRef = useRef<HTMLDivElement>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const positionElementRefs = useMemo(
+    () => ({
+      bar: [barShapeRef, barContentRef],
+      overflow: [overflowRef],
+      glow: [glowRef],
+      falloff: [falloffRef],
+      picker: [pickerRef],
+    }),
+    [barShapeRef, barContentRef, overflowRef, glowRef, falloffRef, pickerRef],
+  )
 
   // Position fixed styles for the bar (from bottom, above keyboard)
-  const barPositionStyles = usePositionFixed({ fromBottom: true, height: BAR_HEIGHT, offset: 0 })
+  const barPositionStyles = usePositionFixed({
+    fromBottom: true,
+    height: BAR_HEIGHT,
+    offset: 0,
+    elementRefs: positionElementRefs.bar,
+  })
 
   // Position fixed styles for the overflow button
   const overflowPositionStyles = usePositionFixed({
     fromBottom: true,
     height: 24,
     offset: OVERFLOW_BUTTON_OFFSET,
+    elementRefs: positionElementRefs.overflow,
   })
 
   // Position fixed styles for the glow layer
-  const glowPositionStyles = usePositionFixed({ fromBottom: true, height: GLOW_HEIGHT, offset: GLOW_OFFSET })
+  const glowPositionStyles = usePositionFixed({
+    fromBottom: true,
+    height: GLOW_HEIGHT,
+    offset: GLOW_OFFSET,
+    elementRefs: positionElementRefs.glow,
+  })
 
   // Position fixed styles for the falloff layer
   const falloffPositionStyles = usePositionFixed({
     fromBottom: true,
     height: FALLOFF_HEIGHT,
     offset: -FALLOFF_UNDERHANG,
+    elementRefs: positionElementRefs.falloff,
   })
 
   const handleOpen = useCallback(() => {
@@ -118,7 +212,7 @@ const FormattingBar = () => {
   // blur layer (bypassing the parent-opacity bug). The blur fades in and out with the bar's slide,
   // and also follows the keyboard as it opens and closes.
   const openProgress = useMotionValue(isOpen ? 1 : 0)
-  const keyboardOpenProgress = useMotionValue(keyboardOpenPercent)
+  const keyboardOpenProgress = useMotionValue(virtualKeyboardStore.getState().openPercent)
   const blurOpacity = useTransform(() => openProgress.get() * keyboardOpenProgress.get())
   useEffect(() => {
     const controls = animate(openProgress, isOpen ? 1 : 0, {
@@ -127,71 +221,30 @@ const FormattingBar = () => {
     })
     return () => controls.stop()
   }, [openProgress, isOpen])
-  useEffect(() => {
-    keyboardOpenProgress.set(keyboardOpenPercent)
-  }, [keyboardOpenProgress, keyboardOpenPercent])
+  useEffect(
+    () =>
+      virtualKeyboardStore.subscribeSelector(
+        state => state.openPercent,
+        value => keyboardOpenProgress.set(value),
+      ),
+    [keyboardOpenProgress],
+  )
 
-  // Virtual keyboard state for debug overlay
-  const vkState = virtualKeyboardStore.useState()
-
-  // Don't render at all when keyboard is fully closed and not animating
-  if (!keyboardOpen && keyboardHeight === 0 && !isAnimating) return null
-
+  // Keep the layers mounted so opening the keyboard does not have to build the bar and its blur layers.
+  // display: contents preserves each layer's blending with the page without introducing a parent box.
   return (
-    <>
-      {/* Debug overlay — VirtualKeyboardStore state */}
-      <div
-        className={css({
-          position: 'fixed',
-          top: '0.5rem',
-          left: '0.5rem',
-          zIndex: 'dialog',
-          pointerEvents: 'none',
-          fontFamily: 'monospace',
-          fontSize: '11px',
-          lineHeight: '1.4',
-          padding: '0.5rem',
-          borderRadius: '6px',
-        })}
-        style={{
-          background: 'rgba(0, 0, 0, 0.75)',
-          color: 'rgba(255, 255, 255, 0.85)',
-        }}
-      >
-        <div style={{ marginBottom: 2, fontWeight: 'bold', color: 'rgba(150, 200, 255, 0.9)' }}>
-          VirtualKeyboardStore
-        </div>
-        <div>open: {String(vkState.open)}</div>
-        <div>height: {vkState.height.toFixed(1)}px</div>
-        <div>openPercent: {vkState.openPercent.toFixed(2)}</div>
-        <div
-          style={{
-            marginTop: 4,
-            borderTop: '1px solid rgba(255,255,255,0.2)',
-            paddingTop: 4,
-            fontWeight: 'bold',
-            color: 'rgba(150, 200, 255, 0.9)',
-          }}
-        >
-          CSS Custom Properties
-        </div>
-        <div>
-          --virtual-keyboard-height:{' '}
-          {getComputedStyle(document.documentElement).getPropertyValue('--virtual-keyboard-height') || '(unset)'}
-        </div>
-        <div>
-          --virtual-keyboard-open-percent:{' '}
-          {getComputedStyle(document.documentElement).getPropertyValue('--virtual-keyboard-open-percent') || '(unset)'}
-        </div>
-        <div style={{ marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: 4 }}>
-          barOpen: {String(isOpen)}
-        </div>
-        <div>animating: {String(isAnimating)}</div>
-      </div>
+    <div
+      style={{
+        display: 'contents',
+        visibility: keyboardOpen || isAnimating ? 'visible' : 'hidden',
+      }}
+    >
+      {import.meta.env.DEV && <VirtualKeyboardDebugOverlay isOpen={isOpen} isAnimating={isAnimating} />}
 
       {/* Overflow menu button (visible when closed). The wrapper's right offset is reduced by the tap
         padding so the visible circle stays anchored at 0.75rem from the right edge. */}
       <div
+        ref={overflowRef}
         className={css({
           zIndex: 'formattingBar',
           pointerEvents: 'auto',
@@ -199,8 +252,7 @@ const FormattingBar = () => {
         style={{
           ...overflowPositionStyles,
           right: `calc(0.75rem - ${OVERFLOW_BUTTON_TAP_PADDING}px)`,
-          opacity: isOpen ? 0 : keyboardOpenPercent,
-          transition: `opacity ${transitionDuration}`,
+          opacity: 'var(--virtual-keyboard-open-percent, 0)',
         }}
         onTransitionEnd={() => setIsAnimating(false)}
       >
@@ -217,6 +269,8 @@ const FormattingBar = () => {
           })}
           style={{
             padding: `${OVERFLOW_BUTTON_TAP_PADDING}px`,
+            opacity: isOpen ? 0 : 1,
+            transition: `opacity ${transitionDuration}`,
             pointerEvents: isOpen ? 'none' : 'auto',
           }}
         >
@@ -251,6 +305,7 @@ const FormattingBar = () => {
         backdrop-filter rendering whenever an ancestor opacity is between 0 and 1. The blur
         and gradient children handle their own fade instead. */}
       <div
+        ref={falloffRef}
         className={css({
           left: 0,
           width: '100%',
@@ -285,7 +340,7 @@ const FormattingBar = () => {
             })}
             style={{ top: `${FALLOFF_RISE - BLUR_RISE}px` }}
           >
-            <ProgressiveBlur direction='to top' minBlur={0} maxBlur={8} opacity={blurOpacity} />
+            <ProgressiveBlur direction='to top' minBlur={0} maxBlur={8} opacity={blurOpacity} promoteLayers />
           </div>
           {/* Gradient falloff: fades content underneath to black so the translucent bar is legible. Clear
             FALLOFF_RISE above the bar, and fully black by the top of the keyboard. The wrapper fades with
@@ -319,6 +374,7 @@ const FormattingBar = () => {
 
       {/* Glow layer (on top of falloff, below bar) */}
       <div
+        ref={glowRef}
         className={css({
           left: 0,
           width: '100%',
@@ -355,6 +411,7 @@ const FormattingBar = () => {
 
       {/* Bar (on top of everything) */}
       <div
+        ref={barShapeRef}
         className={css({
           zIndex: 'formattingBar',
           pointerEvents: 'auto',
@@ -464,7 +521,7 @@ const FormattingBar = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

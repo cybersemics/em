@@ -10,7 +10,12 @@ import iOSCapacitorHandler from '../iOSCapacitorHandler'
 const listeners: Record<string, (info?: { keyboardHeight: number }) => void> = {}
 
 vi.mock('@capacitor/core', () => ({
-  Capacitor: { getPlatform: () => 'ios', isNativePlatform: () => true, isPluginAvailable: () => true },
+  Capacitor: {
+    getPlatform: () => 'ios',
+    isNativePlatform: () => true,
+    isPluginAvailable: (name: string) => name === 'Keyboard',
+  },
+  registerPlugin: () => ({}),
 }))
 vi.mock('@capacitor/keyboard', () => ({
   Keyboard: {
