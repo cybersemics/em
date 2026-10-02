@@ -39,6 +39,11 @@ const config: CapacitorConfig = {
       resize: 'none',
       style: 'dark',
     },
+    // Android's SystemBars plugin pads the decor view by the IME height, which shrinks the WebView
+    // in addition to em's own keyboard-aware positioning. iOS ignores this Android option.
+    SystemBars: {
+      insetsHandling: 'disable',
+    },
   },
 }
 
