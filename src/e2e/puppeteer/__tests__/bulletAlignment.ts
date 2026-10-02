@@ -1,3 +1,4 @@
+import click from '../helpers/click'
 import newThought from '../helpers/newThought'
 import { page } from '../session'
 
@@ -6,6 +7,10 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 describe('bullet alignment', () => {
   // https://github.com/cybersemics/em/issues/5567
   it('bullet is vertically centered on the thought text', async () => {
+    // The misalignment grows with the font size and falls within subpixel rounding at the 16px default.
+    await click('[data-testid=increase-font]') // 17
+    await click('[data-testid=increase-font]') // 18
+
     await newThought('This is an empty thought')
     await page.waitForSelector('[aria-label="bullet-glyph"]')
 
