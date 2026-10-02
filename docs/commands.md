@@ -80,6 +80,8 @@ The global `keyDown` handler (registered by [`initEvents.ts`](../src/util/initEv
 
 Hashes are uppercased, modifier-prefixed strings — so `Cmd+Shift+P` becomes `META_SHIFT_P`. `commandKeyIndex[hash]` resolves the command in O(1).
 
+The key itself is resolved from `e.keyCode` first, falling back to `e.code` and then `e.key`. The indirection exists because macOS composes Option + N, E, I, U, and `` ` `` as dead keys, which corrupts `e.key` (`'Dead'` in Chrome, `'~'` in Safari) and `e.keyCode` (192, the tilde key) alike — so the Option chords, and only those, consult `e.code` for the physical key. `e.keyCode` stays ahead of it so that a layout reporting a letter's keyCode faithfully keeps resolving through it, as AZERTY does in reporting keyCode 65 for the physical `KeyQ`.
+
 `Key.control` is the only modifier whose physical key differs by platform beyond the usual Command/Ctrl and Option/Alt substitution: on non-Mac platforms Ctrl already serves as `meta`, so `control` falls back to Shift and `hashCommand` emits `SHIFT_` for it. `heading0`–`heading5` are therefore Command + Option + Control + *n* on Mac and Ctrl + Alt + Shift + *n* elsewhere, which keeps them distinct from the text color shortcuts (Command/Ctrl + Option/Alt + *n*). `parseCommandShortcut`, which lets the Command Universe be searched by shortcut, applies the same platform mapping, so typing a command's shortcut exactly as it is displayed always resolves to that command.
 
 The handler also:
