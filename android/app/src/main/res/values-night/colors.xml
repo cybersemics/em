@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Mirrors colors.highlight in src/colors.config.ts (dark theme), the color of the drop hover bar. -->
+    <color name="themeHighlight">#ADD8E6</color>
+</resources>

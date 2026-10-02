@@ -13,8 +13,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-        <!-- The WebView tints its caret and selection handles with the accent, which AppCompat defaults to teal. Match the blue that Chrome on Android uses. -->
-        <item name="colorAccent">#0B57D0</item>
+        <!-- The WebView tints its caret and selection handles with the accent, which AppCompat defaults to teal. Use em's highlight color, which follows the system's dark mode rather than em's Theme setting. -->
+        <item name="colorAccent">@color/themeHighlight</item>
     </style>
 
 
