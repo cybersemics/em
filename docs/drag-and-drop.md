@@ -31,6 +31,12 @@ Left at its default of `true`, Tauri installs a native drag-and-drop handler on 
 
 Disabling it removes that handler, so drag events reach the page normally. Nothing is lost: em never listened for the `tauri://drag-*` events, and OS file drops go back to arriving as react-dnd's `NativeTypes.FILE`, which is what the app already handles.
 
+#### Android app
+
+In the Android Capacitor app, [`initEvents`](../src/util/initEvents.ts) cancels every native `dragstart`. Long-pressing selected text starts a native text drag in the Android System WebView, but the WebView never delivers the `dragenter` / `dragover` / `drop` / `dragend` that follow, nor the `touchend` that ends the press. The word can never be dropped, no drop caret is drawn, and the native selection menu stays on screen over the dragged word. Cancelling `dragstart` keeps the long press an ordinary press, so `touchend` arrives as usual.
+
+Thought drags are unaffected. `TouchBackend` never uses native drag events, and it announces a drag with its own `dragStart` `CustomEvent` (see [react-dnd patches](#react-dnd-patches)). Android Chrome is not gated in, because there the native text drag completes and moves the text.
+
 ### State machine: `state.longPress`
 
 The whole subsystem is orchestrated by a single Redux state field, [`state.longPress`](../src/@types/State.ts), which is a `LongPressState` enum with these values (see [`constants.ts`](../src/constants.ts)):
