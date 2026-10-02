@@ -4,6 +4,7 @@ import ActionType from './ActionType'
 import Alert from './Alert'
 import Command from './Command'
 import CommandId from './CommandId'
+import CommandUniverseNavigation from './CommandUniverseNavigation'
 import Context from './Context'
 import DragCommandZone from './DragCommandZone'
 import Index from './IndexType'
@@ -26,6 +27,8 @@ interface State {
   archived?: boolean
   authenticated: boolean
   autologin: boolean
+  /** Page history for the current Command Universe session. */
+  commandUniverseNavigation: CommandUniverseNavigation
   /** Key: hashPath(path). */
   contextViews: Index<boolean>
   cursor: Path | null
@@ -104,7 +107,7 @@ interface State {
   /**
    * History of edit points that can be navigated with the jump command.
    * New edit points are added to the beginning of the list.
-   * Cannot use undoHistory because it omits the cursor from some edits.
+   * Cannot use the undo history because it omits the cursor from some edits.
    * i.e. It causes the 'jump after new subthought' to fail.
    */
   jumpHistory: (Path | null)[]
@@ -112,7 +115,7 @@ interface State {
    * Increments on each activation of Jump Back, and determines where the cursor is moved on Jump Forward.
    */
   jumpIndex: number
-  /** The last undoable action that was executed. Usually this is the same as undoPatches.at(-1).actions[0]. However, on undo this will equal redoPatches.at(-1).actions[0]. This is important for special case animatons, like swapParent, that should be enabled not just when the action is originally executed, but also when it is reversed via undo. */
+  /** The underlying action type of the last undoable change. On undo this is the first action type of the corresponding redo patch. Used by special-case animations that also run when a change is reversed. */
   lastUndoableActionType?: ActionType
   latestCommands: Command[]
   /** Tracks the state of long press and drag-and-drop. */

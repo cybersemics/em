@@ -154,6 +154,14 @@ const keyframes = defineKeyframes({
       width: '1.25em',
     },
   },
+  shimmerText: {
+    from: {
+      maskPosition: '200% 0',
+    },
+    to: {
+      maskPosition: '-200% 0',
+    },
+  },
   tofg: {
     to: {
       color: 'fg',
@@ -374,6 +382,7 @@ const globalCss = defineGlobalStyles({
     fontStyle: 'italic',
     color: 'var(--placeholder-color, {colors.dim})',
     backgroundColor: 'var(--placeholder-background-color, transparent)',
+    filter: 'opacity(var(--placeholder-opacity))',
     content: 'attr(placeholder)',
     cursor: 'text',
   },
@@ -414,8 +423,18 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
     fontFamily: 'monospace',
   },
+  /* Sweep a highlight across existing paint, preserving rich-text colors, backgrounds and native emoji. */
+  '[data-generating], [data-generating-note] [aria-label="note-editable"]': {
+    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, black 50%, rgba(0, 0, 0, 0.5) 100%)',
+    maskSize: '250% 100%',
+    animation: 'shimmerText 4s linear infinite',
+  },
+  '[placeholder][data-generating]:empty::before': {
+    color: 'var(--placeholder-color, {colors.fg})',
+  },
   ':root': {
     '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
+    '--placeholder-opacity': '1',
   },
 })
 

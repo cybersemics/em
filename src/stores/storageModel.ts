@@ -1,5 +1,6 @@
 import CommandId from '../@types/CommandId'
 import Path from '../@types/Path'
+import { DEFAULT_FONT_SIZE } from '../constants'
 import storage from '../util/storage'
 
 type BackgroundGlowStorageType = { image: string | null; opacity: number }
@@ -25,7 +26,7 @@ const storageModel = storage.model({
     encode: (value: CursorStorageType) => JSON.stringify(value),
   },
   fontSize: {
-    default: 18,
+    default: DEFAULT_FONT_SIZE,
     decode: (s: string | null) => (s ? +s : undefined),
   },
   jumpHistory: {
