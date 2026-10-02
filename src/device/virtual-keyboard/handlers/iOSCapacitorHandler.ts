@@ -58,10 +58,11 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       // Stop any existing animation to prevent conflict.
       controls?.stop()
 
-      // Start storing animated height values in virtualKeyboardStore.
+      // The native keyboard drops faster than it rises. Use a faster hide spring so elements
+      // pinned above it do not remain suspended over the keyboard during dismissal.
       controls = animate(virtualKeyboardStore.getState().height, 0, {
         type: 'spring',
-        stiffness: 3600,
+        stiffness: 9000,
         damping: 220,
         mass: 1.2,
         onUpdate: value => {
