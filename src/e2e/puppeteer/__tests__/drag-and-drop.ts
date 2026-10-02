@@ -1,15 +1,22 @@
 import path from 'path'
+import { KnownDevices } from 'puppeteer'
+import newThoughtCommand from '../../../commands/newThought'
+import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../../constants'
 import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
+import deviceEmulation from '../helpers/deviceEmulation'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
+import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
+import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
+import setSelection from '../helpers/setSelection'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
@@ -704,5 +711,47 @@ describe('hover expansion', () => {
     // Verify that all A's children (A1 and A2) are no longer visible (A has collapsed)
     await waitUntilElementNotVisible('A1')
     await waitUntilElementNotVisible('A2')
+  })
+})
+
+describe('mobile only', () => {
+  // Android, where the caret exemption is limited to an empty thought. On iOS Safari it covers every caret (#3763).
+  deviceEmulation.useForSuite(KnownDevices['Pixel 5'])
+
+  it('does not start a long press when the press lands on the caret of an empty thought', async () => {
+    await paste('- hello world')
+    const textEditable = await waitForEditable('hello world')
+    await gesture(newThoughtCommand)
+    const emptyEditable = (await waitForEditable('')).asElement()
+    if (!emptyEditable) throw new Error('Empty editable not found.')
+
+    const boundingBox = await emptyEditable.boundingBox()
+    if (!boundingBox) throw new Error('Editable has no bounding box.')
+
+    // An empty thought renders its caret at the start of its content, so the left inside edge is a press on it.
+    await page.touchscreen.touchStart(boundingBox.x + 1, boundingBox.y + boundingBox.height / 2)
+    // A long press that must NOT happen offers nothing to wait for, so hold well past the delay that would start one.
+    await sleep(TIMEOUT_LONG_PRESS_THOUGHT * 2)
+    // Read the highlight while the finger is still down; releasing clears it and would pass either way.
+    const highlighted = await emptyEditable.evaluate(el =>
+      el.parentElement
+        ?.closest('[aria-label="thought-container"]')
+        ?.querySelector('[aria-label="bullet"]')
+        ?.getAttribute('data-highlighted'),
+    )
+    await page.touchscreen.touchEnd()
+
+    expect(highlighted).not.toBe('true')
+
+    // The same press on the caret of a thought with text still starts a long press, since a long press there selects
+    // a word and the menu is reachable that way. longPressThought throws if the bullet never highlights.
+    await clickThought('hello world')
+    // Focus the editable before selecting, otherwise the browser discards the selection on a
+    // non-focused contenteditable under mobile emulation.
+    await page.evaluate(() =>
+      (document.querySelector('[data-editing=true] [data-editable]') as HTMLElement | null)?.focus(),
+    )
+    await setSelection(0, 0)
+    await longPressThought(textEditable, { edge: 'left' })
   })
 })
