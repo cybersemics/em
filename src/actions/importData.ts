@@ -46,7 +46,7 @@ const REGEX_HTML_SINGLE_LINE =
  * @param payload.html - HTML content to be imported, or null if importing plain text.
  * @param payload.rawDestValue - The untrimmed destination value to preserve whitespace when combining with existing content.
  * @param payload.transient - If true, creates a new empty thought before importing the text.
- * @param payload.isEmText - If true, preserves formatting when stripping HTML. Default: false.
+ * @param payload.isEmText - If true, the HTML was copied from em and its formatting is preserved. Otherwise, HTML that is inserted inside a thought is stripped to plain text. Default: false.
  *
  * @returns A Thunk that handles importing the data based on whether it is multiline or markdown.
  */
@@ -107,6 +107,8 @@ export const importDataActionCreator = ({
           caretPosition: (selection.isText() ? selection.offsetThought() || 0 : state.cursorOffset) || 0,
           path,
           text: processedText,
+          // Formatting is only preserved when the HTML was copied from em (#4161).
+          stripFormatting: !!cleanedHtml && !isEmText,
           // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
           // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
           rawDestValue,

@@ -1,3 +1,4 @@
+import { escape as escapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -40,6 +41,25 @@ import uncategorize from './uncategorize'
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
 
+/** Elements that separate the text on either side of them, so their text must not run into that of their siblings when the formatting is stripped. */
+const SEPARATING_ELEMENTS =
+  'address, article, aside, blockquote, br, dd, div, dl, dt, figcaption, figure, footer, h1, h2, h3, h4, h5, h6, header, hr, li, ol, p, pre, section, table, td, th, tr, ul'
+
+/** Reduces an HTML fragment to its escaped text on a single line. The fragment is parsed into an inert template, so that its scripts do not run and its images do not load, and the text is read from the parsed nodes rather than matched out of the markup. */
+const htmlToSingleLineText = (html: string): string => {
+  const template = document.createElement('template')
+  template.innerHTML = html
+  template.content.querySelectorAll('script, style').forEach(element => element.remove())
+  template.content.querySelectorAll(SEPARATING_ELEMENTS).forEach(element => element.after(' '))
+  // Collapse the whitespace that HTML collapses, including the newlines of a <pre>, since a thought is a single line.
+  // Other Unicode spaces, such as an ideographic or narrow no-break space, are text and are kept. Each no-break space becomes a normal space, as in strip.
+  const text = (template.content.textContent ?? '')
+    .replace(/[ \t\n\r\f]+/g, ' ')
+    .replaceAll('\u00a0', ' ')
+    .trim()
+  return escapeHtml(text)
+}
+
 export interface ImportTextPayload {
   caretPosition?: number
 
@@ -65,6 +85,9 @@ export interface ImportTextPayload {
 
   skipRoot?: boolean
 
+  /** Strips the formatting from HTML that is inserted inside the thought (single line only), such as text copied from a web page. Multiline imports are unaffected. */
+  stripFormatting?: boolean
+
   /** Text or HTML that will be inserted below the thought (if multiline) or inside the thought (singl line only). */
   text: string
 
@@ -85,6 +108,7 @@ const importText = (
     replaceEnd,
     replaceStart,
     skipRoot,
+    stripFormatting,
     updatedBy = clientId,
     caretPosition = 0,
   }: ImportTextPayload,
@@ -120,11 +144,12 @@ const importText = (
           )
         : destValue
 
+    const insertedText = stripFormatting ? htmlToSingleLineText(text) : text
     const insertOffset = replaceStart ?? caretPosition
-    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, text)
+    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedText)
     const newValue = addEmojiSpace(combinedValue)
     // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
-    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(text).length
+    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(insertedText).length
     const emojiSpaceInsertionOffset = newValue === combinedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
     const offset =
       emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset
