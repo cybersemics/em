@@ -33,6 +33,8 @@ Logging is **off** in production unless the user turns on **Debug Logging** in S
 
 A reporter attaches the downloaded file to an issue under a `## Debug Log` heading — see [`write-issue`](../.github/skills/write-issue/SKILL.md).
 
+The log carries thought text verbatim, in value fields, typed keystrokes, action payloads and the `state.thoughts` dump. An agent quoting a reporter's log into an issue replaces that text with placeholders first; [`write-issue`](../.github/skills/write-issue/SKILL.md#anonymizing-user-data) lists every place it appears.
+
 ### Streaming to the console
 
 `debugLog.setConsole(true)` mirrors every entry to `console.info` as it is appended, behind a `debugLog` prefix, in the same line format `format()` writes. The choice is recorded in `localStorage`, so it survives the page reloads a reproduction performs — though not `localStorage.clear()`, which takes it along with everything else.
