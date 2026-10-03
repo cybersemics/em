@@ -13,6 +13,7 @@ import useGestureMenuLayout, {
   HEADER_FONT_SIZE_REM,
   HEADER_TITLE_MARGIN_BOTTOM_REM,
   ROW_GAP_REM,
+  fogDepthAt,
 } from '../../hooks/useGestureMenuLayout'
 import gestureStore, {
   onGestureMenuEntered,
@@ -43,17 +44,18 @@ const GestureMenu: FC<{
     columnCount,
     maxColumns,
     columnWidth,
-    dividerWidth,
     horizontalPaddingRem,
     paddingTopRem,
     verticalPaddingRem,
     rowsPerColumn,
     visibleCommandCount,
-    isMultiColumn,
   } = useGestureMenuLayout(commands.length)
 
-  // Only the grid trims; the single-column stack renders every command and scrolls instead.
-  const visibleCommands = isMultiColumn ? commands.slice(0, visibleCommandCount) : commands
+  // The layout caps instead of scrolling, so it trims to what the hook budgeted.
+  const visibleCommands = commands.slice(0, visibleCommandCount)
+
+  // Fog trailing rows only when a single column is all the viewport fits and commands are capped. Uses maxColumns, not columnCount, so a wider viewport gets another column instead of fog.
+  const fogsOverflow = maxColumns === 1 && visibleCommandCount < commands.length
 
   /**
    * Whether a command's row renders as selected. Every command is selected by an exact gesture match;
@@ -71,19 +73,22 @@ const GestureMenu: FC<{
     return false
   }
 
-  /** Renders command rows. Auto-scroll is only enabled in the single-column (scrolling) layout. */
-  const renderCommands = (items: Command[]) =>
-    items.map((command, index) => (
-      <GestureMenuItem
-        gestureInProgress={gestureInProgress as string}
-        key={command.id}
-        selected={isSelected(command)}
-        command={command}
-        isFirstCommand={index === 0}
-        isLastCommand={index === items.length - 1}
-        autoScroll={!isMultiColumn}
-      />
-    ))
+  /** Renders command rows. When `fog` is set, the last GESTURE_MENU_FOG_ROW_COUNT rows fade to signal hidden commands. */
+  const renderCommands = (items: Command[], { fog = false }: { fog?: boolean } = {}) =>
+    items.map((command, index) => {
+      const distanceFromEnd = items.length - 1 - index
+      const fogDepth = fog ? fogDepthAt(distanceFromEnd) : 0
+      return (
+        <GestureMenuItem
+          gestureInProgress={gestureInProgress as string}
+          key={command.id}
+          selected={isSelected(command)}
+          command={command}
+          isFirstCommand={index === 0}
+          fogDepth={fogDepth}
+        />
+      )
+    })
 
   return (
     <div
@@ -92,7 +97,7 @@ const GestureMenu: FC<{
         flexDirection: 'column',
         maxWidth: '100%',
         overflow: 'hidden',
-        maxHeight: `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
+        height: `calc(100dvh - ${token('spacing.safeAreaBottom')} - ${token('spacing.safeAreaTop')})`,
         paddingTop: 'safeAreaTop',
         fontFamily: 'radioCanada',
       })}
@@ -107,6 +112,7 @@ const GestureMenu: FC<{
           display: 'flex',
           flexDirection: 'column',
         })}
+        // Width is bounded by `columnWidth` on the column itself, so no fixed content-width cap here.
         style={{ fontSize }}
       >
         {gestureInProgress && (
@@ -136,61 +142,42 @@ const GestureMenu: FC<{
                   height: '1px',
                   background: 'linear-gradient(90deg, {colors.gestureMenuDivider} 0%, {colors.bgTransparent} 100%)',
                 })}
-                style={{ width: dividerWidth }}
+                style={{ width: columnWidth }}
               />
             </div>
 
-            {isMultiColumn ? (
-              /* Multi-column grid: commands flow top-to-bottom then left-to-right and own every column.
-                 Cancel and Command Universe are simply the last two entries, so they land wherever the
-                 packing puts them — including split across a column boundary. */
-              <div
-                style={{
-                  display: 'grid',
-                  // Track count comes from what fits, not what's used, so the tracks keep their width
-                  // as commands drop away; unused tracks simply render empty.
-                  gridTemplateColumns: `repeat(${maxColumns}, minmax(0, 1fr))`,
-                  columnGap: `${COLUMN_GAP_REM}rem`,
-                }}
-              >
-                {/* Split the commands into column-major chunks (top-to-bottom then left-to-right)
-                   and render each column as its own nested grid. Per-column row tracks — rather
-                   than one shared set of tracks — keep a selected command's description from
-                   inflating the matching row in sibling columns. */}
-                {Array.from({ length: columnCount }, (_, columnIndex) =>
-                  visibleCommands.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn),
-                ).map((columnCommands, columnIndex) => (
-                  <div key={columnIndex} style={{ minWidth: 0 }}>
-                    <div
-                      style={{
-                        display: 'grid',
-                        // Auto rows (rather than a fixed repeat(rowsPerColumn)) so a short last column
-                        // is only as tall as its own items, with no trailing empty tracks.
-                        gridAutoRows: 'min-content',
-                        rowGap: `${ROW_GAP_REM}rem`,
-                      }}
-                    >
-                      {renderCommands(columnCommands)}
-                    </div>
+            <div
+              style={{
+                display: 'grid',
+                // Track count comes from what fits, not what's used, so the tracks keep their width
+                // as commands drop away; unused tracks simply render empty.
+                gridTemplateColumns: `repeat(${maxColumns}, minmax(0, 1fr))`,
+                columnGap: `${COLUMN_GAP_REM}rem`,
+              }}
+            >
+              {/* Split the commands into column chunks (top-to-bottom then left-to-right)
+                 and render each column as its own nested grid. Per-column row tracks — rather
+                 than one shared set of tracks — keep a selected command's description from
+                 inflating the matching row in sibling columns. */}
+              {Array.from({ length: columnCount }, (_, columnIndex) =>
+                visibleCommands.slice(columnIndex * rowsPerColumn, (columnIndex + 1) * rowsPerColumn),
+              ).map((columnCommands, columnIndex) => (
+                <div key={columnIndex} style={{ minWidth: 0 }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      // The last column can have fewer items than rowsPerColumn, so size rows to fit the
+                      // actual items ('min-content') instead of always reserving rowsPerColumn rows —
+                      // otherwise a short last column would have empty space at the bottom.
+                      gridAutoRows: 'min-content',
+                      rowGap: `${ROW_GAP_REM}rem`,
+                    }}
+                  >
+                    {renderCommands(columnCommands, { fog: fogsOverflow })}
                   </div>
-                ))}
-              </div>
-            ) : (
-              /* Single column: a plain flex stack rather than a grid. Above md it is held to the same
-                 columnWidth the grid tracks use, so collapsing from two columns to one leaves the
-                 surviving column exactly where and how wide it was. */
-              <div style={{ width: columnWidth }}>
-                <div
-                  className={css({
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1.2rem',
-                  })}
-                >
-                  {renderCommands(visibleCommands)}
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )}
       </div>
