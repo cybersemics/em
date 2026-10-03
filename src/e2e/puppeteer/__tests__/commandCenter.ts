@@ -213,7 +213,7 @@ describe('command center', () => {
   })
 
   // https://github.com/cybersemics/em/pull/5756#issuecomment-5964322349
-  it.skip('dismisses the keyboard when it is opened from a note', async () => {
+  it('dismisses the keyboard when it is opened from a note', async () => {
     await paste('- One')
     await clickThought('One')
 
