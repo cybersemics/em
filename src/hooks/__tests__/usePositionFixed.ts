@@ -32,7 +32,14 @@ it('animates the supplied elements from the transition clock and releases them a
   const animation = { startTime: null as number | null, cancel: vi.fn() }
   anchor.animate = vi.fn(() => animation as unknown as Animation)
   const elementRefs = [{ current: anchor }]
-  const { unmount } = renderHook(() => usePositionFixed({ fromBottom: true, height: 48, elementRefs }))
+  const rendered = vi.fn()
+  const { unmount } = renderHook(() => {
+    rendered()
+    return usePositionFixed({ fromBottom: true, height: 48, elementRefs })
+  })
+
+  act(() => virtualKeyboardStore.update({ open: true }))
+  rendered.mockClear()
 
   act(() => {
     virtualKeyboardStore.update({
@@ -42,8 +49,17 @@ it('animates the supplied elements from the transition clock and releases them a
   })
 
   expect(anchor.animate).toHaveBeenCalledOnce()
+  // Starting native motion must not render the bar's controls before the animation can run.
+  expect(rendered).not.toHaveBeenCalled()
   expect(animation.startTime).toBeCloseTo(performance.now() - 150)
   act(() => virtualKeyboardStore.update({ height: 300, motion: undefined }))
   expect(animation.cancel).toHaveBeenCalledOnce()
+  act(() => {
+    virtualKeyboardStore.update({ motion: { startedAt: Date.now(), duration: 300, heights: [300, 0] } })
+  })
+  expect(anchor.animate).toHaveBeenCalledTimes(2)
   unmount()
+  expect(animation.cancel).toHaveBeenCalledTimes(2)
+  act(() => virtualKeyboardStore.update({ motion: undefined }))
+  expect(animation.cancel).toHaveBeenCalledTimes(2)
 })

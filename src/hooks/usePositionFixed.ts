@@ -46,7 +46,6 @@ const usePositionFixed = ({
   willChange?: string
 } => {
   const keyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
-  const motion = virtualKeyboardStore.useSelector(state => (fromBottom && elementRefs ? state.motion : undefined))
 
   // On iOS Safari, emulate `position: fixed` using absolute positioning when the virtual keyboard is open.
   const position = keyboardOpen && isSafari() && !isCapacitor() ? 'absolute' : 'fixed'
@@ -57,20 +56,33 @@ const usePositionFixed = ({
   const { innerHeight } = viewportStore.useState()
 
   useLayoutEffect(() => {
-    if (!motion || !elementRefs || position !== 'fixed' || motion.duration <= 0) return
-    const frames = motion.heights.map((height, index) => ({
-      offset: index / (motion.heights.length - 1),
-      translate: `0 ${-height}px`,
-    }))
-    const startedAt = performance.now() - (Date.now() - motion.startedAt)
-    const animations = elementRefs.flatMap(ref => {
-      if (!ref.current) return []
-      const animation = ref.current.animate(frames, { duration: motion.duration, fill: 'both' })
-      animation.startTime = startedAt
-      return [animation]
-    })
-    return () => animations.forEach(animation => animation.cancel())
-  }, [elementRefs, motion, position])
+    if (!fromBottom || !elementRefs || position !== 'fixed') return
+    let animations: Animation[] = []
+    // Native motion must start without waiting for the positioned component to render.
+    const updateMotion = () => {
+      animations.forEach(animation => animation.cancel())
+      animations = []
+      const { motion } = virtualKeyboardStore.getState()
+      if (!motion || motion.duration <= 0) return
+      const frames = motion.heights.map((height, index) => ({
+        offset: index / (motion.heights.length - 1),
+        translate: `0 ${-height}px`,
+      }))
+      const startedAt = performance.now() - (Date.now() - motion.startedAt)
+      animations = elementRefs.flatMap(ref => {
+        if (!ref.current) return []
+        const animation = ref.current.animate(frames, { duration: motion.duration, fill: 'both' })
+        animation.startTime = startedAt
+        return [animation]
+      })
+    }
+    const unsubscribe = virtualKeyboardStore.subscribeSelector(state => state.motion, updateMotion)
+    updateMotion()
+    return () => {
+      unsubscribe()
+      animations.forEach(animation => animation.cancel())
+    }
+  }, [elementRefs, fromBottom, position])
 
   let top, bottom, translate
 

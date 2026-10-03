@@ -1,3 +1,5 @@
+import { keyboardOpenActionCreator as keyboardOpen } from '../../../../actions/keyboardOpen'
+import store from '../../../../stores/app'
 import viewportStore from '../../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../../stores/virtualKeyboardStore'
 import iOSCapacitorHandler from '../iOSCapacitorHandler'
@@ -102,4 +104,60 @@ it('publishes normalized timed geometry for the renderer and clears it at the en
 
   listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
   expect(virtualKeyboardStore.getState().motion).toBeUndefined()
+})
+
+it('starts closing when edit mode ends and keeps that clock when the native hide arrives', () => {
+  store.dispatch(keyboardOpen({ value: true }))
+  listeners.keyboardAnimation({
+    stage: 'start',
+    id: 1,
+    fromHeight: 0,
+    toHeight: 320,
+    startedAt: Date.now() - 300,
+    durationMs: 300,
+    bezier: [0, 0, 1, 1],
+  })
+  listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
+
+  const startedAt = Date.now()
+  store.dispatch(keyboardOpen({ value: false }))
+  expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt)
+  // An opening endpoint still in transit must not cancel the early close.
+  listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
+  expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt)
+
+  vi.advanceTimersByTime(30)
+  listeners.keyboardAnimation({
+    stage: 'start',
+    id: 2,
+    fromHeight: 320,
+    toHeight: 0,
+    startedAt: Date.now(),
+    durationMs: 300,
+    bezier: [0, 0, 1, 1],
+  })
+  expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt)
+  expect(virtualKeyboardStore.getState().height).toBeCloseTo(268)
+  listeners.keyboardAnimation({ stage: 'end', id: 2, toHeight: 0 })
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: false, height: 0, motion: undefined })
+})
+
+it('keeps the keyboard geometry when edit mode ends but an input retains focus', () => {
+  store.dispatch(keyboardOpen({ value: true }))
+  listeners.keyboardAnimation({
+    stage: 'start',
+    id: 1,
+    fromHeight: 0,
+    toHeight: 320,
+    startedAt: Date.now() - 300,
+    durationMs: 300,
+    bezier: [0, 0, 1, 1],
+  })
+  listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
+  const input = document.createElement('input')
+  document.body.appendChild(input)
+  input.focus()
+  store.dispatch(keyboardOpen({ value: false }))
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 300, motion: undefined })
+  input.remove()
 })

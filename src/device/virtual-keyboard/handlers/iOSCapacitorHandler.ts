@@ -168,6 +168,9 @@ const initNative = () => {
   let lastId = -1
   let frame: number | null = null
   let motion: KeyboardAnimation | null = null
+  let timing: KeyboardAnimation | null = null
+  let closingStartedAt: number | null = null
+  let wasEditing = store.getState().isKeyboardOpen
   let safeAreaBottom = getSafeAreaBottom()
   /** Maps elapsed native time through its cubic timing function. */
   let ease = (value: number) => value
@@ -205,11 +208,40 @@ const initNative = () => {
     if (!finished) frame = requestAnimationFrame(tick)
   }
 
+  /** Publishes native timing to the shared store without restarting its clock. */
+  const startMotion = (event: KeyboardAnimation) => {
+    cancelFrame()
+    ease = event.bezier ? cubicBezier(...event.bezier) : value => value
+    motion = event
+    tick()
+    virtualKeyboardStore.update({
+      motion:
+        event.durationMs && event.startedAt !== undefined
+          ? {
+              startedAt: event.startedAt,
+              duration: event.durationMs / (event.speed ?? 1),
+              heights: Array.from({ length: 121 }, (_, index) => {
+                const fraction = index / 120
+                const progress = fraction === 1 ? 1 : progressAt(fraction, event)
+                return Math.max(0, event.fromHeight! + progress * (event.toHeight - event.fromHeight!) - safeAreaBottom)
+              }),
+            }
+          : undefined,
+    })
+  }
+
   /** Accepts native transitions and final geometry while ignoring stale notifications and drag focus. */
   const receive = (event: KeyboardAnimation) => {
     if (disposed || event.id < lastId) return
     const visible = event.visible ?? event.toHeight > 0
+    // A delayed opening endpoint cannot override a dismissal already started by edit mode.
+    if (closingStartedAt !== null && event.stage === 'end' && visible) return
     if (visible && store.getState().longPress !== LongPressState.Inactive) return
+    if (event.stage === 'start') {
+      timing = event
+      if (!visible && closingStartedAt !== null) event = { ...event, startedAt: closingStartedAt }
+      closingStartedAt = null
+    }
     receivedEvent = true
     lastId = event.id
     cancelFrame()
@@ -221,28 +253,33 @@ const initNative = () => {
       updateHeight(event.toHeight, event.toHeight > 0)
       virtualKeyboardStore.update({ motion: undefined })
     } else {
-      ease = event.bezier ? cubicBezier(...event.bezier) : value => value
-      motion = event
-      tick()
-      virtualKeyboardStore.update({
-        motion:
-          event.durationMs && event.startedAt !== undefined
-            ? {
-                startedAt: event.startedAt,
-                duration: event.durationMs / (event.speed ?? 1),
-                heights: Array.from({ length: 121 }, (_, index) => {
-                  const fraction = index / 120
-                  const progress = fraction === 1 ? 1 : progressAt(fraction, event)
-                  return Math.max(
-                    0,
-                    event.fromHeight! + progress * (event.toHeight - event.fromHeight!) - safeAreaBottom,
-                  )
-                }),
-              }
-            : undefined,
-      })
+      startMotion(event)
     }
   }
+
+  /** Starts a known dismissal before WebKit finishes delivering the native hide notification. */
+  const unsubscribeEditMode = store.subscribe(() => {
+    const editing = store.getState().isKeyboardOpen
+    if (editing === wasEditing) return
+    wasEditing = editing
+    const { height, open } = virtualKeyboardStore.getState()
+    if (editing || !open || height <= 0 || !timing || motion?.toHeight === 0) return
+    // Selection can leave edit mode while its editor retains native focus and the keyboard stays up.
+    const activeElement = document.activeElement
+    if (
+      activeElement instanceof HTMLElement &&
+      (activeElement.isContentEditable || activeElement.matches('input, textarea'))
+    )
+      return
+    closingStartedAt = Date.now()
+    startMotion({
+      ...timing,
+      fromHeight: height + safeAreaBottom,
+      toHeight: 0,
+      visible: false,
+      startedAt: closingStartedAt,
+    })
+  })
 
   void IOSKeyboardPlugin.addListener('keyboardAnimation', receive).then(handle => {
     if (disposed) void handle.remove()
@@ -257,6 +294,7 @@ const initNative = () => {
 
   return () => {
     disposed = true
+    unsubscribeEditMode()
     cancelFrame()
     motion = null
     virtualKeyboardStore.update({ motion: undefined })
