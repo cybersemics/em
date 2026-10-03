@@ -20,11 +20,15 @@ describe('url history', () => {
       - b
     `)
 
+    await waitForUrlChange('/')
+    // FORCE: open the 100ms url throttle window just before the click, as a slow paste would
+    await page.evaluate(() => window.em.store.dispatch({ type: 'probe' } as any))
     await clickThought('a')
     await waitForUrlChange('/')
     const entriesBefore = await page.evaluate(() => window.history.length)
 
     const pathnameA = await page.evaluate(() => window.location.pathname)
+    console.log('PROBE pathnameA', pathnameA, await page.evaluate(() => window.em.store.getState().cursor))
     await clickThought('b')
     await waitForUrlChange(pathnameA)
     const entriesAfter = await page.evaluate(() => window.history.length)
