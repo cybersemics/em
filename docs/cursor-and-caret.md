@@ -30,7 +30,7 @@ dispatch(setCursor({ path: newPath, offset: 5 }))
 
 | Environment | Write | Consequence |
 | --- | --- | --- |
-| Desktop browser | `pushState` | browser back/forward step through cursor positions; `onPopstate` in [`initEvents`](../src/util/initEvents.ts) turns each one back into a `setCursor` |
+| Desktop browser | `pushState` | browser back/forward step through cursor positions; `onPopstate` in [`initEvents`](../src/util/initEvents.ts) turns each one back into a `setCursor`, skipping in the same direction any entry whose thought has since been deleted or moved |
 | Touch browser | `replaceState` | the URL stays current, but no history entries accumulate |
 | PWA | neither | the URL is not updated at all; the address bar is not visible and the cursor is persisted locally ([#212](https://github.com/cybersemics/em/issues/212)) |
 

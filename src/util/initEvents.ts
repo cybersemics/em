@@ -164,20 +164,29 @@ const initEvents = (store: Store<State, any>) => {
   const onPopstate = (e: PopStateEvent) => {
     const state = store.getState()
 
-    const { path, contextViews } = decodeThoughtsUrl(state)
+    // A history entry outlives its thoughts, so require them to exist; a deleted thought decodes to a null path instead of reaching pathToContext, which throws on a missing thought.
+    const { path, contextViews } = decodeThoughtsUrl(state, { exists: true })
+    const direction = !lastState || lastState > e.state ? 'back' : 'forward'
+
+    // Skip an entry whose thought has since been deleted or moved, continuing in the same direction until an entry resolves to an existing path. The cursor is left untouched in the meantime.
+    if (!path || !pathExists(state, pathToContext(state, path))) {
+      lastState = e.state
+      window.history[direction]()
+      return
+    }
 
     if (!lastPath) {
       lastPath = state.cursor
     }
 
-    if (!path || !pathExists(state, pathToContext(state, path)) || equalPath(lastPath, path)) {
-      window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
+    if (equalPath(lastPath, path)) {
+      window.history[direction]()
     }
 
-    lastPath = path && pathExists(state, pathToContext(state, path)) ? path : lastPath
+    lastPath = path
     lastState = e.state
 
-    const toRoot = !path || isRoot(path)
+    const toRoot = isRoot(path)
 
     // clear the selection if root
     if (toRoot) {
