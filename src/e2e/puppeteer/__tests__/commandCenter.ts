@@ -1,5 +1,6 @@
 import { KnownDevices } from 'puppeteer'
 import clearThoughtCommand from '../../../commands/clearThought'
+import noteCommand from '../../../commands/note'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
@@ -209,5 +210,27 @@ describe('command center', () => {
     // the note has the keyboard, so the thought is no longer selected and the sheet is dismissed
     expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(0)
     await waitForCommandCenterClosed()
+  })
+
+  // https://github.com/cybersemics/em/pull/5756#issuecomment-5964322349
+  it.skip('dismisses the keyboard when it is opened from a note', async () => {
+    await paste('- One')
+    await clickThought('One')
+
+    await gesture(noteCommand)
+    await waitForNoteFocus()
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+    await waitForBrowserSettled()
+
+    // the caret leaves the note so that the keyboard closes, and the thought that the note belongs to is selected
+    const caret = await page.evaluate(() =>
+      document.activeElement instanceof HTMLElement && document.activeElement.isContentEditable
+        ? document.activeElement.getAttribute('aria-label')
+        : null,
+    )
+    expect(caret).toBeNull()
+    expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(1)
   })
 })
