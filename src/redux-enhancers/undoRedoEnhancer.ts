@@ -6,6 +6,7 @@ import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Lexeme from '../@types/Lexeme'
 import Patch, { CommandAttributedAction, PatchMetadataInput } from '../@types/Patch'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
@@ -207,24 +208,45 @@ const restorePushQueueFromPatches = (state: State, oldState: State, ops: Operati
   }
 }
 
+/** Keys of State whose value is a Path or a list of Paths. */
+type PathProperty = {
+  [K in keyof State]-?: NonNullable<State[K]> extends Path | (Path | null)[] ? K : never
+}[keyof State]
+
+/** State properties that diffState replaces whole. A Record over PathProperty rather than a list, so that adding a Path to State without listing it here is a type error. */
+const pathProperties: Record<PathProperty, true> = {
+  cursor: true,
+  cursorBeforeQuickAdd: true,
+  cursorBeforeSearch: true,
+  cursorHistory: true,
+  draggedSimplePath: true,
+  draggingThoughts: true,
+  expandHoverDownPath: true,
+  expandHoverUpPath: true,
+  hoveringPath: true,
+  importThoughtPath: true,
+  jumpHistory: true,
+  multicursorAnchor: true,
+}
+
 /**
  * Returns the diff between two states as a fast-json-patch Patch that can be applied for undo/redo functionality. Ignores ephemeral state properties such as alert which should not be recreated (defined in statePropertiesToOmit).
- * A top-level array property, such as the cursor or multicursorAnchor Path, is replaced whole rather than element by element. A Path is a value, not a container: an element-wise op like replace /multicursorAnchor/2 is only valid against the exact array it was diffed from. When navigation patches are merged, the previous patch is replayed on top of whatever non-undoable actions have done since, so the array may have changed or become null in the meantime (e.g. toggleMulticursor clears the anchor when the anchored thought is deselected). Replaying an element-wise op then either splices the restored Path into an unrelated one or throws on null.
+ * A Path-valued property, such as the cursor or multicursorAnchor (see pathProperties), is replaced whole rather than element by element. A Path is a value, not a container: an element-wise op like replace /multicursorAnchor/2 is only valid against the exact array it was diffed from. When navigation patches are merged, the previous patch is replayed on top of whatever non-undoable actions have done since, so the array may have changed or become null in the meantime (e.g. toggleMulticursor clears the anchor when the anchored thought is deselected). Replaying an element-wise op then either splices the restored Path into an unrelated one or throws on null.
  */
 const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => {
   const ops = compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))
 
-  // top-level array properties with at least one element-wise op
-  const arrayKeys = new Set(
+  // Path properties with at least one element-wise op
+  const pathKeys = new Set(
     ops
       .map(op => op.path.split('/'))
-      .filter(segments => segments.length > 2 && Array.isArray(value[segments[1]]))
+      .filter(segments => segments.length > 2 && segments[1] in pathProperties)
       .map(segments => segments[1]),
   )
 
   return [
-    ...ops.filter(op => !arrayKeys.has(op.path.split('/')[1])),
-    ...[...arrayKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(value[key]) })),
+    ...ops.filter(op => !pathKeys.has(op.path.split('/')[1])),
+    ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(value[key]) })),
   ]
 }
 
