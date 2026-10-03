@@ -2,15 +2,12 @@ import { KnownDevices } from 'puppeteer'
 import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
 import paste from '../helpers/paste'
+import waitForUrlCursor from '../helpers/waitForUrlCursor'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 deviceEmulation.useForSuite(KnownDevices['iPhone 15 Pro'])
-
-/** Resolves once the throttled url update has moved the address bar off `pathname`. */
-const waitForUrlChange = (pathname: string) =>
-  page.waitForFunction(previous => window.location.pathname !== previous, { timeout: 5000 }, pathname)
 
 describe('url history', () => {
   // https://github.com/cybersemics/em/issues/4115
@@ -20,17 +17,12 @@ describe('url history', () => {
       - b
     `)
 
-    await waitForUrlChange('/')
-    // FORCE: open the 100ms url throttle window just before the click, as a slow paste would
-    await page.evaluate(() => window.em.store.dispatch({ type: 'probe' } as any))
     await clickThought('a')
-    await waitForUrlChange('/')
+    await waitForUrlCursor('a')
     const entriesBefore = await page.evaluate(() => window.history.length)
 
-    const pathnameA = await page.evaluate(() => window.location.pathname)
-    console.log('PROBE pathnameA', pathnameA, await page.evaluate(() => window.em.store.getState().cursor))
     await clickThought('b')
-    await waitForUrlChange(pathnameA)
+    await waitForUrlCursor('b')
     const entriesAfter = await page.evaluate(() => window.history.length)
 
     // Each cursor move used to push an entry, giving Mobile Safari's edge swipe a stale rendering of
