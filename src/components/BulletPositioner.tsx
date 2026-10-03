@@ -10,7 +10,7 @@ import { deleteAttributeActionCreator as deleteAttribute } from '../actions/dele
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { setDescendantActionCreator as setDescendant } from '../actions/setDescendant'
 import { toggleMulticursorActionCreator as toggleMulticursor } from '../actions/toggleMulticursor'
-import { isSafari, isTouch, isiPhone } from '../browser'
+import { isTouch } from '../browser'
 import { LongPressState } from '../constants'
 import { LongPressProps } from '../hooks/useLongPress'
 import findDescendant from '../selectors/findDescendant'
@@ -28,8 +28,6 @@ import head from '../util/head'
 import isCommandKey from '../util/isCommandKey'
 import isDivider from '../util/isDivider'
 import parentOf from '../util/parentOf'
-
-const isIOSSafari = isTouch && isiPhone && isSafari()
 
 const glyph = cva({
   base: {
@@ -217,9 +215,6 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
     const width = getBulletWidth(fontSize) + (!isInContextView && isTableCol1 ? fontSize / 4 : 0)
     const marginLeft = -width
 
-    // Bottom margin for bullet to align with thought text
-    const glyphBottomMargin = isIOSSafari ? '-0.2em' : '-0.3em'
-
     return (
       <span
         data-testid={cursorOverlay ? undefined : 'bullet-' + hashPath(path)}
@@ -239,7 +234,9 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
           }),
         )}
         style={{
-          top: -extendClickHeight,
+          // extend the click area upward, and mirror the editable's -0.5px top margin (see editableRecipe) so that the
+          // bullet shares the text's baseline
+          top: -extendClickHeight - 0.5,
           left: -extendClickWidth + marginLeft,
           paddingTop: `calc(${token('spacing.editablePaddingTop')} + ${extendClickHeight}px)`,
           paddingLeft: extendClickWidth,
@@ -279,7 +276,10 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
             marginLeft: -lineHeight,
             // required to make the distance between bullet and thought scale properly at all font sizes.
             left: lineHeight * 0.317,
-            marginBottom: glyphBottomMargin,
+            // Center the bullet on the midpoint of the text's x-height band, the optical center of the thought text.
+            // vertical-align resolves that midpoint from the font the platform actually uses, so the bullet stays
+            // centered on the text whichever font is substituted for Helvetica.
+            verticalAlign: 'middle',
             // Allow multi-digit ordered-list numbers (=bullet/Ordered) to extend left into the indent gap
             // instead of being clipped to the bullet's square viewport. Circle/triangle glyphs stay within
             // the viewBox, so this does not affect normal bullets.
