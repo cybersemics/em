@@ -75,7 +75,10 @@ const DesktopCommandUniverseSearch: FC<{
     const sel = selection.save()
     inputRef.current?.focus()
     return () => {
-      selection.restore(sel)
+      // Do not overwrite a caret that the executed command placed in a thought or note, e.g. Note focuses the new note. The Command Universe unmounts after its fade-out, well after the command has run.
+      if (!selection.isThought()) {
+        selection.restore(sel)
+      }
     }
   }, [])
 
