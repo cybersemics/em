@@ -92,3 +92,97 @@ it('replaces estimated motion when the native clock arrives, even with matching 
   unmount()
   expect(animation.cancel).toHaveBeenCalledTimes(2)
 })
+
+it.each([
+  ['opening', Array.from({ length: 121 }, (_, index) => 300 * (index / 120) ** 2)],
+  ['closing', Array.from({ length: 121 }, (_, index) => 300 * (1 - index / 120) ** 2)],
+  [
+    'returning to its starting height',
+    Array.from({ length: 121 }, (_, index) => (index === 120 ? 0 : 300 * Math.sin((index / 120) * Math.PI))),
+  ],
+] as const)('reduces %s keyframes while keeping every sampled height within a quarter pixel', (_, heights) => {
+  const anchor = document.createElement('div')
+  const animate = vi.fn<HTMLElement['animate']>(() => ({ startTime: null, cancel: vi.fn() }) as unknown as Animation)
+  anchor.animate = animate
+  const elementRefs = [{ current: anchor }]
+  const { unmount } = renderHook(() => usePositionFixed({ fromBottom: true, elementRefs }))
+  act(() => virtualKeyboardStore.update({ motion: { startedAt: Date.now(), duration: 400, heights } }))
+
+  const frames = animate.mock.calls[0][0] as { offset: number; translate: string }[]
+  expect(frames.length).toBeLessThan(heights.length / 2)
+  expect(frames[0]).toEqual({ offset: 0, translate: `0 ${-heights[0]}px` })
+  expect(frames.at(-1)).toEqual({ offset: 1, translate: `0 ${-heights.at(-1)!}px` })
+  heights.forEach((height, index) => {
+    const offset = index / (heights.length - 1)
+    const right = frames.findIndex(frame => frame.offset >= offset)
+    const before = frames[Math.max(0, right - 1)]
+    const after = frames[right]
+    const fraction = after.offset === before.offset ? 0 : (offset - before.offset) / (after.offset - before.offset)
+    const from = -parseFloat(before.translate.split(' ')[1])
+    const to = -parseFloat(after.translate.split(' ')[1])
+    expect(Math.abs(from + fraction * (to - from) - height)).toBeLessThanOrEqual(0.25)
+  })
+  unmount()
+})
+
+it('prepares paused tracks and starts them only when matching native timing arrives', () => {
+  vi.useFakeTimers()
+  const anchor = document.createElement('div')
+  const animation = {
+    startTime: null as number | null,
+    currentTime: null as number | null,
+    pause: vi.fn(),
+    play: vi.fn(),
+    cancel: vi.fn(),
+  }
+  anchor.animate = vi.fn(() => animation as unknown as Animation)
+  const elementRefs = [{ current: anchor }]
+  const { unmount } = renderHook(() => usePositionFixed({ fromBottom: true, elementRefs }))
+  act(() => virtualKeyboardStore.update({ motion: { duration: 300, heights: [300, 150, 0] } }))
+  expect(animation.pause).toHaveBeenCalledOnce()
+  expect(animation.currentTime).toBe(0)
+  expect(animation.startTime).toBeNull()
+  vi.advanceTimersByTime(30)
+  expect(animation.play).not.toHaveBeenCalled()
+  act(() =>
+    virtualKeyboardStore.update({ motion: { startedAt: Date.now() - 5, duration: 300, heights: [300, 150, 0] } }),
+  )
+  expect(anchor.animate).toHaveBeenCalledOnce()
+  expect(animation.cancel).not.toHaveBeenCalled()
+  expect(animation.play).not.toHaveBeenCalled()
+  expect(animation.startTime).toBeCloseTo(performance.now() - 5)
+  unmount()
+  expect(animation.cancel).toHaveBeenCalledOnce()
+})
+
+it('cancels a prepared track if its consumer unmounts before native timing arrives', () => {
+  const anchor = document.createElement('div')
+  const animation = { currentTime: null as number | null, pause: vi.fn(), cancel: vi.fn() }
+  anchor.animate = vi.fn(() => animation as unknown as Animation)
+  const elementRefs = [{ current: anchor }]
+  const { unmount } = renderHook(() => usePositionFixed({ fromBottom: true, elementRefs }))
+  act(() => virtualKeyboardStore.update({ motion: { duration: 300, heights: [300, 150, 0] } }))
+  unmount()
+  expect(animation.cancel).toHaveBeenCalledOnce()
+  act(() => virtualKeyboardStore.update({ motion: { startedAt: Date.now(), duration: 300, heights: [300, 150, 0] } }))
+  expect(anchor.animate).toHaveBeenCalledOnce()
+})
+
+it('replaces prepared tracks if native geometry differs', () => {
+  vi.useFakeTimers()
+  const anchor = document.createElement('div')
+  const prepared = { currentTime: null as number | null, pause: vi.fn(), cancel: vi.fn() }
+  const running = { startTime: null as number | null, cancel: vi.fn() }
+  anchor.animate = vi.fn().mockReturnValueOnce(prepared).mockReturnValueOnce(running)
+  const elementRefs = [{ current: anchor }]
+  const { unmount } = renderHook(() => usePositionFixed({ fromBottom: true, elementRefs }))
+  act(() => virtualKeyboardStore.update({ motion: { duration: 300, heights: [300, 150, 0] } }))
+  act(() =>
+    virtualKeyboardStore.update({ motion: { startedAt: Date.now() - 5, duration: 300, heights: [200, 100, 0] } }),
+  )
+  expect(prepared.cancel).toHaveBeenCalledOnce()
+  expect(anchor.animate).toHaveBeenCalledTimes(2)
+  expect(running.startTime).toBeCloseTo(performance.now() - 5)
+  unmount()
+  expect(running.cancel).toHaveBeenCalledOnce()
+})

@@ -20,6 +20,32 @@ type PositionFixedOptions = {
   | { fromBottom?: false; elementRefs?: undefined }
 )
 
+/** Removes redundant transform keyframes while bounding the displacement error to a quarter CSS pixel. */
+const getMotionKeyframes = (heights: readonly number[]): Keyframe[] => {
+  const frames = heights.map((height, index) => ({
+    offset: heights.length > 1 ? index / (heights.length - 1) : 0,
+    translate: `0 ${-height}px`,
+  }))
+  if (frames.length <= 2) return frames
+
+  /** Keeps the most divergent sample until each linear segment respects the displacement error bound. */
+  const simplify = (first: number, last: number): Keyframe[] => {
+    const split = heights.slice(first + 1, last).reduce(
+      (largest, height, offset) => {
+        const index = first + offset + 1
+        const interpolated = heights[first] + ((heights[last] - heights[first]) * (index - first)) / (last - first)
+        const error = Math.abs(height - interpolated)
+        return error > largest.error ? { index, error } : largest
+      },
+      { index: first, error: 0 },
+    )
+    return split.error <= 0.25
+      ? [frames[first], frames[last]]
+      : [...simplify(first, split.index).slice(0, -1), ...simplify(split.index, last)]
+  }
+  return simplify(0, frames.length - 1)
+}
+
 /**
  * Safe-area-aware, keyboard-aware and iOS-safe fixed positioning for mobile.
  *
@@ -61,23 +87,43 @@ const usePositionFixed = ({ fromBottom, offset = 0, height, elementRefs }: Posit
   useLayoutEffect(() => {
     if (!fromBottom || !elementRefs || position !== 'fixed') return
     let animations: Animation[] = []
+    let previousMotion: ReturnType<typeof virtualKeyboardStore.getState>['motion']
     /** Starts native motion without waiting for the positioned component to render. */
     const updateMotion = () => {
       const { motion } = virtualKeyboardStore.getState()
-      // Replace the tracks when the native clock supersedes an estimate. Changing startTime on an
-      // already-running WebKit animation can leave its rendered motion on the estimated clock.
+      const prepared = previousMotion
+      previousMotion = motion
+      if (
+        motion?.startedAt !== undefined &&
+        prepared &&
+        prepared.startedAt === undefined &&
+        animations.length > 0 &&
+        motion.duration === prepared.duration &&
+        motion.heights.length === prepared.heights.length &&
+        motion.heights.every((height, index) => height === prepared.heights[index])
+      ) {
+        // A paused track has never advanced on an estimated clock, so it can start without replacement.
+        const startedAt = performance.now() - (Date.now() - motion.startedAt)
+        // Setting startTime releases the paused hold directly, without scheduling a pending play task.
+        animations.forEach(animation => (animation.startTime = startedAt))
+        return
+      }
+      // Replace running tracks when their clock changes. Updating startTime on an already-running
+      // WebKit animation can leave its rendered motion on the old clock.
       animations.forEach(animation => animation.cancel())
       animations = []
       if (!motion || motion.duration <= 0) return
-      const frames = motion.heights.map((height, index) => ({
-        offset: index / (motion.heights.length - 1),
-        translate: `0 ${-height}px`,
-      }))
-      const startedAt = performance.now() - (Date.now() - motion.startedAt)
+      const frames = getMotionKeyframes(motion.heights)
+      const startedAt = motion.startedAt === undefined ? undefined : performance.now() - (Date.now() - motion.startedAt)
       animations = elementRefs.flatMap(ref => {
         if (!ref.current) return []
         const animation = ref.current.animate(frames, { duration: motion.duration, fill: 'both' })
-        animation.startTime = startedAt
+        if (startedAt === undefined) {
+          animation.pause()
+          animation.currentTime = 0
+        } else {
+          animation.startTime = startedAt
+        }
         return [animation]
       })
     }

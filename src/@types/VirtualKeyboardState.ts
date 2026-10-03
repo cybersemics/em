@@ -10,8 +10,8 @@ export default interface VirtualKeyboardState {
   phase?: 'opening' | 'open' | 'closing' | 'closed'
   /** Optional timed geometry for renderers that can follow the keyboard independently of JavaScript frames. */
   motion?: {
-    /** Native transition start on the same wall clock as Date.now(), in milliseconds. */
-    startedAt: number
+    /** Native start on the Date.now() clock, in milliseconds. Undefined prepares the motion without playing it. */
+    startedAt?: number
     /** Duration in milliseconds. */
     duration: number
     /** Normalized keyboard heights sampled at evenly spaced fractions of the transition. */

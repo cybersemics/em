@@ -169,7 +169,7 @@ const initNative = () => {
   let frame: number | null = null
   let motion: KeyboardAnimation | null = null
   let timing: KeyboardAnimation | null = null
-  let closingStartedAt: number | null = null
+  let preparingClose = false
   let wasEditing = store.getState().isKeyboardOpen
   let safeAreaBottom = getSafeAreaBottom()
   /** Maps elapsed native time through its cubic timing function. */
@@ -213,20 +213,19 @@ const initNative = () => {
     cancelFrame()
     ease = event.bezier ? cubicBezier(...event.bezier) : value => value
     motion = event
-    tick()
+    if (event.startedAt !== undefined) tick()
     virtualKeyboardStore.update({
-      motion:
-        event.durationMs && event.startedAt !== undefined
-          ? {
-              startedAt: event.startedAt,
-              duration: event.durationMs / (event.speed ?? 1),
-              heights: Array.from({ length: 121 }, (_, index) => {
-                const fraction = index / 120
-                const progress = fraction === 1 ? 1 : progressAt(fraction, event)
-                return Math.max(0, event.fromHeight! + progress * (event.toHeight - event.fromHeight!) - safeAreaBottom)
-              }),
-            }
-          : undefined,
+      motion: event.durationMs
+        ? {
+            startedAt: event.startedAt,
+            duration: event.durationMs / (event.speed ?? 1),
+            heights: Array.from({ length: 121 }, (_, index) => {
+              const fraction = index / 120
+              const progress = fraction === 1 ? 1 : progressAt(fraction, event)
+              return Math.max(0, event.fromHeight! + progress * (event.toHeight - event.fromHeight!) - safeAreaBottom)
+            }),
+          }
+        : undefined,
     })
   }
 
@@ -234,13 +233,13 @@ const initNative = () => {
   const receive = (event: KeyboardAnimation) => {
     if (disposed || event.id < lastId) return
     const visible = event.visible ?? event.toHeight > 0
-    // A delayed opening endpoint cannot override a dismissal already started by edit mode.
-    if (closingStartedAt !== null && event.stage === 'end' && visible) return
+    // A delayed opening endpoint cannot discard a dismissal already prepared by edit mode.
+    if (preparingClose && event.stage === 'end' && visible) return
     if (visible && store.getState().longPress !== LongPressState.Inactive) return
     if (event.stage === 'start') {
       timing = event
-      // The estimate prepares compositor tracks; the real event supplies the authoritative native clock.
-      closingStartedAt = null
+      // Prepared tracks stay paused until this event supplies the native clock.
+      preparingClose = false
     }
     receivedEvent = true
     lastId = event.id
@@ -257,11 +256,16 @@ const initNative = () => {
     }
   }
 
-  /** Starts a known dismissal before WebKit finishes delivering the native hide notification. */
+  /** Prepares a known dismissal without advancing it before the native hide notification. */
   const unsubscribeEditMode = store.subscribe(() => {
     const editing = store.getState().isKeyboardOpen
     if (editing === wasEditing) return
     wasEditing = editing
+    if (editing && preparingClose) {
+      preparingClose = false
+      motion = null
+      virtualKeyboardStore.update({ motion: undefined })
+    }
     const { height, open } = virtualKeyboardStore.getState()
     if (editing || !open || height <= 0 || !timing || motion?.toHeight === 0) return
     // Selection can leave edit mode while its editor retains native focus and the keyboard stays up.
@@ -271,13 +275,13 @@ const initNative = () => {
       (activeElement.isContentEditable || activeElement.matches('input, textarea'))
     )
       return
-    closingStartedAt = Date.now()
+    preparingClose = true
     startMotion({
       ...timing,
       fromHeight: height + safeAreaBottom,
       toHeight: 0,
       visible: false,
-      startedAt: closingStartedAt,
+      startedAt: undefined,
     })
   })
 

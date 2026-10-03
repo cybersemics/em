@@ -106,7 +106,7 @@ it('publishes normalized timed geometry for the renderer and clears it at the en
   expect(virtualKeyboardStore.getState().motion).toBeUndefined()
 })
 
-it('anchors closing to the native clock rather than edit-mode exit', () => {
+it('prepares closing without moving until the native clock arrives', () => {
   store.dispatch(keyboardOpen({ value: true }))
   listeners.keyboardAnimation({
     stage: 'start',
@@ -121,12 +121,13 @@ it('anchors closing to the native clock rather than edit-mode exit', () => {
 
   const startedAt = Date.now()
   store.dispatch(keyboardOpen({ value: false }))
-  expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt)
-  // The estimate prepares compositor tracks before the native callback arrives.
+  expect(virtualKeyboardStore.getState().motion).toMatchObject({ startedAt: undefined, duration: 300 })
+  // A late opening endpoint must not discard the prepared closing tracks.
   listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
-  expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt)
+  expect(virtualKeyboardStore.getState().motion).toMatchObject({ startedAt: undefined, duration: 300 })
 
   vi.advanceTimersByTime(30)
+  expect(virtualKeyboardStore.getState().height).toBe(300)
   listeners.keyboardAnimation({
     stage: 'start',
     id: 2,
@@ -160,4 +161,23 @@ it('keeps the keyboard geometry when edit mode ends but an input retains focus',
   store.dispatch(keyboardOpen({ value: false }))
   expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 300, motion: undefined })
   input.remove()
+})
+
+it('discards a prepared dismissal when editing resumes before the native hide', () => {
+  store.dispatch(keyboardOpen({ value: true }))
+  listeners.keyboardAnimation({
+    stage: 'start',
+    id: 1,
+    fromHeight: 0,
+    toHeight: 320,
+    startedAt: Date.now() - 300,
+    durationMs: 300,
+    bezier: [0, 0, 1, 1],
+  })
+  listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
+  store.dispatch(keyboardOpen({ value: false }))
+  expect(virtualKeyboardStore.getState().motion).toMatchObject({ startedAt: undefined })
+  store.dispatch(keyboardOpen({ value: true }))
+  vi.advanceTimersByTime(400)
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 300, motion: undefined })
 })
