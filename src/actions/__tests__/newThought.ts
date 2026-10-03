@@ -331,7 +331,7 @@ describe('context view', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5445
-  it.skip('new subthought on a context view does not warn about a missing sibling', () => {
+  it('new subthought on a context view does not warn about a missing sibling', () => {
     const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     const text = `
