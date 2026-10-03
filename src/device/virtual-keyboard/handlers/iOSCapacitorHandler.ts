@@ -239,7 +239,7 @@ const initNative = () => {
     if (visible && store.getState().longPress !== LongPressState.Inactive) return
     if (event.stage === 'start') {
       timing = event
-      if (!visible && closingStartedAt !== null) event = { ...event, startedAt: closingStartedAt }
+      // The estimate prepares compositor tracks; the real event supplies the authoritative native clock.
       closingStartedAt = null
     }
     receivedEvent = true

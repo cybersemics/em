@@ -59,10 +59,12 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     /** Used when `anchorFromBottom = true` for calculating position on mobile safari. */
     const [height, setHeight] = React.useState(0)
     const innerRef = React.useRef<HTMLDivElement>(null)
+    const positionElementRefs = React.useMemo(() => [innerRef], [innerRef])
     const positionFixedStyles = usePositionFixed({
       fromBottom: anchorFromBottom,
       offset: anchorOffset,
       height,
+      elementRefs: positionElementRefs,
     })
 
     // measure the height of the popup after it has been rendered

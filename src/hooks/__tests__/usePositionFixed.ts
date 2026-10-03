@@ -8,10 +8,12 @@ vi.mock('../../browser', async importOriginal => ({
 }))
 
 it('updates keyboard positioning without rendering its consumer on each animation frame', () => {
+  const anchor = document.createElement('div')
+  const elementRefs = [{ current: anchor }]
   const rendered = vi.fn()
   const { unmount } = renderHook(() => {
     rendered()
-    return usePositionFixed({ fromBottom: true, height: 48 })
+    return usePositionFixed({ fromBottom: true, height: 48, elementRefs })
   })
 
   act(() => virtualKeyboardStore.update({ open: true }))
@@ -22,6 +24,7 @@ it('updates keyboard positioning without rendering its consumer on each animatio
   })
 
   expect(document.documentElement.style.getPropertyValue('--virtual-keyboard-height')).toBe('200px')
+  expect(anchor.style.getPropertyValue('--virtual-keyboard-height')).toBe('200px')
   expect(rendered).not.toHaveBeenCalled()
   unmount()
 })
@@ -62,4 +65,30 @@ it('animates the supplied elements from the transition clock and releases them a
   expect(animation.cancel).toHaveBeenCalledTimes(2)
   act(() => virtualKeyboardStore.update({ motion: undefined }))
   expect(animation.cancel).toHaveBeenCalledTimes(2)
+})
+
+it('reanchors matching native geometry without replacing its compositor tracks', () => {
+  vi.useFakeTimers()
+  const anchor = document.createElement('div')
+  const animation = { startTime: null as number | null, cancel: vi.fn() }
+  anchor.animate = vi.fn(() => animation as unknown as Animation)
+  const elementRefs = [{ current: anchor }]
+  const { unmount } = renderHook(() => usePositionFixed({ fromBottom: true, elementRefs }))
+  act(() => {
+    virtualKeyboardStore.update({
+      open: true,
+      motion: { startedAt: Date.now() - 10, duration: 300, heights: [300, 150, 0] },
+    })
+  })
+  vi.advanceTimersByTime(10)
+  act(() => {
+    virtualKeyboardStore.update({
+      motion: { startedAt: Date.now() - 5, duration: 300, heights: [300, 150, 0] },
+    })
+  })
+  expect(anchor.animate).toHaveBeenCalledOnce()
+  expect(animation.cancel).not.toHaveBeenCalled()
+  expect(animation.startTime).toBeCloseTo(performance.now() - 5)
+  unmount()
+  expect(animation.cancel).toHaveBeenCalledOnce()
 })

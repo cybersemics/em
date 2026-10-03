@@ -3,3 +3,17 @@
   See: https://panda-css.com/docs/concepts/writing-styles
 */
 @layer reset, base, tokens, recipes, utilities;
+
+/* Renderer hooks bind these metrics directly to their consumers. Inheritance would
+   restyle the entire page whenever the keyboard moves. */
+@property --virtual-keyboard-height {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --virtual-keyboard-open-percent {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}

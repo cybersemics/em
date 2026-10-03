@@ -106,7 +106,7 @@ it('publishes normalized timed geometry for the renderer and clears it at the en
   expect(virtualKeyboardStore.getState().motion).toBeUndefined()
 })
 
-it('starts closing when edit mode ends and keeps that clock when the native hide arrives', () => {
+it('anchors closing to the native clock rather than edit-mode exit', () => {
   store.dispatch(keyboardOpen({ value: true }))
   listeners.keyboardAnimation({
     stage: 'start',
@@ -122,7 +122,7 @@ it('starts closing when edit mode ends and keeps that clock when the native hide
   const startedAt = Date.now()
   store.dispatch(keyboardOpen({ value: false }))
   expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt)
-  // An opening endpoint still in transit must not cancel the early close.
+  // The estimate prepares compositor tracks before the native callback arrives.
   listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
   expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt)
 
@@ -136,8 +136,8 @@ it('starts closing when edit mode ends and keeps that clock when the native hide
     durationMs: 300,
     bezier: [0, 0, 1, 1],
   })
-  expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt)
-  expect(virtualKeyboardStore.getState().height).toBeCloseTo(268)
+  expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt + 30)
+  expect(virtualKeyboardStore.getState().height).toBe(300)
   listeners.keyboardAnimation({ stage: 'end', id: 2, toHeight: 0 })
   expect(virtualKeyboardStore.getState()).toMatchObject({ open: false, height: 0, motion: undefined })
 })

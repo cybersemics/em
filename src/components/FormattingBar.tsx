@@ -5,6 +5,7 @@ import { css } from '../../styled-system/css'
 import { toggleFormattingBarActionCreator as toggleFormattingBar } from '../actions/toggleFormattingBar'
 import { isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
+import useVirtualKeyboardCssProperty from '../hooks/useVirtualKeyboardCssProperty'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import durations from '../util/durations'
 import haptics from '../util/haptics'
@@ -148,6 +149,7 @@ const FormattingBar = () => {
   const overflowRef = useRef<HTMLDivElement>(null)
   const glowRef = useRef<HTMLDivElement>(null)
   const falloffRef = useRef<HTMLDivElement>(null)
+  const falloffGradientRef = useRef<HTMLDivElement>(null)
   const pickerRef = useRef<HTMLDivElement>(null)
   const positionElementRefs = useMemo(
     () => ({
@@ -159,6 +161,12 @@ const FormattingBar = () => {
     }),
     [barShapeRef, barContentRef, overflowRef, glowRef, falloffRef, pickerRef],
   )
+
+  const keyboardOpacityRefs = useMemo(
+    () => [overflowRef, glowRef, falloffGradientRef],
+    [overflowRef, glowRef, falloffGradientRef],
+  )
+  useVirtualKeyboardCssProperty('openPercent', keyboardOpacityRefs)
 
   // Position fixed styles for the bar (from bottom, above keyboard)
   const barPositionStyles = usePositionFixed({
@@ -356,6 +364,7 @@ const FormattingBar = () => {
             }}
           >
             <div
+              ref={falloffGradientRef}
               className={css({
                 position: 'absolute',
                 inset: 0,

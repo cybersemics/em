@@ -3,6 +3,22 @@ import { isCapacitor, isSafari } from '../browser'
 import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import useScrollTop from './useScrollTop'
+import useVirtualKeyboardCssProperty from './useVirtualKeyboardCssProperty'
+
+type PositionFixedOptions = {
+  /** Additional pixel offset from the anchored edge (top or bottom). */
+  offset?: number
+  /** Container height for bottom positioning on mobile Safari. */
+  height?: number
+} & (
+  | {
+      /** Anchor position for the element. */
+      fromBottom?: boolean
+      /** Explicit consumers of keyboard geometry and timed compositor motion. Required for bottom positioning. */
+      elementRefs: readonly RefObject<HTMLElement | null>[]
+    }
+  | { fromBottom?: false; elementRefs?: undefined }
+)
 
 /**
  * Safe-area-aware, keyboard-aware and iOS-safe fixed positioning for mobile.
@@ -24,21 +40,7 @@ import useScrollTop from './useScrollTop'
  * fixed positioning.
  *
  */
-const usePositionFixed = ({
-  fromBottom,
-  offset = 0,
-  height,
-  elementRefs,
-}: {
-  /** Anchor position for the element. */
-  fromBottom?: boolean
-  /** Additional pixel offset from the anchored edge (top or bottom). */
-  offset?: number
-  /** The height of the container, used to calculate the bottom offset on mobile safari. Only use with `fromBottom`. */
-  height?: number
-  /** Elements positioned with these styles. Enables timed compositor motion when the keyboard supplies it. */
-  elementRefs?: readonly RefObject<HTMLElement | null>[]
-} = {}): {
+const usePositionFixed = ({ fromBottom, offset = 0, height, elementRefs }: PositionFixedOptions = {}): {
   position: 'fixed' | 'absolute'
   top?: string
   bottom?: string
@@ -46,6 +48,7 @@ const usePositionFixed = ({
   willChange?: string
 } => {
   const keyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
+  useVirtualKeyboardCssProperty('height', fromBottom ? elementRefs : undefined)
 
   // On iOS Safari, emulate `position: fixed` using absolute positioning when the virtual keyboard is open.
   const position = keyboardOpen && isSafari() && !isCapacitor() ? 'absolute' : 'fixed'
@@ -58,11 +61,28 @@ const usePositionFixed = ({
   useLayoutEffect(() => {
     if (!fromBottom || !elementRefs || position !== 'fixed') return
     let animations: Animation[] = []
-    // Native motion must start without waiting for the positioned component to render.
+    let previousMotion: ReturnType<typeof virtualKeyboardStore.getState>['motion']
+    /** Starts native motion without waiting for the positioned component to render. */
     const updateMotion = () => {
+      const { motion } = virtualKeyboardStore.getState()
+      const lastMotion = previousMotion
+      if (
+        motion &&
+        lastMotion &&
+        animations.length > 0 &&
+        motion.duration === lastMotion.duration &&
+        motion.heights.length === lastMotion.heights.length &&
+        motion.heights.every((height, index) => height === lastMotion.heights[index])
+      ) {
+        // Native timing can replace an estimated clock without rebuilding identical compositor tracks.
+        const startedAt = performance.now() - (Date.now() - motion.startedAt)
+        animations.forEach(animation => (animation.startTime = startedAt))
+        previousMotion = motion
+        return
+      }
       animations.forEach(animation => animation.cancel())
       animations = []
-      const { motion } = virtualKeyboardStore.getState()
+      previousMotion = motion
       if (!motion || motion.duration <= 0) return
       const frames = motion.heights.map((height, index) => ({
         offset: index / (motion.heights.length - 1),
