@@ -361,8 +361,10 @@ jobs:
             kill "$APP_PID" 2>/dev/null || true
           fi
 
+      # Also on cancel: a run stuck waiting for a tunnel is usually cancelled by hand, and that is
+      # exactly the run whose connector log is needed to tell why.
       - name: Upload cloudflared connector log
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v7
         with:
           name: cloudflared-browserstack-android-log
