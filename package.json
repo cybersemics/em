@@ -52,6 +52,7 @@
     "lint": "FORCE_COLOR=1 npm-run-all --serial \"lint:*\"",
     "postinstall": "yarn build:packages && git config core.hooksPath .hooks && yarn build:styles",
     "servebuild": "vite preview --port 3000",
+    "setup": "yarn build:packages && yarn build:styles",
     "start": "vite --host --port 3000",
     "start:http": "HTTP=1 vite --host --port 3000",
     "tauri": "tauri",
