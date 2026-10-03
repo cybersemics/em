@@ -67,7 +67,7 @@ it('animates the supplied elements from the transition clock and releases them a
   expect(animation.cancel).toHaveBeenCalledTimes(2)
 })
 
-it('reanchors matching native geometry without replacing its compositor tracks', () => {
+it('replaces estimated motion when the native clock arrives, even with matching geometry', () => {
   vi.useFakeTimers()
   const anchor = document.createElement('div')
   const animation = { startTime: null as number | null, cancel: vi.fn() }
@@ -86,9 +86,9 @@ it('reanchors matching native geometry without replacing its compositor tracks',
       motion: { startedAt: Date.now() - 5, duration: 300, heights: [300, 150, 0] },
     })
   })
-  expect(anchor.animate).toHaveBeenCalledOnce()
-  expect(animation.cancel).not.toHaveBeenCalled()
+  expect(anchor.animate).toHaveBeenCalledTimes(2)
+  expect(animation.cancel).toHaveBeenCalledOnce()
   expect(animation.startTime).toBeCloseTo(performance.now() - 5)
   unmount()
-  expect(animation.cancel).toHaveBeenCalledOnce()
+  expect(animation.cancel).toHaveBeenCalledTimes(2)
 })

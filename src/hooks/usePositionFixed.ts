@@ -61,28 +61,13 @@ const usePositionFixed = ({ fromBottom, offset = 0, height, elementRefs }: Posit
   useLayoutEffect(() => {
     if (!fromBottom || !elementRefs || position !== 'fixed') return
     let animations: Animation[] = []
-    let previousMotion: ReturnType<typeof virtualKeyboardStore.getState>['motion']
     /** Starts native motion without waiting for the positioned component to render. */
     const updateMotion = () => {
       const { motion } = virtualKeyboardStore.getState()
-      const lastMotion = previousMotion
-      if (
-        motion &&
-        lastMotion &&
-        animations.length > 0 &&
-        motion.duration === lastMotion.duration &&
-        motion.heights.length === lastMotion.heights.length &&
-        motion.heights.every((height, index) => height === lastMotion.heights[index])
-      ) {
-        // Native timing can replace an estimated clock without rebuilding identical compositor tracks.
-        const startedAt = performance.now() - (Date.now() - motion.startedAt)
-        animations.forEach(animation => (animation.startTime = startedAt))
-        previousMotion = motion
-        return
-      }
+      // Replace the tracks when the native clock supersedes an estimate. Changing startTime on an
+      // already-running WebKit animation can leave its rendered motion on the estimated clock.
       animations.forEach(animation => animation.cancel())
       animations = []
-      previousMotion = motion
       if (!motion || motion.duration <= 0) return
       const frames = motion.heights.map((height, index) => ({
         offset: index / (motion.heights.length - 1),
