@@ -70,6 +70,7 @@ on:
       - '.github/workflows/copilot-*.yml'
       - '.github/workflows/dependabot-*.yml'
       - '.github/workflows/docs.yml'
+      - '.github/workflows/evals.yml'
       - '.github/workflows/estimate-*.yml'
       - '.github/workflows/issue-classifier.yml'
       - '.github/workflows/lint.yml'
@@ -89,6 +90,7 @@ on:
       - 'scripts/issue-classifier/**'
       # The other browser suite. The two share no imports.
       - 'src/e2e/puppeteer/**'
+      - 'src/e2e/android/**'
   pull_request_target:
     types: [opened, synchronize, reopened]
     # GitHub Actions does not support YAML anchors, so this list is duplicated from `push` above.
@@ -125,6 +127,7 @@ on:
       - '.github/workflows/copilot-*.yml'
       - '.github/workflows/dependabot-*.yml'
       - '.github/workflows/docs.yml'
+      - '.github/workflows/evals.yml'
       - '.github/workflows/estimate-*.yml'
       - '.github/workflows/issue-classifier.yml'
       - '.github/workflows/lint.yml'
@@ -140,6 +143,7 @@ on:
       - 'scripts/estimate/**'
       - 'scripts/issue-classifier/**'
       - 'src/e2e/puppeteer/**'
+      - 'src/e2e/android/**'
   workflow_dispatch:
     inputs:
       rerun_id:

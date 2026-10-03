@@ -29,17 +29,6 @@ enum EditThoughtDirection {
   Shorter = 'Shorter',
 }
 
-/** Interface for the setIsMulticursorExecuting action. */
-interface SetIsMulticursorExecutingAction extends Action<'setIsMulticursorExecuting'> {
-  value: boolean
-  undoLabel?: string
-}
-
-/** Type guard to check if an action is a setIsMulticursorExecuting action. */
-function isSetIsMulticursorExecutingAction(action: Action<string>): action is SetIsMulticursorExecutingAction {
-  return action.type === 'setIsMulticursorExecuting'
-}
-
 /** Type guard for editThought action. */
 function isEditThoughtAction(action: UnknownAction): action is UnknownAction & editThoughtPayload {
   return action.type === 'editThought'
@@ -562,8 +551,10 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
                 undoPatch,
                 commandMetadata ?? {
                   source: 'action',
-                  ...(isSetIsMulticursorExecutingAction(action) && action.undoLabel
-                    ? { label: action.undoLabel }
+                  // An action may name its undo step, e.g. setIsMulticursorExecuting for the batch it opens, or
+                  // formatSelection for a color change.
+                  ...(typeof (action as UnknownAction).undoLabel === 'string'
+                    ? { label: (action as UnknownAction).undoLabel as string }
                     : null),
                 },
                 actionType,
