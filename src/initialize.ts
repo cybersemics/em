@@ -26,6 +26,7 @@ import store from './stores/app'
 import offlineStatusStore, { init as initOfflineStatusStore } from './stores/offlineStatusStore'
 import storageStatusStore from './stores/storageStatusStore'
 import syncStatusStore from './stores/syncStatusStore'
+import { init as initWebKit27Store } from './stores/webKit27Store'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
 import debugLog from './util/debugLog'
@@ -69,6 +70,7 @@ type InitializeOptions = { storage: ThoughtspaceStorage }
 /** Initialize local db and window events. */
 const initializeInternal = async ({ storage }: InitializeOptions) => {
   initOfflineStatusStore(/* websocket */)
+  initWebKit27Store()
   const eventHandlers = initEvents(store)
 
   const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({

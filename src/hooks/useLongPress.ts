@@ -11,6 +11,7 @@ import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
 import multitouchStore from '../stores/multitouchStore'
 import touchStore from '../stores/touchStore'
+import webKit27Store from '../stores/webKit27Store'
 import haptics from '../util/haptics'
 import head from '../util/head'
 
@@ -30,7 +31,7 @@ export interface LongPressProps {
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent) => void) | null = noop,
+  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent | MouseEvent) => void) | null = noop,
   delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
 ) => {
   const [pressing, setPressing] = useState(false)
@@ -105,7 +106,7 @@ const useLongPress = (
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
-    (e?: React.MouseEvent | React.TouchEvent) => {
+    (e?: React.MouseEvent | React.TouchEvent | MouseEvent) => {
       setPressing(false)
 
       // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
@@ -125,6 +126,25 @@ const useLongPress = (
     },
     [onLongPressEnd, setPressing],
   )
+
+  // iOS 27 can withhold a press's touchend until the next touch, but still fires mouseup when the finger lifts (#5660).
+  useEffect(() => {
+    if (!pressing || !webKit27Store.getState()) return
+
+    window.addEventListener('mouseup', stop, { capture: true })
+    return () => window.removeEventListener('mouseup', stop, { capture: true })
+  }, [pressing, stop])
+
+  // A withheld tap can get no mouseup either, but iOS still moves the caret when it lifts (#5660). A finger still down
+  // does not move the caret before the long press delay, and once DragHold begins em blurs the editable itself.
+  useEffect(() => {
+    if (!pressing || longPressState !== LongPressState.Inactive || !webKit27Store.getState()) return
+
+    /** Ends the press. */
+    const onSelectionChange = () => stop()
+    document.addEventListener('selectionchange', onSelectionChange)
+    return () => document.removeEventListener('selectionchange', onSelectionChange)
+  }, [longPressState, pressing, stop])
 
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
   // A press on the caret of an *empty* thought is exempt, where the menu is the only way to reach paste: every other

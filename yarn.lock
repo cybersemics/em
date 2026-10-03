@@ -2446,6 +2446,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@capacitor/device@npm:^8.0.3":
+  version: 8.0.3
+  resolution: "@capacitor/device@npm:8.0.3"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/697eb65c2d314b04145c43021bfe5559ecd9fb4d7c5185f4a5757d6afa62650ef9da3ab9ad4e69562dc1560dfd8c1e151da6bbe4559e1917f37aca17f9a89b9b
+  languageName: node
+  linkType: hard
+
 "@capacitor/docgen@npm:^0.3.1":
   version: 0.3.1
   resolution: "@capacitor/docgen@npm:0.3.1"
@@ -12551,6 +12560,7 @@ __metadata:
     "@capacitor/cli": "npm:^8.5.2"
     "@capacitor/clipboard": "npm:^8.0.1"
     "@capacitor/core": "npm:^8.5.2"
+    "@capacitor/device": "npm:^8.0.3"
     "@capacitor/haptics": "npm:^8.0.2"
     "@capacitor/ios": "npm:^8.5.2"
     "@capacitor/keyboard": "npm:^8.0.5"
