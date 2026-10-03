@@ -888,6 +888,24 @@ const Editable = ({
   const onPaste = useOnPaste({ contentRef, simplePath, transient })
   const onCopy = useOnCopy({ thoughtId })
   const onCut = useOnCut()
+
+  /** Flushes the last edit before cutting, otherwise if cut occurs in quick succession the new value can be overwritten by the throttled change. Memoized so that ContentEditable's React.memo is not defeated by a new handler on every render. */
+  const onCutHandler = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>) => {
+      throttledChangeRef.current?.flush()
+      onCut(e)
+    },
+    [onCut],
+  )
+
+  /** Flushes the last edit before pasting, otherwise if paste occurs in quick succession the pasted value can be overwritten by the throttled change. Memoized so that ContentEditable's React.memo is not defeated by a new handler on every render. */
+  const onPasteHandler = useCallback(
+    (e: React.ClipboardEvent<HTMLDivElement>) => {
+      throttledChangeRef.current?.flush()
+      onPaste(e)
+    },
+    [onPaste],
+  )
   /** Flushes edits and updates certain state variables on blur. */
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
@@ -1278,18 +1296,8 @@ const Editable = ({
       onBlur={onBlur}
       onChange={onChangeHandler}
       onCopy={onCopy}
-      onCut={e => {
-        // flush the last edit, otherwise if cut occurs in quick succession the new value can be overwritten by the throttled change
-        throttledChangeRef.current?.flush()
-
-        onCut(e)
-      }}
-      onPaste={e => {
-        // flush the last edit, otherwise if paste occurs in quick succession the pasted value can be overwritten by the throttled change
-        throttledChangeRef.current?.flush()
-
-        onPaste(e)
-      }}
+      onCut={onCutHandler}
+      onPaste={onPasteHandler}
       // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
       // unless it is given a hint that the element is some sort of form control
       role='button'
