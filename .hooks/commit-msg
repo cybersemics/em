@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Add the active Codex model and effort to commits made in a Codex session."""
+
+import json
+import os
+import pathlib
+import re
+import subprocess
+import sys
+
+
+CODEX_TRAILER = re.compile(r"^Co-Authored-By:\s*Codex\b.*$", re.IGNORECASE)
+ANY_TRAILER = re.compile(r"^[A-Za-z0-9-]+:\s+\S")
+
+
+def session_model_and_effort(session_id):
+    """Read the latest model and effort recorded for this Codex session."""
+    codex_home = pathlib.Path(os.environ.get("CODEX_HOME", pathlib.Path.home() / ".codex"))
+    sessions = codex_home / "sessions"
+    session_path = next((path for path in sessions.rglob("*.jsonl") if path.name.endswith(f"{session_id}.jsonl")), None)
+    if session_path is None:
+        return "unknown", "unknown"
+
+    latest_context = None
+    try:
+        with session_path.open(encoding="utf-8") as transcript:
+            for line in transcript:
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if event.get("type") == "turn_context":
+                    latest_context = event.get("payload", {})
+    except OSError:
+        return "unknown", "unknown"
+
+    return (latest_context or {}).get("model") or "unknown", (latest_context or {}).get("effort") or "unknown"
+
+
+def replaying_commit():
+    """Preserve existing authorship when Git is replaying a prior commit."""
+    for marker in ("CHERRY_PICK_HEAD", "REBASE_HEAD", "REVERT_HEAD", "MERGE_HEAD"):
+        path = subprocess.check_output(["git", "rev-parse", "--git-path", marker], text=True).strip()
+        if pathlib.Path(path).exists():
+            return True
+    return False
+
+
+def main():
+    """Normalize the Codex co-author trailer in Git's proposed message."""
+    session_id = os.environ.get("CODEX_SESSION_ID")
+    if not session_id or replaying_commit():
+        return
+
+    message_path = pathlib.Path(sys.argv[1])
+    message = message_path.read_text(encoding="utf-8")
+    model, effort = session_model_and_effort(session_id)
+    expected = f"Co-Authored-By: Codex {model} ({effort}) <noreply@openai.com>"
+    lines = message.splitlines()
+    existing = [line for line in lines if CODEX_TRAILER.match(line)]
+    if existing == [expected]:
+        return
+
+    lines = [line for line in lines if not CODEX_TRAILER.match(line)]
+    while lines and not lines[-1].strip():
+        lines.pop()
+    separator = "\n" if lines and ANY_TRAILER.match(lines[-1]) else "\n\n"
+    message_path.write_text("\n".join(lines) + separator + expected + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()
