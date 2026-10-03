@@ -57,24 +57,23 @@ flowchart TD
 
 So **"CI failed" does not on its own mean the bug is unfixed.** You have to look at which check failed:
 
-- **The TDD check is red** — the new test passes on code without the fix. The test is not actually testing the reported bug. Fix the test.
+- **The TDD check is red** — the new test passes on code without the fix. The test is not actually testing the reported bug. Fix the test. If the log says *not validated* instead, the test never ran to a result on the base branch — a configuration error, a file that fails to load there, a session that never started — and that is what to fix.
 - **The normal suite is red** — something is genuinely broken. Fix the code.
 
 Both prompt files and the [`tdd-write-failing-test`](skills.md#tdd-write-failing-test) skill spell this out, because an agent that misreads it will "fix" a perfectly good test until it stops catching anything.
 
 ## How the check works
 
-[`.github/workflows/tdd.yml`](../../.github/workflows/tdd.yml) runs on every pull request in four stages.
+[`.github/workflows/tdd.yml`](../../.github/workflows/tdd.yml) runs on every pull request in four stages. The iOS stage is a workflow of its own, [`tdd-ios.yml`](../../.github/workflows/tdd-ios.yml), with its own check (see [the ios job](#the-ios-job) below).
 
 ```mermaid
 flowchart TD
     D["<b>detect</b><br/>Which test files changed, and do they add new tests?"]
     D --> U["<b>unit</b>"]
     D --> P["<b>puppeteer</b>"]
-    D --> I["<b>ios</b>"]
+    D -.-> I["<b>ios</b><br/>tdd-ios.yml, its own check"]
     U --> S["<b>summary</b><br/>one check for branch protection"]
     P --> S
-    I --> S
 
     click D "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#how-the-check-works" "What detect classifies"
     click U "https://github.com/cybersemics/em/blob/HEAD/docs/agents/tdd.md#how-the-check-works" "The unit job"
@@ -92,11 +91,15 @@ It then decides whether to skip. It skips if no test files changed; if the pull 
 1. Check out the base branch — the code *without* the fix.
 2. Copy the changed test files across from the pull request, along with any changed test infrastructure they may depend on — helpers, config/setup directories, and shared `src/e2e/*.ts` files.
 3. Switch any newly-added skipped tests back on, via [`.github/actions/unskip-added-tests`](../../.github/actions/unskip-added-tests/action.yml).
-4. Run them, and **require them to fail.**
+4. Run them, and **require them to fail.** The verdict comes from the tests the runner reports, not from its exit code ([`scripts/ci/tdd-verdict.mjs`](../../scripts/ci/tdd-verdict.mjs)): at least one of them has to have run and failed. A run that never reached a test — a crash loading the config, a file that fails to import on the base branch, a failure only in setup hooks — fails as *not validated*.
 
 Step 2 copies the files individually rather than applying a patch, because a brand-new test file has nothing on the base branch to patch against. Test infrastructure comes across too, since a test that calls a new helper cannot even compile on the base branch without it. A path the pull request *deleted* is removed from the base branch rather than copied — there is no blob at the head to copy, and a deletion is as much a part of the change under test as an edit.
 
-**summary** collapses the three into a single check, so branch protection has one thing to require.
+**summary** collapses unit and puppeteer into a single check, so branch protection has one thing to require.
+
+### The ios job
+
+The iOS tests run on real devices on BrowserStack, which needs credentials, and a `pull_request` run of a fork's pull request receives none. So the iOS job lives in [`tdd-ios.yml`](../../.github/workflows/tdd-ios.yml), which triggers on `pull_request_target`: that runs in the base repository's context with its secrets, the way the BrowserStack workflow does. Its detection is the same [`tdd-detect`](../../.github/actions/tdd-detect/action.yml) action, run from the base branch. Everything except the pull request's test files — the workflow, the actions it uses, and the verdict script — is read from the base branch too, and the credentials are passed only to the step that runs the tests. Where they are absent anyway, as on a Dependabot pull request, the job skips with a warning rather than run into a crash.
 
 ### Escape hatches
 
