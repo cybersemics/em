@@ -248,9 +248,30 @@ Screenshots and videos are usually already in the conversation that prompted the
 
 ## Anonymizing user data
 
-A reporter's Debug Log and any dump of their thoughtspace (the `--- state.thoughts` section of a log, an export, a pasted outline, a copied database) hold their own thoughts verbatim: journal entries, names, addresses, whatever they write in **em**. An issue is public and indexed. Anonymize everything you take from one of these before it reaches the issue body, the title, a comment, or a file you attach.
+A reporter's Debug Log and any dump of their thoughtspace (the `--- state.thoughts` section of a log, an export, a pasted outline, a copied database) hold their own thoughts verbatim. An issue is public and indexed. Before anything from one of these reaches the issue body, the title, a comment, or a file you attach, anonymize what the reporter would reasonably not want made public.
 
-Replace each thought value with a neutral placeholder: `a`, `b`, `c` and onward, or `x1`, `x2` where the alphabet runs out. Map consistently, so the same value becomes the same placeholder everywhere it appears, in the thought tree in Steps to Reproduce, in every quoted log line, and in Current and Expected Behavior. The reader resolves log entries against the steps through those placeholders, and `compare-debug-log` aligns a reproduction against them.
+That is the test, applied thought by thought:
+
+- **Anonymize people and places.** Names of people, pets, employers, schools, streets, addresses, and any other proper noun that points at the reporter's life.
+- **Anonymize feelings, attitudes, fears and beliefs.** Personal journaling, opinions about someone, health, money, relationships, politics, religion.
+- **Leave generic and technical text alone.** That covers `test`, `foo`, `todo`, `Item 1`, a code snippet, lorem ipsum and common words, as well as interests and hobbies (`guitar`, `hiking`) and the names of countries. A thought that reveals nothing about the person, or reveals only something unremarkable, is clearer left as written than replaced.
+
+Judge each thought on its own, and in context. `Paris` under `Countries` stays, `Paris` under `Where to move when I leave him` does not, and neither does its parent.
+
+Replace what you anonymize with a neutral placeholder: `a`, `b`, `c` and onward, or `x1`, `x2` where the alphabet runs out, or a generic stand-in of the same kind (`Alice`, `Springfield`) where the kind matters to the bug. Map consistently, so the same value becomes the same placeholder everywhere it appears, in the thought tree in Steps to Reproduce, in every quoted log line, and in Current and Expected Behavior. The reader resolves log entries against the steps through those placeholders, and `compare-debug-log` aligns a reproduction against them.
+
+### Lexemes
+
+Thoughts whose values normalize to the same string share a Lexeme, which is what puts them together in the Context View, in favorites, and in every other "same thought in another context" feature. Normalization ignores case, plurals, diacritics, most punctuation, whitespace and HTML tags (`normalizeThought`), so `Anna`, `anna's` and `ANNA` are one Lexeme. Single characters are the exception: they are never normalized, so `a` and `A` are two Lexemes.
+
+Where the issue involves Lexemes in any way, the anonymized values must share Lexemes exactly where the originals did, and nowhere else:
+
+- Values that shared a Lexeme get placeholders that still do. Carry over the variation the bug may hinge on: `Anna`, `anna's` and `ANNA` become `Alice`, `alice's` and `ALICE`, not three copies of one placeholder, and not `a`, `b` and `c`. Use placeholders of two or more letters here, since single letters do not normalize and `a` and `A` would split what was one Lexeme.
+- Values that did not share a Lexeme get placeholders that do not either. `Cat` and `Cats` would merge two thoughts the reporter kept apart.
+
+Check it before posting by grouping the originals by Lexeme and the placeholders by Lexeme, and confirming the two groupings are the same.
+
+### What to keep
 
 Keep what the bug depends on and nothing else of the original:
 
@@ -267,7 +288,7 @@ Thought text turns up in more of a log than the `value` fields. Check all of the
 
 Leave thought ids, ranks, sequence numbers, timestamps, action types, and the `---` device header as they are. None of them is the reporter's writing, and they are what lets the excerpt be matched to the log.
 
-When unsure whether something is personal, anonymize it. When a value cannot be replaced without losing the bug, ask the reporter whether it can be posted, in the same round as your other questions.
+When unsure whether a thought is something the reporter would want public, anonymize it. When a value cannot be replaced without losing the bug, ask the reporter whether it can be posted, in the same round as your other questions.
 
 Before posting, search the draft for every original value you replaced, and for any distinctive word from the dump, to confirm none survived. A log you captured yourself while reproducing holds only the thoughts you typed, and needs none of this.
 
@@ -302,7 +323,9 @@ New issues often originate in a comment thread on another issue or PR.
 - An Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
-- A reporter's thought text quoted from their Debug Log or thoughtspace instead of a placeholder, including text spelled out one keystroke at a time across `input` or `keydown` entries.
+- A personal thought (a name, a place, a feeling) quoted from a reporter's Debug Log or thoughtspace instead of a placeholder, including one spelled out a keystroke at a time across `input` or `keydown` entries.
+- Generic text replaced with placeholders that it did not need, making the steps harder to follow.
+- Placeholders that merge or split Lexemes the original values did not, in an issue that involves Lexemes.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
 - A piece of a larger feature opened as a sibling with `Part of #5481` in the body, where a sub-issue relationship is what tracks it.
 - A loose end left for the reader — an unruled-out alternative, a missing value, an unnamed platform — that the reporter could have answered before posting.

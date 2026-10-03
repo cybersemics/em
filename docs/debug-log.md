@@ -33,7 +33,7 @@ Logging is **off** in production unless the user turns on **Debug Logging** in S
 
 A reporter attaches the downloaded file to an issue under a `## Debug Log` heading — see [`write-issue`](../.github/skills/write-issue/SKILL.md).
 
-The log carries thought text verbatim, in value fields, typed keystrokes, action payloads and the `state.thoughts` dump. An agent quoting a reporter's log into an issue replaces that text with placeholders first; [`write-issue`](../.github/skills/write-issue/SKILL.md#anonymizing-user-data) lists every place it appears.
+The log carries thought text verbatim, in value fields, typed keystrokes, action payloads and the `state.thoughts` dump. An agent quoting a reporter's log into an issue replaces the personal parts of that text with placeholders first, keeping Lexemes intact; [`write-issue`](../.github/skills/write-issue/SKILL.md#anonymizing-user-data) lists every place it appears.
 
 ### Streaming to the console
 
