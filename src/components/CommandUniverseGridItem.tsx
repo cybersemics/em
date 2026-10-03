@@ -1,4 +1,5 @@
-import { FC } from 'react'
+import { useInView } from 'motion/react'
+import { FC, RefObject, useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
@@ -26,11 +27,15 @@ interface CommandUniverseGridItemProps {
   command: Command
   /** Search text that will be highlighted within the matched command title. */
   search?: string
+  /** The inner dialog scroller used to decide when this cell's gesture is near view. */
+  scrollRootRef: RefObject<HTMLDivElement | null>
 }
 
 /** Renders a single command as a cell in CommandUniverseGrid. */
-const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '' }) => {
+const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '', scrollRootRef }) => {
   const dispatch = useDispatch()
+  const gestureBoxRef = useRef<HTMLDivElement>(null)
+  const [showGesture, setShowGesture] = useState(false)
   const isActive = useSelector(state => command.isActive?.(state))
   const disabled = useSelector(state => !isExecutable(state, command))
   const label = command.labelInverse && isActive ? command.labelInverse : command.label
@@ -42,6 +47,14 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
   })
 
   const Icon = command.svg ?? SettingsIcon
+
+  const isNearViewport = useInView(gestureBoxRef, { root: scrollRootRef, margin: '180px 0px', once: false })
+  useEffect(() => {
+    const page = gestureBoxRef.current?.closest('[data-entry-id]')
+    // Retain rendered diagrams while the grid is hidden or zooming so Back has a complete surface to animate.
+    if (!isNearViewport && (page?.getAttribute('aria-hidden') === 'true' || page?.hasAttribute('inert'))) return
+    setShowGesture(isNearViewport)
+  }, [isNearViewport])
 
   return (
     <tr>
@@ -103,6 +116,7 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
               })}
             >
               <div
+                ref={gestureBoxRef}
                 className={css({
                   width: '100%',
                   aspectRatio: '1 / 1',
@@ -110,18 +124,20 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
                   margin: '0 auto',
                 })}
               >
-                <GestureDiagram
-                  path={gestureString(command)}
-                  cssRaw={css.raw({ display: 'block' })}
-                  size={150}
-                  arrowSize={1}
-                  strokeWidth={12}
-                  arrowhead='outlined-wide'
-                  cornerRadius={12}
-                  rounded={command.rounded}
-                  gradient={GESTURE_GRADIENT}
-                  glow={false}
-                />
+                {showGesture && (
+                  <GestureDiagram
+                    path={gestureString(command)}
+                    cssRaw={css.raw({ display: 'block' })}
+                    size={150}
+                    arrowSize={1}
+                    strokeWidth={12}
+                    arrowhead='outlined-wide'
+                    cornerRadius={12}
+                    rounded={command.rounded}
+                    gradient={GESTURE_GRADIENT}
+                    glow={false}
+                  />
+                )}
               </div>
             </div>
           ) : null}
