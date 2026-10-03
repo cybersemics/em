@@ -15,6 +15,7 @@ import updateThoughts from '../actions/updateThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
+import debugLog from '../util/debugLog'
 import equalArrays from '../util/equalArrays'
 import getUndoStepCount from '../util/getUndoStepCount'
 import headValue from '../util/headValue'
@@ -208,9 +209,24 @@ const restorePushQueueFromPatches = (state: State, oldState: State, ops: Operati
 
 /**
  * Returns the diff between two states as a fast-json-patch Patch that can be applied for undo/redo functionality. Ignores ephemeral state properties such as alert which should not be recreated (defined in statePropertiesToOmit).
+ * A top-level array property, such as the cursor or multicursorAnchor Path, is replaced whole rather than element by element. A Path is a value, not a container: an element-wise op like replace /multicursorAnchor/2 is only valid against the exact array it was diffed from. When navigation patches are merged, the previous patch is replayed on top of whatever non-undoable actions have done since, so the array may have changed or become null in the meantime (e.g. toggleMulticursor clears the anchor when the anchored thought is deselected). Replaying an element-wise op then either splices the restored Path into an unrelated one or throws on null.
  */
-const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] =>
-  compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))
+const diffState = <T>(newValue: Index<T>, value: Index<T>): Operation[] => {
+  const ops = compare(_.omit(newValue, statePropertiesToOmit), _.omit(value, statePropertiesToOmit))
+
+  // top-level array properties with at least one element-wise op
+  const arrayKeys = new Set(
+    ops
+      .map(op => op.path.split('/'))
+      .filter(segments => segments.length > 2 && Array.isArray(value[segments[1]]))
+      .map(segments => segments[1]),
+  )
+
+  return [
+    ...ops.filter(op => !arrayKeys.has(op.path.split('/')[1])),
+    ...[...arrayKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(value[key]) })),
+  ]
+}
 
 /**
  * Creates a patch with user-level metadata stored once, independently of its operations.
@@ -494,6 +510,14 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           } catch (e) {
             if (!(e instanceof Error)) throw e
             console.error(e.message, { state, lastUndoPatch })
+            // The throw unwinds the dispatch before loggerMiddleware records the action, so the Debug Log would
+            // otherwise show the error with no trace of what triggered it.
+            debugLog.log('undoPatchError', {
+              actionType,
+              message: e.message,
+              patchActionTypes: lastUndoPatch.metadata.actionTypes,
+              opPaths: lastUndoPatch.ops.map(op => `${op.op} ${op.path}`),
+            })
             throw new Error('Error applying patch')
           }
         }
