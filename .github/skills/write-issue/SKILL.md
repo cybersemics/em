@@ -262,14 +262,7 @@ Replace what you anonymize with a neutral placeholder: `a`, `b`, `c` and onward,
 
 ### Lexemes
 
-Thoughts whose values normalize to the same string share a Lexeme, which is what puts them together in the Context View, in favorites, and in every other "same thought in another context" feature. Normalization ignores case, plurals, diacritics, most punctuation, whitespace and HTML tags (`normalizeThought`), so `Anna`, `anna's` and `ANNA` are one Lexeme. Single characters are the exception: they are never normalized, so `a` and `A` are two Lexemes.
-
-Where the issue involves Lexemes in any way, the anonymized values must share Lexemes exactly where the originals did, and nowhere else:
-
-- Values that shared a Lexeme get placeholders that still do. Carry over the variation the bug may hinge on: `Anna`, `anna's` and `ANNA` become `Alice`, `alice's` and `ALICE`, not three copies of one placeholder, and not `a`, `b` and `c`. Use placeholders of two or more letters here, since single letters do not normalize and `a` and `A` would split what was one Lexeme.
-- Values that did not share a Lexeme get placeholders that do not either. `Cat` and `Cats` would merge two thoughts the reporter kept apart.
-
-Check it before posting by grouping the originals by Lexeme and the placeholders by Lexeme, and confirming the two groupings are the same.
+Where the issue involves Lexemes, thoughts that shared a [Lexeme](../../../docs/glossary.md) before anonymizing must still share one after, and thoughts that did not must still not. Keep any variation in form the bug may hinge on.
 
 ### What to keep
 
@@ -325,7 +318,7 @@ New issues often originate in a comment thread on another issue or PR.
 - A screenshot with no steps.
 - A personal thought (a name, a place, a feeling) quoted from a reporter's Debug Log or thoughtspace instead of a placeholder, including one spelled out a keystroke at a time across `input` or `keydown` entries.
 - Generic text replaced with placeholders that it did not need, making the steps harder to follow.
-- Placeholders that merge or split Lexemes the original values did not, in an issue that involves Lexemes.
+- Placeholders that merge or split Lexemes the originals did not, in an issue that involves Lexemes.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
 - A piece of a larger feature opened as a sibling with `Part of #5481` in the body, where a sub-issue relationship is what tracks it.
 - A loose end left for the reader — an unruled-out alternative, a missing value, an unnamed platform — that the reporter could have answered before posting.
