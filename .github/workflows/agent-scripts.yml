@@ -44,6 +44,8 @@ on:
       - scripts/ci/copilot-conflicts-comment.cjs
       - scripts/ci/start-copilot-conflict-task.mjs
       - scripts/ci/start-dependabot-fix-task.mjs
+      - scripts/ci/merge-dependabot-pr.cjs
+      - scripts/ci/__tests__/merge-dependabot-pr.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -71,6 +73,8 @@ on:
       - scripts/ci/copilot-conflicts-comment.cjs
       - scripts/ci/start-copilot-conflict-task.mjs
       - scripts/ci/start-dependabot-fix-task.mjs
+      - scripts/ci/merge-dependabot-pr.cjs
+      - scripts/ci/__tests__/merge-dependabot-pr.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -137,3 +141,6 @@ jobs:
 
       - name: Run Copilot conflict collector tests
         run: node scripts/ci/__tests__/collect-copilot-conflicts.mjs
+
+      - name: Run Dependabot merge gate tests
+        run: node scripts/ci/__tests__/merge-dependabot-pr.mjs
