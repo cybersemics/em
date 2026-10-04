@@ -79,11 +79,11 @@ The skill states *what* must be true and lets a single clause carry *how* per en
 
 ## What is shared, and what is not
 
-**Shared** — [`write-issue`](skills.md#write-issue), [`plan`](skills.md#plan), [`tdd-write-failing-test`](skills.md#tdd-write-failing-test), [`compare-debug-log`](skills.md#compare-debug-log), [`test-diagnosis`](skills.md#test-diagnosis), [`puppeteer-update-snapshots`](skills.md#puppeteer-update-snapshots), [`ci-monitor`](skills.md#ci-monitor), [`docs-sync`](skills.md#docs-sync), [`end-session`](skills.md#end-session).
+**Shared** — [`create-issue`](skills.md#create-issue), [`plan`](skills.md#plan), [`tdd-write-failing-test`](skills.md#tdd-write-failing-test), [`compare-debug-log`](skills.md#compare-debug-log), [`test-diagnosis`](skills.md#test-diagnosis), [`puppeteer-update-snapshots`](skills.md#puppeteer-update-snapshots), [`ci-monitor`](skills.md#ci-monitor), [`docs-sync`](skills.md#docs-sync), [`end-session`](skills.md#end-session).
 
 Three of those needed a per-harness clause. `end-session` and `ci-monitor` name a Copilot tool that has no local equivalent — opening a pull request, listing workflow runs — and now name the `gh` command alongside it. `test-diagnosis` was written as though a failure could only arrive from CI; its trigger now covers a suite run locally, where the output is already on screen rather than in a log to be fetched.
 
-`write-issue` needed nothing — it shells out to `gh` and names no provisioned resource.
+`create-issue` needed nothing — it shells out to `gh` and names no provisioned resource.
 
 `compare-debug-log` is shared even though it borders the browser story, because the half that carries the insight does not need a browser: comparing two logs is two files and a script. Only the capture step wants a live session, and a local agent that has one — a dev server and a Chrome on a debugging port — gets that too. Given a log a reporter attached and one captured any other way, the comparison runs anywhere.
 
