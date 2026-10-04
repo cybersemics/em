@@ -8,7 +8,7 @@
 
 ## Quick Start
 
-The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests. A fresh checkout — including every agent worktree under `.claude/worktrees/` — needs its own `yarn install`: the local Capacitor plugins in `packages/` are linked as workspace dependencies and are only compiled by the `postinstall` → `build:packages` step, so without it any test that reaches production code importing one fails to collect with `Failed to resolve import "webview-background" from "src/device/nativeHistory.ts"`. The generated Panda CSS output is the same story one step earlier, failing to collect with `Failed to resolve import '../../../styled-system/css'`.
+The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests. A fresh checkout — including every agent worktree under `.claude/worktrees/` — needs its own `yarn install` (a new Claude Code cloud session runs it automatically; see [Claude Code in the cloud](agents/external-agents.md#claude-code-in-the-cloud)): the local Capacitor plugins in `packages/` are linked as workspace dependencies and are only compiled by the `postinstall` → `build:packages` step, so without it any test that reaches production code importing one fails to collect with `Failed to resolve import "webview-background" from "src/device/nativeHistory.ts"`. The generated Panda CSS output is the same story one step earlier, failing to collect with `Failed to resolve import '../../../styled-system/css'`.
 
 ```sh
 yarn build:styles    # styled-system/
