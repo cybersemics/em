@@ -1,4 +1,5 @@
 import { useSelector } from 'react-redux'
+import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
 import ColorPicker from '../ColorPicker'
@@ -10,8 +11,10 @@ const TextColorWithColorPicker = ({ size = 18, style, fill, cssRaw }: IconType) 
     state => state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'colorPicker',
   )
 
+  // A flex column rather than a block, so the icon is not set on a line of text, whose room for descenders would make
+  // the wrapper taller than the icon and lift the icon off centre in the Formatting Bar. The picker still opens below.
   return (
-    <div>
+    <div className={css({ display: 'flex', flexDirection: 'column' })}>
       <TextColorIcon
         size={size}
         style={style}

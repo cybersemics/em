@@ -3,6 +3,7 @@ import { Children, act, createElement } from 'react'
 import { Provider } from 'react-redux'
 import { clearActionCreator as clear } from '../../actions/clear'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import { toggleFormattingBarActionCreator as toggleFormattingBar } from '../../actions/toggleFormattingBar'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -15,6 +16,7 @@ import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import durations from '../../util/durations'
 import initialState from '../../util/initialState'
+import ColorPicker from '../ColorPicker'
 import Editable from '../Editable'
 import FormattingBar from '../FormattingBar'
 
@@ -74,6 +76,16 @@ it('set a heading level from the Formatting Bar heading picker', async () => {
   expect(optionTouchEnd.defaultPrevented).toBe(true)
 })
 
+it('open the Color Picker only in the Formatting Bar when its Text Color button is tapped', async () => {
+  await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
+  // The Toolbar renders its own Color Picker inside its Text Color button, which must stay closed.
+  renderWithStore(createElement(FormattingBar), createElement(ColorPicker))
+
+  await tap('[aria-label="Text Color"]')
+
+  expect(document.querySelectorAll('[aria-label="Color Picker"]')).toHaveLength(1)
+})
+
 it('close a picker opened from the Formatting Bar when the bar is closed', async () => {
   // The picker stays mounted until its closing animation ends, so make the animation instant.
   durations.setInTest(true)
@@ -87,6 +99,28 @@ it('close a picker opened from the Formatting Bar when the bar is closed', async
   await act(vi.runAllTimersAsync)
 
   expect(document.querySelector('[aria-label="Heading Picker"]')).toBeNull()
+})
+
+it('mark the default text color swatch for a thought with no color', async () => {
+  await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
+  renderWithStore(createElement(FormattingBar))
+
+  await tap('[aria-label="Text Color"]')
+
+  const selected = Array.from(document.querySelectorAll('[aria-label="Color Picker"] [data-selected="true"]'))
+  expect(selected.map(option => option.getAttribute('aria-label'))).toEqual(['default'])
+})
+
+it('highlight a picker button in the Formatting Bar only while its picker is open', async () => {
+  await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
+  renderWithStore(createElement(FormattingBar))
+
+  const textColorButton = '[aria-label="Text Color"]'
+  expect(document.querySelector(textColorButton)?.getAttribute('data-active')).toBe('false')
+
+  await tap(textColorButton)
+
+  expect(document.querySelector(textColorButton)?.getAttribute('data-active')).toBe('true')
 })
 
 it('keep the keyboard open when a tap in the Formatting Bar misses its buttons', async () => {
@@ -115,6 +149,19 @@ it('show the description of a Formatting Bar picker when its info button is tapp
   expect(description()?.getAttribute('aria-hidden')).toBe('false')
   // The picker stays open, and the tap is consumed so the keyboard stays open too.
   expect(infoTouchEnd.defaultPrevented).toBe(true)
+})
+
+it('show the description in every Formatting Bar picker once the info button is tapped in one', async () => {
+  await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
+  renderWithStore(createElement(FormattingBar))
+
+  await tap('[aria-label="Heading"]')
+  await tap('[aria-label="Heading Picker"] [aria-label="Info"]')
+  await tap('[aria-label="Text Color"]')
+
+  expect(document.querySelector('[aria-label="Color Picker"] [aria-label="Info"]')?.getAttribute('aria-pressed')).toBe(
+    'true',
+  )
 })
 
 it('starts closed and persists opening and closing without releasing editor focus', async () => {
@@ -189,4 +236,23 @@ it('consume a disabled formatting button tap without executing it', async () => 
 
   expect(release.defaultPrevented).toBe(true)
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}`)
+})
+
+it('moves an open Color Picker from the Toolbar to the formatting bar in one tap', async () => {
+  await dispatch([
+    importText({ text: '- hello' }),
+    setCursor(['hello']),
+    toggleFormattingBar({ value: true }),
+    toggleDropdown({ dropDownType: 'colorPicker', value: true }),
+  ])
+  renderWithStore(createElement(FormattingBar), createElement(ColorPicker))
+  expect(document.querySelectorAll('[aria-label="Color Picker"]')).toHaveLength(1)
+  // Only the formatting-bar presentation has an Info button.
+  expect(document.querySelector('[aria-label="Color Picker"] [aria-label="Info"]')).toBeNull()
+
+  const touchEnd = await tap('[aria-label="Text Color"]')
+
+  expect(document.querySelectorAll('[aria-label="Color Picker"]')).toHaveLength(1)
+  expect(document.querySelector('[aria-label="Color Picker"] [aria-label="Info"]')).not.toBeNull()
+  expect(touchEnd.defaultPrevented).toBe(true)
 })
