@@ -1,3 +1,4 @@
+import { motion } from 'motion/react'
 import React, { PropsWithChildren, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
@@ -106,7 +107,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       : {}
 
     return (
-      <div
+      <motion.div
         className={css({
           boxSizing: 'border-box',
           textAlign,
@@ -164,7 +165,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
             disableSwipeToDismiss
           />
         ) : null}
-      </div>
+      </motion.div>
     )
   },
 )
