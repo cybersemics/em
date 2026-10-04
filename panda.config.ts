@@ -517,6 +517,8 @@ export default defineConfig({
             'tip',
             'cloneDroppedThought',
             'hoverArrow',
+            // Above the gesture trace, like a keyboard accessory: a stroke drawn across the bar passes beneath it.
+            'formattingBar',
             'gestureTrace',
             'gestureContentBlur',
             'hamburgerMenu',
