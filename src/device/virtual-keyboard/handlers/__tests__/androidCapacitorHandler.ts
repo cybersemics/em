@@ -136,7 +136,7 @@ it('fades keyboard progress through closing geometry updates before native compl
 
   expect(virtualKeyboardStore.getState()).toMatchObject({ height: 160, open: true, phase: 'closing' })
   expect(virtualKeyboardStore.getState().openPercent).toBeCloseTo(4 / 9)
-  expect(Number(document.documentElement.style.getPropertyValue('--virtual-keyboard-open-percent'))).toBeCloseTo(4 / 9)
+  expect(virtualKeyboardStore.getState().openPercent).toBeCloseTo(4 / 9)
 
   renderFrame(400)
   expect(virtualKeyboardStore.getState()).toMatchObject({ height: 0, open: true, openPercent: 0 })

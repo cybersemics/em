@@ -1,49 +1,17 @@
-import { RefObject, useLayoutEffect } from 'react'
+import { MotionValue, useMotionValue } from 'motion/react'
+import { useLayoutEffect } from 'react'
 import { isCapacitor, isSafari } from '../browser'
 import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import useScrollTop from './useScrollTop'
-import useVirtualKeyboardCssProperty from './useVirtualKeyboardCssProperty'
 
 type PositionFixedOptions = {
+  /** Anchor the element to the bottom instead of the top. */
+  fromBottom?: boolean
   /** Additional pixel offset from the anchored edge (top or bottom). */
   offset?: number
   /** Container height for bottom positioning on mobile Safari. */
   height?: number
-} & (
-  | {
-      /** Anchor position for the element. */
-      fromBottom?: boolean
-      /** Explicit consumers of keyboard geometry and timed compositor motion. Required for bottom positioning. */
-      elementRefs: readonly RefObject<HTMLElement | null>[]
-    }
-  | { fromBottom?: false; elementRefs?: undefined }
-)
-
-/** Removes redundant transform keyframes while bounding the displacement error to a quarter CSS pixel. */
-const getMotionKeyframes = (heights: readonly number[]): Keyframe[] => {
-  const frames = heights.map((height, index) => ({
-    offset: heights.length > 1 ? index / (heights.length - 1) : 0,
-    translate: `0 ${-height}px`,
-  }))
-  if (frames.length <= 2) return frames
-
-  /** Keeps the most divergent sample until each linear segment respects the displacement error bound. */
-  const simplify = (first: number, last: number): Keyframe[] => {
-    const split = heights.slice(first + 1, last).reduce(
-      (largest, height, offset) => {
-        const index = first + offset + 1
-        const interpolated = heights[first] + ((heights[last] - heights[first]) * (index - first)) / (last - first)
-        const error = Math.abs(height - interpolated)
-        return error > largest.error ? { index, error } : largest
-      },
-      { index: first, error: 0 },
-    )
-    return split.error <= 0.25
-      ? [frames[first], frames[last]]
-      : [...simplify(first, split.index).slice(0, -1), ...simplify(split.index, last)]
-  }
-  return simplify(0, frames.length - 1)
 }
 
 /**
@@ -51,6 +19,8 @@ const getMotionKeyframes = (heights: readonly number[]): Keyframe[] => {
  *
  * Returns `{ position, top, bottom }` styles that keep an element pinned to a viewport edge, while offsetting the
  * position of the element to ensure it remains visible when the keyboard is open and avoids safe areas.
+ * Bottom-anchored consumers receive MotionValues for their keyboard-dependent styles and must use a Motion element.
+ * Scalar store subscriptions update those values without rendering the consumer on each keyboard frame.
  *
  * The hook handles three concerns:
  *
@@ -66,16 +36,26 @@ const getMotionKeyframes = (heights: readonly number[]): Keyframe[] => {
  * fixed positioning.
  *
  */
-const usePositionFixed = ({ fromBottom, offset = 0, height, elementRefs }: PositionFixedOptions = {}): {
+function usePositionFixed(options?: PositionFixedOptions & { fromBottom?: false }): {
   position: 'fixed' | 'absolute'
   top?: string
   bottom?: string
-  translate?: string
+}
+function usePositionFixed(options: PositionFixedOptions): {
+  position: 'fixed' | 'absolute'
+  top?: string | MotionValue<string>
+  bottom?: string
+  translate?: MotionValue<string>
   willChange?: string
-} => {
+}
+function usePositionFixed({ fromBottom, offset = 0, height }: PositionFixedOptions = {}): {
+  position: 'fixed' | 'absolute'
+  top?: string | MotionValue<string>
+  bottom?: string
+  translate?: MotionValue<string>
+  willChange?: string
+} {
   const keyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
-  useVirtualKeyboardCssProperty('height', fromBottom ? elementRefs : undefined)
-
   // On iOS Safari, emulate `position: fixed` using absolute positioning when the virtual keyboard is open.
   const position = keyboardOpen && isSafari() && !isCapacitor() ? 'absolute' : 'fixed'
 
@@ -84,56 +64,24 @@ const usePositionFixed = ({ fromBottom, offset = 0, height, elementRefs }: Posit
   const scrollTop = useScrollTop({ disabled: position === 'fixed' })
   const { innerHeight } = viewportStore.useState()
 
+  const bodyHeight = position === 'absolute' && fromBottom ? document.body.scrollHeight : 0
+  const currentHeight = virtualKeyboardStore.getState().height
+  const keyboardTranslate = useMotionValue(`0 ${-currentHeight}px`)
+  const keyboardTop = useMotionValue(
+    `calc(min(${bodyHeight}px, ${scrollTop + innerHeight}px - ${currentHeight}px) - ${(height ?? 0) + offset}px - env(safe-area-inset-bottom))`,
+  )
   useLayoutEffect(() => {
-    if (!fromBottom || !elementRefs || position !== 'fixed') return
-    let animations: Animation[] = []
-    let previousMotion: ReturnType<typeof virtualKeyboardStore.getState>['motion']
-    /** Starts native motion without waiting for the positioned component to render. */
-    const updateMotion = () => {
-      const { motion } = virtualKeyboardStore.getState()
-      const prepared = previousMotion
-      previousMotion = motion
-      if (
-        motion?.startedAt !== undefined &&
-        prepared &&
-        prepared.startedAt === undefined &&
-        animations.length > 0 &&
-        motion.duration === prepared.duration &&
-        motion.heights.length === prepared.heights.length &&
-        motion.heights.every((height, index) => height === prepared.heights[index])
-      ) {
-        // A paused track has never advanced on an estimated clock, so it can start without replacement.
-        const startedAt = performance.now() - (Date.now() - motion.startedAt)
-        // Setting startTime releases the paused hold directly, without scheduling a pending play task.
-        animations.forEach(animation => (animation.startTime = startedAt))
-        return
-      }
-      // Replace running tracks when their clock changes. Updating startTime on an already-running
-      // WebKit animation can leave its rendered motion on the old clock.
-      animations.forEach(animation => animation.cancel())
-      animations = []
-      if (!motion || motion.duration <= 0) return
-      const frames = getMotionKeyframes(motion.heights)
-      const startedAt = motion.startedAt === undefined ? undefined : performance.now() - (Date.now() - motion.startedAt)
-      animations = elementRefs.flatMap(ref => {
-        if (!ref.current) return []
-        const animation = ref.current.animate(frames, { duration: motion.duration, fill: 'both' })
-        if (startedAt === undefined) {
-          animation.pause()
-          animation.currentTime = 0
-        } else {
-          animation.startTime = startedAt
-        }
-        return [animation]
-      })
+    if (!fromBottom) return
+    /** Maps scalar geometry directly to declarative styles, without another derived-value frame. */
+    const update = (value: number) => {
+      keyboardTranslate.set(`0 ${-value}px`)
+      keyboardTop.set(
+        `calc(min(${bodyHeight}px, ${scrollTop + innerHeight}px - ${value}px) - ${(height ?? 0) + offset}px - env(safe-area-inset-bottom))`,
+      )
     }
-    const unsubscribe = virtualKeyboardStore.subscribeSelector(state => state.motion, updateMotion)
-    updateMotion()
-    return () => {
-      unsubscribe()
-      animations.forEach(animation => animation.cancel())
-    }
-  }, [elementRefs, fromBottom, position])
+    update(virtualKeyboardStore.getState().height)
+    return virtualKeyboardStore.subscribeSelector(state => state.height, update)
+  }, [fromBottom, bodyHeight, scrollTop, innerHeight, height, offset, keyboardTranslate, keyboardTop])
 
   let top, bottom, translate
 
@@ -151,9 +99,8 @@ const usePositionFixed = ({ fromBottom, offset = 0, height, elementRefs }: Posit
       // Then subtract the element's own height and offset if provided by the caller, and subtract the
       // safe-area-bottom inset so the element doesn't overlap the rounded-screen home indicator.
       //
-      // Read animated height from CSS so each keyboard frame can move the element without a React render.
-      const visibleBottom = `min(${document.body.scrollHeight}px, ${scrollTop + innerHeight}px - var(--virtual-keyboard-height, 0px))`
-      top = `calc(${visibleBottom} - ${(height ?? 0) + offset}px - env(safe-area-inset-bottom))`
+      // Motion updates this style from scalar height without rendering the consumer on each frame.
+      top = keyboardTop
     } else {
       // fromTop
       // Position the element at the top of the visible area.
@@ -171,7 +118,7 @@ const usePositionFixed = ({ fromBottom, offset = 0, height, elementRefs }: Posit
       // above the keyboard when open.
       bottom = `calc(env(safe-area-inset-bottom) + ${offset}px)`
       // Translation can run on the compositor; changing bottom requires layout on every keyboard frame.
-      translate = '0 calc(-1 * var(--virtual-keyboard-height, 0px))'
+      translate = keyboardTranslate
     } else {
       // fromTop
       // Normal fixed positioning anchored to the top — safe-area-top keeps the element

@@ -1,3 +1,4 @@
+import { motion } from 'motion/react'
 import React, { PropsWithChildren, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
@@ -59,12 +60,10 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     /** Used when `anchorFromBottom = true` for calculating position on mobile safari. */
     const [height, setHeight] = React.useState(0)
     const innerRef = React.useRef<HTMLDivElement>(null)
-    const positionElementRefs = React.useMemo(() => [innerRef], [innerRef])
     const positionFixedStyles = usePositionFixed({
       fromBottom: anchorFromBottom,
       offset: anchorOffset,
       height,
-      elementRefs: positionElementRefs,
     })
 
     // measure the height of the popup after it has been rendered
@@ -108,7 +107,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       : {}
 
     return (
-      <div
+      <motion.div
         className={css({
           boxSizing: 'border-box',
           textAlign,
@@ -166,7 +165,7 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
             disableSwipeToDismiss
           />
         ) : null}
-      </div>
+      </motion.div>
     )
   },
 )

@@ -18,6 +18,33 @@ vi.mock('@capacitor/core', () => ({
   }),
 }))
 
+// Control the external frame scheduler for scalar timing tests. Simulator captures verify real rendering order.
+vi.mock('framer-motion', async importOriginal => {
+  const actual = await importOriginal<typeof import('framer-motion')>()
+  const pending = new Map<() => void, ReturnType<typeof setTimeout>>()
+  return {
+    ...actual,
+    frame: {
+      ...actual.frame,
+      /** Schedules a deterministic update frame against the test clock. */
+      update: (callback: () => void) => {
+        pending.set(
+          callback,
+          setTimeout(() => {
+            pending.delete(callback)
+            callback()
+          }, 16),
+        )
+      },
+    },
+    /** Cancels the scheduled update for a superseded or disposed native transition. */
+    cancelFrame: (callback: () => void) => {
+      clearTimeout(pending.get(callback))
+      pending.delete(callback)
+    },
+  }
+})
+
 beforeEach(async () => {
   vi.useFakeTimers()
   document.documentElement.style.setProperty('--safe-area-inset-bottom', '20px')
@@ -84,100 +111,68 @@ it('keeps closing synchronized and ignores the end of a superseded opening', () 
   expect(virtualKeyboardStore.getState()).toMatchObject({ open: false, height: 0 })
 })
 
-it('publishes normalized timed geometry for the renderer and clears it at the endpoint', () => {
-  const startedAt = Date.now() - 150
+it('keeps scalar geometry steady on blur until native dismissal begins', () => {
+  store.dispatch(keyboardOpen({ value: true }))
+  listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
+  store.dispatch(keyboardOpen({ value: false }))
+  vi.advanceTimersByTime(30)
+  expect(virtualKeyboardStore.getState()).toEqual({ open: true, height: 300, openPercent: 1, phase: undefined })
   listeners.keyboardAnimation({
     stage: 'start',
-    id: 1,
-    fromHeight: 0,
-    toHeight: 320,
-    startedAt,
+    id: 2,
+    fromHeight: 320,
+    toHeight: 0,
+    startedAt: Date.now() - 150,
     durationMs: 300,
     bezier: [0, 0, 1, 1],
   })
-
-  const motion = virtualKeyboardStore.getState().motion!
-  expect(motion).toMatchObject({ startedAt, duration: 300 })
-  expect(motion.heights[0]).toBe(0)
-  expect(motion.heights[Math.floor(motion.heights.length / 2)]).toBe(140)
-  expect(motion.heights.at(-1)).toBe(300)
-
-  listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
-  expect(virtualKeyboardStore.getState().motion).toBeUndefined()
+  expect(virtualKeyboardStore.getState().height).toBe(140)
+  listeners.keyboardAnimation({ stage: 'end', id: 2, toHeight: 0 })
+  expect(virtualKeyboardStore.getState()).toEqual({ open: false, height: 0, openPercent: 0, phase: undefined })
 })
 
-it('prepares closing without moving until the native clock arrives', () => {
-  store.dispatch(keyboardOpen({ value: true }))
-  listeners.keyboardAnimation({
-    stage: 'start',
-    id: 1,
-    fromHeight: 0,
-    toHeight: 320,
-    startedAt: Date.now() - 300,
-    durationMs: 300,
-    bezier: [0, 0, 1, 1],
-  })
+it('applies a zero-duration native transition immediately', () => {
   listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
-
-  const startedAt = Date.now()
-  store.dispatch(keyboardOpen({ value: false }))
-  expect(virtualKeyboardStore.getState().motion).toMatchObject({ startedAt: undefined, duration: 300 })
-  // A late opening endpoint must not discard the prepared closing tracks.
-  listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
-  expect(virtualKeyboardStore.getState().motion).toMatchObject({ startedAt: undefined, duration: 300 })
-
-  vi.advanceTimersByTime(30)
-  expect(virtualKeyboardStore.getState().height).toBe(300)
   listeners.keyboardAnimation({
     stage: 'start',
     id: 2,
     fromHeight: 320,
     toHeight: 0,
     startedAt: Date.now(),
-    durationMs: 300,
-    bezier: [0, 0, 1, 1],
+    durationMs: 0,
   })
-  expect(virtualKeyboardStore.getState().motion?.startedAt).toBe(startedAt + 30)
-  expect(virtualKeyboardStore.getState().height).toBe(300)
-  listeners.keyboardAnimation({ stage: 'end', id: 2, toHeight: 0 })
-  expect(virtualKeyboardStore.getState()).toMatchObject({ open: false, height: 0, motion: undefined })
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: false, height: 0, openPercent: 0 })
 })
 
-it('keeps the keyboard geometry when edit mode ends but an input retains focus', () => {
-  store.dispatch(keyboardOpen({ value: true }))
+it('stops sampling and releases its listener on teardown', async () => {
   listeners.keyboardAnimation({
     stage: 'start',
     id: 1,
     fromHeight: 0,
     toHeight: 320,
-    startedAt: Date.now() - 300,
+    startedAt: Date.now() - 150,
     durationMs: 300,
     bezier: [0, 0, 1, 1],
   })
-  listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
-  const input = document.createElement('input')
-  document.body.appendChild(input)
-  input.focus()
-  store.dispatch(keyboardOpen({ value: false }))
-  expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 300, motion: undefined })
-  input.remove()
+  iOSCapacitorHandler.destroy()
+  await vi.runAllTimersAsync()
+  expect(virtualKeyboardStore.getState().height).toBe(140)
+  expect(removeListener).toHaveBeenCalled()
 })
 
-it('discards a prepared dismissal when editing resumes before the native hide', () => {
-  store.dispatch(keyboardOpen({ value: true }))
+it('continues publishing scalar samples between native notifications', () => {
   listeners.keyboardAnimation({
     stage: 'start',
     id: 1,
     fromHeight: 0,
     toHeight: 320,
-    startedAt: Date.now() - 300,
+    startedAt: Date.now(),
     durationMs: 300,
     bezier: [0, 0, 1, 1],
   })
+  vi.advanceTimersByTime(100)
+  expect(virtualKeyboardStore.getState().height).toBeGreaterThan(60)
+  expect(virtualKeyboardStore.getState().height).toBeLessThan(100)
   listeners.keyboardAnimation({ stage: 'end', id: 1, toHeight: 320 })
-  store.dispatch(keyboardOpen({ value: false }))
-  expect(virtualKeyboardStore.getState().motion).toMatchObject({ startedAt: undefined })
-  store.dispatch(keyboardOpen({ value: true }))
-  vi.advanceTimersByTime(400)
-  expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 300, motion: undefined })
+  expect(virtualKeyboardStore.getState()).toMatchObject({ open: true, height: 300, openPercent: 1 })
 })

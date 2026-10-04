@@ -9,7 +9,6 @@ import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggle
 import { toggleFormattingBarActionCreator as toggleFormattingBar } from '../actions/toggleFormattingBar'
 import { isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
-import useVirtualKeyboardCssProperty from '../hooks/useVirtualKeyboardCssProperty'
 import getHeadingLevel from '../selectors/getHeadingLevel'
 import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
@@ -133,40 +132,14 @@ const FormattingBar = () => {
 
   const keyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
 
-  const barShapeRef = useRef<HTMLDivElement>(null)
-  const barContentRef = useRef<HTMLDivElement>(null)
-  const overflowRef = useRef<HTMLDivElement>(null)
-  const glowRef = useRef<HTMLDivElement>(null)
-  const falloffRef = useRef<HTMLDivElement>(null)
-  const falloffGradientRef = useRef<HTMLDivElement>(null)
-  const pickerRef = useRef<HTMLDivElement>(null)
-  const pickerBackdropRef = useRef<HTMLDivElement>(null)
   const colorButtonRef = useRef<HTMLDivElement>(null)
   const letterCaseButtonRef = useRef<HTMLDivElement>(null)
   const headingButtonRef = useRef<HTMLDivElement>(null)
-  const positionElementRefs = useMemo(
-    () => ({
-      bar: [barShapeRef, barContentRef],
-      overflow: [overflowRef],
-      glow: [glowRef],
-      falloff: [falloffRef],
-      picker: [pickerRef, pickerBackdropRef],
-    }),
-    [barShapeRef, barContentRef, overflowRef, glowRef, falloffRef, pickerRef, pickerBackdropRef],
-  )
-
-  const keyboardOpacityRefs = useMemo(
-    () => [overflowRef, glowRef, falloffGradientRef],
-    [overflowRef, glowRef, falloffGradientRef],
-  )
-  useVirtualKeyboardCssProperty('openPercent', keyboardOpacityRefs)
-
   // Position fixed styles for the bar (from bottom, above keyboard)
   const barPositionStyles = usePositionFixed({
     fromBottom: true,
     height: barHeight,
     offset: 0,
-    elementRefs: positionElementRefs.bar,
   })
 
   // Position fixed styles for the overflow button
@@ -174,7 +147,6 @@ const FormattingBar = () => {
     fromBottom: true,
     height: overflowSize + overflowTapPadding * 2,
     offset: overflowOffset,
-    elementRefs: positionElementRefs.overflow,
   })
 
   // Position fixed styles for the glow layer
@@ -182,7 +154,6 @@ const FormattingBar = () => {
     fromBottom: true,
     height: GLOW_HEIGHT,
     offset: glowOffset,
-    elementRefs: positionElementRefs.glow,
   })
 
   // Position fixed styles for the falloff layer
@@ -190,7 +161,6 @@ const FormattingBar = () => {
     fromBottom: true,
     height: falloffHeight,
     offset: -FALLOFF_UNDERHANG,
-    elementRefs: positionElementRefs.falloff,
   })
 
   const handleOpen = useCallback(() => {
@@ -216,23 +186,17 @@ const FormattingBar = () => {
   // with it. A state rather than a ref, so that the pickers re-render once it mounts.
   const [pickerContainer, setPickerContainer] = useState<HTMLDivElement | null>(null)
   const [pickerBackdropContainer, setPickerBackdropContainer] = useState<HTMLDivElement | null>(null)
-  // Keep the portal container and its positioning ref attached to the same element.
-  const handlePickerContainerRef = useCallback(
-    (element: HTMLDivElement | null) => {
-      pickerRef.current = element
-      setPickerContainer(element)
-    },
-    [pickerRef],
-  )
+  // Keep the portal container available to the picker components.
+  const handlePickerContainerRef = useCallback((element: HTMLDivElement | null) => {
+    setPickerContainer(element)
+  }, [])
   const pickerContainerPositionStyles = usePositionFixed({
     fromBottom: true,
     height: 0,
     offset: barHeight,
-    elementRefs: positionElementRefs.picker,
   })
   /** Attaches the picker's backdrop to the same keyboard positioning as its options and light. */
   const handlePickerBackdropRef = useCallback((element: HTMLDivElement | null) => {
-    pickerBackdropRef.current = element
     setPickerBackdropContainer(element)
   }, [])
   const formattingBarContext = useMemo(
@@ -281,8 +245,7 @@ const FormattingBar = () => {
     >
       {/* Overflow menu button (visible when closed). The wrapper's right offset is reduced by the tap
         padding so the visible circle stays anchored at 0.75rem from the right edge. */}
-      <div
-        ref={overflowRef}
+      <motion.div
         className={css({
           zIndex: 'formattingBar',
           pointerEvents: 'auto',
@@ -290,7 +253,7 @@ const FormattingBar = () => {
         style={{
           ...overflowPositionStyles,
           right: `calc(0.75rem - ${overflowTapPadding}px)`,
-          opacity: 'var(--virtual-keyboard-open-percent, 0)',
+          opacity: keyboardOpenProgress,
         }}
         onTransitionEnd={() => setIsAnimating(false)}
       >
@@ -341,14 +304,13 @@ const FormattingBar = () => {
             </svg>
           </span>
         </button>
-      </div>
+      </motion.div>
 
       {/* Falloff layer (underneath glow). Slides up from beneath the keyboard with the bar.
         Note: we deliberately do NOT apply opacity to this wrapper — iOS Safari disables
         backdrop-filter rendering whenever an ancestor opacity is between 0 and 1. The blur
         and gradient children handle their own fade instead. */}
-      <div
-        ref={falloffRef}
+      <motion.div
         className={css({
           left: 0,
           width: '100%',
@@ -398,27 +360,25 @@ const FormattingBar = () => {
               transition: `opacity ${transitionDuration}`,
             }}
           >
-            <div
-              ref={falloffGradientRef}
+            <motion.div
               className={css({
                 position: 'absolute',
                 inset: 0,
               })}
               style={{
                 background: `linear-gradient(180deg, rgba(0, 0, 0, 0) 0px, #000 ${FALLOFF_RISE + barHeight}px)`,
-                // Drive opacity off the CSS custom property the keyboard store updates per frame
+                // Drive opacity from scalar keyboard progress without rendering on each frame
                 // (see virtualKeyboardStore.ts). Avoids React re-renders during the close animation,
                 // which were causing choppy repaints on iOS.
-                opacity: 'var(--virtual-keyboard-open-percent)',
+                opacity: keyboardOpenProgress,
               }}
             />
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Glow layer (on top of falloff, below bar) */}
-      <div
-        ref={glowRef}
+      <motion.div
         className={css({
           left: 0,
           width: '100%',
@@ -431,7 +391,7 @@ const FormattingBar = () => {
           // See note above on the falloff: per-frame React re-renders from keyboardOpenPercent
           // make this heavy PNG repaint choppily on iOS during the close animation. The CSS
           // custom property is updated outside React, so the GPU can drive the fade smoothly.
-          opacity: 'var(--virtual-keyboard-open-percent)',
+          opacity: keyboardOpenProgress,
         }}
       >
         {/* Fades with the bar's slide. The bar's color-dodge blend draws mostly from the glow, so the
@@ -455,12 +415,11 @@ const FormattingBar = () => {
             transition: `opacity ${transitionDuration}`,
           }}
         />
-      </div>
+      </motion.div>
 
       {/* Bar shape: the fill and strokes, blended with what is behind it. The buttons are a separate layer on top, so
         that the blend does not tint the icons and the shape's rounded clip does not cut off their highlights. */}
       <motion.div
-        ref={barShapeRef}
         className={css({
           zIndex: 'formattingBar',
           pointerEvents: 'auto',
@@ -539,7 +498,6 @@ const FormattingBar = () => {
 
       {/* Bar content: the commands, then the down arrow. Positioned and animated with the bar shape beneath it. */}
       <motion.div
-        ref={barContentRef}
         role='toolbar'
         aria-label='Formatting Bar'
         className={css({
@@ -668,7 +626,7 @@ const FormattingBar = () => {
       </motion.div>
 
       {/* Picker fade and blur: below both glows, so black hides thoughts without hiding the bar's light. */}
-      <div
+      <motion.div
         ref={handlePickerBackdropRef}
         className={css({ left: 0, width: '100%', zIndex: 'formattingBarFalloff', pointerEvents: 'none' })}
         style={
@@ -682,7 +640,7 @@ const FormattingBar = () => {
       />
 
       {/* Picker options and light. The bar's shape and buttons stay above the image's tail. */}
-      <div
+      <motion.div
         ref={handlePickerContainerRef}
         className={css({
           left: 0,

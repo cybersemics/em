@@ -9,24 +9,14 @@ const virtualKeyboardStore = reactMinistore<VirtualKeyboardState>({
   height: 0,
   openPercent: 0,
   phase: undefined,
-  motion: undefined,
 })
 
-// Publish diagnostic metrics at the document root. The properties do not inherit;
-// renderer hooks bind them locally so keyboard frames do not restyle the entire page.
+// Progress is derived state shared by all platform handlers; presentation subscribes separately.
 virtualKeyboardStore.subscribeSelector(
-  state => state.height,
+  state => (state.open ? state.height : 0),
   height => {
-    // Derive openPercent from the animated height relative to the target keyboard height.
-    // When open is false, force to 0 — on iOS the closing animation settles at
-    // safeAreaBottom (not 0), which would otherwise leave a residual percentage.
-    const { open } = virtualKeyboardStore.getState()
     const targetHeight = viewportStore.getState().virtualKeyboardHeight
-    const openPercent = open && targetHeight > 0 ? Math.min(height / targetHeight, 1) : 0
-    virtualKeyboardStore.update({ openPercent })
-
-    document.documentElement.style.setProperty('--virtual-keyboard-height', `${height}px`)
-    document.documentElement.style.setProperty('--virtual-keyboard-open-percent', `${openPercent}`)
+    virtualKeyboardStore.update({ openPercent: targetHeight > 0 ? Math.min(height / targetHeight, 1) : 0 })
   },
 )
 

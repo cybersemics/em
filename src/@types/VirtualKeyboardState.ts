@@ -8,13 +8,4 @@ export default interface VirtualKeyboardState {
   openPercent: number
   /** Native lifecycle phase, when the platform provides it. Editor behavior observes this separately from geometry. */
   phase?: 'opening' | 'open' | 'closing' | 'closed'
-  /** Optional timed geometry for renderers that can follow the keyboard independently of JavaScript frames. */
-  motion?: {
-    /** Native start on the Date.now() clock, in milliseconds. Undefined prepares the motion without playing it. */
-    startedAt?: number
-    /** Duration in milliseconds. */
-    duration: number
-    /** Normalized keyboard heights sampled at evenly spaced fractions of the transition. */
-    heights: readonly number[]
-  }
 }

@@ -1,6 +1,6 @@
 import { Capacitor, PluginListenerHandle, registerPlugin } from '@capacitor/core'
 import { Keyboard } from '@capacitor/keyboard'
-import { AnimationPlaybackControls, animate, cubicBezier } from 'framer-motion'
+import { AnimationPlaybackControls, animate, cancelFrame, cubicBezier, frame } from 'framer-motion'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { LongPressState } from '../../../constants'
 import store from '../../../stores/app'
@@ -166,21 +166,11 @@ const initNative = () => {
   let disposed = false
   let receivedEvent = false
   let lastId = -1
-  let frame: number | null = null
   let motion: KeyboardAnimation | null = null
-  let timing: KeyboardAnimation | null = null
-  let preparingClose = false
-  let wasEditing = store.getState().isKeyboardOpen
   let safeAreaBottom = getSafeAreaBottom()
   /** Maps elapsed native time through its cubic timing function. */
   let ease = (value: number) => value
   const handles: PluginListenerHandle[] = []
-
-  /** Cancels a superseded animation frame. */
-  const cancelFrame = () => {
-    if (frame !== null) cancelAnimationFrame(frame)
-    frame = null
-  }
 
   /** Publishes the raw occlusion above the app's resting safe area. */
   const updateHeight = (rawHeight: number, open: boolean) => {
@@ -195,7 +185,6 @@ const initNative = () => {
 
   /** Reconstructs this frame's native height rather than advancing an independent spring. */
   const tick = () => {
-    frame = null
     if (disposed || !motion) return
     const elapsed = Math.max(0, Date.now() - motion.startedAt!) * (motion.speed ?? 1)
     const duration = motion.durationMs ?? 0
@@ -205,85 +194,30 @@ const initNative = () => {
       motion.fromHeight! + progress * (motion.toHeight - motion.fromHeight!),
       !finished || (motion.visible ?? motion.toHeight > 0),
     )
-    if (!finished) frame = requestAnimationFrame(tick)
-  }
-
-  /** Publishes native timing to the shared store without restarting its clock. */
-  const startMotion = (event: KeyboardAnimation) => {
-    cancelFrame()
-    ease = event.bezier ? cubicBezier(...event.bezier) : value => value
-    motion = event
-    if (event.startedAt !== undefined) tick()
-    virtualKeyboardStore.update({
-      motion: event.durationMs
-        ? {
-            startedAt: event.startedAt,
-            duration: event.durationMs / (event.speed ?? 1),
-            heights: Array.from({ length: 121 }, (_, index) => {
-              const fraction = index / 120
-              const progress = fraction === 1 ? 1 : progressAt(fraction, event)
-              return Math.max(0, event.fromHeight! + progress * (event.toHeight - event.fromHeight!) - safeAreaBottom)
-            }),
-          }
-        : undefined,
-    })
+    // Sample in Motion's update phase so declarative styles can render in this same frame.
+    if (!finished) frame.update(tick)
   }
 
   /** Accepts native transitions and final geometry while ignoring stale notifications and drag focus. */
   const receive = (event: KeyboardAnimation) => {
     if (disposed || event.id < lastId) return
     const visible = event.visible ?? event.toHeight > 0
-    // A delayed opening endpoint cannot discard a dismissal already prepared by edit mode.
-    if (preparingClose && event.stage === 'end' && visible) return
     if (visible && store.getState().longPress !== LongPressState.Inactive) return
-    if (event.stage === 'start') {
-      timing = event
-      // Prepared tracks stay paused until this event supplies the native clock.
-      preparingClose = false
-    }
     receivedEvent = true
     lastId = event.id
-    cancelFrame()
+    cancelFrame(tick)
     safeAreaBottom = getSafeAreaBottom()
     // Keep the open height cached while hiding so openPercent can still fade toward zero.
     if (visible) viewportStore.update({ virtualKeyboardHeight: Math.max(0, event.toHeight - safeAreaBottom) })
     if (event.stage === 'end') {
       motion = null
       updateHeight(event.toHeight, event.toHeight > 0)
-      virtualKeyboardStore.update({ motion: undefined })
     } else {
-      startMotion(event)
+      ease = event.bezier ? cubicBezier(...event.bezier) : value => value
+      motion = event
+      if (event.startedAt !== undefined) tick()
     }
   }
-
-  /** Prepares a known dismissal without advancing it before the native hide notification. */
-  const unsubscribeEditMode = store.subscribe(() => {
-    const editing = store.getState().isKeyboardOpen
-    if (editing === wasEditing) return
-    wasEditing = editing
-    if (editing && preparingClose) {
-      preparingClose = false
-      motion = null
-      virtualKeyboardStore.update({ motion: undefined })
-    }
-    const { height, open } = virtualKeyboardStore.getState()
-    if (editing || !open || height <= 0 || !timing || motion?.toHeight === 0) return
-    // Selection can leave edit mode while its editor retains native focus and the keyboard stays up.
-    const activeElement = document.activeElement
-    if (
-      activeElement instanceof HTMLElement &&
-      (activeElement.isContentEditable || activeElement.matches('input, textarea'))
-    )
-      return
-    preparingClose = true
-    startMotion({
-      ...timing,
-      fromHeight: height + safeAreaBottom,
-      toHeight: 0,
-      visible: false,
-      startedAt: undefined,
-    })
-  })
 
   void IOSKeyboardPlugin.addListener('keyboardAnimation', receive).then(handle => {
     if (disposed) void handle.remove()
@@ -298,10 +232,8 @@ const initNative = () => {
 
   return () => {
     disposed = true
-    unsubscribeEditMode()
-    cancelFrame()
+    cancelFrame(tick)
     motion = null
-    virtualKeyboardStore.update({ motion: undefined })
     handles.forEach(handle => void handle.remove())
   }
 }
