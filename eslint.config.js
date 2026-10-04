@@ -11,6 +11,9 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import em from './packages/eslint-plugin-em/index.js'
 
+// The Panda plugin lints against the tokens, recipes, and utilities in panda.config.ts, so it loads the config up front.
+const pandaConfig = await panda.configs.recommended({ configPath: './panda.config.ts' })
+
 const rules = {
   'no-irregular-whitespace': 2,
   'no-extra-semi': 2,
@@ -143,7 +146,7 @@ export default [
       '@typescript-eslint': typescriptEslint,
       import: importPlugin,
       'react-hooks': reactHooks,
-      '@pandacss': panda,
+      '@pandacss': pandaConfig.plugins['@pandacss'],
       em,
     },
     rules,
@@ -203,17 +206,15 @@ export default [
       'jsx-quotes': [2, 'prefer-single'],
       'react-refresh/only-export-components': 2,
       'em/no-store-subscribe-in-components': 2,
-      ...panda.configs.recommended.rules,
-      '@pandacss/no-config-function-in-source': 0,
-      '@pandacss/prefer-longhand-properties': 2,
-      '@pandacss/no-dynamic-styling': 0,
-      '@pandacss/no-hardcoded-color': [
+      ...pandaConfig.rules,
+      '@pandacss/consistent-property-style': [2, { style: 'longhand' }],
+      '@pandacss/prefer-token': [
         2,
         {
-          whitelist: ['inherit', 'currentColor'],
+          categories: ['colors'],
+          allow: ['inherit', 'currentColor'],
         },
       ],
-      '@pandacss/no-property-renaming': 2,
       '@typescript-eslint/return-await': ['error', 'in-try-catch'],
     },
   },
