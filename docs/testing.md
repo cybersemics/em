@@ -791,7 +791,7 @@ BrowserStack, BrowserStack Android, Vercel Preview, and Evals are the exception 
 
 #### Path filtering
 
-Test, Puppeteer, BrowserStack, BrowserStack Android, and Vercel Preview each carry a `paths-ignore` filter. **The five lists are not identical.** Test, Puppeteer, BrowserStack, and BrowserStack Android share a core and then diverge, because a unit run and a browser run have different inputs; Vercel Preview keeps only the documentation and native groups it already had, since it builds `packages/ai` alongside the web app and so cannot filter it.
+Test, Puppeteer, BrowserStack, BrowserStack Android, and Vercel Preview each carry a `paths-ignore` filter. **The five lists are not identical.** Test, Puppeteer, BrowserStack, and BrowserStack Android share a core and then diverge, because a unit run and a browser run have different inputs; Vercel Preview keeps the documentation and native groups plus CI files — `.github/workflows/` (which `pull_request_target` always reads from `main`) and `scripts/ci/` — since it builds `packages/ai` alongside the web app and so cannot filter it.
 
 The core shared by the four test workflows covers four groups:
 
