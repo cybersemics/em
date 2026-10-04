@@ -3,6 +3,10 @@ import androidCapacitorHandler from './handlers/androidCapacitorHandler'
 import androidWebHandler from './handlers/androidWebHandler'
 import iOSCapacitorHandler from './handlers/iOSCapacitorHandler'
 import iOSSafariHandler from './handlers/iOSSafariHandler'
+import simulatedKeyboardHandler from './handlers/simulatedKeyboardHandler'
+
+/** True on the dev server outside Puppeteer, where desktop Chrome's device emulation needs a simulated keyboard (see simulatedKeyboardHandler). Puppeteer also runs the dev server with mobile emulation, and is excluded so its tests see no keyboard. */
+const simulateKeyboard = import.meta.env.MODE === 'development' && !navigator.webdriver
 
 /** A controller for managing the virtual keyboard handlers based on the platform. */
 const virtualKeyboardHandler = {
@@ -17,6 +21,7 @@ const virtualKeyboardHandler = {
       // resize, so use the VirtualKeyboard API to detect the keyboard closing. iOS Safari lacks this API
       // and falls through to iOSSafariHandler.
       androidWebHandler.init()
+      if (simulateKeyboard) simulatedKeyboardHandler.init()
     } else {
       // fallback
       iOSSafariHandler.init()
@@ -30,6 +35,7 @@ const virtualKeyboardHandler = {
       androidCapacitorHandler.destroy()
     } else if (isTouch && 'virtualKeyboard' in navigator) {
       androidWebHandler.destroy()
+      if (simulateKeyboard) simulatedKeyboardHandler.destroy()
     } else {
       // fallback
       iOSSafariHandler.destroy()
