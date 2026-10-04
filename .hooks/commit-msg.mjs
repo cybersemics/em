@@ -169,7 +169,11 @@ const main = () => {
   const body = lines.filter(line => !pattern.test(line))
   const lastLine = body.findLastIndex(line => line.trim())
   const kept = body.slice(0, lastLine + 1)
-  const separator = kept.length > 0 && ANY_TRAILER.test(kept.at(-1)) ? '\n' : '\n\n'
+  // Join an existing trailer block only when it is a paragraph after the subject. A subject such as
+  // "fix: …" looks like a trailer, and the trailer must not be glued onto it.
+  const lastBlank = kept.findLastIndex(line => !line.trim())
+  const endsInTrailers = lastBlank > 0 && kept.slice(lastBlank + 1).every(line => ANY_TRAILER.test(line))
+  const separator = endsInTrailers ? '\n' : '\n\n'
   writeFileSync(messagePath, kept.join('\n') + separator + expected + '\n')
 }
 
