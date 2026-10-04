@@ -10757,15 +10757,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"browserstack-local@npm:^1.5.8":
-  version: 1.5.13
-  resolution: "browserstack-local@npm:1.5.13"
+"browserstack-local@npm:^1.5.15":
+  version: 1.5.15
+  resolution: "browserstack-local@npm:1.5.15"
   dependencies:
     agent-base: "npm:^6.0.2"
     https-proxy-agent: "npm:^5.0.1"
     is-running: "npm:^2.1.0"
     tree-kill: "npm:^1.2.2"
-  checksum: 10c0/41493365cfa6c89625caef732d444827818c8b4f1664d0bc2c76a56151332cfd85bced15f57bf6fcec8d85671c62eeeeb864a147d06b32fe8cfcc0279d7dba4e
+  checksum: 10c0/e4c0c198ca0a0128a5b1a31da554bda09934a2d45700e75bb3ff84d71ffaaf621b1216bdb01f9f14875aebfcf09cc2717a1d83e1c01a67a78cee9cd783a4ab04
   languageName: node
   linkType: hard
 
@@ -12648,7 +12648,7 @@ __metadata:
     "@wdio/spec-reporter": "npm:^9.32.0"
     "@wdio/types": "npm:^9.32.0"
     axios: "npm:^1.20.0"
-    browserstack-local: "npm:^1.5.8"
+    browserstack-local: "npm:^1.5.15"
     chalk: "npm:^6.0.1"
     clipboard: "npm:^2.0.11"
     cloudflared: "npm:^0.7.3"
