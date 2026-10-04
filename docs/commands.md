@@ -146,6 +146,8 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 - **`overlay.gesture` / `overlay.keyboard`** — alternative shortcuts shown in the toolbar long-press overlay.
 - **`longPress(dispatch)`** — runs when a toolbar button is long-pressed.
 
+[`ToolbarButton`](../src/components/ToolbarButton.tsx) owns the pointer target; its decorative icon has `pointer-events: none`. Animated icons replace their SVG when the animation ends, so letting an SVG own a touch could remove its target while the finger is down. WebKit then misses the button's `touchend` handler and synthesizes a mouse event that blurs the editable and closes the keyboard. The persistent button receives the complete touch sequence while its icon animates. Pickers keep their own pointer targets.
+
 The **Command Universe** is the searchable command palette. Two flavors:
 
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.

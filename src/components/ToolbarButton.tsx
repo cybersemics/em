@@ -327,6 +327,9 @@ const ToolbarButton: FC<ToolbarButtonProps> = ({
         size={fontSize}
         cssRaw={css.raw({
           position: 'relative' as const,
+          // Animated icons replace their SVG when they finish. Keep the touch target on the persistent
+          // button so a replacement mid-press cannot lose touchend and let WebKit blur the editable.
+          pointerEvents: 'none',
           cursor: isButtonExecutable ? 'pointer' : 'default',
           opacity: dropToRemove ? 0 : 1,
           transition: 'opacity {durations.fast} ease-out',
