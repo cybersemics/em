@@ -43,6 +43,11 @@ const storageModel = storage.model({
     default: false,
     decode: (s: string | null) => s === 'true',
   },
+  // whether the Formatting Bar pickers show their descriptions, toggled by the info button in any of them
+  formattingBarPopoverInfoOpen: {
+    default: false,
+    decode: (s: string | null) => s === 'true',
+  },
 })
 
 export default storageModel

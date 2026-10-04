@@ -1,8 +1,10 @@
 import { motion } from 'motion/react'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import CommandId from '../@types/CommandId'
+import Thunk from '../@types/Thunk'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { toggleFormattingBarActionCreator as toggleFormattingBar } from '../actions/toggleFormattingBar'
 import { isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
@@ -12,10 +14,17 @@ import haptics from '../util/haptics'
 import FormattingBarButton from './FormattingBarButton'
 import ProgressiveBlur from './ProgressiveBlur'
 
-const glowImages = ['/img/formatting-bar/glow.png']
+const glowImages = ['/img/formatting-bar/glow.png', '/img/formatting-bar/popover-overlay.avif']
 
 /** Commands exposed by this layer of the mobile bar. */
 const commandIds: CommandId[] = ['bold', 'italic', 'underline', 'strikethrough']
+
+/** Closes the current formatting-bar picker without affecting another surface. */
+const closeFormattingBarPicker = (): Thunk => (dispatch, getState) => {
+  const active = getState().activeDropdown
+  if (active?.surface === 'formattingBar')
+    dispatch(toggleDropdown({ dropDownType: active.picker, surface: active.surface, value: false }))
+}
 
 /** Fade the painted layers directly, leaving the panel free of opacity for backdrop filtering. */
 const visibleWhenOpen = css.raw({
@@ -135,6 +144,7 @@ const FormattingBarShell = () => (
       overflow: 'hidden',
       pointerEvents: 'none',
       mixBlendMode: 'color-dodge',
+      zIndex: 2,
       background:
         'radial-gradient(130.84% 151.39% at 57.5% 55.06%, {colors.formattingBarFillStart} 0%, {colors.formattingBarFillEnd} 100%)',
       maskImage: 'linear-gradient(to top, transparent, #000 2rem)',
@@ -158,10 +168,17 @@ const FormattingBarShell = () => (
 )
 
 /** Contains the bar's controls and consumes taps in the gaps so they cannot blur the editor. */
-const FormattingBarControls = ({ isOpen }: { isOpen: boolean }) => {
+const FormattingBarControls = ({
+  isOpen,
+  iconSize,
+  onIconSize,
+}: {
+  isOpen: boolean
+  iconSize: number
+  onIconSize: (size: number) => void
+}) => {
   const dispatch = useDispatch()
   const iconProbeRef = useRef<HTMLSpanElement>(null)
-  const [iconSize, setIconSize] = useState(20)
 
   // CSS sizes the grid and icon probe. Measure its result only because legacy icon/picker APIs accept pixels.
   useLayoutEffect(() => {
@@ -171,13 +188,13 @@ const FormattingBarControls = ({ isOpen }: { isOpen: boolean }) => {
     const measure = () => {
       const width = element.getBoundingClientRect().width
       if (width <= 0) return
-      setIconSize(width)
+      onIconSize(width)
     }
     const observer = new ResizeObserver(measure)
     observer.observe(element)
     measure()
     return () => observer.disconnect()
-  }, [])
+  }, [onIconSize])
 
   return (
     <>
@@ -189,6 +206,7 @@ const FormattingBarControls = ({ isOpen }: { isOpen: boolean }) => {
         onTouchEnd={event => event.preventDefault()}
         className={css(visibleWhenOpen, {
           position: 'relative',
+          zIndex: 2,
           width: '100%',
           minHeight: '48px',
           paddingBlock: '0.625rem',
@@ -227,11 +245,11 @@ const FormattingBarControls = ({ isOpen }: { isOpen: boolean }) => {
           onTouchEnd={event => {
             event.preventDefault()
             haptics.light()
-            dispatch(toggleFormattingBar({ value: false }))
+            dispatch([closeFormattingBarPicker(), toggleFormattingBar({ value: false })])
           }}
           onClick={() => {
             haptics.light()
-            dispatch(toggleFormattingBar({ value: false }))
+            dispatch([closeFormattingBarPicker(), toggleFormattingBar({ value: false })])
           }}
           className={css({
             display: 'grid',
@@ -270,6 +288,11 @@ const FormattingBar = () => {
   const isOpen = useSelector(state => state.showFormattingBar)
   const keyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
   const position = usePositionFixed({ fromBottom: true, height: 0 })
+  const dispatch = useDispatch()
+  const [iconSize, setIconSize] = useState(20)
+  useEffect(() => {
+    if (!keyboardOpen) dispatch(closeFormattingBarPicker())
+  }, [dispatch, keyboardOpen])
   usePrefetchImages(glowImages)
 
   return (
@@ -299,11 +322,15 @@ const FormattingBar = () => {
           '[data-formatting-bar-open=true][data-keyboard-open=true] &': { transform: 'translateY(0)' },
         })}
       >
-        <FormattingBarFalloff />
-        <FormattingBarGlow />
+        <div className={css({ position: 'absolute', inset: 0, zIndex: 0 })}>
+          <FormattingBarFalloff />
+        </div>
+        <div className={css({ position: 'absolute', inset: 0, zIndex: 1 })}>
+          <FormattingBarGlow />
+        </div>
         <div className={css({ position: 'relative', width: '92.5%', maxWidth: '36rem', marginInline: 'auto' })}>
           <FormattingBarShell />
-          <FormattingBarControls isOpen={isOpen} />
+          <FormattingBarControls isOpen={isOpen} iconSize={iconSize} onIconSize={setIconSize} />
         </div>
       </div>
     </motion.div>
