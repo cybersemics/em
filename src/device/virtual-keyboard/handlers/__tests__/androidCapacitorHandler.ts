@@ -118,10 +118,30 @@ it('keeps the keyboard visible through an interrupted close and ignores stale co
   listeners.keyboardAnimation({ id: 1, stage: 'end', toHeight: 400 })
   renderFrame(300)
   expect(virtualKeyboardStore.getState()).toMatchObject({ height: 60, open: true, phase: 'closing' })
+  expect(virtualKeyboardStore.getState().openPercent).toBeCloseTo(1 / 6)
   renderFrame(390)
   expect(virtualKeyboardStore.getState()).toMatchObject({ height: 0, open: true, phase: 'closing' })
   listeners.keyboardAnimation({ id: 2, stage: 'end', toHeight: 0 })
   expect(virtualKeyboardStore.getState()).toMatchObject({ height: 0, open: false, phase: 'closed' })
+})
+
+it('fades keyboard progress through closing geometry updates before native completion', () => {
+  listeners.keyboardAnimation({ id: 1, stage: 'end', toHeight: 400 })
+  expect(virtualKeyboardStore.getState().openPercent).toBe(1)
+
+  listeners.keyboardAnimation({ id: 2, stage: 'start', fromHeight: 400, toHeight: 0, durationMs: 400, curve: [0, 1] })
+  listeners.keyboardAnimation({ id: 2, stage: 'geometry', toHeight: 0 })
+  listeners.keyboardAnimation({ id: 2, stage: 'anchor', toHeight: 0, epochMs: 1000 })
+  renderFrame(200)
+
+  expect(virtualKeyboardStore.getState()).toMatchObject({ height: 160, open: true, phase: 'closing' })
+  expect(virtualKeyboardStore.getState().openPercent).toBeCloseTo(4 / 9)
+  expect(Number(document.documentElement.style.getPropertyValue('--virtual-keyboard-open-percent'))).toBeCloseTo(4 / 9)
+
+  renderFrame(400)
+  expect(virtualKeyboardStore.getState()).toMatchObject({ height: 0, open: true, openPercent: 0 })
+  listeners.keyboardAnimation({ id: 2, stage: 'end', toHeight: 0 })
+  expect(virtualKeyboardStore.getState()).toMatchObject({ height: 0, open: false, openPercent: 0, phase: 'closed' })
 })
 
 it('publishes zero-duration geometry without scheduling an animation', () => {

@@ -58,7 +58,7 @@ const androidCapacitorHandler: VirtualKeyboardHandler = {
       cancelFrame()
       motion = null
       safeAreaBottom = getSafeAreaBottom()
-      viewportStore.update({ virtualKeyboardHeight: normalized(height) })
+      if (height > 0) viewportStore.update({ virtualKeyboardHeight: normalized(height) })
       virtualKeyboardStore.update({
         height: normalized(height),
         open: height > 0,
@@ -101,7 +101,8 @@ const androidCapacitorHandler: VirtualKeyboardHandler = {
         motion = null
         const duration = event.durationMs ?? 0
         const from = event.fromHeight ?? 0
-        viewportStore.update({ virtualKeyboardHeight: normalized(event.toHeight) })
+        // Keep the measured open height while closing so openPercent follows the animation toward zero.
+        if (event.toHeight > 0) viewportStore.update({ virtualKeyboardHeight: normalized(event.toHeight) })
         virtualKeyboardStore.update({
           open: true,
           phase: event.toHeight > 0 ? 'opening' : 'closing',
@@ -117,7 +118,7 @@ const androidCapacitorHandler: VirtualKeyboardHandler = {
         if (event.stage === 'anchor' && event.epochMs !== undefined) motion.epoch = event.epochMs
         if (event.stage === 'geometry') {
           motion.to = event.toHeight
-          viewportStore.update({ virtualKeyboardHeight: normalized(event.toHeight) })
+          if (event.toHeight > 0) viewportStore.update({ virtualKeyboardHeight: normalized(event.toHeight) })
         }
         schedule()
       }
