@@ -11,6 +11,8 @@ import dropHoverRecipe from './src/recipes/dropHover'
 import editableRecipe from './src/recipes/editable'
 import extendTapRecipe from './src/recipes/extendTap'
 import fadeTransitionRecipe from './src/recipes/fadeTransition'
+import formattingBarOptionRecipe from './src/recipes/formattingBarOption'
+import formattingBarOptionsRecipe from './src/recipes/formattingBarOptions'
 import iconRecipe from './src/recipes/icon'
 import invalidOptionRecipe from './src/recipes/invalidOption'
 import linkRecipe from './src/recipes/link'
@@ -517,6 +519,10 @@ export default defineConfig({
             'tip',
             'cloneDroppedThought',
             'hoverArrow',
+            // Above the gesture trace, like a keyboard accessory: a stroke drawn across the bar passes beneath it.
+            'formattingBar',
+            'formattingBarGlow',
+            'formattingBarFalloff',
             'gestureTrace',
             'gestureContentBlur',
             'hamburgerMenu',
@@ -531,9 +537,6 @@ export default defineConfig({
             'toolbar',
             'navbar',
             'backgroundGlowFalloff',
-            'formattingBar',
-            'formattingBarGlow',
-            'formattingBarFalloff',
             'latestCommands',
             'tutorialTraceGesture',
             'dropEmpty',
@@ -566,6 +569,8 @@ export default defineConfig({
         dropHoverRecipe,
         dropEndRecipe,
         invalidOptionRecipe,
+        formattingBarOptionRecipe,
+        formattingBarOptionsRecipe,
         panelCommandGroupRecipe,
         panelCommandRecipe,
       },

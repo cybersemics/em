@@ -147,8 +147,10 @@ const initialState = (created: Timestamp = timestamp()) => {
     selectionOffsets: null,
     // clear resets the app by merging initialState() into the previous state through reducerFlow, so a dropdown flag
     // omitted here would survive a clear and leave the dropdown open.
+    dropdownHost: 'toolbar',
     showBulletPicker: false,
     showColorPicker: false,
+    showHeadingPicker: false,
     showLetterCase: false,
     showSortPicker: false,
     showUndoSlider: false,

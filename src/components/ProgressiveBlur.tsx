@@ -13,10 +13,12 @@ interface ProgressiveBlurProps extends React.HTMLAttributes<HTMLDivElement> {
     | 'to bottom left'
     | 'to top right'
     | 'to top left'
-  /** Maximum blur radius in pixels. */
-  maxBlur?: number
+  /** Maximum blur radius in pixels, or a CSS length such as a custom property. */
+  maxBlur?: number | string
   /** Minimum blur radius in pixels (applied to all layers). */
   minBlur?: number
+  /** Exponent of the blur curve: 2 keeps the light end nearly sharp, 1 ramps evenly. */
+  curve?: number
   /** Number of discrete blur layers. */
   layers?: number
   /** Width override. */
@@ -34,6 +36,7 @@ const ProgressiveBlur = ({
   direction = 'to right',
   maxBlur = 32,
   minBlur = 0,
+  curve = 2,
   layers = 8,
   width = '100%',
   opacity,
@@ -43,10 +46,14 @@ const ProgressiveBlur = ({
   ...props
 }: ProgressiveBlurProps) => {
   const blurLayers = Array.from({ length: layers }).map((_, i) => {
-    // Blur radius follows a quadratic curve, reaching 0 at the trailing edge
+    // Blur radius follows a power curve (quadratic by default), reaching 0 at the trailing edge
     // so the last layer applies no blur and the transition is seamless.
     const t = layers <= 1 ? 1 : (layers - 1 - i) / (layers - 1)
-    const radius = minBlur + Math.pow(t, 2) * (maxBlur - minBlur)
+    const strength = Math.pow(t, curve)
+    const radius =
+      typeof maxBlur === 'number'
+        ? `${(minBlur + strength * (maxBlur - minBlur)).toFixed(2)}px`
+        : `calc(${minBlur}px + ${strength} * (${maxBlur} - ${minBlur}px))`
 
     // Each layer covers a specific slice with a generous overlap (feather) to ensure smoothness.
     const start = (i / layers) * 100
@@ -84,8 +91,8 @@ const ProgressiveBlur = ({
             })}
             style={{
               opacity,
-              backdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
-              WebkitBackdropFilter: `blur(${layer.radius.toFixed(2)}px)`,
+              backdropFilter: `blur(${layer.radius})`,
+              WebkitBackdropFilter: `blur(${layer.radius})`,
               ...(promoteLayers && { willChange: 'transform' }),
 
               // Sliced mask with overlap (feather), clamped to container bounds.

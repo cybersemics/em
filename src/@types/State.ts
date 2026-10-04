@@ -7,6 +7,7 @@ import CommandId from './CommandId'
 import CommandUniverseNavigation from './CommandUniverseNavigation'
 import Context from './Context'
 import DragCommandZone from './DragCommandZone'
+import DropdownHost from './DropdownHost'
 import Index from './IndexType'
 import Modal from './Modal'
 import Patch from './Patch'
@@ -156,8 +157,11 @@ interface State {
    * opens, so it does not participate in the render cycle.
    */
   selectionOffsets: { thoughtId: ThoughtId; start: number; end: number } | null
+  /** The surface whose buttons opened the current picker dropdown. The Toolbar and the mobile Formatting Bar both render the Text Color and Letter Case buttons, and only the surface that opened a picker shows it. */
+  dropdownHost: DropdownHost
   showBulletPicker: boolean
   showColorPicker: boolean
+  showHeadingPicker: boolean
   showLetterCase: boolean
   showDesktopCommandUniverse: boolean
   /** Whether the mobile Formatting Bar is open (showing the bar) or closed (showing only the overflow button). Persisted to local storage. */

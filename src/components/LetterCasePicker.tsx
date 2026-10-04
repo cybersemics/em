@@ -4,11 +4,8 @@ import { css } from '../../styled-system/css'
 import LetterCaseType from '../@types/LetterCaseType'
 import { formatLetterCaseActionCreator as formatLetterCase } from '../actions/formatLetterCase'
 import { isTouch } from '../browser'
-import getThoughtById from '../selectors/getThoughtById'
-import selectedPaths from '../selectors/selectedPaths'
-import applyLetterCase from '../util/applyLetterCase'
+import getSelectedLetterCase from '../selectors/getSelectedLetterCase'
 import fastClick from '../util/fastClick'
-import head from '../util/head'
 import Popover from './Popover'
 import LowerCaseIcon from './icons/LowerCaseIcon'
 import SentenceCaseIcon from './icons/SentenceCaseIcon'
@@ -28,26 +25,7 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
     e.preventDefault()
     dispatch(formatLetterCase(command))
   }
-  const selected = useSelector(state => {
-    // The swatches are only rendered while the picker is open, and deriving the letter case of a large multiselection
-    // is not free, so there is nothing to derive until then.
-    if (!state.showLetterCase) return ''
-
-    // The selected swatch is the letter case of the thoughts that formatLetterCase edits, i.e. the multiselection when
-    // there is one, which may have no cursor at all once the Home button has dismissed it (#4844).
-    const paths = selectedPaths(state)
-    // No swatch is selected when there is nothing to edit, otherwise `every` below would be vacuously true and
-    // highlight the first letter case.
-    if (!paths.length) return ''
-
-    const texts = paths.map(path => {
-      const value = getThoughtById(state, head(path))?.value || ''
-      // The letter case of the thought should be independent of its formatting.
-      return new DOMParser().parseFromString(value, 'text/html').body.textContent ?? ''
-    })
-
-    return casingTypes.find(type => texts.every(text => text === applyLetterCase(type, text))) ?? ''
-  })
+  const selected = useSelector(state => (state.showLetterCase ? getSelectedLetterCase(state) : ''))
 
   return (
     <Popover show={showLetterCase} size={size}>

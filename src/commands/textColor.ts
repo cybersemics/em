@@ -14,8 +14,10 @@ const textColor = {
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
   preventDefault: true,
   multicursor: false,
-  exec: (dispatch, _) => {
-    dispatch(toggleDropdown({ dropDownType: 'colorPicker' }))
+  exec: (dispatch, _, __, { type }) => {
+    dispatch(
+      toggleDropdown({ dropDownType: 'colorPicker', host: type === 'formattingBar' ? 'formattingBar' : 'toolbar' }),
+    )
   },
   isActive: state => !!state.cursor || hasMulticursor(state),
   isDropdownOpen: state => !!state.showColorPicker,

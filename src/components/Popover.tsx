@@ -14,11 +14,15 @@ interface PopoverProps {
   size?: number
 }
 
-/** A reusable popover component that handles positioning and styling for popup menus. */
+/** A Toolbar popover that opens beneath its icon and preserves the editor selection while options are used. */
 const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => {
   const ref = useRef<HTMLDivElement>(null)
   const fontSize = useSelector(state => state.fontSize)
   const overflow = useWindowOverflow(ref)
+
+  // Formatting Bar pickers are separate components; this surface only shows a picker the Toolbar opened.
+  const dropdownHost = useSelector(state => state.dropdownHost)
+  const visible = !!show && dropdownHost === 'toolbar'
 
   /** Stops a tap that lands on the popover's padding rather than one of its options from reaching the toolbar button that renders the popover, which would otherwise close it (#4264). */
   const containTap = (e: React.MouseEvent | React.TouchEvent) => {
@@ -29,7 +33,7 @@ const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => 
   return (
     // nodeRef avoids FadeTransition's wrapper span, which would make this div a block-in-inline. WebKit relayouts that
     // case inconsistently, applying marginTop above the line box and shifting the whole toolbar button down (#4263).
-    <FadeTransition type='fast' in={show} exit={false} unmountOnExit nodeRef={ref}>
+    <FadeTransition type='fast' in={visible} exit={false} unmountOnExit nodeRef={ref}>
       <div
         ref={ref}
         className={css({

@@ -102,8 +102,11 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
-  const showColorPicker = useSelector(state => state.showColorPicker)
-  const showDropdown = useSelector(state => state.showColorPicker || state.showLetterCase)
+  // Only the pickers this Toolbar opened, not those opened from the Formatting Bar, which renders the same buttons.
+  const showColorPicker = useSelector(state => state.showColorPicker && state.dropdownHost === 'toolbar')
+  const showDropdown = useSelector(
+    state => (state.showColorPicker || state.showLetterCase) && state.dropdownHost === 'toolbar',
+  )
   const positionFixedStyles = usePositionFixed()
 
   // re-render only (why?)
@@ -296,6 +299,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
           <div
             id='toolbar'
             data-testid='toolbar'
+            data-toolbar-scroll-container
             ref={toolbarRef}
             className={css({
               maxWidth: '100%',
