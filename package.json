@@ -225,7 +225,7 @@
     "@wdio/spec-reporter": "^9.32.0",
     "@wdio/types": "^9.32.0",
     "browserstack-local": "^1.5.8",
-    "chalk": "^6.0.0",
+    "chalk": "^6.0.1",
     "cloudflared": "^0.7.3",
     "dotenv": "18.0.5",
     "eslint": "^10.11.0",
