@@ -1,15 +1,21 @@
 import { motion } from 'motion/react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import CommandId from '../@types/CommandId'
 import { toggleFormattingBarActionCreator as toggleFormattingBar } from '../actions/toggleFormattingBar'
 import { isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
 import usePrefetchImages from '../hooks/usePrefetchImages'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import haptics from '../util/haptics'
+import FormattingBarButton from './FormattingBarButton'
 import ProgressiveBlur from './ProgressiveBlur'
 
 const glowImages = ['/img/formatting-bar/glow.png']
+
+/** Commands exposed by this layer of the mobile bar. */
+const commandIds: CommandId[] = ['bold', 'italic', 'underline', 'strikethrough']
 
 /** Fade the painted layers directly, leaving the panel free of opacity for backdrop filtering. */
 const visibleWhenOpen = css.raw({
@@ -154,69 +160,108 @@ const FormattingBarShell = () => (
 /** Contains the bar's controls and consumes taps in the gaps so they cannot blur the editor. */
 const FormattingBarControls = ({ isOpen }: { isOpen: boolean }) => {
   const dispatch = useDispatch()
+  const iconProbeRef = useRef<HTMLSpanElement>(null)
+  const [iconSize, setIconSize] = useState(20)
+
+  // CSS sizes the grid and icon probe. Measure its result only because legacy icon/picker APIs accept pixels.
+  useLayoutEffect(() => {
+    const element = iconProbeRef.current
+    if (!element) return
+    /** Reports the browser's resolved icon width without recreating its layout calculations. */
+    const measure = () => {
+      const width = element.getBoundingClientRect().width
+      if (width <= 0) return
+      setIconSize(width)
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    measure()
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <div
-      role='toolbar'
-      aria-label='Formatting Bar'
-      inert={!isOpen}
-      onMouseDown={event => event.preventDefault()}
-      onTouchEnd={event => event.preventDefault()}
-      className={css(visibleWhenOpen, {
-        position: 'relative',
-        width: '100%',
-        minHeight: '48px',
-        paddingBlock: '0.625rem',
-        paddingInline: '1rem',
-        boxSizing: 'border-box',
-        display: 'flex',
-        alignItems: 'center',
-        pointerEvents: 'auto',
-      })}
-    >
-      <button
-        aria-label='Close formatting bar'
-        onMouseDown={() => {
-          if (!isTouch) haptics.medium()
-        }}
-        onTouchStart={() => haptics.medium()}
-        onTouchEnd={event => {
-          event.preventDefault()
-          haptics.light()
-          dispatch(toggleFormattingBar({ value: false }))
-        }}
-        onClick={() => {
-          haptics.light()
-          dispatch(toggleFormattingBar({ value: false }))
-        }}
-        className={css({
+    <>
+      <div
+        role='toolbar'
+        aria-label='Formatting Bar'
+        inert={!isOpen}
+        onMouseDown={event => event.preventDefault()}
+        onTouchEnd={event => event.preventDefault()}
+        className={css(visibleWhenOpen, {
+          position: 'relative',
+          width: '100%',
+          minHeight: '48px',
+          paddingBlock: '0.625rem',
+          paddingInline: '1rem',
+          boxSizing: 'border-box',
           display: 'grid',
-          placeItems: 'center',
-          height: '100%',
-          flex: 1,
-          minWidth: 0,
-          padding: 0,
-          background: 'transparent',
-          border: 'none',
-          cursor: 'pointer',
+          gridAutoFlow: 'column',
+          gridAutoColumns: 'minmax(0, 1fr)',
+          alignItems: 'center',
+          pointerEvents: 'auto',
         })}
       >
-        <svg
-          viewBox='0 0 16 16'
-          fill='none'
-          xmlns='http://www.w3.org/2000/svg'
-          className={css({ width: '1.25rem', maxWidth: '100%', height: '1.25rem' })}
+        <span
+          ref={iconProbeRef}
+          aria-hidden='true'
+          className={css({
+            position: 'absolute',
+            gridColumn: '1 / 2',
+            gridRow: '1 / 2',
+            justifySelf: 'center',
+            width: '1.25rem',
+            maxWidth: '100%',
+            height: 0,
+            pointerEvents: 'none',
+          })}
+        />
+        {commandIds.map(id => (
+          <FormattingBarButton key={id} commandId={id} iconSize={iconSize} />
+        ))}
+        <button
+          aria-label='Close formatting bar'
+          onMouseDown={() => {
+            if (!isTouch) haptics.medium()
+          }}
+          onTouchStart={() => haptics.medium()}
+          onTouchEnd={event => {
+            event.preventDefault()
+            haptics.light()
+            dispatch(toggleFormattingBar({ value: false }))
+          }}
+          onClick={() => {
+            haptics.light()
+            dispatch(toggleFormattingBar({ value: false }))
+          }}
+          className={css({
+            display: 'grid',
+            placeItems: 'center',
+            height: '100%',
+            flex: 1,
+            minWidth: 0,
+            padding: 0,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+          })}
         >
-          <path
-            d='M4 6L8 10L12 6'
-            stroke='rgba(255, 255, 255, 0.5)'
-            strokeWidth='1.33'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-          />
-        </svg>
-      </button>
-    </div>
+          <svg
+            viewBox='0 0 16 16'
+            fill='none'
+            xmlns='http://www.w3.org/2000/svg'
+            className={css({ width: '1.25rem', maxWidth: '100%', height: '1.25rem' })}
+          >
+            <path
+              d='M4 6L8 10L12 6'
+              stroke='rgba(255, 255, 255, 0.5)'
+              strokeWidth='1.33'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            />
+          </svg>
+        </button>
+      </div>
+    </>
   )
 }
 
