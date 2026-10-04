@@ -1,54 +1,117 @@
-# Approves a Dependabot bump and arms auto-merge, so it lands on its own once Lint passes.
+# Approves and squash-merges a Dependabot bump once every check on it has passed.
 #
-# Gated on the pull request's AUTHOR, not on who pushed. A `pull_request` workflow cannot run at
-# all while a pull request is conflicting: GitHub never builds `refs/pull/<n>/merge`, so the
-# `opened` run never happens. A bump that is born conflicting — main took another lockfile change
-# seconds earlier — therefore misses what would otherwise be its only chance to arm auto-merge, and
-# the `synchronize` that lands when the conflict is resolved is the sole recovery. That push comes
-# from whoever resolved it: `dependabot-fix.yml`'s agent, or a human. Gating on `github.actor` skips
-# exactly that run, which is how #5208 came to sit MERGEABLE with `autoMergeRequest: null`, waiting
-# on a human that nothing had asked for.
+# Not native auto-merge. `gh pr merge --auto` waits only for *required* status checks, and Lint is
+# the only one — Test, Puppeteer, BrowserStack, and Vercel Preview are deliberately optional. Armed
+# on a bump, it landed the bump the moment Lint went green with the slower suites still running,
+# and Cancel PR Runs then cancelled them: #5775 merged with Test, Puppeteer, and BrowserStack in
+# flight. This instead waits for the whole suite and merges directly.
 #
-# SECURITY: `github.actor` was what stopped a non-Dependabot actor from arming auto-merge, so the
-# author check is paired with the same two guards `dependabot-fix.yml` uses — the head branch must
-# live in this repository and carry the `dependabot/` prefix. What remains is that a collaborator
-# pushing to an open Dependabot branch gets their commit auto-merged, which is deliberate: it is
-# precisely what `dependabot-fix.yml` is built to do. Approval is held to the narrower actor check
-# for that reason; see the step.
+# Runs:
+#   - Automatically, when a check completes on a `dependabot/*` branch (see below)
+#   - Manually: `gh workflow run dependabot-automerge.yml -f pr=5775`
 #
-# Requires `DEPENDABOT_AUTOMERGE_TOKEN` in BOTH secret stores. A Dependabot-triggered run reads
-# Dependabot secrets ("Secret source: Dependabot" in the run log); every other run, including the
-# `synchronize` this fix exists to catch, reads Actions secrets. Deleting either copy breaks one of
-# the two paths silently, with an empty `GH_TOKEN` rather than a missing-secret error.
+# Why every completion and not just the successes. A pull request's checks finish at different
+# times, so triggering on `success` would fire while other checks were still running. This triggers
+# on every completion and the check step bails unless it is the last one out — the same arrangement
+# dependabot-fix.yml and pr-ready.yml use. The list below must name every workflow that reports a
+# check to a pull request's head: one left out that happens to finish last never wakes this, and
+# the bump sits green until something else is pushed to it.
+#
+# Gated on the pull request's AUTHOR, not on who pushed. A bump that failed carries a fix from
+# Dependabot Fix's agent or a human, and landing that fix is the point of it. The check step pairs
+# the author check with the guards dependabot-fix.yml uses — the head branch must live in this
+# repository and carry the `dependabot/` prefix — and approves only when every commit is
+# Dependabot's own.
+#
+# SECURITY: this runs in the base-repo context with a write-capable token. It checks out only the
+# base repo's own code, never the pull request's, and executes none of it.
+#
+# Requires `DEPENDABOT_AUTOMERGE_TOKEN` in BOTH secret stores. The merge must use a PAT rather than
+# GITHUB_TOKEN, because a GITHUB_TOKEN push to main raises no workflow runs — the push suites on
+# main would never see the bump. A run whose triggering check Dependabot started reads Dependabot
+# secrets ("Secret source: Dependabot" in the run log); one triggered by a check on a fix commit,
+# or by a dispatch, reads Actions secrets. Deleting either copy breaks one of the two paths
+# silently, with an empty `GH_TOKEN` rather than a missing-secret error.
+#
+# `workflow_run` reads this file from the default branch, so edits here have no effect until they
+# are merged to main.
 
 name: Auto-merge Dependabot
+
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows:
+      [
+        'Lint',
+        'Test',
+        'Puppeteer',
+        'BrowserStack',
+        'BrowserStack Android',
+        'Vercel Preview',
+        'TDD',
+        'Agent Scripts',
+        'Evals',
+        'Copilot Setup Steps',
+        'Copilot Conflict Resolution',
+      ]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Pull request number to merge if its checks have all passed'
+        required: true
+        type: string
+
+# Serialize per branch so two checks finishing at once cannot both reach the merge. Never cancel: a
+# queued run is the one that would notice the last check completing.
+concurrency:
+  group: dependabot-automerge-${{ github.event.workflow_run.head_branch || inputs.pr }}
+  cancel-in-progress: false
+
 permissions:
-  contents: write
-  pull-requests: write
+  actions: read # list the workflow runs on the pull request head
+  checks: read # list the check runs on the pull request head
+  contents: read # check out scripts/ci from the base repo
+  pull-requests: write # read the pull request, and approve it
+  statuses: read # read commit statuses on the pull request head
+
 jobs:
   automerge:
-    if: >-
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      startsWith(github.event.pull_request.head.ref, 'dependabot/')
+    name: Merge when green
     runs-on: ubuntu-latest
+    # Cheap gate so completions on other pull requests cost nothing. Author, mergeability, and the
+    # checks themselves are verified in the step below.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (startsWith(github.event.workflow_run.head_branch, 'dependabot/') &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
+
     steps:
-      # Only when Dependabot itself pushed. `main` requires 0 approving reviews, so this satisfies
-      # no gate today and skipping it costs nothing — auto-merge below arms either way. If that
-      # count is ever raised, an approval stamped on a commit an agent or a human wrote would be
-      # automation standing in for the review of hand-written code; withholding it instead leaves
-      # auto-merge armed and waiting for a human, which is the right way for this to fail.
-      - name: Approve
-        if: github.actor == 'dependabot[bot]'
-        run: gh pr review "$PR_URL" --approve
+      # `workflow_run` resolves `github.ref` to the default branch, so this checks out the base
+      # repo's own code — never the pull request's — solely to make scripts/ci/ available below.
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check pull request
+        id: check
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-      - name: Squash auto-merge
-        run: gh pr merge "$PR_URL" --auto --squash
+          # Empty on workflow_dispatch, where PR_NUMBER identifies the pull request instead.
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          PR_NUMBER: ${{ inputs.pr }}
+        with:
+          script: |
+            await require('./scripts/ci/merge-dependabot-pr.cjs')({ github, context, core })
+
+      # --match-head-commit refuses the merge if a commit landed on the branch after the checks
+      # above were read, so only the commit that was verified can be merged.
+      - name: Squash merge
+        if: steps.check.outputs.merge == 'true'
+        run: gh pr merge "$PR_NUMBER" --repo "$REPO" --squash --match-head-commit "$HEAD_SHA"
         env:
           GH_TOKEN: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.check.outputs.pr }}
+          HEAD_SHA: ${{ steps.check.outputs.sha }}
