@@ -81,13 +81,13 @@ Bisecting checks out old commits, so it must never happen in a tree holding some
 Every commit under test needs its own dependencies and its own dev server. At each one:
 
 ```bash
-rm -rf styled-system packages/webview/dist   # generated output from the previous commit
 yarn install
+rm -rf styled-system packages/webview/dist   # generated output, possibly from another commit
 yarn run postinstall    # builds packages/webview and the styles
 yarn start              # or: yarn vite --host --port <port>
 ```
 
-Do all of it at every commit. `yarn install` skips `postinstall` when the dependencies did not change, and the style and package builds each skip themselves when their stamp says they are up to date, so without the deletion a commit is served with generated files from a different commit. That fails loudly at best — an older commit importing `styled-system/tokens/index.mjs` that a newer codegen no longer emits — and silently at worst. Then **restart the dev server**. Vite's hot reload does not survive a jump of hundreds of commits — config, plugins, and dependencies change underneath it — and a page served by the previous commit's server produces a verdict about the wrong commit, silently. Reload the page or relaunch the app afterwards, and start each trial from a fresh app state (`localStorage.clear(); location.reload();`, or a fresh session).
+Do all of it at every commit, in this order. `yarn install` skips `postinstall` when the dependencies did not change, and when they did, it can run `postinstall` partway through switching them, generating files against the wrong versions. The style and package builds also skip themselves when their stamp says they are up to date. So delete the generated output after the install, and only then build it. That fails loudly at best — an older commit importing `styled-system/tokens/index.mjs` that a newer codegen no longer emits — and silently at worst. Then **restart the dev server**. Vite's hot reload does not survive a jump of hundreds of commits — config, plugins, and dependencies change underneath it — and a page served by the previous commit's server produces a verdict about the wrong commit, silently. Reload the page or relaunch the app afterwards, and start each trial from a fresh app state (`localStorage.clear(); location.reload();`, or a fresh session).
 
 If the bug is a test that did not exist at an older commit, copy the test file from the tip of `main` into the tree under test, untracked, for each trial. If it depends on helpers that did not exist then either, that commit is untestable — see [Untestable commits](#untestable-commits).
 
