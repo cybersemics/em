@@ -1,6 +1,7 @@
 // Add the active model and effort to commits made in a coding agent's session. Called by
 // commit-msg only when one of the HARNESSES session variables is set.
 import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
@@ -88,6 +89,32 @@ const opencodeModelAndEffort = sessionId => {
   }
 }
 
+/** Returns a named Cursor model, excluding its routing placeholders such as Auto and default. */
+const concreteCursorModel = value =>
+  typeof value === 'string' && !/^(default|unknown|auto|cursor-auto)/i.test(value) ? value : undefined
+
+/** Reads the model and effort that .cursor/hooks/save-prompt-model.mjs saved for this Cursor conversation's current prompt. */
+const cursorModelAndEffort = conversationId => {
+  try {
+    const cache = execFileSync('git', ['rev-parse', '--git-path', 'cursor-attribution-cache'], {
+      encoding: 'utf8',
+    }).trim()
+    const record = JSON.parse(
+      readFileSync(join(cache, `${createHash('sha256').update(conversationId).digest('hex')}.json`), 'utf8'),
+    )
+    // CURSOR_REQUEST_ID is the prompt's generation ID, so a record left by an earlier prompt is not mistaken for this one.
+    if (process.env.CURSOR_REQUEST_ID && record.generation_id !== process.env.CURSOR_REQUEST_ID) return {}
+    const model = concreteCursorModel(record.model_id) || concreteCursorModel(record.model)
+    return {
+      model,
+      // An effort without a named model would describe whatever Auto routed to, so it is dropped with the model.
+      effort: model && record.model_params?.find(({ id }) => id === 'effort' || id === 'reasoning_effort')?.value,
+    }
+  } catch {
+    return {}
+  }
+}
+
 /** Each harness's identity, the variable its shell sets, and how to read its session record. Add one entry per harness, and its variable to commit-msg. */
 const HARNESSES = [
   { agent: 'Codex', email: 'noreply@openai.com', sessionVar: 'CODEX_SESSION_ID', readSession: codexModelAndEffort },
@@ -110,6 +137,13 @@ const HARNESSES = [
     email: 'noreply@opencode.ai',
     sessionVar: 'OPENCODE_SESSION_ID',
     readSession: opencodeModelAndEffort,
+  },
+  // Cursor's shell carries the conversation and generation IDs, but its model only reaches Cursor's own hooks.
+  {
+    agent: 'Cursor',
+    email: 'cursoragent@cursor.com',
+    sessionVar: 'CURSOR_CONVERSATION_ID',
+    readSession: cursorModelAndEffort,
   },
 ]
 

@@ -3,14 +3,7 @@
   "hooks": {
     "beforeSubmitPrompt": [
       {
-        "command": "node .cursor/hooks/check-commit-attribution.mjs prompt"
-      }
-    ],
-    "beforeShellExecution": [
-      {
-        "command": "node .cursor/hooks/check-commit-attribution.mjs",
-        "matcher": "git\\s+commit",
-        "failClosed": true
+        "command": "node .cursor/hooks/save-prompt-model.mjs"
       }
     ]
   }

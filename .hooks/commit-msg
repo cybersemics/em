@@ -2,5 +2,5 @@
 # Hand commits made in a coding agent's shell to commit-msg.mjs, which writes the agent's
 # co-author trailer. Every other commit exits here, so a person's own commits never start Node.
 # Add a harness's session variable here and to the HARNESSES table in commit-msg.mjs.
-[[ -n "${CODEX_SESSION_ID:-}${CLAUDE_CODE_SESSION_ID:-}${PI_SESSION_ID:-}${OPENCODE_SESSION_ID:-}" ]] || exit 0
+[[ -n "${CODEX_SESSION_ID:-}${CLAUDE_CODE_SESSION_ID:-}${PI_SESSION_ID:-}${OPENCODE_SESSION_ID:-}${CURSOR_CONVERSATION_ID:-}" ]] || exit 0
 exec node "$(dirname "$0")/commit-msg.mjs" "$@"
