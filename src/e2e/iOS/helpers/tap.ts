@@ -19,6 +19,8 @@ interface Options {
   y?: number
   // Milliseconds to delay the release of the tap.
   releaseDelayMs?: number
+  /** Number of presses delivered in one native input sequence, separated by 100ms. Defaults to one. */
+  tapCount?: number
 }
 
 /**
@@ -27,8 +29,18 @@ interface Options {
  */
 const tap = async (
   nodeHandle: Element,
-  { horizontalTapLine = 'center', offset, x = 0, y = 0, pointerType = 'mouse', releaseDelayMs = 100 }: Options = {},
+  {
+    horizontalTapLine = 'center',
+    offset,
+    x = 0,
+    y = 0,
+    pointerType = 'mouse',
+    releaseDelayMs = 100,
+    tapCount = 1,
+  }: Options = {},
 ) => {
+  if (!Number.isInteger(tapCount) || tapCount < 1) throw new Error('tapCount must be a positive integer.')
+
   // Ensure element exists and has an elementId
   const exists = await nodeHandle.isExisting()
   if (!exists) {
@@ -90,9 +102,12 @@ const tap = async (
           y: Math.round(finalCoords.y),
           origin: 'viewport',
         },
-        { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: releaseDelayMs },
-        { type: 'pointerUp', button: 0 },
+        ...Array.from({ length: tapCount }).flatMap((_, index) => [
+          ...(index > 0 ? [{ type: 'pause', duration: 100 }] : []),
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: releaseDelayMs },
+          { type: 'pointerUp', button: 0 },
+        ]),
       ],
     },
   ])
