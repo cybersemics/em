@@ -172,7 +172,7 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 
 ## Labels
 
-`bug` for broken behaviour, `feature` for a request, `refactor` for a behaviour-preserving cleanup, `test` for test and CI work, `agent` for agent configuration and ops.
+`bug` for broken behaviour, `feature` for new user-facing behaviour, `refactor` for work no user could observe (a cleanup, or internal machinery only other code uses), `test` for test and CI work, `agent` for agent configuration and ops.
 
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
