@@ -47,6 +47,7 @@
     "lint:lockfile": "npx lockfile-lint",
     "lint:no-npm": "node ./scripts/no-files.js package-lock.json",
     "lint:prettier": "FORCE_COLOR=1 prettier --check .",
+    "lint:tauri-versions": "node ./scripts/check-tauri-versions.mjs",
     "lint:src": "FORCE_COLOR=1 NODE_OPTIONS=--max-old-space-size=4096 eslint . --cache --rule 'no-console: [2, { allow: [error, info, warn] }]'",
     "lint:tsc": "tsc && tsc -p src/e2e/iOS/tsconfig.json && tsc -p src/e2e/android/tsconfig.json",
     "lint": "FORCE_COLOR=1 npm-run-all --serial \"lint:*\"",
