@@ -194,6 +194,8 @@ Two rules carry most of the weight:
 - **Nondeterministic bugs get a measured number of trials.** The agent first reproduces 5 times at the tip of `main`, and that rate sets how many clean trials a commit needs before it counts as good. One sighting of the failure is enough to call a commit bad; one clean run is not enough to call it good.
 - **The answer is checked before it is reported.** The named commit must reproduce again, and its parent must come up clean at twice the usual trial count. If the parent is bad too, the result is reported as inconclusive and no pull request is named.
 
+iOS needs the most care, because not every environment has every behaviour. BrowserStack's devices have autocorrect switched off, a local Simulator has it but is not real hardware, and Safari and the Capacitor app handle the keyboard differently. So the skill says which environment covers what, and when the bug does not reproduce at the tip of `main`, it checks the commit from when the issue was filed to tell "already fixed" apart from "needs an environment we lack".
+
 It reports a verdict and the commit and pull request behind it, and nothing about the cause — explaining the bug is left to a separate agent, so the bisect's evidence is not mixed with a guess.
 
 ## Testing

@@ -51,6 +51,17 @@ Determine the platform — `web`, `android`, or `ios` — using the table in [`r
 | A failing test named in the issue | That test, run in its harness (`run-test` on Copilot; `yarn test <file>` for unit tests, `yarn test:puppeteer <file>` for Puppeteer) |
 | Behaviour or appearance in the app | The app, driven through `browser-control` on Copilot, or whatever browser, simulator, or device tooling your harness has locally |
 
+### iOS
+
+The iOS app on BrowserStack is a shell that loads the dev server, as is a server-mode build of `ios/App` — so on either, swapping the commit behind the dev server swaps the code under test, and the native app is built only once. Safari on iOS and the Capacitor app scroll differently with the keyboard up (the app runs the keyboard plugin with `resize: 'none'`), so reproduce in whichever one the issue names, and try the app before giving up if it names neither.
+
+Some iOS behaviour is not available everywhere:
+
+- **Autocorrect** is switched off on BrowserStack's shared devices and cannot be enabled. A local iOS Simulator has it, but off by default: turn on Settings → General → Keyboard → Auto-Correction and Predictive Text, and turn off the hardware keyboard (`defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false`, before boot) so the on-screen keyboard is what types. Tap its keys rather than sending text, or autocorrect never sees the word.
+- **The Simulator is not a device.** Some behaviour reproduces only on hardware — see [Cursor and Caret](../../../docs/cursor-and-caret.md). If a bug needs both autocorrect and real hardware, no environment here has both: stop and report that, rather than bisecting an environment where the bug does not happen.
+
+For the app in a local Simulator: `CAPACITOR_SERVER_URL=http://localhost:<port> BUILD_MODE=server NODE_ENV=development npx cap sync ios`, then build `ios/App/App.xcworkspace` for the simulator with `xcodebuild` and install it with `xcrun simctl install`. A debug build's web view is inspectable, so Appium (installed into a scratch directory with its `xcuitest` driver) can attach to it to seed thoughts through `window.em.testHelpers` and read scroll positions, while native taps drive the keyboard.
+
 ---
 
 ## Step 2: Prepare a tree
@@ -70,11 +81,13 @@ Bisecting checks out old commits, so it must never happen in a tree holding some
 Every commit under test needs its own dependencies and its own dev server. At each one:
 
 ```bash
-yarn install            # also runs postinstall, which builds packages/ and the styles
+rm -rf styled-system packages/webview/dist   # generated output from the previous commit
+yarn install
+yarn run postinstall    # builds packages/webview and the styles
 yarn start              # or: yarn vite --host --port <port>
 ```
 
-Run the install every time, not only when `yarn.lock` changed — `postinstall` builds `packages/webview` and the generated styles from source, so skipping it serves a stale build that belongs to a different commit. Then **restart the dev server**. Vite's hot reload does not survive a jump of hundreds of commits — config, plugins, and dependencies change underneath it — and a page served by the previous commit's server produces a verdict about the wrong commit, silently. Reload the page or relaunch the app afterwards, and start each trial from a fresh app state (`localStorage.clear(); location.reload();`, or a fresh session).
+Do all of it at every commit. `yarn install` skips `postinstall` when the dependencies did not change, and the style and package builds each skip themselves when their stamp says they are up to date, so without the deletion a commit is served with generated files from a different commit. That fails loudly at best — an older commit importing `styled-system/tokens/index.mjs` that a newer codegen no longer emits — and silently at worst. Then **restart the dev server**. Vite's hot reload does not survive a jump of hundreds of commits — config, plugins, and dependencies change underneath it — and a page served by the previous commit's server produces a verdict about the wrong commit, silently. Reload the page or relaunch the app afterwards, and start each trial from a fresh app state (`localStorage.clear(); location.reload();`, or a fresh session).
 
 If the bug is a test that did not exist at an older commit, copy the test file from the tip of `main` into the tree under test, untracked, for each trial. If it depends on helpers that did not exist then either, that commit is untestable — see [Untestable commits](#untestable-commits).
 
@@ -82,7 +95,7 @@ If the bug is a test that did not exist at an older commit, copy the test file f
 
 ## Step 3: Baseline at the tip of `main`
 
-Reproduce the bug at `origin/main` before going anywhere else. If it does not reproduce there, there is nothing to bisect — it may already be fixed, or the steps may be incomplete. Stop and report that.
+Reproduce the bug at `origin/main` before going anywhere else. If it does not reproduce there, there is nothing to bisect — it may already be fixed, the steps may be incomplete, or the bug may need an environment you do not have. Check one of those cheaply before stopping: reproduce at the last commit on `main` before the issue was filed. If it reproduces there, `main` has fixed it; if not, the environment or the steps are the gap. Report which, and name every environment you tried.
 
 While you are here, **measure how reliably it reproduces**: follow the steps from a fresh state **5 times** and count the failures. That rate decides how many trials every later verdict needs.
 
