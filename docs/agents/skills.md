@@ -33,6 +33,9 @@ flowchart TD
     TD --> PUS["<b>puppeteer-update-snapshots</b><br/>regenerate screenshots"]
 
     CM --> ES["<b>end-session</b><br/>checklist before stopping"]
+
+    ASK(["Asked to bisect"]) --> BIS["<b>bisect</b><br/>regression or always broken?"]
+    BIS --> BC
     ES --> DS["<b>docs-sync</b><br/>make docs true again"]
 
     style REP fill:#2d4a2d,color:#fff
@@ -51,6 +54,7 @@ flowchart TD
     click RT "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#run-test" "run-test — run one test for real"
     click CM "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "ci-monitor — wait for every check"
     click TD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "test-diagnosis — classify the failure"
+    click BIS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#bisect" "bisect — find the commit that broke it"
     click PUS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#puppeteer-update-snapshots" "puppeteer-update-snapshots — regenerate screenshots"
 ```
 
@@ -71,6 +75,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
+| [`bisect`](#bisect) | Find whether a bug is a recent regression, and the commit and pull request that introduced it | [SKILL.md](../../.github/skills/bisect/SKILL.md) |
 | `create-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
 
 ## The gates
@@ -171,6 +176,25 @@ Two facts shape the whole skill, and both were measured rather than assumed.
 **A log must never be read into context.** Four steps of editing produce about 6 KB; a full buffer approaches a megabyte. So the reporter's log is downloaded to a file, the local one is captured to a file by a script that attaches through the existing e2e bridges, and only a bounded report is printed.
 
 The skill also tells the agent to run it *before* escalating a failed reproduction. "Their log has four `composition` entries mine never produced" is a question the user can answer; "could not reproduce" is not.
+
+## Finding regressions
+
+### bisect
+
+**Source: [`.github/skills/bisect/SKILL.md`](../../.github/skills/bisect/SKILL.md)**
+
+Runs on demand — when someone asks to bisect an issue, or whether a bug used to work. It takes an issue number or URL, and the issue must carry exact Steps to Reproduce; without them it stops rather than inventing steps, because a bisect is only as trustworthy as the reproduction it repeats at every commit.
+
+It drives `git bisect` by hand instead of with `git bisect run`. A bug here may be a failing test, but it is as often a caret position on iOS or a gesture that misfires one time in three, and the only oracle that covers all of those is the agent reproducing the steps. So at each commit it reinstalls, restarts the dev server, reproduces, and tells `git bisect` what it saw.
+
+The search window is deliberately short. It looks for a good commit 30 days back, then a year back, and if the bug is present a year ago it reports the bug as having always existed and stops. It bisects along `main`'s first-parent history, where each squash-merged commit is one pull request.
+
+Two rules carry most of the weight:
+
+- **Nondeterministic bugs get a measured number of trials.** The agent first reproduces 5 times at the tip of `main`, and that rate sets how many clean trials a commit needs before it counts as good. One sighting of the failure is enough to call a commit bad; one clean run is not enough to call it good.
+- **The answer is checked before it is reported.** The named commit must reproduce again, and its parent must come up clean at twice the usual trial count. If the parent is bad too, the result is reported as inconclusive and no pull request is named.
+
+It reports a verdict and the commit and pull request behind it, and nothing about the cause — explaining the bug is left to a separate agent, so the bisect's evidence is not mixed with a guess.
 
 ## Testing
 
