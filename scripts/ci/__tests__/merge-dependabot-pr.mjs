@@ -127,4 +127,4 @@ for (const pr of [
   assert.equal(approvals.length, 0)
 }
 
-console.log('merge-dependabot-pr tests passed')
+console.info('PASS: merge-dependabot-pr')
