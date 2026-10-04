@@ -5683,6 +5683,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@percy/sdk-utils@npm:^1.32.0":
+  version: 1.32.11
+  resolution: "@percy/sdk-utils@npm:1.32.11"
+  dependencies:
+    pac-proxy-agent: "npm:^7.0.2"
+  checksum: 10c0/ecbbbf151c1d874c4f5213b39a75aa42cd67909ac3935b83fb4b24e7eb6b1f74bb8a6dff835a4445c098964aac53703852226383402f0981276e5e9712222559
+  languageName: node
+  linkType: hard
+
 "@percy/selenium-webdriver@npm:^2.2.2":
   version: 2.2.5
   resolution: "@percy/selenium-webdriver@npm:2.2.5"
@@ -5690,6 +5699,17 @@ __metadata:
     "@percy/sdk-utils": "npm:^1.30.9"
     node-request-interceptor: "npm:^0.6.3"
   checksum: 10c0/2bc1b06d6d300f3b45661d0de08541e631e03409190e1954bac644e9cad707a656cfeda23b5d49f3f7d3ee7229c8c993ac8dad4149083cdf78d7d003c977bbf6
+  languageName: node
+  linkType: hard
+
+"@percy/webdriverio@npm:^3.3.4":
+  version: 3.3.4
+  resolution: "@percy/webdriverio@npm:3.3.4"
+  dependencies:
+    "@percy/sdk-utils": "npm:^1.32.0"
+  peerDependencies:
+    webdriverio: ~6 || ~7 || ~8 || ~ 9
+  checksum: 10c0/3329951e8776355e152ec65059f144c100d34d759caa39fa07057424dec3b9ae7adb11532eebc0b067a3be355510a03d6aee584c2a1b81bf304c81fd2480a9e3
   languageName: node
   linkType: hard
 
@@ -9137,15 +9157,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@wdio/browserstack-service@npm:^9.36.2":
-  version: 9.36.2
-  resolution: "@wdio/browserstack-service@npm:9.36.2"
+"@wdio/browserstack-service@npm:^9.39.2":
+  version: 9.39.2
+  resolution: "@wdio/browserstack-service@npm:9.39.2"
   dependencies:
     "@browserstack/ai-sdk-node": "npm:1.5.17"
     "@bufbuild/protobuf": "npm:^2.5.2"
     "@grpc/grpc-js": "npm:~1.13.5"
     "@percy/appium-app": "npm:^2.0.9"
     "@percy/selenium-webdriver": "npm:^2.2.2"
+    "@percy/webdriverio": "npm:^3.3.4"
     "@types/gitconfiglocal": "npm:^2.0.1"
     "@wdio/logger": "npm:^9.0.0"
     "@wdio/reporter": "npm:^9.0.0"
@@ -9164,7 +9185,7 @@ __metadata:
     yauzl: "npm:^3.4.0"
   peerDependencies:
     "@wdio/cli": ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/3ee1419cd3596a3787d9c2720bbfe14b2674696fdf1208b847324a4a47bf9596f5fab3498455810a50a8c43a4ac55b08bdaaeb437043ad762bb8888aa9cbc4ec
+  checksum: 10c0/7de4c344ad410868402f4c8667f240da26b7d7a85ba3a95e8b8264efdd551e33c34e8dafc08827c272820d8f44326dbcf22b39a2dc8f83cf9d496f42016202e8
   languageName: node
   linkType: hard
 
@@ -12616,7 +12637,7 @@ __metadata:
     "@typescript/native": "npm:typescript@7.0.2"
     "@vitejs/plugin-basic-ssl": "npm:^2.3.0"
     "@vitejs/plugin-react": "npm:^5.1.4"
-    "@wdio/browserstack-service": "npm:^9.36.2"
+    "@wdio/browserstack-service": "npm:^9.39.2"
     "@wdio/cli": "npm:^9.32.0"
     "@wdio/globals": "npm:^9.31.3"
     "@wdio/local-runner": "npm:^9.32.0"
