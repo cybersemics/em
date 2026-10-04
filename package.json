@@ -188,7 +188,7 @@
     "@pandacss/types": "^2.1.1",
     "@sinonjs/fake-timers": "^15.4.0",
     "@stylistic/eslint-plugin": "^5.10.0",
-    "@tauri-apps/cli": "^2.11.5",
+    "@tauri-apps/cli": "^2.12.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
