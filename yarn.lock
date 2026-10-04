@@ -5474,9 +5474,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@puppeteer/browsers@npm:3.2.2":
-  version: 3.2.2
-  resolution: "@puppeteer/browsers@npm:3.2.2"
+"@puppeteer/browsers@npm:3.2.3":
+  version: 3.2.3
+  resolution: "@puppeteer/browsers@npm:3.2.3"
   dependencies:
     modern-tar: "npm:^0.8.4"
     yargs: "npm:^18.0.0"
@@ -5490,7 +5490,7 @@ __metadata:
       optional: true
   bin:
     browsers: lib/main-cli.js
-  checksum: 10c0/c26a8c4669ccc5a3a29a1879fd9f68d6af88ea09d6678f0d4405950fa5a13298badbd59c69a777418e60f62898777ec0859fff01e2912568f4d5b660d6dd46f3
+  checksum: 10c0/e45fdc7c6b8e248ff9979e0ca12523832abf5f49a17feea2c21b6fa19689e197eb5146d821ed9e9995f0e6d9f7914081d5e7f0fc4b56b64300b7313afb88be01
   languageName: node
   linkType: hard
 
@@ -11795,10 +11795,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"devtools-protocol@npm:0.0.1666840":
-  version: 0.0.1666840
-  resolution: "devtools-protocol@npm:0.0.1666840"
-  checksum: 10c0/ccc9a31ba2616cb5a90c7eed525ffb489075155afefeec050389ddb84b5b3910aae92b91a5ec41197ed30d851902bc21760d0c2d40702e2b7033303b531bac5e
+"devtools-protocol@npm:0.0.1687809":
+  version: 0.0.1687809
+  resolution: "devtools-protocol@npm:0.0.1687809"
+  checksum: 10c0/2260fe07e2d86f666634da82d01c8e03e575f2bb716cda1ed52c36720201aa7a167040985e05febe8d03c9513fc863818571316965c8728e7591128fb818c7dc
   languageName: node
   linkType: hard
 
@@ -12320,7 +12320,7 @@ __metadata:
     pluralize: "npm:^8.0.0"
     postinstall-postinstall: "npm:^2.1.0"
     prettier: "npm:^3.9.9"
-    puppeteer: "npm:^25.10.0"
+    puppeteer: "npm:^25.12.0"
     qrcode.react: "npm:^4.2.0"
     rc-slider: "npm:^11.1.9"
     react: "npm:^19.3.0"
@@ -20157,33 +20157,33 @@ __metadata:
   languageName: node
   linkType: hard
 
-"puppeteer-core@npm:25.10.0":
-  version: 25.10.0
-  resolution: "puppeteer-core@npm:25.10.0"
+"puppeteer-core@npm:25.12.0":
+  version: 25.12.0
+  resolution: "puppeteer-core@npm:25.12.0"
   dependencies:
-    "@puppeteer/browsers": "npm:3.2.2"
+    "@puppeteer/browsers": "npm:3.2.3"
     chromium-bidi: "npm:17.0.2"
-    devtools-protocol: "npm:0.0.1666840"
+    devtools-protocol: "npm:0.0.1687809"
     typed-query-selector: "npm:^2.12.2"
     webdriver-bidi-protocol: "npm:0.4.3"
     ws: "npm:^8.21.3"
-  checksum: 10c0/d95292e389f415b8dc1238df7d67e06a8c37576b8ca6899ee92550f6289c69dedc1b606ee8c443e0eed7e7e5710cfcf45bd83b4e20b75670057d71347441b903
+  checksum: 10c0/b742f6ecec8dc343072a0230e696b1dba0cd24a12060131ee44614cf8bafe2c93a57699adaa992e1795226dcf6c13242ebb9f2c915c86675d63747e858770de6
   languageName: node
   linkType: hard
 
-"puppeteer@npm:^25.10.0":
-  version: 25.10.0
-  resolution: "puppeteer@npm:25.10.0"
+"puppeteer@npm:^25.12.0":
+  version: 25.12.0
+  resolution: "puppeteer@npm:25.12.0"
   dependencies:
-    "@puppeteer/browsers": "npm:3.2.2"
+    "@puppeteer/browsers": "npm:3.2.3"
     chromium-bidi: "npm:17.0.2"
-    devtools-protocol: "npm:0.0.1666840"
+    devtools-protocol: "npm:0.0.1687809"
     lilconfig: "npm:^3.1.3"
-    puppeteer-core: "npm:25.10.0"
+    puppeteer-core: "npm:25.12.0"
     typed-query-selector: "npm:^2.12.2"
   bin:
     puppeteer: lib/puppeteer/node/cli.js
-  checksum: 10c0/3c57205a40b4ab15a9fa7881bf62060d91491e776fcfbe6e35ff8ac03d730ba5e17479142186e0b016f452acaf9091ed6cac88c81894327ecc199e2144481973
+  checksum: 10c0/3839cfb756af54aba37f83ef44056e72cee6aeae513b3fad3a7f575568e569ce02046d4b82f70963ea68c39e424f1136cf5ffb7c0eaaef6feee30aae49df4433
   languageName: node
   linkType: hard
 
