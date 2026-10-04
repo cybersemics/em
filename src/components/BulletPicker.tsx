@@ -63,7 +63,9 @@ const BulletOption: FC<{
 /** A dropdown menu for choosing the bullet style of the current list, applied via `=children/=bullet` on the cursor's parent. */
 const BulletPicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
-  const showBulletPicker = useSelector(state => state.showBulletPicker)
+  const showBulletPicker = useSelector(
+    state => state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'bulletPicker',
+  )
 
   const bulletStyle = useSelector(state => {
     if (!state.cursor || isRoot(state.cursor)) return null

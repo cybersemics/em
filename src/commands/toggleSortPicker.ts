@@ -31,7 +31,7 @@ const toggleSortCommand = {
     const sortPreference = getSortPreference(state, head(path))
     return ['Alphabetical', 'Created', 'Updated', 'Note'].includes(sortPreference.type)
   },
-  isDropdownOpen: state => !!state.showSortPicker,
+  isDropdownOpen: state => !!(state.activeDropdown?.picker === 'sortPicker'),
   // Show an error if the ranks do not match the sort condition.
   // This is only needed for migrating to permasort, and can be removed after the migration is complete.
   error: state => {

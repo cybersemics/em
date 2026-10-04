@@ -102,8 +102,14 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
-  const showColorPicker = useSelector(state => state.showColorPicker)
-  const showDropdown = useSelector(state => state.showColorPicker || state.showLetterCase)
+  const showColorPicker = useSelector(
+    state => state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'colorPicker',
+  )
+  const showDropdown = useSelector(
+    state =>
+      state.activeDropdown?.surface === 'toolbar' &&
+      ['colorPicker', 'letterCase'].includes(state.activeDropdown.picker),
+  )
   const positionFixedStyles = usePositionFixed()
 
   // re-render only (why?)

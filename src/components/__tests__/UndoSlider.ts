@@ -31,7 +31,7 @@ const arrange = async () => {
     indent(),
     setCursor(['b']),
     indent(),
-    // Open the slider explicitly rather than toggling it, since clear does not reset showUndoSlider between tests.
+    // Open the slider explicitly rather than toggling it, so the test does not depend on the previous open state.
     toggleDropdown({ dropDownType: 'undoSlider', value: true }),
   ])
   await act(vi.runOnlyPendingTimersAsync)

@@ -177,14 +177,14 @@ it('does not show the Command Center when undoing a multicursor delete while the
 
   // open the Undo Slider
   store.dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))
-  expect(store.getState().showUndoSlider).toBe(true)
+  expect(store.getState().activeDropdown?.picker === 'undoSlider').toBe(true)
 
   // drag the slider to the left to undo the deletion
   store.dispatch(undo())
 
   // the Undo Slider should not be auto dismissed, and the Command Center should not be re-shown
   // even though undo restores the multicursor
-  expect(store.getState().showUndoSlider).toBe(true)
+  expect(store.getState().activeDropdown?.picker === 'undoSlider').toBe(true)
   expect(store.getState().showCommandCenter).toBe(false)
 })
 

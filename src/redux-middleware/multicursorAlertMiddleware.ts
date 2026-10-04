@@ -44,7 +44,7 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
         // Do not open the Command Center while the Undo Slider session is active.
         // Otherwise undoing/redoing a multicursor command (e.g. delete from the Command Center) restores the
         // multicursor, which would re-open the Command Center and dismiss the Undo Slider being used.
-        !state.showUndoSlider &&
+        !(state.activeDropdown?.picker === 'undoSlider') &&
         // Do not re-open the Command Center while the keyboard is open, i.e. while the multiselection is being edited
         // (Clear Thought). The sheet would cover the editing session, and on iOS any focus that arrives while the
         // Command Center is shown is actively dismissed (see onFocus in Editable), so the keyboard could never open.
