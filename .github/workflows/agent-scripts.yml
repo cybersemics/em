@@ -50,6 +50,8 @@ on:
       - scripts/ci/__tests__/collect-main-failures.mjs
       - scripts/ci/merge-main-fix.cjs
       - scripts/ci/__tests__/merge-main-fix.mjs
+      - scripts/ci/merge-dependabot-pr.cjs
+      - scripts/ci/__tests__/merge-dependabot-pr.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -82,6 +84,8 @@ on:
       - scripts/ci/__tests__/collect-main-failures.mjs
       - scripts/ci/merge-main-fix.cjs
       - scripts/ci/__tests__/merge-main-fix.mjs
+      - scripts/ci/merge-dependabot-pr.cjs
+      - scripts/ci/__tests__/merge-dependabot-pr.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -154,3 +158,6 @@ jobs:
 
       - name: Run Main Fix merge tests
         run: node scripts/ci/__tests__/merge-main-fix.mjs
+
+      - name: Run Dependabot merge gate tests
+        run: node scripts/ci/__tests__/merge-dependabot-pr.mjs

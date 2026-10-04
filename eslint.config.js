@@ -14,6 +14,18 @@ import em from './packages/eslint-plugin-em/index.js'
 // The Panda plugin lints against the tokens, recipes, and utilities in panda.config.ts, so it loads the config up front.
 const pandaConfig = await panda.configs.recommended({ configPath: './panda.config.ts' })
 
+// Matches a variable spread directly into a css(), css.raw(), cva() or sva() style object, or into an object nested in it
+// by property (e.g. under a condition or a selector). Spreads inside a callback in the call (e.g. a reduce that builds
+// variants) are not matched.
+const pandaVariableSpreadSelector = [0, 1, 2, 3]
+  .map(
+    depth =>
+      'CallExpression:matches([callee.name=/^(css|cva|sva)$/], [callee.object.name=/^(css|cva|sva)$/][callee.property.name="raw"]) > ObjectExpression' +
+      ' > Property > ObjectExpression'.repeat(depth) +
+      ' > SpreadElement[argument.type=/^(Identifier|MemberExpression)$/]',
+  )
+  .join(', ')
+
 const rules = {
   'no-irregular-whitespace': 2,
   'no-extra-semi': 2,
@@ -40,6 +52,11 @@ const rules = {
       selector: 'MemberExpression[object.name="vi"][property.name=/^(waitFor|waitUntil)$/]',
       message:
         'vi.waitFor polls on a real-time interval. In store and JSDOM tests, initStore and createTestApp already enable fake timers, so flush them instead — await vi.runAllTimersAsync() (wrapped in act when it causes React updates), then assert — which settles the work in one step and fails immediately rather than after the poll timeout. In Puppeteer, wait in the page with page.waitForFunction or a waitFor* helper. See docs/testing.md § Never wait for wall-clock time.',
+    },
+    {
+      selector: pandaVariableSpreadSelector,
+      message:
+        'PandaCSS v2 does not generate CSS for a variable spread into a style object when the variable holds a conditional (e.g. `const styles = flag ? { ... } : {}`), and it fails silently: the class name is applied but no rule exists. Give each property its own ternary (`border: flag ? "1px solid" : undefined`) or spread the object literal inline (`...(flag ? { ... } : {})`). See .github/instructions/code-standards.instructions.md § CSS.',
     },
   ],
   'no-restricted-properties': [
