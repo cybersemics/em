@@ -2,6 +2,7 @@
 // commit-msg only when one of the HARNESSES session variables is set.
 import { execFileSync } from 'node:child_process'
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
@@ -55,6 +56,38 @@ const claudeModelAndEffort = sessionId => {
   }
 }
 
+/** Reads the model of the latest assistant message in an OpenCode session, and the effort variant the latest user message asked for or else the session's. */
+const opencodeModelAndEffort = sessionId => {
+  const path =
+    process.env.OPENCODE_DB ||
+    join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'opencode', 'opencode.db')
+  if (!existsSync(path)) return {}
+  try {
+    // Loaded here rather than imported so that only OpenCode commits pay for SQLite.
+    const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite')
+    const db = new DatabaseSync(path, { readOnly: true })
+    const latest = (role, field) =>
+      db
+        .prepare(
+          `SELECT json_extract(data, '$.${field}') AS value FROM message
+           WHERE session_id = ? AND json_extract(data, '$.role') = ? ORDER BY time_created DESC LIMIT 1`,
+        )
+        .get(sessionId, role)?.value
+    // A message records a variant only when one was chosen; otherwise the session's own, often "default", applies.
+    const sessionVariant = db
+      .prepare(`SELECT json_extract(model, '$.variant') AS value FROM session WHERE id = ?`)
+      .get(sessionId)?.value
+    const result = {
+      model: latest('assistant', 'modelID'),
+      effort: latest('user', 'model.variant') || sessionVariant,
+    }
+    db.close()
+    return result
+  } catch {
+    return {}
+  }
+}
+
 /** Each harness's identity, the variable its shell sets, and how to read its session record. Add one entry per harness, and its variable to commit-msg. */
 const HARNESSES = [
   { agent: 'Codex', email: 'noreply@openai.com', sessionVar: 'CODEX_SESSION_ID', readSession: codexModelAndEffort },
@@ -63,6 +96,20 @@ const HARNESSES = [
     email: 'noreply@anthropic.com',
     sessionVar: 'CLAUDE_CODE_SESSION_ID',
     readSession: claudeModelAndEffort,
+  },
+  // Pi exports the model and reasoning level to each command its agent runs.
+  {
+    agent: 'Pi',
+    email: 'noreply@pi.dev',
+    sessionVar: 'PI_SESSION_ID',
+    readSession: () => ({ model: process.env.PI_MODEL, effort: process.env.PI_REASONING_LEVEL }),
+  },
+  // OpenCode sets no session variable of its own; .opencode/plugins/session-env.js exports this one.
+  {
+    agent: 'OpenCode',
+    email: 'noreply@opencode.ai',
+    sessionVar: 'OPENCODE_SESSION_ID',
+    readSession: opencodeModelAndEffort,
   },
 ]
 

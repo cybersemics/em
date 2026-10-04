@@ -174,7 +174,8 @@ CLAUDE.md            → AGENTS.md
 └── <name>           → .github/skills/<name>
 .claude/skills       → .agents/skills
 .hooks/commit-msg                    Exits unless a coding agent's session marker is set
-.hooks/commit-msg.mjs                Codex and Claude Code commit attribution
+.hooks/commit-msg.mjs                Codex, Claude Code, Pi, and OpenCode commit attribution
+.opencode/plugins/session-env.js     Exports OpenCode's session ID for commit-msg.mjs
 .cursor/hooks.json                   Cursor Agent commit attribution
 ```
 
