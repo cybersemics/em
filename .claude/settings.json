@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/SessionStart/yarn-install.sh",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}
