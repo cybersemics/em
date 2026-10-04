@@ -14,8 +14,9 @@ name: Agent Scripts
 #     local stub upstream and asserts session adoption, DELETE swallowing, and clean forwarding —
 #     no BrowserStack credentials involved.
 #   - scripts/ci/__tests__/ covers the comment the fix automations keep on a pull request — the
-#     shared renderer, and the Copilot conflict scan that decides what goes in it — which nothing
-#     else exercises until one of them writes on a real pull request.
+#     shared renderer, and the Copilot conflict scan that decides what goes in it — and Main Fix's
+#     decisions about CI failing on main: when to re-run, file, or link, and when to merge the fix.
+#     Nothing else exercises any of them until one acts on a real pull request or issue.
 #   - scripts/debugLogCompare.test.ts covers the debug-log comparison the compare-debug-log skill
 #     runs. Its whole job is to neutralize what differs between two runs of the same steps — ids,
 #     sequence numbers, timestamps, per-device nonces — so a regression there does not fail loudly,
@@ -44,6 +45,11 @@ on:
       - scripts/ci/copilot-conflicts-comment.cjs
       - scripts/ci/start-copilot-conflict-task.mjs
       - scripts/ci/start-dependabot-fix-task.mjs
+      - scripts/ci/job-log.cjs
+      - scripts/ci/collect-main-failures.cjs
+      - scripts/ci/__tests__/collect-main-failures.mjs
+      - scripts/ci/merge-main-fix.cjs
+      - scripts/ci/__tests__/merge-main-fix.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -71,6 +77,11 @@ on:
       - scripts/ci/copilot-conflicts-comment.cjs
       - scripts/ci/start-copilot-conflict-task.mjs
       - scripts/ci/start-dependabot-fix-task.mjs
+      - scripts/ci/job-log.cjs
+      - scripts/ci/collect-main-failures.cjs
+      - scripts/ci/__tests__/collect-main-failures.mjs
+      - scripts/ci/merge-main-fix.cjs
+      - scripts/ci/__tests__/merge-main-fix.mjs
       - src/e2e/puppeteer/attachExistingBrowserInstance.ts
       - src/e2e/puppeteer/session.ts
       - .github/workflows/agent-scripts.yml
@@ -137,3 +148,9 @@ jobs:
 
       - name: Run Copilot conflict collector tests
         run: node scripts/ci/__tests__/collect-copilot-conflicts.mjs
+
+      - name: Run Main Fix collector tests
+        run: node scripts/ci/__tests__/collect-main-failures.mjs
+
+      - name: Run Main Fix merge tests
+        run: node scripts/ci/__tests__/merge-main-fix.mjs
