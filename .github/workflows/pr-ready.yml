@@ -33,7 +33,17 @@ name: PR Ready
 on:
   workflow_run:
     workflows:
-      ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'BrowserStack Android', 'Vercel Preview', 'TDD', 'Agent Scripts']
+      [
+        'Lint',
+        'Test',
+        'Puppeteer',
+        'BrowserStack',
+        'BrowserStack Android',
+        'Vercel Preview',
+        'TDD',
+        'Agent Scripts',
+        'Tauri Check',
+      ]
     types: [completed]
   workflow_dispatch:
     inputs:

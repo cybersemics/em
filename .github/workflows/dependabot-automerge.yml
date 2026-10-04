@@ -53,6 +53,7 @@ on:
         'Evals',
         'Copilot Setup Steps',
         'Copilot Conflict Resolution',
+        'Tauri Check',
       ]
     types: [completed]
   workflow_dispatch:

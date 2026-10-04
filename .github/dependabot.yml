@@ -109,8 +109,9 @@ updates:
           - 'workbox-*'
 
   # The desktop app's Rust crates. Only the Tauri crates are updated, all in one pull request: they
-  # are the ones whose versions the npm packages must match, and no pull request builds the Rust
-  # code (Tauri Release runs only on main), so every other crate bump would land unbuilt.
+  # are the ones whose versions the npm packages must match. Pull requests only compile the Rust
+  # code (tauri-check.yml) and nothing runs the desktop app, so a bump to any other crate would land
+  # with no evidence it still works.
   - package-ecosystem: 'cargo'
     directory: '/desktop'
     # Same slot as npm above.
