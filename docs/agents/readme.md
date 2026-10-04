@@ -173,7 +173,8 @@ CLAUDE.md            → AGENTS.md
 .agents/skills/                      The shared subset, one symlink each
 └── <name>           → .github/skills/<name>
 .claude/skills       → .agents/skills
-.hooks/commit-msg                    Codex and Claude Code commit attribution from their session markers
+.hooks/commit-msg                    Exits unless a coding agent's session marker is set
+.hooks/commit-msg.mjs                Codex and Claude Code commit attribution
 .cursor/hooks.json                   Cursor Agent commit attribution
 ```
 
