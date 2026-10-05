@@ -83,4 +83,42 @@ describe('url history on desktop', () => {
       throw new Error(`Expected the cursor to move back to "Five", but it is on ${JSON.stringify(cursor)}.`)
     }
   })
+
+  // https://github.com/cybersemics/em/issues/5747
+  it('browser back preserves direction after revisiting and deleting a history thought', async () => {
+    await paste(`
+      - A
+      - B
+      - C
+    `)
+
+    await clickThought('A')
+    await waitForUrlChange('/')
+    const pathnameA = await page.evaluate(() => window.location.pathname)
+
+    await clickThought('C')
+    await waitForUrlChange(pathnameA)
+    await page.goBack()
+    await waitForCursor('A')
+
+    await clickThought('C')
+    await waitForCursor('C')
+
+    await clickToolbar('Delete')
+    await waitForCursor('B')
+
+    await page.goBack()
+
+    try {
+      await page.waitForFunction(
+        () => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML === 'A',
+        { timeout: 5000 },
+      )
+    } catch {
+      const cursor = await page.evaluate(
+        () => document.querySelector('[data-editing=true] [data-editable]')?.innerHTML ?? null,
+      )
+      throw new Error(`Expected the cursor to move back to "A", but it is on ${JSON.stringify(cursor)}.`)
+    }
+  })
 })

@@ -155,8 +155,40 @@ let eventHandlers: EventHandlers | null = null
 const initEvents = (store: Store<State, any>) => {
   if (eventHandlers) return eventHandlers
 
-  let lastState: number
+  /** Reads the numeric browser history state used by updateUrlHistory. */
+  const historyState = () => (typeof window.history.state === 'number' ? window.history.state : 0)
+
+  let lastState: number = historyState()
   let lastPath: Path | null
+
+  /** Tracks pushState/replaceState writes so popstate direction is based on fresh history state. */
+  const trackHistoryState = () => {
+    const pushState = window.history.pushState.bind(window.history)
+    const replaceState = window.history.replaceState.bind(window.history)
+
+    window.history.pushState = ((state, title, url) => {
+      if (typeof state === 'number') {
+        lastState = state
+        lastPath = store.getState().cursor
+      }
+      return pushState(state, title, url)
+    }) as History['pushState']
+
+    window.history.replaceState = ((state, title, url) => {
+      if (typeof state === 'number') {
+        lastState = state
+        lastPath = store.getState().cursor
+      }
+      return replaceState(state, title, url)
+    }) as History['replaceState']
+
+    return () => {
+      window.history.pushState = pushState
+      window.history.replaceState = replaceState
+    }
+  }
+
+  const untrackHistoryState = trackHistoryState()
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
@@ -563,6 +595,7 @@ const initEvents = (store: Store<State, any>) => {
     unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
+    untrackHistoryState()
     eventHandlers = null
   }
 
