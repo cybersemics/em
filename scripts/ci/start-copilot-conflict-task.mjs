@@ -26,7 +26,7 @@ if (!process.env.COPILOT_TASKS_TOKEN) {
 const { tasks, requested } = JSON.parse(readFileSync(reportFile, 'utf8'))
 
 /** Starts a Copilot task on the existing pull request branch. */
-const startTask = async task => {
+const startTask = async (task, { useDefaultModel = false } = {}) => {
   const response = await fetch(`https://api.github.com/agents/repos/${process.env.GITHUB_REPOSITORY}/tasks`, {
     method: 'POST',
     headers: {
@@ -41,16 +41,21 @@ const startTask = async task => {
         `Merge the latest \`${task.baseRef}\` into \`${task.headRef}\`, preserve both intended changes, and commit the resolution directly to this branch.`,
         'Do not open a second pull request. Run the relevant tests and lint before requesting review.',
       ].join('\n'),
-      model: MODEL,
+      ...(useDefaultModel ? {} : { model: MODEL }),
       custom_agent: CUSTOM_AGENT,
       head_ref: task.headRef,
       base_ref: task.baseRef,
     }),
   })
-  if (!response.ok)
-    throw new Error(
-      `${response.status} ${response.statusText} — ${(await response.text()).replace(/\s+/g, ' ').slice(0, 300)}`,
-    )
+  if (!response.ok) {
+    const detail = (await response.text()).replace(/\s+/g, ' ')
+    // Model access depends on the token owner's plan and policy; let GitHub select an available one.
+    if (!useDefaultModel && response.status === 400 && detail.includes('model not found or not enabled for user')) {
+      console.warn(`Preferred conflict-resolution model ${MODEL} unavailable; retrying with GitHub's default model.`)
+      return startTask(task, { useDefaultModel: true })
+    }
+    throw new Error(`${response.status} ${response.statusText} — ${detail.slice(0, 300)}`)
+  }
   return response.json()
 }
 
