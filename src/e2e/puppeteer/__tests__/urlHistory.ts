@@ -92,8 +92,9 @@ describe('url history on desktop', () => {
       - C
     `)
 
+    const pathnameInitial = await page.evaluate(() => window.location.pathname)
     await clickThought('A')
-    await waitForUrlChange('/')
+    await waitForUrlChange(pathnameInitial)
     const pathnameA = await page.evaluate(() => window.location.pathname)
 
     await clickThought('C')
