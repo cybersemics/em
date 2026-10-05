@@ -55,7 +55,8 @@ const ThoughtLink = ({
       <Link
         cssRaw={css.raw({ fontWeight: 'inherit', color: 'fg' })}
         simplePath={simplePath}
-        label={value}
+        // an empty thought shows the placeholder that Editable shows, rather than an invisible link
+        label={value === '' ? 'This is an empty thought' : value}
         style={styleLink}
       />
       <Superscript simplePath={simplePath} />

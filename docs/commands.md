@@ -483,7 +483,7 @@ https://github.com/user-attachments/assets/4255766e-8c9d-4cdf-a140-573ab82399ae
 
 ### Uncategorize
 
-Deletes the current thought and moves all its subthoughts up a level.
+Deletes the current thought and moves all its subthoughts up a level. Meta attributes move up with them, so uncategorizing a favorite makes its parent the favorite. The home context cannot be a favorite, so a favorited top-level thought is instead moved into a new, empty thought, which takes the favorite — the Favorites list shows it as "This is an empty thought" until the user types into it.
 
 <kbd>Command + Option + c</kbd>
 

@@ -12,14 +12,8 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-/** Returns the text of each favorite in the sidebar, excluding its context breadcrumbs. */
-const favoritesText = () =>
-  Array.from(document.querySelectorAll('[data-testid="drag-and-drop-favorite"] [data-thought-link]'))
-    .filter(link => !link.closest('[aria-label="context-breadcrumbs"]'))
-    .map(link => link.textContent)
-
 // https://github.com/cybersemics/em/issues/5833
-it.skip('uncategorizing a favorited top-level thought favorites a new empty parent shown with a placeholder', async () => {
+it('uncategorizing a favorited top-level thought favorites a new empty parent shown with a placeholder', async () => {
   await dispatch([
     importText({
       text: `
@@ -44,5 +38,10 @@ it.skip('uncategorizing a favorited top-level thought favorites a new empty pare
     - =favorite
     - a
   - b`)
-  expect(favoritesText()).toEqual(['This is an empty thought'])
+
+  // the favorite's own link, excluding the links in its context breadcrumbs
+  const favorites = Array.from(document.querySelectorAll('[data-testid="drag-and-drop-favorite"] [data-thought-link]'))
+    .filter(link => !link.closest('[aria-label="context-breadcrumbs"]'))
+    .map(link => link.textContent)
+  expect(favorites).toEqual(['This is an empty thought'])
 })

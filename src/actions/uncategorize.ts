@@ -1,10 +1,12 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
 import Thunk from '../@types/Thunk'
 import moveThought from '../actions/moveThought'
 import setCursor from '../actions/setCursor'
+import { HOME_TOKEN } from '../constants'
 import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getChildren, getChildrenRanked, isVisible } from '../selectors/getChildren'
 import getRankBefore from '../selectors/getRankBefore'
@@ -18,8 +20,10 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
+import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
+import categorize from './categorize'
 import deleteThought from './deleteThought'
 import sort from './sort'
 
@@ -53,6 +57,25 @@ const uncategorize = (state: State, { at }: Options): State => {
         offset: 0,
       }),
     ])(state)
+  }
+
+  // The home context cannot be a favorite, so moving =favorite up from a top-level thought would list home itself in
+  // Favorites. Instead, move the thought into a new empty thought, as categorize does, and give the favorite to that new
+  // parent. Only the cursor is affected: importText and swapNote pass `at` to collapse an intermediate thought, which
+  // must be deleted.
+  const favoriteId = findDescendant(state, head(simplePath), '=favorite')
+  if (!at && favoriteId && isRoot(rootedParentOf(state, simplePath))) {
+    const stateCategorized = categorize(state)
+    const categoryId = getThoughtById(stateCategorized, head(simplePath))?.parentId
+
+    // categorize alerts instead of moving the thought when it cannot be categorized
+    if (!categoryId || categoryId === HOME_TOKEN) return stateCategorized
+
+    return moveThought(stateCategorized, {
+      oldPath: appendToPath(null, categoryId, head(simplePath), favoriteId),
+      newPath: appendToPath(null, categoryId, favoriteId),
+      newRank: getRankBefore(stateCategorized, appendToPath<SimplePath>(null, categoryId, head(simplePath))),
+    })
   }
 
   /** Returns first moved child path as new cursor after uncategorize. */
