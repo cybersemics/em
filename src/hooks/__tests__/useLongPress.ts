@@ -4,7 +4,7 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { AlertText, TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import store from '../../stores/app'
-import webKit27Store from '../../stores/webKit27Store'
+import osVersionStore from '../../stores/osVersionStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
@@ -20,7 +20,7 @@ import getBulletByContext from '../../test-helpers/queries/getBulletByContext'
 
 beforeEach(async () => {
   await createTestApp()
-  webKit27Store.update(true)
+  osVersionStore.update(27)
 })
 
 afterEach(async () => {
@@ -101,7 +101,7 @@ it('a selection change after a long press begins does not end it', async () => {
 })
 
 it('a mouseup does not end a touch press before WebKit 27', async () => {
-  webKit27Store.update(false)
+  osVersionStore.update(26)
   await dispatch(importText({ text: '- One' }))
   await act(vi.runOnlyPendingTimersAsync)
   const bullet = getBulletByContext(['One'])

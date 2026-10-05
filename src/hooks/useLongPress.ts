@@ -10,8 +10,8 @@ import * as selection from '../device/selection'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
 import multitouchStore from '../stores/multitouchStore'
+import osVersionStore from '../stores/osVersionStore'
 import touchStore from '../stores/touchStore'
-import webKit27Store from '../stores/webKit27Store'
 import haptics from '../util/haptics'
 import head from '../util/head'
 
@@ -129,7 +129,7 @@ const useLongPress = (
 
   // iOS 27 can withhold a press's touchend until the next touch, but still fires mouseup when the finger lifts (#5660).
   useEffect(() => {
-    if (!pressing || !webKit27Store.getState()) return
+    if (!pressing || (osVersionStore.getState() ?? 0) < 27) return
 
     window.addEventListener('mouseup', stop, { capture: true })
     return () => window.removeEventListener('mouseup', stop, { capture: true })
@@ -138,7 +138,7 @@ const useLongPress = (
   // A withheld tap can get no mouseup either, but iOS still moves the caret when it lifts (#5660). A finger still down
   // does not move the caret before the long press delay, and once DragHold begins em blurs the editable itself.
   useEffect(() => {
-    if (!pressing || longPressState !== LongPressState.Inactive || !webKit27Store.getState()) return
+    if (!pressing || longPressState !== LongPressState.Inactive || (osVersionStore.getState() ?? 0) < 27) return
 
     /** Ends the press. */
     const onSelectionChange = () => stop()

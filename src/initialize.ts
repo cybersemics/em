@@ -26,9 +26,9 @@ import getThoughtById from './selectors/getThoughtById'
 import thoughtToContext from './selectors/thoughtToContext'
 import store from './stores/app'
 import offlineStatusStore, { init as initOfflineStatusStore } from './stores/offlineStatusStore'
+import osVersionStore from './stores/osVersionStore'
 import storageStatusStore from './stores/storageStatusStore'
 import syncStatusStore from './stores/syncStatusStore'
-import webKit27Store from './stores/webKit27Store'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
 import debugLog from './util/debugLog'
@@ -73,9 +73,9 @@ type InitializeOptions = { storage: ThoughtspaceStorage }
 const initializeInternal = async ({ storage }: InitializeOptions) => {
   initOfflineStatusStore(/* websocket */)
 
-  // An app built before the Device plugin was added cannot tell, so the store stays false.
+  // An app built before the Device plugin was added cannot tell, so the store stays null.
   if (Capacitor.getPlatform() === 'ios' && Capacitor.isPluginAvailable('Device')) {
-    Device.getInfo().then(({ osVersion }) => webKit27Store.update(parseInt(osVersion) >= 27))
+    Device.getInfo().then(({ osVersion }) => osVersionStore.update(parseInt(osVersion)))
   }
 
   const eventHandlers = initEvents(store)
