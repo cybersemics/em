@@ -1,5 +1,5 @@
 import { isCapacitor, isSafari } from '../browser'
-import viewportStore from '../stores/viewport'
+import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import useScrollTop from './useScrollTop'
 

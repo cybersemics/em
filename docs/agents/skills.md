@@ -71,7 +71,7 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
-| `write-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/write-issue/SKILL.md) |
+| `create-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
 
 ## The gates
 
@@ -94,7 +94,7 @@ Until the failure has actually been observed, the agent may not read source code
 | `[Mobile]`, or general touch words like "tap", "swipe", "on-screen keyboard" | `android`, falling back to `ios` |
 | No platform signal, or desktop words like "click", "hover" | `web` |
 
-`[Mobile]` means Android first because mobile Chrome is far cheaper than a real device and catches nearly all mobile-only behaviour. But if the bug will not reproduce there, it is probably genuinely iOS-specific, so the skill retries on a real iPhone before giving up. An explicit `[Android]` tag gets no such fallback.
+`[Mobile]` means Android first because mobile Chrome is far cheaper than a real device and catches nearly all mobile-only behaviour; a real Android device exists only in the CI smoke suite (`src/e2e/android`), not in the agent tooling. But if the bug will not reproduce there, it is probably genuinely iOS-specific, so the skill retries on a real iPhone before giving up. An explicit `[Android]` tag gets no such fallback.
 
 The skill is blunt about one thing in particular: **iOS is always reproducible here.** "This needs a physical device" and "I cannot automate iOS" are not acceptable reasons to skip reproduction, because real iPhones are available through BrowserStack. That paragraph exists because agents kept talking themselves out of iOS work.
 

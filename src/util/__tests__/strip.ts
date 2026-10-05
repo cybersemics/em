@@ -27,6 +27,12 @@ it('preserve bold', () => {
   expect(strip('Hello <b>world</b>', { preserveFormatting: true })).toBe('Hello <b>world</b>')
 })
 
+it('removes temporary generating emoji wraps while preserving formatting', () => {
+  expect(strip('Hello <span data-generating-emoji>🍎</span> world', { preserveFormatting: true })).toBe(
+    'Hello 🍎 world',
+  )
+})
+
 it('preserve italic', () => {
   expect(strip('Hello <i>sun</i>', { preserveFormatting: true })).toBe('Hello <i>sun</i>')
 })

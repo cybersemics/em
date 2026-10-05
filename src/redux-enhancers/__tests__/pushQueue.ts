@@ -6,11 +6,6 @@ import debugLog from '../../util/debugLog'
 
 beforeEach(initStore)
 
-afterEach(() => {
-  debugLog.setEnabled(false)
-  debugLog.clear()
-})
-
 it('logs a push entry when thought updates are flushed to persistence, and pushSynced when the write completes', async () => {
   debugLog.setEnabled(true)
   debugLog.clear()

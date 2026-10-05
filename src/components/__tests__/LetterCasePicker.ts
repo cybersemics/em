@@ -73,7 +73,7 @@ it('Set Upper Case with multicursor selection', async () => {
   await dispatch([
     newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' }),
     newThought({ value: 'Goodbye everyone, this is Max. Thanks for your help.' }),
-    addAllMulticursor({}),
+    addAllMulticursor(),
   ])
   expect(Object.keys(store.getState().multicursors)).toHaveLength(2)
   await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
@@ -94,7 +94,7 @@ it('multicursor selection is preserved after applying Upper Case', async () => {
   await dispatch([
     newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' }),
     newThought({ value: 'Goodbye everyone, this is Max. Thanks for your help.' }),
-    addAllMulticursor({}),
+    addAllMulticursor(),
   ])
   await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
   await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
