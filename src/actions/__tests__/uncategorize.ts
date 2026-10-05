@@ -380,6 +380,41 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
+  // https://github.com/cybersemics/em/issues/5833
+  it('move a favorited top-level context into a new empty thought that takes the favorite', () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - =favorite
+        - m
+          - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'b']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - 
+    - =favorite
+    - b
+      - m
+        - y`)
+
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
+  })
+
   it('uncategorize context subthought in context view', () => {
     const text = `
       - a

@@ -46,16 +46,24 @@ const uncategorize = (state: State, { at }: Options): State => {
   if (children.length === 0 || !thought) return state
 
   // Uncategorizing a context in the context view is equivalent to uncategorizing the parent of the cursor SimplePath.
+  // The context is uncategorized as the cursor rather than with `at`, so that a favorited top-level context is moved into a
+  // new parent like any other favorited top-level thought (see below).
   // The cursor needs to be updated to stay in the context view.
   const isInContextView = isContextViewActive(state, parentOf(path))
   if (isInContextView) {
+    const contextPath = rootedParentOf(state, simplePath)
     return reducerFlow([
-      state => uncategorize(state, { at: rootedParentOf(state, simplePath) }),
-      setCursor({
-        path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
-        isKeyboardOpen: state.isKeyboardOpen,
-        offset: 0,
-      }),
+      setCursor({ path: contextPath }),
+      stateContextCursor => uncategorize(stateContextCursor, {}),
+      stateUncategorized =>
+        setCursor(stateUncategorized, {
+          // a favorited top-level context is moved rather than deleted, so it is still a context of the cursor thought
+          path: getThoughtById(stateUncategorized, head(contextPath))
+            ? path
+            : appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
+          isKeyboardOpen: state.isKeyboardOpen,
+          offset: 0,
+        }),
     ])(state)
   }
 
