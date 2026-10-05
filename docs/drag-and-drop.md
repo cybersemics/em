@@ -33,9 +33,11 @@ Disabling it removes that handler, so drag events reach the page normally. Nothi
 
 #### Android app
 
-In the Android Capacitor app, [`initEvents`](../src/util/initEvents.ts) cancels every native `dragstart`. Long-pressing selected text starts a native text drag in the Android System WebView, but the WebView never delivers the `dragenter` / `dragover` / `drop` / `dragend` that follow, nor the `touchend` that ends the press. The word can never be dropped, no drop caret is drawn, and the native selection menu stays on screen over the dragged word. Cancelling `dragstart` keeps the long press an ordinary press, so `touchend` arrives as usual.
+In the Android Capacitor app, long-pressing selected text starts a native text drag, and the Android System WebView carries it through to `drop` and `dragend`, moving the text. But it leaves the native selection menu (Cut, Copy, …) on screen over the dragged word for the whole drag, and draws the drop caret in the editable's caret color, which is the text color and too thin to pick out against the text.
 
-Thought drags are unaffected. `TouchBackend` never uses native drag events, and it announces a drag with its own `dragStart` `CustomEvent` (see [react-dnd patches](#react-dnd-patches)). Android Chrome is not gated in, because there the native text drag completes and moves the text.
+[`initEvents`](../src/util/initEvents.ts) handles this without cancelling the drag. On `dragstart` it saves the selected range and collapses the selection, which dismisses the menu because Android draws it for the range ([`selection.collapse`](../src/device/selection.ts), as in [Cursor and Caret](cursor-and-caret.md)). It also sets `data-native-text-drag` on the body, which the `nativeTextDrag` Panda condition uses to give every element a `blue` caret while the drag lasts. A capture-phase `drop` listener restores the saved range before the browser handles the drop: the browser moves the selected text to the drop point, and without a selection it would copy the text instead. `dragend` restores the range if the drag was abandoned, and clears the attribute.
+
+Thought drags are unaffected. `TouchBackend` never uses native drag events, and it announces a drag with its own `dragStart` `CustomEvent` (see [react-dnd patches](#react-dnd-patches)). Android Chrome is not gated in, because it dismisses the selection menu when the drag starts.
 
 ### State machine: `state.longPress`
 
