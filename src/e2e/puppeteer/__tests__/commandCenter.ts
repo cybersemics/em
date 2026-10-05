@@ -212,6 +212,35 @@ describe('command center', () => {
     await waitForCommandCenterClosed()
   })
 
+  // https://github.com/cybersemics/em/pull/5756#issuecomment-5964399980
+  it.skip('does not make room for the keyboard while it closes for the Note command', async () => {
+    await paste('- a')
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    // The keyboard that the note raises arrives while the sheet is sliding out. Headless Chrome has no virtual keyboard
+    // whose inset could be measured, so capture whether the sheet pads its content by the keyboard inset at the moment
+    // it starts closing, which grows the sheet back up the screen as soon as the keyboard appears.
+    const closingPaddingBottom = page.evaluate(
+      () =>
+        new Promise<string>(resolve => {
+          const sheet = document.querySelector('[data-testid="command-center-panel"]')!
+          const observer = new MutationObserver(() => {
+            if (sheet.getAttribute('data-sheet-state') !== 'closing') return
+            observer.disconnect()
+            resolve((sheet.querySelector('.react-modal-sheet-content-scroller') as HTMLElement).style.paddingBottom)
+          })
+          observer.observe(sheet, { attributeFilter: ['data-sheet-state'] })
+        }),
+    )
+
+    await clickToolbar('Note')
+
+    expect(await closingPaddingBottom).toBe('')
+  })
+
   // https://github.com/cybersemics/em/pull/5756#issuecomment-5964322349
   it('dismisses the keyboard when it is opened from a note', async () => {
     await paste('- One')
