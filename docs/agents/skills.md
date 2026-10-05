@@ -339,4 +339,6 @@ Beyond the frontmatter, patterns worth copying from the existing ones:
 
 **Say what to do when stuck.** Every skill ends with escalation rules, and most end with the same line: default to acting on your own, escalate only when the right path is genuinely unclear. Without that, agents either stop constantly or never stop at all.
 
+**Run a procedure skill once on a real case before opening its pull request.** Checking its commands one by one is not enough: the `bisect` skill's first version passed that check, and its first real bisect still turned up a stale build step, a missing iOS environment, and a report step that needed the user's say. Where a step could not be run, say so in the pull request.
+
 **Split large skills by what the caller needs.** `browser-control` routes to a Chrome half and an iOS half so that a web task never loads several hundred lines about BrowserStack.

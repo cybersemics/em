@@ -37,14 +37,19 @@ It does **not** explain the bug. Do not read the bad commit's diff to form a the
 Accept an issue number (`5812`) or URL (`https://github.com/cybersemics/em/issues/5812`), and read the issue and its comments:
 
 ```bash
-gh issue view <number> --repo cybersemics/em --comments
+gh issue view <number> --repo cybersemics/em --json title,body,comments
 ```
+
+Use `--json`: `gh issue view --comments` can print nothing at all for an issue that has a body.
 
 Extract **Steps to Reproduce**, **Current Behavior**, and **Expected Behavior**, matching headings loosely as the `create-issue` format varies ("Steps to Reproduce", "How to reproduce", "Actual Behavior").
 
 **The issue must contain exact steps to reproduce.** If it has none, or they are too vague to follow without inventing steps ("sometimes the cursor jumps"), stop and say so. Do not fill the gaps yourself: a bisect is only as good as its oracle, and steps you invented test your guess about the bug rather than the bug. Point the user at `create-issue` for adding steps.
 
 Determine the platform — `web`, `android`, or `ios` — using the table in [`reproduce`](../reproduce/SKILL.md) Step 1, and the vehicle the bug lives in:
+
+For a platform-specific bug, match the reporter's OS version as well, and ask for it when the issue does not say. #5676 never reproduced on iOS 26.5 and did on iOS 27.
+
 
 | The bug is… | Reproduce it with |
 | --- | --- |
@@ -58,7 +63,9 @@ The iOS app on BrowserStack is a shell that loads the dev server, as is a server
 Some iOS behaviour is not available everywhere:
 
 - **Autocorrect** is switched off on BrowserStack's shared devices and cannot be enabled. A local iOS Simulator has it, but off by default: turn on Settings → General → Keyboard → Auto-Correction and Predictive Text, and turn off the hardware keyboard (`defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false`, before boot) so the on-screen keyboard is what types. Tap its keys rather than sending text, or autocorrect never sees the word. Then confirm a correction actually happened in every trial: the iOS 27.0 Simulator shows both settings on yet offers no suggestions and corrects nothing, and a trial in which autocorrect never fired is not a clean trial — it tested nothing.
-- **The Simulator is not a device.** Some behaviour reproduces only on hardware — see [Cursor and Caret](../../../docs/cursor-and-caret.md). If a bug needs both autocorrect and real hardware, no environment here has both: stop and report that, rather than bisecting an environment where the bug does not happen.
+- **Vary the misspelling between trials.** iOS learns from a correction that was reverted, so a word reverted a few times (resetting a trial does exactly that) can stop being corrected. Use a fresh misspelling for each trial.
+- **The Simulator is not a device.** Some behaviour reproduces only on hardware — see [Cursor and Caret](../../../docs/cursor-and-caret.md). Do not bisect an environment where the bug does not happen; when only hardware reproduces it, the user drives the device ([below](#when-only-a-physical-device-reproduces-it)).
+- **A missing iOS runtime** can be installed with `xcodebuild -downloadPlatform iOS` — about 8 GB, so ask first — then `xcrun simctl create <name> <device type> <runtime>` makes a matching device.
 
 For the app in a local Simulator: `CAPACITOR_SERVER_URL=http://localhost:<port> BUILD_MODE=server NODE_ENV=development npx cap sync ios`, then build `ios/App/App.xcworkspace` for the simulator with `xcodebuild` and install it with `xcrun simctl install`. A debug build's web view is inspectable, so Appium (installed into a scratch directory with its `xcuitest` driver) can attach to it to seed thoughts through `window.em.testHelpers` and read scroll positions, while native taps drive the keyboard.
 
@@ -95,7 +102,7 @@ yarn run postinstall    # builds packages/webview and the styles
 yarn start              # or: yarn vite --host --port <port>
 ```
 
-Do all of it at every commit, in this order. `yarn install` skips `postinstall` when the dependencies did not change, and when they did, it can run `postinstall` partway through switching them, generating files against the wrong versions. The style and package builds also skip themselves when their stamp says they are up to date. So delete the generated output after the install, and only then build it. That fails loudly at best — an older commit importing `styled-system/tokens/index.mjs` that a newer codegen no longer emits — and silently at worst. Then **restart the dev server**. Vite's hot reload does not survive a jump of hundreds of commits — config, plugins, and dependencies change underneath it — and a page served by the previous commit's server produces a verdict about the wrong commit, silently. Reload the page or relaunch the app afterwards, and start each trial from a fresh app state (`localStorage.clear(); location.reload();`, or a fresh session).
+Do all of it at every commit, in this order. `yarn install` skips `postinstall` when the dependencies did not change, and when they did, it can run `postinstall` partway through switching them, generating files against the wrong versions. The style and package builds also skip themselves when their stamp says they are up to date. So delete the generated output after the install, and only then build it. That fails loudly at best — an older commit importing `styled-system/tokens/index.mjs` that a newer codegen no longer emits — and silently at worst. Then **restart the dev server**. Vite's hot reload does not survive a jump of hundreds of commits — config, plugins, and dependencies change underneath it — and a page served by the previous commit's server produces a verdict about the wrong commit, silently. Before calling a commit ready, request an app module through the dev server (`/src/index.tsx`) and check the dev server's log for errors: the root HTML loads even when every module fails to build, so a page that answers is not a page that works. Reload the page or relaunch the app afterwards, and start each trial from a fresh app state (`localStorage.clear(); location.reload();`, or a fresh session).
 
 If the bug is a test that did not exist at an older commit, copy the test file from the tip of `main` into the tree under test, untracked, for each trial. If it depends on helpers that did not exist then either, that commit is untestable — see [Untestable commits](#untestable-commits).
 
@@ -114,6 +121,8 @@ While you are here, **measure how reliably it reproduces**: follow the steps fro
 | 0 of 5 | — | Stop: not reproducible. |
 
 For a nondeterministic bug that reproduces with probability *p*, a commit that is really bad passes *N* clean trials with probability (1 − *p*)ᴺ. Choose *N* so that falls under 5%: 2 trials at 4 of 5, 4 trials at 3 of 5, 6 trials at 2 of 5, 14 trials at 1 of 5. Reproduction is evidence; its absence is only evidence after enough trials. A verdict of **bad** never needs more than one sighting of the failure, as long as it is the failure the issue describes and not some other one.
+
+Set up each trial so the failure would be visible if it happened. A bug that scrolls the cursor thought to the center shows nothing when the thought already sits at the center, so move it toward an edge before triggering it; a trial that could not have shown the failure is not a clean trial.
 
 Write down exactly what you did at the baseline — the steps, the helpers or commands, what the failure looked like. Every later trial repeats that procedure unchanged. A procedure that drifts between commits makes the oracle, not the code, the variable.
 
@@ -173,6 +182,8 @@ There are about 300 commits on `main` in a month and 1500 in a year, so expect a
 
 `git bisect skip` a commit that fails to install or build, crashes before the steps can start, or lacks something the steps depend on. **Do not mark an untestable commit good or bad.** A commit that does not start is not good because the bug is absent, and not bad because something is broken — a different failure is not the reported failure. If `git bisect` ends with a range of skipped commits instead of one, report that range.
 
+When every commit is untestable for the same environmental reason — the iOS app crashing at launch on a new iOS until a later fix — overlay that fix's files on each checkout instead of skipping: `git fetch origin pull/<number>/head && git checkout FETCH_HEAD -- <files>`. Restore those files before the next `git bisect` step.
+
 ### Things that go wrong
 
 - **A verdict from the wrong commit.** The dev server was not restarted, or the install was skipped, so the page shows the previous commit's code. Restart every time.
@@ -220,7 +231,7 @@ Include:
 - The baseline reproduction rate and the trial count used.
 - The bisect log, or its path.
 
-Report to the user. Do not comment on the issue or the pull request unless asked — a bisect verdict posted on someone's pull request is outward-facing, and the user decides where it goes.
+Report to the user, then ask whether to post the verdict on the issue, where whoever fixes the bug will look first. Do not post on the issue or the pull request without that answer — a bisect verdict posted on someone's pull request is outward-facing, and the user decides where it goes.
 
 ---
 
@@ -230,7 +241,7 @@ Report to the user. Do not comment on the issue or the pull request unless asked
 git bisect reset
 ```
 
-Stop every dev server the bisect started. On a developer's machine, remove the worktree (`git worktree remove <scratch>/em-bisect`). On a disposable runner, return to the branch you started on and restore anything you set aside in Step 2.
+Stop every dev server and tunnel the bisect started, by PID or by an argument unique to it (`--url http://localhost:<port>`), never by program name: the machine may run its own `cloudflared` or `vite`, and `pkill -f cloudflared` reaches those too. On a developer's machine, remove the worktree (`git worktree remove <scratch>/em-bisect`). On a disposable runner, return to the branch you started on and restore anything you set aside in Step 2.
 
 ---
 
