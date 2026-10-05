@@ -34,7 +34,7 @@ const semanticCases: Record<string, string[]> = {
  * prompt is fixed. Dog: the model pads its fifteen candidates with repeats of the same dog emoji, and generateEmoji
  * rejects most responses for having fewer than ten unique ones. Irritable: the top five are the faces the prompt's
  * avoid list forbids. Both pass at reasoning effort low, and their concepts are drafted from samples taken there.
- * https://github.com/cybersemics/em/issues/5830
+ * Tracked in https://github.com/cybersemics/em/issues/5830.
  */
 const knownFailures: Record<string, string[]> = {
   Dog: ['🐕🐶', '🦮🐕‍🦺🐩'],
