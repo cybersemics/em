@@ -94,7 +94,8 @@ describe('=note', () => {
     expect(screen.getByLabelText('note-editable').innerHTML).toBe('seed')
   })
 
-  test.each(['suppressChange'] as const)('leaves temporary blur untouched while %s is active', async flag => {
+  /** Blurs the note while a flag that suppresses blur handling is set, then again once it is cleared. */
+  const blurWhileSuppressed = async (flag: string) => {
     await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
     await act(vi.runOnlyPendingTimersAsync)
     const noteEditor = screen.getByLabelText('note-editable')
@@ -114,7 +115,12 @@ describe('=note', () => {
     })
     expect(noteEditor.innerHTML).toBe('hello')
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>hello</li>')
-  })
+  }
+
+  test.each(['suppressChange'])('leaves temporary blur untouched while %s is active', blurWhileSuppressed)
+
+  // The iOS autocomplete focus retarget that set suppressBlurSync was reverted (#5676). Restore with it (#4222).
+  test.skip.each(['suppressBlurSync'])('leaves temporary blur untouched while %s is active', blurWhileSuppressed)
 
   test('does not recreate an empty note deleted immediately before blur', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - ' }), setCursor(['a']), toggleNote()])
