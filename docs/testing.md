@@ -15,7 +15,7 @@ yarn build:styles    # styled-system/
 yarn build:packages  # packages/webview — or just `yarn`, whose postinstall runs it
 ```
 
-Import-resolution failures across many test files at once mean that generated output is missing or stale, not that the code is broken.
+Import-resolution failures across many test files at once mean that generated output is missing or stale, not that the code is broken. Both builds skip themselves when a stamp in their output directory records a fingerprint matching the current inputs: the generator's config or sources, and the versions of the generator and its dependencies installed in `node_modules`. Switching to a commit with different dependencies therefore regenerates on the next `postinstall` even when the config is unchanged. Pass `--force` (`yarn build:styles --force`, `yarn build:packages --force`) to rebuild regardless.
 
 ```sh
 yarn test            # unit and jsdom tests
