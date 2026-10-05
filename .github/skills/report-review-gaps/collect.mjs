@@ -108,4 +108,4 @@ for (const pr of prs) {
   }
 }
 
-console.log(JSON.stringify({ final, first: args.first, scanned: prs.length, prs: result }, null, 1))
+process.stdout.write(JSON.stringify({ final, first: args.first, scanned: prs.length, prs: result }, null, 1) + "\n")
