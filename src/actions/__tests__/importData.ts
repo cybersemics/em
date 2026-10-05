@@ -1303,14 +1303,16 @@ it('separate the text of adjacent block elements when stripping formatting from 
 
 // https://github.com/cybersemics/em/issues/4161
 it('keep basic formatting within the text when stripping formatting from single-line HTML', async () => {
-  const html = `<p style="font-family: sans-serif;">Some <strong style="color: rgb(255, 0, 0);">bold</strong>, <i>italic</i>, <em>emphasized</em> and <code>code</code> text</p>`
+  const html = `<p style="font-family: sans-serif;">Some <strong style="color: rgb(255, 0, 0);">bold</strong>, <i>italic</i>, <em>emphasized</em>, <s>struck</s>, <del>deleted</del> and <code>code</code> text</p>`
   vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
   store.dispatch(newThought({ value: 'a' }))
   // capture the path before the import, since the pasted text changes the value of the thought
   const path = contextToPath(store.getState(), ['a'])!
-  store.dispatch(importDataActionCreator({ path, html, text: 'Some bold, italic, emphasized and code text' }))
+  store.dispatch(
+    importDataActionCreator({ path, html, text: 'Some bold, italic, emphasized, struck, deleted and code text' }),
+  )
 
   await vi.runOnlyPendingTimersAsync()
 
@@ -1319,7 +1321,9 @@ it('keep basic formatting within the text when stripping formatting from single-
 
   cleanup()
 
-  expect(value).toBe('aSome <strong>bold</strong>, <i>italic</i>, emphasized and code text')
+  expect(value).toBe(
+    'aSome <strong>bold</strong>, <i>italic</i>, <em>emphasized</em>, <strike>struck</strike>, <strike>deleted</strike> and code text',
+  )
 })
 
 // https://github.com/cybersemics/em/issues/4161

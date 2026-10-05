@@ -48,7 +48,7 @@ const SEPARATING_ELEMENTS =
 const descendants = (node: Node): Node[] => [...node.childNodes].flatMap(child => [child, ...descendants(child)])
 
 /**
- * Sanitizes single-line HTML copied from outside em, such as from a web page, before it is inserted inside a thought (#4161). Only the basic formatting tags in EXTERNAL_FORMATTING_TAGS are kept, without their attributes, and every other element is unwrapped to its contents. A formatting tag that covers all of the text, such as a heading's bold or the <b style="font-weight:normal"> that Google Docs wraps around every copy, is unwrapped too, since it is unlikely to be intentional. Formatting within the text, such as a bold word, is kept.
+ * Sanitizes single-line HTML copied from outside em, such as from a web page, before it is inserted inside a thought (#4161). Only the basic formatting tags in EXTERNAL_FORMATTING_TAGS are kept, without their attributes, along with <s> and <del> as <strike>, and every other element is unwrapped to its contents. A formatting tag that covers all of the text, such as a heading's bold or the <b style="font-weight:normal"> that Google Docs wraps around every copy, is unwrapped too, since it is unlikely to be intentional. Formatting within the text, such as a bold word, is kept.
  *
  * The HTML is parsed into an inert template, so that its scripts do not run and its images do not load, and it is sanitized on the parsed nodes rather than matched out of the markup.
  *
@@ -64,6 +64,12 @@ const sanitizeExternalHtml = (html: string): string => {
     .filter(node => node.nodeType === Node.COMMENT_NODE)
     .forEach(comment => comment.parentNode?.removeChild(comment))
   fragment.querySelectorAll(SEPARATING_ELEMENTS).forEach(element => element.after(' '))
+  // <s> and <del> are kept as <strike>, the strikethrough tag that em supports
+  fragment.querySelectorAll('s, del').forEach(element => {
+    const strike = document.createElement('strike')
+    strike.append(...element.childNodes)
+    element.replaceWith(strike)
+  })
   fragment
     .querySelectorAll('*')
     .forEach(element =>
@@ -87,9 +93,10 @@ const sanitizeExternalHtml = (html: string): string => {
   textNodesFromEnd.some(node => (node.data = node.data.replace(/ +$/, '')).length > 0)
   fragment.querySelectorAll('*').forEach(element => element.textContent === '' && element.remove())
 
-  // Unwrap each formatting tag that covers all of the text. Unwrapping one does not change the text of the others.
+  // Unwrap each formatting tag that covers all of the text, which are the only elements left. Unwrapping one does not
+  // change the text of the others.
   fragment
-    .querySelectorAll(EXTERNAL_FORMATTING_TAGS.join(', '))
+    .querySelectorAll('*')
     .forEach(element => element.textContent === fragment.textContent && element.replaceWith(...element.childNodes))
 
   return template.innerHTML
