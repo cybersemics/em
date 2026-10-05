@@ -64,36 +64,33 @@ const STAGE_OFFSET_REM = 2.78
  * stage's command list already extends CHEVRON_SECTION_HEIGHT_REM + STAGE_OFFSET_REM below the viewport,
  * so a lift this size never opens a gap beneath the drawer.
  */
-const OVERSHOOT_REM = 1.71
+const MAX_EXPAND_REM = 1.71
 
-/** Share of the lift spent rising to the ceiling. Set so that the turn comes once the Sheet's own travel has all but finished, which is what makes the two read as one movement rather than a rise fighting a descent. */
-const OVERSHOOT_PEAK_AT = 0.7
+/** Makes the bounce last longer than the Sheet expansion so it can settle after the Sheet stops. */
+const EXPAND_BOUNCE_DURATION_RATIO = 1.4
 
-/** The lift runs longer than the Sheet's travel so that the return leg has room after the turn. */
-const OVERSHOOT_DURATION_SCALE = 1.4
+/** Minimum bounce rise threshold, in pixels. */
+const MIN_BOUNCE_THRESHOLD = 1
 
-/** Below this much additional rise, in px, the drawer is already at the ceiling and the lift is a plain settle rather than another climb. */
-const OVERSHOOT_MIN_RISE = 1
+/** Eases into the highest point, then back to the expanded stage. */
+const bounceAnimation = ['easeOut', 'easeInOut'] as const
 
-/** Rising into the turn, then settling onto the target. Decelerating into the turn and accelerating out of it is what keeps the reversal from reading as a stop. */
-const easeOvershoot = ['easeOut', 'easeInOut'] as const
-
-/** Asymptotic resistance. Maps an unbounded drag past the expanded stage onto [0, max), so that the drawer keeps answering the finger without ever reaching the gap budget. */
+/** Slows extra upward drag so the drawer approaches, but never reaches, its maximum bounce. */
 const rubberBand = (raw: number, max: number) => max * (1 - 1 / (raw / max + 1))
 
 /**
- * Splits one drag frame into the part taken up as lift and the part that still moves the drawer.
+ * Shares a drag between the drawer and its bounce. Going up expands the drawer before lifting the
+ * bounce; going down settles the bounce before moving the drawer.
  *
- * `raw` is the cumulative unresisted distance dragged past the expanded stage, and `deltaY` is this
- * frame's finger movement, negative upward.
+ * `raw` tracks unresisted movement sent to the bounce.
  */
-const applyOvershootDrag = ({ deltaY, raw, y }: { deltaY: number; raw: number; y: number }) => {
+const applyBounceDrag = ({ deltaY, raw, y }: { deltaY: number; raw: number; y: number }) => {
   if (deltaY < 0) {
     const next = y + deltaY
-    // above the expanded stage the drawer absorbs y down to 0 and the lift takes the remainder
+    // Above the expanded stage, the bounce takes the extra upward movement.
     return next >= 0 ? { deltaY, raw } : { deltaY: -y, raw: raw - next }
   }
-  // moving back down unwinds the lift before it moves the drawer again
+  // Moving down removes bounce before moving the drawer again.
   const consumed = Math.min(deltaY, raw)
   return { deltaY: deltaY - consumed, raw: raw - consumed }
 }
@@ -188,8 +185,7 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>, bounceY: Moti
     if (ref.current) setSheetReady(true)
   }, [ref])
 
-  // Subtracting the bounce lift (which is negative) keeps the falloff gradient and the blur glued to the
-  // drawer's top edge while it overshoots the expanded stage.
+  // Keep the falloff gradient and blur attached to the drawer while it bounces upward.
   const height = useTransform(() => {
     return (ref.current?.yInverted.get() ?? 0) - bounceY.get()
   })
@@ -248,18 +244,12 @@ const useSheetTransforms = (ref: React.RefObject<SheetRef | null>, bounceY: Moti
 }
 
 /**
- * The upward counterpart to the drawer's existing drag-past-the-snap bounce.
+ * Lets the drawer move above the expanded stage, then settle back onto it.
  *
- * Carries every expand past the expanded stage and back onto it.
- *
- * The Sheet clamps its own `y` at the expanded stage, so the drawer can neither be dragged above it nor
- * animated above it. `bounceY` is an extra translate the Sheet never touches, which does both: the drag
- * handler feeds it the part of a swipe the Sheet refuses, so the drawer stays with the thumb up to the
- * ceiling, and the release runs it back onto the target — climbing to the ceiling first when the swipe was
- * let go before reaching it. Only a swipe lifts the drawer: a chevron tap carries no momentum, so it snaps
- * plainly, the way the collapse chevron already does.
+ * The Sheet stops at the expanded stage. `bounceY` moves a wrapper above that limit, so the drawer can
+ * continue following an upward swipe and settle back after release.
  */
-const useExpandOvershoot = ({
+const useExpandBounce = ({
   bounceY,
   fontSize,
   scrollerRef,
@@ -274,64 +264,62 @@ const useExpandOvershoot = ({
 }) => {
   const prefersReducedMotion = useReducedMotion()
 
-  /** Cumulative unresisted distance dragged past the expanded stage. The visible lift is this run through rubberBand. */
+  /** Extra upward drag beyond the expanded stage, before resistance is applied. */
   const rawRef = useRef(0)
 
-  /** Whether a lift is in flight. The chevron starts one itself and the Sheet then reports the snap when its travel ends, which would otherwise restart the lift half way through. */
+  /** Prevents another bounce from starting before the current one finishes. */
   const isLiftingRef = useRef(false)
 
-  /** Whether the current gesture started inside the expanded stage's command list. An upward swipe there scrolls the list, but the Sheet reports drag events for it all the same, so the drawer must not lift. */
+  /** Ignores Sheet drag events caused by scrolling the expanded command list. */
   const isListScrollRef = useRef(false)
 
-  /** How far above the expanded stage the drawer may be lifted. */
-  const ceiling = Math.round(fontSize * OVERSHOOT_REM)
+  /** Maximum upward bounce in pixels. */
+  const ceiling = Math.round(fontSize * MAX_EXPAND_REM)
 
   /**
-   * Runs the lift: up to the ceiling, then back onto the target, as one animation.
+   * Runs the upward bounce and return as one animation.
    *
-   * `travel` is the distance the Sheet itself still has to cover, and scales the rise. A release that
-   * already carried the drawer to the top has nothing left to climb through and only settles, while a tap
-   * has the whole stage offset ahead of it and gets the full ceiling. Both start in the same tick as the
-   * Sheet's own travel, so the two add up to a single continuous movement.
+   * `travel` is the Sheet's remaining distance to the expanded stage. More remaining travel produces a
+   * higher bounce, so both movements finish together.
    */
   const expand = useCallback(
     (travel: number) => {
       rawRef.current = 0
       if (isLiftingRef.current) return
-      // nothing lifted and nothing left to climb: a chevron tap, which carries no momentum to answer
-      if (!bounceY.get() && travel <= OVERSHOOT_MIN_RISE) return
+      // if already at the expanded stage with no bounce to settle, exit early.
+      if (!bounceY.get() && travel <= MIN_BOUNCE_THRESHOLD) return
       const settleDuration = durations.get('commandCenter') / 1000
-      // durations are zero in e2e, where an animated lift would only add flakiness
+      // Durations are zero in e2e, so we skip the animation to avoid flakiness.
       if (!settleDuration || prefersReducedMotion) {
         bounceY.set(0)
         return
       }
-      /** Clears the in-flight flag so the next expand can run. */
+      /** Reset the isLiftingRef value to allow the next bounce to start. */
       const onComplete = () => {
         isLiftingRef.current = false
       }
       isLiftingRef.current = true
       const from = bounceY.get()
       const peak = ceiling * Math.min(Math.max(travel / stageOffset, 0), 1)
-      if (peak - Math.abs(from) <= OVERSHOOT_MIN_RISE) {
-        animate(bounceY, 0, { duration: settleDuration, ease: easeOvershoot[1], onComplete })
+      if (peak - Math.abs(from) <= MIN_BOUNCE_THRESHOLD) {
+        animate(bounceY, 0, { duration: settleDuration, ease: bounceAnimation[1], onComplete })
         return
       }
       animate(bounceY, [from, -peak, 0], {
-        duration: settleDuration * OVERSHOOT_DURATION_SCALE,
-        ease: [...easeOvershoot],
+        duration: settleDuration * EXPAND_BOUNCE_DURATION_RATIO,
+        ease: [...bounceAnimation],
         onComplete,
-        times: [0, OVERSHOOT_PEAK_AT, 1],
+        times: [0, 0.7, 1],
       })
     },
     [bounceY, ceiling, prefersReducedMotion, stageOffset],
   )
 
-  /** Classifies the gesture, so that scrolling the command list cannot be mistaken for dragging the drawer. */
+  /** Records whether this gesture starts in the command list. */
   const onDragStart = useCallback(
     (e: MouseEvent | TouchEvent | PointerEvent) => {
       isListScrollRef.current = e.target instanceof Node && !!scrollerRef.current?.contains(e.target)
-      // the drag writes the lift directly, so a lift still in flight from the last release must let go of it
+      // A new drag takes control from any bounce still in progress.
       bounceY.stop()
       isLiftingRef.current = false
     },
@@ -339,20 +327,16 @@ const useExpandOvershoot = ({
   )
 
   /**
-   * Lets the drawer follow the finger above the expanded stage, under resistance that eases into the
-   * ceiling rather than stopping at it.
+   * Moves the drawer above the expanded stage as an upward drag continues.
    *
-   * The Sheet clamps its own `y` at 0, so the part of the drag past that point is taken up as lift
-   * instead. The Sheet applies `y.set(y.get() + info.delta.y)` immediately after this handler returns,
-   * which is what the pre-compensation below accounts for: writing `y` here decides where that addition
-   * lands.
+   * The Sheet cannot move any higher, so the bounce takes the extra drag with increasing resistance.
    */
   const onDrag = useCallback(
     (_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
       const sheetY = sheetRef.current?.y
       if (!sheetY || isListScrollRef.current) return
       const y = sheetY.get()
-      const next = applyOvershootDrag({ deltaY: info.delta.y, raw: rawRef.current, y })
+      const next = applyBounceDrag({ deltaY: info.delta.y, raw: rawRef.current, y })
       if (next.deltaY !== info.delta.y) sheetY.set(y + next.deltaY - info.delta.y)
       rawRef.current = next.raw
       bounceY.set(-rubberBand(next.raw, ceiling))
@@ -361,9 +345,7 @@ const useExpandOvershoot = ({
   )
 
   /**
-   * Starts the lift on release. The Sheet calls onSnap once the destination stage is decided and before it
-   * animates there, so the lift and the travel begin together and `y` still reads the release position,
-   * which is exactly the travel left to scale the rise by.
+   * Only applies the bounce when the Sheet chooses the expanded stage.
    */
   const onSnap = useCallback(
     (snapIndex: number) => {
@@ -436,11 +418,11 @@ const CommandCenter = () => {
   )
 
   const {
-    onDrag: onOvershootDrag,
-    onDragStart: onOvershootDragStart,
-    onSnap: onOvershootSnap,
-    reset: resetOvershoot,
-  } = useExpandOvershoot({ bounceY, fontSize, scrollerRef, sheetRef, stageOffset })
+    onDrag: onBounceDrag,
+    onDragStart: onBounceDragStart,
+    onSnap: onBounceSnap,
+    reset: resetBounce,
+  } = useExpandBounce({ bounceY, fontSize, scrollerRef, sheetRef, stageOffset })
 
   // Disabling drag-to-collapse when the CommandTable's scroll position is not at the top.
   // This ensures that the drag-to-collapse gesture does not conflict with scrolling the list.
@@ -489,18 +471,18 @@ const CommandCenter = () => {
     (snapIndex: number) => {
       setStage(snapIndex === SNAP_EXPANDED ? 'expanded' : 'standard')
       if (snapIndex !== SNAP_EXPANDED) scrollerRef.current?.scrollTo({ top: 0 })
-      onOvershootSnap(snapIndex)
+      onBounceSnap(snapIndex)
     },
-    [onOvershootSnap],
+    [onBounceSnap],
   )
 
   /** The overlay hold and the bounce's gesture classifier both key off where the drag began. */
   const onSheetDragStart = useCallback(
     (e: MouseEvent | TouchEvent | PointerEvent) => {
       onDragStart()
-      onOvershootDragStart(e)
+      onBounceDragStart(e)
     },
-    [onDragStart, onOvershootDragStart],
+    [onBounceDragStart, onDragStart],
   )
 
   // mount the CommandTable only when the Command Center is open, to avoid unnecessary renders and state updates when it is closed
@@ -518,8 +500,8 @@ const CommandCenter = () => {
   const onCloseEnd = useCallback(() => {
     setIsCommandTableMounted(false)
     setStage('standard')
-    resetOvershoot()
-  }, [resetOvershoot])
+    resetBounce()
+  }, [resetBounce])
 
   useEffect(() => {
     if (isTouch && showCommandCenter && showSidebar) onClose()
@@ -576,7 +558,7 @@ const CommandCenter = () => {
           onOpenEnd={onOpenEnd}
           onCloseEnd={onCloseEnd}
           onDragStart={onSheetDragStart}
-          onDrag={onOvershootDrag}
+          onDrag={onBounceDrag}
           /** Must be onCloseStart rather than onClose: the Done button and the swipe-down gesture dismiss the drawer by clearing the multicursors in Redux and never call onClose, so releasing the hold there would leave the overlay at full opacity for the whole dismiss animation. */
           onCloseStart={clearExpandedSnap}
           disableDismiss={stage === 'expanded'}
