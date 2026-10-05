@@ -52,9 +52,9 @@ import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
 import trimBullet from '../../util/trimBullet'
 import Checkbox from './../Checkbox'
-import ChevronIcon from './../icons/ChevronIcon'
 import Dropdown from './../Dropdown'
 import LoadingEllipsis from './../LoadingEllipsis'
+import ChevronIcon from './../icons/ChevronIcon'
 import ModalComponent from './ModalComponent'
 
 /******************************************************************************
