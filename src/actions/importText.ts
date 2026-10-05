@@ -87,11 +87,10 @@ const sanitizeExternalHtml = (html: string): string => {
   textNodesFromEnd.some(node => (node.data = node.data.replace(/ +$/, '')).length > 0)
   fragment.querySelectorAll('*').forEach(element => element.textContent === '' && element.remove())
 
-  // Unwrap each formatting tag that covers all of the text, computing the coverage of every tag before any is unwrapped.
-  const visibleTextNodes = textNodes.filter(node => node.data.trim())
-  EXTERNAL_FORMATTING_TAGS.filter(tag => visibleTextNodes.every(node => node.parentElement?.closest(tag))).forEach(
-    tag => fragment.querySelectorAll(tag).forEach(element => element.replaceWith(...element.childNodes)),
-  )
+  // Unwrap each formatting tag that covers all of the text. Unwrapping one does not change the text of the others.
+  fragment
+    .querySelectorAll(EXTERNAL_FORMATTING_TAGS.join(', '))
+    .forEach(element => element.textContent === fragment.textContent && element.replaceWith(...element.childNodes))
 
   return template.innerHTML
 }
