@@ -315,10 +315,14 @@ const runDispatch = async responses => {
     write: process.stdout.write,
     token: process.env.COPILOT_TASKS_TOKEN,
     repository: process.env.GITHUB_REPOSITORY,
+    model: process.env.COPILOT_MODEL,
+    conflictModel: process.env.COPILOT_MODEL_CONFLICTS,
   }
   process.argv = [process.argv[0], 'start-copilot-conflict-task.mjs', reportFile]
   process.env.COPILOT_TASKS_TOKEN = 'test-token'
   process.env.GITHUB_REPOSITORY = 'owner/repo'
+  process.env.COPILOT_MODEL = 'claude-opus-5'
+  process.env.COPILOT_MODEL_CONFLICTS = 'claude-opus-5'
   process.exit = code => {
     result.exitCode = code
   }
@@ -353,6 +357,10 @@ const runDispatch = async responses => {
     else process.env.COPILOT_TASKS_TOKEN = original.token
     if (original.repository === undefined) delete process.env.GITHUB_REPOSITORY
     else process.env.GITHUB_REPOSITORY = original.repository
+    if (original.model === undefined) delete process.env.COPILOT_MODEL
+    else process.env.COPILOT_MODEL = original.model
+    if (original.conflictModel === undefined) delete process.env.COPILOT_MODEL_CONFLICTS
+    else process.env.COPILOT_MODEL_CONFLICTS = original.conflictModel
     rmSync(directory, { recursive: true, force: true })
   }
 }
