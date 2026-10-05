@@ -1394,4 +1394,32 @@ describe('paste over a selection', () => {
     expect(getThoughtById(state, head(state.cursor!))!.value).toBe('One One')
     expect(state.cursorOffset).toBe('One One'.length)
   })
+
+  // The emoji space must survive the trim of the whitespace before the emoji (#5232).
+  it('separates an emoji from the thought after trimming the leading space of single-line HTML pasted before it', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- Hello' }), setCursor(['Hello'])])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 0, 0)
+
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['Hello'])!,
+            html: "<meta charset='utf-8'> 🧠",
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('🧠 Hello')
+    expect(state.cursorOffset).toBe('🧠 '.length)
+  })
 })

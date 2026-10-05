@@ -123,24 +123,22 @@ const importText = (
 
     const insertOffset = replaceStart ?? caretPosition
     const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, text)
-    const untrimmedValue = addEmojiSpace(combinedValue)
-    // A thought's value never holds leading or trailing whitespace, which a paste can carry in (#5232).
-    const newValue = trimHtml(untrimmedValue)
+    // A thought's value never holds leading or trailing whitespace, which a paste can carry in (#5232). Trim before
+    // adding the emoji space, as the change handler does, since the space is only added to a value starting with an emoji.
+    const trimmedValue = trimHtml(combinedValue)
+    const newValue = addEmojiSpace(trimmedValue)
+    const combinedText = getTextContentFromHTML(combinedValue)
+    const leadingWhitespaceLength = combinedText.length - combinedText.trimStart().length
     // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
-    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(text).length
-    const emojiSpaceInsertionOffset =
-      untrimmedValue === combinedValue ? -1 : getTextContentFromHTML(untrimmedValue).indexOf(' ')
-    const untrimmedOffset =
+    const offsetBeforeEmojiSpace = Math.min(
+      Math.max(insertOffset + getTextContentFromHTML(text).length - leadingWhitespaceLength, 0),
+      getTextContentFromHTML(trimmedValue).length,
+    )
+    const emojiSpaceInsertionOffset = newValue === trimmedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
+    const offset =
       emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset
         ? offsetBeforeEmojiSpace + 1
         : offsetBeforeEmojiSpace
-    // shift the caret by the trimmed leading whitespace and keep it within the trimmed text
-    const untrimmedText = getTextContentFromHTML(untrimmedValue)
-    const leadingWhitespaceLength = untrimmedText.length - untrimmedText.trimStart().length
-    const offset = Math.min(
-      Math.max(untrimmedOffset - leadingWhitespaceLength, 0),
-      getTextContentFromHTML(newValue).length,
-    )
 
     return reducerFlow([
       // Force the editable to re-render in order to trigger setSelectionToCursorOffset in useEditMode and restore the caret.
