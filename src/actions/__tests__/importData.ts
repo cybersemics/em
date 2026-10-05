@@ -1322,7 +1322,7 @@ it('keep basic formatting within the text when stripping formatting from single-
   cleanup()
 
   expect(value).toBe(
-    'aSome <strong>bold</strong>, <i>italic</i>, <em>emphasized</em>, <strike>struck</strike>, <strike>deleted</strike> and code text',
+    'aSome <strong>bold</strong>, <i>italic</i>, <em>emphasized</em>, <strike>struck</strike>, <strike>deleted</strike> and <code>code</code> text',
   )
 })
 
