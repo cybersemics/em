@@ -438,14 +438,84 @@ describe('toggleSortPicker error', () => {
   )
 
   // https://github.com/cybersemics/em/issues/3965
-  it.skip('does not report an error when a note is added to a thought in a context sorted by Note', () => {
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when a note is added to a thought in a context sorted by Note %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - A
+            - B
+            - C
+            - D
+          `,
+        }),
+        setCursor(['A']),
+      ])
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Note', direction },
+        }),
+      )
+
+      store.dispatch(setCursor(['C']))
+      executeCommand(noteCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+
+      store.dispatch(editThought(['C', '=note', ''], 'Thesa'))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when a note is cleared in a context sorted by Note %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - A
+              - =note
+                - x
+            - B
+            - C
+              - =note
+                - y
+            - D
+          `,
+        }),
+        setCursor(['A']),
+      ])
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Note', direction },
+        }),
+      )
+
+      store.dispatch(editThought(['A', '=note', 'x'], ''))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  it('does not report an error when a note is given formatting in a context sorted by Note Desc', () => {
     store.dispatch([
       importText({
         text: `
           - A
+            - =note
+              - b
           - B
           - C
-          - D
+            - =note
+              - a
         `,
       }),
       setCursor(['A']),
@@ -455,13 +525,11 @@ describe('toggleSortPicker error', () => {
     store.dispatch(
       setSortPreference({
         simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
-        sortPreference: { type: 'Note', direction: 'Asc' },
+        sortPreference: { type: 'Note', direction: 'Desc' },
       }),
     )
 
-    store.dispatch(setCursor(['C']))
-    executeCommand(noteCommand, { store })
-    store.dispatch(editThought(['C', '=note', ''], 'Thesa'))
+    store.dispatch(editThought(['C', '=note', 'a'], '<b>z</b>'))
 
     expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
   })
