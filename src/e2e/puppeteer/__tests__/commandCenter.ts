@@ -213,7 +213,7 @@ describe('command center', () => {
   })
 
   // https://github.com/cybersemics/em/pull/5756#issuecomment-5964399980
-  it.skip('does not make room for the keyboard while it closes for the Note command', async () => {
+  it('does not make room for the keyboard while it closes for the Note command', async () => {
     await paste('- a')
     await clickThought('a')
 
