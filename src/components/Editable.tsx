@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { FocusEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -197,10 +197,6 @@ const Editable = ({
   }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
-  // The untrimmed value of the last single-line paste, which is stored trimmed. Shown in place of the value while editing,
-  // so that the pasted whitespace stays visible as typed whitespace does, until editing ends or the value changes (#5232).
-  const [pastedValue, setPastedValue] = useState<string | null>(null)
-  const untrimmedValue = isEditing && pastedValue !== null && trimHtml(pastedValue) === value ? pastedValue : null
   const generating = useSelector(state => !!getThoughtById(state, head(simplePath))?.generating)
   const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
   const isCursorCleared = useSelector(
@@ -908,10 +904,6 @@ const Editable = ({
       // (#4692).
       if (editableSyncStore.getState().suppressBlurSync) return
 
-      // Pasted whitespace is shown only until editing ends, after which the editable is resynced to the trimmed value
-      // below (#5232).
-      setPastedValue(null)
-
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
       // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
       // oldValueRef.current is the latest value since throttledChangeRef was just flushed
@@ -1229,7 +1221,7 @@ const Editable = ({
   // thought still has its value, which is shown as a placeholder.
   // Emoji spans are display-only and removed before the value is stored.
   // See wrapGeneratingEmoji and unwrapGeneratingEmoji.
-  const displayedValue = isEditing ? (untrimmedValue ?? value) : (childrenLabel ?? value)
+  const displayedValue = isEditing ? value : (childrenLabel ?? value)
   const html =
     value === EM_TOKEN
       ? '<b>em</b>'
@@ -1296,7 +1288,7 @@ const Editable = ({
         // flush the last edit, otherwise if paste occurs in quick succession the pasted value can be overwritten by the throttled change
         throttledChangeRef.current?.flush()
 
-        setPastedValue(onPaste(e))
+        onPaste(e)
       }}
       // iOS Safari delays event handling in case the DOM is modified during setTimeout inside an event handler,
       // unless it is given a hint that the element is some sort of form control

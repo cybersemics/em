@@ -1365,4 +1365,33 @@ describe('paste over a selection', () => {
     const state = store.getState()
     expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one three three')
   })
+
+  // https://github.com/cybersemics/em/issues/5232
+  it('trims the trailing space of single-line HTML pasted over the selection', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- One two' }), setCursor(['One two'])])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 'One '.length, 'One two'.length)
+
+    // importData trims plain text itself, but inserts single-line HTML as is
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['One two'])!,
+            html: "<meta charset='utf-8'>One ",
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('One One')
+    expect(state.cursorOffset).toBe('One One'.length)
+  })
 })

@@ -3,7 +3,6 @@ import Thunk from '../@types/Thunk'
 import { HOME_PATH, REGEX_NONFORMATTING_HTML } from '../constants'
 import * as selection from '../device/selection'
 import rootedParentOf from '../selectors/rootedParentOf'
-import spliceIntoThought from '../selectors/spliceIntoThought'
 import head from '../util/head'
 import isMarkdown from '../util/isMarkdown'
 import timestamp from '../util/timestamp'
@@ -49,7 +48,7 @@ const REGEX_HTML_SINGLE_LINE =
  * @param payload.transient - If true, creates a new empty thought before importing the text.
  * @param payload.isEmText - If true, preserves formatting when stripping HTML. Default: false.
  *
- * @returns A Thunk that handles importing the data based on whether it is multiline or markdown. Returns the untrimmed value of a single-line import, which is stored trimmed, so that the editable can show the imported whitespace until editing ends (#5232). Otherwise null.
+ * @returns A Thunk that handles importing the data based on whether it is multiline or markdown.
  */
 export const importDataActionCreator = ({
   path,
@@ -59,7 +58,7 @@ export const importDataActionCreator = ({
   transient,
   // TODO: May need to be rewritten to avoid converting from HTML -> JSON -> text -> HTML. See commit.
   isEmText = false,
-}: ImportDataPayload): Thunk<string | null> => {
+}: ImportDataPayload): Thunk => {
   return (dispatch, getState) => {
     const state = getState()
 
@@ -100,32 +99,26 @@ export const importDataActionCreator = ({
       // Measured against the destination editable so that the offsets index into its whole value rather than into the text node the selection starts in (#5154).
       const replaceRange = path ? selection.offsetRangeThought(head(path)) : null
 
-      const importTextPayload = {
-        // use caret position to correctly track the last navigated point for caret
-        // offsetThought returns the offset relative to the entire thought's text content, not just the current text node.
-        // This is necessary because rawDestValue is stripped of HTML tags, so a plain text offset is needed.
-        caretPosition: (selection.isText() ? selection.offsetThought() || 0 : state.cursorOffset) || 0,
-        path,
-        text: processedText,
-        // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
-        // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
-        rawDestValue,
-        // use selection start and end for importText to replace (if the imported thoughts are one line)
-        ...(replaceRange && replaceRange.start !== replaceRange.end
-          ? {
-              replaceStart: replaceRange.start,
-              replaceEnd: replaceRange.end,
-            }
-          : null),
-      }
-
-      // If importText imports it as structure instead, the editable ignores this value, since it no longer matches.
-      const untrimmedValue =
-        !multiline && path ? (spliceIntoThought(getState(), { ...importTextPayload, path })?.value ?? null) : null
-
-      dispatch(importText(importTextPayload))
-
-      return untrimmedValue
+      dispatch(
+        importText({
+          // use caret position to correctly track the last navigated point for caret
+          // offsetThought returns the offset relative to the entire thought's text content, not just the current text node.
+          // This is necessary because rawDestValue is stripped of HTML tags, so a plain text offset is needed.
+          caretPosition: (selection.isText() ? selection.offsetThought() || 0 : state.cursorOffset) || 0,
+          path,
+          text: processedText,
+          // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
+          // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
+          rawDestValue,
+          // use selection start and end for importText to replace (if the imported thoughts are one line)
+          ...(replaceRange && replaceRange.start !== replaceRange.end
+            ? {
+                replaceStart: replaceRange.start,
+                replaceEnd: replaceRange.end,
+              }
+            : null),
+        }),
+      )
     } else {
       // importFiles passes preventSetCursor: true to newThought so the selection will stay disabled
       selection.clear()
@@ -143,8 +136,6 @@ export const importDataActionCreator = ({
           ],
         }),
       )
-
-      return null
     }
   }
 }
