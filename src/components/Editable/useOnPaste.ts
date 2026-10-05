@@ -8,7 +8,7 @@ import store from '../../stores/app'
 import equalPath from '../../util/equalPath'
 import strip from '../../util/strip'
 
-/** Returns an onPaste handler that parses and inserts the pasted text or thoughts at the cursor. Handles plaintext and HTML, inline and nested paste. */
+/** Returns an onPaste handler that parses and inserts the pasted text or thoughts at the cursor. Handles plaintext and HTML, inline and nested paste. The handler returns the untrimmed value of a single-line paste, which is stored trimmed, or null. */
 const useOnPaste = ({
   contentRef,
   simplePath,
@@ -21,7 +21,7 @@ const useOnPaste = ({
   const dispatch = useDispatch()
 
   return useCallback(
-    (e: React.ClipboardEvent) => {
+    (e: React.ClipboardEvent): string | null => {
       // mobile Safari copies URLs as 'text/uri-list' when the share button is used
       const plainText = e.clipboardData.getData('text/plain') || e.clipboardData.getData('text/uri-list')
       const htmlText = e.clipboardData.getData('text/html')
@@ -40,7 +40,7 @@ const useOnPaste = ({
         !window.confirm('Import raw thought state? Current state will be overwritten.')
       ) {
         e.preventDefault()
-        return
+        return null
       }
 
       // pasting from mobile copy (e.g. Choose "Share" in Twitter and select "Copy") results in blank plainText and htmlText
@@ -54,7 +54,7 @@ const useOnPaste = ({
         const { cursor } = store.getState()
         const path = (cursor && equalPath(cursor, simplePath) ? cursor : simplePath) as SimplePath
 
-        dispatch(
+        return dispatch(
           importData({
             path,
             text: escapeHtml(plainText),
@@ -65,6 +65,8 @@ const useOnPaste = ({
           }),
         )
       }
+
+      return null
     },
     [simplePath, transient, contentRef, dispatch],
   )

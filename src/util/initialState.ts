@@ -164,7 +164,6 @@ const initialState = (created: Timestamp = timestamp()) => {
     pushQueue: [],
     thoughts: initialThoughts(created),
     undoPatches: [],
-    untrimmedCursorValue: null,
     showCommandCenter: false,
   }
 

@@ -9,27 +9,23 @@ import setCursor from '../actions/setCursor'
 import updateThoughts from '../actions/updateThoughts'
 import { HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/thoughtspaceSession'
-import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { anyChild, findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import spliceIntoThought from '../selectors/spliceIntoThought'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
-import addEmojiSpace from '../util/addEmojiSpace'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
 import importJson from '../util/importJson'
-import insertHtmlAtTextOffset from '../util/insertHtmlAtTextOffset'
 import isMarkdown from '../util/isMarkdown'
 import isRoot from '../util/isRoot'
 import markdownToText from '../util/markdownToText'
-import mergeAdjacentTags from '../util/mergeAdjacentTags'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
 import roamJsonToBlocks, { RoamPage } from '../util/roamJsonToBlocks'
-import splitHtmlAtTextOffset from '../util/splitHtmlAtTextOffset'
 import textToHtml from '../util/textToHtml'
 import trimHtml from '../util/trimHtml'
 import unroot from '../util/unroot'
@@ -37,7 +33,6 @@ import validateRoam from '../util/validateRoam'
 import editableRender from './editableRender'
 import newThought from './newThought'
 import uncategorize from './uncategorize'
-import untrimmedCursorValue from './untrimmedCursorValue'
 
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
@@ -108,31 +103,15 @@ const importText = (
 
   // if we are only importing a single line of html, then simply modify the current thought
   if (numLines <= 1 && !isRoam && !isRoot(path)) {
-    // insert the text into the destValue in the correct place
-    // if cursorCleared is true i.e. clearThought is enabled we don't have to use existing thought to be appended
-
-    // Both halves of the edit are addressed by plain text offset and resolved through the DOM. Indexing into the markup
-    // instead cuts between two tag contexts, leaving a tag unclosed (#5154), and considers an entity to have as many characters
-    // as its markup is long (#5297).
-    const replacedDestValue = state.cursorCleared
-      ? ''
-      : replaceStart != null && replaceEnd != null
-        ? mergeAdjacentTags(
-            `${splitHtmlAtTextOffset(destValue, replaceStart).left}${splitHtmlAtTextOffset(destValue, replaceEnd).right}`,
-          )
-        : destValue
-
-    const insertOffset = replaceStart ?? caretPosition
-    const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, text)
-    const newValue = addEmojiSpace(combinedValue)
-    const trimmedValue = trimHtml(newValue)
-    // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
-    const offsetBeforeEmojiSpace = insertOffset + getTextContentFromHTML(text).length
-    const emojiSpaceInsertionOffset = newValue === combinedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
-    const offset =
-      emojiSpaceInsertionOffset >= 0 && offsetBeforeEmojiSpace >= emojiSpaceInsertionOffset
-        ? offsetBeforeEmojiSpace + 1
-        : offsetBeforeEmojiSpace
+    // destThought was checked above
+    const { value, offset } = spliceIntoThought(state, {
+      caretPosition,
+      path,
+      rawDestValue,
+      replaceEnd,
+      replaceStart,
+      text,
+    })!
 
     return reducerFlow([
       // Force the editable to re-render in order to trigger setSelectionToCursorOffset in useEditMode and restore the caret.
@@ -141,7 +120,8 @@ const importText = (
       editableRender,
       editThought({
         oldValue: destValue,
-        newValue: trimmedValue,
+        // The editable that pasted shows the untrimmed value until editing ends (see useOnPaste).
+        newValue: trimHtml(value),
         path: simplePath,
       }),
 
@@ -151,9 +131,6 @@ const importText = (
             offset,
           })
         : null,
-
-      // The caret offset is measured against the untrimmed value, which the editable keeps showing until editing ends.
-      !preventSetCursor && path ? untrimmedCursorValue({ value: trimmedValue !== newValue ? newValue : null }) : null,
     ])(state)
   } else {
     const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText) as RoamPage[]) : htmlToJson(convertedText)
