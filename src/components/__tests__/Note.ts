@@ -94,30 +94,27 @@ describe('=note', () => {
     expect(screen.getByLabelText('note-editable').innerHTML).toBe('seed')
   })
 
-  test.each(['suppressBlurSync', 'suppressChange'] as const)(
-    'leaves temporary blur untouched while %s is active',
-    async flag => {
-      await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
-      await act(vi.runOnlyPendingTimersAsync)
-      const noteEditor = screen.getByLabelText('note-editable')
-      await act(async () => {
-        fireEvent.input(noteEditor, { target: { innerHTML: '  hello  ' } })
-        editableSyncStore.update({ [flag]: true })
-        fireEvent.focusOut(noteEditor)
-        await vi.runOnlyPendingTimersAsync()
-      })
-      expect(noteEditor.innerHTML).toBe('  hello  ')
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>  hello  </li>')
+  test.each(['suppressChange'] as const)('leaves temporary blur untouched while %s is active', async flag => {
+    await dispatch([importText({ text: '- a\n  - =note\n    - seed' }), setCursor(['a']), toggleNote()])
+    await act(vi.runOnlyPendingTimersAsync)
+    const noteEditor = screen.getByLabelText('note-editable')
+    await act(async () => {
+      fireEvent.input(noteEditor, { target: { innerHTML: '  hello  ' } })
+      editableSyncStore.update({ [flag]: true })
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(noteEditor.innerHTML).toBe('  hello  ')
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>  hello  </li>')
 
-      await act(async () => {
-        editableSyncStore.update({ [flag]: false })
-        fireEvent.focusOut(noteEditor)
-        await vi.runOnlyPendingTimersAsync()
-      })
-      expect(noteEditor.innerHTML).toBe('hello')
-      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>hello</li>')
-    },
-  )
+    await act(async () => {
+      editableSyncStore.update({ [flag]: false })
+      fireEvent.focusOut(noteEditor)
+      await vi.runOnlyPendingTimersAsync()
+    })
+    expect(noteEditor.innerHTML).toBe('hello')
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/html')).toContain('<li>hello</li>')
+  })
 
   test('does not recreate an empty note deleted immediately before blur', async () => {
     await dispatch([importText({ text: '- a\n  - =note\n    - ' }), setCursor(['a']), toggleNote()])

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { isTouch } from '../browser'
-import editableSyncStore from '../stores/editableSyncStore'
 
 interface ContentEditableProps extends Omit<React.HTMLProps<HTMLDivElement>, 'onChange'> {
   style?: React.CSSProperties
@@ -94,12 +93,7 @@ const ContentEditable = React.memo(
           const innerHTML = contentRef!.current!.innerHTML
 
           // allow innerHTML updates after blur
-          // The momentary blur of the iOS autocomplete focus retarget does not end editing — focus returns to the
-          // editable immediately — so keep innerHTML updates suppressed there, or a re-render can overwrite what the
-          // user is typing with the trimmed value from Redux (#4828).
-          if (!editableSyncStore.getState().suppressBlurSync) {
-            allowInnerHTMLChange.current = true
-          }
+          allowInnerHTMLChange.current = true
 
           const event = Object.assign({}, originalEvent, {
             target: {
