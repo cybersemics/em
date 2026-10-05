@@ -240,7 +240,7 @@ const Note = React.memo(
     /** Trims the saved note and updates focus and keyboard state when editing ends. */
     const onBlur = useFreshCallback(
       (e: React.FocusEvent) => {
-        if (editableSyncStore.getState().suppressChange) return
+        if (editableSyncStore.getState().suppressBlurSync || editableSyncStore.getState().suppressChange) return
 
         // Input saves synchronously. Trim fresh state rather than replaying the DOM, which may be stale after a
         // command or undo. Only update an existing note so blur cannot recreate one that was just deleted.

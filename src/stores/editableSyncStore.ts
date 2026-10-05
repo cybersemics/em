@@ -4,6 +4,8 @@ import ministore from './ministore'
 const editableSyncStore = ministore({
   /** Suppresses the Editable change handler so that it ignores the execCommands in registerNativeUndoStep and in device/nativeHistory.ts. */
   suppressChange: false,
+  /** Suppresses the blur handlers that resync the editable's innerHTML to the value in Redux. Set while the editable is momentarily blurred and refocused to retarget focus after iOS autocomplete, which does not end editing. */
+  suppressBlurSync: false,
 })
 
 export default editableSyncStore
