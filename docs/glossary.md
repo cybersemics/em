@@ -64,8 +64,6 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## D
 
-**displayValue** — Transient text shown while a thought is `generating`, such as an ellipsis appended to its existing text. It does not change the canonical `value`, lexeme membership or exported/persisted payload.
-
 **docId** — The TreeCRDT document identifier for the thoughtspace. Equal to *tsid*. See [persistence.md → The TreeCRDT client](persistence.md#the-treecrdt-client).
 
 **DragCanceled / DragHold / DragInProgress / Inactive** — Values of [`LongPressState`](../src/constants.ts), the state machine for the drag/long-press subsystem. See [drag-and-drop.md → State machine](drag-and-drop.md#state-machine-statelongpress).
@@ -82,7 +80,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## G
 
-**generating** — Transient flag on `Thought` set while AI produces content; `displayValue` supplies progress text without changing the canonical value.
+**generating** — Transient flag on `Thought` while AI produces content. Generating thoughts and their notes shimmer without changing their canonical values. Empty thoughts show a command-specific **generatingPlaceholder**. Both fields live in `state.thoughtUi` and are never persisted or synchronized; emoji wrappers likewise exist only in displayed HTML.
 
 **GLOBAL_ROOT_TOKEN** — The root node of the TreeCRDT tree, and the value `ROOT_PARENT_ID` aliases. `HOME_TOKEN`, `EM_TOKEN`, and `ABSOLUTE_TOKEN` are inserted as its children during initialization. See [`constants.ts`](../src/constants.ts).
 

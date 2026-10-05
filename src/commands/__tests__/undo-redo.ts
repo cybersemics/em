@@ -1590,7 +1590,7 @@ describe('operation receipts', () => {
     store.dispatch([
       updateThoughts({
         persist: false,
-        thoughtIndexUpdates: { [thought.id]: { ...thought, generating: true, displayValue: 'preview' } },
+        thoughtIndexUpdates: { [thought.id]: { ...thought, generating: true, generatingPlaceholder: 'preview' } },
       }),
       editThought(['a'], 'ab'),
     ])
@@ -1623,7 +1623,7 @@ describe('operation receipts', () => {
       updateThoughts({
         persist: false,
         thoughtIndexUpdates: {
-          [thought.id]: { ...thought, generating: true, displayValue: 'a preview', splitSource: thought.id },
+          [thought.id]: { ...thought, generating: true, generatingPlaceholder: 'a preview', splitSource: thought.id },
         },
       }),
     )
@@ -1635,14 +1635,14 @@ describe('operation receipts', () => {
     store.dispatch(undo({ count: 1 }))
     expect(contextToThought(store.getState(), ['a'])).toMatchObject({
       generating: true,
-      displayValue: 'a preview',
+      generatingPlaceholder: 'a preview',
       splitSource: thought.id,
     })
-    expect(store.getState().thoughts.getThought(thought.id)!.displayValue).toBeUndefined()
+    expect(store.getState().thoughts.getThought(thought.id)!.generatingPlaceholder).toBeUndefined()
 
     store.dispatch(redo({ count: 1 }))
     expect(contextToThought(store.getState(), ['ab'])).toMatchObject({ generating: false, splitSource: thought.id })
-    expect(contextToThought(store.getState(), ['ab'])!.displayValue).toBeUndefined()
+    expect(contextToThought(store.getState(), ['ab'])!.generatingPlaceholder).toBeUndefined()
   })
 
   it('restores thought UI history after an incoming deletion prunes its entry', () => {
@@ -1651,7 +1651,7 @@ describe('operation receipts', () => {
     store.dispatch([
       updateThoughts({
         persist: false,
-        thoughtIndexUpdates: { [thought.id]: { ...thought, generating: true, displayValue: 'preview' } },
+        thoughtIndexUpdates: { [thought.id]: { ...thought, generating: true, generatingPlaceholder: 'preview' } },
       }),
       editThought(['a'], 'ab'),
     ])
@@ -1662,8 +1662,11 @@ describe('operation receipts', () => {
     store.dispatch(undo({ count: 1 }))
 
     // The engine receipt restores the edited node; its UI patch must not depend on the pruned entry still existing.
-    expect(contextToThought(store.getState(), ['a'])).toMatchObject({ generating: true, displayValue: 'preview' })
-    expect(store.getState().thoughts.getThought(thought.id)!.displayValue).toBeUndefined()
+    expect(contextToThought(store.getState(), ['a'])).toMatchObject({
+      generating: true,
+      generatingPlaceholder: 'preview',
+    })
+    expect(store.getState().thoughts.getThought(thought.id)!.generatingPlaceholder).toBeUndefined()
 
     store.dispatch(redo({ count: 1 }))
 

@@ -1,7 +1,7 @@
 ---
-name: write-issue
+name: create-issue
 description: >-
-  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another.
+  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
 allowed-tools:
   - bash
 ---
@@ -147,7 +147,7 @@ This call is yours, every time. You have the steps, you have the rule, and you c
 
 - **A short preamble above the first heading**, for what you are unsure about: which platform you tested, whether an unrelated setting seemed causal, what you could not rule out.
 - **`## Notes`** at the bottom, for anything that constrains the fix rather than describing the bug — a tradeoff already understood, an approach known not to work, a reason the obvious fix is wrong.
-- **`## Debug Log`**, for an attached log file.
+- **`## Debug Log`**, for an attached log file, anonymized as described under [Anonymizing user data](#anonymizing-user-data).
 
 One issue per reproduction. Where two failures share a cause and a fix, a single issue may carry both, each under its own `#` heading with its own three subsections — see [#4954](https://github.com/cybersemics/em/issues/4954).
 
@@ -172,7 +172,7 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 
 ## Labels
 
-`bug` for broken behaviour, `feature` for a request, `refactor` for a behaviour-preserving cleanup, `test` for test and CI work, `agent` for agent configuration and ops.
+`bug` for broken behaviour, `feature` for new user-facing behaviour, `refactor` for work no user could observe (a cleanup, or internal machinery only other code uses), `test` for test and CI work, `agent` for agent configuration and ops.
 
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
@@ -246,6 +246,47 @@ Keep a `## Notes` bullet beside the relationship where the reason is not obvious
 
 Screenshots and videos are usually already in the conversation that prompted the issue. Copy the attachment markup across verbatim, `<img src="https://github.com/user-attachments/...">` and all; those URLs stay valid in another issue. Do not re-upload or re-host, and do not describe an image you could link.
 
+## Anonymizing user data
+
+A reporter's Debug Log and any dump of their thoughtspace (the `--- state.thoughts` section of a log, an export, a pasted outline, a copied database) hold their own thoughts verbatim. An issue is public and indexed. Before anything from one of these reaches the issue body, the title, a comment, or a file you attach, anonymize what the reporter would reasonably not want made public.
+
+That is the test, applied thought by thought:
+
+- **Anonymize people and places.** Names of people, pets, employers, schools, streets, addresses, and any other proper noun that points at the reporter's life.
+- **Anonymize feelings, attitudes, fears and beliefs.** Personal journaling, opinions about someone, health, money, relationships, politics, religion.
+- **Leave generic and technical text alone.** That covers `test`, `foo`, `todo`, `Item 1`, a code snippet, lorem ipsum and common words, as well as interests and hobbies (`guitar`, `hiking`) and the names of countries. A thought that reveals nothing about the person, or reveals only something unremarkable, is clearer left as written than replaced.
+
+Judge each thought on its own, and in context. `Paris` under `Countries` stays, `Paris` under `Where to move when I leave him` does not, and neither does its parent.
+
+Replace what you anonymize with a neutral placeholder: `a`, `b`, `c` and onward, or `x1`, `x2` where the alphabet runs out, or a generic stand-in of the same kind (`Alice`, `Springfield`) where the kind matters to the bug. Map consistently, so the same value becomes the same placeholder everywhere it appears, in the thought tree in Steps to Reproduce, in every quoted log line, and in Current and Expected Behavior. The reader resolves log entries against the steps through those placeholders, and `compare-debug-log` aligns a reproduction against them.
+
+### Lexemes
+
+Where the issue involves Lexemes, thoughts that shared a [Lexeme](../../../docs/glossary.md) before anonymizing must still share one after, and thoughts that did not must still not. Keep any variation in form the bug may hinge on.
+
+### What to keep
+
+Keep what the bug depends on and nothing else of the original:
+
+- **Length**, where wrapping, truncation or layout is involved. Substitute lorem ipsum of the same length.
+- **Characters that matter**, such as emoji, RTL text, punctuation, leading or trailing whitespace, HTML formatting, or a URL that is the subject of the bug. Keep the character and replace the words around it. A URL becomes `https://example.com/...`.
+- **Meta attributes** like `=note`, `=sort` and `=pin`, and their option values like `Alphabetical`. These are **em**'s vocabulary, not the reporter's.
+
+Thought text turns up in more of a log than the `value` fields. Check all of these:
+
+- `value`, `oldValue` and `newValue`, including inside `thoughts`, `sample` and `integrity` entries.
+- `data` on `input`, `beforeinput` and `composition` entries, and `key` on `keydown` entries when it is a printable character. These spell out what was typed one keystroke at a time.
+- `payload` on `action` entries, a stringified JSON object where the text appears escaped (`\"value\":\"...\"`) and in fields like `text` on `importData`.
+- Each line of `--- state.thoughts`.
+
+Leave thought ids, ranks, sequence numbers, timestamps, action types, and the `---` device header as they are. None of them is the reporter's writing, and they are what lets the excerpt be matched to the log.
+
+When unsure whether a thought is something the reporter would want public, anonymize it. When a value cannot be replaced without losing the bug, ask the reporter whether it can be posted, in the same round as your other questions.
+
+Before posting, search the draft for every original value you replaced, and for any distinctive word from the dump, to confirm none survived. A log you captured yourself while reproducing holds only the thoughts you typed, and needs none of this.
+
+Never attach or re-host the reporter's original file. A log the reporter attached to an issue themselves is theirs to have posted. Quote from it only through the placeholders above.
+
 ## Splitting an issue out of a discussion
 
 New issues often originate in a comment thread on another issue or PR.
@@ -275,6 +316,9 @@ New issues often originate in a comment thread on another issue or PR.
 - An Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
+- A personal thought (a name, a place, a feeling) quoted from a reporter's Debug Log or thoughtspace instead of a placeholder, including one spelled out a keystroke at a time across `input` or `keydown` entries.
+- Generic text replaced with placeholders that it did not need, making the steps harder to follow.
+- Placeholders that merge or split Lexemes the originals did not, in an issue that involves Lexemes.
 - A `Blocked by` line in the body with no relationship configured on GitHub.
 - A piece of a larger feature opened as a sibling with `Part of #5481` in the body, where a sub-issue relationship is what tracks it.
 - A loose end left for the reader — an unruled-out alternative, a missing value, an unnamed platform — that the reporter could have answered before posting.

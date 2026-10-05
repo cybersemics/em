@@ -51,6 +51,7 @@ const Note = React.memo(
     const dispatch = useDispatch()
     const noteRef: { current: HTMLElement | null } = useRef(null)
     const fontSize = useSelector(state => state.fontSize)
+    const generating = useEditorSelector(state => !!getThoughtById(state, head(path))?.generating)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
     // A draft preserves the user's comma spacing while typing. A forced editor refresh (e.g. undo/redo)
@@ -303,6 +304,7 @@ const Note = React.memo(
     return (
       <div
         aria-label='note'
+        data-generating-note={generating || undefined}
         className={cx(
           textNoteRecipe(),
           css({

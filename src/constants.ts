@@ -142,7 +142,7 @@ export const ICON_SCALING_FACTOR = 1.37
 export const BASE_FONT_SIZE = 16
 
 export const MIN_FONT_SIZE = 8
-export const DEFAULT_FONT_SIZE = 18
+export const DEFAULT_FONT_SIZE = 16
 export const MAX_FONT_SIZE = 40
 export const FONT_SCALE_INCREMENT = 1
 

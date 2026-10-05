@@ -85,8 +85,22 @@ it('marks the thought as generating while inference is pending', async () => {
   const cursor = store.getState().cursor!
   expect(getThoughtById(store.getState(), head(cursor))).toMatchObject({
     generating: true,
+    generatingPlaceholder: 'Generating Emoji',
     value: 'Dog',
-    displayValue: 'Dog...',
+  })
+})
+
+it('marks an empty thought as generating without changing its value', async () => {
+  acknowledgeAiDisclosure()
+  mockFetch.mockReturnValueOnce(new Promise(() => {}))
+  await dispatch([importText({ text: '- ' }), setCursor([''])])
+
+  executeCommand(generateEmoji)
+
+  expect(getThoughtById(store.getState(), head(store.getState().cursor!))).toMatchObject({
+    generating: true,
+    generatingPlaceholder: 'Generating Emoji',
+    value: '',
   })
 })
 

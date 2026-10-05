@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, { FocusEventHandler, useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { FocusEventHandler, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { shallowEqual, useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { editableRecipe, invalidOptionRecipe } from '../../styled-system/recipes'
@@ -26,6 +26,7 @@ import {
   EMOJI_REGEX,
   EM_TOKEN,
   LongPressState,
+  REGEX_EMOJI_GLOBAL,
   TOUCH_SLOP,
   TUTORIAL2_STEP_CONTEXT1,
   TUTORIAL2_STEP_CONTEXT1_PARENT,
@@ -74,6 +75,7 @@ import strip from '../util/strip'
 import stripEmptyFormattingTags from '../util/stripEmptyFormattingTags'
 import stripTags from '../util/stripTags'
 import trimHtml from '../util/trimHtml'
+import unwrapGeneratingEmoji from '../util/unwrapGeneratingEmoji'
 import ContentEditable, { ContentEditableEvent } from './ContentEditable'
 import useEditMode from './Editable/useEditMode'
 import useOnCopy from './Editable/useOnCopy'
@@ -98,6 +100,65 @@ interface EditableProps {
   */
   transient?: boolean
   onEdit?: (args: { path: Path; oldValue: string; newValue: string }) => void
+}
+
+/**
+ * Returns the visible text and the HTML index of each visible character. Formatting tags are skipped so emoji can be
+ * wrapped without including markup in the span.
+ */
+const getVisibleText = (html: string): { charStarts: number[]; text: string } => {
+  const charStarts: number[] = []
+  let text = ''
+
+  for (let i = 0; i < html.length;) {
+    if (html[i] === '<') {
+      const tagEnd = html.indexOf('>', i + 1)
+      if (tagEnd >= 0) {
+        i = tagEnd + 1
+        continue
+      }
+    }
+
+    charStarts[text.length] = i
+    text += html[i]
+    i++
+  }
+
+  return { charStarts, text }
+}
+
+/**
+ * Wraps each emoji in a display-only span during generation. The stored thought value is not changed. Indices are applied from the end so earlier source offsets stay valid.
+ */
+const wrapGeneratingEmoji = (html: string): string => {
+  const { charStarts, text } = getVisibleText(html)
+  return [...text.matchAll(REGEX_EMOJI_GLOBAL)].reduceRight((result, match) => {
+    const start = match.index
+    if (start == null) return result
+    const htmlStart = charStarts[start]
+    const htmlEnd = htmlStart + match[0].length
+    return `${result.slice(0, htmlStart)}<span data-generating-emoji="">${result.slice(htmlStart, htmlEnd)}</span>${result.slice(htmlEnd)}`
+  }, html)
+}
+
+/** Applies or removes the generating emoji wrap on a live editable. Returns true when the HTML changed. */
+const applyGeneratingEmojiWrap = (editable: HTMLElement, generating: boolean): boolean => {
+  const next = generating
+    ? wrapGeneratingEmoji(unwrapGeneratingEmoji(editable.innerHTML))
+    : unwrapGeneratingEmoji(editable.innerHTML)
+  if (editable.innerHTML === next) return false
+  editable.innerHTML = next
+  return true
+}
+
+/** Restores a plain-text caret or range on an editable that still holds focus. */
+const restoreThoughtCaret = (editable: HTMLElement, range: { start: number; end: number } | null): void => {
+  if (!range || document.activeElement !== editable) return
+  if (range.start === range.end) {
+    selection.set(editable, { offset: range.start })
+    return
+  }
+  selection.setRange(editable, range)
 }
 
 /** Whether the cursor offset restored from storage has been applied, so that it is applied only on the initial setCursorOnThought. A ministore rather than a module variable so that each test starts with the restore still pending, as a fresh page load does. Read imperatively; nothing subscribes. */
@@ -135,10 +196,8 @@ const Editable = ({
     return childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
-  const value = useEditorSelector(state => {
-    const thought = getThoughtById(state, head(simplePath))
-    return thought?.displayValue ?? thought?.value ?? ''
-  })
+  const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value || '')
+  const generating = useEditorSelector(state => !!getThoughtById(state, head(simplePath))?.generating)
   const rank = useEditorSelector(state => state.thoughts.getPosition(head(simplePath)) ?? 0)
   const isCursorCleared = useEditorSelector(
     // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
@@ -198,6 +257,7 @@ const Editable = ({
   const multiEditing = caretRectStore.useSelector(caretRect => caretRect.x !== null)
   // store the old value so that we have a transcendental head when it is changed
   const oldValueRef = useRef(value)
+  const generatingCaretRef = useRef<{ start: number; end: number } | null>(null)
   const nullRef = useRef<HTMLInputElement>(null)
   const contentRef = editableRef || nullRef
   const isCursor = useSelector(state => equalPath(path, state.cursor))
@@ -578,20 +638,21 @@ const Editable = ({
 
       // NOTE: When Subthought components are re-rendered on edit, change is called with identical old and new values (?) causing an infinite loop
       const oldValue = oldValueRef.current
+      const incomingValue = unwrapGeneratingEmoji(e.target.value)
 
       // Using a clipboard app such as Paste for iOS or the built-in clipboard viewer on Android directly modifies the innerHTML and triggers an onChange event on the contenteditable.
-      const isClipboardInsert = /<div>(?!<br>)/.test(e.target.value)
+      const isClipboardInsert = /<div>(?!<br>)/.test(incomingValue)
 
       if (isClipboardInsert) {
         // When inserting plain text, the clipboard app replaces newlines with divs. This results in a mixed format that looks like HTML, but it actually plain text with meaningful whitespace.
         // TODO: What happens when actual HTML is inserted from the clipboard app? It needs to be differentiated from plain text with divs.
         // TODO: Consider handling this in importData or textToHtml, as onChangeHandler should not contain import logic. Just need to make sure it does not introduce regressions.
-        const text = e.target.value.slice(oldValue.length).replace(/<div>/g, '\n')
+        const text = incomingValue.slice(oldValue.length).replace(/<div>/g, '\n')
         debugLog.log('change', {
           branch: 'clipboard',
           isClipboardInsert,
           oldValue,
-          newValue: e.target.value,
+          newValue: incomingValue,
           cursorOffset: selection.offsetThought(),
         })
         dispatch(
@@ -605,7 +666,7 @@ const Editable = ({
         return
       }
 
-      editingValueUntrimmedStore.update(e.target.value)
+      editingValueUntrimmedStore.update(incomingValue)
 
       dispatch((dispatch, getState) => {
         const state = getState()
@@ -622,10 +683,10 @@ const Editable = ({
         const pendingFormatValue = getThoughtById(state, head(simplePath))?.pendingFormat
         const wrappedValue =
           state.cursorCleared && oldValue.length > 0
-            ? applyOuterTags(e.target.value, oldValue)
-            : pendingFormatValue && oldValue.length === 0 && e.target.value.length > 0
-              ? applyOuterTags(e.target.value, pendingFormatValue)
-              : e.target.value
+            ? applyOuterTags(incomingValue, oldValue)
+            : pendingFormatValue && oldValue.length === 0 && incomingValue.length > 0
+              ? applyOuterTags(incomingValue, pendingFormatValue)
+              : incomingValue
         const trimmedWrappedValue = trimHtml(wrappedValue)
         const valueWithEmojiSpace = addEmojiSpace(trimmedWrappedValue)
         const newValue = stripEmptyFormattingTags(valueWithEmojiSpace)
@@ -775,7 +836,7 @@ const Editable = ({
         // run the thoughtChangeHandler immediately if superscript changes or it's a url (also when it changes true to false)
         // run it immediately is there is a style wrapper that needs to be applied to the editable after a clearThought action (#3673)
         if (
-          wrappedValue !== e.target.value ||
+          wrappedValue !== incomingValue ||
           emojiSpaceAdded ||
           transient ||
           contextLengthChange ||
@@ -796,7 +857,7 @@ const Editable = ({
           // if a style needs to be re-applied with cursorClearedWrapper, the editable needs to re-render immediately to prevent
           // a flash of unstyled content
           thoughtChangeHandler(newValue, {
-            force: wrappedValue !== e.target.value || emojiSpaceAdded,
+            force: wrappedValue !== incomingValue || emojiSpaceAdded,
             rank,
             simplePath,
             cursorOffset: cursorOffsetWithEmojiSpace,
@@ -813,8 +874,14 @@ const Editable = ({
         }
       })
     },
+    // Every value the handler reads that can change while it is mounted is listed, so that it never acts on the
+    // thought as it was at an earlier render. A thought moved by a command keeps its Editable, so omitting path left
+    // the handler matching the multicursors — which are keyed by path — against the location the thought had before
+    // the move, and no edit was mirrored to the rest of an indented multiselection (#5288).
+    // thoughtChangeHandler and invalidStateError are redefined on every render, but read nothing beyond these values
+    // and stable refs, so the copies captured with them are equally fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [readonly, uneditable /* TODO: options */],
+    [dispatch, onEdit, options, path, rank, readonly, simplePath, transient, uneditable],
   )
 
   /** Imports text that is pasted onto the thought. */
@@ -840,7 +907,7 @@ const Editable = ({
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
       // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
       // oldValueRef.current is the latest value since throttledChangeRef was just flushed
-      if (contentRef.current?.innerHTML !== oldValueRef.current) {
+      if (contentRef.current && unwrapGeneratingEmoji(contentRef.current.innerHTML) !== oldValueRef.current) {
         // remove the invalid state error, remove invalid-option class, and reset editable html
         dispatch((dispatch, getState) => {
           const state = getState()
@@ -848,7 +915,9 @@ const Editable = ({
             invalidStateError(null)
           }
         })
-        contentRef.current!.innerHTML = oldValueRef.current
+        contentRef.current.innerHTML = contentRef.current.hasAttribute('data-generating')
+          ? wrapGeneratingEmoji(oldValueRef.current)
+          : oldValueRef.current
       }
 
       // if we know that the focus is changing to another editable or note then do not set editing to false
@@ -1150,6 +1219,9 @@ const Editable = ({
 
   // The html that is rendered in the editable. Note that it is empty while the thought is cleared, even though the
   // thought still has its value, which is shown as a placeholder.
+  // Emoji spans are display-only and removed before the value is stored.
+  // See wrapGeneratingEmoji and unwrapGeneratingEmoji.
+  const displayedValue = isEditing ? value : (childrenLabel ?? value)
   const html =
     value === EM_TOKEN
       ? '<b>em</b>'
@@ -1157,9 +1229,26 @@ const Editable = ({
         // see: /actions/cursorCleared
         isCursorCleared
         ? ''
-        : isEditing
-          ? value
-          : (childrenLabel ?? value)
+        : generating
+          ? wrapGeneratingEmoji(displayedValue)
+          : displayedValue
+
+  // ContentEditable skips innerHTML updates while the user is typing, so the cursor thought would otherwise keep the
+  // unwrapped value. Apply the wrap when generating changes, and restore the caret after ContentEditable's sync.
+  // html is omitted so an in-flight edit cannot snap the caret back to the offset from the start of the request.
+  useLayoutEffect(() => {
+    const editable = contentRef.current
+    if (!editable) return
+    generatingCaretRef.current = document.activeElement === editable ? selection.offsetRange(editable) : null
+    applyGeneratingEmojiWrap(editable, generating)
+  }, [contentRef, generating])
+
+  useEffect(() => {
+    const editable = contentRef.current
+    if (!editable) return
+    applyGeneratingEmojiWrap(editable, generating)
+    restoreThoughtCaret(editable, generatingCaretRef.current)
+  }, [contentRef, generating])
 
   const contentEditable = (
     <ContentEditable
@@ -1168,6 +1257,7 @@ const Editable = ({
       innerRef={contentRef}
       aria-label={'editable-' + head(path)}
       data-editable
+      data-generating={generating || undefined}
       data-placeholder-cleared={isCursorCleared || undefined}
       data-placeholder-bold={placeholderCommandState?.bold || undefined}
       data-placeholder-code={placeholderCommandState?.code || undefined}

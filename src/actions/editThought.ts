@@ -93,7 +93,7 @@ const editThought = (
 
   const thoughtNew: Thought = {
     ...editedThoughtWithoutPendingFormat,
-    ...(editedThought.generating ? { generating: false, displayValue: undefined } : null),
+    ...(editedThought.generating ? { generating: false, generatingPlaceholder: undefined } : null),
     value: newValue,
     lastUpdated: timestamp(),
     updatedBy: clientId,

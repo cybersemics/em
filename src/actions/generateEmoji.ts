@@ -31,7 +31,8 @@ const addEmojiPrefix = (emoji: string, value: string): string => `${emoji}${valu
  * Generates emoji for the thoughts at the given paths in one request, or instantly cycles cached alternatives for
  * thoughts that the command already generated.
  *
- * Pending text is a display-only overlay, leaving document values and memberships unchanged during inference.
+ * The thought is marked generating outside undo history so Undo returns to the source thought rather than a
+ * temporary in-flight state.
  *
  * Takes an explicit list of paths instead of reading state.cursor so that every thought of a multiselect can be
  * generated in one request and one LLM completion.
@@ -123,7 +124,7 @@ const generateEmoji =
             {
               ...request.thought,
               generating: true,
-              displayValue: `${request.thought.value}...`,
+              generatingPlaceholder: 'Generating Emoji',
             },
           ]),
         ),
@@ -183,7 +184,7 @@ const generateEmoji =
                 [thought.id]: {
                   ...thoughtPending,
                   generating: false,
-                  displayValue: undefined,
+                  generatingPlaceholder: undefined,
                 },
               },
               persist: false,
@@ -206,7 +207,7 @@ const generateEmoji =
             [thought.id]: {
               ...thoughtPending,
               generating: false,
-              displayValue: undefined,
+              generatingPlaceholder: undefined,
             },
           },
           persist: false,

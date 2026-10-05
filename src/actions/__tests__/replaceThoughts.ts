@@ -53,8 +53,8 @@ it('preserves surviving thought UI across canonical replacement and prunes delet
     updateThoughts({
       persist: false,
       thoughtIndexUpdates: {
-        [a.id]: { ...a, generating: true, displayValue: 'preview', splitSource: c.id },
-        [c.id]: { ...c, generating: true, displayValue: 'deleted preview' },
+        [a.id]: { ...a, generating: true, generatingPlaceholder: 'preview', splitSource: c.id },
+        [c.id]: { ...c, generating: true, generatingPlaceholder: 'deleted preview' },
       },
     }),
   )
@@ -72,14 +72,14 @@ it('preserves surviving thought UI across canonical replacement and prunes delet
   expect(getThoughtById(next, a.id)).toMatchObject({
     value: 'incoming a',
     generating: true,
-    displayValue: 'preview',
+    generatingPlaceholder: 'preview',
     splitSource: c.id,
   })
   expect(next.thoughtUi[c.id]).toBeUndefined()
   expect(getThoughtById(next, c.id)).toBeUndefined()
-  expect(previous.thoughtUi[c.id]).toEqual({ generating: true, displayValue: 'deleted preview' })
+  expect(previous.thoughtUi[c.id]).toEqual({ generating: true, generatingPlaceholder: 'deleted preview' })
   expect(getThoughtById(previous, a.id)).toBe(rendered)
-  expect(rendered).toMatchObject({ value: 'a', displayValue: 'preview' })
+  expect(rendered).toMatchObject({ value: 'a', generatingPlaceholder: 'preview' })
 })
 
 it('publishes a provider event atomically without adding history or authored writes', () => {

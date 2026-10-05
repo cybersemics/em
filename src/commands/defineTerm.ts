@@ -74,6 +74,7 @@ const defineTermAtPaths =
             {
               ...request.thought,
               generating: true,
+              generatingPlaceholder: 'Defining Term',
             },
           ]),
         ),
@@ -153,7 +154,7 @@ const defineTermAtPaths =
           // Incoming edits preserve our overlay; a newer AI command replaces it and owns its own cleanup.
           return currentThought?.generating &&
             currentState.thoughtUi[request.thought.id] === pendingThoughtUi[request.thought.id]
-            ? [[request.thought.id, { ...currentThought, generating: false }]]
+            ? [[request.thought.id, { ...currentThought, generating: false, generatingPlaceholder: undefined }]]
             : []
         }),
       )

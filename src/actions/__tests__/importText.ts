@@ -112,7 +112,7 @@ it('preserves the destination parent thought UI when importing children', () => 
     updateThoughts({
       persist: false,
       thoughtIndexUpdates: {
-        [parent.id]: { ...parent, generating: true, displayValue: 'preview', splitSource: parent.id },
+        [parent.id]: { ...parent, generating: true, generatingPlaceholder: 'preview', splitSource: parent.id },
       },
     }),
     initial,

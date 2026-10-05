@@ -6,6 +6,7 @@ import { Action, StoreEnhancer, StoreEnhancerStoreCreator, UnknownAction } from 
 import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Patch, { CommandAttributedAction } from '../@types/Patch'
+import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
@@ -134,15 +135,44 @@ const statePropertiesToOmit: (keyof State)[] = [
   'selectionOffsets',
 ]
 
+/** Keys of State whose value is a Path or a list of Paths. */
+type PathProperty = {
+  [K in keyof State]-?: NonNullable<State[K]> extends Path | (Path | null)[] ? K : never
+}[keyof State]
+
+/** State properties that diffState replaces whole. A Record over PathProperty rather than a list, so that adding a Path to State without listing it here is a type error. */
+const pathProperties: Record<PathProperty, true> = {
+  cursor: true,
+  cursorBeforeQuickAdd: true,
+  cursorBeforeSearch: true,
+  cursorHistory: true,
+  draggedSimplePath: true,
+  draggingThoughts: true,
+  expandHoverDownPath: true,
+  expandHoverUpPath: true,
+  hoveringPath: true,
+  jumpHistory: true,
+  multicursorAnchor: true,
+}
+
 /** Computes UI restoration and diagnostic document diffs, never recursively recording the history itself. */
 const diffState = (
   newValue: State,
   value: State,
-  { transaction, mergeWith = [] }: { transaction?: ThoughtspaceTransaction; mergeWith?: readonly Operation[] } = {},
+  {
+    transaction,
+    mergeWith,
+    actionType,
+  }: {
+    transaction?: ThoughtspaceTransaction
+    mergeWith?: Patch
+    actionType?: string
+  } = {},
 ): Operation[] => {
+  const mergeOps = mergeWith?.ops ?? []
   const sameThoughts =
     newValue.thoughts === value.thoughts &&
-    !mergeWith.some(op => op.path === '/thoughts' || op.path.startsWith('/thoughts/'))
+    !mergeOps.some(op => op.path === '/thoughts' || op.path.startsWith('/thoughts/'))
   const changes = sameThoughts ? undefined : transaction?.getChanges()
   let scope =
     !sameThoughts && (newValue.thoughts === value.thoughts || (changes && !changes.reset))
@@ -169,7 +199,7 @@ const diffState = (
         if (after) thoughtIds.add(after.parentId)
       }
     }
-    for (const op of mergeWith) {
+    for (const op of mergeOps) {
       if (op.path !== '/thoughts' && !op.path.startsWith('/thoughts/')) continue
       const [, , index, key] = op.path.split('/')
       if (!key || (index !== 'thoughtIndex' && index !== 'lexemeIndex')) {
@@ -190,13 +220,20 @@ const diffState = (
   let previous: State | ReturnType<typeof thoughtspaceHistory.capture> = sameThoughts
     ? value
     : thoughtspaceHistory.capture(value, scope)
-  if (mergeWith.length) {
+  if (mergeOps.length) {
     // Reconstruct only records touched by this group, retaining the existing keyed patch/report semantics.
     try {
-      previous = produceHistoryBaseline(previous, draft => applyPatch(draft, mergeWith).newDocument)
+      previous = produceHistoryBaseline(previous, draft => applyPatch(draft, mergeOps).newDocument)
     } catch (error) {
       if (!(error instanceof Error)) throw error
       console.error(error.message, { state: value, mergeWith })
+      // The throw unwinds dispatch before loggerMiddleware can record the action that triggered it.
+      debugLog.log('undoPatchError', {
+        actionType,
+        message: error.message,
+        patchActionTypes: mergeWith?.metadata.actionTypes,
+        opPaths: mergeOps.map(op => `${op.op} ${op.path}`),
+      })
       throw new Error('Error applying patch')
     }
   }
@@ -204,15 +241,24 @@ const diffState = (
     ...statePropertiesToOmit,
     'undoPatches',
     'redoPatches',
-    'cursor',
     'thoughtUi',
     ...(sameThoughts ? ['thoughts'] : []),
   ]
+  const ops = compare(
+    _.omit(sameThoughts ? newValue : thoughtspaceHistory.capture(newValue, scope), omitted),
+    _.omit(previous, omitted),
+  )
+  // Navigation and incoming changes may shorten or clear Paths without changing history.
+  // Restore the captured value, not array operations that assume the previous path still exists.
+  const pathKeys = new Set(
+    ops
+      .map(op => op.path.split('/'))
+      .filter(segments => segments.length > 2 && segments[1] in pathProperties)
+      .map(segments => segments[1] as PathProperty),
+  )
   return [
-    ...compare(
-      _.omit(sameThoughts ? newValue : thoughtspaceHistory.capture(newValue, scope), omitted),
-      _.omit(previous, omitted),
-    ),
+    ...ops.filter(op => !pathKeys.has(op.path.split('/')[1] as PathProperty)),
+    ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(previous[key]) })),
     // A remote deletion may have pruned an entry since history was recorded. Restore each entry atomically.
     ...Object.keys({ ...newValue.thoughtUi, ...previous.thoughtUi }).flatMap<Operation>(id =>
       _.isEqual(newValue.thoughtUi[id], previous.thoughtUi[id])
@@ -221,11 +267,6 @@ const diffState = (
           ? [{ op: 'add', path: `/thoughtUi/${id}`, value: previous.thoughtUi[id] }]
           : [{ op: 'remove', path: `/thoughtUi/${id}` }],
     ),
-    // Incoming deletion can shorten or clear the cursor without changing history. Restore its captured value atomically,
-    // not with relative array operations that assume the pre-publication path still exists.
-    ...(_.isEqual(newValue.cursor, previous.cursor)
-      ? []
-      : [{ op: 'replace' as const, path: '/cursor', value: previous.cursor }]),
   ]
 }
 
@@ -486,7 +527,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       if (shouldMerge) {
         lastAction = action
-        const combinedUndoPatch = diffState(newState, state, { transaction, mergeWith: lastUndoPatch?.ops })
+        const combinedUndoPatch = diffState(newState, state, { transaction, mergeWith: lastUndoPatch, actionType })
         const combinedOperationIds = [...(lastUndoPatch?.documentOperationIds ?? []), ...documentOperationIds]
 
         const actionTypes: [ActionType, ...ActionType[]] = lastUndoPatch

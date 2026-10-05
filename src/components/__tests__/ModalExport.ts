@@ -122,7 +122,7 @@ it('exports document values without transient generation overlays', async () => 
   await dispatch([
     updateThoughts({
       thoughtIndexUpdates: {
-        [thought.id]: { ...thought, generating: true, displayValue: 'Generating…', splitSource: thought.id },
+        [thought.id]: { ...thought, generating: true, generatingPlaceholder: 'Generating…', splitSource: thought.id },
       },
       persist: false,
     }),
@@ -141,7 +141,7 @@ it('exports document values without transient generation overlays', async () => 
   expect(exported[thought.id].value).toBe('selected')
   for (const entry of Object.values(exported)) {
     expect(entry).not.toHaveProperty('generating')
-    expect(entry).not.toHaveProperty('displayValue')
+    expect(entry).not.toHaveProperty('generatingPlaceholder')
     expect(entry).not.toHaveProperty('splitSource')
   }
 })

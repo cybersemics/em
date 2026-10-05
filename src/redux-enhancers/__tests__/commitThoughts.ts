@@ -45,7 +45,13 @@ it('keeps transient thought UI in Redux without changing the canonical view or a
     updateThoughts({
       persist: false,
       thoughtIndexUpdates: {
-        [a.id]: { ...a, value: 'not a document edit', generating: true, displayValue: 'preview', splitSource: b.id },
+        [a.id]: {
+          ...a,
+          value: 'not a document edit',
+          generating: true,
+          generatingPlaceholder: 'preview',
+          splitSource: b.id,
+        },
         [b.id]: null,
       },
     }),
@@ -56,8 +62,8 @@ it('keeps transient thought UI in Redux without changing the canonical view or a
   expect(preview.thoughts).toBe(before.thoughts)
   expect(db.project()).toBe(before.thoughts)
   expect(preview.undoPatches).toBe(before.undoPatches)
-  expect(preview.thoughtUi[a.id]).toEqual({ generating: true, displayValue: 'preview', splitSource: b.id })
-  expect(rendered).toMatchObject({ value: 'a', generating: true, displayValue: 'preview', splitSource: b.id })
+  expect(preview.thoughtUi[a.id]).toEqual({ generating: true, generatingPlaceholder: 'preview', splitSource: b.id })
+  expect(rendered).toMatchObject({ value: 'a', generating: true, generatingPlaceholder: 'preview', splitSource: b.id })
   expect(getThoughtById({ ...preview, cursorOffset: (preview.cursorOffset ?? 0) + 1 }, a.id)).toBe(rendered)
   expect(preview.thoughts.getThought(a.id)).toBe(a)
   expect(preview.thoughts.getThought(b.id)).toBe(b)
@@ -72,9 +78,9 @@ it('keeps transient thought UI in Redux without changing the canonical view or a
   const completed = store.getState()
   expect(completed.thoughts).toBe(before.thoughts)
   expect(completed.thoughtUi[a.id]).toEqual({ generating: false, splitSource: b.id })
-  expect(getThoughtById(completed, a.id)!.displayValue).toBeUndefined()
+  expect(getThoughtById(completed, a.id)!.generatingPlaceholder).toBeUndefined()
   expect(getThoughtById(preview, a.id)).toBe(rendered)
-  expect(rendered.displayValue).toBe('preview')
+  expect(rendered.generatingPlaceholder).toBe('preview')
 })
 
 it('holds an empty thought format without changing the canonical view or authoring document operations', () => {

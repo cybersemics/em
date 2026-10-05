@@ -243,7 +243,7 @@ const formatThought = (thought: { id: string; value: string; parentId: string },
   return `${thought.id} ${JSON.stringify(value)} rank:${position} parent:${thought.parentId}`
 }
 
-/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, and build commit. Appends the last-frame marker and, when state is provided, a compact document dump grouped by parent and sibling position so entry ids can be resolved to values and current sibling order is visible. */
+/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, and build commit. Appends the last-frame marker and, when state is provided, the current editor view summary and a compact document dump grouped by parent and sibling position so entry ids can be resolved to values and current sibling order is visible. */
 const format = (state?: State): string => {
   // The device: the navigator platform, the shell em is served through (web, ios, android, or tauri), the screen
   // dimensions, and the pointer type. The shell is worth naming separately because it is not recoverable from the user
@@ -284,6 +284,21 @@ const format = (state?: State): string => {
         position: state.thoughts.getPosition(thought.id) ?? 0,
       }))
     : []
+  // The view the log ended on, which the entries can only reconstruct from setCursor and similar actions — the first
+  // to be evicted in a long session. Thought ids resolve against the state.thoughts dump that follows.
+  const view = state
+    ? `\n--- state: ${JSON.stringify({
+        cursor: state.cursor,
+        cursorOffset: state.cursorOffset,
+        isKeyboardOpen: state.isKeyboardOpen,
+        noteFocus: state.noteFocus,
+        expanded: Object.keys(state.expanded).length,
+        multicursors: Object.keys(state.multicursors).length,
+        undo: state.undoPatches.length,
+        redo: state.redoPatches.length,
+      })}`
+    : ''
+
   const dump = state
     ? [
         `\n--- state.thoughts: ${thoughts.length} thoughts, ${Object.keys(state.thoughts.lexemeIndex).length} lexemes`,
@@ -299,7 +314,7 @@ const format = (state?: State): string => {
       ].join('\n')
     : ''
 
-  return `${header}${entryLines ? `\n${entryLines}` : ''}${markerLine}${dump}`
+  return `${header}${entryLines ? `\n${entryLines}` : ''}${markerLine}${view}${dump}`
 }
 
 /** Empties the buffer and removes all of its localStorage keys, including the legacy single-key buffer and the frame marker. */
@@ -400,6 +415,22 @@ const setConsole = (value: boolean): void => {
   }
 }
 
+/** Records an uncaught error as an `error` entry with its name, message and stack, so a crash leaves its stack in the log after the console that printed it is gone. Accepts any thrown value, since a rejected promise or a `throw` can carry a non-Error. The source names where it was caught, e.g. `window`, `unhandledrejection` or `render`; extra fields such as a React component stack are passed through. */
+const logError = (source: string, error: unknown, fields?: Record<string, unknown>): void => {
+  if (!enabled) return
+  try {
+    log(
+      'error',
+      error instanceof Error
+        ? { source, name: error.name, message: error.message, stack: error.stack, ...fields }
+        : { source, message: typeof error === 'string' ? error : (JSON.stringify(error) ?? String(error)), ...fields },
+    )
+  } catch {
+    // The thrown value could not be stringified (e.g. a circular object), which must not cost the entry.
+    log('error', { source, message: '[unserializable]', ...fields })
+  }
+}
+
 /** Returns whether this device has opted out of auto-enabled logging. Only consulted on auto-enable hosts. Never throws. */
 const isAutoOptOut = (): boolean => {
   try {
@@ -436,6 +467,7 @@ const debugLog = {
   isConsole,
   isEnabled,
   log,
+  logError,
   read,
   setAutoOptOut,
   setConsole,

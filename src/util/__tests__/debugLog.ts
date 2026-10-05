@@ -276,6 +276,14 @@ describe('format', () => {
         getPosition: (id: string) => (id === 't1' ? 1 : 0),
         lexemeIndex: {},
       },
+      cursor: null,
+      cursorOffset: null,
+      isKeyboardOpen: false,
+      noteFocus: false,
+      expanded: {},
+      multicursors: {},
+      undoPatches: [],
+      redoPatches: [],
     } as unknown as State
     const text = debugLog.format(state)
     expect(text).toContain('state.thoughts: 2 thoughts, 0 lexemes')
@@ -283,6 +291,77 @@ describe('format', () => {
     expect(text).toContain('t2 "banana" rank:0 parent:root')
     // siblings are ordered by rank within a parent, so banana (rank 0) precedes apple (rank 1)
     expect(text.indexOf('banana')).toBeLessThan(text.indexOf('apple'))
+  })
+  it('renders the view the log ended on before the state.thoughts dump', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const state = {
+      thoughts: { values: () => [].values(), lexemeIndex: {} },
+      cursor: ['t1', 't2'],
+      cursorOffset: 3,
+      isKeyboardOpen: true,
+      noteFocus: false,
+      expanded: { a: ['t1'], b: ['t1', 't2'] },
+      multicursors: {},
+      undoPatches: [{}, {}, {}],
+      redoPatches: [{}],
+    } as unknown as State
+    const lines = debugLog.format(state).split('\n')
+    const view = lines.findIndex(line => line.startsWith('--- state: '))
+    expect(JSON.parse(lines[view].slice('--- state: '.length))).toEqual({
+      cursor: ['t1', 't2'],
+      cursorOffset: 3,
+      isKeyboardOpen: true,
+      noteFocus: false,
+      expanded: 2,
+      multicursors: 0,
+      undo: 3,
+      redo: 1,
+    })
+    expect(view).toBeLessThan(lines.findIndex(line => line.startsWith('--- state.thoughts:')))
+  })
+})
+
+describe('logError', () => {
+  it('records the name, message and stack of an Error', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const error = new TypeError('boom')
+    debugLog.logError('window', error, { filename: 'app.js' })
+    expect(debugLog.read()).toEqual([
+      expect.objectContaining({
+        type: 'error',
+        source: 'window',
+        name: 'TypeError',
+        message: 'boom',
+        stack: expect.stringContaining('TypeError: boom'),
+        filename: 'app.js',
+      }),
+    ])
+  })
+
+  it('records a thrown non-Error as its message', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.logError('unhandledrejection', 'plain string')
+    debugLog.logError('unhandledrejection', { code: 42 })
+    expect(debugLog.read().map(entry => entry.message)).toEqual(['plain string', '{"code":42}'])
+  })
+
+  it('still records an entry when the thrown value cannot be stringified', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const circular: Record<string, unknown> = {}
+    circular.self = circular
+    debugLog.logError('unhandledrejection', circular)
+    expect(debugLog.read()).toEqual([
+      expect.objectContaining({ type: 'error', source: 'unhandledrejection', message: '[unserializable]' }),
+    ])
+  })
+
+  it('is a no-op when logging is disabled', () => {
+    debugLog.logError('window', new Error('boom'))
+    expect(debugLog.read()).toEqual([])
   })
 })
 

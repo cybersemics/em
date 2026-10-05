@@ -108,10 +108,7 @@ const StaticThought = ({
   const fontSize = useSelector(state => state.fontSize)
   const dark = useEditorSelector(state => theme(state) !== 'Light')
   const homeContext = isRoot(simplePath)
-  const value = useEditorSelector(state => {
-    const thought = getThoughtById(state, head(simplePath))
-    return thought?.displayValue ?? thought?.value ?? ''
-  })
+  const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value) ?? ''
   // store ContentEditable ref to update DOM without re-rendering the Editable during editing
   const editableRef = React.useRef<HTMLInputElement>(null)
   const placeholder = usePlaceholder({ isEditing, path, simplePath })

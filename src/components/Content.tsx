@@ -45,6 +45,8 @@ const Content: FC = () => {
   const dispatch = useDispatch()
   const tutorial = useEditorSelector(isTutorial)
   const tutorialStep = useEditorSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
+  /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
+  const reduceBottomSpace = isTouch && tutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS
   const search = useSelector(state => state.search)
   const rootThoughtsLength = useEditorSelector(state => {
     const rankedRoot = isAbsolute(state.rootContext) ? ABSOLUTE_PATH : HOME_PATH
@@ -95,7 +97,10 @@ const Content: FC = () => {
           // limit line width for easier reading
           maxWidth: '60em',
           margin: '0 auto',
-          minHeight: '100vh',
+          // Each property takes its own ternary rather than being overridden by a conditional spread, because PandaCSS
+          // does not extract a value that a later spread in the same css call overrides.
+          minHeight: reduceBottomSpace ? 'auto' : '100vh',
+          paddingBottom: reduceBottomSpace ? '20px' : undefined,
           // Disallow text selection on the entire tree to prevent selection of scroll zone and other background elements when dragging.
           // This is overriden by the editable recipe to enable text selection on editable thoughts.
           // https://github.com/cybersemics/em/pull/2962
@@ -108,13 +113,6 @@ const Content: FC = () => {
             maxWidth: '50em',
             paddingLeft: '40px',
           },
-          ...(isTouch &&
-            tutorial &&
-            tutorialStep !== TUTORIAL2_STEP_SUCCESS && {
-              /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
-              minHeight: 'auto',
-              paddingBottom: '20px',
-            }),
         })}
         style={{
           // Moved from css({...}) because PandaCSS requires statically analyzable values at build time.

@@ -24,6 +24,7 @@ import {
   allowAiDisclosureOnce,
   hasAcknowledgedAiDisclosure,
 } from '../../util/aiDisclosure'
+import head from '../../util/head'
 import headValue from '../../util/headValue'
 import generateThought from '../generateThought'
 
@@ -52,7 +53,7 @@ test('fetch and set webpage title when cursor is on empty thought with URL child
 
   await dispatch([importText({ text }), setCursor([''])])
 
-  // use act, otherwise pending value (...) will still be rendered
+  // use act so the async generation settles
   await act(async () => {
     executeCommand(generateThought)
   })
@@ -80,7 +81,7 @@ test('handle HTML entities in webpage title', async () => {
 
   await dispatch([importText({ text }), setCursor([''])])
 
-  // use act, otherwise pending value (...) will still be rendered
+  // use act so the async generation settles
   await act(async () => {
     executeCommand(generateThought)
   })
@@ -107,7 +108,7 @@ test('handle URLs without protocol', async () => {
 
   await dispatch([importText({ text }), setCursor([''])])
 
-  // use act, otherwise pending value (...) will still be rendered
+  // use act so the async generation settles
   await act(async () => {
     executeCommand(generateThought)
   })
@@ -134,7 +135,7 @@ test('handle fetch failure gracefully and leave thought empty', async () => {
 
   await dispatch([importText({ text }), setCursor([''])])
 
-  // use act, otherwise pending value (...) will still be rendered
+  // use act so the async generation settles
   await act(async () => {
     executeCommand(generateThought)
   })
@@ -167,7 +168,7 @@ test('handle empty or missing title tags and leave thought empty', async () => {
 
   await dispatch([importText({ text }), setCursor([''])])
 
-  // use act, otherwise pending value (...) will still be rendered
+  // use act so the async generation settles
   await act(async () => {
     executeCommand(generateThought)
   })
@@ -197,7 +198,7 @@ test('replace a non-empty thought with the complete generated thought', async ()
 
   await dispatch([importText({ text }), setCursor(['Some existing text'])])
 
-  // use act, otherwise pending value (...) will still be rendered
+  // use act so the async generation settles
   await act(async () => {
     executeCommand(generateThought)
   })
@@ -246,7 +247,7 @@ test('not fetch title when first child is not a URL', async () => {
     }
   })
 
-  // use act, otherwise pending value (...) will still be rendered
+  // use act so the async generation settles
   await act(async () => {
     executeCommand(generateThought)
   })
@@ -489,7 +490,6 @@ test('restore the original thought and allow retry when the AI request fails', a
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - original`)
-  expect(store.getState().cursorCleared).toBe(false)
 
   mockFetch.mockResolvedValueOnce({
     json: () => Promise.resolve({ thoughts: ['replacement'] }),
@@ -522,7 +522,6 @@ test('preserve the original thought when the AI returns an empty replacement', a
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - original`)
-  expect(store.getState().cursorCleared).toBe(false)
 
   vi.unstubAllEnvs()
 })
@@ -543,7 +542,6 @@ test('asks the user to retry after reaching the rate limit', async () => {
   })
   expect(store.getState().alert?.value).toBe('Rate limit reached. Please try again later.')
   expect(store.getState().error).toBeNull()
-  expect(store.getState().cursorCleared).toBe(false)
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - original`)
@@ -566,7 +564,6 @@ test('surfaces an AI service error without changing the thought', async () => {
     await vi.runAllTimersAsync()
   })
   expect(store.getState().error).toBe('Model unavailable')
-  expect(store.getState().cursorCleared).toBe(false)
 
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - original`)
@@ -616,7 +613,6 @@ test('show AI disclosure and avoid network request before acknowledgement', asyn
   expect(exported).toBe(`- ${HOME_TOKEN}
   - 
     - Not a URL`)
-  expect(state.cursorCleared).toBe(false)
 
   vi.unstubAllEnvs()
 })
@@ -672,7 +668,10 @@ test('clear the pending overlay without overwriting an incoming edit', async () 
     executeCommand(generateThought)
   })
   expect(mockFetch).toHaveBeenCalledTimes(1)
-  expect(getThoughtById(store.getState(), thought.id)).toMatchObject({ generating: true, displayValue: 'a...' })
+  expect(getThoughtById(store.getState(), thought.id)).toMatchObject({
+    generating: true,
+    generatingPlaceholder: 'Generating Thought',
+  })
 
   const incoming = db.transact(transaction =>
     transaction.update({ thoughtIndexUpdates: { [thought.id]: { ...thought, value: 'incoming a' } } }),
@@ -684,7 +683,7 @@ test('clear the pending overlay without overwriting an incoming edit', async () 
   })
 
   expect(getThoughtById(store.getState(), thought.id)).toMatchObject({ value: 'incoming a', generating: false })
-  expect(getThoughtById(store.getState(), thought.id)?.displayValue).toBeUndefined()
+  expect(getThoughtById(store.getState(), thought.id)?.generatingPlaceholder).toBeUndefined()
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - incoming a`)
 
@@ -734,19 +733,19 @@ test('leave a newer generation untouched when an older request completes', async
   expect(getThoughtById(store.getState(), thought.id)).toMatchObject({
     value: 'a',
     generating: true,
-    displayValue: 'a...',
+    generatingPlaceholder: 'Generating Thought',
   })
 
   await act(async () => {
     resolveNewRequest({ json: () => Promise.resolve({ thoughts: ['fresh a'] }) })
   })
   expect(getThoughtById(store.getState(), thought.id)).toMatchObject({ value: 'fresh a', generating: false })
-  expect(getThoughtById(store.getState(), thought.id)?.displayValue).toBeUndefined()
+  expect(getThoughtById(store.getState(), thought.id)?.generatingPlaceholder).toBeUndefined()
 
   vi.unstubAllEnvs()
 })
 
-test('restore the original value rather than the pending value on undo', async () => {
+test('restore the original value on undo', async () => {
   // Mock AI URL environment variable
   vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
   acknowledgeAiDisclosure()
@@ -758,7 +757,7 @@ test('restore the original value rather than the pending value on undo', async (
 
   await dispatch([importText({ text: `- a` }), setCursor(['a'])])
 
-  // use act, otherwise pending value (...) will still be rendered
+  // use act so the async generation settles
   await act(async () => {
     executeCommand(generateThought)
   })
@@ -769,10 +768,44 @@ test('restore the original value rather than the pending value on undo', async (
 
   await dispatch(undo())
 
-  // The pending value "a..." is set with updateThoughts, which is not undoable, so it must be restored to the
-  // original value before the generated value is applied. Otherwise undo reverts to "a...".
+  // generating is set with updateThoughts, which is not undoable, but the stored value is never changed until
+  // editThought applies the result, so undo reverts to the original text.
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a`)
+
+  vi.unstubAllEnvs()
+})
+
+test('marks a non-empty thought as generating without changing its value', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+  await dispatch([importText({ text: '- a' }), setCursor(['a'])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  const cursor = store.getState().cursor!
+  expect(getThoughtById(store.getState(), head(cursor))).toMatchObject({ generating: true, value: 'a' })
+
+  vi.unstubAllEnvs()
+})
+
+test('marks an empty thought as generating without changing its value', async () => {
+  vi.stubEnv('VITE_AI_URL', 'http://test-ai-url')
+  acknowledgeAiDisclosure()
+  mockFetch.mockReturnValueOnce(new Promise(() => {}))
+
+  await dispatch([importText({ text: '- ' }), setCursor([''])])
+
+  await act(async () => {
+    executeCommand(generateThought)
+  })
+
+  const cursor = store.getState().cursor!
+  expect(getThoughtById(store.getState(), head(cursor))).toMatchObject({ generating: true, value: '' })
 
   vi.unstubAllEnvs()
 })
@@ -810,7 +843,7 @@ test('preserve an edit made while the thought is generating as its own undo step
     executeCommand(generateThought)
   })
 
-  // Pending text is display-only; exports continue to contain the authoritative document value.
+  // Precondition: the request is in flight and the cursor thought still has its original value.
   expect(mockFetch).toHaveBeenCalledTimes(1)
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
@@ -868,7 +901,7 @@ test('preserve an addition made while the thought is generating as its own undo 
     executeCommand(generateThought)
   })
 
-  // Pending text is display-only; exports continue to contain the authoritative document value.
+  // Precondition: the request is in flight and the cursor thought still has its original value.
   expect(mockFetch).toHaveBeenCalledTimes(1)
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
@@ -1222,7 +1255,7 @@ describe('multicursor', () => {
     // Flush the mocked requests so that every generation has been applied and the undo bracket has closed.
     await act(() => vi.runAllTimersAsync())
 
-    // Both thoughts are left at their original values, without the pending ellipsis.
+    // Both thoughts are left at their original values.
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - a
   - b`)

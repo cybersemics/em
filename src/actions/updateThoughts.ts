@@ -39,7 +39,8 @@ const updateThoughts = (
   Object.entries(thoughtIndexUpdates).forEach(([id, thought]) => {
     const ui = {
       ...(thought?.generating !== undefined && { generating: thought.generating }),
-      ...(thought?.generating && thought.displayValue !== undefined && { displayValue: thought.displayValue }),
+      ...(thought?.generating &&
+        thought.generatingPlaceholder !== undefined && { generatingPlaceholder: thought.generatingPlaceholder }),
       ...(thought?.pendingFormat !== undefined && { pendingFormat: thought.pendingFormat }),
       ...(thought?.splitSource !== undefined && { splitSource: thought.splitSource }),
     }

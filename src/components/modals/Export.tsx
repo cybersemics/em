@@ -163,7 +163,8 @@ const ModalExport: FC = () => {
           const thought = exportedState.thoughts.getThought(id)!
           // UI overlays and metadata do not belong in the compact document export.
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { created, lastUpdated, updatedBy, generating, displayValue, splitSource, ...partialThought } = thought
+          const { created, lastUpdated, updatedBy, generating, generatingPlaceholder, splitSource, ...partialThought } =
+            thought
           return [
             id,
             {
