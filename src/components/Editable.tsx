@@ -36,8 +36,6 @@ import {
   TUTORIAL_CONTEXT1_PARENT,
   TUTORIAL_CONTEXT2_PARENT,
 } from '../constants'
-import asyncFocus from '../device/asyncFocus'
-import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
@@ -469,14 +467,14 @@ const Editable = ({
     if (!isTouch || !isSafari() || !contentRef.current) return
 
     const editable = contentRef.current
-    const AUTOCOMPLETE_SPACE_WINDOW_MS = 250
+    const AUTOCOMPLETE_WINDOW_MS = 250
     let pendingAutocompleteAt: number | null = null
 
-    /** Snapshots the input event and editable state for the rolling log. `branch` names the code path that handled the event,
-     * so the log distinguishes an ignored keystroke from the retarget path that runs after iOS autocomplete. */
-    const logInput = (e: InputEvent, branch: string) =>
+    /** Logs each input event and the editable state, marking the iOS autocomplete (insertReplacementText) that opens
+     * the window in which caret movement is logged. */
+    const onEditableInput = (e: Event) => {
+      if (!(e instanceof InputEvent)) return
       debugLog.log('input', {
-        branch,
         inputType: e.inputType,
         data: e.data,
         isComposing: e.isComposing,
@@ -484,85 +482,14 @@ const Editable = ({
         sel: selection.offsetThought() ?? selection.offset(),
         pending: pendingAutocompleteAt,
       })
-
-    /** After iOS autocomplete (insertReplacementText) accepts a word, no touch events reach the DOM
-     * in a "dead zone" beneath the word until focus is retargeted. Moving focus to the asyncFocus dummy input
-     * and back to the previous active element allows touch events to reach the DOM again.
-     *
-     * It is possible to intercept insertReplacementText and perform the focus retargeting there
-     * instead of waiting for the next insertText event, but that breaks native undo via shake or three-finger swipe.
-     *
-     * The edit is flushed synchronously (so onBlur cannot commit a stale value), but the focus retarget itself is
-     * deferred to the next animation frame. Blurring/refocusing synchronously inside this input event races UIKit's
-     * in-flight keyboard/autocorrect transaction and can deadlock the native text-input layer, freezing the app with
-     * the space bar stuck down until the device is restarted (#4607). The requestAnimationFrame callback runs after
-     * the current task but before the next paint, which keeps the iOS keyboard open (#3129) and still dismisses the
-     * touch dead zone (#4222) long before the user's next tap.
-     */
-    const onAutocompleteInput = (e: Event) => {
-      if (!editable || !(e instanceof InputEvent)) return
-
-      if (e.inputType === 'insertReplacementText') {
-        logInput(e, 'replacement-pending')
-        pendingAutocompleteAt = performance.now()
-        return
-      }
-
-      if (e.inputType !== 'insertText' || e.data !== ' ' || pendingAutocompleteAt == null) {
-        logInput(e, 'ignored')
-        pendingAutocompleteAt = null
-        return
-      }
-
-      if (performance.now() - pendingAutocompleteAt > AUTOCOMPLETE_SPACE_WINDOW_MS) {
-        logInput(e, 'window-expired')
-        pendingAutocompleteAt = null
-        return
-      }
-
-      logInput(e, 'retarget')
-
-      const savedCharOffset = selection.offsetThought() ?? selection.offset() ?? 0
-
-      // Queue and flush the change with the browser-applied value to ensure it's captured before the editable blurs.
-      oldValueRef.current = editable.textContent || ''
-      throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
-      throttledChangeRef.current.flush()
-
-      // The editThought re-render that lands before the deferred callback cannot invalidate savedCharOffset:
-      // ContentEditable sets allowInnerHTMLChange to false during editing, so the DOM is not reset until blur.
-      requestAnimationFrame(() => {
-        // The editable can only detach in the single frame between the autocorrect and this callback, but guard
-        // anyway: selection.set on a detached node is the one real hazard of firing late.
-        if (!editable.isConnected) return
-
-        // Log each retarget step around the native focus/selection calls so a freeze can be pinned to the exact call
-        // that stopped returning (the last 'retarget' entry before the log goes silent is the culprit). `deferred`
-        // distinguishes these entries from pre-#4607-fix logs, where the retarget ran synchronously in the input event.
-        debugLog.log('retarget', { step: 'asyncFocus', savedOffset: savedCharOffset, deferred: true })
-        // asyncFocus dispatches blur synchronously, and focus returns to the editable a few lines below, so the user
-        // is still typing. Suppress the blur handlers that resync the editable to the value in Redux, which by now
-        // has been trimmed by onChangeHandler: they would swallow the space that committed the autocomplete (#4828).
-        editableSyncStore.update({ suppressBlurSync: true })
-        asyncFocus({ force: true })
-        editableSyncStore.update({ suppressBlurSync: false })
-
-        debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
-        preventAutoscroll(editable)
-        // Restore the selection offset captured when insertText(' ') arrived.
-        debugLog.log('retarget', { step: 'selection.set', savedOffset: savedCharOffset })
-        selection.set(editable, { offset: savedCharOffset })
-        preventAutoscrollEnd(editable)
-      })
-
-      pendingAutocompleteAt = null
+      pendingAutocompleteAt = e.inputType === 'insertReplacementText' ? performance.now() : null
     }
 
     // The following native listeners are scoped to this effect (Safari touch only) so they add zero surface area on other
     // platforms. Each is a no-op when debug logging is disabled. They capture the raw event stream around autocomplete,
-    // which React's synthetic onChange does not fully expose (e.g. beforeinput, composition, and focus retargeting).
+    // which React's synthetic onChange does not fully expose (e.g. beforeinput, composition, and focus changes).
 
-    /** Logs the key sequence leading into an autocomplete freeze. */
+    /** Logs the key sequence leading into an autocomplete. */
     const onEditableKeyDown = (e: KeyboardEvent) => debugLog.log('keydown', { key: e.key, isComposing: e.isComposing })
 
     /** Logs beforeinput, which precedes each mutation and reveals intent (e.g. insertReplacementText) even if input never fires. */
@@ -576,20 +503,20 @@ const Editable = ({
     const onEditableCompositionEnd = (e: CompositionEvent) =>
       debugLog.log('composition', { phase: 'end', data: e.data })
 
-    /** Describes the currently focused element (tag + data-testid) so focus retargeting during autocomplete can be traced. */
+    /** Describes the currently focused element (tag + data-testid) so focus changes during autocomplete can be traced. */
     const describeActiveElement = () => {
       const el = document.activeElement
       return { tag: el?.tagName ?? null, testid: el?.getAttribute?.('data-testid') ?? null }
     }
     /** Logs when the editable gains focus, recording which element is now active. */
     const onEditableFocus = () => debugLog.log('focus', describeActiveElement())
-    /** Logs when the editable loses focus, recording which element is now active (reveals the asyncFocus retarget target). */
+    /** Logs when the editable loses focus, recording which element is now active. */
     const onEditableBlur = () => debugLog.log('blur', describeActiveElement())
 
-    /** Logs caret movement ONLY during the ~250ms autocomplete window (pendingAutocompleteAt != null) to trace the caret
-     * entering the touch dead zone without flooding the log with every ordinary selection change. */
+    /** Logs caret movement ONLY during the ~250ms autocomplete window to trace the caret after an autocomplete without
+     * flooding the log with every ordinary selection change. */
     const onSelectionChange = () => {
-      if (pendingAutocompleteAt == null) return
+      if (pendingAutocompleteAt == null || performance.now() - pendingAutocompleteAt > AUTOCOMPLETE_WINDOW_MS) return
       debugLog.log('selectionchange', {
         anchor: selection.anchorOffset(),
         focus: selection.offset(),
@@ -597,7 +524,7 @@ const Editable = ({
       })
     }
 
-    editable.addEventListener('input', onAutocompleteInput)
+    editable.addEventListener('input', onEditableInput)
     editable.addEventListener('keydown', onEditableKeyDown)
     editable.addEventListener('beforeinput', onEditableBeforeInput)
     editable.addEventListener('compositionstart', onEditableCompositionStart)
@@ -606,7 +533,7 @@ const Editable = ({
     editable.addEventListener('blur', onEditableBlur)
     document.addEventListener('selectionchange', onSelectionChange)
     return () => {
-      editable.removeEventListener('input', onAutocompleteInput)
+      editable.removeEventListener('input', onEditableInput)
       editable.removeEventListener('keydown', onEditableKeyDown)
       editable.removeEventListener('beforeinput', onEditableBeforeInput)
       editable.removeEventListener('compositionstart', onEditableCompositionStart)
@@ -615,7 +542,7 @@ const Editable = ({
       editable.removeEventListener('blur', onEditableBlur)
       document.removeEventListener('selectionchange', onSelectionChange)
     }
-  }, [contentRef, rank, simplePath])
+  }, [contentRef])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef
@@ -892,17 +819,6 @@ const Editable = ({
   const onBlur: FocusEventHandler<HTMLElement> = useCallback(
     e => {
       throttledChangeRef.current.flush()
-
-      // The iOS autocomplete focus retarget blurs to the asyncFocus dummy input and refocuses this same editable
-      // within the same frame, so its momentary blur does not end editing. Its relatedTarget is a bare input rather
-      // than an editable, so the check below cannot recognize it; the suppressBlurSync flag the retarget sets is what
-      // marks a blur that does not end editing. Skip the value resync (#4828) and the editing teardown below:
-      // otherwise the blur closes the keyboard and exits the cleared state mid-typing, on an edited multiselection the
-      // Command Center re-opens over the editing session (see multicursorAlertMiddleware), and the resulting desync
-      // between state.isKeyboardOpen and the open keyboard makes useEditMode stop placing the caret, so the next
-      // re-render of the editable (e.g. undoing the autocorrect) leaves the caret at the beginning of the thought
-      // (#4692).
-      if (editableSyncStore.getState().suppressBlurSync) return
 
       // update the ContentEditable if the new scrubbed value is different (i.e. stripped, space after emoji added, etc)
       // they may intentionally become out of sync during editing if the value is modified programmatically (such as trim) in order to avoid reseting the caret while the user is still editing
