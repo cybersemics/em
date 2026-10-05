@@ -635,8 +635,13 @@ it('does not load the pending descendants of a duplicate at the destination', as
   await vi.runOnlyPendingTimersAsync()
 
   const state = store.getState()
+  // c is left in storage, so it is not in the export until it is loaded
   const exported = exportContext(state, HOME_PATH, 'text/plain')
   const pending = getThoughtById(state, head(contextToPath(state, ['a', 'b'])!))?.pending
+
+  // load everything to show that c was left untouched under the original a/b
+  await store.dispatch(pull([HOME_TOKEN], { maxDepth: Infinity }))
+  const exportedAfterPull = exportContext(store.getState(), HOME_PATH, 'text/plain')
 
   cleanup()
 
@@ -650,6 +655,16 @@ it('does not load the pending descendants of a duplicate at the destination', as
 - y
 `)
   expect(pending).toBe(true)
+  expect(removeHome(exportedAfterPull)).toBe(`
+- a
+  - b
+    - c
+- x
+- a
+  - b
+    - d
+- y
+`)
 })
 
 // https://github.com/cybersemics/em/issues/2712
