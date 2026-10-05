@@ -721,7 +721,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
             color: 'bg',
             backgroundColor: 'fg',
           })}
-          disabled={exportContent === null}
+          disabled={!exportContent}
           {...fastClick(onExportClick)}
         >
           {exportWord}
@@ -730,7 +730,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
       {/* Copy to clipboard */}
       <div className={css({ marginBottom: '15px', textAlign: 'center' })}>
-        {exportContent !== null && (
+        {exportContent && (
           <a data-clipboard-text={exportContent} aria-label='copy-clipboard-btn' className={extendTapRecipe()}>
             Copy to clipboard
           </a>

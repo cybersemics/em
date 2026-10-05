@@ -116,3 +116,23 @@ it('Show a message instead of the root when all thoughts are archived', async ()
     ),
   ).toBeInTheDocument()
 })
+
+// https://github.com/cybersemics/em/issues/4078
+it('Disable the export button and hide Copy to clipboard when there is nothing to export', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - a
+      `,
+    }),
+    setCursor(['a']),
+    archiveThought({}),
+    setCursor(null),
+    showModal({ id: 'export' }),
+  ])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  expect(screen.getByRole('button', { name: 'Download' })).toBeDisabled()
+  expect(screen.queryByLabelText('copy-clipboard-btn')).not.toBeInTheDocument()
+})
