@@ -8,7 +8,7 @@ run-name: Vercel Preview
 # Review fork changes for secret-exfiltration paths before approving them.
 #
 # The Vercel builds are the web app and AI service, so documentation, agent/editor configuration,
-# and the native platform projects cannot change the preview. A PR confined to them gets no
+# the native platform projects, and CI workflows and scripts cannot change the preview. A PR confined to them gets no
 # deployment and no preview comment, which is the intended outcome — there is nothing to look at.
 #
 # paths-ignore skips the workflow outright, which means NO check is reported. That is only correct
@@ -36,6 +36,12 @@ on:
       - 'ios/**'
       - 'desktop/**'
       - 'assets/**'
+      # CI. pull_request_target always reads workflow files from the base branch, so a PR's edits
+      # to them cannot change its own preview. Only scripts/ci/ is listed, not scripts/: the build
+      # runs scripts/build-styles.mjs. .github/actions/ is not listed either, because this
+      # workflow runs the pull request's copy of the install action.
+      - '.github/workflows/**'
+      - 'scripts/ci/**'
 
 # Rapidfire pushes to the same PR cancel the older preview build. Keyed on the PR number rather
 # than github.ref because pull_request_target sets github.ref to the *base* branch — every open PR
