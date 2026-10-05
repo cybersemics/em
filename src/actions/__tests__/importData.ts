@@ -1369,7 +1369,7 @@ describe('paste over a selection', () => {
   // https://github.com/cybersemics/em/issues/5232
   it('trims the trailing space of single-line HTML pasted over the selection', async () => {
     act(() => {
-      store.dispatch([importText({ text: '- One two' }), setCursor(['One two'])])
+      store.dispatch([importText({ text: '- One two' })])
     })
 
     await act(vi.runOnlyPendingTimersAsync)
@@ -1398,7 +1398,7 @@ describe('paste over a selection', () => {
   // The emoji space must survive the trim of the whitespace before the emoji (#5232).
   it('separates an emoji from the thought after trimming the leading space of single-line HTML pasted before it', async () => {
     act(() => {
-      store.dispatch([importText({ text: '- Hello' }), setCursor(['Hello'])])
+      store.dispatch([importText({ text: '- Hello' })])
     })
 
     await act(vi.runOnlyPendingTimersAsync)
