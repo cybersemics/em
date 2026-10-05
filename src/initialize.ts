@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core'
+import { Device } from '@capacitor/device'
 import moize from 'moize'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
@@ -26,7 +28,7 @@ import store from './stores/app'
 import offlineStatusStore, { init as initOfflineStatusStore } from './stores/offlineStatusStore'
 import storageStatusStore from './stores/storageStatusStore'
 import syncStatusStore from './stores/syncStatusStore'
-import { init as initWebKit27Store } from './stores/webKit27Store'
+import webKit27Store from './stores/webKit27Store'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
 import debugLog from './util/debugLog'
@@ -70,7 +72,12 @@ type InitializeOptions = { storage: ThoughtspaceStorage }
 /** Initialize local db and window events. */
 const initializeInternal = async ({ storage }: InitializeOptions) => {
   initOfflineStatusStore(/* websocket */)
-  initWebKit27Store()
+
+  // An app built before the Device plugin was added cannot tell, so the store stays false.
+  if (Capacitor.getPlatform() === 'ios' && Capacitor.isPluginAvailable('Device')) {
+    Device.getInfo().then(({ osVersion }) => webKit27Store.update(parseInt(osVersion) >= 27))
+  }
+
   const eventHandlers = initEvents(store)
 
   const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
