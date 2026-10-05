@@ -19,8 +19,6 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import Editable from '../Editable'
 
 // The focus retarget that follows iOS autocomplete (#4467) is only installed on Mobile Safari.
-// The retarget was reverted because it scrolls the cursor thought to the center on iOS 27 (#5676). These tests are
-// skipped until it is restored (#4222).
 vi.mock('../../browser', async importOriginal => {
   const actual = await importOriginal<typeof import('../../browser')>()
   return { ...actual, isTouch: true, isSafari: () => true }
@@ -31,7 +29,7 @@ beforeEach(initStore)
 // Only the DOM half of the scenario can be emulated here: typing the next word depends on the caret that
 // selection.set restores, and jsdom does not move focus with the selection. The space surviving in the editable is
 // what the next keystroke lands after, so it is the observable that regressed.
-it.skip('keeps the space that commits an iOS autocorrect in the editable (#4828)', async () => {
+it('keeps the space that commits an iOS autocorrect in the editable (#4828)', async () => {
   await dispatch([importText({ text: '- Adf' }), setCursor(['Adf'])])
 
   const simplePath = contextToPath(store.getState(), ['Adf']) as SimplePath
@@ -78,7 +76,7 @@ it.skip('keeps the space that commits an iOS autocorrect in the editable (#4828)
 })
 
 // https://github.com/cybersemics/em/pull/4692
-it.skip('keeps edit mode active through the iOS autocorrect focus retarget (#4692)', async () => {
+it('keeps edit mode active through the iOS autocorrect focus retarget (#4692)', async () => {
   await dispatch([importText({ text: '- Adf' }), setCursor(['Adf']), keyboardOpen({ value: true })])
 
   const simplePath = contextToPath(store.getState(), ['Adf']) as SimplePath
@@ -121,7 +119,7 @@ it.skip('keeps edit mode active through the iOS autocorrect focus retarget (#469
 })
 
 // https://github.com/cybersemics/em/pull/4520#issuecomment-5186318307
-it.skip('keeps multi edit mode through the focus retarget after an iOS autocorrect', async () => {
+it('keeps multi edit mode through the focus retarget after an iOS autocorrect', async () => {
   await dispatch([
     importText({
       text: `
