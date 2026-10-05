@@ -1,4 +1,3 @@
-import { escape as escapeHtml } from 'html-escaper'
 import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -8,7 +7,7 @@ import Timestamp from '../@types/Timestamp'
 import editThought from '../actions/editThought'
 import setCursor from '../actions/setCursor'
 import updateThoughts from '../actions/updateThoughts'
-import { HOME_PATH } from '../constants'
+import { EXTERNAL_FORMATTING_TAGS, HOME_PATH } from '../constants'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import { anyChild, findAnyChild, getAllChildren } from '../selectors/getChildren'
@@ -41,23 +40,60 @@ import uncategorize from './uncategorize'
 // a list item tag
 const REGEX_LIST_ITEM = /<li(?:\s|>)/gim
 
-/** Elements that separate the text on either side of them, so their text must not run into that of their siblings when the formatting is stripped. */
+/** Elements that separate the text on either side of them, so their text must not run into that of their siblings when they are unwrapped. */
 const SEPARATING_ELEMENTS =
   'address, article, aside, blockquote, br, dd, div, dl, dt, figcaption, figure, footer, h1, h2, h3, h4, h5, h6, header, hr, li, ol, p, pre, section, table, td, th, tr, ul'
 
-/** Reduces an HTML fragment to its escaped text on a single line. The fragment is parsed into an inert template, so that its scripts do not run and its images do not load, and the text is read from the parsed nodes rather than matched out of the markup. */
-const htmlToSingleLineText = (html: string): string => {
+/** Returns the descendants of a node in document order. */
+const descendants = (node: Node): Node[] => [...node.childNodes].flatMap(child => [child, ...descendants(child)])
+
+/**
+ * Sanitizes single-line HTML copied from outside em, such as from a web page, before it is inserted inside a thought (#4161). Only the basic formatting tags in EXTERNAL_FORMATTING_TAGS are kept, without their attributes, and every other element is unwrapped to its contents. A formatting tag that covers all of the text, such as a heading's bold or the <b style="font-weight:normal"> that Google Docs wraps around every copy, is unwrapped too, since it is unlikely to be intentional. Formatting within the text, such as a bold word, is kept.
+ *
+ * The HTML is parsed into an inert template, so that its scripts do not run and its images do not load, and it is sanitized on the parsed nodes rather than matched out of the markup.
+ *
+ * In the import pipeline (#4988) this is the external sanitization profile, which belongs in the shared funnel (htmlToJson). It lives here because the single-line splice does not run through the funnel yet. Once parse-then-route (#5175) has the splice consume the funnel's output, it moves there.
+ */
+const sanitizeExternalHtml = (html: string): string => {
   const template = document.createElement('template')
   template.innerHTML = html
-  template.content.querySelectorAll('script, style').forEach(element => element.remove())
-  template.content.querySelectorAll(SEPARATING_ELEMENTS).forEach(element => element.after(' '))
-  // Collapse the whitespace that HTML collapses, including the newlines of a <pre>, since a thought is a single line.
-  // Other Unicode spaces, such as an ideographic or narrow no-break space, are text and are kept. Each no-break space becomes a normal space, as in strip.
-  const text = (template.content.textContent ?? '')
-    .replace(/[ \t\n\r\f]+/g, ' ')
-    .replaceAll('\u00a0', ' ')
-    .trim()
-  return escapeHtml(text)
+  const fragment = template.content
+
+  fragment.querySelectorAll('script, style, title').forEach(element => element.remove())
+  descendants(fragment)
+    .filter(node => node.nodeType === Node.COMMENT_NODE)
+    .forEach(comment => comment.parentNode?.removeChild(comment))
+  fragment.querySelectorAll(SEPARATING_ELEMENTS).forEach(element => element.after(' '))
+  fragment
+    .querySelectorAll('*')
+    .forEach(element =>
+      EXTERNAL_FORMATTING_TAGS.includes(element.localName)
+        ? [...element.attributes].forEach(attribute => element.removeAttribute(attribute.name))
+        : element.replaceWith(...element.childNodes),
+    )
+
+  // Collapse the whitespace that HTML collapses, including the newlines of a <pre> and across the boundaries of the
+  // formatting tags, since a thought is a single line. Other Unicode spaces, such as an ideographic or narrow no-break
+  // space, are text and are kept. Each no-break space becomes a normal space, as in strip.
+  const textNodes = descendants(fragment).filter(node => node.nodeType === Node.TEXT_NODE) as Text[]
+  textNodes.reduce((previousEndsWithSpace, node) => {
+    const collapsed = node.data.replace(/[ \t\n\r\f]+/g, ' ')
+    node.data = (previousEndsWithSpace ? collapsed.replace(/^ /, '') : collapsed).replaceAll('\u00a0', ' ')
+    return collapsed ? collapsed.endsWith(' ') : previousEndsWithSpace
+  }, false)
+  // trim the text at both ends, which may span several text nodes when they are only whitespace
+  const textNodesFromEnd = [...textNodes].reverse()
+  textNodes.some(node => (node.data = node.data.replace(/^ +/, '')).length > 0)
+  textNodesFromEnd.some(node => (node.data = node.data.replace(/ +$/, '')).length > 0)
+  fragment.querySelectorAll('*').forEach(element => element.textContent === '' && element.remove())
+
+  // Unwrap each formatting tag that covers all of the text, computing the coverage of every tag before any is unwrapped.
+  const visibleTextNodes = textNodes.filter(node => node.data.trim())
+  EXTERNAL_FORMATTING_TAGS.filter(tag => visibleTextNodes.every(node => node.parentElement?.closest(tag))).forEach(
+    tag => fragment.querySelectorAll(tag).forEach(element => element.replaceWith(...element.childNodes)),
+  )
+
+  return template.innerHTML
 }
 
 export interface ImportTextPayload {
@@ -85,8 +121,8 @@ export interface ImportTextPayload {
 
   skipRoot?: boolean
 
-  /** Strips the formatting from HTML that is inserted inside the thought (single line only), such as text copied from a web page. Multiline imports are unaffected. */
-  stripFormatting?: boolean
+  /** The text is HTML copied from outside em, such as from a web page. Its formatting is sanitized with sanitizeExternalHtml when it is inserted inside the thought (single line only). Multiline imports are unaffected. */
+  isExternalHtml?: boolean
 
   /** Text or HTML that will be inserted below the thought (if multiline) or inside the thought (singl line only). */
   text: string
@@ -107,8 +143,8 @@ const importText = (
     rawDestValue,
     replaceEnd,
     replaceStart,
+    isExternalHtml,
     skipRoot,
-    stripFormatting,
     updatedBy = clientId,
     caretPosition = 0,
   }: ImportTextPayload,
@@ -144,7 +180,7 @@ const importText = (
           )
         : destValue
 
-    const insertedText = stripFormatting ? htmlToSingleLineText(text) : text
+    const insertedText = isExternalHtml ? sanitizeExternalHtml(text) : text
     const insertOffset = replaceStart ?? caretPosition
     const combinedValue = insertHtmlAtTextOffset(replacedDestValue, insertOffset, insertedText)
     const newValue = addEmojiSpace(combinedValue)

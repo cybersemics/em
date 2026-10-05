@@ -1298,7 +1298,50 @@ it('separate the text of adjacent block elements when stripping formatting from 
 
   cleanup()
 
-  expect(value).toBe('aHeading here Some para text')
+  expect(value).toBe('aHeading here Some <b>para</b> text')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('keep basic formatting within the text when stripping formatting from single-line HTML', async () => {
+  const html = `<p style="font-family: sans-serif;">Some <strong style="color: rgb(255, 0, 0);">bold</strong>, <i>italic</i>, <em>emphasized</em> and <code>code</code> text</p>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: 'Some bold, italic, emphasized and code text' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('aSome <strong>bold</strong>, <i>italic</i>, emphasized and code text')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('unwrap formatting that covers all of the text when stripping formatting from single-line HTML', async () => {
+  // the text/html that Google Docs writes to the clipboard, which wraps every copy in a <b> that is not bold
+  const html = `<meta charset='utf-8'><b style="font-weight:normal;" id="docs-internal-guid-6c3b2a1e-7fff-1a2b-3c4d-5e6f7a8b9c0d"><span style="font-size:11pt;font-family:Arial,sans-serif;color:#000000;"><i>Hello world</i></span></b>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: 'Hello world' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('aHello world')
 })
 
 // https://github.com/cybersemics/em/issues/4161
