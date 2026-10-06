@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import lifecycle from 'page-lifecycle'
 import { Store } from 'redux'
+import { css } from '../../styled-system/css'
 import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
@@ -10,7 +11,7 @@ import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
-import { isCapacitor, isIOS, isSafari, isTouch } from '../browser'
+import { isAndroid, isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
 import { AlertType, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
@@ -50,7 +51,7 @@ const WINDOW_SCROLLATEDGE_DOWN_SIZE = 100
 const TOOLBAR_SCROLLATEDGE_SPEED = 1.25
 const WINDOW_SCROLLATEDGE_SPEED = 2
 
-/** How far above the finger, in px, to draw the drop caret of a native text drag in the Android app, so that it is not hidden under the finger. See onAndroidAppDragOver. */
+/** How far above the finger, in px, to draw the drop caret of a native text drag on Android, so that it is not hidden under the finger. See onAndroidDragOver. */
 const NATIVE_TEXT_DRAG_CARET_OFFSET = 40
 
 /** How often to save the selection offset to storage when it changes. */
@@ -332,11 +333,11 @@ const initEvents = (store: Store<State, any>) => {
    */
   const onSafariGesture = (e: Event) => e.preventDefault()
 
-  /** The editable and plain-text offsets of the selected text being dragged natively in the Android app, or null if no native text drag is in progress. See #4225. */
+  /** The editable and plain-text offsets of the selected text being dragged natively on Android, or null if no native text drag is in progress. See #4225. */
   let nativeTextDrag: { editable: HTMLElement; start: number; end: number } | null = null
 
   /**
-   * Finds where dragged text would be dropped in the Android app for a finger at the given viewport coordinates.
+   * Finds where dragged text would be dropped on Android for a finger at the given viewport coordinates.
    * The drop point is NATIVE_TEXT_DRAG_CARET_OFFSET above the finger, so the drop caret is not hidden under it.
    * Returns the editable, the plain-text offset within it, and the caret's rect, or null if the point is not in an
    * editable thought or note.
@@ -355,7 +356,7 @@ const initEvents = (store: Store<State, any>) => {
     return { editable, offset: before.toString().length, rect: range.getBoundingClientRect() }
   }
 
-  /** Ends a native text drag in the Android app, hiding the drop caret. */
+  /** Ends a native text drag on Android, hiding the drop caret. */
   const endNativeTextDrag = () => {
     nativeTextDrag = null
     nativeTextDragCaretStore.update(null)
@@ -363,47 +364,76 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   /**
-   * Starts a native text drag in the Android app. A long press on selected text starts a native drag, but the Android
+   * Starts a native text drag on Android. A long press on selected text starts a native drag, but the Android
    * WebView leaves the selection menu (Cut, Copy, …) on screen over the dragged text for the whole drag. The menu is
    * drawn for the selected range, so collapsing the selection dismisses it without blurring the editable. The collapse
-   * is deferred because the WebView takes the drag image (the text that follows the finger) from the selection after
-   * dragstart, and a collapsed selection has no image. The dragged text is saved as offsets so the drop can move it,
-   * and the body is flagged to hide the native caret for the duration of the drag. Thought drags are unaffected:
-   * react-dnd's TouchBackend does not use native drag events. Android Chrome dismisses the menu on its own.
+   * is deferred because the browser takes the drag image (the text that follows the finger) after dragstart. The
+   * dragged text is saved as offsets so the drop can move it, and the body is flagged to hide the native caret for the
+   * duration of the drag. Thought drags are unaffected: react-dnd's TouchBackend does not use native drag events.
    */
-  const onAndroidAppDragStart = (e: DragEvent) => {
+  const onAndroidDragStart = (e: DragEvent) => {
     const node = e.target as Node | null
     const editable = (node instanceof Element ? node : node?.parentElement)?.closest<HTMLElement>(
       '[contenteditable="true"]',
     )
-    const offsets = editable && selection.text() ? selection.offsetRange(editable) : null
-    if (!editable || !offsets) return
+    const text = selection.text()
+    const offsets = editable && text ? selection.offsetRange(editable) : null
+    if (!editable || !text || !offsets) return
 
     nativeTextDrag = { editable, ...offsets }
     document.body.dataset.nativeTextDrag = 'true'
+
+    // The default drag image of selected text is only its glyphs, with no background, and Android draws a text drag
+    // translucent, so the dragged text is too faint to see over the text behind it. Replace it with the text on an
+    // opaque background. The image is painted from the element after dragstart, so the element must be laid out
+    // (offscreen rather than display: none) and is removed afterwards. The offset keeps the image where the selected
+    // text was relative to the finger, as the default image does.
+    const rect = selection.getBoundingClientRect()
+    if (e.dataTransfer && rect) {
+      const image = document.createElement('div')
+      image.className = css({
+        position: 'fixed',
+        top: '-1000px',
+        left: 0,
+        padding: '2px 4px',
+        border: 'solid 1px {colors.fg}',
+        borderRadius: '4px',
+        backgroundColor: 'bg',
+        color: 'fg',
+        whiteSpace: 'pre-wrap',
+      })
+      image.style.font = getComputedStyle(editable).font
+      image.style.maxWidth = `${editable.clientWidth}px`
+      image.textContent = text
+      document.body.appendChild(image)
+      // include the 1px border and the padding
+      e.dataTransfer.setDragImage(image, e.clientX - rect.left + 5, e.clientY - rect.top + 3)
+      setTimeout(() => image.remove())
+    }
+
     setTimeout(selection.collapse)
   }
 
   /**
-   * Suppresses em's long-press handling of the context menu while selected text is pressed in the Android app. A long
+   * Suppresses em's long-press handling of the context menu while selected text is pressed on Android. A long
    * press on selected text never becomes a thought drag (see canDrag), but the long-press handler in useLongPress
    * still blurs the editable and closes the keyboard, which interrupts the native text drag. The context menu that
    * follows the long press may arrive just before or just after dragstart, so the selected range is checked too.
    * Registered in the capture phase so it runs before React's handlers.
    */
-  const onAndroidAppContextMenu = (e: MouseEvent) => {
+  const onAndroidContextMenu = (e: MouseEvent) => {
     if ((e as PointerEvent).pointerType !== 'touch' || (!nativeTextDrag && !selection.text())) return
     e.preventDefault()
     e.stopPropagation()
   }
 
   /**
-   * Moves the drop caret of a native text drag in the Android app. The WebView draws its own drop caret under the
+   * Moves the drop caret of a native text drag on Android. The browser draws its own drop caret under the
    * finger, where it cannot be seen, while the collapsed selection's caret stays at the dragged text, so there are two.
-   * Canceling dragover clears the WebView's drop caret, and the native caret is hidden while dragging, which leaves
+   * Canceling dragover clears the browser's drop caret, and the native caret is hidden while dragging, which leaves
    * the single drop caret rendered by NativeTextDragCaret above the finger.
    */
-  const onAndroidAppDragOver = (e: DragEvent) => {
+  const onAndroidDragOver = (e: DragEvent) => {
     if (!nativeTextDrag) return
     e.preventDefault()
     const target = nativeTextDropPoint(e.clientX, e.clientY)
@@ -414,12 +444,12 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   /**
-   * Moves the dragged text to the drop caret in the Android app. The drop is canceled, since the WebView would drop
+   * Moves the dragged text to the drop caret on Android. The drop is canceled, since the browser would drop
    * the text under the finger rather than at the drop caret above it, and the text is moved with the same delete and
    * insert edits as the native drop. The dragged text is reselected if it is dropped onto itself. Registered in the
    * capture phase so it runs before any other drop handler.
    */
-  const onAndroidAppDrop = (e: DragEvent) => {
+  const onAndroidDrop = (e: DragEvent) => {
     if (!nativeTextDrag) return
     e.preventDefault()
     const { editable, start, end } = nativeTextDrag
@@ -439,13 +469,13 @@ const initEvents = (store: Store<State, any>) => {
     document.execCommand('insertHTML', false, html)
   }
 
-  /** Ends a native text drag in the Android app whose drop and dragend never arrived, e.g. when the WebView drops the drag, so the native caret is not left hidden. A native drag holds the touch, so the next touchstart comes after it has ended. */
-  const onAndroidAppTouchStart = () => {
+  /** Ends a native text drag on Android whose drop and dragend never arrived, e.g. when the browser drops the drag, so the native caret is not left hidden. A native drag holds the touch, so the next touchstart comes after it has ended. */
+  const onAndroidTouchStart = () => {
     if (nativeTextDrag) endNativeTextDrag()
   }
 
-  /** Ends a native text drag in the Android app that was abandoned without a drop, reselecting the dragged text. */
-  const onAndroidAppDragEnd = () => {
+  /** Ends a native text drag on Android that was abandoned without a drop, reselecting the dragged text. */
+  const onAndroidDragEnd = () => {
     if (!nativeTextDrag) return
     const { editable, start, end } = nativeTextDrag
     endNativeTextDrag()
@@ -631,13 +661,13 @@ const initEvents = (store: Store<State, any>) => {
     document.addEventListener('gesturechange', onSafariGesture)
     document.addEventListener('gestureend', onSafariGesture)
   }
-  if (isCapacitor() && !isIOS) {
-    window.addEventListener('dragstart', onAndroidAppDragStart)
-    window.addEventListener('contextmenu', onAndroidAppContextMenu, { capture: true })
-    window.addEventListener('dragover', onAndroidAppDragOver)
-    window.addEventListener('drop', onAndroidAppDrop, { capture: true })
-    window.addEventListener('dragend', onAndroidAppDragEnd)
-    window.addEventListener('touchstart', onAndroidAppTouchStart)
+  if (isAndroid) {
+    window.addEventListener('dragstart', onAndroidDragStart)
+    window.addEventListener('contextmenu', onAndroidContextMenu, { capture: true })
+    window.addEventListener('dragover', onAndroidDragOver)
+    window.addEventListener('drop', onAndroidDrop, { capture: true })
+    window.addEventListener('dragend', onAndroidDragEnd)
+    window.addEventListener('touchstart', onAndroidTouchStart)
   }
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
@@ -681,12 +711,12 @@ const initEvents = (store: Store<State, any>) => {
     document.removeEventListener('gesturestart', onSafariGesture)
     document.removeEventListener('gesturechange', onSafariGesture)
     document.removeEventListener('gestureend', onSafariGesture)
-    window.removeEventListener('dragstart', onAndroidAppDragStart)
-    window.removeEventListener('contextmenu', onAndroidAppContextMenu, { capture: true })
-    window.removeEventListener('dragover', onAndroidAppDragOver)
-    window.removeEventListener('drop', onAndroidAppDrop, { capture: true })
-    window.removeEventListener('dragend', onAndroidAppDragEnd)
-    window.removeEventListener('touchstart', onAndroidAppTouchStart)
+    window.removeEventListener('dragstart', onAndroidDragStart)
+    window.removeEventListener('contextmenu', onAndroidContextMenu, { capture: true })
+    window.removeEventListener('dragover', onAndroidDragOver)
+    window.removeEventListener('drop', onAndroidDrop, { capture: true })
+    window.removeEventListener('dragend', onAndroidDragEnd)
+    window.removeEventListener('touchstart', onAndroidTouchStart)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('scroll', updateScrollTop)
     window.removeEventListener('dragenter', dragEnter)

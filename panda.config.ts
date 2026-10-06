@@ -274,8 +274,8 @@ const globalCss = defineGlobalStyles({
         userSelect: 'none',
       },
     },
-    // Hide the caret of the collapsed selection during a native text drag in the Android app, leaving the single drop
-    // caret rendered by NativeTextDragCaret. See onAndroidAppDragOver in initEvents.ts.
+    // Hide the caret of the collapsed selection during a native text drag on Android, leaving the single drop
+    // caret rendered by NativeTextDragCaret. See onAndroidDragOver in initEvents.ts.
     _nativeTextDrag: {
       caretColor: 'transparent',
     },

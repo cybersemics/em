@@ -2,7 +2,7 @@ import store from '../../stores/app'
 import nativeTextDragCaretStore from '../../stores/nativeTextDragCaretStore'
 import initEvents from '../initEvents'
 
-// The Android app is tested in its own file because initEvents registers its listeners once per module registry, so
+// Android is tested in its own file because initEvents registers its listeners once per module registry, so
 // the platform must be mocked before the single registration.
 vi.mock('@capacitor/core', async importOriginal => {
   const actual = await importOriginal<typeof import('@capacitor/core')>()
@@ -90,6 +90,26 @@ it('dismisses the selection menu during a native drag of selected text', async (
 
   // the native caret is hidden while dragging
   expect(document.body.dataset.nativeTextDrag).toBe('true')
+})
+
+// https://github.com/cybersemics/em/issues/4225
+it('drags selected text with an opaque drag image of the text', async () => {
+  selectWord('fringilla')
+
+  const setDragImage = vi.fn()
+  const dragStart = new MouseEvent('dragstart', { bubbles: true, cancelable: true, clientX: 30, clientY: 10 })
+  Object.assign(dragStart, { dataTransfer: { setDragImage } })
+  editable.firstChild!.dispatchEvent(dragStart)
+
+  // the image is laid out when the browser paints it after dragstart, with the finger where it was on the selected
+  // text, which JSDOM lays out at the origin, offset by the image's border and padding
+  const [image, x, y] = setDragImage.mock.calls[0]
+  expect(image.textContent).toBe('fringilla')
+  expect(image.isConnected).toBe(true)
+  expect([x, y]).toEqual([35, 13])
+
+  await vi.runAllTimersAsync()
+  expect(image.isConnected).toBe(false)
 })
 
 // https://github.com/cybersemics/em/issues/4225
