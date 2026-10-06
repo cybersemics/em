@@ -440,8 +440,10 @@ describe('context view', () => {
     - m
       - y`)
 
-    expectPathToEqual(stateNew, stateNew.cursor, ['m'])
-    expect(isContextViewActive(stateNew, contextToPath(stateNew, ['b', 'm']))).toBe(false)
+    // the Context View on b/m stays open with the cursor on the home context, which is now a context of m
+    const contextViewPath = contextToPath(stateNew, ['b', 'm'])
+    expect(isContextViewActive(stateNew, contextViewPath)).toBe(true)
+    expect(stateNew.cursor).toEqual([...contextViewPath!, HOME_TOKEN])
   })
 })
 

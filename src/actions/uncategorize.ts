@@ -16,7 +16,6 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
-import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
@@ -46,17 +45,12 @@ const uncategorize = (state: State, { at }: Options): State => {
   // The cursor needs to be updated to stay in the context view.
   const isInContextView = isContextViewActive(state, parentOf(path))
   if (isInContextView) {
-    const contextParentPath = parentOf(parentOf(simplePath))
-    // A top-level context has no parent to stay on, since the thought is moved up to the home context.
-    // Close the context view and set the cursor on the moved thought instead.
-    const isTopLevelContext = contextParentPath.length === 0
     return reducerFlow([
       state => uncategorize(state, { at: rootedParentOf(state, simplePath) }),
-      isTopLevelContext
-        ? state => ({ ...state, contextViews: _.omit(state.contextViews, hashPath(parentOf(path))) })
-        : null,
       setCursor({
-        path: isTopLevelContext ? [head(simplePath)] : appendToPath(parentOf(path), head(contextParentPath)),
+        // The thought is moved into the context's parent, which becomes its new context in the context view.
+        // A top-level context is moved into the home context, so the cursor is set on the home context.
+        path: appendToPath(parentOf(path), head(rootedParentOf(state, parentOf(simplePath)))),
         isKeyboardOpen: state.isKeyboardOpen,
         offset: 0,
       }),
