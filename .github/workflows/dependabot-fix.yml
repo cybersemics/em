@@ -1,9 +1,9 @@
-# Starts an Opus 5 agent task on a Dependabot pull request whose checks failed.
+# Starts a Copilot agent task on a Dependabot pull request whose checks failed.
 #
-# Dependabot opens a bump, `dependabot-automerge.yml` approves it and enables auto-merge, and the
-# bump lands on its own — until a check fails, at which point the pull request stops dead and waits
-# for a human. Most of those failures are small and mechanical: a renamed export, a tightened type,
-# an assertion that moved. This puts an agent on one the moment it happens, so the bump is being
+# Dependabot opens a bump, `dependabot-automerge.yml` approves and merges it once every check has
+# passed, and the bump lands on its own — until a check fails, at which point the pull request stops
+# dead and waits for a human. Most of those failures are small and mechanical: a renamed export, a
+# tightened type, an assertion that moved. This puts an agent on one the moment it happens, so the bump is being
 # worked on rather than queueing behind whoever next reads the checks tab.
 #
 # Runs:
@@ -11,7 +11,8 @@
 #   - Manually: `gh workflow run dependabot-fix.yml -f pr=5203`
 #
 # Follow-up:
-#   - A GitHub Copilot cloud agent task (Opus 5, the `worker-bee` agent), committing to the
+#   - A GitHub Copilot cloud agent task (the `worker-bee` agent, on the COPILOT_MODEL or
+#     COPILOT_MODEL_DEPENDABOT repository variable's model), committing to the
 #     pull request's own branch rather than opening a second pull request
 #   - A single comment on the pull request linking that task
 #
@@ -40,7 +41,18 @@ name: Dependabot Fix
 
 on:
   workflow_run:
-    workflows: ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'Vercel Preview', 'TDD', 'Agent Scripts']
+    workflows:
+      [
+        'Lint',
+        'Test',
+        'Puppeteer',
+        'BrowserStack',
+        'BrowserStack Android',
+        'Vercel Preview',
+        'TDD',
+        'Agent Scripts',
+        'Tauri Check',
+      ]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -97,9 +109,12 @@ jobs:
             await require('./scripts/ci/collect-dependabot-failures.cjs')({ github, context, core })
 
       # Uses a PAT, not GITHUB_TOKEN: the agent tasks API rejects app installation tokens.
-      - name: Start Opus 5 task
+      - name: Start Copilot task
         if: steps.collect.outputs.dispatch == 'true'
         env:
+          # Repository variables naming the Copilot model; the specific one wins when set.
+          COPILOT_MODEL: ${{ vars.COPILOT_MODEL }}
+          COPILOT_MODEL_DEPENDABOT: ${{ vars.COPILOT_MODEL_DEPENDABOT }}
           COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # The run the comment's footer credits with starting the task.

@@ -33,7 +33,7 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandle = await waitForEditable('foo')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     await waitUntil(isKeyboardShown)
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -45,7 +45,7 @@ describe('Caret', () => {
     await newThought('bar', { insertNewSubthought: true })
 
     const editableNodeHandle = await waitForEditable('foo')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     await waitUntil(async () => (await getEditingText()) === 'foo')
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -76,7 +76,7 @@ describe('Caret', () => {
     await newThought('d', { insertNewSubthought: true })
 
     const editableNodeHandle = await waitForEditable('c')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
     await waitUntil(async () => (await getEditingText()) === 'c')
 
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -96,7 +96,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandle = await waitForEditable('d')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
     await waitUntil(async () => (await getEditingText()) !== 'c')
 
     const editingText = await getEditingText()
@@ -116,7 +116,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandle = await waitForEditable('d')
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     await waitUntil(async () => (await getEditingText()) === 'd')
     const selectionTextContent = await getSelection().focusNode?.textContent
@@ -148,10 +148,9 @@ describe('Caret', () => {
     await clickThought('b')
     await clickThought('c')
 
-    // y:60 compensates for the offset between web and screen coordinates
     const editable = await waitForEditable('d')
-    await tap(editable, { y: 60 })
-    await tap(editable, { y: 60 })
+    await tap(editable)
+    await tap(editable)
     await waitUntil(isKeyboardShown)
 
     await scrubSpaceBar(-6)
@@ -179,9 +178,8 @@ describe('Caret', () => {
         - A`,
     )
 
-    // y:60 compensates for the offset between web and screen coordinates
     const note = await waitForElement('[aria-label="note-editable"]')
-    await tap(note, { y: 60 })
+    await tap(note)
     await waitUntil(isKeyboardShown)
 
     // zero steps: holding the space bar is the whole gesture
@@ -206,7 +204,7 @@ describe('Caret', () => {
     await clickThought('c')
 
     const editableNodeHandleD = await waitForEditable('d')
-    await tap(editableNodeHandleD, { y: 200 })
+    await tap(editableNodeHandleD, { y: 140 })
 
     // Wait until cursor change
     await waitUntil(async () => (await getEditingText()) === 'b')
@@ -229,7 +227,7 @@ describe('Caret', () => {
     await hideKeyboardByTappingDone()
 
     const editableNodeHandleD = await waitForEditable('d')
-    await tap(editableNodeHandleD, { y: 200 })
+    await tap(editableNodeHandleD, { y: 140 })
 
     // Wait until cursor change
     await waitUntil(async () => (await getEditingText()) === 'b')
@@ -250,7 +248,7 @@ describe('Caret', () => {
       segmentLength: elementRect.width,
     })
 
-    await tap(editableNodeHandle, { y: 60 })
+    await tap(editableNodeHandle)
 
     const editingText = await getEditingText()
     expect(editingText).toBe('foo')
@@ -337,7 +335,9 @@ describe('Caret', () => {
     await newThought('Hello')
 
     const editable = await waitForEditable('Hello')
-    await browser.execute(() => window.scrollTo(0, 0))
+    // Deliberately no scrollTo(0, 0): the keyboard makes Safari scroll the document so that scrollY tracks
+    // visualViewport.offsetTop, and forcing scrollY back to 0 leaves the two desynchronised, which shifts the
+    // page-to-screen offset by offsetTop and lands the tap below the thought.
     const rect = await getElementRectByScreen(editable)
 
     // Prime with a tap on the thought's center + keyboard dismissal. Priming while
@@ -361,6 +361,7 @@ describe('Caret', () => {
         ],
       },
     ])
+
     await hideKeyboardByTappingDone()
 
     // Cursor Back (swipe right) to set the cursor to null, so that "Hello" becomes a non-cursor thought.

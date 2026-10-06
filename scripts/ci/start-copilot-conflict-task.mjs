@@ -8,7 +8,11 @@
 import { readFileSync } from 'node:fs'
 import { MARKER, MAX_TASKS, SKIP_LABELS, commentBody, parseState } from './copilot-conflicts-comment.cjs'
 
-const MODEL = 'claude-opus-5'
+/**
+ * The model the task runs on, as the agent tasks API names it (e.g. `claude-opus-5.5`): the
+ * COPILOT_MODEL repository variable, or COPILOT_MODEL_CONFLICTS to give these tasks their own.
+ */
+const MODEL = process.env.COPILOT_MODEL_CONFLICTS || process.env.COPILOT_MODEL
 const CUSTOM_AGENT = 'worker-bee'
 const API_VERSION = '2026-03-10'
 const [reportFile] = process.argv.slice(2)
@@ -21,6 +25,11 @@ if (!reportFile) {
 if (!process.env.COPILOT_TASKS_TOKEN) {
   console.error('COPILOT_TASKS_TOKEN secret not set; skipping Copilot conflict-resolution dispatch.')
   process.exit(0)
+}
+
+if (!MODEL) {
+  console.error('Neither COPILOT_MODEL_CONFLICTS nor COPILOT_MODEL is set; set the COPILOT_MODEL repository variable.')
+  process.exit(1)
 }
 
 const { tasks, requested } = JSON.parse(readFileSync(reportFile, 'utf8'))
@@ -39,7 +48,7 @@ const startTask = async (task, { useDefaultModel = false } = {}) => {
       prompt: [
         `Resolve the merge conflicts on Copilot pull request #${task.number} (${task.url}).`,
         `Merge the latest \`${task.baseRef}\` into \`${task.headRef}\`, preserve both intended changes, and commit the resolution directly to this branch.`,
-        'Do not open a second pull request. Run the relevant tests and lint before requesting review.',
+        'Do not open a second pull request. Run the relevant tests and lint. Do not request a review; the existing reviewers stay as they are.',
       ].join('\n'),
       ...(useDefaultModel ? {} : { model: MODEL }),
       custom_agent: CUSTOM_AGENT,

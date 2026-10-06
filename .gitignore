@@ -51,7 +51,8 @@ styled-system-studio
 
 # WDIO
 wdio.*
-!src/e2e/android/config/wdio.*.ts
+# The WebdriverIO configs themselves are source. Without this, `git add` silently skips a new one.
+!src/e2e/**/config/wdio.*.conf.ts
 browserstack.*
 local.*
 /log

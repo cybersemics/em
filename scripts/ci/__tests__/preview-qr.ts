@@ -1,33 +1,19 @@
 /**
- * Tests for the pull request body handling behind .github/workflows/preview-qr.yml: the managed
- * block's parse/render round trip, the state transitions in the script's header, and the repair
- * after `gh pr edit --attach`. The GitHub and gh calls around them can only be exercised on a real
- * pull request once the workflow is on main; everything that decides *what* to write is here.
+ * Tests for the comment handling behind .github/workflows/preview-qr.yml: the managed block's
+ * parse/render round trip, the state transitions in the script's header, and cutting out a block
+ * left in a description from before the QR moved to a comment. The GitHub calls around them can
+ * only be exercised on a real pull request once the workflow is on main; everything that decides
+ * *what* to write is here.
  */
 import { describe, expect, it } from 'vitest'
-import {
-  END,
-  QR_FILE,
-  START,
-  decide,
-  formatTimestamp,
-  parseBody,
-  renderBlock,
-  repairAfterAttach,
-  selectPullRequest,
-  spliceBody,
-} from '../preview-qr.mjs'
+import { END, START, decide, formatTimestamp, parseBody, renderBlock, selectPullRequest } from '../preview-qr.mjs'
 
 const shaA = 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678'
 const shaB = 'd4e5f6a7b8c90112233445566778899aabbccdde'
-const imageA = 'https://github.com/user-attachments/assets/0b1a2c3d-4e5f-6071-8293-a4b5c6d7e8f9'
-const imageB = 'https://github.com/user-attachments/assets/ffffffff-1111-2222-3333-444444444444'
+const imageA = 'https://raw.githubusercontent.com/cybersemics/em/0b1a2c3d4e5f60718293a4b5c6d7e8f901234567/pr-1.png'
+const imageB = 'https://raw.githubusercontent.com/cybersemics/em/ffffffff11112222333344444444444455556666/pr-1.png'
 const stableA = { sha: shaA, createdAt: '2026-09-04T10:00:00Z', url: 'https://em-a.vercel.app', image: imageA }
 const pendingB = { sha: shaB, createdAt: '2026-09-04T12:30:00Z' }
-
-/** A pull request body with human text above a managed block in the given state. */
-const bodyWith = (state: Parameters<typeof renderBlock>[0]) =>
-  spliceBody('## Summary\n\nHuman-written description.', renderBlock(state))
 
 describe('formatTimestamp', () => {
   it('formats the deployment timestamp as a short UTC date and time', () => {
@@ -48,7 +34,6 @@ describe('renderBlock', () => {
     expect(block).toContain(
       `<a href="${stableA.url}" target="_blank" rel="noopener noreferrer">![Preview deployment](${imageA})</a>`,
     )
-    expect(block).not.toContain('Open preview')
     expect(block).not.toContain('Generating')
   })
 
@@ -73,14 +58,9 @@ describe('renderBlock', () => {
     expect(renderBlock({ stable: null, pending: null })).toBeNull()
   })
 
-  it('keeps the image URL out of the state comment, where gh cannot rewrite it', () => {
-    const block = renderBlock({ stable: { ...stableA, image: `./${QR_FILE}` }, pending: null })!
-    const comment = block.match(/<!-- preview-qr:state (.*) -->/)![1]
-    expect(comment).not.toContain(QR_FILE)
-    expect(JSON.parse(comment)).toEqual({
-      stable: { sha: shaA, createdAt: stableA.createdAt, url: stableA.url },
-      pending: null,
-    })
+  it('keeps the QR image URL in the state comment', () => {
+    const block = renderBlock({ stable: stableA, pending: null })!
+    expect(JSON.parse(block.match(/<!-- preview-qr:state (.*) -->/)![1])).toEqual({ stable: stableA, pending: null })
   })
 
   it('separates the image from the HTML tags with blank lines so GitHub renders it', () => {
@@ -92,40 +72,39 @@ describe('renderBlock', () => {
 
 describe('parseBody', () => {
   it('round-trips the state through a rendered block', () => {
-    const { outside, state } = parseBody(bodyWith({ stable: stableA, pending: pendingB }))
-    expect(outside).toBe('## Summary\n\nHuman-written description.')
-    expect(state).toEqual({ stable: stableA, pending: pendingB })
+    expect(parseBody(renderBlock({ stable: stableA, pending: pendingB }))).toEqual({
+      outside: '',
+      state: { stable: stableA, pending: pendingB },
+    })
   })
 
-  it('treats a body without a block as human text with no state', () => {
+  it('treats a body without a block as having no state', () => {
     expect(parseBody('Just a description.\n')).toEqual({ outside: 'Just a description.', state: null })
     expect(parseBody(null)).toEqual({ outside: '', state: null })
   })
 
-  it('lifts a block out of the middle of the description, preserving the text around it', () => {
+  it('cuts a block out of a description, preserving the text around it', () => {
     const block = renderBlock({ stable: stableA, pending: null })
-    const { outside, state } = parseBody(`Intro\n\n${block}\n\nA paragraph a human added below the block.\n`)
-    expect(outside).toBe('Intro\n\n\n\nA paragraph a human added below the block.')
-    expect(state).toEqual({ stable: stableA, pending: null })
-    expect(spliceBody(outside, block)).toBe(`Intro\n\n\n\nA paragraph a human added below the block.\n\n${block}`)
+    expect(parseBody(`## Summary\n\nHuman-written description.\n\n${block}`).outside).toBe(
+      '## Summary\n\nHuman-written description.',
+    )
+    expect(parseBody(`Intro\n\n${block}\n\nA paragraph a human added below the block.\n`).outside).toBe(
+      'Intro\n\n\n\nA paragraph a human added below the block.',
+    )
   })
 
-  it('reports no image when the block still holds the local path, so the QR is uploaded again', () => {
-    const { state } = parseBody(bodyWith({ stable: { ...stableA, image: `./${QR_FILE}` }, pending: null }))
-    expect(state!.stable!.image).toBeNull()
+  it('reports no image for a block written before the image URL was part of the state', () => {
+    const { sha, createdAt, url } = stableA
+    const state = JSON.stringify({ stable: { sha, createdAt, url }, pending: null })
+    expect(parseBody(`${START}\n<!-- preview-qr:state ${state} -->\n${END}`).state).toEqual({
+      stable: { ...stableA, image: null },
+      pending: null,
+    })
   })
 
   it('ignores a state comment that is not valid JSON', () => {
     const body = `${START}\n<!-- preview-qr:state {not json} -->\n<details></details>\n${END}`
     expect(parseBody(body)).toEqual({ outside: '', state: null })
-  })
-})
-
-describe('spliceBody', () => {
-  it('appends the block after a blank line and drops it when there is none', () => {
-    expect(spliceBody('text', 'block')).toBe('text\n\nblock')
-    expect(spliceBody('', 'block')).toBe('block')
-    expect(spliceBody('text', null)).toBe('text')
   })
 })
 
@@ -172,7 +151,7 @@ describe('decide', () => {
     ).toBeNull()
   })
 
-  it('replaces the preview when the run succeeds, marking the QR as still to be uploaded', () => {
+  it('replaces the preview when the run succeeds, marking the QR as still to be committed', () => {
     expect(
       decide({ run: succeeded, deployment: deploymentB, current: { stable: stableA, pending: pendingB } }),
     ).toEqual({
@@ -206,7 +185,7 @@ describe('decide', () => {
     })
   })
 
-  it('removes the block when the first build fails', () => {
+  it('removes the comment when the first build fails', () => {
     expect(decide({ run: failed, deployment: null, current: { stable: null, pending: pendingB } })).toEqual({
       stable: null,
       pending: null,
@@ -231,63 +210,26 @@ describe('decide', () => {
 describe('state transitions end to end', () => {
   const stableB = { sha: shaB, createdAt: pendingB.createdAt, url: 'https://em-b.vercel.app', image: imageB }
 
-  it('A stable → B generating → B stable leaves exactly one block and one QR', () => {
-    const generating = bodyWith({ stable: stableA, pending: pendingB })
+  it('A stable → B generating → B stable leaves exactly one QR', () => {
+    const generating = renderBlock({ stable: stableA, pending: pendingB })!
     expect(generating).toContain(imageA)
     expect(generating).toContain('d4e5f6a')
-    const stable = spliceBody(parseBody(generating).outside, renderBlock({ stable: stableB, pending: null }))
+    const stable = renderBlock({ stable: stableB, pending: null })!
     expect(stable).not.toContain(imageA)
     expect(stable).not.toContain('a1b2c3d')
     expect(stable).not.toContain('Generating')
-    expect(stable.split(START)).toHaveLength(2)
     expect(stable.split('![Preview deployment]')).toHaveLength(2)
-    expect(stable.startsWith('## Summary')).toBe(true)
   })
 
   it('A stable → B generating → B failed returns to A exactly', () => {
-    const before = bodyWith({ stable: stableA, pending: null })
-    const generating = spliceBody(parseBody(before).outside, renderBlock({ stable: stableA, pending: pendingB }))
-    const after = spliceBody(parseBody(generating).outside, renderBlock({ stable: stableA, pending: null }))
-    expect(after).toBe(before)
-    expect(after).not.toContain('d4e5f6a')
+    const before = renderBlock({ stable: stableA, pending: null })
+    const generating = renderBlock({ stable: stableA, pending: pendingB })
+    expect(renderBlock({ stable: parseBody(generating).state!.stable, pending: null })).toBe(before)
   })
 
   it('is idempotent for a repeated event', () => {
-    const body = bodyWith({ stable: stableA, pending: pendingB })
-    const { outside, state } = parseBody(body)
-    expect(spliceBody(outside, renderBlock(state!))).toBe(body)
-  })
-})
-
-describe('repairAfterAttach', () => {
-  const target = {
-    stable: { sha: shaB, createdAt: pendingB.createdAt, url: 'https://em-b.vercel.app', image: null },
-    pending: null,
-  }
-  const sent = bodyWith({ ...target, stable: { ...target.stable, image: `./${QR_FILE}` } })
-
-  it('does nothing when gh rewrote the reference', () => {
-    expect(repairAfterAttach({ before: sent, after: sent.replace(`./${QR_FILE}`, imageB), state: target })).toBeNull()
-  })
-
-  it('moves an appended attachment into the block and removes the local path', () => {
-    const repaired = repairAfterAttach({ before: sent, after: `${sent}\n\n![${QR_FILE}](${imageB})`, state: target })!
-    expect(repaired).not.toContain(QR_FILE)
-    expect(repaired).toContain(
-      `<a href="https://em-b.vercel.app" target="_blank" rel="noopener noreferrer">![Preview deployment](${imageB})</a>`,
-    )
-    expect(repaired.endsWith(END)).toBe(true)
-    expect(repaired.split('![Preview deployment]')).toHaveLength(2)
-    expect(repaired.split(imageB)).toHaveLength(2)
-  })
-
-  it('does not mistake an attachment the author embedded for the uploaded QR', () => {
-    const authored = `Screenshot: ![before](${imageA})`
-    const before = spliceBody(authored, renderBlock({ ...target, stable: { ...target.stable, image: `./${QR_FILE}` } }))
-    expect(repairAfterAttach({ before, after: before, state: target })).toBeNull()
-    const repaired = repairAfterAttach({ before, after: `${before}\n\n![${QR_FILE}](${imageB})`, state: target })!
-    expect(repaired).toContain(authored)
-    expect(repaired).toContain(`![Preview deployment](${imageB})</a>`)
+    const comment = renderBlock({ stable: stableA, pending: pendingB })
+    expect(renderBlock(parseBody(comment).state!)).toBe(comment)
   })
 })
 

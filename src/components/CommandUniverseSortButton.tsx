@@ -53,6 +53,7 @@ const CommandUniverseSortButton = ({ onSortChange }: CommandUniverseSortButtonPr
       onClick={() => setDropdownOpen(!isDropdownOpen)}
       className={css({
         border: 'none',
+        fontFamily: 'inherit',
         background: 'transparent',
         padding: 0,
         cursor: 'pointer',

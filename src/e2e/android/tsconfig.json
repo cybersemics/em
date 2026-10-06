@@ -1,7 +1,16 @@
 {
-  // Keep WebdriverIO globals scoped to the device tests, including their shared iOS helpers.
+  // Typechecks the WebdriverIO (Android Chrome) tests. Together with src/e2e/iOS/tsconfig.json these are the only
+  // programs that declare WebdriverIO's globals — browser, $, $$, and expect from @wdio/globals/types, mocha's
+  // describe/it via @wdio/mocha-framework — and @wdio/browserstack-service's global interfaces. The root tsconfig
+  // excludes this directory so that none of those leak into app code. The Android suite imports the iOS suite's
+  // platform-neutral helpers and config, so those files are checked by both WebdriverIO programs, which declare the
+  // same globals.
   "extends": "../../../tsconfig.json",
+  // The app modules pulled in by import rely on the app's ambient declarations (vite-env.d.ts, @types/*.d.ts)
+  // and on the global augmentations in src/@types/index.ts (Window.em, the redux Dispatch overloads, …),
+  // which the root program gets from its src/**/*.ts include and this one has to name.
   "include": ["**/*.ts", "../../@types/index.ts", "../../**/*.d.ts"],
+  // The root excludes this directory; exclude is inherited, so it must be reset here.
   "exclude": [],
   "compilerOptions": {
     "types": ["node", "@wdio/globals/types", "@wdio/mocha-framework", "@wdio/browserstack-service"]
