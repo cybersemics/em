@@ -46,6 +46,7 @@ const ThoughtLink = ({
             variant='small'
             hideArchive={hideArchive}
             path={parentPath}
+            placeholder={EMPTY_THOUGHT_PLACEHOLDER}
             staticText={staticBreadcrumbs}
             charLimit={charLimit || 32}
             thoughtsLimit={thoughtsLimit || 10}

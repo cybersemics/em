@@ -78,7 +78,7 @@ describe('sidebar', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5848
-  it.skip('empty ancestor in a favorite breadcrumb shows the empty-thought placeholder', async () => {
+  it('empty ancestor in a favorite breadcrumb shows the empty-thought placeholder', async () => {
     await newThought()
     await clickToolbar('Add to Favorites')
     await press('Enter', { meta: true })

@@ -101,52 +101,62 @@ const BreadCrumb = React.memo(
       label?: string
       onClickEllipsis: () => void
       path: Path
+      placeholder?: string
       showDivider?: boolean
       staticText?: boolean
       linkCssRaw?: SystemStyleObject
     }
-  >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
-    const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-    const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
-    const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
-    const delimiterStyle: React.CSSProperties = {
-      fontSize: '0.8em',
-      lineHeight: '16px',
-      margin: '0 3px',
-      verticalAlign: 1,
-      userSelect: 'none',
-    }
-    return !isOverflow ? (
-      <span ref={ref} className={css({ fontSize: staticText ? '0.8em' : undefined })}>
-        {/* possible delimiter symbols: ⇢ */}
-        {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
-        {!isDeleting &&
-          (staticText ? (
-            ellipsize(decodeCharacterEntities(value))
-          ) : label === HOME_TOKEN ? (
-            <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
-          ) : (
-            <Link
-              cssRaw={css.raw(linkCssRaw)}
-              className={extendTapRecipe({ size: 'small' })}
+  >(
+    (
+      { isOverflow, label, isDeleting, path, placeholder, showDivider, onClickEllipsis, staticText, linkCssRaw },
+      ref,
+    ) => {
+      const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
+      const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
+      const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
+      const delimiterStyle: React.CSSProperties = {
+        fontSize: '0.8em',
+        lineHeight: '16px',
+        margin: '0 3px',
+        verticalAlign: 1,
+        userSelect: 'none',
+      }
+      return !isOverflow ? (
+        <span ref={ref} className={css({ fontSize: staticText ? '0.8em' : undefined })}>
+          {/* possible delimiter symbols: ⇢ */}
+          {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
+          {!isDeleting &&
+            (staticText ? (
+              ellipsize(decodeCharacterEntities(value))
+            ) : label === HOME_TOKEN ? (
+              <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
+            ) : (
+              <Link
+                cssRaw={css.raw(linkCssRaw)}
+                className={extendTapRecipe({ size: 'small' })}
+                simplePath={simplePath}
+                label={label}
+                placeholder={placeholder}
+              />
+            ))}
+          {!isDeleting && (
+            <Superscript
               simplePath={simplePath}
-              label={label}
+              cssRaw={css.raw({ position: 'relative', left: '-2px', top: '-3px' })}
             />
-          ))}
-        {!isDeleting && (
-          <Superscript simplePath={simplePath} cssRaw={css.raw({ position: 'relative', left: '-2px', top: '-3px' })} />
-        )}
-      </span>
-    ) : (
-      <span ref={ref}>
-        <span style={delimiterStyle}> • </span>
-        <span {...fastClick(onClickEllipsis)} className={css({ cursor: 'pointer' })}>
-          {' '}
-          ...{' '}
+          )}
         </span>
-      </span>
-    )
-  }),
+      ) : (
+        <span ref={ref}>
+          <span style={delimiterStyle}> • </span>
+          <span {...fastClick(onClickEllipsis)} className={css({ cursor: 'pointer' })}>
+            {' '}
+            ...{' '}
+          </span>
+        </span>
+      )
+    },
+  ),
 )
 
 BreadCrumb.displayName = 'BreadCrumb'
@@ -157,6 +167,7 @@ const ContextBreadcrumbs = ({
   hideArchive,
   hidden,
   path,
+  placeholder,
   staticText,
   thoughtsLimit,
   linkCssRaw,
@@ -172,6 +183,8 @@ const ContextBreadcrumbs = ({
    */
   hidden?: boolean
   path: Path
+  /** Text shown in place of an empty ancestor. Empty ancestors render blank if omitted. */
+  placeholder?: string
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean
   thoughtsLimit?: number
@@ -257,6 +270,7 @@ const ContextBreadcrumbs = ({
                   label={label}
                   onClickEllipsis={() => setDisabled(true)}
                   path={ancestors[i]}
+                  placeholder={placeholder}
                   showDivider={i > 0}
                   staticText={staticText}
                   linkCssRaw={css.raw(
