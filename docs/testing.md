@@ -8,7 +8,7 @@
 
 ## Quick Start
 
-The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests. A fresh checkout — including every agent worktree under `.claude/worktrees/` — needs its own `yarn install` (a new Claude Code cloud session runs it automatically; see [Claude Code in the cloud](agents/external-agents.md#claude-code-in-the-cloud)): the local Capacitor plugins in `packages/` are linked as workspace dependencies and are only compiled by the `postinstall` → `build:packages` step, so without it any test that reaches production code importing one fails to collect with `Failed to resolve import "webview-background" from "src/device/nativeHistory.ts"`. The generated Panda CSS output is the same story one step earlier, failing to collect with `Failed to resolve import '../../../styled-system/css'`.
+The project requires Node.js 22.13 or newer. Install dependencies with `yarn` before running tests. A fresh checkout — including every agent worktree under `.claude/worktrees/` — needs its own `yarn install` (a new Claude Code cloud session runs it automatically; see [Claude Code in the cloud](agents/external-agents.md#claude-code-in-the-cloud)): the local Capacitor plugins in `packages/` are linked as workspace dependencies and are only compiled by the `postinstall` → `build:packages` step, so without it any test that reaches production code importing one fails to collect with `Failed to resolve import "webview-background" from "src/device/nativeHistory.ts"`. The generated Panda CSS output is the same story one step earlier, failing to collect with `Failed to resolve import '../../../styled-system/css'`. Install again after merging `main` into a branch that has fallen behind it: the worktree keeps the dependencies it was installed with, and a lint configuration written against newer ones crashes ESLint before it lints anything, e.g. `TypeError: panda.configs.recommended is not a function` after a PandaCSS bump.
 
 ```sh
 yarn build:styles    # styled-system/
@@ -215,12 +215,13 @@ The second is cursor movement. `cursorUp`, `cursorDown`, `cursorNext`, `cursorPr
 
 Helpers are the vocabulary; tests are sentences. A puppeteer test should read as a sequence like `paste → clickThought → press → waitForEditable → exportThoughts → expect`. There are helpers for nearly everything (see [Test Helpers](#test-helpers)); use them before writing raw Puppeteer calls or Redux plumbing.
 
-Writing a **new helper** is allowed but is a design event, not a workaround: name it after the user's intent (`clickThought`, not `clickDivTreeNode`), put it in the helpers directory, and expect it to be reviewed as shared vocabulary. Inline `page.evaluate` in a test file is acceptable only for reading user-visible DOM (e.g. counting elements by `aria-label`); anything touching `window.em` belongs in a sanctioned helper or nowhere.
+Writing a **new helper** is allowed but is a design event, not a workaround: name it after the user's intent (`clickThought`, not `clickDivTreeNode`), put it in the helpers directory, and expect it to be reviewed as shared vocabulary. Inline `page.evaluate` in a test file is acceptable only for reading user-visible DOM (e.g. counting elements by `aria-label`) or waiting for an animation frame (a file-local `nextFrame`); anything touching `window.em` belongs in a sanctioned helper or nowhere.
 
 A helper should have a narrow, explicit contract:
 
 - Do one user action or query one condition. A helper may compose the low-level driver calls that make up a single action (`longPressThought` holds and releases a touch), but it must not bundle several distinct user steps into one call — those stay inline in the test ([Principle 5](#5-keep-tests-concrete-and-boring)).
 - Keep expectations in the test so the behavior being proved is visible. A helper may wait for the action it performs to settle, but it must not hide unrelated assertions or synchronization.
+- Fix a flaky caller at the call site, not in a shared helper. Every wait added to a helper is paid by all of its callers, so before widening one, read its call sites: a wait that only some of them need belongs in those tests. `waitForCursor` has about twenty callers, and only the few that press a cursor key next need the extra animation frame described under [cursor movement](#3-never-wait-for-wall-clock-time-wait-for-the-response), so those tests wait for it themselves. ([#5703](https://github.com/cybersemics/em/pull/5703))
 - Accept semantic inputs and named options rather than exposing browser plumbing or positional booleans.
 - If a required target or precondition is missing, throw a descriptive error. Do not silently return, use an optional-chain fallback, or allow the test to pass without performing its act.
 
