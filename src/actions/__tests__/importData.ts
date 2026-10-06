@@ -830,6 +830,61 @@ it('import a dropped markdown file', async () => {
 `)
 })
 
+// https://github.com/cybersemics/em/issues/5172
+// Pasted markdown is imported with importText and a dropped markdown file is imported with importFiles. Both must give
+// the same outline, so the same markdown is imported into two identical destinations, once through each.
+it('import the same markdown with importText and importFiles', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const markdown = `# Fruits
+
+- Apple
+  - Red
+- Banana
+
+## Citrus
+
+- Orange
+
+# Vegetables
+
+- Carrot
+`
+
+  store.dispatch([
+    importText({ text: '- text\n- files' }),
+    (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text'])!, text: markdown })),
+    (dispatch, getState) =>
+      dispatch(
+        importFiles({
+          path: contextToPath(getState(), ['files'])!,
+          files: [{ lastModified: Date.now(), name: 'test.md', size: markdown.length, text: async () => markdown }],
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exportedText = exportContext(store.getState(), ['text'], 'text/plain')
+  const exportedFiles = exportContext(store.getState(), ['files'], 'text/plain')
+
+  cleanup()
+
+  const expected = `
+  - Fruits
+    - Apple
+      - Red
+    - Banana
+    - Citrus
+      - Orange
+  - Vegetables
+    - Carrot`
+
+  expect(exportedText).toBe(`- text${expected}`)
+  expect(exportedFiles).toBe(`- files${expected}`)
+})
+
 // TODO: Indentation broke when switching from importText to importData
 it.skip(`import bold thoughts with bold descendants`, async () => {
   const text = `
