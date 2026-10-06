@@ -401,6 +401,39 @@ describe('drag', () => {
     expect(await getEditingText()).toBe('a')
   })
 
+  // https://github.com/cybersemics/em/issues/5856
+  it.skip('names an empty thought as empty thought in moved alert', async () => {
+    await paste(`
+      - a
+        - =pin
+          - true
+        -
+      -
+        - =pin
+          - true
+        - c
+    `)
+
+    await press('Escape')
+
+    // the empty thought under a is the first empty thought
+    await dragAndDropThought('', 'c', {
+      position: 'after',
+      showAlert: true,
+    })
+
+    await waitForAlert('moved to')
+
+    const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
+    expect(alertText).toBe('empty thought moved to empty thought.')
+
+    const destinationLinkText = await page.$eval(
+      '[data-testid=alert-content] [data-thought-link]',
+      el => el.textContent,
+    )
+    expect(destinationLinkText).toBe('empty thought')
+  })
+
   it('should allow dropping before first thought in table row', async () => {
     await paste(`
       - x
