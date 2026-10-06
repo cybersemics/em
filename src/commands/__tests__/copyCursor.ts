@@ -89,7 +89,7 @@ describe('copyCursor', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5856
-  it.skip('names an empty thought as empty thought in the alert', async () => {
+  it('names an empty thought as empty thought in the alert', async () => {
     store.dispatch(newThought({ value: '' }))
 
     executeCommandWithMulticursor(copyCursorCommand, { store })

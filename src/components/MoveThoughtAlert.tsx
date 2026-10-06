@@ -27,19 +27,21 @@ const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numTho
   const isRootPath = isRoot(toPath)
   const to = useSelector(state => (isRootPath ? 'home' : getThoughtById(state, head(toPath))?.value || ''))
   const context = useSelector(state => (contextPath ? headValue(state, contextPath) : null))
-  const alertFrom = numThoughts === 1 ? `"${ellipsize(from)}"` : `${numThoughts} thoughts`
+  const alertFrom = numThoughts === 1 ? (from ? `"${ellipsize(from)}"` : 'empty thought') : `${numThoughts} thoughts`
 
   return (
     <span>
       {alertFrom} moved to{top ? ' top of' : ''}{' '}
       {isRootPath ? (
         to
-      ) : (
+      ) : to ? (
         <>
           &quot;
           <Link simplePath={toPath} label={ellipsize(to)} style={{ cursor: 'pointer', textDecoration: 'underline' }} />
           &quot;
         </>
+      ) : (
+        <Link simplePath={toPath} label='empty thought' style={{ cursor: 'pointer', textDecoration: 'underline' }} />
       )}
       {contextPath ? ` in the context of ${ellipsize(context || 'MISSING_CONTEXT')}` : ''}.
     </span>

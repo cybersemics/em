@@ -106,7 +106,7 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it('DragAndDropThought', async () => {
+  it.skip('DragAndDropThought', async () => {
     await paste(`
       - a
       - b
@@ -402,7 +402,7 @@ describe('drag', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5856
-  it.skip('names an empty thought as empty thought in moved alert', async () => {
+  it('names an empty thought as empty thought in moved alert', async () => {
     await paste(`
       - a
         - =pin

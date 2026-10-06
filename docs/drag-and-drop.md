@@ -185,7 +185,7 @@ When a thought is dropped on the gutter:
 - If dragged from the main thoughts area (`zone: Thoughts`), the thought is archived via [`archiveThought`](../src/actions/archiveThought.ts) with a haptic vibration of `DELETE_VIBRATE_DURATION` (80 ms).
 - If dragged from favorites (`zone: Favorites`), the `=favorite` attribute is toggled off via `toggleAttribute`.
 
-When the user hovers the gutter without dropping, a contextual alert is shown (e.g. *"Drop to delete cat"*).
+When the user hovers the gutter without dropping, a contextual alert is shown (e.g. *"Drop to delete cat"*, or *"Drop to remove cat from favorites"* when dragged from favorites). An empty thought is named *empty thought*, as in the delete and archive alerts.
 
 The previous `QuickDropIcon` / `DeleteDrop` / `CopyOneDrop` / `ExportDrop` icon stack has been removed; only the delete gutter remains.
 

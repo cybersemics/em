@@ -65,7 +65,7 @@ const drop = (state: State, items: DragThoughtItem[]) => {
 }
 
 /** Show an alert on hover that notifies the user the thought will be copied if dropped on the icon. */
-const hoverMessage = (state: State, zone: DragThoughtZone) => {
+const hoverMessage = (state: State, zone: DragThoughtZone | null) => {
   const length = state.draggingThoughts.length
   if (length === 0) return ''
 
@@ -74,7 +74,8 @@ const hoverMessage = (state: State, zone: DragThoughtZone) => {
 
   if (length === 1) {
     const value = getThoughtById(state, head(state.draggingThoughts[0]))?.value
-    return value ? `Drop to ${action} ${ellipsize(value)}${suffix}` : ''
+    if (value === undefined) return ''
+    return `Drop to ${action} ${value ? ellipsize(value) : 'empty thought'}${suffix}`
   }
 
   return `Drop to ${action} ${length} thoughts${suffix}`
@@ -82,11 +83,11 @@ const hoverMessage = (state: State, zone: DragThoughtZone) => {
 
 /** Creates the props for drop. */
 const dropCollect = (monitor: DropTargetMonitor) => {
-  const item = monitor.getItem() as DragThoughtItem
+  const items = monitor.getItem() as DragThoughtItem[] | null
 
   return {
-    isDragInProgress: !!monitor.getItem(),
-    zone: item?.zone || null,
+    isDragInProgress: !!items,
+    zone: items?.[0]?.zone || null,
     isHovering: monitor.isOver({ shallow: true }),
   }
 }
@@ -104,7 +105,7 @@ const DropGutter: FC = () => {
   })
 
   /** Show an alert on hover that notifies the user what will happen if the thought is dropped on the icon. */
-  const hover = (isHovering: boolean, zone: DragThoughtZone) => {
+  const hover = (isHovering: boolean, zone: DragThoughtZone | null) => {
     const state = store.getState()
 
     if (isHovering || state.alert?.alertType === AlertType.DeleteDropHint) {

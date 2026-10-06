@@ -90,7 +90,7 @@ describe('DropGutter: mobile only', () => {
     await waitForAlert('Added "a" to favorites')
 
     await dragToDropGutter(await waitForEditable('a'))
-    await waitForAlert('Drop to remove')
+    await waitForAlert('Drop to delete a')
     await page.touchscreen.touchEnd()
 
     await waitForAlert('Removed 1 thought')
@@ -113,7 +113,7 @@ describe('DropGutter: mobile only', () => {
     await clickThought('a')
 
     await dragToDropGutter(await waitForEditable('a'))
-    await waitForAlert('Drop to remove')
+    await waitForAlert('Drop to delete a')
     await page.touchscreen.touchEnd()
 
     await waitForAlert('Removed 1 thought')
@@ -127,7 +127,7 @@ describe('DropGutter: mobile only', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5856
-  it.skip('names an empty thought as empty thought in the drop to delete hint', async () => {
+  it('names an empty thought as empty thought in the drop to delete hint', async () => {
     await paste(`
         - a
           -
@@ -141,7 +141,7 @@ describe('DropGutter: mobile only', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5856
-  it.skip('names an empty favorite as empty thought in the drop to remove hint', async () => {
+  it('names an empty favorite as empty thought in the drop to remove hint', async () => {
     await paste(`
         -
           - =favorite

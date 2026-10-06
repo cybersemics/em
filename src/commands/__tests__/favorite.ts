@@ -46,7 +46,7 @@ describe('favorite', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5856
-  it.skip('names an empty thought as empty thought when adding it to favorites', () => {
+  it('names an empty thought as empty thought when adding it to favorites', () => {
     store.dispatch(newThought({ value: '' }))
 
     executeCommand(favorite, { store })
@@ -55,7 +55,7 @@ describe('favorite', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5856
-  it.skip('names an empty thought as empty thought when removing it from favorites', () => {
+  it('names an empty thought as empty thought when removing it from favorites', () => {
     store.dispatch([
       importText({
         text: `
