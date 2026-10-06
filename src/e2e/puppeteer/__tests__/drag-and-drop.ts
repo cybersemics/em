@@ -106,7 +106,7 @@ describe('drag', () => {
     expect(image).toMatchImageSnapshot()
   })
 
-  it.skip('DragAndDropThought', async () => {
+  it('DragAndDropThought', async () => {
     await paste(`
       - a
       - b
