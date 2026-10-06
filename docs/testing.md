@@ -22,7 +22,7 @@ yarn test            # unit and jsdom tests
 yarn test:puppeteer  # puppeteer (Docker required; starts its own local Vite server)
 ```
 
-The iOS suites require the app to already be running:
+The WebdriverIO suites require the app to already be running:
 
 ```sh
 # terminal 1
@@ -30,6 +30,7 @@ yarn start
 
 # terminal 2
 yarn test:ios:browserstack  # BrowserStack credentials required
+yarn test:android:browserstack # BrowserStack credentials required
 yarn test:ios:local         # local Appium and iOS Simulator required
 ```
 
@@ -438,13 +439,14 @@ yarn test:puppeteer -u render-thoughts
 
 ⚡️ 1–2s each (but large overhead to start session)
 
-Start the app before either iOS suite:
+Start the app before a WebdriverIO suite:
 
 ```sh
 # terminal 1
 yarn start
 # terminal 2: choose one
 yarn test:ios:browserstack
+yarn test:android:browserstack
 yarn test:ios:local
 ```
 
@@ -481,9 +483,11 @@ WebdriverIO tests provide automated test coverage of actual iOS devices (among o
 
 The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config). [wdio.base.conf.ts](../src/e2e/iOS/config/wdio.base.conf.ts) contains common iOS Safari settings and lifecycle hooks. [wdio.browserstack.conf.ts](../src/e2e/iOS/config/wdio.browserstack.conf.ts) loads credentials, starts the Cloudflare tunnel, and configures `@wdio/browserstack-service`. [wdio.local.conf.ts](../src/e2e/iOS/config/wdio.local.conf.ts) configures local Appium and the iOS Simulator.
 
-#### TypeScript for the iOS tests
+The Android Chrome configuration lives in [`src/e2e/android/config/wdio.browserstack.conf.ts`](../src/e2e/android/config/wdio.browserstack.conf.ts). It extends the iOS BrowserStack configuration's tunnel setup, slot waiting, cleanup, and per-test browser reset, overriding the specs and capabilities to run the Android smoke suite on a Google Pixel 8 with Android 14 and one worker. `yarn test:android` is an alias of `yarn test:android:browserstack`. The suite checks platform identification, typing, and the real soft keyboard's overlay and dismissal behavior.
 
-The iOS tests are typechecked by their own [`src/e2e/iOS/tsconfig.json`](../src/e2e/iOS/tsconfig.json), which is the only program that declares WebdriverIO's globals — `browser`, `$`, `$$`, and `expect` from `@wdio/globals/types`, mocha's `describe`/`it` via `@wdio/mocha-framework`, and `@wdio/browserstack-service`'s global interfaces (`State`, `GRRUrls`, …). The root `tsconfig.json` excludes `src/e2e/iOS`, so none of those exist for app code: a file that forgets to import the app's own `State` fails to compile instead of silently binding to BrowserStack's. `yarn lint` runs both programs (`lint:tsc`), and editors pick the nearest `tsconfig.json`, so each file sees the globals of the runtime it targets.
+#### TypeScript for the WebdriverIO tests
+
+The iOS and Android tests are typechecked by their own [`src/e2e/iOS/tsconfig.json`](../src/e2e/iOS/tsconfig.json) and [`src/e2e/android/tsconfig.json`](../src/e2e/android/tsconfig.json). These are the only programs that declare WebdriverIO's globals — `browser`, `$`, `$$`, and `expect` from `@wdio/globals/types`, mocha's `describe`/`it` via `@wdio/mocha-framework`, and `@wdio/browserstack-service`'s global interfaces (`State`, `GRRUrls`, …). The root `tsconfig.json` excludes both directories, so none of those exist for app code: a file that forgets to import the app's own `State` fails to compile instead of silently binding to BrowserStack's. `yarn lint` runs all three programs (`lint:tsc`), and editors pick the nearest `tsconfig.json`, so each file sees the globals of the runtime it targets.
 
 A module shared with the app is checked by both programs and therefore cannot reference `browser`. The console proxy is split along that line: [`src/util/consoleProxy.ts`](../src/util/consoleProxy.ts) is the app side and owns the storage key and record shape, while draining the buffer and waiting for the proxy to install live in [`wdio.base.conf.ts`](../src/e2e/iOS/config/wdio.base.conf.ts).
 
@@ -548,13 +552,13 @@ Related tests: [/src/e2e/iOS](../src/e2e/iOS)
 
 [`vitest.config.ts`](../vitest.config.ts) defines three projects, all extending [`vite.config.ts`](../vite.config.ts):
 
-- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding the two e2e spec directories (`src/e2e/puppeteer/__tests__/`, `src/e2e/iOS/__tests__/`), `evals/`, and `.claude/`. Only the spec directories are excluded, not all of `src/e2e/`: the e2e harness has ordinary unit tests of its own (`src/e2e/iOS/config/__tests__/`) that no other runner collects. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.ts`](../src/setupTests.ts). Used by `yarn test`.
+- **`unit`** — `jsdom` environment, picks up everything under `**/__tests__/**/*.ts` excluding the three e2e spec directories (`src/e2e/puppeteer/__tests__/`, `src/e2e/iOS/__tests__/`, `src/e2e/android/__tests__/`), `evals/`, and `.claude/`. Only the spec directories are excluded, not all of `src/e2e/`: the e2e harness has ordinary unit tests of its own (`src/e2e/iOS/config/__tests__/`) that no other runner collects. The include glob is unanchored, and `.claude/worktrees/` holds agent worktrees — full checkouts of this repo — so without that second exclusion a test run collects every test several times over, and fails outright on any worktree where PandaCSS has not been run, since `styled-system/` is generated and gitignored. Git hides those worktrees via `.git/info/exclude`, which Vitest does not consult. Setup files: [`vitest-localstorage-mock`](https://www.npmjs.com/package/vitest-localstorage-mock) (loaded first to ensure `localStorage` is defined in CI), then [`src/setupTests.ts`](../src/setupTests.ts). Used by `yarn test`.
 - **`puppeteer-e2e`** — custom environment [`puppeteer-environment.ts`](../src/e2e/puppeteer-environment.ts), setup file [`puppeteer/setup.ts`](../src/e2e/puppeteer/setup.ts), only includes `src/e2e/puppeteer/__tests__/*.ts`. The `vite-plugin-terminal` plugin pipes `console.log` from the page back to the terminal so Puppeteer test failures are debuggable. Used by `yarn test:puppeteer`; locally, [`test-puppeteer.sh`](../src/e2e/puppeteer/test-puppeteer.sh) also starts Browserless and a dedicated Vite dev server on port 2552.
 - **`eval`** — `node` environment and picks up live model evaluations under `packages/ai/src/evals/`. Its concurrent cases retry failures up to twice and allow 60 seconds per case. The directory is excluded from `unit` so `yarn test` remains deterministic and credential-free; run all evaluations explicitly with `yarn test:evals`, which loads `packages/ai/.env.local` before Vitest imports the AI client.
 
 Exceptions thrown inside a DOM event listener never propagate out of `dispatchEvent` — jsdom catches them and re-reports them as an `error` event on `window`. Vitest turns that event back into a run-failing unhandled error, but only while nothing else is listening for `error`, and [`initEvents.ts`](../src/util/initEvents.ts) registers a listener at module scope to drive the error banner, which suppresses that conversion in any test that imports app code. [`setupTests.ts`](../src/setupTests.ts) restores it by re-emitting trusted `error` events as `uncaughtException`, so a test that crashes on click fails the run instead of passing silently. Tests that dispatch a synthetic `ErrorEvent` to exercise the banner itself are unaffected, since events constructed in test code are not trusted.
 
-iOS tests are not part of the Vitest config — they run under WDIO, see [WebdriverIO tests](#5-webdriverio-tests).
+iOS and Android tests are not part of the Vitest config — they run under WDIO, see [WebdriverIO tests](#5-webdriverio-tests).
 
 ### Isolation and cleanup
 
@@ -872,10 +876,10 @@ Both steps write the comment, and the scan rewrites whatever the dispatch left, 
 
 #### Layered BrowserStack concurrency
 
-Two things limit how many iOS runs can proceed at once, and they are enforced in different places. **Superseding** is GitHub's job: only the newest commit on a pull request is worth a device session. **The BrowserStack parallel-session cap** is not — a GitHub group can only serialize on the assumption that the account is busy, whereas [`waitForBrowserStackSlots.ts`](../src/e2e/iOS/config/waitForBrowserStackSlots.ts) can ask whether it actually is.
+Two things limit how many device runs can proceed at once, and they are enforced in different places. **Superseding** is GitHub's job: only the newest commit on a pull request is worth a device session. **The BrowserStack parallel-session cap** is not — a GitHub group can only serialize on the assumption that the account is busy, whereas [`waitForBrowserStackSlots.ts`](../src/e2e/iOS/config/waitForBrowserStackSlots.ts) can ask whether it actually is.
 
 - **Workflow level — per-PR superseding.** Each pull request gets its own group with `cancel-in-progress: true`, so a new commit cancels the PR's previous run whether it is still waiting for a slot or already mid-suite. Non-PR runs (pushes to `main`, `workflow_dispatch`) get a unique group per run: every `main` commit should be tested, and `ghworkflow` fans out dispatch runs deliberately for flake hunting, so none of these may cancel each other.
-- **In-process — the slot wait.** `wdio.browserstack.conf.ts`'s `onPrepare` calls `waitForBrowserStackSlots(sessionsNeeded)` **before claiming a tunnel**, and once more after the claim as a recheck, so that nothing is created against a full pool. `sessionsNeeded` is `maxInstances` (2), or the `--spec` file count when that is smaller — `tdd.yml` runs one or two changed specs and needs only that many sessions. It polls `https://api.browserstack.com/automate/plan.json` (Basic auth with `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY`) every ~15s with jitter, logging usage as it waits, until there is both parallel headroom (`parallel_sessions_max_allowed - parallel_sessions_running >= sessionsNeeded`) **and** queue headroom (`queued_sessions + sessionsNeeded <= queued_sessions_max_allowed`). The queue is a separate cap: extra `POST .../session` calls wait there when all parallels are busy, and overflowing it fails with `BROWSERSTACK_QUEUE_SIZE_EXCEEDED` even when parallels look free. `maxInstances` stays at 2 so one run does not take the whole parallel cap and a handful of overlapping CI jobs cannot burst 4×5 session creates into that queue.
+- **In-process — the slot wait.** `wdio.browserstack.conf.ts`'s `onPrepare` calls `waitForBrowserStackSlots(sessionsNeeded)` **before claiming a tunnel**, and once more after the claim as a recheck, so that nothing is created against a full pool. `sessionsNeeded` is the calling configuration's `maxInstances` (2 for iOS, 1 for Android), or the `--spec` file count when that is smaller — `tdd.yml` runs one or two changed specs and needs only that many sessions. It polls `https://api.browserstack.com/automate/plan.json` (Basic auth with `BROWSERSTACK_USERNAME` / `BROWSERSTACK_ACCESS_KEY`) every ~15s with jitter, logging usage as it waits, until there is both parallel headroom (`parallel_sessions_max_allowed - parallel_sessions_running >= sessionsNeeded`) **and** queue headroom (`queued_sessions + sessionsNeeded <= queued_sessions_max_allowed`). The queue is a separate cap: extra `POST .../session` calls wait there when all parallels are busy, and overflowing it fails with `BROWSERSTACK_QUEUE_SIZE_EXCEEDED` even when parallels look free. `maxInstances` stays at 2 so one run does not take the whole parallel cap and a handful of overlapping CI jobs cannot burst 4×5 session creates into that queue.
 
   The order matters because a waiting run should hold as little as possible. Sessions are the scarcer resource (a full run takes 2 of the account's 5, but only 1 of the 5 pool tunnels), and the wait can be long, so it happens before the tunnel claim and holds only the runner. The recheck after the claim covers the window in which the claim itself waited for a busy pool; it normally returns immediately.
 

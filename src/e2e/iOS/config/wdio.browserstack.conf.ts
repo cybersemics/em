@@ -133,7 +133,7 @@ export const config: WebdriverIO.Config = {
     // WDIO's Testrunner type does not declare `spec`, which only ever arrives from the CLI.
     const { spec: cliSpecs } = config as { spec?: string[] }
     const specCount = cliSpecs?.length && config.specs?.length ? config.specs.length : Infinity
-    const sessionsNeeded = Math.min(baseConfig.maxInstances, specCount)
+    const sessionsNeeded = Math.min(config.maxInstances ?? baseConfig.maxInstances, specCount)
 
     try {
       // Claim a tunnel from the pool if not already set (e.g. by a CI workflow step)

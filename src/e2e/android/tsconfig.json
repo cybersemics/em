@@ -1,0 +1,9 @@
+{
+  // Keep WebdriverIO globals scoped to the device tests, including their shared iOS helpers.
+  "extends": "../../../tsconfig.json",
+  "include": ["**/*.ts", "../../@types/index.ts", "../../**/*.d.ts"],
+  "exclude": [],
+  "compilerOptions": {
+    "types": ["node", "@wdio/globals/types", "@wdio/mocha-framework", "@wdio/browserstack-service"]
+  }
+}

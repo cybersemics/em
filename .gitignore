@@ -51,6 +51,7 @@ styled-system-studio
 
 # WDIO
 wdio.*
+!src/e2e/android/config/wdio.*.ts
 browserstack.*
 local.*
 /log
