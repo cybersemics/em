@@ -11,7 +11,7 @@ const MENU_ITEMS = ['Cut', 'Copy', 'Paste', 'Replace…', 'Look Up', 'Select All
 /** Pastes the system pasteboard into the thought being edited, via the native iOS edit menu. */
 const pasteFromEditMenu = async (): Promise<void> => {
   // One tap raises the menu on a thought already in edit mode; a second tap would dismiss it.
-  await tap(await waitForElement(EDITING), { pointerType: 'touch', y: 60 })
+  await tap(await waitForElement(EDITING), { pointerType: 'touch' })
 
   const context = ((await browser.getContext()) as string) || 'NATIVE_APP'
   await browser.switchContext('NATIVE_APP')

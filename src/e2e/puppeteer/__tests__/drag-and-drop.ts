@@ -21,6 +21,7 @@ import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
+import withDebugLog from '../helpers/withDebugLog'
 import { page } from '../session'
 
 // TODO: Why do the uncle tests fail with the default threshold of 0.18?
@@ -719,39 +720,42 @@ describe('mobile only', () => {
   deviceEmulation.useForSuite(KnownDevices['Pixel 5'])
 
   it('does not start a long press when the press lands on the caret of an empty thought', async () => {
-    await paste('- hello world')
-    const textEditable = await waitForEditable('hello world')
-    await gesture(newThoughtCommand)
-    const emptyEditable = (await waitForEditable('')).asElement()
-    if (!emptyEditable) throw new Error('Empty editable not found.')
+    // Records the Debug Log to diagnose an intermittent CI failure (#5762). Remove once the flake is fixed.
+    await withDebugLog(async () => {
+      await paste('- hello world')
+      const textEditable = await waitForEditable('hello world')
+      await gesture(newThoughtCommand)
+      const emptyEditable = (await waitForEditable('')).asElement()
+      if (!emptyEditable) throw new Error('Empty editable not found.')
 
-    const boundingBox = await emptyEditable.boundingBox()
-    if (!boundingBox) throw new Error('Editable has no bounding box.')
+      const boundingBox = await emptyEditable.boundingBox()
+      if (!boundingBox) throw new Error('Editable has no bounding box.')
 
-    // An empty thought renders its caret at the start of its content, so the left inside edge is a press on it.
-    await page.touchscreen.touchStart(boundingBox.x + 1, boundingBox.y + boundingBox.height / 2)
-    // A long press that must NOT happen offers nothing to wait for, so hold well past the delay that would start one.
-    await sleep(TIMEOUT_LONG_PRESS_THOUGHT * 2)
-    // Read the highlight while the finger is still down; releasing clears it and would pass either way.
-    const highlighted = await emptyEditable.evaluate(el =>
-      el.parentElement
-        ?.closest('[aria-label="thought-container"]')
-        ?.querySelector('[aria-label="bullet"]')
-        ?.getAttribute('data-highlighted'),
-    )
-    await page.touchscreen.touchEnd()
+      // An empty thought renders its caret at the start of its content, so the left inside edge is a press on it.
+      await page.touchscreen.touchStart(boundingBox.x + 1, boundingBox.y + boundingBox.height / 2)
+      // A long press that must NOT happen offers nothing to wait for, so hold well past the delay that would start one.
+      await sleep(TIMEOUT_LONG_PRESS_THOUGHT * 2)
+      // Read the highlight while the finger is still down; releasing clears it and would pass either way.
+      const highlighted = await emptyEditable.evaluate(el =>
+        el.parentElement
+          ?.closest('[aria-label="thought-container"]')
+          ?.querySelector('[aria-label="bullet"]')
+          ?.getAttribute('data-highlighted'),
+      )
+      await page.touchscreen.touchEnd()
 
-    expect(highlighted).not.toBe('true')
+      expect(highlighted).not.toBe('true')
 
-    // The same press on the caret of a thought with text still starts a long press, since a long press there selects
-    // a word and the menu is reachable that way. longPressThought throws if the bullet never highlights.
-    await clickThought('hello world')
-    // Focus the editable before selecting, otherwise the browser discards the selection on a
-    // non-focused contenteditable under mobile emulation.
-    await page.evaluate(() =>
-      (document.querySelector('[data-editing=true] [data-editable]') as HTMLElement | null)?.focus(),
-    )
-    await setSelection(0, 0)
-    await longPressThought(textEditable, { edge: 'left' })
+      // The same press on the caret of a thought with text still starts a long press, since a long press there selects
+      // a word and the menu is reachable that way. longPressThought throws if the bullet never highlights.
+      await clickThought('hello world')
+      // Focus the editable before selecting, otherwise the browser discards the selection on a
+      // non-focused contenteditable under mobile emulation.
+      await page.evaluate(() =>
+        (document.querySelector('[data-editing=true] [data-editable]') as HTMLElement | null)?.focus(),
+      )
+      await setSelection(0, 0)
+      await longPressThought(textEditable, { edge: 'left' })
+    })
   })
 })
