@@ -738,6 +738,198 @@ it('resumes an interrupted import into thoughts that are not loaded yet', async 
   expect(localStorage.getItem('resume-imports')).toBe('{}')
 })
 
+// Metaprogramming attributes are the only thoughts that are still merged on import, so importing an attribute that
+// already exists in the destination must not create a second one.
+describe('merge metaprogramming attributes', () => {
+  it('merges a pasted attribute into an existing attribute of the destination', async () => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =sort
+              - Alphabetical
+            - b
+        `,
+      }),
+      (dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['a'])!,
+            text: `
+- =sort
+  - Alphabetical
+- c`,
+          }),
+        ),
+    ])
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+    cleanup()
+
+    expect(removeHome(exported)).toBe(`
+- a
+  - =sort
+    - Alphabetical
+  - b
+  - c
+`)
+  })
+
+  it('merges a pasted attribute into an existing attribute of a destination that is not loaded yet', async () => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    store.dispatch(
+      importText({
+        text: `
+          - x
+            - a
+              - =sort
+                - Alphabetical
+              - b
+        `,
+      }),
+    )
+    await waitForThoughtspaceIdle()
+
+    // reload from storage one level deep, so that x/a is pending
+    store.dispatch(clear())
+    await store.dispatch(pull([HOME_TOKEN], { maxDepth: 1 }))
+    expect(getThoughtById(store.getState(), head(contextToPath(store.getState(), ['x', 'a'])!))?.pending).toBe(true)
+
+    store.dispatch((dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), ['x', 'a'])!,
+          text: `
+- =sort
+  - Alphabetical
+- c`,
+        }),
+      ),
+    )
+
+    await vi.runOnlyPendingTimersAsync()
+
+    // load everything so the export shows the whole outline
+    await store.dispatch(pull([HOME_TOKEN], { maxDepth: Infinity }))
+    const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+    cleanup()
+
+    expect(removeHome(exported)).toBe(`
+- x
+  - a
+    - =sort
+      - Alphabetical
+    - b
+    - c
+`)
+  })
+
+  it('merges an attribute imported with importText into an existing attribute of the destination', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =sort
+              - Alphabetical
+            - b
+        `,
+      }),
+      (dispatch, getState) =>
+        dispatch(
+          importText({
+            path: contextToPath(getState(), ['a'])!,
+            text: `
+- =sort
+  - Alphabetical
+- c`,
+          }),
+        ),
+    ])
+
+    const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+    expect(removeHome(exported)).toBe(`
+- a
+  - =sort
+    - Alphabetical
+  - b
+  - c
+`)
+  })
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// A resumed import finds the parent of the next thought by walking the values of its ancestors down from the
+// destination. Now that duplicates are not merged, the interrupted session may have imported a thought with the same
+// value as an existing sibling, and the remaining descendants belong under the imported thought, not the existing one.
+// Skipped because descendantPath resolves each value to the first matching child, so b is imported into the existing a.
+// The fix belongs to moving resume reconstruction out of importFiles. See https://github.com/cybersemics/em/issues/5174.
+it.skip('resumes an interrupted import into an imported thought that duplicates an existing sibling', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const text = `
+- a
+  - b
+- c`
+
+  // the existing a with its child x, followed by the a imported by the interrupted session
+  store.dispatch(
+    importText({
+      text: `
+        - a
+          - x
+        - a
+      `,
+    }),
+  )
+  await waitForThoughtspaceIdle()
+
+  // what the interrupted session persisted for resume
+  localStorage.setItem(
+    'resume-imports',
+    JSON.stringify({
+      resumeTest: {
+        id: 'resumeTest',
+        lastModified: 0,
+        thoughtsImported: 1,
+        name: 'from clipboard',
+        path: HOME_PATH,
+        size: text.length,
+      },
+    }),
+  )
+  // fake-indexeddb completes requests with setImmediate, which fake timers would never run
+  vi.useRealTimers()
+  await idb.set('resume-imports-resumeTest', text)
+  vi.useFakeTimers()
+
+  // the same call initialize makes on startup
+  store.dispatch(importFiles({ resume: true }))
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - x
+- a
+  - b
+- c
+`)
+})
+
 it('two root thoughts', async () => {
   const text = `- a
   - b
