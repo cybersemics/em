@@ -20,6 +20,7 @@ import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import stripTags from '../util/stripTags'
+import usePlaceholder from './Editable/usePlaceholder'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
@@ -108,6 +109,7 @@ const BreadCrumb = React.memo(
   >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
     const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
     const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
+    const placeholder = usePlaceholder({ isEditing: false, path, simplePath })
     const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
     const delimiterStyle: React.CSSProperties = {
       fontSize: '0.8em',
@@ -131,6 +133,8 @@ const BreadCrumb = React.memo(
               className={extendTapRecipe({ size: 'small' })}
               simplePath={simplePath}
               label={label}
+              // usePlaceholder returns the value of a non-empty thought, so only an empty thought gets the placeholder
+              placeholder={value ? undefined : placeholder}
             />
           ))}
         {!isDeleting && (

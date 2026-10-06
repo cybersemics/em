@@ -23,7 +23,7 @@ it('Strip formatting from thought values in ContextBreadcrumbs', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/5855
-it.skip('shows the empty-thought placeholder for an empty cursor thought', async () => {
+it('shows the empty-thought placeholder for an empty cursor thought', async () => {
   await dispatch([
     importText({
       text: `

@@ -6,7 +6,7 @@ import { page } from '../session'
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 // https://github.com/cybersemics/em/issues/5855
-it.skip('empty cursor thought shows the outline placeholder in italic grey in the breadcrumbs', async () => {
+it('empty cursor thought shows the outline placeholder in italic grey in the breadcrumbs', async () => {
   await paste(`
 - a
   - b
