@@ -391,7 +391,16 @@ const CommandCenter = () => {
   const backgroundGlow = backgroundGlowStore.useState()
 
   // Reveals the glow-mode falloff only within the sheet area, with the same soft 2.5rem top edge as the plain falloff gradient. Anchored to the bottom of the viewport since the sheet is bottom-anchored.
-  const backgroundGlowMask = useMotionTemplate`linear-gradient(to top, black calc(${height}px - 2.5rem), transparent ${height}px)`
+  /*
+   * Keep each bottom-anchored background layer viewport-sized and move its top edge with a translate.
+   * Animating height would relayout and repaint the gradient, mask, and blur on every drag frame.
+   */
+  const blurTranslate = useMotionTemplate`0 calc(100% - ${blurHeight}px)`
+  /** Extends the falloff slightly above the drawer's top edge. */
+  const falloffTranslate = useMotionTemplate`0 calc(100% - ${height}px - 0.711rem)`
+  const glowTranslate = useMotionTemplate`0 calc(100% - ${height}px)`
+  /** Moves the glow image the opposite way so it stays aligned with the page background. */
+  const glowImageTranslate = useMotionTemplate`0 calc(${height}px - 100%)`
 
   const stageOffset = Math.round(fontSize * STAGE_OFFSET_REM)
 
@@ -538,11 +547,12 @@ const CommandCenter = () => {
               mask: 'linear-gradient(180deg, {colors.bgTransparent} 0%, black 110px, black 100%)',
               bottom: 0,
               width: '100%',
+              /** Fill the viewport so translate can move the top edge; the mask hides the offscreen portion. */
+              height: '100%',
               zIndex: 'commandCenterBlur',
             })}
-            style={{
-              height: blurHeight,
-            }}
+            /** `backdrop-filter` already promotes this layer to the compositor, so it doesnt need willChange property to make it composited. */
+            style={{ translate: blurTranslate }}
           />
         )}
         <HiddenOverlay />
@@ -584,13 +594,19 @@ const CommandCenter = () => {
                 inset: 0,
                 pointerEvents: 'none',
                 backgroundColor: 'bg',
+                /** Keep the ramp at this layer's top edge; `glowTranslate` aligns it with the drawer. */
+                maskImage: 'linear-gradient(to bottom, transparent 0, black 2.5rem)',
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, black 2.5rem)',
+                /** The counter-translated image overflows above this layer, so the mask must not repeat. */
+                maskRepeat: 'no-repeat',
+                WebkitMaskRepeat: 'no-repeat',
               })}
               style={{
-                maskImage: backgroundGlowMask,
-                WebkitMaskImage: backgroundGlowMask,
+                translate: glowTranslate,
+                willChange: 'transform',
               }}
             >
-              <div
+              <motion.div
                 className={css({
                   position: 'absolute',
                   inset: 0,
@@ -601,6 +617,9 @@ const CommandCenter = () => {
                 style={{
                   backgroundImage: `url(/img/glow/${backgroundGlow.image})`,
                   opacity: backgroundGlow.opacity,
+                  translate: glowImageTranslate,
+                  /** The sheet counter-adjusts this image on every drag frame. */
+                  willChange: 'transform',
                 }}
               />
             </motion.div>
@@ -611,12 +630,16 @@ const CommandCenter = () => {
                 pointerEvents: 'none',
                 position: 'absolute',
                 background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 2.5rem)',
-                paddingTop: '0.711rem',
                 bottom: 0,
                 width: '100%',
+                /** Fill the Sheet root so translate can move the top edge; overflow clips the offscreen portion. */
                 height: '100%',
               })}
-              style={{ height }}
+              style={{
+                translate: falloffTranslate,
+                /** The sheet updates this transform on every drag frame. */
+                willChange: 'transform',
+              }}
             />
           )}
           <motion.div
