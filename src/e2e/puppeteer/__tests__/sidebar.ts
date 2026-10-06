@@ -9,6 +9,7 @@ import openSidebar from '../helpers/openSidebar'
 import press from '../helpers/press'
 import screenshot from '../helpers/screenshot'
 import setTheme from '../helpers/setTheme'
+import waitForEditable from '../helpers/waitForEditable'
 import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
@@ -74,5 +75,21 @@ describe('sidebar', () => {
     })
     const outlinePlaceholderColor = await page.$eval('[data-editable]', el => getComputedStyle(el, '::before').color)
     expect(placeholderStyle).toEqual({ color: outlinePlaceholderColor, fontStyle: 'italic' })
+  })
+
+  // https://github.com/cybersemics/em/issues/5848
+  it.skip('empty ancestor in a favorite breadcrumb shows the empty-thought placeholder', async () => {
+    await newThought()
+    await clickToolbar('Add to Favorites')
+    await press('Enter', { meta: true })
+    await waitForEditable('')
+    await clickToolbar('Add to Favorites')
+    await openSidebar()
+
+    const breadcrumbs = await page.$$eval(
+      '[data-testid="favorites"] [aria-label="context-breadcrumbs"] [data-thought-link]',
+      links => links.map(link => link.textContent),
+    )
+    expect(breadcrumbs).toEqual(['This is an empty thought'])
   })
 })
