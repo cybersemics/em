@@ -252,7 +252,7 @@ describe('context view', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5858
-  it.skip('archive the hidden children of an empty thought whose context view is open', () => {
+  it('archive the hidden children of an empty thought whose context view is open', () => {
     const steps = [
       importText({
         text: `
@@ -270,6 +270,7 @@ describe('context view', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - =archive
     - =favorite`)
+    expect(stateNew.alert?.value).toBe('Deleted =favorite')
   })
 })
 
