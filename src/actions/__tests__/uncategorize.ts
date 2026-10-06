@@ -413,7 +413,7 @@ describe('context view', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5847
-  it.skip('uncategorize top-level context', () => {
+  it('uncategorize top-level context', () => {
     const text = `
       - a
         - m

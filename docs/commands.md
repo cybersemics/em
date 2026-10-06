@@ -485,6 +485,7 @@ https://github.com/user-attachments/assets/4255766e-8c9d-4cdf-a140-573ab82399ae
 
 Deletes the current thought and moves all its subthoughts up a level.
 
+In the Context View, Uncategorize applies to the selected context, and the Context View stays open with the cursor on the context's parent. When the context is top-level, the thought moves up to the home context, so the Context View closes with the cursor on the moved thought.
 <kbd>Command + Option + c</kbd>
 
 https://github.com/user-attachments/assets/a0da2b2a-925e-4f6a-9924-3bba37b7feb2
