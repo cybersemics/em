@@ -274,10 +274,10 @@ const globalCss = defineGlobalStyles({
         userSelect: 'none',
       },
     },
-    // The Android WebView draws the drop caret of a native text drag in the editable's caret color, which is the text
-    // color by default and too thin to pick out against the text. See onAndroidAppDragStart in initEvents.ts.
+    // Hide the caret of the collapsed selection during a native text drag in the Android app, leaving the single drop
+    // caret rendered by NativeTextDragCaret. See onAndroidAppDragOver in initEvents.ts.
     _nativeTextDrag: {
-      caretColor: 'blue',
+      caretColor: 'transparent',
     },
     _test: {
       // Caret should be invisible in puppeteer tests as the blink timing differs between runs and will fail the screenshot tests.
