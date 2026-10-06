@@ -7,6 +7,7 @@ import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
 import findCursor from '../../test-helpers/queries/findCursor'
 import selectRange from '../../test-helpers/selectRange'
@@ -14,6 +15,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import head from '../../util/head'
 import removeHome from '../../util/removeHome'
 import importDataActionCreator from '../importData'
+import { importFilesActionCreator as importFiles } from '../importFiles'
 import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
 
@@ -501,6 +503,249 @@ it('keeps children under each duplicate ancestor', async () => {
 - foo
   - baz
 `)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// importText and importFiles are two pipelines for the same import. They are being consolidated into one, so each
+// outline is imported into two identical destinations, once through each pipeline, and both must give the same outline.
+describe('importText and importFiles import the same outline', () => {
+  it.each([
+    {
+      name: 'duplicate siblings',
+      destination: '',
+      text: `
+- a
+- a`,
+      expected: `
+  - a
+  - a`,
+    },
+    {
+      name: 'duplicate nested thoughts',
+      destination: '',
+      text: `
+- a
+  - b
+    - c
+  - b
+- a
+  - b
+    - d`,
+      expected: `
+  - a
+    - b
+      - c
+    - b
+  - a
+    - b
+      - d`,
+    },
+    {
+      name: 'empty thoughts',
+      destination: '',
+      text: `
+- a
+- ${''}
+- b`,
+      expected: `
+  - a
+  - ${''}
+  - b`,
+    },
+    {
+      name: 'duplicates of the descendants of the destination',
+      destination: `
+- b
+  - c`,
+      text: `
+- b
+  - d
+- e`,
+      expected: `
+  - b
+    - c
+  - b
+    - d
+  - e`,
+    },
+    {
+      name: 'metaprogramming attributes',
+      destination: `
+- =sort
+  - Alphabetical
+- b`,
+      text: `
+- =sort
+  - Alphabetical
+- c
+  - =pin
+    - true
+  - d`,
+      expected: `
+  - =sort
+    - Alphabetical
+  - b
+  - c
+    - =pin
+      - true
+    - d`,
+    },
+  ])('$name', async ({ destination, text, expected }) => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    store.dispatch([
+      importText({ text: '- text\n- files' }),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text'])!, text: destination })),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['files'])!, text: destination })),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text'])!, text })),
+      (dispatch, getState) =>
+        dispatch(
+          importFiles({
+            path: contextToPath(getState(), ['files'])!,
+            files: [{ lastModified: 0, name: 'test', size: text.length, text: async () => text }],
+          }),
+        ),
+    ])
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exportedText = exportContext(store.getState(), ['text'], 'text/plain')
+    const exportedFiles = exportContext(store.getState(), ['files'], 'text/plain')
+
+    cleanup()
+
+    expect(exportedText).toBe(`- text${expected}`)
+    expect(exportedFiles).toBe(`- files${expected}`)
+  })
+
+  it('an empty destination thought with siblings', async () => {
+    vi.useFakeTimers()
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    const text = `
+- a
+- b`
+
+    store.dispatch([
+      importText({
+        text: `
+          - text
+            - x
+            - y
+          - files
+            - x
+            - y
+        `,
+      }),
+      setCursor(['text', 'x']),
+      newThought({}),
+      setCursor(['files', 'x']),
+      newThought({}),
+      (dispatch, getState) => dispatch(importText({ path: contextToPath(getState(), ['text', ''])!, text })),
+      (dispatch, getState) =>
+        dispatch(
+          importFiles({
+            path: contextToPath(getState(), ['files', ''])!,
+            files: [{ lastModified: 0, name: 'test', size: text.length, text: async () => text }],
+          }),
+        ),
+    ])
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exportedText = exportContext(store.getState(), ['text'], 'text/plain')
+    const exportedFiles = exportContext(store.getState(), ['files'], 'text/plain')
+
+    cleanup()
+
+    expect(exportedText).toBe(`- text
+  - x
+  - a
+  - b
+  - y`)
+    expect(exportedFiles).toBe(`- files
+  - x
+  - a
+  - b
+  - y`)
+  })
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// A resumed import continues from the number of thoughts recorded in the resume manifest. Duplicates are not merged,
+// so a count that falls behind the thoughts actually imported would import them a second time. Recording the count
+// after every thought keeps it from falling behind.
+it('records the progress of an import after every imported thought', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+  const setItem = vi.spyOn(localStorage, 'setItem')
+  setItem.mockClear()
+
+  const text = `
+- a
+  - b
+- c`
+
+  store.dispatch(
+    importFiles({
+      path: HOME_PATH,
+      files: [{ lastModified: 0, name: 'test', size: text.length, text: async () => text }],
+    }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // the number of thoughts imported, recorded in each write of the resume manifest
+  const thoughtsImported = setItem.mock.calls
+    .filter(([key]) => key === 'resume-imports')
+    .map(([, value]) =>
+      Object.values(JSON.parse(value) as Record<string, { thoughtsImported: number }>).map(
+        file => file.thoughtsImported,
+      ),
+    )
+
+  cleanup()
+
+  // the manifest is deleted once the import is complete
+  expect(thoughtsImported).toEqual([[0], [1], [2], [3], []])
+})
+
+// https://github.com/cybersemics/em/issues/2712
+// The cursor is set on the first imported thought that is not a metaprogramming attribute. Duplicates are not merged,
+// so when it duplicates an existing sibling, the cursor belongs on the imported thought, not on the existing one.
+it('sets the cursor on the imported thought when it duplicates an existing sibling', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+      `,
+    }),
+    (dispatch, getState) =>
+      dispatch(
+        importDataActionCreator({
+          path: contextToPath(getState(), ['a'])!,
+          text: `
+- =sort
+  - Alphabetical
+- b
+- c`,
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const state = store.getState()
+  const [, bImported] = getChildrenRankedByContext(state, ['a']).filter(child => child.value === 'b')
+
+  cleanup()
+
+  expect(state.cursor && head(state.cursor)).toBe(bImported.id)
 })
 
 it('two root thoughts', async () => {
