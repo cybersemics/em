@@ -47,7 +47,7 @@ const uncategorize = (state: State, { at }: Options): State => {
   // A thought whose only children are meta attributes cannot be uncategorized by the user.
   // importText and swapNote pass `at` to collapse their own intermediate thoughts, whose meta attributes must still be moved up.
   if (!at && !isInContextView && children.every(child => isAttribute(child.value))) {
-    return alert(state, { value: 'Unable to uncategorize a single thought.' })
+    return alert(state, { value: 'Unable to uncategorize thought with no children' })
   }
 
   if (children.length === 0) return state

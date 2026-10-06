@@ -42,7 +42,7 @@ describe('normal view', () => {
   - a
     - =favorite
   - b`)
-    expect(stateNew.alert?.value).toBe('Unable to uncategorize a single thought.')
+    expect(stateNew.alert?.value).toBe('Unable to uncategorize thought with no children')
   })
 
   it('uncategorize context with single child', () => {
@@ -180,7 +180,7 @@ describe('normal view', () => {
     - b
       - =x`)
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
-    expect(stateNew.alert?.value).toBe('Unable to uncategorize a single thought.')
+    expect(stateNew.alert?.value).toBe('Unable to uncategorize thought with no children')
   })
 
   it('collapse empty thought with empty child', () => {

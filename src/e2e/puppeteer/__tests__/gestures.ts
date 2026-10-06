@@ -1,6 +1,7 @@
 import { type ConsoleMessage, ElementHandle, KnownDevices } from 'puppeteer'
 import newSubthoughtCommand from '../../../commands/newSubthought'
 import newThoughtCommand from '../../../commands/newThought'
+import uncategorizeCommand from '../../../commands/uncategorize'
 import $ from '../helpers/$'
 import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
@@ -68,6 +69,16 @@ describe('alerts', () => {
     // Verify alert content contains gesture hint text
     const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
     expect(alertText).toBeTruthy()
+  })
+
+  // https://github.com/cybersemics/em/issues/5833
+  it('shows the alert of the command rather than its gesture hint', async () => {
+    await paste('a')
+    await clickThought('a')
+
+    await gesture(uncategorizeCommand)
+
+    await waitForAlert('Unable to uncategorize thought with no children')
   })
 })
 

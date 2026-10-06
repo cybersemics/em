@@ -120,7 +120,7 @@ A gesture is also always a **single finger**. `MultiGesture` latches as soon as 
 - **Mobile Command Universe.** If the sequence ends with the `openMobileCommandUniverse` gesture, that command runs.
 - **Chained commands.** If the sequence *starts* with a gesture for an `isChainable` command and continues with another command's gesture, the two are chained and executed together. The canonical example: `selectAll` is chainable, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Both commands execute inside one command transaction whose metadata identifies the combined command, so they produce one undo patch.
 
-After execution, an alert briefly confirms the command's `label` (in training mode), unless the command has `hideAlert: true`.
+In training mode, an alert briefly confirms the command's `label`, unless the command has `hideAlert: true`. The label is shown before the command executes, so an alert the command shows itself, such as an error, replaces it.
 
 ### Multi-touch rejection
 
@@ -483,7 +483,7 @@ https://github.com/user-attachments/assets/4255766e-8c9d-4cdf-a140-573ab82399ae
 
 ### Uncategorize
 
-Deletes the current thought and moves all its subthoughts up a level. If the thought is a favorite, its `=favorite` attribute is deleted with it rather than moved up, so the parent does not become a favorite. A thought with no subthoughts other than meta attributes is left unchanged, and the alert "Unable to uncategorize a single thought." is shown instead.
+Deletes the current thought and moves all its subthoughts up a level. If the thought is a favorite, its `=favorite` attribute is deleted with it rather than moved up, so the parent does not become a favorite. A thought with no subthoughts other than meta attributes is left unchanged, and the alert "Unable to uncategorize thought with no children" is shown instead.
 
 <kbd>Command + Option + c</kbd>
 

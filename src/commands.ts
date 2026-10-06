@@ -771,6 +771,12 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     }
   }
 
+  // In training mode, show the label of any valid command (except forward/back).
+  // The label is shown before the command executes so that an alert the command shows itself, such as an error, replaces the label rather than being replaced by it.
+  if (command && !command.hideAlert && !getUserSetting(state, Settings.experienceMode)) {
+    store.dispatch(alert(command.label, { alertType: AlertType.GestureHint }))
+  }
+
   // execute command
   // do not execute when modal is displayed or a drag is in progress
   if (
@@ -812,7 +818,6 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   // clear gesture hint
   clearGestureMenuTimer()
 
-  // In training mode, show alert for any valid command (except forward/back)
   // In experience mode, clear any existing gesture hint
   setTimeout(() => {
     store.dispatch((dispatch, getState) => {
@@ -824,14 +829,7 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
         dispatch(gestureMenu())
       }
 
-      // Show alert for valid commands in training mode
-      if (!experienceMode && command && !command.hideAlert) {
-        dispatch(
-          alert(command.label, {
-            alertType: AlertType.GestureHint,
-          }),
-        )
-      } else if (
+      if (
         // Clear alert if gesture is cancelled (no command)
         !command ||
         // Clear alert if back/forward
