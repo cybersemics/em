@@ -14,6 +14,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import head from '../../util/head'
 import removeHome from '../../util/removeHome'
 import importDataActionCreator from '../importData'
+import { importFilesActionCreator as importFiles } from '../importFiles'
 import { importTextActionCreator as importText } from '../importText'
 import { newThoughtActionCreator as newThought } from '../newThought'
 
@@ -777,6 +778,55 @@ f
           - e
           - H6
             - f
+`)
+})
+
+// https://github.com/cybersemics/em/issues/5172
+it.skip('import a dropped markdown file', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const markdown = `# Fruits
+
+- Apple
+- Banana
+
+# Vegetables
+
+- Carrot
+`
+
+  store.dispatch([
+    importText({ text: '- a' }),
+    (dispatch, getState) =>
+      dispatch(
+        importFiles({
+          path: contextToPath(getState(), ['a'])!,
+          files: [
+            {
+              lastModified: Date.now(),
+              name: 'test.md',
+              size: markdown.length,
+              text: async () => markdown,
+            },
+          ],
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - Fruits
+    - Apple
+    - Banana
+  - Vegetables
+    - Carrot
 `)
 })
 
