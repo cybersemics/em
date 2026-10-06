@@ -27,7 +27,7 @@ describe('normal view', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5833
-  it.skip('do nothing on a favorited thought with no other children', () => {
+  it('do nothing on a favorited thought with no other children', () => {
     const text = `
       - a
         - =favorite
@@ -169,12 +169,18 @@ describe('normal view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'c'])
   })
 
-  it('after uncategorize context set cursor to the parent if there are no visible children.', () => {
+  it('do nothing on a thought with only meta attributes', () => {
     const steps = [newThought('a'), newSubthought('b'), newSubthought('=x'), cursorBack, uncategorize({})]
 
     const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
-    expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - b
+      - =x`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'b'])
+    expect(stateNew.alert?.value).toBe('Unable to uncategorize a single thought.')
   })
 
   it('collapse empty thought with empty child', () => {
@@ -399,6 +405,38 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
+  it('remove =favorite from a favorited context', () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - test
+          - =favorite
+          - m
+            - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'test']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+      - x
+  - b
+    - m
+      - y`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
+  })
+
   it('uncategorize context subthought in context view', () => {
     const text = `
       - a
@@ -545,6 +583,52 @@ describe('uncategorizing contexts with meta attributes', () => {
     - c
     - d
   - e`)
+  })
+
+  it('should remove =favorite when uncategorizing a context', () => {
+    const steps = [
+      importText({
+        text: `
+          - p
+            - a
+              - =favorite
+              - x
+        `,
+      }),
+      setCursor(['p', 'a']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - p
+    - x`)
+  })
+
+  it('should remove =favorite when uncategorizing a top-level context', () => {
+    const steps = [
+      importText({
+        text: `
+          - a
+            - =favorite
+            - x
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - x
+  - b`)
   })
 
   it('should move meta attributes to the top when uncategorizing a context', () => {

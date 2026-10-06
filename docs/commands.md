@@ -483,7 +483,7 @@ https://github.com/user-attachments/assets/4255766e-8c9d-4cdf-a140-573ab82399ae
 
 ### Uncategorize
 
-Deletes the current thought and moves all its subthoughts up a level.
+Deletes the current thought and moves all its subthoughts up a level. If the thought is a favorite, its `=favorite` attribute is deleted with it rather than moved up, so the parent does not become a favorite. A thought with no subthoughts other than meta attributes is left unchanged, and the alert "Unable to uncategorize a single thought." is shown instead.
 
 <kbd>Command + Option + c</kbd>
 

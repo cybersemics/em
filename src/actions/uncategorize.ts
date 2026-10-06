@@ -20,6 +20,7 @@ import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
+import alert from './alert'
 import deleteThought from './deleteThought'
 import sort from './sort'
 
@@ -39,14 +40,25 @@ const uncategorize = (state: State, { at }: Options): State => {
   const children = getChildrenRanked(state, head(simplePath))
   const thought = getThoughtById(state, head(simplePath))
 
-  if (children.length === 0 || !thought) return state
+  if (!thought) return state
+
+  const isInContextView = isContextViewActive(state, parentOf(path))
+
+  // A thought whose only children are meta attributes cannot be uncategorized by the user.
+  // importText and swapNote pass `at` to collapse their own intermediate thoughts, whose meta attributes must still be moved up.
+  if (!at && !isInContextView && children.every(child => isAttribute(child.value))) {
+    return alert(state, { value: 'Unable to uncategorize a single thought.' })
+  }
+
+  if (children.length === 0) return state
 
   // Uncategorizing a context in the context view is equivalent to uncategorizing the parent of the cursor SimplePath.
+  // The context is uncategorized as the cursor rather than with `at`, so that its =favorite is removed like any other uncategorized favorite.
   // The cursor needs to be updated to stay in the context view.
-  const isInContextView = isContextViewActive(state, parentOf(path))
   if (isInContextView) {
     return reducerFlow([
-      state => uncategorize(state, { at: rootedParentOf(state, simplePath) }),
+      setCursor({ path: rootedParentOf(state, simplePath) }),
+      state => uncategorize(state, {}),
       setCursor({
         path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
         isKeyboardOpen: state.isKeyboardOpen,
@@ -55,9 +67,15 @@ const uncategorize = (state: State, { at }: Options): State => {
     ])(state)
   }
 
+  // The user's favorite is removed with the uncategorized thought rather than moved up, since that would make the parent a favorite.
+  const favoriteId = !at ? findDescendant(state, head(simplePath), '=favorite') : null
+  const movedChildren = children.filter(child => child.id !== favoriteId)
+
   /** Returns first moved child path as new cursor after uncategorize. */
   const getNewCursor = (state: State): Path | null => {
-    const firstVisibleChildOfPrevCursor = (state.showHiddenThoughts ? children : children.filter(isVisible(state)))[0]
+    const firstVisibleChildOfPrevCursor = (
+      state.showHiddenThoughts ? movedChildren : movedChildren.filter(isVisible(state))
+    )[0]
 
     if (!firstVisibleChildOfPrevCursor) return path.length > 1 ? parentOf(path) : null
 
@@ -123,7 +141,7 @@ const uncategorize = (state: State, { at }: Options): State => {
       : null,
 
     // outdent each child
-    ...children.map(child => (state: State) => {
+    ...movedChildren.map(child => (state: State) => {
       // Skip =sort since it has already been moved to the parent.
       if (contextHasSortPreference && child.value === '=sort') return state
 
