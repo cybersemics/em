@@ -8,6 +8,9 @@ import emojiRegex from './emojiRegex'
 
 export const TOOLBAR_HEIGHT = 50
 
+// Placeholder for an empty thought. Shown in the outline once an empty thought has gone untouched for a few seconds, and in place of the text of an empty thought listed in Favorites, Recently Edited, or Recently Deleted.
+export const EMPTY_THOUGHT_PLACEHOLDER = 'This is an empty thought'
+
 // maximum number of characters of children to allow expansion
 export const MAX_DISTANCE_FROM_CURSOR = 3
 export const MAX_DEPTH = 20

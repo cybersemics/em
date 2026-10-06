@@ -60,7 +60,7 @@ describe('sidebar', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5848
-  it.skip('empty favorite shows the empty-thought placeholder', async () => {
+  it('empty favorite shows the empty-thought placeholder', async () => {
     await newThought()
     await clickToolbar('Add to Favorites')
     await openSidebar()
