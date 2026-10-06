@@ -3,6 +3,8 @@ import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
 import deviceEmulation from '../helpers/deviceEmulation'
+import exportThoughts from '../helpers/exportThoughts'
+import gesture from '../helpers/gesture'
 import getEditingText from '../helpers/getEditingText'
 import paste from '../helpers/paste'
 import waitForSelector from '../helpers/waitForSelector'
@@ -57,4 +59,30 @@ it('tapping a toolbar dropdown option does not move the cursor to the thought un
   await waitForSelector('[aria-label="bullet-glyph"][data-bullet="ordered"]')
 
   expect(await getEditingText()).toBe('quebec romeo sierra tango')
+})
+
+// https://github.com/cybersemics/em/issues/5850
+it.skip('the first gesture after a toolbar dropdown is closed is executed', async () => {
+  await paste(`
+    - a
+    - b
+    - c
+  `)
+
+  await clickThought('b')
+
+  await clickToolbar('Sort Picker', 'Alphabetical')
+  await waitForSelector('[aria-label="sort options"]', { hidden: true })
+
+  await gesture('rd')
+
+  expect(await exportThoughts()).toBe(`
+- =sort
+  - Alphabetical
+    - Asc
+- a
+- b
+- ${''}
+- c
+`)
 })
