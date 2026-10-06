@@ -201,7 +201,7 @@ describe('toggleSortPicker error', () => {
       store.dispatch(
         setSortPreference({
           simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
-          sortPreference: { type: 'Created', direction },
+          sortPreference: { type: 'Created', direction: 'Asc' },
         }),
       )
 
@@ -466,7 +466,7 @@ describe('toggleSortPicker error', () => {
       store.dispatch(
         setSortPreference({
           simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
-          sortPreference: { type: 'Created', direction },
+          sortPreference: { type: 'Created', direction: 'Asc' },
         }),
       )
 
@@ -483,7 +483,7 @@ describe('toggleSortPicker error', () => {
   )
 
   // https://github.com/cybersemics/em/issues/5854
-  it.skip('sorts a thought created above a sibling to the end of a context sorted by Created with numbered bullets', () => {
+  it('sorts a thought created above a sibling to the end of a context sorted by Created with numbered bullets', () => {
     // Advance the clock between each step so that the thoughts and attributes have distinct created timestamps, as they
     // do when a user types the thoughts one at a time and then picks the sort and bullet style from the toolbar.
     store.dispatch(newThought({ value: 'ggg' }))
