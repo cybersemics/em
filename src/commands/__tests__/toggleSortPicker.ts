@@ -1,19 +1,25 @@
+import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { outdentActionCreator as outdent } from '../../actions/outdent'
+import { setBulletStyleActionCreator as setBulletStyle } from '../../actions/setBulletStyle'
 import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { executeCommand } from '../../commands'
+import { HOME_TOKEN } from '../../constants'
 import rootedParentOf from '../../selectors/rootedParentOf'
 import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import isAttribute from '../../util/isAttribute'
 import categorizeCommand from '../categorize'
 import deleteCommand from '../delete'
 import favoriteCommand from '../favorite'
+import newThoughtAboveCommand from '../newThoughtAbove'
 import outdentCommand from '../outdent'
 import pinCommand from '../pin'
 import splitSentencesCommand from '../splitSentences'
@@ -475,4 +481,39 @@ describe('toggleSortPicker error', () => {
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
   )
+
+  // https://github.com/cybersemics/em/issues/5854
+  it.skip('sorts a thought created above a sibling to the end of a context sorted by Created with numbered bullets', () => {
+    // Advance the clock between each step so that the thoughts and attributes have distinct created timestamps, as they
+    // do when a user types the thoughts one at a time and then picks the sort and bullet style from the toolbar.
+    store.dispatch(newThought({ value: 'ggg' }))
+    vi.advanceTimersByTime(1000)
+    store.dispatch(newThought({ value: 'uuu' }))
+    vi.advanceTimersByTime(1000)
+    store.dispatch(newThought({ value: 'eee' }))
+    vi.advanceTimersByTime(1000)
+    store.dispatch(newThought({ value: 'aaa' }))
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(
+      setSortPreference({
+        simplePath: [HOME_TOKEN] as SimplePath,
+        sortPreference: { type: 'Created', direction: 'Asc' },
+      }),
+    )
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(setBulletStyle({ simplePath: [HOME_TOKEN] as SimplePath, value: 'Ordered' }))
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(setCursor(['uuu']))
+    executeCommand(newThoughtAboveCommand, { store })
+    store.dispatch(editThought([''], 'fff'))
+
+    const children = getChildrenRankedByContext(store.getState(), [HOME_TOKEN]).filter(
+      child => !isAttribute(child.value),
+    )
+    expect(children.map(child => child.value)).toEqual(['ggg', 'uuu', 'eee', 'aaa', 'fff'])
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
 })
