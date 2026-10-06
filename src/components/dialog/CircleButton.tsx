@@ -26,6 +26,7 @@ const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick,
         borderRadius: '50%',
         border: 'none',
         // Subtle white sheen from upper-left to lower-right — softens the otherwise flat translucent fill into something glassy.
+        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
         background:
           'linear-gradient(191.32deg, {colors.dialogHeaderButtonBg} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
         // Soft lavender outer glow.
@@ -40,6 +41,7 @@ const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick,
           inset: 0,
           borderRadius: 'inherit',
           padding: '1px',
+          // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
           background:
             'linear-gradient(180deg, {colors.dialogHeaderButtonBorder} 0%, {colors.dialogHeaderButtonBorderFade} 100%)',
           WebkitMask: 'linear-gradient(white 0 0) content-box, linear-gradient(white 0 0)',
@@ -67,6 +69,7 @@ const CircleButton: React.FC<PropsWithChildren<CircleButtonProps>> = ({ onClick,
           position: 'absolute',
           inset: 0,
           borderRadius: 'inherit',
+          // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
           background:
             'linear-gradient(191.32deg, {colors.dialogHeaderButtonBgHover} 5.64%, {colors.dialogHeaderButtonBgFade} 83.21%)',
           opacity: 0,
