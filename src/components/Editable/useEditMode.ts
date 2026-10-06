@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux'
 import Path from '../../@types/Path'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { isSafari, isTouch } from '../../browser'
-import { LongPressState } from '../../constants'
+import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, TOUCH_SLOP } from '../../constants'
 import asyncFocus from '../../device/asyncFocus'
 import getCaretOffset from '../../device/getCaretOffset'
 import preventAutoscroll, { preventAutoscrollEnd } from '../../device/preventAutoscroll'
@@ -209,9 +209,14 @@ const useEditMode = ({
     // #4220: Pending re-placement of the caret after WebKit reverts it (see onTouchEnd).
     let caretRevertTimeout: ReturnType<typeof setTimeout> | undefined
 
+    // #4220: Where and when the current touch began, so that onTouchEnd can tell a tap from a press or a drag.
+    let touchStart: { x: number; y: number; timeStamp: number } | undefined
+
     /** Marks the beginning of a touch so that onMouseDown can determine whether a long press is occurring. */
-    const onTouchStart = () => {
+    const onTouchStart = (e: TouchEvent) => {
       pressingRef.current = true
+      const touch = e.changedTouches[0]
+      touchStart = touch ? { x: touch.clientX, y: touch.clientY, timeStamp: e.timeStamp } : undefined
       // A new touch proves that the previous tap's deferred caret placement no longer applies, on the same
       // reasoning as the capture-phase touchstart listeners that clear globals.suppressCursorAfterTouch and
       // Editable's recorded touchend time. Notably it keeps the second tap of a double tap, which selects a
@@ -253,6 +258,16 @@ const useEditMode = ({
           // once the revert has happened. getCaretOffset resolves the same offset onMouseDown would have, so a
           // mousedown that does arrive late sets the caret to the same place.
           if (!equalPath(state.cursor, path) || !tapMayPlaceCaret) return
+
+          // Only a tap is swallowed. A touch held past the long press delay or moved past the tap tolerance is
+          // native caret repositioning — the text magnifier, or a caret drag — and the caret it leaves belongs to
+          // it. Correcting it was observed to throw the caret to the start of the thought after a magnifier drag.
+          if (
+            !touchStart ||
+            e.timeStamp - touchStart.timeStamp > TIMEOUT_LONG_PRESS_THOUGHT ||
+            Math.hypot(touch.clientX - touchStart.x, touch.clientY - touchStart.y) > TOUCH_SLOP
+          )
+            return
 
           const { offset } = getCaretOffset(editable, { clientX: touch.clientX, clientY: touch.clientY })
           if (offset === null) return
