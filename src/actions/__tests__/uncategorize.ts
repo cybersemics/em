@@ -26,6 +26,25 @@ describe('normal view', () => {
     - b`)
   })
 
+  // https://github.com/cybersemics/em/issues/5833
+  it.skip('do nothing on a favorited thought with no other children', () => {
+    const text = `
+      - a
+        - =favorite
+      - b
+    `
+    const steps = [importText({ text }), setCursor(['a']), uncategorize({})]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - =favorite
+  - b`)
+    expect(stateNew.alert?.value).toBe('Unable to uncategorize a single thought.')
+  })
+
   it('uncategorize context with single child', () => {
     const steps = [newThought('a'), newSubthought('b'), newSubthought('c'), cursorBack, uncategorize({})]
 
