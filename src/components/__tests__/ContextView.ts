@@ -108,7 +108,7 @@ it('render home icon as breadcrumbs for each context whose parent is the home co
 })
 
 // https://github.com/cybersemics/em/issues/5857
-it.skip('do not show the no-other-contexts placeholder under a collapsed thought', async () => {
+it('do not show the no-other-contexts placeholder under a collapsed thought', async () => {
   await dispatch([
     importText({
       text: `
