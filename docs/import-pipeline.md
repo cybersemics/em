@@ -35,7 +35,7 @@ flowchart TD
 
     inline["editThought<br/><i>insert at caret</i>"]
     importJson["importJson<br/><i>Block[] → thoughtIndex /<br/>lexemeIndex updates</i>"]
-    newThought["newThought, one block at a time<br/><i>serial, resumable, merges duplicates</i>"]
+    newThought["newThought, one block at a time<br/><i>serial, resumable, merges only attributes</i>"]
 
     textToHtml -- "importText, ≤1 li:<br/>splice raw text at caret<br/>(converted output discarded)" --> inline
     htmlToJson -- "importText" --> importJson
@@ -67,7 +67,7 @@ Routing proceeds in order:
 4. **Markdown detection.** [`isMarkdown`](../src/util/isMarkdown.ts) checks for headings, links, or images. Markdown is always routed to `importText`, even when multiline.
 5. **Dispatch.** Single-line or markdown content goes to `importText` along with the caret offset and any selection range to replace. Multiline content goes to `importFiles`, wrapped in a `VirtualFile` named "from clipboard".
 
-The trade-off between the two executors: `importText` is atomic, synchronous, and preserves the browser selection, but cannot resume and does not pull pending descendants for duplicate merging. `importFiles` imports one thought at a time with a progress bar, persists a resume manifest, and merges duplicates against pulled descendants, but drops the selection and is much slower.
+The trade-off between the two executors: `importText` is atomic, synchronous, and preserves the browser selection, but cannot resume and does not pull pending descendants. `importFiles` imports one thought at a time with a progress bar and persists a resume manifest, but drops the selection and is much slower. Both merge only metaprogramming attributes and keep duplicate normal thoughts as separate siblings (since [#4539](https://github.com/cybersemics/em/pull/4539)).
 
 ## importText: atomic import
 
@@ -88,7 +88,7 @@ The pasted string is spliced into the destination thought's value at the caret a
 
 The converted HTML goes through [`htmlToJson`](../src/util/htmlToJson.ts) into `Block[]`, then [`importJson`](../src/util/importJson.ts) generates `thoughtIndex`/`lexemeIndex` updates for the whole tree at once, applied with a single `updateThoughts`.
 
-When the destination has existing children (or an empty destination has siblings), `importText` imports into a **dummy thought** and then collapses it with [`uncategorize`](../src/actions/uncategorize.ts) (twice if the destination was an empty thought), so that top-level imports merge with existing siblings. Collapse uses `moveThought`, which triggers `mergeThoughts` — so duplicate merging happens as a side effect of the collapse rather than in `importJson` itself. `setLastImportedCursor` then reconstructs the cursor path across the collapse, including the case where the last imported thought was merged into an existing sibling.
+When the destination has existing children (or an empty destination has siblings), `importText` imports into a **dummy thought** and then collapses it with [`uncategorize`](../src/actions/uncategorize.ts) (twice if the destination was an empty thought), placing the imported top-level thoughts among the existing siblings. Collapse moves each child with [`moveThought`](../src/actions/moveThought.ts), which merges into an existing duplicate only when `isAttribute(sourceThought.value) || destinationContext.some(isAttribute)` — so attribute merging happens as a side effect of the collapse rather than in `importJson` itself: a pasted `=sort` merges into an existing `=sort`, as does anything inside an attribute's subtree, while a pasted `a` next to an existing `a` gives two `a`s. `setLastImportedCursor` then reconstructs the cursor path across the collapse, including the case where the last imported thought was merged into an existing attribute.
 
 ## importFiles: resumable import
 
@@ -96,7 +96,7 @@ When the destination has existing children (or an empty destination has siblings
 
 1. Persists a `ResumeImport` manifest (localStorage) plus the raw file text (IndexedDB) before importing, so an interrupted import is offered for resume by `initialize` on next launch. The alert UI in [`Alert.tsx`](../src/components/Alert.tsx) can delete a resumable file.
 2. Parses the text through the same funnel: `textToHtml` → `htmlToJson` → `Block[]`, then [`flattenTree`](../src/util/flattenTree.ts) turns the tree into a serial task list.
-3. For each block: pulls pending descendants ([`pullDuplicateDescendants`](../src/actions/importFiles.ts)) so duplicates can be detected against the full tree, then either merges into an existing child with the same value or dispatches `newThought` with the block's scope as the value. Empty thoughts are never treated as duplicates (#4448).
+3. For each block: pulls pending descendants ([`pullDuplicateDescendants`](../src/actions/importFiles.ts)), then either merges into an existing child with the same value — only when the block is, or descends from, a metaprogramming attribute (`isMetaDuplicate`: `isAttribute(block.scope) || parentContext.some(isAttribute)`, the same rule as `moveThought`) — or dispatches `newThought` with the block's scope as the value, so duplicate normal thoughts are kept as separate siblings. Empty thoughts are never treated as duplicates (#4448). The pull currently runs for every block; [#5760](https://github.com/cybersemics/em/pull/5760) restricts it to the two cases that need loaded descendants: attributes (to find the duplicate to merge into) and resume (to find previously imported parents by value).
 4. Updates the progress alert and resume manifest after every thought, and sets the cursor on the first *visible* imported thought (skipping meta attributes).
 
 Note that `importFiles` never calls `importText`; the two executors share only the parse funnel.
@@ -219,7 +219,7 @@ Two independent layers:
 
 ### Structural paste edge cases
 
-- [#3622](https://github.com/cybersemics/em/issues/3622) (paste at same indentation does nothing): pasted top-level thoughts that duplicate existing siblings are merged (by `importFiles`' duplicate check, or by the collapse-merge in `importText`), so a copy → paste of siblings into the same context appears to no-op. Any fix must decide the product question — merge vs. duplicate siblings — inside the existing duplicate handling in `importFiles`/`mergeThoughts`, not by adding a pre-check in the paste handler. The decision has since been made in [#2712](https://github.com/cybersemics/em/issues/2712): do not merge duplicates on import.
+- [#3622](https://github.com/cybersemics/em/issues/3622) (paste at same indentation does nothing): pasted top-level thoughts that duplicated existing siblings used to be merged, so a copy → paste of siblings into the same context appeared to no-op. The product question was decided in [#2712](https://github.com/cybersemics/em/issues/2712) — do not merge duplicates on import — and since [#4539](https://github.com/cybersemics/em/pull/4539) both executors merge only metaprogramming attributes, so the same copy → paste now creates duplicate siblings. Only a paste consisting of attributes (or into an attribute's subtree) still merges. Any further change belongs in the shared attribute rule in `moveThought`/`importFiles`, not in a pre-check in the paste handler.
 - [#2826](https://github.com/cybersemics/em/issues/2826) (stuck at "Storing from clipboard" with trailing whitespace): reproduce at the funnel level (`textToHtml` → `htmlToJson` → `flattenTree` on the exact input) before touching `importFiles`; the hang is in parsing, not persistence.
 - [#3510](https://github.com/cybersemics/em/issues/3510) (ChatGPT list loses nesting), [#2897](https://github.com/cybersemics/em/issues/2897) (Wikipedia nesting false positive), [#1033](https://github.com/cybersemics/em/issues/1033) (iOS Notes structure), [#2154](https://github.com/cybersemics/em/issues/2154)–[#2157](https://github.com/cybersemics/em/issues/2157): all are `htmlToJson`/`textToHtml` parse bugs with skipped tests already written in [`importData.ts`](../src/actions/__tests__/importData.ts) / [`importText.ts`](../src/actions/__tests__/importText.ts) — restore the test first, then fix the funnel. The fragile spots are `joinChildren` (sibling/child chunking) and the ChatGPT `p1/p2` class heuristic.
 - [#3479](https://github.com/cybersemics/em/issues/3479) (Unknown inline token, hang on large paste): `isMarkdown`'s link regex false-positives on ordinary bracketed text, routing huge plain-text files through the atomic markdown path. Tighten `isMarkdown` and make `markdownToText`'s unknown-token case lossless (emit `token.raw`) rather than adding size limits elsewhere.
@@ -244,15 +244,15 @@ flowchart TD
 
     parseText["importText parses for itself:<br/>markdownToText if markdown,<br/>then textToHtml → htmlToJson"]
     parseText -- "single line" --> splice["<b>inline splice</b> at caret<br/><i>unsanitized</i>"]
-    parseText -- "multiline markdown" --> atomic["<b>atomic commit</b><br/>importJson → one updateThoughts<br/><i>merges duplicates via collapse</i>"]
+    parseText -- "multiline markdown" --> atomic["<b>atomic commit</b><br/>importJson → one updateThoughts<br/><i>merges only attributes via collapse</i>"]
 
     persist["importFiles persists raw text + manifest,<br/>then parses for itself:<br/>textToHtml → htmlToJson<br/><i>no markdown conversion</i>"]
-    persist --> serial["<b>serial resumable commit</b><br/>newThought per block<br/><i>pulls + merges duplicates ·<br/>checkpoints per thought</i>"]
+    persist --> serial["<b>serial resumable commit</b><br/>newThought per block<br/><i>pulls descendants · merges only attributes ·<br/>checkpoints per thought</i>"]
 ```
 
 ### Expected
 
-After the sequence below: every source calls one entry point; small content is parsed once, routed on the parsed tree, and committed through Redux in the foreground; large content is structural by fiat and imported in bulk — parsed downstream through the same funnel, written to the TreeCRDT store in one or a few sqlite transactions, and materialized into Redux like another client's edits, rendering through the normal pull mechanism so only the visible slice enters app state. Raw text is persisted, next to its checkpoint in sqlite, only for imports that span multiple transactions. Nothing merges duplicates on import.
+After the sequence below: every source calls one entry point; small content is parsed once, routed on the parsed tree, and committed through Redux in the foreground; large content is structural by fiat and imported in bulk — parsed downstream through the same funnel, written to the TreeCRDT store in one or a few sqlite transactions, and materialized into Redux like another client's edits, rendering through the normal pull mechanism so only the visible slice enters app state. Raw text is persisted, next to its checkpoint in sqlite, only for imports that span multiple transactions. Duplicate normal thoughts are never merged on import. Whether the bulk path keeps attribute merging is an open decision: `moveThought` treats a context with two of the same attribute as invalid, which argues for keeping it, but then step 6 must look up existing attributes at the destination without loading every descendant.
 
 ```mermaid
 flowchart TD
@@ -268,7 +268,7 @@ flowchart TD
     funnel -- "single block" --> splice["<b>inline splice</b> at caret<br/><i>funnel-sanitized like all content</i>"]
     funnel -- "multiple blocks" --> atomic["<b>atomic commit</b><br/>importJson → one updateThoughts<br/><i>undoable · selection preserved</i>"]
 
-    bulkgen["parses downstream via the same funnel →<br/>importJson-style generation<br/><i>no duplicate pull or merge (#2712)</i>"] --> write["<b>bulk CRDT write</b> (step 6)<br/>provider updateThoughts per transaction<br/><i>whole subtree in one transaction when it fits ·<br/>chunked with in-transaction checkpoint<br/>+ persisted raw text when not</i>"]
+    bulkgen["parses downstream via the same funnel →<br/>importJson-style generation<br/><i>no descendant pull · attribute merging<br/>undecided (#2712)</i>"] --> write["<b>bulk CRDT write</b> (step 6)<br/>provider updateThoughts per transaction<br/><i>whole subtree in one transaction when it fits ·<br/>chunked with in-transaction checkpoint<br/>+ persisted raw text when not</i>"]
     write --> ingest["materializes into Redux like<br/>another client's edits · renders via pull"]
 ```
 
@@ -276,7 +276,7 @@ flowchart TD
 
 The work is decomposed into independently landable steps, in dependency order:
 
-1. [#2712](https://github.com/cybersemics/em/issues/2712) — remove duplicate-descendant merging from import. The starting point, and a hard prerequisite for step 6: it deletes `pullDuplicateDescendants` and the per-thought pull that makes serial import slow, and decides #3622's merge-vs-duplicate product question. Merging also made import path-dependent — each block's destination depended on what earlier blocks had merged into — so removing it turns the whole import into a pure function of `Block[]` + destination, which is what allows a subtree to be written at once. Caveat for the interim: merging currently makes resume accidentally idempotent — once it is removed, a stale `thoughtsImported` checkpoint produces real duplicates, so the per-thought un-throttled manifest update in `importFiles` is load-bearing until step 6's in-transaction checkpoint removes the drift possibility.
+1. [#2712](https://github.com/cybersemics/em/issues/2712) — stop pulling destination descendants for every imported block. The starting point, and a hard prerequisite for step 6. #3622's merge-vs-duplicate product question is already settled: since [#4539](https://github.com/cybersemics/em/pull/4539) only metaprogramming attributes merge. What remains is the per-thought `pullDuplicateDescendants` that makes serial import slow, which [#5760](https://github.com/cybersemics/em/pull/5760) restricts to attributes and resume. With normal thoughts no longer merged, import is path-dependent only within attribute subtrees — elsewhere each block's destination no longer depends on what earlier blocks merged into — which is what allows a subtree to be written at once. Caveat for the interim: merging used to make resume accidentally idempotent; now that normal thoughts are not merged, a stale `thoughtsImported` checkpoint produces real duplicates, so the per-thought un-throttled manifest update in `importFiles` is load-bearing until step 6's in-transaction checkpoint removes the drift possibility.
 2. [#5172](https://github.com/cybersemics/em/issues/5172) — move markdown conversion into the shared funnel, so dropped `.md` files import with the same structure as pasted markdown. Relatively self-contained.
 3. [#5173](https://github.com/cybersemics/em/issues/5173) — retire `importData`'s markdown routing branch; multiline markdown imports resumably. Depends on #5172; closes the routing half of #3479.
 4. [#5174](https://github.com/cybersemics/em/issues/5174) — move resume reconstruction out of `importFiles` into `initialize`, scoped to the seam only: `initialize` hands the entry point text, path, and offset instead of `importFiles` reaching into storage itself. The storage substrate — localStorage manifest, IDB raw text, per-thought checkpointing — is deliberately left untouched, because step 6 replaces it wholesale.
