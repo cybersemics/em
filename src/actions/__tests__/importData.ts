@@ -782,7 +782,7 @@ f
 })
 
 // https://github.com/cybersemics/em/issues/5172
-it.skip('import a dropped markdown file', async () => {
+it('import a dropped markdown file', async () => {
   vi.useFakeTimers()
   const { cleanup } = await initialize({ storage: 'memory' })
 
