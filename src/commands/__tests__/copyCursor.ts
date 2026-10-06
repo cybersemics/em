@@ -95,7 +95,7 @@ describe('copyCursor', () => {
     executeCommandWithMulticursor(copyCursorCommand, { store })
     await vi.runAllTimersAsync()
 
-    expect(store.getState().alert?.value).toBe('Copied empty thought to the clipboard')
+    expect(store.getState().alert?.value).toBe('Copied "empty thought" to the clipboard')
   })
 
   describe('multicursor', () => {

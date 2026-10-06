@@ -51,7 +51,7 @@ describe('favorite', () => {
 
     executeCommand(favorite, { store })
 
-    expect(store.getState().alert?.value).toBe('Added empty thought to favorites')
+    expect(store.getState().alert?.value).toBe('Added "empty thought" to favorites')
   })
 
   // https://github.com/cybersemics/em/issues/5856
@@ -68,7 +68,7 @@ describe('favorite', () => {
 
     executeCommand(favorite, { store })
 
-    expect(store.getState().alert?.value).toBe('Removed empty thought from favorites')
+    expect(store.getState().alert?.value).toBe('Removed "empty thought" from favorites')
   })
 
   describe('multicursor', () => {

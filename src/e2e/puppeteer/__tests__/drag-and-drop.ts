@@ -425,7 +425,7 @@ describe('drag', () => {
     await waitForAlert('moved to')
 
     const alertText = await page.$eval('[data-testid=alert-content]', el => el.textContent)
-    expect(alertText).toBe('empty thought moved to empty thought.')
+    expect(alertText).toBe('"Empty thought" moved to "empty thought".')
 
     const destinationLinkText = await page.$eval(
       '[data-testid=alert-content] [data-thought-link]',

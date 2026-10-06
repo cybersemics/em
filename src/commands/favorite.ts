@@ -50,7 +50,7 @@ const favorite = {
     const thought = getThoughtById(state, id)
     if (!thought) return
     const isFavorite = findDescendant(state, id, '=favorite')
-    const label = thought.value ? `"${ellipsize(thought.value)}"` : 'empty thought'
+    const label = `"${thought.value ? ellipsize(thought.value) : 'empty thought'}"`
     dispatch([
       // TODO: Fix single value to not overwrite other thought
       toggleAttribute({ path: cursor, values: ['=favorite', 'true'] }),

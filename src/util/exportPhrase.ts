@@ -16,7 +16,7 @@ const exportPhrase = (idOrIds: ThoughtId | ThoughtId[], numDescendants: number |
 
   const id = Array.isArray(idOrIds) ? idOrIds[0] : idOrIds
 
-  const label = value ? `"${ellipsize(value)}"` : 'empty thought'
+  const label = `"${value ? ellipsize(value) : 'empty thought'}"`
 
   return isRoot([id])
     ? numDescendants === 1
