@@ -1,8 +1,13 @@
 import { findAllByLabelText, findByLabelText, queryByLabelText, queryByText, screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
 import { act } from 'react'
+import SimplePath from '../../@types/SimplePath'
+import { editThoughtActionCreator as editThought } from '../../actions/editThought'
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { setCursorActionCreator as setCursorAction } from '../../actions/setCursor'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
+import { HOME_TOKEN } from '../../constants'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import store from '../../stores/app'
 import freeThoughtsThresholdStore from '../../stores/freeThoughtsThresholdStore'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -100,6 +105,32 @@ it('render home icon as breadcrumbs for each context whose parent is the home co
     { value: 'b', homeBreadcrumbs: true },
     { value: 'b', homeBreadcrumbs: false },
   ])
+})
+
+// https://github.com/cybersemics/em/issues/5857
+it.skip('do not show the no-other-contexts placeholder under a collapsed thought', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - aaa
+        - aaa
+      `,
+    }),
+    setCursor(['aaa']),
+    toggleContextView(),
+  ])
+
+  // set the cursor on the second aaa and edit it to aaap
+  await dispatch((dispatch, getState) => {
+    const [, second] = getChildrenRanked(getState(), HOME_TOKEN)
+    const path = [second.id] as SimplePath
+    dispatch([setCursorAction({ path }), editThought({ path, oldValue: 'aaa', newValue: 'aaap' })])
+  })
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  await findThoughtByText('aaap')
+  expect(screen.queryByText('This thought is not found in any other contexts', { exact: false })).toBeNull()
 })
 
 describe('freeThoughts', () => {
