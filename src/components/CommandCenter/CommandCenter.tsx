@@ -3,6 +3,7 @@ import {
   MotionValue,
   PanInfo,
   animate,
+  easeIn,
   motion,
   useMotionTemplate,
   useMotionValue,
@@ -513,7 +514,7 @@ const CommandCenter = () => {
   // `standardViewOpacity` and `expandedViewOpacity`, but both are derived from
   // the same `stageProgress` value to ensure smooth transitions between stages.
   const standardViewOpacity = useTransform(stageProgress, [0, 0.9], [1, 0])
-  const expandedViewOpacity = useTransform(stageProgress, [0.3, 1], [0, 1])
+  const expandedViewOpacity = useTransform(stageProgress, [0.3, 1], [0, 1], { ease: easeIn })
   const standardPointerEvents = useTransform(stageProgress, p => (p > 0.5 ? 'none' : 'auto')) as MotionValue<
     'none' | 'auto'
   >
@@ -753,6 +754,7 @@ const CommandCenter = () => {
                 >
                   <div className={css({ position: 'relative' })}>
                     <motion.div
+                      /** The standard stage's command grid. Kept on its own compositor layer so the stage crossfade blends it rather than repainting every tile each frame. */
                       className={css({
                         display: 'grid',
                         gridTemplateColumns: 'repeat(4, 1fr)',
@@ -761,7 +763,11 @@ const CommandCenter = () => {
                         gap: '0.622rem',
                         gridRowGap: '0.889rem',
                       })}
-                      style={{ opacity: standardViewOpacity, pointerEvents: standardPointerEvents }}
+                      style={{
+                        opacity: standardViewOpacity,
+                        pointerEvents: standardPointerEvents,
+                        willChange: 'opacity',
+                      }}
                     >
                       <PanelCommand command={{ ...copyCursorCommand, label: 'Copy' }} size='small' />
                       <PanelCommand command={note} size='small' />
@@ -791,6 +797,11 @@ const CommandCenter = () => {
                         // Set a negative bottom value to allow content to extend into the hidden chevron
                         // area instead of stopping at the visible edge.
                         bottom: `calc(-1 * (${CHEVRON_SECTION_HEIGHT_REM}rem + ${STAGE_OFFSET_REM}rem))`,
+                        // Keeps the command list on its own compositor layer, so the stage crossfade blends
+                        // it rather than repainting every row each frame. Declared statically rather than
+                        // only while the crossfade runs: the layer has to exist before the first frame of
+                        // the fade to save that frame, and this subtree only exists while the drawer is open.
+                        willChange: 'opacity',
                       }}
                     >
                       <div
