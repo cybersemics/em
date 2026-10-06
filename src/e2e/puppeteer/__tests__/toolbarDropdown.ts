@@ -62,7 +62,7 @@ it('tapping a toolbar dropdown option does not move the cursor to the thought un
 })
 
 // https://github.com/cybersemics/em/issues/5850
-it.skip('the first gesture after a toolbar dropdown is closed is executed', async () => {
+it('the first gesture after a toolbar dropdown is closed is executed', async () => {
   await paste(`
     - a
     - b
