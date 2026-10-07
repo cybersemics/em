@@ -1,29 +1,24 @@
-import { clearActionCreator as clear } from '../../actions/clear'
-import { importTextActionCreator as importTextAction } from '../../actions/importText'
+import { act } from 'react'
+import { importTextActionCreator as importText } from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
-import { initialize } from '../../initialize'
 import exportContext from '../../selectors/exportContext'
 import appStore from '../../stores/app'
-import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
+import contextToThought from '../../test-helpers/contextToThought'
+import createTestApp, { cleanupTestApp, refreshTestApp } from '../../test-helpers/createTestApp'
+import dispatch from '../../test-helpers/dispatch'
 import { moveThoughtAtFirstMatchActionCreator } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import testTimer from '../../test-helpers/testTimer'
-
-const timer = testTimer()
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
 
-// TODO: TransactionInactiveError: A request was placed against a transaction which is currently not active, or which is finished.
-it.skip('merge up to pending destination descendant', async () => {
-  timer.useFakeTimer()
-  initialize({ storage: 'memory' })
-  await timer.runAllAsync()
-
-  const text = `
+it('merge up to pending destination descendant', async () => {
+  await dispatch(
+    importText({
+      text: `
     - a
       - b
-        -c
+        - c
           - one
           - two
     - d
@@ -31,39 +26,32 @@ it.skip('merge up to pending destination descendant', async () => {
         - c
           - three
           - four
-  `
+  `,
+    }),
+  )
 
-  appStore.dispatch(importTextAction({ text }))
-  await timer.runAllAsync()
+  await act(vi.runOnlyPendingTimersAsync)
 
-  timer.useFakeTimer()
+  // clear and initialize again to reload from local db (simulating page refresh)
+  await refreshTestApp()
 
-  // clear and call initialize again to reload from local db (simulating page refresh)
-  appStore.dispatch(clear())
-  await timer.runAllAsync()
+  await dispatch(setCursor(['a']))
 
-  initialize({ storage: 'memory' })
+  // wait for the pull queue to load the thoughts within the buffer depth
+  await act(vi.runOnlyPendingTimersAsync)
 
-  await timer.runAllAsync()
+  // the move must run while the destination's descendants are still pending
+  expect(contextToThought(appStore.getState(), ['d', 'b'])).toMatchObject({ pending: true })
 
-  appStore.dispatch([setCursor(['a'])])
-
-  // wait for pullBeforeMove middleware to execute
-  await timer.runAllAsync()
-
-  timer.useFakeTimer()
-
-  appStore.dispatch([
+  await dispatch(
     moveThoughtAtFirstMatchActionCreator({
       from: ['a', 'b'],
       to: ['d', 'b'],
       newRank: 1,
     }),
-  ])
+  )
 
-  await timer.runAllAsync()
-
-  timer.useRealTimer()
+  await act(vi.runOnlyPendingTimersAsync)
 
   const exported = exportContext(appStore.getState(), [HOME_TOKEN], 'text/plain')
 
