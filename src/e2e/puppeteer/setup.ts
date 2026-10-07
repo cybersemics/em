@@ -133,18 +133,11 @@ const setup = async ({
 
 beforeEach(setup, 60000)
 
-// TreeCRDT teardown can drain OPFS writes from import-heavy tests before dropping storage.
+// Closing the browser context is the whole teardown. Every test runs in its own incognito context whose storage
+// (localStorage and the OPFS database alike) is discarded with it, and names its thoughtspace with a fresh tsid, so
+// nothing a test wrote can be seen by the next one and there is no need to drop the thoughtspace from inside the page.
 afterEach(async () => {
   if (page) {
-    await page
-      .evaluate(async () => {
-        await window.em?.testHelpers?.waitForThoughtspaceRuntimeIdle?.()
-        await window.em?.testHelpers?.dropThoughtspace?.()
-      })
-      .catch(() => {
-        // Ignore teardown errors when a failing test has already closed or navigated the page.
-      })
-
     await page.close().catch(() => {
       // Ignore errors when closing the page.
     })
