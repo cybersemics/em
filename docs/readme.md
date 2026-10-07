@@ -13,6 +13,10 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Layout Rendering](layout-rendering.md) — How thoughts are positioned in the absolute-flat-list layout, including the autocrop / vertical-autocrop mechanism and how the cursor is scrolled into view.
 - [Debug Log](debug-log.md) — The on-device rolling log that survives a freeze, how to get it off a device, and how to compare two of them.
 
+## Solutions
+
+- [Solutions](solutions/readme.md) — Durable learnings recovered from closed issues and merged pull requests: the non-obvious cause, the approach that failed, the guardrail. Where the docs above say how a subsystem works, these say how it went wrong. Grep here when you are standing in front of a symptom.
+
 ## Agents
 
 - [Agent Infrastructure](agents/readme.md) — How coding agents work on this repo: what the Copilot cloud agent reads, the skills they run, the environment and MCP servers behind them, the TDD workflow, and how Codex and Claude Code share the same suite.
