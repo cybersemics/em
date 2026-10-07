@@ -31,9 +31,9 @@ Logging is **off** in production unless the user turns on **Debug Logging** in S
 | A script or agent | `window.em.debugLog` — `format(state)`, `read()`, `clear()`, `setEnabled()`, `setConsole()`. |
 | An agent reproducing a bug | [`scripts/debug-log-capture.ts`](../scripts/debug-log-capture.ts), which attaches through the e2e bridges and writes to a file. |
 
-A reporter attaches the downloaded file to an issue under a `## Debug Log` heading — see [`write-issue`](../.github/skills/write-issue/SKILL.md).
+A reporter attaches the downloaded file to an issue under a `## Debug Log` heading — see [`create-issue`](../.github/skills/create-issue/SKILL.md).
 
-The log carries thought text verbatim, in value fields, typed keystrokes, action payloads and the `state.thoughts` dump. An agent quoting a reporter's log into an issue replaces the personal parts of that text with placeholders first, keeping Lexemes intact; [`write-issue`](../.github/skills/write-issue/SKILL.md#anonymizing-user-data) lists every place it appears.
+The log carries thought text verbatim, in value fields, typed keystrokes, action payloads and the `state.thoughts` dump. An agent quoting a reporter's log into an issue replaces the personal parts of that text with placeholders first, keeping Lexemes intact; [`create-issue`](../.github/skills/create-issue/SKILL.md#anonymizing-user-data) lists every place it appears.
 
 ### Streaming to the console
 

@@ -83,13 +83,6 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
     // disable swipe-to-dismiss when multicursor is active
     const swipeProps: typeof useSwipeToDismissProps = multicursor ? {} : useSwipeToDismissProps
 
-    const borderStyles = border
-      ? {
-          border: '1px solid {colors.panelBorder}',
-          borderRadius: '8px',
-        }
-      : {}
-
     const fullScreenStyles = fullScreen
       ? {
           boxShadow: 'none',
@@ -119,7 +112,9 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           left: 0,
           right: 0,
           width: 'max-content',
-          ...borderStyles,
+          // Ternaries instead of a spread from a variable, because PandaCSS does not extract styles spread from a variable.
+          border: border ? '1px solid {colors.panelBorder}' : undefined,
+          borderRadius: border ? '8px' : undefined,
           '&:hover': {
             '& [data-close-button]': {
               opacity: showXOnHover ? 1 : undefined,
