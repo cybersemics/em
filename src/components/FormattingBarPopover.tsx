@@ -328,7 +328,7 @@ const FormattingBarPopover: FC<FormattingBarPopoverProps> = ({
                 right: 0,
                 top: '-24px',
                 bottom: '-6rem',
-                background: 'linear-gradient(to bottom, {colors.transparent}, {colors.black} 48px)',
+                backgroundImage: 'linear-gradient(to bottom, {colors.transparent}, {colors.black} 48px)',
                 opacity: 0.85,
                 pointerEvents: 'none',
               })}
