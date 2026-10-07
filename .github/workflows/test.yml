@@ -76,6 +76,7 @@ on:
       - '.github/workflows/preview-qr.yml'
       - '.github/workflows/tauri-*.yml'
       - '.github/workflows/tdd.yml'
+      - '.github/workflows/tdd-ios.yml'
       - '.github/workflows/update-browserslist.yml'
       - '.github/workflows/vercel-*.yml'
       # Build-only inputs. Test never runs `yarn build`, so nothing that only reaches the app
@@ -134,6 +135,7 @@ on:
       - '.github/workflows/preview-qr.yml'
       - '.github/workflows/tauri-*.yml'
       - '.github/workflows/tdd.yml'
+      - '.github/workflows/tdd-ios.yml'
       - '.github/workflows/update-browserslist.yml'
       - '.github/workflows/vercel-*.yml'
       - 'public/**'

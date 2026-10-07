@@ -149,12 +149,14 @@ end-session: escalating — checklist passed per .github/skills/end-session/SKIL
 ├── actions/
 │   ├── install/                     Cached dependency install
 │   ├── serve/                       Start the built app and wait for it
+│   ├── tdd-detect/                  Finds the tests a PR adds, for both TDD workflows
 │   └── unskip-added-tests/          Switches .skip tests back on — see tdd.md
 └── workflows/
     ├── copilot-setup-steps.yml      Builds the agent's environment
     ├── main-fix.yml                 Puts an agent on CI failing on main
     ├── pr-ready.yml                 Undrafts a finished PR whose checks passed; merges a main fix
-    └── tdd.yml                      Checks new tests genuinely fail first
+    ├── tdd.yml                      Checks new tests genuinely fail first
+    └── tdd-ios.yml                  The same for iOS tests, with BrowserStack credentials
 
 scripts/
 ├── shared-chrome.mjs                One Chrome that agent and tests share

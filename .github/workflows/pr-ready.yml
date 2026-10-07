@@ -41,6 +41,7 @@ on:
         'BrowserStack Android',
         'Vercel Preview',
         'TDD',
+        'TDD iOS',
         'Agent Scripts',
         'Tauri Check',
       ]
@@ -67,7 +68,7 @@ jobs:
   ready:
     name: Mark ready for review
     runs-on: ubuntu-latest
-    # Cheap gate so the seven other completions on a normal pull request cost nothing. Author,
+    # Cheap gate so the eight other completions on a normal pull request cost nothing. Author,
     # draft status, session state, and the checks themselves are verified in the step below.
     if: >-
       github.event_name == 'workflow_dispatch' ||

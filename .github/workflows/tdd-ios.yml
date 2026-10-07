@@ -1,0 +1,278 @@
+name: TDD iOS
+
+# The iOS half of the TDD workflow (tdd.yml): runs the iOS tests a pull request adds against the pre-fix commit on
+# BrowserStack, and expects them to fail there. It is a workflow of its own because it needs the BrowserStack and
+# tunnel secrets, which a pull_request run of a fork's pull request does not receive. Under pull_request it crashed
+# loading the WDIO config on every fork pull request, and the old exit-code check counted the crash as a red test
+# (#4744). The unit and Puppeteer jobs need no secrets and stay in tdd.yml under pull_request.
+#
+# pull_request_target runs in the base repository's context with its secrets, and this job then runs the pull
+# request's test files with them, as ios.yml already does with its whole checkout. GitHub's approval setting for
+# outside collaborators does not gate pull_request_target runs, so it is not a mitigation. What is: the token is
+# read-only, the secrets are scoped to the one step that runs the tests, and everything that is not the pull
+# request's tests — this file, the detect action, the actions the job uses, and the verdict script — is read from
+# the base branch rather than from the pull request.
+#
+# The workflow file itself is read from the default branch, so a change to it has no effect on a pull request until
+# it merges.
+on:
+  pull_request_target:
+    branches:
+      - '**'
+
+# A new push supersedes the run in progress. Keyed on the pull request number because pull_request_target sets
+# github.ref to the base branch, so every open pull request would otherwise share one group. Separate from ios.yml's
+# group, so the two never queue behind each other; both wait in-process for BrowserStack session headroom instead
+# (see waitForBrowserStackSlots.ts).
+concurrency:
+  group: tdd-ios-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CI: true
+  # Skip Puppeteer's Chrome download on install — nothing here launches the bundled browser.
+  PUPPETEER_SKIP_DOWNLOAD: true
+
+jobs:
+  detect:
+    name: Detect changed tests
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.changed_files > 0
+    outputs:
+      has_ios: ${{ steps.detect.outputs.has_ios }}
+      has_skipped_ios: ${{ steps.detect.outputs.has_skipped_ios }}
+      ios_files: ${{ steps.detect.outputs.ios_files }}
+      helper_files: ${{ steps.detect.outputs.helper_files }}
+      skipped_ios_files: ${{ steps.detect.outputs.skipped_ios_files }}
+      merge_base: ${{ steps.detect.outputs.merge_base }}
+      tdd_commit: ${{ steps.detect.outputs.tdd_commit }}
+      skip: ${{ steps.detect.outputs.skip }}
+      skip_reason: ${{ steps.detect.outputs.reason }}
+      skip_ios: ${{ steps.detect.outputs.skip_ios }}
+
+    steps:
+      # The base branch, not the pull request: the detect action runs from this checkout. It reads the pull
+      # request's changes with git, and runs none of its code.
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 999
+
+      - name: Detect changed tests
+        id: detect
+        uses: ./.github/actions/tdd-detect
+
+      - name: Report skip
+        if: steps.detect.outputs.skip == 'true' || steps.detect.outputs.skip_ios == 'true' || steps.detect.outputs.has_ios != 'true'
+        run: echo "⏭️  No iOS TDD validation for this pull request. ${{ steps.detect.outputs.reason }}"
+
+  # ---------------------------------------------------------------------------
+  # iOS BrowserStack: check out the changed iOS test diff onto base, run on
+  # BrowserStack, expect failure. Real device time — gate independently with the
+  # `skip-tdd-ios` label.
+  # ---------------------------------------------------------------------------
+  ios:
+    name: TDD — iOS tests
+    needs: detect
+    if: needs.detect.outputs.skip != 'true' && needs.detect.outputs.skip_ios != 'true' && needs.detect.outputs.has_ios == 'true'
+    runs-on: ubuntu-latest
+    env:
+      # Activates the console proxy (src/util/consoleProxy.ts) at build time; BrowserStack can't access
+      # iOS console logs, and the wdio config's beforeTest waits for the proxy. Mirrors ios.yml.
+      VITE_BROWSER_CONSOLE_CAPTURE: 1
+
+    steps:
+      # Without the credentials there is nothing to run the tests on. pull_request_target receives the repository's
+      # secrets for fork pull requests too, so this is for the events that legitimately get none, such as a
+      # Dependabot pull request: skip with a notice rather than crash and have the crash read as a result.
+      - name: Check BrowserStack credentials
+        id: credentials
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+        run: |
+          if [ -n "$BROWSERSTACK_USERNAME" ] && [ -n "$BROWSERSTACK_ACCESS_KEY" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            MESSAGE="iOS TDD validation skipped: the BrowserStack credentials are not available to this run, so the changed iOS tests were not run and nothing was validated."
+            echo "::warning::$MESSAGE"
+            echo "⏭️  $MESSAGE" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # The pre-fix commit, onto which only the pull request's test files are overlaid below. /tdd <commit> can name a
+      # commit of the pull request itself, which checkout v6 refuses from pull_request_target unless this is set.
+      # https://gh.io/securely-using-pull_request_target
+      - name: Clone repository
+        if: steps.credentials.outputs.available == 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.detect.outputs.tdd_commit }}
+          fetch-depth: 999
+          allow-unsafe-pr-checkout: true
+
+      # The actions this job uses and the verdict script come from the base branch, the commit this workflow file
+      # was read from, never from the pull request: they run before and after its tests with the token in reach,
+      # and the pre-fix commit checked out above may predate them. Fetched before the PR head, since the steps
+      # below read the head from FETCH_HEAD.
+      - name: Check out the actions and verdict script with the workflow
+        if: steps.credentials.outputs.available == 'true'
+        run: |
+          git fetch --depth=1 origin ${{ github.sha }}
+          git checkout ${{ github.sha }} -- .github/actions/ scripts/ci/tdd-verdict.mjs
+
+      - name: Fetch PR head
+        if: steps.credentials.outputs.available == 'true'
+        run: git fetch origin ${{ github.event.pull_request.head.sha }}
+
+      - name: Checkout test files and support from PR head
+        if: steps.credentials.outputs.available == 'true'
+        id: patch
+        run: |
+          IOS_FILES=$(echo "${{ needs.detect.outputs.ios_files }}" | base64 -d)
+          IOS_SUPPORT_FILES=$(git diff --name-only "${{ needs.detect.outputs.merge_base }}" FETCH_HEAD -- \
+            | grep -E '^src/e2e/(browserEnvironment|iOS)/(helpers|config|setup)/' || true)
+
+          echo "=== Changed iOS test files ==="
+          echo "$IOS_FILES"
+          echo "=== Changed iOS test support files ==="
+          echo "$IOS_SUPPORT_FILES"
+
+          if [ -z "$IOS_FILES" ]; then
+            echo "No iOS test files to process"
+            echo "empty=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Check out a path from the PR head, or delete it when the PR deleted it. git checkout fails outright on a
+          # pathspec that does not exist at the target, so a PR that removes a test or a helper would break the run
+          # here. A deletion is part of the change under test like any other edit, so base has to reflect it too.
+          sync_from_head() {
+            local f="$1"
+            if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then
+              echo "Checking out: $f"
+              git checkout FETCH_HEAD -- "$f"
+            else
+              echo "Removing (deleted in PR): $f"
+              git rm -q --ignore-unmatch -- "$f"
+            fi
+          }
+
+          # Test support is part of the test, not the application fix. Check it out
+          # with the test so the base-branch run reaches the behavioral assertion.
+          echo "=== Checking out iOS test files and support from PR head ==="
+          for f in $IOS_FILES $IOS_SUPPORT_FILES; do
+            sync_from_head "$f"
+          done
+
+          # Test infrastructure the changed tests may depend on, e.g. a new helper.
+          HELPER_FILES=$(echo "${{ needs.detect.outputs.helper_files }}" | base64 -d)
+          for f in $HELPER_FILES; do
+            sync_from_head "$f"
+          done
+
+          echo "empty=false" >> "$GITHUB_OUTPUT"
+
+      - name: Enable Corepack
+        if: steps.credentials.outputs.available == 'true' && steps.patch.outputs.empty != 'true'
+        run: corepack enable
+
+      - name: Unskip added iOS tests before running on base
+        if: steps.credentials.outputs.available == 'true' && steps.patch.outputs.empty != 'true' && needs.detect.outputs.has_skipped_ios == 'true'
+        uses: ./.github/actions/unskip-added-tests
+        with:
+          merge-base: ${{ needs.detect.outputs.merge_base }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          skipped-files: ${{ needs.detect.outputs.skipped_ios_files }}
+          no-files-message: No iOS skipped test files to unskip.
+
+      - name: Set Node.js version
+        if: steps.credentials.outputs.available == 'true' && steps.patch.outputs.empty != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'yarn'
+
+      - name: Install npm dependencies
+        if: steps.credentials.outputs.available == 'true' && steps.patch.outputs.empty != 'true'
+        uses: ./.github/actions/install
+
+      - name: Build
+        if: steps.credentials.outputs.available == 'true' && steps.patch.outputs.empty != 'true'
+        run: yarn build
+
+      # Vite app-gate token (see tunnelTokenGate in vite.config.ts). Must be set before Serve
+      # starts the dev server, and passed to the test step below so the wdio config's tunnel-pool
+      # claim (cloudflareTunnelPool.ts) can prove a candidate is answering THIS run's server.
+      - name: Generate tunnel token
+        if: steps.credentials.outputs.available == 'true' && steps.patch.outputs.empty != 'true'
+        run: |
+          TOKEN=$(openssl rand -hex 16)
+          echo "::add-mask::$TOKEN"
+          echo "TUNNEL_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Serve
+        if: steps.credentials.outputs.available == 'true' && steps.patch.outputs.empty != 'true'
+        # HTTP=1 forces a plain-HTTP origin here: Cloudflare's tunnel already terminates HTTPS at its edge for Safari (a real CA-signed cert on the public hostname), so this local connector-to-origin hop never needs its own TLS.
+        run: HTTP=1 yarn servebuild &
+
+      - name: Run changed iOS tests on base (expect failure)
+        if: steps.credentials.outputs.available == 'true' && steps.patch.outputs.empty != 'true'
+        id: run_tests
+        env:
+          BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
+          BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
+          BROWSERSTACK_BUILD_NAME: 'TDD - ${{ github.run_id }}'
+          BROWSERSTACK_PROJECT_NAME: 'em'
+          TUNNEL_TOKEN: ${{ env.TUNNEL_TOKEN }}
+          # Same tunnel pool ios.yml uses — see cloudflareTunnelPool.ts. Eliminates this job's
+          # previous fallback to an ephemeral *.trycloudflare.com quick tunnel. Note this means a
+          # TDD run and an ios.yml run can contend for the pool, since they are in different
+          # concurrency groups — that contention is what cloudflareTunnelPool.ts is built to resolve.
+          CLOUDFLARE_TUNNEL_POOL: ${{ secrets.CLOUDFLARE_TUNNEL_POOL }}
+        run: |
+          IOS_FILES=$(echo "${{ needs.detect.outputs.ios_files }}" | base64 -d)
+
+          echo "=== Running changed iOS tests ==="
+          echo "$IOS_FILES"
+
+          # wdio --spec filters the config's specs to the changed file(s).
+          SPEC_ARGS=""
+          for f in $IOS_FILES; do SPEC_ARGS="$SPEC_ARGS --spec $f"; done
+
+          # The log is kept for the verdict, which is read from the spec reporter's per-test lines: the base commit's
+          # own WDIO config runs here, and the spec reporter is the one thing every base commit has.
+          set +e
+          yarn test:ios $SPEC_ARGS 2>&1 | tee /tmp/tdd-ios.log
+          TEST_EXIT=${PIPESTATUS[0]}
+          echo ""
+          node scripts/ci/tdd-verdict.mjs wdio /tmp/tdd-ios.log "$TEST_EXIT"
+          VERDICT_EXIT=$?
+          set -e
+
+          # A nonzero exit is not evidence on its own: the verdict is read from the tests the runner reports.
+          case "$VERDICT_EXIT" in
+            0) VERDICT=validated ;;
+            10) VERDICT=flagged ;;
+            *) VERDICT=invalid ;;
+          esac
+          echo "test_exit=$TEST_EXIT" >> "$GITHUB_OUTPUT"
+          echo "verdict=$VERDICT" >> "$GITHUB_OUTPUT"
+
+          if [ "$VERDICT" = validated ]; then
+            echo "✅ TDD validated: changed iOS tests FAIL on the base branch."
+            echo "This means the tests are genuinely covering new behavior."
+          elif [ "$VERDICT" = flagged ]; then
+            echo "❌ TDD flagged: changed iOS tests PASS on the base branch."
+            echo "New tests that accompany bug fixes are expected to FAIL on the base branch and PASS on the PR, demonstrating that the issue has been fixed. Please review your tests and make sure they fail on the base branch."
+            echo "If you are extending the test coverage over previously working behavior, add the 'skip-tdd' or 'skip-tdd-ios' label to the PR to skip this workflow."
+            exit 1
+          else
+            echo "❌ TDD not validated: the changed iOS tests did not run to a result on the base branch (exit code $TEST_EXIT)."
+            echo "A configuration error, a session or tunnel failure, or a failure only in hooks proves nothing about the fix. See the output above."
+            exit 1
+          fi

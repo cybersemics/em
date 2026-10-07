@@ -49,6 +49,7 @@ on:
         'BrowserStack Android',
         'Vercel Preview',
         'TDD',
+        'TDD iOS',
         'Agent Scripts',
         'Evals',
         'Copilot Setup Steps',
