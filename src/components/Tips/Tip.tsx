@@ -64,6 +64,7 @@ const TipBlur: FC<{
       className={css({
         position: 'absolute',
         inset: 0,
+        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
         background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 100%)',
       })}
     />
