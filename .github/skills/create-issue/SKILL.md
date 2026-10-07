@@ -1,7 +1,7 @@
 ---
-name: write-issue
+name: create-issue
 description: >-
-  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another.
+  ALWAYS USE THIS SKILL when creating or editing a GitHub issue in this repo — filing a new bug, splitting one out of a comment thread, adding reproduction steps to an issue that lacks them, or marking one blocked by another. Triggers on "create issue", "write issue", "file an issue", "open an issue", "make an issue", "report a bug", and any request to draft or edit issue text.
 allowed-tools:
   - bash
 ---
@@ -172,7 +172,7 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 
 ## Labels
 
-`bug` for broken behaviour, `feature` for a request, `refactor` for a behaviour-preserving cleanup, `test` for test and CI work, `agent` for agent configuration and ops.
+`bug` for broken behaviour, `feature` for new user-facing behaviour, `refactor` for work no user could observe (a cleanup, or internal machinery only other code uses), `test` for test and CI work, `agent` for agent configuration and ops.
 
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
