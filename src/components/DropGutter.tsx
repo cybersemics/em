@@ -75,7 +75,7 @@ const hoverMessage = (state: State, zone: DragThoughtZone | null) => {
   if (length === 1) {
     const value = getThoughtById(state, head(state.draggingThoughts[0]))?.value
     if (value === undefined) return ''
-    return `Drop to ${action} ${value ? ellipsize(value) : 'empty thought'}${suffix}`
+    return `Drop to ${action} ${value ? ellipsize(value) : '"empty thought"'}${suffix}`
   }
 
   return `Drop to ${action} ${length} thoughts${suffix}`

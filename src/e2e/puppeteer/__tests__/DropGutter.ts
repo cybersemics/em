@@ -137,7 +137,7 @@ describe('DropGutter: mobile only', () => {
 
     await dragToDropGutter(await waitForEditable(''))
 
-    await waitForDropGutterHint('Drop to delete empty thought')
+    await waitForDropGutterHint('Drop to delete "empty thought"')
   })
 
   // https://github.com/cybersemics/em/issues/5856
@@ -152,6 +152,6 @@ describe('DropGutter: mobile only', () => {
 
     await dragToDropGutter(await waitForSelector('[data-testid="drag-and-drop-favorite"]'))
 
-    await waitForDropGutterHint('Drop to remove empty thought from favorites')
+    await waitForDropGutterHint('Drop to remove "empty thought" from favorites')
   })
 })

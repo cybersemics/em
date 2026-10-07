@@ -26,7 +26,7 @@ const deleteThoughtAlertText = (
   const child = anyChild(state, head(simplePath))
   const value = thought && ellipsize(thought.value === '=note' ? 'note ' + child?.value || '' : thought.value)
 
-  return `${archive ? 'Deleted' : 'Permanently deleted'} ${value || 'empty thought'}${
+  return `${archive ? 'Deleted' : 'Permanently deleted'} ${value || '"empty thought"'}${
     showContexts ? ' from ' + ellipsize(headValue(state, path) ?? 'MISSING_THOUGHT') : ''
   }`
 }
