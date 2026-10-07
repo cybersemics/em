@@ -1,5 +1,5 @@
 import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
-import { createMemoryClient } from '@treecrdt/wasm'
+import { createMemoryClient } from '@treecrdt/wasm/memory'
 import type Thought from '../../../@types/Thought'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type ThoughtspaceView from '../../../@types/ThoughtspaceView'
@@ -12,8 +12,38 @@ import initializeMemoryStorage from '../initializeMemoryStorage'
 import { decodeThoughtPayload, encodeThoughtPayload } from '../payload'
 import * as thoughtPayload from '../payload'
 
+it('publishes local edits from an incoming listener once even when several native notifications are queued', async () => {
+  const persistent = await createTreecrdtClient({ docId: tsid })
+  const runtime = createMemoryThoughtspace(async () => persistent)
+  const id = '1'.repeat(32) as ThoughtId
+  const publications: string[] = []
+  const unsubscribe = runtime.subscribe(() => {
+    const thought = runtime.project().getThought(id)!
+    publications.push(thought.value)
+    if (thought.value !== 'incoming') return
+    ;['local first', 'local second'].forEach(value => {
+      runtime.transact(transaction => transaction.update({ thoughtIndexUpdates: { [id]: { ...thought, value } } }))
+    })
+  })
+  try {
+    await runtime.init({ storage: 'memory' })
+    await persistent.local.insert(
+      new Uint8Array(32).fill(9),
+      HOME_TOKEN,
+      id,
+      { type: 'last' },
+      encodeThoughtPayload({ value: 'incoming', created: 1, lastUpdated: 1, updatedBy: 'remote' }),
+    )
+    await runtime.waitForIdle()
+    expect(publications).toEqual(['incoming', 'local first', 'local second'])
+  } finally {
+    unsubscribe()
+    await runtime.drop()
+  }
+})
+
 it('avoids scanning history for its own writes without suppressing incoming changes during a pending append', async () => {
-  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
   const subscribed = vi.fn()
   const unsubscribe = runtime.subscribe(subscribed)
@@ -41,7 +71,7 @@ it('avoids scanning history for its own writes without suppressing incoming chan
     const committed = runtime.transact(transaction =>
       transaction.update({ thoughtIndexUpdates: { [own.id]: own }, movePlacements: { [own.id]: null } }),
     )
-    expect(subscribed).toHaveBeenCalledExactlyOnceWith()
+    expect(subscribed).toHaveBeenCalledTimes(1)
     subscribed.mockClear()
     await committed.persisted
     await runtime.waitForIdle()
@@ -57,7 +87,7 @@ it('avoids scanning history for its own writes without suppressing incoming chan
     const pending = runtime.transact(transaction =>
       transaction.update({ thoughtIndexUpdates: { [own.id]: { ...own, value: 'pending local edit' } } }),
     )
-    expect(subscribed).toHaveBeenCalledExactlyOnceWith()
+    expect(subscribed).toHaveBeenCalledTimes(1)
     subscribed.mockClear()
     await appendStarted
     const received = new Promise<ThoughtspaceView>(resolve =>
@@ -79,9 +109,11 @@ it('avoids scanning history for its own writes without suppressing incoming chan
     await pending.persisted
     await runtime.waitForIdle()
     expect(scans).toHaveBeenCalledTimes(1)
-    expect(subscribed).toHaveBeenCalledExactlyOnceWith()
+    expect(subscribed).toHaveBeenCalledTimes(1)
     expect(runtime.project()).toBe(view)
-    expect(decodeThoughtPayload((await persistent.tree.getPayload(own.id))!).value).toBe('pending local edit')
+    expect(decodeThoughtPayload((await (await persistent.tree.get(own.id))!.payload())!).value).toBe(
+      'pending local edit',
+    )
   } finally {
     release()
     unsubscribe()
@@ -92,7 +124,7 @@ it('avoids scanning history for its own writes without suppressing incoming chan
 it.each(['foreign', 'mixed', 'mixed changes', 'missing', 'empty'] as const)(
   'synchronizes a materialization event with %s write provenance',
   async provenance => {
-    const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+    const persistent = await createTreecrdtClient({ docId: tsid })
     const foreign = await createMemoryClient()
     const subscribe = persistent.onMaterialized.bind(persistent)
     let incoming = false
@@ -177,7 +209,7 @@ it.each(['foreign', 'mixed', 'mixed changes', 'missing', 'empty'] as const)(
 )
 
 it('publishes incoming edits and order, and keeps a newer memory edit while an older write is awaiting storage', async () => {
-  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
   let view: ThoughtspaceView = runtime.project()
   const unsubscribe = runtime.subscribe(() => {
@@ -234,7 +266,7 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
     await Promise.all([first.persisted, second.persisted])
     await runtime.waitForIdle()
     expect(view.getThought(a.id)!.value).toBe('second')
-    expect(decodeThoughtPayload((await persistent.tree.getPayload(a.id))!).value).toBe('second')
+    expect(decodeThoughtPayload((await (await persistent.tree.get(a.id))!.payload())!).value).toBe('second')
   } finally {
     release()
     unsubscribe()
@@ -243,7 +275,7 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
 })
 
 it('publishes every newly received descendant and its current ancestor path after an incoming move', async () => {
-  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
   let view: ThoughtspaceView = runtime.project()
   const unsubscribe = runtime.subscribe(() => {
@@ -297,7 +329,7 @@ it('publishes every newly received descendant and its current ancestor path afte
 })
 
 it('loads all descendants before ready and serves ordinary queries and edit projection entirely from memory', async () => {
-  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const persistent = await createTreecrdtClient({ docId: tsid })
   const memory = await createMemoryClient()
   const runtime = createMemoryThoughtspace(
     async () => persistent,
@@ -368,9 +400,9 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
       vi.spyOn(persistent.runner, 'getText'),
       vi.spyOn(persistent.ops, 'get').mockClear(),
       vi.spyOn(persistent.opRefs, 'all'),
-      vi.spyOn(persistent.tree, 'parent'),
-      vi.spyOn(persistent.tree, 'children'),
-      vi.spyOn(persistent.tree, 'getPayload'),
+      vi.spyOn(persistent.tree, 'get'),
+      vi.spyOn(persistent.tree.root, 'children'),
+      vi.spyOn(persistent.tree.root, 'payload'),
     ]
     const queried = runtime.project()
     expect(parents.map(id => queried.getChildren(id))).toEqual(children.map(child => [child]))
@@ -387,19 +419,19 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
     const projected = runtime.project()
     expect(projected.getThought(grandchild)!).toBe(view.getThought(grandchild)!)
     expect(decoded).not.toHaveBeenCalled()
-    const siblingReads = vi.spyOn(memory.tree, 'children')
+    const wholeDocumentReads = vi.spyOn(memory, 'nodeIds')
     const changed = runtime.transact(transaction =>
       transaction.update({
         thoughtIndexUpdates: { [grandchild]: { ...view.getThought(grandchild)!, value: 'edited in memory' } },
       }),
     )
     expect(changed.value.getThought(grandchild)!.value).toBe('edited in memory')
-    expect(changed.value.getChildren(children[0])).toBe(heldChildren)
+    expect(changed.value.getChildren(children[0])).toEqual(heldChildren)
     expect(Reflect.set(heldThought, 'value', 'corrupted')).toBe(false)
     expect(Reflect.set(heldChildren, '0', parents[0])).toBe(false)
-    expect(view.getThought(grandchild)!.value).toBe('deep descendant')
-    expect(decoded).toHaveBeenCalledTimes(1)
-    expect(siblingReads).not.toHaveBeenCalled()
+    expect(heldThought.value).toBe('deep descendant')
+    expect(view.getThought(grandchild)!.value).toBe('edited in memory')
+    expect(wholeDocumentReads).not.toHaveBeenCalled()
     expect(changed.value.getThought(children[0])!).toBe(view.getThought(children[0])!)
     expect(changed.value.getThought(parents[11])!).toBe(view.getThought(parents[11])!)
     for (const read of storageReads) expect(read).not.toHaveBeenCalled()
@@ -412,7 +444,7 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
 })
 
 it('projects payload-bearing descendants and their canonical ranks under a payloadless parent', async () => {
-  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
   const replica = new Uint8Array(32).fill(13)
   const parent = '8'.repeat(32) as ThoughtId
@@ -435,15 +467,17 @@ it('projects payload-bearing descendants and their canonical ranks under a paylo
     await persistent.local.payload(replica, parent, encodeThoughtPayload({ ...payload, value: 'parent' }))
     await runtime.waitForIdle()
     const withParent = runtime.project()
-    expect(withParent.getChildren(parent)).toEqual([child])
-    expect(Reflect.set(withParent.getChildren(parent), '0', empty)).toBe(false)
+    const visibleChildren = withParent.getChildren(parent)
+    expect(visibleChildren).toEqual([child])
+    expect(Reflect.set(visibleChildren, '0', empty)).toBe(false)
 
     await persistent.local.payload(replica, child, null)
     await runtime.waitForIdle()
     expect(runtime.project().getThought(child)).toBeUndefined()
     expect(runtime.project().getChildren(parent)).toEqual([])
     expect(runtime.project().lexemeIndex[hashThought('visible child')]).toBeUndefined()
-    expect(withParent.getChildren(parent)).toEqual([child])
+    expect(visibleChildren).toEqual([child])
+    expect(withParent.getChildren(parent)).toEqual([])
 
     await persistent.local.payload(replica, child, encodeThoughtPayload(payload))
     await runtime.waitForIdle()

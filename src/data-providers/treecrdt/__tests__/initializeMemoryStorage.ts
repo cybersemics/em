@@ -7,7 +7,7 @@ const replicaId = new Uint8Array(32).fill(1)
 let client: TreecrdtClient
 
 beforeEach(async () => {
-  client = await createTreecrdtClient({ storage: { type: 'memory' }, runtime: { type: 'direct' } })
+  client = await createTreecrdtClient({ docId: 'initialize-memory-storage' })
 })
 
 afterEach(async () => {
@@ -17,17 +17,17 @@ afterEach(async () => {
 it('seeds system roots and Settings without legacy application tables', async () => {
   await initializeMemoryStorage(client, replicaId)
 
-  expect(await client.tree.children(GLOBAL_ROOT_TOKEN)).toEqual([HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN])
-  expect(await client.tree.children(EM_TOKEN)).toEqual([SETTINGS_TOKEN])
-  expect(await client.tree.children(HOME_TOKEN)).toEqual([])
-  expect(await client.tree.children(ABSOLUTE_TOKEN)).toEqual([])
-  expect(decodeThoughtPayload((await client.tree.getPayload(GLOBAL_ROOT_TOKEN))!)).toEqual({
+  expect((await client.tree.root.children()).map(node => node.id)).toEqual([HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN])
+  expect((await (await client.tree.get(EM_TOKEN))!.children()).map(node => node.id)).toEqual([SETTINGS_TOKEN])
+  expect(await (await client.tree.get(HOME_TOKEN))!.children()).toEqual([])
+  expect(await (await client.tree.get(ABSOLUTE_TOKEN))!.children()).toEqual([])
+  expect(decodeThoughtPayload((await client.tree.root.payload())!)).toEqual({
     value: GLOBAL_ROOT_TOKEN,
     created: 0,
     lastUpdated: 0,
     updatedBy: '',
   })
-  expect(decodeThoughtPayload((await client.tree.getPayload(SETTINGS_TOKEN))!)).toEqual({
+  expect(decodeThoughtPayload((await (await client.tree.get(SETTINGS_TOKEN))!.payload())!)).toEqual({
     value: 'Settings',
     created: expect.any(Number),
     lastUpdated: expect.any(Number),
@@ -54,9 +54,12 @@ it('seeds canonical Settings independently of an unrelated thought with the same
 
   await initializeMemoryStorage(client, replicaId)
 
-  expect(await client.tree.children(EM_TOKEN)).toEqual([settingsId, SETTINGS_TOKEN])
-  expect(decodeThoughtPayload((await client.tree.getPayload(settingsId))!)).toEqual(settingsPayload)
-  expect(decodeThoughtPayload((await client.tree.getPayload(SETTINGS_TOKEN))!).value).toBe('Settings')
+  expect((await (await client.tree.get(EM_TOKEN))!.children()).map(node => node.id)).toEqual([
+    settingsId,
+    SETTINGS_TOKEN,
+  ])
+  expect(decodeThoughtPayload((await (await client.tree.get(settingsId))!.payload())!)).toEqual(settingsPayload)
+  expect(decodeThoughtPayload((await (await client.tree.get(SETTINGS_TOKEN))!.payload())!).value).toBe('Settings')
 })
 
 it('preserves renamed and moved Settings and its children without authoring operations on reinitialization', async () => {
@@ -77,9 +80,10 @@ it('preserves renamed and moved Settings and its children without authoring oper
 
   await initializeMemoryStorage(client, replicaId)
 
-  expect(await client.tree.parent(SETTINGS_TOKEN)).toBe(HOME_TOKEN)
-  expect(decodeThoughtPayload((await client.tree.getPayload(SETTINGS_TOKEN))!)).toEqual(settingsPayload)
-  expect(await client.tree.children(SETTINGS_TOKEN)).toEqual([childId])
+  const settings = (await client.tree.get(SETTINGS_TOKEN))!
+  expect((await settings.parent())?.id).toBe(HOME_TOKEN)
+  expect(decodeThoughtPayload((await settings.payload())!)).toEqual(settingsPayload)
+  expect((await settings.children()).map(node => node.id)).toEqual([childId])
   expect(await client.tree.dump()).toEqual(before)
   expect(await client.ops.all()).toEqual(operations)
 })

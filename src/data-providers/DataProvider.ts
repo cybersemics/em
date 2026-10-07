@@ -6,10 +6,10 @@ interface DataProvider {
   /** Reads the canonical document and its derived lexemes. */
   project: () => ThoughtspaceView
   /**
-   * Invalidates reads after completed local and incoming changes. Subscribers read the latest project(), not a
-   * historical event payload; reentrant commits may invalidate it more than once. Initialization and cleanup are explicit.
+   * Invalidates reads after completed local and incoming changes. The previous reader is valid only during the
+   * synchronous callback, before any reentrant commit; current values come from project().
    */
-  subscribe: (listener: () => void) => () => void
+  subscribe: (listener: (previous: ThoughtspaceView) => void) => () => void
   /**
    * Runs an atomic command synchronously; persisted resolves after storage acknowledges its operations.
    * The optional commit callback runs after persistence is queued and before subscribers, including for no-op

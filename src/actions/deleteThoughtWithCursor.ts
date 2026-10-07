@@ -59,6 +59,7 @@ const deleteThoughtWithCursor = (
   // This is a problem specifically for tangential contexts, which have a different parent from the cursor.
   // i.e. The id of b/m is not contained within the cursor a/m~/b because they are different m instances.
   const contextId = (showContexts && getContext(state, cursor)) || null
+  const previous = { ...state, thoughts: transaction?.capturePrevious() ?? state.thoughts }
 
   return reducerFlow([
     // delete thought
@@ -77,7 +78,7 @@ const deleteThoughtWithCursor = (
     ),
 
     // move cursor
-    stateNew => updateCursorAfterDelete(stateNew, state, transaction),
+    stateNew => updateCursorAfterDelete(stateNew, previous, transaction),
 
     /* If the second-to-last context is deleted, and it is a tangential context, we need to manually close the context view.
        Other cases are handled by deleteThought.

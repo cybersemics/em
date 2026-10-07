@@ -6,7 +6,7 @@ import { SYSTEM_ROOT_THOUGHT_IDS } from './systemThoughtIds'
 /** Seeds the persistent tree without creating independent application indexes. */
 const initializeMemoryStorage = async (client: TreecrdtClient, replicaId: Uint8Array): Promise<void> => {
   // The global root exists structurally, but needs a payload to be projected as a thought.
-  if (!(await client.tree.getPayload(GLOBAL_ROOT_TOKEN))) {
+  if (!(await client.tree.root.payload())) {
     await client.local.payload(
       replicaId,
       GLOBAL_ROOT_TOKEN,
@@ -16,7 +16,7 @@ const initializeMemoryStorage = async (client: TreecrdtClient, replicaId: Uint8A
 
   // Insert sequentially to preserve the established system-root order.
   for (const id of SYSTEM_ROOT_THOUGHT_IDS) {
-    if (!(await client.tree.exists(id))) {
+    if (!(await client.tree.get(id))) {
       const now = Date.now()
       await client.local.insert(
         replicaId,
@@ -29,7 +29,7 @@ const initializeMemoryStorage = async (client: TreecrdtClient, replicaId: Uint8A
   }
 
   // A canonical Settings thought may have been renamed or moved. Preserve that existing document state.
-  if (await client.tree.exists(SETTINGS_TOKEN)) return
+  if (await client.tree.get(SETTINGS_TOKEN)) return
 
   const now = Date.now()
   await client.local.insert(

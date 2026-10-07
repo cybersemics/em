@@ -20,7 +20,7 @@ The estimate is rarely far enough off to be visible, so the user almost never se
 
 Each render produces two parallel lists, both indexed by the same key:
 
-- **`treeThoughts: TreeThought[]`** — produced by the [`linearizeTree`](../src/selectors/linearizeTree.ts) selector. An in-order traversal of all currently visible thoughts. Each entry carries depth, table-cell flags, autofocus state, the `Path` and `SimplePath`, accumulated styles, etc. Selected from the captured editor context when document or UI state changes.
+- **`treeThoughts: TreeThought[]`** — produced by the [`linearizeTree`](../src/selectors/linearizeTree.ts) selector. An in-order traversal of all currently visible thoughts. Each entry carries depth, table-cell flags, autofocus state, the `Path` and `SimplePath`, accumulated styles, etc. Selected from current document reads and UI state when either changes.
 - **`treeThoughtsPositioned: TreeThoughtPositioned[]`** — produced by `usePositionedThoughts`. Same shape but with `x`, `y`, `width`, `height`, `cliff`, `isLastVisible`. Recalculated when widths or heights change in the `sizes` map.
 
 The render walks `treeThoughtsPositioned`, wrapping each entry in a `TreeNode` (which mounts a `VirtualThought` plus the appropriate drop targets) inside a `TransitionGroup` so removed thoughts can fade out.
@@ -44,7 +44,7 @@ So the key is the concatenation of every context-view boundary's `id` plus the t
 
 Important behaviors:
 
-- **Sibling order comes from the captured snapshot.** [`getChildrenRanked`](../src/selectors/getChildren.ts) reads canonical child order without sorting during the walk. A context's `=sort` preference changes that order through explicit placements; `getPosition` supplies numeric coordinates for render records. See [data-model.md → Visibility and sorting](data-model.md#visibility-and-sorting).
+- **Sibling order comes from the current memory tree.** [`getChildrenRanked`](../src/selectors/getChildren.ts) reads canonical child order without sorting during the walk. A context's `=sort` preference changes that order through explicit placements; `getPosition` supplies numeric coordinates for render records. See [data-model.md → Visibility and sorting](data-model.md#visibility-and-sorting).
 - **Visibility gating.** A subtree is skipped entirely unless `state.expanded[hashPath(path)]` is set, so collapsed branches don't appear in `treeThoughts` at all. (The expansion model itself lives in [`expandThoughts`](../src/selectors/expandThoughts.ts).)
 - **Context-view pivot.** When a thought has its context view active, the recursion pivots from "render this thought's children" to "render the *contexts* in which this thought appears" via [`getContextsSortedAndRanked`](../src/selectors/getContextsSortedAndRanked.ts). The `contextChain` accumulator is updated, which feeds `crossContextualKey`. A special early-return: if the context view has only one context, the `NoOtherContexts` placeholder is rendered instead.
 - **`belowCursor` propagation.** Once the cursor's `Path` is encountered during the walk, every subsequent `TreeThought` gets `belowCursor: true`. `LayoutTree` later uses this flag to exclude hidden-below-cursor thoughts from `totalHeight` so the document doesn't have a giant trailing dead zone.

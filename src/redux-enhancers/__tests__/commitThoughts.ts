@@ -133,7 +133,7 @@ it('logs a push entry when document changes commit, and pushSynced when persiste
 
   const pushes = debugLog.read().filter(e => e.type === 'push')
   expect(pushes.length).toBeGreaterThan(0)
-  expect(pushes[0].thoughtCount as number).toBeGreaterThan(0)
+  expect(pushes[0].operationCount as number).toBeGreaterThan(0)
 
   // Flush scheduled UI work without looping through debugLog's self-rescheduling animation heartbeat, then wait for
   // the actual durable write; draining fake timers alone does not acknowledge the asynchronous SQLite replica.

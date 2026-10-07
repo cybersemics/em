@@ -5,23 +5,25 @@ This prototype runs two TreeCRDT instances for one thoughtspace:
 1. **Memory engine** — synchronous Rust/WASM TreeCRDT, containing the complete document.
 2. **Persistent engine** — the full document in asynchronous SQLite, running through `@treecrdt/wa-sqlite` in an OPFS-backed worker.
 
-The memory engine owns the document and accepts local commands synchronously. Redux owns UI state; an external editor store publishes a captured read context combining UI state and the read-only document view. Document commands execute in one memory transaction outside Redux's reducer, reading canonical state between composed steps. The completed editor state is published synchronously. Network sync is disabled, including when `VITE_TREECRDT_SYNC_BASE_URL` is set.
+The memory engine owns the document and accepts local commands synchronously. Redux owns UI state; an external editor store combines UI state with current document reads. Document commands execute in one memory transaction outside Redux's reducer, reading canonical state between composed steps. The completed editor state is published synchronously. Network sync is disabled, including when `VITE_TREECRDT_SYNC_BASE_URL` is set.
 
 [`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exposes one implementation through two interfaces: `db: DataProvider` supplies synchronous `project` reads, `transact`, and `subscribe` invalidations after committed changes; `thoughtspaceRuntime: ThoughtspaceRuntime` manages initialization, readiness, cleanup, and waiting for persistence. [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts) implements both. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `update`/`project`, cumulative invalidations through `getChanges`, operation receipts and `revert`, and an `afterPersist` callback.
 
 ## Running the prototype
 
-The experimental `@treecrdt/wasm` dependency is a prebuilt GitHub prerelease pinned in `package.json` and `yarn.lock`. Its source is on TreeCRDT's `prototype/synchronous-wasm-view` branch; no local TreeCRDT build is required.
+The experimental TreeCRDT dependencies are prebuilt GitHub release assets pinned by source commit in `package.json` and `yarn.lock`; no local TreeCRDT build is required. The memory WASM and SQLite extension must use the same operation and version-vector formats.
 
-The package includes browser and Node loaders and the WASM binary. It initializes explicitly; importing it does not load WASM. Keep the core version aligned with EM's SQLite package so both replicas use the same operation format.
+Browser OPFS requires cross-origin isolation: `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` response headers. The Vite development and preview servers and Vercel configuration supply these headers. In-memory storage does not require OPFS.
+
+The WASM package includes browser and Node loaders and the binary. It initializes explicitly; importing it does not load WASM. Its `@treecrdt/wasm/memory` entry point exports the synchronous live-reading `MemoryClient`, created by `createMemoryClient`; there is no separate snapshot client.
 
 ## Document projection and React subscriptions
 
-The editor's `state.thoughts` is a [`ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) captured against one immutable memory snapshot, not a field in the Redux store. It exposes `getThought`, `getChildren`, `getPosition`, `values`, and the derived `lexemeIndex`. Initialization loads the full document before enabling editing or resolving the URL cursor. Navigation, contexts, copying, and export read this view without loading or evicting subtrees.
+The editor's `state.thoughts` is a [`ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) reading the current memory tree, not a field in the Redux store or a historical snapshot. It exposes `getThought`, `getChildren`, `getPosition`, `values`, and the derived `lexemeIndex`. Its `revision` invalidates selector caches; it does not enable historical reads. Retain returned values when earlier content is needed; retaining a reader does not preserve the tree. Initialization loads the full document before enabling editing or resolving the URL cursor. Navigation, contexts, copying, and export read this view without loading or evicting subtrees.
 
-[`useEditorSelector`](../src/hooks/useEditorSelector.ts) uses `useSyncExternalStoreWithSelector` to select from a stable editor context combining the captured document and UI state. Ordinary React Redux `useSelector` reads only UI fields. [`EditorProvider`](../src/components/EditorProvider.tsx) supplies both interfaces; both dispatch through the same middleware and command boundary. Unchanged selections retain identity through the selector's equality function. A document-only event does not require a Redux state update.
+[`useEditorSelector`](../src/hooks/useEditorSelector.ts) uses `useSyncExternalStoreWithSelector` to cache selected values. Editor-state identity marks a publication, not a retained document version; selectors must return owned values rather than the live reader. Ordinary React Redux `useSelector` reads only UI fields. [`EditorProvider`](../src/components/EditorProvider.tsx) supplies both interfaces; both dispatch through the same middleware and command boundary. Unchanged selections retain identity through the selector's equality function. A document-only event does not require a Redux state update.
 
-There is no maintained EM `thoughtIndex`, child map, or rank field. Decoded payloads are cached; topology stays in the native snapshot. `project()` reads only the document. Redux keeps temporary generation text, generation flags, pending formatting, and split-source bookkeeping in `state.thoughtUi`; `getThoughtById` combines them with canonical content for editor consumers.
+EM does not retain whole-tree row snapshots, a child map, or rank fields. Decoded thought query results are cached lazily and invalidated by actual changes; topology stays in the native tree. `project()` reads only the document. Redux keeps temporary generation text, generation flags, pending formatting, and split-source bookkeeping in `state.thoughtUi`; `getThoughtById` combines them with canonical content for editor consumers.
 
 ## Local persistence (TreeCRDT + SQLite)
 
@@ -52,7 +54,9 @@ Node payloads contain only `value`, `created`, `lastUpdated`, `updatedBy`, and o
 
 There are no EM-owned SQLite membership or attribute-child tables. EM derives lexemes from thought values, excluding system roots. Child readers use canonical sibling order; attribute selectors resolve children by value.
 
-A projection uses immutable snapshots and affected-node batches from transaction reads or commit events, with a full refresh for initialization or replay resets. Changed payloads update affected lexeme buckets. Child lists and sibling-position lookups are cached lazily, with no rank rewriting on moves. Payload-less nodes occupy canonical positions without becoming EM thoughts. Document reads use memory, not SQLite. UI-only changes reuse the document view.
+A projection uses changed-node records from transaction reads or commit events. Changed payloads update affected lexeme buckets; initialization derives all buckets once. There is no rank rewriting on moves. Payload-less nodes occupy canonical positions without becoming EM thoughts. Document reads use memory, not SQLite. UI-only changes reuse the document view.
+
+History comparisons use `transaction.capturePrevious()`: a synchronous reader backed by changed rows, valid only until the transaction callback returns. Incoming subscribers receive an equivalent previous reader for cursor repair, valid only within the publication callback and before a reentrant commit. Neither reader may cross an `await`. Diagnostic patches and React selections retain plain values instead.
 
 ### Writes
 
@@ -70,7 +74,7 @@ The transaction applies parents and placement anchors before their dependents, t
 
 ### Persistence and incoming changes
 
-Promise tails serialize durable appends and loopback notifications. `persistent.onMaterialized` notifies the storage peer's full-document subscription, except when every change is tagged as this memory provider's own write. Foreign, mixed, or unidentified changes still synchronize. The memory adapter deduplicates operations by their replica/counter identity, applies new operations in a batch, and publishes a new immutable projection only when state changes. Storage confirmations do not overwrite newer memory edits.
+Promise tails serialize durable appends and loopback notifications. `persistent.onMaterialized` notifies the storage peer's full-document subscription, except when every change is tagged as this memory provider's own write. Foreign, mixed, or unidentified changes still synchronize. The memory adapter deduplicates operations by their replica/counter identity, applies new operations in a batch, and invalidates current reads only when state changes. Storage confirmations do not overwrite newer memory edits.
 
 Initialization explicitly publishes the initial view. `db.subscribe` invalidates the view on subsequent local and incoming commits; subscribers read the latest `project()` rather than replaying event payloads. Changes outside a dispatched command use non-undoable `replaceThoughts` to repair cursor topology. Ordinary commands publish their completed document and UI state together rather than exposing the provider notification mid-command.
 
@@ -85,17 +89,17 @@ Initialization explicitly publishes the initial view. `db.subscribe` invalidates
 
 Both peers run locally through `createInMemoryConnectedPeers` and the existing protobuf codec, using the standard full-document filter. No remote endpoint is opened; the retained WebSocket adapter is not started by the active factory. Authentication, network integration, and durable retries are not implemented by this prototype.
 
-The full document and its operation history must fit in memory, and startup waits for hydration. Native forward updates read affected rows; historical replay requests a full snapshot. EM still copies the lexeme index when projecting changes. History recording compares affected records and sibling positions; whole-document diagnostic capture remains for reports and reset/replay fallbacks. Native rollback reconstructs retained history only on failure. This design deliberately has no partial-loading or migration mode.
+The full document and its operation history must fit in memory, and startup waits for hydration. Forward updates track affected rows; historical replay temporarily compares the full materialized tree to report actual changes. EM still copies the lexeme index when its buckets change. History recording compares affected records and sibling positions; whole-document diagnostic capture remains for reports and comparisons without a changed-record scope. Native rollback reconstructs retained history only on failure. This design deliberately has no partial-loading or migration mode.
 
 ## Command coordination and Redux publication
 
-[`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `db.transact`, then uses the transaction's synchronous commit callback to stage the captured editor context before provider subscribers run. Editor and Redux UI subscribers therefore read a completed command, without waiting for SQLite acknowledgement. The pure Redux publication reducer receives only `UiState`, excluding `thoughts`, and only when UI fields change. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
+[`undoRedoEnhancer.ts`](../src/redux-enhancers/undoRedoEnhancer.ts) evaluates document commands and history restoration inside `db.transact`, then uses the transaction's synchronous commit callback to publish editor state before provider subscribers run. Editor and Redux UI subscribers therefore read a completed command, without waiting for SQLite acknowledgement. The pure Redux publication reducer receives only `UiState`, excluding `thoughts`, and only when UI fields change. UI-only actions remain pure. [`command`](../src/util/command.ts) and [`reducerFlow`](../src/util/reducerFlow.ts) forward the explicit transaction through nested commands; no transaction is stored in Redux or a global current-command variable.
 
 `updateThoughts` changes the memory document and reads its resulting view immediately. Temporary editor fields stay in Redux; updates with `persist: false` change only those fields. Document publication prunes editor entries for deleted thoughts, and UI reset clears them. There is no Redux write queue or separate lexeme derivation. The `onPersisted` callback runs only after SQLite acknowledges the whole command. Undo/redo restores editor fields through UI patches and document content through the same document transaction; see [commands.md → Undo history](commands.md#undo-history-and-the-undo-slider).
 
 ```
 command → memory transaction (update → canonical read → next step)
-          ├→ completed snapshot → undo history + coherent editor publication
+          ├→ completed changes → undo history + coherent editor publication
           │                      └→ Redux publication only for changed UI state
           └→ asynchronous SQLite append of the same operations
              → persistence callback
@@ -103,7 +107,7 @@ command → memory transaction (update → canonical read → next step)
 
 ## Reading and exporting
 
-Selectors read the captured document view synchronously. Export scopes JSON to the selected subtree and generates legacy `rank` and `childrenMap` fields only during serialization; it does not wait for persistence. A `clear()` UI reset does not delete the TreeCRDT document; `clear({ persist: true })` explicitly deletes it.
+Selectors read the current document synchronously. Export scopes JSON to the selected subtree and generates legacy `rank` and `childrenMap` fields only during serialization; it does not wait for persistence. A `clear()` UI reset does not delete the TreeCRDT document; `clear({ persist: true })` explicitly deletes it.
 
 ## Identity & sharing
 

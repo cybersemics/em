@@ -28,8 +28,6 @@ const TutorialNavigationNext = React.forwardRef<HTMLAnchorElement, { tutorialSte
   ({ tutorialStep }: { tutorialStep: number }, ref) => {
     const dispatch = useDispatch()
 
-    useEditorSelector(state => state.thoughts)
-
     const showNextButton = useEditorSelector(state => {
       const tutorialChoice = +(getSetting(state, 'Tutorial Choice') || 0) as keyof typeof TUTORIAL_CONTEXT
       const cursorValue = state.cursor ? headValue(state, state.cursor) : null

@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, cleanup as unmountTestApp } from '@testing-library/react'
 import { Profiler, ProfilerOnRenderCallback, act, createRef } from 'react'
 import { DndProvider } from 'react-dnd'
 import { TestBackend } from 'react-dnd-test-backend'
@@ -86,9 +86,14 @@ export const cleanupTestApp = async () => {
       await vi.runAllTimersAsync()
       await waitForThoughtspaceIdle()
     } finally {
-      await Promise.all([thoughtspaceRuntime.drop(), commandThoughtspace.drop()])
-      store.dispatch(clear({ full: true }))
-      await vi.runAllTimersAsync()
+      try {
+        // Unmount and clear while selectors can still read the live document.
+        unmountTestApp()
+        store.dispatch(clear({ full: true }))
+        await vi.runAllTimersAsync()
+      } finally {
+        await Promise.all([thoughtspaceRuntime.drop(), commandThoughtspace.drop()])
+      }
 
       // set url back to home
       window.history.pushState({}, '', '/')

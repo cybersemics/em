@@ -18,9 +18,9 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **archived** — Soft-deletion timestamp on `Thought`. Distinct from `=archive`, the meta-attribute parent under which archived thoughts are nested.
 
-**attribute / meta-attribute** — A child thought whose value starts with `=` (e.g. `=pin`, `=style`, `=view`). Meta-attributes change app behaviour for their parent (or, with `=children`/`=grandchildren`, for descendants). `findDescendant` lazily caches attribute-by-value lookup within each immutable view. See [metaprogramming.md](metaprogramming.md).
+**attribute / meta-attribute** — A child thought whose value starts with `=` (e.g. `=pin`, `=style`, `=view`). Meta-attributes change app behaviour for their parent (or, with `=children`/`=grandchildren`, for descendants). `findDescendant` scans current children by value, choosing the first matching sibling. See [metaprogramming.md](metaprogramming.md).
 
-**attribute-child keys** — The `=attribute` keys retained in serialized `childrenMap` for history diagnostics and JSON export. Live lookup uses `findDescendant`'s per-view cache; there is no separate persistent attribute-child index. See [persistence.md → Derived view](persistence.md#derived-view).
+**attribute-child keys** — The `=attribute` keys retained in serialized `childrenMap` for history diagnostics and JSON export. Live lookup uses `findDescendant` to scan current children; there is no separate persistent attribute-child index. See [persistence.md → Derived view](persistence.md#derived-view).
 
 **autocrop** — Vertical: hides the empty space above a deep cursor by translating the layout container upward and counter-scrolling to keep visible thoughts stable. Horizontal: see *indent*. See [layout-rendering.md → useAutocrop](layout-rendering.md#useautocrop-vertical-autocrop).
 
@@ -38,7 +38,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **caret** — The native browser selection (`window.getSelection()`), typically collapsed to a vertical bar. Distinct from *cursor*. Direct access is gated through [`device/selection.ts`](../src/device/selection.ts) (lint-enforced). See [cursor-and-caret.md](cursor-and-caret.md).
 
-**childrenMap** — Legacy `Index<ThoughtId>` materialized only for history diagnostics and JSON export. Keyed by `ThoughtId` for regular children and duplicate attributes, but by value for the first meta-attribute (e.g. `'=pin'`). Live `Thought` records have no child map; the snapshot view provides `getChildren`.
+**childrenMap** — Legacy `Index<ThoughtId>` materialized only for history diagnostics and JSON export. Keyed by `ThoughtId` for regular children and duplicate attributes, but by value for the first meta-attribute (e.g. `'=pin'`). Live `Thought` records have no child map; the document reader provides `getChildren`.
 
 **cliff** — A drop in visible depth between consecutive thoughts. `cliff = next.depth - node.depth` when negative; `cliff = -3` means three levels shallower. Drives extra padding (`cliffPadding`) and the number of `DropEnd` zones rendered. See [`DropCliff.tsx`](../src/components/DropCliff.tsx) and [layout-rendering.md → usePositionedThoughts](layout-rendering.md#usepositionedthoughts-x-and-y).
 
@@ -110,7 +110,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## M
 
-**materialization** — TreeCRDT applying operations to its read model. The persistent engine emits `onMaterialized` for loopback notification; the memory engine applies received operations and publishes complete snapshots. See [persistence.md → Incoming changes](persistence.md#persistence-and-incoming-changes).
+**materialization** — TreeCRDT applying operations to its read model. The persistent engine emits `onMaterialized` for loopback notification; the memory engine applies received operations and publishes changes that invalidate current reads. See [persistence.md → Incoming changes](persistence.md#persistence-and-incoming-changes).
 
 **meta-attribute** — See *attribute*.
 
@@ -172,7 +172,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **tangential context** — In the context view, a context from a different part of the tree than the one the view was opened in — every context listed except the *cyclic context*, e.g. `b` under `a/m~`.
 
-**Thought** — Cached decoded record read through `state.thoughts.getThought(id)` from an immutable snapshot. The memory TreeCRDT owns its *ThoughtPayload*; the reader adds `id`, `parentId`, and sparse transient editor fields. Child order and positions are read separately through `getChildren` and `getPosition`. See [data-model.md → Thought](data-model.md#thought) and [persistence.md → Document model](persistence.md#document-model).
+**Thought** — Cached decoded record read through `state.thoughts.getThought(id)` from the current memory tree. The memory TreeCRDT owns its *ThoughtPayload*; the reader adds `id` and `parentId`, and `getThoughtById` overlays transient editor fields. Child order and positions are read separately through `getChildren` and `getPosition`. See [data-model.md → Thought](data-model.md#thought) and [persistence.md → Document model](persistence.md#document-model).
 
 **ThoughtId** — Branded string identifying a thought: 32 lowercase hex characters (128 bits), the format TreeCRDT requires for a node id. Minted by [`createId`](../src/util/createId.ts). See [`@types/ThoughtId.ts`](../src/@types/ThoughtId.ts).
 
@@ -194,7 +194,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **updatedBy** — `clientId` metadata stored in a Thought's payload; projected Lexemes derive it from their newest member. It is not used to identify self-originated operations.
 
-**updateThoughts** — The document command ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that applies updates through the current `ThoughtspaceTransaction` and returns canonical thoughts and derived lexemes immediately. Incoming engine snapshots use `replaceThoughts` instead.
+**updateThoughts** — The document command ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that applies updates through the current `ThoughtspaceTransaction` and returns canonical thoughts and derived lexemes immediately. Incoming engine changes use `replaceThoughts` instead.
 
 ## V
 

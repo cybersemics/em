@@ -54,6 +54,7 @@ const restore = (state: DiagnosticState): State => {
   return {
     ...state,
     thoughts: {
+      revision: 0,
       getThought,
       /** Preserves historical rank ties and incoming siblings when reading keyed diagnostic patches. */
       getChildren: id => {

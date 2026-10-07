@@ -1251,11 +1251,11 @@ Test `enter` and `leave` on each of the following actions:
 
 ### Document commands
 
-Pure UI reducers can be called directly. Document commands require the real memory engine: initialize it with `initStore`, then use the test-only [`reducerFlow`](../src/test-helpers/reducerFlow.ts) as `reducerFlow(steps)(state)`, or [`runDocumentCommand`](../src/test-helpers/runDocumentCommand.ts) for a single command. Both restore the supplied immutable fixture through document operations in an isolated provider, so arbitrary fixtures do not publish into the live app. Nested flows reuse the current transaction without restoring again. `initStore` initializes both providers; `waitForThoughtspaceIdle` drains both before teardown. Store-publication tests instead use the live `db` or dispatch commands.
+Pure UI reducers can be called directly. Document commands require the real memory engine: initialize it with `initStore`, then use the test-only [`reducerFlow`](../src/test-helpers/reducerFlow.ts) as `reducerFlow(steps)(state)`, or [`runDocumentCommand`](../src/test-helpers/runDocumentCommand.ts) for a single command. Both restore the supplied fixture through document operations in an isolated provider, so arbitrary fixtures do not publish into the live app. After command execution, the helper retains owned result values so tests can branch from earlier fixtures; production readers remain live. Nested flows reuse the current transaction without restoring again. `initStore` initializes both providers; `waitForThoughtspaceIdle` drains both before teardown. Store-publication tests instead use the live `db` or dispatch commands.
 
 ### Fake timers: flush, don't poll
 
-`initStore` and `createTestApp` enable fake timers. Advance them to flush scheduled UI work, but await asynchronous initialization and persistence explicitly. Document commands publish their complete memory snapshot synchronously; SQLite acknowledgement is a separate boundary:
+`initStore` and `createTestApp` enable fake timers. Advance them to flush scheduled UI work, but await asynchronous initialization and persistence explicitly. Document commands publish completed memory changes synchronously; SQLite acknowledgement is a separate boundary:
 
 ```ts
 vi.useFakeTimers()
@@ -1264,7 +1264,7 @@ await vi.runAllTimersAsync()
 await waitForThoughtspaceIdle()
 ```
 
-[`waitForThoughtspaceIdle`](../src/test-helpers/waitForThoughtspaceIdle.ts) waits for accepted writes and local loopback work. Timer advancement alone does not establish durability. Initialization already publishes the full canonical snapshot before resolving; no pull queue needs to be flushed.
+[`waitForThoughtspaceIdle`](../src/test-helpers/waitForThoughtspaceIdle.ts) waits for accepted writes and local loopback work. Timer advancement alone does not establish durability. Initialization makes the complete canonical document available for current reads before resolving; no pull queue needs to be flushed.
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
 

@@ -40,14 +40,12 @@ const exec: Command['exec'] = (dispatch, getState, e, { type }) => {
       haptics.vibrate(DELETE_VIBRATE_DURATION)
     }
 
-    dispatch(deleteThoughtWithCursor())
-
     // Alert which thought was deleted.
     // Only show alert for empty thought in training mode.
     const experienceMode = getUserSetting(state, Settings.experienceMode)
-    if (value || !experienceMode) {
-      dispatch(alert(deleteThoughtAlertText(state, cursor)))
-    }
+    const message = value || !experienceMode ? deleteThoughtAlertText(state, cursor) : null
+    dispatch(deleteThoughtWithCursor())
+    if (message) dispatch(alert(message))
   }
 }
 

@@ -9,7 +9,7 @@ import { encodeThoughtPayload } from '../payload'
 it.each([false, true])(
   'keeps a deep startup deletion durable after reloading its operation log (delete descendants: %s)',
   async deleteDescendants => {
-    const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+    const persistent = await createTreecrdtClient({ docId: tsid })
     const runtime = createMemoryThoughtspace(async () => persistent)
     const replica = new Uint8Array(32).fill(12)
     const ids = ['a', 'b', 'c', 'd'].map(value => value.repeat(32) as ThoughtId)
@@ -45,13 +45,13 @@ it.each([false, true])(
       await committed.persisted
       await runtime.waitForIdle()
       for (const id of deletedIds) {
-        expect(await persistent.tree.exists(id)).toBe(false)
+        expect(await persistent.tree.get(id)).toBeUndefined()
         expect(runtime.project().getThought(id)).toBeUndefined()
       }
 
       // Reconstruct a fresh SQLite instance from the exact persisted log, then open a fresh memory runtime.
       const durableOps = await persistent.ops.all()
-      const restoredClient = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+      const restoredClient = await createTreecrdtClient({ docId: tsid })
       reloaded = createMemoryThoughtspace(async () => restoredClient)
       await restoredClient.ops.appendMany(durableOps)
       await reloaded.init({ storage: 'memory' })
@@ -60,7 +60,7 @@ it.each([false, true])(
       expect(restored.getChildren(HOME_TOKEN)).not.toContain(ids[0])
       for (const id of deletedIds) {
         expect(restored.getThought(id)).toBeUndefined()
-        expect(await restoredClient.tree.exists(id)).toBe(false)
+        expect(await restoredClient.tree.get(id)).toBeUndefined()
       }
     } finally {
       await reloaded?.drop()

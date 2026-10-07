@@ -17,7 +17,11 @@ import head from '../util/head'
 /** Publishes a complete canonical document without planning writes or recording undo history. */
 const replaceThoughts = (
   state: State,
-  { thoughts, repairCursor = false }: { thoughts: ThoughtspaceView; repairCursor?: boolean },
+  {
+    thoughts,
+    previousThoughts = state.thoughts,
+    repairCursor = false,
+  }: { thoughts: ThoughtspaceView; previousThoughts?: ThoughtspaceView; repairCursor?: boolean },
 ): State => {
   const thoughtUi = _.pickBy(state.thoughtUi, (_, id) => !!thoughts.getThought(id as ThoughtId))
   const next = {
@@ -29,7 +33,7 @@ const replaceThoughts = (
   let cursor = state.cursor
   if (repairCursor && cursor) {
     // Resolve context-view paths against the previous complete document before replacing their topology.
-    const previousSimplePath = simplifyPath(state, cursor)
+    const previousSimplePath = simplifyPath({ ...state, thoughts: previousThoughts }, cursor)
     const thought = getThoughtById(next, head(previousSimplePath))
     if (thought) {
       const currentSimplePath = thoughtToPath(next, thought.id)
@@ -48,7 +52,7 @@ const replaceThoughts = (
   return { ...repaired, expanded: _.isEqual(expanded, state.expanded) ? state.expanded : expanded }
 }
 
-/** Publishes the runtime's complete document snapshot. */
+/** Publishes the runtime's current document reader. */
 export const replaceThoughtsActionCreator =
   (payload: Parameters<typeof replaceThoughts>[1]): Thunk =>
   dispatch =>

@@ -31,6 +31,7 @@ import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import initStore from '../../test-helpers/initStore'
+import { moveThoughtAtFirstMatchActionCreator as moveThoughtAtFirstMatch } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import archiveCommand from '../archive'
@@ -1536,6 +1537,28 @@ describe('operation receipts', () => {
   - ab`)
     expect(store.getState().undoPatches.at(-1)!.documentOperationIds).not.toEqual(redoEntries[0].documentOperationIds)
     expect(store.getState().redoPatches).toHaveLength(0)
+  })
+
+  it('keeps individual redo diagnostics when undoing two moves returns to the transaction starting order', () => {
+    store.dispatch(importText({ text: '- a\n- b' }))
+    const a = contextToThought(store.getState(), ['a'])!
+    const b = contextToThought(store.getState(), ['b'])!
+    store.dispatch([
+      moveThoughtAtFirstMatch({ from: ['a'], to: ['a'], after: ['b'] }),
+      moveThoughtAtFirstMatch({ from: ['a'], to: ['a'], after: null }),
+      undo({ count: 2 }),
+    ])
+
+    expect(store.getState().thoughts.getChildren(HOME_TOKEN)).toEqual([a.id, b.id])
+    expect(store.getState().redoPatches.at(-1)!.ops).toContainEqual({
+      op: 'replace',
+      path: `/thoughts/thoughtIndex/${a.id}/rank`,
+      value: 1,
+    })
+    store.dispatch(redo({ count: 1 }))
+    expect(store.getState().thoughts.getChildren(HOME_TOKEN)).toEqual([b.id, a.id])
+    store.dispatch(redo({ count: 1 }))
+    expect(store.getState().thoughts.getChildren(HOME_TOKEN)).toEqual([a.id, b.id])
   })
 
   it('keeps incoming payload changes on a locally moved thought without adding history or discarding redo', () => {

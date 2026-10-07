@@ -8,9 +8,6 @@ import debugLog from '../util/debugLog'
 /** Maximum number of thought summaries included in a structured updateThoughts entry. */
 const MAX_SUMMARY_THOUGHTS = 20
 
-/** Maximum number of individual move entries per action. Beyond this, one moveBatch entry with a sample is logged instead (e.g. a sort reranking a whole context). */
-const MAX_MOVES = 10
-
 /** Maximum characters of a thought value included in a log entry. */
 const VALUE_MAX_LENGTH = 100
 
@@ -37,39 +34,6 @@ const summarizeUpdateThoughts = (action: UnknownAction): Record<string, unknown>
   }
 }
 
-/** Diffs immutable document views and logs a self-describing `move` entry for every thought whose sibling position or parent changed. Loads and deletions, where only one side exists, are skipped. */
-const logThoughtMoves = (stateBefore: State, stateAfter: State, actionType: string): void => {
-  const before = stateBefore.thoughts
-  const after = stateAfter.thoughts
-  if (before === after) return
-
-  const moves = Array.from(after.values()).flatMap(thought => {
-    const old = before.getThought(thought.id)
-    const oldRank = before.getPosition(thought.id)
-    const newRank = after.getPosition(thought.id)
-    return old && (oldRank !== newRank || old.parentId !== thought.parentId)
-      ? [
-          {
-            actionType,
-            id: thought.id,
-            value: truncateValue(thought.value),
-            oldRank,
-            newRank,
-            ...(old.parentId !== thought.parentId
-              ? { oldParentId: old.parentId, newParentId: thought.parentId }
-              : { parentId: thought.parentId }),
-          },
-        ]
-      : []
-  })
-
-  if (moves.length <= MAX_MOVES) {
-    moves.forEach(move => debugLog.log('move', move))
-  } else {
-    debugLog.log('moveBatch', { actionType, count: moves.length, sample: moves.slice(0, MAX_MOVES) })
-  }
-}
-
 /** Logs which original action types an undo or redo reverted or replayed, read from the patches popped off the undo/redo stack, so a move restored by undo is distinguishable from a fresh user move. */
 const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string): void => {
   if (actionType !== 'undo' && actionType !== 'redo') return
@@ -81,11 +45,11 @@ const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string):
   debugLog.log(actionType, { steps: popped.length, actions })
 }
 
-/** Redux Middleware for logging all actions. Logs to the console when testFlags.logActions is set (useful for e2e/remote debugging when Redux Developer Tools are not available), and captures every action into the persistent debugLog when it is enabled (via the Debug Logging setting, or automatically on development and preview hosts) — along with structured updateThoughts summaries, sibling-position and parent changes, and undo/redo attribution. */
+/** Logs dispatched actions, structured thought updates, and undo/redo attribution. Document moves are captured inside the command transaction, before its previous-value reader expires. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
   return next => action => {
-    // Capture pre-reduction state so thought moves can be diffed. This middleware runs after the thunk middleware, so
+    // Capture pre-reduction UI history. This middleware runs after the thunk middleware, so
     // `action` is always a resolved plain action and getState() here reflects the state before this action's reducers.
     const stateBefore = debugLog.isEnabled() ? store.getState() : null
 
@@ -118,7 +82,6 @@ const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
       if (stateBefore) {
         const stateAfter = store.getState()
         try {
-          logThoughtMoves(stateBefore, stateAfter, type ?? 'unknown')
           logUndoRedo(stateBefore, stateAfter, type ?? 'unknown')
         } catch {
           // Logging must never throw.

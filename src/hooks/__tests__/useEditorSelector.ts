@@ -5,10 +5,15 @@ import State from '../../@types/State'
 import { errorActionCreator as error } from '../../actions/error'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { settingsActionCreator as settings } from '../../actions/settings'
 import EditorProvider from '../../components/EditorProvider'
+import { EM_TOKEN } from '../../constants'
 import db from '../../data-providers/thoughtspace'
 import { getChildrenRanked } from '../../selectors/getChildren'
+import getEmThought from '../../selectors/getEmThought'
+import getSetting from '../../selectors/getSetting'
 import getThoughtById from '../../selectors/getThoughtById'
+import zoomPath from '../../selectors/zoomPath'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
 import initStore from '../../test-helpers/initStore'
@@ -25,13 +30,12 @@ afterEach(waitForThoughtspaceIdle)
 
 it('updates document selectors and effects without notifying the UI-only Redux store', async () => {
   store.dispatch(importText({ text: '- a', preventSetCursor: true }))
-  const captured = store.getState()
-  const a = contextToThought(captured, ['a'])!
+  const a = contextToThought(store.getState(), ['a'])!
   const ui = store.uiStore.getState()
   const notified = vi.fn()
   const effect = vi.fn()
   const unsubscribe = store.uiStore.subscribe(notified)
-  /** Selects the same thought from each captured document. */
+  /** Selects an owned thought record from the current document. */
   const select = (state: State) => getThoughtById(state, a.id)
   const { result } = renderHook(
     () => {
@@ -55,7 +59,6 @@ it('updates document selectors and effects without notifying the UI-only Redux s
     expect(effect).toHaveBeenCalledExactlyOnceWith(result.current)
     expect(store.uiStore.getState()).toBe(ui)
     expect(notified).not.toHaveBeenCalled()
-    expect(getThoughtById(captured, a.id)).toBe(a)
     expect(a.value).toBe('a')
   } finally {
     unsubscribe()
@@ -100,26 +103,48 @@ it('preserves an equal fresh-object selection across unrelated UI and document c
   expect(rendered).toHaveBeenCalledExactlyOnceWith(result.current)
 })
 
-it('publishes coherent cursor and document snapshots for local creation and provider-driven deletion', () => {
+it('invalidates memoized selectors when a retained live reader advances', () => {
+  store.dispatch([
+    importText({ text: '- a\n  - =focus\n    - Zoom' }),
+    settings({ key: 'Theme', value: 'Light' }),
+    setCursor(['a']),
+  ])
+  const state = store.getState()
+  const theme = contextToThought(state, [EM_TOKEN, 'Settings', 'Theme', 'Light'])!
+  const zoom = contextToThought(state, ['a', '=focus', 'Zoom'])!
+  expect(getSetting(state, 'Theme')).toBe('Light')
+  expect(getEmThought(state, ['Settings', 'Theme'])).toBe('Light')
+  expect(zoomPath(state)).not.toBeNull()
+
+  db.transact(transaction =>
+    transaction.update({ thoughtIndexUpdates: { [theme.id]: { ...theme, value: 'Dark' }, [zoom.id]: null } }),
+  )
+
+  expect(getSetting(state, 'Theme')).toBe('Dark')
+  expect(getEmThought(state, ['Settings', 'Theme'])).toBe('Dark')
+  expect(zoomPath(state)).toBeNull()
+})
+
+it('publishes coherent cursor and document selections for local creation and provider-driven deletion', () => {
   store.dispatch([importText({ text: '- parent' }), setCursor(['parent'])])
-  const before = store.getState()
-  const parent = contextToThought(before, ['parent'])!
-  /** Reads cursor ancestry and children from one captured editor snapshot. */
+  const parent = contextToThought(store.getState(), ['parent'])!
+  /** Reads cursor ancestry and children during one synchronous selection. */
   const select = (state: State) => ({
     cursor: state.cursor?.map(id => getThoughtById(state, id)?.value) ?? null,
     children: getChildrenRanked(state, parent.id).map(thought => thought.value),
   })
   const { result } = renderHook(() => useEditorSelector(select), { wrapper })
-  const observed: State[] = []
-  const observedDuringUiPublication: State[] = []
-  const unsubscribe = store.subscribe(() => observed.push(store.getState()))
-  const unsubscribeUi = store.uiStore.subscribe(() => observedDuringUiPublication.push(store.getState()))
+  const before = result.current
+  const observed: ReturnType<typeof select>[] = []
+  const observedDuringUiPublication: ReturnType<typeof select>[] = []
+  const unsubscribe = store.subscribe(() => observed.push(select(store.getState())))
+  const unsubscribeUi = store.uiStore.subscribe(() => observedDuringUiPublication.push(select(store.getState())))
   try {
     act(() => {
       store.dispatch(newThought({ value: 'child', insertNewSubthought: true }))
     })
-    const created = store.getState()
-    const child = contextToThought(created, ['parent', 'child'])!
+    const created = result.current
+    const child = contextToThought(store.getState(), ['parent', 'child'])!
     expect(result.current).toEqual({ cursor: ['parent', 'child'], children: ['child'] })
 
     act(() => {
@@ -128,13 +153,13 @@ it('publishes coherent cursor and document snapshots for local creation and prov
     })
 
     expect(result.current).toEqual({ cursor: ['parent'], children: [] })
-    expect(observed.map(select)).toEqual([
+    expect(observed).toEqual([
       { cursor: ['parent', 'child'], children: ['child'] },
       { cursor: ['parent'], children: [] },
     ])
     expect(observedDuringUiPublication).toEqual(observed)
-    expect(select(before)).toEqual({ cursor: ['parent'], children: [] })
-    expect(select(created)).toEqual({ cursor: ['parent', 'child'], children: ['child'] })
+    expect(before).toEqual({ cursor: ['parent'], children: [] })
+    expect(created).toEqual({ cursor: ['parent', 'child'], children: ['child'] })
     expect(getThoughtById(store.getState(), child.id)).toBeUndefined()
   } finally {
     unsubscribe()

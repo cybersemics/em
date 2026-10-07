@@ -1,5 +1,5 @@
 import { type TreecrdtClient, createTreecrdtClient } from '@treecrdt/wa-sqlite'
-import { createMemoryClient } from '@treecrdt/wasm'
+import { createMemoryClient } from '@treecrdt/wasm/memory'
 import type Thought from '../../../@types/Thought'
 import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
@@ -26,9 +26,9 @@ it('retries initialization after opening fails', async () => {
 
 it('closes a partially initialized client before retrying bootstrap', async () => {
   const failure = new Error('Bootstrap failed')
-  const client = await createTreecrdtClient({ storage: { type: 'memory' } })
+  const client = await createTreecrdtClient({ docId: tsid })
   const close = vi.spyOn(client, 'close')
-  vi.spyOn(client.tree, 'getPayload').mockRejectedValueOnce(failure)
+  vi.spyOn(client.tree.root, 'payload').mockRejectedValueOnce(failure)
   const open = vi.fn(createTreecrdtClient).mockResolvedValueOnce(client)
   const onError = vi.fn()
   const runtime = createMemoryThoughtspace(open)
@@ -45,7 +45,7 @@ it('closes a partially initialized client before retrying bootstrap', async () =
 
 it('rejects initialization when the automatic subscription push fails before hydration succeeds', async () => {
   const failure = new Error('Initial subscription push failed')
-  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const persistent = await createTreecrdtClient({ docId: tsid })
   const close = vi.spyOn(persistent, 'close')
   const listOpRefs = persistent.opRefs.all.bind(persistent.opRefs)
   // Subscription setup succeeds; its automatic push fails, while the following hydration read succeeds.
@@ -106,7 +106,7 @@ it('reopens only after a concurrent drop finishes and blocks editing during tear
 })
 
 it('reports a failed durable append, blocks later commands, and clears the failure on drop', async () => {
-  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(vi.fn(createTreecrdtClient).mockResolvedValueOnce(persistent))
   const failure = new Error('Durable append failed')
   const onError = vi.fn()
@@ -135,7 +135,7 @@ it('reports a failed durable append, blocks later commands, and clears the failu
       ),
     ).toThrow(failure)
     await expect(runtime.waitForIdle()).rejects.toBe(failure)
-    expect(await persistent.tree.exists(thought.id)).toBe(false)
+    expect(await persistent.tree.get(thought.id)).toBeUndefined()
 
     await runtime.drop()
     await runtime.init({ storage: 'memory', onError })
@@ -152,7 +152,7 @@ it('reports a failed durable append, blocks later commands, and clears the failu
 })
 
 it('reports a failed loopback operation-log read and gates later edits', async () => {
-  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
   const failure = new Error('Operation-log read failed')
   const onError = vi.fn()
@@ -171,7 +171,7 @@ it('reports a failed loopback operation-log read and gates later edits', async (
     await expect(runtime.waitForIdle()).rejects.toThrow('Operation-log read failed')
     expect(onError).toHaveBeenCalledTimes(1)
     expect(() => runtime.transact(transaction => transaction.project())).toThrow('Operation-log read failed')
-    expect(await persistent.tree.exists(node)).toBe(true)
+    expect(await persistent.tree.get(node)).toBeDefined()
   } finally {
     await runtime.drop()
   }
@@ -206,7 +206,7 @@ it('reports a failed incoming WASM batch and gates later edits without publishin
     expect(onError).toHaveBeenCalledTimes(1)
     expect(() => runtime.transact(transaction => transaction.project())).toThrow('Incoming batch failed')
     expect(runtime.project().getThought(node)).toBeUndefined()
-    expect(await persistent.tree.exists(node)).toBe(true)
+    expect(await persistent.tree.get(node)).toBeDefined()
   } finally {
     await runtime.drop()
   }

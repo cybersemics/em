@@ -82,6 +82,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtspaceView => 
   }
 
   return {
+    revision: 0,
     getThought: id => thoughtIndex[id],
     getChildren: () => [],
     getPosition: id => (thoughtIndex[id] ? 0 : undefined),

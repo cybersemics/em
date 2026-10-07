@@ -30,12 +30,8 @@ it('requires durable OPFS storage when persistent storage is requested', async (
 
   await expect(runtime.init({ storage: 'persistent', onError: () => undefined })).rejects.toBe(failure)
   expect(open).toHaveBeenCalledExactlyOnceWith({
-    storage: {
-      type: 'opfs',
-      filename: `/treecrdt-em-memory-prototype-${tsid}.db`,
-      fallback: 'throw',
-    },
-    runtime: { type: 'dedicated-worker' },
+    persistent: true,
+    filename: `/treecrdt-em-memory-prototype-${tsid}.db`,
     docId: tsid,
   })
 })
@@ -52,8 +48,8 @@ it('opens the client lazily after acquiring access', async () => {
 
     await runtime.init({ storage: 'memory' })
     expect(open).toHaveBeenCalledExactlyOnceWith({
-      storage: { type: 'memory' },
-      runtime: { type: 'direct' },
+      persistent: false,
+      filename: `/treecrdt-em-memory-prototype-${tsid}.db`,
       docId: tsid,
     })
   } finally {
@@ -77,7 +73,7 @@ it('coalesces concurrent initialization into one client', async () => {
 })
 
 it('discards a terminal client when drop reports an error and allows a fresh initialization', async () => {
-  const client = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' }, runtime: { type: 'direct' } })
+  const client = await createTreecrdtClient({ docId: tsid })
   const failure = new Error('client drop failed')
   const dropClient = client.drop.bind(client)
   // A durable client may report a failure after closing its underlying database.

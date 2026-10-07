@@ -10,6 +10,7 @@ import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
+import ThoughtspaceView from '../@types/ThoughtspaceView'
 import UiState from '../@types/UiState'
 import * as commands from '../actions'
 import { editThoughtPayload } from '../actions/editThought'
@@ -45,16 +46,53 @@ const projectThoughts = (state: State, transaction?: ThoughtspaceTransaction): S
 }
 
 /** Caches first-paint settings only after a document transaction succeeds. */
-const cacheSettings = (state: State, previous: State) => {
-  if (state.thoughts === previous.thoughts) return
+const cacheSettings = (state: State) => {
   for (const name of CACHED_SETTINGS) {
     const settingsId = contextToThoughtId(state, [EM_TOKEN, 'Settings', name])
     const setting = getChildrenRanked(state, settingsId).find(child => !isAttribute(child.value))
-    const previousSettingsId = contextToThoughtId(previous, [EM_TOKEN, 'Settings', name])
-    const previousSetting = getChildrenRanked(previous, previousSettingsId).find(child => !isAttribute(child.value))
-    if (setting?.value === previousSetting?.value) continue
+    if ((setting?.value || null) === storage.getItem(`Settings/${name}`)) continue
     if (setting?.value) storage.setItem(`Settings/${name}`, setting.value)
     else storage.removeItem(`Settings/${name}`)
+  }
+}
+
+/** Captures changed sibling positions while the previous reader is valid; only plain log values escape the scope. */
+const collectThoughtMoves = (
+  before: ThoughtspaceView,
+  after: ThoughtspaceView,
+  actionType: string,
+  changes?: ReturnType<ThoughtspaceTransaction['getChanges']>,
+) => {
+  try {
+    const ids = changes ? new Set(changes.thoughtIds) : new Set(Array.from(after.values(), thought => thought.id))
+    changes?.childrenChangedIds.forEach(id => {
+      before.getChildren(id).forEach(child => ids.add(child))
+      after.getChildren(id).forEach(child => ids.add(child))
+    })
+    return Array.from(ids).flatMap(id => {
+      const thought = after.getThought(id)
+      const old = before.getThought(id)
+      if (!thought || !old) return []
+      const oldRank = before.getPosition(id)
+      const newRank = after.getPosition(id)
+      return oldRank !== newRank || old.parentId !== thought.parentId
+        ? [
+            {
+              actionType,
+              id,
+              value: thought.value.length > 100 ? `${thought.value.slice(0, 100)}…` : thought.value,
+              oldRank,
+              newRank,
+              ...(old.parentId !== thought.parentId
+                ? { oldParentId: old.parentId, newParentId: thought.parentId }
+                : { parentId: thought.parentId }),
+            },
+          ]
+        : []
+    })
+  } catch {
+    // Logging must never reject a command.
+    return []
   }
 }
 
@@ -170,10 +208,11 @@ const diffState = (
   } = {},
 ): Operation[] => {
   const mergeOps = mergeWith?.ops ?? []
+  const changes = transaction?.getChanges()
   const sameThoughts =
-    newValue.thoughts === value.thoughts &&
+    (newValue.thoughts === value.thoughts ||
+      (changes && !changes.reset && !changes.thoughtIds.length && !changes.childrenChangedIds.length)) &&
     !mergeOps.some(op => op.path === '/thoughts' || op.path.startsWith('/thoughts/'))
-  const changes = sameThoughts ? undefined : transaction?.getChanges()
   let scope =
     !sameThoughts && (newValue.thoughts === value.thoughts || (changes && !changes.reset))
       ? { thoughtIds: new Set(changes?.thoughtIds), lexemeKeys: new Set<string>() }
@@ -282,6 +321,7 @@ const revertPatch = (
   if (patch.documentOperationIds.length && !transaction) {
     throw new Error('Restoring document history requires a thoughtspace transaction')
   }
+  const previousThoughts = transaction?.capturePrevious() ?? state.thoughts
   const documentOperationIds = patch.documentOperationIds.length ? transaction!.revert(patch.documentOperationIds) : []
   const uiState = produce(
     state,
@@ -295,7 +335,7 @@ const revertPatch = (
   return {
     state: newState,
     patch: {
-      ops: diffState(newState, state, { transaction }),
+      ops: diffState(newState, { ...state, thoughts: previousThoughts }, { transaction }),
       metadata: patch.metadata,
       documentOperationIds,
     },
@@ -469,6 +509,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       }
 
       // otherwise run the normal reducer for the action
+      const previousThoughts = transaction?.capturePrevious() ?? state.thoughts
       const newState = projectThoughts(reducer(state, action, transaction), transaction)
       const documentOperationIds = transaction?.operationIds ?? []
 
@@ -527,7 +568,15 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       if (shouldMerge) {
         lastAction = action
-        const combinedUndoPatch = diffState(newState, state, { transaction, mergeWith: lastUndoPatch, actionType })
+        const combinedUndoPatch = diffState(
+          newState,
+          { ...state, thoughts: previousThoughts },
+          {
+            transaction,
+            mergeWith: lastUndoPatch,
+            actionType,
+          },
+        )
         const combinedOperationIds = [...(lastUndoPatch?.documentOperationIds ?? []), ...documentOperationIds]
 
         const actionTypes: [ActionType, ...ActionType[]] = lastUndoPatch
@@ -568,7 +617,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // Note focus intentionally does not dispatch on every caret movement. For the first note edit after focus,
       // infer the pre-edit caret so the inverse patch can restore it instead of leaving the caret at the end.
       const noteOffsetBeforeEdit = getNoteOffsetBeforeEdit(action)
-      const stateBeforeAction = noteOffsetBeforeEdit == null ? state : { ...state, noteOffset: noteOffsetBeforeEdit }
+      const stateBeforeAction = {
+        ...state,
+        thoughts: previousThoughts,
+        ...(noteOffsetBeforeEdit == null ? {} : { noteOffset: noteOffsetBeforeEdit }),
+      }
       const undoPatch = diffState(newState, stateBeforeAction, { transaction })
       return undoPatch.length || documentOperationIds.length
         ? {
@@ -626,17 +679,21 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         const handler = (commands as Index<{ requiresDocument?: boolean }>)[action.type]
         const needsDocument = handler?.requiresDocument || action.type === 'undo' || action.type === 'redo'
         let committed = false
+        let moves: ReturnType<typeof collectThoughtMoves> = []
+        let operationCount = 0
         /** Publishes committed document and UI state before provider observers can start another command. */
         const publish = (next: State, persisted?: Promise<void>) => {
           committed = true
           // The document is already committed. A best-effort first-paint cache must never prevent publication.
           try {
-            cacheSettings(next, state)
+            if (next.thoughts !== state.thoughts) cacheSettings(next)
           } catch (error) {
             console.warn('Unable to cache first-paint settings', error)
           }
+          if (moves.length <= 10) moves.forEach(move => debugLog.log('move', move))
+          else debugLog.log('moveBatch', { actionType: action.type, count: moves.length, sample: moves.slice(0, 10) })
           if (persisted && next.thoughts !== state.thoughts) {
-            if (debugLog.isEnabled()) debugLog.log('push', { thoughtCount: Array.from(next.thoughts.values()).length })
+            if (debugLog.isEnabled()) debugLog.log('push', { operationCount })
             void persisted
               .then(() => debugLog.log('pushSynced'))
               .catch(error => {
@@ -653,9 +710,18 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         }
         try {
           if (needsDocument && thoughtspaceRuntime.ready) {
-            db.transact(transaction => execute(state, action, transaction), publish)
+            db.transact(transaction => {
+              const previous = debugLog.isEnabled() ? transaction.capturePrevious() : undefined
+              const next = execute(state, action, transaction)
+              operationCount = transaction.operationIds.length
+              if (previous) moves = collectThoughtMoves(previous, next.thoughts, action.type, transaction.getChanges())
+              return next
+            }, publish)
           } else {
-            publish(execute(state, action))
+            const next = execute(state, action)
+            const previous = (action as UnknownAction).previousThoughts as ThoughtspaceView | undefined
+            if (debugLog.isEnabled() && previous) moves = collectThoughtMoves(previous, next.thoughts, action.type)
+            publish(next)
           }
         } catch (error) {
           // A post-commit observer failure cannot undo history that has already been published.

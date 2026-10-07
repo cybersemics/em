@@ -63,7 +63,7 @@ const deleteEmptyThought = (
   }
   // archive an empty thought with only hidden children
   else if (isEmpty && visibleChildren.length === 0) {
-    const statePrev = state
+    const statePrev = { ...state, thoughts: transaction?.capturePrevious() ?? state.thoughts }
 
     return reducerFlow([
       // archive all children

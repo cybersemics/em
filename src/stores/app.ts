@@ -72,10 +72,10 @@ const store = {
   uiStore: { ...editorStore.uiStore, dispatch: editorStore.dispatch },
 }
 
-db.subscribe(() => {
+db.subscribe(previousThoughts => {
   const thoughts = db.project()
   if (thoughts !== store.getState().thoughts) {
-    store.dispatch(replaceThoughts({ thoughts, repairCursor: true }))
+    store.dispatch(replaceThoughts({ thoughts, previousThoughts, repairCursor: true }))
   }
 })
 

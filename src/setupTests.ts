@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom'
-import { initializeMemoryWasm } from '@treecrdt/wasm'
+import { initializeMemoryWasm } from '@treecrdt/wasm/memory'
 import 'fake-indexeddb/auto'
 import * as matchers from 'jest-extended'
 // requires jest config resetMocks: false after react-scripts v4

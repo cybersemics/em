@@ -1,13 +1,14 @@
 # Understanding the Data Model
 
-The thoughtspace is a tree of thoughts. Every thought has a stable `ThoughtId`, a `value` (its text), and a `parentId`. The synchronous memory TreeCRDT owns the complete document; Redux holds UI state. Selectors receive a captured editor context combining that UI state with an immutable TreeCRDT view. An asynchronous SQLite replica persists the same operations. See [persistence.md](persistence.md).
+The thoughtspace is a tree of thoughts. Every thought has a stable `ThoughtId`, a `value` (its text), and a `parentId`. The synchronous memory TreeCRDT owns the complete document; Redux holds UI state. Selectors receive an editor context combining that UI state with current TreeCRDT reads. An asynchronous SQLite replica persists the same operations. See [persistence.md](persistence.md).
 
 A second index, `lexemeIndex`, runs orthogonal to the tree: it maps a *normalized* hash of a thought's value to a `Lexeme` that lists every `ThoughtId` in the thoughtspace whose value hashes to the same key. This is what makes the Context View and search-style features possible.
 
-[`state.thoughts: ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) reads one captured document snapshot:
+[`state.thoughts: ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) reads the current document, not a retained snapshot:
 
 ```ts
 state.thoughts: {
+  readonly revision: number // cache invalidation token, not a historical version
   getThought(id: ThoughtId): Thought | undefined
   getChildren(id: ThoughtId): readonly ThoughtId[]
   getPosition(id: ThoughtId): number | undefined
@@ -18,19 +19,19 @@ state.thoughts: {
 state.thoughtUi: Index<Pick<Thought, 'generating' | 'generatingPlaceholder' | 'splitSource'>>
 ```
 
-Initialization hydrates the complete document before editing begins. Navigation and context views read the snapshot synchronously; thoughts are not loaded or evicted by visibility. Document commands submit changes through an explicit transaction and read the canonical snapshot after each update. The editor publishes after the whole command succeeds; Redux is notified only when UI state changes. Incoming engine snapshots use the non-undoable [`replaceThoughts`](../src/actions/replaceThoughts.ts) to repair dependent UI state.
+Initialization hydrates the complete document before editing begins. Navigation and context views read the document synchronously; thoughts are not loaded or evicted by visibility. Document commands submit changes through an explicit transaction and read canonical state after each update. The editor publishes after the whole command succeeds; Redux is notified only when UI state changes. Incoming engine changes use the non-undoable [`replaceThoughts`](../src/actions/replaceThoughts.ts) to repair dependent UI state.
 
 ## Tree topology
 
-Topology comes from the captured TreeCRDT snapshot:
+Topology comes from current TreeCRDT reads:
 
 - `Thought.parentId` — the parent's `ThoughtId`. `ROOT_PARENT_ID` for the root contexts.
 - `state.thoughts.getChildren(id)` — payload-bearing children in canonical sibling order. Missing or payload-less parents return no EM children.
 - `state.thoughts.getPosition(id)` — the zero-based position in the raw sibling order, including payload-less siblings. It also works when a thought's parent has no EM payload.
 
-Meta-attribute lookup (values starting with `=`, e.g. `=pin`, `=note`) is cached lazily by [`findDescendant`](../src/selectors/findDescendant.ts) within each immutable view. It chooses the first matching sibling; traversal still includes every duplicate attribute. Renaming a child invalidates the view's lookup without rebuilding a parent child map.
+Meta-attribute lookup (values starting with `=`, e.g. `=pin`, `=note`) uses [`findDescendant`](../src/selectors/findDescendant.ts) to scan current children. It chooses the first matching sibling; traversal still includes every duplicate attribute. Child renames are visible immediately without rebuilding a parent child map or attribute cache.
 
-Thoughts do not store child maps or numeric ranks. Unchanged decoded thoughts can retain identity when sibling order changes, and held views keep their original ordering.
+Thoughts do not store child maps or numeric ranks. Unchanged decoded thoughts can retain identity when sibling order changes, but a held reader sees the new order. Retain returned values when earlier content or ordering is needed.
 
 ## Data Types
 
@@ -58,11 +59,11 @@ interface Thought {
 }
 ```
 
-See [Thought.ts](../src/@types/Thought.ts). TreeCRDT stores a `ThoughtPayload` (`value`, `created`, `lastUpdated`, `updatedBy`, `archived`) on each node; the document reader adds `id` and `parentId`. The `getThoughtById` selector combines that content with temporary fields from `state.thoughtUi`, which are never persisted or synchronized. Payload decoding is cached by immutable row identity. See [persistence.md → Document model](persistence.md#document-model).
+See [Thought.ts](../src/@types/Thought.ts). TreeCRDT stores a `ThoughtPayload` (`value`, `created`, `lastUpdated`, `updatedBy`, `archived`) on each node; the document reader adds `id` and `parentId`. The `getThoughtById` selector combines that content with temporary fields from `state.thoughtUi`, which are never persisted or synchronized. Decoded thought results are cached by id and invalidated when payload or parent changes. See [persistence.md → Document model](persistence.md#document-model).
 
 #### rank
 
-The view resolves numeric positions through `getPosition`, caching them by immutable child-array identity. Render records and hover gaps still use numeric `rank` coordinates, but canonical `Thought` records do not. Payload-less siblings occupy positions even though they are not rendered.
+The view resolves numeric positions through `getPosition`, caching requested sibling orders and positions until its revision changes. Render records and hover gaps still use numeric `rank` coordinates, but canonical `Thought` records do not. Payload-less siblings occupy positions even though they are not rendered.
 
 Document commands specify `afterId`: a preceding sibling's id, or `null` for first. Creates and moves never accept numeric ranks. The returned view reads the resulting canonical order immediately.
 

@@ -18,6 +18,7 @@ const runDocumentCommand = (
   command: (state: State, transaction: ThoughtspaceTransaction) => State,
   state: State,
 ): State => {
+  let unchanged = false
   const result = commandThoughtspace.transact(transaction => {
     const current = transaction.project()
     const target = state.thoughts
@@ -33,7 +34,7 @@ const runDocumentCommand = (
             .filter(
               thought =>
                 !_.isEqual(thought, current.getThought(thought.id)) ||
-                target.getPosition(thought.id) !== current.getPosition(thought.id),
+                (!roots.has(thought.id) && target.getPosition(thought.id) !== current.getPosition(thought.id)),
             )
             .map(thought => [thought.id, thought]),
         ),
@@ -58,9 +59,31 @@ const runDocumentCommand = (
     const input = thoughts === state.thoughts ? state : { ...state, thoughts }
     const next = command(input, transaction)
     const projected = transaction.project()
+    unchanged = next === input && projected === thoughts
     return projected === next.thoughts ? next : { ...next, thoughts: projected }
   })
-  return result.value
+  if (unchanged) return state
+  // Test fixtures may branch later; capture their owned values only after real command execution has completed.
+  const view = result.value.thoughts
+  const rows = new Map(
+    Array.from(view.values(), thought => [
+      thought.id,
+      { thought, children: view.getChildren(thought.id), position: view.getPosition(thought.id) },
+    ]),
+  )
+  return {
+    ...result.value,
+    thoughts: {
+      revision: view.revision,
+      getThought: id => rows.get(id)?.thought,
+      getChildren: id => rows.get(id)?.children ?? [],
+      getPosition: id => rows.get(id)?.position,
+      values: function* () {
+        for (const row of rows.values()) yield row.thought
+      },
+      lexemeIndex: view.lexemeIndex,
+    },
+  }
 }
 
 export default runDocumentCommand

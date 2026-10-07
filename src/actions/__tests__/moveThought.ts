@@ -919,9 +919,9 @@ it('move thought to the end of a sorted context', () => {
 })
 
 it('persists sorted placement instead of the caller predecessor across a fresh runtime', async () => {
-  const persistent = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
-  const restoredClient = await createTreecrdtClient({ docId: tsid, storage: { type: 'memory' } })
+  const restoredClient = await createTreecrdtClient({ docId: tsid })
   const reloaded = createMemoryThoughtspace(async () => restoredClient)
 
   try {

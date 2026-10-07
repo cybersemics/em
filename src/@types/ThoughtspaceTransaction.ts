@@ -24,6 +24,8 @@ interface ThoughtspaceTransaction {
   }) => ThoughtspaceView
   /** Reads the current canonical document and its derived lexemes. */
   project: () => ThoughtspaceView
+  /** Reads this boundary's previous values until the synchronous transaction callback returns. */
+  capturePrevious: () => ThoughtspaceView
   /** Runs only after this whole transaction has been durably persisted. */
   afterPersist: (callback: () => void) => void
 }

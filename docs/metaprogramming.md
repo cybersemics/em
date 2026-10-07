@@ -5,7 +5,7 @@ Metaprogramming is **em**'s mechanism for changing app behavior from inside a th
 Three things make this work:
 
 1. Any thought value beginning with `=` is treated as a **meta-attribute** — hidden by default in normal view, and skipped during ordinary navigation.
-2. `findDescendant` lazily caches meta-attribute children by *value* within each immutable snapshot view, making repeated attribute lookup constant-time. See [data-model.md](data-model.md).
+2. `findDescendant` resolves meta-attribute children by *value* from current document reads. See [data-model.md](data-model.md).
 3. The `attribute()` / `attributeEquals()` / `findDescendant()` selectors hide the lookup behind a small API.
 
 Generally, an attribute affects *only its parent thought*. Three special attributes broadcast settings to descendants: `=children` and `=grandchildren` apply attributes one and two levels down, and `=descendants` applies recursively to the entire subtree (currently only `=pin`).
@@ -14,15 +14,15 @@ Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thou
 
 ## How attributes are stored and read
 
-Attributes are ordinary TreeCRDT children. `state.thoughts.getChildren(id)` reads their canonical order from the captured snapshot; `findDescendant` scans that list once per parent and view to cache the first child for each attribute value. Duplicate attributes remain in traversal, but lookup selects the first in sibling order. A new view gets a fresh lookup cache, so child renames cannot leave stale attribute keys.
+Attributes are ordinary TreeCRDT children. `state.thoughts.getChildren(id)` reads their canonical order from the current tree; `findDescendant` scans current children for each value step. Duplicate attributes remain in traversal, but lookup selects the first in sibling order. There is no retained attribute cache, so child renames are visible immediately.
 
 `childrenMap` is only materialized for history diagnostics and JSON export, not stored on live `Thought` records.
 
 The four selectors most code uses:
 
 - [`attribute(state, id, name)`](../src/selectors/attribute.ts) — returns the *value of the first visible child* of the named attribute, or `null`. So `attribute(state, parent.id, '=pin')` returns `'true'` (when set to `=pin/true`), `'false'`, or `null`. Use this when an attribute carries a string payload.
-- [`attributeEquals(state, id, attr, value)`](../src/selectors/attributeEquals.ts) — boolean check for a child with the given value under the named attribute. Uses `findDescendant` and its attribute cache; regular value steps scan children.
-- [`findDescendant(state, id, values)`](../src/selectors/findDescendant.ts) — walks down a chain of values (e.g. `['=children', '=pin', 'true']`) and returns the deepest matching `ThoughtId`, or `null`. Uses the per-view cache at each meta-prefixed step. Use this for deeper checks, especially through `=children` / `=grandchildren` propagation.
+- [`attributeEquals(state, id, attr, value)`](../src/selectors/attributeEquals.ts) — boolean check for a child with the given value under the named attribute. Uses `findDescendant` to scan children at each step.
+- [`findDescendant(state, id, values)`](../src/selectors/findDescendant.ts) — walks down a chain of values (e.g. `['=children', '=pin', 'true']`) and returns the deepest matching `ThoughtId`, or `null`. Use this for deeper checks, especially through `=children` / `=grandchildren` propagation.
 - `findAnyChild(state, id, predicate)` — generic find on regular children. Used by some bespoke attribute lookups.
 
 ## Inheritance: `=children`, `=grandchildren`, and `=descendants`

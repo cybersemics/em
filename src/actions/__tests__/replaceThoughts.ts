@@ -78,7 +78,7 @@ it('preserves surviving thought UI across canonical replacement and prunes delet
   expect(next.thoughtUi[c.id]).toBeUndefined()
   expect(getThoughtById(next, c.id)).toBeUndefined()
   expect(previous.thoughtUi[c.id]).toEqual({ generating: true, generatingPlaceholder: 'deleted preview' })
-  expect(getThoughtById(previous, a.id)).toBe(rendered)
+  expect(getThoughtById(previous, a.id)?.value).toBe('incoming a')
   expect(rendered).toMatchObject({ value: 'a', generatingPlaceholder: 'preview' })
 })
 
