@@ -1,48 +1,53 @@
 #!/usr/bin/env node
 /**
- * Maintains a collapsed "Preview Deployment" disclosure at the bottom of a pull request description holding a
- * QR code of its latest successful Vercel preview. Run by .github/workflows/preview-qr.yml as
+ * Maintains a "Preview Deployment" comment on a pull request holding a QR code of its latest
+ * successful Vercel preview. Run by .github/workflows/preview-qr.yml as
  * `node scripts/ci/preview-qr.mjs <head-sha>`, or with `--pr <number>` in place of the commit to
  * reconcile that pull request's current head, which is what the workflow's manual dispatch does.
  *
  * The workflow is a reconciler, not an event handler. Every invocation resolves the pull request
  * the commit belongs to, finds the newest Vercel Preview run for that pull request's *current*
- * head, and rewrites the managed block to describe that run — whatever event happened to wake it.
- * That is what makes delivery order irrelevant: a late event for a superseded commit finds that the
- * head has moved and exits; a duplicate event renders an identical body and skips the write.
+ * head, and rewrites the comment to describe that run — whatever event happened to wake it. That
+ * is what makes delivery order irrelevant: a late event for a superseded commit finds that the
+ * head has moved and exits; a duplicate event renders an identical comment and skips the write.
  *
- * The block is the text between `<!-- preview-qr:start -->` and `<!-- preview-qr:end -->`. Inside
- * it, an HTML comment `<!-- preview-qr:state {json} -->` carries the machine-readable state — the
- * commit, timestamp, and URL of the latest successful deployment, and of the deployment currently
- * building — so a failed build can restore the summary of the QR that stays on display without
- * re-deriving it from the deployments API. The QR image URL is deliberately not in that comment:
- * `gh pr edit --attach` rewrites the markdown image reference to the uploaded asset but leaves
- * HTML comments alone, so the image is read back from the rendered markdown instead. Everything in
- * the block is rendered from state on every write; nothing outside the markers is ever touched.
+ * The QR lives in a comment of its own rather than in the description because the description has
+ * other writers. The Copilot coding agent rewrites the whole description each time it reports
+ * progress, without a push, so a QR kept there disappears until the next preview; nobody but this
+ * script edits the comment. The comment is the one by github-actions[bot] containing
+ * `<!-- preview-qr:start -->`, and an HTML comment `<!-- preview-qr:state {json} -->` inside it
+ * carries the machine-readable state — the commit, timestamp, URL, and QR image of the latest
+ * successful deployment, and the commit and timestamp of the deployment currently building — so a
+ * failed build can restore the QR that stays on display without re-deriving it from the
+ * deployments API. Everything in the comment is rendered from state on every write.
  *
  * State transitions, where A is the last successful preview and B the one being built.
  *
  * ```
- * no block ── run starts ──▶ generating B (no QR) ── success ──▶ stable B
- *                                   └── failure ──▶ block removed
- * stable A ── run starts ──▶ generating B (QR A)  ── success ──▶ stable B
- *                                   └── failure ──▶ stable A
+ * no comment ── run starts ──▶ generating B (no QR) ── success ──▶ stable B
+ *                                     └── failure ──▶ comment deleted
+ * stable A ──── run starts ──▶ generating B (QR A)  ── success ──▶ stable B
+ *                                     └── failure ──▶ stable A
  * ```
  *
- * Reads and plain body writes use GH_TOKEN, the workflow's own token. Installing a new QR uses
- * `gh pr edit --attach`, which uploads the PNG to GitHub's attachment storage and rewrites the
- * body in one mutation; gh refuses to upload with an app installation token, so that one step
- * authenticates with PREVIEW_QR_TOKEN, a fine-grained personal access token with pull-request and
- * content write access. The workflow does nothing at all when that secret is absent.
+ * The QR image is committed as `pr-<number>.png` to the `preview-qr` branch, which holds nothing
+ * else and is written only by this script, and the comment links to it by commit SHA. A
+ * commit-pinned URL is unique per upload, so GitHub's image proxy can never serve a previous QR
+ * from its cache, and the branch keeps only the latest file per pull request. Every call uses
+ * GH_TOKEN, the workflow's own token.
+ *
+ * Descriptions written before the QR moved to a comment still carry the old managed block between
+ * the same markers; the next reconcile cuts it out, leaving the rest of the description as it was.
  *
  * SECURITY: this runs in the base repository with write access and is triggered by runs of fork
  * code. It never checks out or executes anything from the pull request. Every input is either
  * GitHub API metadata or a value the trusted Vercel Preview workflow wrote to the deployment
  * record (the preview URL), and the preview URL is only ever encoded into a PNG and placed in a
- * markdown link.
+ * link. Only a comment authored by github-actions[bot] is ever read as state, so a marker pasted
+ * into another comment cannot steer it.
  */
 import { execFileSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -53,17 +58,17 @@ export const START = '<!-- preview-qr:start -->'
 /** Closes the managed block. */
 export const END = '<!-- preview-qr:end -->'
 
-/** The local filename the QR is written to and referenced by until gh rewrites it. */
-export const QR_FILE = 'preview-qr.png'
-
-/** Where uploaded attachments live. Used to recognize an installed QR image. */
-const ASSET_HOST = 'https://github.com/user-attachments/assets/'
-
 /** The workflow file whose runs are the preview deployments. */
 const PREVIEW_WORKFLOW = '.github/workflows/vercel-preview.yml'
 
 /** The environment name vercel-preview.yml deploys to. */
 const PREVIEW_ENVIRONMENT = 'Preview'
+
+/** The branch the QR images are committed to. */
+const BRANCH = 'preview-qr'
+
+/** The author of every comment the workflow token writes. */
+const BOT = 'github-actions[bot]'
 
 /**
  * Formats a deployment timestamp for the disclosure summary in UTC, as `Sep 4, 2026, 10:00 AM UTC`.
@@ -81,13 +86,10 @@ export const formatTimestamp = iso =>
   }).format(new Date(iso))
 
 /**
- * Splits a pull request body into the text outside the managed block and the block's parsed
- * state. Outside text is returned with the block cut out and trailing whitespace trimmed, ready
- * for the block to be appended at the bottom. A block anywhere in the body is found, which is how
- * one that a human edit pushed into the middle ends up at the bottom again on the next write.
- *
- * `state.stable.image` is the uploaded QR's URL, taken from the markdown image; it is null when
- * the block holds no attachment URL there, which makes the next successful run upload one.
+ * Splits a body into the text outside the managed block and the block's parsed state. Outside
+ * text is returned with the block cut out and trailing whitespace trimmed. Used on the comment,
+ * where only the state matters, and on a description that still carries a block from before the
+ * QR moved to a comment, where only the outside text does.
  */
 export const parseBody = body => {
   const text = body ?? ''
@@ -100,29 +102,21 @@ export const parseBody = body => {
   if (!match) return { outside, state: null }
   try {
     const { stable, pending } = JSON.parse(match[1])
-    const image = block.match(/!\[Preview deployment\]\(([^)\s]+)\)/)?.[1]
-    return {
-      outside,
-      state: {
-        stable: stable ? { ...stable, image: image?.startsWith(ASSET_HOST) ? image : null } : null,
-        pending: pending ?? null,
-      },
-    }
+    // A block written before the image URL moved into the state has none, and gets a new upload.
+    return { outside, state: { stable: stable ? { image: null, ...stable } : null, pending: pending ?? null } }
   } catch {
     return { outside, state: null }
   }
 }
 
 /**
- * Renders the managed block from state, or null when there is nothing to show — no successful
- * preview and none building.
+ * Renders the comment from state, or null when there is nothing to show — no successful preview
+ * and none building.
  *
- * The blank lines around the image are load-bearing twice over: GitHub only renders markdown
- * inside a `<details>` HTML block when a blank line ends the block's raw-HTML run, and gh's
- * `--attach` rewrite only sees the image reference if the markdown parser produced a node for it.
+ * The blank lines around the image are load-bearing: GitHub only renders markdown inside a
+ * `<details>` HTML block when a blank line ends the block's raw-HTML run.
  *
- * The link around the image is a raw `<a>` rather than a markdown link so it can ask for a new tab;
- * the image stays markdown inside it, which is what keeps `--attach` able to rewrite the reference.
+ * The link around the image is a raw `<a>` rather than a markdown link so it can ask for a new tab.
  * The tag opens a paragraph rather than an HTML block because it is not alone on its line, so the
  * image is still parsed as markdown. GitHub may strip `target`, in which case this degrades to an
  * ordinary link.
@@ -136,7 +130,7 @@ export const renderBlock = ({ stable, pending }) => {
     ? [`<a href="${stable.url}" target="_blank" rel="noopener noreferrer">![Preview deployment](${stable.image})</a>`]
     : ['Preview deployment is being generated.']
   const state = {
-    stable: stable ? { sha: stable.sha, createdAt: stable.createdAt, url: stable.url } : null,
+    stable: stable ? { sha: stable.sha, createdAt: stable.createdAt, url: stable.url, image: stable.image } : null,
     pending: pending ? { sha: pending.sha, createdAt: pending.createdAt } : null,
   }
   return [
@@ -152,32 +146,12 @@ export const renderBlock = ({ stable, pending }) => {
   ].join('\n')
 }
 
-/** Joins the text outside the block with a rendered block at the bottom, or drops the block. */
-export const spliceBody = (outside, block) => (block ? (outside ? `${outside}\n\n${block}` : block) : outside)
-
 /**
- * Repairs a body after `gh pr edit --attach` in the case where gh appended the uploaded image
- * instead of rewriting the local reference. Returns the corrected body, or null when the body
- * holds no local reference and needs no repair. `before` is the body as it was sent, so the asset
- * URL gh added can be told apart from any attachment a human had already embedded.
- */
-export const repairAfterAttach = ({ before, after, state }) => {
-  if (!after.includes(`./${QR_FILE}`)) return null
-  const assets = [...after.matchAll(/https:\/\/github\.com\/user-attachments\/assets\/[\w-]+/g)].map(m => m[0])
-  const added = assets.find(url => !before.includes(url))
-  if (!added) return null
-  // gh appends its own reference to the uploaded file; drop it, wherever it landed.
-  const reference = new RegExp(`\\n*!?\\[[^\\]]*\\]\\(${added.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\)`, 'g')
-  const { outside } = parseBody(after.replace(reference, ''))
-  return spliceBody(outside, renderBlock({ ...state, stable: { ...state.stable, image: added } }))
-}
-
-/**
- * Decides the state the block should be in for the newest preview run. `run` is that run's
+ * Decides the state the comment should be in for the newest preview run. `run` is that run's
  * current status and conclusion, `deployment` the deployment it created (if any, with `url` once
- * it succeeded), and `current` the state parsed from the body. Returns the target state, or `null`
- * to leave the body alone because the run has not started yet. A target whose stable preview has
- * no image is one whose QR still has to be generated and uploaded.
+ * it succeeded), and `current` the state parsed from the comment. Returns the target state, or
+ * `null` to leave the comment alone because the run has not started yet. A target whose stable
+ * preview has no image is one whose QR still has to be generated and committed.
  */
 export const decide = ({ run, deployment, current }) => {
   const stable = current?.stable ?? null
@@ -198,8 +172,9 @@ export const decide = ({ run, deployment, current }) => {
 }
 
 /**
- * Calls the GitHub REST API with the workflow token and returns the parsed JSON. GITHUB_API_URL
- * is what Actions sets it to; overriding it points the script at a stand-in server for a dry run.
+ * Calls the GitHub REST API with the workflow token and returns the parsed JSON, or null for an
+ * empty response. A failure throws an error carrying the HTTP `status`. GITHUB_API_URL is what
+ * Actions sets it to; overriding it points the script at a stand-in server for a dry run.
  */
 const api = async (route, init = {}) => {
   const response = await fetch(`${process.env.GITHUB_API_URL ?? 'https://api.github.com'}${route}`, {
@@ -211,8 +186,11 @@ const api = async (route, init = {}) => {
       ...(init.body ? { 'content-type': 'application/json' } : {}),
     },
   })
-  if (!response.ok) throw new Error(`${init.method ?? 'GET'} ${route} → ${response.status} ${await response.text()}`)
-  return response.json()
+  if (!response.ok) {
+    const message = `${init.method ?? 'GET'} ${route} → ${response.status} ${await response.text()}`
+    throw Object.assign(new Error(message), { status: response.status })
+  }
+  return response.status === 204 ? null : response.json()
 }
 
 /**
@@ -282,32 +260,65 @@ const deploymentForRun = async (repo, sha, runId) => {
   return null
 }
 
-/** Writes the body with a plain update. Used for every transition that installs no new image. */
-const updateBody = (repo, number, body) =>
-  api(`/repos/${repo}/pulls/${number}`, { method: 'PATCH', body: JSON.stringify({ body }) })
-
-/**
- * Generates the QR PNG and installs it with `gh pr edit --attach`, which uploads it and rewrites
- * the body in one mutation. Run from a scratch directory so the body's `./preview-qr.png` and the
- * `--attach` path resolve to the same absolute file. Because gh writes nothing when the upload
- * fails, a failure here leaves the previous body — and its QR — in place.
- */
-const installQr = ({ repo, number, body, url }) => {
-  const dir = mkdtempSync(path.join(process.env.RUNNER_TEMP ?? tmpdir(), 'preview-qr-'))
-  // -s 8: 8px modules, comfortably scannable from a monitor. -m 2: two-module quiet zone.
-  // -l M: medium error correction, so a slightly blurred phone camera still reads it.
-  execFileSync('qrencode', ['-o', path.join(dir, QR_FILE), '-s', '8', '-m', '2', '-l', 'M', url], {
-    stdio: 'inherit',
-  })
-  writeFileSync(path.join(dir, 'pr-body.md'), body)
-  execFileSync(
-    'gh',
-    ['pr', 'edit', String(number), '--repo', repo, '--body-file', 'pr-body.md', '--attach', `./${QR_FILE}`],
-    { cwd: dir, stdio: 'inherit', env: { ...process.env, GH_TOKEN: process.env.PREVIEW_QR_TOKEN } },
-  )
+/** Lists every comment on the pull request, following pagination. */
+const listComments = async (repo, number, page = 1) => {
+  const comments = await api(`/repos/${repo}/issues/${number}/comments?per_page=100&page=${page}`)
+  return comments.length < 100 ? comments : [...comments, ...(await listComments(repo, number, page + 1))]
 }
 
-/** Reconciles the managed block of the pull request the commit belongs to. */
+/**
+ * Commits one file to the QR branch, creating the branch as an orphan on first use, and returns
+ * the new commit's SHA. Workflow runs for different pull requests can race on the branch, so a
+ * rejected ref update — another run moved the branch first — rebuilds the commit on the new head.
+ */
+const commitFile = async ({ repo, file, blob, message }, attempt = 1) => {
+  const ref = await api(`/repos/${repo}/git/ref/heads/${BRANCH}`).catch(error =>
+    error.status === 404 ? null : Promise.reject(error),
+  )
+  const parent = ref?.object.sha
+  const baseTree = parent ? (await api(`/repos/${repo}/git/commits/${parent}`)).tree.sha : undefined
+  const tree = await api(`/repos/${repo}/git/trees`, {
+    method: 'POST',
+    body: JSON.stringify({ base_tree: baseTree, tree: [{ path: file, mode: '100644', type: 'blob', sha: blob }] }),
+  })
+  const commit = await api(`/repos/${repo}/git/commits`, {
+    method: 'POST',
+    body: JSON.stringify({ message, tree: tree.sha, parents: parent ? [parent] : [] }),
+  })
+  try {
+    await (parent
+      ? api(`/repos/${repo}/git/refs/heads/${BRANCH}`, { method: 'PATCH', body: JSON.stringify({ sha: commit.sha }) })
+      : api(`/repos/${repo}/git/refs`, {
+          method: 'POST',
+          body: JSON.stringify({ ref: `refs/heads/${BRANCH}`, sha: commit.sha }),
+        }))
+    return commit.sha
+  } catch (error) {
+    if (error.status !== 422 || attempt >= 5) throw error
+    console.info(`The ${BRANCH} branch moved during the commit; retrying (attempt ${attempt + 1}).`)
+    return commitFile({ repo, file, blob, message }, attempt + 1)
+  }
+}
+
+/**
+ * Generates the QR PNG for the preview URL, commits it to the QR branch, and returns the image URL
+ * pinned to that commit.
+ */
+const publishQr = async ({ repo, number, sha, url }) => {
+  const png = path.join(mkdtempSync(path.join(process.env.RUNNER_TEMP ?? tmpdir(), 'preview-qr-')), 'qr.png')
+  // -s 8: 8px modules, comfortably scannable from a monitor. -m 2: two-module quiet zone.
+  // -l M: medium error correction, so a slightly blurred phone camera still reads it.
+  execFileSync('qrencode', ['-o', png, '-s', '8', '-m', '2', '-l', 'M', url], { stdio: 'inherit' })
+  const blob = await api(`/repos/${repo}/git/blobs`, {
+    method: 'POST',
+    body: JSON.stringify({ content: readFileSync(png).toString('base64'), encoding: 'base64' }),
+  })
+  const file = `pr-${number}.png`
+  const commit = await commitFile({ repo, file, blob: blob.sha, message: `PR #${number}: ${sha.slice(0, 7)}` })
+  return `https://raw.githubusercontent.com/${repo}/${commit}/${file}`
+}
+
+/** Reconciles the preview comment of the pull request the commit belongs to. */
 const main = async sha => {
   const repo = process.env.GITHUB_REPOSITORY
   const pr = await resolvePullRequest(repo, sha)
@@ -321,8 +332,10 @@ const main = async sha => {
     return
   }
   const deployment = await deploymentForRun(repo, sha, run.id)
-  const { outside, state } = parseBody(pr.body)
-  const target = decide({ run, deployment, current: state })
+  // Only the bot's own comment is state; anyone can paste the marker into a comment of theirs.
+  const comment =
+    (await listComments(repo, pr.number)).find(c => c.user?.login === BOT && (c.body ?? '').includes(START)) ?? null
+  const target = decide({ run, deployment, current: parseBody(comment?.body).state })
   if (!target) {
     console.info(`Vercel Preview run ${run.id} is ${run.status}; leaving PR #${pr.number} as it is.`)
     return
@@ -331,44 +344,43 @@ const main = async sha => {
     console.warn(`Run ${run.id} succeeded but recorded no preview URL; restoring the previous preview.`)
   }
 
-  const installing = Boolean(target.stable && !target.stable.image)
-  const block = renderBlock(installing ? { ...target, stable: { ...target.stable, image: `./${QR_FILE}` } } : target)
-  const body = spliceBody(outside, block)
-  if (body === (pr.body ?? '').trimEnd()) {
-    console.info(`PR #${pr.number} already reflects run ${run.id}; nothing to write.`)
-    return
-  }
-
-  // Freshness check as close to the write as possible: a push during the API calls above makes
-  // this run stale, and a human may have edited the description in the meantime.
+  // Freshness check as close to the writes as possible: a push during the API calls above makes
+  // this run stale.
   const latest = await api(`/repos/${repo}/pulls/${pr.number}`)
   if (latest.state !== 'open' || latest.head.sha !== sha) {
     console.info(`PR #${pr.number} changed under us (state ${latest.state}, head ${latest.head.sha}); not writing.`)
     return
   }
-  const fresh = spliceBody(parseBody(latest.body).outside, block)
 
-  if (!installing) {
-    await updateBody(repo, pr.number, fresh)
-    const outcome = target.pending
-      ? `generating ${target.pending.sha.slice(0, 7)}`
+  if ((latest.body ?? '').includes(START)) {
+    await api(`/repos/${repo}/pulls/${pr.number}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ body: parseBody(latest.body).outside }),
+    })
+    console.info(`PR #${pr.number}: removed the old preview block from the description.`)
+  }
+
+  const stable =
+    target.stable && !target.stable.image
+      ? { ...target.stable, image: await publishQr({ repo, number: pr.number, sha, url: target.stable.url }) }
       : target.stable
-        ? `stable ${target.stable.sha.slice(0, 7)}`
-        : 'block removed'
-    console.info(`PR #${pr.number}: ${outcome}.`)
+  const block = renderBlock({ ...target, stable })
+  if (block === (comment?.body ?? null)) {
+    console.info(`PR #${pr.number} already reflects run ${run.id}; nothing to write.`)
     return
   }
 
-  installQr({ repo, number: pr.number, body: fresh, url: target.stable.url })
-  const written = (await api(`/repos/${repo}/pulls/${pr.number}`)).body ?? ''
-  const repaired = repairAfterAttach({ before: fresh, after: written, state: target })
-  if (repaired) {
-    console.warn('gh appended the QR instead of rewriting its reference; moving it into the block.')
-    await updateBody(repo, pr.number, repaired)
-  } else if (written.includes(`./${QR_FILE}`) || !parseBody(written).state?.stable?.image) {
-    throw new Error('The QR upload did not leave an attachment URL in the managed block.')
-  }
-  console.info(`PR #${pr.number}: installed QR for ${target.stable.url} (${target.stable.sha.slice(0, 7)}).`)
+  await (!block
+    ? api(`/repos/${repo}/issues/comments/${comment.id}`, { method: 'DELETE' })
+    : comment
+      ? api(`/repos/${repo}/issues/comments/${comment.id}`, { method: 'PATCH', body: JSON.stringify({ body: block }) })
+      : api(`/repos/${repo}/issues/${pr.number}/comments`, { method: 'POST', body: JSON.stringify({ body: block }) }))
+  const outcome = target.pending
+    ? `generating ${target.pending.sha.slice(0, 7)}`
+    : stable
+      ? `stable ${stable.sha.slice(0, 7)}, QR ${stable.image}`
+      : 'comment deleted'
+  console.info(`PR #${pr.number}: ${outcome}.`)
 }
 
 export default main
