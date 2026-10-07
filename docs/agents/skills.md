@@ -33,6 +33,9 @@ flowchart TD
     TD --> PUS["<b>puppeteer-update-snapshots</b><br/>regenerate screenshots"]
 
     CM --> ES["<b>end-session</b><br/>checklist before stopping"]
+
+    ASK(["Asked to bisect"]) --> BIS["<b>bisect</b><br/>regression or always broken?"]
+    BIS --> BC
     ES --> DS["<b>docs-sync</b><br/>make docs true again"]
 
     style REP fill:#2d4a2d,color:#fff
@@ -51,6 +54,7 @@ flowchart TD
     click RT "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#run-test" "run-test — run one test for real"
     click CM "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "ci-monitor — wait for every check"
     click TD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "test-diagnosis — classify the failure"
+    click BIS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#bisect" "bisect — find the commit that broke it"
     click PUS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#puppeteer-update-snapshots" "puppeteer-update-snapshots — regenerate screenshots"
 ```
 
@@ -71,7 +75,10 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
+| [`bisect`](#bisect) | Find whether a bug is a recent regression, and the commit and pull request that introduced it | [SKILL.md](../../.github/skills/bisect/SKILL.md) |
 | `create-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
+| [`liminal`](#liminal) | Style a static artifact, such as a report page, like em's Liminal UI | [SKILL.md](../../.github/skills/liminal/SKILL.md) |
+| [`report-review-gaps`](#report-review-gaps) | Report the feedback a final reviewer gave after the first review, as review principles | [SKILL.md](../../.github/skills/report-review-gaps/SKILL.md) |
 
 ## The gates
 
@@ -171,6 +178,27 @@ Two facts shape the whole skill, and both were measured rather than assumed.
 **A log must never be read into context.** Four steps of editing produce about 6 KB; a full buffer approaches a megabyte. So the reporter's log is downloaded to a file, the local one is captured to a file by a script that attaches through the existing e2e bridges, and only a bounded report is printed.
 
 The skill also tells the agent to run it *before* escalating a failed reproduction. "Their log has four `composition` entries mine never produced" is a question the user can answer; "could not reproduce" is not.
+
+## Finding regressions
+
+### bisect
+
+**Source: [`.github/skills/bisect/SKILL.md`](../../.github/skills/bisect/SKILL.md)**
+
+Runs on demand — when someone asks to bisect an issue, or whether a bug used to work. It takes an issue number or URL, and the issue must carry exact Steps to Reproduce; without them it stops rather than inventing steps, because a bisect is only as trustworthy as the reproduction it repeats at every commit.
+
+It drives `git bisect` by hand instead of with `git bisect run`. A bug here may be a failing test, but it is as often a caret position on iOS or a gesture that misfires one time in three, and the only oracle that covers all of those is the agent reproducing the steps. So at each commit it reinstalls, restarts the dev server, reproduces, and tells `git bisect` what it saw.
+
+The search window is deliberately short. It looks for a good commit 30 days back, then a year back, and if the bug is present a year ago it reports the bug as having always existed and stops. It bisects along `main`'s first-parent history, where each squash-merged commit is one pull request.
+
+Two rules carry most of the weight:
+
+- **Nondeterministic bugs get a measured number of trials.** The agent first reproduces 5 times at the tip of `main`, and that rate sets how many clean trials a commit needs before it counts as good. One sighting of the failure is enough to call a commit bad; one clean run is not enough to call it good.
+- **The answer is checked before it is reported.** The named commit must reproduce again, and its parent must come up clean at twice the usual trial count. If the parent is bad too, the result is reported as inconclusive and no pull request is named.
+
+iOS needs the most care, because not every environment has every behaviour. BrowserStack's devices have autocorrect switched off, a local Simulator has it but is not real hardware, and Safari and the Capacitor app handle the keyboard differently. So the skill says which environment covers what, and when the bug does not reproduce at the tip of `main`, it checks the commit from when the issue was filed to tell "already fixed" apart from "needs an environment we lack".
+
+It reports a verdict and the commit and pull request behind it, and nothing about the cause — explaining the bug is left to a separate agent, so the bisect's evidence is not mixed with a guess.
 
 ## Testing
 
@@ -287,6 +315,20 @@ It reports one line back into the ending — the documents it updated, or `docs:
 
 The escalation rule is the interesting one. If a change contradicts **design intent** recorded in a doc — not a detail, but the stated reason a subsystem is built the way it is — the agent stops and raises it instead of editing the intent to match the new code. Quietly rewriting the "why" erases the only record that a deliberate decision was ever made.
 
+## Presenting work
+
+### liminal
+
+**Source: [`.github/skills/liminal/SKILL.md`](../../.github/skills/liminal/SKILL.md)**
+
+Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and the background glow from `public/img/glow/`, published next to the page. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
+
+### report-review-gaps
+
+**Source: [`.github/skills/report-review-gaps/SKILL.md`](../../.github/skills/report-review-gaps/SKILL.md)**
+
+Runs on demand, ahead of a review check-in. Its script collects every comment the final reviewer posted after the first reviewer's first review, on PRs by the given authors. The agent then keeps only the substantive feedback, groups it into review principles with the comments quoted verbatim, and publishes the result as a [`liminal`](#liminal) artifact. The report is shared with the first reviewer, so it never quotes them, and it is written as principles to adopt rather than a scorecard.
+
 ## Writing a new skill
 
 Create `.github/skills/<name>/SKILL.md` starting with frontmatter:
@@ -312,5 +354,7 @@ Beyond the frontmatter, patterns worth copying from the existing ones:
 **Name the ways it goes wrong.** `plan` lists three failure modes by name; [`tdd-write-failing-test`](#tdd-write-failing-test) describes exactly what a wrongly-failing test looks like. Naming a trap is how you stop an agent walking into it.
 
 **Say what to do when stuck.** Every skill ends with escalation rules, and most end with the same line: default to acting on your own, escalate only when the right path is genuinely unclear. Without that, agents either stop constantly or never stop at all.
+
+**Run a procedure skill once on a real case before opening its pull request.** Checking its commands one by one is not enough: the `bisect` skill's first version passed that check, and its first real bisect still turned up a stale build step, a missing iOS environment, and a report step that needed the user's say. Where a step could not be run, say so in the pull request.
 
 **Split large skills by what the caller needs.** `browser-control` routes to a Chrome half and an iOS half so that a web task never loads several hundred lines about BrowserStack.

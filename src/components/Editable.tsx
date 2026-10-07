@@ -543,12 +543,15 @@ const Editable = ({
         // asyncFocus dispatches blur synchronously, and focus returns to the editable a few lines below, so the user
         // is still typing. Suppress the blur handlers that resync the editable to the value in Redux, which by now
         // has been trimmed by onChangeHandler: they would swallow the space that committed the autocomplete (#4828).
+        // Neither focus may scroll: on iOS 27, focusing the dummy input and then the editable again scrolls the cursor
+        // thought to the center of the screen, even though it was already visible (#5676).
         editableSyncStore.update({ suppressBlurSync: true })
-        asyncFocus({ force: true })
+        asyncFocus({ force: true, preventScroll: true })
         editableSyncStore.update({ suppressBlurSync: false })
 
         debugLog.log('retarget', { step: 'preventAutoscroll', savedOffset: savedCharOffset })
         preventAutoscroll(editable)
+        editable.focus({ preventScroll: true })
         // Restore the selection offset captured when insertText(' ') arrived.
         debugLog.log('retarget', { step: 'selection.set', savedOffset: savedCharOffset })
         selection.set(editable, { offset: savedCharOffset })

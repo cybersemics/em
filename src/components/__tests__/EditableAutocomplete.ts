@@ -178,3 +178,50 @@ it('keeps multi edit mode through the focus retarget after an iOS autocorrect', 
   expect(store.getState().showCommandCenter).toBe(false)
   expect(Object.keys(store.getState().multicursors)).toHaveLength(3)
 })
+
+// https://github.com/cybersemics/em/issues/5676
+it('does not scroll when the focus retarget moves focus after an iOS autocorrect', async () => {
+  await dispatch([importText({ text: '- Adf' }), setCursor(['Adf'])])
+
+  const simplePath = contextToPath(store.getState(), ['Adf']) as SimplePath
+  const { container } = render(
+    createElement(EditorProvider, {
+      store,
+      children: createElement(Editable, {
+        isEditing: true,
+        isVisible: true,
+        path: simplePath,
+        rank: 0,
+        simplePath,
+      }),
+    }),
+  )
+  const editable = container.querySelector('[data-editable]') as HTMLElement
+  // Focusing the editable sets the cursor on the thought, which re-renders it.
+  act(() => {
+    editable.focus()
+  })
+
+  // Pressing space on a misspelled word makes iOS replace the word...
+  editable.innerHTML = 'All'
+  selection.set(editable, { offset: 'All'.length })
+  fireEvent.input(editable, { inputType: 'insertReplacementText' })
+
+  // ...and then insert the space that committed the correction.
+  editable.innerHTML = 'All '
+  selection.set(editable, { offset: 'All '.length })
+  fireEvent.input(editable, { inputType: 'insertText', data: ' ' })
+
+  const focus = vi.spyOn(HTMLElement.prototype, 'focus')
+
+  // the focus retarget blurs and refocuses the editable on the next animation frame
+  await act(vi.runAllTimersAsync)
+
+  // On iOS 27, a focus that is allowed to scroll moves the cursor thought to the center of the screen.
+  const focused = focus.mock.contexts.map((el, i) => ({ el, options: focus.mock.calls[i][0] }))
+  expect(focused.some(({ el }) => el === editable)).toBe(true)
+  expect(focused.some(({ el }) => el instanceof HTMLInputElement)).toBe(true)
+  expect(focused.every(({ options }) => options?.preventScroll)).toBe(true)
+
+  focus.mockRestore()
+})
