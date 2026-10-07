@@ -62,6 +62,7 @@
 
 - Inline styles using PandaCSS: `className={css({ marginTop: '1em' })}`
 - Only use style attribute for dynamic runtime values. PandaCSS can only handle statically analyzable values.
+- Never spread a variable into `css()`, `css.raw()`, `cva()` or `sva()`. PandaCSS v2 generates no CSS for a spread variable that holds a conditional (`const styles = flag ? { ... } : {}` or `flag && { ... }`), and nothing fails: the element gets the class name, but the stylesheet has no rule for it. Give each property its own ternary (`border: flag ? '1px solid {colors.panelBorder}' : undefined`), or spread the object literal inline (`...(flag ? { ... } : {})`), which PandaCSS does extract. Recipes and `panda.config.ts` are exempt because they are executed rather than statically extracted. Lint enforces this with `no-restricted-syntax`.
 - Prefer inline CSS over recipes. Only add a recipe in `src/recipes` when the styles have variants or are shared by multiple components. A single-use recipe with only base styles should be inline CSS instead.
 
 ### Code Quality
