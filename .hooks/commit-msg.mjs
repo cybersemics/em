@@ -67,6 +67,7 @@ const opencodeModelAndEffort = sessionId => {
     // Loaded here rather than imported so that only OpenCode commits pay for SQLite.
     const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite')
     const db = new DatabaseSync(path, { readOnly: true })
+    /** Reads a field from the latest message with the requested role. */
     const latest = (role, field) =>
       db
         .prepare(
