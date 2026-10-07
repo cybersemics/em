@@ -10,7 +10,7 @@ const touchStore = ministore({
    * without going through the long press state machine. */
   pressOnCaret: false,
   /** Set on iOS 27 when the current press landed inside the editable of an empty thought being edited, within about
-   * the first word of its placeholder. A tap there
+   * 3em of its caret. A tap there
    * gets no mouse events and cannot move the caret, so when WebKit withholds its touchend, nothing tells useLongPress
    * that the finger lifted (#5660). Set and cleared alongside pressOnCaret, and read by useLongPress and canDrag, but
    * not by shouldCancelGesture: a gesture over a new thought's placeholder is common. */

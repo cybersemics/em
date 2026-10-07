@@ -319,8 +319,8 @@ const initEvents = (store: Store<State, any>) => {
         isEmptyThought &&
         (osVersionStore.getState() ?? 0) >= 27 &&
         !!touch &&
-        // roughly the first word of the placeholder, so a press farther right still drags
-        selection.isRightOfCaret(touch.clientX, touch.clientY, 2 * DEFAULT_FONT_SIZE),
+        // about 3em of the placeholder, so a press farther right still drags
+        selection.isRightOfCaret(touch.clientX, touch.clientY, 3 * DEFAULT_FONT_SIZE),
       /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
        * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
        * phase (see the note on the touchmove listener below). */
