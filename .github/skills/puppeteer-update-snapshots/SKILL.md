@@ -13,7 +13,7 @@ Regenerate all Puppeteer image snapshots to match the current UI.
 ## Command
 
 ```bash
-GITHUB_ACTIONS="" yarn test:puppeteer --update
+env -u CI -u GITHUB_ACTIONS yarn test:puppeteer --update
 ```
 
 This runs the full Puppeteer test suite with the `--update` flag, which:
@@ -38,5 +38,5 @@ This runs the full Puppeteer test suite with the `--update` flag, which:
 
 - Do NOT manually edit or create snapshot PNG files. Always use this command to regenerate them.
 - Do NOT delete snapshot files as a fix for test failures. Run this command instead, which handles both missing and outdated snapshots.
-- Do NOT run without unsetting `GITHUB_ACTIONS` -- the script will skip Docker and server setup.
+- Do NOT run without unsetting **both** vars -- without `GITHUB_ACTIONS` the script skips Docker and server setup; without `CI` the tests open `https://172.17.0.1:3000` instead of the `:2552` server the script just started, which is a live dev server in the Copilot runner and a dead address anywhere else (every file fails on `net::ERR_CONNECTION_REFUSED`, which reads as broken snapshots rather than a wrong address).
 - ALWAYS explain to the user why you felt you needed to update snapshots.
