@@ -128,7 +128,7 @@ const FormattingBarFalloff = () => (
       className={css(visibleWhenOpen, {
         position: 'absolute',
         inset: 0,
-        background: 'linear-gradient(to bottom, transparent, {colors.black} 70%)',
+        backgroundImage: 'linear-gradient(to bottom, transparent, {colors.black} 70%)',
       })}
     />
   </div>
@@ -163,7 +163,7 @@ const FormattingBarShell = () => (
       pointerEvents: 'none',
       mixBlendMode: 'color-dodge',
       zIndex: 2,
-      background:
+      backgroundImage:
         'radial-gradient(130.84% 151.39% at 57.5% 55.06%, {colors.formattingBarFillStart} 0%, {colors.formattingBarFillEnd} 100%)',
       maskImage: 'linear-gradient(to top, transparent, #000 2rem)',
     })}
@@ -176,8 +176,9 @@ const FormattingBarShell = () => (
         borderTopRadius: '2rem',
         border: '1px solid transparent',
         borderBottomWidth: 0,
-        background:
-          'linear-gradient(180deg, {colors.panelCommandBorderGradientGray} 76%, {colors.panelCommandBorderGradientPurpleLight} 143%) border-box, linear-gradient(180deg, {colors.panelCommandBorderGradientPurpleLight} 0%, {colors.panelCommandBorderGradientGray} 65%) border-box',
+        backgroundImage:
+          'linear-gradient(180deg, {colors.panelCommandBorderGradientGray} 76%, {colors.panelCommandBorderGradientPurpleLight} 143%), linear-gradient(180deg, {colors.panelCommandBorderGradientPurpleLight} 0%, {colors.panelCommandBorderGradientGray} 65%)',
+        backgroundOrigin: 'border-box',
         mask: 'linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)',
         maskComposite: 'exclude',
       })}
