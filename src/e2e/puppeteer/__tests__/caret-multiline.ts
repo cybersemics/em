@@ -4,8 +4,12 @@ import paste from '../helpers/paste'
 import press from '../helpers/press'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
+import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
+
+/** Waits a single animation frame, long enough for the cursor navigation throttle to reset after the move that just landed. The cursorUp and cursorDown commands are throttled to one execution per animation frame by throttleByAnimationFrame, and the cursor moves during the keydown that dispatched the move, so a key pressed as soon as waitForCursor resolves can still be dropped. */
+const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
 describe('all platforms', () => {
   // test case 1
@@ -122,8 +126,9 @@ describe('all platforms', () => {
 
     await press('ArrowDown')
 
-    // Wait for the first press to land before pressing again. cursorDown's exec is throttled to one execution per animation frame, so a second keydown that arrives in the same frame is dropped and the cursor silently stops short.
+    // Wait for the first press to land and the throttle to reset before pressing again. cursorDown's exec is throttled to one execution per animation frame, so a second keydown that arrives in the same frame is dropped and the cursor silently stops short.
     await waitForCursor(multiLineCursor)
+    await nextFrame()
 
     await press('ArrowDown')
 

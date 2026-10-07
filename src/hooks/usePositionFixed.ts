@@ -46,14 +46,12 @@ function usePositionFixed(options: PositionFixedOptions): {
   top?: string | MotionValue<string>
   bottom?: string
   translate?: MotionValue<string>
-  willChange?: string
 }
 function usePositionFixed({ fromBottom, offset = 0, height }: PositionFixedOptions = {}): {
   position: 'fixed' | 'absolute'
   top?: string | MotionValue<string>
   bottom?: string
   translate?: MotionValue<string>
-  willChange?: string
 } {
   const keyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
   // On iOS Safari, emulate `position: fixed` using absolute positioning when the virtual keyboard is open.
@@ -133,7 +131,6 @@ function usePositionFixed({ fromBottom, offset = 0, height }: PositionFixedOptio
     bottom,
     ...(translate && {
       translate,
-      willChange: 'transform',
     }),
   }
 }

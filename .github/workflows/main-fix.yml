@@ -1,0 +1,136 @@
+# Puts an agent on CI failing on main, after ruling out a temporary outage.
+#
+# Every pull request runs CI before it merges, so main breaks rarely and for one of two reasons: a
+# service the suite depends on was down, or a merge broke something its own checks did not catch.
+# This tells the two apart by re-running the failed jobs once, and hands the second kind to a Copilot
+# cloud agent task, which either fixes the break or reverts the commit that caused it.
+#
+# Runs:
+#   - Automatically, when a CI workflow completes on a push to main (see below)
+#   - Manually: `gh workflow run main-fix.yml -f sha=<commit on main>`, which skips the re-run and
+#     starts a task even when a tracking issue is already open
+#
+# What happens, in order (scripts/ci/collect-main-failures.cjs decides each step):
+#   1. Nothing, until every CI workflow on the commit has finished — the last one out reports for
+#      all of them, so Lint, Test, and Puppeteer failing on one push are one issue and one task.
+#   2. A failed run on its first attempt is re-run once, failed jobs only. A re-run that passes is
+#      the end of it: a temporary outage, with nothing to fix.
+#   3. Failures that survive the re-run get a tracking issue labelled `main-fix`, naming each failing
+#      workflow and its failed tests — or, when one is already open, a comment on it instead.
+#   4. A new issue gets a Copilot task (the `worker-bee` agent, on the COPILOT_MODEL or
+#      COPILOT_MODEL_MAIN repository variable's model). An issue that was already open has one.
+#
+# Follow-up:
+#   - The task's pull request is merged by pr-ready.yml once the agent has finished and every check
+#     and status on it has completed and passed — not just the required ones auto-merge would wait
+#     for. See scripts/ci/merge-main-fix.cjs.
+#
+# Why every completion and not just the failures. The CI workflows on one commit finish at different
+# times, and a failure is often followed by a green workflow still running. Triggering only on
+# `failure` would therefore report while others were still running, so this triggers on every
+# completion and the collector bails unless it is the last one out — the same arrangement
+# dependabot-fix.yml and pr-ready.yml use. The re-runs it starts are themselves completions, which is
+# how it comes back for their results.
+#
+# Requires two repository secrets:
+#   - COPILOT_TASKS_TOKEN, the same fine-grained PAT the other task-starting workflows use ("Agent
+#     tasks" read and write).
+#   - MAIN_FIX_TOKEN, a fine-grained PAT for this repository with "Actions", "Contents", and "Pull
+#     requests" set to read and write, belonging to someone with push access. It starts the re-runs
+#     here and merges the fix in pr-ready.yml. GITHUB_TOKEN cannot do either: an event it causes
+#     starts no workflow, so its re-run would never bring this back round, and its merge would run
+#     no CI on main and deploy nothing.
+#
+# `workflow_run` reads this file from the default branch, so edits here have no effect until they
+# are merged to main.
+
+name: Main Fix
+
+on:
+  workflow_run:
+    # Must match CI_WORKFLOWS in scripts/ci/collect-main-failures.cjs.
+    workflows: ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'BrowserStack Android', 'Agent Scripts']
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Full SHA of the commit on main to report'
+        required: true
+        type: string
+
+# One at a time across all of main, so two commits failing together cannot both file an issue.
+# Never cancel: a queued run is the one that would notice the last workflow completing. GitHub drops
+# a pending run when a newer one queues behind it, which is harmless here — every run inspects the
+# whole commit, so the newer one sees everything the dropped one would have.
+concurrency:
+  group: main-fix
+  cancel-in-progress: false
+
+permissions:
+  actions: read # list the commit's runs and their jobs, and read the failed jobs' logs
+  contents: read # check out scripts/ci from main
+  issues: write # file or comment on the tracking issue, and create its label
+
+jobs:
+  fix:
+    name: Fix main
+    runs-on: ubuntu-latest
+    # Cheap gate so a pull request's completions cost nothing. Only a push to main in this
+    # repository is trusted code that broke main.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
+
+    steps:
+      # `workflow_run` resolves `github.ref` to the default branch, so this checks out main's own
+      # scripts/ci regardless of which commit failed.
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Collect failures
+        id: collect
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          SHA: ${{ inputs.sha || github.event.workflow_run.head_sha }}
+          DISPATCHED: ${{ github.event_name == 'workflow_dispatch' }}
+          # Job logs are fetched with fetch() rather than octokit, because the endpoint answers a
+          # redirect to storage that must be followed without the Authorization header.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            await require('./scripts/ci/collect-main-failures.cjs')({ github, context, core })
+
+      - name: Re-run failed jobs
+        if: steps.collect.outputs.rerun != ''
+        env:
+          GH_TOKEN: ${{ secrets.MAIN_FIX_TOKEN }}
+          RUN_IDS: ${{ steps.collect.outputs.rerun }}
+        run: |
+          set -euo pipefail
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::MAIN_FIX_TOKEN secret not set; cannot re-run the failed jobs, so nothing further happens for this commit."
+            exit 1
+          fi
+          for id in $RUN_IDS; do
+            gh run rerun "$id" --failed --repo "$GITHUB_REPOSITORY"
+            echo "- Re-ran the failed jobs of $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$id" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+
+      # Uses a PAT, not GITHUB_TOKEN: the agent tasks API rejects app installation tokens.
+      - name: Start Copilot task
+        if: steps.collect.outputs.dispatch == 'true'
+        env:
+          # Repository variables naming the Copilot model; the specific one wins when set.
+          COPILOT_MODEL: ${{ vars.COPILOT_MODEL }}
+          COPILOT_MODEL_MAIN: ${{ vars.COPILOT_MODEL_MAIN }}
+          COPILOT_TASKS_TOKEN: ${{ secrets.COPILOT_TASKS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The run the issue comment credits with starting the task.
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          node scripts/ci/start-main-fix-task.mjs main-fix/report.json | tee -a "$GITHUB_STEP_SUMMARY"
