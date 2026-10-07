@@ -26,7 +26,7 @@ const FadeTransition = ({
      */
     id?: string | number
     /** The type of fade transition, which determines both duration and easing. Corresponds to variants in recipes/fadeTransition. Basic transitions such as "fast", "medium", or "slow" use ease-out or ease, while specialized transitions such as "disappearingUpperRight" use custom easing functions. */
-    type: FadeTransitionRecipeVariant['type']
+    type: NonNullable<FadeTransitionRecipeVariant['type']>
     /*
       Optionally override the nodeRef that is passed to CSSTransition. If CSSTransition's nodeRef property is not explicitly provided, it will result in a findDOMNode deprecation warning. In order to avoid making the parent provide the ref every time, we wrap the children in a <span> and use that as the nodeRef by default.
 
