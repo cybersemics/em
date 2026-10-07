@@ -12,7 +12,7 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
-import { AlertType, LongPressState } from '../constants'
+import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
@@ -319,7 +319,8 @@ const initEvents = (store: Store<State, any>) => {
         isEmptyThought &&
         (osVersionStore.getState() ?? 0) >= 27 &&
         !!touch &&
-        selection.isInCaretEditable(touch.clientX, touch.clientY),
+        // roughly the first word of the placeholder, so a press farther right still drags
+        selection.isRightOfCaret(touch.clientX, touch.clientY, 2 * DEFAULT_FONT_SIZE),
       /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
        * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
        * phase (see the note on the touchmove listener below). */

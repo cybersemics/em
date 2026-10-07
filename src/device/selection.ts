@@ -735,11 +735,11 @@ export const isNear = (
   return isNearBounds(x, y, rect, distance)
 }
 
-/** Returns true if the point is inside the editable that holds the collapsed caret. */
-export const isInCaretEditable = (x: number, y: number): boolean => {
+/** Returns true if the point is inside the editable that holds the collapsed caret, at most distance px right of it. */
+export const isRightOfCaret = (x: number, y: number, distance: number): boolean => {
   if (!isActive() || !isCollapsed()) return false
   const caret = caretRectViewport()
-  return !!caret && isNearBounds(x, y, caret.editableRect, 0)
+  return !!caret && isNearBounds(x, y, caret.editableRect, 0) && x <= caret.x + distance
 }
 
 /**
