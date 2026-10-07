@@ -30,9 +30,8 @@ const setFontSize = async (fontSize: number): Promise<void> => {
       document.querySelector(selector)!.scrollIntoView({ behavior: 'instant', block: 'nearest' })
     }, selector)
 
-    // y:60 compensates for the offset between web and screen coordinates; a touch pointer because fastClick binds
-    // onTouchStart rather than onMouseDown when isTouch.
-    await tap(control, { y: 60, pointerType: 'touch' })
+    // a touch pointer because fastClick binds onTouchStart rather than onMouseDown when isTouch
+    await tap(control, { pointerType: 'touch' })
 
     // A tap that lands on nothing would otherwise spin the loop forever.
     await browser.waitUntil(async () => (await currentFontSize()) !== before, {

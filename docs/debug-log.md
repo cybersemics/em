@@ -2,7 +2,7 @@
 
 A rolling record of what **em** did, kept on the device so that a bug nobody can reproduce still leaves evidence behind. It exists for the failures that defeat ordinary debugging: a freeze that takes the console with it, a gesture that misfires once a week, a thought that lands under the wrong parent on someone else's phone and nowhere else.
 
-Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), app switching and viewport resizes ([`initEvents`](../src/util/initEvents.ts)), and persistence ([`pushQueue`](../src/redux-enhancers/pushQueue.ts)).
+Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), app switching, viewport resizes and uncaught errors ([`initEvents`](../src/util/initEvents.ts)), render errors ([`ErrorBoundaryContainer`](../src/components/ErrorBoundaryContainer.tsx)), and persistence ([`pushQueue`](../src/redux-enhancers/pushQueue.ts)).
 
 ## What it is
 
@@ -19,7 +19,7 @@ Every entry shares an envelope and adds its own fields:
 
 `seq` is monotonic, so a gap means entries were dropped and a counter climbing while `dt` collapses toward zero means a runaway loop.
 
-A `format()` dump wraps the entries in three things. Above them, a `--- device` / `--- userAgent` / `--- version` / `--- commit` header, rendered at format time so it survives however much the rolling buffer has evicted. Below them, `--- lastFrameAt`, the last animation frame the page painted, and `--- state.thoughts`, every thought by id, value, rank and parent. The frame marker is what separates a freeze *in* the app from one below it — if the marker keeps advancing past the last entry, the page was still painting and the hang is at the native layer.
+A `format()` dump wraps the entries in three things. Above them, a `--- device` / `--- userAgent` / `--- version` / `--- commit` header, rendered at format time so it survives however much the rolling buffer has evicted. Below them, `--- lastFrameAt`, the last animation frame the page painted; `--- state`, the view the log ended on — the cursor path, caret offset, whether the keyboard was open and the note focused, and how many paths were expanded, how many multicursors were set and how deep the undo and redo stacks were; and `--- state.thoughts`, every thought by id, value, rank and parent. The view is there because the entries can only reconstruct it from `setCursor` and its kin, which a long session evicts first. The frame marker is what separates a freeze *in* the app from one below it — if the marker keeps advancing past the last entry, the page was still painting and the hang is at the native layer.
 
 Logging is **off** in production unless the user turns on **Debug Logging** in Settings. It auto-enables on localhost and `*.vercel.app`, excluding test environments (Vitest via `MODE`, Puppeteer via `navigator.webdriver`) and the native Capacitor and Tauri shells, which serve production builds from localhost-like origins. On an auto-enabled host the Settings checkbox switches a device-local opt-out instead of the synced setting, so a preview build can be aligned with production for performance testing without disabling logging on the user's other devices.
 
@@ -31,7 +31,9 @@ Logging is **off** in production unless the user turns on **Debug Logging** in S
 | A script or agent | `window.em.debugLog` — `format(state)`, `read()`, `clear()`, `setEnabled()`, `setConsole()`. |
 | An agent reproducing a bug | [`scripts/debug-log-capture.ts`](../scripts/debug-log-capture.ts), which attaches through the e2e bridges and writes to a file. |
 
-A reporter attaches the downloaded file to an issue under a `## Debug Log` heading — see [`write-issue`](../.github/skills/write-issue/SKILL.md).
+A reporter attaches the downloaded file to an issue under a `## Debug Log` heading — see [`create-issue`](../.github/skills/create-issue/SKILL.md).
+
+The log carries thought text verbatim, in value fields, typed keystrokes, action payloads and the `state.thoughts` dump. An agent quoting a reporter's log into an issue replaces the personal parts of that text with placeholders first, keeping Lexemes intact; [`create-issue`](../.github/skills/create-issue/SKILL.md#anonymizing-user-data) lists every place it appears.
 
 ### Streaming to the console
 
@@ -42,6 +44,8 @@ It is **off by default on every host**, including the ones where logging itself 
 Use it to watch a single interaction live, through a browser MCP's console listing. Do not use it to capture a whole reproduction: four steps of editing produce about 6 KB, and a full buffer approaches a megabyte. Dump the buffer to a file instead.
 
 ## In tests
+
+In Puppeteer, a test under investigation for a flake is wrapped in [`withDebugLog`](../src/e2e/puppeteer/helpers/withDebugLog.ts), which records the log and appends it to the error if the test fails.
 
 Logging is off in Vitest and Puppeteer, so a test that wants entries calls `debugLog.setEnabled(true)` and usually `debugLog.clear()` right after, to drop the session marker. It cleans up nothing afterwards: the module's in-memory state is restored at every test boundary by `resetStores` (see [Isolation and cleanup](testing.md#isolation-and-cleanup)), which runs the `reset` that `debugLog.ts` registers.
 
@@ -83,10 +87,12 @@ The procedure an agent follows — download, arm, drive, capture, compare, and h
 
 Some shapes worth recognizing:
 
+- **An `error` entry** is an uncaught error, with its name, message and stack (cut at the 2000-character field cap). Its `source` says where it was caught: `window` for an uncaught exception, which also shows the error banner; `unhandledrejection` for a rejected promise nothing handled, which is logged and nothing more; `render` for a component that threw while rendering, which replaces the app with the error screen and carries a `componentStack` locating it in the tree.
 - **A `push` with no matching `pushSynced`** is a write that never completed. See [Persistence](persistence.md).
 - **An `integrity` entry** reports siblings sharing an exact rank, which makes their order ambiguous and is the signature of a data-integrity fault.
 - **`move` entries** are diffed out of the thought index rather than logged by any one reducer, so they catch a reorder from every source — drag and drop, sort, undo, remote sync — without special-casing any of them.
 - **The log stopping while `lastFrameAt` keeps advancing** means the page was still painting: the hang is below the app.
 - **A `touchend` logged within a few milliseconds before the next `touchstart`** is one that iOS 27 withheld until that touch began ([#5660](https://github.com/cybersemics/em/issues/5660)); a `touchend` that arrived on time precedes the next `touchstart` by the gap between the taps. A `longPressEnd` with `eventType: "mouseup"` is a press that the lift's `mouseup` ended, since iOS still fires `mouseup` when a withheld touch lifts.
 - **`dt` collapsing toward zero across many entries** is a tight loop.
+- **An `undoPatchError` entry** precedes the "Error applying patch" error. It names the action that failed to merge into the last undo step (which is otherwise missing from the log, since the throw unwinds the dispatch before it is logged) and lists that step's op paths, the one that no longer resolves among them.
 - **`viewport` entries** record the window, layout viewport (`clientHeight`) and visual viewport sizes, the scroll position and whether the keyboard is open. One is written on every resize that changes them, one when the app becomes active (`resume`), and one a second later (`settled`), since iOS can finish resizing after the page is active without firing a resize event. A `clientHeight` or `visualViewportHeight` well below `innerHeight` while `isKeyboardOpen` is false means the page is still laid out for a keyboard that is gone: fixed and sticky elements such as the nav bar are then pinned mid-screen.

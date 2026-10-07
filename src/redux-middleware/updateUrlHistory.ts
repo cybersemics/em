@@ -119,7 +119,9 @@ const updateUrlHistory = (state: State, path: Path) => {
   const decodedPath = decoded.path || [HOME_TOKEN]
 
   // if we are already on the page we are trying to navigate to (both in thoughts and contextViews), then NOOP
-  if (equalArrays(path, decodedPath) && decoded.contextViews[encoded] === state.contextViews[encoded]) return
+  // a null cursor is compared as the home path, otherwise navigating back to the home page would push a duplicate entry and discard the forward history (#5747)
+  if (equalArrays(path || HOME_PATH, decodedPath) && decoded.contextViews[encoded] === state.contextViews[encoded])
+    return
 
   const stateWithNewContextViews = {
     ...state,
@@ -180,7 +182,7 @@ const updateUrlHistoryMiddleware: ThunkMiddleware<State> = ({ getState }) => {
       cursorThoughtValue !== cursorThoughtValuePrev ||
       state.multicursors !== multicursorsPrev
     ) {
-      updateCommandState()
+      updateCommandState(state)
     }
     cursorPrevStore.update({ cursor, value: cursorThoughtValue, multicursors: state.multicursors })
   }

@@ -104,16 +104,25 @@ export const hashCommand = (keyboard: string | Key): string => {
   )
 }
 
+/**
+ * The letter or digit of the physical key an Option chord was struck on, e.g. 'KeyN' -> 'N'. Option + N, E, I, U, and `
+ * compose as dead keys on macOS, which mangles e.key ('Dead' in Chrome, '~' in Safari) and e.keyCode (192, the tilde
+ * key) alike, leaving e.code as the only faithful source. Restricted to Option so that unmodified typing — including
+ * IME composition, where keyCode is the 229 sentinel and e.code is still the physical key — resolves as it otherwise
+ * would.
+ */
+const optionChordKey = (e: KeyboardEvent): string | undefined =>
+  e.altKey ? /^(?:Key|Digit)(.)$/.exec(e.code)?.[1] : undefined
+
 /** Hash all the properties of a keydown event into a string that can be compared with the result of hashCommand. */
 export const hashKeyDown = (e: KeyboardEvent): string =>
   (e.metaKey || e.ctrlKey ? 'META_' : '') +
   (e.altKey ? 'ALT_' : '') +
   (isMac && e.ctrlKey ? 'CONTROL_' : '') +
   (e.shiftKey ? 'SHIFT_' : '') +
-  // for some reason, e.key returns 'Dead' in some cases, perhaps because of alternate keyboard settings
-  // e.g. alt + meta + n
-  // use e.keyCode if available instead
-  (letters[e.keyCode] || digits[e.keyCode] || e.key || '').toUpperCase()
+  // keyCode is tried before e.code so that a layout which reports a letter's keyCode faithfully keeps resolving through
+  // it, e.g. AZERTY reports keyCode 65 for the physical KeyQ.
+  (letters[e.keyCode] || digits[e.keyCode] || optionChordKey(e) || e.key || '').toUpperCase()
 
 /* A map of typed modifier tokens to the corresponding Key modifier property.
  * Command and Ctrl are the same modifier on their respective platforms, so they both map to meta. Literal Control is

@@ -48,7 +48,7 @@ const startTask = async task => {
       prompt: [
         `Resolve the merge conflicts on Copilot pull request #${task.number} (${task.url}).`,
         `Merge the latest \`${task.baseRef}\` into \`${task.headRef}\`, preserve both intended changes, and commit the resolution directly to this branch.`,
-        'Do not open a second pull request. Run the relevant tests and lint before requesting review.',
+        'Do not open a second pull request. Run the relevant tests and lint. Do not request a review; the existing reviewers stay as they are.',
       ].join('\n'),
       model: MODEL,
       custom_agent: CUSTOM_AGENT,
