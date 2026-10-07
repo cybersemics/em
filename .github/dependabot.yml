@@ -16,10 +16,20 @@ updates:
       timezone: 'America/New_York'
     open-pull-requests-limit: 10
     # Replaces Dependabot's default labels, which are `dependencies` plus an ecosystem label.
-    # npm is the only ecosystem configured here, so the `javascript` label it adds distinguishes
-    # nothing and is dropped by omitting it. `dependencies` must be listed to be kept.
+    # The ecosystem label (`javascript` here, `rust` on the cargo entry) is dropped by omitting it:
+    # nothing filters or routes on it, and the branch name already says which ecosystem a bump is
+    # from. `dependencies` must be listed to be kept.
     labels:
       - 'dependencies'
+    # The Tauri npm packages must stay on the same major.minor as their Rust crates, or `tauri build`
+    # fails (enforced on pull requests by `yarn lint:tauri-versions`). The cargo entry below leads:
+    # its `tauri` group moves the crates, and the npm side follows on that pull request. Letting npm
+    # move a minor on its own is how #5781 broke the desktop build on main.
+    ignore:
+      - dependency-name: '@tauri-apps/api'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
+      - dependency-name: '@tauri-apps/plugin-*'
+        update-types: ['version-update:semver-minor', 'version-update:semver-major']
     # Group related deps into single PR
     groups:
       babel:
@@ -97,3 +107,26 @@ updates:
       workbox:
         patterns:
           - 'workbox-*'
+
+  # The desktop app's Rust crates. Only the Tauri crates are updated, all in one pull request: they
+  # are the ones whose versions the npm packages must match. Pull requests only compile the Rust
+  # code (tauri-check.yml) and nothing runs the desktop app, so a bump to any other crate would land
+  # with no evidence it still works.
+  - package-ecosystem: 'cargo'
+    directory: '/desktop'
+    # Same slot as npm above.
+    schedule:
+      interval: 'weekly'
+      day: 'saturday'
+      time: '22:00'
+      timezone: 'America/New_York'
+    labels:
+      - 'dependencies'
+    allow:
+      - dependency-name: 'tauri'
+      - dependency-name: 'tauri-*'
+    groups:
+      tauri:
+        patterns:
+          - 'tauri'
+          - 'tauri-*'
