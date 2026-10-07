@@ -77,27 +77,24 @@ const NavBar = ({ position }: { position: string }) => {
           className={css({
             position: 'sticky',
             zIndex: 'stack',
-            padding: '0 15px 0 10px',
+            // Ternaries instead of conditional spreads, because PandaCSS does not extract a value that a later spread in the same css call overrides.
+            padding: position === 'bottom' ? '0 15px' : '0 15px 0 10px',
             bottom: '0',
+            top: position === 'top' ? 0 : undefined,
             backgroundColor: isCursor && !glowImage ? 'bg' : undefined,
             boxShadow: isCursor && !glowImage ? `0 20px 15px 25px {colors.bg}` : undefined,
-            ...(position === 'top' ? { top: 0 } : position === 'bottom' ? { padding: '0 15px' } : {}),
           })}
         >
           <div>
             <div
               className={css({
-                position: 'absolute',
+                position: position === 'bottom' ? 'relative' : 'absolute',
                 /* offset .nav padding */
-                width: 'calc(100% - 30px)',
+                width: position === 'bottom' ? '100%' : 'calc(100% - 30px)',
                 transition: 'background-color {durations.fast} ease-out',
                 justifyContent: 'flex-end',
-                ...(position === 'bottom' && {
-                  position: 'relative',
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                }),
+                display: position === 'bottom' ? 'flex' : undefined,
+                alignItems: position === 'bottom' ? 'flex-end' : undefined,
               })}
             >
               {!isTutorialOn && (
