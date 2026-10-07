@@ -735,6 +735,13 @@ export const isNear = (
   return isNearBounds(x, y, rect, distance)
 }
 
+/** Returns true if the point is inside the editable that holds the collapsed caret. */
+export const isInCaretEditable = (x: number, y: number): boolean => {
+  if (!isActive() || !isCollapsed()) return false
+  const caret = caretRectViewport()
+  return !!caret && isNearBounds(x, y, caret.editableRect, 0)
+}
+
 /**
  * Returns true if the point is on the collapsed caret, i.e. within a touch target of it and inside the editable that
  * holds it. Where isNear is about a range of selected text, this is about the insertion point — a press that lands
