@@ -1,21 +1,17 @@
 import path from 'path'
-import sleep from '../../../util/sleep'
 import configureSnapshots from '../configureSnapshots'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
 import hideVisibility from '../helpers/hideVisibility'
 import paste from '../helpers/paste'
 import screenshot from '../helpers/screenshot'
+import waitUntil from '../helpers/waitUntil'
 
 expect.extend({
   toMatchImageSnapshot: configureSnapshots({ fileName: path.basename(__filename).replace('.ts', '') }),
 })
 
-// TODO: Fix flaky snapshot test
-// https://github.com/cybersemics/em/actions/runs/13156294896
-// https://github.com/cybersemics/em/actions/runs/13182568493
-// https://github.com/cybersemics/em/actions/runs/13224979298
-it.skip('ColorPicker', async () => {
+it('ColorPicker', async () => {
   await paste('Hello world')
 
   await clickThought('Hello world')
@@ -25,9 +21,9 @@ it.skip('ColorPicker', async () => {
   await hideVisibility('[aria-label="nav"]')
   await hideVisibility('[data-testid="toolbar-icon"]:not([aria-label="Text Color"])')
 
-  // ColorPicker swatches have small pixel differences if we do not wait 50–100ms.
-  // Possibly an animation that has not been turned off?
-  await sleep(100)
+  // The Popover fades in via a CSS transition, so the screenshot can otherwise capture a partially faded frame.
+  // Wait for every running transition to settle rather than for a fixed duration.
+  await waitUntil(() => document.getAnimations().every(animation => animation.playState !== 'running'))
 
   expect(await screenshot()).toMatchImageSnapshot()
 })
