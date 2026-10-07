@@ -24,6 +24,8 @@ The reason this skill exists: `docs/` is not decoration, it is the fastest route
 
 ## Step 1: Work out which docs are in scope
 
+**Two directories under `docs/` are not documentation.** `docs/plans/` holds Compound Engineering plans and `docs/solutions/` holds the learnings captured from finished work. Both are point-in-time records: a plan describes a change before it was made, a learning describes a problem as it was solved. Neither asserts how the project works now, so neither is in scope here. Leave them out of the by-name grep below, never route a changed file to them, and never rewrite one because the code has since moved on. If a change touches only files under those two directories, the answer is `docs: unaffected`.
+
 Start from what you changed:
 
 ```bash
@@ -39,7 +41,7 @@ Then find the affected documents three ways. They catch different things, and th
 
 ```bash
 git diff origin/main...HEAD | grep -E '^-' | grep -oE '\b[a-zA-Z][a-zA-Z0-9]{4,}\b' | sort -u > /tmp/touched
-grep -rnFf /tmp/touched docs/ --include='*.md' | sort -u
+grep -rnFf /tmp/touched docs/ --include='*.md' --exclude-dir=plans --exclude-dir=solutions | sort -u
 ```
 
 Noisy, and worth skimming rather than trusting wholesale — but it finds every document that mentions what you changed, regardless of which document is supposed to own it. This is the pass that catches a doc describing your code from another subsystem's point of view.
