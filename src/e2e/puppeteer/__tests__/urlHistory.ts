@@ -4,6 +4,7 @@ import clickToolbar from '../helpers/clickToolbar'
 import deviceEmulation from '../helpers/deviceEmulation'
 import paste from '../helpers/paste'
 import waitForCursor from '../helpers/waitForCursor'
+import waitForUrlCursor from '../helpers/waitForUrlCursor'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -23,12 +24,11 @@ describe('url history on touch devices', () => {
     `)
 
     await clickThought('a')
-    await waitForUrlChange('/')
+    await waitForUrlCursor('a')
     const entriesBefore = await page.evaluate(() => window.history.length)
 
-    const pathnameA = await page.evaluate(() => window.location.pathname)
     await clickThought('b')
-    await waitForUrlChange(pathnameA)
+    await waitForUrlCursor('b')
     const entriesAfter = await page.evaluate(() => window.history.length)
 
     // Each cursor move used to push an entry, giving Mobile Safari's edge swipe a stale rendering of

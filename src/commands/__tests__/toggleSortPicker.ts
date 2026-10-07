@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { indentActionCreator as indent } from '../../actions/indent'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { outdentActionCreator as outdent } from '../../actions/outdent'
 import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
@@ -11,7 +12,10 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import categorizeCommand from '../categorize'
+import deleteCommand from '../delete'
 import favoriteCommand from '../favorite'
+import outdentCommand from '../outdent'
+import pinCommand from '../pin'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
@@ -136,6 +140,41 @@ describe('toggleSortPicker error', () => {
     },
   )
 
+  // https://github.com/cybersemics/em/issues/5695
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when deleting a subthought in a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - One
+              - Four
+            - Two
+            - Three
+          `,
+        }),
+        setCursor(['One']),
+      ])
+
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['One', 'Four']))
+      executeCommand(deleteCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
   it.each(['Asc', 'Desc'] as const)(
     'does not report an error after Split Sentences in a context sorted by Created %s',
     direction => {
@@ -170,6 +209,50 @@ describe('toggleSortPicker error', () => {
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
   )
+
+  // https://github.com/cybersemics/em/issues/4096
+  it('does not report an error when a subthought is outdented into a context sorted by Created', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - One
+        `,
+      }),
+      setCursor(['One']),
+    ])
+
+    // Advance the clock between each step so that the thoughts have distinct created timestamps, as they do when a
+    // user types them one at a time.
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(newThought({ value: 'Four', insertNewSubthought: true }))
+
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch([setCursor(['One']), newThought({ value: 'Two' })])
+
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(newThought({ value: 'Three' }))
+
+    vi.advanceTimersByTime(1000)
+
+    const state = store.getState()
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Created', direction: 'Asc' },
+      }),
+    )
+
+    vi.advanceTimersByTime(1000)
+
+    store.dispatch(setCursor(['One', 'Four']))
+
+    executeCommand(outdentCommand, { store })
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
 
   // https://github.com/cybersemics/em/issues/4098
   it('does not report an error when a thought is favorited under updated sort', () => {
@@ -265,6 +348,89 @@ describe('toggleSortPicker error', () => {
 
       // toggleAttribute inserts =pin above its siblings with getPrevRank, while its lastUpdated is now.
       store.dispatch(toggleAttribute({ path: simplePath, values: ['=pin'] }))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/5736
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after pinning a thought in a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - aaa
+            - bbb
+            - ccc
+            - ddd
+          `,
+        }),
+      ])
+
+      // Advance the clock between each step so that the thoughts, the indent, the sort preference, and the pin all have
+      // distinct timestamps, as they do when a user performs each step some time after the last.
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch([setCursor(['ccc']), indent()])
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['aaa']))
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      executeCommand(pinCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after unpinning a thought in a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - aaa
+            - bbb
+            - ccc
+          `,
+        }),
+        setCursor(['aaa']),
+      ])
+
+      vi.advanceTimersByTime(1000)
+
+      executeCommand(pinCommand, { store })
+
+      // Pin a second thought later, so that aaa is not the most recently updated thought when the context is sorted.
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['bbb']))
+      executeCommand(pinCommand, { store })
+
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['aaa']))
+      executeCommand(pinCommand, { store })
 
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },

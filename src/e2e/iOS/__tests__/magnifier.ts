@@ -3,6 +3,7 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import type { Element } from 'webdriverio'
+import getScreenOffsetY from '../helpers/getScreenOffsetY.js'
 import getSelection from '../helpers/getSelection'
 import getTextOffsetCoordinates from '../helpers/getTextOffsetCoordinates.js'
 import isKeyboardShown from '../helpers/isKeyboardShown'
@@ -24,9 +25,6 @@ const DRAG_STEP_MS = 150
 interface Options {
   /** Character offset within the element's text to press on. Defaults to the horizontal center of the element. */
   offset?: number
-  /** Pixels of y offset to add to the touch coordinates. Defaults to the Safari chrome offset used throughout this
-   * suite, since element rects are read in page coordinates but touches are delivered in screen coordinates. */
-  y?: number
 }
 
 /**
@@ -38,7 +36,7 @@ interface Options {
  *
  * @param dx Horizontal distance to drag, in pixels. Negative drags left.
  */
-const dragMagnifier = async (nodeHandle: Element, dx: number, { offset, y = 60 }: Options = {}) => {
+const dragMagnifier = async (nodeHandle: Element, dx: number, { offset }: Options = {}) => {
   const elementId = nodeHandle.elementId
   if (!elementId) throw new Error('Element does not have an elementId.')
 
@@ -52,10 +50,12 @@ const dragMagnifier = async (nodeHandle: Element, dx: number, { offset, y = 60 }
 
   if (!coordinate) throw new Error('Coordinate not found.')
 
+  // element rects are viewport-relative while touches are delivered in screen coordinates
+  const screenY = coordinate.y + (await getScreenOffsetY())
   const steps = Math.max(1, Math.round(Math.abs(dx) / DRAG_STEP_PX))
   const step = dx / steps
 
-  console.info(`Dragging magnifier from {x: ${coordinate.x}, y: ${coordinate.y + y}} by ${dx}px in ${steps} steps`)
+  console.info(`Dragging magnifier from {x: ${coordinate.x}, y: ${screenY}} by ${dx}px in ${steps} steps`)
 
   await browser.performActions([
     {
@@ -68,7 +68,7 @@ const dragMagnifier = async (nodeHandle: Element, dx: number, { offset, y = 60 }
           duration: 0,
           origin: 'viewport',
           x: Math.round(coordinate.x),
-          y: Math.round(coordinate.y + y),
+          y: Math.round(screenY),
         },
         { type: 'pointerDown', button: 0 },
         { type: 'pause', duration: MAGNIFIER_HOLD_MS },
@@ -97,7 +97,7 @@ describe('Magnifier', () => {
     await waitUntil(isKeyboardShown)
 
     // place the caret in the middle of the text, where a person reaches for the magnifier
-    await tap(editable, { offset: 10, y: 60, pointerType: 'touch' })
+    await tap(editable, { offset: 10, pointerType: 'touch' })
     expect(await getSelection().focusNode?.textContent).toBe(value)
     const offsetBefore = await getSelection().focusOffset
 
