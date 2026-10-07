@@ -345,16 +345,17 @@ const useExpandBounce = ({
     [bounceY, ceiling, sheetRef],
   )
 
-  /**
-   * Only applies the bounce when the Sheet chooses the expanded stage.
-   */
+  /** Starts or clears the bounce when the sheet settles. */
   const onSnap = useCallback(
     (snapIndex: number) => {
       if (snapIndex === SNAP_EXPANDED) {
+        // Bounce based on the drawer's remaining distance.
         expand(sheetRef.current?.y.get() ?? 0)
         return
       }
+      // Reset the extra drag distance.
       rawRef.current = 0
+      // Return the bounce to its resting position.
       if (bounceY.get() !== 0) expand(0)
     },
     [bounceY, expand, sheetRef],
@@ -481,6 +482,7 @@ const CommandCenter = () => {
     (snapIndex: number) => {
       setStage(snapIndex === SNAP_EXPANDED ? 'expanded' : 'standard')
       if (snapIndex !== SNAP_EXPANDED) scrollerRef.current?.scrollTo({ top: 0 })
+      console.log('>>> onbouncesnap', snapIndex)
       onBounceSnap(snapIndex)
     },
     [onBounceSnap],
