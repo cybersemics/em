@@ -40,6 +40,9 @@ on:
       - scripts/debug-log-diff.ts
       - scripts/ci/task-comment.cjs
       - scripts/ci/__tests__/task-comment.mjs
+      - scripts/ci/resolve-diff-pr.cjs
+      - scripts/ci/upsert-diff-comment.cjs
+      - scripts/ci/__tests__/diff-comment.mjs
       - scripts/ci/collect-copilot-conflicts.cjs
       - scripts/ci/__tests__/collect-copilot-conflicts.mjs
       - scripts/ci/copilot-conflicts-comment.cjs
@@ -74,6 +77,9 @@ on:
       - scripts/debug-log-diff.ts
       - scripts/ci/task-comment.cjs
       - scripts/ci/__tests__/task-comment.mjs
+      - scripts/ci/resolve-diff-pr.cjs
+      - scripts/ci/upsert-diff-comment.cjs
+      - scripts/ci/__tests__/diff-comment.mjs
       - scripts/ci/collect-copilot-conflicts.cjs
       - scripts/ci/__tests__/collect-copilot-conflicts.mjs
       - scripts/ci/copilot-conflicts-comment.cjs
@@ -149,6 +155,9 @@ jobs:
 
       - name: Run task comment tests
         run: node scripts/ci/__tests__/task-comment.mjs
+
+      - name: Run Puppeteer diff comment tests
+        run: node scripts/ci/__tests__/diff-comment.mjs
 
       - name: Run Copilot conflict collector tests
         run: node scripts/ci/__tests__/collect-copilot-conflicts.mjs

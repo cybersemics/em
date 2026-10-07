@@ -92,7 +92,8 @@ const upsertDiffComment = async ({ github, context }) => {
   const runId = process.env.RUN_ID
   const runUrl = process.env.RUN_URL
   const author = process.env.AUTHOR
-  const collected = Number(process.env.COLLECTED || '0')
+  // Artifacts survive retries on the same run, so old diffs cannot override a successful conclusion.
+  const collected = context.payload.workflow_run.conclusion === 'success' ? 0 : Number(process.env.COLLECTED || '0')
 
   let body
   if (collected > 0) {

@@ -9,15 +9,17 @@
  */
 const fs = require('node:fs')
 
-const PR_NUMBER_FILE = 'artifacts/pr-number/pr-number.txt'
+const PR_NUMBER_FILES = ['artifacts/pr-number/pr-number.txt', 'artifacts/pr-number.txt']
 
 /** Resolves and verifies the PR the downloaded diff artifacts belong to. */
 const resolveDiffPr = async ({ github, context, core }) => {
-  if (!fs.existsSync(PR_NUMBER_FILE)) {
+  // A download containing only pr-number is extracted directly into artifacts/.
+  const prNumberFile = PR_NUMBER_FILES.find(file => fs.existsSync(file))
+  if (!prNumberFile) {
     core.info('No pr-number artifact found; nothing to do.')
     return
   }
-  const raw = fs.readFileSync(PR_NUMBER_FILE, 'utf8').trim()
+  const raw = fs.readFileSync(prNumberFile, 'utf8').trim()
   if (!/^[0-9]+$/.test(raw)) {
     core.setFailed(`Refusing to proceed: pr-number artifact is not a plain integer (${JSON.stringify(raw)}).`)
     return
