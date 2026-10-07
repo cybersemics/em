@@ -282,6 +282,9 @@ const globalCss = defineGlobalStyles({
   },
   /* Disables pull-to-refresh but allows overscroll glow effects. */
   body: { overscrollBehaviorY: 'contain', color: 'fg', backgroundColor: 'bg' },
+  // Matches the caret to the Android app's native selection handles, which are tinted with the highlight color by the Android theme (android/app/src/main/res/values/styles.xml). On iOS, caret-color also tints the selection handles and selection highlight.
+  // Set on the body rather than on the editable so that the hideCaret animation on the LayoutTree can still hide the caret through inheritance.
+  'body[data-device=mobile]': { caretColor: 'highlight' },
   button: { fontSize: '1.2em' },
   a: {
     cursor: 'pointer',
