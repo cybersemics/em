@@ -90,6 +90,7 @@ const CommandUniverseSearch: FC<{ onInput?: (value: string) => void }> = ({ onIn
           // plus-lighter brightens the input text against the dialog's translucent glass — additive blend lifts the placeholder & typed text out of the background.
           mixBlendMode: 'plus-lighter',
           // Gradient-fill the text by clipping the background to the glyph shape. `color: transparent` reveals the gradient through the text. Applied to ::placeholder too so the empty-state text shows the same fill.
+          // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
           background: 'linear-gradient(90deg, {colors.dialogSearchAccent} 0%, {colors.dialogSearchAccentFade} 100%)',
           backgroundClip: 'text',
           color: 'transparent',

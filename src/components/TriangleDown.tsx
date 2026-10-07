@@ -1,5 +1,5 @@
 import { css } from '../../styled-system/css'
-import { token } from '../../styled-system/tokens/index.mjs'
+import { token } from '../../styled-system/tokens'
 import Icon from '../@types/IconType'
 
 /** A down-facing triangle component. */
