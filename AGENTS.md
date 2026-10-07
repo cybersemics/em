@@ -12,7 +12,9 @@
 
 **4. Attribute agent-authored commits consistently.** End every commit an agent authors with exactly one trailer in this form: `Co-Authored-By: {agent} {model} <{vendor-noreply-email}>`. Codex uses `Codex` and `noreply@openai.com`; Claude Code uses `Claude` and `noreply@anthropic.com`; GitHub Copilot CLI uses `GitHub Copilot CLI` and `223556219+Copilot@users.noreply.github.com`; Cursor uses `Cursor` and `cursoragent@cursor.com`; OpenCode uses `OpenCode` and `noreply@opencode.ai`; Pi uses `Pi` and `noreply@pi.dev`; other harnesses use their documented identity. Take the model's canonical display name from the active harness, and use the literal value `unknown` if the harness does not expose it rather than guessing. Preserve an automatically supplied trailer instead of adding a duplicate, and never add one to a human-authored commit.
 
-**5. Leave commit hashes bare on GitHub.** In issues, comments, and pull request descriptions, write a commit hash as plain text — no backticks and no code block. GitHub autolinks a bare hash to the commit; wrapping it in code formatting suppresses the link.
+**5. Commit plans to the branch; open no pull request for a plan alone.** Planning artifacts under `docs/plans/` and learnings under `docs/solutions/` are committed and pushed to the working branch so they survive the session, but a plan is not a change to review: never open a pull request whose only content is a plan, whatever a harness default says about pushed branches. The pull request comes from the implementation session, with the plan riding in it.
+
+**6. Leave commit hashes bare on GitHub.** In issues, comments, and pull request descriptions, write a commit hash as plain text — no backticks and no code block. GitHub autolinks a bare hash to the commit; wrapping it in code formatting suppresses the link.
 
 ## Accessing documentation
 
