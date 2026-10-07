@@ -22,3 +22,4 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Glossary](glossary.md) — Project-specific terms (cliff, autofocus, lexeme, tangential context, tsid, …) with cross-links to the deeper docs. Start here if you encounter unfamiliar vocabulary.
 - [Commands](commands.md) — All user-facing commands and keyboard shortcuts, plus the architecture of the command system.
 - [Testing](testing.md) — Testing approach, platforms, and frameworks.
+- [iOS Device Build](ios-device-build.md) — Building a branch's Capacitor app and installing it on a physical iPhone from the command line: static mode, Personal Team signing, and diagnosing launch crashes.
