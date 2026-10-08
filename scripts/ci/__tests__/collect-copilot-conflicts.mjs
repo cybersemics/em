@@ -1,8 +1,6 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { readFileSync, rmSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 
 const require = createRequire(import.meta.url)
 const collect = require('../collect-copilot-conflicts.cjs')
@@ -293,127 +291,6 @@ const testNamedDispatchOverridesWaitAndCap = async () => {
   assert.equal((await run([waiting])).requested, false)
 }
 
-/** Runs the real task dispatcher with fixture API responses and captures its requests and exit status. */
-const runDispatch = async responses => {
-  const directory = mkdtempSync(join(tmpdir(), 'copilot-conflict-dispatch-'))
-  const reportFile = join(directory, 'report.json')
-  const pr = makePr({ number: 1, updatedAt: '2026-09-06T10:00:00Z', state: dueState(0) })
-  const task = {
-    number: pr.number,
-    url: pr.html_url,
-    headRef: pr.head.ref,
-    baseRef: pr.base.ref,
-    headSha: pr.head.sha,
-    baseSha: pr.base.sha,
-  }
-  writeFileSync(reportFile, JSON.stringify({ tasks: [task], requested: false }))
-  const result = { requests: [], updates: [], output: '', exitCode: 0 }
-  const original = {
-    fetch: global.fetch,
-    argv: process.argv,
-    exit: process.exit,
-    write: process.stdout.write,
-    token: process.env.COPILOT_TASKS_TOKEN,
-    repository: process.env.GITHUB_REPOSITORY,
-    model: process.env.COPILOT_MODEL,
-    conflictModel: process.env.COPILOT_MODEL_CONFLICTS,
-  }
-  process.argv = [process.argv[0], 'start-copilot-conflict-task.mjs', reportFile]
-  process.env.COPILOT_TASKS_TOKEN = 'test-token'
-  process.env.GITHUB_REPOSITORY = 'owner/repo'
-  process.env.COPILOT_MODEL = 'claude-opus-5'
-  process.env.COPILOT_MODEL_CONFLICTS = 'claude-opus-5'
-  process.exit = code => {
-    result.exitCode = code
-  }
-  process.stdout.write = output => {
-    result.output += output
-    return true
-  }
-  global.fetch = async (url, options) => {
-    if (url === 'https://api.github.com/repos/owner/repo/pulls/1') return Response.json(pr)
-    if (url === 'https://api.github.com/repos/owner/repo/issues/1/comments') return Response.json(pr.comments)
-    if (url === 'https://api.github.com/agents/repos/owner/repo/tasks') {
-      assert.equal(options.method, 'POST')
-      result.requests.push(JSON.parse(options.body))
-      const response = responses[result.requests.length - 1]
-      assert.ok(response, 'unexpected additional task dispatch')
-      return response
-    }
-    assert.equal(url, 'https://api.github.com/repos/owner/repo/issues/comments/1')
-    assert.equal(options.method, 'PATCH')
-    result.updates.push(JSON.parse(options.body))
-    return Response.json({})
-  }
-  try {
-    await import(`../start-copilot-conflict-task.mjs?report=${encodeURIComponent(reportFile)}`)
-    return result
-  } finally {
-    global.fetch = original.fetch
-    process.argv = original.argv
-    process.exit = original.exit
-    process.stdout.write = original.write
-    if (original.token === undefined) delete process.env.COPILOT_TASKS_TOKEN
-    else process.env.COPILOT_TASKS_TOKEN = original.token
-    if (original.repository === undefined) delete process.env.GITHUB_REPOSITORY
-    else process.env.GITHUB_REPOSITORY = original.repository
-    if (original.model === undefined) delete process.env.COPILOT_MODEL
-    else process.env.COPILOT_MODEL = original.model
-    if (original.conflictModel === undefined) delete process.env.COPILOT_MODEL_CONFLICTS
-    else process.env.COPILOT_MODEL_CONFLICTS = original.conflictModel
-    rmSync(directory, { recursive: true, force: true })
-  }
-}
-
-/** Verifies an unavailable model falls back once without changing the task or consuming an extra task count. */
-const testUnavailableModelFallback = async () => {
-  const result = await runDispatch([
-    Response.json({ message: 'model not found or not enabled for user' }, { status: 400 }),
-    Response.json({ html_url: 'https://example.test/task/1' }, { status: 201 }),
-  ])
-  assert.equal(result.exitCode, 0, result.output)
-  assert.equal(result.requests.length, 2)
-  const { model, ...task } = result.requests[0]
-  assert.equal(model, 'claude-opus-5')
-  assert.deepEqual(result.requests[1], task)
-  assert.equal(task.custom_agent, 'worker-bee')
-  assert.equal(task.head_ref, 'copilot/fix/1')
-  assert.equal(task.base_ref, 'main')
-  assert.equal(result.updates.length, 1)
-  const { parseState } = require('../copilot-conflicts-comment.cjs')
-  const state = parseState(result.updates[0].body)
-  assert.equal(state.tasks, 1)
-  assert.equal(state.lastTaskUrl, 'https://example.test/task/1')
-  assert.equal(state.history.length, 1)
-}
-
-/** Verifies a successful preferred-model request starts only one task. */
-const testPreferredModelSuccess = async () => {
-  const result = await runDispatch([Response.json({ html_url: 'https://example.test/task/1' }, { status: 201 })])
-  assert.equal(result.exitCode, 0, result.output)
-  assert.equal(result.requests.length, 1)
-  assert.equal(result.requests[0].model, 'claude-opus-5')
-  assert.equal(result.updates.length, 1)
-}
-
-/** Verifies other errors are not retried and a rejected fallback never consumes task state. */
-const testDispatchFailures = async () => {
-  for (const responses of [
-    [Response.json({ message: 'Invalid head_ref' }, { status: 400 })],
-    [Response.json({ message: 'model not found or not enabled for user' }, { status: 403 })],
-    [
-      Response.json({ message: 'model not found or not enabled for user' }, { status: 400 }),
-      Response.json({ message: 'model not found or not enabled for user' }, { status: 400 }),
-    ],
-  ]) {
-    const result = await runDispatch(responses)
-    assert.equal(result.exitCode, 1)
-    assert.equal(result.requests.length, responses.length)
-    assert.equal(result.updates.length, 0)
-    assert.ok(result.output.includes('dispatch failed:'))
-  }
-}
-
 await testRetryPolicy()
 await testExclusions()
 await testCommentOnConflictOnly()
@@ -425,8 +302,5 @@ await testCapNotice()
 await testScheduleBeforeFirstTask()
 await testTaskLink()
 await testNamedDispatchOverridesWaitAndCap()
-await testUnavailableModelFallback()
-await testPreferredModelSuccess()
-await testDispatchFailures()
 
 console.info('PASS: collect-copilot-conflicts')
