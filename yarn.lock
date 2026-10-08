@@ -20571,13 +20571,13 @@ __metadata:
 
 "react-modal-sheet@patch:react-modal-sheet@npm%3A5.6.0#~/.yarn/patches/react-modal-sheet-npm-5.6.0-f2ff243f4a.patch":
   version: 5.6.0
-  resolution: "react-modal-sheet@patch:react-modal-sheet@npm%3A5.6.0#~/.yarn/patches/react-modal-sheet-npm-5.6.0-f2ff243f4a.patch::version=5.6.0&hash=fb3a2e"
+  resolution: "react-modal-sheet@patch:react-modal-sheet@npm%3A5.6.0#~/.yarn/patches/react-modal-sheet-npm-5.6.0-f2ff243f4a.patch::version=5.6.0&hash=8a95d2"
   dependencies:
     react-use-measure: "npm:2.1.7"
   peerDependencies:
     motion: ">=11"
     react: ">=16"
-  checksum: 10c0/2de57a3c8f157eb72e3342aeff919410428aa98c463319ee051d242aeecf9c738ba9cef5f73a6a260b159975a187a9bb929605b8fce6deb4e8971667fdb0ed33
+  checksum: 10c0/96fb812218c544928d5f37af762c4c9a639fbfece22c1c1af0a7d436d52191f60ef58c10f63de9eb6cf823044cec871a0d72ac1e5b14ea142b1727d2466679bc
   languageName: node
   linkType: hard
 
