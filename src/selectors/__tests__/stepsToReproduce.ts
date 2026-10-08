@@ -1,4 +1,3 @@
-import { applyPatch } from 'fast-json-patch'
 import { archiveThoughtActionCreator as archiveThought } from '../../actions/archiveThought'
 import { deleteThoughtWithCursorActionCreator as deleteThoughtWithCursor } from '../../actions/deleteThoughtWithCursor'
 import { importTextActionCreator as importText } from '../../actions/importText'
@@ -24,7 +23,6 @@ import { editThoughtByContextActionCreator as editThought } from '../../test-hel
 import initStore from '../../test-helpers/initStore'
 import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
-import thoughtspaceHistory from '../../util/thoughtspaceHistory'
 import contextToPath from '../contextToPath'
 import stepsToReproduce from '../stepsToReproduce'
 
@@ -42,6 +40,10 @@ it('report the thoughtspace at the start, the steps up to the end, and the thoug
     setCursor(['b']),
     indent(),
   ])
+
+  expect(store.getState().undoPatches.flatMap(patch => patch.ops.map(op => op.path))).not.toContainEqual(
+    expect.stringMatching(/^\/thoughts\/lexemeIndex(?:\/|$)/),
+  )
 
   // start after b was created, end after c was indented
   expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(`## Steps to Reproduce
@@ -239,25 +241,41 @@ it('retains incoming siblings and payloads while reconstructing a local reorder 
   expect(db.project()).toBe(current.thoughts)
 })
 
-it.each([
-  ['ordinary', '=renamed'],
-  ['=attribute', 'renamed'],
-  ['ordinary', '=attribute'],
-])('restores diagnostic child keys when renaming %s to %s', (oldValue, newValue) => {
-  store.dispatch([
-    importText({ text: '- parent\n  - ordinary\n  - =attribute\n    - child' }),
-    setCursor(['parent', oldValue]),
-  ])
-  const before = thoughtspaceHistory.capture(store.getState())
+it('retains incoming reparenting while reconstructing a local reorder for a report', () => {
+  store.dispatch([importText({ text: '- a\n- b\n- d' }), setCursor(['a']), moveThoughtDown()])
+  const b = contextToThought(store.getState(), ['b'])!
+  const d = contextToThought(store.getState(), ['d'])!
+  const incoming = db.transact(transaction =>
+    transaction.update({
+      thoughtIndexUpdates: { [b.id]: { ...b, parentId: d.id } },
+      movePlacements: { [b.id]: null },
+    }),
+  )
+  store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
 
-  store.dispatch(editThought(['parent', oldValue], newValue))
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
 
-  const state = store.getState()
-  const after = thoughtspaceHistory.capture(state)
-  const restored = applyPatch(after, state.undoPatches.at(-1)!.ops, false, false).newDocument
+\`\`\`
+- a
+- d
+  - b
+\`\`\`
 
-  // Attribute names key the parent's child map; exporting the outline alone would not detect stale keys.
-  expect(restored.thoughts).toEqual(before.thoughts)
+1. Set the cursor on \`a\`.
+2. Move Thought Down.
+
+## Current Behavior
+
+\`\`\`
+- a
+- d
+  - b
+\`\`\`
+
+## Expected Behavior
+
+
+`)
 })
 
 it('describes a multicursor move by its invocation and selection without inferring a single moved thought', () => {
@@ -626,16 +644,16 @@ it('describes a same-parent drag across siblings by the thought that reproduces 
 
   const state = store.getState()
   const shiftedSibling = contextToThought(state, ['c'])!
-  const shiftedRankPath = `/thoughts/thoughtIndex/${shiftedSibling.id}/rank`
+  const shiftedPositionPath = `/thoughts/childPositions/${shiftedSibling.parentId}/${shiftedSibling.id}`
   // Position shifts also touch c, but moving c after b would not reproduce the recorded reorder.
   const undoPatches = state.undoPatches.map(patch => ({
     ...patch,
     ops: [
-      ...patch.ops.filter(operation => operation.path === shiftedRankPath),
-      ...patch.ops.filter(operation => operation.path !== shiftedRankPath),
+      ...patch.ops.filter(operation => operation.path === shiftedPositionPath),
+      ...patch.ops.filter(operation => operation.path !== shiftedPositionPath),
     ],
   }))
-  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedRankPath)
+  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedPositionPath)
 
   expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
 
@@ -688,17 +706,17 @@ it('describe a drag and drop by where the thought lands', () => {
   ])
 
   const state = store.getState()
-  const shiftedSiblingId = contextToPath(state, ['a', 'd'])!.at(-1)!
-  const shiftedRankPath = `/thoughts/thoughtIndex/${shiftedSiblingId}/rank`
-  // Put the derived sibling-rank change before the actual reparenting, independent of random thought ids.
+  const shiftedSibling = contextToThought(state, ['a', 'd'])!
+  const shiftedPositionPath = `/thoughts/childPositions/${shiftedSibling.parentId}/${shiftedSibling.id}`
+  // Put the derived sibling-position change before the actual reparenting, independent of random thought ids.
   const undoPatches = state.undoPatches.map(patch => ({
     ...patch,
     ops: [
-      ...patch.ops.filter(operation => operation.path === shiftedRankPath),
-      ...patch.ops.filter(operation => operation.path !== shiftedRankPath),
+      ...patch.ops.filter(operation => operation.path === shiftedPositionPath),
+      ...patch.ops.filter(operation => operation.path !== shiftedPositionPath),
     ],
   }))
-  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedRankPath)
+  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedPositionPath)
 
   expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
 

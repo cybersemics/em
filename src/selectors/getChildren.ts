@@ -6,6 +6,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtContext from '../@types/ThoughtContext'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtReaderState from '../@types/ThoughtReaderState'
 import getSortPreference from '../selectors/getSortPreference'
 import appendToPath from '../util/appendToPath'
 import {
@@ -44,13 +45,13 @@ export const isVisible = _.curry((state: State, child: Thought): boolean => {
 })
 
 /** Returns the thoughts for the given thought id. If the children have not changed, returns the same object reference. If given null, returns an empty array. */
-export const getAllChildren = (state: State, thoughtId: ThoughtId | null): readonly ThoughtId[] => {
+export const getAllChildren = (state: ThoughtReaderState, thoughtId: ThoughtId | null): readonly ThoughtId[] => {
   if (!thoughtId) return NO_THOUGHT_IDS
   return state.thoughts.getChildren(thoughtId)
 }
 
 /** Returns the subthoughts (as Thoughts) in canonical sibling order. */
-export const getAllChildrenAsThoughts = (state: State, id: ThoughtId | null): Thought[] => {
+export const getAllChildrenAsThoughts = (state: ThoughtReaderState, id: ThoughtId | null): Thought[] => {
   const children = childIdsToThoughts(state, getAllChildren(state, id))
   return children.length === 0 ? NO_CHILDREN : children
 }

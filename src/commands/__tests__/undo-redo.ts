@@ -1565,7 +1565,7 @@ describe('operation receipts', () => {
     expect(store.getState().thoughts.getChildren(HOME_TOKEN)).toEqual([a.id, b.id])
     expect(store.getState().redoPatches.at(-1)!.ops).toContainEqual({
       op: 'replace',
-      path: `/thoughts/thoughtIndex/${a.id}/rank`,
+      path: `/thoughts/childPositions/${a.parentId}/${a.id}`,
       value: 1,
     })
     store.dispatch(redo({ count: 1 }))

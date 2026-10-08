@@ -6,6 +6,7 @@ import Patch from '../@types/Patch'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtReaderState from '../@types/ThoughtReaderState'
 import { commandById, formatKeyboardShortcut, gestureString } from '../commands'
 import { HOME_TOKEN } from '../constants'
 import head from '../util/head'
@@ -24,8 +25,8 @@ import undoSteps from './undoSteps'
 /** A patch with the states before and after it. */
 interface Snapshot {
   patch: Patch
-  before: State
-  after: State
+  before: ThoughtReaderState
+  after: ThoughtReaderState
 }
 
 /** Plain keyed diagnostics used only while reconstructing reports, not live document snapshots. */
@@ -59,14 +60,16 @@ const code = (s: string) => `\`${s}\``
 const name = (value: string) => (value ? code(value) : 'the empty thought')
 
 /** Names the thought at the given path preceded by a space, or returns an empty string if there is no such thought so that a description reads naturally either way. */
-const target = (state: State, path: Path | null): string => {
+const target = (state: ThoughtReaderState, path: Path | null): string => {
   const value = path ? headValue(state, path) : undefined
   return value !== undefined ? ` ${name(value)}` : ''
 }
 
-/** The ids of the thoughts whose entries a patch touches, from its operation paths. */
+/** The ids of thoughts whose records or keyed sibling positions a patch touches. */
 const touchedIds = (patch: Patch): ThoughtId[] =>
-  uniq(patch.ops.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
+  uniq(
+    patch.ops.flatMap(op => op.path.match(/^\/thoughts\/(?:thoughtIndex\/|childPositions\/[^/]+\/)([^/]+)/)?.[1] ?? []),
+  ) as ThoughtId[]
 
 /** Describes how a command was invoked. */
 const describeCommandInvocation = (patch: Patch): string => {
@@ -103,26 +106,26 @@ const deletedIds = ({ patch, before, after }: Snapshot): ThoughtId[] =>
   touchedIds(patch).filter(id => before.thoughts.getThought(id) && !after.thoughts.getThought(id))
 
 /** The topmost thoughts of a set in the given state, i.e. those whose parent is not in the set. */
-const topmost = (state: State, ids: ThoughtId[]): ThoughtId[] =>
+const topmost = (state: ThoughtReaderState, ids: ThoughtId[]): ThoughtId[] =>
   ids.filter(id => !ids.includes(state.thoughts.getThought(id)!.parentId))
 
 /** The ids of the selected thoughts in document order. */
-const selectionIds = (state: State): ThoughtId[] =>
+const selectionIds = (state: ThoughtReaderState): ThoughtId[] =>
   documentSort(state, Object.values(state.multicursors)).map(path => head(path))
 
 /** Names a thought in the given state by its value, or as the root. */
-const describeThought = (state: State, id: ThoughtId): string =>
+const describeThought = (state: ThoughtReaderState, id: ThoughtId): string =>
   isRoot([id]) ? 'the root' : name(state.thoughts.getThought(id)?.value ?? '')
 
 /** The value of a thought followed by those of its only-child descendants, separated by slashes, e.g. =pin/true. Stops at an empty value. */
-const chain = (state: State, id: ThoughtId): string => {
+const chain = (state: ThoughtReaderState, id: ThoughtId): string => {
   const children = getChildrenRanked(state, id)
   const { value } = state.thoughts.getThought(id)!
   return children.length === 1 && children[0].value ? `${value}/${chain(state, children[0].id)}` : value
 }
 
 /** The nearest meta attribute at or above a thought in the given state, i.e. the attribute whose value the thought is part of. */
-const attributeRoot = (state: State, id: ThoughtId): ThoughtId | undefined => {
+const attributeRoot = (state: ThoughtReaderState, id: ThoughtId): ThoughtId | undefined => {
   const thought = state.thoughts.getThought(id)
   return !thought || isRoot([id]) ? undefined : isAttribute(thought.value) ? id : attributeRoot(state, thought.parentId)
 }
@@ -187,16 +190,16 @@ const attributeChanges = (snapshot: Snapshot): string => {
 }
 
 /** Returns true if the given thought is the cursor thought in the given state. */
-const isCursor = (state: State, id: ThoughtId): boolean => !!state.cursor && head(state.cursor) === id
+const isCursor = (state: ThoughtReaderState, id: ThoughtId): boolean => !!state.cursor && head(state.cursor) === id
 
 /** The siblings of a thought without the meta attributes, which are hidden and so cannot serve as a landmark. */
-const visibleSiblings = (state: State, id: ThoughtId) =>
+const visibleSiblings = (state: ThoughtReaderState, id: ThoughtId) =>
   getChildrenRanked(state, state.thoughts.getThought(id)!.parentId).filter(
     sibling => sibling.id === id || !isAttribute(sibling.value),
   )
 
 /** Describes where a thought sits in the given state relative to its siblings, or its parent when it has none, e.g. " after `b`". */
-const placement = (state: State, id: ThoughtId): string => {
+const placement = (state: ThoughtReaderState, id: ThoughtId): string => {
   const { parentId } = state.thoughts.getThought(id)!
   const siblings = visibleSiblings(state, id)
   const i = siblings.findIndex(sibling => sibling.id === id)
@@ -212,7 +215,7 @@ const placement = (state: State, id: ThoughtId): string => {
 }
 
 /** Describes the creation of a thought by the command that creates it, e.g. "New Subthought `e`.". The value is read from the given state so that a value typed by a later patch of the same step can be used. */
-const describeNewThought = (snapshot: Snapshot, state: State): string => {
+const describeNewThought = (snapshot: Snapshot, state: ThoughtReaderState): string => {
   const { before, after } = snapshot
   const { metadata } = snapshot.patch
   const type = metadata.source === 'command' ? metadata.commandId : metadata.actionTypes[0]
@@ -400,14 +403,14 @@ const describeStep = (snapshots: Snapshot[]): string => {
 }
 
 /** Describes setting the cursor on the thought at the given path. */
-const describeSetCursor = (state: State, path: Path) => `Set the cursor on${target(state, path)}.`
+const describeSetCursor = (state: ThoughtReaderState, path: Path) => `Set the cursor on${target(state, path)}.`
 
 /** Describes selecting the given thoughts, e.g. "Select `a`, `b`, and `c`.". */
-const describeSelect = (state: State, ids: ThoughtId[]) =>
+const describeSelect = (state: ThoughtReaderState, ids: ThoughtId[]) =>
   `Select ${joinConjunction(ids.map(id => name(state.thoughts.getThought(id)?.value ?? '')))}.`
 
 /** Exports the thoughtspace of the given state as plain text with meta attributes, without the root. Returns an empty string if the thoughtspace is empty, which exports as the root's placeholder value rather than as nothing. */
-const exportTree = (state: State): string =>
+const exportTree = (state: ThoughtReaderState): string =>
   getChildrenRanked(state, HOME_TOKEN).length
     ? // removeHome wraps the children of the root in newlines
       removeHome(exportContext(state, [HOME_TOKEN], 'text/plain')).replace(/^\n|\n$/g, '')
@@ -454,7 +457,7 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
   )
 
   /** The state at a position: the current state, the state before the oldest patch of the step ahead of it, or the state after the newest patch of the step behind it. */
-  const stateAt = (p: number): State =>
+  const stateAt = (p: number): ThoughtReaderState =>
     p === position
       ? state
       : p > position

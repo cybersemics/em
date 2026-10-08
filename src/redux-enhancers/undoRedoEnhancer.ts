@@ -25,7 +25,6 @@ import simplifyPath from '../selectors/simplifyPath'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import debugLog from '../util/debugLog'
 import getUndoStepCount from '../util/getUndoStepCount'
-import hashThought from '../util/hashThought'
 import headValue from '../util/headValue'
 import isAttribute from '../util/isAttribute'
 import reducerFlow from '../util/reducerFlow'
@@ -217,45 +216,33 @@ const diffState = (
     !mergeOps.some(op => op.path === '/thoughts' || op.path.startsWith('/thoughts/'))
   let scope =
     !sameThoughts && (newValue.thoughts === value.thoughts || (changes && !changes.reset))
-      ? { thoughtIds: new Set(changes?.thoughtIds), lexemeKeys: new Set<string>() }
+      ? {
+          thoughtIds: new Set(changes?.thoughtIds),
+          parentIds: new Set(changes?.childrenChangedIds),
+        }
       : undefined
 
   if (scope) {
-    const { thoughtIds, lexemeKeys } = scope
-    // Native child order includes payload-less nodes: visible siblings can change rank without changing their own rows.
-    for (const id of changes?.childrenChangedIds ?? []) {
-      thoughtIds.add(id)
-      value.thoughts.getChildren(id).forEach(child => thoughtIds.add(child))
-      newValue.thoughts.getChildren(id).forEach(child => thoughtIds.add(child))
-    }
+    const { thoughtIds, parentIds } = scope
     for (const id of changes?.thoughtIds ?? []) {
       const before = value.thoughts.getThought(id)
       const after = newValue.thoughts.getThought(id)
-      // Visibility and attribute names affect the parent's child map; ordinary text edits need no parent capture.
-      if (
-        !!before !== !!after ||
-        (before?.value !== after?.value && (isAttribute(before?.value ?? '') || isAttribute(after?.value ?? '')))
-      ) {
-        if (before) thoughtIds.add(before.parentId)
-        if (after) thoughtIds.add(after.parentId)
+      // Gaining or losing a payload changes visible children even if the native sibling order is unchanged.
+      if (!!before !== !!after) {
+        if (before) parentIds.add(before.parentId)
+        if (after) parentIds.add(after.parentId)
       }
     }
     for (const op of mergeOps) {
       if (op.path !== '/thoughts' && !op.path.startsWith('/thoughts/')) continue
       const [, , index, key] = op.path.split('/')
-      if (!key || (index !== 'thoughtIndex' && index !== 'lexemeIndex')) {
+      if (!key || (index !== 'thoughtIndex' && index !== 'childPositions')) {
         scope = undefined
         break
       }
       if (index === 'thoughtIndex') thoughtIds.add(unescapePathComponent(key) as ThoughtId)
-      else lexemeKeys.add(unescapePathComponent(key))
+      else parentIds.add(unescapePathComponent(key) as ThoughtId)
     }
-    scope?.thoughtIds.forEach(id => {
-      const before = value.thoughts.getThought(id)
-      const after = newValue.thoughts.getThought(id)
-      if (before) lexemeKeys.add(hashThought(before.value))
-      if (after) lexemeKeys.add(hashThought(after.value))
-    })
   }
 
   let previous: State | ReturnType<typeof thoughtspaceHistory.capture> = sameThoughts
@@ -528,8 +515,6 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         // Command Center opened by the multicursor alert middleware) is not restored by undo.
         (!isUndoable(actionType) && !(state.isMulticursorExecuting && multicursorActionTypes.has(actionType))) ||
         // ignore the first importText since it is part of app initialization and should not be undoable
-        // otherwise the edit merge logic below will create an undo patch with an invalid lexemeIndex/000
-        // See: https://github.com/cybersemics/em/issues/1494
         (actionType === 'importText' && !newState.undoPatches.length)
       ) {
         return newState

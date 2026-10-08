@@ -1,9 +1,9 @@
 import { unescape as decodeCharacterEntities } from 'lodash'
 import Context from '../@types/Context'
 import MimeType from '../@types/MimeType'
-import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtReaderState from '../@types/ThoughtReaderState'
 import { REGEX_TAGS } from '../constants'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import { getChildrenRanked } from '../selectors/getChildren'
@@ -50,7 +50,7 @@ interface Options {
 
 /** Exports the navigable subtree of the given context. */
 export const exportContext = (
-  state: State,
+  state: ThoughtReaderState,
   contextOrThoughtId: Context | ThoughtId,
   format: MimeType = 'text/html',
   { indent = 0, title, excludeMarkdownFormatting, excludeMeta, excludeArchived, maxDepth }: Options = {},

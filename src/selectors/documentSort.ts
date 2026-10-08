@@ -1,10 +1,10 @@
 import ComparatorValue from '../@types/ComparatorValue'
 import Path from '../@types/Path'
-import State from '../@types/State'
+import ThoughtReaderState from '../@types/ThoughtReaderState'
 import sort from '../util/sort'
 
 /** Sorts thoughts in document order. Returns a new array of paths. */
-const documentSort = (state: State, paths: Path[]) => {
+const documentSort = (state: ThoughtReaderState, paths: Path[]) => {
   return sort(paths, (a, b) => {
     for (let i = 0; i < Math.min(a.length, b.length); i++) {
       const aRank = state.thoughts.getPosition(a[i]) ?? 0

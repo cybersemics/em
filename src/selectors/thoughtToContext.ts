@@ -1,6 +1,6 @@
 import Context from '../@types/Context'
-import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtReaderState from '../@types/ThoughtReaderState'
 import { EM_TOKEN, HOME_PATH } from '../constants'
 import getThoughtById from '../selectors/getThoughtById'
 import isRoot from '../util/isRoot'
@@ -8,7 +8,11 @@ import isRoot from '../util/isRoot'
 /**
  * Generates the Context for a Thought by traversing upwards to the root thought.
  */
-const thoughtToContext = (state: State, thoughtId: ThoughtId, visited: Set<ThoughtId> = new Set()): Context => {
+const thoughtToContext = (
+  state: ThoughtReaderState,
+  thoughtId: ThoughtId,
+  visited: Set<ThoughtId> = new Set(),
+): Context => {
   // Detect cycles
   if (visited.has(thoughtId)) {
     console.error(`Cycle detected in parent chain for thought: ${thoughtId}`)

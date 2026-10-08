@@ -20,7 +20,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **attribute / meta-attribute** — A child thought whose value starts with `=` (e.g. `=pin`, `=style`, `=view`). Meta-attributes change app behaviour for their parent (or, with `=children`/`=grandchildren`, for descendants). `findDescendant` scans current children by value, choosing the first matching sibling. See [metaprogramming.md](metaprogramming.md).
 
-**attribute-child keys** — The `=attribute` keys retained in serialized `childrenMap` for history diagnostics and JSON export. Live lookup uses `findDescendant` to scan current children; there is no separate persistent attribute-child index. See [persistence.md → Derived view](persistence.md#derived-view).
+**attribute-child keys** — The `=attribute` keys retained in serialized `childrenMap` for JSON export. Live lookup uses `findDescendant` to scan current children; there is no separate persistent attribute-child index. See [persistence.md → Derived view](persistence.md#derived-view).
 
 **autocrop** — Vertical: hides the empty space above a deep cursor by translating the layout container upward and counter-scrolling to keep visible thoughts stable. Horizontal: see *indent*. See [layout-rendering.md → useAutocrop](layout-rendering.md#useautocrop-vertical-autocrop).
 
@@ -38,7 +38,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **caret** — The native browser selection (`window.getSelection()`), typically collapsed to a vertical bar. Distinct from *cursor*. Direct access is gated through [`device/selection.ts`](../src/device/selection.ts) (lint-enforced). See [cursor-and-caret.md](cursor-and-caret.md).
 
-**childrenMap** — Legacy `Index<ThoughtId>` materialized only for history diagnostics and JSON export. Keyed by `ThoughtId` for regular children and duplicate attributes, but by value for the first meta-attribute (e.g. `'=pin'`). Live `Thought` records have no child map; the document reader provides `getChildren`.
+**childrenMap** — Legacy `Index<ThoughtId>` materialized only for JSON export. Keyed by `ThoughtId` for regular children and duplicate attributes, but by value for the first meta-attribute (e.g. `'=pin'`). Live `Thought` records have no child map; the document reader provides `getChildren`.
 
 **cliff** — A drop in visible depth between consecutive thoughts. `cliff = next.depth - node.depth` when negative; `cliff = -3` means three levels shallower. Drives extra padding (`cliffPadding`) and the number of `DropEnd` zones rendered. See [`DropCliff.tsx`](../src/components/DropCliff.tsx) and [layout-rendering.md → usePositionedThoughts](layout-rendering.md#usepositionedthoughts-x-and-y).
 

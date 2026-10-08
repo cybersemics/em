@@ -1,8 +1,8 @@
 import Context from '../@types/Context'
 import Index from '../@types/IndexType'
-import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtReaderState from '../@types/ThoughtReaderState'
 import { EM_TOKEN } from '../constants'
 import childIdsToThoughts from '../selectors/childIdsToThoughts'
 import { getAllChildren } from '../selectors/getChildren'
@@ -13,7 +13,7 @@ import isRoot from '../util/isRoot'
  * Recursively finds the thought for the given context.
  */
 const recursiveThoughtFinder = (
-  state: State,
+  state: ThoughtReaderState,
   thought: Thought,
   target: Context,
   targetIndex = 0,
@@ -45,7 +45,7 @@ const recursiveThoughtFinder = (
   })
 }
 /** DEPRECATED. Recursively finds the thought represented by the context and returns the id. This is the part of the independent migration strategy. Will likely be changed to some other name later. If more than one thought has the same value in the same context, traveerses the first. */
-const contextToThoughtId = (state: State, thoughts: Context): ThoughtId | null => {
+const contextToThoughtId = (state: ThoughtReaderState, thoughts: Context): ThoughtId | null => {
   if (isRoot(thoughts)) return thoughts[0] as ThoughtId
 
   const startsWithEM = thoughts[0] === EM_TOKEN

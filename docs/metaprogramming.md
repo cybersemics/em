@@ -16,7 +16,7 @@ Meta-attribute children are hidden in normal view. Toggle the **Show Hidden Thou
 
 Attributes are ordinary TreeCRDT children. `state.thoughts.getChildren(id)` reads their canonical order from the current tree; `findDescendant` scans current children for each value step. Duplicate attributes remain in traversal, but lookup selects the first in sibling order. There is no retained attribute cache, so child renames are visible immediately.
 
-`childrenMap` is only materialized for history diagnostics and JSON export, not stored on live `Thought` records.
+`childrenMap` is only materialized for JSON export, not stored on live `Thought` records.
 
 The four selectors most code uses:
 
