@@ -525,7 +525,7 @@ const CommandCenter = () => {
   // `standardViewOpacity` and `expandedViewOpacity`, but both are derived from
   // the same `stageProgress` value to ensure smooth transitions between stages.
   const standardViewOpacity = useTransform(stageProgress, [0, 0.9], [1, 0])
-  const expandedViewOpacity = useTransform(stageProgress, [0.3, 1], [0, 1], { ease: easeIn })
+  const expandedViewOpacity = useTransform(stageProgress, [0.2, 1], [0, 1], { ease: easeIn })
   const standardPointerEvents = useTransform(stageProgress, p => (p > 0.5 ? 'none' : 'auto')) as MotionValue<
     'none' | 'auto'
   >
