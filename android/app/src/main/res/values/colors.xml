@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Mirrors colors.highlight in src/colors.config.ts (light theme), the color of the drop hover bar. -->
-    <color name="themeHighlight">#4169E1</color>
+    <!-- Mirrors colors.selectionHandle in src/colors.config.ts (royal blue). -->
+    <color name="selectionHandle">#4169E1</color>
 </resources>

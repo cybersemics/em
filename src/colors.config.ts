@@ -31,7 +31,7 @@ const colors = {
     gray75: 'rgba(191, 191, 191, 1)', // #bfbfbf
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9, this is used for disabled things + text color, unlike gray66 it is the same for both light and dark
     green: 'rgba(0, 214, 136, 1)', // #00d688
-    highlight: 'rgba(173, 216, 230, 1)', // #add8e6 (lightblue) – mirrored in android/app/src/main/res/values-night/colors.xml
+    highlight: 'rgba(173, 216, 230, 1)', // #add8e6 (lightblue)
     highlight0: 'rgba(173, 216, 230, 0)', // #add8e6 (lightblue - 0% alpha [used in pulseBackgroundHighlight animation])
     highlight10: 'rgba(173, 216, 230, 0.1)', // #add8e6 (lightblue - 10% alpha [used in pulseBackgroundHighlight animation])
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
@@ -41,6 +41,7 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
+    selectionHandle: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue) – mirrored in android/app/src/main/res/values/colors.xml
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014
@@ -148,7 +149,7 @@ const colors = {
     gray75: 'rgba(64, 64, 64, 1)', // #404040
     gray: 'rgba(169, 169, 169, 1)', // #a9a9a9
     green: 'rgba(0, 214, 136, 1)', // #00d688
-    highlight: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue) – mirrored in android/app/src/main/res/values/colors.xml
+    highlight: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue)
     highlight0: 'rgba(173, 216, 230, 0)', // #add8e6 (lightblue - 0% alpha [used in pulseBackgroundHighlight animation])
     highlight10: 'rgba(173, 216, 230, 0.1)', // #add8e6 (lightblue - 10% alpha [used in pulseBackgroundHighlight animation])
     highlight2: 'rgba(155, 170, 220, 1)', // (slight variation on highlight color for alternating highlights)
@@ -158,6 +159,7 @@ const colors = {
     pink: 'rgba(238, 130, 238, 1)', // #ee82ee
     purple: 'rgba(170, 128, 255, 1)', // #aa80ff
     red: 'rgba(255, 87, 61, 1)', // #ff573d
+    selectionHandle: 'rgba(65, 105, 225, 1)', // #4169e1 (royalblue) – mirrored in android/app/src/main/res/values/colors.xml
     vividHighlight: 'rgba(99, 201, 234, 1)', // #63c9ea
     white: 'rgba(255, 255, 255, 1)',
     yellow: 'rgba(255, 208, 20, 1)', // #ffd014

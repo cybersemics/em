@@ -117,13 +117,13 @@ The same reasoning applies outside `Editable`, to anything the user taps that is
 
 ### Caret color
 
-On mobile the caret and selection handles are drawn in em's `highlight` color, the same color as the drop hover bar. Each platform needs its own mechanism, because the handles are drawn natively:
+On mobile, em's dark theme draws the caret and selection handles in `selectionHandle` (royal blue, `#4169e1`). In the light theme the web caret keeps the platform's native color. Each platform needs its own mechanism, because the handles are drawn natively:
 
-- **Android app.** The WebView tints its native handles with the activity theme's `colorAccent`, which [`styles.xml`](../android/app/src/main/res/values/styles.xml) sets to `themeHighlight`. The color resources in `values/colors.xml` and `values-night/colors.xml` mirror `highlight` from [`colors.config.ts`](../src/colors.config.ts). The native theme follows the system's dark mode rather than em's Theme setting, and only picks up a change on the next launch.
-- **iOS (Safari and the app).** WebKit tints the caret, the selection handles, and the selection highlight with an explicit CSS `caret-color`.
+- **Android app.** The WebView tints its native handles with the activity theme's `colorAccent`, which [`styles.xml`](../android/app/src/main/res/values/styles.xml) sets to the `selectionHandle` color resource in `values/colors.xml`, mirroring the token in [`colors.config.ts`](../src/colors.config.ts). The native theme cannot see em's Theme setting, so the handles are royal blue in both themes.
+- **iOS (Safari and the app).** WebKit tints the caret, the selection handles, and the selection highlight with an explicit CSS `caret-color`. They cannot be colored separately — iOS ignores `::selection` — so in the dark theme the selection highlight is a royal blue tint too.
 - **Mobile Chrome.** Chrome draws the handles in its own color, which no CSS reaches; `caret-color` colors only the caret.
 
-The `caret-color` is set by a global style on `body[data-device=mobile]` in [`panda.config.ts`](../panda.config.ts), so it follows em's Theme setting. It is set on the body rather than on the editable so that the editables inherit it: the `hideCaret` animations that hide the real caret behind the [faux caret](../src/components/FauxCaret.tsx) on iOS Safari animate `caret-color` on the `LayoutTree`, and a value set on the editable itself would override the inherited, animated one. Puppeteer tests make the caret transparent everywhere to keep screenshots stable.
+The `caret-color` is set by a global style on `body[data-device=mobile][data-color-mode=dark]` in [`panda.config.ts`](../panda.config.ts), so it follows em's Theme setting. It is set on the body rather than on the editable so that the editables inherit it: the `hideCaret` animations that hide the real caret behind the [faux caret](../src/components/FauxCaret.tsx) on iOS Safari animate `caret-color` on the `LayoutTree`, and a value set on the editable itself would override the inherited, animated one. Puppeteer tests make the caret transparent everywhere to keep screenshots stable.
 
 ### Caret restoration on iOS
 
