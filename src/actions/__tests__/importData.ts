@@ -1512,13 +1512,14 @@ describe('paste over a selection', () => {
     expect(thought).toBeTruthy()
     selectRange(thought!, 'One '.length, 'One two'.length)
 
-    // importData trims plain text itself, but inserts single-line HTML as is
+    // Copied within em, whose HTML is inserted as is, unlike external HTML or plain text, which importData trims itself.
     await act(async () => {
       store.dispatch((dispatch, getState) =>
         dispatch(
           importDataActionCreator({
             path: contextToPath(getState(), ['One two'])!,
             html: "<meta charset='utf-8'>One ",
+            isEmText: true,
           }),
         ),
       )
@@ -1547,6 +1548,7 @@ describe('paste over a selection', () => {
           importDataActionCreator({
             path: contextToPath(getState(), ['Hello'])!,
             html: "<meta charset='utf-8'> 🧠",
+            isEmText: true,
           }),
         ),
       )
