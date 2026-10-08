@@ -1,5 +1,6 @@
 import DOMPurify from 'dompurify'
 import _ from 'lodash'
+import { marked } from 'marked'
 import { parse } from 'text-block-parser'
 import Block from '../@types/Block'
 import { ALLOWED_ATTR, ALLOWED_TAGS, REGEX_NONFORMATTING_HTML, REGEX_PLAINTEXT_BULLET } from '../constants'
@@ -272,12 +273,11 @@ const blocksToHtml = (parsedBlocks: Block[]): string =>
 
 /** Parses plaintext, indented text, markdown, RTF, or HTML and converts it into HTML that himalaya can parse. */
 const textToHtml = (input: string) => {
-  // marked discards block-level HTML up to the next blank line, so only input that is not HTML is converted from markdown here.
+  // marked discards block-level HTML up to the next blank line, so only markdown without any is converted here.
   // Markdown wrapped in HTML is left for parse-then-route (#5175) to unwrap after sanitizing, and convert as pure markdown.
-  const isHtmlInput = REGEX_NONFORMATTING_HTML.test(input) || REGEX_STARTS_WITH_CLOSED_TAG.test(input.trim())
   const normalizedInput = REGEX_RTF.test(input)
     ? rtfToTaggedText(input)
-    : !isHtmlInput && isMarkdown(input)
+    : isMarkdown(input) && !marked.lexer(input.trim()).some(token => token.type === 'html')
       ? markdownToText(input)
       : input
 

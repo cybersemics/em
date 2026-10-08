@@ -920,6 +920,58 @@ it('import a dropped HTML file that looks like markdown', async () => {
 `)
 })
 
+// https://github.com/cybersemics/em/issues/5172
+// HTML within code is text, so the file must still be imported as markdown, and the code must keep its tags as text.
+it('import a dropped markdown file with HTML in its code', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const markdown = `# Tags
+
+- Wrap a list in \`<ul>\`
+- Wrap an item in \`<li>\`
+
+\`\`\`
+<ul><li>Apple</li></ul>
+\`\`\`
+`
+
+  store.dispatch([
+    importText({ text: '- a' }),
+    (dispatch, getState) =>
+      dispatch(
+        importFiles({
+          path: contextToPath(getState(), ['a'])!,
+          files: [{ lastModified: Date.now(), name: 'tags.md', size: markdown.length, text: async () => markdown }],
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), ['a'], 'text/html')
+
+  cleanup()
+
+  expect(exported).toBe(`<ul>
+  <li>a${EMPTY_SPACE}
+    <ul>
+      <li>Tags${EMPTY_SPACE}${EMPTY_SPACE}${EMPTY_SPACE}
+        <ul>
+          <li>Wrap a list in <code>&lt;ul&gt;</code></li>
+          <li>Wrap an item in <code>&lt;li&gt;</code></li>
+          <li>&lt;ul&gt;&lt;li&gt;Apple&lt;/li&gt;&lt;/ul&gt;${EMPTY_SPACE.repeat(5)}
+            <ul>
+              <li>=code</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+</ul>`)
+})
+
 // TODO: Indentation broke when switching from importText to importData
 it.skip(`import bold thoughts with bold descendants`, async () => {
   const text = `

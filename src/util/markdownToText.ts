@@ -36,7 +36,8 @@ export default function markdownToText(markdown: string): string {
           str += `<img src="${token.href}" alt="${token.text}" title="${token.title}" />`
           break
         case 'codespan':
-          str += `<code>${token.text}</code>`
+          // & is left alone, since pasted text arrives already escaped
+          str += `<code>${token.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`
           break
 
         default:
@@ -183,7 +184,7 @@ export default function markdownToText(markdown: string): string {
             result += `${indent(stack.length + 2)}- ${token.title}\n`
           break
         case 'code':
-          result += `${indent(stack.length)}- ${token.text.replace(/\n/g, '&#10;')}\n`
+          result += `${indent(stack.length)}- ${token.text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '&#10;')}\n`
           result += `${indent(stack.length + 1)}- =code\n`
           break
         case 'table': {
