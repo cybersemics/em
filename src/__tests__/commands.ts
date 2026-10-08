@@ -3,6 +3,7 @@ import {
   formatKeyboardShortcut,
   handleGestureSegment,
   hashCommand,
+  hashKeyDown,
   keyDown,
   parseCommandShortcut,
 } from '../commands'
@@ -109,6 +110,52 @@ describe('parseCommandShortcut', () => {
     it('a plain multi-word label', () => {
       expect(parseCommandShortcut('new thought')).toBeNull()
     })
+  })
+})
+
+describe('hashKeyDown', () => {
+  /** Builds a keydown event, forcing the deprecated keyCode that jsdom otherwise derives from key. */
+  const keyDownEvent = (props: KeyboardEventInit & { keyCode: number }): KeyboardEvent => {
+    const event = new KeyboardEvent('keydown', props)
+    Object.defineProperty(event, 'keyCode', { get: () => props.keyCode })
+    return event
+  }
+
+  // macOS composes Option + N as a dead key, remapping key and keyCode but not code. Captured from a physical
+  // keypress on both browsers. https://github.com/cybersemics/em/issues/5731
+  it('resolves an Option chord that macOS composed as a dead key in Chrome, which reports key Dead', () => {
+    expect(hashKeyDown(keyDownEvent({ key: 'Dead', code: 'KeyN', keyCode: 192, metaKey: true, altKey: true }))).toBe(
+      hashCommand({ key: 'n', meta: true, alt: true }),
+    )
+  })
+
+  it('resolves an Option chord that macOS composed as a dead key in Safari, which reports key ~', () => {
+    expect(hashKeyDown(keyDownEvent({ key: '~', code: 'KeyN', keyCode: 192, metaKey: true, altKey: true }))).toBe(
+      hashCommand({ key: 'n', meta: true, alt: true }),
+    )
+  })
+
+  it('resolves a dead-key Option chord that carries Shift rather than Command', () => {
+    expect(hashKeyDown(keyDownEvent({ key: 'Dead', code: 'KeyN', keyCode: 192, altKey: true, shiftKey: true }))).toBe(
+      hashCommand({ key: 'n', alt: true, shift: true }),
+    )
+  })
+
+  it('prefers keyCode over code, so that a layout reporting a letter faithfully is unaffected', () => {
+    // AZERTY reports keyCode 65 for the physical KeyQ, which must still hash as A rather than Q.
+    expect(hashKeyDown(keyDownEvent({ key: 'a', code: 'KeyQ', keyCode: 65, altKey: true }))).toBe(
+      hashCommand({ key: 'a', alt: true }),
+    )
+  })
+
+  it('ignores code during IME composition, where keyCode is the 229 sentinel and no Option is held', () => {
+    expect(hashKeyDown(keyDownEvent({ key: 'Process', code: 'KeyA', keyCode: 229 }))).toBe('PROCESS')
+  })
+
+  it('hashes a key that names no letter or digit', () => {
+    expect(
+      hashKeyDown(keyDownEvent({ key: 'ArrowDown', code: 'ArrowDown', keyCode: 40, metaKey: true, shiftKey: true })),
+    ).toBe(hashCommand({ key: 'ArrowDown', meta: true, shift: true }))
   })
 })
 

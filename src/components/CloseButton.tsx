@@ -23,18 +23,6 @@ const BaseCloseButton = ({
 }: PropsWithChildren<CloseButtonProps>) => {
   const fontSize = useSelector(state => state.fontSize)
   const padding = fontSize / 2 + 2
-  const circleStyles = circled
-    ? {
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: '50%',
-        transform: 'translate(50%, -50%)',
-        background: 'inherit',
-        border: 'inherit',
-        padding: '0.5rem',
-      }
-    : {}
   const letterStyles = lettered
     ? {
         fontSize,
@@ -51,7 +39,19 @@ const BaseCloseButton = ({
         top: 0,
         right: 0,
         opacity: transparent ? 0 : 1,
-        ...circleStyles,
+        // Spread inline rather than from a variable, because PandaCSS does not extract styles spread from a variable.
+        ...(circled
+          ? {
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: '50%',
+              transform: 'translate(50%, -50%)',
+              background: 'inherit',
+              border: 'inherit',
+              padding: '0.5rem',
+            }
+          : {}),
       })}
       style={letterStyles}
       aria-label={disableSwipeToDismiss ? 'no-swipe-to-dismiss' : undefined}
