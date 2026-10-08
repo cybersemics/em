@@ -885,6 +885,41 @@ it('import the same markdown with importText and importFiles', async () => {
   expect(exportedFiles).toBe(`- files${expected}`)
 })
 
+// https://github.com/cybersemics/em/issues/5172
+// The CSS id selector at the start of a line matches isMarkdown, but the file must still be imported as HTML.
+it('import a dropped HTML file that looks like markdown', async () => {
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  const html = `<html><head><style>
+#main { color: red }
+</style></head><body><ul><li>Fruits<ul><li>Apple</li><li>Banana</li></ul></li></ul></body></html>`
+
+  store.dispatch([
+    importText({ text: '- a' }),
+    (dispatch, getState) =>
+      dispatch(
+        importFiles({
+          path: contextToPath(getState(), ['a'])!,
+          files: [{ lastModified: Date.now(), name: 'test.html', size: html.length, text: async () => html }],
+        }),
+      ),
+  ])
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - Fruits
+    - Apple
+    - Banana
+`)
+})
+
 // TODO: Indentation broke when switching from importText to importData
 it.skip(`import bold thoughts with bold descendants`, async () => {
   const text = `

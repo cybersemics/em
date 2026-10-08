@@ -272,9 +272,12 @@ const blocksToHtml = (parsedBlocks: Block[]): string =>
 
 /** Parses plaintext, indented text, markdown, RTF, or HTML and converts it into HTML that himalaya can parse. */
 const textToHtml = (input: string) => {
+  // marked discards block-level HTML up to the next blank line, so only input that is not HTML is converted from markdown here.
+  // Markdown wrapped in HTML is left for parse-then-route (#5175) to unwrap after sanitizing, and convert as pure markdown.
+  const isHtmlInput = REGEX_NONFORMATTING_HTML.test(input) || REGEX_STARTS_WITH_CLOSED_TAG.test(input.trim())
   const normalizedInput = REGEX_RTF.test(input)
     ? rtfToTaggedText(input)
-    : isMarkdown(input)
+    : !isHtmlInput && isMarkdown(input)
       ? markdownToText(input)
       : input
 
