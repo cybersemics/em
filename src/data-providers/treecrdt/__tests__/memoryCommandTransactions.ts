@@ -1,5 +1,6 @@
 import type { OperationId } from '@treecrdt/interface'
 import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
+import { createMemoryClient } from '@treecrdt/wasm/memory'
 import Thought from '../../../@types/Thought'
 import ThoughtId from '../../../@types/ThoughtId'
 import ThoughtspaceView from '../../../@types/ThoughtspaceView'
@@ -353,7 +354,8 @@ it('reverts unpersisted document receipts synchronously and persists only commit
 })
 
 it('keeps captured thought values immutable when composed moves restore the original parent', async () => {
-  const runtime = createMemoryThoughtspace()
+  const memory = await createMemoryClient()
+  const runtime = createMemoryThoughtspace(undefined, async () => memory)
   try {
     await runtime.init({ storage: 'memory' })
     const before = runtime.transact(transaction =>
@@ -363,19 +365,25 @@ it('keeps captured thought values immutable when composed moves restore the orig
       }),
     ).value
     const heldThought = before.getThought(first.id)!
+    const reads = vi.spyOn(memory, 'get')
     const restored = runtime.transact(transaction => {
       const moved = transaction.update({
         thoughtIndexUpdates: { [first.id]: { ...heldThought, parentId: second.id } },
         movePlacements: { [first.id]: null },
       })
       expect(Reflect.set(moved.getThought(first.id)!, 'parentId', HOME_TOKEN)).toBe(false)
+      reads.mockClear()
       return transaction.update({
         thoughtIndexUpdates: { [first.id]: heldThought },
         movePlacements: { [first.id]: null },
       })
     })
+    // The cumulative batch drops net-reverted rows; their earlier before values supply projection without rereads.
+    expect(reads).not.toHaveBeenCalled()
     expect(heldThought.parentId).toBe(HOME_TOKEN)
     expect(restored.value.getThought(first.id)).toEqual(heldThought)
+    expect(restored.value.getChildren(HOME_TOKEN)).toEqual([first.id, second.id])
+    expect(restored.value.getChildren(second.id)).toEqual([])
     await restored.persisted
   } finally {
     await runtime.drop()

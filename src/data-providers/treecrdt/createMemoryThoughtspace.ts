@@ -142,7 +142,7 @@ const createMemoryThoughtspace = (
       getThought,
       () => viewRevision,
     )
-  let snapshot = view()
+  let currentView = view()
   let latestChanges: MemoryChanges | undefined
   let projectedChanges: MemoryChanges | undefined
   let editing = false
@@ -191,9 +191,9 @@ const createMemoryThoughtspace = (
 
   /** Updates affected lexeme buckets from actual changes; ordinary reads stay in the native tree. */
   const project = (batch = latestChanges): ThoughtspaceView => {
-    if (!memory || !ready) return snapshot
-    if (!batch || batch === projectedChanges) return snapshot
-    const prior = new Map(projectedChanges?.changes.map(change => [change.id, change.after]))
+    if (!memory || !ready) return currentView
+    if (!batch || batch === projectedChanges) return currentView
+    const prior = new Map(projectedChanges?.changes.map(change => [change.id, change]))
     const changes = new Map(batch.changes.map(change => [change.id, change]))
     const candidates = new Set([...prior.keys(), ...changes.keys()])
     const memberships = new Map<string, Set<string>>()
@@ -205,8 +205,11 @@ const createMemoryThoughtspace = (
     }
     let changed = false
     candidates.forEach(id => {
-      const oldRow = (prior.has(id) ? prior.get(id) : changes.get(id)?.before) ?? undefined
-      const row = read(id)
+      const previousChange = prior.get(id)
+      const change = changes.get(id)
+      const oldRow = (previousChange ? previousChange.after : change?.before) ?? undefined
+      // Net-reverted rows disappear from the cumulative batch, returning to their original before values.
+      const row = (change ? change.after : previousChange?.before) ?? undefined
       if (_.isEqual(oldRow, row)) return
       changed = true
       const payloadChanged = !_.isEqual(oldRow?.payload, row?.payload)
@@ -237,9 +240,9 @@ const createMemoryThoughtspace = (
     projectedChanges = batch
     if (changed) {
       viewRevision++
-      snapshot = view()
+      currentView = view()
     }
-    return snapshot
+    return currentView
   }
 
   /** Supplies old rows only for changed nodes, while unchanged rows are read from the current tree. */
@@ -289,7 +292,7 @@ const createMemoryThoughtspace = (
     )
     try {
       projectedChanges = undefined
-      const old = snapshot
+      const old = currentView
       const next = project()
       if (next !== old) notify(previous)
     } catch (error) {
@@ -455,7 +458,7 @@ const createMemoryThoughtspace = (
       latestChanges = projectedChanges = result.changes
     } catch (error) {
       viewRevision++
-      snapshot = previous
+      currentView = previous
       lexemeIndex = previousLexemes
       thoughts.clear()
       projectedChanges = previousProjected
@@ -522,7 +525,7 @@ const createMemoryThoughtspace = (
       lexemeIndex = {}
       thoughts.clear()
       viewRevision++
-      snapshot = view()
+      currentView = view()
       projectedChanges = undefined
       latestChanges = undefined
       initPromise = undefined
