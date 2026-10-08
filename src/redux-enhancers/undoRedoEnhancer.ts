@@ -7,6 +7,7 @@ import ActionType from '../@types/ActionType'
 import Index from '../@types/IndexType'
 import Patch, { CommandAttributedAction } from '../@types/Patch'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
@@ -20,6 +21,7 @@ import db, { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import contextToThoughtId from '../selectors/contextToThoughtId'
 import expandThoughts from '../selectors/expandThoughts'
 import { getChildrenRanked } from '../selectors/getChildren'
+import simplifyPath from '../selectors/simplifyPath'
 import { isNavigation, isUndoable } from '../util/actionMetadata.registry'
 import debugLog from '../util/debugLog'
 import getUndoStepCount from '../util/getUndoStepCount'
@@ -206,7 +208,7 @@ const diffState = (
     mergeWith?: Patch
     actionType?: string
   } = {},
-): Operation[] => {
+): { ops: Operation[]; isFormatting: boolean } => {
   const mergeOps = mergeWith?.ops ?? []
   const changes = transaction?.getChanges()
   const sameThoughts =
@@ -283,10 +285,19 @@ const diffState = (
     'thoughtUi',
     ...(sameThoughts ? ['thoughts'] : []),
   ]
-  const ops = compare(
-    _.omit(sameThoughts ? newValue : thoughtspaceHistory.capture(newValue, scope), omitted),
-    _.omit(previous, omitted),
-  )
+  const current = sameThoughts ? newValue : thoughtspaceHistory.capture(newValue, scope)
+  // Record the value-change semantics with the history entry, not by interpreting diagnostic patches during undo.
+  const previousIndex = 'thoughtIndex' in previous.thoughts ? previous.thoughts.thoughtIndex : {}
+  const currentIndex = 'thoughtIndex' in current.thoughts ? current.thoughts.thoughtIndex : {}
+  const isFormatting = Object.entries(previousIndex).some(([id, before]) => {
+    const after = currentIndex[id]
+    return (
+      !!after &&
+      before.value !== after.value &&
+      stripTags(before.value).toLowerCase() === stripTags(after.value).toLowerCase()
+    )
+  })
+  const ops = compare(_.omit(current, omitted), _.omit(previous, omitted))
   // Navigation and incoming changes may shorten or clear Paths without changing history.
   // Restore the captured value, not array operations that assume the previous path still exists.
   const pathKeys = new Set(
@@ -295,18 +306,21 @@ const diffState = (
       .filter(segments => segments.length > 2 && segments[1] in pathProperties)
       .map(segments => segments[1] as PathProperty),
   )
-  return [
-    ...ops.filter(op => !pathKeys.has(op.path.split('/')[1] as PathProperty)),
-    ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(previous[key]) })),
-    // A remote deletion may have pruned an entry since history was recorded. Restore each entry atomically.
-    ...Object.keys({ ...newValue.thoughtUi, ...previous.thoughtUi }).flatMap<Operation>(id =>
-      _.isEqual(newValue.thoughtUi[id], previous.thoughtUi[id])
-        ? []
-        : previous.thoughtUi[id]
-          ? [{ op: 'add', path: `/thoughtUi/${id}`, value: previous.thoughtUi[id] }]
-          : [{ op: 'remove', path: `/thoughtUi/${id}` }],
-    ),
-  ]
+  return {
+    isFormatting,
+    ops: [
+      ...ops.filter(op => !pathKeys.has(op.path.split('/')[1] as PathProperty)),
+      ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(previous[key]) })),
+      // A remote deletion may have pruned an entry since history was recorded. Restore each entry atomically.
+      ...Object.keys({ ...newValue.thoughtUi, ...previous.thoughtUi }).flatMap<Operation>(id =>
+        _.isEqual(newValue.thoughtUi[id], previous.thoughtUi[id])
+          ? []
+          : previous.thoughtUi[id]
+            ? [{ op: 'add', path: `/thoughtUi/${id}`, value: previous.thoughtUi[id] }]
+            : [{ op: 'remove', path: `/thoughtUi/${id}` }],
+      ),
+    ],
+  }
 }
 
 /** Actions that mutate state.multicursors. They are not undoable on their own, but belong to an executing multicursor command's history. */
@@ -332,11 +346,12 @@ const revertPatch = (
       ).newDocument,
   )
   const newState = projectThoughts(uiState, transaction)
+  const { ops, isFormatting } = diffState(newState, { ...state, thoughts: previousThoughts }, { transaction })
   return {
     state: newState,
     patch: {
-      ops: diffState(newState, { ...state, thoughts: previousThoughts }, { transaction }),
-      metadata: patch.metadata,
+      ops,
+      metadata: { ...patch.metadata, isFormatting },
       documentOperationIds,
     },
   }
@@ -380,22 +395,7 @@ const undoReducer = (
   const penultimateUndoPatch = undoPatches.at(-2)
   if (!undoPatches.length) return state
 
-  // Infer whether the last patch is a formatting-only edit by examining the diff operations.
-  // A formatting patch changes a thought's value without changing its plain text content.
-  // This is detected by finding an operation that restores a thoughtIndex value where
-  // stripTags(restored_value) === stripTags(current_value) — same plain text, different HTML.
-  // Letter case changes (e.g. "hello" → "HELLO") are also treated as formatting since they do not
-  // add or remove content, only change its presentation.
-  const lastPatchIsFormatting = !!lastUndoPatch?.ops.some(op => {
-    const match = op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)\/value$/)
-    if (!match) return false
-    const id = match[1] as ThoughtId
-    const currentValue = state.thoughts.getThought(id)?.value
-    if (currentValue === undefined || !('value' in op) || op.value === undefined) return false
-    const restoredPlain = stripTags(op.value as string)
-    const currentPlain = stripTags(currentValue)
-    return restoredPlain === currentPlain || restoredPlain.toLowerCase() === currentPlain.toLowerCase()
-  })
+  const lastPatchIsFormatting = !!lastUndoPatch?.metadata.isFormatting
 
   const undoCount =
     count ?? getUndoStepCount(lastUndoPatch, penultimateUndoPatch, { isFormatting: lastPatchIsFormatting })
@@ -568,7 +568,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       if (shouldMerge) {
         lastAction = action
-        const combinedUndoPatch = diffState(
+        const { ops: combinedUndoPatch, isFormatting } = diffState(
           newState,
           { ...state, thoughts: previousThoughts },
           {
@@ -599,6 +599,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
                     metadata: {
                       ...(commandMetadata ?? lastUndoPatch?.metadata ?? { source: 'action' as const }),
                       actionTypes,
+                      isFormatting,
                       isNavigation: lastUndoPatch
                         ? lastUndoPatch.metadata.isNavigation && isNavigation(actionType)
                         : isNavigation(actionType),
@@ -622,7 +623,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         thoughts: previousThoughts,
         ...(noteOffsetBeforeEdit == null ? {} : { noteOffset: noteOffsetBeforeEdit }),
       }
-      const undoPatch = diffState(newState, stateBeforeAction, { transaction })
+      const { ops: undoPatch, isFormatting } = diffState(newState, stateBeforeAction, { transaction })
       return undoPatch.length || documentOperationIds.length
         ? {
             ...newState,
@@ -641,6 +642,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
                       : null),
                   }),
                   actionTypes: [actionType],
+                  isFormatting,
                   isNavigation: isNavigation(actionType),
                 },
                 documentOperationIds,
@@ -661,6 +663,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       const { thoughts: _thoughts, ...ui } = editorState
       return ui
     })
+    let publishedCursorPath = editorState.cursor
+      ? ([...simplifyPath(editorState, editorState.cursor)] as SimplePath)
+      : null
 
     return {
       ...store,
@@ -703,8 +708,13 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
           }
           const { thoughts, ...ui } = next
           const sameUi = shallowEqual(store.getState(), ui)
-          // Stage the combined read before Redux notifies UI subscribers, so a cursor never reads an older tree.
-          editorState = sameUi && thoughts === state.thoughts ? state : next
+          if (!sameUi || thoughts !== state.thoughts) {
+            // Retain only the resolved cursor path before live reads advance or publication observers reenter.
+            const cursorPath = next.cursor ? ([...simplifyPath(next, next.cursor)] as SimplePath) : null
+            // Stage the combined read before Redux notifies UI subscribers, so a cursor never reads an older tree.
+            editorState = next
+            publishedCursorPath = cursorPath
+          }
           if (!sameUi) store.dispatch(Object.assign({}, action, { [preparedState]: ui }))
           if (editorState !== state) Array.from(listeners).forEach(listener => listener())
         }
@@ -718,7 +728,10 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               return next
             }, publish)
           } else {
-            const next = execute(state, action)
+            const next = execute(
+              state,
+              action.type === 'replaceThoughts' ? { ...action, previousCursorPath: publishedCursorPath } : action,
+            )
             const previous = (action as UnknownAction).previousThoughts as ThoughtspaceView | undefined
             if (debugLog.isEnabled() && previous) moves = collectThoughtMoves(previous, next.thoughts, action.type)
             publish(next)

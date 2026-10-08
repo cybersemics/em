@@ -969,6 +969,19 @@ describe('grouping', () => {
     expect(exportedAfterSecondUndo).not.toContain('<i>')
   })
 
+  it('keeps formatting separate from thought creation after an incoming text change', () => {
+    store.dispatch([newThought({ value: 'hello' }), editThought(['hello'], '<b>hello</b>')])
+    const thought = contextToThought(store.getState(), ['<b>hello</b>'])!
+    db.transact(transaction =>
+      transaction.update({ thoughtIndexUpdates: { [thought.id]: { ...thought, value: 'incoming text' } } }),
+    )
+
+    store.dispatch(undo())
+
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - hello`)
+  })
+
   it('undoing a formatting edit should preserve trailing space in thought value', () => {
     // Issue F: applying formatting to a thought with a trailing space was stripping the space on undo
     // because trimHtml previously stripped whitespace inside closing tags (e.g. "<b>hello </b>" → "<b>hello</b>").

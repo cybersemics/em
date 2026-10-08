@@ -10,7 +10,7 @@ const isPendingFormat = (patch: Patch | undefined) =>
 
 /** Determines a history step's size from action semantics. Undo and the slider traverse newest first; Redo traverses
  * forward and attaches navigation to the following patch. The slider preserves its existing structural grouping of
- * formatting with a new thought; keyboard Undo supplies the live formatting classification to keep it separate. */
+ * formatting with a new thought; keyboard Undo supplies the recorded formatting classification to keep it separate. */
 const getUndoStepCount = (
   patch: Patch | undefined,
   adjacent: Patch | undefined,

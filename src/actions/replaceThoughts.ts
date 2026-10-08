@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceView from '../@types/ThoughtspaceView'
@@ -8,7 +9,6 @@ import expandThoughts from '../selectors/expandThoughts'
 import getThoughtById from '../selectors/getThoughtById'
 import pathToThought from '../selectors/pathToThought'
 import rootedParentOf from '../selectors/rootedParentOf'
-import simplifyPath from '../selectors/simplifyPath'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
@@ -19,9 +19,9 @@ const replaceThoughts = (
   state: State,
   {
     thoughts,
-    previousThoughts = state.thoughts,
+    previousCursorPath,
     repairCursor = false,
-  }: { thoughts: ThoughtspaceView; previousThoughts?: ThoughtspaceView; repairCursor?: boolean },
+  }: { thoughts: ThoughtspaceView; previousCursorPath?: SimplePath | null; repairCursor?: boolean },
 ): State => {
   const thoughtUi = _.pickBy(state.thoughtUi, (_, id) => !!thoughts.getThought(id as ThoughtId))
   const next = {
@@ -31,13 +31,11 @@ const replaceThoughts = (
     isLoading: false,
   }
   let cursor = state.cursor
-  if (repairCursor && cursor) {
-    // Resolve context-view paths against the previous complete document before replacing their topology.
-    const previousSimplePath = simplifyPath({ ...state, thoughts: previousThoughts }, cursor)
-    const thought = getThoughtById(next, head(previousSimplePath))
+  if (repairCursor && cursor && previousCursorPath) {
+    const thought = getThoughtById(next, head(previousCursorPath))
     if (thought) {
       const currentSimplePath = thoughtToPath(next, thought.id)
-      if (!equalPath(previousSimplePath, currentSimplePath)) cursor = currentSimplePath
+      if (!equalPath(previousCursorPath, currentSimplePath)) cursor = currentSimplePath
     } else {
       const missingIndex = cursor.findIndex((_, i) => {
         const path = cursor!.slice(0, i + 1) as Path

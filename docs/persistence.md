@@ -56,7 +56,7 @@ There are no EM-owned SQLite membership or attribute-child tables. EM derives le
 
 A projection uses changed-node records from transaction reads or commit events. Changed payloads update affected lexeme buckets; initialization derives all buckets once. There is no rank rewriting on moves. Payload-less nodes occupy canonical positions without becoming EM thoughts. Document reads use memory, not SQLite. UI-only changes reuse the document view.
 
-History comparisons use `transaction.capturePrevious()`: a synchronous reader backed by changed rows, valid only until the transaction callback returns. Incoming subscribers receive an equivalent previous reader for cursor repair, valid only within the publication callback and before a reentrant commit. Neither reader may cross an `await`. Diagnostic patches and React selections retain plain values instead.
+History comparisons use `transaction.capturePrevious()`: a synchronous reader backed by changed rows, valid only until the transaction callback returns. Incoming subscribers receive an equivalent previous reader for diagnostic move logging, valid only within the publication callback and before a reentrant commit. Neither reader may cross an `await`. Cursor repair instead captures neighbors before local deletion and retains the resolved cursor path at publication for incoming changes. Diagnostic patches and React selections retain plain values instead.
 
 ### Writes
 

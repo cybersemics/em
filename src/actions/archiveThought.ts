@@ -51,11 +51,11 @@ const archiveThought = (state: State, options: { path?: Path }, transaction?: Th
 
   // rewrite context view operaton in terms of normal view and update cursor
   if (showContexts) {
-    const previous = { ...state, thoughts: transaction?.capturePrevious() ?? state.thoughts }
-    return reducerFlow([
-      state => archiveThought(state, { path: simplePath }, transaction),
-      stateNew => updateCursorAfterDelete(stateNew, previous, transaction),
-    ])(state, transaction)
+    const repairCursor = updateCursorAfterDelete(state)
+    return reducerFlow([state => archiveThought(state, { path: simplePath }, transaction), repairCursor])(
+      state,
+      transaction,
+    )
   }
 
   const pathParent = simplePath.length > 1 ? parentOf(simplePath) : HOME_PATH

@@ -35,6 +35,8 @@ export type PatchMetadata = PatchMetadataInput & {
   actionTypes: [ActionType, ...ActionType[]]
   /** True when every recorded action only navigates state. */
   isNavigation: boolean
+  /** A recorded value change preserves plain text (ignoring case); used for undo grouping and caret placement. */
+  isFormatting: boolean
 }
 
 /** Editor history with UI restoration, diagnostic document diffs, and engine-owned receipts. */

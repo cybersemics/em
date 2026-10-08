@@ -7,7 +7,6 @@ import { applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
 import EditorStore from '../@types/EditorStore'
 import appReducer from '../actions/app'
-import { replaceThoughtsActionCreator as replaceThoughts } from '../actions/replaceThoughts'
 import db from '../data-providers/thoughtspace'
 import storageCache from '../redux-enhancers/storageCache'
 import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
@@ -75,7 +74,8 @@ const store = {
 db.subscribe(previousThoughts => {
   const thoughts = db.project()
   if (thoughts !== store.getState().thoughts) {
-    store.dispatch(replaceThoughts({ thoughts, previousThoughts, repairCursor: true }))
+    // The previous reader is scoped to this callback and used only by diagnostic move logging.
+    store.dispatch({ type: 'replaceThoughts', thoughts, previousThoughts, repairCursor: true })
   }
 })
 

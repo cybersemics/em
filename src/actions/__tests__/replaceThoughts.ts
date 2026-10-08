@@ -2,6 +2,7 @@ import State from '../../@types/State'
 import db from '../../data-providers/thoughtspace'
 import getLexeme from '../../selectors/getLexeme'
 import getThoughtById from '../../selectors/getThoughtById'
+import simplifyPath from '../../selectors/simplifyPath'
 import store from '../../stores/app'
 import contextToThought from '../../test-helpers/contextToThought'
 import deleteThoughtAtFirstMatch from '../../test-helpers/deleteThoughtAtFirstMatch'
@@ -13,6 +14,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import { importTextActionCreator as importText } from '../importText'
 import replaceThoughts, { replaceThoughtsActionCreator } from '../replaceThoughts'
+import { toggleContextViewActionCreator as toggleContextView } from '../toggleContextView'
 import { updateThoughtsActionCreator as updateThoughts } from '../updateThoughts'
 
 afterEach(waitForThoughtspaceIdle)
@@ -27,7 +29,11 @@ it('replaces the entire document and repairs a deleted cursor to its surviving p
   const deletedId = contextToThought(previous, ['a', 'b', 'c'])!.id
   const incoming = runDocumentCommand(deleteThoughtAtFirstMatch(['a', 'b', 'c']), previous).thoughts
 
-  const next = replaceThoughts(previous, { thoughts: incoming, repairCursor: true })
+  const next = replaceThoughts(previous, {
+    thoughts: incoming,
+    previousCursorPath: simplifyPath(previous, previous.cursor!),
+    repairCursor: true,
+  })
 
   expect(next.thoughts).toBe(incoming)
   expect(next.thoughts.getThought(deletedId)).toBeUndefined()
@@ -40,7 +46,11 @@ it('clears the cursor when its entire ancestry was deleted', () => {
   const previous = store.getState()
   const incoming = runDocumentCommand(deleteThoughtAtFirstMatch(['a']), previous).thoughts
 
-  const next = replaceThoughts(previous, { thoughts: incoming, repairCursor: true })
+  const next = replaceThoughts(previous, {
+    thoughts: incoming,
+    previousCursorPath: simplifyPath(previous, previous.cursor!),
+    repairCursor: true,
+  })
 
   expect(next.cursor).toBeNull()
   expect(contextToThought(next, ['x'])).toBeTruthy()
@@ -103,4 +113,39 @@ it('publishes a provider event atomically without adding history or authored wri
   expect(next.undoPatches).toBe(previous.undoPatches)
   expect(next.redoPatches).toBe(previous.redoPatches)
   expect(next.jumpHistory).toBe(previous.jumpHistory)
+})
+
+it('retains a context-view cursor until its resolved thought moves', () => {
+  store.dispatch([
+    importText({ text: '- z\n  - b\n- y', preventSetCursor: true }),
+    setCursor(['a', 'b']),
+    toggleContextView(),
+    setCursor(['a', 'b', 'z']),
+  ])
+  const cursor = store.getState().cursor
+  const c = contextToThought(store.getState(), ['a', 'b', 'c'])!
+
+  db.transact(transaction => transaction.update({ thoughtIndexUpdates: { [c.id]: { ...c, value: 'changed' } } }))
+  expect(store.getState().cursor).toEqual(cursor)
+
+  db.transact(transaction =>
+    moveThoughtAtFirstMatch({ from: ['z', 'b'], to: ['y', 'b'], after: null })(store.getState(), transaction),
+  )
+
+  expectPathToEqual(store.getState(), store.getState().cursor, ['y', 'b'])
+})
+
+it('repairs the latest navigation when a UI publication observer changes the document', () => {
+  const x = contextToThought(store.getState(), ['x'])!
+  const unsubscribe = store.uiStore.subscribe(() => {
+    unsubscribe()
+    db.transact(transaction => transaction.update({ thoughtIndexUpdates: { [x.id]: null } }))
+  })
+  try {
+    store.dispatch(setCursor(['x']))
+  } finally {
+    unsubscribe()
+  }
+
+  expect(store.getState().cursor).toBeNull()
 })
