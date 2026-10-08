@@ -5,8 +5,10 @@ import { css } from '../../styled-system/css'
 import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import Timer from '../@types/Timer'
 import { alertActionCreator as alert } from '../actions/alert'
+import { editThoughtActionCreator as editThought } from '../actions/editThought'
 import { errorActionCreator as error } from '../actions/error'
 import { gestureMenuActionCreator as gestureMenu } from '../actions/gestureMenu'
 import { longPressActionCreator as longPress } from '../actions/longPress'
@@ -19,8 +21,10 @@ import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
 import virtualKeyboardHandler from '../device/virtual-keyboard'
 import decodeThoughtsUrl from '../selectors/decodeThoughtsUrl'
+import findDescendant from '../selectors/findDescendant'
 import getThoughtById from '../selectors/getThoughtById'
 import pathExists from '../selectors/pathExists'
+import thoughtToPath from '../selectors/thoughtToPath'
 import store from '../stores/app'
 import { updateCaretRect } from '../stores/caretRectStore'
 import { updateCommandState } from '../stores/commandStateStore'
@@ -41,6 +45,7 @@ import debugLog from './debugLog'
 import durations from './durations'
 import equalPath from './equalPath'
 import head from './head'
+import stripEmptyFormattingTags from './stripEmptyFormattingTags'
 
 // the width of the scroll-at-edge zone at the top/bottom of the screen (for vertical scrolling) or left/right of the screen (for horizontal scrolling)
 const TOOLBAR_SCROLLATEDGE_SIZE = 50
@@ -333,27 +338,44 @@ const initEvents = (store: Store<State, any>) => {
    */
   const onSafariGesture = (e: Event) => e.preventDefault()
 
-  /** The editable and plain-text offsets of the selected text being dragged natively on Android, or null if no native text drag is in progress. See #4225. */
-  let nativeTextDrag: { editable: HTMLElement; start: number; end: number } | null = null
+  /** The thought, its editable, and the plain-text offsets of the selected text being dragged natively on Android, or null if no native text drag is in progress. See #4225. */
+  let nativeTextDrag: { id: ThoughtId; editable: HTMLElement; start: number; end: number } | null = null
+
+  /**
+   * Returns the thought editable that contains the node, and the id of its thought, or null if the node is not in a
+   * thought. A thought that the Editable change handler would not let the user edit — one marked =readonly or
+   * =uneditable, or restricted to =options — is marked uneditable, so that dragged text is neither taken out of it nor
+   * dropped into it.
+   */
+  const thoughtEditableAt = (node: Node | null | undefined) => {
+    const editable = (node instanceof Element ? node : node?.parentElement)?.closest<HTMLElement>('[data-editable]')
+    const id = editable?.getAttribute('aria-label')?.replace(/^editable-/, '') as ThoughtId | undefined
+    const state = store.getState()
+    const thought = id && getThoughtById(state, id)
+    if (!editable || !thought) return null
+
+    const uneditable =
+      !!findDescendant(state, thought.id, '=readonly') ||
+      !!findDescendant(state, thought.id, '=uneditable') ||
+      !!findDescendant(state, thought.parentId, '=options')
+    return { id: thought.id, editable, uneditable }
+  }
 
   /**
    * Finds where dragged text would be dropped on Android for a finger at the given viewport coordinates.
    * The drop point is NATIVE_TEXT_DRAG_CARET_OFFSET above the finger, so the drop caret is not hidden under it.
-   * Returns the editable, the plain-text offset within it, and the caret's rect, or null if the point is not in an
-   * editable thought or note.
+   * Returns the thought, its editable, the plain-text offset within it, and the caret's rect, or null if the point is
+   * not in a thought that can be edited.
    */
   const nativeTextDropPoint = (x: number, y: number) => {
     const range = document.caretRangeFromPoint(x, y - NATIVE_TEXT_DRAG_CARET_OFFSET)
-    const node = range?.startContainer
-    const editable = (node instanceof Element ? node : node?.parentElement)?.closest<HTMLElement>(
-      '[contenteditable="true"]',
-    )
-    if (!range || !editable) return null
+    const target = thoughtEditableAt(range?.startContainer)
+    if (!range || !target || target.uneditable) return null
 
     const before = document.createRange()
-    before.setStart(editable, 0)
+    before.setStart(target.editable, 0)
     before.setEnd(range.startContainer, range.startOffset)
-    return { editable, offset: before.toString().length, rect: range.getBoundingClientRect() }
+    return { ...target, offset: before.toString().length, rect: range.getBoundingClientRect() }
   }
 
   /** Ends a native text drag on Android, hiding the drop caret. */
@@ -369,18 +391,21 @@ const initEvents = (store: Store<State, any>) => {
    * drawn for the selected range, so collapsing the selection dismisses it without blurring the editable. The collapse
    * is deferred because the browser takes the drag image (the text that follows the finger) after dragstart. The
    * dragged text is saved as offsets so the drop can move it, and the body is flagged to hide the native caret for the
-   * duration of the drag. Thought drags are unaffected: react-dnd's TouchBackend does not use native drag events.
+   * duration of the drag. Text cannot be dragged out of a thought that cannot be edited. Thought drags are unaffected:
+   * react-dnd's TouchBackend does not use native drag events.
    */
   const onAndroidDragStart = (e: DragEvent) => {
-    const node = e.target as Node | null
-    const editable = (node instanceof Element ? node : node?.parentElement)?.closest<HTMLElement>(
-      '[contenteditable="true"]',
-    )
+    const source = thoughtEditableAt(e.target as Node | null)
     const text = selection.text()
-    const offsets = editable && text ? selection.offsetRange(editable) : null
-    if (!editable || !text || !offsets) return
+    const offsets = source && text ? selection.offsetRange(source.editable) : null
+    if (!source || !text || !offsets) return
+    if (source.uneditable) {
+      e.preventDefault()
+      return
+    }
 
-    nativeTextDrag = { editable, ...offsets }
+    const { id, editable } = source
+    nativeTextDrag = { id, editable, ...offsets }
     document.body.dataset.nativeTextDrag = 'true'
 
     // The default drag image of selected text is only its glyphs, with no background, and Android draws a text drag
@@ -431,7 +456,8 @@ const initEvents = (store: Store<State, any>) => {
    * Moves the drop caret of a native text drag on Android. The browser draws its own drop caret under the
    * finger, where it cannot be seen, while the collapsed selection's caret stays at the dragged text, so there are two.
    * Canceling dragover clears the browser's drop caret, and the native caret is hidden while dragging, which leaves
-   * the single drop caret rendered by NativeTextDragCaret above the finger.
+   * the single drop caret rendered by NativeTextDragCaret above the finger. Registered in the capture phase, since
+   * ContentEditable stops dragover from propagating when the device does not have a coarse pointer.
    */
   const onAndroidDragOver = (e: DragEvent) => {
     if (!nativeTextDrag) return
@@ -444,29 +470,85 @@ const initEvents = (store: Store<State, any>) => {
   }
 
   /**
-   * Moves the dragged text to the drop caret on Android. The drop is canceled, since the browser would drop
-   * the text under the finger rather than at the drop caret above it, and the text is moved with the same delete and
-   * insert edits as the native drop. The dragged text is reselected if it is dropped onto itself. Registered in the
-   * capture phase so it runs before any other drop handler.
+   * Moves the dragged text to the drop caret on Android. The drop is canceled, since the browser would drop the text
+   * under the finger rather than at the drop caret above it, and would edit the editables behind em's back. Instead
+   * the dragged text, with the formatting it is in, is cut out of the source thought's value and inserted into the
+   * target thought's value, and the new values are dispatched as edits. The dragged text is reselected if it is
+   * dropped onto itself, or anywhere it cannot be dropped. Registered in the capture phase so it runs before any other
+   * drop handler.
    */
   const onAndroidDrop = (e: DragEvent) => {
     if (!nativeTextDrag) return
     e.preventDefault()
-    const { editable, start, end } = nativeTextDrag
+    const source = nativeTextDrag
     endNativeTextDrag()
-    if (!editable.isConnected) return
+    if (!source.editable.isConnected) return
 
     const target = nativeTextDropPoint(e.clientX, e.clientY)
-    selection.setRange(editable, { start, end })
-    if (!target || (target.editable === editable && target.offset >= start && target.offset <= end)) return
+    const isSameThought = target?.id === source.id
+    if (!target || (isSameThought && target.offset >= source.start && target.offset <= source.end)) {
+      selection.setRange(source.editable, source)
+      return
+    }
 
-    const html = selection.html()
-    if (!html) return
-    document.execCommand('delete')
-    // the text after the dragged text shifts back by its length once it is deleted
-    const offset = target.editable === editable && target.offset > end ? target.offset - (end - start) : target.offset
-    selection.set(target.editable, { offset })
-    document.execCommand('insertHTML', false, html)
+    store.dispatch((dispatch, getState) => {
+      const state = getState()
+      const sourceThought = getThoughtById(state, source.id)
+      const targetThought = getThoughtById(state, target.id)
+      if (!sourceThought || !targetThought) return
+
+      // Edit detached copies of the values. The partially selected formatting elements are split by extractContents,
+      // so the dragged text keeps its formatting, as with a native drop.
+      const sourceCopy = document.createElement('div')
+      sourceCopy.innerHTML = sourceThought.value
+      const targetCopy = isSameThought ? sourceCopy : document.createElement('div')
+      if (!isSameThought) targetCopy.innerHTML = targetThought.value
+
+      const startRange = selection.collapsedRangeAtOffset(sourceCopy, source.start)
+      const endRange = selection.collapsedRangeAtOffset(sourceCopy, source.end)
+      if (!startRange || !endRange) return
+      startRange.setEnd(endRange.startContainer, endRange.startOffset)
+      const dragged = startRange.extractContents()
+
+      // the text after the dragged text shifts back by its length once it is cut out
+      const offset =
+        isSameThought && target.offset > source.end ? target.offset - (source.end - source.start) : target.offset
+      const insertRange = selection.collapsedRangeAtOffset(targetCopy, offset)
+      if (!insertRange) return
+      insertRange.insertNode(dragged)
+
+      const sourceValue = stripEmptyFormattingTags(sourceCopy.innerHTML)
+      const targetValue = stripEmptyFormattingTags(targetCopy.innerHTML)
+      const cursorOffset = offset + (source.end - source.start)
+
+      // Write the new values to the live editables before the edits re-render them, as formatSelection does, since
+      // ContentEditable does not replace the contents of an editable while it is being edited.
+      source.editable.innerHTML = sourceValue
+      target.editable.innerHTML = targetValue
+
+      dispatch([
+        // The deletion from the source and the insertion into the target are edits in opposite directions, which
+        // are not merged on their own, so the source edit is flagged to merge the move into a single undo step.
+        isSameThought
+          ? null
+          : {
+              type: 'editThought',
+              oldValue: sourceThought.value,
+              newValue: sourceValue,
+              path: thoughtToPath(state, source.id),
+              mergeNext: true,
+            },
+        editThought({
+          oldValue: targetThought.value,
+          newValue: targetValue,
+          path: thoughtToPath(state, target.id),
+          cursorOffset,
+        }),
+        isSameThought ? null : setCursor({ path: thoughtToPath(state, target.id), offset: cursorOffset }),
+      ])
+
+      selection.set(target.editable, { offset: cursorOffset })
+    })
   }
 
   /** Ends a native text drag on Android whose drop and dragend never arrived, e.g. when the browser drops the drag, so the native caret is not left hidden. A native drag holds the touch, so the next touchstart comes after it has ended. */
@@ -664,7 +746,7 @@ const initEvents = (store: Store<State, any>) => {
   if (isAndroid) {
     window.addEventListener('dragstart', onAndroidDragStart)
     window.addEventListener('contextmenu', onAndroidContextMenu, { capture: true })
-    window.addEventListener('dragover', onAndroidDragOver)
+    window.addEventListener('dragover', onAndroidDragOver, { capture: true })
     window.addEventListener('drop', onAndroidDrop, { capture: true })
     window.addEventListener('dragend', onAndroidDragEnd)
     window.addEventListener('touchstart', onAndroidTouchStart)
@@ -713,7 +795,7 @@ const initEvents = (store: Store<State, any>) => {
     document.removeEventListener('gestureend', onSafariGesture)
     window.removeEventListener('dragstart', onAndroidDragStart)
     window.removeEventListener('contextmenu', onAndroidContextMenu, { capture: true })
-    window.removeEventListener('dragover', onAndroidDragOver)
+    window.removeEventListener('dragover', onAndroidDragOver, { capture: true })
     window.removeEventListener('drop', onAndroidDrop, { capture: true })
     window.removeEventListener('dragend', onAndroidDragEnd)
     window.removeEventListener('touchstart', onAndroidTouchStart)

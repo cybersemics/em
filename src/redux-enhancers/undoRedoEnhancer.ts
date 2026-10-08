@@ -501,6 +501,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
       // - The closeAlert action is merged with the previous action so that the alert can be undone.
       // - All actions within an explicit command transaction are merged under that command's metadata.
       // - Direct action batches guarded by isMulticursorExecuting are merged into one action patch.
+      // - An action flagged mergeNext is merged with the action that follows it, e.g. the two edits of a text drag between thoughts.
       const lastUndoPatch = nthLast(state.undoPatches, 1)
       // A resumed invocation may extend its latest patch, but never reach back across another edit or undo/redo.
       // Its identity survives await; only contiguous history is eligible for merging.
