@@ -482,7 +482,6 @@ const CommandCenter = () => {
     (snapIndex: number) => {
       setStage(snapIndex === SNAP_EXPANDED ? 'expanded' : 'standard')
       if (snapIndex !== SNAP_EXPANDED) scrollerRef.current?.scrollTo({ top: 0 })
-      console.log('>>> onbouncesnap', snapIndex)
       onBounceSnap(snapIndex)
     },
     [onBounceSnap],
