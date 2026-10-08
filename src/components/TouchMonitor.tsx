@@ -1,11 +1,11 @@
 import lifecycle from 'page-lifecycle'
 import { FC, PropsWithChildren, useEffect } from 'react'
-import globals from '../globals'
+import touchStore from '../stores/touchStore'
 
 /** Turns off touching when app becomes hidden. */
 const onStateChange = ({ newState }: { oldState: string; newState: string }) => {
   if (newState === 'hidden') {
-    globals.touching = false
+    touchStore.update({ touching: false })
   }
 }
 
@@ -20,10 +20,10 @@ const TouchMonitor: FC<PropsWithChildren> = ({ children }) => {
   return (
     <div
       onTouchMove={() => {
-        globals.touching = true
+        touchStore.update({ touching: true })
       }}
       onTouchEnd={() => {
-        globals.touching = false
+        touchStore.update({ touching: false })
       }}
     >
       {children}

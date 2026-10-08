@@ -8,10 +8,14 @@ import press from '../helpers/press'
 import refresh from '../helpers/refresh'
 import waitForCursor from '../helpers/waitForCursor'
 import waitForEditable from '../helpers/waitForEditable'
+import { page } from '../session'
 import { usePersistentTreecrdtStorage } from '../setup'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 usePersistentTreecrdtStorage()
+
+/** Waits a single animation frame, long enough for the cursor navigation throttle to reset after the move that just landed. The cursorUp and cursorDown commands are throttled to one execution per animation frame by throttleByAnimationFrame, and the cursor moves during the keydown that dispatched the move, so a key pressed as soon as waitForCursor resolves can still be dropped. */
+const nextFrame = () => page.evaluate(() => new Promise(requestAnimationFrame))
 
 /** Returns the persistent tree node that contains the editable with the given value. */
 const getTreeNode = async (value: string) => {
@@ -177,16 +181,21 @@ it('move cursor from formatted thought to first unformatted thought in descendin
   // Make text bold using the toolbar
   await clickToolbar('Bold')
 
+  // Wait for formatting to render and the sorted thoughts to settle before moving the cursor.
+  await waitForCursor('<b>apple</b>')
+
   // Press arrow down to move cursor
   await press('ArrowDown')
 
   // Wait for cursor to move to 'pear'
   await waitForCursor('pear')
+  await nextFrame()
 
   await press('ArrowUp')
 
-  // Before doing consecutive arrow up presses, wait until the cursor is on the apple thought then proceed with the arrow up press once again. The reason for doing is cursorUp and cursorDown are throttled to run once per animation frame, so repeated keypresses within the same frame might be ignored especially when running in CI.
+  // Before doing consecutive arrow up presses, wait until the cursor is on the apple thought and the throttle has reset, then proceed with the arrow up press once again. cursorUp and cursorDown are throttled to run once per animation frame, so repeated keypresses within the same frame might be ignored especially when running in CI.
   await waitForCursor('<b>apple</b>')
+  await nextFrame()
 
   await press('ArrowUp')
 

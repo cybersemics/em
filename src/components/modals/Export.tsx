@@ -29,7 +29,6 @@ import { thoughtspaceRuntime } from '../../data-providers/thoughtspace'
 import download from '../../device/download'
 import * as selection from '../../device/selection'
 import share from '../../device/share'
-import globals from '../../globals'
 import useOnClickOutside from '../../hooks/useOnClickOutside'
 import documentSort from '../../selectors/documentSort'
 import exportContext, { exportFilter } from '../../selectors/exportContext'
@@ -299,6 +298,8 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
 const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
   const dispatch = useDispatch()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  // Clears the alert ERROR_TIMEOUT after a clipboard error; cancelled by a successful copy. Scoped to this modal instance rather than a global, so it needs no reset between tests.
+  const errorTimer = useRef(0)
   const id = head(simplePaths[0])
   const title = useSelector(state => (isRoot(simplePaths[0]) ? 'home' : headValue(state, simplePaths[0]))) ?? ''
   const titleShort = ellipsize(title)
@@ -400,7 +401,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
 
     dispatch([closeModal(), alert(`Copied ${exportThoughtsPhraseFinal} to the clipboard`)])
 
-    clearTimeout(globals.errorTimer)
+    clearTimeout(errorTimer.current)
   }, [dispatch, exportThoughtsPhraseFinal])
 
   // Sets export content when pull is complete by useDescendants
@@ -456,8 +457,8 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         console.error(e)
         dispatch(error({ value: 'Error copying thoughts' }))
 
-        clearTimeout(globals.errorTimer)
-        globals.errorTimer = window.setTimeout(() => dispatch(alert(null)), 10000)
+        clearTimeout(errorTimer.current)
+        errorTimer.current = window.setTimeout(() => dispatch(alert(null)), 10000)
       })
 
       return () => {

@@ -1,6 +1,8 @@
 import { KnownDevices } from 'puppeteer'
 import clearThoughtCommand from '../../../commands/clearThought'
 import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
 import getSelection from '../helpers/getSelection'
@@ -9,6 +11,7 @@ import multiselectThoughts from '../helpers/multiselectThoughts'
 import paste from '../helpers/paste'
 import press from '../helpers/press'
 import waitForEditable from '../helpers/waitForEditable'
+import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -81,6 +84,21 @@ const caretOffsets = () =>
     }
   })
 
+/** Asserts that every faux caret is rendered at the real caret's position, to within a pixel. A faux caret is
+ * positioned from the integer offsetLeft/offsetTop of the thought it overlays, while the real caret's rect is
+ * fractional, so the two can differ by a fraction of a pixel. */
+const expectFauxCaretsAtRealCaret = (
+  carets: { real: { x: number; y: number } | null; faux: { x: number; y: number }[] },
+  count: number,
+) => {
+  expect(carets.real).not.toBeNull()
+  expect(carets.faux).toHaveLength(count)
+  carets.faux.forEach(faux => {
+    expect(Math.abs(faux.x - carets.real!.x)).toBeLessThanOrEqual(1)
+    expect(Math.abs(faux.y - carets.real!.y)).toBeLessThanOrEqual(1)
+  })
+}
+
 /** Returns the height of each faux caret alongside the height of the thought it overlays. */
 const fauxCaretHeights = () =>
   page.$$eval('[data-testid="faux-caret-multicursor"]', els =>
@@ -128,8 +146,7 @@ describe('clearThought', () => {
     // The faux carets are rendered at the same position within their thought as the real caret is within its own.
     await nextFrame()
     const carets = await caretOffsets()
-    expect(carets.real).not.toBeNull()
-    expect(carets.faux).toEqual([carets.real, carets.real])
+    expectFauxCaretsAtRealCaret(carets, 2)
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/4519
@@ -155,8 +172,7 @@ describe('clearThought', () => {
     await nextFrame()
 
     const carets = await caretOffsets()
-    expect(carets.real).not.toBeNull()
-    expect(carets.faux).toEqual([carets.real, carets.real])
+    expectFauxCaretsAtRealCaret(carets, 2)
   })
 
   // Regression test for https://github.com/cybersemics/em/issues/4519
@@ -428,5 +444,45 @@ describe('mobile', () => {
     await waitForFirstEditable('hello')
     expect(await editableValues()).toEqual(['hello', 'hello', 'hello'])
     expect(await multiselectSize()).toBe(3)
+  })
+
+  // https://github.com/cybersemics/em/issues/5288
+  it('mirrors typing across the multiselection after the selected thoughts are indented', async () => {
+    await paste(`
+      - aaa
+      - bbb
+      - ccc
+      - =children
+        - =pin
+          - true
+    `)
+
+    const bbb = await waitForEditable('bbb')
+    const ccc = await waitForEditable('ccc')
+
+    await clickThought('ccc')
+    await longPressThought(bbb, { edge: 'right' })
+    await longPressThought(ccc, { edge: 'right' })
+
+    // Wait for the Command Center to reflect the full selection before acting (see multiselect.ts).
+    await page.waitForFunction(
+      () =>
+        document.querySelector('[data-testid=command-center-panel]')?.textContent?.includes('2 thoughts selected') ??
+        false,
+      { timeout: 6000 },
+    )
+
+    await clickToolbar('Indent')
+
+    // Indent moves both selected thoughts into aaa, which becomes a parent.
+    await waitUntil(() => !!document.querySelector('[data-bullet="parent"]'), { timeout: 6000 })
+
+    await gesture(clearThoughtCommand)
+    await waitForEditable('')
+
+    // Typing mirrors the new value across the selected thoughts even though they were moved while selected.
+    await page.keyboard.type('Test')
+    await waitForEditable('Test')
+    expect(await editableValues()).toEqual(['aaa', 'Test', 'Test'])
   })
 })

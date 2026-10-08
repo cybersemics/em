@@ -1198,6 +1198,21 @@ it('paste em text with formatted html and meta charset as inline', async () => {
   expect(exported).not.toContain('<meta')
 })
 
+// https://github.com/cybersemics/em/issues/3960
+// Captured from the iOS pasteboard, which decorates what em wrote: a meta charset, an inline style block on
+// the outer list, and Apple-converted-space. isEmText is false because the text/em marker cannot ride the
+// async Clipboard API that WebKit requires, so none of that is cleaned up before the html is parsed.
+it('paste an iOS pasteboard copy of em thoughts, preserving formatting', async () => {
+  const html = `<head><meta charset="UTF-8"></head><ul style="caret-color: rgb(0, 0, 0); color: rgb(0, 0, 0); font-style: normal; font-weight: 400; text-align: start; white-space: normal; -webkit-text-stroke-width: 0px;"><li>a<span class="Apple-converted-space"> </span><ul><li><u>One</u></li><li><strike>Two</strike></li><li><span style="color: rgb(170, 128, 255);">Three</span></li><li><span style="background-color: rgb(0, 199, 230);">Four</span></li></ul></li></ul>`
+
+  const exported = await importExport(html, 'text/html')
+
+  expect(exported).toContain('<u>One</u>')
+  expect(exported).toContain('<strike>Two</strike>')
+  expect(exported).toContain('color: rgb(170, 128, 255)')
+  expect(exported).toContain('background-color: rgb(0, 199, 230)')
+})
+
 it('insert single-line HTML copied from Windows desktop Chrome at end of thought', async () => {
   const html = `<html>
 <body>
@@ -1240,6 +1255,140 @@ it('insert single-line HTML copied from Mac desktop Chrome at end of thought', a
 
   expect(exported).toBe(`- ${HOME_TOKEN}
   - afoo`)
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('strip formatting from single-line HTML copied from a web page', async () => {
+  // the text/html that Chrome writes to the clipboard when a code block on a web page is copied
+  const html = `<pre style="color: rgb(31, 35, 40); font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; padding: 16px; background-color: rgb(246, 248, 250); border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13.6px;"><code>Hello world of beautiful people</code></pre>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: 'Hello world of beautiful people' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('aHello world of beautiful people')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('separate the text of adjacent block elements when stripping formatting from single-line HTML', async () => {
+  // the text/html that Chrome writes to the clipboard when a heading and paragraph on a web page are copied
+  const html = `<h2 style="color: rgb(31, 35, 40); font-family: sans-serif;">Heading here</h2><p style="color: rgb(31, 35, 40); font-family: sans-serif;">Some<span> </span><b>para</b><span> </span>text</p>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: 'Heading here\nSome para text' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('aHeading here Some <b>para</b> text')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('keep basic formatting within the text when stripping formatting from single-line HTML', async () => {
+  const html = `<p style="font-family: sans-serif;">Some <strong style="color: rgb(255, 0, 0);">bold</strong>, <i>italic</i>, <em>emphasized</em>, <s>struck</s>, <del>deleted</del> and <code>code</code> text</p>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(
+    importDataActionCreator({ path, html, text: 'Some bold, italic, emphasized, struck, deleted and code text' }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe(
+    'aSome <strong>bold</strong>, <i>italic</i>, <em>emphasized</em>, <strike>struck</strike>, <strike>deleted</strike> and <code>code</code> text',
+  )
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('unwrap formatting that covers all of the text when stripping formatting from single-line HTML', async () => {
+  // the text/html that Google Docs writes to the clipboard, which wraps every copy in a <b> that is not bold
+  const html = `<meta charset='utf-8'><b style="font-weight:normal;" id="docs-internal-guid-6c3b2a1e-7fff-1a2b-3c4d-5e6f7a8b9c0d"><span style="font-size:11pt;font-family:Arial,sans-serif;color:#000000;"><i>Hello world</i></span></b>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: 'Hello world' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('aHello world')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('keep escaped markup as text when stripping formatting from single-line HTML', async () => {
+  // a code block on a web page that shows HTML source, as Chrome writes it to the clipboard
+  const html = `<pre style="background-color: rgb(246, 248, 250);"><code>&lt;b&gt;bold&lt;/b&gt; &amp; more</code></pre>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: '&lt;b&gt;bold&lt;/b&gt; &amp; more' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('a&lt;b&gt;bold&lt;/b&gt; &amp; more')
+})
+
+// https://github.com/cybersemics/em/issues/4161
+it('keep the spacing of the text when stripping formatting from single-line HTML', async () => {
+  const html = `<p style="font-family: sans-serif;">東京\u3000大阪 a&nbsp;&nbsp;b 10\u202f%</p>`
+  vi.useFakeTimers()
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(newThought({ value: 'a' }))
+  // capture the path before the import, since the pasted text changes the value of the thought
+  const path = contextToPath(store.getState(), ['a'])!
+  store.dispatch(importDataActionCreator({ path, html, text: '東京\u3000大阪 a\u00a0\u00a0b 10\u202f%' }))
+
+  await vi.runOnlyPendingTimersAsync()
+
+  // read the raw value, since exporting as text/plain would strip the formatting
+  const value = getThoughtById(store.getState(), head(path))!.value
+
+  cleanup()
+
+  expect(value).toBe('a東京\u3000大阪 a  b 10\u202f%')
 })
 
 it('do not insert html with newlines as a single-line', async () => {

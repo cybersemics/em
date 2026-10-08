@@ -631,6 +631,7 @@ const CommandCenter = () => {
               className={css({
                 pointerEvents: 'none',
                 position: 'absolute',
+                // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
                 background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 2.5rem)',
                 bottom: 0,
                 width: '100%',

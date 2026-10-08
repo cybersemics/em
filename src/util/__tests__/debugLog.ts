@@ -1,19 +1,84 @@
 import { vi } from 'vitest'
 import pkg from '../../../package.json'
 import State from '../../@types/State'
+import { resetStores } from '../../stores/ministore'
 import debugLog from '../debugLog'
 import storage from '../storage'
 
+// debugLog's in-memory state is restored after every test by setupTests (see reset in debugLog.ts). Storage is this
+// suite's own: reset deliberately leaves it alone, so it is cleared here.
 beforeEach(() => {
   localStorage.clear()
-  debugLog.setEnabled(false)
-  debugLog.clear()
 })
 
 afterEach(() => {
-  debugLog.setEnabled(false)
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+})
+
+// https://github.com/cybersemics/em/issues/5258
+describe('isolation between tests', () => {
+  // The two tests are a pair: the first leaves logging enabled with an entry in the buffer and cleans up nothing, and
+  // the second passes only if that did not reach it.
+  it('a test may leave logging enabled', () => {
+    debugLog.setEnabled(true)
+    debugLog.log('leak')
+    expect(debugLog.read().length).toBeGreaterThan(0)
+  })
+
+  it('the next test starts with logging off and an empty buffer', () => {
+    expect(debugLog.isEnabled()).toBe(false)
+    expect(debugLog.read()).toEqual([])
+  })
+})
+
+describe('reset', () => {
+  it('turns logging off and empties the buffer without erasing the persisted log', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('x')
+    expect(storage.getItem('debugLog-0')).not.toBeNull()
+
+    resetStores()
+
+    expect(debugLog.isEnabled()).toBe(false)
+    expect(debugLog.read()).toEqual([])
+    // Unlike clear(), which exists to erase the log.
+    expect(storage.getItem('debugLog-0')).not.toBeNull()
+  })
+
+  it('turns the console mirror off', () => {
+    debugLog.setConsole(true)
+
+    resetStores()
+
+    expect(debugLog.isConsole()).toBe(false)
+  })
+
+  it('cancels the frame heartbeat, so that draining fake timers terminates', async () => {
+    vi.useFakeTimers()
+    debugLog.setEnabled(true)
+    // the heartbeat is a self-rescheduling requestAnimationFrame, which fake timers fake
+    expect(vi.getTimerCount()).toBe(1)
+
+    resetStores()
+
+    expect(vi.getTimerCount()).toBe(0)
+    await vi.runAllTimersAsync()
+    vi.useRealTimers()
+  })
+
+  it('lets the heartbeat start again afterwards', () => {
+    vi.useFakeTimers()
+    debugLog.setEnabled(true)
+    resetStores()
+
+    debugLog.setEnabled(true)
+
+    expect(vi.getTimerCount()).toBe(1)
+    expect(debugLog.read().filter(entry => entry.type === 'session')).toHaveLength(1)
+    vi.useRealTimers()
+  })
 })
 
 describe('enabled gate', () => {
@@ -209,6 +274,14 @@ describe('format', () => {
         },
         lexemeIndex: {},
       },
+      cursor: null,
+      cursorOffset: null,
+      isKeyboardOpen: false,
+      noteFocus: false,
+      expanded: {},
+      multicursors: {},
+      undoPatches: [],
+      redoPatches: [],
     } as unknown as State
     const text = debugLog.format(state)
     expect(text).toContain('state.thoughts: 2 thoughts, 0 lexemes')
@@ -216,6 +289,77 @@ describe('format', () => {
     expect(text).toContain('t2 "banana" rank:0 parent:root pending')
     // siblings are ordered by rank within a parent, so banana (rank 0) precedes apple (rank 1)
     expect(text.indexOf('banana')).toBeLessThan(text.indexOf('apple'))
+  })
+  it('renders the view the log ended on before the state.thoughts dump', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const state = {
+      thoughts: { thoughtIndex: {}, lexemeIndex: {} },
+      cursor: ['t1', 't2'],
+      cursorOffset: 3,
+      isKeyboardOpen: true,
+      noteFocus: false,
+      expanded: { a: ['t1'], b: ['t1', 't2'] },
+      multicursors: {},
+      undoPatches: [{}, {}, {}],
+      redoPatches: [{}],
+    } as unknown as State
+    const lines = debugLog.format(state).split('\n')
+    const view = lines.findIndex(line => line.startsWith('--- state: '))
+    expect(JSON.parse(lines[view].slice('--- state: '.length))).toEqual({
+      cursor: ['t1', 't2'],
+      cursorOffset: 3,
+      isKeyboardOpen: true,
+      noteFocus: false,
+      expanded: 2,
+      multicursors: 0,
+      undo: 3,
+      redo: 1,
+    })
+    expect(view).toBeLessThan(lines.findIndex(line => line.startsWith('--- state.thoughts:')))
+  })
+})
+
+describe('logError', () => {
+  it('records the name, message and stack of an Error', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const error = new TypeError('boom')
+    debugLog.logError('window', error, { filename: 'app.js' })
+    expect(debugLog.read()).toEqual([
+      expect.objectContaining({
+        type: 'error',
+        source: 'window',
+        name: 'TypeError',
+        message: 'boom',
+        stack: expect.stringContaining('TypeError: boom'),
+        filename: 'app.js',
+      }),
+    ])
+  })
+
+  it('records a thrown non-Error as its message', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.logError('unhandledrejection', 'plain string')
+    debugLog.logError('unhandledrejection', { code: 42 })
+    expect(debugLog.read().map(entry => entry.message)).toEqual(['plain string', '{"code":42}'])
+  })
+
+  it('still records an entry when the thrown value cannot be stringified', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const circular: Record<string, unknown> = {}
+    circular.self = circular
+    debugLog.logError('unhandledrejection', circular)
+    expect(debugLog.read()).toEqual([
+      expect.objectContaining({ type: 'error', source: 'unhandledrejection', message: '[unserializable]' }),
+    ])
+  })
+
+  it('is a no-op when logging is disabled', () => {
+    debugLog.logError('window', new Error('boom'))
+    expect(debugLog.read()).toEqual([])
   })
 })
 

@@ -92,6 +92,44 @@ const hideCaret = {
   },
 }
 
+// the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
+// See: recipes/hideCaret.ts
+// TODO: FauxCaret will break if hideCaretAnimationNames is imported from hideCaret.config.ts into hideCaret.ts, and vice versa into panda.config.ts, so we are stuck with duplicate definitions in two files.
+const hideCaretAnimationNames = [
+  'hideCaret0',
+  'hideCaret1',
+  'hideCaret2',
+  'hideCaret3',
+  'hideCaret4',
+  'hideCaret5',
+  'hideCaret6',
+  'hideCaret7',
+  'hideCaret8',
+  'hideCaret9',
+  'hideCaretA',
+  'hideCaretB',
+  'hideCaretC',
+  'hideCaretD',
+  'hideCaretE',
+  'hideCaretF',
+  'hideCaretG',
+  'hideCaretH',
+  'hideCaretI',
+  'hideCaretJ',
+  'hideCaretK',
+  'hideCaretL',
+  'hideCaretM',
+  'hideCaretN',
+  'hideCaretO',
+  'hideCaretP',
+  'hideCaretQ',
+  'hideCaretR',
+  'hideCaretS',
+  'hideCaretT',
+  'hideCaretU',
+  'hideCaretV',
+]
+
 const keyframes = defineKeyframes({
   fademostlyin: {
     from: {
@@ -152,6 +190,14 @@ const keyframes = defineKeyframes({
   ellipsis: {
     to: {
       width: '1.25em',
+    },
+  },
+  shimmerText: {
+    from: {
+      maskPosition: '200% 0',
+    },
+    to: {
+      maskPosition: '-200% 0',
     },
   },
   tofg: {
@@ -218,43 +264,7 @@ const keyframes = defineKeyframes({
       '--dialog-content-mask-fade-bottom': '0.25rem',
     },
   },
-  // the hideCaret animation must run every time the indent changes on iOS Safari, which necessitates replacing the animation with an identical substitute with a different name
-  // See: recipes/hideCaret.ts
-  // TODO: FauxCaret will break if hideCaretAnimationNames is imported from hideCaret.config.ts into hideCaret.ts, and vice versa into panda.config.ts, so we are stuck with duplicate definitions in two files.
-  ...[
-    'hideCaret0',
-    'hideCaret1',
-    'hideCaret2',
-    'hideCaret3',
-    'hideCaret4',
-    'hideCaret5',
-    'hideCaret6',
-    'hideCaret7',
-    'hideCaret8',
-    'hideCaret9',
-    'hideCaretA',
-    'hideCaretB',
-    'hideCaretC',
-    'hideCaretD',
-    'hideCaretE',
-    'hideCaretF',
-    'hideCaretG',
-    'hideCaretH',
-    'hideCaretI',
-    'hideCaretJ',
-    'hideCaretK',
-    'hideCaretL',
-    'hideCaretM',
-    'hideCaretN',
-    'hideCaretO',
-    'hideCaretP',
-    'hideCaretQ',
-    'hideCaretR',
-    'hideCaretS',
-    'hideCaretT',
-    'hideCaretU',
-    'hideCaretV',
-  ].reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
+  ...hideCaretAnimationNames.reduce((accum, name) => ({ ...accum, [name]: hideCaret }), {}),
 })
 
 const globalCss = defineGlobalStyles({
@@ -374,6 +384,7 @@ const globalCss = defineGlobalStyles({
     fontStyle: 'italic',
     color: 'var(--placeholder-color, {colors.dim})',
     backgroundColor: 'var(--placeholder-background-color, transparent)',
+    filter: 'opacity(var(--placeholder-opacity))',
     content: 'attr(placeholder)',
     cursor: 'text',
   },
@@ -381,6 +392,19 @@ const globalCss = defineGlobalStyles({
     color: 'var(--placeholder-color, currentColor)',
     // Safari does not fade color emoji with opacity on a pseudo-element, so filter the rendered content instead.
     filter: 'opacity(0.5)',
+  },
+  // Safari never synthesizes an oblique face for color emoji, so font-style leaves them upright while the text around
+  // them slants. Skew the whole placeholder geometrically instead, which slants emoji and text alike, and turn
+  // font-style off so the text is not slanted twice. -12deg is the angle of Helvetica's italic, but a skew only slopes
+  // the upright letterforms rather than selecting the italic face, so it is limited to thoughts that contain an emoji
+  // (data-placeholder-emoji); every other thought keeps true italics. Transforms do not apply to inline boxes, hence
+  // inline-block.
+  '[placeholder][data-placeholder-cleared][data-placeholder-emoji]:empty::before': {
+    _safari: {
+      fontStyle: 'normal',
+      display: 'inline-block',
+      transform: 'skewX(-12deg)',
+    },
   },
   '[placeholder][data-placeholder-bold]:empty::before': {
     fontWeight: 700,
@@ -401,8 +425,18 @@ const globalCss = defineGlobalStyles({
     backgroundColor: 'var(--placeholder-background-color, {colors.codeBg})',
     fontFamily: 'monospace',
   },
+  /* Sweep a highlight across existing paint, preserving rich-text colors, backgrounds and native emoji. */
+  '[data-generating], [data-generating-note] [aria-label="note-editable"]': {
+    maskImage: 'linear-gradient(90deg, rgba(0, 0, 0, 0.5) 0%, black 50%, rgba(0, 0, 0, 0.5) 100%)',
+    maskSize: '250% 100%',
+    animation: 'shimmerText 4s linear infinite',
+  },
+  '[placeholder][data-generating]:empty::before': {
+    color: 'var(--placeholder-color, {colors.fg})',
+  },
   ':root': {
     '--safe-area-inset-bottom': 'env(safe-area-inset-bottom)',
+    '--placeholder-opacity': '1',
   },
 })
 
@@ -555,6 +589,12 @@ export default defineConfig({
 
   globalCss,
 
+  // recipes/fauxCaretTreeProvider.ts builds its animation variants at runtime, which PandaCSS cannot extract statically,
+  // so the animationName utility is generated for each hideCaret animation here.
+  staticCss: {
+    css: [{ properties: { animationName: hideCaretAnimationNames } }],
+  },
+
   /* Registering `--dialog-content-mask-fade-top` as a `<length>`
   is what makes the scroll-driven mask animation in dialogRecipe.ts
   interpolate smoothly.
@@ -594,5 +634,5 @@ export default defineConfig({
 
   // The output directory for your css system
   outdir: 'styled-system',
-  presets: [],
+  presets: ['@pandacss/preset-base'],
 })

@@ -13,13 +13,13 @@ import {
   TUTORIAL_CONTEXT,
   TUTORIAL_STEP_AUTOEXPAND_EXPAND,
 } from '../constants'
-import globals from '../globals'
 import chain from '../selectors/chain'
 import expandThoughts from '../selectors/expandThoughts'
 import getSetting from '../selectors/getSetting'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
-import editingValueStore from '../stores/editingValue'
+import editingValueStore from '../stores/editingValueStore'
+import heldKeysStore from '../stores/heldKeysStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
@@ -101,7 +101,7 @@ const setCursor = (
 
   // If expansion is suppressed, use existing expansion.
   // setCursor will be re-triggered after expansion is unsuppressed.
-  const expanded = globals.suppressExpansion
+  const expanded = heldKeysStore.getState().suppressExpansion
     ? state.expanded
     : expandThoughts({ ...state, contextViews: newContextViews }, thoughtsResolved)
 

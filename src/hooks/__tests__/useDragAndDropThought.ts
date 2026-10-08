@@ -11,7 +11,6 @@ import { longPressActionCreator as longPress } from '../../actions/longPress'
 import Alert from '../../components/Alert'
 import Editable from '../../components/Editable'
 import { LongPressState } from '../../constants'
-import globals from '../../globals'
 import contextToPath from '../../selectors/contextToPath'
 import store from '../../stores/app'
 import dispatch from '../../test-helpers/dispatch'
@@ -49,13 +48,8 @@ const wrapper = ({ children }: PropsWithChildren) => createElement(Provider, { s
 
 beforeEach(async () => {
   await initStore()
-  globals.suppressCursorAfterTouch = false
   dragEndCallbacks.length = 0
   dropCallbacks.length = 0
-})
-
-afterEach(() => {
-  globals.suppressCursorAfterTouch = false
 })
 
 // https://github.com/cybersemics/em/issues/4839
