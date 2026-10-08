@@ -585,12 +585,15 @@ const onError = (e: any) => {
   if (e.error && 'stack' in e.error) {
     console.error(e.error.stack)
   }
+  debugLog.logError('window', e.error ?? e.message, { filename: e.filename, lineno: e.lineno, colno: e.colno })
   store.dispatch(error({ value: e.message }))
 }
 
-// error handler must be added immediately to catch auth errors
+// error handlers must be added immediately to catch auth errors
 if (typeof window !== 'undefined') {
   window.addEventListener('error', onError)
+  // A rejected promise that no code handled is recorded in the debug log only. It is not shown as an error banner.
+  window.addEventListener('unhandledrejection', e => debugLog.logError('unhandledrejection', e.reason))
 }
 
 export default initEvents

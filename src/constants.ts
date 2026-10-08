@@ -142,7 +142,7 @@ export const ICON_SCALING_FACTOR = 1.37
 export const BASE_FONT_SIZE = 16
 
 export const MIN_FONT_SIZE = 8
-export const DEFAULT_FONT_SIZE = 18
+export const DEFAULT_FONT_SIZE = 16
 export const MAX_FONT_SIZE = 40
 export const FONT_SCALE_INCREMENT = 1
 
@@ -295,7 +295,7 @@ export const REGEX_EMOJI_PREFIX = new RegExp(`${REGEX_EMOJI_GROUP.source}\\s*`)
 
 export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code', 'font']
 
-export const EXTERNAL_FORMATTING_TAGS = ['b', 'i', 'u', 'strong', 'strike']
+export const EXTERNAL_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'strike', 'code']
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
 export const ALLOWED_ATTR = ['class', 'style', 'color']

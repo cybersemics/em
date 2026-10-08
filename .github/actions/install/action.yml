@@ -12,8 +12,10 @@ description: >
     - styled-system/ is regenerated on EVERY run via `yarn build:styles` (~5s). It is cheap
       and this eliminates the entire class of "node_modules restored but styled-system stale"
       bugs — no cache key can under-specify it.
-    - packages/webview/dist/ IS cached (its cold build is ~14s) on its own inputs, and rebuilt
-      via `yarn build:packages` only when that cache misses.
+    - packages/webview/dist/ IS cached (its cold build is ~14s) on its own inputs. `yarn
+      build:packages` still runs on every job: its stamp also fingerprints the installed build
+      tools, which this key does not cover, so it rebuilds a restored dist/ that a dependency
+      bump made stale and is a sub-second no-op otherwise.
 
 runs:
   using: composite
@@ -42,7 +44,6 @@ runs:
       shell: bash
       run: yarn build:styles
 
-    - name: Build packages/webview (on cache miss)
-      if: steps.cache-webview.outputs.cache-hit != 'true'
+    - name: Build packages/webview (no-op when up to date)
       shell: bash
       run: yarn build:packages
