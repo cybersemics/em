@@ -46,7 +46,9 @@ describe('DOM', () => {
 
       await act(vi.runOnlyPendingTimersAsync)
 
-      act(() => executeCommand(toggleSortCommand, { store }))
+      act(() => {
+        executeCommand(toggleSortCommand, { store })
+      })
 
       await act(() => vi.runAllTimersAsync())
 
@@ -73,7 +75,9 @@ describe('DOM', () => {
         ])
       })
 
-      act(() => executeCommand(toggleSortCommand, { store }))
+      act(() => {
+        executeCommand(toggleSortCommand, { store })
+      })
 
       await act(() => vi.runOnlyPendingTimersAsync())
 
@@ -104,7 +108,9 @@ describe('DOM', () => {
         ])
       })
 
-      act(() => executeCommand(toggleSortCommand, { store }))
+      act(() => {
+        executeCommand(toggleSortCommand, { store })
+      })
 
       await act(() => vi.runAllTimersAsync())
 
@@ -131,8 +137,12 @@ describe('DOM', () => {
         ])
       })
 
-      act(() => executeCommand(toggleSortCommand, { store }))
-      act(() => executeCommand(toggleSortCommand, { store }))
+      act(() => {
+        executeCommand(toggleSortCommand, { store })
+      })
+      act(() => {
+        executeCommand(toggleSortCommand, { store })
+      })
 
       await act(() => vi.runAllTimersAsync())
 

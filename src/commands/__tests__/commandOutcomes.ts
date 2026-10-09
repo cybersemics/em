@@ -1,3 +1,4 @@
+import { errorActionCreator as error } from '../../actions/error'
 import { commandEmitter, executeCommandWithMulticursor } from '../../commands'
 import store from '../../stores/app'
 import initStore from '../../test-helpers/initStore'
@@ -19,25 +20,26 @@ it('reports the command and actual source for a completed user invocation', () =
   unsubscribe()
 })
 
-it('waits for returned work and does not report rejected work', async () => {
+it('reports an asynchronous command without waiting for its work to settle', () => {
   const report = vi.spyOn(commandEmitter, 'trigger')
-  let finish!: () => void
-  const pending = new Promise<void>(resolve => {
-    finish = resolve
-  })
-  const execution = executeCommandWithMulticursor(
-    { ...toggleDone, canExecute: () => true, exec: () => pending },
+  executeCommandWithMulticursor(
+    { ...toggleDone, canExecute: () => true, exec: () => new Promise<void>(() => {}) },
+    { store, type: 'keyboard' },
+  )
+  expect(report).toHaveBeenCalledOnce()
+})
+
+it('does not report a command that cannot execute', () => {
+  const report = vi.spyOn(commandEmitter, 'trigger')
+  executeCommandWithMulticursor({ ...toggleDone, canExecute: () => false, exec: () => {} }, { store, type: 'keyboard' })
+  expect(report).not.toHaveBeenCalled()
+})
+
+it('does not report a command that raises an error', () => {
+  const report = vi.spyOn(commandEmitter, 'trigger')
+  executeCommandWithMulticursor(
+    { ...toggleDone, canExecute: () => true, exec: dispatch => dispatch(error({ value: 'Read-only' })) },
     { store, type: 'keyboard' },
   )
   expect(report).not.toHaveBeenCalled()
-  finish()
-  await execution
-  expect(report).toHaveBeenCalledOnce()
-  await expect(
-    executeCommandWithMulticursor(
-      { ...toggleDone, canExecute: () => true, exec: () => Promise.reject(new Error('failed')) },
-      { store, type: 'keyboard' },
-    ),
-  ).rejects.toThrow('failed')
-  expect(report).toHaveBeenCalledOnce()
 })
