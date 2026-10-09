@@ -141,6 +141,22 @@ Gesture diagram arrows should stay centered at every app font size, wherever a d
 
 The first is checkable by following the steps; the second is what keeps the fix from being a special case at 32.
 
+Where **In general** runs to a list of requirements, group them the way the requirement does. Bullets that are cases of one requirement, or conditions under which it applies, nest under a bullet that names that requirement, rather than sitting beside it in one flat list. A flat list hides which rules belong together, and the reader has to rebuild the structure the writer already saw. [#5886](https://github.com/cybersemics/em/issues/5886) nests everything that adds a command to the learned set under **Added**, and everything that removes one under **Removed**, both under **Learned set**:
+
+```markdown
+- **Learned set.**
+  - **Added.** A command should be added to the learned set when the user:
+    - Completes its full gesture with the Gesture Menu open.
+    - Completes its full gesture blindly, without the Gesture Menu open.
+    - Pins it as the Pinned Command.
+  - **Removed.** A command should leave the learned set only when the user:
+    - Resets it from that command's detail page in the Command Universe.
+    - Unpins it as the Pinned Command without having made any practice progress on it.
+- **Show all gestures.** A setting should show every command in the Gesture Menu regardless of the learned set.
+```
+
+Before posting, read each top-level bullet and ask whether it is a case of another one. A bullet about the same subject as its neighbour (the Pinned Command beside the learned set it adds to) usually is.
+
 Skip the split where it does not earn its place — where the case *is* the rule and the second heading would restate the first in the abstract, or where the correct behaviour is a single fixed state (a value, a label, a position) with no input to generalise over. One paragraph under the plain heading is right for those.
 
 This call is yours, every time. You have the steps, you have the rule, and you can see whether the two say different things — which is the whole test. Write both halves out and read them: if the second is the first with the specifics lifted out, delete it. Do not put the split to the reporter, and do not put it to them as a recommendation with the alternative attached. They answer what the app should do; you decide how many headings it takes to say so.
@@ -316,6 +332,7 @@ New issues often originate in a comment thread on another issue or PR.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
+- Requirements in one flat list, where several bullets are cases or conditions of the same requirement and belong nested under it.
 - An Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
