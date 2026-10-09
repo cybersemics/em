@@ -2,7 +2,7 @@ import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View, ViewStyle } from 'react-native'
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
-import { noop } from '../constants'
+import { TOUCH_SLOP, noop } from '../constants'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import testFlags from '../e2e/testFlags'
 import { clearGesture, updateGesture } from '../stores/gestureStore'
@@ -58,6 +58,9 @@ type MultiGestureProps = PropsWithChildren<{
   shouldBlockScroll?: () => boolean
 }>
 
+/** Milliseconds into a press on the caret after which touchmove is no longer prevented. IOS raises the text magnifier 100–200ms into the press, and preventing touchmove after that stops the magnifier from moving the caret on some versions. */
+const MAGNIFIER_DELAY = 150
+
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
 const dirToRad = {
   NoBias: {
@@ -103,6 +106,8 @@ const gesture = (p1: Point, p2: Point, minDistanceSquared: number, bias: BiasTyp
 /** A component that handles touch gestures composed of sequential swipes. */
 class MultiGesture extends React.Component<MultiGestureProps> {
   abandon = false
+  /** The timeStamp of the touchstart when shouldBlockScroll is keeping an abandoned touch from scrolling. */
+  blockScrollStart: number | null = null
   clientStart: Point | null = null
   currentStart: Point | null = null
   leftHanded = false
@@ -139,7 +144,15 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             disableScroll: this.disableScroll,
           })
         }
-        if (this.disableScroll) {
+        const touch = e.touches[0]
+        // preventing even one touchmove of a press that is holding still for the magnifier stops it moving the caret
+        const allowMagnifier =
+          this.blockScrollStart !== null &&
+          (e.timeStamp - this.blockScrollStart >= MAGNIFIER_DELAY ||
+            !touch ||
+            !this.clientStart ||
+            Math.hypot(touch.clientX - this.clientStart.x, touch.clientY - this.clientStart.y) <= TOUCH_SLOP)
+        if (this.disableScroll && !allowMagnifier) {
           e.preventDefault()
         }
       },
@@ -197,8 +210,11 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.disableScroll = true
         } else {
           this.abandon = true
-          // overflow rather than disableScroll, whose preventDefault on touchmove also stops the magnifier moving the caret
-          document.documentElement.style.overflow = inGestureZone && props.shouldBlockScroll?.() ? 'hidden' : ''
+          const blockScroll = inGestureZone && !!props.shouldBlockScroll?.()
+          this.disableScroll = blockScroll
+          this.blockScrollStart = blockScroll ? e.timeStamp : null
+          // outlasts disableScroll, which has to let the magnifier's touchmoves through once it appears
+          document.documentElement.style.overflow = blockScroll ? 'hidden' : ''
         }
       }
     })
@@ -425,6 +441,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.currentStart = null
     this.scrollYStart = null
     this.disableScroll = false
+    this.blockScrollStart = null
     document.documentElement.style.overflow = ''
     this.sequence = ''
     this.touchTarget = null
