@@ -15,8 +15,8 @@
 - Do not create new files for constants, hooks, components, selectors, or helper functions that are only used in a single file. Instead, define them in the same file where they are used.
   - Prefer co-located functions over unnecessary abstraction. If a function is only used in one module, define it there instead of abstracting it out into a separate file.
 - Avoid thin functions that give the appearance of abstraction. Before extracting a function, confirm it earns its place by answering yes to at least one of the questions below; if the answer is no to all three, inline it at the call site. A thin function enlarges the internal API while hiding the code that mattered — the significant call it wraps (e.g. a lifecycle hook such as `evaluateOnNewDocument`, or a subscription), or the condition it evaluates — making the control flow harder to follow than the code it replaced.
-  - Does it reduce duplication? A helper called once does not. Neither does a single expression called twice — repeating it at both call sites is cheaper to read than a jump.
-  - Does it establish an encapsulation boundary? A helper whose only consumers live in the same module does not.
+  - Does it reduce duplication? A helper called once does not. Neither does a single short expression repeated at a few call sites, such as `a || b` — repeating it at each call site is cheaper to read than a jump.
+  - Does it establish an encapsulation boundary? A helper whose only consumers live in the same module does not. Neither does a helper whose parts stay public: it hides something only when callers stop needing what it wraps. If `a` and `b` remain exported and read directly elsewhere, an `isAOrB()` beside them hides nothing — it adds a third name for readers to learn, alongside the two it was meant to replace.
   - Does it hide meaningful complexity? A one- or two-line body that just forwards its arguments does not. Neither does a body that is a single boolean expression, ternary, or lookup — inline the expression, and put any explanation in a comment above it rather than a JSDoc on a helper:
     ```ts
     // ✗ too thin: the whole function is one ternary
