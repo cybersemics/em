@@ -158,27 +158,68 @@ let eventHandlers: EventHandlers | null = null
 const initEvents = (store: Store<State, any>) => {
   if (eventHandlers) return eventHandlers
 
-  let lastState: number
+  /** Reads the numeric browser history state used by updateUrlHistory. */
+  const historyState = () => (typeof window.history.state === 'number' ? window.history.state : 0)
+
+  let lastState: number = historyState()
   let lastPath: Path | null
+
+  /** Tracks pushState/replaceState writes so popstate direction is based on fresh history state. */
+  const trackHistoryState = () => {
+    const pushState = window.history.pushState.bind(window.history)
+    const replaceState = window.history.replaceState.bind(window.history)
+
+    window.history.pushState = ((state, title, url) => {
+      if (typeof state === 'number') {
+        lastState = state
+        lastPath = store.getState().cursor
+      }
+      return pushState(state, title, url)
+    }) as History['pushState']
+
+    window.history.replaceState = ((state, title, url) => {
+      if (typeof state === 'number') {
+        lastState = state
+        lastPath = store.getState().cursor
+      }
+      return replaceState(state, title, url)
+    }) as History['replaceState']
+
+    return () => {
+      window.history.pushState = pushState
+      window.history.replaceState = replaceState
+    }
+  }
+
+  const untrackHistoryState = trackHistoryState()
 
   /** Popstate event listener; setCursor on browser history forward/backward. */
   const onPopstate = (e: PopStateEvent) => {
     const state = store.getState()
 
-    const { path, contextViews } = decodeThoughtsUrl(state)
+    // A history entry outlives its thoughts, so require them to exist; a deleted thought decodes to a null path instead of reaching pathToContext, which throws on a missing thought.
+    const { path, contextViews } = decodeThoughtsUrl(state, { exists: true })
+    const direction = !lastState || lastState > e.state ? 'back' : 'forward'
+
+    // Skip an entry whose thought has since been deleted or moved, continuing in the same direction until an entry resolves to an existing path. The cursor is left untouched in the meantime.
+    if (!path || !pathExists(state, pathToContext(state, path))) {
+      lastState = e.state
+      window.history[direction]()
+      return
+    }
 
     if (!lastPath) {
       lastPath = state.cursor
     }
 
-    if (!path || !pathExists(state, pathToContext(state, path)) || equalPath(lastPath, path)) {
-      window.history[!lastState || lastState > e.state ? 'back' : 'forward']()
+    if (equalPath(lastPath, path)) {
+      window.history[direction]()
     }
 
-    lastPath = path && pathExists(state, pathToContext(state, path)) ? path : lastPath
+    lastPath = path
     lastState = e.state
 
-    const toRoot = !path || isRoot(path)
+    const toRoot = isRoot(path)
 
     // clear the selection if root
     if (toRoot) {
@@ -569,6 +610,7 @@ const initEvents = (store: Store<State, any>) => {
     unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()
+    untrackHistoryState()
     eventHandlers = null
   }
 
