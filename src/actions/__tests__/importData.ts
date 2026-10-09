@@ -1558,4 +1558,33 @@ describe('paste over a selection', () => {
     expect(getThoughtById(state, head(state.cursor!))!.value).toBe('🧠 Hello')
     expect(state.cursorOffset).toBe('🧠 '.length)
   })
+
+  // A leading no-break space is not trimmed, as when typing, so it must not shift the caret either.
+  it('places the caret after single-line HTML pasted with a leading no-break space', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- Baz' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 0, 0)
+
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['Baz'])!,
+            html: "<meta charset='utf-8'>&nbsp;Bar",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('&nbsp;BarBaz')
+    expect(state.cursorOffset).toBe('\u00a0Bar'.length)
+  })
 })

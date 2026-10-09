@@ -194,12 +194,13 @@ const importText = (
     // adding the emoji space, as the change handler does, since the space is only added to a value starting with an emoji.
     const trimmedValue = trimHtml(combinedValue)
     const newValue = addEmojiSpace(trimmedValue)
-    const combinedText = getTextContentFromHTML(combinedValue)
-    const leadingWhitespaceLength = combinedText.length - combinedText.trimStart().length
+    const trimmedText = getTextContentFromHTML(trimmedValue)
+    // trimHtml keeps a no-break space, so measure the whitespace it removed rather than what trimStart would remove
+    const leadingWhitespaceLength = Math.max(getTextContentFromHTML(combinedValue).indexOf(trimmedText), 0)
     // the caret lands after the inserted text, which starts where the replaced range did rather than where it ended
     const offsetBeforeEmojiSpace = Math.min(
       Math.max(insertOffset + getTextContentFromHTML(insertedText).length - leadingWhitespaceLength, 0),
-      getTextContentFromHTML(trimmedValue).length,
+      trimmedText.length,
     )
     const emojiSpaceInsertionOffset = newValue === trimmedValue ? -1 : getTextContentFromHTML(newValue).indexOf(' ')
     const offset =
