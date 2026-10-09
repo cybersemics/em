@@ -77,6 +77,8 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
 | [`bisect`](#bisect) | Find whether a bug is a recent regression, and the commit and pull request that introduced it | [SKILL.md](../../.github/skills/bisect/SKILL.md) |
 | `create-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
+| [`liminal`](#liminal) | Style a static artifact, such as a report page, like em's Liminal UI | [SKILL.md](../../.github/skills/liminal/SKILL.md) |
+| [`report-review-gaps`](#report-review-gaps) | Report the feedback a final reviewer gave after the first review, as review principles | [SKILL.md](../../.github/skills/report-review-gaps/SKILL.md) |
 
 ## The gates
 
@@ -312,6 +314,20 @@ Three things go stale, and the skill checks for them in order of how often they 
 It reports one line back into the ending — the documents it updated, or `docs: unaffected — <reason>`. The second is a common and legitimate outcome, but it is a conclusion reached after checking the table, not a default.
 
 The escalation rule is the interesting one. If a change contradicts **design intent** recorded in a doc — not a detail, but the stated reason a subsystem is built the way it is — the agent stops and raises it instead of editing the intent to match the new code. Quietly rewriting the "why" erases the only record that a deliberate decision was ever made.
+
+## Presenting work
+
+### liminal
+
+**Source: [`.github/skills/liminal/SKILL.md`](../../.github/skills/liminal/SKILL.md)**
+
+Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and the background glow from `public/img/glow/`, published next to the page. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
+
+### report-review-gaps
+
+**Source: [`.github/skills/report-review-gaps/SKILL.md`](../../.github/skills/report-review-gaps/SKILL.md)**
+
+Runs on demand, ahead of a review check-in. Its script collects every comment the final reviewer posted after the first reviewer's first review, on PRs by the given authors. The agent then keeps only the substantive feedback, groups it into review principles with the comments quoted verbatim, and publishes the result as a [`liminal`](#liminal) artifact. The report is shared with the first reviewer, so it never quotes them, and it is written as principles to adopt rather than a scorecard.
 
 ## Writing a new skill
 
