@@ -477,7 +477,9 @@ describe('mobile', () => {
     // Indent moves both selected thoughts into aaa, which becomes a parent.
     await waitUntil(() => !!document.querySelector('[data-bullet="parent"]'), { timeout: 6000 })
 
-    await gesture(clearThoughtCommand)
+    // Start above the open Command Center. Its sheet owns touches inside its bounds for scrolling, so they do not
+    // reach the thoughtspace gesture handler.
+    await gesture(clearThoughtCommand, { yStart: 250 })
     await waitForEditable('')
 
     // Typing mirrors the new value across the selected thoughts even though they were moved while selected.
