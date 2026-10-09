@@ -544,7 +544,9 @@ export const executeCommandWithMulticursor = (
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
   if (!command.multicursor || !hasMulticursor(state)) {
     const execution = executeCommand(command, { store: commandStore, type: inputMethod, event, keyboardIndex })
-    return execution === false ? undefined : reportCommandSuccess({ commandStore, commandId: commandArg.id, source, errorBefore, execution })
+    return execution === false
+      ? undefined
+      : reportCommandSuccess({ commandStore, commandId: commandArg.id, source, errorBefore, execution })
   }
 
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
@@ -713,10 +715,16 @@ export const executeCommandWithMulticursor = (
 
       completeMulticursorExecution()
       recordLastCommand(command, metadata, commandStore.getState())
-      return !didExecute ? false : executions.length ? Promise.all(executions).then(results => results.includes(false) ? false : undefined) : undefined
+      return !didExecute
+        ? false
+        : executions.length
+          ? Promise.all(executions).then(results => (results.includes(false) ? false : undefined))
+          : undefined
     }),
   )
-  return execution === false ? undefined : reportCommandSuccess({ commandStore, commandId: commandArg.id, source, errorBefore, execution })
+  return execution === false
+    ? undefined
+    : reportCommandSuccess({ commandStore, commandId: commandArg.id, source, errorBefore, execution })
 }
 
 /**

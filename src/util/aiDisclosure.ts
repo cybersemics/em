@@ -56,13 +56,16 @@ const requestAiDisclosure = (
   cancelAiDisclosure()
 
   return new Promise<void | false>((resolve, reject) => {
-    aiUseStore.update({ resolvePending: resolve, pending: () => {
-      try {
-        Promise.resolve(continuation()).then(resolve, reject)
-      } catch (error) {
-        reject(error)
-      }
-    } })
+    aiUseStore.update({
+      resolvePending: resolve,
+      pending: () => {
+        try {
+          Promise.resolve(continuation()).then(resolve, reject)
+        } catch (error) {
+          reject(error)
+        }
+      },
+    })
   })
 }
 
