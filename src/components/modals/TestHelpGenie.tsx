@@ -33,7 +33,16 @@ const POSES: { label: string; flight: { x: number; y: number }[] }[] = [
 /** Modal used for the HelpGenie snapshot test. */
 const ModalTestHelpGenie = () => (
   <ModalComponent id='testHelpGenie' hideClose={true}>
-    <div className={css({ display: 'flex', flexWrap: 'wrap', gap: '1rem', backgroundColor: 'black', padding: '1rem' })}>
+    <div
+      className={css({
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 300px)',
+        width: 'max-content',
+        gap: '1rem',
+        backgroundColor: 'black',
+        padding: '1rem',
+      })}
+    >
       {POSES.map(pose => (
         <figure
           key={pose.label}
