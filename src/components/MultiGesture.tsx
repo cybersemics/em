@@ -54,6 +54,8 @@ type MultiGestureProps = PropsWithChildren<{
   minDistance?: number
   /** A hook that is called on touchstart if the user is in the gesture zone. If it returns true, the gesture is abandoned. Otherwise scrolling is disabled and a gesture may be entered. */
   shouldCancelGesture?: (x?: number, y?: number) => boolean
+  /** Called on touchstart in the gesture zone when shouldCancelGesture abandons the gesture. If it returns true, the document is kept from scrolling until the touch ends, so that a touch handed to native behavior such as caret repositioning does not scroll it. */
+  shouldBlockScroll?: () => boolean
 }>
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
@@ -195,6 +197,8 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           this.disableScroll = true
         } else {
           this.abandon = true
+          // overflow rather than disableScroll, whose preventDefault on touchmove also stops the magnifier moving the caret
+          document.documentElement.style.overflow = inGestureZone && props.shouldBlockScroll?.() ? 'hidden' : ''
         }
       }
     })
@@ -421,6 +425,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     this.currentStart = null
     this.scrollYStart = null
     this.disableScroll = false
+    document.documentElement.style.overflow = ''
     this.sequence = ''
     this.touchTarget = null
     clearGesture()

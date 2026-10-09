@@ -102,7 +102,7 @@ describe('Gestures', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5844
-  it.skip('does not scroll the document when a drag starts on the caret', async () => {
+  it('does not scroll the document when a drag starts on the caret', async () => {
     /** Generates n sibling thoughts named prefix0, prefix1, …. */
     const filler = (prefix: string, n: number) => Array.from({ length: n }, (_, i) => `- ${prefix}${i}`).join('\n')
     // keep b below the toolbar after the keyboard scrolls the page, so the drag starts in the gesture zone
@@ -130,7 +130,7 @@ describe('Gestures', () => {
 
     const scrollBefore = await browser.execute(() => window.scrollY)
     const caret = await getCaretPosition()
-    // A drag that does not wait for the magnifier. Holding 150ms or longer before moving does not scroll.
+    // a quick drag, since BrowserStack does not reproduce the scroll after a press held long enough for the magnifier
     await gesture('u', { xStart: caret.x, yStart: caret.y, segmentLength: 150, waitMs: 50 })
 
     // scrollY drifts by a pixel even when the drag is blocked
