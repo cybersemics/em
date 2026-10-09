@@ -57,6 +57,11 @@
 ### React
 
 - Use hooks.
+- Do not define React contexts (`createContext`, a context `Provider`, or `useContext` on one of em's own contexts). They are not one of the project's conventions, and the app does not need another way to manage state: Redux, ministores, and props already cover nearly everything. Bringing in context would be a larger design decision than any single change should make. Use instead:
+  - Redux (`useSelector`, or a thunk with `getState()`) for app state that takes part in undo, persistence, or selectors.
+  - A [ministore](../../docs/glossary.md#m) in `src/stores` for ephemeral UI state, read with its own `useSelector`.
+  - Props for everything else, DOM refs included, even when that means passing them down through several components.
+  - Reading a context that a third-party library exposes as its public API, such as motion's `MotionConfigContext`, is fine. The contexts in `src/components/modals/Export.tsx` are older than this rule and are left as they are. Do not copy them.
 
 ### CSS
 

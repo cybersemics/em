@@ -29,10 +29,17 @@ interface CommandUniverseGridItemProps {
   search?: string
   /** The inner dialog scroller used to decide when this cell's gesture is near view. */
   scrollRootRef: RefObject<HTMLDivElement | null>
+  /** The page root that the zoom origin is measured against. */
+  pageRef: RefObject<HTMLDivElement | null>
 }
 
 /** Renders a single command as a cell in CommandUniverseGrid. */
-const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '', scrollRootRef }) => {
+const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
+  command,
+  search = '',
+  scrollRootRef,
+  pageRef,
+}) => {
   const dispatch = useDispatch()
   const gestureBoxRef = useRef<HTMLDivElement>(null)
   const [showGesture, setShowGesture] = useState(false)
@@ -63,10 +70,9 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
           type='button'
           aria-label={label}
           onClick={event => {
-            const root = event.currentTarget.closest('[data-entry-id]')?.parentElement
-            if (!root) throw new Error('Command Universe transition root is missing.')
+            if (!pageRef.current) throw new Error('Command Universe page root is missing.')
             const cell = event.currentTarget.getBoundingClientRect()
-            const page = root.getBoundingClientRect()
+            const page = pageRef.current.getBoundingClientRect()
             dispatch(
               commandUniverseNavigate(
                 'detail',
