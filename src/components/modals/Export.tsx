@@ -51,9 +51,9 @@ import throttleConcat from '../../util/throttleConcat'
 import timestamp from '../../util/timestamp'
 import trimBullet from '../../util/trimBullet'
 import Checkbox from './../Checkbox'
-import ChevronImg from './../ChevronImg'
 import Dropdown from './../Dropdown'
 import LoadingEllipsis from './../LoadingEllipsis'
+import ChevronIcon from './../icons/ChevronIcon'
 import ModalComponent from './ModalComponent'
 
 /******************************************************************************
@@ -276,7 +276,7 @@ const ExportDropdown: FC<ExportDropdownProps> = ({ selected, onSelect }) => {
         {selected.label}
       </a>
       <span className={css({ display: 'inline-flex', verticalAlign: 'middle' })}>
-        <ChevronImg onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
+        <ChevronIcon onClickHandle={() => setIsOpen(!isOpen)} cssRaw={isOpen ? rotate180Class : undefined} />
         <span>
           <Dropdown
             isOpen={isOpen}
@@ -730,7 +730,7 @@ const ModalExport: FC<{ simplePaths: SimplePath[] }> = ({ simplePaths }) => {
         <span
           className={css({ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative' })}
         >
-          <ChevronImg
+          <ChevronIcon
             onClickHandle={onAdvancedClick}
             cssRaw={css.raw(advancedSettings && rotate180Class, { opacity: advancedSettings ? 1 : 0.5 })}
           />
