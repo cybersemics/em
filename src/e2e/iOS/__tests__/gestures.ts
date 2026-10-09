@@ -114,7 +114,19 @@ describe('Gestures', () => {
     await tap(await waitForEditable('b'), { pointerType: 'touch' })
     await waitUntil(isKeyboardShown)
     expect(await setSelection(1, 1)).toMatchObject({ type: 'Caret' })
-    expect(await browser.execute(() => document.documentElement.scrollHeight > window.innerHeight)).toBe(true)
+
+    // Safari may still be scrolling the focused thought into view after the keyboard appears
+    let lastScrollY: number | undefined
+    await waitUntil(async () => {
+      const scrollY = await browser.execute(() => window.scrollY)
+      const settled = scrollY === lastScrollY
+      lastScrollY = scrollY
+      return settled
+    })
+    // an upward drag scrolls down, so there must be room below
+    expect(
+      await browser.execute(() => window.scrollY + window.innerHeight < document.documentElement.scrollHeight),
+    ).toBe(true)
 
     const scrollBefore = await browser.execute(() => window.scrollY)
     const caret = await getCaretPosition()
