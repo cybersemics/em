@@ -437,6 +437,62 @@ describe('context view', () => {
     expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
   })
 
+  it('remove =favorite from a favorited context whose instance of the thought is a leaf', () => {
+    const text = `
+      - a
+        - m
+      - b
+        - test
+          - =favorite
+          - m
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', 'test']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+    - m
+  - b
+    - m`)
+    expectPathToEqual(stateNew, stateNew.cursor, ['a', 'm', 'b'])
+  })
+
+  it('do nothing on the home context', () => {
+    const text = `
+      - m
+        - x
+      - a
+        - m
+          - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['a', 'm']),
+      toggleContextView,
+      setCursor(['a', 'm', HOME_TOKEN]),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - m
+    - x
+  - a
+    - m
+      - y`)
+    expect(stateNew.alert?.value).toBe('The "home context" may not be uncategorized.')
+  })
+
   it('uncategorize context subthought in context view', () => {
     const text = `
       - a
