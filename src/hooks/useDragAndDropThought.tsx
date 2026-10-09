@@ -81,6 +81,9 @@ const canDrag = (props: ThoughtContainerProps) => {
   // longPress reducer).
   if (touchStore.getState().pressOnCaret) return false
 
+  // On iOS 27 a withheld tap on an empty thought gives no sign that it lifted (#5660).
+  if (touchStore.getState().pressInEmptyThought) return false
+
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
   const isDraggable = props.isVisible || props.isCursorParent
