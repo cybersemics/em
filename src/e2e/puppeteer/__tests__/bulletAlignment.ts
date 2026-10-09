@@ -6,7 +6,7 @@ vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
 
 describe('bullet alignment', () => {
   // https://github.com/cybersemics/em/issues/5567
-  it('bullet is vertically centered on the thought text', async () => {
+  it('bullet is vertically centered on the thought text, raised 1px for uppercase', async () => {
     // The misalignment grows with the font size and falls within subpixel rounding at the 16px default.
     await click('[data-testid=increase-font]') // 17
     await click('[data-testid=increase-font]') // 18
@@ -34,7 +34,8 @@ describe('bullet alignment', () => {
       return { opticalCenter, bulletCenter: rect.top + rect.height / 2 }
     })
 
-    // the two centers coincide, up to subpixel rounding
-    expect(Math.abs(opticalCenter - bulletCenter)).toBeLessThan(0.1)
+    // the bullet sits 1px above the lowercase optical center to balance the uppercase letter most thoughts begin with,
+    // up to subpixel rounding
+    expect(Math.abs(opticalCenter - bulletCenter - 1)).toBeLessThan(0.1)
   })
 })

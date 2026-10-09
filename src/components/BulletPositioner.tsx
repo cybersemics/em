@@ -235,8 +235,9 @@ const BulletPositioner = forwardRef<SVGSVGElement, PropsWithChildren<BulletPosit
         )}
         style={{
           // extend the click area upward, and mirror the editable's -0.5px top margin (see editableRecipe) so that the
-          // bullet shares the text's baseline
-          top: -extendClickHeight - 0.5,
+          // bullet shares the text's baseline. Then raise the bullet 1px above the lowercase optical center, since most
+          // thoughts begin with an uppercase letter, whose cap height draws the eye upward next to the bullet.
+          top: -extendClickHeight - 0.5 - 1,
           left: -extendClickWidth + marginLeft,
           paddingTop: `calc(${token('spacing.editablePaddingTop')} + ${extendClickHeight}px)`,
           paddingLeft: extendClickWidth,
