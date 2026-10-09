@@ -11,7 +11,7 @@ import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse
 import { commandById } from '../../commands'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
-import pinnedCommandStore from '../../stores/pinnedCommand'
+import pinnedCommandStore from '../../stores/pinnedCommandStore'
 import durations from '../../util/durations'
 import haptics from '../../util/haptics'
 import SettingsIcon from '../icons/SettingsIcon'
