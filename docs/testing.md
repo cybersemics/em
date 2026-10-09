@@ -480,6 +480,14 @@ BROWSERSTACK_ACCESS_KEY=your_access_key
 CLOUDFLARE_TUNNEL_POOL='[{"name":"…","hostname":"…","token":"…"}, …]'
 ```
 
+`CLOUDFLARE_TUNNEL_POOL` must be single-quoted JSON on one line. dotenv reads an unquoted value that spans several lines as just its first line, `[`, and the run fails at setup with "BrowserStack test setup failed: Unexpected end of JSON input".
+
+Local runs use the dev pool (`em-browserstack-dev-*`), not the CI pool (`em-browserstack-*`). A local run given the CI pool saw every tunnel answer 502 and waited indefinitely. To check what the file actually yields without printing any token:
+
+```sh
+node -e 'require("dotenv").config({path:".env.test.local",quiet:true});console.log(JSON.parse(process.env.CLOUDFLARE_TUNNEL_POOL).map(t=>t.name))'
+```
+
 Local Appium requires macOS with Xcode and an iOS Simulator, Appium, and the XCUITest driver:
 
 ```sh
