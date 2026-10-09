@@ -120,7 +120,7 @@ A gesture is also always a **single finger**. `MultiGesture` latches as soon as 
 - **Mobile Command Universe.** If the sequence ends with the `openMobileCommandUniverse` gesture, that command runs.
 - **Chained commands.** If the sequence *starts* with a gesture for an `isChainable` command and continues with another command's gesture, the two are chained and executed together. The canonical example: `selectAll` is chainable, so `<selectAll-gesture><archive-gesture>` archives all selected thoughts in one motion. `chainCommand(c1, c2)` synthesizes a `Command` whose gesture and label combine both. Both commands execute inside one command transaction whose metadata identifies the combined command, so they produce one undo patch.
 
-After execution, an alert briefly confirms the command's `label` (in training mode), unless the command has `hideAlert: true`.
+In training mode, an alert briefly confirms the command's `label`, unless the command has `hideAlert: true`. The label is shown just before the command executes, so an alert the command raises itself — such as an error explaining why it cannot be executed — replaces the label rather than being hidden by it.
 
 ### Multi-touch rejection
 
