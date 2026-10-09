@@ -121,7 +121,6 @@ it.each<{ cursor: string[] | null; cursorName: string }>([
         isEditing: false,
         isVisible: true,
         path: stalePath,
-        rank: 0,
         simplePath: stalePath,
       }),
     }),

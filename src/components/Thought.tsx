@@ -90,7 +90,6 @@ export interface ThoughtContainerProps {
   path: Path
   prevChildId?: ThoughtId
   publish?: boolean
-  rank: number
   showContexts?: boolean
   simplePath: SimplePath
   style?: React.CSSProperties
@@ -256,7 +255,6 @@ const ThoughtContainer = ({
   leaf,
   path,
   prevChildId,
-  rank,
   showContexts,
   simplePath,
   style: styleProp,
@@ -493,7 +491,6 @@ const ThoughtContainer = ({
   //   path,
   //   prevChildId,
   //   publish,
-  //   rank,
   //   showContexts,
   //   simplePath,
   //   styleProp,
@@ -645,7 +642,6 @@ const ThoughtContainer = ({
             isVisible={isVisible}
             onEdit={!isTouch ? onEdit : undefined}
             path={path}
-            rank={rank}
             showContextBreadcrumbs={showContexts}
             simplePath={simplePath}
             cssRaw={cssRawThought}

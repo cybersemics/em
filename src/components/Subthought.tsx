@@ -60,7 +60,6 @@ const Subthought = ({
   const state = store.getState()
   const ref = useRef<HTMLDivElement>(null)
   const thought = useEditorSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
-  const rank = useEditorSelector(state => state.thoughts.getPosition(head(simplePath)) ?? 0)
   // Cache the thought HTML before it is deleted so that we can animate on unmount
   const cachedThoughtHtmlRef = useCachedThoughtHtml({ thought, elementRef: ref })
   const noOtherContexts = useEditorSelector(
@@ -167,7 +166,6 @@ const Subthought = ({
           updateSize={updateSize}
           path={path}
           prevChildId={prevChildId}
-          rank={rank}
           showContexts={showContexts}
           simplePath={simplePath}
           style={styleSelf}

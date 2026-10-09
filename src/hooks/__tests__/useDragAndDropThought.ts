@@ -73,7 +73,6 @@ it('preserves an unrelated cursor when a trailing click fires after drag cleanup
         isEditing: false,
         isVisible: true,
         path: pathB,
-        rank: 0,
         simplePath: pathB,
       }),
     }),

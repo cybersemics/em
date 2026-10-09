@@ -90,7 +90,6 @@ interface EditableProps {
   isVisible?: boolean
   multiline?: boolean
   placeholder?: string
-  rank?: number
   style?: React.CSSProperties
   className?: string
   simplePath: SimplePath
@@ -198,7 +197,6 @@ const Editable = ({
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
   const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value || '')
   const generating = useEditorSelector(state => !!getThoughtById(state, head(simplePath))?.generating)
-  const rank = useEditorSelector(state => state.thoughts.getPosition(head(simplePath)) ?? 0)
   const isCursorCleared = useEditorSelector(
     // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
     // or a member of a multiselection (multiselect clear).
@@ -284,7 +282,6 @@ const Editable = ({
   //   style,
   //   transient,
   //   value,
-  //   rank,
   //   fontSize,
   //   hasNoteFocus,
   //   isCursorCleared,
@@ -374,16 +371,11 @@ const Editable = ({
   /**
    * Dispatches editThought and has tutorial logic.
    * Debounced from onChangeHandler.
-   * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
+   * Pass the latest path and edit options explicitly because the throttled function persists across renders.
    */
   const thoughtChangeHandler = (
     newValue: string,
-    {
-      force,
-      rank,
-      simplePath,
-      cursorOffset,
-    }: { force?: boolean; rank: number; simplePath: SimplePath; cursorOffset?: number },
+    { force, simplePath, cursorOffset }: { force?: boolean; simplePath: SimplePath; cursorOffset?: number },
   ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
@@ -402,7 +394,11 @@ const Editable = ({
     }
 
     // Log the value transition at the point the edit is committed to Redux. Correlates with the 'change' branch that queued it.
-    debugLog.log('edit', { oldValue, newValue, rank })
+    if (debugLog.isEnabled())
+      dispatch((dispatch, getState) => {
+        const rank = getState().thoughts.getPosition(head(simplePath)) ?? 0
+        debugLog.log('edit', { oldValue, newValue, rank })
+      })
 
     dispatch(
       editThought({
@@ -526,7 +522,7 @@ const Editable = ({
 
       // Queue and flush the change with the browser-applied value to ensure it's captured before the editable blurs.
       oldValueRef.current = editable.textContent || ''
-      throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
+      throttledChangeRef.current(oldValueRef.current, { simplePath })
       throttledChangeRef.current.flush()
 
       // The editThought re-render that lands before the deferred callback cannot invalidate savedCharOffset:
@@ -618,7 +614,7 @@ const Editable = ({
       editable.removeEventListener('blur', onEditableBlur)
       document.removeEventListener('selectionchange', onSelectionChange)
     }
-  }, [contentRef, rank, simplePath])
+  }, [contentRef, simplePath])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef
@@ -861,7 +857,6 @@ const Editable = ({
           // a flash of unstyled content
           thoughtChangeHandler(newValue, {
             force: wrappedValue !== incomingValue || emojiSpaceAdded,
-            rank,
             simplePath,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
@@ -873,7 +868,7 @@ const Editable = ({
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
-          throttledChangeRef.current(newValue, { rank, simplePath })
+          throttledChangeRef.current(newValue, { simplePath })
         }
       })
     },
@@ -884,7 +879,7 @@ const Editable = ({
     // thoughtChangeHandler and invalidStateError are redefined on every render, but read nothing beyond these values
     // and stable refs, so the copies captured with them are equally fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, onEdit, options, path, rank, readonly, simplePath, transient, uneditable],
+    [dispatch, onEdit, options, path, readonly, simplePath, transient, uneditable],
   )
 
   /** Imports text that is pasted onto the thought. */

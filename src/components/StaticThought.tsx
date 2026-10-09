@@ -43,7 +43,6 @@ export interface ThoughtProps {
   onEdit?: (args: { newValue: string; oldValue: string }) => void
   updateSize?: () => void
   path: Path
-  rank: number
   showContextBreadcrumbs?: boolean
   showContexts?: boolean
   simplePath: SimplePath
@@ -95,7 +94,6 @@ const StaticThought = ({
   isVisible,
   onEdit,
   path,
-  rank,
   showContextBreadcrumbs,
   simplePath,
   cssRaw,
@@ -122,7 +120,6 @@ const StaticThought = ({
   //   isVisible,
   //   onEdit,
   //   path,
-  //   rank,
   //   showContextBreadcrumbs,
   //   simplePath,
   //   style,
@@ -173,7 +170,6 @@ const StaticThought = ({
             path={path}
             isEditing={isEditing}
             isVisible={isVisible}
-            rank={rank}
             style={style}
             simplePath={simplePath}
             onEdit={onEdit}
