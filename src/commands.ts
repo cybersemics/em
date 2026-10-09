@@ -418,8 +418,8 @@ const createCommandMetadata = (
   keyboardIndex: keyboardIndex ?? keyboardIndexOf(command, type, event),
 })
 
-/** Executes a single command, returning false if it did not execute because there is nothing to repeat or it cannot execute. */
-const tryExecuteCommand = (
+/** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. Returns false if there is nothing to repeat or the command cannot execute. */
+export const executeCommand = (
   commandArg: Command,
   {
     store: storeArg,
@@ -466,12 +466,6 @@ const tryExecuteCommand = (
       recordLastCommand(command, metadata, commandStore.getState())
     }),
   )
-}
-
-/** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
-export const executeCommand = (...args: Parameters<typeof tryExecuteCommand>) => {
-  const result = tryExecuteCommand(...args)
-  return result === false ? undefined : result
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
@@ -521,7 +515,7 @@ export const executeCommandWithMulticursor = (
 
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
   if (!command.multicursor || !hasMulticursor(state)) {
-    const result = tryExecuteCommand(command, {
+    const result = executeCommand(command, {
       store: commandStore,
       type: inputMethod,
       event,
@@ -672,7 +666,7 @@ export const executeCommandWithMulticursor = (
 
             dispatch(setCursor({ path: recomputedPath }))
             if (
-              tryExecuteCommand(command, {
+              executeCommand(command, {
                 store: scopedStore,
                 type: inputMethod,
                 event,
