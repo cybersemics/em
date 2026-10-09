@@ -29,10 +29,17 @@ interface CommandUniverseGridItemProps {
   search?: string
   /** The inner dialog scroller used to decide when this cell's gesture is near view. */
   scrollRootRef: RefObject<HTMLDivElement | null>
+  /** The page root that the zoom origin is measured against. */
+  pageRef: RefObject<HTMLDivElement | null>
 }
 
 /** Renders a single command as a cell in CommandUniverseGrid. */
-const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, search = '', scrollRootRef }) => {
+const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
+  command,
+  search = '',
+  scrollRootRef,
+  pageRef,
+}) => {
   const dispatch = useDispatch()
   const gestureBoxRef = useRef<HTMLDivElement>(null)
   const [showGesture, setShowGesture] = useState(false)
@@ -62,11 +69,23 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({ command, se
         <button
           type='button'
           aria-label={label}
-          onClick={event =>
+          onClick={event => {
+            if (!pageRef.current) throw new Error('Command Universe page root is missing.')
+            const cell = event.currentTarget.getBoundingClientRect()
+            const page = pageRef.current.getBoundingClientRect()
             dispatch(
-              commandUniverseNavigate('detail', { command }, { origin: event.currentTarget.getBoundingClientRect() }),
+              commandUniverseNavigate(
+                'detail',
+                { command },
+                {
+                  origin: {
+                    x: (cell.x + cell.width / 2 - page.x) / page.width,
+                    y: (cell.y + cell.height / 2 - page.y) / page.height,
+                  },
+                },
+              ),
             )
-          }
+          }}
           className={css({
             position: 'relative',
             cursor: 'pointer',
