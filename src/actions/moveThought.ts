@@ -81,15 +81,7 @@ const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: Th
     throw new Error(`moveThought: sourceThought not found. ${JSON.stringify({ oldPath, newPath })}`)
   }
 
-  // use parentid from oldPath until parentId data integrity issue is fixed
-  const sourceParentId = head(rootedParentOf(state, sourceThoughtPath))
-  if (sourceThought.parentId !== sourceParentId) {
-    console.warn(`Invalid parentId: sourceThought.parentId does not match parentOf(oldPath).`)
-    console.info('oldPath', oldPath)
-    console.info('newPath', newPath)
-    console.info('sourceThought', sourceThought)
-  }
-
+  const sourceParentId = sourceThought.parentId
   const sourceParentThought = getThoughtById(state, sourceParentId)
   const destinationThought = getThoughtById(state, destinationThoughtId)
 
