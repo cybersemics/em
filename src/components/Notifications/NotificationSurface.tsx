@@ -1,4 +1,4 @@
-import { animate, motion, useMotionValue, useTransform } from 'framer-motion'
+import { animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { ReactNode, Ref, useCallback, useEffect, useImperativeHandle, useRef } from 'react'
 import { notificationRecipe } from '../../../styled-system/recipes'
 import useSwipeToClear from '../../hooks/useSwipeToClear'

@@ -1,4 +1,4 @@
-import { animate, useMotionValue, useTransform } from 'framer-motion'
+import { animate, useMotionValue, useTransform } from 'motion/react'
 import React, { useCallback, useRef } from 'react'
 import durations from '../util/durations'
 import useSafeArea from './useSafeArea'
