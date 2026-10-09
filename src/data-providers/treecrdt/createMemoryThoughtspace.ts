@@ -326,6 +326,7 @@ const createMemoryThoughtspace = (
       /** Retains conservative invalidations even when later steps restore the transaction's initial rows. */
       const projectCurrent = () => {
         const batch = engine.getChanges()
+        if (batch === projectedChanges) return currentView
         batch.changes.forEach(change => {
           thoughtIds.add(change.id as ThoughtId)
           if (!_.isEqual(change.before?.children, change.after?.children))
