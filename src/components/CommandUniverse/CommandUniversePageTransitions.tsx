@@ -67,7 +67,6 @@ const CommandUniversePageTransitions = ({ children }: { children: ReactElement[]
   // The cell records its origin before navigation mounts another page, avoiding a layout read during the zoom.
   const transformOrigin = transition?.origin ? `${transition.origin.x * 100}% ${transition.origin.y * 100}%` : 'center'
 
-
   const duration = reducedMotion ? 0 : (motionOptions.duration ?? commandUniverseMotion.duration)
   const ease = motionOptions.ease ?? commandUniverseMotion.ease
 
