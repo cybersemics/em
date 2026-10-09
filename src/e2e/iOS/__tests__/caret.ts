@@ -4,6 +4,7 @@
  */
 import gestures from '../../../test-helpers/gestures'
 import clickThought from '../helpers/clickThought'
+import disableTransitions from '../helpers/disableTransitions'
 import editThought from '../helpers/editThought'
 import gesture from '../helpers/gesture'
 import getEditable from '../helpers/getEditable'
@@ -19,7 +20,7 @@ import scrubSpaceBar from '../helpers/scrubSpaceBar'
 import setFontSize from '../helpers/setFontSize'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForElementAtRest from '../helpers/waitForElementAtRest'
+import waitForElement from '../helpers/waitForElement'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -168,6 +169,8 @@ describe('Caret', () => {
   // The same hit test escapes a note without any drag: a note is short enough that the point lands outside it
   // as soon as the space bar is held, and it leaves from the end, where the note abuts the parent thought.
   it('a caret scrubbed in a note stays in the note (#3276)', async () => {
+    // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
+    await disableTransitions()
     await newThought()
     await paste(
       [''],
@@ -177,8 +180,7 @@ describe('Caret', () => {
         - A`,
     )
 
-    // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
-    const note = await waitForElementAtRest('[aria-label="note-editable"]')
+    const note = await waitForElement('[aria-label="note-editable"]')
     await tap(note)
     await waitUntil(isKeyboardShown)
 
