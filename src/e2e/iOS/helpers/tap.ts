@@ -1,7 +1,6 @@
 import type { Element } from 'webdriverio'
+import getScreenOffsetY from './getScreenOffsetY.js'
 import getTextOffsetCoordinates from './getTextOffsetCoordinates.js'
-
-// import getNativeElementRect from './getNativeElementRect'
 
 interface Options {
   // Where in the horizontal line (inside) of the target node should be tapped. Defaults to center, which
@@ -15,10 +14,13 @@ interface Options {
   offset?: number
   // Number of pixels of x offset to add to the tap coordinates
   x?: number
-  // Number of pixels of y offset to add to the tap coordinates
+  // Number of pixels of y offset to add to the tap coordinates, on top of the page-to-screen conversion applied
+  // automatically. Use it to aim somewhere other than the element, e.g. the empty space below it.
   y?: number
   // Milliseconds to delay the release of the tap.
   releaseDelayMs?: number
+  // Number of taps, e.g. 2 for a double tap.
+  count?: number
 }
 
 /**
@@ -27,7 +29,15 @@ interface Options {
  */
 const tap = async (
   nodeHandle: Element,
-  { horizontalTapLine = 'center', offset, x = 0, y = 0, pointerType = 'mouse', releaseDelayMs = 100 }: Options = {},
+  {
+    horizontalTapLine = 'center',
+    offset,
+    x = 0,
+    y = 0,
+    pointerType = 'mouse',
+    releaseDelayMs = 100,
+    count = 1,
+  }: Options = {},
 ) => {
   // Ensure element exists and has an elementId
   const exists = await nodeHandle.isExisting()
@@ -61,16 +71,14 @@ const tap = async (
 
   if (!coordinate) throw new Error('Coordinate not found.')
 
-  // const topBarRect = await getNativeElementRect(browser, '//XCUIElementTypeOther[@name="topBrowserBar"]')
-  // console.log('topbarrect', topBarRect)
-
   console.info(
     `Coordinates: x ${coordinate.x} y ${coordinate.y} x-offset ${x} y-offset ${y} bb-x ${boundingBox.x} bby ${boundingBox.y}`,
   )
 
   const finalCoords = {
     x: coordinate.x + x,
-    y: coordinate.y + y,
+    // element rects are viewport-relative while touches are delivered in screen coordinates
+    y: coordinate.y + y + (await getScreenOffsetY()),
   }
 
   console.info(`Tapping at coordinates {x: ${finalCoords.x}, y: ${finalCoords.y}}`)
@@ -92,9 +100,13 @@ const tap = async (
           y: Math.round(finalCoords.y),
           origin: 'viewport',
         },
-        { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: releaseDelayMs },
-        { type: 'pointerUp', button: 0 },
+        ...Array.from({ length: count }, (_, i) => [
+          // without a pause between them, the taps overlap
+          ...(i > 0 ? [{ type: 'pause', duration: 100 }] : []),
+          { type: 'pointerDown', button: 0 },
+          { type: 'pause', duration: releaseDelayMs },
+          { type: 'pointerUp', button: 0 },
+        ]).flat(),
       ],
     },
   ])

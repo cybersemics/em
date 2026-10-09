@@ -450,20 +450,22 @@ const ThoughtContainer = ({
   // Highlight the parent of the current drop target to make it easier to drop in the intended place.
   const cssRawThought = css.raw({
     /** Animation to apply to a parent when one of its children is being hovered over. Disabled in puppeteer tests. */
+    // Two mutually exclusive spreads rather than a nested ternary, because PandaCSS only extracts the first branch of a nested ternary.
     ...(isChildHovering
       ? {
           WebkitTextStrokeWidth: '0.05em',
           animation: `pulseLight {durations.slowPulse} linear infinite alternate`,
           color: 'highlight',
         }
-      : isDropGutterDeleteHovering
-        ? {
-            WebkitTextStrokeWidth: '0.05em',
-            animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
-            color: 'gray',
-            textDecoration: 'line-through',
-          }
-        : null),
+      : null),
+    ...(!isChildHovering && isDropGutterDeleteHovering
+      ? {
+          WebkitTextStrokeWidth: '0.05em',
+          animation: `pulseLight {durations.mediumPulse} linear infinite alternate`,
+          color: 'gray',
+          textDecoration: 'line-through',
+        }
+      : null),
   })
 
   // useWhyDidYouUpdate('<Thought> ' + prettyPath(store.getState(), simplePath), {

@@ -1,9 +1,9 @@
 # Starts a Copilot agent task on a Dependabot pull request whose checks failed.
 #
-# Dependabot opens a bump, `dependabot-automerge.yml` approves it and enables auto-merge, and the
-# bump lands on its own — until a check fails, at which point the pull request stops dead and waits
-# for a human. Most of those failures are small and mechanical: a renamed export, a tightened type,
-# an assertion that moved. This puts an agent on one the moment it happens, so the bump is being
+# Dependabot opens a bump, `dependabot-automerge.yml` approves and merges it once every check has
+# passed, and the bump lands on its own — until a check fails, at which point the pull request stops
+# dead and waits for a human. Most of those failures are small and mechanical: a renamed export, a
+# tightened type, an assertion that moved. This puts an agent on one the moment it happens, so the bump is being
 # worked on rather than queueing behind whoever next reads the checks tab.
 #
 # Runs:
@@ -42,7 +42,17 @@ name: Dependabot Fix
 on:
   workflow_run:
     workflows:
-      ['Lint', 'Test', 'Puppeteer', 'BrowserStack', 'BrowserStack Android', 'Vercel Preview', 'TDD', 'Agent Scripts']
+      [
+        'Lint',
+        'Test',
+        'Puppeteer',
+        'BrowserStack',
+        'BrowserStack Android',
+        'Vercel Preview',
+        'TDD',
+        'Agent Scripts',
+        'Tauri Check',
+      ]
     types: [completed]
   workflow_dispatch:
     inputs:

@@ -12,7 +12,7 @@ import { longPressActionCreator as longPress } from '../actions/longPress'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isSafari, isTouch } from '../browser'
 import { beforeInput, keyDown, keyUp } from '../commands'
-import { AlertType, LongPressState } from '../constants'
+import { AlertType, DEFAULT_FONT_SIZE, LongPressState } from '../constants'
 import initKeyboardSelection from '../device/initKeyboardSelection'
 import nativeHistory from '../device/nativeHistory'
 import * as selection from '../device/selection'
@@ -26,6 +26,7 @@ import { updateCommandState } from '../stores/commandStateStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
 import ministore from '../stores/ministore'
 import multitouchStore, { updateMultitouch } from '../stores/multitouchStore'
+import osVersionStore from '../stores/osVersionStore'
 import scrollContainerStore from '../stores/scrollContainerStore'
 import { updateScrollTop } from '../stores/scrollTopStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
@@ -293,7 +294,7 @@ const initEvents = (store: Store<State, any>) => {
   const onTouchEnd = () => {
     scrollAtEdge.stop()
     scrollContainerStore.reset()
-    touchStore.update({ pressOnCaret: false })
+    touchStore.update({ pressOnCaret: false, pressInEmptyThought: false })
   }
 
   /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
@@ -313,6 +314,13 @@ const initEvents = (store: Store<State, any>) => {
     touchStore.update({
       pressOnCaret:
         isTouch && (isSafari() || isEmptyThought) && !!touch && selection.isCaretNear(touch.clientX, touch.clientY),
+      pressInEmptyThought:
+        isTouch &&
+        isEmptyThought &&
+        (osVersionStore.getState() ?? 0) >= 27 &&
+        !!touch &&
+        // about 3em of the placeholder, so a press farther right still drags
+        selection.isRightOfCaret(touch.clientX, touch.clientY, 3 * DEFAULT_FONT_SIZE),
       /** Clears cursor-event suppression: a new touch means subsequent cursor events belong to a new user gesture, not
        * the completed touch. Registered in the capture phase because touchstart propagation is unreliable in the bubble
        * phase (see the note on the touchmove listener below). */
@@ -585,12 +593,15 @@ const onError = (e: any) => {
   if (e.error && 'stack' in e.error) {
     console.error(e.error.stack)
   }
+  debugLog.logError('window', e.error ?? e.message, { filename: e.filename, lineno: e.lineno, colno: e.colno })
   store.dispatch(error({ value: e.message }))
 }
 
-// error handler must be added immediately to catch auth errors
+// error handlers must be added immediately to catch auth errors
 if (typeof window !== 'undefined') {
   window.addEventListener('error', onError)
+  // A rejected promise that no code handled is recorded in the debug log only. It is not shown as an error banner.
+  window.addEventListener('unhandledrejection', e => debugLog.logError('unhandledrejection', e.reason))
 }
 
 export default initEvents

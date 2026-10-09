@@ -82,6 +82,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
                       className={css({
                         flexGrow: 1,
                         height: '1px',
+                        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
                         background:
                           'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
                       })}
@@ -103,6 +104,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
                       className={css({
                         flexGrow: 1,
                         height: '1px',
+                        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
                         background:
                           'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
                       })}

@@ -192,6 +192,8 @@ const CommandCenter = () => {
           }}
           /** Fixes sheet shifting up on ios when it opens. */
           disableScrollLocking
+          /** Lifts the sheet above the keyboard only while it is open. On Chromium the lift tracks the live keyboard inset, so a keyboard that rises while the sheet is closing (e.g. after Note) would grow the sheet back up into view mid-tween. */
+          avoidKeyboard={isOpen}
         >
           {backgroundGlow.image ? (
             <motion.div
@@ -227,6 +229,7 @@ const CommandCenter = () => {
               className={css({
                 pointerEvents: 'none',
                 position: 'absolute',
+                // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
                 background: 'linear-gradient(180deg, {colors.bgTransparent} 0%, {colors.bg} 2.5rem)',
                 paddingTop: '0.711rem',
                 bottom: 0,

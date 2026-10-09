@@ -9,7 +9,7 @@ import * as selection from './selection'
  *
  * See: https://stackoverflow.com/a/45703019/480608.
  */
-export const AsyncFocus: () => (options?: { force?: boolean }) => void = () => {
+export const AsyncFocus: () => (options?: { force?: boolean; preventScroll?: boolean }) => void = () => {
   if (!isTouch) return noop
 
   // create invisible dummy input to receive the focus
@@ -31,12 +31,12 @@ export const AsyncFocus: () => (options?: { force?: boolean }) => void = () => {
   hiddenInput.style.fontSize = '16px'
 
   document.body.prepend(hiddenInput)
-  return (options: { force?: boolean } = {}) => {
+  return (options: { force?: boolean; preventScroll?: boolean } = {}) => {
     // do not set the selection if it is already on a thought or a note
     // provide the option to force the focus in order to retarget focus and prevent an iOS Safari bug (#4222)
     if (options.force || !selection.isThought()) {
       hiddenInput.disabled = false
-      hiddenInput.focus()
+      hiddenInput.focus({ preventScroll: options.preventScroll })
       // the hidden input should not be a valid focus target unless this function was invoked
       hiddenInput.disabled = true
     }
