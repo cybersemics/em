@@ -418,8 +418,8 @@ const createCommandMetadata = (
   keyboardIndex: keyboardIndex ?? keyboardIndexOf(command, type, event),
 })
 
-/** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
-export const executeCommand = (
+/** Executes a single command, returning false if it did not execute because there is nothing to repeat or it cannot execute. */
+const tryExecuteCommand = (
   commandArg: Command,
   {
     store: storeArg,
@@ -461,46 +461,17 @@ export const executeCommand = (
         keyboardIndex: commandMetadata.keyboardIndex,
       })
       if (result instanceof Promise) {
-        return result.then(result => {
-          recordLastCommand(command, metadata, commandStore.getState())
-          return result
-        })
+        return result.then(() => recordLastCommand(command, metadata, commandStore.getState()))
       }
       recordLastCommand(command, metadata, commandStore.getState())
-      return result
     }),
   )
 }
 
-/** Reports one successful top-level invocation after any returned asynchronous work has completed. */
-const reportCommandSuccess = ({
-  commandStore,
-  commandId,
-  source,
-  errorBefore,
-  execution,
-}: {
-  commandStore: Store<State>
-  commandId: CommandId
-  source: CommandSuccess['source']
-  errorBefore: State['error']
-  execution?: void | Promise<void | false>
-}): void | Promise<void> => {
-  /** An error raised through app state during this invocation also prevents credit. */
-  const report = () => {
-    if (commandStore.getState().error === errorBefore) {
-      commandEmitter.trigger('commandSucceeded', { commandId, source } satisfies CommandSuccess)
-    }
-  }
-
-  if (!execution) {
-    report()
-    return
-  }
-
-  return execution.then(result => {
-    if (result !== false) report()
-  })
+/** Execute a single command. Defaults to global store and keyboard shortcuts. Use `executeCommandWithMulticursor` to execute a command with multicursor mode. */
+export const executeCommand = (...args: Parameters<typeof tryExecuteCommand>) => {
+  const result = tryExecuteCommand(...args)
+  return result === false ? undefined : result
 }
 
 /** Execute command. Defaults to global store and keyboard shortcuts. */
@@ -518,7 +489,6 @@ export const executeCommandWithMulticursor = (
   } = {},
 ) => {
   const commandStore = storeArg ?? store
-  const source = type ?? 'internal'
   const inputMethod = type
   const commandType = type ?? 'keyboard'
   event = event ?? eventNoop
@@ -539,14 +509,27 @@ export const executeCommandWithMulticursor = (
   }
 
   const state = commandStore.getState()
-  const errorBefore = state.error
+
+  /** Reports a successful invocation once exec has returned, unless it raised an app error. Asynchronous work is not awaited: the user has completed the command once it starts, whatever a server or the clipboard later returns. */
+  const reportSuccess = () => {
+    if (commandStore.getState().error !== state.error) return
+    commandEmitter.trigger('commandSucceeded', {
+      commandId: commandArg.id,
+      source: type ?? 'internal',
+    } satisfies CommandSuccess)
+  }
 
   // If we don't have active multicursors or the command ignores multicursors, execute the command normally.
   if (!command.multicursor || !hasMulticursor(state)) {
-    const execution = executeCommand(command, { store: commandStore, type: inputMethod, event, keyboardIndex })
-    return execution === false
-      ? undefined
-      : reportCommandSuccess({ commandStore, commandId: commandArg.id, source, errorBefore, execution })
+    const result = tryExecuteCommand(command, {
+      store: commandStore,
+      type: inputMethod,
+      event,
+      keyboardIndex,
+    })
+    if (result === false) return
+    reportSuccess()
+    return result
   }
 
   /** The value of Command['multicursor'] resolved to an object. That is, bare false has already short circuited, and bare true resolves to an empty object so that we don't need to make existential checks everywhere. */
@@ -571,7 +554,9 @@ export const executeCommandWithMulticursor = (
       : filteredPaths
 
   const commandMetadata = createCommandMetadata(command, { type: inputMethod, event, keyboardIndex })
-  const execution = commandStore.dispatch(
+  // Whether exec ran on at least one cursor, i.e. the invocation counts as a success.
+  let didExecute = false
+  const result = commandStore.dispatch(
     commandTransaction(commandMetadata, (dispatch, metadata) => {
       // Pass the attributed dispatch through the existing executor API so nested asynchronous work retains its parent.
       const scopedStore = { ...commandStore, dispatch }
@@ -586,8 +571,6 @@ export const executeCommandWithMulticursor = (
 
       // The thoughts created by the executions, collected for selectNewCursors.
       const newCursors: Path[] = []
-      const executions: Promise<void | false>[] = []
-      let didExecute = false
 
       /** Restores selection state and closes the synchronous multicursor bracket. */
       const completeMulticursorExecution = () => {
@@ -665,9 +648,10 @@ export const executeCommandWithMulticursor = (
       // Otherwise, execute the command once for each of the filtered multicursors.
       if (multicursor.execMulticursor) {
         // Custom execution may settle asynchronously; record Repeat once its attributed work is complete.
-        let result: void | false | Promise<void | false>
+        let result: void | Promise<void>
         try {
           result = multicursor.execMulticursor(execPaths, dispatch, commandStore.getState)
+          didExecute = true
         } catch (error) {
           completeMulticursorExecution()
           throw error
@@ -677,10 +661,7 @@ export const executeCommandWithMulticursor = (
           // Restore the selection and close the synchronous command bracket now. The custom command owns any asynchronous
           // multicursor bracket; its supplied dispatch automatically attributes the completed edits.
           completeMulticursorExecution()
-          return result.then(result => {
-            recordLastCommand(command, metadata, commandStore.getState())
-            return result
-          })
+          return result.then(() => recordLastCommand(command, metadata, commandStore.getState()))
         }
       } else {
         try {
@@ -690,14 +671,16 @@ export const executeCommandWithMulticursor = (
             if (!recomputedPath) continue
 
             dispatch(setCursor({ path: recomputedPath }))
-            const result = executeCommand(command, {
-              store: scopedStore,
-              type: inputMethod,
-              event,
-              keyboardIndex,
-            })
-            if (result !== false) didExecute = true
-            if (result instanceof Promise) executions.push(result)
+            if (
+              tryExecuteCommand(command, {
+                store: scopedStore,
+                type: inputMethod,
+                event,
+                keyboardIndex,
+              }) !== false
+            ) {
+              didExecute = true
+            }
 
             // The command sets the cursor to the thought it created, so a cursor on a different thought than the one that was
             // just set is the new thought. A command that could not act on the selected thought leaves the cursor where it
@@ -715,16 +698,10 @@ export const executeCommandWithMulticursor = (
 
       completeMulticursorExecution()
       recordLastCommand(command, metadata, commandStore.getState())
-      return !didExecute
-        ? false
-        : executions.length
-          ? Promise.all(executions).then(results => (results.includes(false) ? false : undefined))
-          : undefined
     }),
   )
-  return execution === false
-    ? undefined
-    : reportCommandSuccess({ commandStore, commandId: commandArg.id, source, errorBefore, execution })
+  if (didExecute) reportSuccess()
+  return result
 }
 
 /**

@@ -33,11 +33,10 @@ const organizeThought = {
       }
 
       /** Requests disclosure before organizing the full selection. */
-      const organizeAllWithDisclosure = (): Promise<void | false> => {
-        const pending = requestAiDisclosure(organizeAllWithDisclosure)
-        if (pending) {
+      const organizeAllWithDisclosure = () => {
+        if (requestAiDisclosure(organizeAllWithDisclosure)) {
           dispatch(showModal({ id: 'aiDisclosure' }))
-          return pending
+          return
         }
         return organizeAll()
       }
@@ -46,14 +45,13 @@ const organizeThought = {
     },
   },
   canExecute: state => isDocumentEditable() && canOrganizeThought(state, selectedPaths(state)),
-  exec: async (dispatch, getState, event, commandContext): Promise<void | false> => {
+  exec: async (dispatch, getState, event, commandContext) => {
     const paths = selectedPaths(getState())
-    if (paths.length === 0) return false
+    if (paths.length === 0) return
 
-    const pending = requestAiDisclosure(() => organizeThought.exec(dispatch, getState, event, commandContext))
-    if (pending) {
+    if (requestAiDisclosure(() => organizeThought.exec(dispatch, getState, event, commandContext))) {
       dispatch(showModal({ id: 'aiDisclosure' }))
-      return pending
+      return
     }
 
     dispatch(setIsMulticursorExecuting({ value: true, undoLabel: 'organizeThought' }))

@@ -196,11 +196,10 @@ const defineTerm = {
       }
 
       /** Requests disclosure before defining the full selection. */
-      const defineAllWithDisclosure = (): Promise<void | false> => {
-        const pending = requestAiDisclosure(defineAllWithDisclosure)
-        if (pending) {
+      const defineAllWithDisclosure = () => {
+        if (requestAiDisclosure(defineAllWithDisclosure)) {
           dispatch(showModal({ id: 'aiDisclosure' }))
-          return pending
+          return
         }
         return defineAll()
       }
@@ -212,14 +211,13 @@ const defineTerm = {
     const paths = selectedPaths(state)
     return isDocumentEditable() && paths.length > 0 && paths.every(path => canDefineTermAtPath(state, path))
   },
-  exec: async (dispatch, getState, event, commandContext): Promise<void | false> => {
+  exec: async (dispatch, getState, event, commandContext) => {
     const cursor = getState().cursor
-    if (!cursor) return false
+    if (!cursor) return
 
-    const pending = requestAiDisclosure(() => defineTerm.exec(dispatch, getState, event, commandContext))
-    if (pending) {
+    if (requestAiDisclosure(() => defineTerm.exec(dispatch, getState, event, commandContext))) {
       dispatch(showModal({ id: 'aiDisclosure' }))
-      return pending
+      return
     }
 
     await dispatch(defineTermAtPaths([cursor]))
