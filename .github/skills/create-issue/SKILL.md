@@ -63,7 +63,7 @@ Exactly these headings, at `##`, in this order:
 
 ### Steps to Reproduce
 
-Numbered, imperative, one action per line, starting from a fresh app. Name settings by their exact label in the UI and give the exact value — "Increase the app font size to 32", not "make the font bigger". A step that leaves the reader a choice will be followed differently than it was meant.
+Numbered, imperative, one action per line. Name settings by their exact label in the UI and give the exact value — "Increase the app font size to 32", not "make the font bigger". A step that leaves the reader a choice will be followed differently than it was meant.
 
 [#2968](https://github.com/cybersemics/em/issues/2968) was closed unreproduced because its only step was "when width and height are increased", which could have meant the app font size, the window dimensions, or the icon's own dimensions.
 
@@ -84,6 +84,8 @@ Where the bug depends on a particular thought tree, give it as a fenced code blo
 The tree is the starting state, so it already says to create it. Do not add a step for that — "Create the thoughts above: `a`, `b`, and a `=note` on `a`" is the code block read back as prose, and the reader has to compare the two to find out they match. Number the steps from the first action taken on the tree.
 
 The same holds for anything the outline itself shows: which thoughts are children of which, that the last one is empty, that a thought carries a `=note`. A step is for what the outline cannot show — a caret position, a setting, a device width, a collapsed thought.
+
+Every reproduction starts from a fresh app with no saved data, so that goes unsaid. "Open **em** with no saved data" is not a step. Number the steps from the first action taken in the app. Name a starting state only when it departs from a fresh app, such as a returning user or a setting already changed.
 
 Write a keyboard shortcut as `<kbd>` elements, one per key, with no separator between them: `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>`, not `(Shift + Alt + S)`. GitHub renders them as keys, which is what the reader is looking for while scanning the steps. Name the command alongside it — "Move Thought Down (<kbd>Cmd</kbd><kbd>Shift</kbd><kbd>ArrowDown</kbd>)".
 
@@ -307,6 +309,7 @@ New issues often originate in a comment thread on another issue or PR.
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - A step telling the reader to create the thoughts the outline above already gives.
+- A first step telling the reader to open a fresh app, which every reproduction already assumes.
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
 - A Current Behavior carrying a qualifier about the reproduction — "No drag is needed" — where the condition belongs in the steps.
