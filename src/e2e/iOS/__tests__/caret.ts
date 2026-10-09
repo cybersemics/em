@@ -19,7 +19,7 @@ import scrubSpaceBar from '../helpers/scrubSpaceBar'
 import setFontSize from '../helpers/setFontSize'
 import tap from '../helpers/tap'
 import waitForEditable from '../helpers/waitForEditable'
-import waitForElement from '../helpers/waitForElement'
+import waitForElementAtRest from '../helpers/waitForElementAtRest'
 import waitUntil from '../helpers/waitUntil'
 
 // tests succeeds individually, but fails when there are too many tests running in parallel
@@ -177,7 +177,8 @@ describe('Caret', () => {
         - A`,
     )
 
-    const note = await waitForElement('[aria-label="note-editable"]')
+    // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
+    const note = await waitForElementAtRest('[aria-label="note-editable"]')
     await tap(note)
     await waitUntil(isKeyboardShown)
 
