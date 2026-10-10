@@ -45,15 +45,13 @@ The rounds are cheap next to what they prevent — a question the reporter would
 
 ### Design questions
 
-A feature whose design is still being decided is asked about one question at a time, in plain text rather than through the ask tool. A tool option is a one-line label, and a design choice is only judged by seeing what it produces.
+A feature whose design is still being decided is asked about one question at a time, and every decision is taken with the ask tool. The ask tool renders only short single-line text, though, and a design choice is only judged by seeing what it produces. When a question or its options depend on content the tool cannot render, such as steps, an outline or a table, render that content first in a separate reply, labelling the options with letters. Then ask for the decision with the ask tool, with options that refer back to those letters.
 
 - Open with the question as one plain sentence.
 - Give a starting tree in em's outline format, and numbered steps in the order a user would actually arrive at it. A tree a user could only reach by turning on a view and then typing should be built that way in the steps, not written out first.
 - Show each option's result: the resulting tree in outline format when the question is about structure, and a rendered Markdown table (not ASCII) when it is about layout. Keep the two separate, since the tree is the data and the table only its rendering.
 - When an option refers back to a step, name the step as well as its number: "After step 4, Insert Header Row, ...". The reader should not have to scroll back to learn what step 4 was.
-- Keep every example tree realistic. A label such as `Day` is never a sibling of data such as `Monday` unless the steps show how it got there.
 - Build options only from rules already decided. An option that invents a storage location or attribute value nobody chose is rejected for that alone.
-- End with "Which one: a, b or c?" and wait for the answer before writing the next question.
 
 The answers to these questions are revised often, including ones given several rounds earlier. Do not post or rewrite the issue until the reporter says the design is settled, and treat a declined or interrupted question as a question still open, not as the end of the design.
 
@@ -368,4 +366,4 @@ Ask, as above. State whatever survives the answers in the preamble rather than o
 
 Do not guess Expected Behavior, since a guess there becomes a regression test asserting behaviour nobody chose.
 
-- Use the ask tool now to inquire about ambiguous or undecided details, except for design questions, which follow [Design questions](#design-questions). Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.
+- Use the ask tool now to inquire about ambiguous or undecided details. For design questions, render what the ask tool cannot first, as in [Design questions](#design-questions). Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.
