@@ -17,3 +17,5 @@ The selected command appears in a sticky bottom-right slot alongside the NavBar.
 `PinnedCommandRing` composes same-file components for its track, gradient/blur bands, progress arc, and centered icon. It accepts supplied progress and color opacity; the live widget displays its saved reps divided by the captured target. The snapshot fixture covers empty, partial, full, and colorful states with filters enabled.
 
 Each new rep animates the fill from its current visible angle. Reduced motion renders the new fill immediately. Reps continue beyond the target while the visible fill and accessible count cap at the target. No command is marked learned and no history is retained after switching pins.
+
+Locally earned reps at or past the target request a flourish: one spin and a color pulse, with the completing fill finishing during the first half. Rendering restored full progress does not celebrate. Reduced motion retains the color pulse but skips the spin. Each rep also animates the command icon unless a toggle has just switched off.
