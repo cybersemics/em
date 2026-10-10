@@ -71,7 +71,8 @@ const dragMagnifier = async (nodeHandle: Element, dx: number, { offset }: Option
           y: Math.round(screenY),
         },
         { type: 'pointerDown', button: 0 },
-        { type: 'pause', duration: MAGNIFIER_HOLD_MS },
+        // a pause would let the driver spread the drag that follows across the hold, creeping the finger from the start
+        { type: 'pointerMove', duration: MAGNIFIER_HOLD_MS, origin: 'pointer', x: 0, y: 0 },
         ...Array.from({ length: steps }, () => [
           {
             type: 'pointerMove' as const,
