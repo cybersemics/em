@@ -24,6 +24,12 @@ dispatch(setCursor({ path: newPath, offset: 5 }))
 
 ![image](https://user-images.githubusercontent.com/750276/151666504-8548ed98-515c-4894-856a-994af38203e0.png)
 
+### Invalid cursor
+
+The cursor is a Path, so it only leads to its thought while every thought on it is a child of the one before it (a context view breaks that chain where it is crossed, which is allowed). If a thought on the cursor is moved and the cursor is not rebased onto the thought's new location, the cursor names ancestors that no longer contain it, and nothing below the first missing ancestor renders: the thoughtspace appears empty. That is always a bug in whatever moved the thought or set the cursor, but the cursor is set by many reducers directly, not only by `setCursor`, and a move synced from another device can strand a cursor that no local action touched.
+
+So [`recoverInvalidCursor`](../src/redux-middleware/recoverInvalidCursor.ts) checks the cursor with [`isValidPath`](../src/selectors/isValidPath.ts) after every action that changes the cursor or the thoughts, and recovers instead of leaving the screen blank. It moves the cursor back to the last valid cursor (the one before the action), or, if the same action invalidated that one too, to the thought's current location, or else clears it. Each recovery logs a console error and an `integrity` entry in the [Debug Log](debug-log.md#reading-a-log), so that the underlying bug can still be found. Thoughts that are not loaded yet cannot be checked and are assumed to be in place, since the cursor is restored from the URL before its thoughts are pulled.
+
 ### The cursor in the URL
 
 [`updateUrlHistory`](../src/redux-middleware/updateUrlHistory.ts) writes the cursor's path into the address bar (throttled), so a link identifies a thought and a reload restores the cursor via [`initialize`](../src/initialize.ts). *How* it writes depends on the device:
