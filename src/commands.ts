@@ -29,7 +29,7 @@ import { undoActionCreator as undo } from './actions/undo'
 import { isMac } from './browser'
 import * as commandsObject from './commands/index'
 import openMobileCommandUniverseCommand from './commands/openMobileCommandUniverse'
-import { AlertType, COMMAND_PALETTE_TIMEOUT, LongPressState, Settings, noop } from './constants'
+import { AlertType, COMMAND_PALETTE_TIMEOUT, HOME_PATH, LongPressState, Settings, noop } from './constants'
 import * as selection from './device/selection'
 import documentSort from './selectors/documentSort'
 import filterCursors from './selectors/filterCursors'
@@ -39,7 +39,8 @@ import hasMulticursor from './selectors/hasMulticursor'
 import isAllSelected from './selectors/isAllSelected'
 import isRedoEnabled from './selectors/isRedoEnabled'
 import isUndoEnabled from './selectors/isUndoEnabled'
-import recomputePath from './selectors/recomputePath'
+import splitChain from './selectors/splitChain'
+import thoughtToPath from './selectors/thoughtToPath'
 import store from './stores/app'
 import editingValueStore from './stores/editingValueStore'
 import gestureStore from './stores/gestureStore'
@@ -50,6 +51,7 @@ import createId from './util/createId'
 import debugLog from './util/debugLog'
 import equalPath from './util/equalPath'
 import haptics from './util/haptics'
+import head from './util/head'
 import isAttribute from './util/isAttribute'
 import isCommandKey from './util/isCommandKey'
 import keyValueBy from './util/keyValueBy'
@@ -331,6 +333,15 @@ export const chainCommand = (command1: Command, command2: Command): Command => {
 }
 
 const eventNoop = { preventDefault: noop } as Event
+
+/** Recomputes a path after a command has executed, in case the thought was moved. Returns null if the thought no longer exists. Paths that cross a context view are returned as-is, since they do not follow the parent chain and therefore cannot be reconstructed by thoughtToPath. */
+const recomputePath = (state: State, path: Path): Path | null => {
+  // e.g. a/m~/a does not follow the parent chain (the trailing a is a context of the Lexeme m, whose real parent is the root), so thoughtToPath would collapse it to a.
+  if (splitChain(state, path).length > 1) return getThoughtById(state, head(path)) ? path : null
+
+  const recomputed = thoughtToPath(state, head(path))
+  return recomputed && equalPath(recomputed, HOME_PATH) ? null : recomputed
+}
 
 /**
  * Truncates a path to its nearest ancestor that is not within a metaprogramming attribute. If a command moves the cursor or a multicursor into a metaprogramming attribute (e.g. swapNote moving a thought into =note), the selection should be set to the nearest non-attribute ancestor instead. Returns the path unchanged if it contains no attribute, or null if truncation would leave an empty path.

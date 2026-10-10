@@ -5,9 +5,10 @@ import ThoughtId from '../@types/ThoughtId'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { isTouch } from '../browser'
 import documentSort from '../selectors/documentSort'
-import recomputePath from '../selectors/recomputePath'
+import getThoughtById from '../selectors/getThoughtById'
 import ministore from '../stores/ministore'
 import equalPath from '../util/equalPath'
+import head from '../util/head'
 import parentOf from '../util/parentOf'
 
 /** The path the cursor was parked at when the multiselection grew past one thought, and the selection as it stood after the last action, or null if the cursor is not parked. Module state rather than Redux state, since this middleware is its only consumer and a park never outlives the multiselection that started it. A ministore rather than a module variable so that resetStores restores it between tests; nothing subscribes, so a write costs one comparison. */
@@ -73,14 +74,9 @@ const multiselectCursorMiddleware: ThunkMiddleware<State> = ({ getState, dispatc
       // cursor itself — a command that deletes the selected thoughts, or the blur that ends multi edit mode — that
       // cursor is the user's and must not be yanked away.
       if (!equalPath(state.cursor, parkedAt)) return
-      // The selection is the one recorded before the action that ended it, so a thought that was moved in the
-      // meantime is still at its old path, e.g. when a multiselect drag-and-drop drops the selected thoughts into
-      // another context. Landing the cursor on an old path would leave it on a thought that is no longer there, and
-      // nothing below the cursor's missing ancestors would render. Resolve each one to where it is now, as
-      // executeCommandWithMulticursor does when it restores the selection after a command moves it.
       const first = documentSort(
         state,
-        selection.map(path => recomputePath(state, path)).filter((path): path is Path => !!path),
+        selection.filter(path => getThoughtById(state, head(path))),
       )[0]
       if (first) {
         dispatch(setCursor({ path: first }))
