@@ -51,7 +51,6 @@ A feature whose design is still being decided is asked about one question at a t
 - Give a starting tree in em's outline format, and numbered steps in the order a user would actually arrive at it. A tree a user could only reach by turning on a view and then typing should be built that way in the steps, not written out first.
 - Show each option's result: the resulting tree in outline format when the question is about structure, and a rendered Markdown table (not ASCII) when it is about layout. Keep the two separate, since the tree is the data and the table only its rendering.
 - When an option refers back to a step, name the step as well as its number: "After step 4, Insert Header Row, ...". The reader should not have to scroll back to learn what step 4 was.
-- Build options only from rules already decided. An option that invents a storage location or attribute value nobody chose is rejected for that alone.
 
 The answers to these questions are revised often, including ones given several rounds earlier. Do not post or rewrite the issue until the reporter says the design is settled, and treat a declined or interrupted question as a question still open, not as the end of the design.
 
