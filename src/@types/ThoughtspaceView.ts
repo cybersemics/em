@@ -1,4 +1,3 @@
-import Index from './IndexType'
 import Lexeme from './Lexeme'
 import Thought from './Thought'
 import ThoughtId from './ThoughtId'
@@ -13,7 +12,7 @@ interface ThoughtspaceView {
   /** Position in the raw sibling order, including payload-less nodes. */
   getPosition: (id: ThoughtId) => number | undefined
   values: () => IterableIterator<Thought>
-  readonly lexemeIndex: Index<Lexeme>
+  getLexeme: (value: string) => Lexeme | undefined
 }
 
 export default ThoughtspaceView

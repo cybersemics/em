@@ -3,6 +3,7 @@ import { createTreecrdtClient } from '@treecrdt/wa-sqlite'
 import { createMemoryClient } from '@treecrdt/wasm/memory'
 import Thought from '../../../@types/Thought'
 import ThoughtId from '../../../@types/ThoughtId'
+import ThoughtspaceTransaction from '../../../@types/ThoughtspaceTransaction'
 import ThoughtspaceView from '../../../@types/ThoughtspaceView'
 import Timestamp from '../../../@types/Timestamp'
 import { HOME_TOKEN } from '../../../constants'
@@ -23,7 +24,9 @@ const contents = (view: ThoughtspaceView) => ({
       },
     ]),
   ),
-  lexemeIndex: view.lexemeIndex,
+  lexemes: Object.fromEntries(
+    Array.from(view.values(), thought => [hashThought(thought.value), view.getLexeme(thought.value)]),
+  ),
 })
 
 const first: Thought = {
@@ -45,7 +48,7 @@ const second: Thought = {
 it('notifies subscribers once per completed local change and stops notifying an unsubscribed listener', async () => {
   const runtime = createMemoryThoughtspace()
   const onCommit = vi.fn()
-  const subscribed = vi.fn()
+  const subscribed = vi.fn(() => runtime.project().getLexeme('completed'))
   const otherSubscriber = vi.fn()
   const unsubscribe = runtime.subscribe(subscribed)
   const unsubscribeOther = runtime.subscribe(otherSubscriber)
@@ -65,6 +68,7 @@ it('notifies subscribers once per completed local change and stops notifying an 
     })
 
     expect(subscribed).toHaveBeenCalledTimes(1)
+    expect(subscribed).toHaveLastReturnedWith([first.id])
     expect(otherSubscriber).toHaveBeenCalledTimes(1)
     expect(runtime.project()).toBe(committed.value)
     await committed.persisted
@@ -102,13 +106,18 @@ it('preserves persistence order and latest reads when a subscriber authors anoth
     const before = (await persistent.ops.all()).length
     const unsubscribeWriter = runtime.subscribe(() => {
       unsubscribeWriter()
+      expect(runtime.project().getLexeme('shared')).toEqual([first.id])
       phases.push('listener: shared')
       nested = runtime.transact(
         transaction => {
           transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'reentrant edit' } } })
           return transaction.operationIds
         },
-        () => phases.push('commit: reentrant edit'),
+        () => {
+          expect(runtime.project().getLexeme('shared')).toBeUndefined()
+          expect(runtime.project().getLexeme('reentrant edit')).toEqual([first.id])
+          phases.push('commit: reentrant edit')
+        },
       )
     })
     const unsubscribeObserver = runtime.subscribe(() => observed.push(runtime.project()))
@@ -125,6 +134,7 @@ it('preserves persistence order and latest reads when a subscriber authors anoth
     unsubscribeObserver()
 
     expect(observed.map(view => view.getThought(first.id)!.value)).toEqual(['reentrant edit', 'reentrant edit'])
+    expect(observed.map(view => view.getLexeme('reentrant edit'))).toEqual([[first.id], [first.id]])
     expect(captured!.value).toBe('shared')
     expect(phases).toEqual(['commit: shared', 'listener: shared', 'commit: reentrant edit'])
     expect(runtime.project()).toBe(observed[1])
@@ -149,11 +159,16 @@ it('stages reentrant commit callbacks synchronously before invalidating latest d
       transaction =>
         transaction.update({ thoughtIndexUpdates: { [first.id]: first }, movePlacements: { [first.id]: null } }),
       value => {
+        expect(value.getLexeme('shared')).toEqual([first.id])
         phases.push(`commit: ${value.getThought(first.id)!.value}`)
         runtime.transact(
           transaction =>
             transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'reentrant edit' } } }),
-          nested => phases.push(`commit: ${nested.getThought(first.id)!.value}`),
+          nested => {
+            expect(nested.getLexeme('shared')).toBeUndefined()
+            expect(nested.getLexeme('reentrant edit')).toEqual([first.id])
+            phases.push(`commit: ${nested.getThought(first.id)!.value}`)
+          },
         )
         phases.push('outer callback completed')
       },
@@ -214,10 +229,10 @@ it('publishes and persists committed changes when their commit callback throws',
   }
 })
 
-it('exposes canonical memberships and metadata to later commands in the same transaction', async () => {
+it('exposes canonical memberships and thought metadata to later commands in the same transaction', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
-  let previous: ThoughtspaceView
+  let previous: ReturnType<ThoughtspaceTransaction['capturePrevious']>
   try {
     await runtime.init({ storage: 'memory' })
     const before = (await persistent.ops.all()).length
@@ -228,52 +243,64 @@ it('exposes canonical memberships and metadata to later commands in the same tra
         movePlacements: { [first.id]: null, [second.id]: first.id },
       })
       const createdIds = transaction.operationIds
-      expect(created.lexemeIndex[hashThought('shared')]).toEqual({
-        contexts: [first.id, second.id],
-        created: 5,
-        lastUpdated: 30,
-        updatedBy: 'second-device',
-      })
-      expect(created.lexemeIndex[hashThought(HOME_TOKEN)]).toBeUndefined()
+      expect(created.getLexeme('shared')).toEqual([first.id, second.id])
+      expect(created.getThought(first.id)).toEqual(first)
+      expect(created.getThought(second.id)).toEqual(second)
+      expect(created.getLexeme(HOME_TOKEN)).toBeUndefined()
       previous = transaction.capturePrevious()
+      const previousChildren = previous.getChildren(HOME_TOKEN)
+      expect(previous.getPosition(second.id)).toBe(1)
 
       const renamed = transaction.update({
         thoughtIndexUpdates: {
           [first.id]: { ...created.getThought(first.id)!, value: 'renamed', lastUpdated: 40 as Timestamp },
         },
       })
-      expect(renamed.lexemeIndex[hashThought('shared')]).toEqual({
-        contexts: [second.id],
-        created: 5,
-        lastUpdated: 30,
-        updatedBy: 'second-device',
-      })
-      expect(renamed.lexemeIndex[hashThought('renamed')]).toEqual({
-        contexts: [first.id],
-        created: 10,
-        lastUpdated: 40,
-        updatedBy: 'first-device',
-      })
+      expect(renamed.getLexeme('shared')).toEqual([second.id])
+      expect(renamed.getLexeme('renamed')).toEqual([first.id])
+      expect(renamed.getThought(first.id)).toEqual({ ...first, value: 'renamed', lastUpdated: 40 })
 
       const deleted = transaction.update({ thoughtIndexUpdates: { [second.id]: null } })
-      expect(deleted.lexemeIndex[hashThought('shared')]).toBeUndefined()
+      expect(deleted.getLexeme('shared')).toBeUndefined()
       expect(deleted.getChildren(HOME_TOKEN)).toEqual([first.id])
       expect(empty.getThought(first.id)).toBeUndefined()
       expect(previous.getThought(first.id)?.value).toBe('shared')
       expect(previous.getThought(second.id)?.value).toBe('shared')
-      expect(previous.getChildren(HOME_TOKEN)).toEqual([first.id, second.id])
-      expect(previous.lexemeIndex[hashThought('shared')].contexts).toEqual([first.id, second.id])
+      expect(previous.getChildren(HOME_TOKEN)).toBe(previousChildren)
+      expect(previousChildren).toEqual([first.id, second.id])
+      expect(previous.getPosition(second.id)).toBe(1)
       expect(createdIds).toHaveLength(2)
       return { thoughts: transaction.project(), operationIds: transaction.operationIds }
     })
     expect(runtime.project()).toBe(result.value.thoughts)
     expect(() => previous.getThought(first.id)).toThrow('expired')
+    expect(() => previous.getChildren(HOME_TOKEN)).toThrow('expired')
+    expect(() => previous.getPosition(second.id)).toThrow('expired')
     await result.persisted
     expect((await persistent.ops.all()).slice(before).map(operation => operation.meta.id)).toEqual(
       result.value.operationIds,
     )
     expect(runtime.project().getThought(first.id)!).toMatchObject({ value: 'renamed' })
     expect(runtime.project().getThought(second.id)).toBeUndefined()
+
+    // Restore an existing payload exactly: the final cumulative change batch is empty.
+    const original = runtime.project().getThought(first.id)!
+    const originalLexeme = runtime.project().getLexeme('renamed')
+    await runtime.transact(transaction => {
+      const changed = transaction.update({
+        thoughtIndexUpdates: { [first.id]: { ...original, value: 'shared' } },
+      })
+      expect(changed.getLexeme('shared')).toEqual([first.id])
+      expect(runtime.project().getLexeme('renamed')).toBeUndefined()
+      expect(runtime.project()).toBe(changed)
+      const intermediate = transaction.capturePrevious()
+      const restored = transaction.update({ thoughtIndexUpdates: { [first.id]: original } })
+      expect(restored.getLexeme('renamed')).toBe(originalLexeme)
+      expect(restored.getLexeme('shared')).toBeUndefined()
+      expect(intermediate.getThought(first.id)?.value).toBe('shared')
+      expect(transaction.getChanges().thoughtIds).toContain(first.id)
+    }).persisted
+    expect(runtime.project().getLexeme('renamed')).toBe(originalLexeme)
   } finally {
     await runtime.drop()
   }
@@ -365,20 +392,22 @@ it('keeps captured thought values immutable when composed moves restore the orig
       }),
     ).value
     const heldThought = before.getThought(first.id)!
-    const reads = vi.spyOn(memory, 'get')
+    const reads = vi.spyOn(memory, 'getContent')
     const restored = runtime.transact(transaction => {
       const moved = transaction.update({
         thoughtIndexUpdates: { [first.id]: { ...heldThought, parentId: second.id } },
         movePlacements: { [first.id]: null },
       })
       expect(Reflect.set(moved.getThought(first.id)!, 'parentId', HOME_TOKEN)).toBe(false)
+      expect(moved.getChildren(HOME_TOKEN)).toEqual([second.id])
+      expect(moved.getChildren(second.id)).toEqual([first.id])
       reads.mockClear()
       return transaction.update({
         thoughtIndexUpdates: { [first.id]: heldThought },
         movePlacements: { [first.id]: null },
       })
     })
-    // The cumulative batch drops net-reverted rows; their earlier before values supply projection without rereads.
+    // Net-reverted moves project from change records without fetching their rows again.
     expect(reads).not.toHaveBeenCalled()
     expect(heldThought.parentId).toBe(HOME_TOKEN)
     expect(restored.value.getThought(first.id)).toEqual(heldThought)
@@ -464,6 +493,9 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
           movePlacements: { [first.id]: null },
         })
         expect(created.getThought(first.id)!.value).toBe('shared')
+        expect(created.getLexeme('shared')).toEqual([first.id])
+        expect(created.getChildren(HOME_TOKEN)).toEqual([first.id])
+        expect(created.getPosition(first.id)).toBe(0)
         transaction.afterPersist(acknowledged)
         // The root is not its own child, so it cannot anchor a new child within itself.
         transaction.update({
@@ -474,10 +506,13 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
     ).toThrow('afterId must name another child of the destination parent')
 
     expect(runtime.project()).toBe(before)
+    expect(before.getChildren(HOME_TOKEN)).toEqual([])
+    expect(before.getPosition(first.id)).toBeUndefined()
     await runtime.waitForIdle()
     expect(await persistent.opRefs.all()).toEqual(refs)
     expect(runtime.project().getThought(first.id)).toBeUndefined()
     expect(runtime.project().getThought(second.id)).toBeUndefined()
+    expect(runtime.project().getLexeme('shared')).toBeUndefined()
     expect(onCommit).not.toHaveBeenCalled()
     expect(subscribed).not.toHaveBeenCalled()
     expect(acknowledged).not.toHaveBeenCalled()
@@ -487,13 +522,36 @@ it('rolls back an invalid placement before publishing, persisting, or acknowledg
     )
     await accepted.persisted
     expect(accepted.value.getThought(first.id)!.value).toBe('shared')
+    expect(accepted.value.getLexeme('shared')).toEqual([first.id])
   } finally {
     unsubscribe()
     await runtime.drop()
   }
 })
 
-it('updates attribute lookup and lexeme metadata incrementally to the same result as fresh hydration', async () => {
+it('reads and commits accepted memberships after a caught partial update error', async () => {
+  const runtime = createMemoryThoughtspace()
+  try {
+    await runtime.init({ storage: 'memory' })
+    const view = runtime.project()
+    const committed = runtime.transact(transaction => {
+      expect(() =>
+        transaction.update({
+          thoughtIndexUpdates: { [first.id]: first, [second.id]: second },
+          movePlacements: { [first.id]: null, [second.id]: HOME_TOKEN },
+        }),
+      ).toThrow('afterId must name another child of the destination parent')
+      expect(view.getLexeme('shared')).toEqual([first.id])
+      expect(view.getThought(second.id)).toBeUndefined()
+    })
+    await committed.persisted
+    expect(runtime.project().getLexeme('shared')).toEqual([first.id])
+  } finally {
+    await runtime.drop()
+  }
+})
+
+it('preserves membership identities through same-key edits and moves, matching fresh hydration', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(async () => persistent)
   const attribute: Thought = { ...first, id: '3'.repeat(32) as ThoughtId, parentId: first.id, value: '=pin' }
@@ -511,8 +569,37 @@ it('updates attribute lookup and lexeme metadata incrementally to the same resul
       }),
     ).persisted
     const initial = runtime.project()
+    const siblings = initial.getChildren(HOME_TOKEN)
+    const shared = initial.getLexeme('shared')
+    const initialFirst = initial.getThought(first.id)!
+    const initialSecond = initial.getThought(second.id)!
+    const initialRevision = initial.revision
     expect(initial.getChildren(first.id)).toEqual([attribute.id])
     expect(initial.getThought(attribute.id)!.value).toBe('=pin')
+    const edited = runtime.transact(transaction =>
+      transaction.update({
+        thoughtIndexUpdates: {
+          [first.id]: {
+            ...initialFirst,
+            value: 'SHARED',
+            lastUpdated: 50 as Timestamp,
+            updatedBy: 'updated-device',
+          },
+        },
+      }),
+    )
+    expect(edited.value.getLexeme('shared')).toBe(shared)
+    expect(edited.value.getChildren(HOME_TOKEN)).toBe(siblings)
+    expect(edited.value.getThought(first.id)).not.toBe(initialFirst)
+    expect(edited.value.getThought(first.id)).toEqual({
+      ...initialFirst,
+      value: 'SHARED',
+      lastUpdated: 50,
+      updatedBy: 'updated-device',
+    })
+    expect(initialFirst.value).toBe('shared')
+    expect(edited.value.revision).toBeGreaterThan(initialRevision)
+    const editedFirst = edited.value.getThought(first.id)!
     const renamed = runtime.transact(transaction =>
       transaction.update({
         thoughtIndexUpdates: { [attribute.id]: { ...initial.getThought(attribute.id)!, value: '=note' } },
@@ -520,25 +607,29 @@ it('updates attribute lookup and lexeme metadata incrementally to the same resul
     )
     expect(renamed.value.getChildren(first.id)).toEqual([attribute.id])
     expect(renamed.value.getThought(attribute.id)!.value).toBe('=note')
-    expect(renamed.value.getThought(first.id)).toBe(initial.getThought(first.id))
-    expect(renamed.value.getThought(second.id)!).toBe(initial.getThought(second.id)!)
-    expect(renamed.value.lexemeIndex[hashThought('shared')]).toBe(initial.lexemeIndex[hashThought('shared')])
+    expect(renamed.value.getThought(first.id)).toBe(editedFirst)
+    expect(renamed.value.getThought(second.id)).toBe(initialSecond)
+    expect(renamed.value.getLexeme('shared')).toBe(shared)
 
+    const renamedLexeme = renamed.value.getLexeme('=note')
+    const renamedAttribute = renamed.value.getThought(attribute.id)!
+    const renamedRevision = renamed.value.revision
     const moved = runtime.transact(transaction =>
       transaction.update({
-        thoughtIndexUpdates: { [attribute.id]: { ...renamed.value.getThought(attribute.id)!, parentId: second.id } },
+        thoughtIndexUpdates: { [attribute.id]: { ...renamedAttribute, parentId: second.id } },
         movePlacements: { [attribute.id]: null },
       }),
     )
     expect(moved.value.getChildren(first.id)).toEqual([])
     expect(moved.value.getChildren(second.id)).toEqual([attribute.id])
+    expect(moved.value.getChildren(HOME_TOKEN)).toBe(siblings)
+    expect(moved.value.getLexeme('=note')).toBe(renamedLexeme)
+    expect(moved.value.getLexeme('shared')).toBe(shared)
+    expect(moved.value.getThought(attribute.id)).not.toBe(renamedAttribute)
+    expect(moved.value.getThought(attribute.id)).toEqual({ ...renamedAttribute, parentId: second.id })
+    expect(moved.value.revision).toBeGreaterThan(renamedRevision)
     const deleted = runtime.transact(transaction => transaction.update({ thoughtIndexUpdates: { [first.id]: null } }))
-    expect(deleted.value.lexemeIndex[hashThought('shared')]).toEqual({
-      contexts: [second.id],
-      created: 5,
-      lastUpdated: 30,
-      updatedBy: 'second-device',
-    })
+    expect(deleted.value.getLexeme('shared')).toEqual([second.id])
     await deleted.persisted
     await runtime.waitForIdle()
 

@@ -4,6 +4,7 @@ import pkg from '../../package.json'
 import State from '../@types/State'
 import { isTouch } from '../browser'
 import { registerReset } from '../stores/ministore'
+import hashThought from './hashThought'
 import storage from './storage'
 
 /** The localStorage key prefix under which the rolling debug log is persisted. Entries are sharded across numbered chunk keys (`debugLog-0` … `debugLog-9`) so that appending an entry only rewrites the active chunk instead of the whole buffer. */
@@ -278,11 +279,12 @@ const format = (state?: State): string => {
     // ignore
   }
 
+  const lexemes = new Set<string>()
   const thoughts = state
-    ? Array.from(state.thoughts.values(), thought => ({
-        thought,
-        position: state.thoughts.getPosition(thought.id) ?? 0,
-      }))
+    ? Array.from(state.thoughts.values(), thought => {
+        if (state.thoughts.getLexeme(thought.value)?.length) lexemes.add(hashThought(thought.value))
+        return { thought, position: state.thoughts.getPosition(thought.id) ?? 0 }
+      })
     : []
   // The view the log ended on, which the entries can only reconstruct from setCursor and similar actions — the first
   // to be evicted in a long session. Thought ids resolve against the state.thoughts dump that follows.
@@ -301,7 +303,7 @@ const format = (state?: State): string => {
 
   const dump = state
     ? [
-        `\n--- state.thoughts: ${thoughts.length} thoughts, ${Object.keys(state.thoughts.lexemeIndex).length} lexemes`,
+        `\n--- state.thoughts: ${thoughts.length} thoughts, ${lexemes.size} lexemes`,
         ...thoughts
           .sort((a, b) =>
             a.thought.parentId < b.thought.parentId

@@ -1,4 +1,4 @@
-import { applyPatch } from 'fast-json-patch'
+import { Operation, applyPatch, compare, unescapePathComponent } from 'fast-json-patch'
 import { produce } from 'immer'
 import { findLast, isEqual, sortBy, startCase, uniq } from 'lodash'
 import ActionType from '../@types/ActionType'
@@ -9,6 +9,7 @@ import ThoughtId from '../@types/ThoughtId'
 import ThoughtReaderState from '../@types/ThoughtReaderState'
 import { commandById, formatKeyboardShortcut, gestureString } from '../commands'
 import { HOME_TOKEN } from '../constants'
+import db from '../data-providers/thoughtspace'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isAttribute from '../util/isAttribute'
@@ -418,13 +419,54 @@ const exportTree = (state: ThoughtReaderState): string =>
 
 /** Generates a bug report in markdown for the actions between two positions of the undo history: the steps to reproduce them, starting from the thoughtspace at the start position, followed by the thoughtspace at the end position as the current behavior and an empty heading for the expected behavior. Positions count steps back from the present, so start is at or before end. */
 const stepsToReproduce = (state: State, positions: { start: number; end: number }): string => {
-  const { steps, position } = undoSteps(state)
+  const { steps: recordedSteps, position } = undoSteps(state)
 
   // Clamp the positions to the history, which may have changed since they were chosen. The undo slider keeps its handles as
   // long as the number of patches is unchanged, but the same number of patches can group into fewer steps, leaving a handle
   // past the end of the history.
-  const start = Math.min(Math.max(positions.start, 0), steps.length)
+  const start = Math.min(Math.max(positions.start, 0), recordedSteps.length)
   const end = Math.min(Math.max(positions.end, 0), start)
+
+  // Replay all requested boundaries once. Re-normalize each merged segment against its actual before state,
+  // so incoming edits between segments retain the same meaning as when history was recorded eagerly.
+  const segments = recordedSteps
+    .slice(Math.min(end, position), Math.max(start, position))
+    .flatMap(step => step.patches.flatMap(patch => patch.documentHistory.map(range => ({ patch, range }))))
+    .sort((a, b) => a.range.from - b.range.from || a.range.to - b.range.to)
+  const documentOps = new Map<Patch, Operation[]>()
+  if (segments.length) {
+    db.readHistory(
+      segments.map(segment => segment.range),
+      ({ before, after, thoughtIds, childrenChangedIds }, index) => {
+        const { patch } = segments[index]
+        const previousOps = documentOps.get(patch) ?? []
+        const scope = { thoughtIds: new Set(thoughtIds), parentIds: new Set(childrenChangedIds) }
+        thoughtIds.forEach(id => {
+          const old = before.getThought(id)
+          const current = after.getThought(id)
+          // A payload appearing or disappearing also changes EM's filtered sibling membership.
+          if (!!old !== !!current) {
+            if (old) scope.parentIds.add(old.parentId)
+            if (current) scope.parentIds.add(current.parentId)
+          }
+        })
+        previousOps.forEach(op => {
+          const [, , field, key] = op.path.split('/')
+          const id = unescapePathComponent(key) as ThoughtId
+          if (field === 'thoughtIndex') scope.thoughtIds.add(id)
+          else scope.parentIds.add(id)
+        })
+        const oldDocument = { thoughts: thoughtspaceHistory.capture({ ...state, thoughts: before }, scope).thoughts }
+        const currentDocument = { thoughts: thoughtspaceHistory.capture({ ...state, thoughts: after }, scope).thoughts }
+        const baseline = applyPatch(oldDocument, previousOps, false, false).newDocument
+        documentOps.set(patch, compare(currentDocument, baseline))
+      },
+    )
+  }
+  const steps = recordedSteps.map(step => ({
+    ...step,
+    patches: step.patches.map(patch => ({ ...patch, ops: [...patch.ops, ...(documentOps.get(patch) ?? [])] })),
+  }))
 
   // Reconstruct keyed diagnostics over the current document, retaining unrelated incoming changes. Do not apply
   // array-index patches to native child order: incoming siblings can change the meaning of those indices.

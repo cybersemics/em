@@ -5,6 +5,7 @@ import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { replaceThoughtsActionCreator as replaceThoughts } from '../../actions/replaceThoughts'
+import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../../actions/setIsMulticursorExecuting'
 import { swapParentActionCreator as swapParent } from '../../actions/swapParent'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -42,7 +43,7 @@ it('report the thoughtspace at the start, the steps up to the end, and the thoug
   ])
 
   expect(store.getState().undoPatches.flatMap(patch => patch.ops.map(op => op.path))).not.toContainEqual(
-    expect.stringMatching(/^\/thoughts\/lexemeIndex(?:\/|$)/),
+    expect.stringMatching(/^\/thoughts(?:\/|$)/),
   )
 
   // start after b was created, end after c was indented
@@ -270,6 +271,84 @@ it('retains incoming reparenting while reconstructing a local reorder for a repo
 - a
 - d
   - b
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('reconstructs one grouped edit across an incoming update without reverting the incoming thought', () => {
+  store.dispatch([
+    importText({ text: '- a\n- remote' }),
+    setCursor(['a']),
+    setIsMulticursorExecuting({ value: true }),
+    editThought(['a'], 'aa'),
+  ])
+  const remote = contextToThought(store.getState(), ['remote'])!
+  const incoming = db.transact(transaction =>
+    transaction.update({ thoughtIndexUpdates: { [remote.id]: { ...remote, value: 'incoming' } } }),
+  )
+  store.dispatch([
+    replaceThoughts({ thoughts: incoming.value, repairCursor: true }),
+    editThought(['aa'], 'aaa'),
+    setIsMulticursorExecuting({ value: false }),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- a
+- incoming
+\`\`\`
+
+1. Set the cursor on \`a\`.
+2. Set Is Multicursor Executing.
+
+## Current Behavior
+
+\`\`\`
+- aaa
+- incoming
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('retains later incoming text when a UI-only merge already canceled the earlier inverse value', () => {
+  store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+  const a = contextToThought(store.getState(), ['a'])!
+  store.dispatch([setIsMulticursorExecuting({ value: true }), editThought(['a'], 'A')])
+  expect(store.getState().undoPatches.at(-1)!.metadata.isFormatting).toBe(true)
+  const incoming = db.transact(transaction => transaction.update({ thoughtIndexUpdates: { [a.id]: a } }))
+  store.dispatch([
+    replaceThoughts({ thoughts: incoming.value, repairCursor: true }),
+    setCursor(null),
+    setIsMulticursorExecuting({ value: false }),
+  ])
+  expect(store.getState().undoPatches.at(-1)!.metadata.isFormatting).toBe(false)
+  const later = db.transact(transaction =>
+    transaction.update({ thoughtIndexUpdates: { [a.id]: { ...a, value: 'latest incoming' } } }),
+  )
+  store.dispatch(replaceThoughts({ thoughts: later.value, repairCursor: true }))
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- latest incoming
+\`\`\`
+
+1. Set the cursor on \`latest incoming\`.
+2. Set Is Multicursor Executing.
+
+## Current Behavior
+
+\`\`\`
+- latest incoming
 \`\`\`
 
 ## Expected Behavior
@@ -639,23 +718,11 @@ it('describes a same-parent drag across siblings by the thought that reproduces 
   store.dispatch([
     importText({ text: '- x\n- a\n- b\n- c' }),
     setCursor(['x']),
-    moveThought({ from: ['a'], to: ['a'], after: ['c'] }),
+    moveThought({ from: ['c'], to: ['c'], after: ['x'] }),
   ])
 
-  const state = store.getState()
-  const shiftedSibling = contextToThought(state, ['c'])!
-  const shiftedPositionPath = `/thoughts/childPositions/${shiftedSibling.parentId}/${shiftedSibling.id}`
-  // Position shifts also touch c, but moving c after b would not reproduce the recorded reorder.
-  const undoPatches = state.undoPatches.map(patch => ({
-    ...patch,
-    ops: [
-      ...patch.ops.filter(operation => operation.path === shiftedPositionPath),
-      ...patch.ops.filter(operation => operation.path !== shiftedPositionPath),
-    ],
-  }))
-  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedPositionPath)
-
-  expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+  // Moving c also shifts a and b; the report must identify c, not the first changed sibling.
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - x
@@ -665,15 +732,15 @@ it('describes a same-parent drag across siblings by the thought that reproduces 
 \`\`\`
 
 1. Set the cursor on \`x\`.
-2. Move Thought \`a\` after \`c\`.
+2. Move Thought \`c\` after \`x\`.
 
 ## Current Behavior
 
 \`\`\`
 - x
-- b
 - c
 - a
+- b
 \`\`\`
 
 ## Expected Behavior
@@ -705,20 +772,7 @@ it('describe a drag and drop by where the thought lands', () => {
     },
   ])
 
-  const state = store.getState()
-  const shiftedSibling = contextToThought(state, ['a', 'd'])!
-  const shiftedPositionPath = `/thoughts/childPositions/${shiftedSibling.parentId}/${shiftedSibling.id}`
-  // Put the derived sibling-position change before the actual reparenting, independent of random thought ids.
-  const undoPatches = state.undoPatches.map(patch => ({
-    ...patch,
-    ops: [
-      ...patch.ops.filter(operation => operation.path === shiftedPositionPath),
-      ...patch.ops.filter(operation => operation.path !== shiftedPositionPath),
-    ],
-  }))
-  expect(undoPatches.at(-1)!.ops[0].path).toBe(shiftedPositionPath)
-
-  expect(stepsToReproduce({ ...state, undoPatches }, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
 
 \`\`\`
 - a

@@ -25,6 +25,7 @@ import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
 import { getLexeme } from '../../selectors/getLexeme'
 import isUndoEnabled from '../../selectors/isUndoEnabled'
+import stepsToReproduce from '../../selectors/stepsToReproduce'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import contextToThought from '../../test-helpers/contextToThought'
@@ -249,8 +250,7 @@ describe('undo', () => {
     const { undoPatches } = store.getState()
     const lastPatch = undoPatches[undoPatches.length - 1]
 
-    const thoughtsExists = lastPatch.ops.some(({ path }) => path.includes('/thoughts'))
-    expect(thoughtsExists).toEqual(true)
+    expect(lastPatch.documentOperationIds.length).toBeGreaterThan(0)
 
     const alertExists = lastPatch.ops.some(({ path }) => path.includes('/alert'))
     expect(alertExists).toEqual(false)
@@ -970,6 +970,7 @@ describe('grouping', () => {
   })
 
   it('keeps formatting separate from thought creation after an incoming text change', () => {
+    const readHistory = vi.spyOn(db, 'readHistory')
     store.dispatch([newThought({ value: 'hello' }), editThought(['hello'], '<b>hello</b>')])
     const thought = contextToThought(store.getState(), ['<b>hello</b>'])!
     db.transact(transaction =>
@@ -980,6 +981,8 @@ describe('grouping', () => {
 
     expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - hello`)
+    expect(readHistory).not.toHaveBeenCalled()
+    readHistory.mockRestore()
   })
 
   it('undoing a formatting edit should preserve trailing space in thought value', () => {
@@ -1523,6 +1526,7 @@ describe('operation receipts', () => {
   })
 
   it('groups typing receipts chronologically and redoes individual count boundaries with fresh receipts', () => {
+    const readHistory = vi.spyOn(db, 'readHistory')
     store.dispatch([newThought({}), editThought([''], 'a')])
     const firstEdit = store.getState().undoPatches.at(-1)!
     expect(firstEdit.documentOperationIds).toHaveLength(1)
@@ -1550,6 +1554,10 @@ describe('operation receipts', () => {
   - ab`)
     expect(store.getState().undoPatches.at(-1)!.documentOperationIds).not.toEqual(redoEntries[0].documentOperationIds)
     expect(store.getState().redoPatches).toHaveLength(0)
+    expect(readHistory).not.toHaveBeenCalled()
+    stepsToReproduce(store.getState(), { start: 1, end: 0 })
+    expect(readHistory).toHaveBeenCalledTimes(1)
+    readHistory.mockRestore()
   })
 
   it('keeps individual redo diagnostics when undoing two moves returns to the transaction starting order', () => {
@@ -1563,11 +1571,12 @@ describe('operation receipts', () => {
     ])
 
     expect(store.getState().thoughts.getChildren(HOME_TOKEN)).toEqual([a.id, b.id])
-    expect(store.getState().redoPatches.at(-1)!.ops).toContainEqual({
-      op: 'replace',
-      path: `/thoughts/childPositions/${a.parentId}/${a.id}`,
-      value: 1,
-    })
+    expect(stepsToReproduce(store.getState(), { start: 2, end: 1 })).toContain(`## Current Behavior
+
+\`\`\`
+- b
+- a
+\`\`\``)
     store.dispatch(redo({ count: 1 }))
     expect(store.getState().thoughts.getChildren(HOME_TOKEN)).toEqual([b.id, a.id])
     store.dispatch(redo({ count: 1 }))

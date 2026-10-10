@@ -5,7 +5,6 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type ThoughtspaceView from '../../../@types/ThoughtspaceView'
 import type Timestamp from '../../../@types/Timestamp'
 import { HOME_TOKEN } from '../../../constants'
-import hashThought from '../../../util/hashThought'
 import { tsid } from '../../thoughtspaceSession'
 import createMemoryThoughtspace from '../createMemoryThoughtspace'
 import initializeMemoryStorage from '../initializeMemoryStorage'
@@ -240,7 +239,7 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
     expect(view.getThought(a.id)!).toMatchObject({ value: "O'Reilly ?1 $&" })
     expect(view.getPosition(a.id)).toBe(1)
     expect(view.getPosition(b.id)).toBe(0)
-    expect(view.lexemeIndex[hashThought("O'Reilly ?1 $&")].contexts).toEqual([a.id])
+    expect(view.getLexeme("O'Reilly ?1 $&")).toEqual([a.id])
     runtime.project()
 
     const append = persistent.ops.appendMany.bind(persistent.ops)
@@ -259,7 +258,7 @@ it('publishes incoming edits and order, and keeps a newer memory edit while an o
       }),
     )
     expect(view.getThought(a.id)!.value).toBe('second')
-    expect(view.lexemeIndex[hashThought('second')].contexts).toEqual([a.id])
+    expect(view.getLexeme('second')).toEqual([a.id])
     // Memory queries see the latest edit without waiting for SQLite.
     expect(runtime.project().getThought(a.id)?.value).toBe('second')
     release()
@@ -390,12 +389,13 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
     await runtime.waitForIdle()
     expect(runtime.ready).toBe(true)
 
+    const fullRowReads = vi.spyOn(memory, 'get')
     const view = runtime.project()
     const heldThought = view.getThought(grandchild)!
     const heldChildren = view.getChildren(children[0])
     expect(view.getThought(grandchild)!).toMatchObject({ value: 'deep descendant', parentId: children[0] })
     expect(view.getThought(grandchild)!).not.toHaveProperty('pending')
-    expect(view.lexemeIndex[hashThought('deep descendant')].contexts).toEqual([grandchild])
+    expect(view.getLexeme('deep descendant')).toEqual([grandchild])
     const storageReads = [
       vi.spyOn(persistent.runner, 'getText'),
       vi.spyOn(persistent.ops, 'get').mockClear(),
@@ -407,11 +407,8 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
     const queried = runtime.project()
     expect(parents.map(id => queried.getChildren(id))).toEqual(children.map(child => [child]))
     expect(queried.getChildren(children[0])).toEqual([grandchild])
-    expect(queried.lexemeIndex[hashThought('deep descendant')].contexts).toEqual([grandchild])
-    expect([hashThought('parent 0'), hashThought('child 0')].map(key => queried.lexemeIndex[key].contexts)).toEqual([
-      [parents[0]],
-      [children[0]],
-    ])
+    expect(queried.getLexeme('deep descendant')).toEqual([grandchild])
+    expect(['parent 0', 'child 0'].map(value => queried.getLexeme(value))).toEqual([[parents[0]], [children[0]]])
     for (const read of storageReads) expect(read).not.toHaveBeenCalled()
 
     const decoded = vi.spyOn(thoughtPayload, 'decodeThoughtPayload')
@@ -426,7 +423,7 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
       }),
     )
     expect(changed.value.getThought(grandchild)!.value).toBe('edited in memory')
-    expect(changed.value.getChildren(children[0])).toEqual(heldChildren)
+    expect(changed.value.getChildren(children[0])).toBe(heldChildren)
     expect(Reflect.set(heldThought, 'value', 'corrupted')).toBe(false)
     expect(Reflect.set(heldChildren, '0', parents[0])).toBe(false)
     expect(heldThought.value).toBe('deep descendant')
@@ -434,6 +431,7 @@ it('loads all descendants before ready and serves ordinary queries and edit proj
     expect(wholeDocumentReads).not.toHaveBeenCalled()
     expect(changed.value.getThought(children[0])!).toBe(view.getThought(children[0])!)
     expect(changed.value.getThought(parents[11])!).toBe(view.getThought(parents[11])!)
+    expect(fullRowReads).not.toHaveBeenCalled()
     for (const read of storageReads) expect(read).not.toHaveBeenCalled()
     await changed.persisted
     await runtime.waitForIdle()
@@ -460,9 +458,10 @@ it('projects payload-bearing descendants and their canonical ranks under a paylo
     const initial = runtime.project()
     expect(initial.getThought(parent)).toBeUndefined()
     expect(initial.getThought(empty)).toBeUndefined()
+    expect(initial.getChildren(parent)).toEqual([])
     expect(initial.getThought(child)!).toMatchObject({ value: 'visible child', parentId: parent })
     expect(initial.getPosition(child)).toBe(1)
-    expect(initial.lexemeIndex[hashThought('visible child')].contexts).toEqual([child])
+    expect(initial.getLexeme('visible child')).toEqual([child])
 
     await persistent.local.payload(replica, parent, encodeThoughtPayload({ ...payload, value: 'parent' }))
     await runtime.waitForIdle()
@@ -475,7 +474,7 @@ it('projects payload-bearing descendants and their canonical ranks under a paylo
     await runtime.waitForIdle()
     expect(runtime.project().getThought(child)).toBeUndefined()
     expect(runtime.project().getChildren(parent)).toEqual([])
-    expect(runtime.project().lexemeIndex[hashThought('visible child')]).toBeUndefined()
+    expect(runtime.project().getLexeme('visible child')).toBeUndefined()
     expect(visibleChildren).toEqual([child])
     expect(withParent.getChildren(parent)).toEqual([])
 

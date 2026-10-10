@@ -84,7 +84,7 @@ it('persist id on move', () => {
 
   const thoughtA2 = contextToThought(stateNew1, ['a', 'a1', 'a2'])!
 
-  expect(getLexeme(stateNew1, 'a2')!.contexts).toEqual([thoughtA2.id])
+  expect(getLexeme(stateNew1, 'a2')).toEqual([thoughtA2.id])
 
   const steps2 = [
     moveThoughtAtFirstMatch({
@@ -97,7 +97,7 @@ it('persist id on move', () => {
   const stateNew2 = reducerFlow(steps2)(stateNew1)
 
   const thoughtA2New = contextToThought(stateNew2, ['a1', 'a2'])!
-  expect(getLexeme(stateNew2, 'a2')!.contexts).toEqual([thoughtA2New.id])
+  expect(getLexeme(stateNew2, 'a2')).toEqual([thoughtA2New.id])
 
   expect(thoughtA2New.id).toEqual(thoughtA2!.id)
 })

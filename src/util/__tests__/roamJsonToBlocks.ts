@@ -4,7 +4,6 @@ import exportContext from '../../selectors/exportContext'
 import initStore from '../../test-helpers/initStore'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
-import hashThought from '../../util/hashThought'
 import removeHome from '../../util/removeHome'
 import importJson from '../importJson'
 import initialState from '../initialState'
@@ -225,27 +224,14 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
   const thoughtsByValue = Object.fromEntries(Array.from(state.thoughts.values(), thought => [thought.value, thought]))
 
   expect(thoughtsByValue).toMatchObject({
-    // RoamPages acquire the edit time of their last child
-    Fruits: { lastUpdated: editTimeOf('Banana') },
-    Veggies: { lastUpdated: editTimeOf('Spinach') },
-    // RoamBlocks use specified edit time
-    Apple: { lastUpdated: editTimeOf('Apple') },
-    Orange: { lastUpdated: editTimeOf('Orange') },
-    Banana: { lastUpdated: editTimeOf('Banana') },
-    Broccoli: { lastUpdated: editTimeOf('Broccoli') },
-    Spinach: { lastUpdated: editTimeOf('Spinach') },
-  })
-
-  expect(state.thoughts.lexemeIndex).toMatchObject({
-    // Lexemes derive their metadata from the resulting thoughts, including the page's latest child edit.
-    [hashThought('Fruits')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Banana') },
-    [hashThought('Veggies')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Spinach') },
-
-    // RoamBlocks use specified edit time
-    [hashThought('Apple')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
-    [hashThought('Orange')]: { created: createTime('Orange'), lastUpdated: editTimeOf('Orange') },
-    [hashThought('Banana')]: { created: createTime('Banana'), lastUpdated: editTimeOf('Banana') },
-    [hashThought('Broccoli')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
-    [hashThought('Spinach')]: { created: createTime('Spinach'), lastUpdated: editTimeOf('Spinach') },
+    // RoamPages acquire their first child's create time and their last child's edit time.
+    Fruits: { created: createTime('Apple'), lastUpdated: editTimeOf('Banana') },
+    Veggies: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Spinach') },
+    // RoamBlocks use their specified times.
+    Apple: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
+    Orange: { created: createTime('Orange'), lastUpdated: editTimeOf('Orange') },
+    Banana: { created: createTime('Banana'), lastUpdated: editTimeOf('Banana') },
+    Broccoli: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
+    Spinach: { created: createTime('Spinach'), lastUpdated: editTimeOf('Spinach') },
   })
 })

@@ -246,7 +246,7 @@ describe('context view', () => {
 
     // empty context should be deleted from the Lexeme
     const lexeme = getLexeme(stateNew, 'm')
-    expect(lexeme?.contexts).toHaveLength(2)
+    expect(lexeme).toHaveLength(2)
 
     // absolute context should be empty
     const children = getAllChildren(stateNew, ABSOLUTE_TOKEN)

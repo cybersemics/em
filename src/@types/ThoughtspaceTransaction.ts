@@ -6,9 +6,11 @@ import ThoughtspaceView from './ThoughtspaceView'
 
 /** Synchronous document commands scoped to one atomic editor action. */
 interface ThoughtspaceTransaction {
+  /** Accepted-operation offset at this boundary, including operations authored during this transaction. */
+  readonly operationOffset: number
   /** Identifies document operations authored so far in this transaction. */
   readonly operationIds: readonly OperationId[]
-  /** Reads cumulative invalidations; reset requires comparing the complete document. */
+  /** Reads invalidations across captured/observed boundaries; reset requires comparing the complete document. */
   getChanges: () => {
     thoughtIds: readonly ThoughtId[]
     /** Parents whose raw child order changed, including payload-less children. */
@@ -25,7 +27,7 @@ interface ThoughtspaceTransaction {
   /** Reads the current canonical document and its derived lexemes. */
   project: () => ThoughtspaceView
   /** Reads this boundary's previous values until the synchronous transaction callback returns. */
-  capturePrevious: () => ThoughtspaceView
+  capturePrevious: () => Omit<ThoughtspaceView, 'getLexeme' | 'revision'>
   /** Runs only after this whole transaction has been durably persisted. */
   afterPersist: (callback: () => void) => void
 }

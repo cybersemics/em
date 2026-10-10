@@ -3,6 +3,7 @@ import State from '../@types/State'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtReaderState from '../@types/ThoughtReaderState'
+import ThoughtspaceView from '../@types/ThoughtspaceView'
 
 /** Serializable editor diagnostics, never a second live document or an input to engine undo. */
 type DiagnosticState = Omit<State, 'thoughts'> & {
@@ -12,9 +13,9 @@ type DiagnosticState = Omit<State, 'thoughts'> & {
   }
 }
 
-/** Captures selected diagnostic records, or the whole document for reports and reset fallbacks. */
+/** Captures selected historical records, or the current document used as a report's baseline. */
 const capture = (
-  state: State,
+  state: ThoughtReaderState & { thoughts: Pick<ThoughtspaceView, 'values'> },
   scope?: {
     thoughtIds: ReadonlySet<ThoughtId>
     parentIds: ReadonlySet<ThoughtId>

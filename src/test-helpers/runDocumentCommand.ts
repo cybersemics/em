@@ -3,6 +3,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import { ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN } from '../constants'
+import hashThought from '../util/hashThought'
 import commandThoughtspace from './commandThoughtspace'
 
 const roots = new Set<string>([ABSOLUTE_TOKEN, EM_TOKEN, GLOBAL_ROOT_TOKEN, HOME_TOKEN])
@@ -71,6 +72,14 @@ const runDocumentCommand = (
       { thought, children: view.getChildren(thought.id), position: view.getPosition(thought.id) },
     ]),
   )
+  const lexemes = Object.fromEntries(
+    Object.entries(
+      _.groupBy(
+        [...rows.values()].filter(row => !roots.has(row.thought.id)),
+        row => hashThought(row.thought.value),
+      ),
+    ).map(([key, members]) => [key, Object.freeze(members.map(row => row.thought.id).sort())]),
+  )
   return {
     ...result.value,
     thoughts: {
@@ -81,7 +90,7 @@ const runDocumentCommand = (
       values: function* () {
         for (const row of rows.values()) yield row.thought
       },
-      lexemeIndex: view.lexemeIndex,
+      getLexeme: value => lexemes[hashThought(value)],
     },
   }
 }

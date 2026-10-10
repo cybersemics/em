@@ -2,7 +2,7 @@
 
 The thoughtspace is a tree of thoughts. Every thought has a stable `ThoughtId`, a `value` (its text), and a `parentId`. The synchronous memory TreeCRDT owns the complete document; Redux holds UI state. Selectors receive an editor context combining that UI state with current TreeCRDT reads. An asynchronous SQLite replica persists the same operations. See [persistence.md](persistence.md).
 
-A second index, `lexemeIndex`, runs orthogonal to the tree: it maps a *normalized* hash of a thought's value to a `Lexeme` that lists every `ThoughtId` in the thoughtspace whose value hashes to the same key. This is what makes the Context View and search-style features possible.
+EM keeps a private membership index alongside the tree. `getLexeme(value)` returns every `ThoughtId` whose text has the same normalized hash, supporting Context View and search-style features.
 
 [`state.thoughts: ThoughtspaceView`](../src/@types/ThoughtspaceView.ts) reads the current document, not a retained snapshot:
 
@@ -13,7 +13,7 @@ state.thoughts: {
   getChildren(id: ThoughtId): readonly ThoughtId[]
   getPosition(id: ThoughtId): number | undefined
   values(): IterableIterator<Thought>
-  lexemeIndex: Index<Lexeme> // keyed by hashThought(value)
+  getLexeme(value: string): Lexeme | undefined
 }
 
 state.thoughtUi: Index<Pick<Thought, 'generating' | 'generatingPlaceholder' | 'splitSource'>>
@@ -63,7 +63,7 @@ See [Thought.ts](../src/@types/Thought.ts). TreeCRDT stores a `ThoughtPayload` (
 
 #### rank
 
-The view resolves numeric positions through `getPosition`, caching requested sibling orders and positions until its revision changes. Render records and hover gaps still use numeric `rank` coordinates, but canonical `Thought` records do not. Payload-less siblings occupy positions even though they are not rendered.
+The view resolves numeric positions through `getPosition`, caching requested sibling orders and positions until the affected order changes. Render records and hover gaps still use numeric `rank` coordinates, but canonical `Thought` records do not. Payload-less siblings occupy positions even though they are not rendered.
 
 Document commands specify `afterId`: a preceding sibling's id, or `null` for first. Creates and moves never accept numeric ranks. The returned view reads the resulting canonical order immediately.
 
@@ -126,17 +126,12 @@ In practice, you obtain a `SimplePath` either by:
 ### Lexeme
 
 ```ts
-interface Lexeme {
-  contexts: ThoughtId[]
-  created: Timestamp
-  lastUpdated: Timestamp
-  updatedBy: string
-}
+type Lexeme = readonly ThoughtId[]
 ```
 
-A `Lexeme` lists every `ThoughtId` whose value hashes to the same normalized key. It does **not** store the value text itself — the key in `lexemeIndex` is the hash; the value is recovered from any of the listed `Thought`s.
+A `Lexeme` lists every `ThoughtId` whose value hashes to the same normalized key. It does **not** store the value text itself; read that from any of the listed `Thought`s.
 
-Lexemes are derived from the complete memory document, not independently authored records or SQLite membership queries. Every context in a lexeme resolves through `getThought`. Each document transaction update returns a view with current memberships, so composed commands need no separate draft index.
+Lexemes are sorted membership lists derived from the complete memory document, not independently authored records or SQLite membership queries. Every id resolves through `getThought`; timestamps and author metadata belong to those thoughts, not to the list. Within a transaction, queries merge committed memberships with cumulative native changes. The committed index changes only after the native transaction succeeds; unchanged memberships retain their list identity.
 
 The hashing function [`hashThought`](../src/util/hashThought.ts) normalizes the value before hashing:
 
@@ -158,7 +153,7 @@ So the `Lexeme` for *cat* / *Cats* / *🐱cat* contains every context where any 
 
 This is what powers the Context View (showing all contexts that contain "this value") and the Recently-Edited / search features.
 
-**Usage tip:** [`getLexeme(state, value)`](../src/selectors/getLexeme.ts) takes the raw value and hashes it for you. If you already have the hash, look it up directly in `state.thoughts.lexemeIndex`.
+**Usage tip:** [`getLexeme(state, value)`](../src/selectors/getLexeme.ts) and `state.thoughts.getLexeme(value)` take raw text; hashing stays inside the provider.
 
 ### Special tokens
 
@@ -340,7 +335,7 @@ Default mode. A thought's children are rendered as a collapsible tree:
 
 The context view is gated by `state.contextViews`, an object keyed by `hashPath(path)` — see [`isContextViewActive`](../src/selectors/isContextViewActive.ts). Its entries are sorted by ancestor values, independently of each matching thought's position within its own parent.
 
-**Usage tip:** [`getContexts(state, value)`](../src/selectors/getContexts.ts) returns the live list. Internally that's just the `Lexeme.contexts` array.
+**Usage tip:** [`getContexts(state, value)`](../src/selectors/getContexts.ts) returns the lexeme's membership list, or an empty list for missing values and dividers.
 
 #### Context view recursion
 

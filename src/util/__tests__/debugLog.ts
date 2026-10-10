@@ -274,7 +274,7 @@ describe('format', () => {
             { id: 't2', value: 'banana', parentId: 'root' },
           ].values(),
         getPosition: (id: string) => (id === 't1' ? 1 : 0),
-        lexemeIndex: {},
+        getLexeme: () => undefined,
       },
       cursor: null,
       cursorOffset: null,
@@ -296,7 +296,7 @@ describe('format', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     const state = {
-      thoughts: { values: () => [].values(), lexemeIndex: {} },
+      thoughts: { values: () => [].values(), getLexeme: () => undefined },
       cursor: ['t1', 't2'],
       cursorOffset: 3,
       isKeyboardOpen: true,

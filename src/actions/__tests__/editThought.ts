@@ -478,7 +478,7 @@ describe('changing thought with duplicate descendent', () => {
     const lexeme = getLexeme(stateNew, 'ac')
 
     // Lexeme should be properly updated
-    expect(lexeme?.contexts).toHaveLength(2)
+    expect(lexeme).toHaveLength(2)
   })
 
   it('removing', () => {
@@ -503,6 +503,6 @@ describe('changing thought with duplicate descendent', () => {
 
     const lexeme = getLexeme(stateNew, 'a')
     // Lexeme should be properly updated
-    expect(lexeme?.contexts).toHaveLength(1)
+    expect(lexeme).toHaveLength(1)
   })
 })

@@ -22,7 +22,6 @@ import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import command from '../../util/command'
-import hashThought from '../../util/hashThought'
 import initialState from '../../util/initialState'
 import never from '../../util/never'
 import removeHome from '../../util/removeHome'
@@ -68,15 +67,14 @@ it('basic import with proper thought structure', () => {
 
   const stateNew = runDocumentCommand(importText({ text, lastUpdated: now }), initialState(now))
   const thoughts = stateNew.thoughts
-  const { lexemeIndex } = thoughts
 
   const childAId = getAllChildrenByContext(stateNew, [HOME_TOKEN])[0]
   const childBId = getAllChildrenByContext(stateNew, ['a'])[0]
 
   expect(thoughts.getThought(EM_TOKEN)).toMatchObject({ id: EM_TOKEN, lastUpdated: never() })
   expect(thoughts.getThought(ABSOLUTE_TOKEN)).toMatchObject({ id: ABSOLUTE_TOKEN, lastUpdated: never() })
-  expect(thoughts.getThought(childAId)).toMatchObject({ id: childAId, value: 'a' })
-  expect(thoughts.getThought(childBId)).toMatchObject({ id: childBId, value: 'b' })
+  expect(thoughts.getThought(childAId)).toMatchObject({ id: childAId, value: 'a', created: now })
+  expect(thoughts.getThought(childBId)).toMatchObject({ id: childBId, value: 'b', created: now })
   expect(thoughts.getChildren(EM_TOKEN)).toEqual([])
   expect(thoughts.getChildren(HOME_TOKEN)).toEqual([childAId])
   expect(thoughts.getChildren(ABSOLUTE_TOKEN)).toEqual([])
@@ -84,25 +82,14 @@ it('basic import with proper thought structure', () => {
   expect(thoughts.getChildren(childBId)).toEqual([])
 
   expect(thoughts.getThought(childAId)!.lastUpdated).toBeGreaterThanOrEqual(now)
+  expect(thoughts.getThought(childBId)!.lastUpdated).toBeGreaterThanOrEqual(now)
 
-  expect(lexemeIndex).toMatchObject({
-    [hashThought('a')]: {
-      contexts: [childAId],
-      created: now,
-    },
-    [hashThought('b')]: {
-      contexts: [childBId],
-      created: now,
-    },
-  })
+  expect(thoughts.getLexeme('a')).toEqual([childAId])
+  expect(thoughts.getLexeme('b')).toEqual([childBId])
 
-  expect(lexemeIndex[hashThought(HOME_TOKEN)]).toBeUndefined()
-  expect(lexemeIndex[hashThought(EM_TOKEN)]).toBeUndefined()
-  expect(lexemeIndex[hashThought(ABSOLUTE_TOKEN)]).toBeUndefined()
-
-  // Note: Jest doesn't have lexicographic string comparison yet :(
-  expect(lexemeIndex[hashThought('a')].lastUpdated >= now).toBeTruthy()
-  expect(lexemeIndex[hashThought('b')].lastUpdated >= now).toBeTruthy()
+  expect(thoughts.getLexeme(HOME_TOKEN)).toBeUndefined()
+  expect(thoughts.getLexeme(EM_TOKEN)).toBeUndefined()
+  expect(thoughts.getLexeme(ABSOLUTE_TOKEN)).toBeUndefined()
 })
 
 it('preserves the destination parent thought UI when importing children', () => {
@@ -135,17 +122,16 @@ it('duplicate thoughts', () => {
 
   const now = timestamp()
   const imported = runDocumentCommand(importText({ text, lastUpdated: now }), initialState())
-  const lexeme = imported.thoughts.lexemeIndex[hashThought('m')]
+  const lexeme = imported.thoughts.getLexeme('m')
 
-  const childAId = contextToThought(imported, ['a', 'm'])!.id
-  const childBId = contextToThought(imported, ['b', 'm'])!.id
+  const childA = contextToThought(imported, ['a', 'm'])!
+  const childB = contextToThought(imported, ['b', 'm'])!
 
-  expect(lexeme).toMatchObject({
-    contexts: [childAId, childBId].sort(),
-    created: now,
-  })
-
-  expect(lexeme.lastUpdated >= now).toBeTruthy()
+  expect(lexeme).toEqual([childA.id, childB.id].sort())
+  expect(childA.created).toBe(now)
+  expect(childB.created).toBe(now)
+  expect(childA.lastUpdated).toBeGreaterThanOrEqual(now)
+  expect(childB.lastUpdated).toBeGreaterThanOrEqual(now)
 })
 
 it('imports Roam json', () => {
@@ -317,11 +303,9 @@ it('removes the empty cursor thought and its lexeme', () => {
     }),
   ])(initialState(now))
 
-  const { lexemeIndex } = stateNew.thoughts
-
   const emptyThought = Array.from(stateNew.thoughts.values()).find(thought => thought.value === '')
   expect(emptyThought).toBeUndefined()
-  expect(lexemeIndex).not.toHaveProperty(hashThought(''))
+  expect(stateNew.thoughts.getLexeme('')).toBeUndefined()
 })
 
 // TODO: importText no longer handlers multiline imports
@@ -692,7 +676,7 @@ it('properly add lexeme entries for multiple thoughts with same value on import'
 
   const lexemeM = getLexeme(stateNew, 'm')
 
-  expect(lexemeM?.contexts).toEqual([thoughtMFirst!.id, thoughtMSecond!.id].sort())
+  expect(lexemeM).toEqual([thoughtMFirst!.id, thoughtMSecond!.id].sort())
   expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - m

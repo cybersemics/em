@@ -8,7 +8,7 @@ import getThoughtById from './getThoughtById'
 
 /** Returns live favorite marker ids in saved order, appending unsaved favorites by creation time and id. */
 const getFavoriteIds = (state: State): ThoughtId[] => {
-  const favorites = (getLexeme(state, '=favorite')?.contexts ?? [])
+  const favorites = (getLexeme(state, '=favorite') ?? [])
     .map(id => getThoughtById(state, id))
     .filter(nonNull)
     .sort((a, b) => a.created - b.created || a.id.localeCompare(b.id))

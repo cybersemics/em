@@ -42,7 +42,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **cliff** — A drop in visible depth between consecutive thoughts. `cliff = next.depth - node.depth` when negative; `cliff = -3` means three levels shallower. Drives extra padding (`cliffPadding`) and the number of `DropEnd` zones rendered. See [`DropCliff.tsx`](../src/components/DropCliff.tsx) and [layout-rendering.md → usePositionedThoughts](layout-rendering.md#usepositionedthoughts-x-and-y).
 
-**clientId** — Writer identifier, normally derived as base64(SHA-256(accessToken)); not a signing key or authentication signature. Stored as `updatedBy` in thought payloads and derived Lexemes. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
+**clientId** — Writer identifier, normally derived as base64(SHA-256(accessToken)); not a signing key or authentication signature. Stored as `updatedBy` in thought payloads. Available asynchronously via the `clientIdReady` promise. See [persistence.md → Identity & sharing](persistence.md#identity--sharing).
 
 **command** — A user-triggered operation (keyboard shortcut, gesture, toolbar button, or Command Universe entry). Single-file definition under [`/src/commands`](../src/commands) implementing the [`Command`](../src/@types/Command.ts) interface; auto-registered via the barrel import in [`commands.ts`](../src/commands.ts). The legacy name *shortcut* still appears in some places. See [commands.md](commands.md).
 
@@ -102,7 +102,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 ## L
 
-**Lexeme** — Derived object collecting the contexts where a value (or any of its near-identical word forms — case, plurality, emoji variants) appears. Projected into `state.thoughts.lexemeIndex` keyed by `hashThought(value)`, from the complete memory document. The "inbound links" view of a thought. See [data-model.md → Lexeme](data-model.md#lexeme).
+**Lexeme** — Sorted list of thought ids where a value (or any of its near-identical word forms — case, plurality, emoji variants) appears. Read through `state.thoughts.getLexeme(value)` from EM's committed membership index plus any active transaction changes. The "inbound links" view of a thought. See [data-model.md → Lexeme](data-model.md#lexeme).
 
 **linearizeTree** — Selector that produces `treeThoughts: TreeThought[]` — an in-order traversal of every visible thought. Output drives layout. See [layout-rendering.md → linearizeTree](layout-rendering.md#linearizetree-the-in-order-traversal).
 
@@ -192,7 +192,7 @@ A flat reference of project-specific terms used in code and docs. For deeper con
 
 **undo step** — What one Undo reverts: one patch, or a directional pair when trailing navigation belongs with the preceding change or an edit gives a newly created thought its value. A command transaction may collect several underlying actions into one patch. The undo slider uses the same grouping. See [commands.md → Undo history and the undo slider](commands.md#undo-history-and-the-undo-slider).
 
-**updatedBy** — `clientId` metadata stored in a Thought's payload; projected Lexemes derive it from their newest member. It is not used to identify self-originated operations.
+**updatedBy** — `clientId` metadata stored in a Thought's payload. It is not used to identify self-originated operations.
 
 **updateThoughts** — The document command ([`actions/updateThoughts.ts`](../src/actions/updateThoughts.ts)) that applies updates through the current `ThoughtspaceTransaction` and returns canonical thoughts and derived lexemes immediately. Incoming engine changes use `replaceThoughts` instead.
 

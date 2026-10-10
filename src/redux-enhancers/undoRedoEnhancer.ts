@@ -1,4 +1,4 @@
-import { Operation, applyPatch, compare, unescapePathComponent } from 'fast-json-patch'
+import { Operation, applyPatch, compare } from 'fast-json-patch'
 import { Immer, produce } from 'immer'
 import _ from 'lodash'
 import { shallowEqual } from 'react-redux'
@@ -30,7 +30,6 @@ import isAttribute from '../util/isAttribute'
 import reducerFlow from '../util/reducerFlow'
 import storage from '../util/storage'
 import stripTags from '../util/stripTags'
-import thoughtspaceHistory from '../util/thoughtspaceHistory'
 
 // Temporary comparison baselines need copy-on-write, but are never published as editor state.
 const produceHistoryBaseline = new Immer({ autoFreeze: false }).produce
@@ -59,8 +58,8 @@ const cacheSettings = (state: State) => {
 
 /** Captures changed sibling positions while the previous reader is valid; only plain log values escape the scope. */
 const collectThoughtMoves = (
-  before: ThoughtspaceView,
-  after: ThoughtspaceView,
+  before: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>,
+  after: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>,
   actionType: string,
   changes?: ReturnType<ThoughtspaceTransaction['getChanges']>,
 ) => {
@@ -194,10 +193,10 @@ const pathProperties: Record<PathProperty, true> = {
   multicursorAnchor: true,
 }
 
-/** Computes UI restoration and diagnostic document diffs, never recursively recording the history itself. */
+/** Records UI restoration and value-only formatting baselines, never diagnostic document patches. */
 const diffState = (
   newValue: State,
-  value: State,
+  value: Omit<State, 'thoughts'> & { thoughts: Omit<ThoughtspaceView, 'getLexeme' | 'revision'> },
   {
     transaction,
     mergeWith,
@@ -207,49 +206,30 @@ const diffState = (
     mergeWith?: Patch
     actionType?: string
   } = {},
-): { ops: Operation[]; isFormatting: boolean } => {
+): { ops: Operation[]; isFormatting: boolean; formattingBefore: Patch['formattingBefore'] } => {
   const mergeOps = mergeWith?.ops ?? []
   const changes = transaction?.getChanges()
-  const sameThoughts =
-    (newValue.thoughts === value.thoughts ||
-      (changes && !changes.reset && !changes.thoughtIds.length && !changes.childrenChangedIds.length)) &&
-    !mergeOps.some(op => op.path === '/thoughts' || op.path.startsWith('/thoughts/'))
-  let scope =
-    !sameThoughts && (newValue.thoughts === value.thoughts || (changes && !changes.reset))
-      ? {
-          thoughtIds: new Set(changes?.thoughtIds),
-          parentIds: new Set(changes?.childrenChangedIds),
-        }
-      : undefined
-
-  if (scope) {
-    const { thoughtIds, parentIds } = scope
-    for (const id of changes?.thoughtIds ?? []) {
-      const before = value.thoughts.getThought(id)
-      const after = newValue.thoughts.getThought(id)
-      // Gaining or losing a payload changes visible children even if the native sibling order is unchanged.
-      if (!!before !== !!after) {
-        if (before) parentIds.add(before.parentId)
-        if (after) parentIds.add(after.parentId)
-      }
-    }
-    for (const op of mergeOps) {
-      if (op.path !== '/thoughts' && !op.path.startsWith('/thoughts/')) continue
-      const [, , index, key] = op.path.split('/')
-      if (!key || (index !== 'thoughtIndex' && index !== 'childPositions')) {
-        scope = undefined
-        break
-      }
-      if (index === 'thoughtIndex') thoughtIds.add(unescapePathComponent(key) as ThoughtId)
-      else parentIds.add(unescapePathComponent(key) as ThoughtId)
-    }
-  }
-
-  let previous: State | ReturnType<typeof thoughtspaceHistory.capture> = sameThoughts
-    ? value
-    : thoughtspaceHistory.capture(value, scope)
+  const priorValues = mergeWith?.formattingBefore ?? {}
+  const ids = new Set([
+    ...Object.keys(priorValues),
+    ...(changes?.reset
+      ? [...value.thoughts.values(), ...newValue.thoughts.values()].map(thought => thought.id)
+      : (changes?.thoughtIds ?? [])),
+  ])
+  const formattingBefore: Patch['formattingBefore'] = {}
+  let isFormatting = false
+  ids.forEach(key => {
+    const id = key as ThoughtId
+    const before = Object.hasOwn(priorValues, id) ? priorValues[id] : (value.thoughts.getThought(id)?.value ?? null)
+    const after = newValue.thoughts.getThought(id)?.value ?? null
+    if (before === after) return
+    formattingBefore[id] = before
+    isFormatting ||=
+      before !== null && after !== null && stripTags(before).toLowerCase() === stripTags(after).toLowerCase()
+  })
+  let previous = value
   if (mergeOps.length) {
-    // Reconstruct only records touched by this group, retaining the existing keyed patch/report semantics.
+    // Normalize UI restoration against this group's earlier state, including UI-only merge steps.
     try {
       previous = produceHistoryBaseline(previous, draft => applyPatch(draft, mergeOps).newDocument)
     } catch (error) {
@@ -265,26 +245,8 @@ const diffState = (
       throw new Error('Error applying patch')
     }
   }
-  const omitted = [
-    ...statePropertiesToOmit,
-    'undoPatches',
-    'redoPatches',
-    'thoughtUi',
-    ...(sameThoughts ? ['thoughts'] : []),
-  ]
-  const current = sameThoughts ? newValue : thoughtspaceHistory.capture(newValue, scope)
-  // Record the value-change semantics with the history entry, not by interpreting diagnostic patches during undo.
-  const previousIndex = 'thoughtIndex' in previous.thoughts ? previous.thoughts.thoughtIndex : {}
-  const currentIndex = 'thoughtIndex' in current.thoughts ? current.thoughts.thoughtIndex : {}
-  const isFormatting = Object.entries(previousIndex).some(([id, before]) => {
-    const after = currentIndex[id]
-    return (
-      !!after &&
-      before.value !== after.value &&
-      stripTags(before.value).toLowerCase() === stripTags(after.value).toLowerCase()
-    )
-  })
-  const ops = compare(_.omit(current, omitted), _.omit(previous, omitted))
+  const omitted = [...statePropertiesToOmit, 'undoPatches', 'redoPatches', 'thoughtUi', 'thoughts']
+  const ops = compare(_.omit(newValue, omitted), _.omit(previous, omitted))
   // Navigation and incoming changes may shorten or clear Paths without changing history.
   // Restore the captured value, not array operations that assume the previous path still exists.
   const pathKeys = new Set(
@@ -295,6 +257,7 @@ const diffState = (
   )
   return {
     isFormatting,
+    formattingBefore,
     ops: [
       ...ops.filter(op => !pathKeys.has(op.path.split('/')[1] as PathProperty)),
       ...[...pathKeys].map(key => ({ op: 'replace' as const, path: `/${key}`, value: _.cloneDeep(previous[key]) })),
@@ -323,21 +286,22 @@ const revertPatch = (
     throw new Error('Restoring document history requires a thoughtspace transaction')
   }
   const previousThoughts = transaction?.capturePrevious() ?? state.thoughts
+  const from = transaction?.operationOffset ?? db.operationOffset
   const documentOperationIds = patch.documentOperationIds.length ? transaction!.revert(patch.documentOperationIds) : []
-  const uiState = produce(
-    state,
-    draft =>
-      applyPatch(
-        draft,
-        patch.ops.filter(op => op.path !== '/thoughts' && !op.path.startsWith('/thoughts/')),
-      ).newDocument,
-  )
+  const uiState = produce(state, draft => applyPatch(draft, patch.ops).newDocument)
   const newState = projectThoughts(uiState, transaction)
-  const { ops, isFormatting } = diffState(newState, { ...state, thoughts: previousThoughts }, { transaction })
+  const { ops, isFormatting, formattingBefore } = diffState(
+    newState,
+    { ...state, thoughts: previousThoughts },
+    { transaction },
+  )
+  const to = transaction?.operationOffset ?? db.operationOffset
   return {
     state: newState,
     patch: {
       ops,
+      formattingBefore,
+      documentHistory: from === to ? [] : [{ from, to }],
       metadata: { ...patch.metadata, isFormatting },
       documentOperationIds,
     },
@@ -497,7 +461,9 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       // otherwise run the normal reducer for the action
       const previousThoughts = transaction?.capturePrevious() ?? state.thoughts
+      const from = transaction?.operationOffset ?? db.operationOffset
       const newState = projectThoughts(reducer(state, action, transaction), transaction)
+      const to = transaction?.operationOffset ?? db.operationOffset
       const documentOperationIds = transaction?.operationIds ?? []
 
       if (
@@ -553,7 +519,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
 
       if (shouldMerge) {
         lastAction = action
-        const { ops: combinedUndoPatch, isFormatting } = diffState(
+        const {
+          ops: combinedUndoPatch,
+          isFormatting,
+          formattingBefore,
+        } = diffState(
           newState,
           { ...state, thoughts: previousThoughts },
           {
@@ -580,6 +550,11 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               ? [
                   {
                     ops: combinedUndoPatch,
+                    formattingBefore,
+                    documentHistory: [
+                      ...(lastUndoPatch?.documentHistory ?? []),
+                      ...(from !== to || lastUndoPatch?.documentHistory.length ? [{ from, to }] : []),
+                    ],
                     documentOperationIds: combinedOperationIds,
                     metadata: {
                       ...(commandMetadata ?? lastUndoPatch?.metadata ?? { source: 'action' as const }),
@@ -608,7 +583,7 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
         thoughts: previousThoughts,
         ...(noteOffsetBeforeEdit == null ? {} : { noteOffset: noteOffsetBeforeEdit }),
       }
-      const { ops: undoPatch, isFormatting } = diffState(newState, stateBeforeAction, { transaction })
+      const { ops: undoPatch, isFormatting, formattingBefore } = diffState(newState, stateBeforeAction, { transaction })
       return undoPatch.length || documentOperationIds.length
         ? {
             ...newState,
@@ -618,6 +593,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               ...newState.undoPatches,
               {
                 ops: undoPatch,
+                formattingBefore,
+                documentHistory: from === to ? [] : [{ from, to }],
                 metadata: {
                   ...(commandMetadata ?? {
                     source: 'action',
@@ -717,7 +694,8 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
               state,
               action.type === 'replaceThoughts' ? { ...action, previousCursorPath: publishedCursorPath } : action,
             )
-            const previous = (action as UnknownAction).previousThoughts as ThoughtspaceView | undefined
+            const previous = (action as UnknownAction).previousThoughts as
+              Omit<ThoughtspaceView, 'getLexeme' | 'revision'> | undefined
             if (debugLog.isEnabled() && previous) moves = collectThoughtMoves(previous, next.thoughts, action.type)
             publish(next)
           }

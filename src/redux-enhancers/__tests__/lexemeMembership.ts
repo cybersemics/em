@@ -28,14 +28,14 @@ it.each(['create', 'rename'] as const)('includes deep memberships immediately af
   await store.dispatch(importText({ text: '- a\n- b\n  - c\n    - d\n      - e\n        - f' }))
   const deepId = contextToThought(store.getState(), ['b', 'c', 'd', 'e', 'f'])!.id
   await refreshTestApp()
-  expect(getLexeme(store.getState(), 'f')?.contexts).toEqual([deepId])
+  expect(getLexeme(store.getState(), 'f')).toEqual([deepId])
 
   // No timer or storage flush between the command and its complete context count.
   if (mode === 'create') store.dispatch([setCursorFirstMatch(['a']), newThought({ value: 'f' })])
   else store.dispatch(editThought(['a'], 'f'))
   const rootId = contextToThought(store.getState(), ['f'])!.id
-  expect(getLexeme(store.getState(), 'f')?.contexts).toEqual([deepId, rootId].sort())
+  expect(getLexeme(store.getState(), 'f')).toEqual([deepId, rootId].sort())
 
   await refreshTestApp()
-  expect(getLexeme(store.getState(), 'f')?.contexts).toEqual([deepId, rootId].sort())
+  expect(getLexeme(store.getState(), 'f')).toEqual([deepId, rootId].sort())
 })

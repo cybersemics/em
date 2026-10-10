@@ -149,7 +149,7 @@ const windowEm = {
   getContexts: withState(getContexts),
   getLexeme: withState(getLexeme),
   getLexemeContexts: withState((state: State, value: string) => {
-    const contexts = getLexeme(state, value)?.contexts || []
+    const contexts = getLexeme(state, value) ?? []
     return contexts
       .map(id => getThoughtById(state, id))
       .filter(Boolean)

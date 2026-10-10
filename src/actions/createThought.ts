@@ -25,6 +25,8 @@ interface Payload {
   path: Path
   /** Preceding sibling, or null to insert first. */
   afterId: ThoughtId | null
+  /** Skip expansion when the composing command will refresh it after its writes. */
+  preventExpandThoughts?: boolean
   splitSource?: ThoughtId
   value: string
 }
@@ -33,7 +35,7 @@ interface Payload {
  */
 const createThought = (
   state: State,
-  { path, value, afterId, id, onPersisted, splitSource }: Payload,
+  { path, value, afterId, id, onPersisted, splitSource, preventExpandThoughts }: Payload,
   transaction?: ThoughtspaceTransaction,
 ) => {
   id = id || createId()
@@ -72,7 +74,7 @@ const createThought = (
     if (parentAfterId !== getPreviousSiblingId(state, parent.id)) movePlacements[parent.id] = parentAfterId
   }
 
-  return updateThoughts(state, { thoughtIndexUpdates, movePlacements, onPersisted }, transaction)
+  return updateThoughts(state, { thoughtIndexUpdates, movePlacements, onPersisted, preventExpandThoughts }, transaction)
 }
 
 /** Action-creator for createThought. */

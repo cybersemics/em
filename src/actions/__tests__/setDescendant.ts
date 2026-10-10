@@ -245,10 +245,10 @@ it('preserve existing descendants', () => {
           - z`)
 
   const lexemeW = getLexeme(stateNew, 'w')!
-  expect(lexemeW.contexts).toHaveLength(1)
+  expect(lexemeW).toHaveLength(1)
 
   const lexemeX = getLexeme(stateNew, 'x')!
-  expect(lexemeX.contexts).toHaveLength(1)
+  expect(lexemeX).toHaveLength(1)
 })
 
 it('preserve unrelated descendants', () => {

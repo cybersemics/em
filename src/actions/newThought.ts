@@ -39,6 +39,7 @@ import getSortedPlacement from '../selectors/getSortedPlacement'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
+import heldKeysStore from '../stores/heldKeysStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import command from '../util/command'
 import createId from '../util/createId'
@@ -156,6 +157,8 @@ const newThought = (state: State, payload: NewThoughtPayload | string, transacti
   // when creating a new context in a context view, newThoughtId is the new empty thought (a/~m/_), and newContextId is the newly added Lexeme context (/ABS/_/m)
   const newThoughtId = createId()
   const newContextId = insertContext ? createId() : null
+  // Expand after both inserts, at the cursor step when it will actually recompute expansion.
+  const expandWithCursor = !preventSetCursor && !heldKeysStore.getState().suppressExpansion
 
   const reducers = [
     // createThought
@@ -166,6 +169,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string, transacti
       id: newThoughtId,
       onPersisted,
       splitSource,
+      preventExpandThoughts: insertContext || expandWithCursor,
     }),
 
     // if adding a new context to the context view, add the thought to the new context
@@ -176,6 +180,7 @@ const newThought = (state: State, payload: NewThoughtPayload | string, transacti
           value: headValue(state, insertNewSubthought ? path : parentOf(path)) ?? '',
           id: newContextId!,
           splitSource,
+          preventExpandThoughts: expandWithCursor,
         })
       : null,
 

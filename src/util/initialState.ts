@@ -59,26 +59,9 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtspaceView => 
   }
 
   const lexemeIndex: Index<Lexeme> = {
-    [hashThought(HOME_TOKEN)]: {
-      contexts: [],
-      // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
-      created,
-      lastUpdated: never(),
-      updatedBy: clientId,
-    },
-    [hashThought(ABSOLUTE_TOKEN)]: {
-      contexts: [],
-      // set to beginning of epoch to ensure that server lexemeIndex is always considered newer from init lexemeIndex
-      created,
-      lastUpdated: never(),
-      updatedBy: clientId,
-    },
-    [hashThought(EM_TOKEN)]: {
-      contexts: [],
-      created,
-      lastUpdated: never(),
-      updatedBy: clientId,
-    },
+    [hashThought(HOME_TOKEN)]: [],
+    [hashThought(ABSOLUTE_TOKEN)]: [],
+    [hashThought(EM_TOKEN)]: [],
   }
 
   return {
@@ -89,7 +72,7 @@ const initialThoughts = (created: Timestamp = timestamp()): ThoughtspaceView => 
     values: function* () {
       yield* Object.values(thoughtIndex)
     },
-    lexemeIndex,
+    getLexeme: value => lexemeIndex[hashThought(value)],
   }
 }
 

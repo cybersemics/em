@@ -16,7 +16,7 @@ const RecentlyDeleted = () => {
   const paths = useEditorSelector(state => {
     const lexeme = getLexeme(state, '=archive')
     // paths of all =archive instances
-    const archivePaths = lexeme?.contexts.map(cxid => thoughtToPath(state, cxid)) ?? []
+    const archivePaths = lexeme?.map(cxid => thoughtToPath(state, cxid)) ?? []
     // paths of all the children of =archive, since those are the deleted thoughts
     const childrenPaths = archivePaths.flatMap(path =>
       getAllChildren(state, head(path)).map(child => getChildPath(state, child, path)),

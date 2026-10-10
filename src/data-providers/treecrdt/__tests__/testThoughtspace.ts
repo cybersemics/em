@@ -2,7 +2,6 @@ import type ThoughtId from '../../../@types/ThoughtId'
 import type Timestamp from '../../../@types/Timestamp'
 import { EM_TOKEN, SETTINGS_TOKEN, SETTINGS_VALUE } from '../../../constants'
 import findDescendant from '../../../selectors/findDescendant'
-import hashThought from '../../../util/hashThought'
 import initialState from '../../../util/initialState'
 import createMemoryThoughtspace from '../createMemoryThoughtspace'
 
@@ -66,8 +65,8 @@ it('seeds fixed system thoughts in the TreeCRDT provider', async () => {
     value: SETTINGS_VALUE,
   })
 
-  const settingsLexeme = treecrdt.project().lexemeIndex[hashThought(SETTINGS_VALUE)]
-  expect(settingsLexeme?.contexts).toEqual([SETTINGS_TOKEN])
+  const settingsLexeme = treecrdt.project().getLexeme(SETTINGS_VALUE)
+  expect(settingsLexeme).toEqual([SETTINGS_TOKEN])
 })
 
 it('finds the first duplicate attribute in canonical order without changing node ids', async () => {

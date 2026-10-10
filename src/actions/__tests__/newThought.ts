@@ -1,9 +1,12 @@
 import { importText, toggleContextView } from '../../actions'
 import { ABSOLUTE_TOKEN, HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
+import * as expansion from '../../selectors/expandThoughts'
 import exportContext from '../../selectors/exportContext'
 import { getChildrenRanked } from '../../selectors/getChildren'
 import { getLexeme } from '../../selectors/getLexeme'
+import heldKeysStore from '../../stores/heldKeysStore'
+import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
@@ -11,11 +14,13 @@ import reducerFlow from '../../test-helpers/reducerFlow'
 import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
 import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
+import hashPath from '../../util/hashPath'
 import initialState from '../../util/initialState'
 import newThought from '../newThought'
 
 beforeEach(initStore)
 afterEach(waitForThoughtspaceIdle)
+afterEach(() => vi.restoreAllMocks())
 
 describe('normal view', () => {
   it('reads contiguous positions while preserving repeated insert-before order', () => {
@@ -44,7 +49,9 @@ describe('normal view', () => {
   })
 
   it('new thought in root', () => {
+    const expand = vi.spyOn(expansion, 'default')
     const stateNew = runDocumentCommand(newThought({ value: 'a' }), initialState())
+    expect(expand).toHaveBeenCalledTimes(1)
     const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
 
     expect(exported).toBe(`- ${HOME_TOKEN}
@@ -82,6 +89,23 @@ describe('normal view', () => {
     expect(exported).toBe(`- ${HOME_TOKEN}
   - a
     - b`)
+  })
+
+  it.each([
+    { name: 'the cursor is preserved', preventSetCursor: true, suppressExpansion: false },
+    { name: 'cursor expansion is suppressed', preventSetCursor: false, suppressExpansion: true },
+  ])('expands a newly populated only child when $name', ({ preventSetCursor, suppressExpansion }) => {
+    const state = reducerFlow([importText({ text: '- a\n  - b' }), setCursor(['a'])])(initialState())
+    const childPath = contextToPathOrThrow(state, ['a', 'b'], 'newThought test')
+    expect(state.expanded[hashPath(childPath)]).toBeUndefined()
+    heldKeysStore.update({ suppressExpansion })
+
+    const stateNew = runDocumentCommand(
+      newThought({ at: childPath, value: 'c', insertNewSubthought: true, preventSetCursor }),
+      state,
+    )
+
+    expect(stateNew.expanded[hashPath(childPath)]).toEqual(childPath)
   })
 
   it('new subthought top', () => {
@@ -329,18 +353,16 @@ describe('context view', () => {
         - m
           - y
     `
-    const steps = [
-      importText({ text }),
-      setCursor(['a', 'm']),
-      toggleContextView,
-      newThought({ insertNewSubthought: true }),
-    ]
+    const steps = [importText({ text }), setCursor(['a', 'm']), toggleContextView]
 
-    const stateNew = reducerFlow(steps)(initialState())
+    const state = reducerFlow(steps)(initialState())
+    const expand = vi.spyOn(expansion, 'default')
+    const stateNew = runDocumentCommand(newThought({ insertNewSubthought: true }), state)
+    expect(expand).toHaveBeenCalledTimes(1)
 
     // Lexeme should be properly updated
     const lexeme = getLexeme(stateNew, 'm')
-    expect(lexeme?.contexts).toHaveLength(3)
+    expect(lexeme).toHaveLength(3)
 
     // root export will not contain the new thought created in the absolute context
     const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
@@ -418,7 +440,7 @@ describe('context view', () => {
 
     // Lexeme should be properly updated
     const lexeme = getLexeme(stateNew, 'm')
-    expect(lexeme?.contexts).toHaveLength(3)
+    expect(lexeme).toHaveLength(3)
 
     // root export will not contain the new thought created in the absolute context
     const exportedRoot = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
