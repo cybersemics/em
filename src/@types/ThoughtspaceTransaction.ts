@@ -19,7 +19,18 @@ interface ThoughtspaceTransaction {
   }
   /** Authors compensating operations and returns their IDs for redo. */
   revert: (operationIds: readonly OperationId[]) => readonly OperationId[]
-  /** Applies document changes and returns their canonical view before the next command runs. */
+  /** Inserts a thought after the named sibling, or first when null. */
+  insert: (thought: Thought, afterId: ThoughtId | null) => void
+  /** Changes only the supplied persisted fields of an existing thought. */
+  payload: (
+    id: ThoughtId,
+    fields: Partial<Pick<Thought, 'value' | 'created' | 'lastUpdated' | 'updatedBy' | 'archived'>>,
+  ) => void
+  /** Changes topology without rewriting the thought's payload. */
+  move: (id: ThoughtId, placement: { parentId: ThoughtId; afterId: ThoughtId | null }) => void
+  /** Deletes an existing thought; missing thoughts are ignored. */
+  delete: (id: ThoughtId) => void
+  /** Applies an unordered import/restore batch, resolving parent and placement dependencies. */
   update: (changes: {
     thoughtIndexUpdates: Index<Thought | null>
     movePlacements?: Index<ThoughtId | null>

@@ -196,23 +196,22 @@ const setGenerating =
   (thoughtIds: ThoughtId[], generating: boolean): Thunk =>
   (dispatch, getState) => {
     const state = getState()
-    const thoughtIndexUpdates = keyValueBy(thoughtIds, (thoughtId: ThoughtId) => {
+    const thoughtUiUpdates = keyValueBy(thoughtIds, (thoughtId: ThoughtId) => {
       const thought = getThoughtById(state, thoughtId)
       return thought && thought.generating !== generating
         ? {
             [thoughtId]: {
-              ...thought,
+              ...state.thoughtUi[thoughtId],
               generating,
               generatingPlaceholder: generating ? 'Reorganizing Thought' : undefined,
             },
           }
         : null
     })
-    if (Object.keys(thoughtIndexUpdates).length === 0) return
+    if (Object.keys(thoughtUiUpdates).length === 0) return
     dispatch(
       updateThoughts({
-        thoughtIndexUpdates,
-        persist: false,
+        thoughtUiUpdates,
       }),
     )
   }

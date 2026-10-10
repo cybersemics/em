@@ -1,7 +1,5 @@
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
@@ -47,34 +45,30 @@ const createThought = (
     throw new Error(`createThought: Parent thought with id ${parentId} not found`)
   }
 
-  const thoughtIndexUpdates: Index<Thought> = {}
-
-  const thoughtNew: Thought = {
-    created: timestamp(),
-    id,
-    lastUpdated: timestamp(),
-    parentId: parentId,
-    updatedBy: clientId,
-    value,
-    ...(splitSource ? { splitSource } : null),
-  }
-
-  thoughtIndexUpdates[id] = thoughtNew
-  thoughtIndexUpdates[parentId] = {
-    ...parent,
-    id: parentId,
-    lastUpdated: timestamp(),
-    updatedBy: clientId,
-  }
-
   // A child change updates the parent's timestamp, so keep its Updated-sorted context in order.
-  const movePlacements: Index<ThoughtId | null> = { [id]: afterId }
-  if (getSortPreference(state, parent.parentId).type === 'Updated' && !isEmptyOrEmojiOnly(parent.value)) {
-    const parentAfterId = getSortedPlacement(state, parent.parentId, parent.value, { staleId: parent.id })
-    if (parentAfterId !== getPreviousSiblingId(state, parent.id)) movePlacements[parent.id] = parentAfterId
-  }
+  const parentAfterId =
+    getSortPreference(state, parent.parentId).type === 'Updated' && !isEmptyOrEmojiOnly(parent.value)
+      ? getSortedPlacement(state, parent.parentId, parent.value, { staleId: parent.id })
+      : undefined
 
-  return updateThoughts(state, { thoughtIndexUpdates, movePlacements, onPersisted, preventExpandThoughts }, transaction)
+  return updateThoughts(
+    state,
+    {
+      write: transaction => {
+        transaction.payload(parentId, { lastUpdated: timestamp(), updatedBy: clientId })
+        if (parentAfterId !== undefined && parentAfterId !== getPreviousSiblingId(state, parent.id))
+          transaction.move(parent.id, { parentId: parent.parentId, afterId: parentAfterId })
+        transaction.insert(
+          { id, parentId, value, created: timestamp(), lastUpdated: timestamp(), updatedBy: clientId },
+          afterId,
+        )
+      },
+      thoughtUiUpdates: { [id]: splitSource ? { splitSource } : null },
+      onPersisted,
+      preventExpandThoughts,
+    },
+    transaction,
+  )
 }
 
 /** Action-creator for createThought. */

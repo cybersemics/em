@@ -498,7 +498,7 @@ export enum Settings {
 // max time attempting to connect before moving to offline mode (milliseconds)
 export const WEBSOCKET_TIMEOUT = 3000
 
-// See: cacheSettings in undoRedoEnhancer.
+// See: cacheSettings in commandExecutionEnhancer.
 export const CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']
 
 /** The animation duration for a toolbar button press. */

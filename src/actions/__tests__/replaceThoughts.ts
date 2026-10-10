@@ -61,10 +61,9 @@ it('preserves surviving thought UI across canonical replacement and prunes delet
   const c = contextToThought(store.getState(), ['a', 'b', 'c'])!
   store.dispatch(
     updateThoughts({
-      persist: false,
-      thoughtIndexUpdates: {
-        [a.id]: { ...a, generating: true, generatingPlaceholder: 'preview', splitSource: c.id },
-        [c.id]: { ...c, generating: true, generatingPlaceholder: 'deleted preview' },
+      thoughtUiUpdates: {
+        [a.id]: { generating: true, generatingPlaceholder: 'preview', splitSource: c.id },
+        [c.id]: { generating: true, generatingPlaceholder: 'deleted preview' },
       },
     }),
   )

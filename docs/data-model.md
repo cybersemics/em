@@ -69,7 +69,7 @@ Document commands specify `afterId`: a preceding sibling's id, or `null` for fir
 
 `importJson` supplies explicit preceding-sibling ids for the imported blocks, preserving their order without constructing child maps or lexemes.
 
-Existing thoughts are reordered by explicit `movePlacements`. A dispatched action's subscribers and undo history see the canonical memory ordering, without waiting for SQLite. See [persistence.md → Order and placement](persistence.md#order-and-placement).
+Existing thoughts are reordered by `transaction.move(id, { parentId, afterId })`; bulk imports supply equivalent `movePlacements`. A dispatched action's subscribers and undo history see the canonical memory ordering, without waiting for SQLite. See [persistence.md → Order and placement](persistence.md#order-and-placement).
 
 ### ThoughtId
 

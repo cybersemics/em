@@ -1,7 +1,5 @@
-import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
@@ -89,50 +87,25 @@ const editThought = (
 
   // The new value carries any formatting that was held while the thought was empty, so the held copy is dropped. The
   // key is omitted rather than set to undefined, which a JSON patch does not treat as a removal. See formatSelection.
-  const { pendingFormat: _pendingFormat, ...editedThoughtWithoutPendingFormat } = editedThought
-
-  const thoughtNew: Thought = {
-    ...editedThoughtWithoutPendingFormat,
+  const { pendingFormat: _pendingFormat, ...editedUi } = state.thoughtUi[editedThought.id] ?? {}
+  const thoughtUi = {
+    ...editedUi,
     ...(editedThought.generating ? { generating: false, generatingPlaceholder: undefined } : null),
-    value: newValue,
-    lastUpdated: timestamp(),
-    updatedBy: clientId,
   }
 
   // If we're editing a note, the thought that owns the note is repositioned, since a Note-sorted context sorts its
   // children by their note value rather than their own.
   const noteParentThought = isNote ? getThoughtById(state, parentOfEditedThought.parentId) : null
-  const noteParentThoughtNew =
-    noteParentThought && getSortPreference(state, noteParentThought.parentId).type === 'Note'
-      ? {
-          ...noteParentThought,
-          lastUpdated: timestamp(),
-          updatedBy: clientId,
-        }
-      : null
-
-  const thoughtIndexUpdates: Index<Thought | null> = {
-    [editedThought.id]: thoughtNew,
-    ...(noteParentThoughtNew ? { [noteParentThoughtNew.id]: noteParentThoughtNew } : null),
-  }
+  const repositionNoteParent = noteParentThought && getSortPreference(state, noteParentThought.parentId).type === 'Note'
 
   // Persist sort-driven moves directly. Created sorting preserves position because editing does not change creation time.
-  const movePlacements: Index<ThoughtId | null> = {
-    ...(!isValueEmptyOrEmojiOnly && (sortType === 'Alphabetical' || sortType === 'Updated')
-      ? {
-          [editedThought.id]: getSortedPlacement(state, editedThought.parentId, newValue, {
-            staleId: editedThought.id,
-          }),
-        }
-      : null),
-    ...(noteParentThoughtNew
-      ? {
-          [noteParentThoughtNew.id]: getSortedPlacement(state, noteParentThoughtNew.parentId, newValue, {
-            staleId: noteParentThoughtNew.id,
-          }),
-        }
-      : null),
-  }
+  const afterId =
+    !isValueEmptyOrEmojiOnly && (sortType === 'Alphabetical' || sortType === 'Updated')
+      ? getSortedPlacement(state, editedThought.parentId, newValue, { staleId: editedThought.id })
+      : undefined
+  const noteAfterId = repositionNoteParent
+    ? getSortedPlacement(state, noteParentThought.parentId, newValue, { staleId: noteParentThought.id })
+    : undefined
 
   // new state
   const stateNew: State = {
@@ -148,8 +121,15 @@ const editThought = (
     stateNew,
     {
       cursorOffset,
-      thoughtIndexUpdates,
-      movePlacements,
+      write: transaction => {
+        if (afterId !== undefined) transaction.move(editedThought.id, { parentId: editedThought.parentId, afterId })
+        transaction.payload(editedThought.id, { value: newValue, lastUpdated: timestamp(), updatedBy: clientId })
+        if (noteAfterId !== undefined && noteParentThought) {
+          transaction.move(noteParentThought.id, { parentId: noteParentThought.parentId, afterId: noteAfterId })
+          transaction.payload(noteParentThought.id, { lastUpdated: timestamp(), updatedBy: clientId })
+        }
+      },
+      thoughtUiUpdates: { [editedThought.id]: thoughtUi },
     },
     transaction,
   )

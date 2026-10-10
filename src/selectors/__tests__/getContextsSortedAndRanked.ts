@@ -18,7 +18,7 @@ const FIXED_HOME_ROOT_VALUE = '00000000000000000000000000000001'
 
 /** Updates one fixture thought through the document transaction. */
 const setThoughtValue = (state: State, id: ThoughtId, value: string): State =>
-  runDocumentCommand(updateThoughts({ thoughtIndexUpdates: { [id]: { ...getThoughtById(state, id)!, value } } }), state)
+  runDocumentCommand(updateThoughts({ write: transaction => transaction.payload(id, { value }) }), state)
 
 describe('getContextsSortedAndRanked', () => {
   it.each([HOME_TOKEN, FIXED_HOME_ROOT_VALUE])(

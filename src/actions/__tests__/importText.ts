@@ -97,9 +97,8 @@ it('preserves the destination parent thought UI when importing children', () => 
   const parent = contextToThought(initial, ['parent'])!
   const pending = runDocumentCommand(
     updateThoughts({
-      persist: false,
-      thoughtIndexUpdates: {
-        [parent.id]: { ...parent, generating: true, generatingPlaceholder: 'preview', splitSource: parent.id },
+      thoughtUiUpdates: {
+        [parent.id]: { generating: true, generatingPlaceholder: 'preview', splitSource: parent.id },
       },
     }),
     initial,

@@ -60,11 +60,11 @@ it('notifies subscribers once per completed local change and stops notifying an 
     expect(otherSubscriber).not.toHaveBeenCalled()
 
     const committed = runtime.transact(transaction => {
-      transaction.update({ thoughtIndexUpdates: { [first.id]: first }, movePlacements: { [first.id]: null } })
-      const completed = transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'completed' } } })
+      transaction.insert(first, null)
+      transaction.payload(first.id, { value: 'completed' })
       expect(subscribed).not.toHaveBeenCalled()
       expect(otherSubscriber).not.toHaveBeenCalled()
-      return completed
+      return transaction.project()
     })
 
     expect(subscribed).toHaveBeenCalledTimes(1)
@@ -77,9 +77,10 @@ it('notifies subscribers once per completed local change and stops notifying an 
 
     const heldThought = committed.value.getThought(first.id)!
     unsubscribe()
-    const edited = runtime.transact(transaction =>
-      transaction.update({ thoughtIndexUpdates: { [first.id]: { ...first, value: 'edited' } } }),
-    )
+    const edited = runtime.transact(transaction => {
+      transaction.payload(first.id, { value: 'edited' })
+      return transaction.project()
+    })
     expect(subscribed).toHaveBeenCalledTimes(1)
     expect(otherSubscriber).toHaveBeenCalledTimes(2)
     expect(runtime.project()).toBe(edited.value)

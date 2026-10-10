@@ -1,17 +1,21 @@
 import _ from 'lodash'
+import Index from '../@types/IndexType'
 import RecentlyEditedTree from '../@types/RecentlyEditedTree'
 import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import expandThoughts from '../selectors/expandThoughts'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import command from '../util/command'
 
-export type UpdateThoughtsOptions = Parameters<ThoughtspaceTransaction['update']>[0] & {
+export type UpdateThoughtsOptions = {
+  /** Authors document operations synchronously within the current command transaction. */
+  write?: (transaction: ThoughtspaceTransaction) => void
+  /** Replaces the supplied transient editor overlays; null removes one. */
+  thoughtUiUpdates?: Index<State['thoughtUi'][string] | null>
   /** Invoked after SQLite acknowledges the complete command. */
   onPersisted?: () => void
-  /** Author document operations. False only updates transient editor overlays. Default: true. */
-  persist?: boolean
   cursorOffset?: number
   recentlyEdited?: RecentlyEditedTree
   /** By default, thoughts will be re-expanded with the fresh state. If a separate expandThoughts is called after updateThoughts within the same reducerFlow, then we can prevent expandThoughts here for better performance. See moveThought. */
@@ -23,31 +27,31 @@ const updateThoughts = (
   state: State,
   {
     cursorOffset,
-    thoughtIndexUpdates,
+    thoughtUiUpdates = {},
     recentlyEdited,
     preventExpandThoughts,
-    movePlacements,
-    persist = true,
+    write,
     onPersisted,
   }: UpdateThoughtsOptions,
   transaction?: ThoughtspaceTransaction,
 ) => {
-  if (!Object.keys(thoughtIndexUpdates).length) return state
+  if (!write && !Object.keys(thoughtUiUpdates).length) return state
   if (!transaction) throw new Error('Document updates require a thoughtspace transaction')
-  const thoughts = persist ? transaction.update({ thoughtIndexUpdates, movePlacements }) : transaction.project()
+  write?.(transaction)
+  const thoughts = transaction.project()
   const thoughtUi = { ...state.thoughtUi }
-  Object.entries(thoughtIndexUpdates).forEach(([id, thought]) => {
+  Object.entries(thoughtUiUpdates).forEach(([id, overlay]) => {
     const ui = {
-      ...(thought?.generating !== undefined && { generating: thought.generating }),
-      ...(thought?.generating &&
-        thought.generatingPlaceholder !== undefined && { generatingPlaceholder: thought.generatingPlaceholder }),
-      ...(thought?.pendingFormat !== undefined && { pendingFormat: thought.pendingFormat }),
-      ...(thought?.splitSource !== undefined && { splitSource: thought.splitSource }),
+      ...(overlay?.generating !== undefined && { generating: overlay.generating }),
+      ...(overlay?.generating &&
+        overlay.generatingPlaceholder !== undefined && { generatingPlaceholder: overlay.generatingPlaceholder }),
+      ...(overlay?.pendingFormat !== undefined && { pendingFormat: overlay.pendingFormat }),
+      ...(overlay?.splitSource !== undefined && { splitSource: overlay.splitSource }),
     }
-    if (!thought || !thoughts.getThought(thought.id) || !Object.keys(ui).length) delete thoughtUi[id]
+    if (!overlay || !thoughts.getThought(id as ThoughtId) || !Object.keys(ui).length) delete thoughtUi[id]
     else if (!_.isEqual(ui, thoughtUi[id])) thoughtUi[id] = Object.freeze(ui)
   })
-  if (persist && onPersisted) transaction.afterPersist(onPersisted)
+  if (write && onPersisted) transaction.afterPersist(onPersisted)
   const next = {
     ...state,
     thoughts,

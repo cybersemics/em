@@ -2,7 +2,7 @@
 
 A rolling record of what **em** did, kept on the device so that a bug nobody can reproduce still leaves evidence behind. It exists for the failures that defeat ordinary debugging: a freeze that takes the console with it, a gesture that misfires once a week, a thought that lands under the wrong parent on someone else's phone and nowhere else.
 
-Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), app switching, viewport resizes and uncaught errors ([`initEvents`](../src/util/initEvents.ts)), render errors ([`ErrorBoundaryContainer`](../src/components/ErrorBoundaryContainer.tsx)), and persistence ([`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts)).
+Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of its content comes from [`loggerMiddleware`](../src/redux-middleware/loggerMiddleware.ts), which captures every dispatched action; the rest comes from the editor ([`Editable`](../src/components/Editable.tsx)), gestures ([`MultiGesture`](../src/components/MultiGesture.tsx)), app switching, viewport resizes and uncaught errors ([`initEvents`](../src/util/initEvents.ts)), render errors ([`ErrorBoundaryContainer`](../src/components/ErrorBoundaryContainer.tsx)), and persistence ([`commandExecutionEnhancer`](../src/redux-enhancers/commandExecutionEnhancer.ts)).
 
 ## What it is
 

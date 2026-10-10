@@ -73,10 +73,10 @@ const setSortPreference = (
             return updateThoughts(
               state,
               {
-                thoughtIndexUpdates: keyValueBy(children, child => ({ [child.id]: child })),
-                movePlacements: Object.fromEntries(
-                  children.map((child, index) => [child.id, children[index - 1]?.id ?? null]),
-                ),
+                write: transaction =>
+                  children.forEach((child, index) =>
+                    transaction.move(child.id, { parentId: id, afterId: children[index - 1]?.id ?? null }),
+                  ),
                 preventExpandThoughts: true,
               },
               transaction,

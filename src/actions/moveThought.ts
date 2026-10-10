@@ -1,7 +1,5 @@
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
@@ -53,8 +51,7 @@ const repositionUpdated = (state: State, id: ThoughtId, transaction?: Thoughtspa
   return updateThoughts(
     state,
     {
-      thoughtIndexUpdates: { [id]: thought },
-      movePlacements: { [id]: afterId },
+      write: transaction => transaction.move(id, { parentId: thought.parentId, afterId }),
       preventExpandThoughts: true,
     },
     transaction,
@@ -167,44 +164,28 @@ const moveThought = (state: State, payload: MoveThoughtPayload, transaction?: Th
               .slice(0, childrenOfDestination.findIndex(child => child.id === afterId) + 1)
               .filter(child => child.id !== sourceThought.id && getThoughtById(state, child.id))
               .at(-1)?.id ?? null)
-      const thoughtIndexUpdates: Index<Thought> = {
-        ...(!sameContext
-          ? {
-              [sourceParentThought.id]: {
-                ...sourceParentThought,
-                lastUpdated: timestamp(),
-                updatedBy: clientId,
-              },
-              [destinationThought.id]: {
-                ...destinationThought,
-                lastUpdated: timestamp(),
-                updatedBy: clientId,
-              },
-            }
-          : {}),
-        // The explicit placement changes canonical sibling order without writing numeric ranks.
-        [sourceThought.id]: {
-          ...sourceThought,
-          parentId: destinationThought.id,
-          ...(archived ? { archived } : null),
-          lastUpdated: timestamp(),
-          updatedBy: clientId,
-        },
-      }
-
       return updateThoughts(
         state,
         {
-          thoughtIndexUpdates,
           recentlyEdited,
           preventExpandThoughts: true,
-          movePlacements: {
-            [sourceThought.id]: sorted
+          write: transaction => {
+            const afterId = sorted
               ? getSortedPlacement(state, destinationThoughtId, sourceThought.value, {
                   created: sourceThought.created,
                   staleId: sourceThought.id,
                 })
-              : survivingAfterId,
+              : survivingAfterId
+            if (!sameContext) {
+              transaction.payload(sourceParentThought.id, { lastUpdated: timestamp(), updatedBy: clientId })
+              transaction.payload(destinationThought.id, { lastUpdated: timestamp(), updatedBy: clientId })
+            }
+            transaction.move(sourceThought.id, { parentId: destinationThought.id, afterId })
+            transaction.payload(sourceThought.id, {
+              ...(archived ? { archived } : null),
+              lastUpdated: timestamp(),
+              updatedBy: clientId,
+            })
           },
         },
         transaction,

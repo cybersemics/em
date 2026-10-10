@@ -8,8 +8,8 @@ import { thunk } from 'redux-thunk'
 import EditorStore from '../@types/EditorStore'
 import appReducer from '../actions/app'
 import db from '../data-providers/thoughtspace'
+import commandExecutionEnhancer from '../redux-enhancers/commandExecutionEnhancer'
 import storageCache from '../redux-enhancers/storageCache'
-import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import updateJumpHistory from '../redux-enhancers/updateJumpHistoryEnhancer'
 import validateStateEnhancer from '../redux-enhancers/validateStateEnhancer'
 import clearSelection from '../redux-middleware/clearSelection'
@@ -60,8 +60,8 @@ const editorStore = createStore(
     updateJumpHistory,
     // validate state again after production enhancers run
     ...(validateStateEnhancerDevOnly || []),
-    // Run commands and history before entering Redux; Redux only publishes UI state.
-    undoRedoEnhancer,
+    // Execute commands before entering Redux; history is prepared within the same boundary.
+    commandExecutionEnhancer,
   ),
 ) as unknown as EditorStore
 

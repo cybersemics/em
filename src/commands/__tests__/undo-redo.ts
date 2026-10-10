@@ -1634,8 +1634,7 @@ describe('operation receipts', () => {
     const thought = contextToThought(store.getState(), ['a'])!
     store.dispatch([
       updateThoughts({
-        persist: false,
-        thoughtIndexUpdates: { [thought.id]: { ...thought, generating: true, generatingPlaceholder: 'preview' } },
+        thoughtUiUpdates: { [thought.id]: { generating: true, generatingPlaceholder: 'preview' } },
       }),
       editThought(['a'], 'ab'),
     ])
@@ -1666,9 +1665,8 @@ describe('operation receipts', () => {
     const thought = contextToThought(store.getState(), ['a'])!
     store.dispatch(
       updateThoughts({
-        persist: false,
-        thoughtIndexUpdates: {
-          [thought.id]: { ...thought, generating: true, generatingPlaceholder: 'a preview', splitSource: thought.id },
+        thoughtUiUpdates: {
+          [thought.id]: { generating: true, generatingPlaceholder: 'a preview', splitSource: thought.id },
         },
       }),
     )
@@ -1695,8 +1693,7 @@ describe('operation receipts', () => {
     const thought = contextToThought(store.getState(), ['a'])!
     store.dispatch([
       updateThoughts({
-        persist: false,
-        thoughtIndexUpdates: { [thought.id]: { ...thought, generating: true, generatingPlaceholder: 'preview' } },
+        thoughtUiUpdates: { [thought.id]: { generating: true, generatingPlaceholder: 'preview' } },
       }),
       editThought(['a'], 'ab'),
     ])

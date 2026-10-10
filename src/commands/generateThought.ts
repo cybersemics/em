@@ -147,17 +147,16 @@ const generateThoughtAtPathsActionCreator =
     // the original text rather than a pending placeholder, and so empty thoughts can show a display-only placeholder.
     dispatch(
       updateThoughts({
-        thoughtIndexUpdates: Object.fromEntries(
+        thoughtUiUpdates: Object.fromEntries(
           activeTargets.map(target => [
             target.thought.id,
             {
-              ...target.thought,
+              ...state.thoughtUi[target.thought.id],
               generatingPlaceholder: 'Generating Thought',
               generating: true,
             },
           ]),
         ),
-        persist: false,
       }),
     )
     // Each immutable overlay belongs to this request, even if a later generation starts from the same text.
@@ -236,14 +235,13 @@ const generateThoughtAtPathsActionCreator =
       dispatch([
         // Clear the transient overlay before recording the generated edit in undo history.
         updateThoughts({
-          thoughtIndexUpdates: {
+          thoughtUiUpdates: {
             [thought.id]: {
-              ...thoughtPending,
+              ...statePending.thoughtUi[thought.id],
               generatingPlaceholder: undefined,
               generating: false,
             },
           },
-          persist: false,
         }),
         ...(valueNew === null
           ? []

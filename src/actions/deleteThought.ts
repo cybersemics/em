@@ -1,4 +1,3 @@
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import Thought from '../@types/Thought'
@@ -43,29 +42,21 @@ const deleteThought = (state: State, { pathParent, thoughtId }: Payload, transac
 
   const simplePath = thoughtToPath(state, thoughtId)
   const contextViewsNew = { ...state.contextViews }
-  const thoughtIndexUpdates: Index<Thought | null> = {
-    // Deleted thought's parent
-    [parent.id]: {
-      ...parent,
-      lastUpdated: timestamp(),
-      updatedBy: clientId,
-    } as Thought,
-  }
+  const deletedIds: ThoughtId[] = []
 
   /** Collects explicit descendant deletes and clears their context views without copying the growing batch. */
   const collectDeletes = (id: ThoughtId, path: Path) => {
-    thoughtIndexUpdates[id] = null
     delete contextViewsNew[hashPath(path)]
     getChildrenRanked(state, id).forEach(child => collectDeletes(child.id, [...path, child.id]))
+    deletedIds.push(id)
   }
   collectDeletes(thoughtId, [...pathParent, thoughtId])
 
   // A child change updates the parent's timestamp, so keep its Updated-sorted context in order.
-  const movePlacements: Index<ThoughtId | null> = {}
-  if (getSortPreference(state, parent.parentId).type === 'Updated' && !isEmptyOrEmojiOnly(parent.value)) {
-    const parentAfterId = getSortedPlacement(state, parent.parentId, parent.value, { staleId: parent.id })
-    if (parentAfterId !== getPreviousSiblingId(state, parent.id)) movePlacements[parent.id] = parentAfterId
-  }
+  const parentAfterId =
+    getSortPreference(state, parent.parentId).type === 'Updated' && !isEmptyOrEmojiOnly(parent.value)
+      ? getSortedPlacement(state, parent.parentId, parent.value, { staleId: parent.id })
+      : undefined
 
   const isDeletedThoughtCursor = equalPathHead(simplePath, state.cursor)
 
@@ -87,8 +78,13 @@ const deleteThought = (state: State, { pathParent, thoughtId }: Payload, transac
       editingValue: cursorNew ? headValue(state, cursorNew) : null,
     }),
     updateThoughts({
-      thoughtIndexUpdates,
-      movePlacements,
+      write: transaction => {
+        if (parentAfterId !== undefined && parentAfterId !== getPreviousSiblingId(state, parent.id))
+          transaction.move(parent.id, { parentId: parent.parentId, afterId: parentAfterId })
+        transaction.payload(parent.id, { lastUpdated: timestamp(), updatedBy: clientId })
+        deletedIds.forEach(transaction.delete)
+      },
+      thoughtUiUpdates: Object.fromEntries(deletedIds.map(id => [id, null])),
     }),
   ])(state, transaction)
 }

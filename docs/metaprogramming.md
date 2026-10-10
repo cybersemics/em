@@ -136,6 +136,6 @@ enum Settings {
 
 (See the in-app **Settings** modal for human-readable descriptions of each.)
 
-A separate set of *cached* settings — `CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']` — is also persisted to `localStorage` by [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts) so they're available before the thoughtspace hydrates on first paint. See [persistence.md](persistence.md) for the caching mechanics.
+A separate set of *cached* settings — `CACHED_SETTINGS = ['Theme', 'Tutorial', 'Tutorial Step']` — is also persisted to `localStorage` by [`commandExecutionEnhancer`](../src/redux-enhancers/commandExecutionEnhancer.ts) so they're available before the thoughtspace hydrates on first paint. See [persistence.md](persistence.md) for the caching mechanics.
 
 Reads go through [`getSetting`](../src/selectors/getSetting.ts), which first consults the in-memory thought (e.g. `[EM, 'Settings', 'Tutorial']`) and falls back to the localStorage cache when needed.

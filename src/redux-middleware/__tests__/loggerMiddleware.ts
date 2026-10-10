@@ -50,27 +50,26 @@ it('captures every action when debug logging is enabled', () => {
 })
 
 describe('structured updateThoughts summary', () => {
-  it('logs per-thought id/value/parentId and counts instead of the raw stringified action', () => {
+  it('logs editor overlays separately from document writes', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     invoke({
       type: 'updateThoughts',
-      thoughtIndexUpdates: {
-        abc: { id: 'abc', value: 'hello', parentId: 'root' },
+      thoughtUiUpdates: {
+        abc: { generating: true },
         def: null,
       },
-      persist: false,
     })
     const actionEntries = debugLog.read().filter(e => e.type === 'action')
     expect(actionEntries.length).toBe(1)
     expect(actionEntries[0]).toMatchObject({
       actionType: 'updateThoughts',
-      thoughtCount: 2,
-      persist: false,
+      overlayCount: 2,
+      documentWrite: false,
     })
-    expect(actionEntries[0].thoughts).toEqual([
-      { id: 'abc', value: 'hello', parentId: 'root' },
-      { id: 'def', deleted: true },
+    expect(actionEntries[0].overlays).toEqual([
+      { id: 'abc', ui: { generating: true } },
+      { id: 'def', ui: null },
     ])
     expect(actionEntries[0].payload).toBeUndefined()
   })
@@ -119,10 +118,10 @@ describe('thought move logging', () => {
     // Move the first child to the end. All eleven sibling positions change through explicit placements.
     store.dispatch(
       updateThoughts({
-        thoughtIndexUpdates: Object.fromEntries(reordered.map(thought => [thought.id, thought])),
-        movePlacements: Object.fromEntries(
-          reordered.map((thought, i) => [thought.id, i === 0 ? null : reordered[i - 1].id]),
-        ),
+        write: transaction =>
+          reordered.forEach((thought, i) =>
+            transaction.move(thought.id, { parentId: thought.parentId, afterId: reordered[i - 1]?.id ?? null }),
+          ),
       }),
     )
 

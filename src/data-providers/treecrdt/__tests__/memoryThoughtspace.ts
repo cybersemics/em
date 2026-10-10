@@ -448,7 +448,7 @@ it('projects payload-bearing descendants and their canonical ranks under a paylo
   const parent = '8'.repeat(32) as ThoughtId
   const empty = '9'.repeat(32) as ThoughtId
   const child = 'a'.repeat(32) as ThoughtId
-  const payload = { value: 'visible child', created: 1, lastUpdated: 1, updatedBy: 'remote' }
+  const payload = { value: 'visible child', created: 1 as Timestamp, lastUpdated: 1 as Timestamp, updatedBy: 'remote' }
   try {
     await initializeMemoryStorage(persistent, replica)
     await persistent.local.insert(replica, HOME_TOKEN, parent, { type: 'last' }, null)
@@ -463,9 +463,14 @@ it('projects payload-bearing descendants and their canonical ranks under a paylo
     expect(initial.getPosition(child)).toBe(1)
     expect(initial.getLexeme('visible child')).toEqual([child])
 
-    await persistent.local.payload(replica, parent, encodeThoughtPayload({ ...payload, value: 'parent' }))
+    await runtime.transact(transaction =>
+      transaction.update({
+        thoughtIndexUpdates: { [parent]: { ...payload, id: parent, parentId: HOME_TOKEN, value: 'parent' } },
+      }),
+    ).persisted
     await runtime.waitForIdle()
     const withParent = runtime.project()
+    expect(withParent.getThought(parent)!.value).toBe('parent')
     const visibleChildren = withParent.getChildren(parent)
     expect(visibleChildren).toEqual([child])
     expect(Reflect.set(visibleChildren, '0', empty)).toBe(false)

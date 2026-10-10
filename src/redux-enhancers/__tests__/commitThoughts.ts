@@ -19,14 +19,14 @@ import head from '../../util/head'
 import initialState from '../../util/initialState'
 import parentOf from '../../util/parentOf'
 import storage from '../../util/storage'
-import undoRedoEnhancer from '../undoRedoEnhancer'
+import commandExecutionEnhancer from '../commandExecutionEnhancer'
 
 beforeEach(initStore)
 
 it('preserves placeholder roots when a UI action runs before the provider is ready', async () => {
   await thoughtspaceRuntime.drop()
   const initial = initialState()
-  const pendingStore = createStore(appReducer, initial, undoRedoEnhancer)
+  const pendingStore = createStore(appReducer, initial, commandExecutionEnhancer)
   expect(db.project().getThought(HOME_TOKEN)).toBeUndefined()
 
   pendingStore.dispatch({ type: 'error', value: 'Storage unavailable' })
@@ -43,11 +43,8 @@ it('keeps transient thought UI in Redux without changing the canonical view or a
 
   store.dispatch(
     updateThoughts({
-      persist: false,
-      thoughtIndexUpdates: {
+      thoughtUiUpdates: {
         [a.id]: {
-          ...a,
-          value: 'not a document edit',
           generating: true,
           generatingPlaceholder: 'preview',
           splitSource: b.id,
@@ -70,8 +67,7 @@ it('keeps transient thought UI in Redux without changing the canonical view or a
 
   store.dispatch(
     updateThoughts({
-      persist: false,
-      thoughtIndexUpdates: { [a.id]: { ...rendered, generating: false } },
+      thoughtUiUpdates: { [a.id]: { ...preview.thoughtUi[a.id], generating: false } },
     }),
   )
 

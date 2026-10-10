@@ -303,7 +303,13 @@ const importText = (
 
     return reducerFlow([
       // thoughts will be expanded by setCursor, so no need to expand them here
-      updateThoughts({ ...imported, preventExpandThoughts: true }),
+      updateThoughts({
+        write: transaction => transaction.update(imported),
+        thoughtUiUpdates: Object.fromEntries(
+          Object.entries(imported.thoughtIndexUpdates).filter(([, thought]) => !thought),
+        ),
+        preventExpandThoughts: true,
+      }),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
       shouldImportIntoDummy ? uncategorize({ at: unroot(newDestinationPath) }) : null,
       // if original destination is empty then collapse once more.

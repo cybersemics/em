@@ -352,6 +352,19 @@ const createMemoryThoughtspace = (
         })
         return batch
       }
+      /** Rejects invalid anchors before authoring an insert or move. */
+      const checkPlacement = (id: string, parentId: string, afterId: string | null) => {
+        if (!active) throw new Error('The document transaction has finished')
+        if (afterId && (afterId === id || engine.getContent(afterId)?.parentId !== parentId)) {
+          throw new Error('afterId must name another child of the destination parent')
+        }
+      }
+      /** Shares full-payload writes between field edits and imported/restored rows. */
+      const writePayload = (id: string, thought: Thought) => {
+        const payload = thoughtPayload(thought)
+        if (!_.isEqual(engine.getContent(id)?.payload, payload))
+          operationIds.push(engine.local.payload(id, payload).meta.id)
+      }
       const transaction: ThoughtspaceTransaction = {
         get operationOffset() {
           if (!active) throw new Error('The document transaction has finished')
@@ -405,6 +418,27 @@ const createMemoryThoughtspace = (
           if (!active) throw new Error('The document transaction has finished')
           callbacks.push(callback)
         },
+        insert: (thought, afterId) => {
+          checkPlacement(thought.id, thought.parentId, afterId)
+          if (engine.getContent(thought.id)) throw new Error('Cannot insert an existing thought')
+          operationIds.push(engine.local.insert(thought.parentId, thought.id, afterId, thoughtPayload(thought)).meta.id)
+        },
+        payload: (id, fields) => {
+          if (!active) throw new Error('The document transaction has finished')
+          const current = reader.getThought(id)
+          if (!current) throw new Error('Cannot update a missing thought')
+          if (Object.entries(fields).some(([key, value]) => current[key as keyof Thought] !== value)) {
+            writePayload(id, { ...current, ...fields })
+          }
+        },
+        move: (id, { parentId, afterId }) => {
+          checkPlacement(id, parentId, afterId)
+          operationIds.push(engine.local.move(id, parentId, afterId).meta.id)
+        },
+        delete: id => {
+          if (!active) throw new Error('The document transaction has finished')
+          if (engine.getContent(id)) operationIds.push(engine.local.delete(id).meta.id)
+        },
         update: ({ thoughtIndexUpdates, movePlacements }) => {
           if (!active) throw new Error('The document transaction has finished')
           // Moves out of a deleted subtree must precede its delete; otherwise defensive deletion restores the parent.
@@ -439,7 +473,7 @@ const createMemoryThoughtspace = (
           if (ordered.length !== edits.length) throw new Error('A command cannot create a parent or placement cycle')
           for (const [id, thought] of [...ordered, ...deletes.reverse()]) {
             if (!thought) {
-              if (engine.getContent(id)) operationIds.push(engine.local.delete(id).meta.id)
+              transaction.delete(id as ThoughtId)
               continue
             }
             const current = engine.getContent(id)
@@ -448,18 +482,12 @@ const createMemoryThoughtspace = (
             if ((!exists || current.parentId !== thought.parentId) && !hasPlacement) {
               throw new Error('Inserts and parent changes require an explicit afterId placement')
             }
-            const after = movePlacements?.[id]
-            if (hasPlacement && after && (after === id || engine.getContent(after)?.parentId !== thought.parentId)) {
-              throw new Error('afterId must name another child of the destination parent')
-            }
-            const payload = thoughtPayload(thought)
+            const after = movePlacements?.[id] ?? null
             if (!exists) {
-              operationIds.push(engine.local.insert(thought.parentId, id, after, payload).meta.id)
+              transaction.insert(thought, after)
             } else {
-              if (hasPlacement) {
-                operationIds.push(engine.local.move(id, thought.parentId, after).meta.id)
-              }
-              if (!_.isEqual(current.payload, payload)) operationIds.push(engine.local.payload(id, payload).meta.id)
+              if (hasPlacement) transaction.move(id as ThoughtId, { parentId: thought.parentId, afterId: after })
+              writePayload(id, thought)
             }
           }
           return project()

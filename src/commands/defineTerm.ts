@@ -68,17 +68,16 @@ const defineTermAtPaths =
     requests.forEach(request => pendingDefinitions.set(request.thought.id, request.requestId))
     dispatch(
       updateThoughts({
-        thoughtIndexUpdates: Object.fromEntries(
+        thoughtUiUpdates: Object.fromEntries(
           requests.map(request => [
             request.thought.id,
             {
-              ...request.thought,
+              ...state.thoughtUi[request.thought.id],
               generating: true,
               generatingPlaceholder: 'Defining Term',
             },
           ]),
         ),
-        persist: false,
       }),
     )
     // Other AI commands share these overlays but not the Define Term request registry.
@@ -146,7 +145,7 @@ const defineTermAtPaths =
       dispatch(error({ value: 'Failed to define term' }))
     } finally {
       const currentState = getState()
-      const thoughtIndexUpdates = Object.fromEntries(
+      const thoughtUiUpdates = Object.fromEntries(
         requests.flatMap(request => {
           if (pendingDefinitions.get(request.thought.id) !== request.requestId) return []
           pendingDefinitions.delete(request.thought.id)
@@ -154,16 +153,24 @@ const defineTermAtPaths =
           // Incoming edits preserve our overlay; a newer AI command replaces it and owns its own cleanup.
           return currentThought?.generating &&
             currentState.thoughtUi[request.thought.id] === pendingThoughtUi[request.thought.id]
-            ? [[request.thought.id, { ...currentThought, generating: false, generatingPlaceholder: undefined }]]
+            ? [
+                [
+                  request.thought.id,
+                  {
+                    ...currentState.thoughtUi[request.thought.id],
+                    generating: false,
+                    generatingPlaceholder: undefined,
+                  },
+                ],
+              ]
             : []
         }),
       )
 
-      if (Object.keys(thoughtIndexUpdates).length > 0) {
+      if (Object.keys(thoughtUiUpdates).length > 0) {
         dispatch(
           updateThoughts({
-            thoughtIndexUpdates,
-            persist: false,
+            thoughtUiUpdates,
           }),
         )
       }

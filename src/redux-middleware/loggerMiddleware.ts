@@ -1,36 +1,20 @@
 import { Dispatch, Middleware, UnknownAction } from 'redux'
 import Index from '../@types/IndexType'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import testFlags from '../e2e/testFlags'
 import debugLog from '../util/debugLog'
 
-/** Maximum number of thought summaries included in a structured updateThoughts entry. */
+/** Maximum number of editor overlays included in a structured updateThoughts entry. */
 const MAX_SUMMARY_THOUGHTS = 20
 
-/** Maximum characters of a thought value included in a log entry. */
-const VALUE_MAX_LENGTH = 100
-
-/** Truncates a thought value for compact log output. */
-const truncateValue = (value: string): string =>
-  value.length > VALUE_MAX_LENGTH ? `${value.slice(0, VALUE_MAX_LENGTH)}…` : value
-
-/** Builds a structured summary of an updateThoughts action: per-thought id/value/parentId (capped at MAX_SUMMARY_THOUGHTS), plus counts and the persistence flag. Far denser and more useful than the raw stringified action, whose truncation cuts JSON mid-field. */
+/** Summarizes editor overlays without serializing document-write callbacks. */
 const summarizeUpdateThoughts = (action: UnknownAction): Record<string, unknown> => {
-  const thoughtUpdates = Object.entries((action.thoughtIndexUpdates ?? {}) as Index<Thought | null>)
+  const overlays = Object.entries((action.thoughtUiUpdates ?? {}) as Index<State['thoughtUi'][string] | null>)
   return {
     actionType: 'updateThoughts',
-    thoughtCount: thoughtUpdates.length,
-    persist: action.persist !== false,
-    thoughts: thoughtUpdates.slice(0, MAX_SUMMARY_THOUGHTS).map(([id, thought]) =>
-      thought
-        ? {
-            id,
-            value: truncateValue(thought.value),
-            parentId: thought.parentId,
-          }
-        : { id, deleted: true },
-    ),
+    overlayCount: overlays.length,
+    documentWrite: !!action.write,
+    overlays: overlays.slice(0, MAX_SUMMARY_THOUGHTS).map(([id, ui]) => ({ id, ui })),
   }
 }
 

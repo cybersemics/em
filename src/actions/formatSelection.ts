@@ -76,9 +76,8 @@ const holdFormat = (
   return updateThoughts(
     state,
     {
-      thoughtIndexUpdates: { [id]: { ...thought, pendingFormat } },
       // The held format only changes the editor overlay, never the document or its lastUpdated timestamp.
-      persist: false,
+      thoughtUiUpdates: { [id]: { ...state.thoughtUi[id], pendingFormat } },
     },
     transaction,
   )

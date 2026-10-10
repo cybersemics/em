@@ -121,10 +121,9 @@ it('exports document values without transient generation overlays', async () => 
   const thought = contextToThought(store.getState(), ['selected'])!
   await dispatch([
     updateThoughts({
-      thoughtIndexUpdates: {
-        [thought.id]: { ...thought, generating: true, generatingPlaceholder: 'Generating…', splitSource: thought.id },
+      thoughtUiUpdates: {
+        [thought.id]: { generating: true, generatingPlaceholder: 'Generating…', splitSource: thought.id },
       },
-      persist: false,
     }),
     showModal({ id: 'export' }),
   ])

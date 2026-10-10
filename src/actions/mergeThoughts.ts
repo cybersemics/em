@@ -1,7 +1,5 @@
-import Index from '../@types/IndexType'
 import Path from '../@types/Path'
 import State from '../@types/State'
-import Thought from '../@types/Thought'
 import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import { clientId } from '../data-providers/thoughtspaceSession'
@@ -84,20 +82,14 @@ const mergeThoughts = (
         : state,
   ])(state, transaction)
 
-  const thoughtIndexUpdates: Index<Thought | null> = {
-    [sourceParentThought.id]: {
-      ...getThoughtById(newStateAfterMove, sourceParentThought.id)!,
-      lastUpdated: timestamp(),
-      updatedBy: clientId,
-    },
-    // delete source thought
-    [sourceThought.id]: null,
-  }
-
   return updateThoughts(
     newStateAfterMove,
     {
-      thoughtIndexUpdates,
+      write: transaction => {
+        transaction.payload(sourceParentThought.id, { lastUpdated: timestamp(), updatedBy: clientId })
+        transaction.delete(sourceThought.id)
+      },
+      thoughtUiUpdates: { [sourceThought.id]: null },
       preventExpandThoughts: true,
     },
     transaction,
