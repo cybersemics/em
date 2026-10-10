@@ -1,11 +1,17 @@
-import { FC, useRef } from 'react'
-import { useSelector } from 'react-redux'
+import { FC, useId, useRef } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { token } from '../../../styled-system/tokens'
 import Command from '../../@types/Command'
-import { gestureString } from '../../commands'
+import { pinCommandActionCreator as pinCommand } from '../../actions/pinCommand'
+import { unpinCommandActionCreator as unpinCommand } from '../../actions/unpinCommand'
+import { commandById, gestureString } from '../../commands'
 import GestureDiagram from '../GestureDiagram'
+import GradientDivider from '../GradientDivider'
 import DialogContent from '../dialog/DialogContent'
+import ArrowRightIcon from '../icons/ArrowRightIcon'
+import PinnedCommandPinIcon from '../icons/PinnedCommandPinIcon'
+import PinnedCommandUnpinIcon from '../icons/PinnedCommandUnpinIcon'
 import SettingsIcon from '../icons/SettingsIcon'
 
 interface CommandUniverseDetailPageProps {
@@ -28,10 +34,105 @@ const useCommandLabels = (command: Command) => {
 }
 
 /**
+ * A row that pins this command to the persistent corner widget, or unpins it when it is already the pinned command.
+ * Pinning replaces any other pinned command and never executes the command.
+ */
+const PinCommandRow = ({ command }: { command: Command }) => {
+  const dispatch = useDispatch()
+  // commandById returns the registry's own object, so the selector result is referentially stable
+  const pinnedCommand = useSelector(state =>
+    state.learning.pinnedCommandId ? commandById(state.learning.pinnedCommandId) : null,
+  )
+  const isPinned = pinnedCommand?.id === command.id
+  const descriptionId = useId()
+  const title = isPinned ? 'Unpin Command' : 'Pin Command'
+
+  return (
+    <div className={css({ marginBottom: '0.75rem' })}>
+      <button
+        type='button'
+        aria-label={title}
+        aria-describedby={descriptionId}
+        onClick={() => dispatch(isPinned ? unpinCommand() : pinCommand({ commandId: command.id }))}
+        className={css({
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '1rem',
+          width: '100%',
+          padding: '1.5rem 0.5rem 0',
+          background: 'transparent',
+          border: 'none',
+          textAlign: 'left',
+          color: 'fg',
+          fontFamily: 'inherit',
+          cursor: 'pointer',
+          transition: `opacity {durations.fast} ease-out`,
+          '&:active': {
+            opacity: 0.5,
+          },
+          userSelect: 'none',
+        })}
+      >
+        <div
+          className={css({
+            flex: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '36px',
+            height: '36px',
+            marginTop: '0.75rem',
+          })}
+        >
+          {isPinned ? (
+            <PinnedCommandUnpinIcon cssRaw={css.raw({ flex: 'none' })} size={48} fill={token('colors.fg')} />
+          ) : (
+            <PinnedCommandPinIcon cssRaw={css.raw({ flex: 'none' })} size={48} fill={token('colors.fg')} />
+          )}
+        </div>
+        <div className={css({ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 })}>
+          <b className={css({ fontSize: '0.9rem', fontWeight: 400, lineHeight: 1.2 })}>{title}</b>
+          <p
+            id={descriptionId}
+            className={css({
+              margin: 0,
+              marginTop: '0.25rem',
+              color: 'commandUniverseLongDescriptionText',
+              fontSize: '0.8rem',
+              lineHeight: 1.35,
+            })}
+          >
+            {isPinned
+              ? 'Remove this command from the corner of the screen.'
+              : 'Pin this command to the corner of the screen to help you practice and memorise it.'}
+          </p>
+          {pinnedCommand && !isPinned ? (
+            <p
+              className={css({
+                margin: 0,
+                marginTop: '0.25rem',
+                color: 'commandUniverseLongDescriptionText',
+                fontSize: '0.8rem',
+                lineHeight: 1.35,
+              })}
+            >
+              {' '}
+              This will replace the currently pinned command: <b>{pinnedCommand.label}</b>.
+            </p>
+          ) : null}
+        </div>
+        <div>
+          <ArrowRightIcon size={20} fill={token('colors.fgOverlay75')} cssRaw={css.raw({ flex: 'none' })} />
+        </div>
+      </button>
+    </div>
+  )
+}
+
+/**
  * Level 1 of the Command Universe — the per-command detail page reached by tapping a
  * grid cell. Layout: icon + title + subtitle row, optional React content
- * (`command.longDescription`), and an optional gesture row showing the diagram with a
- * short caption to its right.
+ * (`command.longDescription`), an optional gesture row, and the Pin Command row.
  *
  * This page owns its content and scroller. Navigation, focus, and motion live outside it.
  */
@@ -47,7 +148,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
         <header
           className={css({
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             gap: '1.3rem',
             paddingTop: '0.35rem',
             paddingBottom: '1.375rem',
@@ -61,6 +162,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
               justifyContent: 'center',
               width: '36px',
               height: '36px',
+              marginTop: '0.5rem',
             })}
           >
             <Icon cssRaw={css.raw({ flex: 'none' })} size={36} fill={iconFill} />
@@ -127,8 +229,7 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
               display: 'flex',
               alignItems: 'center',
               gap: '0.625rem',
-              paddingTop: command.longDescription ? '0.775rem' : 0,
-              paddingBottom: '1.45rem',
+              padding: '0.65rem 0 0.275rem',
             })}
           >
             <div className={css({ flex: 'none', width: '130px', aspectRatio: '1 / 1' })}>
@@ -164,6 +265,10 @@ const CommandUniverseDetailPage: FC<CommandUniverseDetailPageProps> = ({ command
             </p>
           </div>
         ) : null}
+
+        <GradientDivider />
+
+        <PinCommandRow command={command} />
       </div>
     </DialogContent>
   )

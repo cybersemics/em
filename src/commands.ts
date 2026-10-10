@@ -771,9 +771,10 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     }
   }
 
-  // In training mode, show the label of any valid command (except forward/back).
-  // The label is shown before the command executes so that an alert the command shows itself, such as an error, replaces the label rather than being replaced by it.
-  if (command && !command.hideAlert && !getUserSetting(state, Settings.experienceMode)) {
+  // In training mode, show the command's label as a gesture hint.
+  // Dispatch it before the command executes so that an alert raised by the command itself (e.g. an error explaining why it cannot be executed) replaces the label rather than being replaced by it.
+  const showLabel = !getUserSetting(state, Settings.experienceMode) && !!command && !command.hideAlert
+  if (command && showLabel) {
     store.dispatch(alert(command.label, { alertType: AlertType.GestureHint }))
   }
 
@@ -829,14 +830,16 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
         dispatch(gestureMenu())
       }
 
+      // Do not clear the label shown above, nor the alert that the command raised in its place
       if (
+        !showLabel &&
         // Clear alert if gesture is cancelled (no command)
-        !command ||
-        // Clear alert if back/forward
-        command?.id === 'cursorForward' ||
-        command?.id === 'cursorBack' ||
-        // In experience mode, clear any existing gesture hint
-        (experienceMode && alertType === AlertType.GestureHint)
+        (!command ||
+          // Clear alert if back/forward
+          command?.id === 'cursorForward' ||
+          command?.id === 'cursorBack' ||
+          // In experience mode, clear any existing gesture hint
+          (experienceMode && alertType === AlertType.GestureHint))
       ) {
         dispatch(alert(null))
       }
