@@ -43,6 +43,20 @@ A round is not a quota. Two real questions and a third found by casting about is
 
 The rounds are cheap next to what they prevent — a question the reporter would have answered in a second breath, left instead as a guess in the issue or as a decision the assignee makes alone.
 
+### Design questions
+
+A feature whose design is still being decided is asked about one question at a time, in plain text rather than through the ask tool. A tool option is a one-line label, and a design choice is only judged by seeing what it produces.
+
+- Open with the question as one plain sentence.
+- Give a starting tree in em's outline format, and numbered steps in the order a user would actually arrive at it. A tree a user could only reach by turning on a view and then typing should be built that way in the steps, not written out first.
+- Show each option's result: the resulting tree in outline format when the question is about structure, and a rendered Markdown table (not ASCII) when it is about layout. Keep the two separate, since the tree is the data and the table only its rendering.
+- When an option refers back to a step, name the step as well as its number: "After step 4, Insert Header Row, ...". The reader should not have to scroll back to learn what step 4 was.
+- Keep every example tree realistic. A label such as `Day` is never a sibling of data such as `Monday` unless the steps show how it got there.
+- Build options only from rules already decided. An option that invents a storage location or attribute value nobody chose is rejected for that alone.
+- End with "Which one: a, b or c?" and wait for the answer before writing the next question.
+
+The answers to these questions are revised often, including ones given several rounds earlier. Do not post or rewrite the issue until the reporter says the design is settled, and treat a declined or interrupted question as a question still open, not as the end of the design.
+
 ## The template
 
 Exactly these headings, at `##`, in this order:
@@ -252,7 +266,9 @@ Verify it landed, since a body reference and a relationship look alike once rend
 gh issue view 5226 --repo cybersemics/em --json blockedBy
 ```
 
-Prefer `gh` to the REST endpoint, `POST /repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by`, which takes `issue_id` — the blocker's numeric database id, from `gh api repos/cybersemics/em/issues/5228 --jq .id` — rather than its issue number.
+Where `gh` cannot reach GitHub's GraphQL API, as in Claude Code cloud sessions, `gh issue create` and `gh issue edit` fail with HTTP 403. Create the issue with `gh api repos/cybersemics/em/issues -f title=... -f 'labels[]=feature' -F body=@body.md`, and set relationships through the REST endpoints below.
+
+Otherwise prefer `gh` to the REST endpoint, `POST /repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by`, which takes `issue_id` — the blocker's numeric database id, from `gh api repos/cybersemics/em/issues/5228 --jq .id` — rather than its issue number.
 
 Keep a `## Notes` bullet beside the relationship where the reason is not obvious from the two titles. The relationship carries the fact; only the note carries the why. [#5226](https://github.com/cybersemics/em/issues/5226):
 
@@ -352,4 +368,4 @@ Ask, as above. State whatever survives the answers in the preamble rather than o
 
 Do not guess Expected Behavior, since a guess there becomes a regression test asserting behaviour nobody chose.
 
-- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.
+- Use the ask tool now to inquire about ambiguous or undecided details, except for design questions, which follow [Design questions](#design-questions). Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.
