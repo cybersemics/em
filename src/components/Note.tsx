@@ -17,6 +17,7 @@ import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
 import { isTouch } from '../browser'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useFreshCallback from '../hooks/useFreshCallback'
 import { firstVisibleChild, getChildrenSorted } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
@@ -50,7 +51,7 @@ const Note = React.memo(
     const dispatch = useDispatch()
     const noteRef: { current: HTMLElement | null } = useRef(null)
     const fontSize = useSelector(state => state.fontSize)
-    const generating = useSelector(state => !!getThoughtById(state, head(path))?.generating)
+    const generating = useEditorSelector(state => !!getThoughtById(state, head(path))?.generating)
     const hasFocus = useSelector(state => state.noteFocus && equalPathHead(state.cursor, path))
     const [justPasted, setJustPasted] = useState(false)
     // A draft preserves the user's comma spacing while typing. A forced editor refresh (e.g. undo/redo)
@@ -58,7 +59,7 @@ const Note = React.memo(
     const [noteDraft, setNoteDraft] = useState<{ value: string; editableNonce: number } | null>(null)
 
     /** Gets the value of the note. Returns null if no note exists or if the context view is active. */
-    const note = useSelector(state => noteValue(state, path))
+    const note = useEditorSelector(state => noteValue(state, path))
     const editableNonce = useSelector(state => state.editableNonce)
 
     // Formatting applied to the note while it was empty is held on the note's thought until the user types (#3910).
@@ -67,7 +68,7 @@ const Note = React.memo(
     // `style` is one while `data-*` is not, so the color reaches the DOM but the data-placeholder-* attributes that
     // drive bold/italic/underline/strikethrough/code never do. Moving Note onto the app's own ContentEditable, which
     // spreads props without that gate, fixes it and is out of scope here.
-    const pendingFormat = useSelector(state => noteThought(state, path)?.pendingFormat)
+    const pendingFormat = useEditorSelector(state => noteThought(state, path)?.pendingFormat)
     const placeholderCommandState = useMemo(
       () => (pendingFormat ? getCommandState(pendingFormat) : null),
       [pendingFormat],

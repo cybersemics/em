@@ -17,6 +17,7 @@ import {
   TUTORIAL2_STEP_SUCCESS,
 } from '../constants'
 import * as selection from '../device/selection'
+import useEditorSelector from '../hooks/useEditorSelector'
 import { childrenFilterPredicate, filterAllChildren } from '../selectors/getChildren'
 import getSetting from '../selectors/getSetting'
 import isTutorial from '../selectors/isTutorial'
@@ -36,18 +37,18 @@ const transientChildPath = [TRANSIENT_THOUGHT_ID] as SimplePath
   However removing the transient editable should be handled by some business logic by parent components.
 */
 const TransientEditable = (
-  <Editable isEditing={false} transient={true} path={transientChildPath} simplePath={transientChildPath} rank={0} />
+  <Editable isEditing={false} transient={true} path={transientChildPath} simplePath={transientChildPath} />
 )
 
 /** The main content section of em. */
 const Content: FC = () => {
   const dispatch = useDispatch()
-  const tutorial = useSelector(isTutorial)
-  const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
+  const tutorial = useEditorSelector(isTutorial)
+  const tutorialStep = useEditorSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
   /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
   const reduceBottomSpace = isTouch && tutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS
   const search = useSelector(state => state.search)
-  const rootThoughtsLength = useSelector(state => {
+  const rootThoughtsLength = useEditorSelector(state => {
     const rankedRoot = isAbsolute(state.rootContext) ? ABSOLUTE_PATH : HOME_PATH
     const children = filterAllChildren(state, head(rankedRoot), childrenFilterPredicate(state, rankedRoot))
     return children.length

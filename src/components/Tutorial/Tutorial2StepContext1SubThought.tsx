@@ -1,4 +1,3 @@
-import { useSelector } from 'react-redux'
 import { isMac, isTouch } from '../../browser'
 import newSubthoughtCommand from '../../commands/newSubthought'
 import {
@@ -9,6 +8,7 @@ import {
   TUTORIAL_VERSION_JOURNAL,
   TUTORIAL_VERSION_TODO,
 } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { getAllChildrenAsThoughts, getChildrenRanked } from '../../selectors/getChildren'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
@@ -19,19 +19,19 @@ import context1SubthoughtCreated from './utils/context1SubthoughtCreated'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1SubThought = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
-  const context1SubthoughtisCreated = useSelector(state => context1SubthoughtCreated(state, { tutorialChoice }))
-  const select = useSelector(
+  const tutorialChoice = useEditorSelector(selectTutorialChoice)
+  const context1SubthoughtisCreated = useEditorSelector(state => context1SubthoughtCreated(state, { tutorialChoice }))
+  const select = useEditorSelector(
     state =>
       !state.cursor || headValue(state, state.cursor)?.toLowerCase() !== TUTORIAL_CONTEXT[tutorialChoice].toLowerCase(),
   )
-  const context1Exists = useSelector(state => {
+  const context1Exists = useEditorSelector(state => {
     const rootChildren = getAllChildrenAsThoughts(state, HOME_TOKEN)
     return rootChildren.find(
       child => child.value.toLowerCase() === TUTORIAL_CONTEXT1_PARENT[tutorialChoice].toLowerCase(),
     )
   })
-  const tryItYourself = useSelector(state => {
+  const tryItYourself = useEditorSelector(state => {
     const tutorialChoiceId = contextToThoughtId(state, [TUTORIAL_CONTEXT1_PARENT[tutorialChoice]])
     return (
       tutorialChoiceId &&

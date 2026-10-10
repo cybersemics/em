@@ -1,9 +1,8 @@
 import _ from 'lodash'
 import lifecycle from 'page-lifecycle'
-import { Store } from 'redux'
+import EditorStore from '../@types/EditorStore'
 import LifecycleState from '../@types/LifecycleState'
 import Path from '../@types/Path'
-import State from '../@types/State'
 import Timer from '../@types/Timer'
 import { alertActionCreator as alert } from '../actions/alert'
 import { errorActionCreator as error } from '../actions/error'
@@ -154,8 +153,7 @@ type EventHandlers = {
 let eventHandlers: EventHandlers | null = null
 
 /** Add window event handlers once. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const initEvents = (store: Store<State, any>) => {
+const initEvents = (store: Pick<EditorStore, 'getState' | 'dispatch'>) => {
   if (eventHandlers) return eventHandlers
 
   /** Reads the numeric browser history state used by updateUrlHistory. */

@@ -83,8 +83,8 @@ const saveCursor = _.throttle(
  * SIDE EFFECTS: window.history.
  */
 const updateUrlHistory = (state: State, path: Path) => {
-  // wait until local state has loaded before updating the url
-  if (state.isLoading) return
+  // Preserve the startup URL until the loaded document has restored its cursor.
+  if (state.isLoading || !state.cursorInitialized) return
 
   // If running as a PWA, do not update the browser URL.
   // On iOS, it causes a special browser navigation bar to appear.

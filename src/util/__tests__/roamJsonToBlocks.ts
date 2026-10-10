@@ -1,18 +1,18 @@
-import Index from '../../@types/IndexType'
-import Lexeme from '../../@types/Lexeme'
 import SimplePath from '../../@types/SimplePath'
-import State from '../../@types/State'
-import Thought from '../../@types/Thought'
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import hashThought from '../../util/hashThought'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import removeHome from '../../util/removeHome'
 import importJson from '../importJson'
 import initialState from '../initialState'
-import keyValueBy from '../keyValueBy'
 import roamJsonToBlocks, { RoamPage } from '../roamJsonToBlocks'
 
 vi.mock('../timestamp', () => ({ default: () => '2020-11-02T01:11:58.869Z' }))
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 const testData: RoamPage[] = [
   {
@@ -70,25 +70,13 @@ const testData: RoamPage[] = [
 /** Imports the given Roam's JSON format and exports it as plaintext. */
 const importExport = (roamJson: RoamPage[]) => {
   const thoughtsJSON = roamJsonToBlocks(roamJson)
-  const state = initialState()
-  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJson(state, HOME_PATH as SimplePath, thoughtsJSON, {
-    skipRoot: false,
-  })
-
-  const stateNew: State = {
-    ...initialState(),
-    thoughts: {
-      ...state.thoughts,
-      thoughtIndex: {
-        ...state.thoughts.thoughtIndex,
-        ...(thoughtIndexUpdates as Index<Thought>),
-      },
-      lexemeIndex: {
-        ...state.thoughts.lexemeIndex,
-        ...(lexemeIndexUpdates as Index<Lexeme>),
-      },
-    },
-  }
+  const stateNew = runDocumentCommand(
+    (state, transaction) => ({
+      ...state,
+      thoughts: transaction.update(importJson(state, HOME_PATH as SimplePath, thoughtsJSON, { skipRoot: false })),
+    }),
+    initialState(),
+  )
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
   return removeHome(exported)
 }
@@ -213,9 +201,13 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
 
   const blocks = roamJsonToBlocks(testData)
 
-  const { thoughtIndexUpdates, lexemeIndexUpdates } = importJson(initialState(), HOME_PATH as SimplePath, blocks, {
-    skipRoot: false,
-  })
+  const state = runDocumentCommand(
+    (state, transaction) => ({
+      ...state,
+      thoughts: transaction.update(importJson(state, HOME_PATH as SimplePath, blocks, { skipRoot: false })),
+    }),
+    initialState(),
+  )
 
   /** Gets the edit-time of a RoamBlock. */
   const editTimeOf = (value: string) => {
@@ -229,33 +221,17 @@ test('it should save create-time as created and edit-time as lastUpdated', () =>
     return roamBlock?.['create-time'] || null
   }
 
-  const thoughtIndexEntries = keyValueBy(thoughtIndexUpdates as Index<Thought>, (key, thought) => ({
-    [thought.value]: thought,
-  }))
+  const thoughtsByValue = Object.fromEntries(Array.from(state.thoughts.values(), thought => [thought.value, thought]))
 
-  expect(thoughtIndexEntries).toMatchObject({
-    // RoamPages acquire the edit time of their last child
-    Fruits: { lastUpdated: editTimeOf('Banana') },
-    Veggies: { lastUpdated: editTimeOf('Spinach') },
-    // RoamBlocks use specified edit time
-    Apple: { lastUpdated: editTimeOf('Apple') },
-    Orange: { lastUpdated: editTimeOf('Orange') },
-    Banana: { lastUpdated: editTimeOf('Banana') },
-    Broccoli: { lastUpdated: editTimeOf('Broccoli') },
-    Spinach: { lastUpdated: editTimeOf('Spinach') },
-  })
-
-  expect(lexemeIndexUpdates).toMatchObject({
-    // RoamPages acquire the edit time of their first child for thoughts
-    // TODO: This differs from thoughtIndex incidentally. Should normalize the edit times used for thoughtIndex and lexemeIndex.
-    [hashThought('Fruits')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
-    [hashThought('Veggies')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
-
-    // RoamBlocks use specified edit time
-    [hashThought('Apple')]: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
-    [hashThought('Orange')]: { created: createTime('Orange'), lastUpdated: editTimeOf('Orange') },
-    [hashThought('Banana')]: { created: createTime('Banana'), lastUpdated: editTimeOf('Banana') },
-    [hashThought('Broccoli')]: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
-    [hashThought('Spinach')]: { created: createTime('Spinach'), lastUpdated: editTimeOf('Spinach') },
+  expect(thoughtsByValue).toMatchObject({
+    // RoamPages acquire their first child's create time and their last child's edit time.
+    Fruits: { created: createTime('Apple'), lastUpdated: editTimeOf('Banana') },
+    Veggies: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Spinach') },
+    // RoamBlocks use their specified times.
+    Apple: { created: createTime('Apple'), lastUpdated: editTimeOf('Apple') },
+    Orange: { created: createTime('Orange'), lastUpdated: editTimeOf('Orange') },
+    Banana: { created: createTime('Banana'), lastUpdated: editTimeOf('Banana') },
+    Broccoli: { created: createTime('Broccoli'), lastUpdated: editTimeOf('Broccoli') },
+    Spinach: { created: createTime('Spinach'), lastUpdated: editTimeOf('Spinach') },
   })
 })

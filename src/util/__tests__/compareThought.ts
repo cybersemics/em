@@ -3,6 +3,9 @@ import Timestamp from '../../@types/Timestamp'
 import importText from '../../actions/importText'
 import { HOME_TOKEN } from '../../constants'
 import contextToThought from '../../test-helpers/contextToThought'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import timestamp from '../../util/timestamp'
 import {
   compare,
@@ -20,8 +23,8 @@ import {
   compareThought,
   compareThoughtByCreated,
   compareThoughtByCreatedDescending,
-  compareThoughtByNoteAndRank,
-  compareThoughtByNoteDescendingAndRank,
+  compareThoughtByNote,
+  compareThoughtByNoteDescending,
   compareThoughtByUpdated,
   compareThoughtByUpdatedDescending,
   compareThoughtDescending,
@@ -30,15 +33,12 @@ import {
 } from '../compareThought'
 import createId from '../createId'
 import initialState from '../initialState'
-import reducerFlow from '../reducerFlow'
 
 /** Build a test thought with the given value. */
 const thought = (value: string): Thought => ({
   id: createId(),
-  rank: 0,
   value: value,
   parentId: HOME_TOKEN,
-  childrenMap: {},
   lastUpdated: timestamp(),
   updatedBy: '',
   created: timestamp(),
@@ -645,15 +645,6 @@ describe('compareThoughtByCreated', () => {
     expect(compareThoughtByCreated(newer, older)).toBe(1)
     expect(compareThoughtByCreated(older, { ...older })).toBe(0)
   })
-
-  it('falls back to rank when created timestamps are equal', () => {
-    const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), created: ts, rank: 0 }
-    const b = { ...thought('b'), created: ts, rank: 1 }
-    expect(compareThoughtByCreated(a, b)).toBe(-1)
-    expect(compareThoughtByCreated(b, a)).toBe(1)
-    expect(compareThoughtByCreated(a, { ...a })).toBe(0)
-  })
 })
 
 describe('compareThoughtByCreatedDescending', () => {
@@ -663,15 +654,6 @@ describe('compareThoughtByCreatedDescending', () => {
     expect(compareThoughtByCreatedDescending(newer, older)).toBe(-1)
     expect(compareThoughtByCreatedDescending(older, newer)).toBe(1)
     expect(compareThoughtByCreatedDescending(newer, { ...newer })).toBe(0)
-  })
-
-  it('falls back to rank when created timestamps are equal', () => {
-    const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), created: ts, rank: 0 }
-    const b = { ...thought('b'), created: ts, rank: 1 }
-    expect(compareThoughtByCreatedDescending(a, b)).toBe(-1)
-    expect(compareThoughtByCreatedDescending(b, a)).toBe(1)
-    expect(compareThoughtByCreatedDescending(a, { ...a })).toBe(0)
   })
 })
 
@@ -683,15 +665,6 @@ describe('compareThoughtByUpdated', () => {
     expect(compareThoughtByUpdated(newer, older)).toBe(1)
     expect(compareThoughtByUpdated(older, { ...older })).toBe(0)
   })
-
-  it('falls back to rank when lastUpdated timestamps are equal', () => {
-    const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), lastUpdated: ts, rank: 0 }
-    const b = { ...thought('b'), lastUpdated: ts, rank: 1 }
-    expect(compareThoughtByUpdated(a, b)).toBe(-1)
-    expect(compareThoughtByUpdated(b, a)).toBe(1)
-    expect(compareThoughtByUpdated(a, { ...a })).toBe(0)
-  })
 })
 
 describe('compareThoughtByUpdatedDescending', () => {
@@ -702,18 +675,12 @@ describe('compareThoughtByUpdatedDescending', () => {
     expect(compareThoughtByUpdatedDescending(older, newer)).toBe(1)
     expect(compareThoughtByUpdatedDescending(newer, { ...newer })).toBe(0)
   })
-
-  it('falls back to rank when lastUpdated timestamps are equal', () => {
-    const ts = 1000000 as Timestamp
-    const a = { ...thought('a'), lastUpdated: ts, rank: 0 }
-    const b = { ...thought('b'), lastUpdated: ts, rank: 1 }
-    expect(compareThoughtByUpdatedDescending(a, b)).toBe(-1)
-    expect(compareThoughtByUpdatedDescending(b, a)).toBe(1)
-    expect(compareThoughtByUpdatedDescending(a, { ...a })).toBe(0)
-  })
 })
 
-describe('compareThoughtByNoteAndRank', () => {
+describe('compareThoughtByNote', () => {
+  beforeEach(initStore)
+  afterEach(waitForThoughtspaceIdle)
+
   it('sorts thoughts with notes before thoughts without notes', () => {
     const state = reducerFlow([
       importText({
@@ -729,8 +696,8 @@ describe('compareThoughtByNoteAndRank', () => {
     const thoughtA = contextToThought(state, ['a'])!
     const thoughtB = contextToThought(state, ['b'])!
 
-    expect(compareThoughtByNoteAndRank(state)(thoughtA, thoughtB)).toBe(-1)
-    expect(compareThoughtByNoteAndRank(state)(thoughtB, thoughtA)).toBe(1)
+    expect(compareThoughtByNote(state)(thoughtA, thoughtB)).toBe(-1)
+    expect(compareThoughtByNote(state)(thoughtB, thoughtA)).toBe(1)
   })
 
   it('sorts by note value ascending when both thoughts have notes', () => {
@@ -750,35 +717,16 @@ describe('compareThoughtByNoteAndRank', () => {
     const thoughtA = contextToThought(state, ['a'])!
     const thoughtB = contextToThought(state, ['b'])!
 
-    expect(compareThoughtByNoteAndRank(state)(thoughtA, thoughtB)).toBe(-1)
-    expect(compareThoughtByNoteAndRank(state)(thoughtB, thoughtA)).toBe(1)
-    expect(compareThoughtByNoteAndRank(state)(thoughtA, { ...thoughtA })).toBe(0)
-  })
-
-  it('falls back to rank when notes are equal', () => {
-    const state = reducerFlow([
-      importText({
-        text: `
-          - x
-            - =note
-              - same note
-          - y
-            - =note
-              - same note
-          `,
-      }),
-    ])(initialState())
-
-    const thoughtX = contextToThought(state, ['x'])!
-    const thoughtY = contextToThought(state, ['y'])!
-
-    // x has a lower rank than y since it was imported first; tiebreak by rank
-    expect(compareThoughtByNoteAndRank(state)(thoughtX, thoughtY)).toBe(-1)
-    expect(compareThoughtByNoteAndRank(state)(thoughtY, thoughtX)).toBe(1)
+    expect(compareThoughtByNote(state)(thoughtA, thoughtB)).toBe(-1)
+    expect(compareThoughtByNote(state)(thoughtB, thoughtA)).toBe(1)
+    expect(compareThoughtByNote(state)(thoughtA, { ...thoughtA })).toBe(0)
   })
 })
 
-describe('compareThoughtByNoteDescendingAndRank', () => {
+describe('compareThoughtByNoteDescending', () => {
+  beforeEach(initStore)
+  afterEach(waitForThoughtspaceIdle)
+
   it('sorts thoughts with notes before thoughts without notes', () => {
     const state = reducerFlow([
       importText({
@@ -794,8 +742,8 @@ describe('compareThoughtByNoteDescendingAndRank', () => {
     const thoughtA = contextToThought(state, ['a'])!
     const thoughtB = contextToThought(state, ['b'])!
 
-    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtA, thoughtB)).toBe(-1)
-    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtB, thoughtA)).toBe(1)
+    expect(compareThoughtByNoteDescending(state)(thoughtA, thoughtB)).toBe(-1)
+    expect(compareThoughtByNoteDescending(state)(thoughtB, thoughtA)).toBe(1)
   })
 
   it('sorts by note value descending when both thoughts have notes', () => {
@@ -815,28 +763,7 @@ describe('compareThoughtByNoteDescendingAndRank', () => {
     const thoughtA = contextToThought(state, ['a'])!
     const thoughtB = contextToThought(state, ['b'])!
 
-    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtA, thoughtB)).toBe(1)
-    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtB, thoughtA)).toBe(-1)
-  })
-
-  it('falls back to rank when notes are equal', () => {
-    const state = reducerFlow([
-      importText({
-        text: `
-          - x
-            - =note
-              - same note
-          - y
-            - =note
-              - same note
-          `,
-      }),
-    ])(initialState())
-
-    const thoughtX = contextToThought(state, ['x'])!
-    const thoughtY = contextToThought(state, ['y'])!
-
-    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtX, thoughtY)).toBe(-1)
-    expect(compareThoughtByNoteDescendingAndRank(state)(thoughtY, thoughtX)).toBe(1)
+    expect(compareThoughtByNoteDescending(state)(thoughtA, thoughtB)).toBe(1)
+    expect(compareThoughtByNoteDescending(state)(thoughtB, thoughtA)).toBe(-1)
   })
 })

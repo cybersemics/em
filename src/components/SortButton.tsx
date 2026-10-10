@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import CommandSortType from '../@types/CommandSortType'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useOnClickOutside from '../hooks/useOnClickOutside'
 import theme from '../selectors/theme'
 import FadeTransition from './FadeTransition'
@@ -16,7 +16,7 @@ interface SortButtonProps {
  * SortButton component.
  * */
 const SortButton = ({ onSortChange }: SortButtonProps) => {
-  const isLightTheme = useSelector(state => theme(state) === 'Light')
+  const isLightTheme = useEditorSelector(state => theme(state) === 'Light')
   const [isDropdownOpen, setDropdownOpen] = useState(false)
   const [selectedSort, setSelectedSort] = useState<CommandSortType>('type')
   const buttonRef = useRef<HTMLButtonElement>(null)

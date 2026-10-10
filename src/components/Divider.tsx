@@ -7,6 +7,7 @@ import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
 import { setCursorActionCreator as setCursor } from '../actions/setCursor'
 import { DIVIDER_MIN_WIDTH } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import attributeEquals from '../selectors/attributeEquals'
 import { getAllChildrenAsThoughts } from '../selectors/getChildren'
 import rootedParentOf from '../selectors/rootedParentOf'
@@ -19,7 +20,7 @@ import isDivider from '../util/isDivider'
 
 /** Custom hook to fetch thought IDs that affect the divider width. */
 const useWidthDependentThoughtIds = (path: Path): ThoughtId[] => {
-  return useSelector((state: State) => {
+  return useEditorSelector((state: State) => {
     const parentPath = rootedParentOf(state, path)
     const parentId = head(parentPath)
     const grandParentPath = parentId ? rootedParentOf(state, parentPath) : null

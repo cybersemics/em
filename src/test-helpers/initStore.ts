@@ -3,7 +3,7 @@ import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import store from '../stores/app'
 import { resetStores } from '../stores/ministore'
 import storage from '../util/storage'
-import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
+import commandThoughtspace from './commandThoughtspace'
 
 interface Params {
   /**
@@ -13,7 +13,7 @@ interface Params {
 }
 
 /**
- * Initializes the store. Clears the store and skips the tutorial.
+ * Initializes the live editor and isolated command fixtures, clears the store, and skips the tutorial.
  */
 const initStore = async ({ allowTutorial }: Params = {}) => {
   // Use fake timers so throttled/debounced side effects (e.g., url/history updates, storage writes)
@@ -21,9 +21,8 @@ const initStore = async ({ allowTutorial }: Params = {}) => {
   // This makes tests deterministic and prevents post-teardown access to window/localStorage.
   vi.useFakeTimers()
 
-  await waitForThoughtspaceIdle()
-  await thoughtspaceRuntime.drop()
-  await thoughtspaceRuntime.init({ storage: 'memory' })
+  await Promise.all([thoughtspaceRuntime.drop(), commandThoughtspace.drop()])
+  await Promise.all([thoughtspaceRuntime.init({ storage: 'memory' }), commandThoughtspace.init({ storage: 'memory' })])
   store.dispatch(clear())
 
   // Ministores are module-level singletons that vitest only isolates per test file, so reset them alongside the Redux

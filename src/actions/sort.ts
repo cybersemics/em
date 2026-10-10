@@ -1,48 +1,37 @@
-import _ from 'lodash'
-import Index from '../@types/IndexType'
-import SortPreference from '../@types/SortPreference'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
-import { getAllChildrenSorted } from '../selectors/getChildren'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
+import { getAllChildrenAsThoughts, getAllChildrenSorted } from '../selectors/getChildren'
 import getSortPreference from '../selectors/getSortPreference'
-import keyValueBy from '../util/keyValueBy'
+import command from '../util/command'
 import updateThoughts from './updateThoughts'
 
 /** Sorts a context. If no sort preference is provided, sorts by its =sort attribute. */
-const sort = (state: State, id: ThoughtId, sortPreference?: SortPreference): State => {
-  sortPreference = sortPreference || getSortPreference(state, id)
+const sort = (state: State, id: ThoughtId, transaction?: ThoughtspaceTransaction): State => {
+  const sortPreference = getSortPreference(state, id)
   if (sortPreference?.type === 'None') return state
 
   // Empty and emoji-only thoughts are normally sorted to their point of creation, but applying the sort re-ranks
   // every child, so the sort condition is applied to them as well. This floats empty thoughts to the top (#4000).
   const children = getAllChildrenSorted(state, id, { sortEmpty: true })
 
-  // Get children in their current rank order to compare with the desired sorted order.
-  // Sort by rank to determine the current sequence of thoughts.
-  const childrenByRank = [...children].sort((a, b) => a.rank - b.rank)
+  const childrenByRank = getAllChildrenAsThoughts(state, id)
 
   // No-op if the children are already in the correct sorted order (same sequence of IDs).
-  // This also handles the case where ranks are non-zero or gapped (e.g. 5, 6, 7) but in the
-  // correct relative order—do not normalize ranks unless the order itself must change.
   if (children.every((child, i) => child.id === childrenByRank[i].id)) return state
 
-  // Only include thoughts whose rank actually changes after normalization to 0, 1, 2, ...
-  const thoughtIndexUpdates = keyValueBy(children, (child, i) =>
-    child.rank !== i ? { [child.id]: { ...child, rank: i } } : null,
+  return updateThoughts(
+    state,
+    {
+      write: transaction =>
+        children.forEach((child, i) => {
+          if (child.id !== childrenByRank[i].id)
+            transaction.move(child.id, { parentId: id, afterId: children[i - 1]?.id ?? null })
+        }),
+      preventExpandThoughts: true,
+    },
+    transaction,
   )
-
-  if (Object.keys(thoughtIndexUpdates).length === 0) return state
-
-  const movePlacements: Index<ThoughtId | null> = keyValueBy(children, (child, i) =>
-    child.id in thoughtIndexUpdates ? { [child.id]: i === 0 ? null : children[i - 1].id } : null,
-  )
-
-  return updateThoughts(state, {
-    thoughtIndexUpdates,
-    lexemeIndexUpdates: {},
-    movePlacements,
-    preventExpandThoughts: true,
-  })
 }
 
-export default _.curryRight(sort, 2)
+export default command(sort)

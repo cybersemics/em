@@ -7,7 +7,6 @@ import Thought from '../@types/Thought'
 import { ALLOWED_FORMATTING_TAGS, EMOJI_REGEX, REGEX_EMOJI_GLOBAL } from '../constants'
 import noteValue from '../selectors/noteValue'
 import thoughtToPath from '../selectors/thoughtToPath'
-import compareByRank from './compareByRank'
 import isAttribute from './isAttribute'
 import lower from './lower'
 import stripTags from './stripTags'
@@ -316,21 +315,21 @@ export const compareThought: ComparatorFunction<Thought> = (a: Thought, b: Thoug
 export const compareThoughtDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
   compareReasonableDescending(a.value, b.value)
 
-/** Compare two thoughts by their created timestamp in ascending order (oldest first). Fall back to rank if created at the same time, so that thoughts created within the same millisecond keep the order they are rendered in. */
+/** Compares creation timestamps in ascending order; the context comparator supplies the sibling-position fallback. */
 export const compareThoughtByCreated: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compare(a.created, b.created) || compareByRank(a, b)
+  compare(a.created, b.created)
 
-/** Compare two thoughts by their created timestamp in descending order (newest first). Falls back to rank in ascending order, like compareThoughtByCreated. */
+/** Compares creation timestamps in descending order. */
 export const compareThoughtByCreatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compare(b.created, a.created) || compareByRank(a, b)
+  compare(b.created, a.created)
 
-/** Compare two thoughts by their lastUpdated timestamp in ascending order (oldest first). Fall back to rank if updated at the same time, so that thoughts updated within the same millisecond keep the order they are rendered in. */
+/** Compares update timestamps in ascending order. */
 export const compareThoughtByUpdated: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compare(a.lastUpdated, b.lastUpdated) || compareByRank(a, b)
+  compare(a.lastUpdated, b.lastUpdated)
 
-/** Compare two thoughts by their lastUpdated timestamp in descending order (newest first). Falls back to rank in ascending order, like compareThoughtByUpdated. */
+/** Compares update timestamps in descending order. */
 export const compareThoughtByUpdatedDescending: ComparatorFunction<Thought> = (a: Thought, b: Thought) =>
-  compare(b.lastUpdated, a.lastUpdated) || compareByRank(a, b)
+  compare(b.lastUpdated, a.lastUpdated)
 
 /** Makes a comparator function that compares two thoughts by their note value. */
 const makeCompareThoughtByNote =
@@ -350,10 +349,10 @@ const makeCompareThoughtNoteAndOther =
     return aHasNote && !bHasNote ? -1 : bHasNote && !aHasNote ? 1 : 0
   }
 
-/** Compare two thoughts by their note value in ascending order, falling back to their rank if notes are absent or equal. */
-export const compareThoughtByNoteAndRank = (state: State): ComparatorFunction<Thought> =>
-  makeOrderedComparator([makeCompareThoughtNoteAndOther(state), makeCompareThoughtByNote(state), compareByRank])
+/** Compares two thoughts by their note value in ascending order. */
+export const compareThoughtByNote = (state: State): ComparatorFunction<Thought> =>
+  makeOrderedComparator([makeCompareThoughtNoteAndOther(state), makeCompareThoughtByNote(state)])
 
-/** Compare two thoughts by their note value in descending order, falling back to their rank if notes are absent or equal. */
-export const compareThoughtByNoteDescendingAndRank = (state: State): ComparatorFunction<Thought> =>
-  makeOrderedComparator([makeCompareThoughtNoteAndOther(state), _.flip(makeCompareThoughtByNote(state)), compareByRank])
+/** Compares two thoughts by their note value in descending order. */
+export const compareThoughtByNoteDescending = (state: State): ComparatorFunction<Thought> =>
+  makeOrderedComparator([makeCompareThoughtNoteAndOther(state), _.flip(makeCompareThoughtByNote(state))])

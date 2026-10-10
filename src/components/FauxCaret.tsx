@@ -6,6 +6,7 @@ import FauxCaretType from '../@types/FauxCaretType'
 import Path from '../@types/Path'
 import { isSafari, isTouch } from '../browser'
 import { getBoundingClientRect } from '../device/selection'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useLayoutAnimationFrameEffect from '../hooks/useLayoutAnimationFrameEffect'
 import attributeEquals from '../selectors/attributeEquals'
 import editingValueStore from '../stores/editingValueStore'
@@ -46,7 +47,7 @@ const FauxCaret = ({
   }>(() => (isTouch && isSafari() && caretType === 'positioned' ? { display: 'none' } : {}))
 
   const isEditingCursor = useSelector(state => state.isKeyboardOpen && equalPath(path, state.cursor))
-  const isTableCol1 = useSelector(state => path && attributeEquals(state, head(path), '=view', 'Table'))
+  const isTableCol1 = useEditorSelector(state => path && attributeEquals(state, head(path), '=view', 'Table'))
 
   // Hide the positioned faux caret when typing occurs.
   editingValueStore.useEffect(() => {

@@ -1,8 +1,8 @@
 import { renderHook } from '@testing-library/react'
 import React, { act } from 'react'
-import { Provider } from 'react-redux'
 import { token } from '../../../styled-system/tokens'
 import { fontSizeActionCreator } from '../../actions/fontSize'
+import EditorProvider from '../../components/EditorProvider'
 import store from '../../stores/app'
 import viewportStore from '../../stores/viewportStore'
 import useGestureMenuLayout, {
@@ -64,8 +64,9 @@ const asTablet = <T>(fn: () => T): T => {
   }
 }
 
-/** Redux Provider wrapper so the hook can read state.fontSize. */
-const wrapper = ({ children }: { children: React.ReactNode }) => React.createElement(Provider, { store, children })
+/** EditorProvider wrapper so the hook can read state.fontSize. */
+const wrapper = ({ children }: { children: React.ReactNode }) =>
+  React.createElement(EditorProvider, { store, children })
 
 /** Sets the viewport dimensions the hook reads. */
 const setViewport = (innerWidth: number, innerHeight: number) => {

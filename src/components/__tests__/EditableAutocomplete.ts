@@ -1,7 +1,6 @@
 import { fireEvent } from '@testing-library/dom'
 import { render } from '@testing-library/react'
 import { act, createElement } from 'react'
-import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../actions/keyboardOpen'
@@ -17,6 +16,7 @@ import dispatch from '../../test-helpers/dispatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import Editable from '../Editable'
+import EditorProvider from '../EditorProvider'
 
 // The focus retarget that follows iOS autocomplete (#4467) is only installed on Mobile Safari.
 vi.mock('../../browser', async importOriginal => {
@@ -34,13 +34,12 @@ it('keeps the space that commits an iOS autocorrect in the editable (#4828)', as
 
   const simplePath = contextToPath(store.getState(), ['Adf']) as SimplePath
   const { container } = render(
-    createElement(Provider, {
+    createElement(EditorProvider, {
       store,
       children: createElement(Editable, {
         isEditing: true,
         isVisible: true,
         path: simplePath,
-        rank: 0,
         simplePath,
       }),
     }),
@@ -81,13 +80,12 @@ it('keeps edit mode active through the iOS autocorrect focus retarget (#4692)', 
 
   const simplePath = contextToPath(store.getState(), ['Adf']) as SimplePath
   const { container } = render(
-    createElement(Provider, {
+    createElement(EditorProvider, {
       store,
       children: createElement(Editable, {
         isEditing: true,
         isVisible: true,
         path: simplePath,
-        rank: 0,
         simplePath,
       }),
     }),
@@ -142,13 +140,12 @@ it('keeps multi edit mode through the focus retarget after an iOS autocorrect', 
 
   const simplePath = contextToPath(store.getState(), ['a']) as SimplePath
   const { container } = render(
-    createElement(Provider, {
+    createElement(EditorProvider, {
       store,
       children: createElement(Editable, {
         isEditing: true,
         isVisible: true,
         path: simplePath,
-        rank: 0,
         simplePath,
       }),
     }),
@@ -185,13 +182,12 @@ it('does not scroll when the focus retarget moves focus after an iOS autocorrect
 
   const simplePath = contextToPath(store.getState(), ['Adf']) as SimplePath
   const { container } = render(
-    createElement(Provider, {
+    createElement(EditorProvider, {
       store,
       children: createElement(Editable, {
         isEditing: true,
         isVisible: true,
         path: simplePath,
-        rank: 0,
         simplePath,
       }),
     }),

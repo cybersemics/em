@@ -1,22 +1,41 @@
-import Index from '../@types/IndexType'
-import Lexeme from '../@types/Lexeme'
-import Thought from '../@types/Thought'
-import ThoughtId from '../@types/ThoughtId'
+import type ThoughtId from '../@types/ThoughtId'
+import type ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
+import type ThoughtspaceView from '../@types/ThoughtspaceView'
 
-/** A standard interface for data providers that can sync thoughts. */
-export interface DataProvider {
-  name?: string
-  clear: () => Promise<unknown>
-  getLexemeById: (key: string) => Promise<Lexeme | undefined>
-  getLexemesByIds: (keys: string[]) => Promise<(Lexeme | undefined)[]>
-  getThoughtById: (id: ThoughtId) => Promise<Thought | undefined>
-  getThoughtsByIds: (ids: ThoughtId[]) => Promise<(Thought | undefined)[]>
-  /** Resolved value is provider-specific; the treecrdt provider returns `readonly Operation[]` for local tree mutations. */
-  updateThoughts: (args: {
-    thoughtIndexUpdates: Index<Thought | null>
-    lexemeIndexUpdates: Index<Lexeme | null>
-    movePlacements?: Index<ThoughtId | null>
-  }) => Promise<unknown>
-  freeThought: (id: ThoughtId) => Promise<void>
-  freeLexeme: (key: string) => Promise<void>
+/** Synchronous document access backed by asynchronous persistence. */
+interface DataProvider {
+  /** Current accepted-operation offset; read transaction.operationOffset during an active command. */
+  readonly operationOffset: number
+  /** Reads the canonical document and its derived lexemes. */
+  project: () => ThoughtspaceView
+  /** Reads ordered, non-overlapping operation spans; readers expire after each synchronous callback. */
+  readHistory: (
+    spans: readonly { from: number; to: number }[],
+    visit: (
+      history: {
+        before: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>
+        after: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>
+        thoughtIds: readonly ThoughtId[]
+        /** Parents whose raw child order changed, including payload-less children. */
+        childrenChangedIds: readonly ThoughtId[]
+      },
+      index: number,
+    ) => void,
+  ) => void
+  /**
+   * Invalidates reads after completed local and incoming changes. The previous reader is valid only during the
+   * synchronous callback, before any reentrant commit; current values come from project().
+   */
+  subscribe: (listener: (previous: Omit<ThoughtspaceView, 'getLexeme' | 'revision'>) => void) => () => void
+  /**
+   * Runs an atomic command synchronously; persisted resolves after storage acknowledges its operations.
+   * The optional commit callback runs after persistence is queued and before subscribers, including for no-op
+   * commands. Its errors propagate without rolling back the committed document or suppressing notification.
+   */
+  transact: <T>(
+    work: (transaction: ThoughtspaceTransaction) => T,
+    onCommit?: (value: T, persisted: Promise<void>) => void,
+  ) => { value: T; persisted: Promise<void> }
 }
+
+export default DataProvider

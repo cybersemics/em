@@ -1,11 +1,11 @@
 import { renderHook } from '@testing-library/react'
 import { createElement } from 'react'
-import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../actions/keyboardOpen'
 import store from '../../../stores/app'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
+import EditorProvider from '../../EditorProvider'
 import useEditMode from '../useEditMode'
 
 // The asyncFocus dance that strands the focus is only performed on Mobile Safari.
@@ -36,7 +36,7 @@ it('focuses the editable when the caret is placed with no prior selection on a t
         style: undefined,
         transient: undefined,
       }),
-    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+    { wrapper: ({ children }) => createElement(EditorProvider, { store, children }) },
   )
 
   // The editable must end up with the focus. If it is left on the dummy input, WKWebView never raises the keyboard

@@ -1,38 +1,30 @@
-import type { PreloadedEmWindow } from '../../../@types'
+import deferThoughtspaceInitialization from '../helpers/deferThoughtspaceInitialization'
 import getEditingText from '../helpers/getEditingText'
+import press from '../helpers/press'
+import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 30000, hookTimeout: 20000 })
 
-it('handles keyboard commands while thoughtspace initialization is delayed', async () => {
-  await page.evaluateOnNewDocument(() => {
-    const preloadedWindow = window as unknown as PreloadedEmWindow
-    preloadedWindow.em = {
-      ...preloadedWindow.em,
-      testFlags: {
-        ...preloadedWindow.em?.testFlags,
-        preventInitialize: true,
-      },
-    }
-  })
+it('ignores keyboard editing until thoughtspace initialization succeeds', async () => {
+  const errors: string[] = []
+  page.on('pageerror', error => errors.push(String(error)))
+  const resumeInitialization = await deferThoughtspaceInitialization()
 
-  await page.reload({ waitUntil: 'domcontentloaded' })
+  await press('Enter')
 
-  await page.waitForFunction(() => typeof window.em.testFlags.initialize === 'function')
-  await page.waitForFunction(() => !document.querySelector('[aria-label=modal]'))
-  await page.waitForSelector('[aria-label=empty-thoughtspace]')
+  await waitForSelector('[aria-label=thoughtspace-startup]')
+  expect(await getEditingText()).toBeUndefined()
+  expect(errors).toEqual([])
+
+  await resumeInitialization()
+  await waitForSelector('[aria-label=empty-thoughtspace]')
   expect(await getEditingText()).toBeUndefined()
 
-  try {
-    await page.keyboard.press('Enter')
+  await press('Enter')
 
-    await page.waitForSelector('[data-editing=true] [data-editable]')
-    expect(await getEditingText()).toBe('')
-  } finally {
-    await page.evaluate(async () => {
-      const em = window.em
-      await em.testFlags.initialize?.({ storage: 'memory' })
-      em.testFlags.preventInitialize = false
-    })
-  }
+  await waitForEditable('')
+  expect(await getEditingText()).toBe('')
+  expect(errors).toEqual([])
 })

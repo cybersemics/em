@@ -1,0 +1,61 @@
+import _ from 'lodash'
+import Path from '../@types/Path'
+import SimplePath from '../@types/SimplePath'
+import State from '../@types/State'
+import ThoughtId from '../@types/ThoughtId'
+import ThoughtspaceView from '../@types/ThoughtspaceView'
+import Thunk from '../@types/Thunk'
+import expandThoughts from '../selectors/expandThoughts'
+import getThoughtById from '../selectors/getThoughtById'
+import pathToThought from '../selectors/pathToThought'
+import rootedParentOf from '../selectors/rootedParentOf'
+import thoughtToPath from '../selectors/thoughtToPath'
+import { registerActionMetadata } from '../util/actionMetadata.registry'
+import equalPath from '../util/equalPath'
+import head from '../util/head'
+
+/** Publishes a complete canonical document without planning writes or recording undo history. */
+const replaceThoughts = (
+  state: State,
+  {
+    thoughts,
+    previousCursorPath,
+    repairCursor = false,
+  }: { thoughts: ThoughtspaceView; previousCursorPath?: SimplePath | null; repairCursor?: boolean },
+): State => {
+  const thoughtUi = _.pickBy(state.thoughtUi, (_, id) => !!thoughts.getThought(id as ThoughtId))
+  const next = {
+    ...state,
+    thoughts,
+    thoughtUi: _.isEqual(thoughtUi, state.thoughtUi) ? state.thoughtUi : thoughtUi,
+    isLoading: false,
+  }
+  let cursor = state.cursor
+  if (repairCursor && cursor && previousCursorPath) {
+    const thought = getThoughtById(next, head(previousCursorPath))
+    if (thought) {
+      const currentSimplePath = thoughtToPath(next, thought.id)
+      if (!equalPath(previousCursorPath, currentSimplePath)) cursor = currentSimplePath
+    } else {
+      const missingIndex = cursor.findIndex((_, i) => {
+        const path = cursor!.slice(0, i + 1) as Path
+        const ancestor = pathToThought(next, path)
+        return !ancestor || ancestor.parentId !== head(rootedParentOf(next, path))
+      })
+      cursor = missingIndex > 0 ? (cursor.slice(0, missingIndex) as Path) : null
+    }
+  }
+  const repaired = { ...next, cursor }
+  const expanded = expandThoughts(repaired, cursor)
+  return { ...repaired, expanded: _.isEqual(expanded, state.expanded) ? state.expanded : expanded }
+}
+
+/** Publishes the runtime's current document reader. */
+export const replaceThoughtsActionCreator =
+  (payload: Parameters<typeof replaceThoughts>[1]): Thunk =>
+  dispatch =>
+    dispatch({ type: 'replaceThoughts', ...payload })
+
+export default _.curryRight(replaceThoughts)
+
+registerActionMetadata('replaceThoughts', { undoable: false })

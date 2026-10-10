@@ -5,21 +5,20 @@ import { composeWithDevTools } from '@redux-devtools/extension'
 import _ from 'lodash'
 import { applyMiddleware, createStore } from 'redux'
 import { thunk } from 'redux-thunk'
+import EditorStore from '../@types/EditorStore'
 import appReducer from '../actions/app'
-import pushQueue from '../redux-enhancers/pushQueue'
+import db from '../data-providers/thoughtspace'
+import commandExecutionEnhancer from '../redux-enhancers/commandExecutionEnhancer'
 import storageCache from '../redux-enhancers/storageCache'
-import undoRedoEnhancer from '../redux-enhancers/undoRedoEnhancer'
 import updateJumpHistory from '../redux-enhancers/updateJumpHistoryEnhancer'
 import validateStateEnhancer from '../redux-enhancers/validateStateEnhancer'
 import clearSelection from '../redux-middleware/clearSelection'
 import closeDropdownsWhenCursorNull from '../redux-middleware/closeDropdownsWhenCursorNull'
 import doNotDispatchReducer from '../redux-middleware/doNotDispatchReducer'
-import freeThoughts from '../redux-middleware/freeThoughts'
 import loggerMiddleware from '../redux-middleware/loggerMiddleware'
 import multi from '../redux-middleware/multi'
 import multicursorAlertMiddleware from '../redux-middleware/multicursorAlertMiddleware'
 import multiselectCursorMiddleware from '../redux-middleware/multiselectCursorMiddleware'
-import pullQueue from '../redux-middleware/pullQueue'
 import updateEditingValue from '../redux-middleware/updateEditingValue'
 import updateUrlHistory from '../redux-middleware/updateUrlHistory'
 import validateActionRegistrations from '../util/actionMetadata.registry'
@@ -38,11 +37,9 @@ const middlewareEnhancer = applyMiddleware(
   ...(import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [doNotDispatchReducer] : []),
   multi,
   thunk,
-  pullQueue,
   clearSelection,
   updateEditingValue,
   updateUrlHistory,
-  freeThoughts,
   loggerMiddleware,
   multicursorAlertMiddleware,
   multiselectCursorMiddleware,
@@ -53,21 +50,34 @@ const middlewareEnhancer = applyMiddleware(
 const validateStateEnhancerDevOnly =
   import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test' ? [validateStateEnhancer] : null
 
-const store = createStore(
+const editorStore = createStore(
   appReducer,
   composeEnhancers(
     // validate state before production enhancers run
     ...(validateStateEnhancerDevOnly || []),
     middlewareEnhancer,
     storageCache,
-    undoRedoEnhancer,
     updateJumpHistory,
-    // must go at the end to ensure it clears the pushQueue before other enhancers
-    pushQueue,
     // validate state again after production enhancers run
     ...(validateStateEnhancerDevOnly || []),
+    // Execute commands before entering Redux; history is prepared within the same boundary.
+    commandExecutionEnhancer,
   ),
-)
+) as unknown as EditorStore
+
+const store = {
+  ...editorStore,
+  // React Redux dispatch still enters the complete command/middleware pipeline.
+  uiStore: { ...editorStore.uiStore, dispatch: editorStore.dispatch },
+}
+
+db.subscribe(previousThoughts => {
+  const thoughts = db.project()
+  if (thoughts !== store.getState().thoughts) {
+    // The previous reader is scoped to this callback and used only by diagnostic move logging.
+    store.dispatch({ type: 'replaceThoughts', thoughts, previousThoughts, repairCursor: true })
+  }
+})
 
 // Run validation
 if (import.meta.env.MODE === 'development') {

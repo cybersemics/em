@@ -1,15 +1,20 @@
 import { HOME_PATH, HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
 import pin from '../pin'
 import setSortPreference from '../setSortPreference'
 import swapGrandparent from '../swapGrandparent'
 import toggleContextView from '../toggleContextView'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('no-op if cursor is not set', () => {
   const text = `

@@ -1,6 +1,6 @@
 import { useInView } from 'motion/react'
 import { FC, RefObject, useEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { css } from '../../styled-system/css'
 import { token } from '../../styled-system/tokens'
 import Command from '../@types/Command'
@@ -8,6 +8,7 @@ import State from '../@types/State'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../actions/commandUniverseNavigate'
 import { isTouch } from '../browser'
 import { gestureString } from '../commands'
+import useEditorSelector from '../hooks/useEditorSelector'
 import GestureDiagram from './GestureDiagram'
 import HighlightedText from './HighlightedText'
 import CircleEllipsisIcon from './icons/CircleEllipsisIcon'
@@ -43,10 +44,10 @@ const CommandUniverseGridItem: FC<CommandUniverseGridItemProps> = ({
   const dispatch = useDispatch()
   const gestureBoxRef = useRef<HTMLDivElement>(null)
   const [showGesture, setShowGesture] = useState(false)
-  const isActive = useSelector(state => command.isActive?.(state))
-  const disabled = useSelector(state => !isExecutable(state, command))
+  const isActive = useEditorSelector(state => command.isActive?.(state))
+  const disabled = useEditorSelector(state => !isExecutable(state, command))
   const label = command.labelInverse && isActive ? command.labelInverse : command.label
-  const description = useSelector(state => {
+  const description = useEditorSelector(state => {
     const descriptionStringOrFunction = (isActive && command.descriptionInverse) || command.description
     return typeof descriptionStringOrFunction === 'function'
       ? descriptionStringOrFunction(state)

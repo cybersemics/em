@@ -7,11 +7,16 @@ import toggleContextView from '../../actions/toggleContextView'
 import uncategorize from '../../actions/uncategorize'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 describe('normal view', () => {
   it('do nothing on leaf', () => {
@@ -221,10 +226,7 @@ describe('normal view', () => {
         - b
         - d
     `
-    const state1 = importText({ text })(initialState())
-    const a1 = contextToThought(state1, ['a'])!
-    const c1 = contextToThought(state1, ['c'])!
-    const f1 = contextToThought(state1, ['f'])!
+    const state1 = runDocumentCommand(importText({ text }), initialState())
 
     const steps = [setCursor(['x']), uncategorize({})]
     const stateNew = reducerFlow(steps)(state1)
@@ -239,22 +241,6 @@ describe('normal view', () => {
   - d
   - e
   - f`)
-
-    const a2 = contextToThought(stateNew, ['a'])!
-    const b2 = contextToThought(stateNew, ['b'])!
-    const c2 = contextToThought(stateNew, ['c'])!
-    const d2 = contextToThought(stateNew, ['d'])!
-    const e2 = contextToThought(stateNew, ['e'])!
-    const f2 = contextToThought(stateNew, ['f'])!
-
-    // sibling ranks are unchanged
-    expect(a2.rank).toEqual(a1.rank)
-    expect(c2.rank).toEqual(c1.rank)
-    expect(f2.rank).toEqual(f1.rank)
-
-    // no duplicate ranks
-    const ranks = new Set([a2.rank, b2.rank, c2.rank, d2.rank, e2.rank, f2.rank])
-    expect(ranks.size).toEqual(6)
   })
 
   it('should re-sort parent context when uncategorizing a thought with sort attribute', () => {

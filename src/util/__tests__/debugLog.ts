@@ -262,17 +262,19 @@ describe('format', () => {
     expect(text).toContain('lastFrameAt: 2023-11-14T22:13:20.000Z')
   })
 
-  it('appends a state.thoughts dump grouped by parent and ordered by rank', () => {
+  it('appends a state.thoughts dump grouped by parent and sibling position', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     debugLog.log('x')
     const state = {
       thoughts: {
-        thoughtIndex: {
-          t1: { id: 't1', value: 'apple', rank: 1, parentId: 'root', childrenMap: {} },
-          t2: { id: 't2', value: 'banana', rank: 0, parentId: 'root', childrenMap: {}, pending: true },
-        },
-        lexemeIndex: {},
+        values: () =>
+          [
+            { id: 't1', value: 'apple', parentId: 'root' },
+            { id: 't2', value: 'banana', parentId: 'root' },
+          ].values(),
+        getPosition: (id: string) => (id === 't1' ? 1 : 0),
+        getLexeme: () => undefined,
       },
       cursor: null,
       cursorOffset: null,
@@ -286,7 +288,7 @@ describe('format', () => {
     const text = debugLog.format(state)
     expect(text).toContain('state.thoughts: 2 thoughts, 0 lexemes')
     expect(text).toContain('t1 "apple" rank:1 parent:root')
-    expect(text).toContain('t2 "banana" rank:0 parent:root pending')
+    expect(text).toContain('t2 "banana" rank:0 parent:root')
     // siblings are ordered by rank within a parent, so banana (rank 0) precedes apple (rank 1)
     expect(text.indexOf('banana')).toBeLessThan(text.indexOf('apple'))
   })
@@ -294,7 +296,7 @@ describe('format', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     const state = {
-      thoughts: { thoughtIndex: {}, lexemeIndex: {} },
+      thoughts: { values: () => [].values(), getLexeme: () => undefined },
       cursor: ['t1', 't2'],
       cursorOffset: 3,
       isKeyboardOpen: true,

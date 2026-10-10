@@ -2,10 +2,16 @@ import importText from '../../actions/importText'
 import newThought from '../../actions/newThought'
 import { EMPTY_SPACE, HOME_TOKEN } from '../../constants'
 import editThought from '../../test-helpers/editThoughtByContext'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import exportContext from '../exportContext'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('meta and archived thoughts are included by default', () => {
   const text = `
@@ -233,7 +239,7 @@ it('export note as a normal thought if lossless not selected', () => {
     - c
   `
 
-  const stateNew = importText(initialState(), { text })
+  const stateNew = runDocumentCommand(importText({ text }), initialState())
   const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain', { excludeMeta: true })
 
   expect(exported).toBe(`- ${HOME_TOKEN}

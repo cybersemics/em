@@ -7188,10 +7188,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/interface@npm:0.2.0":
+"@treecrdt/interface@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-interface-0.2.0.tgz":
   version: 0.2.0
-  resolution: "@treecrdt/interface@npm:0.2.0"
-  checksum: 10c0/50ff3dd6e32be057288150fbf4bf1906fb9aa97bb19aab04607187731dd8cf8517f2ba7265d604466acdab3ead2bd38cc3c5e2c5aef4240eb21d5102aa2f67b8
+  resolution: "@treecrdt/interface@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-interface-0.2.0.tgz"
+  checksum: 10c0/a3ae63c0f365d476e86d4daeb5fc3ea7361d1d454cee353528c58eba9bc80ef8f8da84853bfeab092019a004a33ba0780e7f9ee1c5fbcd55fec708b5b6a57369
   languageName: node
   linkType: hard
 
@@ -7247,12 +7247,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/wa-sqlite@npm:0.4.2":
+"@treecrdt/wa-sqlite@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-wa-sqlite-0.4.2.tgz":
   version: 0.4.2
-  resolution: "@treecrdt/wa-sqlite@npm:0.4.2"
+  resolution: "@treecrdt/wa-sqlite@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-wa-sqlite-0.4.2.tgz"
+  dependencies:
+    "@noble/hashes": "npm:^1.8.0"
+    "@treecrdt/interface": "npm:0.2.0"
+    comlink: "npm:^4.4.2"
+  checksum: 10c0/1ec28a4e43a3136d7b1c8556d09f2258b9e39566145980633b6ee2053f561ba36c4c32ff79a1c1e82ebb1d84827da62d039dcbb36d37aa5ed17ad0e7839f3a40
+  languageName: node
+  linkType: hard
+
+"@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-b9009d879ec89a7bf79f5e188a24bc14698a4670/treecrdt-wasm-0.0.1.tgz":
+  version: 0.0.1
+  resolution: "@treecrdt/wasm@https://github.com/cybersemics/treecrdt/releases/download/memory-preview-b9009d879ec89a7bf79f5e188a24bc14698a4670/treecrdt-wasm-0.0.1.tgz"
   dependencies:
     "@treecrdt/interface": "npm:0.2.0"
-  checksum: 10c0/4031ea77dd862b4b1988887090792f32c2ecbe1c951e0770c4a0567f3fc29edfdc1d5b24a8805eba187889d490739dd6a4a168bee0adf52e83f16d397bc43d3c
+    "@treecrdt/sync-protocol": "npm:0.1.2"
+  checksum: 10c0/67fa77053b9990aa2984e2e7741fb5f49a7743700df7bac73cb609a38cd87bef3e5251e76fb340b74296b63c24d8d56791661b0b43c1a156c5f8d037bc2a4217
   languageName: node
   linkType: hard
 
@@ -11012,6 +11024,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"comlink@npm:^4.4.2":
+  version: 4.4.2
+  resolution: "comlink@npm:4.4.2"
+  checksum: 10c0/38aa1f455cf08e94aaa8fc494fd203cc0ef02ece6c21404b7931ce17567e8a72deacddab98aa5650cfd78332ff24c34610586f6fb27fd19dc77e753ed1980deb
+  languageName: node
+  linkType: hard
+
 "commander@npm:^12.0.0, commander@npm:^12.1.0":
   version: 12.1.0
   resolution: "commander@npm:12.1.0"
@@ -12238,13 +12257,14 @@ __metadata:
     "@total-typescript/ts-reset": "npm:^0.6.1"
     "@treecrdt/auth": "npm:0.1.2"
     "@treecrdt/discovery": "npm:0.1.0"
-    "@treecrdt/interface": "npm:0.2.0"
+    "@treecrdt/interface": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-interface-0.2.0.tgz"
     "@treecrdt/riblt-wasm": "npm:0.1.0"
     "@treecrdt/sync": "npm:0.1.2"
     "@treecrdt/sync-protocol": "npm:0.1.2"
     "@treecrdt/sync-server-core": "npm:0.1.2"
     "@treecrdt/sync-sqlite": "npm:0.1.2"
-    "@treecrdt/wa-sqlite": "npm:0.4.2"
+    "@treecrdt/wa-sqlite": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-wa-sqlite-0.4.2.tgz"
+    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-b9009d879ec89a7bf79f5e188a24bc14698a4670/treecrdt-wasm-0.0.1.tgz"
     "@trivago/prettier-plugin-sort-imports": "npm:^6.0.2"
     "@types/clipboard": "npm:^2.0.10"
     "@types/dompurify": "npm:^3.2.0"
@@ -12265,6 +12285,7 @@ __metadata:
     "@types/sanitize-html": "npm:^2.16.2"
     "@types/sinonjs__fake-timers": "npm:^15.0.1"
     "@types/tcp-port-used": "npm:^1.0.4"
+    "@types/use-sync-external-store": "npm:^0.0.6"
     "@typescript-eslint/eslint-plugin": "npm:^8.71.0"
     "@typescript-eslint/parser": "npm:^8.71.0"
     "@typescript/native": "npm:typescript@7.0.2"
@@ -12359,6 +12380,7 @@ __metadata:
     ts-key-enum: "npm:^3.0.13"
     typescript: "npm:@typescript/typescript6@6.0.2"
     undici: "npm:^8.11.2"
+    use-sync-external-store: "npm:^1.4.0"
     vi-canvas-mock: "npm:^1.0.0"
     vite: "npm:^7.3.1"
     vite-plugin-checker: "npm:^0.12.0"

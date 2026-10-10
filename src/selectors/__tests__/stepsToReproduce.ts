@@ -4,6 +4,8 @@ import { importTextActionCreator as importText } from '../../actions/importText'
 import { indentActionCreator as indent } from '../../actions/indent'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../../actions/moveThoughtDown'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
+import { replaceThoughtsActionCreator as replaceThoughts } from '../../actions/replaceThoughts'
+import { setIsMulticursorExecutingActionCreator as setIsMulticursorExecuting } from '../../actions/setIsMulticursorExecuting'
 import { swapParentActionCreator as swapParent } from '../../actions/swapParent'
 import { toggleAttributeActionCreator as toggleAttribute } from '../../actions/toggleAttribute'
 import { undoActionCreator as undo } from '../../actions/undo'
@@ -13,11 +15,14 @@ import moveThoughtDownCommand from '../../commands/moveThoughtDown'
 import newSubthoughtTopCommand from '../../commands/newSubthoughtTop'
 import newThoughtAboveCommand from '../../commands/newThoughtAbove'
 import toggleSortCommand from '../../commands/toggleSort'
-import { HOME_PATH } from '../../constants'
+import { HOME_PATH, HOME_TOKEN } from '../../constants'
+import db from '../../data-providers/thoughtspace'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
+import contextToThought from '../../test-helpers/contextToThought'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
 import initStore from '../../test-helpers/initStore'
+import { moveThoughtAtFirstMatchActionCreator as moveThought } from '../../test-helpers/moveThoughtAtFirstMatch'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import contextToPath from '../contextToPath'
 import stepsToReproduce from '../stepsToReproduce'
@@ -36,6 +41,10 @@ it('report the thoughtspace at the start, the steps up to the end, and the thoug
     setCursor(['b']),
     indent(),
   ])
+
+  expect(store.getState().undoPatches.flatMap(patch => patch.ops.map(op => op.path))).not.toContainEqual(
+    expect.stringMatching(/^\/thoughts(?:\/|$)/),
+  )
 
   // start after b was created, end after c was indented
   expect(stepsToReproduce(store.getState(), { start: 3, end: 1 })).toBe(`## Steps to Reproduce
@@ -188,7 +197,167 @@ it('name each action as dispatched, preceded by the cursor it acts on', () => {
 `)
 })
 
-it('name a multicursor command by its label, preceded by the selection it acts on', () => {
+it('retains incoming siblings and payloads while reconstructing a local reorder for a report', () => {
+  store.dispatch([importText({ text: '- a\n- b\n- c\n  - x' }), setCursor(['a']), moveThoughtDown()])
+  const b = contextToThought(store.getState(), ['b'])!
+  const x = contextToThought(store.getState(), ['c', 'x'])!
+  const incoming = db.transact(transaction =>
+    transaction.update({
+      thoughtIndexUpdates: {
+        [b.id]: { ...b, value: 'incoming b' },
+        [x.id]: { ...x, parentId: HOME_TOKEN },
+      },
+      movePlacements: { [x.id]: null },
+    }),
+  )
+  store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
+  const current = store.getState()
+
+  // Replaying relative array positions would overwrite x and duplicate a; the existing keyed history retains both.
+  expect(stepsToReproduce(current, { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- x
+- a
+- incoming b
+- c
+\`\`\`
+
+1. Set the cursor on \`a\`.
+2. Move Thought Down.
+
+## Current Behavior
+
+\`\`\`
+- x
+- incoming b
+- a
+- c
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+  expect(db.project()).toBe(current.thoughts)
+})
+
+it('retains incoming reparenting while reconstructing a local reorder for a report', () => {
+  store.dispatch([importText({ text: '- a\n- b\n- d' }), setCursor(['a']), moveThoughtDown()])
+  const b = contextToThought(store.getState(), ['b'])!
+  const d = contextToThought(store.getState(), ['d'])!
+  const incoming = db.transact(transaction =>
+    transaction.update({
+      thoughtIndexUpdates: { [b.id]: { ...b, parentId: d.id } },
+      movePlacements: { [b.id]: null },
+    }),
+  )
+  store.dispatch(replaceThoughts({ thoughts: incoming.value, repairCursor: true }))
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- a
+- d
+  - b
+\`\`\`
+
+1. Set the cursor on \`a\`.
+2. Move Thought Down.
+
+## Current Behavior
+
+\`\`\`
+- a
+- d
+  - b
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('reconstructs one grouped edit across an incoming update without reverting the incoming thought', () => {
+  store.dispatch([
+    importText({ text: '- a\n- remote' }),
+    setCursor(['a']),
+    setIsMulticursorExecuting({ value: true }),
+    editThought(['a'], 'aa'),
+  ])
+  const remote = contextToThought(store.getState(), ['remote'])!
+  const incoming = db.transact(transaction =>
+    transaction.update({ thoughtIndexUpdates: { [remote.id]: { ...remote, value: 'incoming' } } }),
+  )
+  store.dispatch([
+    replaceThoughts({ thoughts: incoming.value, repairCursor: true }),
+    editThought(['aa'], 'aaa'),
+    setIsMulticursorExecuting({ value: false }),
+  ])
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- a
+- incoming
+\`\`\`
+
+1. Set the cursor on \`a\`.
+2. Set Is Multicursor Executing.
+
+## Current Behavior
+
+\`\`\`
+- aaa
+- incoming
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('retains later incoming text when a UI-only merge already canceled the earlier inverse value', () => {
+  store.dispatch([importText({ text: '- a' }), setCursor(['a'])])
+  const a = contextToThought(store.getState(), ['a'])!
+  store.dispatch([setIsMulticursorExecuting({ value: true }), editThought(['a'], 'A')])
+  expect(store.getState().undoPatches.at(-1)!.metadata.isFormatting).toBe(true)
+  const incoming = db.transact(transaction => transaction.update({ thoughtIndexUpdates: { [a.id]: a } }))
+  store.dispatch([
+    replaceThoughts({ thoughts: incoming.value, repairCursor: true }),
+    setCursor(null),
+    setIsMulticursorExecuting({ value: false }),
+  ])
+  expect(store.getState().undoPatches.at(-1)!.metadata.isFormatting).toBe(false)
+  const later = db.transact(transaction =>
+    transaction.update({ thoughtIndexUpdates: { [a.id]: { ...a, value: 'latest incoming' } } }),
+  )
+  store.dispatch(replaceThoughts({ thoughts: later.value, repairCursor: true }))
+
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- latest incoming
+\`\`\`
+
+1. Set the cursor on \`latest incoming\`.
+2. Set Is Multicursor Executing.
+
+## Current Behavior
+
+\`\`\`
+- latest incoming
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
+it('describes a multicursor move by its invocation and selection without inferring a single moved thought', () => {
   store.dispatch([
     importText({
       text: `
@@ -215,7 +384,7 @@ it('name a multicursor command by its label, preceded by the selection it acts o
 
 1. Set the cursor on \`a\`.
 2. Select \`a\` and \`b\`.
-3. Run Move Thought Down. Move Thought \`b\` after \`a\`.
+3. Run Move Thought Down.
 
 ## Current Behavior
 
@@ -545,6 +714,41 @@ it('describe a single-line paste by the pasted text', () => {
 `)
 })
 
+it('describes a same-parent drag across siblings by the thought that reproduces the reorder', () => {
+  store.dispatch([
+    importText({ text: '- x\n- a\n- b\n- c' }),
+    setCursor(['x']),
+    moveThought({ from: ['c'], to: ['c'], after: ['x'] }),
+  ])
+
+  // Moving c also shifts a and b; the report must identify c, not the first changed sibling.
+  expect(stepsToReproduce(store.getState(), { start: 1, end: 0 })).toBe(`## Steps to Reproduce
+
+\`\`\`
+- x
+- a
+- b
+- c
+\`\`\`
+
+1. Set the cursor on \`x\`.
+2. Move Thought \`c\` after \`x\`.
+
+## Current Behavior
+
+\`\`\`
+- x
+- c
+- a
+- b
+\`\`\`
+
+## Expected Behavior
+
+
+`)
+})
+
 it('describe a drag and drop by where the thought lands', () => {
   store.dispatch([
     importText({
@@ -563,7 +767,7 @@ it('describe a drag and drop by where the thought lands', () => {
         type: 'moveThought',
         oldPath,
         newPath: [...contextToPath(getState(), ['a'])!, oldPath.at(-1)!],
-        newRank: 0.5,
+        afterId: contextToPath(getState(), ['a', 'b'])!.at(-1)!,
       })
     },
   ])
@@ -732,7 +936,7 @@ it('do not describe a thought as placed after a hidden meta attribute', () => {
         type: 'moveThought',
         oldPath,
         newPath: [...contextToPath(getState(), ['a', 'd'])!, oldPath.at(-1)!],
-        newRank: 1,
+        afterId: contextToPath(getState(), ['a', 'd', '=archive'])!.at(-1)!,
       })
     },
   ])

@@ -39,6 +39,7 @@ import {
 import asyncFocus from '../device/asyncFocus'
 import preventAutoscroll, { preventAutoscrollEnd } from '../device/preventAutoscroll'
 import * as selection from '../device/selection'
+import useEditorSelector from '../hooks/useEditorSelector'
 import findDescendant from '../selectors/findDescendant'
 import { anyChild, getAllChildrenAsThoughts } from '../selectors/getChildren'
 import getContexts from '../selectors/getContexts'
@@ -89,7 +90,6 @@ interface EditableProps {
   isVisible?: boolean
   multiline?: boolean
   placeholder?: string
-  rank?: number
   style?: React.CSSProperties
   className?: string
   simplePath: SimplePath
@@ -170,7 +170,6 @@ const TAP_CLICK_TIMEOUT = 100
 
 /**
  * An editable thought with throttled editing.
- * Use rank instead of headRank(simplePath) as it will be different for context view.
  */
 const Editable = ({
   editableRef,
@@ -187,19 +186,18 @@ const Editable = ({
 }: EditableProps) => {
   const dispatch = useDispatch()
   const thoughtId = head(simplePath)
-  const parentId = useSelector(state => head(rootedParentOf(state, simplePath)))
-  const readonly = useSelector(state => findDescendant(state, thoughtId, '=readonly'))
-  const uneditable = useSelector(state => findDescendant(state, thoughtId, '=uneditable'))
-  const optionsId = useSelector(state => findDescendant(state, parentId, '=options'))
-  const options = useSelector(state => {
+  const parentId = useEditorSelector(state => head(rootedParentOf(state, simplePath)))
+  const readonly = useEditorSelector(state => findDescendant(state, thoughtId, '=readonly'))
+  const uneditable = useEditorSelector(state => findDescendant(state, thoughtId, '=uneditable'))
+  const optionsId = useEditorSelector(state => findDescendant(state, parentId, '=options'))
+  const options = useEditorSelector(state => {
     const childrenOptions = getAllChildrenAsThoughts(state, optionsId)
     return childrenOptions.length > 0 ? childrenOptions.map(thought => thought.value.toLowerCase()) : null
   }, shallowEqual)
   // it is possible that the thought is deleted and the Editable is re-rendered before it unmounts, so guard against undefined thought
-  const value = useSelector(state => getThoughtById(state, head(simplePath))?.value || '')
-  const generating = useSelector(state => !!getThoughtById(state, head(simplePath))?.generating)
-  const rank = useSelector(state => getThoughtById(state, head(simplePath))?.rank || 0)
-  const isCursorCleared = useSelector(
+  const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value || '')
+  const generating = useEditorSelector(state => !!getThoughtById(state, head(simplePath))?.generating)
+  const isCursorCleared = useEditorSelector(
     // A thought is displayed as cleared when clearThought is active and it is either the cursor thought (single clear)
     // or a member of a multiselection (multiselect clear).
     state => state.cursorCleared && (!!isEditing || isMulticursorPath(state, path)),
@@ -209,7 +207,7 @@ const Editable = ({
   // first/cursor thought). The cursor thought shows the real caret via useEditMode. This outlives the cleared state:
   // clearThought preserves the multicursors so that typed edits keep mirroring, and the faux carets must keep tracking
   // the real caret for as long as they do.
-  const isMulticursorFauxCaretPath = useSelector(
+  const isMulticursorFauxCaretPath = useEditorSelector(
     state =>
       isMulticursorPath(state, path) &&
       !equalPath(state.cursor, path) &&
@@ -221,7 +219,7 @@ const Editable = ({
   // the placeholder with it so that the empty thought previews the formatting the typed text will take. A cleared
   // thought keeps its own value's formatting, but only when it has a value to take it from — an empty thought that is
   // also cleared has none, so the held formatting is used instead.
-  const pendingFormat = useSelector(state => getThoughtById(state, thoughtId)?.pendingFormat)
+  const pendingFormat = useEditorSelector(state => getThoughtById(state, thoughtId)?.pendingFormat)
   const placeholderCommandState = useMemo(
     () => (isCursorCleared && value ? getCommandState(value) : pendingFormat ? getCommandState(pendingFormat) : null),
     [isCursorCleared, pendingFormat, value],
@@ -250,7 +248,7 @@ const Editable = ({
     [placeholderBackColor, placeholderForeColor, style],
   )
 
-  const hasMulticursor = useSelector(hasMulticursorSelector)
+  const hasMulticursor = useEditorSelector(hasMulticursorSelector)
   // A non-null caret rect means the multiselection is being edited (Clear Thought), where a click places the caret as
   // usual. It is the only reactive signal that distinguishes an edited multiselection from an idle one, since the
   // browser selection that isMultiEditing consults is not part of the Redux state (see caretRectStore).
@@ -284,13 +282,12 @@ const Editable = ({
   //   style,
   //   transient,
   //   value,
-  //   rank,
   //   fontSize,
   //   hasNoteFocus,
   //   isCursorCleared,
   // })
 
-  const childrenLabel = useSelector(state => {
+  const childrenLabel = useEditorSelector(state => {
     const labelId = findDescendant(state, parentId, '=label')
     return anyChild(state, labelId)?.value
   })
@@ -374,16 +371,11 @@ const Editable = ({
   /**
    * Dispatches editThought and has tutorial logic.
    * Debounced from onChangeHandler.
-   * Since variables inside this function won't get updated between re-render so passing latest context, rank etc as params.
+   * Pass the latest path and edit options explicitly because the throttled function persists across renders.
    */
   const thoughtChangeHandler = (
     newValue: string,
-    {
-      force,
-      rank,
-      simplePath,
-      cursorOffset,
-    }: { force?: boolean; rank: number; simplePath: SimplePath; cursorOffset?: number },
+    { force, simplePath, cursorOffset }: { force?: boolean; simplePath: SimplePath; cursorOffset?: number },
   ) => {
     // Note: Don't update innerHTML of contentEditable here. Since thoughtChangeHandler may be debounced, it may cause contentEditable to be out of sync.
     invalidStateError(null)
@@ -402,7 +394,11 @@ const Editable = ({
     }
 
     // Log the value transition at the point the edit is committed to Redux. Correlates with the 'change' branch that queued it.
-    debugLog.log('edit', { oldValue, newValue, rank })
+    if (debugLog.isEnabled())
+      dispatch((dispatch, getState) => {
+        const rank = getState().thoughts.getPosition(head(simplePath)) ?? 0
+        debugLog.log('edit', { oldValue, newValue, rank })
+      })
 
     dispatch(
       editThought({
@@ -526,7 +522,7 @@ const Editable = ({
 
       // Queue and flush the change with the browser-applied value to ensure it's captured before the editable blurs.
       oldValueRef.current = editable.textContent || ''
-      throttledChangeRef.current(oldValueRef.current, { rank, simplePath })
+      throttledChangeRef.current(oldValueRef.current, { simplePath })
       throttledChangeRef.current.flush()
 
       // The editThought re-render that lands before the deferred callback cannot invalidate savedCharOffset:
@@ -618,7 +614,7 @@ const Editable = ({
       editable.removeEventListener('blur', onEditableBlur)
       document.removeEventListener('selectionchange', onSelectionChange)
     }
-  }, [contentRef, rank, simplePath])
+  }, [contentRef, simplePath])
 
   useEffect(() => {
     // if there is a multicursor, blur the contentRef
@@ -861,7 +857,6 @@ const Editable = ({
           // a flash of unstyled content
           thoughtChangeHandler(newValue, {
             force: wrappedValue !== incomingValue || emojiSpaceAdded,
-            rank,
             simplePath,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
@@ -873,7 +868,7 @@ const Editable = ({
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
-          throttledChangeRef.current(newValue, { rank, simplePath })
+          throttledChangeRef.current(newValue, { simplePath })
         }
       })
     },
@@ -884,7 +879,7 @@ const Editable = ({
     // thoughtChangeHandler and invalidStateError are redefined on every render, but read nothing beyond these values
     // and stable refs, so the copies captured with them are equally fresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [dispatch, onEdit, options, path, rank, readonly, simplePath, transient, uneditable],
+    [dispatch, onEdit, options, path, readonly, simplePath, transient, uneditable],
   )
 
   /** Imports text that is pasted onto the thought. */

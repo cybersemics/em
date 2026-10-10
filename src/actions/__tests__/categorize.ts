@@ -5,16 +5,44 @@ import exportContext from '../../selectors/exportContext'
 import isContextViewActive from '../../selectors/isContextViewActive'
 import addMulticursor from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+import addAllMulticursor from '../addAllMulticursor'
 import categorize from '../categorize'
 import importText from '../importText'
 import newSubthought from '../newSubthought'
 import newThought from '../newThought'
 import toggleContextView from '../toggleContextView'
 
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
+
 describe('normal view', () => {
+  it('categorize later siblings after merging duplicates', () => {
+    const stateNew = reducerFlow([
+      importText({
+        text: `
+          - =note
+            - A
+            - A
+            - B`,
+      }),
+      setCursor(['=note', 'A']),
+      addAllMulticursor,
+      categorize({ value: 'group' }),
+    ])(initialState())
+
+    expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - =note
+    - group
+      - A
+      - B`)
+  })
+
   it('categorize a thought', () => {
     const steps = [newThought('a'), newSubthought('b'), categorize]
 
@@ -470,7 +498,7 @@ describe.each([
       setCursor(['a', 'm', 'b']),
     ])(initialState())
 
-    const stateNew = categorize(state)
+    const stateNew = runDocumentCommand(categorize, state)
 
     expect(stateNew.alert).toBeUndefined()
     expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
@@ -524,7 +552,8 @@ describe('multicursor', () => {
 
     const cursorThoughts = childIdsToThoughts(stateNew, stateNew.cursor!)
 
-    expect(cursorThoughts).toMatchObject([{ value: '', rank: expect.any(Number) }])
+    expect(cursorThoughts).toMatchObject([{ value: '' }])
+    expect(stateNew.thoughts.getPosition(cursorThoughts[0].id)).toBe(2)
   })
 
   it('disallow subcategorizing thoughts from different parents', () => {

@@ -1,14 +1,14 @@
-import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { isTouch } from '../../browser'
 import { gestureString } from '../../commands'
 import newThoughtCommand from '../../commands/newThought'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import headValue from '../../util/headValue'
 import GestureDiagram from '../GestureDiagram'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const TutorialStepSecondThoughtEnter = () => {
-  const ready = useSelector(state => {
+  const ready = useEditorSelector(state => {
     if (!state.cursor) return true
     const headCursorValue = headValue(state, state.cursor)
     return headCursorValue !== undefined && headCursorValue.length > 0

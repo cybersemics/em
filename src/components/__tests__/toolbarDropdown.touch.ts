@@ -1,6 +1,5 @@
 import { createEvent, fireEvent, render } from '@testing-library/react'
 import { act, createElement } from 'react'
-import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { toggleDropdownActionCreator as toggleDropdown } from '../../actions/toggleDropdown'
 import { HOME_TOKEN } from '../../constants'
@@ -10,6 +9,7 @@ import dispatch from '../../test-helpers/dispatch'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import BulletPicker from '../BulletPicker'
+import EditorProvider from '../EditorProvider'
 import LetterCasePicker from '../LetterCasePicker'
 import SortPicker from '../SortPicker'
 
@@ -52,7 +52,7 @@ it('a tap on a letter case option is consumed', async () => {
     setCursor(['hello world']),
     toggleDropdown({ dropDownType: 'letterCase', value: true }),
   ])
-  render(createElement(Provider, { store, children: createElement(LetterCasePicker) }))
+  render(createElement(EditorProvider, { store, children: createElement(LetterCasePicker) }))
 
   const touchEnd = await tap('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
   await act(vi.runAllTimersAsync)
@@ -68,7 +68,7 @@ it('a tap on a sort option is consumed', async () => {
     setCursor(['b']),
     toggleDropdown({ dropDownType: 'sortPicker', value: true }),
   ])
-  render(createElement(Provider, { store, children: createElement(SortPicker) }))
+  render(createElement(EditorProvider, { store, children: createElement(SortPicker) }))
 
   const touchEnd = await tap('[aria-label="sort options"] [aria-label="Alphabetical"]')
   await act(vi.runAllTimersAsync)
@@ -88,7 +88,7 @@ it('a tap on a bullet style option is consumed', async () => {
     setCursor(['a', 'b']),
     toggleDropdown({ dropDownType: 'bulletPicker', value: true }),
   ])
-  render(createElement(Provider, { store, children: createElement(BulletPicker) }))
+  render(createElement(EditorProvider, { store, children: createElement(BulletPicker) }))
 
   const touchEnd = await tap('[aria-label="bullet style options"] [aria-label="Numbers"]')
   await act(vi.runAllTimersAsync)

@@ -8,8 +8,8 @@ import Thought from '../@types/Thought'
 import { errorActionCreator as error } from '../actions/error'
 import { searchLimitActionCreator as setSearchLimit } from '../actions/searchLimit'
 import { EM_TOKEN, HOME_TOKEN } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import hasLexeme from '../selectors/hasLexeme'
-import store from '../stores/app'
 import escapeRegex from '../util/escapeRegex'
 import fastClick from '../util/fastClick'
 import isDocumentEditable from '../util/isDocumentEditable'
@@ -28,10 +28,44 @@ const SearchSubthoughts: FC = () => {
   const search = useSelector(state => state.search)
   const remoteSearch = useSelector(state => state.remoteSearch)
   const searchLimit = useSelector(state => state.searchLimit || DEFAULT_SEARCH_LIMIT)
-  const thoughtIndex = useSelector(state => state.thoughts.thoughtIndex)
+  const hasSearchLexeme = useEditorSelector(state => !!search && hasLexeme(state, search))
+  const children = useEditorSelector(state => {
+    if (!search) return []
+    const searchRegexp = new RegExp(escapeRegex(search), 'gi')
+
+    /** Compares two values lexicographically, sorting exact matches to the top. */
+    const comparator = (a: Thought, b: Thought) => {
+      const aLower = a.value.toLowerCase()
+      const bLower = b.value.toLowerCase()
+      const searchLower = search.toLowerCase()
+      // 1. exact match
+      return bLower === searchLower
+        ? 1
+        : aLower === searchLower
+          ? -1
+          : // 2. starts with search
+            bLower.startsWith(searchLower)
+            ? 1
+            : aLower.startsWith(searchLower)
+              ? -1
+              : // 3. lexicographic
+                a > b
+                ? 1
+                : b > a
+                  ? -1
+                  : 0
+    }
+
+    return sort(
+      Array.from(state.thoughts.values()).filter(
+        thought => thought.value !== HOME_TOKEN && thought.value !== EM_TOKEN && searchRegexp.test(thought.value),
+      ),
+      comparator,
+    )
+  })
 
   /**
-   * Search thoughts remotely or locally and add it to pullQueue.
+   * Placeholder for asynchronous search integration.
    */
   //ignore this line beacaue its call in useEffect Function
   const searchThoughts = async (value: string) => {
@@ -63,45 +97,9 @@ const SearchSubthoughts: FC = () => {
 
   if (isRemoteSearching || isLocalSearching) return <div>...searching</div>
 
-  const searchRegexp = new RegExp(escapeRegex(search), 'gi')
-
-  /** Compares two values lexicographically, sorting exact matches to the top. */
-  const comparator = (a: Thought, b: Thought) => {
-    const aLower = a.value.toLowerCase()
-    const bLower = b.value.toLowerCase()
-    const searchLower = search.toLowerCase()
-    // 1. exact match
-    return bLower === searchLower
-      ? 1
-      : aLower === searchLower
-        ? -1
-        : // 2. starts with search
-          bLower.startsWith(searchLower)
-          ? 1
-          : aLower.startsWith(searchLower)
-            ? -1
-            : // 3. lexicographic
-              a > b
-              ? 1
-              : b > a
-                ? -1
-                : 0
-  }
-
-  const children = search
-    ? sort(
-        Object.values(thoughtIndex).filter(
-          thought =>
-            // (archived || !isArchived(store.getState(), lexeme)) &&
-            thought.value !== HOME_TOKEN && thought.value !== EM_TOKEN && searchRegexp.test(thought.value),
-        ),
-        comparator,
-      )
-    : []
-
   return (
     <div>
-      {!hasLexeme(store.getState(), search) && isDocumentEditable() ? (
+      {!hasSearchLexeme && isDocumentEditable() ? (
         <NewThought path={[] as unknown as SimplePath} label={`Create "${search}"`} value={search} type='button' />
       ) : null}
       <span className={cx(textNoteRecipe(), css({ fontSize: 'sm' }))}>

@@ -4,6 +4,7 @@ import { SystemStyleObject } from '../../styled-system/types'
 import Index from '../@types/IndexType'
 import SimplePath from '../@types/SimplePath'
 import ThoughtId from '../@types/ThoughtId'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getContexts from '../selectors/getContexts'
 import getThoughtById from '../selectors/getThoughtById'
 import store from '../stores/app'
@@ -28,13 +29,13 @@ const Superscript: FC<SuperscriptProps> = ({ showSingle, simplePath, cssRaw }) =
 
   const showHiddenThoughts = useSelector(state => state.showHiddenThoughts)
 
-  const show = useSelector(state => {
+  const show = useEditorSelector(state => {
     const value = getThoughtById(state, head(simplePath))?.value || ''
     const emptyThought = value.length === 0
     return !emptyThought && numContexts! > (showSingle ? 0 : 1)
   })
 
-  const contexts = useSelector(state => (show ? getContexts(state, head(simplePath)) : NO_CONTEXTS), shallowEqual)
+  const contexts = useEditorSelector(state => (show ? getContexts(state, head(simplePath)) : NO_CONTEXTS), shallowEqual)
 
   // delay filtering for performance
   // recalculate when Lexeme contexts are loaded

@@ -5,6 +5,7 @@ import Path from '../../@types/Path'
 import { tutorialStepActionCreator as setTutorialStep } from '../../actions/tutorialStep'
 import { isTouch } from '../../browser'
 import { HOME_TOKEN } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import { getAllChildren, getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import getSetting from '../../selectors/getSetting'
@@ -18,22 +19,22 @@ import pathToContext from '../../util/pathToContext'
 /** Tutorial: Auto Expand. */
 const TutorialStepAutoExpand = () => {
   const cursor = useSelector(state => state.cursor)
-  const cursorValue = useSelector(state => (state.cursor ? headValue(state, state.cursor) : ''))
-  const isNoThoughts = useSelector(state => getAllChildren(state, HOME_TOKEN).length === 0)
-  const tutorialStep = useSelector(state => +getSetting(state, 'Tutorial Step')!)
+  const cursorValue = useEditorSelector(state => (state.cursor ? headValue(state, state.cursor) : ''))
+  const isNoThoughts = useEditorSelector(state => getAllChildren(state, HOME_TOKEN).length === 0)
+  const tutorialStep = useEditorSelector(state => +getSetting(state, 'Tutorial Step')!)
   const dispatch = useDispatch()
-  const isCursorLeaf = useSelector(state => {
+  const isCursorLeaf = useEditorSelector(state => {
     const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
     return cursorChildren.length === 0
   })
-  const cursorChildValue = useSelector(state => {
+  const cursorChildValue = useEditorSelector(state => {
     const cursorChildren = cursor ? getAllChildrenAsThoughts(state, head(cursor)) : []
     return cursorChildren[0]?.value
   })
   const contextAncestor = cursor ? (isCursorLeaf ? parentOf(parentOf(cursor)) : parentOf(cursor)) : []
   const pathToCollapse = useRef<Path | null>(cursor && cursor.length > 1 ? cursor : null)
 
-  const ancestorThoughtChildren = useSelector(
+  const ancestorThoughtChildren = useEditorSelector(
     state =>
       getAllChildrenAsThoughts(
         state,
@@ -50,7 +51,7 @@ const TutorialStepAutoExpand = () => {
   )
 
   /** Gets the subthought that is not the cursor. */
-  const subthoughtNotCursorValue = useSelector(state => {
+  const subthoughtNotCursorValue = useEditorSelector(state => {
     const thought =
       cursor && ancestorThoughtChildren.find(child => pathToContext(state, cursor).indexOf(child.value) === -1)
     return thought?.value || ''

@@ -1,15 +1,16 @@
-import { render } from '@testing-library/react'
+import { render, cleanup as unmountTestApp } from '@testing-library/react'
 import { Profiler, ProfilerOnRenderCallback, act, createRef } from 'react'
 import { DndProvider } from 'react-dnd'
 import { TestBackend } from 'react-dnd-test-backend'
 import Await from '../@types/Await'
 import { clearActionCreator as clear } from '../actions/clear'
 import App from '../components/App'
-import db from '../data-providers/thoughtspace'
+import { thoughtspaceRuntime } from '../data-providers/thoughtspace'
 import { initialize } from '../initialize'
 import store from '../stores/app'
 import { resetStores } from '../stores/ministore'
 import storage from '../util/storage'
+import commandThoughtspace from './commandThoughtspace'
 import waitForThoughtspaceIdle from './waitForThoughtspaceIdle'
 
 let cleanup: Await<ReturnType<typeof initialize>>['cleanup']
@@ -80,19 +81,25 @@ export const cleanupTestApp = async () => {
       cleanup()
     }
 
-    store.dispatch(clear({ full: true }))
+    try {
+      // Report persistence failures, but still release resources before the next test.
+      await vi.runAllTimersAsync()
+      await waitForThoughtspaceIdle()
+    } finally {
+      try {
+        // Unmount and clear while selectors can still read the live document.
+        unmountTestApp()
+        store.dispatch(clear({ full: true }))
+        await vi.runAllTimersAsync()
+      } finally {
+        await Promise.all([thoughtspaceRuntime.drop(), commandThoughtspace.drop()])
+      }
 
-    // run out timers before provider clear, otherwise pending persistence calls may resolve after thoughts have been deleted.
-    await vi.runAllTimersAsync()
-    await waitForThoughtspaceIdle()
+      // set url back to home
+      window.history.pushState({}, '', '/')
 
-    await db.clear()
-    await vi.runAllTimersAsync()
-
-    // set url back to home
-    window.history.pushState({}, '', '/')
-
-    await vi.runAllTimersAsync()
+      await vi.runAllTimersAsync()
+    }
   })
 }
 

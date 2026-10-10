@@ -1,18 +1,24 @@
 import _ from 'lodash'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import { getAllChildrenSorted } from '../selectors/getChildren'
 import getThoughtById from '../selectors/getThoughtById'
 import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import head from '../util/head'
 import normalizeThought from '../util/normalizeThought'
 import reducerFlow from '../util/reducerFlow'
 import mergeThoughts from './mergeThoughts'
 
 /** Merges all duplicate siblings at the same level as the cursor. The first duplicate of each value is kept and the children of the others are moved into it. */
-const mergeDuplicates = (state: State): State => {
+const mergeDuplicates = (
+  state: State,
+  _payload: undefined = undefined,
+  transaction?: ThoughtspaceTransaction,
+): State => {
   const { cursor } = state
 
   if (!cursor) return state
@@ -42,19 +48,23 @@ const mergeDuplicates = (state: State): State => {
     duplicateGroups.flatMap(([target, ...duplicates]) =>
       duplicates.map(
         duplicate => (stateNew: State) =>
-          mergeThoughts(stateNew, {
-            sourceThoughtPath: appendToPath(parentPath, duplicate.id),
-            targetThoughtPath: appendToPath(parentPath, target.id),
-          }),
+          mergeThoughts(
+            stateNew,
+            {
+              sourceThoughtPath: appendToPath(parentPath, duplicate.id),
+              targetThoughtPath: appendToPath(parentPath, target.id),
+            },
+            transaction,
+          ),
       ),
     ),
-  )(state)
+  )(state, transaction)
 }
 
 /** Action-creator for mergeDuplicates. */
 export const mergeDuplicatesActionCreator = (): Thunk => dispatch => dispatch({ type: 'mergeDuplicates' })
 
-export default mergeDuplicates
+export default command(mergeDuplicates)
 
 // Register this action's metadata
 registerActionMetadata('mergeDuplicates', {

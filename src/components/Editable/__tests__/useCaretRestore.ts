@@ -1,6 +1,5 @@
 import { renderHook } from '@testing-library/react'
 import { act, createElement } from 'react'
-import { Provider } from 'react-redux'
 import { importTextActionCreator as importText } from '../../../actions/importText'
 import { keyboardOpenActionCreator as keyboardOpen } from '../../../actions/keyboardOpen'
 import * as selection from '../../../device/selection'
@@ -8,6 +7,7 @@ import store from '../../../stores/app'
 import initStore from '../../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../../test-helpers/setCursorFirstMatch'
 import head from '../../../util/head'
+import EditorProvider from '../../EditorProvider'
 import useCaretRestore from '../useCaretRestore'
 import useEditMode from '../useEditMode'
 
@@ -60,7 +60,7 @@ const mountEditMode = (editable: HTMLElement) =>
         style: undefined,
         transient: undefined,
       }),
-    { wrapper: ({ children }) => createElement(Provider, { store, children }) },
+    { wrapper: ({ children }) => createElement(EditorProvider, { store, children }) },
   )
 
 /** Moves the browser selection into the given editable and fires the selectionchange the browser would fire. */
@@ -153,7 +153,7 @@ it('restores the caret to the end of a note when the selection is dragged out of
   const other = createEditable('other-id', 'b')
 
   renderHook(() => useCaretRestore({ editableRef: { current: note }, enabled: true, end: true }), {
-    wrapper: ({ children }) => createElement(Provider, { store, children }),
+    wrapper: ({ children }) => createElement(EditorProvider, { store, children }),
   })
   act(() => note.focus())
 

@@ -1,9 +1,10 @@
-import { shallowEqual, useSelector } from 'react-redux'
+import { shallowEqual } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import Thought from '../@types/Thought'
 import ThoughtId from '../@types/ThoughtId'
+import useEditorSelector from '../hooks/useEditorSelector'
 import useHideBullet from '../hooks/useHideBullet'
 import useScrollCursorIntoView from '../hooks/useScrollCursorIntoView'
 import attributeEquals from '../selectors/attributeEquals'
@@ -13,7 +14,6 @@ import hasMulticursor from '../selectors/hasMulticursor'
 import isContextViewActive from '../selectors/isContextViewActive'
 import rootedParentOf from '../selectors/rootedParentOf'
 import calculateCursorOverlayRadius from '../util/calculateCursorOverlayRadius'
-import equalThoughtRanked from '../util/equalThoughtRanked'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
@@ -36,10 +36,9 @@ type BulletCursorOverlayProps = {
   leaf?: boolean
 }
 
-/** Returns true if two lists of children are equal. Deeply compares id, value, and rank. */
+/** Returns true if two lists contain the same child ids and values in the same order. */
 const equalChildren = (a: Thought[], b: Thought[]) =>
-  a === b ||
-  (a && b && a.length === b.length && a.every((thought, i) => equalThoughtRanked(a[i], b[i]) && a[i].id === b[i].id))
+  a === b || (a.length === b.length && a.every((thought, i) => thought.id === b[i].id && thought.value === b[i].value))
 
 /**
  * CursorOverlay is a component that renders the cursor overlay for a thought bullet.
@@ -102,26 +101,26 @@ export default function BulletCursorOverlay({
   showContexts,
   leaf,
 }: BulletCursorOverlayProps) {
-  const value: string | undefined = useSelector(state => {
+  const value: string | undefined = useEditorSelector(state => {
     const thought = getThoughtById(state, head(path))
     return thought?.value || ''
   })
 
-  const isMulticursorActive = useSelector(hasMulticursor)
+  const isMulticursorActive = useEditorSelector(hasMulticursor)
 
-  const childrenAttributeId = useSelector(
+  const childrenAttributeId = useEditorSelector(
     state => (value !== '=children' && findAnyChild(state, parentId, child => child.value === '=children')?.id) || null,
   )
   const grandparentId = simplePath[simplePath.length - 3]
 
-  const grandchildrenAttributeId = useSelector(
+  const grandchildrenAttributeId = useEditorSelector(
     state =>
       (value !== '=style' && findAnyChild(state, grandparentId, child => child.value === '=grandchildren')?.id) || null,
   )
 
-  const isInContextView = useSelector(state => isContextViewActive(state, parentOf(path)))
+  const isInContextView = useEditorSelector(state => isContextViewActive(state, parentOf(path)))
 
-  const hideBulletProp = useSelector(state => {
+  const hideBulletProp = useEditorSelector(state => {
     // A context view entry is rendered in place of its context, so the =children/=bullet of its real parent must not hide its bullet.
     if (isInContextView) return false
     const hideBulletsChildren = attributeEquals(state, childrenAttributeId, '=bullet', 'None')
@@ -132,9 +131,9 @@ export default function BulletCursorOverlay({
     return false
   })
 
-  const children = useSelector<Thought[]>(
+  const children = useEditorSelector<Thought[]>(
     state => getChildrenRanked(state, head(simplePath)),
-    // only compare id, value, and rank for re-renders
+    // Only compare child ids, values, and order for re-renders.
     equalChildren,
   )
 
@@ -150,7 +149,7 @@ export default function BulletCursorOverlay({
   })
 
   // Must match the breadcrumbs rendered by Thought so that the cursor overlay is aligned with the thought.
-  const contextBreadcrumbsAncestors = useSelector(state => rootedParentOf(state, simplePath), shallowEqual)
+  const contextBreadcrumbsAncestors = useEditorSelector(state => rootedParentOf(state, simplePath), shallowEqual)
 
   useScrollCursorIntoView(y, height)
 

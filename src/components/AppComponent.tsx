@@ -11,6 +11,7 @@ import { handleGestureCancel, handleGestureEnd, handleGestureSegment } from '../
 import { LongPressState, Settings } from '../constants'
 import * as selection from '../device/selection'
 import testFlags from '../e2e/testFlags'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getUserSetting from '../selectors/getUserSetting'
 import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
@@ -50,7 +51,7 @@ const useBodyAttribute = (name: string, value: string) => {
 
 /** A hook that takes a Redux selector and calls useBodyAttribute to set an attribute on the body element to the value from the Redux state. */
 const useBodyAttributeSelector = <T,>(name: string, selector: (state: State) => T) => {
-  const value = useSelector(selector)
+  const value = useEditorSelector(selector)
   useBodyAttribute(name, String(value))
 }
 
@@ -109,7 +110,7 @@ const shouldCancelGesture = (
  * Wrap an element in the MultiGesture component if the user has a touch screen.
  */
 const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
-  const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
+  const leftHanded = useEditorSelector(getUserSetting(Settings.leftHanded))
   return isTouch ? (
     <MultiGesture
       leftHanded={leftHanded}
@@ -129,14 +130,14 @@ const MultiGestureIfTouch: FC<PropsWithChildren> = ({ children }) => {
  * The main app component.
  */
 const AppComponent: FC = () => {
-  const colors = useSelector(themeColors)
-  const dark = useSelector(state => theme(state) !== 'Light')
+  const colors = useEditorSelector(themeColors)
+  const dark = useEditorSelector(state => theme(state) !== 'Light')
   const enableLatestCommandsDiagram = useSelector(state => state.enableLatestCommandsDiagram)
-  const showTutorial = useSelector(state => isTutorial(state) && !state.isLoading)
+  const showTutorial = useEditorSelector(state => isTutorial(state) && !state.isLoading)
   const fontSize = useSelector(state => state.fontSize)
   const showModal = useSelector(state => state.showModal)
-  const tutorial = useSelector(isTutorial)
-  const debugCrashLog = useSelector(getUserSetting(Settings.debugCrashLog))
+  const tutorial = useEditorSelector(isTutorial)
+  const debugCrashLog = useEditorSelector(getUserSetting(Settings.debugCrashLog))
   const rootRef = useRef<HTMLDivElement>(null)
 
   // Mirror the Debug Logging setting into the persistent debug log. Kept here (a single always-mounted

@@ -1,6 +1,6 @@
 import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
-import { shallowEqual, useSelector } from 'react-redux'
+import { shallowEqual } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
 import { css } from '../../styled-system/css'
 import { extendTapRecipe } from '../../styled-system/recipes'
@@ -10,6 +10,7 @@ import { SystemStyleObject } from '../../styled-system/types'
 import Path from '../@types/Path'
 import ThoughtId from '../@types/ThoughtId'
 import { HOME_TOKEN } from '../constants'
+import useEditorSelector from '../hooks/useEditorSelector'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import simplifyPath from '../selectors/simplifyPath'
@@ -50,7 +51,7 @@ const useEllipsizedThoughts = (
 
   // convert the path to a list of thought values
   // if editing, use the live editing value
-  const thoughtValuesLive = useSelector(
+  const thoughtValuesLive = useEditorSelector(
     state =>
       path.map(id =>
         editingValue && state.cursor && id === head(state.cursor)
@@ -106,9 +107,9 @@ const BreadCrumb = React.memo(
       linkCssRaw?: SystemStyleObject
     }
   >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
-    const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-    const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
-    const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
+    const simplePath = useEditorSelector(state => simplifyPath(state, path), shallowEqual)
+    const value = useEditorSelector(state => getThoughtById(state, head(simplePath))?.value)
+    const showContexts = useEditorSelector(state => isContextViewActive(state, parentOf(path)))
     const delimiterStyle: React.CSSProperties = {
       fontSize: '0.8em',
       lineHeight: '16px',
@@ -180,8 +181,8 @@ const ContextBreadcrumbs = ({
   color?: ColorToken
 }) => {
   const [disabled, setDisabled] = React.useState(false)
-  const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-  const pathFiltered = useSelector(
+  const simplePath = useEditorSelector(state => simplifyPath(state, path), shallowEqual)
+  const pathFiltered = useEditorSelector(
     state => (hideArchive ? (path.filter(id => getThoughtById(state, id)?.value !== '=archive') as Path) : path),
     shallowEqual,
   )

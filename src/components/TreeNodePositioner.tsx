@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import State from '../@types/State'
+import useEditorSelector from '../hooks/useEditorSelector'
 import isCursorGreaterThanParent from '../selectors/isCursorGreaterThanParent'
 import equalPath from '../util/equalPath'
 import hashPath from '../util/hashPath'
@@ -54,7 +55,7 @@ const TreeNodePositioner = ({
   )
 
   /** The direction of the curved animation in swapParent. If the child (cursor) thought value is greater than the parent thought value, rotate clockwise, otherwise rotate counterclockwise. This ensures that the parent and child curve in opposite directions, and activating swapParent twice will appear as a reversal instead of another rotation in the same direction. Returns null if the last action is not swapParent. */
-  const swapDirection = useSelector((state: State): 'clockwise' | 'counterclockwise' | null =>
+  const swapDirection = useEditorSelector((state: State): 'clockwise' | 'counterclockwise' | null =>
     !isSwap ? null : isCursorGreaterThanParent(state) ? 'clockwise' : 'counterclockwise',
   )
 

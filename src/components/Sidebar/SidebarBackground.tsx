@@ -1,8 +1,8 @@
 import { MotionValue, motion, useTransform } from 'framer-motion'
 import { useMemo } from 'react'
-import { useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
 import { isAndroid, isSafari } from '../../browser'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import themeColors from '../../selectors/themeColors'
 import tintColor from '../../util/tintColor'
 import ProgressiveBlur from '../ProgressiveBlur'
@@ -43,7 +43,7 @@ const SidebarGradient = ({
   sectionId: SidebarSectionId
 }) => {
   // tintColor needs resolved theme colors rather than Panda's CSS variable references.
-  const colors = useSelector(themeColors)
+  const colors = useEditorSelector(themeColors)
   /** Pre-tinted gradient colors, recomputed only when the theme changes. */
   const layers = useMemo(
     () =>

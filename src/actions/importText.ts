@@ -1,7 +1,7 @@
-import _ from 'lodash'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
 import State from '../@types/State'
+import ThoughtspaceTransaction from '../@types/ThoughtspaceTransaction'
 import Thunk from '../@types/Thunk'
 import Timestamp from '../@types/Timestamp'
 import editThought from '../actions/editThought'
@@ -17,6 +17,7 @@ import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import addEmojiSpace from '../util/addEmojiSpace'
 import appendToPath from '../util/appendToPath'
+import command from '../util/command'
 import createId from '../util/createId'
 import head from '../util/head'
 import htmlToJson from '../util/htmlToJson'
@@ -105,9 +106,6 @@ const sanitizeExternalHtml = (html: string): string => {
 export interface ImportTextPayload {
   caretPosition?: number
 
-  /** Callback for when the updates have been synced with IDB. */
-  idbSynced?: () => void
-
   path?: Path
 
   /** Set the lastUpdated timestamp on the imported thoughts. Default: now. */
@@ -143,7 +141,6 @@ const importText = (
   {
     path,
     text,
-    idbSynced,
     lastUpdated,
     preventSetCursor,
     rawDestValue,
@@ -154,6 +151,7 @@ const importText = (
     updatedBy = clientId,
     caretPosition = 0,
   }: ImportTextPayload,
+  transaction?: ThoughtspaceTransaction,
 ): State => {
   const isRoam = validateRoam(text)
 
@@ -215,7 +213,7 @@ const importText = (
             offset,
           })
         : null,
-    ])(state)
+    ])(state, transaction)
   } else {
     const json = isRoam ? roamJsonToBlocks(JSON.parse(convertedText) as RoamPage[]) : htmlToJson(convertedText)
 
@@ -232,11 +230,15 @@ const importText = (
     const shouldImportIntoDummy = destEmpty ? !isDestParentContextEmpty() : !destIsLeaf
     const dummyValue = createId()
     const stateWithDummy = shouldImportIntoDummy
-      ? newThought(state, {
-          at: simplePath,
-          insertNewSubthought: true,
-          value: dummyValue,
-        })
+      ? newThought(
+          state,
+          {
+            at: simplePath,
+            insertNewSubthought: true,
+            value: dummyValue,
+          },
+          transaction,
+        )
       : state
 
     /**
@@ -294,14 +296,20 @@ const importText = (
           // Note: Failing to call setCursor may not be noticeable in the app if expandThoughts gets triggered by another action, such as updateThoughts. However ommitting this will fail component tests that rely on the expanded state immediately after importText.
           state.cursor
 
-      return setCursor(state, { path: newCursor })
+      return setCursor(state, { path: newCursor }, transaction)
     }
 
     const parentOfDestination = parentOf(newDestinationPath)
 
     return reducerFlow([
       // thoughts will be expanded by setCursor, so no need to expand them here
-      updateThoughts({ ...imported, preventExpandThoughts: true, idbSynced }),
+      updateThoughts({
+        write: transaction => transaction.update(imported),
+        thoughtUiUpdates: Object.fromEntries(
+          Object.entries(imported.thoughtIndexUpdates).filter(([, thought]) => !thought),
+        ),
+        preventExpandThoughts: true,
+      }),
       // set cusor to destination path's parent after collapse unless it's em or cusor set is prevented.
       shouldImportIntoDummy ? uncategorize({ at: unroot(newDestinationPath) }) : null,
       // if original destination is empty then collapse once more.
@@ -309,7 +317,7 @@ const importText = (
       // restore the cursor to the last imported thought on the first level
       // Note: uncategorize may be executed as part of the import. Since uncategorize moves the cursor, we need to set cursor back to the old cursor if preventSetCursor is true.
       !preventSetCursor ? setLastImportedCursor : setCursor({ path: state.cursor }),
-    ])(stateWithDummy)
+    ])(stateWithDummy, transaction)
   }
 }
 
@@ -319,7 +327,7 @@ export const importTextActionCreator =
   dispatch =>
     dispatch({ type: 'importText', ...payload })
 
-export default _.curryRight(importText)
+export default command(importText)
 
 // Register this action's metadata
 registerActionMetadata('importText', {

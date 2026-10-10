@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { css, cx } from '../../../styled-system/css'
 import { modalActionLinkRecipe } from '../../../styled-system/recipes'
 import { clearActionCreator as clear } from '../../actions/clear'
@@ -6,6 +6,7 @@ import { closeModalActionCreator as closeModal } from '../../actions/closeModal'
 import { tutorialActionCreator as tutorial } from '../../actions/tutorial'
 import { tutorialStepActionCreator as tutorialStep } from '../../actions/tutorialStep'
 import { HOME_TOKEN } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import { hasChildren } from '../../selectors/getChildren'
 import offlineStatusStore from '../../stores/offlineStatusStore'
 import fastClick from '../../util/fastClick'
@@ -43,7 +44,7 @@ const onRef = (el: HTMLDivElement) => {
 /** A modal that welcomes the user to em. */
 const ModalWelcome = () => {
   const dispatch = useDispatch()
-  const isEmpty = useSelector(state => !hasChildren(state, HOME_TOKEN))
+  const isEmpty = useEditorSelector(state => !hasChildren(state, HOME_TOKEN))
 
   /** Close the welcome modal. */
   const close = () => dispatch(closeModal())
@@ -97,7 +98,7 @@ const ModalWelcome = () => {
                   css({ fontSize: 'sm', marginBottom: '-1em', paddingBottom: '1em', textDecoration: 'none' }),
                 )}
                 {...fastClick(() => {
-                  dispatch([clear({ local: true, remote: true })])
+                  dispatch([clear({ persist: true })])
                   endTutorial()
                   close()
                 })}

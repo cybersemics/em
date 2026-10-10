@@ -75,11 +75,11 @@ function expandThoughtsRecursive(
     return {}
 
   if (path && path.length === 0) {
-    // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
+    // Report invalid navigation without crashing rendering.
     console.error(new Error('expandThoughtsRecursive: Invalid empty Path received.'))
     return {}
   } else if (path && path.length > 1 && path[0] === HOME_TOKEN) {
-    // log error instead of throwing since it can cause the pullQueue to enter an infinite loop
+    // Report invalid navigation without crashing rendering.
     console.error(new Error('expandThoughtsRecursive: Invalid Path; Non-root Paths should omit ' + HOME_TOKEN))
     return {}
   }

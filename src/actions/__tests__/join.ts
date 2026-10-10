@@ -2,12 +2,17 @@ import join from '../../actions/join'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import removeHome from '../../util/removeHome'
 import importText from '../importText'
 import moveThoughtUp from '../moveThoughtUp'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('joins two simple thoughts', () => {
   const text = `
@@ -113,7 +118,7 @@ it('joins two thoughts and merges their children', () => {
   expect(removeHome(exported)).toEqual(expectedOutput)
 })
 
-it('generates unique and non-conflicting ranks', () => {
+it('preserves descendant order when joining siblings', () => {
   const text = `
     - a
       - m
@@ -131,7 +136,7 @@ it('generates unique and non-conflicting ranks', () => {
 
   const children = getChildrenRankedByContext(newState, ['a', 'm n o'])
 
-  expect(new Set(children.map(child => child.rank)).size).toBe(4)
+  expect(children.map(child => child.value)).toEqual(['a', 'b', 'c', 'd'])
 })
 
 it('removes trailing hyphens', () => {

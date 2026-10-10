@@ -1,4 +1,4 @@
-import { applyPatch } from 'fast-json-patch'
+import { Operation, applyPatch, compare, unescapePathComponent } from 'fast-json-patch'
 import { produce } from 'immer'
 import { findLast, isEqual, sortBy, startCase, uniq } from 'lodash'
 import ActionType from '../@types/ActionType'
@@ -6,8 +6,10 @@ import Patch from '../@types/Patch'
 import Path from '../@types/Path'
 import State from '../@types/State'
 import ThoughtId from '../@types/ThoughtId'
+import ThoughtReaderState from '../@types/ThoughtReaderState'
 import { commandById, formatKeyboardShortcut, gestureString } from '../commands'
 import { HOME_TOKEN } from '../constants'
+import db from '../data-providers/thoughtspace'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isAttribute from '../util/isAttribute'
@@ -15,6 +17,7 @@ import isRoot from '../util/isRoot'
 import joinConjunction from '../util/joinConjunction'
 import removeHome from '../util/removeHome'
 import stripTags from '../util/stripTags'
+import thoughtspaceHistory from '../util/thoughtspaceHistory'
 import documentSort from './documentSort'
 import exportContext from './exportContext'
 import { getChildrenRanked } from './getChildren'
@@ -23,8 +26,15 @@ import undoSteps from './undoSteps'
 /** A patch with the states before and after it. */
 interface Snapshot {
   patch: Patch
-  before: State
-  after: State
+  before: ThoughtReaderState
+  after: ThoughtReaderState
+}
+
+/** Plain keyed diagnostics used only while reconstructing reports, not live document snapshots. */
+interface DiagnosticSnapshot {
+  patch: Patch
+  before: ReturnType<typeof thoughtspaceHistory.capture>
+  after: ReturnType<typeof thoughtspaceHistory.capture>
 }
 
 /** Describes a patch in terms of the thoughts it changed, as a step the user can follow. The patch records only the types of the actions that produced it, so what they did is read off its operations and the states on either side of it. */
@@ -51,14 +61,16 @@ const code = (s: string) => `\`${s}\``
 const name = (value: string) => (value ? code(value) : 'the empty thought')
 
 /** Names the thought at the given path preceded by a space, or returns an empty string if there is no such thought so that a description reads naturally either way. */
-const target = (state: State, path: Path | null): string => {
+const target = (state: ThoughtReaderState, path: Path | null): string => {
   const value = path ? headValue(state, path) : undefined
   return value !== undefined ? ` ${name(value)}` : ''
 }
 
-/** The ids of the thoughts whose entries a patch touches, from its operation paths. */
+/** The ids of thoughts whose records or keyed sibling positions a patch touches. */
 const touchedIds = (patch: Patch): ThoughtId[] =>
-  uniq(patch.ops.flatMap(op => op.path.match(/^\/thoughts\/thoughtIndex\/([^/]+)/)?.[1] ?? [])) as ThoughtId[]
+  uniq(
+    patch.ops.flatMap(op => op.path.match(/^\/thoughts\/(?:thoughtIndex\/|childPositions\/[^/]+\/)([^/]+)/)?.[1] ?? []),
+  ) as ThoughtId[]
 
 /** Describes how a command was invoked. */
 const describeCommandInvocation = (patch: Patch): string => {
@@ -88,44 +100,44 @@ const describeCommandInvocation = (patch: Patch): string => {
 
 /** The ids of the thoughts that exist after a patch but not before it, i.e. that its actions created. */
 const createdIds = ({ patch, before, after }: Snapshot): ThoughtId[] =>
-  touchedIds(patch).filter(id => !before.thoughts.thoughtIndex[id] && after.thoughts.thoughtIndex[id])
+  touchedIds(patch).filter(id => !before.thoughts.getThought(id) && after.thoughts.getThought(id))
 
 /** The ids of the thoughts that exist before a patch but not after it, i.e. that its actions deleted. */
 const deletedIds = ({ patch, before, after }: Snapshot): ThoughtId[] =>
-  touchedIds(patch).filter(id => before.thoughts.thoughtIndex[id] && !after.thoughts.thoughtIndex[id])
+  touchedIds(patch).filter(id => before.thoughts.getThought(id) && !after.thoughts.getThought(id))
 
 /** The topmost thoughts of a set in the given state, i.e. those whose parent is not in the set. */
-const topmost = (state: State, ids: ThoughtId[]): ThoughtId[] =>
-  ids.filter(id => !ids.includes(state.thoughts.thoughtIndex[id].parentId))
+const topmost = (state: ThoughtReaderState, ids: ThoughtId[]): ThoughtId[] =>
+  ids.filter(id => !ids.includes(state.thoughts.getThought(id)!.parentId))
 
 /** The ids of the selected thoughts in document order. */
-const selectionIds = (state: State): ThoughtId[] =>
+const selectionIds = (state: ThoughtReaderState): ThoughtId[] =>
   documentSort(state, Object.values(state.multicursors)).map(path => head(path))
 
 /** Names a thought in the given state by its value, or as the root. */
-const describeThought = (state: State, id: ThoughtId): string =>
-  isRoot([id]) ? 'the root' : name(state.thoughts.thoughtIndex[id]?.value ?? '')
+const describeThought = (state: ThoughtReaderState, id: ThoughtId): string =>
+  isRoot([id]) ? 'the root' : name(state.thoughts.getThought(id)?.value ?? '')
 
 /** The value of a thought followed by those of its only-child descendants, separated by slashes, e.g. =pin/true. Stops at an empty value. */
-const chain = (state: State, id: ThoughtId): string => {
+const chain = (state: ThoughtReaderState, id: ThoughtId): string => {
   const children = getChildrenRanked(state, id)
-  const { value } = state.thoughts.thoughtIndex[id]
+  const { value } = state.thoughts.getThought(id)!
   return children.length === 1 && children[0].value ? `${value}/${chain(state, children[0].id)}` : value
 }
 
 /** The nearest meta attribute at or above a thought in the given state, i.e. the attribute whose value the thought is part of. */
-const attributeRoot = (state: State, id: ThoughtId): ThoughtId | undefined => {
-  const thought = state.thoughts.thoughtIndex[id]
+const attributeRoot = (state: ThoughtReaderState, id: ThoughtId): ThoughtId | undefined => {
+  const thought = state.thoughts.getThought(id)
   return !thought || isRoot([id]) ? undefined : isAttribute(thought.value) ? id : attributeRoot(state, thought.parentId)
 }
 
 /** The meta attributes a patch set, as the ids of their roots in the state after it: attributes it created, and attributes whose value it changed. */
 const attributesSet = (snapshot: Snapshot): ThoughtId[] => {
   const { patch, before, after } = snapshot
-  const created = topmost(after, createdIds(snapshot)).filter(id => isAttribute(after.thoughts.thoughtIndex[id].value))
+  const created = topmost(after, createdIds(snapshot)).filter(id => isAttribute(after.thoughts.getThought(id)!.value))
   const edited = touchedIds(patch)
-    .filter(id => before.thoughts.thoughtIndex[id] && after.thoughts.thoughtIndex[id])
-    .filter(id => before.thoughts.thoughtIndex[id].value !== after.thoughts.thoughtIndex[id].value)
+    .filter(id => before.thoughts.getThought(id) && after.thoughts.getThought(id))
+    .filter(id => before.thoughts.getThought(id)!.value !== after.thoughts.getThought(id)!.value)
     .map(id => attributeRoot(after, id))
     .filter((id): id is ThoughtId => !!id)
   return uniq([...created, ...edited])
@@ -134,18 +146,36 @@ const attributesSet = (snapshot: Snapshot): ThoughtId[] => {
 /** The meta attributes a patch removed, as the ids of their roots in the state before it. */
 const attributesRemoved = (snapshot: Snapshot): ThoughtId[] =>
   topmost(snapshot.before, deletedIds(snapshot)).filter(id =>
-    isAttribute(snapshot.before.thoughts.thoughtIndex[id].value),
+    isAttribute(snapshot.before.thoughts.getThought(id)!.value),
   )
 
-/** The id of the thought a patch moved to another parent or rank, if any. */
-const movedId = ({ patch, before, after }: Snapshot): ThoughtId | undefined =>
-  touchedIds(patch).find(id => {
-    const oldThought = before.thoughts.thoughtIndex[id]
-    const newThought = after.thoughts.thoughtIndex[id]
-    return (
-      oldThought && newThought && (oldThought.parentId !== newThought.parentId || oldThought.rank !== newThought.rank)
-    )
-  })
+/** Finds a reparented thought or a single sibling move that reproduces the recorded order. */
+const movedId = ({ patch, before, after }: Snapshot): ThoughtId | undefined => {
+  const existing = touchedIds(patch).filter(id => before.thoughts.getThought(id) && after.thoughts.getThought(id))
+  const reparented = existing.find(
+    id => before.thoughts.getThought(id)!.parentId !== after.thoughts.getThought(id)!.parentId,
+  )
+  if (reparented) return reparented
+
+  return uniq(existing.map(id => before.thoughts.getThought(id)!.parentId))
+    .flatMap(parentId => {
+      const previous = before.thoughts.getChildren(parentId)
+      const current = after.thoughts.getChildren(parentId)
+      const firstMismatch = previous.findIndex((id, i) => id !== current[i])
+      // A single move changes one of the two thoughts at the first mismatch. Its other siblings keep their order;
+      // merely taking the first changed position can describe a shifted sibling whose reported move is a no-op.
+      return [previous[firstMismatch], current[firstMismatch]].filter(
+        id =>
+          id &&
+          existing.includes(id) &&
+          isEqual(
+            previous.filter(sibling => sibling !== id),
+            current.filter(sibling => sibling !== id),
+          ),
+      )
+    })
+    .at(0)
+}
 
 /** Describes the meta attributes that a patch set and removed, e.g. "sets `=pin/true`". Returns an empty string if it changed none. */
 const attributeChanges = (snapshot: Snapshot): string => {
@@ -161,17 +191,17 @@ const attributeChanges = (snapshot: Snapshot): string => {
 }
 
 /** Returns true if the given thought is the cursor thought in the given state. */
-const isCursor = (state: State, id: ThoughtId): boolean => !!state.cursor && head(state.cursor) === id
+const isCursor = (state: ThoughtReaderState, id: ThoughtId): boolean => !!state.cursor && head(state.cursor) === id
 
 /** The siblings of a thought without the meta attributes, which are hidden and so cannot serve as a landmark. */
-const visibleSiblings = (state: State, id: ThoughtId) =>
-  getChildrenRanked(state, state.thoughts.thoughtIndex[id].parentId).filter(
+const visibleSiblings = (state: ThoughtReaderState, id: ThoughtId) =>
+  getChildrenRanked(state, state.thoughts.getThought(id)!.parentId).filter(
     sibling => sibling.id === id || !isAttribute(sibling.value),
   )
 
 /** Describes where a thought sits in the given state relative to its siblings, or its parent when it has none, e.g. " after `b`". */
-const placement = (state: State, id: ThoughtId): string => {
-  const { parentId } = state.thoughts.thoughtIndex[id]
+const placement = (state: ThoughtReaderState, id: ThoughtId): string => {
+  const { parentId } = state.thoughts.getThought(id)!
   const siblings = visibleSiblings(state, id)
   const i = siblings.findIndex(sibling => sibling.id === id)
   const previous = siblings[i - 1]
@@ -186,15 +216,15 @@ const placement = (state: State, id: ThoughtId): string => {
 }
 
 /** Describes the creation of a thought by the command that creates it, e.g. "New Subthought `e`.". The value is read from the given state so that a value typed by a later patch of the same step can be used. */
-const describeNewThought = (snapshot: Snapshot, state: State): string => {
+const describeNewThought = (snapshot: Snapshot, state: ThoughtReaderState): string => {
   const { before, after } = snapshot
   const { metadata } = snapshot.patch
   const type = metadata.source === 'command' ? metadata.commandId : metadata.actionTypes[0]
   const [id] = topmost(after, createdIds(snapshot))
   if (!id) return `${startCase(type)}.`
 
-  const value = state.thoughts.thoughtIndex[id]?.value
-  const { parentId } = after.thoughts.thoughtIndex[id]
+  const value = state.thoughts.getThought(id)?.value
+  const { parentId } = after.thoughts.getThought(id)!
   const siblings = visibleSiblings(after, id)
   const i = siblings.findIndex(sibling => sibling.id === id)
   const previous = siblings[i - 1]
@@ -219,14 +249,14 @@ const describeNewThought = (snapshot: Snapshot, state: State): string => {
 /** Describes an edit by the first thought whose value the patch changed. Contiguous edits are merged into one patch, so this reads as a single edit from the first old value to the last new value. A formatting command changes the tags but not the text, so it is named after the tag it added or removed, e.g. Bold. */
 const describeEdit = ({ patch, before, after }: Snapshot): string => {
   const id = touchedIds(patch).find(id => {
-    const oldValue = before.thoughts.thoughtIndex[id]?.value
-    const newValue = after.thoughts.thoughtIndex[id]?.value
+    const oldValue = before.thoughts.getThought(id)?.value
+    const newValue = after.thoughts.getThought(id)?.value
     return oldValue !== undefined && newValue !== undefined && oldValue !== newValue
   })
   if (!id) return 'Edit Thought.'
 
-  const oldValue = before.thoughts.thoughtIndex[id].value
-  const newValue = after.thoughts.thoughtIndex[id].value
+  const oldValue = before.thoughts.getThought(id)!.value
+  const newValue = after.thoughts.getThought(id)!.value
 
   if (stripTags(oldValue) === stripTags(newValue)) {
     /** The names of the tags in an html value. */
@@ -253,7 +283,7 @@ const describeAttribute =
     const [removedId] = attributesRemoved(snapshot)
     const [state, id] = setId ? [after, setId] : [before, removedId]
     if (!id) return `${verb}.`
-    const { parentId } = state.thoughts.thoughtIndex[id]
+    const { parentId } = state.thoughts.getThought(id)!
     return `${verb} ${code(chain(state, id))}${isCursor(before, parentId) ? '' : ` on ${describeThought(state, parentId)}`}.`
   }
 
@@ -262,7 +292,7 @@ const describeExtract =
   (verb: string): Describer =>
   snapshot => {
     const [created] = topmost(snapshot.after, createdIds(snapshot))
-    return `${verb}${created ? ` ${name(snapshot.after.thoughts.thoughtIndex[created].value)}` : ''}.`
+    return `${verb}${created ? ` ${name(snapshot.after.thoughts.getThought(created)!.value)}` : ''}.`
   }
 
 /** Descriptions of the actions whose arguments a reader needs in order to repeat them: a value, a pasted text, an attribute, a destination. Any other action is named as dispatched, since the cursor it acts on is given by the step before it. */
@@ -272,26 +302,26 @@ const describers: Partial<Record<ActionType, Describer>> = {
   deleteAttribute: describeAttribute('Delete Attribute'),
   deleteThought: snapshot => {
     const [id] = topmost(snapshot.before, deletedIds(snapshot))
-    return `Delete Thought${id && !isCursor(snapshot.before, id) ? ` ${name(snapshot.before.thoughts.thoughtIndex[id].value)}` : ''}.`
+    return `Delete Thought${id && !isCursor(snapshot.before, id) ? ` ${name(snapshot.before.thoughts.getThought(id)!.value)}` : ''}.`
   },
   editThought: describeEdit,
   extractCategory: describeExtract('Extract Category'),
   extractSubthought: describeExtract('Extract Subthought'),
   importText: snapshot => {
     const { before, after } = snapshot
-    const roots = sortBy(topmost(after, createdIds(snapshot)), id => after.thoughts.thoughtIndex[id].rank)
+    const roots = sortBy(topmost(after, createdIds(snapshot)), id => after.thoughts.getPosition(id))
     // A single-line paste only inserts text into the value of the thought it is pasted into.
     if (!roots.length) {
       const id = touchedIds(snapshot.patch).find(id => {
-        const oldValue = before.thoughts.thoughtIndex[id]?.value
-        const newValue = after.thoughts.thoughtIndex[id]?.value
+        const oldValue = before.thoughts.getThought(id)?.value
+        const newValue = after.thoughts.getThought(id)?.value
         return oldValue !== undefined && newValue !== undefined && oldValue !== newValue && newValue.includes(oldValue)
       })
       return id
-        ? `Paste ${name(after.thoughts.thoughtIndex[id].value.replace(before.thoughts.thoughtIndex[id].value, ''))}${isCursor(before, id) ? '' : ` into ${name(before.thoughts.thoughtIndex[id].value)}`}.`
+        ? `Paste ${name(after.thoughts.getThought(id)!.value.replace(before.thoughts.getThought(id)!.value, ''))}${isCursor(before, id) ? '' : ` into ${name(before.thoughts.getThought(id)!.value)}`}.`
         : describeEdit(snapshot)
     }
-    const { parentId } = after.thoughts.thoughtIndex[roots[0]]
+    const { parentId } = after.thoughts.getThought(roots[0])!
     const destination =
       isRoot([parentId]) || isCursor(before, parentId) ? '' : ` into ${describeThought(after, parentId)}`
     // The pasted thoughts are quoted in a code block indented under the step, so that the markdown list continues after it.
@@ -305,16 +335,16 @@ const describers: Partial<Record<ActionType, Describer>> = {
   moveThought: snapshot => {
     const id = movedId(snapshot)
     return id
-      ? `Move Thought${isCursor(snapshot.before, id) ? '' : ` ${name(snapshot.after.thoughts.thoughtIndex[id].value)}`}${placement(snapshot.after, id)}.`
+      ? `Move Thought${isCursor(snapshot.before, id) ? '' : ` ${name(snapshot.after.thoughts.getThought(id)!.value)}`}${placement(snapshot.after, id)}.`
       : 'Move Thought.'
   },
   newThought: snapshot => describeNewThought(snapshot, snapshot.after),
   setDescendant: describeAttribute('Set Descendant'),
   splitThought: snapshot => {
     const { before, after } = snapshot
-    const left = before.cursor ? after.thoughts.thoughtIndex[head(before.cursor)]?.value : undefined
+    const left = before.cursor ? after.thoughts.getThought(head(before.cursor))?.value : undefined
     const [created] = createdIds(snapshot)
-    const right = created && after.thoughts.thoughtIndex[created]?.value
+    const right = created && after.thoughts.getThought(created)?.value
     return `Split Thought${left !== undefined && right !== undefined ? ` into ${name(left)} and ${name(right)}` : ''}.`
   },
   toggleAttribute: describeAttribute('Toggle Attribute'),
@@ -324,6 +354,9 @@ const describers: Partial<Record<ActionType, Describer>> = {
 const describeCommandEffect = (snapshot: Snapshot): string => {
   const source = snapshot.patch.metadata
   if (source.source !== 'command') return ''
+  // The recorded selection and invocation reproduce a multicursor command. A single inferred effect cannot describe
+  // the group reliably: canonical rank changes also touch siblings that the user did not move.
+  if (commandById(source.commandId).multicursor && selectionIds(snapshot.before).length > 1) return ''
   const describe = describers[source.actionTypes[0]]
   if (describe) return describe(snapshot)
 
@@ -335,8 +368,8 @@ const describeCommandEffect = (snapshot: Snapshot): string => {
   if (movedId(snapshot)) return describers.moveThought!(snapshot)
 
   const edited = touchedIds(snapshot.patch).some(id => {
-    const before = snapshot.before.thoughts.thoughtIndex[id]?.value
-    const after = snapshot.after.thoughts.thoughtIndex[id]?.value
+    const before = snapshot.before.thoughts.getThought(id)?.value
+    const after = snapshot.after.thoughts.getThought(id)?.value
     return before !== undefined && after !== undefined && before !== after
   })
   return edited ? describeEdit(snapshot) : ''
@@ -371,14 +404,14 @@ const describeStep = (snapshots: Snapshot[]): string => {
 }
 
 /** Describes setting the cursor on the thought at the given path. */
-const describeSetCursor = (state: State, path: Path) => `Set the cursor on${target(state, path)}.`
+const describeSetCursor = (state: ThoughtReaderState, path: Path) => `Set the cursor on${target(state, path)}.`
 
 /** Describes selecting the given thoughts, e.g. "Select `a`, `b`, and `c`.". */
-const describeSelect = (state: State, ids: ThoughtId[]) =>
-  `Select ${joinConjunction(ids.map(id => name(state.thoughts.thoughtIndex[id]?.value ?? '')))}.`
+const describeSelect = (state: ThoughtReaderState, ids: ThoughtId[]) =>
+  `Select ${joinConjunction(ids.map(id => name(state.thoughts.getThought(id)?.value ?? '')))}.`
 
 /** Exports the thoughtspace of the given state as plain text with meta attributes, without the root. Returns an empty string if the thoughtspace is empty, which exports as the root's placeholder value rather than as nothing. */
-const exportTree = (state: State): string =>
+const exportTree = (state: ThoughtReaderState): string =>
   getChildrenRanked(state, HOME_TOKEN).length
     ? // removeHome wraps the children of the root in newlines
       removeHome(exportContext(state, [HOME_TOKEN], 'text/plain')).replace(/^\n|\n$/g, '')
@@ -386,21 +419,64 @@ const exportTree = (state: State): string =>
 
 /** Generates a bug report in markdown for the actions between two positions of the undo history: the steps to reproduce them, starting from the thoughtspace at the start position, followed by the thoughtspace at the end position as the current behavior and an empty heading for the expected behavior. Positions count steps back from the present, so start is at or before end. */
 const stepsToReproduce = (state: State, positions: { start: number; end: number }): string => {
-  const { steps, position } = undoSteps(state)
+  const { steps: recordedSteps, position } = undoSteps(state)
 
   // Clamp the positions to the history, which may have changed since they were chosen. The undo slider keeps its handles as
   // long as the number of patches is unchanged, but the same number of patches can group into fewer steps, leaving a handle
   // past the end of the history.
-  const start = Math.min(Math.max(positions.start, 0), steps.length)
+  const start = Math.min(Math.max(positions.start, 0), recordedSteps.length)
   const end = Math.min(Math.max(positions.end, 0), start)
 
-  // Reconstruct the state before and after each patch between the current state and the two positions.
+  // Replay all requested boundaries once. Re-normalize each merged segment against its actual before state,
+  // so incoming edits between segments retain the same meaning as when history was recorded eagerly.
+  const segments = recordedSteps
+    .slice(Math.min(end, position), Math.max(start, position))
+    .flatMap(step => step.patches.flatMap(patch => patch.documentHistory.map(range => ({ patch, range }))))
+    .sort((a, b) => a.range.from - b.range.from || a.range.to - b.range.to)
+  const documentOps = new Map<Patch, Operation[]>()
+  if (segments.length) {
+    db.readHistory(
+      segments.map(segment => segment.range),
+      ({ before, after, thoughtIds, childrenChangedIds }, index) => {
+        const { patch } = segments[index]
+        const previousOps = documentOps.get(patch) ?? []
+        const scope = { thoughtIds: new Set(thoughtIds), parentIds: new Set(childrenChangedIds) }
+        thoughtIds.forEach(id => {
+          const old = before.getThought(id)
+          const current = after.getThought(id)
+          // A payload appearing or disappearing also changes EM's filtered sibling membership.
+          if (!!old !== !!current) {
+            if (old) scope.parentIds.add(old.parentId)
+            if (current) scope.parentIds.add(current.parentId)
+          }
+        })
+        previousOps.forEach(op => {
+          const [, , field, key] = op.path.split('/')
+          const id = unescapePathComponent(key) as ThoughtId
+          if (field === 'thoughtIndex') scope.thoughtIds.add(id)
+          else scope.parentIds.add(id)
+        })
+        const oldDocument = { thoughts: thoughtspaceHistory.capture({ ...state, thoughts: before }, scope).thoughts }
+        const currentDocument = { thoughts: thoughtspaceHistory.capture({ ...state, thoughts: after }, scope).thoughts }
+        const baseline = applyPatch(oldDocument, previousOps, false, false).newDocument
+        documentOps.set(patch, compare(currentDocument, baseline))
+      },
+    )
+  }
+  const steps = recordedSteps.map(step => ({
+    ...step,
+    patches: step.patches.map(patch => ({ ...patch, ops: [...patch.ops, ...(documentOps.get(patch) ?? [])] })),
+  }))
+
+  // Reconstruct keyed diagnostics over the current document, retaining unrelated incoming changes. Do not apply
+  // array-index patches to native child order: incoming siblings can change the meaning of those indices.
+  const captured = thoughtspaceHistory.capture(state)
   // The undo stack holds inverse patches, applied newest first to walk back to the start.
   const undoSnapshots = steps
     .slice(position, start)
     .flatMap(step => [...step.patches].reverse())
-    .reduce<Snapshot[]>((snapshots, patch) => {
-      const after = snapshots.at(-1)?.before ?? state
+    .reduce<DiagnosticSnapshot[]>((snapshots, patch) => {
+      const after = snapshots.at(-1)?.before ?? captured
       return [...snapshots, { patch, before: produce(after, draft => applyPatch(draft, patch.ops).newDocument), after }]
     }, [])
   // The redo stack holds forward patches, applied oldest first to walk forward to the end.
@@ -408,17 +484,22 @@ const stepsToReproduce = (state: State, positions: { start: number; end: number 
     .slice(end, position)
     .reverse()
     .flatMap(step => step.patches)
-    .reduce<Snapshot[]>((snapshots, patch) => {
-      const before = snapshots.at(-1)?.after ?? state
+    .reduce<DiagnosticSnapshot[]>((snapshots, patch) => {
+      const before = snapshots.at(-1)?.after ?? captured
       return [
         ...snapshots,
         { patch, before, after: produce(before, draft => applyPatch(draft, patch.ops).newDocument) },
       ]
     }, [])
-  const snapshots = new Map([...undoSnapshots, ...redoSnapshots].map(snapshot => [snapshot.patch, snapshot]))
+  const snapshots = new Map<Patch, Snapshot>(
+    [...undoSnapshots, ...redoSnapshots].map(({ patch, before, after }) => [
+      patch,
+      { patch, before: thoughtspaceHistory.restore(before), after: thoughtspaceHistory.restore(after) },
+    ]),
+  )
 
   /** The state at a position: the current state, the state before the oldest patch of the step ahead of it, or the state after the newest patch of the step behind it. */
-  const stateAt = (p: number): State =>
+  const stateAt = (p: number): ThoughtReaderState =>
     p === position
       ? state
       : p > position

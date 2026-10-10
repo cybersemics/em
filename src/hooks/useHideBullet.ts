@@ -1,4 +1,3 @@
-import { useSelector } from 'react-redux'
 import LazyEnv from '../@types/LazyEnv'
 import Path from '../@types/Path'
 import SimplePath from '../@types/SimplePath'
@@ -15,6 +14,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import equalPath from '../util/equalPath'
 import head from '../util/head'
 import stripTags from '../util/stripTags'
+import useEditorSelector from './useEditorSelector'
 
 /** Gets a globally defined bullet. */
 const getGlobalBullet = (key: string) => GLOBAL_STYLE_ENV[key as keyof typeof GLOBAL_STYLE_ENV]?.bullet
@@ -39,7 +39,7 @@ const useHideBullet = ({
   isInContextView: boolean
   thoughtId: ThoughtId
 }) => {
-  const hideBullet = useSelector(state => {
+  const hideBullet = useEditorSelector(state => {
     const thought = getThoughtById(state, thoughtId)
     // bullet may be set from =children or =grandchildren and passed as a prop
     if (hideBulletProp) return true

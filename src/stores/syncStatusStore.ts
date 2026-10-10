@@ -1,9 +1,7 @@
 import reactMinistore from './react-ministore'
 
-/** A store that tracks state related to syncing. The pull queue updates isPulling and file import updates importProgress. Nothing has written savingProgress since the treecrdt thoughtspace, so it stays at 1. */
+/** A store that tracks state related to syncing. File import updates importProgress; savingProgress has no writer and stays at 1. */
 const syncStatusStore = reactMinistore<{
-  /** Tracks if the pullQueue is currently pulling. */
-  isPulling: boolean
   /**
    * Progress of replicating all thoughts for offline editing (between 0–1).
    * Value of null means replication has not started yet.
@@ -19,7 +17,6 @@ const syncStatusStore = reactMinistore<{
    */
   importProgress: number
 }>({
-  isPulling: false,
   replicationProgress: null,
   savingProgress: 1,
   importProgress: 1,

@@ -46,9 +46,9 @@ it('lands the cursor on the first selected thought at its new location when the 
   // drop the selection into the collapsed cousin r, as the subthought drop does
   store.dispatch([
     setIsMulticursorExecuting({ value: true, undoLabel: 'Dragging Thoughts' }),
-    moveThought({ from: ['g', 'a', 'x'], to: ['g', 'b', 'r', 'x'], newRank: -3 }),
-    moveThought({ from: ['g', 'a', 'y'], to: ['g', 'b', 'r', 'y'], newRank: -2 }),
-    moveThought({ from: ['g', 'a', 'z'], to: ['g', 'b', 'r', 'z'], newRank: -1 }),
+    moveThought({ from: ['g', 'a', 'x'], to: ['g', 'b', 'r', 'x'], after: null }),
+    moveThought({ from: ['g', 'a', 'y'], to: ['g', 'b', 'r', 'y'], after: ['g', 'b', 'r', 'x'] }),
+    moveThought({ from: ['g', 'a', 'z'], to: ['g', 'b', 'r', 'z'], after: ['g', 'b', 'r', 'y'] }),
     setIsMulticursorExecuting({ value: false }),
   ])
 

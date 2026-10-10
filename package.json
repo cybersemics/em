@@ -80,12 +80,18 @@
       "npm",
       "yarn"
     ],
+    "allowed-urls": [
+      "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-interface-0.2.0.tgz",
+      "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-wa-sqlite-0.4.2.tgz",
+      "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-b9009d879ec89a7bf79f5e188a24bc14698a4670/treecrdt-wasm-0.0.1.tgz"
+    ],
     "path": "yarn.lock"
   },
   "jest": {
     "resetMocks": false
   },
   "resolutions": {
+    "@treecrdt/interface": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-interface-0.2.0.tgz",
     "@pandacss/node@npm:0.47.0": "patch:@pandacss/node@npm%3A0.47.0#~/.yarn/patches/@pandacss-node-npm-0.47.0.patch",
     "use-latest": "^1.3.0",
     "use-isomorphic-layout-effect": "^1.2.1"
@@ -115,13 +121,14 @@
     "@tauri-apps/api": "^2.12.1",
     "@treecrdt/auth": "0.1.2",
     "@treecrdt/discovery": "0.1.0",
-    "@treecrdt/interface": "0.2.0",
+    "@treecrdt/interface": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-interface-0.2.0.tgz",
     "@treecrdt/riblt-wasm": "0.1.0",
     "@treecrdt/sync": "0.1.2",
     "@treecrdt/sync-protocol": "0.1.2",
     "@treecrdt/sync-server-core": "0.1.2",
     "@treecrdt/sync-sqlite": "0.1.2",
-    "@treecrdt/wa-sqlite": "0.4.2",
+    "@treecrdt/wa-sqlite": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-84ae38d0ff4d70031d1f7ca9979be4d8e303dd06/treecrdt-wa-sqlite-0.4.2.tgz",
+    "@treecrdt/wasm": "https://github.com/cybersemics/treecrdt/releases/download/memory-preview-b9009d879ec89a7bf79f5e188a24bc14698a4670/treecrdt-wasm-0.0.1.tgz",
     "axios": "^1.20.0",
     "clipboard": "^2.0.11",
     "dnd-core": "^16.0.1",
@@ -166,6 +173,7 @@
     "title-case": "^4.3.2",
     "truncate-html": "^1.2.2",
     "ts-key-enum": "^3.0.13",
+    "use-sync-external-store": "^1.4.0",
     "vite-plugin-html": "^3.2.2",
     "webview-background": "workspace:*",
     "workbox-build": "^7.4.1",
@@ -215,6 +223,7 @@
     "@types/sanitize-html": "^2.16.2",
     "@types/sinonjs__fake-timers": "^15.0.1",
     "@types/tcp-port-used": "^1.0.4",
+    "@types/use-sync-external-store": "^0.0.6",
     "@typescript-eslint/eslint-plugin": "^8.71.0",
     "@typescript-eslint/parser": "^8.71.0",
     "@typescript/native": "npm:typescript@7.0.2",

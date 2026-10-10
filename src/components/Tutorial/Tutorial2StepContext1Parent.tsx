@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { isTouch } from '../../browser'
 import newThoughtCommand from '../../commands/newThought'
 import { HOME_TOKEN, TUTORIAL_CONTEXT1_PARENT } from '../../constants'
+import useEditorSelector from '../../hooks/useEditorSelector'
 import { getAllChildrenAsThoughts } from '../../selectors/getChildren'
 import selectTutorialChoice from '../../selectors/selectTutorialChoice'
 import ellipsize from '../../util/ellipsize'
@@ -13,10 +14,10 @@ import TutorialHint from './TutorialHint'
 
 // eslint-disable-next-line jsdoc/require-jsdoc
 const Tutorial2StepContext1Parent = () => {
-  const tutorialChoice = useSelector(selectTutorialChoice)
+  const tutorialChoice = useEditorSelector(selectTutorialChoice)
   const cursor = useSelector(state => state.cursor)
-  const hasQuotes = useSelector(state => state.cursor && headValue(state, state.cursor)?.startsWith('"'))
-  const rootChildren = useSelector(state => getAllChildrenAsThoughts(state, HOME_TOKEN), isEqual)
+  const hasQuotes = useEditorSelector(state => state.cursor && headValue(state, state.cursor)?.startsWith('"'))
+  const rootChildren = useEditorSelector(state => getAllChildrenAsThoughts(state, HOME_TOKEN), isEqual)
 
   return (
     <>

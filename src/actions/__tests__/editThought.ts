@@ -12,11 +12,17 @@ import editThought from '../../test-helpers/editThoughtByContext'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenAsThoughtsByContext from '../../test-helpers/getAllChildrenAsThoughtsByContext'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
+import initStore from '../../test-helpers/initStore'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
+import reducerFlow from '../../test-helpers/reducerFlow'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import { compareThought } from '../../util/compareThought'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('edit a thought', () => {
   const steps = [newThought({ value: 'a' }), newThought({ value: 'b' }), setCursor(['a']), editThought(['a'], 'aa')]
@@ -217,7 +223,7 @@ it('edit a thought that exists in another context', () => {
   expect(thoughtInContextB).toBeTruthy()
 
   // ab should exist in both contexts a and b
-  expect(getContexts(stateNew, 'ab')).toMatchObject([thoughtInContextA!.id, thoughtInContextB!.id])
+  expect(getContexts(stateNew, 'ab')).toEqual([thoughtInContextA!.id, thoughtInContextB!.id].sort())
 
   expect(getAllChildrenAsThoughtsByContext(stateNew, ['a'])).toMatchObject([
     {
@@ -273,7 +279,7 @@ it('do not duplicate children when new and old context are same', () => {
 })
 
 describe('sort', () => {
-  it('rank should change when editing a thought in a sorted context', () => {
+  it('reorders an edited thought in a sorted context', () => {
     const text = `
     - =sort
       - Alphabetical
@@ -281,11 +287,7 @@ describe('sort', () => {
     - b
     - d`
 
-    const state1 = importText({ text })(initialState())
-
-    const a1 = contextToThought(state1, ['a'])!
-    const b1 = contextToThought(state1, ['b'])!
-    const d1 = contextToThought(state1, ['d'])!
+    const state1 = runDocumentCommand(importText({ text }), initialState())
 
     const steps = [setCursor(['a']), editThought(['a'], 'c')]
 
@@ -298,17 +300,6 @@ describe('sort', () => {
   - b
   - c
   - d`)
-
-    const b2 = contextToThought(stateNew, ['b'])!
-    const c2 = contextToThought(stateNew, ['c'])!
-    const d2 = contextToThought(stateNew, ['d'])!
-
-    // rank of edited thought should change
-    expect(c2.rank).not.toEqual(a1.rank)
-
-    // rank of siblings should not
-    expect(b2.rank).toEqual(b1.rank)
-    expect(d2.rank).toEqual(d1.rank)
   })
 
   it('empty thought in sorted context should be sorted on edit', () => {
@@ -367,7 +358,7 @@ describe('sort', () => {
     - D
     - 🙂`)
 
-    const stateEmojiWithText = editThought(['X', '🙂'], '🙂C')(stateEmoji)
+    const stateEmojiWithText = runDocumentCommand(editThought(['X', '🙂'], '🙂C'), stateEmoji)
 
     expect(exportContext(stateEmojiWithText, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - X
@@ -405,7 +396,7 @@ describe('sort', () => {
     - D
     - ****`)
 
-    const stateAfter = editThought(['X', '<b></b>'], '<b></b>C')(stateBefore)
+    const stateAfter = runDocumentCommand(editThought(['X', '<b></b>'], '<b></b>C'), stateBefore)
 
     expect(exportContext(stateAfter, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - X
@@ -417,7 +408,7 @@ describe('sort', () => {
     - D`)
   })
 
-  it('rank should not change when editing a thought to empty', () => {
+  it('preserves sibling order when editing a thought to empty', () => {
     const text = `
     - =sort
       - Alphabetical
@@ -425,11 +416,7 @@ describe('sort', () => {
     - b
     - c`
 
-    const state1 = importText({ text })(initialState())
-
-    const a1 = contextToThought(state1, ['a'])!
-    const b1 = contextToThought(state1, ['b'])!
-    const c1 = contextToThought(state1, ['c'])!
+    const state1 = runDocumentCommand(importText({ text }), initialState())
 
     const steps = [setCursor(['b']), editThought(['b'], '')]
 
@@ -442,14 +429,6 @@ describe('sort', () => {
   - a
   - 
   - c`)
-
-    const a2 = contextToThought(stateNew, ['a'])!
-    const empty2 = contextToThought(stateNew, [''])!
-    const c2 = contextToThought(stateNew, ['c'])!
-
-    expect(a2.rank).toEqual(a1.rank)
-    expect(empty2.rank).toEqual(b1.rank)
-    expect(c2.rank).toEqual(c1.rank)
   })
 
   it('edited thought that was empty should be sorted into place', () => {
@@ -499,7 +478,7 @@ describe('changing thought with duplicate descendent', () => {
     const lexeme = getLexeme(stateNew, 'ac')
 
     // Lexeme should be properly updated
-    expect(lexeme?.contexts).toHaveLength(2)
+    expect(lexeme).toHaveLength(2)
   })
 
   it('removing', () => {
@@ -524,6 +503,6 @@ describe('changing thought with duplicate descendent', () => {
 
     const lexeme = getLexeme(stateNew, 'a')
     // Lexeme should be properly updated
-    expect(lexeme?.contexts).toHaveLength(1)
+    expect(lexeme).toHaveLength(1)
   })
 })

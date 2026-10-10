@@ -1,5 +1,4 @@
 import React from 'react'
-import { useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
 import { dropEndRecipe, dropHoverRecipe } from '../../styled-system/recipes'
 import DropThoughtZone from '../@types/DropThoughtZone'
@@ -8,6 +7,7 @@ import { isTouch } from '../browser'
 import { HOME_DISPLAY_VALUE } from '../constants'
 import testFlags from '../e2e/testFlags'
 import useDragAndDropSubThought from '../hooks/useDragAndDropSubThought'
+import useEditorSelector from '../hooks/useEditorSelector'
 import attributeEquals from '../selectors/attributeEquals'
 import dropHoverColor from '../selectors/dropHoverColor'
 import { getChildrenSorted } from '../selectors/getChildren'
@@ -48,12 +48,12 @@ const DropEnd = ({
   }
   const thoughtId = head(path)
   const isRootPath = isRoot(path)
-  const value = useSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
+  const value = useEditorSelector(state => getThoughtById(state, thoughtId)?.value) ?? ''
   // Simulated drag snapshots need a human-readable root label, but the canonical Home value remains HOME_TOKEN.
   const displayValue = isRootPath ? HOME_DISPLAY_VALUE : value
-  const dropHoverColorValue = useSelector(state => dropHoverColor(state, depth + 1))
+  const dropHoverColorValue = useEditorSelector(state => dropHoverColor(state, depth + 1))
 
-  const isParentTableCol1 = useSelector(state =>
+  const isParentTableCol1 = useEditorSelector(state =>
     attributeEquals(state, head(rootedParentOf(state, path)), '=view', 'Table'),
   )
 
@@ -61,7 +61,7 @@ const DropEnd = ({
 
   // a boolean indicating if the drop-hover component is shown
   // true if hovering and the context is not sorted
-  const showDropHover = useSelector(state => {
+  const showDropHover = useEditorSelector(state => {
     if (testFlags.simulateDrag) return true
 
     // if hovering, and the parent is not sorted, show the drop-hover

@@ -2,7 +2,6 @@ import { fireEvent } from '@testing-library/dom'
 import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { act, createElement } from 'react'
-import { Provider } from 'react-redux'
 import SimplePath from '../../@types/SimplePath'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
@@ -24,6 +23,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import windowEvent from '../../test-helpers/windowEvent'
 import { acknowledgeAiDisclosure, clearAiDisclosureAcknowledgement } from '../../util/aiDisclosure'
 import Editable from '../Editable'
+import EditorProvider from '../EditorProvider'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -115,13 +115,12 @@ it.each<{ cursor: string[] | null; cursorName: string }>([
   const stalePath = contextToPath(store.getState(), ['A', 'B']) as SimplePath
   const cursorBefore = store.getState().cursor
   const { container } = render(
-    createElement(Provider, {
+    createElement(EditorProvider, {
       store,
       children: createElement(Editable, {
         isEditing: false,
         isVisible: true,
         path: stalePath,
-        rank: 0,
         simplePath: stalePath,
       }),
     }),
@@ -132,7 +131,7 @@ it.each<{ cursor: string[] | null; cursorName: string }>([
     moveThought({
       from: ['A', 'B'],
       to: ['A', 'C', 'B'],
-      newRank: 0,
+      after: null,
     }),
   )
   await act(() => fireEvent.click(staleEditable))

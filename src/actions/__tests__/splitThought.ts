@@ -2,13 +2,18 @@ import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
 import getThoughtById from '../../selectors/getThoughtById'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
+import initStore from '../../test-helpers/initStore'
+import reducerFlow from '../../test-helpers/reducerFlow'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import head from '../../util/head'
 import initialState from '../../util/initialState'
-import reducerFlow from '../../util/reducerFlow'
 import importText from '../importText'
 import newThought from '../newThought'
 import splitThought from '../splitThought'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 it('split thought', () => {
   const steps = [
@@ -131,6 +136,28 @@ it('move children to the correct sibling in a sorted context', () => {
       - A
       - B
       - C`)
+})
+
+it('move later children after merging duplicate siblings when splitting', () => {
+  const stateNew = reducerFlow([
+    importText({
+      text: `
+        - =note
+          - hello world
+            - A
+            - A
+            - B`,
+    }),
+    setCursor(['=note', 'hello world']),
+    splitThought({ splitResult: { left: 'hello', right: 'world' } }),
+  ])(initialState())
+
+  expect(exportContext(stateNew, [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
+  - =note
+    - hello
+    - world
+      - A
+      - B`)
 })
 
 // https://github.com/cybersemics/em/issues/4582

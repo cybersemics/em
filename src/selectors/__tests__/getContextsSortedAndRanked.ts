@@ -1,27 +1,24 @@
 import State from '../../@types/State'
+import ThoughtId from '../../@types/ThoughtId'
 import importText from '../../actions/importText'
+import updateThoughts from '../../actions/updateThoughts'
 import { HOME_TOKEN } from '../../constants'
 import contextToThoughtId from '../../selectors/contextToThoughtId'
 import getContextsSortedAndRanked from '../../selectors/getContextsSortedAndRanked'
 import getThoughtById from '../../selectors/getThoughtById'
+import initStore from '../../test-helpers/initStore'
+import runDocumentCommand from '../../test-helpers/runDocumentCommand'
+import waitForThoughtspaceIdle from '../../test-helpers/waitForThoughtspaceIdle'
 import initialState from '../../util/initialState'
+
+beforeEach(initStore)
+afterEach(waitForThoughtspaceIdle)
 
 const FIXED_HOME_ROOT_VALUE = '00000000000000000000000000000001'
 
-/** Updates a thought value in the reducer state used by selector tests. */
-const setThoughtValue = (state: State, id: string, value: string): State => ({
-  ...state,
-  thoughts: {
-    ...state.thoughts,
-    thoughtIndex: {
-      ...state.thoughts.thoughtIndex,
-      [id]: {
-        ...state.thoughts.thoughtIndex[id],
-        value,
-      },
-    },
-  },
-})
+/** Updates one fixture thought through the document transaction. */
+const setThoughtValue = (state: State, id: ThoughtId, value: string): State =>
+  runDocumentCommand(updateThoughts({ write: transaction => transaction.payload(id, { value }) }), state)
 
 describe('getContextsSortedAndRanked', () => {
   it.each([HOME_TOKEN, FIXED_HOME_ROOT_VALUE])(
@@ -37,7 +34,7 @@ describe('getContextsSortedAndRanked', () => {
               - y
       `
 
-      const state = importText(initialState(), { text })
+      const state = runDocumentCommand(importText({ text }), initialState())
       const vId = contextToThoughtId(state, ['v'])
       const bId = contextToThoughtId(state, ['v', 'b'])
 
