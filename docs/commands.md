@@ -731,6 +731,8 @@ Display subthoughts of the current thought as indented paragraphs.
 
 Display the current list as a table, with subthoughts rendered in the second column.
 
+Run it with the cursor on one of the list's children, not on the list thought itself: it sets `=view/Table` on the cursor's parent.
+
 <kbd>Option + Shift + T</kbd>
 
 https://github.com/user-attachments/assets/accb2319-5926-4fe3-856b-cb4da3c218ab
