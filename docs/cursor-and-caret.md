@@ -30,7 +30,7 @@ dispatch(setCursor({ path: newPath, offset: 5 }))
 
 | Environment | Write | Consequence |
 | --- | --- | --- |
-| Desktop browser | `pushState` | browser back/forward step through cursor positions; `onPopstate` in [`initEvents`](../src/util/initEvents.ts) turns each one back into a `setCursor` |
+| Desktop browser | `pushState` | browser back/forward step through cursor positions; `onPopstate` in [`initEvents`](../src/util/initEvents.ts) turns each one back into a `setCursor`, skipping in the same direction any entry whose thought has since been deleted or moved |
 | Touch browser | `replaceState` | the URL stays current, but no history entries accumulate |
 | PWA | neither | the URL is not updated at all; the address bar is not visible and the cursor is persisted locally ([#212](https://github.com/cybersemics/em/issues/212)) |
 
@@ -114,6 +114,12 @@ The same unreliable suppression means the tap's click can reach `Editable` itsel
 A tap that is part of a multi-touch gesture is ignored altogether, so that the caret stays where it was while the user pinches or traces with two fingers. `handleTapBehavior` returns early (preventing the default, so the browser does not synthesize a focus on the editable), `useEditMode`'s mousedown handler drops the event, and the condition that moves the cursor on tap excludes it. All three read the multitouch latch, which persists through the terminating touchend and click of the gesture and is only reset by the next single-finger touchstart or by a mouse or pen pointerdown — otherwise the final lift of a pinch would arrive as an ordinary tap and move the cursor to wherever that finger happened to be. See [Multi-touch rejection](commands.md#multi-touch-rejection).
 
 The same reasoning applies outside `Editable`, to anything the user taps that is rendered over the thoughtspace. A toolbar dropdown ([`LetterCasePicker`](../src/components/LetterCasePicker.tsx), [`SortPicker`](../src/components/SortPicker.tsx), [`BulletPicker`](../src/components/BulletPicker.tsx), [`ColorPicker`](../src/components/ColorPicker.tsx)) opens on top of the thoughts, so a tap on one of its options that the option does not consume is completed by the browser, and the mouse events it synthesizes at the tapped point reach the editor underneath and move the cursor to the thought behind the option ([issue #5608](https://github.com/cybersemics/em/issues/5608)). Each option therefore applies on `touchend` and calls `preventDefault()` there. `touchstart` is not an alternative: React registers it passively, so `preventDefault()` in an `onTouchStart` is a no-op and the browser completes the tap regardless.
+
+### Rapid taps between thoughts
+
+When a tap on one thought follows a tap on another within a few hundred milliseconds, iOS Safari treats the pair as a double tap and retargets the second tap's synthesized `mousedown`, focus and `click` to the thought it left ([#4173](https://github.com/cybersemics/em/issues/4173)). Only its touch events reach the thought that was tapped. [`lastTouch`](../src/components/Editable/lastTouch.ts) records the last touch and the editable it landed on; `useEditMode`'s `mousedown` handler drops, with `preventDefault()`, a mouse event that arrives on a different editable within its window, since it would otherwise put the caret back where it was, and the tapped thought's `touchend` moves the cursor itself, with the offset computed from the touch's coordinates.
+
+On WebKit 27 that `touchend` can be withheld until the next touch ([#5660](https://github.com/cybersemics/em/issues/5660), see [Drag and Drop](drag-and-drop.md)), so it arrives after the retargeted `mousedown` and the ghost is not recognized: the tap can leave the caret on the thought it left, or at the start of the tapped thought. A quick tap after a withheld one can also be lost altogether, with no event reaching the page. Neither is handled yet.
 
 ### Caret restoration on iOS
 

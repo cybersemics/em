@@ -96,6 +96,7 @@ const statePropertiesToOmit: (keyof State)[] = [
   'cursorCleared',
   'editableNonce',
   'isKeyboardOpen',
+  'learning',
   'selectionOffsets',
 ]
 

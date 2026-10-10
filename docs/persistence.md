@@ -128,3 +128,5 @@ Device permissions live in [`permissionsStore.ts`](../src/data-providers/permiss
 ## Cleanup
 
 `thoughtspaceRuntime.drop()` drains work, stops the full-document subscription, detaches loopback peers and the materialization listener, frees WASM, and drops the prototype SQLite database. It is used by device removal and test teardown. Unit tests and most e2e runs use in-memory SQLite; persistence-specific Puppeteer suites explicitly use OPFS. See [testing.md](testing.md).
+
+Learning state uses `storageModel` under `learning` and is restored by `initialState`, like font size and jump history. The pin is device-specific; practice progress is local for now. Neither is replicated by TreeCRDT.

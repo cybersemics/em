@@ -451,8 +451,7 @@ it('should paste text with an improperly nested meta tag', async () => {
 `)
 })
 
-// TODO: Should be imported as siblings, not parent-child
-it.skip('simple duplicate', async () => {
+it('simple duplicate', async () => {
   const text = `
     - a
     - a
@@ -466,8 +465,7 @@ it.skip('simple duplicate', async () => {
   expect(exported.trim()).toBe(expectedExport.trim())
 })
 
-// TODO: No longer working as it did in importText. What should we expect?
-it.skip('multiple duplicates', async () => {
+it('multiple duplicates', async () => {
   const text = `
     - a
       - b
@@ -506,6 +504,247 @@ it('keeps children under each duplicate ancestor', async () => {
 - foo
   - baz
 `)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+it('does not merge a pasted thought into a duplicate sibling', async () => {
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch([
+    importText({
+      text: `
+        - a
+          - b
+        - x
+      `,
+    }),
+    setCursor(['x']),
+    newThought({}),
+  ])
+  await store.dispatch(
+    importDataActionCreator({
+      path: contextToPath(store.getState(), [''])!,
+      text: `
+- a
+  - b
+    - c
+- y`,
+    }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - b
+- x
+- a
+  - b
+    - c
+- y
+`)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+it('does not merge pasted children into duplicate descendants of the destination', async () => {
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(
+    importText({
+      text: `
+        - a
+          - b
+            - c
+      `,
+    }),
+  )
+  await store.dispatch(
+    importDataActionCreator({
+      path: contextToPath(store.getState(), ['a'])!,
+      text: `
+- b
+  - d
+- e`,
+    }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - b
+    - c
+  - b
+    - d
+  - e
+`)
+})
+
+// https://github.com/cybersemics/em/issues/2712
+it('keeps existing deep descendants separate from a pasted duplicate', async () => {
+  const { cleanup } = await initialize({ storage: 'memory' })
+
+  store.dispatch(
+    importText({
+      text: `
+        - a
+          - b
+            - c
+        - x
+      `,
+    }),
+  )
+  store.dispatch([setCursor(['x']), newThought({})])
+  await store.dispatch(
+    importDataActionCreator({
+      path: contextToPath(store.getState(), [''])!,
+      text: `
+- a
+  - b
+    - d
+- y`,
+    }),
+  )
+
+  await vi.runOnlyPendingTimersAsync()
+
+  const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+  cleanup()
+
+  expect(removeHome(exported)).toBe(`
+- a
+  - b
+    - c
+- x
+- a
+  - b
+    - d
+- y
+`)
+})
+
+// Metaprogramming attributes are the only thoughts that are still merged on import, so importing an attribute that
+// already exists in the destination must not create a second one.
+describe('merge metaprogramming attributes', () => {
+  it('merges a pasted attribute into an existing attribute of the destination', async () => {
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    store.dispatch(
+      importText({
+        text: `
+          - a
+            - =sort
+              - Alphabetical
+            - b
+        `,
+      }),
+    )
+    await store.dispatch(
+      importDataActionCreator({
+        path: contextToPath(store.getState(), ['a'])!,
+        text: `
+- =sort
+  - Alphabetical
+- c`,
+      }),
+    )
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+    cleanup()
+
+    expect(removeHome(exported)).toBe(`
+- a
+  - =sort
+    - Alphabetical
+  - b
+  - c
+`)
+  })
+
+  it('merges a pasted attribute into an existing attribute of a nested destination', async () => {
+    const { cleanup } = await initialize({ storage: 'memory' })
+
+    store.dispatch(
+      importText({
+        text: `
+          - x
+            - a
+              - =sort
+                - Alphabetical
+              - b
+        `,
+      }),
+    )
+    await store.dispatch(
+      importDataActionCreator({
+        path: contextToPath(store.getState(), ['x', 'a'])!,
+        text: `
+- =sort
+  - Alphabetical
+- c`,
+      }),
+    )
+
+    await vi.runOnlyPendingTimersAsync()
+
+    const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+    cleanup()
+
+    expect(removeHome(exported)).toBe(`
+- x
+  - a
+    - =sort
+      - Alphabetical
+    - b
+    - c
+`)
+  })
+
+  it('merges an attribute imported with importText into an existing attribute of the destination', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - =sort
+              - Alphabetical
+            - b
+        `,
+      }),
+      (dispatch, getState) =>
+        dispatch(
+          importText({
+            path: contextToPath(getState(), ['a'])!,
+            text: `
+- =sort
+  - Alphabetical
+- c`,
+          }),
+        ),
+    ])
+
+    const exported = exportContext(store.getState(), HOME_PATH, 'text/plain')
+
+    expect(removeHome(exported)).toBe(`
+- a
+  - =sort
+    - Alphabetical
+  - b
+  - c
+`)
+  })
 })
 
 it('two root thoughts', async () => {
