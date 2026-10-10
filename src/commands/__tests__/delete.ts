@@ -33,7 +33,9 @@ describe('delete', () => {
 
       await act(vi.runOnlyPendingTimersAsync)
 
-      act(() => executeCommand(deleteCommand, { store }))
+      act(() => {
+        executeCommand(deleteCommand, { store })
+      })
 
       const popupValue = await screen.findByTestId('alert-content')!
       expect(popupValue.textContent).toBe('Permanently deleted test')
