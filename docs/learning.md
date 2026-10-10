@@ -56,7 +56,7 @@ The component is organized into same-file visual layers: `RingTrack` owns the st
 [`PinnedCommandTooltip`](../src/components/Learning/PinnedCommandTooltip.tsx) uses the shared [`NotificationSurface`](../src/components/Notifications/NotificationSurface.tsx), so it sits where [`Tip`](../src/components/Notifications/Tip.tsx) does, blurs the content beneath it the same way, and fades the same way; unlike Tip it does not swipe to dismiss, since a swipe over it is a gesture trace. At the bottom-right anchor that blur and its scrim are a corner rather than a full-width band: a box sized to the content and feathered by one shared elliptical mask, so on a landscape phone the rest of the thoughtspace stays sharp. Its visibility animation uses the Sidebar's gentle open curve and the Command Center's gentle-start close curve. The ring's scale and color follow that same eased opacity. It differs from Tip in three ways:
 
 - **Glow.** The surface's `pinnedCommand` glow variant paints `public/img/pinned-command/pinned-command-glow.avif` with extents that do not follow the content height, unlike Tip's. Portrait and landscape are keyed by the `lg` breakpoint in [`notification.ts`](../src/recipes/notification.ts), which is where the tooltip's anchor switches. The glow element is the image's own footprint: the image's constants live in its aspect ratio, and every other value is a fraction of one viewport dimension. Portrait scales with viewport width and anchors left, matched to the design at 412×922; landscape scales with viewport height and anchors right, matched at 922×412, with a heavier blur. Sizing from a single dimension avoids iOS Safari's unstable `vh` in portrait, and the bottom anchor adds the safe-area inset so the bright band follows the text above the home indicator. Tablet and desktop share the landscape branch, where the glow must stay localized in the corner at the phone size, so each height-relative value there is capped at its value on a 412px-tall viewport. The surface owns the image paths, applies the selected path directly as a background image, and prefetches it. Static rainbow-glow placement is defined directly in the anchor styles. Motion supplies the ring’s animated transform directly through `useMotionTemplate`, with `useBreakpoint` selecting the responsive bottom padding; no feature-specific animation variables are needed. Notification easing and the shared corner blur/scrim mask are defined in `constants.ts`.
-- **Content.** A row of the learning genie button, the command's name as a button with a chevron that opens its Command Universe detail page directly, and one line saying how to activate it: trace the gesture on touch devices, press the shortcut otherwise, or open the Command Universe when the command has neither. Text is left-aligned at both anchors. The genie and the text form one vertically centered row so they read as a unit with the ring in the corner; Clear hangs below that row, outside its flow and in the surface's bottom padding, so it does not pull the row's center down. That padding is tight on devices without a safe-area inset, so the tooltip adds bottom padding that shrinks as the inset grows.
+- **Content.** A row of the learning genie button, which lets the [help genie](#help-genie) out or puts it back, the command's name as a button with a chevron that opens its Command Universe detail page directly, and one line saying how to activate it: trace the gesture on touch devices, press the shortcut otherwise, or open the Command Universe when the command has neither. Text is left-aligned at both anchors. The genie and the text form one vertically centered row so they read as a unit with the ring in the corner; Clear hangs below that row, outside its flow and in the surface's bottom padding, so it does not pull the row's center down. That padding is tight on devices without a safe-area inset, so the tooltip adds bottom padding that shrinks as the inset grows.
 
 - **Diagram.** Below `lg`, when the command has a gesture, its canonical gesture from the command registry is drawn large above the text with the Command Universe detail page's diagram styling. Behind it is its own glow, `public/img/pinned-command/pinned-command-gesture-glow.avif`, positioned and sized relative to the diagram box so the two stay aligned on every device; it is separate from the surface glow because the diagram can be absent. There is no landscape design for the diagram yet.
 
@@ -66,6 +66,55 @@ The ring records the editor's selection offsets before pointer activation can mo
 
 [`TestPinnedCommandTooltip`](../src/components/modals/TestPinnedCommandTooltip.tsx) renders the open tooltip for Context View so the [`pinned-command-tooltip`](../src/e2e/puppeteer/__tests__/pinned-command-tooltip.ts) snapshots can guard its layout at a portrait and a landscape viewport. The screenshot helper disables CSS filters, so the snapshots cover placement and extents, not the blur.
 
+
+## Help genie
+
+The help genie is a glowing orb with a tapering, sparkling trail that flies over the app. For now it has no job beyond flying: it follows the pointer or a finger, and can be sent to a point from code.
+
+### State
+
+`state.helpGenie` ([`HelpGenieState`](../src/@types/HelpGenieState.ts)) holds what the app wants from the genie, not its motion:
+
+```ts
+{
+  visible: boolean
+  target: { x: number; y: number } | null
+  unavailable: boolean
+}
+```
+
+- [`toggleHelpGenie`](../src/actions/toggleHelpGenie.ts) lets it out and puts it back, or sets it with `value`. The genie buttons dispatch it: Help in the Command Universe header ([`DialogHeader`](../src/components/dialog/DialogHeader.tsx)) and the learning genie button in the pinned command tooltip. Both report the state through `aria-pressed`.
+- [`moveHelpGenie`](../src/actions/moveHelpGenie.ts) sends it to a point in the viewport, in CSS pixels. It flies there with its full effect. It still follows the pointer too; whichever moved last is where it goes.
+- [`disableHelpGenie`](../src/actions/disableHelpGenie.ts) marks it unable to run on this device and puts it away. Its buttons are disabled while `unavailable` is set.
+
+None of this is saved, so a reload puts the genie away and clears `unavailable`. The actions are registered `undoable: false`, and `helpGenie` is listed in `statePropertiesToOmit` in [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts), so undoing an edit never moves or hides the genie. Its moment-to-moment motion is not in Redux: it changes every frame and lives in the animation.
+
+### Overlay
+
+[`HelpGenie`](../src/components/HelpGenie/HelpGenie.tsx) is mounted at the end of `AppComponent`, outside the modal condition, so the genie keeps flying over dialogs and modals. It covers the viewport on the `helpGenie` z-index layer, the highest, above `dialog`, and ignores pointer events, so it never blocks a tap or a gesture. It screen-blends with the app, so the genie only ever adds light to what is beneath it. The blend is on the overlay rather than the canvas because the overlay is a stacking context: a blend inside it would only mix with the empty overlay.
+
+The genie needs WebGL. `HelpGenie` checks for it before loading the canvas, and loads the canvas lazily, so Pixi is only downloaded the first time the genie is let out, never by a device without WebGL, and never by the JSDOM tests. If the genie cannot start (no WebGL, its code fails to download, Pixi starts without WebGL, or it throws while running), it dispatches `disableHelpGenie` and logs why.
+
+### How it works
+
+The genie is drawn with [PixiJS](https://pixijs.com/) through `@pixi/react`, in [`components/HelpGenie`](../src/components/HelpGenie). Each frame runs the same pipeline:
+
+1. **Input.** The target is the pointer, or wherever `moveHelpGenie` last sent it.
+2. **Step.** [`stepGenie`](../src/components/HelpGenie/stepGenie.ts) turns the last [`GenieFrame`](../src/components/HelpGenie/GenieFrame.ts) into the next. The head moves towards the target on a spring ([`genieMotion`](../src/components/HelpGenie/genieMotion.ts)) and remembers its new position; the positions from the last `MEMORY` ms are the trail, so it grows with speed and shrinks into the head at rest. Sparkles are born along the stretch just flown and old ones expire ([`sparkles`](../src/components/HelpGenie/sparkles/sparkles.ts)). The spring is solved exactly rather than stepped, so the genie flies the same path at 60Hz and 120Hz. `stepGenie` is pure, which is what makes the genie testable and a flight scriptable.
+3. **Draw.** Three layers each draw that frame and keep no state of their own:
+   - [`GenieHalo`](../src/components/HelpGenie/halo/GenieHalo.tsx) — the broad glow. [`haloShape`](../src/components/HelpGenie/halo/haloShape.ts) places its center slightly behind the head and lays points along the path either side of it; [`halo.frag`](../src/components/HelpGenie/halo/halo.frag) colors each pixel from its distance to those points. On a straight path the glow is an ellipse; on a turn it bends with the path, and cannot fold however tight the turn.
+   - [`GenieTrail`](../src/components/HelpGenie/trail/GenieTrail.tsx) — a ribbon along the smoothed path ([`flightPath`](../src/components/HelpGenie/trail/flightPath.ts)), full width through a short neck and tapering to nothing ([`trailWidth`](../src/components/HelpGenie/trail/trailWidth.ts)), with a near-white hot core down its front. Blurred and screen-blended.
+   - [`GenieSparkles`](../src/components/HelpGenie/sparkles/GenieSparkles.tsx) — each sparkle's position and fade at the frame's time, drawn in one batch. Color-dodged, so they only show where the genie is lit.
+
+[`GenieCanvas`](../src/components/HelpGenie/GenieCanvas.tsx) owns the Pixi canvas and runs the pipeline. [help-genie.md](help-genie.md) has diagrams of how the modules fit together. Every tuned value is in [`constants.ts`](../src/components/HelpGenie/constants.ts), grouped by the part of the genie it shapes. Each layer creates its Pixi resources and destroys them when it unmounts. The canvas renders at the screen’s pixel density capped at 1.5×, reducing pixel work on high-density screens to leave headroom for the rest of the app.
+
+The folder is laid out by part of the genie rather than by em's usual convention of types in `@types/` and pure code in `util/`, so each part's maths and drawing sit together.
+
+### Tests
+
+- [`genieMotion`](../src/components/HelpGenie/__tests__/genieMotion.ts), [`stepGenie`](../src/components/HelpGenie/__tests__/stepGenie.ts), [`flightPath`](../src/components/HelpGenie/__tests__/flightPath.ts), and [`haloShape`](../src/components/HelpGenie/__tests__/haloShape.ts) cover the pure pipeline, including frame-rate independence and the halo bending on a turn. [`toggleHelpGenie`](../src/actions/__tests__/toggleHelpGenie.ts) covers the actions.
+- [`TestHelpGenie`](../src/components/modals/TestHelpGenie.tsx) flies the genie through scripted targets, one per 60Hz frame, with seeded sparkles, and holds four poses (rest, straight, arc, reversal) for the [`help-genie`](../src/e2e/puppeteer/__tests__/help-genie.ts) snapshot. The test waits for every pose's first frame, so it fails rather than approving empty boxes if WebGL is missing.
+- [`help-genie-toggle`](../src/e2e/puppeteer/__tests__/help-genie-toggle.ts) lets the genie out from the Command Universe Help button and puts it back.
 
 ## Not yet built
 
