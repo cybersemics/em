@@ -16,6 +16,8 @@ import getStyle from '../selectors/getStyle'
 import getThoughtById from '../selectors/getThoughtById'
 import isContextViewActive from '../selectors/isContextViewActive'
 import store from '../stores/app'
+import equalPath from '../util/equalPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isDescendantPath from '../util/isDescendantPath'
 import once from '../util/once'
@@ -61,8 +63,13 @@ const Subthought = ({
   const thought = useSelector(state => getThoughtById(state, head(simplePath)), shallowEqual)
   // Cache the thought HTML before it is deleted so that we can animate on unmount
   const cachedThoughtHtmlRef = useCachedThoughtHtml({ thought, elementRef: ref })
+  // Only show the placeholder when the thought is expanded, since linearizeTree does not render the context view of a collapsed thought.
   const noOtherContexts = useSelector(
-    state => thought && isContextViewActive(state, simplePath) && getContexts(state, thought.value).length <= 1,
+    state =>
+      thought &&
+      (!!state.expanded[hashPath(path)] || equalPath(state.expandHoverDownPath, path)) &&
+      isContextViewActive(state, simplePath) &&
+      getContexts(state, thought.value).length <= 1,
   )
   const grandparentId = simplePath[simplePath.length - 3]
   const isVisible = autofocus === 'show' || autofocus === 'dim'
