@@ -2,7 +2,7 @@ import React, { PropsWithChildren } from 'react'
 import { GestureResponderEvent, PanResponder, PanResponderInstance, View, ViewStyle } from 'react-native'
 import Direction from '../@types/Direction'
 import Gesture from '../@types/Gesture'
-import { TOUCH_SLOP, noop } from '../constants'
+import { noop } from '../constants'
 import { caretRectViewport } from '../device/selection'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import testFlags from '../e2e/testFlags'
@@ -59,7 +59,7 @@ type MultiGestureProps = PropsWithChildren<{
   shouldBlockScroll?: () => boolean
 }>
 
-/** Milliseconds into a press on the caret after which touchmove is no longer prevented. IOS raises the text magnifier 100–200ms into the press, and preventing touchmove after that stops the magnifier from moving the caret on some versions. */
+/** Milliseconds into a press on the caret after which touchmove is no longer prevented. IOS raises the text magnifier 100–200ms into the press, and preventing touchmove after that stops the magnifier from moving the caret on BrowserStack's devices, and no longer stops the scroll on a physical iPhone or iPad, so the overflow lock takes over. */
 const MAGNIFIER_DELAY = 150
 
 /** Static mapping of intercardinal directions to radians. Used to determine the closest gesture to an angle. Range: -π to π. */
@@ -164,15 +164,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
             ])
           }
         }
-        const touch = e.touches[0]
-        // preventing even one touchmove of a press that is holding still for the magnifier stops it moving the caret
-        const allowMagnifier =
-          this.blockScrollStart !== null &&
-          (e.timeStamp - this.blockScrollStart >= MAGNIFIER_DELAY ||
-            !touch ||
-            !this.clientStart ||
-            Math.hypot(touch.clientX - this.clientStart.x, touch.clientY - this.clientStart.y) <= TOUCH_SLOP)
-        if (this.disableScroll && !allowMagnifier) {
+        if (
+          this.disableScroll &&
+          !(this.blockScrollStart !== null && e.timeStamp - this.blockScrollStart >= MAGNIFIER_DELAY)
+        ) {
           e.preventDefault()
         }
       },
