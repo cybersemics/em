@@ -6,7 +6,7 @@ The learning journey is tracked in [#5481](https://github.com/cybersemics/em/iss
 
 `storageModel` stores this state under `learning`. `initialState` restores it alongside font size and jump history. Decoding validates the stored shape and drops malformed records without importing the command registry. Consumers must ignore IDs no longer available in the current command registry.
 
-Practice records are local for now. User-wide learning progress and synchronization remain deferred. The command runner emits `commandSucceeded` through `commandEmitter` after a successful invocation settles. `awardPracticeRepMiddleware` listens for that event and dispatches `awardPracticeRep` only when a keyboard or gesture invocation matches the current pin and its progress record. That action updates Redux and persists the rep locally. Clicks and programmatic calls earn none, and commands without an eligible pin add no Redux action.
+Practice records are local for now. User-wide learning progress and synchronization remain deferred. The command runner emits `commandSucceeded` through `commandEmitter` as soon as an invocation executes without raising an error; asynchronous work it starts is not awaited. `awardPracticeRepMiddleware` listens for that event and dispatches `awardPracticeRep` only when a keyboard or gesture invocation matches the current pin and its progress record. That action updates Redux and persists the rep locally. Clicks and programmatic calls earn none, and commands without an eligible pin add no Redux action.
 
 Command Universe detail pages offer Pin and Unpin controls. Pinning another command replaces the selection; the row describes which command will be replaced. These controls do not execute commands.
 

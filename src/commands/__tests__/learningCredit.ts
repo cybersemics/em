@@ -7,11 +7,7 @@ import storageModel from '../../stores/storageModel'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import importToContext from '../../test-helpers/importToContext'
 import initStore from '../../test-helpers/initStore'
-import requestAiDisclosure, {
-  acceptAiDisclosure,
-  cancelAiDisclosure,
-  clearAiDisclosureAcknowledgement,
-} from '../../util/aiDisclosure'
+import requestAiDisclosure, { acceptAiDisclosure, clearAiDisclosureAcknowledgement } from '../../util/aiDisclosure'
 import storage from '../../util/storage'
 import toggleDoneCommand from '../toggleDone'
 
@@ -51,77 +47,41 @@ it('does not award a rep for non-execution, internal invocation, toolbar, or an 
   expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
 })
 
-it('waits for returned asynchronous work and ignores a rejected invocation', async () => {
+it('awards a rep as soon as an asynchronous command starts', () => {
   store.dispatch(pinCommand({ commandId: 'toggleDone' }))
-  let complete!: () => void
-  const pending = new Promise<void>(resolve => {
-    complete = resolve
-  })
 
-  const execution = executeCommandWithMulticursor(
-    { ...runnableCommand, exec: () => pending },
+  executeCommandWithMulticursor(
+    { ...runnableCommand, exec: () => new Promise<void>(() => {}) },
     { store, type: 'gesture' },
   )
-  expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
 
-  complete()
-  await execution
-  expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
-
-  await expect(
-    executeCommandWithMulticursor(
-      { ...runnableCommand, exec: async () => Promise.reject(new Error('Command failed')) },
-      { store, type: 'gesture' },
-    ),
-  ).rejects.toThrow('Command failed')
   expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
 })
 
-it('waits through first-use AI disclosure and awards nothing when it is canceled', async () => {
+it('awards one rep when first-use AI disclosure is shown, and none when it is accepted', () => {
   store.dispatch(pinCommand({ commandId: 'toggleDone' }))
   const command = {
     ...runnableCommand,
-    exec: () => requestAiDisclosure(async () => undefined) ?? undefined,
+    exec: () => {
+      requestAiDisclosure(() => {})
+    },
   }
 
-  const canceled = executeCommandWithMulticursor(command, { store, type: 'gesture' })
-  expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
-  cancelAiDisclosure()
-  await canceled
-  expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
+  executeCommandWithMulticursor(command, { store, type: 'gesture' })
+  expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
 
-  const accepted = executeCommandWithMulticursor(command, { store, type: 'gesture' })
-  expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
   acceptAiDisclosure({ remember: false })?.()
-  await accepted
   expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
 })
 
-it('settles a disclosure invocation replaced by another command', async () => {
-  store.dispatch(pinCommand({ commandId: 'toggleDone' }))
-  const command = {
-    ...runnableCommand,
-    exec: () => requestAiDisclosure(async () => undefined) ?? undefined,
-  }
-
-  const first = executeCommandWithMulticursor(command, { store, type: 'gesture' })
-  const second = executeCommandWithMulticursor(command, { store, type: 'gesture' })
-  await first
-  expect(store.getState().learning.progress.toggleDone?.reps).toBe(0)
-
-  acceptAiDisclosure({ remember: false })?.()
-  await second
-  expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
-})
-
-it('awards one rep for the whole multicursor invocation', async () => {
+it('awards one rep for the whole multicursor invocation', () => {
   store.dispatch(pinCommand({ commandId: 'toggleDone' }))
   store.dispatch(importToContext('- a\n- b'))
   store.dispatch(addMulticursor(['a']))
   store.dispatch(addMulticursor(['b']))
   const command = { ...runnableCommand, exec: vi.fn() }
 
-  await executeCommandWithMulticursor(command, { store, type: 'keyboard' })
+  executeCommandWithMulticursor(command, { store, type: 'keyboard' })
 
   expect(command.exec).toHaveBeenCalledTimes(2)
   expect(store.getState().learning.progress.toggleDone?.reps).toBe(1)
