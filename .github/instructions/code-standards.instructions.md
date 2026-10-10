@@ -1,7 +1,8 @@
 ### Architecture
 
 - Before writing new code, search the codebase for related mechanisms and existing architecture.
-- Prefer extending or reusing existing infrastructure over creating new solutions.
+- Prefer extending or reusing existing infrastructure over creating new solutions. Reuse a helper only where it sits at the layer that owns the problem, not merely where it fits the shape of the fix.
+- Update dependent state at the source of the change, in the action that makes it, while both the old and the new value are known. Do not reconstruct it afterwards from the result: what changed is no longer known, so recomputing is guesswork. For example, [`moveThought`](../../src/actions/moveThought.ts) rebases the selection Paths from `oldPath` to `newPath`; see [Stored Paths and moves](../../docs/data-model.md#stored-paths-and-moves). `recomputePath` in `executeCommandWithMulticursor` ([`commands.ts`](../../src/commands.ts)) resolves Paths again with `thoughtToPath` after a command runs. It restores the Paths that the command itself captured beforehand, and it is not a pattern for fixing stale state elsewhere. A last-resort safety net is fine, but it does not replace the fix at the source.
 - Do not access the app `store` directly. To read fresh state, dispatch a thunk and use `getState()` — this avoids importing the app `store` or adding it to a hook's dependency list:
   ```ts
   dispatch((dispatch, getState) => {
