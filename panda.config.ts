@@ -533,7 +533,7 @@ export default defineConfig({
             'toolbar',
             'pinnedCommand',
             'navbar',
-            'backgroundGlowFalloff',
+            'navbarFalloff',
             'latestCommands',
             'tutorialTraceGesture',
             'dropEmpty',

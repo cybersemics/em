@@ -6,7 +6,6 @@ import { isTouch } from '../browser'
 import { commandById } from '../commands'
 import { BASE_FONT_SIZE, PINNED_COMMAND_RESERVED_WIDTH } from '../constants'
 import isTutorial from '../selectors/isTutorial'
-import backgroundGlowStore from '../stores/backgroundGlowStore'
 import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
@@ -51,10 +50,7 @@ const NavBar = ({ position }: { position: string }) => {
   const scale = fontSize / BASE_FONT_SIZE
 
   const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
-  const isCursor = useSelector(state => !!state.cursor && state.cursor.length > 0)
-  // While a background glow image is selected, the blackout is disabled entirely; the glow falloff in BackgroundGlow fades the content out above the nav bar instead.
-  const glowImage = backgroundGlowStore.useSelector(state => state.image)
-  // While a command is pinned, the row ends short of the right edge so the breadcrumbs and buttons do not run under the pinned command ring. The blackout on the nav element itself stays full width.
+  // While a command is pinned, the row ends short of the right edge so the breadcrumbs and buttons do not run under the pinned command ring.
   const isCommandPinned = useSelector(state =>
     Boolean(state.learning.pinnedCommandId && commandById(state.learning.pinnedCommandId)),
   )
@@ -86,8 +82,7 @@ const NavBar = ({ position }: { position: string }) => {
             padding: position === 'bottom' ? '0 15px' : '0 15px 0 10px',
             bottom: '0',
             top: position === 'top' ? 0 : undefined,
-            backgroundColor: isCursor && !glowImage ? 'bg' : undefined,
-            boxShadow: isCursor && !glowImage ? `0 20px 15px 25px {colors.bg}` : undefined,
+            // No background of its own: content scrolling under the nav bar is hidden by the falloff in BackgroundGlow, the same with or without a glow.
           })}
         >
           <div>
