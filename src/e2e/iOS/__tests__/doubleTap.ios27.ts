@@ -51,7 +51,6 @@ describe('Double tap', () => {
     await waitUntil(async () => (await getSelection().toString()) === 'One')
 
     await newThought()
-    // getEditable('') would match every thought
     const empty = await browser.$('[data-editing=true] [data-editable]').getElement()
     // the third letter of the placeholder, out of reach of the caret at its start
     await tap(empty, { horizontalTapLine: 'left', x: 25, pointerType: 'touch' })
