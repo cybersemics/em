@@ -8,6 +8,7 @@ import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByContext'
+import importDataAtFirstMatch from '../../test-helpers/importDataAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
 import findCursor from '../../test-helpers/queries/findCursor'
 import selectRange from '../../test-helpers/selectRange'
@@ -726,17 +727,13 @@ it('sets the cursor on the imported thought when it duplicates an existing sibli
           - b
       `,
     }),
-    (dispatch, getState) =>
-      dispatch(
-        importDataActionCreator({
-          path: contextToPath(getState(), ['a'])!,
-          text: `
+    importDataAtFirstMatch(['a'], {
+      text: `
 - =sort
   - Alphabetical
 - b
 - c`,
-        }),
-      ),
+    }),
   ])
 
   await vi.runOnlyPendingTimersAsync()
