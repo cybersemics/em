@@ -88,6 +88,28 @@ it('shows the shortcut for a command without a gesture and closes on Escape', as
   expect(screen.queryByRole('dialog', { name: 'Gesture for Settings' })).toBeNull()
 })
 
+it('stays closed after its command opens a modal over it', async () => {
+  await act(async () => {
+    store.dispatch(pinCommand({ commandId: 'settings' }))
+    await vi.runAllTimersAsync()
+  })
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+
+  const ring = screen.getByRole('button', { name: 'Show gesture for Settings' })
+  ring.focus()
+  await user.keyboard('{Enter}')
+  expect(ring).toHaveAttribute('aria-expanded', 'true')
+
+  // Settings opens as a modal, which replaces the pinned command until it closes.
+  await user.keyboard('{Meta>},{/Meta}')
+  await act(vi.runAllTimersAsync)
+  await user.click(screen.getByRole('button', { name: 'Close' }))
+  await act(vi.runAllTimersAsync)
+
+  expect(screen.getByTestId('pinned-command')).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByRole('dialog', { name: 'Gesture for Settings' })).toBeNull()
+})
+
 it('dismisses when Clear is activated', async () => {
   await act(async () => {
     store.dispatch(pinCommand({ commandId: 'newThought' }))

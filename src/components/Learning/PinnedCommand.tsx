@@ -65,6 +65,14 @@ const PinnedCommand = () => {
   const isOpen = useSelector(state => state.showPinnedCommandTooltip && !!state.learning.pinnedCommandId)
   const isRingRaised = isOpen || keepRaisedDuringExit
 
+  // Close the tooltip when this widget disappears. A modal (such as Settings) replaces the widget while it is open, and
+  // the tooltip should not reappear when the modal closes.
+  useEffect(() => {
+    return () => {
+      dispatch(showPinnedCommandTooltip({ value: false }))
+    }
+  }, [dispatch])
+
   useEffect(() => {
     if (isOpen) {
       if (!keepRaisedDuringExit) setKeepRaisedDuringExit(true)
