@@ -138,6 +138,11 @@ const notificationRecipe = defineSlotRecipe({
       // landscape reference height. The matching -46.9vh bottom offset is about -193px at that height.
       // These are image-placement ratios from visual tuning, not dimensions of the tooltip content.
       pinnedCommand: {
+        // The pinned command's tooltip shares the raised ring's layer, above dialogs, so it can open over the Mobile
+        // Command Universe. The ring renders after it and so still paints on top.
+        container: {
+          zIndex: 'pinnedCommandExpanded',
+        },
         glow: {
           width: {
             base: '329.7vw',

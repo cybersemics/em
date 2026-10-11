@@ -243,17 +243,24 @@ const PinnedCommandTooltipTitle = ({ label, onClick }: { label: string; onClick:
 
 /**
  * How to activate the command. Touch devices practice the gesture and other devices the shortcut; a command with
- * neither is only reachable from the Command Universe, so it points there. The gradient is painted as the background
+ * neither is only reachable from the Command Universe, so it points there. Over the Mobile Command Universe nothing can
+ * be activated: a trace there is a dry run, and shortcuts do not run. The gradient is painted as the background
  * and clipped to the glyphs, as on the Command Universe detail page's gesture caption.
  */
 const PinnedCommandTooltipSubtitle = ({ command }: { command: Command }) => {
   const gesture = gestureString(command)
   const keyboard = command.keyboardDisplay ?? command.keyboard
+  const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
+  const shortcut = keyboard ? formatKeyboardShortcut(keyboard) : null
   const instruction =
     isTouch && gesture
-      ? 'Trace the gesture to activate.'
-      : keyboard
-        ? `Press ${formatKeyboardShortcut(keyboard)} to activate.`
+      ? inCommandUniverse
+        ? 'Trace the gesture to practice.'
+        : 'Trace the gesture to activate.'
+      : shortcut
+        ? inCommandUniverse
+          ? `Close Commands, then press ${shortcut} to activate.`
+          : `Press ${shortcut} to activate.`
         : 'Open it in the Command Universe to learn more.'
 
   return (
@@ -329,6 +336,7 @@ const PinnedCommandTooltip = ({
   const dismiss = useCallback(() => surfaceRef.current?.dismiss(), [])
   useDismissOnOutsideTap(isOpen, insideRefs, dismiss)
 
+  const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
   // A gesture is in progress on the page beneath: the user is practicing. Dim everything but the diagram.
   const isTracing = gestureStore.useSelector(state => state.gesture !== '')
 
@@ -342,7 +350,8 @@ const PinnedCommandTooltip = ({
       onDismiss={onClose}
       onOpacityChange={onOpacityChange}
       dimmed={isTracing}
-      pointerEventsPassThrough
+      // Over the Command Universe a press that fell through would land on the dialog's backdrop and close it.
+      pointerEventsPassThrough={!inCommandUniverse}
     >
       <section
         ref={tooltipRef}
