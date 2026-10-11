@@ -1,0 +1,49 @@
+name: Install Vercel CLI
+description: >
+  Install the Vercel CLI once per run and put it on PATH, so the pull, build, and deploy steps
+  invoke a plain `vercel`.
+
+  This replaces a `yarn dlx vercel` at every call site, which reinstalls the CLI each time it is
+  used — six times in Vercel Preview, three in Vercel Production. Yarn caches the download but
+  relinks and rebuilds (esbuild) on every invocation, so each repeat costs roughly 17 seconds for a
+  binary the run already has. Installing once is around a minute and a half faster per preview run.
+
+  It also fixes one CLI version for the whole run. The version is still whatever `latest` is when
+  the run starts — the CLI is deliberately unpinned so deploys track Vercel's tooling — but a
+  release landing mid-run can no longer leave one step on a different build than the next.
+
+  The retry is for Vercel's publish order. The CLI pins each of its own workspace packages exactly
+  (`"@vercel/go": "9.0.0"`) and normally publishes them first; when that order inverts, `latest` is
+  unresolvable until the missing package lands and the install fails with `ETARGET` (`YN0082` under
+  Yarn) — a red deploy caused by nothing but the minute the run started in. It is rare: in the six
+  releases before it, `@vercel/go` reached npm between 46 seconds and 4 minutes *ahead* of the CLI.
+  59.11.0 inverted the order and left a seven-minute hole on 2026-09-01 that a preview run fell
+  into, failing 26 seconds before the missing package was published.
+
+runs:
+  using: composite
+  steps:
+    # Installed under RUNNER_TEMP rather than the workspace so `vercel build` never sees it.
+    #
+    # Six attempts a minute apart. Nothing in this repository bounds the window — it lasts as long
+    # as the missing package takes to publish — so the ceiling is a judgement call: five minutes
+    # covers the one occurrence observed, and a `latest` that is genuinely broken is only delayed by
+    # it, never hidden.
+    - name: Install Vercel CLI
+      shell: bash
+      run: |
+        prefix="$RUNNER_TEMP/vercel-cli"
+        attempts=6
+        for attempt in $(seq 1 $attempts); do
+          if npm install --no-save --no-audit --no-fund --prefix "$prefix" vercel; then
+            echo "$prefix/node_modules/.bin" >> "$GITHUB_PATH"
+            "$prefix/node_modules/.bin/vercel" --version
+            exit 0
+          fi
+          if [ "$attempt" -eq "$attempts" ]; then
+            echo "vercel@latest was still uninstallable after $attempts attempts over $((attempts - 1)) minutes."
+            exit 1
+          fi
+          echo "Attempt $attempt/$attempts failed; retrying in 60s in case npm is missing a just-published dependency."
+          sleep 60
+        done

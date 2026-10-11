@@ -1,5 +1,6 @@
 /** Defines app-wide constants. */
 import CommandId from './@types/CommandId'
+import DropdownType from './@types/DropdownType'
 import SimplePath from './@types/SimplePath'
 import ThoughtId from './@types/ThoughtId'
 import { ColorToken } from './colors.config'
@@ -141,7 +142,7 @@ export const ICON_SCALING_FACTOR = 1.37
 export const BASE_FONT_SIZE = 16
 
 export const MIN_FONT_SIZE = 8
-export const DEFAULT_FONT_SIZE = 18
+export const DEFAULT_FONT_SIZE = 16
 export const MAX_FONT_SIZE = 40
 export const FONT_SCALE_INCREMENT = 1
 
@@ -227,7 +228,6 @@ export const TOOLBAR_DEFAULT_COMMANDS: CommandId[] = [
   // 'newThoughtAbove',
   // 'newUncle',
   // 'proseView',
-  // 'search',
   // 'textColor',
   // 'toggleDone',
   // 'toggleSort',
@@ -278,9 +278,24 @@ export const EMOJI_REGEX = emojiRegex
  */
 export const REGEX_EMOJI_GLOBAL = new RegExp(EMOJI_REGEX.source, 'g')
 
+/*
+  Matches a group of one or more emoji at the start of a string.
+
+  Note: Some emoji end with a zero width joiner or zero width space which don't actually give any visible whitespace.
+        So optionally including them at the end of the regex.
+
+  Note: The above regex uses unicode property escape to match emojis https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions/Unicode_Property_Escapes.
+        However these emoji property escapes don't account for emoji variant selector (\ufe0f) which can be found in many emojis (example: 🖼️, 🖥️).
+        So we add \ufe0f as optional match and also prevent it from being detected as non emoji character.
+ */
+export const REGEX_EMOJI_GROUP = new RegExp(`^(?:${EMOJI_REGEX.source})+\u200D?\u200B?`)
+
+/** Matches a group of one or more emoji at the start of a string, including the whitespace that separates it from the rest of the string. */
+export const REGEX_EMOJI_PREFIX = new RegExp(`${REGEX_EMOJI_GROUP.source}\\s*`)
+
 export const ALLOWED_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'span', 'strike', 'code', 'font']
 
-export const EXTERNAL_FORMATTING_TAGS = ['b', 'i', 'u', 'strong', 'strike']
+export const EXTERNAL_FORMATTING_TAGS = ['b', 'i', 'u', 'em', 'strong', 'strike', 'code']
 export const ALLOWED_TAGS = ['ul', 'li', 'br', ...ALLOWED_FORMATTING_TAGS]
 
 export const ALLOWED_ATTR = ['class', 'style', 'color']
@@ -501,119 +516,149 @@ export const TOOLBAR_PRESS_ANIMATION_DURATION = 80
 export const GESTURE_GLOW_BLUR = 10
 export const GESTURE_GLOW_COLOR: ColorToken = 'highlight'
 
-// define the grouping and ordering of commands
-export const COMMAND_GROUPS: {
+/** Defines command difficulties and categories in presentation order. IDs remain stable when titles or positions change. */
+export const COMMAND_DIFFICULTIES = [
+  {
+    id: 'beginner',
+    title: 'Beginner',
+    groups: [
+      {
+        id: 'creatingThoughts',
+        title: 'Creating Thoughts',
+        commands: ['newThought', 'newThoughtAbove', 'newSubthought', 'newSubthoughtTop'],
+      },
+      {
+        id: 'navigation',
+        title: 'Navigation',
+        commands: [
+          'cursorBack',
+          'cursorForward',
+          'cursorNext',
+          'cursorPrev',
+          'jumpBack',
+          'jumpForward',
+          'moveCursorBackward',
+          'moveCursorForward',
+          'navigateBack',
+          'navigateForward',
+          'openDesktopCommandUniverse',
+          'home',
+          'selectAll',
+          'selectBetween',
+          'closeCommandCenter',
+          'openCommandCenter',
+          'help',
+          'openMobileCommandUniverse',
+          'cancel',
+        ],
+      },
+      {
+        id: 'contexts',
+        title: 'Contexts',
+        commands: ['toggleContextView'],
+      },
+    ],
+  },
+  {
+    id: 'intermediate',
+    title: 'Intermediate',
+    groups: [
+      {
+        id: 'categorizing',
+        title: 'Categorizing',
+        commands: ['categorize', 'uncategorize', 'extractSubthought', 'extractCategory'],
+      },
+      {
+        id: 'nudging',
+        title: 'Nudging',
+        commands: [
+          'indent',
+          'outdent',
+          'bumpThoughtDown',
+          'moveThoughtDown',
+          'moveThoughtUp',
+          'swapParent',
+          'swapGrandparent',
+        ],
+      },
+      {
+        id: 'deleting',
+        title: 'Deleting',
+        commands: ['delete', 'archive', 'clearThought'],
+      },
+    ],
+  },
+  {
+    id: 'advanced',
+    title: 'Advanced',
+    groups: [
+      {
+        id: 'creatingThoughtsII',
+        title: 'Creating Thoughts II',
+        commands: [
+          'newUncle',
+          'newGrandChild',
+          'defineTerm',
+          'generateEmoji',
+          'generateThought',
+          'organizeThought',
+          'join',
+          'mergeDuplicates',
+          'splitSentences',
+          'bold',
+          'italic',
+          'strikethrough',
+          'underline',
+          'code',
+          'copyCursor',
+          'removeFormat',
+          'textColor',
+          'applyColor',
+        ],
+      },
+      {
+        id: 'editHistory',
+        title: 'Edit History',
+        commands: ['undo', 'redo', 'repeat'],
+      },
+      {
+        id: 'notes',
+        title: 'Notes',
+        commands: ['note', 'swapNote'],
+      },
+      {
+        id: 'views',
+        title: 'Views',
+        commands: [
+          'proseView',
+          'toggleTableView',
+          'toggleSort',
+          'heading0',
+          'heading1',
+          'heading2',
+          'heading3',
+          'heading4',
+          'heading5',
+          'pin',
+          'pinAll',
+          'pinDescendants',
+          'toggleDone',
+          'toggleHiddenThoughts',
+          'settings',
+          'customizeToolbar',
+        ],
+      },
+    ],
+  },
+] as const satisfies readonly {
+  id: string
   title: string
-  commands: CommandId[]
-}[] = [
-  {
-    title: 'Navigation',
-    commands: [
-      'cursorBack',
-      'cursorForward',
-      'cursorNext',
-      'cursorPrev',
-      'jumpBack',
-      'jumpForward',
-      'moveCursorBackward',
-      'moveCursorForward',
-      'navigateBack',
-      'navigateForward',
-      'openDesktopCommandUniverse',
-      'home',
-      'search',
-      'selectAll',
-      'selectBetween',
-    ],
-  },
-  {
-    title: 'Creating thoughts',
-    commands: [
-      'categorize',
-      'newThought',
-      'newThoughtAbove',
-      'newSubthought',
-      'newSubthoughtTop',
-      'newUncle',
-      'newGrandChild',
-      'extractSubthought',
-      'extractCategory',
-      'generateThought',
-    ],
-  },
-  {
-    title: 'Deleting thoughts',
-    commands: ['delete', 'archive', 'uncategorize', 'clearThought'],
-  },
-  {
-    title: 'Moving thoughts',
-    commands: [
-      'indent',
-      'outdent',
-      'bumpThoughtDown',
-      'moveThoughtDown',
-      'moveThoughtUp',
-      'swapParent',
-      'swapGrandparent',
-    ],
-  },
-  {
-    title: 'Editing thoughts',
-    commands: [
-      'join',
-      'mergeDuplicates',
-      'splitSentences',
-      'bold',
-      'italic',
-      'strikethrough',
-      'underline',
-      'code',
-      'copyCursor',
-      'closeCommandCenter',
-      'openCommandCenter',
-      'removeFormat',
-      'textColor',
-      'applyColor',
-    ],
-  },
-  {
-    title: 'Oops',
-    commands: ['undo', 'redo', 'repeat'],
-  },
-  {
-    title: 'Special Views',
-    commands: [
-      'note',
-      'swapNote',
-      'toggleContextView',
-      'proseView',
-      'toggleTableView',
-      'toggleSort',
-      'heading0',
-      'heading1',
-      'heading2',
-      'heading3',
-      'heading4',
-      'heading5',
-    ],
-  },
-  {
-    title: 'Visibility',
-    commands: ['pin', 'pinAll', 'pinDescendants', 'toggleDone', 'toggleHiddenThoughts'],
-  },
-  {
-    title: 'Settings',
-    commands: ['settings', 'customizeToolbar'],
-  },
-  {
-    title: 'Help',
-    commands: ['help', 'openMobileCommandUniverse'],
-  },
-  {
-    title: 'Cancel',
-    commands: ['cancel'],
-  },
-]
+  groups: readonly {
+    id: string
+    title: string
+    commands: readonly CommandId[]
+  }[]
+}[]
 
 /** The duration of the haptics vibrate on delete or archive non-empty thought. */
 export const DELETE_VIBRATE_DURATION = 80
@@ -621,3 +666,25 @@ export const DELETE_VIBRATE_DURATION = 80
 /** Right padding and Left padding of the Content component in px. */
 export const CONTENT_BOX_PADDING_RIGHT = 10
 export const CONTENT_BOX_PADDING_LEFT = 50
+
+type DropdownStateKeys =
+  'showBulletPicker' | 'showColorPicker' | 'showLetterCase' | 'showSortPicker' | 'showCommandCenter' | 'showUndoSlider'
+
+/** Maps dropdown types to their corresponding State keys. */
+export const DROPDOWN_STATE_KEYS: Record<DropdownType, DropdownStateKeys> = {
+  bulletPicker: 'showBulletPicker',
+  colorPicker: 'showColorPicker',
+  letterCase: 'showLetterCase',
+  sortPicker: 'showSortPicker',
+  commandCenter: 'showCommandCenter',
+  undoSlider: 'showUndoSlider',
+}
+
+/** Practice repetitions needed to learn a command. Captured into a command's progress record when it is first pinned, so changing this does not change existing records. Provisional value pending a product decision (see #5485). */
+export const LEARNING_TARGET_REPS = 5
+
+/** Width and height of the pinned command ring's box in CSS px, from the Figma export. */
+export const PINNED_COMMAND_RING_SIZE = 73
+
+/** Horizontal space, in the nav bar's own (font-scaled) px, that the bottom chrome leaves free on the right while a command is pinned so that its text and buttons do not run under the ring or its extended tap target. */
+export const PINNED_COMMAND_RESERVED_WIDTH = 62

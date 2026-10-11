@@ -3,6 +3,7 @@ import Thunk from '../@types/Thunk'
 import { HOME_PATH, REGEX_NONFORMATTING_HTML } from '../constants'
 import * as selection from '../device/selection'
 import rootedParentOf from '../selectors/rootedParentOf'
+import head from '../util/head'
 import isMarkdown from '../util/isMarkdown'
 import timestamp from '../util/timestamp'
 import { importFilesActionCreator as importFiles } from './importFiles'
@@ -45,7 +46,7 @@ const REGEX_HTML_SINGLE_LINE =
  * @param payload.html - HTML content to be imported, or null if importing plain text.
  * @param payload.rawDestValue - The untrimmed destination value to preserve whitespace when combining with existing content.
  * @param payload.transient - If true, creates a new empty thought before importing the text.
- * @param payload.isEmText - If true, preserves formatting when stripping HTML. Default: false.
+ * @param payload.isEmText - If true, the HTML was copied from em and its formatting is preserved. Otherwise, HTML that is inserted inside a thought is sanitized to basic formatting within the text. Default: false.
  *
  * @returns A Thunk that handles importing the data based on whether it is multiline or markdown.
  */
@@ -95,6 +96,9 @@ export const importDataActionCreator = ({
     // Resumable imports (via importFiles) import thoughts one at a time and can be resumed if the page is refreshed or there is another interruption. They have a progress bar and they allow duplicates pending descendants to be loaded and merged.
     // Non-resumable imports (via importText), in contrast, are atomic, fast, and preserve the browser selection. Due to the lack of support for duplicates pending descendants, they are only used for single line imports.
     if (!multiline || markdown) {
+      // Measured against the destination editable so that the offsets index into its whole value rather than into the text node the selection starts in (#5154).
+      const replaceRange = path ? selection.offsetRangeThought(head(path)) : null
+
       dispatch(
         importText({
           // use caret position to correctly track the last navigated point for caret
@@ -103,14 +107,16 @@ export const importDataActionCreator = ({
           caretPosition: (selection.isText() ? selection.offsetThought() || 0 : state.cursorOffset) || 0,
           path,
           text: processedText,
+          // Formatting is only preserved as is when the HTML was copied from em (#4161).
+          isExternalHtml: !!cleanedHtml && !isEmText,
           // text/plain may contain text that ultimately looks like html (contains <li>) and should be parsed as html
           // pass the untrimmed old value to importText so that the whitespace is not loss when combining the existing value with the pasted value
           rawDestValue,
           // use selection start and end for importText to replace (if the imported thoughts are one line)
-          ...(selection.isActive() && !selection.isCollapsed()
+          ...(replaceRange && replaceRange.start !== replaceRange.end
             ? {
-                replaceStart: selection.offsetStart()!,
-                replaceEnd: selection.offsetEnd()!,
+                replaceStart: replaceRange.start,
+                replaceEnd: replaceRange.end,
               }
             : null),
         }),

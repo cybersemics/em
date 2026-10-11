@@ -1,22 +1,118 @@
+# Approves and squash-merges a Dependabot bump once every check on it has passed.
+#
+# Not native auto-merge. `gh pr merge --auto` waits only for *required* status checks, and Lint is
+# the only one — Test, Puppeteer, BrowserStack, and Vercel Preview are deliberately optional. Armed
+# on a bump, it landed the bump the moment Lint went green with the slower suites still running,
+# and Cancel PR Runs then cancelled them: #5775 merged with Test, Puppeteer, and BrowserStack in
+# flight. This instead waits for the whole suite and merges directly.
+#
+# Runs:
+#   - Automatically, when a check completes on a `dependabot/*` branch (see below)
+#   - Manually: `gh workflow run dependabot-automerge.yml -f pr=5775`
+#
+# Why every completion and not just the successes. A pull request's checks finish at different
+# times, so triggering on `success` would fire while other checks were still running. This triggers
+# on every completion and the check step bails unless it is the last one out — the same arrangement
+# dependabot-fix.yml and pr-ready.yml use. The list below must name every workflow that reports a
+# check to a pull request's head: one left out that happens to finish last never wakes this, and
+# the bump sits green until something else is pushed to it.
+#
+# Gated on the pull request's AUTHOR, not on who pushed. A bump that failed carries a fix from
+# Dependabot Fix's agent or a human, and landing that fix is the point of it. The check step pairs
+# the author check with the guards dependabot-fix.yml uses — the head branch must live in this
+# repository and carry the `dependabot/` prefix — and approves only when every commit is
+# Dependabot's own.
+#
+# SECURITY: this runs in the base-repo context with a write-capable token. It checks out only the
+# base repo's own code, never the pull request's, and executes none of it.
+#
+# Requires `DEPENDABOT_AUTOMERGE_TOKEN` in BOTH secret stores. The merge must use a PAT rather than
+# GITHUB_TOKEN, because a GITHUB_TOKEN push to main raises no workflow runs — the push suites on
+# main would never see the bump. A run whose triggering check Dependabot started reads Dependabot
+# secrets ("Secret source: Dependabot" in the run log); one triggered by a check on a fix commit,
+# or by a dispatch, reads Actions secrets. Deleting either copy breaks one of the two paths
+# silently, with an empty `GH_TOKEN` rather than a missing-secret error.
+#
+# `workflow_run` reads this file from the default branch, so edits here have no effect until they
+# are merged to main.
+
 name: Auto-merge Dependabot
+
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows:
+      [
+        'Lint',
+        'Test',
+        'Puppeteer',
+        'BrowserStack',
+        'BrowserStack Android',
+        'Vercel Preview',
+        'TDD',
+        'Agent Scripts',
+        'Evals',
+        'Copilot Setup Steps',
+        'Copilot Conflict Resolution',
+        'Tauri Check',
+      ]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Pull request number to merge if its checks have all passed'
+        required: true
+        type: string
+
+# Serialize per branch so two checks finishing at once cannot both reach the merge. Never cancel: a
+# queued run is the one that would notice the last check completing.
+concurrency:
+  group: dependabot-automerge-${{ github.event.workflow_run.head_branch || inputs.pr }}
+  cancel-in-progress: false
+
 permissions:
-  contents: write
-  pull-requests: write
+  actions: read # list the workflow runs on the pull request head
+  checks: read # list the check runs on the pull request head
+  contents: read # check out scripts/ci from the base repo
+  pull-requests: write # read the pull request, and approve it
+  statuses: read # read commit statuses on the pull request head
+
 jobs:
   automerge:
-    if: github.actor == 'dependabot[bot]'
+    name: Merge when green
     runs-on: ubuntu-latest
+    # Cheap gate so completions on other pull requests cost nothing. Author, mergeability, and the
+    # checks themselves are verified in the step below.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (startsWith(github.event.workflow_run.head_branch, 'dependabot/') &&
+      github.event.workflow_run.head_repository.full_name == github.repository)
+
     steps:
-      - name: Approve
-        run: gh pr review "$PR_URL" --approve
+      # `workflow_run` resolves `github.ref` to the default branch, so this checks out the base
+      # repo's own code — never the pull request's — solely to make scripts/ci/ available below.
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Check pull request
+        id: check
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
-      - name: Squash auto-merge
-        run: gh pr merge "$PR_URL" --auto --squash
+          # Empty on workflow_dispatch, where PR_NUMBER identifies the pull request instead.
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          PR_NUMBER: ${{ inputs.pr }}
+        with:
+          script: |
+            await require('./scripts/ci/merge-dependabot-pr.cjs')({ github, context, core })
+
+      # --match-head-commit refuses the merge if a commit landed on the branch after the checks
+      # above were read, so only the commit that was verified can be merged.
+      - name: Squash merge
+        if: steps.check.outputs.merge == 'true'
+        run: gh pr merge "$PR_NUMBER" --repo "$REPO" --squash --match-head-commit "$HEAD_SHA"
         env:
           GH_TOKEN: ${{ secrets.DEPENDABOT_AUTOMERGE_TOKEN }}
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.check.outputs.pr }}
+          HEAD_SHA: ${{ steps.check.outputs.sha }}

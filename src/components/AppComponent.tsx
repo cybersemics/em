@@ -16,9 +16,12 @@ import isTutorial from '../selectors/isTutorial'
 import theme from '../selectors/theme'
 import themeColors from '../selectors/themeColors'
 import store from '../stores/app'
+import multitouchStore from '../stores/multitouchStore'
+import touchStore from '../stores/touchStore'
 import debugLog from '../util/debugLog'
 import isDocumentEditable from '../util/isDocumentEditable'
 import Alert from './Alert'
+import BackgroundGlow from './BackgroundGlow'
 import CommandCenter from './CommandCenter/CommandCenter'
 import Content from './Content'
 import DesktopCommandUniverse from './DesktopCommandUniverse'
@@ -27,6 +30,7 @@ import ErrorMessage from './ErrorMessage'
 import Footer from './Footer'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
+import PinnedCommand from './Learning/PinnedCommand'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import Sidebar from './Sidebar/Sidebar'
@@ -83,8 +87,17 @@ const shouldCancelGesture = (
   const state = store.getState()
   const distance = state.fontSize * 2
   return (
+    // Reject two-finger gestures (pinch-to-zoom / two-finger trace): the multitouch latch stays set for the
+    // rest of the touch interaction, so a second finger joining after a single-finger gesture has begun also
+    // cancels it (the touchstart guard in MultiGesture is skipped once a gesture is in progress). See #4233.
+    multitouchStore.getState() ||
     isOnToolbar(x, y) ||
+    // Cancel when the touch starts on a range input (e.g. the background glow debug sliders). Otherwise the gesture disables scrolling by calling preventDefault on touchmove, which blocks the slider's native drag.
+    !!(x && y && document.elementFromPoint(x, y)?.closest('input[type="range"]')) ||
     (x && y && selection.isNear(x, y, distance)) ||
+    // A touch that landed on the caret belongs to native caret repositioning. Latched at touchstart by initEvents, so
+    // it holds for the whole touch rather than only the call that carries coordinates.
+    touchStore.getState().pressOnCaret ||
     state.longPress !== LongPressState.Inactive ||
     !!state.showModal ||
     state.showSidebar ||
@@ -191,6 +204,8 @@ const AppComponent: FC = () => {
       })}
       ref={rootRef}
     >
+      {/* Rendered first so that later positioned siblings (Content, Toolbar, Footer) paint above it. */}
+      <BackgroundGlow />
       <Alert />
       <Tips />
       {!isTouch && <DesktopCommandUniverse />}
@@ -232,6 +247,7 @@ const AppComponent: FC = () => {
         <>
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
+          <PinnedCommand />
 
           <CommandCenter />
           <div style={{ fontSize }}>

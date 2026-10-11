@@ -4,7 +4,8 @@ import { Capacitor } from '@capacitor/core'
 import { Keyboard } from '@capacitor/keyboard'
 import { isHTMLElement } from 'motion/react'
 import SplitResult from '../@types/SplitResult'
-import { ALLOWED_FORMATTING_TAGS } from '../constants'
+import { ALLOWED_FORMATTING_TAGS, DEFAULT_FONT_SIZE } from '../constants'
+import isFormattingElement from '../util/isFormattingElement'
 
 export type SelectionOptionsType = {
   offset?: number
@@ -25,6 +26,14 @@ export interface SavedSelection {
   /** The anchor end, i.e. the end that stays put. Only present when the saved selection was a range; a collapsed
    * caret has no second end to record. */
   anchor?: { node: Node; offset: number }
+}
+
+/** A saved range selection (anchor and focus) that can restore a non-collapsed browser selection when passed to selection.restoreRange. Unlike SavedSelection, it preserves the selected range rather than collapsing to the caret. */
+export interface SavedRange {
+  anchorNode: Node
+  anchorOffset: number
+  focusNode: Node
+  focusOffset: number
 }
 
 /** Gets the padding of an element as an array of numbers [top, right, bottom, left]. */
@@ -71,6 +80,21 @@ export const selectNode = (node: Node): void => {
   range.selectNodeContents(node)
   sel.removeAllRanges()
   sel.addRange(range)
+}
+
+/**
+ * Collapses a selected range to a caret at its end, leaving focus and the keyboard alone.
+ *
+ * Android draws the text context menu for the range, so this dismisses the menu on its own. Unlike `clear`, it
+ * does not blur, which is what keeps the menu's dismissal from overlapping the keyboard's: tearing a range down
+ * while the keyboard is going away makes Android rebuild the menu, so it flashes back after it has already gone
+ * ([#4833](https://github.com/cybersemics/em/issues/4833)). Collapsing while the keyboard is still up lets the
+ * menu fade out in one pass, and the caret it leaves behind is dismissed by the blur that follows.
+ */
+export const collapse = (): void => {
+  const sel = window.getSelection()
+  if (!sel || sel.isCollapsed) return
+  sel.collapseToEnd()
 }
 
 /** Returns true if the selection is a collapsed caret, i.e. the beginning and end of the selection are the same. Returns undefined if there is no selection. */
@@ -241,25 +265,6 @@ export const offsetFromNode = (node: Node): number | null => {
   return range.toString().length
 }
 
-/** Returns the character offset at the end of the selection. Returns null if there is no selection. */
-export const offsetEnd = (): number | null => {
-  const selection = window.getSelection()
-  if (!selection) return null
-  const range = selection.getRangeAt(0)
-  if (!range) return null
-  const selectionStart = range.startOffset || 0
-  return selectionStart + selection.toString().length
-}
-
-/** Returns the character offset at the start of the selection. Returns null if there is no selection. */
-export const offsetStart = (): number | null => {
-  const selection = window.getSelection()
-  if (!selection) return null
-  const range = selection.getRangeAt(0)
-  if (!range) return null
-  return range.startOffset || 0
-}
-
 /** Returns the plain-text character offsets [start, end) of the current selection relative to the given editable
  * element (ignoring nested HTML), or null if there is no selection within it. Used to apply formatting to an
  * arbitrary sub-range synchronously (#4637). */
@@ -273,6 +278,13 @@ export const offsetRange = (editable: HTMLElement): { start: number; end: number
   pre.setEnd(range.startContainer, range.startOffset)
   const start = pre.toString().length
   return { start, end: start + range.toString().length }
+}
+
+/** Returns the plain-text character offsets [start, end) of the current selection relative to the given thought's
+ * editable, or null if the thought is not rendered or the selection is not within it. */
+export const offsetRangeThought = (thoughtId: string): { start: number; end: number } | null => {
+  const editable = document.querySelector(`[aria-label="editable-${thoughtId}"]`)
+  return editable ? offsetRange(editable as HTMLElement) : null
 }
 
 /** Clamps a saved offset to what the node can currently address. The node's contents may have changed while the
@@ -325,6 +337,43 @@ export const save = (): SavedSelection | null => {
   }
 }
 
+/** Removes all selection ranges without blurring the focused element. Unlike clear, this preserves focus (and the mobile keyboard) and does not trigger onBlur. Used to hide the native selection (and the iOS selection callout / edit menu) while preserving the editor state. */
+export const removeRanges = (): void => {
+  window.getSelection()?.removeAllRanges()
+}
+
+/** Saves the full selection range (anchor and focus) so that a non-collapsed selection can be restored later with selection.restoreRange. Returns null if there is no selection range. Unlike save, this preserves the selected range rather than collapsing to the focus. */
+export const saveRange = (): SavedRange | null => {
+  const sel = window.getSelection()
+
+  if (sel && sel.rangeCount > 0 && sel.anchorNode && sel.focusNode) {
+    return {
+      anchorNode: sel.anchorNode,
+      anchorOffset: sel.anchorOffset,
+      focusNode: sel.focusNode,
+      focusOffset: sel.focusOffset,
+    }
+  } else {
+    return null
+  }
+}
+
+/** Restores a selection range saved by selection.saveRange. NOOP if the saved range is null, if its nodes are no longer connected to the document (e.g. the thought was edited or deleted), or if a selection is already active (so a selection set in the meantime is not clobbered). */
+export const restoreRange = (savedRange: SavedRange | null): void => {
+  if (!savedRange) return
+
+  const { anchorNode, anchorOffset, focusNode, focusOffset } = savedRange
+  if (!anchorNode.isConnected || !focusNode.isConnected) return
+
+  const sel = window.getSelection()
+  if (!sel) return
+
+  // Do not overwrite a selection that was set after the range was saved (e.g. by a command that executed while the gesture menu was open).
+  if (sel.rangeCount > 0 && !sel.isCollapsed) return
+
+  sel.setBaseAndExtent(anchorNode, anchorOffset, focusNode, focusOffset)
+}
+
 /**
  * Recursively iterates the nodes children and returns focusNode and offset where the relative offset ends.
  */
@@ -370,10 +419,10 @@ const offsetFromClosestParentRecursive = (node: Node, relativeOffset: number): N
  * @param nodeOffset - The offset that is taken relative to the value with all the html tags removed.
  */
 export const offsetFromClosestParent = (nodeRoot: Node, offsetRoot: number): NodeOffset | null => {
-  // case where caret should be positioned at the beginning of the node.
-  if (offsetRoot <= 0) return { node: nodeRoot, offset: 0 }
+  // a root with no text has no text node to resolve the offset against, so anchor on the root itself
+  if (!nodeRoot.textContent) return { node: nodeRoot, offset: 0 }
   // case where the caret should be positioned at the end of the node.
-  else if (nodeRoot.textContent && offsetRoot >= nodeRoot.textContent.length) {
+  else if (offsetRoot >= nodeRoot.textContent.length) {
     return {
       node: nodeRoot,
       offset: nodeRoot.childNodes.length,
@@ -381,6 +430,23 @@ export const offsetFromClosestParent = (nodeRoot: Node, offsetRoot: number): Nod
   }
 
   return offsetFromClosestParentRecursive(nodeRoot, offsetRoot)
+}
+
+/**
+ * Returns a collapsed Range at a plain text offset within the given root, mapping through nested formatting tags. Returns null if the root has no text content to resolve the offset against.
+ *
+ * @param root The node the offset is relative to.
+ * @param offset The offset that is taken relative to the root's value with all the html tags removed.
+ */
+export const collapsedRangeAtOffset = (root: Node, offset: number): Range | null => {
+  const nodeOffset = offsetFromClosestParent(root, offset)
+  if (!nodeOffset?.node) return null
+
+  const range = document.createRange()
+  range.setStart(nodeOffset.node, nodeOffset.offset)
+  range.setEnd(nodeOffset.node, nodeOffset.offset)
+
+  return range
 }
 
 /** Set the selection at the desired offset on the given node. Inserts empty text node when element has no children.
@@ -521,11 +587,11 @@ export const split = (el: HTMLElement): SplitResult | null => {
 }
 
 /**
- * Returns the position and height of the caret relative to the top left of the focused thought, or null if the caret is
- * not in a thought. This is the real caret's own geometry, so a faux caret rendered at the same offsets within another
- * thought is guaranteed to match it, no matter how the two thoughts' values differ (see MulticursorFauxCaret).
+ * Returns the caret's geometry in viewport coordinates, along with the rect of the editable that holds it, or null if
+ * the caret is not in a thought. The editable's rect is returned rather than the element so that callers needing it
+ * do not measure it again.
  */
-export const caretRect = (): { x: number; y: number; height: number } | null => {
+const caretRectViewport = (): { editableRect: DOMRect; x: number; y: number; height: number } | null => {
   const editable = document.activeElement
   if (!isHTMLElement(editable) || !isContentEditable(editable)) return null
 
@@ -555,12 +621,24 @@ export const caretRect = (): { x: number; y: number; height: number } | null => 
   const [paddingTop, , paddingBottom, paddingLeft] = getElementPaddings(editable)
   const lineHeight = parseFloat(window.getComputedStyle(editable).lineHeight)
   return rect?.height
-    ? { x: rect.x - editableRect.x, y: rect.y - editableRect.y, height: rect.height }
+    ? { editableRect, x: rect.x, y: rect.y, height: rect.height }
     : {
-        x: paddingLeft,
-        y: paddingTop,
+        editableRect,
+        x: editableRect.x + paddingLeft,
+        y: editableRect.y + paddingTop,
         height: lineHeight || editableRect.height - paddingTop - paddingBottom,
       }
+}
+
+/**
+ * Returns the position and height of the caret relative to the top left of the focused thought, or null if the caret is
+ * not in a thought. This is the real caret's own geometry, so a faux caret rendered at the same offsets within another
+ * thought is guaranteed to match it, no matter how the two thoughts' values differ (see MulticursorFauxCaret).
+ */
+export const caretRect = (): { x: number; y: number; height: number } | null => {
+  const caret = caretRectViewport()
+  if (!caret) return null
+  return { x: caret.x - caret.editableRect.x, y: caret.y - caret.editableRect.y, height: caret.height }
 }
 
 /** Returns the selection text, or null if there is no selection. */
@@ -576,18 +654,21 @@ export const removeCurrentSelection = () => {
   if (selection && selection.rangeCount > 0) document.execCommand('delete')
 }
 
-/** Remove the useless HTMLElement from element. */
-const removeEmptyElementsRecursively = (element: HTMLElement, remainText: string) => {
-  // Loop through the child nodes of the element
-  for (let i = element.childNodes.length - 1; i >= 0; i--) {
-    const child = element.childNodes[i] as HTMLElement
+/** Wraps a container's contents in shallow clones of the formatting elements the given node sits inside. Cloning a range's contents returns bare text, dropping the tags that wholly contain it (#4229). */
+const wrapInFormattingAncestors = (container: HTMLElement, node: Node) => {
+  // wrap outward from the innermost ancestor; the editable itself is not a formatting element, so the walk stops there
+  for (let ancestor = node.parentElement; isFormattingElement(ancestor); ancestor = ancestor.parentElement) {
+    const wrapper = ancestor.cloneNode(false) as HTMLElement
+    while (container.firstChild) wrapper.appendChild(container.firstChild)
+    container.appendChild(wrapper)
+  }
+}
 
-    // Recursively check the child element
-    removeEmptyElementsRecursively(child, remainText)
-
-    if (!child.hasChildNodes() && child.textContent !== remainText) {
-      child.remove()
-    }
+/** Removes all text from an element, leaving its formatting elements behind as empty shells. */
+const stripText = (element: Element) => {
+  for (const node of Array.from(element.childNodes)) {
+    if (node.nodeType === Node.TEXT_NODE) node.remove()
+    else stripText(node as Element)
   }
 }
 
@@ -595,42 +676,27 @@ const removeEmptyElementsRecursively = (element: HTMLElement, remainText: string
 export const html = () => {
   const selection = document?.getSelection()
   if (!selection || selection.rangeCount === 0) return null
-  const range = selection?.getRangeAt(0)
+  const range = selection.getRangeAt(0)
+  const node = range.startContainer
+  const div = document.createElement('div')
 
-  if (range.startContainer.isEqualNode(range.endContainer)) {
-    let containerHtml: string | null = null
-
-    if (range && range.startContainer) {
-      let node = range.startContainer
-
-      // Check if the node is an Element using the instanceof operator
-      if (node instanceof Element) {
-        // When the caret is collapsed on the editable element itself (e.g. when the cursor is moved to a thought
-        // by tapping its bullet), return the editable's inner HTML rather than its outerHTML, so that the wrapper
-        // element and its attributes (such as placeholder="<b>…</b>", whose value contains raw HTML) are excluded
-        // from the selection html (#3912).
-        containerHtml = node.getAttribute('contenteditable') === 'true' ? node.innerHTML : node.outerHTML
-      } else if (node instanceof CharacterData) {
-        while (node.parentElement?.tagName !== 'DIV') {
-          node = node.parentElement!
-        }
-
-        const parentElement = node.parentElement
-        const clonedElement = parentElement.cloneNode(true) as HTMLElement
-        removeEmptyElementsRecursively(clonedElement!, range.startContainer.textContent!)
-        containerHtml = clonedElement ? clonedElement.innerHTML : null
-      }
-    }
-
-    // iOS Safari converts non-breaking spaces into UTF-8 characters when accessing range textContent.
-    // Convert them back into HTML character entities to ensure that REGEX_HTML_SINGLE_LINE matches (#3779).
-    return containerHtml?.replace(range.startContainer.textContent!.replace(/\u00A0/g, '&nbsp;'), selection.toString())
+  if (range.collapsed && node instanceof Element) {
+    // A collapsed caret on the editable itself (e.g. after tapping a thought's bullet) selects no text, so report the
+    // formatting it sits in as empty shells — commandStateStore reads this to light the toolbar buttons. Take the
+    // editable's children rather than the element itself, so the wrapper's attributes, such as a placeholder whose
+    // value contains raw HTML, are excluded (#3912).
+    const clone = node.cloneNode(true) as Element
+    const isEditable = node.getAttribute('contenteditable') === 'true'
+    div.append(...(isEditable ? Array.from(clone.childNodes) : [clone]))
+    stripText(div)
+  } else {
+    div.appendChild(range.cloneContents())
+    // Identity, not isEqualNode: two distinct nodes that happen to hold the same content span a multi-node range, whose
+    // clone already carries its own formatting, so re-applying the start node's ancestors would wrap it twice.
+    if (node === range.endContainer && node instanceof CharacterData) wrapInFormattingAncestors(div, node)
   }
 
-  const div = document.createElement('div')
-  div.appendChild(range.cloneContents())
-  const currentHtml = div.innerHTML
-  return currentHtml
+  return div.innerHTML
 }
 
 /** Returns the bounding rectangle for the current browser selection. */
@@ -641,6 +707,18 @@ export const getBoundingClientRect = () => {
 
   return null
 }
+
+/** Returns true if the point is within the given number of pixels of the bounds, on every side. */
+const isNearBounds = (
+  x: number,
+  y: number,
+  bounds: { left: number; right: number; top: number; bottom: number },
+  distance: number,
+): boolean =>
+  x >= bounds.left - distance &&
+  x <= bounds.right + distance &&
+  y >= bounds.top - distance &&
+  y <= bounds.bottom + distance
 
 /** Returns true if the point is within the given number of pixels from the browser selection. */
 export const isNear = (
@@ -654,10 +732,39 @@ export const isNear = (
   const rect = getBoundingClientRect()
   if (!rect) return false
 
-  const left = rect.left - distance
-  const right = rect.right + distance
-  const top = rect.top - distance
-  const bottom = rect.bottom + distance
+  return isNearBounds(x, y, rect, distance)
+}
 
-  return x >= left && y >= top && x <= right && y <= bottom
+/** Returns true if the point is inside the editable that holds the collapsed caret, at most distance px right of it. */
+export const isRightOfCaret = (x: number, y: number, distance: number): boolean => {
+  if (!isActive() || !isCollapsed()) return false
+  const caret = caretRectViewport()
+  return !!caret && isNearBounds(x, y, caret.editableRect, 0) && x <= caret.x + distance
+}
+
+/**
+ * Returns true if the point is on the collapsed caret, i.e. within a touch target of it and inside the editable that
+ * holds it. Where isNear is about a range of selected text, this is about the insertion point — a press that lands
+ * here is the user reaching for the caret, so it must not be claimed as a long press or a gesture (#3763). The point
+ * must be inside the editable so that a press on the bullet, which sits just left of a caret at the start of the text,
+ * still starts a drag.
+ *
+ * The zone is DEFAULT_FONT_SIZE rather than the user's font size, so that a finger-sized target does not grow with
+ * their text, and so that every caller agrees on where the caret ends.
+ */
+export const isCaretNear = (x: number, y: number): boolean => {
+  // A range is handled by isNear and by selectionRangeStore, which disable the same interactions ahead of the press.
+  if (!isActive() || !isCollapsed()) return false
+
+  const caret = caretRectViewport()
+  if (!caret) return false
+
+  if (!isNearBounds(x, y, caret.editableRect, 0)) return false
+
+  return isNearBounds(
+    x,
+    y,
+    { left: caret.x, right: caret.x, top: caret.y, bottom: caret.y + caret.height },
+    DEFAULT_FONT_SIZE,
+  )
 }

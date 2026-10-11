@@ -17,6 +17,7 @@ import getRankBefore from '../selectors/getRankBefore'
 import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import simplifyPath from '../selectors/simplifyPath'
+import thoughtToPath from '../selectors/thoughtToPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import createId from '../util/createId'
@@ -24,6 +25,7 @@ import equalPath from '../util/equalPath'
 import head from '../util/head'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
+import splitEmojiPrefix from '../util/splitEmojiPrefix'
 import alert from './alert'
 import categorize from './categorize'
 
@@ -57,11 +59,31 @@ const bumpThoughtDown = (state: State, { paths, simplePath }: { paths?: Path[]; 
 
   const { value } = headThought
 
+  // A leading emoji labels the thought it is attached to, so it stays put rather than being buried in the new
+  // subthought. Only the text it labels is bumped down.
+  const { prefixLength, valuePrefix, valueRest } = splitEmojiPrefix(value)
+
   // const rank = headRank(simplePath)
   const children = getAllChildren(state, head(simplePath))
 
   // if there are no children
-  if (children.length === 0) return categorize(state)
+  if (children.length === 0) {
+    // categorize creates the new thought above and moves this thought into it, so the emoji becomes the category's
+    // value and only the remaining text is left on the thought below.
+    const stateCategorized = categorize(state, { value: valuePrefix })
+
+    // categorize signals success by moving the cursor onto the category it created, so an unmoved cursor means it
+    // refused (e.g. a read-only parent) and the thought must keep its full value.
+    return equalPath(stateCategorized.cursor, state.cursor)
+      ? stateCategorized
+      : editThought(stateCategorized, {
+          oldValue: value,
+          newValue: valueRest,
+          // The thought has been moved under the new category, so its path is no longer the cursor's. Its id is unchanged.
+          path: thoughtToPath(stateCategorized, head(simplePath)),
+          force: true,
+        })
+  }
 
   // TODO: Resolve simplePath to make it work within the context view
   // Cannot do this without the contextChain
@@ -94,15 +116,15 @@ const bumpThoughtDown = (state: State, { paths, simplePath }: { paths?: Path[]; 
         id: newThoughtId,
         path: simplePath as Path,
         // If there is a sort preference, use it. Otherwise, insert at the top.
-        rank: sortId ? getSortedRank(state, head(simplePath), value) : getPrevRank(state, head(simplePath)),
-        value,
+        rank: sortId ? getSortedRank(state, head(simplePath), valueRest) : getPrevRank(state, head(simplePath)),
+        value: valueRest,
       })
     },
 
-    // clear text
+    // clear text, less the emoji prefix that stays behind
     editThought({
       oldValue: value,
-      newValue: '',
+      newValue: valuePrefix,
       path: simplePathWithNewRank,
     }),
 
@@ -122,7 +144,9 @@ const bumpThoughtDown = (state: State, { paths, simplePath }: { paths?: Path[]; 
     setCursor({
       path: simplePathWithNewRankAndValue,
       isKeyboardOpen: true,
-      offset: 0,
+      // Place the caret after the emoji that stayed behind so the user can type where its value leaves off. For a
+      // thought with no emoji this is the usual offset 0.
+      offset: prefixLength,
     }),
     editableRender,
   ])(state)

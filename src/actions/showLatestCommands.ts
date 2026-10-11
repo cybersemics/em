@@ -3,6 +3,7 @@ import Command from '../@types/Command'
 import Thunk from '../@types/Thunk'
 import Timer from '../@types/Timer'
 import { LATEST_COMMAND_DIAGRAM_DURATION, LATEST_COMMAND_LIMIT } from '../constants'
+import ministore from '../stores/ministore'
 import { addLatestCommandsActionCreator } from './addLatestCommands'
 import { clearLatestCommandsActionCreator as clearLatestCommands } from './clearLatestCommands'
 
@@ -10,12 +11,16 @@ interface Options {
   clear?: number
 }
 
-let timeoutId: Timer | null = null
+/** The pending clear of the latest commands diagram. A ministore whose dispose clears the timer, so that resetStores cancels it between tests. The timer is null whenever none is armed. */
+const latestCommandsTimerStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
 
-/** Clear timeout id. */
+/** Clears the pending clear of the latest commands diagram. */
 const clearTimer = () => {
-  if (timeoutId) clearTimeout(timeoutId)
-  timeoutId = null
+  clearTimeout(latestCommandsTimerStore.getState().timer ?? undefined)
+  latestCommandsTimerStore.update({ timer: null })
 }
 
 /**
@@ -38,9 +43,10 @@ export const showLatestCommandsActionCreator =
 
       clearTimer()
       dispatch(addLatestCommandsActionCreator(command))
-      timeoutId = setTimeout(() => {
+      const timer = setTimeout(() => {
+        latestCommandsTimerStore.update({ timer: null })
         dispatch(clearLatestCommands())
-        clearTimer()
       }, LATEST_COMMAND_DIAGRAM_DURATION)
+      latestCommandsTimerStore.update({ timer })
     }
   }

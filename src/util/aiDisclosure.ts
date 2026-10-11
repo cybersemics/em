@@ -5,6 +5,7 @@
  * After implementing the sync engine, this should be revisited so that the acknowledgement is persisted for
  * all devices of a current user, but not across all users of the same shared thoughtspace.
  */
+import ministore from '../stores/ministore'
 import storage from './storage'
 
 /** Version of the AI data disclosure acknowledgement. */
@@ -13,33 +14,37 @@ const AI_DISCLOSURE_VERSION = 'v1'
 const AI_DISCLOSURE_KEY = `aiDisclosureAcknowledged/${AI_DISCLOSURE_VERSION}`
 /** Value for the AI data disclosure acknowledgement. */
 const ACKNOWLEDGED_VALUE = '1'
-/** Whether to allow one more AI use without persisting acknowledgement. */
-let allowNextAiUse = false
-/** The AI request to run after the user accepts the disclosure. */
-let pendingAiUse: (() => void) | null = null
+
+/** The in-memory half of the disclosure state: a ministore rather than module variables so that it is restored between tests along with every other store. Both fields live in one object because ministore.update calls a function argument as an updater, so the continuation can only be stored as a field. */
+const aiUseStore = ministore<{
+  /** Whether to allow one more AI use without persisting acknowledgement. */
+  allowNext: boolean
+  /** The AI request to run after the user accepts the disclosure. */
+  pending: (() => void) | null
+}>({ allowNext: false, pending: null })
 
 /** Returns true if the user has acknowledged the AI data disclosure on this device. */
 export const hasAcknowledgedAiDisclosure = () => storage.getItem(AI_DISCLOSURE_KEY) === ACKNOWLEDGED_VALUE
 
 /** Returns true if an AI request is waiting for the disclosure to be accepted. */
-export const hasPendingAiUse = () => pendingAiUse !== null
+export const hasPendingAiUse = () => aiUseStore.getState().pending !== null
 
 /** Allows one AI use without persisting acknowledgement. */
 export const allowAiDisclosureOnce = () => {
-  allowNextAiUse = true
+  aiUseStore.update({ allowNext: true })
 }
 
 /** Consumes a one-time AI allowance, returning whether one was available. */
 const consumeAiDisclosureAllowance = () => {
-  if (!allowNextAiUse) return false
-  allowNextAiUse = false
+  if (!aiUseStore.getState().allowNext) return false
+  aiUseStore.update({ allowNext: false })
   return true
 }
 
 /** Queues an AI request if disclosure is required. Returns true when the disclosure must be shown. */
 const requestAiDisclosure = (continuation: () => void) => {
   if (hasAcknowledgedAiDisclosure() || consumeAiDisclosureAllowance()) return false
-  pendingAiUse = continuation
+  aiUseStore.update({ pending: continuation })
   return true
 }
 
@@ -56,21 +61,19 @@ export const acceptAiDisclosure = ({ remember }: { remember: boolean }): (() => 
     allowAiDisclosureOnce()
   }
 
-  const continuation = pendingAiUse
-  pendingAiUse = null
+  const continuation = aiUseStore.getState().pending
+  aiUseStore.update({ pending: null })
   return continuation
 }
 
 /** Discards the AI request pending disclosure. */
 export const cancelAiDisclosure = () => {
-  pendingAiUse = null
+  aiUseStore.update({ pending: null })
 }
 
-/** Revokes AI data disclosure acknowledgement and clears any pending or one-time AI use. */
+/** Revokes AI data disclosure acknowledgement on this device. */
 export const clearAiDisclosureAcknowledgement = () => {
   storage.removeItem(AI_DISCLOSURE_KEY)
-  allowNextAiUse = false
-  pendingAiUse = null
 }
 
 export default requestAiDisclosure

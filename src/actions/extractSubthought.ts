@@ -1,16 +1,19 @@
 import _ from 'lodash'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
+import getTextContentFromHTML from '../device/getTextContentFromHTML'
 import getThoughtById from '../selectors/getThoughtById'
 import selectionOffsets from '../selectors/selectionOffsets'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import head from '../util/head'
 import reducerFlow from '../util/reducerFlow'
+import splitFormattedValue from '../util/splitFormattedValue'
 import alert from './alert'
 import editThought from './editThought'
 import newThought from './newThought'
 
+/** Extract the selection as child thought. */
 export interface extractSubthoughtPayload {
   /** The character offset of the start of the selection within the cursor thought's value. */
   selectionStart: number
@@ -35,18 +38,26 @@ const extractSubthought = (state: State, { selectionStart, selectionEnd }: extra
   }
 
   const { value } = cursorThought
-  const newValue = `${value.slice(0, selectionStart)}${value.slice(selectionEnd, value.length)}`.trim()
-  const childValue = value.slice(selectionStart, selectionEnd)
+  const plainValue = getTextContentFromHTML(value)
+
+  // A formatted value cannot be sliced by the selection offsets, since they are plain text offsets that do not line up with the indices of the markup, causing the slice to land in the middle of a tag (#4103). Split it as HTML instead. An unformatted value takes the fast path, avoiding the DOM entirely.
+  const { remainingValue, extractedValue } =
+    plainValue === value
+      ? {
+          remainingValue: `${value.slice(0, selectionStart)}${value.slice(selectionEnd, value.length)}`.trim(),
+          extractedValue: value.slice(selectionStart, selectionEnd),
+        }
+      : splitFormattedValue(value, selectionStart, selectionEnd)
 
   const reducers = [
     editThought({
       oldValue: value,
-      newValue,
+      newValue: remainingValue,
       path: simplifyPath(state, cursor),
       force: true,
-      cursorOffset: state.cursorOffset != null ? state.cursorOffset - (value.length - newValue.length) : undefined,
+      cursorOffset: state.cursorOffset != null ? selectionStart : undefined,
     }),
-    newThought({ value: childValue, insertNewSubthought: true, preventSetCursor: true }),
+    newThought({ value: extractedValue, insertNewSubthought: true, preventSetCursor: true }),
   ]
 
   return reducerFlow(reducers)(state)

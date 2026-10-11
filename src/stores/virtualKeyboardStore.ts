@@ -6,6 +6,7 @@ import reactMinistore from './react-ministore'
 const virtualKeyboardStore = reactMinistore<VirtualKeyboardState>({
   open: false,
   height: 0,
+  phase: undefined,
 })
 
 export default virtualKeyboardStore

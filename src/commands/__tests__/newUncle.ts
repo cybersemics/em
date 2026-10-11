@@ -99,7 +99,7 @@ describe('multicursor', () => {
   - `)
   })
 
-  it('leaves the caret on the empty uncle of the last selected thought and clears the multicursor', () => {
+  it('leaves the caret on the empty uncle of the last selected thought', () => {
     store.dispatch([
       importText({
         text: `
@@ -124,8 +124,6 @@ describe('multicursor', () => {
 
     // the caret ends on the empty uncle created for the last selected thought, ready to type
     expect(state.cursor && head(state.cursor)).toBe(rootChildren[3].id)
-
-    expect(hasMulticursor(state)).toBe(false)
   })
 
   it('creates a single empty uncle with the caret on it when one thought is selected', () => {
@@ -198,5 +196,29 @@ describe('multicursor', () => {
     - d
   - e
     - f`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it('selects the new uncles after execution', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+            - b
+          - c
+            - d
+        `,
+      }),
+      setCursor(['a', 'b']),
+      addMulticursor(['a', 'b']),
+      addMulticursor(['c', 'd']),
+    ])
+
+    executeCommandWithMulticursor(newUncleCommand, { store })
+
+    const state = store.getState()
+    const newThoughts = getChildrenRankedByContext(state, [HOME_TOKEN]).filter(child => child.value === '')
+
+    expect(Object.values(state.multicursors).map(head)).toEqual(newThoughts.map(child => child.id))
   })
 })

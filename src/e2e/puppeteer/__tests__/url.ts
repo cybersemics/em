@@ -23,11 +23,15 @@ vi.setConfig({ testTimeout: 60000, hookTimeout: 20000 })
 // Tests the following cases:
 // - Single line url
 // - Single line url with cursor
+// - Url and email icon alignment. Both icons are clipped by the 1em link that wraps them, so only the painted result
+//   shows whether they sit level with the text rather than hanging below it.
+//   https://github.com/cybersemics/em/issues/4684
 
 it('single line', async () => {
   await hideHUD()
 
   await paste(`
+    - test@test.com
     - https://test.com/single-line
     - https://test.com/single-line-with-cursor
     - This thought tests the line height of the above thought
@@ -61,11 +65,9 @@ describe('multiline', () => {
     expect(image).toMatchImageSnapshot()
   }
 
-  it('Font Size: 18 (default)', multilineTest)
+  it('Font Size: 16 (default)', multilineTest)
 
   it('Font Size: 13', async () => {
-    await click('[data-testid=decrease-font]') // 17
-    await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15
     await click('[data-testid=decrease-font]') // 14
     await click('[data-testid=decrease-font]') // 13

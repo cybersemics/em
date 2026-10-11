@@ -1,4 +1,5 @@
-import _ from 'lodash'
+import { Capacitor } from '@capacitor/core'
+import { Device } from '@capacitor/device'
 import moize from 'moize'
 import CommandId from './@types/CommandId'
 import Context from './@types/Context'
@@ -12,8 +13,8 @@ import { pullActionCreator as pull } from './actions/pull'
 import { setCursorActionCreator as setCursor } from './actions/setCursor'
 import { updateThoughtsActionCreator } from './actions/updateThoughts'
 import { commandById, executeCommand } from './commands'
-import db, { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
-import * as selection from './device/selection'
+import { type ThoughtspaceStorage, thoughtspaceRuntime } from './data-providers/thoughtspace'
+import scrollTo from './device/scrollTo'
 import testFlags from './e2e/testFlags'
 import contextToThoughtId from './selectors/contextToThoughtId'
 import decodeThoughtsUrl from './selectors/decodeThoughtsUrl'
@@ -25,9 +26,12 @@ import getThoughtById from './selectors/getThoughtById'
 import thoughtToContext from './selectors/thoughtToContext'
 import store from './stores/app'
 import offlineStatusStore, { init as initOfflineStatusStore } from './stores/offlineStatusStore'
-import syncStatusStore from './stores/syncStatus'
+import osVersionStore from './stores/osVersionStore'
+import storageStatusStore from './stores/storageStatusStore'
+import syncStatusStore from './stores/syncStatusStore'
 import importToContext from './test-helpers/importToContext'
 import prettyPath from './test-helpers/prettyPath'
+import debugLog from './util/debugLog'
 import hashThought from './util/hashThought'
 import initEvents from './util/initEvents'
 import isRoot from './util/isRoot'
@@ -35,9 +39,16 @@ import owner from './util/owner'
 
 /**
  * Decode cursor from url, pull and initialize the cursor.
+ *
+ * The app is interactive while the thoughtspace is still initializing, so the user may already have set the cursor by
+ * the time this runs. In that case the live cursor wins: setCursor marks cursorInitialized, and restoring the cursor
+ * from the URL here would discard the cursor, note focus, and multiselection the user has since created.
  */
 const initializeCursor = async () => {
-  const { path } = decodeThoughtsUrl(store.getState())
+  const state = store.getState()
+  if (state.cursorInitialized) return
+
+  const { path } = decodeThoughtsUrl(state)
   // if no path in decoded from the url initialize the cursor with null
   if (!path || isRoot(path)) {
     store.dispatch(setCursor({ path: null }))
@@ -45,6 +56,8 @@ const initializeCursor = async () => {
     // pull the path thoughts
     await store.dispatch(pull(path, { maxDepth: 0 }))
     const newState = store.getState()
+    // the user may have set the cursor while the path was being pulled
+    if (newState.cursorInitialized) return
     const isCursorLoaded = path.every(thoughtId => getThoughtById(newState, thoughtId))
     store.dispatch(
       setCursor({
@@ -59,9 +72,15 @@ type InitializeOptions = { storage: ThoughtspaceStorage }
 /** Initialize local db and window events. */
 const initializeInternal = async ({ storage }: InitializeOptions) => {
   initOfflineStatusStore(/* websocket */)
+
+  // An app built before the Device plugin was added cannot tell, so the store stays null.
+  if (Capacitor.getPlatform() === 'ios' && Capacitor.isPluginAvailable('Device')) {
+    Device.getInfo().then(({ osVersion }) => osVersionStore.update(parseInt(osVersion)))
+  }
+
   const eventHandlers = initEvents(store)
 
-  const { clientId } = await thoughtspaceRuntime.init({
+  const { clientId, storage: storageInUse } = await thoughtspaceRuntime.init({
     storage,
     materialization: {
       getSnapshot: () => {
@@ -84,6 +103,8 @@ const initializeInternal = async ({ storage }: InitializeOptions) => {
       },
     },
   })
+
+  storageStatusStore.update(storageInUse)
 
   // load local state unless loading a public context
   // await initDB()
@@ -158,16 +179,19 @@ const testHelpers = {
   dropThoughtspace: thoughtspaceRuntime.drop,
   waitForInitialized,
   waitForThoughtspaceRuntimeIdle: thoughtspaceRuntime.waitForIdle,
-  setSelection: selection.set,
   importToContext: withDispatch(importToContext),
-  getLexemeFromThoughtspace: (value: string) => db.getLexemeById(hashThought(value)),
-  getState: store.getState,
-  _: _,
+  // The production scroll, so that a test's explicit scroll supersedes a scroll the cursor had queued exactly as the
+  // app's own do (see device/scrollTo.ts), instead of the helper cancelling the pending cursor scroll by hand.
+  scrollTo,
 }
 
 // add useful functions to window.em for debugging
 const windowEm = {
   contextToThoughtId: withState((state: State, thoughts: Context) => contextToThoughtId(state, thoughts)),
+  // The rolling debug log, so that a reproduction can read, clear, and stream it from outside the app —
+  // the Settings modal's copy/download controls are the only other way off the device, and neither is
+  // reachable from a script. See docs/debug-log.md.
+  debugLog,
   exportContext: (contextOrThoughtId: Context | ThoughtId, format?: MimeType) =>
     exportContext(store.getState(), contextOrThoughtId, format),
   getContexts: withState(getContexts),

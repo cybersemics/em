@@ -1,6 +1,6 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
-import globals from '../../globals'
 import store from '../../stores/app'
+import heldKeysStore from '../../stores/heldKeysStore'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 import headValue from '../../util/headValue'
@@ -23,9 +23,6 @@ const pressEvent = { key: 'ArrowRight', repeat: false } as unknown as KeyboardEv
 const repeatEvent = { key: 'ArrowRight', repeat: true } as unknown as KeyboardEvent
 
 beforeEach(initStore)
-beforeEach(() => {
-  globals.arrowKeyBoundaryCross = null
-})
 
 describe('cursorForwardTable', () => {
   it('moves the cursor from a col1 thought to its col2 child', () => {
@@ -42,7 +39,7 @@ describe('cursorForwardTable', () => {
 
     cursorForwardTableCommand.exec(store.dispatch, store.getState, pressEvent, { type: 'keyboard' })
 
-    expect(globals.arrowKeyBoundaryCross).toBe('ArrowRight')
+    expect(heldKeysStore.getState().arrowKeyBoundaryCross).toBe('ArrowRight')
   })
 
   it('does not cross the boundary on auto-repeat (held key)', () => {
@@ -54,6 +51,6 @@ describe('cursorForwardTable', () => {
     // the cursor should remain on the col1 thought
     expect(state.cursor && headValue(state, state.cursor)).toBe('b')
     // and the suppression flag should not be set by a repeat
-    expect(globals.arrowKeyBoundaryCross).toBeNull()
+    expect(heldKeysStore.getState().arrowKeyBoundaryCross).toBeNull()
   })
 })

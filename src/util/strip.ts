@@ -4,6 +4,7 @@ import _ from 'lodash'
 import { ALLOWED_ATTR, ALLOWED_FORMATTING_TAGS, EXTERNAL_FORMATTING_TAGS } from '../constants'
 import formattingNodeToHtml from './formattingNodeToHtml'
 import isFormattingTag from './isFormattingTag'
+import unwrapGeneratingEmoji from './unwrapGeneratingEmoji'
 
 type StripOptions = {
   preserveFormatting?: boolean
@@ -30,7 +31,7 @@ const strip = (
   html: string,
   { preserveFormatting = false, preventTrim = false, stripAttributes = true, stripColors = false }: StripOptions = {},
 ) => {
-  const replacedHtml = html
+  const replacedHtml = unwrapGeneratingEmoji(html)
     .replace(REGEX_STYLE_TAG, '') // Remove style tag and its contents, otherwise just the opening and closing tags will be stripped
     .replace(REGEX_CONTIGUOUS_PARAGRAPH, '</p>\n<p') // <p> is a block element, if there is no newline between <p> tags add newline.
     .replace(REGEX_BR_TAG, '\n') // Some text editors add <br> instead of \n

@@ -9,18 +9,20 @@ import Thunk from '../@types/Thunk'
 import updateThoughts from '../actions/updateThoughts'
 import { clientId } from '../data-providers/thoughtspaceSession'
 import getLexeme from '../selectors/getLexeme'
+import getMovePlacement from '../selectors/getMovePlacement'
+import getSortPreference from '../selectors/getSortPreference'
+import getSortedRank from '../selectors/getSortedRank'
 import getThoughtById from '../selectors/getThoughtById'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import { childrenMapKey } from '../util/createChildrenMap'
 import createId from '../util/createId'
 import hashThought from '../util/hashThought'
 import head from '../util/head'
+import isEmptyOrEmojiOnly from '../util/isEmptyOrEmojiOnly'
 import keyValueBy from '../util/keyValueBy'
 import timestamp from '../util/timestamp'
 
 interface Payload {
-  // directly adds children to thought.childrenMap with no additional validation
-  children?: ThoughtId[]
   id?: ThoughtId
   /** Callback for when the updates have been synced with IDB. */
   idbSynced?: () => void
@@ -32,7 +34,7 @@ interface Payload {
 /**
  * Creates a new thought with a known context and rank. Does not update the cursor. Use the newThought reducer for a higher level function.
  */
-const createThought = (state: State, { path, value, rank, id, idbSynced, children, splitSource }: Payload) => {
+const createThought = (state: State, { path, value, rank, id, idbSynced, splitSource }: Payload) => {
   id = id || createId()
   const lexemeOld = getLexeme(state, value)
 
@@ -50,7 +52,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
   const parent = getThoughtById(state, parentId)
 
   if (!parent) {
-    console.error({ path, value, rank, id, idbSynced, children, splitSource })
+    console.error({ path, value, rank, id, idbSynced, splitSource })
     throw new Error(`createThought: Parent thought with id ${parentId} not found`)
   }
 
@@ -65,8 +67,9 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
   // }
 
   const thoughtNew: Thought = {
-    // Do not use createChildrenMap since the thoughts must exist and createThought does not require the thoughts to exist.
-    childrenMap: children ? keyValueBy(children || {}, id => ({ [id]: id })) : {},
+    // A new thought has no children yet. A caller that needs children creates them with further createThought calls
+    // once this thought exists, so the parent's childrenMap never references a thought that is not in the index.
+    childrenMap: {},
     created: timestamp(),
     id,
     lastUpdated: timestamp(),
@@ -76,6 +79,14 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
     value: newValue,
     ...(splitSource ? { splitSource } : null),
   }
+
+  // Adding a child moves the parent's lastUpdated to now, which is its sort key in a context sorted by Updated, so the
+  // parent is re-ranked among its siblings to keep their ranks matching the sort condition (#4098). Empty and
+  // emoji-only thoughts are sorted to their point of creation, so they keep the rank they have.
+  const parentRank =
+    getSortPreference(state, parent.parentId).type === 'Updated' && !isEmptyOrEmojiOnly(parent.value)
+      ? getSortedRank(state, parent.parentId, parent.value, { staleId: parentId })
+      : parent.rank
 
   thoughtIndexUpdates[id] = thoughtNew
   thoughtIndexUpdates[parentId] = {
@@ -95,6 +106,7 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
       [childrenMapKey(parent.childrenMap, thoughtNew)]: id,
     },
     lastUpdated: timestamp(),
+    rank: parentRank,
     updatedBy: clientId,
   }
 
@@ -102,7 +114,14 @@ const createThought = (state: State, { path, value, rank, id, idbSynced, childre
     [hashThought(value)]: lexemeNew,
   }
 
-  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced })
+  // A new rank is invisible to the persistence layer on its own: sibling order is stored structurally there and only
+  // changes on a move, which is minted from an explicit placement (#5126).
+  const movePlacements: Index<ThoughtId | null> =
+    parentRank !== parent.rank
+      ? { [parentId]: getMovePlacement(state, parent.parentId, { id: parentId, rank: parentRank }) }
+      : {}
+
+  return updateThoughts(state, { lexemeIndexUpdates, thoughtIndexUpdates, idbSynced, movePlacements })
 }
 
 /** Action-creator for createThought. */

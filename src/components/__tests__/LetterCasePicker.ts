@@ -1,5 +1,6 @@
 import { act } from 'react'
 import { addAllMulticursorActionCreator as addAllMulticursor } from '../../actions/addAllMulticursor'
+import { homeActionCreator as home } from '../../actions/home'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
@@ -72,7 +73,7 @@ it('Set Upper Case with multicursor selection', async () => {
   await dispatch([
     newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' }),
     newThought({ value: 'Goodbye everyone, this is Max. Thanks for your help.' }),
-    addAllMulticursor({}),
+    addAllMulticursor(),
   ])
   expect(Object.keys(store.getState().multicursors)).toHaveLength(2)
   await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
@@ -93,7 +94,7 @@ it('multicursor selection is preserved after applying Upper Case', async () => {
   await dispatch([
     newThought({ value: 'Hello everyone, this is Rose. Thanks for your help.' }),
     newThought({ value: 'Goodbye everyone, this is Max. Thanks for your help.' }),
-    addAllMulticursor({}),
+    addAllMulticursor(),
   ])
   await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
   await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
@@ -152,4 +153,22 @@ it('Recognizes a styled thought with uppercase text as UpperCase', async () => {
 
   const upperCase = document.querySelector('[aria-label="UpperCase"][data-selected="true"]')
   expect(upperCase).toBeInTheDocument()
+})
+
+// https://github.com/cybersemics/em/issues/4844
+it('Set Upper Case with a multicursor selection that has no cursor', async () => {
+  await dispatch([newThought({ value: 'foo' }), home(), addMulticursorAtFirstMatch(['foo'])])
+
+  expect(store.getState().cursor).toBeNull()
+
+  await click('[data-testid="toolbar-icon"][aria-label="Letter Case"]')
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const exported = exportContext(store.getState(), [HOME_TOKEN], 'text/plain')
+  expect(exported).toEqual(`- ${HOME_TOKEN}
+  - FOO`)
+
+  expect(document.querySelector('[aria-label="UpperCase"][data-selected="true"]')).toBeInTheDocument()
 })

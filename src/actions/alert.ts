@@ -4,7 +4,7 @@ import type { AlertValue } from '../@types/Alert'
 import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import { AlertType } from '../constants'
-import alertStore from '../stores/alert'
+import alertStore from '../stores/alertStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import clearMulticursors from './clearMulticursors'
 

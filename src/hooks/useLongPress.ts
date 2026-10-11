@@ -7,7 +7,13 @@ import { isTouch } from '../browser'
 import { LongPressState, TIMEOUT_LONG_PRESS_THOUGHT, noop } from '../constants'
 import allowTouchToScroll from '../device/allowTouchToScroll'
 import * as selection from '../device/selection'
+import getThoughtById from '../selectors/getThoughtById'
+import store from '../stores/app'
+import multitouchStore from '../stores/multitouchStore'
+import osVersionStore from '../stores/osVersionStore'
+import touchStore from '../stores/touchStore'
 import haptics from '../util/haptics'
+import head from '../util/head'
 
 export interface LongPressProps {
   onContextMenu: (e: React.MouseEvent | React.PointerEvent) => void
@@ -25,7 +31,7 @@ export interface LongPressProps {
  **/
 const useLongPress = (
   onLongPressStart: (() => void) | null = noop,
-  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent) => void) | null = noop,
+  onLongPressEnd: ((e?: React.MouseEvent | React.TouchEvent | MouseEvent) => void) | null = noop,
   delay: number = TIMEOUT_LONG_PRESS_THOUGHT,
 ) => {
   const [pressing, setPressing] = useState(false)
@@ -38,6 +44,12 @@ const useLongPress = (
     /** Begin a long press, after the timer elapses on desktop, or the dragStart event is fired by TouchBackend in react-dnd. */
     const onStart = () => {
       if (!pressing) return
+
+      // Reject long-press / drag initiation during a multi-touch gesture (e.g. two-finger trace or pinch-to-zoom).
+      // The patched TouchBackend arms its drag timer from the primary touch and fires dragStart independently of
+      // react-dnd's canDrag, so this second guard is required to stop a two-finger gesture from beginning a drag.
+      // The multitouch latch stays set until every finger lifts. See #4233.
+      if (multitouchStore.getState()) return
 
       // react-dnd-touch-backend will call preventDefault on touchmove events once a drag has begun, but since there is a touchSlop threshold of 10px,
       // we can get iOS Safari to initiate a scroll before drag-and-drop begins. It is then impossible to cancel the scroll programatically. (#3141)
@@ -78,7 +90,17 @@ const useLongPress = (
    * we will know which element is being long-pressed. */
   const start = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      if ('touches' in e.nativeEvent || e.nativeEvent.button !== 2) setPressing(true)
+      if (e.nativeEvent instanceof MouseEvent && e.nativeEvent.button === 2) return
+
+      // A press that lands on the caret is the user reaching for native caret repositioning, not the start of a drag.
+      // Never marking the press keeps the rest of the chain — haptics, the scroll lock, DragHold — from running (#3763).
+      // The flag is latched by the capture-phase touchstart listener in initEvents, which runs first.
+      if (touchStore.getState().pressOnCaret) return
+
+      // On iOS 27 a withheld tap on an empty thought gives no sign that it lifted (#5660).
+      if (touchStore.getState().pressInEmptyThought) return
+
+      setPressing(true)
     },
     [setPressing],
   )
@@ -87,7 +109,7 @@ const useLongPress = (
   // Note: This method is not guaranteed to be called, so make sure you perform any cleanup from onLongPressStart elsewhere (e.g. in useDragHold.)
   // TODO: Maybe an unmount handler would be better?
   const stop = useCallback(
-    (e?: React.MouseEvent | React.TouchEvent) => {
+    (e?: React.MouseEvent | React.TouchEvent | MouseEvent) => {
       setPressing(false)
 
       // Once the long press ends, we can allow touchmove events to cause scrolling again. If drag-and-drop has begun, then this will not fire,
@@ -96,25 +118,58 @@ const useLongPress = (
 
       // This gives other components a chance to short circuit.
       // We can't stop propagation here without messing up other components like Bullet.
+      // Do not clear the timer here. setPressing(false) above already clears the timer of the press that is
+      // ending, via the arming effect's cleanup. By the time this deferred callback runs, the only timer that
+      // could be pending belongs to a *subsequent* press, and clearing it would silently cancel that long
+      // press. This is not hypothetical: the callback is deferred by a timer, so a congested main thread can
+      // delay it past the next mousedown, which the browser prioritizes over an overdue timer.
       setTimeout(() => {
-        clearTimeout(timerIdRef.current)
-        timerIdRef.current = 0
         onLongPressEnd?.(e)
       }, 10)
     },
     [onLongPressEnd, setPressing],
   )
 
+  // iOS 27 can withhold a press's touchend until the next touch, but still fires mouseup when the finger lifts (#5660).
+  useEffect(() => {
+    if (!pressing || (osVersionStore.getState() ?? 0) < 27) return
+
+    window.addEventListener('mouseup', stop, { capture: true })
+    return () => window.removeEventListener('mouseup', stop, { capture: true })
+  }, [pressing, stop])
+
+  // A withheld tap can get no mouseup either, but iOS still moves the caret when it lifts (#5660). A finger still down
+  // does not move the caret before the long press delay, and once DragHold begins em blurs the editable itself.
+  useEffect(() => {
+    if (!pressing || longPressState !== LongPressState.Inactive || (osVersionStore.getState() ?? 0) < 27) return
+
+    /** Ends the press. */
+    const onSelectionChange = () => stop()
+    document.addEventListener('selectionchange', onSelectionChange)
+    return () => document.removeEventListener('selectionchange', onSelectionChange)
+  }, [longPressState, pressing, stop])
+
   // Prevent context menu from appearing on long press, otherwise it interferes with drag-and-drop.
-  // Allow double tap to open the context menu as usual.
+  // A press on the caret of an *empty* thought is exempt, where the menu is the only way to reach paste: every other
+  // route to it goes through selecting a word, and an empty thought has none.
   // Android passes React.PointerEvent
   // Web passes React.MouseEvent
   const onContextMenu = useCallback(
     (e: React.MouseEvent | React.PointerEvent) => {
       // On Android, double tap activation of context menu produces a pointerType of `mouse` whereas long press produces `touch`
       if ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch') {
+        const state = store.getState()
+        const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
+        const { pressOnCaret, pressInEmptyThought } = touchStore.getState()
+        if ((pressOnCaret || pressInEmptyThought) && isEmptyThought) return
+
         e.preventDefault()
         e.stopPropagation()
+
+        // The cleanup below closes the keyboard on the way into a drag. A press on the caret never becomes one, so
+        // running it would blur the editable and destroy the caret the press was aimed at.
+        if (pressOnCaret) return
+
         selection.clear()
         dispatch(keyboardOpen({ value: false }))
       }

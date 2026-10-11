@@ -1,6 +1,8 @@
 import Command from '../@types/Command'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { alertActionCreator as alert } from '../actions/alert'
+import { dismissKeyboardActionCreator as dismissKeyboard } from '../actions/dismissKeyboard'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import HelpIcon from '../components/icons/HelpIcon'
 import { AlertType } from '../constants'
 import hasMulticursor from '../selectors/hasMulticursor'
@@ -26,9 +28,11 @@ const openCommandCenterCommand = {
     // Otherwise quickly closing and opening the Command Center will inadvertently trigger the special alert.
     clearTimeout(scrollZoneHelpAlertTimeout)
 
-    if (!state.cursor || hasMulticursor(state)) {
+    // Swiping up with nothing to act on cannot open the Command Center, and swiping up while it is already open is more
+    // likely to be an attempt to scroll.
+    if (state.showCommandCenter || (!state.cursor && !hasMulticursor(state))) {
       if (!showScrollZoneHelpAlert) {
-        if (!hasMulticursor(state)) {
+        if (!state.showCommandCenter) {
           dispatch(alert('Select a thought to open the Command Center.'))
         }
       } else {
@@ -44,7 +48,20 @@ const openCommandCenterCommand = {
       return
     }
 
-    dispatch(addMulticursor({ path: state.cursor }))
+    // Select the cursor thought, unless a multiselection is already active and adding to it would be a no-op. A
+    // multiselection outlives the Command Center wherever it is hidden with the selection intact: over an edit (Clear
+    // Thought), under the Undo Slider, and during a multicursor command.
+    // Open the Command Center outright rather than leaving multicursorAlertMiddleware to notice the multiselection.
+    // The middleware ignores multiselection changes while a multicursor command is executing and declines to re-open
+    // over an edit; neither should silence an explicit swipe, which is the user asking for the Command Center they can
+    // see is closed.
+    // A note keeps the caret when a selection starts, unlike a thought, whose editable blurs itself. Release it
+    // first, so that the keyboard closes rather than staying up beneath the sheet.
+    dispatch([
+      state.noteFocus ? dismissKeyboard() : null,
+      state.cursor && !hasMulticursor(state) ? addMulticursor({ path: state.cursor }) : null,
+      toggleDropdown({ dropDownType: 'commandCenter', value: true }),
+    ])
 
     showScrollZoneHelpAlert = false
   },

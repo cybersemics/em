@@ -36,7 +36,7 @@ export type ThoughtspaceAccessResult =
 export interface ThoughtspaceRuntime {
   /** Acquires any runtime-specific access required before opening the interactive thoughtspace. */
   acquireAccess: () => Promise<ThoughtspaceAccessResult>
-  init: (options: ThoughtspaceRuntimeInitOptions) => Promise<{ clientId: string }>
+  init: (options: ThoughtspaceRuntimeInitOptions) => Promise<{ clientId: string; storage: string }>
   drop: () => Promise<unknown>
   waitForIdle: () => Promise<void>
   persistPushQueueBatches: (batches: readonly PersistThoughtspaceBatch[]) => Promise<void>

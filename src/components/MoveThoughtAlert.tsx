@@ -32,7 +32,12 @@ const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numTho
     return toVisibleText(getThoughtById(state, head(toPath as SimplePath))?.value || '')
   })
   const context = useSelector(state => (contextPath ? headValue(state, contextPath) : null))
-  const alertFrom = numThoughts === 1 ? `"${ellipsize(escapeHtml(toVisibleText(from)))}"` : `${numThoughts} thoughts`
+  const alertFrom =
+    numThoughts === 1
+      ? from
+        ? `"${ellipsize(escapeHtml(toVisibleText(from)))}"`
+        : 'Empty thought'
+      : `${numThoughts} thoughts`
   const contextText = toVisibleText(context || 'MISSING_CONTEXT')
 
   return (
@@ -40,7 +45,7 @@ const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numTho
       {alertFrom} moved to{top ? ' top of' : ''}{' '}
       {isRootPath ? (
         to
-      ) : (
+      ) : to ? (
         <>
           &quot;
           <Link
@@ -51,6 +56,8 @@ const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numTho
           />
           &quot;
         </>
+      ) : (
+        <Link simplePath={toPath} label='empty thought' style={{ cursor: 'pointer', textDecoration: 'underline' }} />
       )}
       {contextPath ? ` in the context of ${ellipsize(escapeHtml(contextText))}` : ''}.
     </span>

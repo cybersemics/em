@@ -104,4 +104,96 @@ describe('html', () => {
 
     document.body.removeChild(editable)
   })
+
+  it('returns only the selected text', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.innerHTML = 'Foo x BarBaz'
+    document.body.appendChild(editable)
+
+    const range = document.createRange()
+    range.setStart(editable.firstChild!, 9)
+    range.setEnd(editable.firstChild!, 12)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    expect(html()).toBe('Baz')
+
+    document.body.removeChild(editable)
+  })
+
+  // https://github.com/cybersemics/em/issues/5297
+  it('returns only the selected text when the value contains an HTML entity', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.innerHTML = 'Foo &amp; BarBaz'
+    document.body.appendChild(editable)
+
+    const range = document.createRange()
+    range.setStart(editable.firstChild!, 9)
+    range.setEnd(editable.firstChild!, 12)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    expect(html()).toBe('Baz')
+
+    document.body.removeChild(editable)
+  })
+
+  // cloneContents drops an ancestor that wholly contains the range (#4229), so the formatting has to be re-applied.
+  it('retains the formatting the selection sits inside', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.innerHTML = '<b>apple</b>'
+    document.body.appendChild(editable)
+
+    const range = document.createRange()
+    range.setStart(editable.firstChild!.firstChild!, 1)
+    range.setEnd(editable.firstChild!.firstChild!, 4)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    expect(html()).toBe('<b>ppl</b>')
+
+    document.body.removeChild(editable)
+  })
+
+  it('returns the selected children when the range spans whole elements', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.innerHTML = '<b>one</b><i>two</i>'
+    document.body.appendChild(editable)
+
+    const range = document.createRange()
+    range.setStart(editable, 0)
+    range.setEnd(editable, 1)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    expect(html()).toBe('<b>one</b>')
+
+    document.body.removeChild(editable)
+  })
+
+  it('returns the enclosing formatting element for a collapsed caret on a formatting element', () => {
+    const editable = document.createElement('div')
+    editable.setAttribute('contenteditable', 'true')
+    editable.innerHTML = '<b>One</b>'
+    document.body.appendChild(editable)
+
+    const range = document.createRange()
+    range.setStart(editable.firstChild!, 0)
+    range.collapse(true)
+    const selection = window.getSelection()!
+    selection.removeAllRanges()
+    selection.addRange(range)
+
+    expect(html()).toBe('<b></b>')
+
+    document.body.removeChild(editable)
+  })
 })

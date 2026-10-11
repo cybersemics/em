@@ -241,10 +241,10 @@ describe('undo', () => {
     const { undoPatches } = store.getState()
     const lastPatch = undoPatches[undoPatches.length - 1]
 
-    const thoughtsExists = lastPatch.some(({ path }) => path.includes('/thoughts'))
+    const thoughtsExists = lastPatch.ops.some(({ path }) => path.includes('/thoughts'))
     expect(thoughtsExists).toEqual(true)
 
-    const alertExists = lastPatch.some(({ path }) => path.includes('/alert'))
+    const alertExists = lastPatch.ops.some(({ path }) => path.includes('/alert'))
     expect(alertExists).toEqual(false)
   })
 
@@ -408,6 +408,46 @@ describe('undo', () => {
 
     values = getAllChildrenAsThoughtsByContext(store.getState(), [HOME_TOKEN]).map(child => child.value)
     expect(values).toEqual(['AAA', 'BBB', 'CCC'])
+  })
+
+  // The Letter Case picker edits every selected thought without going through its toolbar command, so
+  // formatLetterCase brackets the edits with setIsMulticursorExecuting itself and names the undo step with a camel
+  // case undoLabel. The alert has to render its display form.
+  it('name a multicursor letter case change in the undo alert', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      formatLetterCase('LowerCase'),
+    ])
+
+    store.dispatch(undo())
+
+    expect(store.getState().alert?.value).toBe('Undo: Letter Case')
+  })
+
+  // Same for the Color picker, which reaches the thoughtspace through formatSelection.
+  it('name a multicursor text color change in the undo alert', () => {
+    store.dispatch([
+      importText({
+        text: `
+        - AAA
+        - BBB`,
+      }),
+      setCursor(['AAA']),
+      addMulticursor(['AAA']),
+      addMulticursor(['BBB']),
+      formatSelection('foreColor', 'green'),
+    ])
+
+    store.dispatch(undo())
+
+    expect(store.getState().alert?.value).toBe('Undo: Text Color')
   })
 
   it('undo should stay enabled and not throw after a multicursor command that nets to no change', () => {

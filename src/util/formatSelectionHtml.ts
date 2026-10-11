@@ -1,6 +1,7 @@
 import { ALLOWED_FORMATTING_TAGS } from '../constants'
+import isFormattingElement from './isFormattingElement'
+import resolveSelectionColors from './resolveSelectionColors'
 import rgbToHex from './rgbToHex'
-import rgbaToHex from './rgbaToHex'
 
 /** A formatting command that maps to a single HTML tag toggle. */
 type TagCommand = 'bold' | 'italic' | 'underline' | 'strikethrough' | 'code'
@@ -33,13 +34,28 @@ const unwrapAll = (root: Element | DocumentFragment, selector: string) => {
 }
 
 /** Wraps an extracted fragment in the command's tag, first unwrapping any nested instances of the same tag so the
- * result doesn't nest redundantly (e.g. bolding a whole thought that already has a bold substring). */
+ * result doesn't nest redundantly (e.g. bolding a whole thought that already has a bold substring). When the whole
+ * fragment is already wrapped in a color element, the tag is nested inside that element rather than around it, so
+ * that a `<u>`/`<strike>` inherits the color and draws its line in it: text-decoration-color resolves to the
+ * currentColor of the decorating element, not of its children, so a decoration on the outside would draw in the
+ * theme's default color (white in dark mode). This is also the markup applyColor produces when the color is applied
+ * last, so the result no longer depends on the order the user formatted in. */
 const wrapWithTag = (fragment: DocumentFragment, command: FormatCommand): HTMLElement => {
   unwrapAll(fragment, tagForCommand(command)!)
   const wrapper = createWrapper(command)
-  wrapper.appendChild(fragment)
+
+  // The fragment's sole child when it is an element that sets a text color, i.e. the whole range is colored. A color
+  // is carried by a <font color> or an inline color style, as in getCommandState's extractColors.
+  const onlyChild = fragment.childNodes.length === 1 ? (fragment.firstElementChild as HTMLElement | null) : null
+  const colorElement = onlyChild && (onlyChild.style.color || onlyChild.getAttribute('color')) ? onlyChild : null
+
+  wrapper.append(...Array.from(colorElement ? colorElement.childNodes : fragment.childNodes))
   wrapper.normalize()
-  return wrapper
+
+  if (!colorElement) return wrapper
+
+  colorElement.appendChild(wrapper)
+  return colorElement
 }
 
 /** A { node, offset } position on a text node, as resolved from a plain-text offset. */
@@ -136,62 +152,56 @@ const removeEmptyFormatting = (container: HTMLElement) => {
   }
 }
 
-/** Returns true if the node is a formatting element (b/i/u/font/span/etc.). */
-const isFormattingElement = (node: Node): node is HTMLElement =>
-  node.nodeType === Node.ELEMENT_NODE && ALLOWED_FORMATTING_TAGS.includes((node as HTMLElement).tagName.toLowerCase())
-
-/** Inserts a node at the (collapsed) range, lifting out of any empty formatting ancestors that extractContents left
- * behind. Without this, re-coloring content that already fills a single wrapper (e.g. the second dispatch of a
- * foreColor + backColor pair) would nest the new <font> inside the emptied one instead of replacing it. */
-const insertAtRange = (container: HTMLElement, range: Range, node: Node) => {
-  // Climb from the insertion point to the outermost formatting ancestor that extractContents left empty, and replace
-  // it with the node. (The collapsed range often sits on an empty text node inside the emptied wrapper.)
-  let emptyAncestor: HTMLElement | null = null
-  for (let n: Node | null = range.startContainer; n && n !== container; n = n.parentNode) {
-    if (isFormattingElement(n) && (n.textContent ?? '') === '') emptyAncestor = n
+/** Returns the nearest ancestor element within container that carries a text color or background color and contains the
+ * node, or null if the node is not inside one. A color is carried by a <font color> or an inline color/background-color
+ * style, as in getCommandState's extractColors. */
+const enclosingColorElement = (node: Node, container: Node): HTMLElement | null => {
+  for (let n: Node | null = node; n && n !== container; n = n.parentNode) {
+    if (
+      n.nodeType === Node.ELEMENT_NODE &&
+      ((n as HTMLElement).getAttribute('color') ||
+        (n as HTMLElement).style.color ||
+        (n as HTMLElement).style.backgroundColor)
+    ) {
+      return n as HTMLElement
+    }
   }
-  if (emptyAncestor) {
-    emptyAncestor.replaceWith(node)
-  } else {
-    range.insertNode(node)
-  }
+  return null
 }
 
-/** Text color applied by a backColor command for contrast against the background (always black, per product design). */
-const CONTRAST_COLOR = '#000000'
+/** Moves whatever of el follows the collapsed range into a copy of el placed directly after it, so that the range
+ * becomes a boundary between two siblings rather than a point inside one. */
+const splitAtRange = (el: HTMLElement, range: Range) => {
+  const tail = document.createRange()
+  tail.setStart(range.startContainer, range.startOffset)
+  tail.setEnd(el, el.childNodes.length)
+  const contents = tail.extractContents()
+  if ((contents.textContent ?? '') === '') return
+  const clone = el.cloneNode(false) as HTMLElement
+  clone.appendChild(contents)
+  el.after(clone)
+}
 
-/** Normalizes a color to an alpha-aware hex so that colors differing only in opacity are not treated as equal — e.g.
- * opaque white (fg, the thought default) vs 50%-alpha white (fgNote, the note default), which both collapse to #ffffff
- * under an alpha-dropping conversion. This is what lets a note be explicitly set to white without being mistaken for a
- * reset to its own (translucent) default (#4657). Passes 6-digit hex inputs (e.g. the default background) through. */
-const toComparableColor = (color: string): string => (color.startsWith('#') ? rgbToHex(color) : rgbaToHex(color))
-
-/** Determines the target text color and background for a single color command. A foreColor sets the text color and
- * clears the background; a backColor sets the background and forces a contrasting (black) text color. A color set to
- * the corresponding theme default clears it instead of applying a redundant default-colored wrapper (foreColor →
- * default text color, backColor → default background), leaving no markup (#3901). This folds ColorPicker's former
- * two-dispatch foreColor + backColor pairing into a single transform (#4637). */
-const resolveColors = (
-  command: 'foreColor' | 'backColor',
-  colorValue: string | undefined,
-  defaultColor: string | undefined,
-  defaultBackgroundColor: string | undefined,
-): { color: string | null; background: string | null } => {
-  /** True if the color value equals the given theme default (compared as alpha-aware hex). */
-  const isDefault = (value: string | undefined, defaultValue: string | undefined) =>
-    value !== undefined && defaultValue !== undefined && toComparableColor(value) === toComparableColor(defaultValue)
-
-  if (command === 'foreColor') {
-    return { color: isDefault(colorValue, defaultColor) ? null : (colorValue ?? null), background: null }
+/** Expands the range outward over every formatting element whose entire text it already covers, so that the element
+ * travels with the extracted content instead of being left behind empty. Without this, coloring text that fills a
+ * formatting element strips that formatting whenever the range sits wholly within one text node — which is what happens
+ * when the formatted text starts at the beginning of the thought (#5507). Expanding also puts the color outside the
+ * element rather than inside it, which <u> and <strike> require in order to draw their line in it (#4018). */
+const expandOverCoveredFormatting = (container: HTMLElement, range: Range) => {
+  const { commonAncestorContainer } = range
+  let el: Node | null =
+    commonAncestorContainer.nodeType === Node.ELEMENT_NODE
+      ? commonAncestorContainer
+      : commonAncestorContainer.parentNode
+  while (el && el !== container && isFormattingElement(el) && range.toString() === (el.textContent ?? '')) {
+    range.selectNode(el)
+    el = el.parentNode
   }
-  // a backColor set to the default background clears both the background and the forced contrast color
-  if (isDefault(colorValue, defaultBackgroundColor)) return { color: null, background: null }
-  return { color: CONTRAST_COLOR, background: colorValue ?? null }
 }
 
 /** Applies a foreColor/backColor to the given range (a sub-range or the whole thought's contents), consolidating into a
  * single <font> element that carries both the color attribute and the background-color style. The color command fully
- * redetermines both properties (see resolveColors), so existing color/background wrappers within the range are stripped
+ * redetermines both properties (see resolveSelectionColors), so existing color/background wrappers within the range are stripped
  * before re-wrapping once. Non-color formatting (b/i/u/code) within the range is preserved. */
 const applyColor = (
   container: HTMLElement,
@@ -201,13 +211,15 @@ const applyColor = (
   defaultColor: string | undefined,
   defaultBackgroundColor: string | undefined,
 ) => {
+  expandOverCoveredFormatting(container, range)
+
   // extract the range into a temp container so existing color/background wrappers can be stripped
   const temp = document.createElement('div')
   temp.appendChild(range.extractContents())
   unwrapAll(temp, 'font, span')
   temp.normalize()
 
-  const { color, background } = resolveColors(command, colorValue, defaultColor, defaultBackgroundColor)
+  const { color, background } = resolveSelectionColors(command, colorValue, defaultColor, defaultBackgroundColor)
 
   // move the (color-stripped) content into a fragment, wrapping it in a single <font> when a color/background applies
   const content = document.createDocumentFragment()
@@ -222,7 +234,16 @@ const applyColor = (
     insertNode = font
   }
 
-  insertAtRange(container, range, insertNode)
+  // A color command redetermines the color of its entire range, so the node must not come to rest inside an element
+  // still carrying the old one. Split that element at the insertion point and insert between the two halves (#5505).
+  const colorElement = enclosingColorElement(range.startContainer, container)
+  if (colorElement) {
+    splitAtRange(colorElement, range)
+    colorElement.after(insertNode)
+  } else {
+    range.insertNode(insertNode)
+  }
+
   // remove any now-empty formatting element left behind where the range was extracted
   removeEmptyFormatting(container)
 }

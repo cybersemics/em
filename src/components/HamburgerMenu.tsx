@@ -5,7 +5,7 @@ import Index from '../@types/IndexType'
 import { toggleSidebarActionCreator as toggleSidebar } from '../actions/toggleSidebar'
 import { isAndroid, isSafari, isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
-import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
 import fastClick from '../util/fastClick'
 import FadeTransition from './FadeTransition'
 

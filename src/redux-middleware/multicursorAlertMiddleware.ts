@@ -51,10 +51,13 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
         // When the keyboard closes (blur or exiting the cleared state), the multicursors are still active and this
         // branch re-opens the Command Center.
         // Starting a multiselection from none is exempt, since selecting a thought while the keyboard is open is how
-        // the Command Center is opened in the first place (Open Command Center adds the cursor thought, and only ever
-        // does so when there was no multiselection yet). Checking prevNumMulticursors rather than a plain count-change
-        // keeps a multiselection that is already being edited (Clear Thought) from re-opening the Command Center over
-        // the editing session should its multicursor count fluctuate for some unrelated reason while typing.
+        // the Command Center is opened in the first place (Open Command Center adds the cursor thought when there is no
+        // multiselection yet). Checking prevNumMulticursors rather than a plain count-change keeps a multiselection that
+        // is already being edited (Clear Thought) from re-opening the Command Center over the editing session should
+        // its multicursor count fluctuate for some unrelated reason while typing.
+        // This only governs multiselection changes. An explicit Open/Close Command Center gesture is never subject to
+        // it: both commands set showCommandCenter themselves so that the user can always reach the Command Center they
+        // can see (see openCommandCenter.ts and closeCommandCenter.ts).
         (!state.isKeyboardOpen || prevNumMulticursors === 0)
       ) {
         dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: true }))
@@ -62,12 +65,18 @@ const multicursorAlertMiddleware: ThunkMiddleware<State> = ({ getState, dispatch
     }
     // on desktop, show a persistent alert
     else {
-      // clear multicursor alert
-      if (!numMulticursors && state.alert?.alertType === AlertType.MulticursorActive) {
-        throttledAlert(dispatch, null)
-      }
-
-      if (numMulticursors !== prevNumMulticursors) {
+      // A single throttle carries both the count alert and its clear, and only the last call's arguments survive to the
+      // trailing invocation. So a selection that drops to zero must schedule only the clear: scheduling the count alert
+      // as well would replace the pending clear with a "0 thoughts selected" alert that overwrites whatever alert is
+      // showing by then (e.g. an AI request's rate-limit message) and is cleared only on the next action.
+      if (!numMulticursors) {
+        // clear multicursor alert. The clear is throttled, so by the time it fires another alert may have replaced
+        // the multicursor one; scoping it to the multicursor alertType makes the action creator drop it in that case
+        // rather than dismiss an unrelated alert.
+        if (state.alert?.alertType === AlertType.MulticursorActive) {
+          throttledAlert(dispatch, null, { alertType: AlertType.MulticursorActive })
+        }
+      } else if (numMulticursors !== prevNumMulticursors) {
         // show or update multicursor alert
         throttledAlert(
           dispatch,

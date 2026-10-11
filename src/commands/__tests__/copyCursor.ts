@@ -1,7 +1,11 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { toggleContextViewActionCreator as toggleContextView } from '../../actions/toggleContextView'
+import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
+import { HOME_TOKEN } from '../../constants'
 import * as copyModule from '../../device/copy'
+import exportContext from '../../selectors/exportContext'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import initStore from '../../test-helpers/initStore'
@@ -34,12 +38,12 @@ describe('copyCursor', () => {
 
     executeCommandWithMulticursor(copyCursorCommand, { store })
 
-    expect(copyModule.default).toHaveBeenCalledWith(
-      `- a
+    await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+      text: `- a
   - a1
   - a2`,
-      expect.objectContaining({ html: expect.any(String) }),
-    )
+      html: expect.any(String),
+    })
   })
 
   it('omit the bullet "-" when copying a single thought', async () => {
@@ -54,7 +58,44 @@ describe('copyCursor', () => {
 
     executeCommandWithMulticursor(copyCursorCommand, { store })
 
-    expect(copyModule.default).toHaveBeenCalledWith('a', expect.objectContaining({ html: expect.any(String) }))
+    await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+      text: 'a',
+      html: expect.any(String),
+    })
+  })
+
+  it('does not add an undo step', async () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      newThought({ value: 'c' }),
+      setCursor(['a']),
+    ])
+
+    executeCommandWithMulticursor(copyCursorCommand, { store })
+    await vi.runAllTimersAsync()
+
+    store.dispatch(undo())
+
+    // Undo reverts the thought created before the copy, not the copy.
+    expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5856
+  it('names an empty thought as empty thought in the alert', async () => {
+    store.dispatch(newThought({ value: '' }))
+
+    executeCommandWithMulticursor(copyCursorCommand, { store })
+    await vi.runAllTimersAsync()
+
+    expect(store.getState().alert?.value).toBe('Copied empty thought to the clipboard')
   })
 
   describe('multicursor', () => {
@@ -80,15 +121,15 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      expect(copyModule.default).toHaveBeenCalledWith(
-        `- a
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+        text: `- a
   - a1
   - a2
 - c
   - c1
   - c2`,
-        expect.objectContaining({ html: expect.any(String) }),
-      )
+        html: expect.any(String),
+      })
     })
 
     it('omit the bullet "-" when copying a single thought', async () => {
@@ -106,7 +147,10 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      expect(copyModule.default).toHaveBeenCalledWith('a', expect.objectContaining({ html: expect.any(String) }))
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+        text: 'a',
+        html: expect.any(String),
+      })
     })
 
     it('only copies ancestors when both ancestor and descendant are selected', async () => {
@@ -129,13 +173,13 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      expect(copyModule.default).toHaveBeenCalledWith(
-        `- a
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+        text: `- a
   - a1
     - a1a
   - a2`,
-        expect.objectContaining({ html: expect.any(String) }),
-      )
+        html: expect.any(String),
+      })
     })
 
     it('handles mixed scenarios correctly', async () => {
@@ -163,8 +207,8 @@ describe('copyCursor', () => {
 
       executeCommandWithMulticursor(copyCursorCommand, { store })
 
-      expect(copyModule.default).toHaveBeenCalledWith(
-        `- a
+      await expect(vi.mocked(copyModule.copyDeferred).mock.calls.at(-1)![0]).resolves.toEqual({
+        text: `- a
   - a1
     - a1a
   - a2
@@ -172,8 +216,8 @@ describe('copyCursor', () => {
 - c
   - c1
   - c2`,
-        expect.objectContaining({ html: expect.any(String) }),
-      )
+        html: expect.any(String),
+      })
     })
 
     it('does not move the cursor or multicursors when copying in context view', async () => {
@@ -242,6 +286,32 @@ describe('copyCursor', () => {
       const stateAfter = store.getState()
       expect(stateAfter.cursor).toEqual(cursorBefore)
       expect(stateAfter.multicursors).toEqual(multicursorsBefore)
+    })
+
+    it('does not add an undo step', async () => {
+      store.dispatch([
+        importText({
+          text: `
+            - a
+            - b
+          `,
+        }),
+        setCursor(['a']),
+        newThought({ value: 'c' }),
+        setCursor(['a']),
+        addMulticursor(['a']),
+        addMulticursor(['b']),
+      ])
+
+      executeCommandWithMulticursor(copyCursorCommand, { store })
+      await vi.runAllTimersAsync()
+
+      store.dispatch(undo())
+
+      // Undo reverts the thought created before the copy, not the copy.
+      expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - a
+  - b`)
     })
   })
 })

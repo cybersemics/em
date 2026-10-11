@@ -3,10 +3,10 @@ import State from '../@types/State'
 import Thunk from '../@types/Thunk'
 import settings from '../actions/settings'
 import { TUTORIAL2_STEP_CONTEXT_VIEW_TOGGLE } from '../constants'
-import globals from '../globals'
 import expandThoughts from '../selectors/expandThoughts'
 import getContexts from '../selectors/getContexts'
 import getSetting from '../selectors/getSetting'
+import heldKeysStore from '../stores/heldKeysStore'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import hashPath from '../util/hashPath'
 import headValue from '../util/headValue'
@@ -34,7 +34,7 @@ const toggleContextView = (state: State): State => {
     // update context views and expanded
     state => ({
       ...state,
-      expanded: globals.suppressExpansion ? {} : expandThoughts(state, state.cursor),
+      expanded: heldKeysStore.getState().suppressExpansion ? {} : expandThoughts(state, state.cursor),
     }),
 
     // advance tutorial from context view toggle step

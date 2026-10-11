@@ -1,17 +1,84 @@
 import { vi } from 'vitest'
+import pkg from '../../../package.json'
 import State from '../../@types/State'
+import { resetStores } from '../../stores/ministore'
 import debugLog from '../debugLog'
 import storage from '../storage'
 
+// debugLog's in-memory state is restored after every test by setupTests (see reset in debugLog.ts). Storage is this
+// suite's own: reset deliberately leaves it alone, so it is cleared here.
 beforeEach(() => {
   localStorage.clear()
-  debugLog.setEnabled(false)
-  debugLog.clear()
 })
 
 afterEach(() => {
-  debugLog.setEnabled(false)
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
+
+// https://github.com/cybersemics/em/issues/5258
+describe('isolation between tests', () => {
+  // The two tests are a pair: the first leaves logging enabled with an entry in the buffer and cleans up nothing, and
+  // the second passes only if that did not reach it.
+  it('a test may leave logging enabled', () => {
+    debugLog.setEnabled(true)
+    debugLog.log('leak')
+    expect(debugLog.read().length).toBeGreaterThan(0)
+  })
+
+  it('the next test starts with logging off and an empty buffer', () => {
+    expect(debugLog.isEnabled()).toBe(false)
+    expect(debugLog.read()).toEqual([])
+  })
+})
+
+describe('reset', () => {
+  it('turns logging off and empties the buffer without erasing the persisted log', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('x')
+    expect(storage.getItem('debugLog-0')).not.toBeNull()
+
+    resetStores()
+
+    expect(debugLog.isEnabled()).toBe(false)
+    expect(debugLog.read()).toEqual([])
+    // Unlike clear(), which exists to erase the log.
+    expect(storage.getItem('debugLog-0')).not.toBeNull()
+  })
+
+  it('turns the console mirror off', () => {
+    debugLog.setConsole(true)
+
+    resetStores()
+
+    expect(debugLog.isConsole()).toBe(false)
+  })
+
+  it('cancels the frame heartbeat, so that draining fake timers terminates', async () => {
+    vi.useFakeTimers()
+    debugLog.setEnabled(true)
+    // the heartbeat is a self-rescheduling requestAnimationFrame, which fake timers fake
+    expect(vi.getTimerCount()).toBe(1)
+
+    resetStores()
+
+    expect(vi.getTimerCount()).toBe(0)
+    await vi.runAllTimersAsync()
+    vi.useRealTimers()
+  })
+
+  it('lets the heartbeat start again afterwards', () => {
+    vi.useFakeTimers()
+    debugLog.setEnabled(true)
+    resetStores()
+
+    debugLog.setEnabled(true)
+
+    expect(vi.getTimerCount()).toBe(1)
+    expect(debugLog.read().filter(entry => entry.type === 'session')).toHaveLength(1)
+    vi.useRealTimers()
+  })
 })
 
 describe('enabled gate', () => {
@@ -147,6 +214,129 @@ describe('clear', () => {
 })
 
 describe('format', () => {
+  it('renders the device, user agent, em version, build commit, display, and URL as the first six lines', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('input')
+    const lines = debugLog.format().split('\n')
+    // the device names the navigator platform (empty in jsdom), the shell, the screen, and the pointer type
+    expect(lines[0]).toMatch(/^--- device: .+ \((web|ios|android|tauri)\), \d+x\d+, (touch|mouse)$/)
+    expect(lines[1]).toBe(`--- userAgent: ${navigator.userAgent}`)
+    expect(lines[2]).toBe(`--- version: ${pkg.version}`)
+    expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
+    // jsdom reports no standalone display mode, no orientation and no visual viewport
+    expect(lines[4]).toMatch(/^--- display: browser, .+, dpr \d+(\.\d+)?, scale [\d.]+, safe-area-bottom \d+$/)
+    expect(lines[5]).toBe(`--- url: ${window.location.href}`)
+    expect(lines[6]).toMatch(/^--- date: \d{4}-\d{2}-\d{2}$/)
+    expect(lines[7]).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3} \+\d+ms #0 input$/)
+  })
+
+  it('names the tauri shell, which Capacitor reports as web', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    // the flag the Tauri runtime injects into the WebView, which is what @tauri-apps/api reads to detect the shell
+    vi.stubGlobal('isTauri', true)
+    expect(debugLog.format().split('\n')[0]).toContain('(tauri)')
+  })
+
+  it('renders the header even when the buffer is empty, so a log with no entries still identifies the build', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const lines = debugLog.format().split('\n')
+    expect(lines.length).toBe(6)
+    expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
+    expect(lines[5]).toBe(`--- url: ${window.location.href}`)
+  })
+
+  it('renders the header after the buffer overflows and the session marker is evicted', () => {
+    debugLog.setEnabled(false)
+    debugLog.clear()
+    debugLog.setEnabled(true)
+    for (let i = 0; i < 5100; i++) {
+      debugLog.log('n', { i })
+    }
+    expect(debugLog.read().some(entry => entry.type === 'session')).toBe(false)
+    const lines = debugLog.format().split('\n')
+    expect(lines[0]).toMatch(/^--- device: /)
+    expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
+    expect(lines[5]).toBe(`--- url: ${window.location.href}`)
+    expect(lines[6]).toBe('--- evicted: 101 earlier entries')
+    expect(lines[8]).toContain('#101 n')
+  })
+
+  it('reports how many entries the rolling buffer has evicted', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    Array.from({ length: 5003 }, (_, i) => debugLog.log('x', { i }))
+    const lines = debugLog.format().split('\n')
+    expect(lines[6]).toBe('--- evicted: 3 earlier entries')
+    expect(lines[8]).toContain('#3 x')
+  })
+
+  it('omits the eviction line while the buffer holds the whole session', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('x')
+    expect(debugLog.format()).not.toContain('--- evicted')
+  })
+
+  it('puts the actionType in the envelope and spreads the parsed payload into the fields', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('action', { actionType: 'indent', payload: JSON.stringify({ at: null, value: 'a' }) })
+    expect(debugLog.format()).toMatch(/ #0 action indent \{"at":null,"value":"a"\}$/m)
+  })
+
+  it('keeps a payload that does not parse, such as one cut by the field cap, as a string', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('action', { actionType: 'importText', payload: JSON.stringify({ text: 'x'.repeat(3000) }) })
+    expect(debugLog.format()).toMatch(/ #0 action importText \{"payload":"\{\\"text\\":\\"x+…\(\+\d+\)"\}$/m)
+  })
+
+  it('drops isComposing:false, a value repeating a reserved id, and the commandMetadata label and source', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const home = '00000000000000000000000000000001'
+    debugLog.log('keydown', { key: 'a', isComposing: false })
+    debugLog.log('move', { id: home, value: home, oldRank: 0, newRank: 1 })
+    debugLog.log('action', {
+      actionType: 'newThought',
+      payload: JSON.stringify({
+        commandMetadata: { source: 'command', commandId: 'newThought', label: 'New Thought' },
+      }),
+    })
+    const text = debugLog.format()
+    expect(text).toMatch(/ #0 keydown \{"key":"a"\}$/m)
+    expect(text).toMatch(new RegExp(` #1 move \\{"id":"${home}","oldRank":0,"newRank":1\\}$`, 'm'))
+    expect(text).toMatch(/ #2 action newThought \{"commandMetadata":\{"commandId":"newThought"\}\}$/m)
+  })
+
+  it('shortens thought ids to ten characters and keeps reserved ids whole', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('setCursor', { path: ['00000000000000000000000000000001', '97e810f0c6ba2f31736f6dac650e0cfd'] })
+    expect(debugLog.format()).toMatch(/ #0 setCursor \{"path":\["00000000000000000000000000000001","97e810f0c6"\]\}$/m)
+  })
+
+  it('writes a date line before the first entry and wherever the date changes', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const now = vi.spyOn(Date, 'now')
+    now.mockReturnValue(Date.parse('2026-10-10T23:59:59.000Z'))
+    debugLog.log('a')
+    debugLog.log('b')
+    now.mockReturnValue(Date.parse('2026-10-11T00:00:01.000Z'))
+    debugLog.log('c')
+    now.mockRestore()
+    const lines = debugLog.format().split('\n').slice(6)
+    expect(lines[0]).toBe('--- date: 2026-10-10')
+    expect(lines[1]).toMatch(/^23:59:59\.000 \+\d+ms #0 a$/)
+    expect(lines[2]).toMatch(/^23:59:59\.000 \+\d+ms #1 b$/)
+    expect(lines[3]).toBe('--- date: 2026-10-11')
+    expect(lines[4]).toMatch(/^00:00:01\.000 \+\d+ms #2 c$/)
+  })
+
   it('renders a one-line-per-entry text block', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
@@ -178,6 +368,14 @@ describe('format', () => {
         },
         lexemeIndex: {},
       },
+      cursor: null,
+      cursorOffset: null,
+      isKeyboardOpen: false,
+      noteFocus: false,
+      expanded: {},
+      multicursors: {},
+      undoPatches: [],
+      redoPatches: [],
     } as unknown as State
     const text = debugLog.format(state)
     expect(text).toContain('state.thoughts: 2 thoughts, 0 lexemes')
@@ -185,6 +383,77 @@ describe('format', () => {
     expect(text).toContain('t2 "banana" rank:0 parent:root pending')
     // siblings are ordered by rank within a parent, so banana (rank 0) precedes apple (rank 1)
     expect(text.indexOf('banana')).toBeLessThan(text.indexOf('apple'))
+  })
+  it('renders the view the log ended on before the state.thoughts dump', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const state = {
+      thoughts: { thoughtIndex: {}, lexemeIndex: {} },
+      cursor: ['t1', 't2'],
+      cursorOffset: 3,
+      isKeyboardOpen: true,
+      noteFocus: false,
+      expanded: { a: ['t1'], b: ['t1', 't2'] },
+      multicursors: {},
+      undoPatches: [{}, {}, {}],
+      redoPatches: [{}],
+    } as unknown as State
+    const lines = debugLog.format(state).split('\n')
+    const view = lines.findIndex(line => line.startsWith('--- state: '))
+    expect(JSON.parse(lines[view].slice('--- state: '.length))).toEqual({
+      cursor: ['t1', 't2'],
+      cursorOffset: 3,
+      isKeyboardOpen: true,
+      noteFocus: false,
+      expanded: 2,
+      multicursors: 0,
+      undo: 3,
+      redo: 1,
+    })
+    expect(view).toBeLessThan(lines.findIndex(line => line.startsWith('--- state.thoughts:')))
+  })
+})
+
+describe('logError', () => {
+  it('records the name, message and stack of an Error', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const error = new TypeError('boom')
+    debugLog.logError('window', error, { filename: 'app.js' })
+    expect(debugLog.read()).toEqual([
+      expect.objectContaining({
+        type: 'error',
+        source: 'window',
+        name: 'TypeError',
+        message: 'boom',
+        stack: expect.stringContaining('TypeError: boom'),
+        filename: 'app.js',
+      }),
+    ])
+  })
+
+  it('records a thrown non-Error as its message', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.logError('unhandledrejection', 'plain string')
+    debugLog.logError('unhandledrejection', { code: 42 })
+    expect(debugLog.read().map(entry => entry.message)).toEqual(['plain string', '{"code":42}'])
+  })
+
+  it('still records an entry when the thrown value cannot be stringified', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const circular: Record<string, unknown> = {}
+    circular.self = circular
+    debugLog.logError('unhandledrejection', circular)
+    expect(debugLog.read()).toEqual([
+      expect.objectContaining({ type: 'error', source: 'unhandledrejection', message: '[unserializable]' }),
+    ])
+  })
+
+  it('is a no-op when logging is disabled', () => {
+    debugLog.logError('window', new Error('boom'))
+    expect(debugLog.read()).toEqual([])
   })
 })
 
@@ -227,7 +496,8 @@ describe('auto-enable', () => {
 
   it('does not auto-enable in the native Capacitor shell', async () => {
     vi.stubEnv('MODE', 'production')
-    vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true } }))
+    // getPlatform is part of the shell that src/browser.ts reads at module load, so the double implements it too
+    vi.doMock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => true, getPlatform: () => 'ios' } }))
     vi.resetModules()
     const fresh = (await import('../debugLog')).default
     expect(fresh.autoEnabled).toBe(false)
@@ -268,5 +538,106 @@ describe('auto-enable', () => {
     expect(localStorage.getItem('debugLogOptOut')).toBeNull()
     debugLog.setEnabled(true)
     expect(debugLog.isEnabled()).toBe(true)
+  })
+})
+
+describe('console mirror', () => {
+  beforeEach(() => {
+    debugLog.setConsole(false)
+  })
+
+  afterEach(() => {
+    debugLog.setConsole(false)
+  })
+
+  it('does not mirror to the console by default', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.log('test', { a: 1 })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('mirrors each entry once it is turned on', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('test', { a: 1 })
+    expect(info).toHaveBeenCalledTimes(2)
+    expect(info.mock.calls[0][0]).toMatch(/^debugLog --- date: \d{4}-\d{2}-\d{2}$/)
+    expect(info.mock.calls[1][0]).toMatch(/^debugLog \d{2}:\d{2}:\d{2}\.\d{3} \+\d+ms #\d+ test \{"a":1\}$/)
+  })
+
+  it('writes the date line again only when the date changes', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('a')
+    debugLog.log('b')
+    expect(info.mock.calls.filter(([line]) => (line as string).includes('--- date:'))).toHaveLength(1)
+  })
+
+  it('writes the date line again when the mirror is turned back on', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('a')
+    debugLog.setConsole(false)
+    debugLog.setConsole(true)
+    debugLog.log('b')
+    expect(info.mock.calls.filter(([line]) => (line as string).includes('--- date:'))).toHaveLength(2)
+  })
+
+  it('mirrors the same line that format() writes, so either source parses the same', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('test', { a: 1 })
+    const mirrored = (info.mock.calls.at(-1)![0] as string).replace(/^debugLog /, '')
+    expect(debugLog.format().split('\n')).toContain(mirrored)
+  })
+
+  it('stops mirroring when turned off', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.setConsole(false)
+    debugLog.log('test', { a: 1 })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('persists the choice so it survives a reload', async () => {
+    debugLog.setConsole(true)
+    expect(storage.getItem('debugLogConsole')).toBe('true')
+
+    vi.resetModules()
+    const fresh = (await import('../debugLog')).default
+    expect(fresh.isConsole()).toBe(true)
+
+    // stop the fresh instance's frame heartbeat so it cannot log into later tests
+    fresh.setEnabled(false)
+  })
+
+  it('survives clear(), which empties the log but must leave the preference alone', () => {
+    debugLog.setConsole(true)
+    debugLog.clear()
+    expect(debugLog.isConsole()).toBe(true)
+    expect(storage.getItem('debugLogConsole')).toBe('true')
+  })
+
+  it('does not mirror while logging is disabled', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setConsole(true)
+    debugLog.log('test', { a: 1 })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('a throwing console cannot cost an entry its place in the buffer', () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {
+      throw new Error('console is gone')
+    })
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    expect(() => debugLog.log('test', { a: 1 })).not.toThrow()
+    expect(debugLog.read().some(entry => entry.type === 'test')).toBe(true)
   })
 })
