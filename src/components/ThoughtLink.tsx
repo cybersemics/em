@@ -2,6 +2,7 @@ import React from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
+import { EMPTY_THOUGHT_PLACEHOLDER } from '../constants'
 import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -39,6 +40,7 @@ const ThoughtLink = ({
             variant='small'
             hideArchive={hideArchive}
             path={parentPath}
+            placeholder={EMPTY_THOUGHT_PLACEHOLDER}
             staticText={staticBreadcrumbs}
             charLimit={charLimit || 32}
             thoughtsLimit={thoughtsLimit || 10}
@@ -46,7 +48,12 @@ const ThoughtLink = ({
           />
         </div>
       )}
-      <Link cssRaw={css.raw({ fontWeight: 'inherit', color: 'fg' })} simplePath={simplePath} style={styleLink} />
+      <Link
+        cssRaw={css.raw({ fontWeight: 'inherit', color: 'fg' })}
+        simplePath={simplePath}
+        placeholder={EMPTY_THOUGHT_PLACEHOLDER}
+        style={styleLink}
+      />
       <Superscript simplePath={simplePath} />
     </div>
   )
