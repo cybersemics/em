@@ -93,9 +93,9 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
 
   // Record the inputs to the scroll decision, so a cursor scrolled to the wrong place can be checked against where the
   // cursor was and what bounded it. Every value is one this function already computed, except scrollHeight, which
-  // is free here: the toolbar and navbar rects above have just brought layout up to date, and nothing has written to
-  // the DOM since. It shows whether the browser will clamp the target at the bottom of the document. The scroll
-  // itself is recorded by the viewport scrollStart and scrollEnd entries that follow.
+  // is free here: window.scrollY and the navbar rect above, read on every path, have just brought layout up to date,
+  // and nothing has written to the DOM since. It shows whether the browser will clamp the target at the bottom of the
+  // document. The scroll itself is recorded by the viewport scrollStart and scrollEnd entries that follow.
   if (debugLog.isEnabled()) {
     debugLog.log('scroll', {
       source: 'cursor',
@@ -105,6 +105,10 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
       scrollY: Math.round(window.scrollY),
       yViewport: Math.round(yViewport),
       toolbarBottom: Math.round(toolbarBottom),
+      // which of the two viewport heights bounded the cursor: the iOS Capacitor keyboard branch or visualViewport
+      keyboardOpen,
+      visualViewportHeight: Math.round(visualViewportHeight),
+      effectiveViewportHeight: Math.round(effectiveViewportHeight),
       bottomBoundary: Math.round(bottomBoundary),
       scrollHeight: document.documentElement.scrollHeight,
       direction: isAboveViewport ? 'up' : 'down',

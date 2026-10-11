@@ -288,6 +288,8 @@ const testEnvironmentPrefersTheFormatHeader = async () => {
     '--- userAgent: Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148',
     '--- version: 349.1.0',
     '--- commit: abc1234',
+    '--- display: standalone, portrait-primary, dpr 3, scale 1, safe-area-bottom 34',
+    '--- evicted: 3 earlier entries',
   ]
 
   // a long log whose session entry has been evicted, leaving only the header
@@ -295,6 +297,7 @@ const testEnvironmentPrefersTheFormatHeader = async () => {
   assert.equal(evicted.entries.filter(e => e.type === 'session').length, 0, 'fixture still has a session entry')
   assert.equal(evicted.session?.version, '349.1.0')
   assert.equal(evicted.session?.device, 'iPhone (ios), 390x844, touch')
+  assert.equal(evicted.session?.display, 'standalone, portrait-primary, dpr 3, scale 1, safe-area-bottom 34')
   assert.equal(evicted.skipped, 0, 'the header was counted as unrecognized')
 
   // the session fields the header restates are dropped, so each fact is reported once rather than twice
