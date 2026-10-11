@@ -43,6 +43,17 @@ A round is not a quota. Two real questions and a third found by casting about is
 
 The rounds are cheap next to what they prevent — a question the reporter would have answered in a second breath, left instead as a guess in the issue or as a decision the assignee makes alone.
 
+### Design questions
+
+A feature whose design is still being decided is asked about one question at a time, and every decision is taken with the ask tool. The ask tool renders only short single-line text, though, and a design choice is only judged by seeing what it produces. When a question or its options depend on content the tool cannot render, such as steps, an outline or a table, render that content first in a separate reply, labelling the options with letters. Then ask for the decision with the ask tool, with options that refer back to those letters.
+
+- Open with the question as one plain sentence.
+- Give a starting tree in em's outline format, and numbered steps in the order a user would actually arrive at it. A tree a user could only reach by turning on a view and then typing should be built that way in the steps, not written out first.
+- Show each option's result: the resulting tree in outline format when the question is about structure, and a rendered Markdown table (not ASCII) when it is about layout. Keep the two separate, since the tree is the data and the table only its rendering.
+- When an option refers back to a step, name the step as well as its number: "After step 4, Insert Header Row, ...". The reader should not have to scroll back to learn what step 4 was.
+
+The answers to these questions are revised often, including ones given several rounds earlier. Do not post or rewrite the issue until the reporter says the design is settled, and treat a declined or interrupted question as a question still open, not as the end of the design.
+
 ## The template
 
 Exactly these headings, at `##`, in this order:
@@ -63,7 +74,7 @@ Exactly these headings, at `##`, in this order:
 
 ### Steps to Reproduce
 
-Numbered, imperative, one action per line, starting from a fresh app. Name settings by their exact label in the UI and give the exact value — "Increase the app font size to 32", not "make the font bigger". A step that leaves the reader a choice will be followed differently than it was meant.
+Numbered, imperative, one action per line. Name settings by their exact label in the UI and give the exact value — "Increase the app font size to 32", not "make the font bigger". A step that leaves the reader a choice will be followed differently than it was meant.
 
 [#2968](https://github.com/cybersemics/em/issues/2968) was closed unreproduced because its only step was "when width and height are increased", which could have meant the app font size, the window dimensions, or the icon's own dimensions.
 
@@ -84,6 +95,8 @@ Where the bug depends on a particular thought tree, give it as a fenced code blo
 The tree is the starting state, so it already says to create it. Do not add a step for that — "Create the thoughts above: `a`, `b`, and a `=note` on `a`" is the code block read back as prose, and the reader has to compare the two to find out they match. Number the steps from the first action taken on the tree.
 
 The same holds for anything the outline itself shows: which thoughts are children of which, that the last one is empty, that a thought carries a `=note`. A step is for what the outline cannot show — a caret position, a setting, a device width, a collapsed thought.
+
+Every reproduction starts from a fresh app with no saved data, so that goes unsaid. "Open **em** with no saved data" is not a step. Number the steps from the first action taken in the app. Name a starting state only when it departs from a fresh app, such as a returning user or a setting already changed.
 
 Write a keyboard shortcut as `<kbd>` elements, one per key, with no separator between them: `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>`, not `(Shift + Alt + S)`. GitHub renders them as keys, which is what the reader is looking for while scanning the steps. Name the command alongside it — "Move Thought Down (<kbd>Cmd</kbd><kbd>Shift</kbd><kbd>ArrowDown</kbd>)".
 
@@ -138,6 +151,22 @@ Gesture diagram arrows should stay centered at every app font size, wherever a d
 ```
 
 The first is checkable by following the steps; the second is what keeps the fix from being a special case at 32.
+
+Where **In general** runs to a list of requirements, group them the way the requirement does. Bullets that are cases of one requirement, or conditions under which it applies, nest under a bullet that names that requirement, rather than sitting beside it in one flat list. A flat list hides which rules belong together, and the reader has to rebuild the structure the writer already saw. [#5886](https://github.com/cybersemics/em/issues/5886) nests everything that adds a command to the learned set under **Added**, and everything that removes one under **Removed**, both under **Learned set**:
+
+```markdown
+- **Learned set.**
+  - **Added.** A command should be added to the learned set when the user:
+    - Completes its full gesture with the Gesture Menu open.
+    - Completes its full gesture blindly, without the Gesture Menu open.
+    - Pins it as the Pinned Command.
+  - **Removed.** A command should leave the learned set only when the user:
+    - Resets it from that command's detail page in the Command Universe.
+    - Unpins it as the Pinned Command without having made any practice progress on it.
+- **Show all gestures.** A setting should show every command in the Gesture Menu regardless of the learned set.
+```
+
+Before posting, read each top-level bullet and ask whether it is a case of another one. A bullet about the same subject as its neighbour (the Pinned Command beside the learned set it adds to) usually is.
 
 Skip the split where it does not earn its place — where the case *is* the rule and the second heading would restate the first in the abstract, or where the correct behaviour is a single fixed state (a value, a label, a position) with no input to generalise over. One paragraph under the plain heading is right for those.
 
@@ -234,7 +263,9 @@ Verify it landed, since a body reference and a relationship look alike once rend
 gh issue view 5226 --repo cybersemics/em --json blockedBy
 ```
 
-Prefer `gh` to the REST endpoint, `POST /repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by`, which takes `issue_id` — the blocker's numeric database id, from `gh api repos/cybersemics/em/issues/5228 --jq .id` — rather than its issue number.
+Where `gh` cannot reach GitHub's GraphQL API, as in Claude Code cloud sessions, `gh issue create` and `gh issue edit` fail with HTTP 403. Create the issue with `gh api repos/cybersemics/em/issues -f title=... -f 'labels[]=feature' -F body=@body.md`, and set relationships through the REST endpoints below.
+
+Otherwise prefer `gh` to the REST endpoint, `POST /repos/{owner}/{repo}/issues/{number}/dependencies/blocked_by`, which takes `issue_id` — the blocker's numeric database id, from `gh api repos/cybersemics/em/issues/5228 --jq .id` — rather than its issue number.
 
 Keep a `## Notes` bullet beside the relationship where the reason is not obvious from the two titles. The relationship carries the fact; only the note carries the why. [#5226](https://github.com/cybersemics/em/issues/5226):
 
@@ -307,12 +338,14 @@ New issues often originate in a comment thread on another issue or PR.
 - Prose instead of numbered steps.
 - A step containing a decision — "increase the width and height", "make the thought long enough", "set up a table view".
 - A step telling the reader to create the thoughts the outline above already gives.
+- A first step telling the reader to open a fresh app, which every reproduction already assumes.
 - A gesture written as letters — `ldr` where `←↓→` is what the reader swipes.
 - A keyboard shortcut written as plain text — `(Shift + Alt + S)` where `<kbd>Shift</kbd><kbd>Alt</kbd><kbd>S</kbd>` is what renders as keys.
 - A Current Behavior carrying a qualifier about the reproduction — "No drag is needed" — where the condition belongs in the steps.
 - Current and Expected merged into one sentence, leaving nothing to assert.
 - A theory about the cause in place of the symptom.
 - An Expected Behavior that specifies the fix rather than naming the goal.
+- Requirements in one flat list, where several bullets are cases or conditions of the same requirement and belong nested under it.
 - An Expected Behavior stated only as a rule, leaving the reader to work out what the steps above should have produced — or only as the one case, leaving the assignee to guess how far it generalises.
 - A paragraph of preamble establishing what you did and did not reproduce, where a clause would do.
 - A screenshot with no steps.
@@ -332,4 +365,4 @@ Ask, as above. State whatever survives the answers in the preamble rather than o
 
 Do not guess Expected Behavior, since a guess there becomes a regression test asserting behaviour nobody chose.
 
-- Use the ask tool now to inquire about ambiguous or undecided details. Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.
+- Use the ask tool now to inquire about ambiguous or undecided details. For design questions, render what the ask tool cannot first, as in [Design questions](#design-questions). Never mark a new issue with the `design-needed` label. If more design is needed, or an answer leaves something newly undecided, break it down and ask another round with the ask tool, as many rounds as it takes to close the last question.
