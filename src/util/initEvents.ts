@@ -432,7 +432,7 @@ const initEvents = (store: Store<State, any>) => {
       visualViewportHeight: visualViewport ? Math.round(visualViewport.height) : null,
       visualViewportOffsetTop: visualViewport ? Math.round(visualViewport.offsetTop) : null,
       scrollY: Math.round(window.scrollY),
-      // Bottom edge of the background glow, in the same layout-viewport coordinates as visualViewportOffsetTop, so it can be compared against the bottom of the visible area (visualViewportOffsetTop + visualViewportHeight). Null when no glow is selected.
+      // Bottom edge of the background glow. iOS Safari measures it from the top of the visual viewport, so a correctly fixed glow has glowBottom + visualViewportOffsetTop === clientHeight, and it is flush with the bottom of the screen when glowBottom === visualViewportHeight. Null when no glow is selected.
       glowBottom: glow ? Math.round(glow.getBoundingClientRect().bottom) : null,
       isKeyboardOpen: store.getState().isKeyboardOpen,
     }
