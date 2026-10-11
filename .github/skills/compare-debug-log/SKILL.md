@@ -108,7 +108,7 @@ When the head of the report is noise, narrow the window and look again rather th
 | `--tail <n>` | Compare only the last n entries. The fastest way to focus on the moment of failure. |
 | `--anchor <type>` | Start at the last entry of a type. Defaults to `session`, so a reporter's log covering several app launches is compared from the last one. |
 | `--no-anchor` | Compare from the top, when the bug predates the last launch in their log. |
-| `--ignore <types>` | Drop noisy entry types, e.g. `--ignore frameGap,selectionchange,lifecycle`. |
+| `--ignore <types>` | Drop noisy entry types, e.g. `--ignore frameGap,selectionchange,lifecycle`. `scroll` and `viewport` entries carry device geometry, so they differ between any two devices; add them when the bug is not about scrolling. |
 | `--include frameGap` | Keep the frame-gap entries that are dropped by default — they are the signal for a freeze or jank report. |
 | `--mask <fields>` | Mask another field that differs by construction between devices. |
 | `--context`, `--max-lines` | Widen or tighten how much of the alignment is printed. |
