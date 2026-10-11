@@ -1,8 +1,8 @@
 import { act, createElement } from 'react'
 import { alertActionCreator as alert } from '../../actions/alert'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import Link from '../../components/Link'
 import MoveThoughtAlert from '../../components/MoveThoughtAlert'
+import { HOME_PATH } from '../../constants'
 import store from '../../stores/app'
 import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
@@ -58,7 +58,7 @@ it('does not strip angle-bracket thought values from move alerts', async () => {
 
   const toPath = contextToPathOrThrow(store.getState(), ['bbb'], 'NavBar test')
 
-  await dispatch([alert(() => createElement(MoveThoughtAlert, { from: '<aaa>', toPath }))])
+  await dispatch([alert(() => createElement(MoveThoughtAlert, { from: '&lt;aaa&gt;', toPath }))])
 
   const alertContent = document.querySelector('[data-testid="alert-content"]')!
   expect(alertContent.textContent).toContain('"<aaa>" moved to "bbb".')
@@ -72,7 +72,7 @@ it('preserves explicit closing tags in ContextBreadcrumbs', async () => {
             - child
       `,
     }),
-    editThought(['parent'], '<foo></foo>'),
+    editThought(['parent'], '&lt;foo&gt;&lt;/foo&gt;'),
   ])
 
   await act(vi.runOnlyPendingTimersAsync)
@@ -146,30 +146,17 @@ it('preserves quotes and equals signs in move alert destination label', async ()
   expect(alertContent.textContent).toContain('"baz" moved to "foo bar=""".')
 })
 
-it('strips formatting tags from link labels passed as props', async () => {
-  await dispatch([
-    importText({
-      text: `
-          - formatted
-      `,
-    }),
-  ])
-
-  await act(vi.runOnlyPendingTimersAsync)
-
-  const simplePath = contextToPathOrThrow(store.getState(), ['formatted'], 'NavBar test')
-
-  await dispatch([alert(() => createElement(Link, { simplePath, label: '<b>formatted</b>' }))])
-
-  const alertContent = document.querySelector('[data-testid="alert-content"]')!
-  expect(alertContent.textContent).toContain('formatted')
-  expect(alertContent.textContent).not.toContain('<b>')
-})
-
 // https://github.com/cybersemics/em/pull/4121#pullrequestreview-5057343884
 it('shows home when a thought is moved to the home level', async () => {
-  await dispatch([alert(() => createElement(MoveThoughtAlert, { from: 'ccc', toPath: [] }))])
+  await dispatch([alert(() => createElement(MoveThoughtAlert, { from: 'ccc', toPath: HOME_PATH }))])
 
   const alertContent = document.querySelector('[data-testid="alert-content"]')!
   expect(alertContent.textContent).toContain('"ccc" moved to home.')
+})
+
+it('does not strip angle-bracket text from string alerts', async () => {
+  await dispatch([alert('"<aaa>" deleted.')])
+
+  const alertContent = document.querySelector('[data-testid="alert-content"]')!
+  expect(alertContent.textContent).toContain('"<aaa>" deleted.')
 })

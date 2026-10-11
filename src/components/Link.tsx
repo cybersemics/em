@@ -1,4 +1,3 @@
-import { escape as escapeHtml } from 'html-escaper'
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css, cx } from '../../styled-system/css'
@@ -14,7 +13,6 @@ import getThoughtById from '../selectors/getThoughtById'
 import ellipsize from '../util/ellipsize'
 import fastClick from '../util/fastClick'
 import head from '../util/head'
-import toVisibleText from '../util/toVisibleText'
 
 interface LinkProps {
   charLimit?: number
@@ -28,7 +26,7 @@ interface LinkProps {
 /** Renders a link to a thought. */
 const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, className }: LinkProps) => {
   const isEM = simplePath.length === 1 && head(simplePath) === EM_TOKEN
-  const value = useSelector(state => toVisibleText(label ?? (getThoughtById(state, head(simplePath))?.value || '')))
+  const text = useSelector(state => label ?? ellipsize(getThoughtById(state, head(simplePath))?.value, charLimit))
   const dispatch = useDispatch()
 
   return (
@@ -68,7 +66,7 @@ const Link = React.memo(({ simplePath, label, charLimit = 32, style, cssRaw, cla
       }}
       dangerouslySetInnerHTML={isEM ? { __html: '<b>em</b>' } : undefined}
     >
-      {!isEM ? ellipsize(escapeHtml(value), charLimit) : null}
+      {!isEM ? text : null}
     </a>
   )
 })

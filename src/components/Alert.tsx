@@ -12,7 +12,6 @@ import { AlertType } from '../constants'
 import alertStore from '../stores/alertStore'
 import syncStatusStore from '../stores/syncStatusStore'
 import fastClick from '../util/fastClick'
-import toVisibleText from '../util/toVisibleText'
 import Notification from './Notification'
 import RedoIcon from './RedoIcon'
 import UndoIcon from './UndoIcon'
@@ -51,7 +50,7 @@ const Alert: FC = () => {
   const alert = useSelector(state => state.alert)
   const alertStoreValue = alertStore.useState()
   const alertValue = alertStoreValue ?? alert?.value ?? null
-  const valueText = typeof alertValue === 'string' ? toVisibleText(alertValue) : null
+  const valueText = typeof alertValue === 'string' ? alertValue : null
   const AlertValue = typeof alertValue === 'function' ? alertValue : null
   const value = valueText ?? (AlertValue ? <AlertValue /> : null)
   const transitionKey =

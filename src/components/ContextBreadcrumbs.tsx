@@ -1,4 +1,3 @@
-import { escape as escapeHtml } from 'html-escaper'
 import { isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
@@ -74,8 +73,7 @@ const useEllipsizedThoughts = (
       // add ellipsized label
       ...(!disabled && value != null
         ? {
-            // subtract 2 so that additional '...' is still within the char limit
-            label: value.length > charLimit! - 2 ? value.slice(0, charLimit! - 2) + '...' : value,
+            label: ellipsize(thoughtValuesLive[i]!, charLimit),
           }
         : {}),
     }
@@ -108,7 +106,7 @@ const BreadCrumb = React.memo(
     }
   >(({ isOverflow, label, isDeleting, path, showDivider, onClickEllipsis, staticText, linkCssRaw }, ref) => {
     const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
-    const value = useSelector(state => toVisibleText(getThoughtById(state, head(simplePath))?.value || ''))
+    const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
     const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
     const delimiterStyle: React.CSSProperties = {
       fontSize: '0.8em',
@@ -123,7 +121,7 @@ const BreadCrumb = React.memo(
         {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
         {!isDeleting &&
           (staticText ? (
-            ellipsize(escapeHtml(value || ''))
+            ellipsize(value)
           ) : label === HOME_TOKEN ? (
             <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
           ) : (

@@ -770,7 +770,7 @@ const Editable = ({
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
-          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is read-only and cannot be edited.` }))
+          dispatch(error({ value: `"${oldValueClean}" is read-only and cannot be edited.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (uneditable) {
@@ -781,7 +781,7 @@ const Editable = ({
             newValue,
             cursorOffset: cursorOffsetWithEmojiSpace,
           })
-          dispatch(error({ value: `"${ellipsize(oldValueClean)}" is uneditable.` }))
+          dispatch(error({ value: `"${oldValueClean}" is uneditable.` }))
           throttledChangeRef.current.cancel() // see above
           return
         } else if (options && !options.includes(newValue.toLowerCase())) {
