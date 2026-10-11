@@ -2,28 +2,52 @@
 // commit-msg only when one of the HARNESSES session variables is set.
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { closeSync, existsSync, fstatSync, openSync, readFileSync, readSync, readdirSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
 const ANY_TRAILER = /^[A-Za-z0-9-]+:\s+\S/
 
-/** Parses each line of a JSONL file, skipping lines that are not valid JSON. Returns an empty list if the file cannot be read. */
-const readJsonLines = path => {
+/** Visits the records of a JSONL file from the last one back, in 256 KB chunks, and returns the first result visit gives that is not undefined. Stops reading as soon as it has one. */
+const findFromEnd = (path, visit) => {
+  let fd
   try {
-    return readFileSync(path, 'utf8')
-      .split('\n')
-      .flatMap(line => {
+    fd = openSync(path, 'r')
+    let pos = fstatSync(fd).size
+    let carry = Buffer.alloc(0)
+    while (pos > 0) {
+      const size = Math.min(1 << 18, pos)
+      pos -= size
+      const chunk = Buffer.alloc(size)
+      readSync(fd, chunk, 0, size, pos)
+      const buf = Buffer.concat([chunk, carry])
+      // The bytes before the first newline may be a partial line, so they wait for the next chunk.
+      const newline = buf.indexOf(10)
+      if (pos > 0 && newline < 0) {
+        carry = buf
+        continue
+      }
+      const start = pos > 0 ? newline + 1 : 0
+      carry = buf.subarray(0, start)
+      const lines = buf.subarray(start).toString('utf8').split('\n')
+      for (let i = lines.length - 1; i >= 0; i--) {
+        let record
         try {
-          return [JSON.parse(line)]
+          record = JSON.parse(lines[i])
         } catch {
-          return []
+          continue
         }
-      })
+        const result = visit(record)
+        if (result !== undefined) return result
+      }
+    }
   } catch {
-    return []
+    // An unreadable record leaves the fields unknown.
+  } finally {
+    if (fd !== undefined) closeSync(fd)
   }
+  return undefined
 }
 
 /** Reads the latest model and effort recorded for a Codex session. */
@@ -33,9 +57,7 @@ const codexModelAndEffort = sessionId => {
     ? readdirSync(sessions, { recursive: true }).find(file => file.endsWith(`${sessionId}.jsonl`))
     : undefined
   const context = sessionFile
-    ? readJsonLines(join(sessions, sessionFile))
-        .filter(event => event.type === 'turn_context')
-        .at(-1)?.payload
+    ? findFromEnd(join(sessions, sessionFile), event => (event.type === 'turn_context' ? event.payload : undefined))
     : undefined
   return { model: context?.model, effort: context?.effort }
 }
@@ -48,13 +70,15 @@ const claudeModelAndEffort = sessionId => {
         .map(project => join(projects, project, `${sessionId}.jsonl`))
         .find(existsSync)
     : undefined
-  const messages = transcript
-    ? readJsonLines(transcript).filter(event => event.type === 'assistant' && !event.isSidechain)
-    : []
-  return {
-    model: messages.findLast(event => event.message?.model)?.message.model,
-    effort: messages.findLast(event => event.effort)?.effort,
-  }
+  const found = {}
+  if (transcript)
+    findFromEnd(transcript, event => {
+      if (event.type !== 'assistant' || event.isSidechain) return undefined
+      found.model ??= event.message?.model
+      found.effort ??= event.effort
+      return found.model && found.effort ? found : undefined
+    })
+  return found
 }
 
 /** Reads the model of the latest assistant message in an OpenCode session, and the effort variant the latest user message asked for or else the session's. */
@@ -150,9 +174,14 @@ const HARNESSES = [
 
 /** Returns true while Git is replaying a prior commit, whose existing authorship must be preserved. */
 const replayingCommit = () =>
-  ['CHERRY_PICK_HEAD', 'REBASE_HEAD', 'REVERT_HEAD', 'MERGE_HEAD'].some(marker =>
-    existsSync(execFileSync('git', ['rev-parse', '--git-path', marker], { encoding: 'utf8' }).trim()),
+  execFileSync(
+    'git',
+    ['rev-parse', ...['CHERRY_PICK_HEAD', 'REBASE_HEAD', 'REVERT_HEAD', 'MERGE_HEAD'].flatMap(m => ['--git-path', m])],
+    { encoding: 'utf8' },
   )
+    .trim()
+    .split('\n')
+    .some(existsSync)
 
 /** Normalizes the agent co-author trailer in Git's proposed message. */
 const main = () => {
