@@ -7,10 +7,10 @@
  * *same* interaction share almost no bytes.
  *
  * ```
- * #16 action {"actionType":"newThought","payload":"{\"at\":null,\"value\":\"\"}"}
- * #20 action {"actionType":"editThought","payload":"{...\"path\":[\"97e810f0…\"]…}"}
- * #56 action {"actionType":"newThought","payload":"{\"at\":null,\"value\":\"\"}"}
- * #60 action {"actionType":"editThought","payload":"{...\"path\":[\"94701f3d…\"]…}"}
+ * #16 action newThought {"at":null,"value":""}
+ * #20 action editThought {..."path":["97e810f0c6"]...}
+ * #56 action newThought {"at":null,"value":""}
+ * #60 action editThought {..."path":["94701f3dbf"]...}
  * ```
  *
  * Those two blocks are the same four keystrokes. So each entry is reduced to a **signature** — its type plus
@@ -20,7 +20,6 @@
  * See docs/debug-log.md.
  */
 import { readFileSync } from 'node:fs'
-import debugLogCompact from '../src/util/debugLogCompact'
 
 /** One parsed entry of a debug log. */
 interface Entry {
@@ -34,7 +33,7 @@ interface Entry {
   type: string
   /** The actionType of an `action` entry, which format() writes after the type, or null for any other entry. */
   label: string | null
-  /** The event-specific fields as compact JSON text — in the form format() writes, whichever format the log was exported in (see normalize) — or an empty string. */
+  /** The event-specific fields, as the raw JSON text that followed the type, or an empty string. */
   fields: string
   /** The line exactly as it appeared, for display. */
   line: string
@@ -104,14 +103,11 @@ interface CompareOptions {
 const ENTRY_REGEX =
   /^.*?(\d{2}:\d{2}:\d{2}\.\d{3})\s+\+(-?\d+)ms\s+#(\d+)\s+(\S+)(?:\s+([^\s{]\S*))?(?:\s+(\{.*\}))?\s*$/
 
-/** Matches one entry of a log exported before the format was compacted: `[<ISO timestamp>] +<dt>ms #<seq> <type> <fields JSON>`, with an action's actionType and stringified payload inside the fields. Reporters' logs already attached to issues are in this form. */
-const LEGACY_ENTRY_REGEX = /^.*?\[(\d{4}-\d{2}-\d{2}T[^\]]*)\]\s+\+(-?\d+)ms\s+#(\d+)\s+(\S+)(?:\s+(\{.*\}))?\s*$/
-
 /** Matches the `--- date: YYYY-MM-DD` line format() writes before the first entry and wherever the date changes, with the same leniency as ENTRY_REGEX. */
 const DATE_REGEX = /^.*?--- date: (\d{4}-\d{2}-\d{2})\s*$/
 
-/** Matches a thought id: a full one, 32 lowercase hex characters (see src/util/createId.ts), which only reserved ids still are once normalized; or one shortened on export to its first debugLogCompact.SHORT_ID_LENGTH. */
-const ID_REGEX = new RegExp(`\\b(?:[0-9a-f]{32}|[0-9a-f]{${debugLogCompact.SHORT_ID_LENGTH}})\\b`, 'g')
+/** Matches a thought id as format() writes it: cut to its first 10 hex characters (SHORT_ID_LENGTH in src/util/debugLog.ts), or whole, 32 characters, for a reserved id. */
+const ID_REGEX = /\b(?:[0-9a-f]{32}|[0-9a-f]{10})\b/g
 
 /**
  * Matches a reserved thought id — GLOBAL_ROOT_TOKEN, HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN, SETTINGS_TOKEN,
@@ -133,24 +129,7 @@ const MAX_ALIGN_CELLS = 4_000_000
 /** Longest entry line rendered in a report, so that one enormous updateThoughts payload cannot crowd out the rest. */
 const LINE_MAX_LENGTH = 240
 
-/**
- * Brings an entry's fields into the form format() writes now, so that a reporter's log exported before the format was
- * compacted compares equal to a fresh capture of the same steps: the same compaction is applied (debugLogCompact,
- * which leaves already compacted fields as they are) and thought ids are shortened. Fields that are not valid JSON
- * are kept as they are.
- */
-const normalize = (type: string, label: string | null, fields: string): { label: string | null; fields: string } => {
-  if (!fields) return { label, fields }
-  try {
-    const compacted = debugLogCompact.compactFields(type, JSON.parse(fields) as Record<string, unknown>)
-    const json = Object.keys(compacted.fields).length > 0 ? JSON.stringify(compacted.fields) : ''
-    return { label: label ?? compacted.label, fields: debugLogCompact.shortenIds(json) }
-  } catch {
-    return { label, fields: debugLogCompact.shortenIds(fields) }
-  }
-}
-
-/** Parses the text of a debug log — as written by debugLog.format(), or read off the console mirror, in the current format or the one before it was compacted — into entries, ignoring any line that is not one. */
+/** Parses the text of a debug log — as written by debugLog.format(), or read off the console mirror — into entries, ignoring any line that is not one. */
 const parse = (text: string, name: string): Log => {
   const lines = text.split('\n')
 
@@ -162,17 +141,15 @@ const parse = (text: string, name: string): Log => {
       const dateMatch = line.match(DATE_REGEX)
       if (dateMatch) return { ...acc, date: dateMatch[1] }
       const match = line.match(ENTRY_REGEX)
-      const legacy = match ? null : line.match(LEGACY_ENTRY_REGEX)
-      if (!match && !legacy) return acc
-      const [, time, dt, seq, type, label, fields] = match ?? [...legacy!.slice(0, 5), undefined, legacy![5]]
-      const normalized = normalize(type, label ?? null, fields ?? '')
+      if (!match) return acc
+      const [, time, dt, seq, type, label, fields] = match
       acc.entries.push({
         seq: Number(seq),
-        t: match ? Date.parse(`${acc.date}T${time}Z`) : Date.parse(time),
+        t: Date.parse(`${acc.date}T${time}Z`),
         dt: Number(dt),
         type,
-        label: normalized.label,
-        fields: normalized.fields,
+        label: label ?? null,
+        fields: fields ?? '',
         line,
       })
       return acc
@@ -186,8 +163,8 @@ const parse = (text: string, name: string): Log => {
   //
   // format() renders it as a `--- key: value` header, which is preferred because it is written at format time.
   // The session entry says the same thing but is an ordinary entry, so the rolling buffer evicts it once
-  // capacity is exceeded — in exactly the long sessions whose logs are most worth comparing. Older logs
-  // predate the header and carry only the entry, so both are read.
+  // capacity is exceeded — in exactly the long sessions whose logs are most worth comparing. An excerpt
+  // read off the console mirror carries no header, only the entry, so both are read.
   //
   // The entry is parsed defensively. The input is a file downloaded from an issue attachment, so a damaged one
   // must cost the environment header rather than the whole comparison.
@@ -228,12 +205,7 @@ const parse = (text: string, name: string): Log => {
     name,
     entries,
     skipped: beforeDump.filter(
-      line =>
-        line.trim() &&
-        !line.startsWith('--- ') &&
-        !DATE_REGEX.test(line) &&
-        !ENTRY_REGEX.test(line) &&
-        !LEGACY_ENTRY_REGEX.test(line),
+      line => line.trim() && !line.startsWith('--- ') && !DATE_REGEX.test(line) && !ENTRY_REGEX.test(line),
     ).length,
     session,
     stateDump: lines[dumpIndex]?.replace('--- ', '') ?? null,
@@ -255,9 +227,9 @@ const signature = (entry: Entry, ids: Map<string, string>, mask: string[]): stri
   // comparison; they are reported side by side in the header instead.
   if (entry.type === 'session') return 'session'
 
-  // Two patterns per field, because an action's payload is stringified before it is logged, so the same field
-  // appears both plainly (`"clientId":"…"`) and escaped one level deep (`\"clientId\":\"…\"`). Masking only
-  // the plain form leaves every initThoughts entry reading as a divergence on a nonce.
+  // Two patterns per field. format() parses an action's payload into the fields, so a field normally appears
+  // plainly (`"clientId":"…"`); but a payload the field cap cut no longer parses and stays a string, where the
+  // same field appears escaped one level deep (`\"clientId\":\"…\"`).
   const masked = [...VOLATILE_FIELDS, ...mask].reduce(
     (text, field) =>
       text

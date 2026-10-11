@@ -5,7 +5,6 @@ import State from '../@types/State'
 import { isTouch } from '../browser'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import { registerReset } from '../stores/ministore'
-import debugLogCompact from './debugLogCompact'
 import storage from './storage'
 
 /** The localStorage key prefix under which the rolling debug log is persisted. Entries are sharded across numbered chunk keys (`debugLog-0` … `debugLog-9`) so that appending an entry only rewrites the active chunk instead of the whole buffer. */
@@ -168,20 +167,80 @@ const persist = (): void => {
   }
 }
 
+/** Number of leading characters a thought id is cut to in format()'s output. At 10 hex characters, two of the ~2000 distinct ids a full buffer carries share a prefix with a probability of about one in a million. */
+const SHORT_ID_LENGTH = 10
+
+/** Matches a full thought id: 32 lowercase hex characters (see src/util/createId.ts). */
+const ID_REGEX = /\b[0-9a-f]{32}\b/g
+
+/** Matches a reserved thought id — HOME_TOKEN, EM_TOKEN and the rest (src/constants.ts), all of which carry at least 24 leading zeros. These are kept whole: they are short in tokens and mean the same thing on every device. */
+const RESERVED_ID_REGEX = /^0{24}/
+
+/** Shortens every non-reserved thought id in the text to its first SHORT_ID_LENGTH characters. */
+const shortenIds = (text: string): string =>
+  text.replace(ID_REGEX, id => (RESERVED_ID_REGEX.test(id) ? id : id.slice(0, SHORT_ID_LENGTH)))
+
+/** Drops the fields that carry nothing an agent needs, recursively: `isComposing: false`, the default; `value` when it only repeats a reserved id; and the `label` and `source` of commandMetadata, which repeat its commandId. */
+const prune = (value: unknown): unknown => {
+  if (Array.isArray(value)) return value.map(prune)
+  if (!value || typeof value !== 'object') return value
+  const obj = value as Record<string, unknown>
+  return Object.fromEntries(
+    Object.entries(obj)
+      .filter(
+        ([key, child]) =>
+          !(key === 'isComposing' && child === false) &&
+          !(key === 'value' && child === obj.id && typeof child === 'string' && RESERVED_ID_REGEX.test(child)),
+      )
+      .map(([key, child]) => {
+        if (key !== 'commandMetadata' || !child || typeof child !== 'object') return [key, prune(child)]
+        const { label: _label, source: _source, ...rest } = child as Record<string, unknown>
+        return [key, prune(rest)]
+      }),
+  )
+}
+
+/**
+ * Compacts the fields of one entry. An `action` entry's actionType is returned as a label for the envelope, and its
+ * payload — stringified when it was logged, so that the field cap bounds it in storage — is parsed back and spread
+ * into the fields, which removes a level of escaping from every key. A payload that does not parse (one cut by the
+ * field cap) or is not an object stays a `payload` string.
+ */
+const compactFields = (type: string, fields: Record<string, unknown>): { label: string | null; fields: object } => {
+  if (type !== 'action' || typeof fields.actionType !== 'string')
+    return { label: null, fields: prune(fields) as object }
+  const { actionType, payload, ...rest } = fields
+  const parsed = ((): unknown => {
+    if (typeof payload !== 'string') return undefined
+    try {
+      return JSON.parse(payload)
+    } catch {
+      return undefined
+    }
+  })()
+  const spread =
+    parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : payload !== undefined
+        ? { payload }
+        : {}
+  return { label: actionType, fields: prune({ ...rest, ...spread }) as object }
+}
+
 /** Returns the UTC date of a timestamp as YYYY-MM-DD, which format() and the console mirror write as a `--- date` line whenever it changes, so that each entry carries only the time of day. */
 const utcDate = (t: number): string => new Date(t).toISOString().slice(0, 10)
 
 /**
  * Renders one entry as a single line: the UTC time of day, `dt`, `seq` and `type` envelope — followed, for an `action`,
- * by its actionType — and then the event-specific fields as JSON, compacted and with thought ids shortened (see
- * debugLogCompact). Shared by format() and the console mirror so that a log read off the console parses identically to
+ * by its actionType — and then the event-specific fields as JSON, compacted (see compactFields) and with thought ids
+ * shortened. Shared by format() and the console mirror so that a log read off the console parses identically to
  * one dumped from the buffer. The log is read only by agents, so the line is shaped for tokens rather than for a person.
  */
 const formatEntry = ({ seq, t, dt, type, ...fields }: DebugLogEntry): string => {
-  const compacted = debugLogCompact.compactFields(type, fields)
+  const compacted = compactFields(type, fields)
   const fieldStr = Object.keys(compacted.fields).length > 0 ? ` ${JSON.stringify(compacted.fields)}` : ''
   const line = `${new Date(t).toISOString().slice(11, 23)} +${dt}ms #${seq} ${type}${compacted.label ? ` ${compacted.label}` : ''}${fieldStr}`
-  return debugLogCompact.shortenIds(line)
+  return shortenIds(line)
 }
 
 /** Appends an entry to the rolling buffer and persists its chunk synchronously. No-op when logging is disabled. Never throws, so instrumentation can never worsen a freeze or break editing. */
@@ -265,7 +324,7 @@ const formatThought = (thought: {
 }): string => {
   const value =
     thought.value.length > DUMP_VALUE_MAX_LENGTH ? `${thought.value.slice(0, DUMP_VALUE_MAX_LENGTH)}…` : thought.value
-  return debugLogCompact.shortenIds(
+  return shortenIds(
     `${thought.id} ${JSON.stringify(value)} rank:${thought.rank} parent:${thought.parentId}${thought.pending ? ' pending' : ''}`,
   )
 }
@@ -334,7 +393,7 @@ const format = (state?: State): string => {
   // The view the log ended on, which the entries can only reconstruct from setCursor and similar actions — the first
   // to be evicted in a long session. Thought ids resolve against the state.thoughts dump that follows.
   const view = state
-    ? `\n--- state: ${debugLogCompact.shortenIds(
+    ? `\n--- state: ${shortenIds(
         JSON.stringify({
           cursor: state.cursor,
           cursorOffset: state.cursorOffset,
