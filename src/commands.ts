@@ -717,7 +717,14 @@ export const executeCommandWithMulticursor = (
 export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; sequence: Gesture }) => {
   const state = store.getState()
 
-  if (state.showModal || state.longPress === LongPressState.DragInProgress || state.showMobileCommandUniverse) return
+  // Over the Mobile Command Universe the only gesture is a dry run of the pinned command, traced over its tooltip.
+  const isDryRun = state.showMobileCommandUniverse && state.showPinnedCommandTooltip
+  if (
+    state.showModal ||
+    state.longPress === LongPressState.DragInProgress ||
+    (state.showMobileCommandUniverse && !isDryRun)
+  )
+    return
 
   // Stop gesture segment haptics when there are no more possible commands that can be completed from the current sequence.
   // useFilteredCommands updates the possibleCommands in a back channel for efficiency.
@@ -795,6 +802,16 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
     if (commandMatch) {
       command = chainCommand(chainableCommandInProgressExclusive, commandMatch)
     }
+  }
+
+  // Whether the user drew one of the pinned command's own gestures, exactly.
+  const isPinnedGesture = !!sequence && commandGestureIndex[sequence]?.id === state.learning.pinnedCommandId
+
+  // Over the Mobile Command Universe a trace over the pinned command's tooltip is a dry run: nothing executes and no
+  // rep is earned, but tracing the pinned command's own gesture plays the ring's burst.
+  if (state.showMobileCommandUniverse && state.showPinnedCommandTooltip) {
+    if (isPinnedGesture) commandEmitter.trigger('pinnedGestureDryRun')
+    return
   }
 
   // execute command

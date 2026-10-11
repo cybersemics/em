@@ -10,6 +10,7 @@ import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse
 import { commandById } from '../../commands'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
+import commandEmitter from '../../stores/commandEmitter'
 import durations from '../../util/durations'
 import haptics from '../../util/haptics'
 import SettingsIcon from '../icons/SettingsIcon'
@@ -74,6 +75,15 @@ const PinnedCommand = () => {
   // The pinned command stays visible over the Mobile Command Universe, the dialog the user pins from, by keeping the
   // ring on its raised layer there. Under every other overlay it stays docked beneath.
   const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
+  // A dry run over the Command Universe earns no rep, so the ring bursts with color instead of filling. The gesture
+  // handler announces each one on commandEmitter; the count only exists to tell the ring to play again.
+  const [burst, setBurst] = useState(0)
+  useEffect(() => {
+    /** Plays the ring's burst for a successful dry run. */
+    const playBurst = () => setBurst(count => count + 1)
+    commandEmitter.on('pinnedGestureDryRun', playBurst)
+    return () => commandEmitter.off('pinnedGestureDryRun', playBurst)
+  }, [])
 
   // Close the tooltip when this widget disappears. A modal (such as Settings) replaces the widget while it is open, and
   // the tooltip should not reappear when the modal closes.
@@ -216,6 +226,7 @@ const PinnedCommand = () => {
             key={pinnedCommandId}
             progress={progress}
             flourish={flourish}
+            burst={burst}
             activeOpacity={tooltipOpacity}
           >
             <Icon

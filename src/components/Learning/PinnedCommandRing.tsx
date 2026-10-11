@@ -17,6 +17,7 @@ import durations from '../../util/durations'
  *
  * PinnedCommandRing
  * ├─ RingTrack: dim background circle with its gradient, blur, and shadow.
+ * ├─ RingBurst: a colorful ripple that leaves the ring to celebrate a dry run, without touching the fill.
  * ├─ RingProgress: animated fill, color, and flourish.
  * │  └─ BlurredProgressArc: the gradient arc, split into overlapping blur bands.
  * │     └─ RingBlurBand: the mask and blur for one band of the arc.
@@ -58,6 +59,9 @@ const STOPS_COLORFUL: Stop[] = [
 
 /** Restricts a layer to the ring's annulus. Applied before the layer's blur, so the blur softens the ring edges. */
 const ANNULUS_MASK = `radial-gradient(circle at ${CENTER_X}px ${CENTER_Y}px, transparent ${FILL_RADIUS - STROKE_WIDTH / 2 - 0.3}px, black ${FILL_RADIUS - STROKE_WIDTH / 2}px, black ${FILL_RADIUS + STROKE_WIDTH / 2}px, transparent ${FILL_RADIUS + STROKE_WIDTH / 2 + 0.3}px)`
+
+/** The colorful palette with no tail or head, so the burst reads as a ring of color rather than a progress arc. */
+const BURST_BACKGROUND = `conic-gradient(from 0deg at ${CENTER_X}px ${CENTER_Y}px, rgba(255, 166, 166, 0.9), rgba(255, 237, 231, 1), rgba(255, 166, 166, 0.9))`
 
 interface RingProgressProps {
   /** Practice progress from 0 (unstarted) to 1 (target reached). */
@@ -159,6 +163,48 @@ const BlurredProgressArc = ({ progress, stops }: { progress: number; stops: Stop
       ))}
     </>
   )
+}
+
+/** Expands a colorful copy of the whole ring outward and fades it, celebrating a success that earns no progress. */
+const RingBurst = ({ burst }: { burst: number }) => {
+  const prefersReducedMotion = useReducedMotion()
+  const previousBurst = useRef(burst)
+  const [isPlaying, setIsPlaying] = useState(false)
+  // One timeline from 0 to 1. The ripple starts just outside the ring and grows away from it, so a full colorful
+  // circle never rests on the ring where it could read as a full fill; it rises quickly and fades as it grows.
+  // Reduced motion keeps the fade only.
+  const t = useMotionValue(0)
+  const scale = useTransform(t, value => (prefersReducedMotion ? 1.08 : 1.08 + 0.52 * value))
+  const opacity = useTransform(t, value => Math.min(1, value * 5) * (1 - value))
+
+  useEffect(() => {
+    if (burst === previousBurst.current) return
+    previousBurst.current = burst
+    setIsPlaying(true)
+    t.set(0)
+    const animation = animate(t, [0, 1], {
+      duration: durations.get('pinnedCommandFlourish') / 1000,
+      ease: 'easeOut',
+      onComplete: () => setIsPlaying(false),
+    })
+    return () => animation.stop()
+  }, [burst, t])
+
+  return isPlaying ? (
+    <motion.div
+      className={css({ position: 'absolute', inset: 0, transformOrigin: `${CENTER_X}px ${CENTER_Y}px` })}
+      style={{ scale, opacity }}
+    >
+      {/* One blurred annulus rather than the fill's banded arc, whose bands overlap where a full circle meets itself
+      and would brighten 12 o'clock into something like a head. */}
+      <div className={css({ position: 'absolute', inset: 0, filter: 'blur(4px)' })}>
+        <div
+          className={css({ position: 'absolute', inset: 0 })}
+          style={{ background: BURST_BACKGROUND, maskImage: ANNULUS_MASK, WebkitMaskImage: ANNULUS_MASK }}
+        />
+      </div>
+    </motion.div>
+  ) : null
 }
 
 /**
@@ -281,12 +327,22 @@ const RingIcon = ({ children }: PropsWithChildren) => (
 )
 
 /** Composes the background track, animated progress, and centered command icon. */
-const PinnedCommandRing = ({ children, ...progressProps }: PropsWithChildren<RingProgressProps>) => (
+const PinnedCommandRing = ({
+  children,
+  burst = 0,
+  ...progressProps
+}: PropsWithChildren<
+  RingProgressProps & {
+    /** Increment to play the burst, which celebrates a success without changing progress. Only changes matter. */
+    burst?: number
+  }
+>) => (
   <div
     className={css({ position: 'relative', flex: 'none' })}
     style={{ width: PINNED_COMMAND_RING_SIZE, height: PINNED_COMMAND_RING_SIZE }}
   >
     <RingTrack />
+    <RingBurst burst={burst} />
     <RingProgress {...progressProps} />
     <RingIcon>{children}</RingIcon>
   </div>
