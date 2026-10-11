@@ -19,6 +19,7 @@ import screenshot from '../helpers/screenshot'
 import setSelection from '../helpers/setSelection'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlert from '../helpers/waitForAlert'
+import waitForDropHovers from '../helpers/waitForDropHovers'
 import waitForEditable from '../helpers/waitForEditable'
 import waitUntil from '../helpers/waitUntil'
 import withDebugLog from '../helpers/withDebugLog'
@@ -577,6 +578,9 @@ describe('pinned drop hovers', () => {
     // then hover the DropEnd at the end of a's children (drop as a sibling after d)
     await dragAndDropThought('x', 'd', { hold: true, position: 'after', skipMouseDown: true })
 
+    // the alert that dragAndDropThought waits for is already shown by the first hover, so wait for the second drop hover to render
+    await waitForDropHovers(2)
+
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
   })
@@ -602,6 +606,9 @@ describe('pinned drop hovers', () => {
 
     // then hover the ThoughtDrop before the root thought d
     await dragAndDropThought('x', 'd', { hold: true, position: 'before', skipMouseDown: true })
+
+    // the alert that dragAndDropThought waits for is already shown by the first hover, so wait for the second drop hover to render
+    await waitForDropHovers(2)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
