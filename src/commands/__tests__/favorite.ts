@@ -45,6 +45,32 @@ describe('favorite', () => {
     expect(exported).toEqual(expectedOutput)
   })
 
+  // https://github.com/cybersemics/em/issues/5856
+  it('names an empty thought as empty thought when adding it to favorites', () => {
+    store.dispatch(newThought({ value: '' }))
+
+    executeCommand(favorite, { store })
+
+    expect(store.getState().alert?.value).toBe('Added "empty thought" to favorites')
+  })
+
+  // https://github.com/cybersemics/em/issues/5856
+  it('names an empty thought as empty thought when removing it from favorites', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - 
+            - =favorite
+        `,
+      }),
+      setCursor(['']),
+    ])
+
+    executeCommand(favorite, { store })
+
+    expect(store.getState().alert?.value).toBe('Removed "empty thought" from favorites')
+  })
+
   describe('multicursor', () => {
     it('adds multiple thoughts to favorites', async () => {
       store.dispatch([

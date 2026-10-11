@@ -5,9 +5,11 @@ import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import deviceEmulation from '../helpers/deviceEmulation'
 import getEditable from '../helpers/getEditable'
+import openSidebar from '../helpers/openSidebar'
 import paste from '../helpers/paste'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import { page } from '../session'
 
 vi.setConfig({ testTimeout: 20000, hookTimeout: 20000 })
@@ -22,29 +24,12 @@ const isThoughtInDOM = async (value: string) => {
 }
 
 /**
- * Long press a thought and drag it to the DropGutter to remove it.
+ * Long press a thought or favorite and drag it over the DropGutter, holding it there without dropping.
  */
-const dragToDropGutter = async (nodeHandle: ElementHandle<Element> | JSHandle<undefined>) => {
-  const boundingBox = await nodeHandle.asElement()?.boundingBox()
+const dragToDropGutter = async (nodeHandle: ElementHandle<Element> | JSHandle<undefined> | null) => {
+  const boundingBox = await nodeHandle?.asElement()?.boundingBox()
 
   if (!boundingBox) throw new Error('Bounding box of element not found.')
-
-  // Find the specific bullet element associated with this thought
-  const bulletElement = await page.evaluateHandle(editableNode => {
-    if (!editableNode) throw new Error('Node handle does not contain a valid Element')
-
-    // Find the thought container that contains this editable
-    const thoughtContainer = editableNode.closest('[aria-label="thought-container"]')
-    if (!thoughtContainer) throw new Error('Thought container not found')
-
-    // Find the bullet element within this specific thought container
-    const bullet = thoughtContainer.querySelector('[aria-label="bullet"]')
-    if (!bullet) throw new Error('Bullet not found in thought container')
-
-    return bullet
-  }, nodeHandle)
-
-  if (!(bulletElement instanceof ElementHandle)) throw new Error('Bullet element not found')
 
   const coordinate = {
     x: boundingBox.x + 1,
@@ -53,12 +38,8 @@ const dragToDropGutter = async (nodeHandle: ElementHandle<Element> | JSHandle<un
 
   await page.touchscreen.touchStart(coordinate.x, coordinate.y)
 
-  // Wait for this specific bullet to be highlighted
-  await page.waitForFunction(
-    (bulletEl: Element) => bulletEl.getAttribute('data-highlighted') === 'true',
-    { timeout: 5000 },
-    bulletElement,
-  )
+  // The drag hint appears once the long press begins, for thoughts and favorites alike.
+  await waitForAlert('Drag and drop to')
 
   // Drag to DropGutter
   const viewport = await page.viewport()
@@ -78,11 +59,20 @@ const dragToDropGutter = async (nodeHandle: ElementHandle<Element> | JSHandle<un
   for (let i = 1; i <= steps; i++) {
     await page.touchscreen.touchMove(coordinate.x + deltaX * i, coordinate.y + deltaY * i)
   }
+}
 
-  // Wait for the "Drop to remove" alert
-  await waitForAlert('Drop to remove')
-
-  await page.touchscreen.touchEnd()
+/** Waits for the hint shown while a thought is held over the DropGutter. The wait is the assertion, so a timeout reports the alert that was shown instead. */
+const waitForDropGutterHint = async (text: string) => {
+  try {
+    await page.waitForFunction(
+      (text: string) => document.querySelector('[data-testid="alert-content"]')?.textContent === text,
+      { timeout: 6000 },
+      text,
+    )
+  } catch {
+    const alertText = await page.evaluate(() => document.querySelector('[data-testid="alert-content"]')?.textContent)
+    throw new Error(`Expected the DropGutter hint "${text}", but the alert read "${alertText}".`)
+  }
 }
 
 describe('DropGutter: mobile only', () => {
@@ -100,6 +90,8 @@ describe('DropGutter: mobile only', () => {
     await waitForAlert('Added "a" to favorites')
 
     await dragToDropGutter(await waitForEditable('a'))
+    await waitForAlert('Drop to delete a')
+    await page.touchscreen.touchEnd()
 
     await waitForAlert('Removed 1 thought')
 
@@ -121,6 +113,8 @@ describe('DropGutter: mobile only', () => {
     await clickThought('a')
 
     await dragToDropGutter(await waitForEditable('a'))
+    await waitForAlert('Drop to delete a')
+    await page.touchscreen.touchEnd()
 
     await waitForAlert('Removed 1 thought')
 
@@ -130,5 +124,34 @@ describe('DropGutter: mobile only', () => {
     // Assert that other thoughts still exist
     expect(await isThoughtInDOM('b')).toBe(true)
     expect(await isThoughtInDOM('c')).toBe(true)
+  })
+
+  // https://github.com/cybersemics/em/issues/5856
+  it('names an empty thought as empty thought in the drop to delete hint', async () => {
+    await paste(`
+        - a
+          -
+        `)
+
+    await clickThought('a')
+
+    await dragToDropGutter(await waitForEditable(''))
+
+    await waitForDropGutterHint('Drop to delete "empty thought"')
+  })
+
+  // https://github.com/cybersemics/em/issues/5856
+  it('names an empty favorite as empty thought in the drop to remove hint', async () => {
+    await paste(`
+        -
+          - =favorite
+            - true
+        `)
+
+    await openSidebar()
+
+    await dragToDropGutter(await waitForSelector('[data-testid="drag-and-drop-favorite"]'))
+
+    await waitForDropGutterHint('Drop to remove "empty thought" from favorites')
   })
 })

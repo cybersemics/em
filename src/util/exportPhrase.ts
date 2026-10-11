@@ -16,14 +16,13 @@ const exportPhrase = (idOrIds: ThoughtId | ThoughtId[], numDescendants: number |
 
   const id = Array.isArray(idOrIds) ? idOrIds[0] : idOrIds
 
-  // presumably getThoughtById will never fail, but guard for safety
-  const label = ellipsize(value || 'thought')
+  const label = `"${value ? ellipsize(value) : 'empty thought'}"`
 
   return isRoot([id])
     ? numDescendants === 1
       ? '1 thought'
       : `all${numDescendants ? ' ' + numDescendants.toLocaleString() : ''} thoughts`
-    : `"${label}"${numDescendants ? ` and ${pluralize('subthought', numDescendants, true)}` : ''}`
+    : `${label}${numDescendants ? ` and ${pluralize('subthought', numDescendants, true)}` : ''}`
 }
 
 export default exportPhrase

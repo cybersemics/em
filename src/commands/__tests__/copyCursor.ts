@@ -88,6 +88,16 @@ describe('copyCursor', () => {
   - b`)
   })
 
+  // https://github.com/cybersemics/em/issues/5856
+  it('names an empty thought as empty thought in the alert', async () => {
+    store.dispatch(newThought({ value: '' }))
+
+    executeCommandWithMulticursor(copyCursorCommand, { store })
+    await vi.runAllTimersAsync()
+
+    expect(store.getState().alert?.value).toBe('Copied "empty thought" to the clipboard')
+  })
+
   describe('multicursor', () => {
     it('copies multiple thoughts and their descendants', async () => {
       store.dispatch([
