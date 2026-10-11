@@ -156,6 +156,8 @@ The Heading button opens [`FormattingBarHeadingPicker`](../src/components/Format
 
 The Letter Case button opens [`FormattingBarLetterCasePicker`](../src/components/FormattingBarLetterCasePicker.tsx). It reuses `formatLetterCase` and shares `getSelectedLetterCase` with the Toolbar picker, including multicursor selection.
 
+With a collapsed caret, the command state reads the colors from the browser and discards the editor's defaults: the default text colors for the text color, and only the page background or a transparent one for the background color, so that the inverse swatch, whose background is the text color, still shows as selected.
+
 Mutually exclusive dropdowns use one `state.activeDropdown` value: `{ surface, picker }`, or `null` when closed. It covers Color, Letter Case, Bullet Style, Sort, and the Undo Slider; later surfaces can add picker identities. `toggleDropdown` compares the complete target, so repeating the same target closes it, while a different picker or surface replaces it. An explicit close only affects its matching target. `showCommandCenter` remains independent, and `closeDropdowns` closes both and clears the multiselection. Dropdown presentation is excluded from document undo patches. The surface field is temporary routing for the Toolbar migration. Presentation components receive visibility and close callbacks instead of interpreting ownership.
 
 The **Command Universe** is the searchable command palette. Two flavors:
