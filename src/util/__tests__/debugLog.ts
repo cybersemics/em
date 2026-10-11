@@ -214,7 +214,7 @@ describe('clear', () => {
 })
 
 describe('format', () => {
-  it('renders the device, user agent, em version, and build commit as the first four lines', () => {
+  it('renders the device, user agent, em version, build commit, and URL as the first five lines', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     debugLog.log('input')
@@ -224,7 +224,8 @@ describe('format', () => {
     expect(lines[1]).toBe(`--- userAgent: ${navigator.userAgent}`)
     expect(lines[2]).toBe(`--- version: ${pkg.version}`)
     expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
-    expect(lines[4]).toContain('#0 input')
+    expect(lines[4]).toBe(`--- url: ${window.location.href}`)
+    expect(lines[5]).toContain('#0 input')
   })
 
   it('names the tauri shell, which Capacitor reports as web', () => {
@@ -239,8 +240,24 @@ describe('format', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     const lines = debugLog.format().split('\n')
-    expect(lines.length).toBe(4)
+    expect(lines.length).toBe(5)
     expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
+    expect(lines[4]).toBe(`--- url: ${window.location.href}`)
+  })
+
+  it('renders the header after the buffer overflows and the session marker is evicted', () => {
+    debugLog.setEnabled(false)
+    debugLog.clear()
+    debugLog.setEnabled(true)
+    for (let i = 0; i < 5100; i++) {
+      debugLog.log('n', { i })
+    }
+    expect(debugLog.read().some(entry => entry.type === 'session')).toBe(false)
+    const lines = debugLog.format().split('\n')
+    expect(lines[0]).toMatch(/^--- device: /)
+    expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
+    expect(lines[4]).toBe(`--- url: ${window.location.href}`)
+    expect(lines[5]).toContain('#')
   })
 
   it('renders a one-line-per-entry text block', () => {

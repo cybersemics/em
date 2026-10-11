@@ -249,7 +249,7 @@ const formatThought = (thought: {
   return `${thought.id} ${JSON.stringify(value)} rank:${thought.rank} parent:${thought.parentId}${thought.pending ? ' pending' : ''}`
 }
 
-/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, and build commit. Appends the last-frame marker and, when state is provided, the view the log ended on (cursor, caret offset, keyboard, note focus, and the sizes of the expanded set, multicursor set and undo/redo stacks) and a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
+/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, build commit, and the URL the log was formatted on. Appends the last-frame marker and, when state is provided, the view the log ended on (cursor, caret offset, keyboard, note focus, and the sizes of the expanded set, multicursor set and undo/redo stacks) and a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
 const format = (state?: State): string => {
   // The device: the navigator platform, the shell em is served through (web, ios, android, or tauri), the screen
   // dimensions, and the pointer type. The shell is worth naming separately because it is not recoverable from the user
@@ -266,12 +266,13 @@ const format = (state?: State): string => {
   // The header is rendered here rather than read back from the session marker, which the rolling buffer evicts once
   // capacity is exceeded — i.e. in exactly the long sessions whose logs are most worth reading. It describes the device
   // and build the log was formatted on, so a hydrated log spanning an app update may still carry a session marker from
-  // the version that wrote the older entries.
+  // the version that wrote the older entries. The URL is what tells production, a preview deployment and localhost apart.
   const header = [
     `--- device: ${device}`,
     `--- userAgent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'}`,
     `--- version: ${pkg.version}`,
     `--- commit: ${__COMMIT_HASH__}`,
+    `--- url: ${typeof window !== 'undefined' ? window.location.href : 'unknown'}`,
   ].join('\n')
 
   const entryLines = entries.map(formatEntry).join('\n')
