@@ -14,6 +14,7 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import categorizeCommand from '../categorize'
 import deleteCommand from '../delete'
 import favoriteCommand from '../favorite'
+import noteCommand from '../note'
 import outdentCommand from '../outdent'
 import pinCommand from '../pin'
 import splitSentencesCommand from '../splitSentences'
@@ -435,6 +436,103 @@ describe('toggleSortPicker error', () => {
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
   )
+
+  // https://github.com/cybersemics/em/issues/3965
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when a note is added to a thought in a context sorted by Note %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - A
+            - B
+            - C
+            - D
+          `,
+        }),
+        setCursor(['A']),
+      ])
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Note', direction },
+        }),
+      )
+
+      store.dispatch(setCursor(['C']))
+      executeCommand(noteCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+
+      store.dispatch(editThought(['C', '=note', ''], 'Thesa'))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when a note is cleared in a context sorted by Note %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - A
+              - =note
+                - x
+            - B
+            - C
+              - =note
+                - y
+            - D
+          `,
+        }),
+        setCursor(['A']),
+      ])
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Note', direction },
+        }),
+      )
+
+      store.dispatch(editThought(['A', '=note', 'x'], ''))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  it('does not report an error when a note is given formatting in a context sorted by Note Desc', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - A
+            - =note
+              - b
+          - B
+          - C
+            - =note
+              - a
+        `,
+      }),
+      setCursor(['A']),
+    ])
+
+    const state = store.getState()
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Note', direction: 'Desc' },
+      }),
+    )
+
+    store.dispatch(editThought(['C', '=note', 'a'], '<b>z</b>'))
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
 
   // https://github.com/cybersemics/em/issues/4101
   it.each(['Asc', 'Desc'] as const)(
