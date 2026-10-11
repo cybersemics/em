@@ -211,7 +211,7 @@ A small effect that writes the LayoutTree's top y (offset + autocrop) into `view
 
 ## Masking content under the nav bar
 
-Content that scrolls under the bottom nav bar is hidden by one of two masks. Without a background glow, [`NavBar`](../src/components/NavBar.tsx) paints its own background and a box shadow that fades in over the 15px above its top edge. With a glow selected (a debug option behind the sparkle button in the footer), that blackout is turned off and [`BackgroundGlow`](../src/components/BackgroundGlow.tsx) draws a falloff instead: a fixed full-viewport copy of the background masked in by a gradient. The falloff must cover the same band as the blackout, so turning the glow on does not move where content disappears, and it must measure from the same base the nav bar sits on, `max(11px, safe-area-inset-bottom)`, rather than adding the inset to a fixed offset.
+Content that scrolls under the bottom nav bar is hidden by one of two masks. Without a background glow, [`NavBar`](../src/components/NavBar.tsx) paints its own background, which is opaque from its top edge, and a box shadow that fades in over the ~27px above it and reaches about 72% opacity before that edge. With a glow selected (a debug option behind the sparkle button in the footer), that blackout is turned off and [`BackgroundGlow`](../src/components/BackgroundGlow.tsx) draws a falloff instead: a fixed full-viewport copy of the background masked in by a gradient. The falloff's gradient samples the blackout's curve, so turning the glow on does not move where content disappears, and it must measure from the same base the nav bar sits on, `max(11px, safe-area-inset-bottom)`, rather than adding the inset to a fixed offset.
 
 ## Scrolling the cursor into view
 
