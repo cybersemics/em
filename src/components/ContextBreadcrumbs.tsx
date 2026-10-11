@@ -20,6 +20,7 @@ import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import toVisibleText from '../util/toVisibleText'
+import usePlaceholder from './Editable/usePlaceholder'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
 import Link from './Link'
@@ -112,6 +113,7 @@ const BreadCrumb = React.memo(
     ) => {
       const simplePath = useSelector(state => simplifyPath(state, path), shallowEqual)
       const value = useSelector(state => getThoughtById(state, head(simplePath))?.value)
+      const thoughtPlaceholder = usePlaceholder({ isEditing: false, path, simplePath })
       const showContexts = useSelector(state => isContextViewActive(state, parentOf(path)))
       const delimiterStyle: React.CSSProperties = {
         fontSize: '0.8em',
@@ -135,7 +137,8 @@ const BreadCrumb = React.memo(
                 className={extendTapRecipe({ size: 'small' })}
                 simplePath={simplePath}
                 label={label}
-                placeholder={placeholder}
+                // usePlaceholder returns the value of a non-empty thought, so only an empty thought gets the placeholder
+                placeholder={value ? undefined : (placeholder ?? thoughtPlaceholder)}
               />
             ))}
           {!isDeleting && (
@@ -182,7 +185,7 @@ const ContextBreadcrumbs = ({
    */
   hidden?: boolean
   path: Path
-  /** Text shown in place of an empty ancestor. Empty ancestors render blank if omitted. */
+  /** Text shown in place of an empty ancestor. Defaults to the empty-thought placeholder if omitted. */
   placeholder?: string
   /** Disables click on breadcrumb fragments. */
   staticText?: boolean

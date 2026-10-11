@@ -8,6 +8,7 @@ import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import dispatch from '../../test-helpers/dispatch'
 import { editThoughtByContextActionCreator as editThought } from '../../test-helpers/editThoughtByContext'
+import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
 
 beforeEach(createTestApp)
 afterEach(cleanupTestApp)
@@ -159,4 +160,26 @@ it('does not strip angle-bracket text from string alerts', async () => {
 
   const alertContent = document.querySelector('[data-testid="alert-content"]')!
   expect(alertContent.textContent).toContain('"<aaa>" deleted.')
+})
+
+// https://github.com/cybersemics/em/issues/5855
+it('shows the empty-thought placeholder for an empty cursor thought', async () => {
+  await dispatch([
+    importText({
+      text: `
+- a
+  - b
+  -
+`,
+    }),
+  ])
+  vi.setSystemTime(Date.now() + 5001)
+  await dispatch([setCursor(['a', ''])])
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const breadcrumbs = Array.from(
+    document.querySelectorAll('[aria-label="nav"] [aria-label="context-breadcrumbs"] [data-thought-link]'),
+  ).map(link => link.textContent)
+  expect(breadcrumbs).toEqual(['a', 'This is an empty thought'])
 })
