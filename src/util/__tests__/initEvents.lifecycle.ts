@@ -149,6 +149,23 @@ it('logs a viewport resize only when the geometry changes', () => {
   expect(viewportEntries.map(entry => entry.reason)).toEqual(['resize'])
 })
 
+// Fixed elements were reported out of place after scrolling, and the debug log only recorded the viewport on resize, so nothing showed the geometry around a scroll. Logging every scroll event would flood the bounded log, so only the start and end are written.
+it('logs the viewport once at the start and once at the end of a scroll', async () => {
+  initEvents(store)
+  debugLog.setEnabled(true)
+  debugLog.clear()
+
+  window.dispatchEvent(new Event('scroll'))
+  await vi.advanceTimersByTimeAsync(100)
+  window.dispatchEvent(new Event('scroll'))
+  await vi.advanceTimersByTimeAsync(100)
+  window.dispatchEvent(new Event('scroll'))
+  await vi.advanceTimersByTimeAsync(150)
+
+  const viewportEntries = debugLog.read().filter(entry => entry.type === 'viewport')
+  expect(viewportEntries.map(entry => entry.reason)).toEqual(['scrollStart', 'scrollEnd'])
+})
+
 // https://github.com/cybersemics/em/issues/5255
 it('does not clear the selection after cleanup when the passive-state timer was armed before it', async () => {
   const { cleanup } = initEvents(store)
