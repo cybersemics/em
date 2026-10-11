@@ -1,5 +1,7 @@
 import Command from '../@types/Command'
+import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { toggleNoteActionCreator as toggleNote } from '../actions/toggleNote'
+import { isTouch } from '../browser'
 import PencilIcon from '../components/icons/PencilIcon'
 import { HOME_PATH } from '../constants'
 import asyncFocus from '../device/asyncFocus'
@@ -17,6 +19,10 @@ const noteCommand = {
   multicursor: {
     // The end-of-run cursor restore dispatches setCursor, which resets noteFocus and would yank the caret out of the note that was just created. Instead, leave the cursor on the last selected thought with its note focused, ready to type.
     preventSetCursor: true,
+    // On mobile, the selection is what keeps the Command Center open, and the sheet would cover the keyboard that the note has just opened. Close it, which clears the selection, so that the note can be edited. This runs after the multicursors have been restored, so they cannot re-open it.
+    onComplete: (filteredCursors, dispatch) => {
+      if (isTouch) dispatch(toggleDropdown({ dropDownType: 'commandCenter', value: false }))
+    },
   },
   svg: PencilIcon,
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
