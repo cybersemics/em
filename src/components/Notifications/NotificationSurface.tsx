@@ -37,7 +37,7 @@ interface NotificationSurfaceProps {
    * pointer-events: auto themselves; swipe-to-dismiss still works from those children because their touches bubble
    * to the content layer.
    */
-  passThrough?: boolean
+  pointerEventsPassThrough?: boolean
   /**
    * Fade the blur, scrim, and glow to half strength, for while the user interacts with the page beneath. Children
    * are not affected, so the consumer decides which of them dim along.
@@ -56,7 +56,7 @@ const NotificationSurface = ({
   onDismiss,
   onOpacityChange,
   swipeToDismiss = false,
-  passThrough = false,
+  pointerEventsPassThrough = false,
   dimmed = false,
   children,
 }: NotificationSurfaceProps) => {
@@ -150,7 +150,7 @@ const NotificationSurface = ({
         />
         <div
           className={slots.content}
-          style={{ pointerEvents: isVisible && !passThrough ? 'auto' : 'none' }}
+          style={{ pointerEvents: isVisible && !pointerEventsPassThrough ? 'auto' : 'none' }}
           {...(swipeToDismiss ? touchHandlers : {})}
         >
           {children}

@@ -137,7 +137,7 @@ const PinnedCommandTooltip = ({
       onDismiss={onClose}
       onOpacityChange={onOpacityChange}
       dimmed={isTracing}
-      passThrough
+      pointerEventsPassThrough
     >
       <section
         ref={tooltipRef}
