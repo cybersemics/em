@@ -7,7 +7,7 @@ This prototype runs two TreeCRDT instances for one thoughtspace:
 
 The memory engine owns the document and accepts local commands synchronously. Redux owns UI state; an external editor store combines UI state with current document reads. Document commands execute in one memory transaction outside Redux's reducer, reading canonical state between composed steps. The completed editor state is published synchronously. Network sync is disabled, including when `VITE_TREECRDT_SYNC_BASE_URL` is set.
 
-[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exposes one implementation through two interfaces: `db: DataProvider` supplies synchronous `project` reads, `transact`, and `subscribe` invalidations after committed changes; `thoughtspaceRuntime: ThoughtspaceRuntime` manages initialization, readiness, cleanup, and waiting for persistence. [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts) implements both. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `insert`, `payload`, `move`, `delete`, and `project`, an unordered import/restore `update` batch, cumulative invalidations through `getChanges`, operation receipts and `revert`, and an `afterPersist` callback.
+[`data-providers/thoughtspace.ts`](../src/data-providers/thoughtspace.ts) exposes one implementation through two interfaces: `db: DataProvider` supplies synchronous `project` reads, `transact`, and `subscribe` invalidations after committed changes; `thoughtspaceRuntime: ThoughtspaceRuntime` manages initialization, readiness, cleanup, and waiting for persistence. [`createMemoryThoughtspace.ts`](../src/data-providers/treecrdt/createMemoryThoughtspace.ts) implements both. Its explicit [`ThoughtspaceTransaction`](../src/@types/ThoughtspaceTransaction.ts) provides synchronous `insert`, `payload`, `move`, `delete`, and `project`, an ordered import/restore `update` batch, cumulative invalidations through `getChanges`, operation receipts and `revert`, and an `afterPersist` callback.
 
 ## Running the prototype
 
@@ -60,7 +60,7 @@ Formatting comparisons use `transaction.capturePrevious()`: a synchronous reader
 
 ### Writes
 
-`db.transact` authors operations synchronously in Rust for one complete dispatched command. Ordinary commands explicitly insert, change payload fields, move, or delete; each subsequent read sees those writes. Payload comparisons avoid redundant operations. Imports/restores use `transaction.update` to order parents and placement anchors before dependents, then deletions. If a command throws, the adapter restores its tree, decoded caches and operation bookkeeping; no partial command is queued for persistence or published.
+`db.transact` authors operations synchronously in Rust for one complete dispatched command. Ordinary commands explicitly insert, change payload fields, move, or delete; each subsequent read sees those writes. Payload comparisons avoid redundant operations. Imports/restores supply ordered batches to `transaction.update`. If a command throws, the adapter restores its tree, decoded caches and operation bookkeeping; no partial command is queued for persistence or published.
 
 A serialized `persistent.ops.appendMany(ops)` stores those exact operations without minting new identities. Its promise provides the persistence acknowledgement; the protocol's transport-send promise alone would not. The returned view already reads canonical memory payloads, parents, and child order. Persistence acknowledgements do not replace it with a captured SQLite readback.
 
@@ -70,7 +70,7 @@ An asynchronous append or loopback failure is reported through `onError` and gat
 
 `insert(thought, afterId)` and `move(id, { parentId, afterId })` name the preceding sibling, or `null` for first. The bulk `update` accepts equivalent `movePlacements`; creates and parent changes require one. Adding or removing a child also repositions its nonempty, non-emoji-only parent when its context is sorted by `Updated`. Undo/redo instead asks TreeCRDT to revert operation IDs; EM does not reconstruct placements from Redux patches.
 
-The bulk update applies parents and placement anchors before their dependents, then deletions; explicit writes execute in caller order. Invalid anchors fail the atomic command rather than falling back to a numeric rank. `getPosition` reads a sibling's ordinal without storing it on `Thought`. See [data-model.md → rank](data-model.md#rank).
+The bulk update preserves property order for edits, so callers must supply parents and placement anchors before their dependents; deletions run last. Explicit writes execute in caller order. Invalid anchors fail the atomic command rather than falling back to a numeric rank. `getPosition` reads a sibling's ordinal without storing it on `Thought`. See [data-model.md → rank](data-model.md#rank).
 
 ### Persistence and incoming changes
 

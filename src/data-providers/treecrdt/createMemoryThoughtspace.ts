@@ -444,34 +444,7 @@ const createMemoryThoughtspace = (
           // Moves out of a deleted subtree must precede its delete; otherwise defensive deletion restores the parent.
           const edits = Object.entries(thoughtIndexUpdates).filter((entry): entry is [string, Thought] => !!entry[1])
           const deletes = Object.entries(thoughtIndexUpdates).filter(([, thought]) => !thought)
-          // Batched imports can supply an unordered topology. Restore parents and placement anchors
-          // before their dependents so every insert/move has a live destination.
-          const pending = new Map<string, number>()
-          const dependents = new Map<string, typeof edits>()
-          const ordered: typeof edits = []
-          for (const entry of edits) {
-            const [id, thought] = entry
-            let dependencies = 0
-            for (const dependency of [thought.parentId, movePlacements?.[id]]) {
-              if (!dependency || !thoughtIndexUpdates[dependency]) continue
-              dependencies++
-              const entries = dependents.get(dependency) ?? []
-              entries.push(entry)
-              dependents.set(dependency, entries)
-            }
-            pending.set(id, dependencies)
-            if (!dependencies) ordered.push(entry)
-          }
-          // Iterate the growing queue without recursion or copying the ancestry of long sibling chains.
-          for (const [id] of ordered) {
-            for (const entry of dependents.get(id) ?? []) {
-              const remaining = pending.get(entry[0])! - 1
-              pending.set(entry[0], remaining)
-              if (!remaining) ordered.push(entry)
-            }
-          }
-          if (ordered.length !== edits.length) throw new Error('A command cannot create a parent or placement cycle')
-          for (const [id, thought] of [...ordered, ...deletes.reverse()]) {
+          for (const [id, thought] of [...edits, ...deletes.reverse()]) {
             if (!thought) {
               transaction.delete(id as ThoughtId)
               continue

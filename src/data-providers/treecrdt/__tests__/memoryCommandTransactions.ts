@@ -420,7 +420,7 @@ it('keeps captured thought values immutable when composed moves restore the orig
   }
 })
 
-it('restores parents and sibling anchors before their dependents in an unordered batch', async () => {
+it('restores a deleted tree from a parent- and sibling-anchor-first batch', async () => {
   const runtime = createMemoryThoughtspace()
   const parent = { ...first, value: 'parent' }
   const branch = { ...second, parentId: parent.id, value: 'branch' }
@@ -460,7 +460,7 @@ it('restores parents and sibling anchors before their dependents in an unordered
     const restored = runtime.transact(transaction =>
       transaction.update({
         thoughtIndexUpdates: Object.fromEntries(
-          [leaf, ...[...children].reverse(), branch, parent].map(thought => [thought.id, thought]),
+          [parent, branch, ...children, leaf].map(thought => [thought.id, thought]),
         ),
         movePlacements: placements,
       }),

@@ -24,6 +24,16 @@ const runDocumentCommand = (
     const current = transaction.project()
     const target = state.thoughts
     if (current !== target) {
+      // Walk canonical child lists so restored parents and sibling anchors precede their dependents.
+      const targetThoughts = [HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN].flatMap(id => target.getThought(id) ?? [])
+      const movePlacements: Record<ThoughtId, ThoughtId | null> = {}
+      for (const thought of targetThoughts) {
+        const children = target.getChildren(thought.id)
+        children.forEach((id, index) => {
+          targetThoughts.push(target.getThought(id)!)
+          movePlacements[id] = children[index - 1] ?? null
+        })
+      }
       const thoughtIndexUpdates = {
         ...Object.fromEntries(
           [...current.values()]
@@ -31,7 +41,7 @@ const runDocumentCommand = (
             .map(thought => [thought.id, null]),
         ),
         ...Object.fromEntries(
-          [...target.values()]
+          targetThoughts
             .filter(
               thought =>
                 !_.isEqual(thought, current.getThought(thought.id)) ||
@@ -40,20 +50,6 @@ const runDocumentCommand = (
             .map(thought => [thought.id, thought]),
         ),
       }
-      const movePlacements = Object.fromEntries(
-        Object.values(
-          _.groupBy(
-            [...target.values()].filter(thought => !roots.has(thought.id)),
-            'parentId',
-          ),
-        )
-          .flatMap(siblings =>
-            [...siblings]
-              .sort((a, b) => (target.getPosition(a.id) ?? 0) - (target.getPosition(b.id) ?? 0))
-              .map((thought, index, ordered) => [thought.id, index ? ordered[index - 1].id : null]),
-          )
-          .filter(([id]) => id! in thoughtIndexUpdates),
-      ) as Record<ThoughtId, ThoughtId | null>
       transaction.update({ thoughtIndexUpdates, movePlacements })
     }
     const thoughts = transaction.project()

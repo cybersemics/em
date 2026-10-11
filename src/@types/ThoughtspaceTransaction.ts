@@ -30,7 +30,7 @@ interface ThoughtspaceTransaction {
   move: (id: ThoughtId, placement: { parentId: ThoughtId; afterId: ThoughtId | null }) => void
   /** Deletes an existing thought; missing thoughts are ignored. */
   delete: (id: ThoughtId) => void
-  /** Applies an unordered import/restore batch, resolving parent and placement dependencies. */
+  /** Applies a batch in property order, requiring parents and placement anchors before dependents; deletions run last. */
   update: (changes: {
     thoughtIndexUpdates: Index<Thought | null>
     movePlacements?: Index<ThoughtId | null>
