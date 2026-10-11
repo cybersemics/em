@@ -19,7 +19,7 @@ const toggleMobileCommandUniverse = (state: State, { value, entryId }: { value?:
 
 /** Action-creator for toggleMobileCommandUniverse. */
 export const toggleMobileCommandUniverseActionCreator =
-  ({ value }: { value?: boolean }): Thunk =>
+  ({ value, preserveSelectionOffsets = false }: { value?: boolean; preserveSelectionOffsets?: boolean }): Thunk =>
   (dispatch, getState) => {
     const state = getState()
     const isOpen = value == null ? !state.showMobileCommandUniverse : value
@@ -27,7 +27,7 @@ export const toggleMobileCommandUniverseActionCreator =
     if (isOpening) {
       // Snapshot the selection before clearing it, so that commands which operate on the selected text can still read
       // it once the Command Universe is open. See state.selectionOffsets.
-      dispatch(saveSelectionOffsets())
+      if (!preserveSelectionOffsets) dispatch(saveSelectionOffsets())
       selection.clear()
     }
     dispatch({ type: 'toggleMobileCommandUniverse', value, entryId: isOpening ? nanoid() : undefined })
