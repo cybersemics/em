@@ -155,6 +155,7 @@ const initialState = (created: Timestamp = timestamp()) => {
     showSortPicker: false,
     showUndoSlider: false,
     showDesktopCommandUniverse: false,
+    showMobileCommandUniverse: false,
     showGestureMenu: false,
     remoteSearch: false,
     searchContexts: null,

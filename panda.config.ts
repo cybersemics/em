@@ -530,10 +530,11 @@ export default defineConfig({
             // The help genie flies over everything, including the Command Universe dialog it is let out from. Its
             // canvas ignores pointer events, so it never blocks what is beneath it.
             'helpGenie',
+            // Above dialogs so the pinned command stays visible over the Mobile Command Universe. See docs/learning.md.
+            'pinnedCommandExpanded',
             'dialog',
             'dialogContainer',
             'popup',
-            'pinnedCommandExpanded',
             'notification',
             'cloneDroppedThought',
             'hoverArrow',

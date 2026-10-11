@@ -209,3 +209,43 @@ it('keeps the editor selection for Command Universe commands and earns no practi
   expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toBe(`- ${HOME_TOKEN}
   - Alpha`)
 })
+
+it('keeps the editor selection snapshot when the ring is tapped over the Command Universe', async () => {
+  await act(async () => {
+    store.dispatch(importToContext('- Alpha'))
+    store.dispatch(setCursorFirstMatch(['Alpha']))
+    store.dispatch(pinCommand({ commandId: 'newThought' }))
+    await vi.runAllTimersAsync()
+  })
+  const editable = await findThoughtByText('Alpha')
+  expect(editable).not.toBeNull()
+  act(() => selection.set(editable!, { offset: 2 }))
+  const thoughtId = head(store.getState().cursor!)
+  // Opening the Command Universe records the editor selection and then clears it.
+  await act(async () => {
+    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    await vi.runAllTimersAsync()
+  })
+
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+  await user.click(screen.getByRole('button', { name: 'Show gesture for New Thought' }))
+  await act(vi.runAllTimersAsync)
+
+  expect(screen.getByRole('dialog', { name: 'Gesture for New Thought' })).toBeVisible()
+  expect(store.getState().selectionOffsets).toEqual({ thoughtId, start: 2, end: 2 })
+})
+
+it('asks the user to close the Command Universe before pressing the shortcut', async () => {
+  await act(async () => {
+    store.dispatch(pinCommand({ commandId: 'settings' }))
+    store.dispatch(toggleMobileCommandUniverse({ value: true }))
+    await vi.runAllTimersAsync()
+  })
+  const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+
+  await user.click(screen.getByRole('button', { name: 'Show gesture for Settings' }))
+
+  expect(screen.getByRole('dialog', { name: 'Gesture for Settings' })).toHaveTextContent(
+    'Close Commands, then press Ctrl + , to activate.',
+  )
+})
