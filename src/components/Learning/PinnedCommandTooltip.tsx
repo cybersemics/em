@@ -123,13 +123,21 @@ const PinnedCommandTooltip = ({
     }
   }, [isOpen, leftHanded])
 
+  // Over the Mobile Command Universe nothing can be activated: a trace there is a dry run, and shortcuts do not run.
+  const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
+
   // Touch devices practice the gesture; other devices practice the shortcut. A command with neither is only reachable
   // from the Command Universe, so point there.
+  const shortcut = keyboard ? formatKeyboardShortcut(keyboard) : null
   const instruction =
     isTouch && gesture
-      ? 'Trace the gesture to activate.'
-      : keyboard
-        ? `Press ${formatKeyboardShortcut(keyboard)} to activate.`
+      ? inCommandUniverse
+        ? 'Trace the gesture to practice.'
+        : 'Trace the gesture to activate.'
+      : shortcut
+        ? inCommandUniverse
+          ? `Close Commands, then press ${shortcut} to activate.`
+          : `Press ${shortcut} to activate.`
         : 'Open it in the Command Universe to learn more.'
 
   return (
@@ -141,7 +149,8 @@ const PinnedCommandTooltip = ({
       onDismiss={onClose}
       onOpacityChange={onOpacityChange}
       dimmed={isTracing}
-      pointerEventsPassThrough
+      // Over the Command Universe a press that fell through would land on the dialog's backdrop and close it.
+      pointerEventsPassThrough={!inCommandUniverse}
     >
       <section
         ref={tooltipRef}

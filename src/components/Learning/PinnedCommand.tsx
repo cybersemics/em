@@ -71,6 +71,9 @@ const PinnedCommand = () => {
   // Changing the pinned command also closes the tooltip for any previous pinned command that might be open.
   const isOpen = useSelector(state => state.showPinnedCommandTooltip && !!state.learning.pinnedCommandId)
   const isRingRaised = isOpen || keepRaisedDuringExit
+  // The pinned command stays visible over the Mobile Command Universe, the dialog the user pins from, by keeping the
+  // ring on its raised layer there. Under every other overlay it stays docked beneath.
+  const inCommandUniverse = useSelector(state => !!state.showMobileCommandUniverse)
 
   // Close the tooltip when this widget disappears. A modal (such as Settings) replaces the widget while it is open, and
   // the tooltip should not reappear when the modal closes.
@@ -118,7 +121,18 @@ const PinnedCommand = () => {
   }
 
   return (
-    <>
+    // The Mobile Command Universe closes on a press outside it. A press on the pinned command, which is layered above
+    // it, is not outside it.
+    <div data-above-dialog>
+      {/* Rendered before the ring, which shares its layer while raised and must paint on top of it. */}
+      <PinnedCommandTooltip
+        id={tooltipId}
+        command={command}
+        isOpen={isOpen}
+        onClose={() => dispatch(showPinnedCommandTooltip({ value: false }))}
+        onOpacityChange={handleTooltipOpacityChange}
+        onReveal={revealCommand}
+      />
       {/* Fixed to the screen corner, so the ring stays put however the page scrolls, including over the footer at the end of the page. It sits on the pinnedCommand layer just above the NavBar, and rises above the tooltip's surface while that is open or fading out. Position lives here; scale and lift stay on the button. */}
       <div
         className={css({
@@ -126,7 +140,7 @@ const PinnedCommand = () => {
           right: 0,
           // The ring center sits 13.5px above the NavBar's bottom edge; its box center is 36.16px above its bottom.
           bottom: 'calc(max(11px, token(spacing.safeAreaBottom)) - 22.5px)',
-          zIndex: isRingRaised ? 'pinnedCommandExpanded' : 'pinnedCommand',
+          zIndex: isRingRaised || inCommandUniverse ? 'pinnedCommandExpanded' : 'pinnedCommand',
           pointerEvents: 'none',
         })}
       >
@@ -142,8 +156,9 @@ const PinnedCommand = () => {
           aria-controls={tooltipId}
           data-testid='pinned-command'
           onPointerDown={event => {
-            // Record the editor selection before focusing an interactive control in the corner.
-            dispatch(saveSelectionOffsets())
+            // Record the editor selection before focusing an interactive control in the corner. Over the Command
+            // Universe the editor has no selection; the snapshot taken when the Command Universe opened must survive.
+            if (!inCommandUniverse) dispatch(saveSelectionOffsets())
             event.preventDefault()
             held.current = false
             window.clearTimeout(holdTimer.current)
@@ -164,7 +179,7 @@ const PinnedCommand = () => {
               return
             }
             // Keyboard activation has no pointerdown; clear any stale snapshot before opening.
-            if (event.detail === 0) dispatch(saveSelectionOffsets())
+            if (event.detail === 0 && !inCommandUniverse) dispatch(saveSelectionOffsets())
             dispatch(showPinnedCommandTooltip({ value: true }))
           }}
           className={css({
@@ -214,15 +229,7 @@ const PinnedCommand = () => {
           </PinnedCommandRing>
         </motion.button>
       </div>
-      <PinnedCommandTooltip
-        id={tooltipId}
-        command={command}
-        isOpen={isOpen}
-        onClose={() => dispatch(showPinnedCommandTooltip({ value: false }))}
-        onOpacityChange={handleTooltipOpacityChange}
-        onReveal={revealCommand}
-      />
-    </>
+    </div>
   )
 }
 
