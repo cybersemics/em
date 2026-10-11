@@ -116,7 +116,9 @@ const ColorSwatch: FC<{
 
 /** Text Color Picker component. */
 const ColorPicker: FC<{ size?: number }> = ({ size }) => {
-  const showColorPicker = useSelector(state => state.showColorPicker)
+  const showColorPicker = useSelector(
+    state => state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'colorPicker',
+  )
 
   return (
     <Popover ariaLabel='Color Picker' show={showColorPicker} size={size}>

@@ -152,7 +152,9 @@ const UndoRange: FC<{ handles: Handles | null; setHandles: (handles: { end: numb
 
 /** Undo slider that can rewind edits and copy the steps to reproduce them. */
 const UndoSlider: FC = () => {
-  const showUndoSlider = useSelector(state => !!state.showUndoSlider)
+  const showUndoSlider = useSelector(
+    state => !!(state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'undoSlider'),
+  )
   const historyLength = useSelector(state => state.undoPatches.length + state.redoPatches.length)
   // The handles are held here rather than in UndoRange, which is unmounted while the slider is closed, so that closing and
   // reopening the slider leaves them where the user put them. They are discarded when a new action discards the history ahead

@@ -1,6 +1,7 @@
 import DropThoughtZone from '../@types/DropThoughtZone'
 import { LongPressState } from '../constants'
 import ActionType from './ActionType'
+import ActiveDropdown from './ActiveDropdown'
 import Alert from './Alert'
 import Command from './Command'
 import CommandId from './CommandId'
@@ -159,15 +160,13 @@ interface State {
    * opens, so it does not participate in the render cycle.
    */
   selectionOffsets: { thoughtId: ThoughtId; start: number; end: number } | null
-  showBulletPicker: boolean
-  showColorPicker: boolean
-  showLetterCase: boolean
+  /** The open mutually exclusive dropdown; the Command Center has independent state. */
+  activeDropdown: ActiveDropdown | null
   showDesktopCommandUniverse: boolean
   /** Whether the mobile Formatting Bar is open (showing the bar) or closed (showing only the overflow button). Persisted to local storage. */
   showFormattingBar: boolean
   showGestureMenu: boolean
   showHiddenThoughts: boolean
-  showSortPicker: boolean
   showCommandCenter: boolean
   /**
    * The currently shown modal dialog box.
@@ -177,7 +176,6 @@ interface State {
   showModal?: Modal | null
   showSidebar: boolean
   showMobileCommandUniverse?: boolean
-  showUndoSlider: boolean
   /* Status:
       'disconnected'   Logged out or yet to connect, but not in explicit offline mode.
       'connecting'     Connecting.

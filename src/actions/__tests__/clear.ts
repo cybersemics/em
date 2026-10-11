@@ -8,9 +8,9 @@ beforeEach(initStore)
 
 it('closes an open toolbar dropdown', async () => {
   await dispatch(toggleDropdown({ dropDownType: 'undoSlider' }))
-  expect(store.getState().showUndoSlider).toBe(true)
+  expect(store.getState().activeDropdown?.picker === 'undoSlider').toBe(true)
 
   await dispatch(clear({ full: true }))
 
-  expect(store.getState().showUndoSlider).toBe(false)
+  expect(store.getState().activeDropdown?.picker === 'undoSlider').toBe(false)
 })

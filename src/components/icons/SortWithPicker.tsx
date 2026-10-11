@@ -5,7 +5,9 @@ import SortIcon from './Sort'
 
 /** Sort Icon Component with popup Picker. */
 const SortWithPicker = ({ size = 18, style, cssRaw }: IconType) => {
-  const showSortPicker = useSelector(state => state.showSortPicker)
+  const showSortPicker = useSelector(
+    state => state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'sortPicker',
+  )
 
   return (
     <div>

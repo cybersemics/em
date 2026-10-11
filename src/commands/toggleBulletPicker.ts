@@ -27,7 +27,7 @@ const toggleBulletPickerCommand = {
     const simplePath = simplifyPath(state, rootedParentOf(state, state.cursor))
     return getBulletStyle(state, head(simplePath)) !== null
   },
-  isDropdownOpen: state => !!state.showBulletPicker,
+  isDropdownOpen: state => !!(state.activeDropdown?.picker === 'bulletPicker'),
 } satisfies Command
 
 export default toggleBulletPickerCommand

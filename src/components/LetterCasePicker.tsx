@@ -20,7 +20,9 @@ const casingTypes: LetterCaseType[] = ['LowerCase', 'UpperCase', 'SentenceCase',
 /** Letter Case Picker component. */
 const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
   const dispatch = useDispatch()
-  const showLetterCase = useSelector(state => state.showLetterCase)
+  const showLetterCase = useSelector(
+    state => state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'letterCase',
+  )
 
   /** Toggles the Letter Case to the clicked swatch. */
   const toggleLetterCase = (command: LetterCaseType, e: React.MouseEvent | React.TouchEvent) => {
@@ -31,7 +33,7 @@ const LetterCasePicker: FC<{ size?: number }> = memo(({ size }) => {
   const selected = useSelector(state => {
     // The swatches are only rendered while the picker is open, and deriving the letter case of a large multiselection
     // is not free, so there is nothing to derive until then.
-    if (!state.showLetterCase) return ''
+    if (!(state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'letterCase')) return ''
 
     // The selected swatch is the letter case of the thoughts that formatLetterCase edits, i.e. the multiselection when
     // there is one, which may have no cursor at all once the Home button has dismissed it (#4844).
