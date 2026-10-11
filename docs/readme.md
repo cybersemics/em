@@ -12,6 +12,7 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Drag and Drop](drag-and-drop.md) — react-dnd integration and drop targets.
 - [Layout Rendering](layout-rendering.md) — How thoughts are positioned in the absolute-flat-list layout, including the autocrop / vertical-autocrop mechanism and how the cursor is scrolled into view.
 - [Debug Log](debug-log.md) — The on-device rolling log that survives a freeze, how to get it off a device, and how to compare two of them.
+- [iOS Safari Viewport](ios-safari-viewport.md) — How mobile Safari places fixed elements while the keyboard is open, what it reports to the page, overscroll and stale-rendering bugs, and the approaches that failed.
 
 ## Agents
 
