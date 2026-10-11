@@ -18,8 +18,10 @@ import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
+import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
 import reducerFlow from '../util/reducerFlow'
+import alert from './alert'
 import deleteThought from './deleteThought'
 import sort from './sort'
 
@@ -39,14 +41,21 @@ const uncategorize = (state: State, { at }: Options): State => {
   const children = getChildrenRanked(state, head(simplePath))
   const thought = getThoughtById(state, head(simplePath))
 
-  if (children.length === 0 || !thought) return state
+  if (!thought) return state
 
   // Uncategorizing a context in the context view is equivalent to uncategorizing the parent of the cursor SimplePath.
+  // It is resolved before the children are checked, since they are the children of the instance of the thought within the context rather than of the context itself.
+  // The context is uncategorized as the cursor rather than with `at`, so that its =favorite is removed like any other uncategorized favorite.
   // The cursor needs to be updated to stay in the context view.
-  const isInContextView = isContextViewActive(state, parentOf(path))
-  if (isInContextView) {
+  if (isContextViewActive(state, parentOf(path))) {
+    const contextPath = rootedParentOf(state, simplePath)
+
+    // The home context cannot be set as the cursor, so the recursive uncategorize would act on the context view again.
+    if (isRoot(contextPath)) return alert(state, { value: 'The "home context" may not be uncategorized.' })
+
     return reducerFlow([
-      state => uncategorize(state, { at: rootedParentOf(state, simplePath) }),
+      setCursor({ path: contextPath }),
+      state => uncategorize(state, {}),
       setCursor({
         path: appendToPath(parentOf(path), head(parentOf(parentOf(simplePath)))),
         isKeyboardOpen: state.isKeyboardOpen,
@@ -55,9 +64,23 @@ const uncategorize = (state: State, { at }: Options): State => {
     ])(state)
   }
 
+  // A thought whose only children are meta attributes cannot be uncategorized by the user.
+  // importText and swapNote pass `at` to collapse their own intermediate thoughts, whose meta attributes must still be moved up.
+  if (!at && children.every(child => isAttribute(child.value))) {
+    return alert(state, { value: 'Unable to uncategorize thought with no children' })
+  }
+
+  if (children.length === 0) return state
+
+  // The user's favorite is removed with the uncategorized thought rather than moved up, since that would make the parent a favorite.
+  const favoriteId = !at ? findDescendant(state, head(simplePath), '=favorite') : null
+  const movedChildren = children.filter(child => child.id !== favoriteId)
+
   /** Returns first moved child path as new cursor after uncategorize. */
   const getNewCursor = (state: State): Path | null => {
-    const firstVisibleChildOfPrevCursor = (state.showHiddenThoughts ? children : children.filter(isVisible(state)))[0]
+    const firstVisibleChildOfPrevCursor = (
+      state.showHiddenThoughts ? movedChildren : movedChildren.filter(isVisible(state))
+    )[0]
 
     if (!firstVisibleChildOfPrevCursor) return path.length > 1 ? parentOf(path) : null
 
@@ -123,7 +146,7 @@ const uncategorize = (state: State, { at }: Options): State => {
       : null,
 
     // outdent each child
-    ...children.map(child => (state: State) => {
+    ...movedChildren.map(child => (state: State) => {
       // Skip =sort since it has already been moved to the parent.
       if (contextHasSortPreference && child.value === '=sort') return state
 
