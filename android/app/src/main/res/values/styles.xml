@@ -13,6 +13,8 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- The WebView tints its caret and selection handles with the accent, which AppCompat defaults to teal. Use em's royal blue selection handle color. The native theme cannot see em's Theme setting, so it applies in both themes. -->
+        <item name="colorAccent">@color/selectionHandle</item>
     </style>
 
 
