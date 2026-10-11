@@ -11,9 +11,9 @@ import debugLogCompare from './debugLogCompare'
 /** The comparison options the diff CLI defaults to, so the test exercises what an agent actually runs. */
 const defaults = { anchor: 'session', tail: null, ignore: debugLogCompare.DEFAULT_IGNORE, mask: [] }
 
-/** Renders one entry line the way debugLog.format() does. */
-const entry = (t: string, seq: number, type: string, fields?: string): string =>
-  `[${t}] +1ms #${seq} ${type}${fields ? ` ${fields}` : ''}`
+/** Renders one entry line the way debugLog.format() does: the time of day, then the type, which for an action includes its actionType (`action newThought`). */
+const entry = (time: string, seq: number, type: string, fields?: string): string =>
+  `${time} +1ms #${seq} ${type}${fields ? ` ${fields}` : ''}`
 
 /**
  * One run of "press Enter, type a, press Enter, type b", taken verbatim from a live capture and
@@ -27,7 +27,7 @@ const run = ({
   idB,
   ua,
 }: {
-  /** Date portion of every timestamp, so the two runs are not merely seconds apart. */
+  /** Date of the run, written as its `--- date` line, so the two runs are not merely seconds apart. */
   day: string
   /** Sequence number the run starts at. */
   seq: number
@@ -39,24 +39,25 @@ const run = ({
   ua: string
 }): string =>
   [
-    entry(`${day}T12:53:22.074Z`, seq, 'session', `{"ua":"${ua}","screen":"800x600","appVersion":"351.2.0"}`),
-    entry(`${day}T12:53:23.044Z`, seq + 1, 'command', '{"id":"newThought","commandType":"keyboard"}'),
-    entry(`${day}T12:53:23.048Z`, seq + 2, 'action', '{"actionType":"newThought","payload":"{\\"at\\":null}"}'),
-    entry(`${day}T12:53:23.197Z`, seq + 3, 'edit', '{"oldValue":"","newValue":"a","rank":0}'),
-    entry(`${day}T12:53:23.201Z`, seq + 4, 'action', `{"actionType":"editThought","payload":"{\\"path\\":[\\"${idA}\\"]}"}`), // prettier-ignore
-    entry(`${day}T12:53:23.201Z`, seq + 5, 'command', '{"id":"newThought","commandType":"keyboard"}'),
-    entry(`${day}T12:53:23.204Z`, seq + 6, 'action', `{"actionType":"newThought","payload":"{\\"at\\":[\\"${idA}\\"]}"}`), // prettier-ignore
-    entry(`${day}T12:53:23.246Z`, seq + 7, 'edit', '{"oldValue":"","newValue":"b","rank":1}'),
-    entry(`${day}T12:53:23.249Z`, seq + 8, 'action', `{"actionType":"editThought","payload":"{\\"path\\":[\\"${idB}\\"]}"}`), // prettier-ignore
-    entry(`${day}T12:53:23.251Z`, seq + 9, 'move', `{"id":"${idB}","oldRank":1,"newRank":0,"parentId":"00000000000000000000000000000001"}`), // prettier-ignore
+    `--- date: ${day}`,
+    entry('12:53:22.074', seq, 'session', `{"ua":"${ua}","screen":"800x600","appVersion":"351.2.0"}`),
+    entry('12:53:23.044', seq + 1, 'command', '{"id":"newThought","commandType":"keyboard"}'),
+    entry('12:53:23.048', seq + 2, 'action newThought', '{"at":null}'),
+    entry('12:53:23.197', seq + 3, 'edit', '{"oldValue":"","newValue":"a","rank":0}'),
+    entry('12:53:23.201', seq + 4, 'action editThought', `{"path":["${idA}"]}`),
+    entry('12:53:23.201', seq + 5, 'command', '{"id":"newThought","commandType":"keyboard"}'),
+    entry('12:53:23.204', seq + 6, 'action newThought', `{"at":["${idA}"]}`),
+    entry('12:53:23.246', seq + 7, 'edit', '{"oldValue":"","newValue":"b","rank":1}'),
+    entry('12:53:23.249', seq + 8, 'action editThought', `{"path":["${idB}"]}`),
+    entry('12:53:23.251', seq + 9, 'move', `{"id":"${idB}","oldRank":1,"newRank":0,"parentId":"00000000000000000000000000000001"}`), // prettier-ignore
   ].join('\n')
 
 /** A reporter's log: an old run, on another device, with its own ids. */
 const theirs = run({
   day: '2026-08-01',
   seq: 4102,
-  idA: '97e810f0c6ba2f31736f6dac650e0cfd',
-  idB: '2abb43d7e76631baf32014359b5a13d2',
+  idA: '97e810f0c6',
+  idB: '2abb43d7e7',
   ua: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148 Safari/604.1',
 })
 
@@ -64,8 +65,8 @@ const theirs = run({
 const mine = run({
   day: '2026-09-12',
   seq: 8,
-  idA: '94701f3dbfb2860e757b8886868bda6e',
-  idB: '57772fa97c25a845d6efa2feafa4cd44',
+  idA: '94701f3dbf',
+  idB: '57772fa97c',
   ua: 'Mozilla/5.0 (X11; Linux x86_64) HeadlessChrome/152.0.0.0 Safari/537.36',
 })
 
@@ -84,6 +85,14 @@ const testParse = async () => {
   assert.equal(log.entries[1].seq, 9)
   assert.equal(log.entries[1].dt, 1)
   assert.equal(log.entries[1].fields, '{"id":"newThought","commandType":"keyboard"}')
+  assert.equal(log.entries[1].label, null)
+  // the date is carried forward from the `--- date` line, since each entry carries only the time of day
+  assert.equal(log.entries[1].t, Date.parse('2026-09-12T12:53:23.044Z'))
+  // an action's actionType is read as its label
+  assert.equal(log.entries[2].type, 'action')
+  assert.equal(log.entries[2].label, 'newThought')
+  assert.equal(log.entries[2].fields, '{"at":null}')
+  assert.equal(log.skipped, 0, 'the date line was counted as unrecognized')
 }
 
 /**
@@ -103,7 +112,7 @@ const testSameBehaviourDespiteDifferentText = async () => {
 /** Verifies a genuine behavioural difference is found, and reported at the entry where it happens rather than at the first line that differs textually. */
 const testDivergence = async () => {
   // the reporter's second Enter produced a subthought where the local run produced a sibling
-  const diverged = mine.replace('"actionType":"newThought","payload":"{\\"at\\":[\\"94701f3dbfb2860e757b8886868bda6e\\"]}"', '"actionType":"newSubthought","payload":"{\\"at\\":[\\"94701f3dbfb2860e757b8886868bda6e\\"]}"') // prettier-ignore
+  const diverged = mine.replace('action newThought {"at":["94701f3dbf"]}', 'action newSubthought {"at":["94701f3dbf"]}')
   assert.notEqual(diverged, mine, 'fixture substitution did not apply')
 
   const result = compare(theirs, diverged)
@@ -114,15 +123,15 @@ const testDivergence = async () => {
   assert.match(report, /First divergence at compared entry 7/)
   assert.match(report, /newSubthought/)
   // the reporter's entry is marked -, the local capture +
-  assert.match(report, /- \[2026-08-01.*newThought/)
-  assert.match(report, /\+ \[2026-09-12.*newSubthought/)
+  assert.match(report, /- 12:53:23\.204 .*#4108 action newThought/)
+  assert.match(report, /\+ 12:53:23\.204 .*#14 action newSubthought/)
 }
 
 /** Verifies reserved thought ids are compared as themselves. They mean the same thing on every device, so canonicalizing them would discard the only ids that are directly comparable. */
 const testReservedIdsSurvive = async () => {
   const ids = new Map<string, string>()
   const signature = debugLogCompare.signature(
-    debugLogCompare.parse(entry('2026-09-12T00:00:00.000Z', 1, 'move', '{"id":"57772fa97c25a845d6efa2feafa4cd44","parentId":"00000000000000000000000000000001"}'), 'x').entries[0], // prettier-ignore
+    debugLogCompare.parse(entry('00:00:00.000', 1, 'move', '{"id":"57772fa97c","parentId":"00000000000000000000000000000001"}'), 'x').entries[0], // prettier-ignore
     ids,
     [],
   )
@@ -131,7 +140,7 @@ const testReservedIdsSurvive = async () => {
 
   // a move of HOME's child must not compare equal to a move of some other parent's child
   const other = debugLogCompare.signature(
-    debugLogCompare.parse(entry('2026-09-12T00:00:00.000Z', 1, 'move', '{"id":"57772fa97c25a845d6efa2feafa4cd44","parentId":"aabb43d7e76631baf32014359b5a13d2"}'), 'x').entries[0], // prettier-ignore
+    debugLogCompare.parse(entry('00:00:00.000', 1, 'move', '{"id":"57772fa97c","parentId":"aabb43d7e7"}'), 'x').entries[0], // prettier-ignore
     ids,
     [],
   )
@@ -140,11 +149,22 @@ const testReservedIdsSurvive = async () => {
 
 /** Verifies a log read off the console mirror parses the same as one dumped from the buffer, so either source can be compared against the other. */
 const testConsoleMirrorParsesTheSame = async () => {
-  const mirrored = mine
-    .split('\n')
-    .map(line => `debugLog ${line}`)
-    .join('\n')
-  assert.equal(compare(theirs, mirrored).divergence, -1, 'a console-mirrored log did not compare equal to a dump')
+  /** Prefixes every line the way a console listing shows a mirrored one: its own level and timestamp column, then the mirror's prefix. */
+  const mirror = (prefix: string) =>
+    mine
+      .split('\n')
+      .map(line => `${prefix}${line}`)
+      .join('\n')
+  ;['debugLog ', '[info] 2026-09-12 12:53:23 debugLog '].forEach(prefix => {
+    const log = debugLogCompare.parse(mirror(prefix), 'mine')
+    assert.equal(log.skipped, 0, `a mirrored line was not recognized behind ${JSON.stringify(prefix)}`)
+    assert.equal(log.entries[0].t, Date.parse('2026-09-12T12:53:22.074Z'), 'the mirrored date line was not read')
+    assert.equal(
+      compare(theirs, mirror(prefix)).divergence,
+      -1,
+      'a console-mirrored log did not compare equal to a dump',
+    )
+  })
 }
 
 /** Verifies the non-entry parts of a format() dump — the state summary, the frame marker — are carried into the report rather than derailing the parse. */
@@ -153,7 +173,7 @@ const testStateDumpIsReportedNotParsed = async () => {
     mine,
     '--- lastFrameAt: 2026-09-12T12:53:24.000Z',
     '--- state.thoughts: 12 thoughts, 8 lexemes',
-    '57772fa97c25a845d6efa2feafa4cd44 "b" rank:0 parent:00000000000000000000000000000001',
+    '57772fa97c "b" rank:0 parent:00000000000000000000000000000001',
   ].join('\n')
   const log = debugLogCompare.parse(withDump, 'mine')
   assert.equal(log.entries.length, 10, 'dump lines were parsed as entries')
@@ -175,10 +195,10 @@ const testEnvironmentIsReportedNotDiffed = async () => {
 /** Verifies frameGap entries are dropped by default. They measure how loaded the device was, so a reporter's phone produces many and a headless browser almost none. */
 const testFrameGapIgnoredByDefault = async () => {
   const janky = mine.replace(
-    entry('2026-09-12T12:53:23.197Z', 11, 'edit', '{"oldValue":"","newValue":"a","rank":0}'),
+    entry('12:53:23.197', 11, 'edit', '{"oldValue":"","newValue":"a","rank":0}'),
     [
-      entry('2026-09-12T12:53:23.100Z', 99, 'frameGap', '{"gap":812}'),
-      entry('2026-09-12T12:53:23.197Z', 11, 'edit', '{"oldValue":"","newValue":"a","rank":0}'),
+      entry('12:53:23.100', 99, 'frameGap', '{"gap":812}'),
+      entry('12:53:23.197', 11, 'edit', '{"oldValue":"","newValue":"a","rank":0}'),
     ].join('\n'),
   )
   assert.notEqual(janky, mine, 'fixture substitution did not apply')
@@ -193,8 +213,8 @@ const testFrameGapIgnoredByDefault = async () => {
 /** Verifies the comparison starts at the last session entry, so that a reporter's log covering several app launches is compared from the launch the bug happened in rather than from whatever the rolling buffer happened to retain. */
 const testAnchor = async () => {
   const twoSessions = [
-    entry('2026-08-01T10:00:00.000Z', 1, 'action', '{"actionType":"deleteThought","payload":"{}"}'),
-    entry('2026-08-01T10:00:01.000Z', 2, 'action', '{"actionType":"archiveThought","payload":"{}"}'),
+    entry('10:00:00.000', 1, 'action deleteThought'),
+    entry('10:00:01.000', 2, 'action archiveThought'),
     theirs,
   ].join('\n')
   assert.equal(compare(twoSessions, mine).divergence, -1, 'entries before the last session were compared')
@@ -208,10 +228,10 @@ const testAnchor = async () => {
 /** Verifies an entry present in one log and absent from the other aligns as an insertion, so the entries after it still line up instead of every subsequent entry reading as changed. */
 const testInsertionRealigns = async () => {
   const extra = mine.replace(
-    entry('2026-09-12T12:53:23.246Z', 15, 'edit', '{"oldValue":"","newValue":"b","rank":1}'),
+    entry('12:53:23.246', 15, 'edit', '{"oldValue":"","newValue":"b","rank":1}'),
     [
-      entry('2026-09-12T12:53:23.240Z', 98, 'keydown', '{"key":"Dead","isComposing":true}'),
-      entry('2026-09-12T12:53:23.246Z', 15, 'edit', '{"oldValue":"","newValue":"b","rank":1}'),
+      entry('12:53:23.240', 98, 'keydown', '{"key":"Dead","isComposing":true}'),
+      entry('12:53:23.246', 15, 'edit', '{"oldValue":"","newValue":"b","rank":1}'),
     ].join('\n'),
   )
   assert.notEqual(extra, mine, 'fixture substitution did not apply')
@@ -225,25 +245,27 @@ const testInsertionRealigns = async () => {
 }
 
 /**
- * Verifies a per-device nonce is masked even when it sits inside a stringified payload. Every action's
- * payload is JSON.stringify'd before it is logged, so the field arrives escaped one level deep — masking only
- * the plain form left every initThoughts entry reading as a divergence, which is how this was found.
+ * Verifies a per-device nonce is masked both where format() writes it — plainly, among the fields it parsed out
+ * of the payload — and inside a payload the field cap cut, which no longer parses and so stays a string with the
+ * field escaped one level deep.
  */
 const testMaskingReachesNestedPayloads = async () => {
-  /** Renders the initThoughts entry, whose payload carries the client's nonce escaped one level deep. */
-  const initThoughts = (clientId: string) =>
-    entry('2026-09-12T12:53:22.500Z', 2, 'action', `{"actionType":"initThoughts","payload":"{\\"clientId\\":\\"${clientId}\\"}"}`) // prettier-ignore
-  assert.match(initThoughts('x'), /\\"clientId\\"/, 'fixture is not escaped, so it proves nothing')
+  /** Renders the initThoughts entry carrying the client's nonce, plainly or inside a payload string that was cut. */
+  const initThoughts = (clientId: string, cut: boolean) =>
+    entry('12:53:22.500', 2, 'action initThoughts', cut ? `{"payload":"{\\"clientId\\":\\"${clientId}\\",\\"x\\":\\"…(+12)"}` : `{"clientId":"${clientId}"}`) // prettier-ignore
+  assert.match(initThoughts('x', true), /\\"clientId\\"/, 'fixture is not escaped, so it proves nothing')
 
-  /** Splices that entry into the reporter's run, after its session entry. */
-  const withNonce = (clientId: string) =>
-    [theirs.split('\n')[0], initThoughts(clientId), ...theirs.split('\n').slice(1)].join('\n')
+  /** Splices that entry into the reporter's run, after its date line and session entry. */
+  const withNonce = (clientId: string, cut: boolean) =>
+    [...theirs.split('\n').slice(0, 2), initThoughts(clientId, cut), ...theirs.split('\n').slice(2)].join('\n')
 
-  assert.equal(
-    compare(withNonce('BJQKAn5PEIrh3C+/T8g6uMucxTjAEjSvmv+8hB3gTLE='), withNonce('42nf0WkeuzhJlNd9UridEt1vLxBnmH9s+y5VHb01UMk=')).divergence, // prettier-ignore
-    -1,
-    'a clientId nested in a payload was compared rather than masked',
-  )
+  ;[false, true].forEach(cut => {
+    assert.equal(
+      compare(withNonce('BJQKAn5PEIrh3C+/T8g6uMucxTjAEjSvmv+8hB3gTLE=', cut), withNonce('42nf0WkeuzhJlNd9UridEt1vLxBnmH9s+y5VHb01UMk=', cut)).divergence, // prettier-ignore
+      -1,
+      `a clientId ${cut ? 'escaped in a cut payload' : 'among the fields'} was compared rather than masked`,
+    )
+  })
 }
 
 /**
@@ -251,11 +273,12 @@ const testMaskingReachesNestedPayloads = async () => {
  * is a file downloaded from an issue attachment, so it is the one input that must never be trusted to parse.
  */
 const testDamagedSessionEntry = async () => {
-  const damaged = entry('2026-09-12T12:53:22.074Z', 8, 'session', '{"ua":"Mozilla/5.0", "screen":}')
-  const log = debugLogCompare.parse([damaged, ...mine.split('\n').slice(1)].join('\n'), 'mine')
+  const damaged = entry('12:53:22.074', 8, 'session', '{"ua":"Mozilla/5.0", "screen":}')
+  const withDamaged = [mine.split('\n')[0], damaged, ...mine.split('\n').slice(2)].join('\n')
+  const log = debugLogCompare.parse(withDamaged, 'mine')
   assert.equal(log.session, null, 'a damaged session entry was not tolerated')
   assert.equal(log.entries.length, 10, 'the rest of the log was lost with it')
-  assert.equal(compare(theirs, [damaged, ...mine.split('\n').slice(1)].join('\n')).divergence, -1)
+  assert.equal(compare(theirs, withDamaged).divergence, -1)
 }
 
 /**
@@ -266,7 +289,7 @@ const testDamagedSessionEntry = async () => {
 const testStateDumpIsNotCountedAsSkipped = async () => {
   const thoughts = Array.from(
     { length: 300 },
-    (_, i) => `aa${String(i).padStart(30, '0')} "t${i}" rank:${i} parent:00000000000000000000000000000001`,
+    (_, i) => `aa${String(i).padStart(8, '0')} "t${i}" rank:${i} parent:00000000000000000000000000000001`,
   )
   const log = debugLogCompare.parse([mine, '--- state.thoughts: 300 thoughts, 300 lexemes', ...thoughts].join('\n'), 'mine') // prettier-ignore
   assert.equal(log.skipped, 0, 'the state dump was counted as unparsed lines')
@@ -288,20 +311,26 @@ const testEnvironmentPrefersTheFormatHeader = async () => {
     '--- userAgent: Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148',
     '--- version: 349.1.0',
     '--- commit: abc1234',
+    '--- display: standalone, portrait-primary, dpr 3, scale 1, safe-area-bottom 34',
+    '--- url: https://em.org/~/home',
+    '--- evicted: 3 earlier entries',
   ]
 
   // a long log whose session entry has been evicted, leaving only the header
-  const evicted = debugLogCompare.parse([...header, ...theirs.split('\n').slice(1)].join('\n'), 'theirs')
+  const lines = theirs.split('\n')
+  const evicted = debugLogCompare.parse([...header, lines[0], ...lines.slice(2)].join('\n'), 'theirs')
   assert.equal(evicted.entries.filter(e => e.type === 'session').length, 0, 'fixture still has a session entry')
   assert.equal(evicted.session?.version, '349.1.0')
   assert.equal(evicted.session?.device, 'iPhone (ios), 390x844, touch')
+  assert.equal(evicted.session?.display, 'standalone, portrait-primary, dpr 3, scale 1, safe-area-bottom 34')
+  assert.equal(evicted.session?.url, 'https://em.org/~/home')
   assert.equal(evicted.skipped, 0, 'the header was counted as unrecognized')
 
   // the session fields the header restates are dropped, so each fact is reported once rather than twice
   assert.equal(evicted.session?.ua, undefined, 'the session ua survived alongside the header userAgent')
   assert.equal(evicted.session?.appVersion, undefined, 'the session appVersion survived alongside the header version')
 
-  // an older log, written before the header existed, still reports its session entry
+  // an excerpt read off the console mirror carries no header, so it still reports its session entry
   assert.match(String(debugLogCompare.parse(theirs, 'theirs').session?.ua), /iPhone/)
 
   assert.match(
