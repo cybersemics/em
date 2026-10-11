@@ -274,6 +274,11 @@ const globalCss = defineGlobalStyles({
         userSelect: 'none',
       },
     },
+    // Hide the caret of the collapsed selection during a native text drag on Android, leaving the single drop
+    // caret rendered by NativeTextDragCaret. See onAndroidDragOver in initEvents.ts.
+    _nativeTextDrag: {
+      caretColor: 'transparent',
+    },
     _test: {
       // Caret should be invisible in puppeteer tests as the blink timing differs between runs and will fail the screenshot tests.
       // Do this here rather than programmatically in order to avoid an extra page.evaluate.
@@ -631,6 +636,7 @@ export default defineConfig({
     iphone: '[data-platform=iphone] &',
     dragHold: '[data-drag-hold=true] &',
     dragInProgress: '[data-drag-in-progress=true] &',
+    nativeTextDrag: '[data-native-text-drag=true] &',
   },
 
   // The output directory for your css system
