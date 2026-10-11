@@ -519,13 +519,15 @@ export default defineConfig({
             'helpGenie',
             // Above dialogs so the pinned command stays visible over the Mobile Command Universe. See docs/learning.md.
             'pinnedCommandExpanded',
+            // Above dialogs so a dry run traced over the pinned command's tooltip is drawn over the Mobile Command
+            // Universe, and below the tooltip, as in the thoughtspace.
+            'gestureTrace',
             'dialog',
             'dialogContainer',
             'popup',
             'notification',
             'cloneDroppedThought',
             'hoverArrow',
-            'gestureTrace',
             'gestureContentBlur',
             'hamburgerMenu',
             'sidebar',
