@@ -4832,15 +4832,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pandacss/cli@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/cli@npm:2.1.1"
+"@pandacss/cli@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/cli@npm:2.1.2"
   dependencies:
     "@clack/prompts": "npm:1.7.0"
-    "@pandacss/compiler": "npm:2.1.1"
-    "@pandacss/compiler-shared": "npm:2.1.1"
-    "@pandacss/config": "npm:2.1.1"
-    "@pandacss/types": "npm:2.1.1"
+    "@pandacss/compiler": "npm:2.1.2"
+    "@pandacss/compiler-shared": "npm:2.1.2"
+    "@pandacss/config": "npm:2.1.2"
+    "@pandacss/types": "npm:2.1.2"
     "@parcel/watcher": "npm:2.5.6"
     citty: "npm:0.2.2"
     fflate: "npm:0.8.3"
@@ -4849,91 +4849,91 @@ __metadata:
   bin:
     panda: bin.js
     pandacss: bin.js
-  checksum: 10c0/8be4bf4e195e109a30a7003126b8b2782405117856899db451e99be568e06ac685cd501c08ad5c1f3600cd3b3d6fb5807e11dcb1b77b6b3735268025faac300c
+  checksum: 10c0/30793b890b9dc51d6d7de7a7f44622cab9e8afbea6b0df623da079db330dea0edbea67616e0d963fcaf6093416cafa049e4a012bd8f75f2fb775f4bdde3d0915
   languageName: node
   linkType: hard
 
-"@pandacss/compiler-darwin-arm64@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler-darwin-arm64@npm:2.1.1"
+"@pandacss/compiler-darwin-arm64@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler-darwin-arm64@npm:2.1.2"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@pandacss/compiler-darwin-x64@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler-darwin-x64@npm:2.1.1"
+"@pandacss/compiler-darwin-x64@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler-darwin-x64@npm:2.1.2"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@pandacss/compiler-linux-arm64-gnu@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler-linux-arm64-gnu@npm:2.1.1"
+"@pandacss/compiler-linux-arm64-gnu@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler-linux-arm64-gnu@npm:2.1.2"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@pandacss/compiler-linux-arm64-musl@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler-linux-arm64-musl@npm:2.1.1"
+"@pandacss/compiler-linux-arm64-musl@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler-linux-arm64-musl@npm:2.1.2"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@pandacss/compiler-linux-x64-gnu@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler-linux-x64-gnu@npm:2.1.1"
+"@pandacss/compiler-linux-x64-gnu@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler-linux-x64-gnu@npm:2.1.2"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@pandacss/compiler-linux-x64-musl@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler-linux-x64-musl@npm:2.1.1"
+"@pandacss/compiler-linux-x64-musl@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler-linux-x64-musl@npm:2.1.2"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@pandacss/compiler-shared@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler-shared@npm:2.1.1"
+"@pandacss/compiler-shared@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler-shared@npm:2.1.2"
   dependencies:
-    "@pandacss/types": "npm:2.1.1"
-  checksum: 10c0/630546ffb6d00cdd5eb401123a44c8e53fd637ba8f89f29c2370c51bb3ef18848663daf5c51a8e0dad9b8ed32b375a107c03e77cf13a677b4bc5a806ca7ef3c4
+    "@pandacss/types": "npm:2.1.2"
+  checksum: 10c0/39ebcb489350f70ea1e30cececc4ef8ce9b2ddfd4877c2bccbd9c989e886dc10495d954ac4c1210628ce7037d2463989d7191f40cf35aa15d17b7e41f074f03c
   languageName: node
   linkType: hard
 
-"@pandacss/compiler-win32-arm64-msvc@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler-win32-arm64-msvc@npm:2.1.1"
+"@pandacss/compiler-win32-arm64-msvc@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler-win32-arm64-msvc@npm:2.1.2"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@pandacss/compiler-win32-x64-msvc@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler-win32-x64-msvc@npm:2.1.1"
+"@pandacss/compiler-win32-x64-msvc@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler-win32-x64-msvc@npm:2.1.2"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@pandacss/compiler@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/compiler@npm:2.1.1"
+"@pandacss/compiler@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/compiler@npm:2.1.2"
   dependencies:
     "@napi-rs/wasm-runtime": "npm:^1.1.6"
-    "@pandacss/compiler-darwin-arm64": "npm:2.1.1"
-    "@pandacss/compiler-darwin-x64": "npm:2.1.1"
-    "@pandacss/compiler-linux-arm64-gnu": "npm:2.1.1"
-    "@pandacss/compiler-linux-arm64-musl": "npm:2.1.1"
-    "@pandacss/compiler-linux-x64-gnu": "npm:2.1.1"
-    "@pandacss/compiler-linux-x64-musl": "npm:2.1.1"
-    "@pandacss/compiler-shared": "npm:2.1.1"
-    "@pandacss/compiler-win32-arm64-msvc": "npm:2.1.1"
-    "@pandacss/compiler-win32-x64-msvc": "npm:2.1.1"
-    "@pandacss/config": "npm:2.1.1"
-    "@pandacss/types": "npm:2.1.1"
+    "@pandacss/compiler-darwin-arm64": "npm:2.1.2"
+    "@pandacss/compiler-darwin-x64": "npm:2.1.2"
+    "@pandacss/compiler-linux-arm64-gnu": "npm:2.1.2"
+    "@pandacss/compiler-linux-arm64-musl": "npm:2.1.2"
+    "@pandacss/compiler-linux-x64-gnu": "npm:2.1.2"
+    "@pandacss/compiler-linux-x64-musl": "npm:2.1.2"
+    "@pandacss/compiler-shared": "npm:2.1.2"
+    "@pandacss/compiler-win32-arm64-msvc": "npm:2.1.2"
+    "@pandacss/compiler-win32-x64-msvc": "npm:2.1.2"
+    "@pandacss/config": "npm:2.1.2"
+    "@pandacss/types": "npm:2.1.2"
   dependenciesMeta:
     "@pandacss/compiler-darwin-arm64":
       optional: true
@@ -4951,35 +4951,35 @@ __metadata:
       optional: true
     "@pandacss/compiler-win32-x64-msvc":
       optional: true
-  checksum: 10c0/b8250515674020d0e480d07e0f83a4672eb44c9423894e121010c4333f20f43bdc0c8afff59a3c4d2ba0940850b5beee7a4d07fcfdfba963f5cac25c33582dd6
+  checksum: 10c0/657438879550d4214cf4f473f731d8cc9bd0d3a49a33baab46e030f686d14f9c496099260eba5e445b5a0102909b9de53a5e4003cb209ff79bb632cb3d9a935b
   languageName: node
   linkType: hard
 
-"@pandacss/config@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/config@npm:2.1.1"
+"@pandacss/config@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/config@npm:2.1.2"
   dependencies:
-    "@pandacss/compiler-shared": "npm:2.1.1"
-    "@pandacss/types": "npm:2.1.1"
+    "@pandacss/compiler-shared": "npm:2.1.2"
+    "@pandacss/types": "npm:2.1.2"
     acorn: "npm:^8.17.0"
     acorn-walk: "npm:^8.3.5"
     javascript-stringify: "npm:2.1.0"
     magic-string: "npm:^0.30.21"
     microdiff: "npm:1.5.0"
     rolldown: "npm:1.2.7"
-  checksum: 10c0/0647c254ffb2e7e4b4b85a3dfb9ebd5ba296f44d4c5a8fdea0d1eb5a5570784179e7a7d79f826bfa27bff1193bf070865c6f788e731d75069d2c2e58af729bc9
+  checksum: 10c0/6aa9511827c1e66fb59b20b7e85dd83a0b80dcee9d9405bbddd4c4c779f945ed37de76b58462120427cba4881637b0a488fe92eb5fe6be3b71ede244a60390c1
   languageName: node
   linkType: hard
 
-"@pandacss/dev@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/dev@npm:2.1.1"
+"@pandacss/dev@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/dev@npm:2.1.2"
   dependencies:
-    "@pandacss/cli": "npm:2.1.1"
-    "@pandacss/compiler": "npm:2.1.1"
-    "@pandacss/config": "npm:2.1.1"
-    "@pandacss/postcss": "npm:2.1.1"
-    "@pandacss/types": "npm:2.1.1"
+    "@pandacss/cli": "npm:2.1.2"
+    "@pandacss/compiler": "npm:2.1.2"
+    "@pandacss/config": "npm:2.1.2"
+    "@pandacss/postcss": "npm:2.1.2"
+    "@pandacss/types": "npm:2.1.2"
   peerDependencies:
     postcss: ">=8"
   peerDependenciesMeta:
@@ -4988,48 +4988,48 @@ __metadata:
   bin:
     panda: bin.js
     pandacss: bin.js
-  checksum: 10c0/88563bf49c745f0edf2dc2aa2021de7a18fddbe4bd5dbb0f4a698808765b863b3ccc82c25017dc094c80d9377bb7cdd8f8add3f96333303c9cd818b16342a61a
+  checksum: 10c0/b745c1546e24dce94471bc09b9ac9be4b59fbf10ee975b6187f4b11f7183f0784c63c7c7f3ca91a81d519e7ba5450dd73cd10757c111a97eaac124117e0b4bfd
   languageName: node
   linkType: hard
 
-"@pandacss/eslint-plugin@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/eslint-plugin@npm:2.1.1"
+"@pandacss/eslint-plugin@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/eslint-plugin@npm:2.1.2"
   dependencies:
-    "@pandacss/compiler": "npm:2.1.1"
-    "@pandacss/compiler-shared": "npm:2.1.1"
-    "@pandacss/config": "npm:2.1.1"
+    "@pandacss/compiler": "npm:2.1.2"
+    "@pandacss/compiler-shared": "npm:2.1.2"
+    "@pandacss/config": "npm:2.1.2"
   peerDependencies:
     eslint: ">=9"
-  checksum: 10c0/a32fe8016e02eb9f615173df1e030a9381c16f81d435d1fcc6d00ce674a154c9b37c84f45ed5de4b8f7ee55c9c934eb803c01c177b7f85a1c734112ee39ae908
+  checksum: 10c0/8bbcd902c1624936d9f3275092965c1d4e8ee4e3f5a1cb1949dbab0db42067f8cf028a569193ce82cc8c6cbb3ca945bbe95afdf463e086ede3ea52b414b5dc78
   languageName: node
   linkType: hard
 
-"@pandacss/postcss@npm:2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/postcss@npm:2.1.1"
+"@pandacss/postcss@npm:2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/postcss@npm:2.1.2"
   dependencies:
-    "@pandacss/compiler": "npm:2.1.1"
-    "@pandacss/compiler-shared": "npm:2.1.1"
+    "@pandacss/compiler": "npm:2.1.2"
+    "@pandacss/compiler-shared": "npm:2.1.2"
   peerDependencies:
     postcss: ">=8"
-  checksum: 10c0/f19efd5790c48e35e6aa9990d389f8078f516b420528a8c25e7b3858168cf5a2cca39d51ec772e69aa3625051a4e3d8b9440453ca0d6325a910f93a7c41d755e
+  checksum: 10c0/fc0238596fff5379a34ec83be63e834efafff40287b2f178788b67d581c251562677013b5041757dd97a2abc4b0907b8f1b084f5bf139e82c594655ff7638bd3
   languageName: node
   linkType: hard
 
-"@pandacss/preset-base@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/preset-base@npm:2.1.1"
+"@pandacss/preset-base@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/preset-base@npm:2.1.2"
   dependencies:
-    "@pandacss/types": "npm:2.1.1"
-  checksum: 10c0/85fa257e024aa267a3dad9142352346368ea5265ebd9f9e795f19fab2e319a3b1b6b86cd5b27c9771e93b3b14a543171b57bec4a29ab431cb4e47140a48152e1
+    "@pandacss/types": "npm:2.1.2"
+  checksum: 10c0/ac2637a8fa494be4c2a54bbd1a3716952ed1d1b803b2b5e25a2c99c039694d2f6363f6b9f0b2a0c4cf42a5bbcc25c13da900d4c7e282bb4d7dbf9448f204eed6
   languageName: node
   linkType: hard
 
-"@pandacss/types@npm:2.1.1, @pandacss/types@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "@pandacss/types@npm:2.1.1"
-  checksum: 10c0/d19cb8295a471479543974fb45868026ab3c5935fca4955b845f8762588e361bdd941e47ef75e08616ce540cdf859cbe81300381cfa18f1ed9ca75ce2a7dcbd0
+"@pandacss/types@npm:2.1.2, @pandacss/types@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "@pandacss/types@npm:2.1.2"
+  checksum: 10c0/416887ec7fd868731043b4743d6e6ac30437701b29ed4e7b66ba8fbd987618831eb65a8b8b4d0ae97f797c73a6d93275f12f08d4776a52bf52b63c73bb611e0e
   languageName: node
   linkType: hard
 
@@ -12296,10 +12296,10 @@ __metadata:
     "@emotion/styled": "npm:^11.14.1"
     "@eslint-community/eslint-plugin-eslint-comments": "npm:^4.8.1"
     "@mui/material": "npm:^9.4.0"
-    "@pandacss/dev": "npm:^2.1.1"
-    "@pandacss/eslint-plugin": "npm:^2.1.1"
-    "@pandacss/preset-base": "npm:^2.1.1"
-    "@pandacss/types": "npm:^2.1.1"
+    "@pandacss/dev": "npm:^2.1.2"
+    "@pandacss/eslint-plugin": "npm:^2.1.2"
+    "@pandacss/preset-base": "npm:^2.1.2"
+    "@pandacss/types": "npm:^2.1.2"
     "@radix-ui/react-dialog": "npm:^1.1.23"
     "@radix-ui/react-visually-hidden": "npm:^1.2.11"
     "@redux-devtools/extension": "npm:^4.0.0"
