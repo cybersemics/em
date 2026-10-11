@@ -31,6 +31,7 @@ import Footer from './Footer'
 import FormattingBar from './FormattingBar'
 import HamburgerMenu from './HamburgerMenu'
 import LatestCommandsDiagram from './LatestCommandsDiagram'
+import PinnedCommand from './Learning/PinnedCommand'
 import MultiGesture from './MultiGesture'
 import NavBar from './NavBar'
 import Sidebar from './Sidebar/Sidebar'
@@ -248,6 +249,7 @@ const AppComponent: FC = () => {
         <>
           {/* NavBar must be outside MultiGestureIfTouch in order to have a higher stacking order than the Sidebar. Otherwise the user can accidentally activate the Sidebar edge swipe when trying to tap the Home icon. */}
           <NavBar position='bottom' />
+          <PinnedCommand />
 
           <CommandCenter />
           <div style={{ fontSize }}>
