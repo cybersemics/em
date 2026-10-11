@@ -147,6 +147,15 @@ class MultiGesture extends React.Component<MultiGestureProps> {
     // enable/disable scrolling based on where the user clicks
     // TODO: Could this be moved to onMoveShouldSetResponder?
     document.body.addEventListener('touchstart', e => {
+      // A first finger starts a new touch interaction, so clear whatever the previous one left behind. Its touchend
+      // does not always reach the window listener below that normally resets it: a toolbar dropdown option stops the
+      // propagation of the touchend that selects it, which would leave the abandon latch set by the touch on the
+      // toolbar, and the next gesture would be abandoned. See #5850.
+      if (e.touches.length === 1) {
+        this.multitouch = false
+        this.reset()
+      }
+
       // Latch as soon as a second finger lands, before the in-progress check below, so that a finger joining a
       // gesture already underway is caught too. It stays latched until every finger is up.
       if (e.touches.length > 1) {
