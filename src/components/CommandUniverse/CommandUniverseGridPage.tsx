@@ -25,8 +25,11 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
   // This fixes a bug where the crossfade between results when searching/sorting did not play on WebKit/Safari.
   const fadeRef = React.useRef<HTMLDivElement>(null)
 
+  // Fills the page surface, so zoom origins measured against it match the surface's transform origin.
+  const pageRef = React.useRef<HTMLDivElement>(null)
+
   return (
-    <>
+    <div ref={pageRef} className={css({ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 })}>
       {/* Search row that lives between the header and the scrollable content. Sits outside the scroll
           container so it stays put as the command list scrolls. Left padding matches contentInner so the
           search glyph aligns with the section headers and command list down the left edge of the panel. */}
@@ -82,6 +85,7 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
                       className={css({
                         flexGrow: 1,
                         height: '1px',
+                        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
                         background:
                           'linear-gradient(to right, {colors.transparent} 0%, {colors.dialogHeaderDivider} 100%)',
                       })}
@@ -103,20 +107,29 @@ const CommandUniverseGridPage: React.FC<Record<string, never>> = () => {
                       className={css({
                         flexGrow: 1,
                         height: '1px',
+                        // eslint-disable-next-line @pandacss/prefer-token -- every color in the gradient is a token reference
                         background:
                           'linear-gradient(to right, {colors.dialogHeaderDivider} 0%, {colors.transparent} 100%)',
                       })}
                     />
                   </div>
-                  <CommandUniverseGrid commands={section.commands} search={search} />
+                  <CommandUniverseGrid
+                    commands={section.commands}
+                    search={search}
+                    scrollRootRef={scrollRef}
+                    pageRef={pageRef}
+                  />
                 </div>
               ))}
             </div>
           </FadeTransition>
         </SwitchTransition>
       </DialogContent>
-    </>
+    </div>
   )
 }
 
-export default CommandUniverseGridPage
+const CommandUniverseGridPageMemo = React.memo(CommandUniverseGridPage)
+CommandUniverseGridPageMemo.displayName = 'CommandUniverseGridPage'
+
+export default CommandUniverseGridPageMemo

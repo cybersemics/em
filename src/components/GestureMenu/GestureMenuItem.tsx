@@ -109,7 +109,8 @@ const GestureMenuItem: FC<{
             lineHeight: '1em',
             fontSize: '0.95rem',
             whiteSpace: 'nowrap',
-            color: disabled ? 'gray45' : selected ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
+            // eslint-disable-next-line @pandacss/prefer-token -- white/60 is the white token with an opacity modifier
+            color: disabled ? 'gray45' : selected ? 'white' : 'white/60',
             fontWeight: selected ? 600 : 400,
             textShadow:
               selected && !disabled

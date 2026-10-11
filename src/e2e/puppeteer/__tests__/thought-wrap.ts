@@ -36,15 +36,13 @@ const testSuite = (width: number) => {
   })
 }
 
-describe('Font Size: 18 (default)', () => {
+describe('Font Size: 16 (default)', () => {
   testSuite(560)
   testSuite(575)
 })
 
 describe('Font Size: 13', () => {
   beforeEach(async () => {
-    await click('[data-testid=decrease-font]') // 17
-    await click('[data-testid=decrease-font]') // 16
     await click('[data-testid=decrease-font]') // 15
     await click('[data-testid=decrease-font]') // 14
     await click('[data-testid=decrease-font]') // 13
@@ -62,6 +60,8 @@ describe('Font Size: 13', () => {
 
 describe('Font Size: 28', () => {
   beforeEach(async () => {
+    await click('[data-testid=increase-font]') // 17
+    await click('[data-testid=increase-font]') // 18
     await click('[data-testid=increase-font]') // 19
     await click('[data-testid=increase-font]') // 20
     await click('[data-testid=increase-font]') // 21

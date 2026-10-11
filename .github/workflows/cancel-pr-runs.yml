@@ -16,9 +16,9 @@ name: Cancel PR Runs
 # is what actually shipped. A PR closed without merging has nothing left to report to at all.
 #
 # Two consequences to expect. A merged PR's checks now read `cancelled` rather than green, which
-# is honest: those runs did not finish. And a PR that auto-merges on Lint alone (Dependabot's
-# path, see dependabot-automerge.yml) loses the tail of its slower suites — the push run on main
-# is what surfaces a regression from then on.
+# is honest: those runs did not finish. And a PR merged on Lint alone, the one required check,
+# loses the tail of its slower suites — the push run on main is what surfaces a regression from
+# then on. Dependabot bumps do not take that path: dependabot-automerge.yml waits for every check.
 on:
   # Not `pull_request`: a fork PR gets a read-only GITHUB_TOKEN there, and cancelling needs
   # actions: write. pull_request_target runs in the base repo's context, where the token can

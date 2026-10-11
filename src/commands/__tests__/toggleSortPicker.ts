@@ -1,4 +1,5 @@
 import { importTextActionCreator as importText } from '../../actions/importText'
+import { indentActionCreator as indent } from '../../actions/indent'
 import { newThoughtActionCreator as newThought } from '../../actions/newThought'
 import { outdentActionCreator as outdent } from '../../actions/outdent'
 import { setSortPreferenceActionCreator as setSortPreference } from '../../actions/setSortPreference'
@@ -13,7 +14,9 @@ import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helper
 import categorizeCommand from '../categorize'
 import deleteCommand from '../delete'
 import favoriteCommand from '../favorite'
+import noteCommand from '../note'
 import outdentCommand from '../outdent'
+import pinCommand from '../pin'
 import splitSentencesCommand from '../splitSentences'
 import toggleSortPickerCommand from '../toggleSortPicker'
 
@@ -350,6 +353,186 @@ describe('toggleSortPicker error', () => {
       expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
     },
   )
+
+  // https://github.com/cybersemics/em/issues/5736
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after pinning a thought in a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - aaa
+            - bbb
+            - ccc
+            - ddd
+          `,
+        }),
+      ])
+
+      // Advance the clock between each step so that the thoughts, the indent, the sort preference, and the pin all have
+      // distinct timestamps, as they do when a user performs each step some time after the last.
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch([setCursor(['ccc']), indent()])
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['aaa']))
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      executeCommand(pinCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error after unpinning a thought in a context sorted by Updated %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - aaa
+            - bbb
+            - ccc
+          `,
+        }),
+        setCursor(['aaa']),
+      ])
+
+      vi.advanceTimersByTime(1000)
+
+      executeCommand(pinCommand, { store })
+
+      // Pin a second thought later, so that aaa is not the most recently updated thought when the context is sorted.
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['bbb']))
+      executeCommand(pinCommand, { store })
+
+      vi.advanceTimersByTime(1000)
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Updated', direction },
+        }),
+      )
+
+      vi.advanceTimersByTime(1000)
+
+      store.dispatch(setCursor(['aaa']))
+      executeCommand(pinCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  // https://github.com/cybersemics/em/issues/3965
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when a note is added to a thought in a context sorted by Note %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - A
+            - B
+            - C
+            - D
+          `,
+        }),
+        setCursor(['A']),
+      ])
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Note', direction },
+        }),
+      )
+
+      store.dispatch(setCursor(['C']))
+      executeCommand(noteCommand, { store })
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+
+      store.dispatch(editThought(['C', '=note', ''], 'Thesa'))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  it.each(['Asc', 'Desc'] as const)(
+    'does not report an error when a note is cleared in a context sorted by Note %s',
+    direction => {
+      store.dispatch([
+        importText({
+          text: `
+            - A
+              - =note
+                - x
+            - B
+            - C
+              - =note
+                - y
+            - D
+          `,
+        }),
+        setCursor(['A']),
+      ])
+
+      const state = store.getState()
+      store.dispatch(
+        setSortPreference({
+          simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+          sortPreference: { type: 'Note', direction },
+        }),
+      )
+
+      store.dispatch(editThought(['A', '=note', 'x'], ''))
+
+      expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+    },
+  )
+
+  it('does not report an error when a note is given formatting in a context sorted by Note Desc', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - A
+            - =note
+              - b
+          - B
+          - C
+            - =note
+              - a
+        `,
+      }),
+      setCursor(['A']),
+    ])
+
+    const state = store.getState()
+    store.dispatch(
+      setSortPreference({
+        simplePath: simplifyPath(state, rootedParentOf(state, state.cursor!)),
+        sortPreference: { type: 'Note', direction: 'Desc' },
+      }),
+    )
+
+    store.dispatch(editThought(['C', '=note', 'a'], '<b>z</b>'))
+
+    expect(toggleSortPickerCommand.error?.(store.getState())).toBeNull()
+  })
 
   // https://github.com/cybersemics/em/issues/4101
   it.each(['Asc', 'Desc'] as const)(

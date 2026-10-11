@@ -97,6 +97,9 @@ const useLongPress = (
       // The flag is latched by the capture-phase touchstart listener in initEvents, which runs first.
       if (touchStore.getState().pressOnCaret) return
 
+      // On iOS 27 a withheld tap on an empty thought gives no sign that it lifted (#5660).
+      if (touchStore.getState().pressInEmptyThought) return
+
       setPressing(true)
     },
     [setPressing],
@@ -157,8 +160,8 @@ const useLongPress = (
       if ('pointerType' in e.nativeEvent && e.nativeEvent.pointerType === 'touch') {
         const state = store.getState()
         const isEmptyThought = !!state.cursor && getThoughtById(state, head(state.cursor))?.value === ''
-        const { pressOnCaret } = touchStore.getState()
-        if (pressOnCaret && isEmptyThought) return
+        const { pressOnCaret, pressInEmptyThought } = touchStore.getState()
+        if ((pressOnCaret || pressInEmptyThought) && isEmptyThought) return
 
         e.preventDefault()
         e.stopPropagation()

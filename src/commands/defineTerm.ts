@@ -74,6 +74,7 @@ const defineTermAtPaths =
             {
               ...request.thought,
               generating: true,
+              generatingPlaceholder: 'Defining Term',
             },
           ]),
         ),
@@ -151,7 +152,7 @@ const defineTermAtPaths =
           pendingDefinitions.delete(request.thought.id)
           const currentThought = getThoughtById(currentState, request.thought.id)
           return currentThought?.generating && currentThought.value === request.originalValue
-            ? [[request.thought.id, { ...currentThought, generating: false }]]
+            ? [[request.thought.id, { ...currentThought, generating: false, generatingPlaceholder: undefined }]]
             : []
         }),
       )
