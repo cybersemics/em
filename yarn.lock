@@ -2384,18 +2384,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/android@npm:^8.5.2":
-  version: 8.5.2
-  resolution: "@capacitor/android@npm:8.5.2"
+"@capacitor/android@npm:^8.5.3":
+  version: 8.5.3
+  resolution: "@capacitor/android@npm:8.5.3"
   peerDependencies:
     "@capacitor/core": ^8.5.0
-  checksum: 10c0/339e79cb00e3cdce6c91dfa647a269bd20f88c524d75b7d267f797130a37a0425722e15c283b707d4530dd8494f50c3cc1a7fedc842f702a55a530a90ed49e54
+  checksum: 10c0/25bfc9a76920e49ccb96e4dcb34a1861f54e8541cdb2f6a2d85d51bff8b8b9f24823a159e55d63417895d12211b66178d87decfbcd22270d7d2edd9156df3121
   languageName: node
   linkType: hard
 
-"@capacitor/cli@npm:^8.5.2":
-  version: 8.5.2
-  resolution: "@capacitor/cli@npm:8.5.2"
+"@capacitor/cli@npm:^8.5.3":
+  version: 8.5.3
+  resolution: "@capacitor/cli@npm:8.5.3"
   dependencies:
     "@ionic/cli-framework-output": "npm:^2.2.8"
     "@ionic/utils-subprocess": "npm:^3.0.1"
@@ -2418,7 +2418,7 @@ __metadata:
   bin:
     cap: bin/capacitor
     capacitor: bin/capacitor
-  checksum: 10c0/1c9b457d0e28e7c3402dd9783cbfa9cad799b5d4ef69c8a6a7679acfb2c718908c45e851a30b18c5be9a1f257cdd4b8b0e7c3fb921c2266deb0547825c8eeb3a
+  checksum: 10c0/0a95f8c110b7f0a321bac57a40054d603733a85e358e1cb915900aa1f5ece4b54463aa85bda0d165adae08f7520841de25a5b34824a0a35e00693191b411465a
   languageName: node
   linkType: hard
 
@@ -2431,12 +2431,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/core@npm:^8.5.2":
-  version: 8.5.2
-  resolution: "@capacitor/core@npm:8.5.2"
+"@capacitor/core@npm:^8.5.3":
+  version: 8.5.3
+  resolution: "@capacitor/core@npm:8.5.3"
   dependencies:
     tslib: "npm:^2.1.0"
-  checksum: 10c0/266f084b124ecbaeece8d763ce5bea1aac234e950b08b137782b94b5b898e248a9bcdfbc5a6ba57a8f8fe35f8bbbaf80ea1d2ce8cd744d7c55010176d5823d0d
+  checksum: 10c0/d6ea860b1ab19c2121e06d673f35a55b8e04732881eff7657baa762ef8fa263db04246ed0a80c0ede6c8d22e4075561db785837435fe1677820d25dc377e09b3
   languageName: node
   linkType: hard
 
@@ -2472,39 +2472,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@capacitor/ios@npm:^8.5.2":
-  version: 8.5.2
-  resolution: "@capacitor/ios@npm:8.5.2"
+"@capacitor/ios@npm:^8.5.3":
+  version: 8.5.3
+  resolution: "@capacitor/ios@npm:8.5.3"
   peerDependencies:
     "@capacitor/core": ^8.5.0
-  checksum: 10c0/aca7d49d3b9cdc16155df0c8c0a8057210ce5f2d2c0e400303ee86baff1f03668c19e8af59fb283223ee4dc49c90efc391366e46d7067814f4e86200b5a4b4ad
+  checksum: 10c0/dec9ee7edf74fb505169813e4a3fc5b470bc4e12787683e320b58ad3a3dce2998eabddf88312c8fa06481b636c7aff4dee5e43d229f96029740fc9169bc62047
   languageName: node
   linkType: hard
 
-"@capacitor/keyboard@npm:^8.0.5":
-  version: 8.0.5
-  resolution: "@capacitor/keyboard@npm:8.0.5"
+"@capacitor/keyboard@npm:^8.0.6":
+  version: 8.0.6
+  resolution: "@capacitor/keyboard@npm:8.0.6"
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
-  checksum: 10c0/264731185eb7000d36df689b69d96c8f8b5f4d1314fcd2852d5ec727af4aedab8b78c192cd02775e3c1f84233a563d0600aad828da009067b5699e733029eb0e
+  checksum: 10c0/00f0599f2ffe08e9fc09c0fdcd0a3d3ef27099fb91f246a2dfcc102407006f027dc640eec0d017359c6ec4b5b18ef608d35df271e9ccdde0fe1b1352b8cbdc17
   languageName: node
   linkType: hard
 
-"@capacitor/share@npm:^8.0.2":
-  version: 8.0.2
-  resolution: "@capacitor/share@npm:8.0.2"
-  peerDependencies:
-    "@capacitor/core": ">=8.0.0"
-  checksum: 10c0/9c9a1938f2e8745fd8394082ee4aee0b8a2cb4b9899209dea8039c6d5a1140df909030215db76f048f7d2d48d32ccd0755231a3599fb54eca39b19caba067c8a
-  languageName: node
-  linkType: hard
-
-"@capacitor/status-bar@npm:^8.0.3":
+"@capacitor/share@npm:^8.0.3":
   version: 8.0.3
-  resolution: "@capacitor/status-bar@npm:8.0.3"
+  resolution: "@capacitor/share@npm:8.0.3"
   peerDependencies:
     "@capacitor/core": ">=8.0.0"
-  checksum: 10c0/f4ea555fd466928e413ea64d0cf52566dd63e96af333f63a33938ffe4068d568a0b3c490f4c4967f29b96d0c91c6867049ad63e413353c287d29a6d8df3e0875
+  checksum: 10c0/121272723b2686b836e90ce4a3225c43248983a2afd7e3d5c22ecb9622d29578ac560719f00a2c2cacad5e7db91d3cab4bacbeac3e8e34fb8e2474a14d5f315c
+  languageName: node
+  linkType: hard
+
+"@capacitor/status-bar@npm:^8.0.4":
+  version: 8.0.4
+  resolution: "@capacitor/status-bar@npm:8.0.4"
+  peerDependencies:
+    "@capacitor/core": ">=8.0.0"
+  checksum: 10c0/f3c291c00e9898b5876df07d745d8931c107a4b40bee3db66c7b564b2e58fbacebcb4c5b95813f8b64f2acdd5eea413a7072025e49051b374878a85dae4f7d89
   languageName: node
   linkType: hard
 
@@ -12199,16 +12199,16 @@ __metadata:
   dependencies:
     "@babel/core": "npm:^8.0.7"
     "@babel/plugin-proposal-private-property-in-object": "npm:^7.21.11"
-    "@capacitor/android": "npm:^8.5.2"
-    "@capacitor/cli": "npm:^8.5.2"
+    "@capacitor/android": "npm:^8.5.3"
+    "@capacitor/cli": "npm:^8.5.3"
     "@capacitor/clipboard": "npm:^8.0.1"
-    "@capacitor/core": "npm:^8.5.2"
+    "@capacitor/core": "npm:^8.5.3"
     "@capacitor/device": "npm:^8.0.3"
     "@capacitor/haptics": "npm:^8.0.2"
-    "@capacitor/ios": "npm:^8.5.2"
-    "@capacitor/keyboard": "npm:^8.0.5"
-    "@capacitor/share": "npm:^8.0.2"
-    "@capacitor/status-bar": "npm:^8.0.3"
+    "@capacitor/ios": "npm:^8.5.3"
+    "@capacitor/keyboard": "npm:^8.0.6"
+    "@capacitor/share": "npm:^8.0.3"
+    "@capacitor/status-bar": "npm:^8.0.4"
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
     "@eslint-community/eslint-plugin-eslint-comments": "npm:^4.8.1"
@@ -24658,17 +24658,17 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "webview-background@workspace:packages/webview"
   dependencies:
-    "@capacitor/android": "npm:^8.5.2"
-    "@capacitor/core": "npm:^8.5.2"
+    "@capacitor/android": "npm:^8.5.3"
+    "@capacitor/core": "npm:^8.5.3"
     "@capacitor/docgen": "npm:^0.3.1"
-    "@capacitor/ios": "npm:^8.5.2"
+    "@capacitor/ios": "npm:^8.5.3"
     "@ionic/swiftlint-config": "npm:^2.0.0"
     rimraf: "npm:^6.1.3"
     rollup: "npm:^4.63.6"
     swiftlint: "npm:^2.0.0"
     typescript: "npm:7.0.2"
   peerDependencies:
-    "@capacitor/core": ^8.5.2
+    "@capacitor/core": ^8.5.3
   languageName: unknown
   linkType: soft
 
