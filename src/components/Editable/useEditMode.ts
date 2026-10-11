@@ -17,7 +17,9 @@ import isMultiEditing from '../../selectors/isMultiEditing'
 import isMulticursorPath from '../../selectors/isMulticursorPath'
 import multitouchStore from '../../stores/multitouchStore'
 import touchStore from '../../stores/touchStore'
+import debugLog from '../../util/debugLog'
 import equalPath from '../../util/equalPath'
+import head from '../../util/head'
 import isCommandKey from '../../util/isCommandKey'
 import lastTouch from './lastTouch'
 import useCaretRestore from './useCaretRestore'
@@ -115,6 +117,23 @@ const useEditMode = ({
           !disabledRef.current)
 
       if (shouldSetSelection) {
+        const shouldAsyncFocus =
+          isTouch &&
+          isSafari() &&
+          lastUndoableActionType !== 'swapParent' &&
+          lastUndoableActionType !== 'swapGrandparent' &&
+          !selection.isThought()
+
+        // Record each programmatic caret placement, which happens without a tap on Enter, gestures and undo, and is
+        // what makes iOS scroll the focused editable into view.
+        debugLog.log('caret', {
+          thoughtId: head(path),
+          offset: cursorOffset,
+          asyncFocus: shouldAsyncFocus,
+          transient: !!transient,
+          hidden: style?.visibility === 'hidden',
+        })
+
         preventAutoscroll(contentRef.current)
 
         /*
@@ -130,13 +149,7 @@ const useEditMode = ({
 
         If the last action is a swap, set the selection synchronously to keep the focus stable after the swap.
       */
-        if (
-          isTouch &&
-          isSafari() &&
-          lastUndoableActionType !== 'swapParent' &&
-          lastUndoableActionType !== 'swapGrandparent' &&
-          !selection.isThought()
-        ) {
+        if (shouldAsyncFocus) {
           asyncFocus()
 
           // asyncFocus parks the focus on its dummy input so that the programmatic selection below is honored.
