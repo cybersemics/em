@@ -102,6 +102,7 @@ const Toolbar: FC<ToolbarProps> = ({ customize, onSelect, selected }) => {
   const distractionFreeTyping = distractionFreeTypingStore.useState()
   const fontSize = useSelector(state => state.fontSize)
   const arrowWidth = fontSize / 3
+  // Only the pickers this Toolbar opened, not those opened from the Formatting Bar, which has its own buttons.
   const showColorPicker = useSelector(
     state => state.activeDropdown?.surface === 'toolbar' && state.activeDropdown.picker === 'colorPicker',
   )

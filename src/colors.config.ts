@@ -69,6 +69,14 @@ const colors = {
     // The Formatting Bar is drawn over a black falloff in both themes, so these are identical in the light palette.
     formattingBarIcon: 'rgba(218, 218, 218, 1)', // #dadada
     formattingBarHighlightGlow: 'rgba(136, 150, 242, 1)', // #8896f2
+    // The Formatting Bar's picker popovers. Drawn over the same black falloff in both themes.
+    formattingBarPopoverTitle: 'rgba(145, 150, 180, 1)', // #9196b4
+    formattingBarPopoverDescription: 'rgba(123, 136, 214, 1)', // #7b88d6
+    formattingBarPopoverInfoBg: 'rgba(37, 42, 67, 1)', // #252a43
+    formattingBarPopoverInfoBgLit: 'rgba(73, 86, 138, 1)', // #49568a
+    formattingBarPopoverInfoGlow: 'rgba(110, 125, 230, 0.6)',
+    formattingBarPopoverSelectedBg: 'rgba(42, 43, 66, 1)', // #2a2b42
+    formattingBarPopoverSelectedBorder: 'rgba(61, 64, 99, 1)', // #3d4063
     pickerBg: 'rgba(20, 20, 20, 1)', // #141414
     sidebarBg: 'rgba(10, 10, 18, 1)', // #0a0a12
     sidebarOverlayBg: 'rgba(0, 0, 0, 0.5)', // this is defined separately to bgOverlay50 as it doesn't change between dark/light mode
@@ -193,6 +201,14 @@ const colors = {
     // Intentionally identical to the dark palette.
     formattingBarIcon: 'rgba(218, 218, 218, 1)', // #dadada
     formattingBarHighlightGlow: 'rgba(136, 150, 242, 1)', // #8896f2
+    // The Formatting Bar's picker popovers. Drawn over the same black falloff in both themes.
+    formattingBarPopoverTitle: 'rgba(145, 150, 180, 1)', // #9196b4
+    formattingBarPopoverDescription: 'rgba(123, 136, 214, 1)', // #7b88d6
+    formattingBarPopoverInfoBg: 'rgba(37, 42, 67, 1)', // #252a43
+    formattingBarPopoverInfoBgLit: 'rgba(73, 86, 138, 1)', // #49568a
+    formattingBarPopoverInfoGlow: 'rgba(110, 125, 230, 0.6)',
+    formattingBarPopoverSelectedBg: 'rgba(42, 43, 66, 1)', // #2a2b42
+    formattingBarPopoverSelectedBorder: 'rgba(61, 64, 99, 1)', // #3d4063
     pickerBg: 'rgba(235, 235, 235, 1)', // #ebebeb
     sidebarBg: 'rgba(230, 230, 230, 1)', // #0a0a12
     sidebarOverlayBg: 'rgba(0, 0, 0, 0.5)', // this is defined separately to bgOverlay50 as it doesn't change between dark/light mode

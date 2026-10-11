@@ -14,7 +14,7 @@ interface PopoverProps {
   size?: number
 }
 
-/** A reusable popover component that handles positioning and styling for popup menus. */
+/** A Toolbar popover that opens beneath its icon and preserves the editor selection while options are used. */
 const Popover: FC<PopoverProps> = ({ ariaLabel, children, show, size = 18 }) => {
   const ref = useRef<HTMLDivElement>(null)
   const fontSize = useSelector(state => state.fontSize)
