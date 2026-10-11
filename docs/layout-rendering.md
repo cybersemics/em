@@ -209,6 +209,10 @@ When `b` is positioned, `yaccum` is *not* incremented; `b1` is placed at `(x = f
 
 A small effect that writes the LayoutTree's top y (offset + autocrop) into `viewportStore.layoutTreeTop`. Used by `scrollCursorIntoView` to figure out where thoughts actually start on the page (vs. the toolbar above).
 
+## Masking content under the nav bar
+
+Content that scrolls under the bottom nav bar is hidden by one of two masks. Without a background glow, [`NavBar`](../src/components/NavBar.tsx) paints its own background and a box shadow that fades in over the 15px above its top edge. With a glow selected (a debug option behind the sparkle button in the footer), that blackout is turned off and [`BackgroundGlow`](../src/components/BackgroundGlow.tsx) draws a falloff instead: a fixed full-viewport copy of the background masked in by a gradient. The falloff must cover the same band as the blackout, so turning the glow on does not move where content disappears, and it must measure from the same base the nav bar sits on, `max(11px, safe-area-inset-bottom)`, rather than adding the inset to a fixed offset.
+
 ## Scrolling the cursor into view
 
 [`scrollCursorIntoView`](../src/device/scrollCursorIntoView.ts) scrolls the minimum amount needed to clear the toolbar above and the navbar (or virtual keyboard) below. [`useScrollCursorIntoView`](../src/hooks/useScrollCursorIntoView.ts) calls it two ways: directly when the cursor's `y` or `height` changes, and through [`scheduleScrollCursorIntoView`](../src/device/scheduleScrollCursorIntoView.ts) when the editing value changes — the cursor's rank can move as it is edited, e.g. toggling bold in a long, sorted context.
