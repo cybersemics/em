@@ -314,7 +314,8 @@ const publishQr = async ({ repo, number, sha, url }) => {
     body: JSON.stringify({ content: readFileSync(png).toString('base64'), encoding: 'base64' }),
   })
   const file = `pr-${number}.png`
-  const commit = await commitFile({ repo, file, blob: blob.sha, message: `PR #${number}: ${sha.slice(0, 7)}` })
+  // No '#' before the number: GitHub would cross-reference the pull request and list every QR commit in its timeline.
+  const commit = await commitFile({ repo, file, blob: blob.sha, message: `pr-${number}: ${sha.slice(0, 7)}` })
   return `https://raw.githubusercontent.com/${repo}/${commit}/${file}`
 }
 
