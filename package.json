@@ -179,7 +179,7 @@
     "yallist": "^5.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^8.0.6",
+    "@babel/core": "^8.0.7",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/cli": "^8.5.2",
     "@eslint-community/eslint-plugin-eslint-comments": "^4.8.1",
