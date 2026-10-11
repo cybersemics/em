@@ -7,25 +7,32 @@ name: TDD iOS
 # (#4744). The unit and Puppeteer jobs need no secrets and stay in tdd.yml under pull_request.
 #
 # pull_request_target runs in the base repository's context with its secrets, and this job then runs the pull
-# request's test files with them, as ios.yml already does with its whole checkout. GitHub's approval setting for
-# outside collaborators does not gate pull_request_target runs, so it is not a mitigation. What is: the token is
-# read-only, the secrets are scoped to the one step that runs the tests, and everything that is not the pull
-# request's tests — this file, the detect action, the actions the job uses, and the verdict script — is read from
-# the base branch rather than from the pull request.
+# request's test files with them. Those files, and the WDIO config and helpers that come with them, are Node code
+# that can read the secrets from the environment of the step that runs them. GitHub's approval setting for outside
+# collaborators does not gate pull_request_target runs, so it is no mitigation either. The secrets are therefore
+# released only to a trusted pull request: one whose author is an owner, member, or collaborator, or one a
+# maintainer has reviewed and labeled safe-to-test. The label counts only on the event that adds it, so a later push
+# runs untrusted again until a maintainer re-applies it. Everything else limits what a trusted run can do: the token
+# is read-only, the secrets are scoped to the one step that runs the tests, and everything that is not the pull
+# request's tests — this file, the detect action, the actions the job uses, and the verdict script — is read from the
+# base branch rather than from the pull request.
 #
 # The workflow file itself is read from the default branch, so a change to it has no effect on a pull request until
 # it merges.
 on:
   pull_request_target:
+    # labeled is for safe-to-test (see above). Any other label is ignored by detect's job-level if.
+    types: [opened, synchronize, reopened, labeled]
     branches:
       - '**'
 
 # A new push supersedes the run in progress. Keyed on the pull request number because pull_request_target sets
 # github.ref to the base branch, so every open pull request would otherwise share one group. Separate from ios.yml's
 # group, so the two never queue behind each other; both wait in-process for BrowserStack session headroom instead
-# (see waitForBrowserStackSlots.ts).
+# (see waitForBrowserStackSlots.ts). A label other than safe-to-test gets a group of its own, so that labeling a pull
+# request does not cancel its run in progress for a run that does nothing.
 concurrency:
-  group: tdd-ios-pr-${{ github.event.pull_request.number }}
+  group: tdd-ios-pr-${{ github.event.pull_request.number }}${{ github.event.action == 'labeled' && github.event.label.name != 'safe-to-test' && format('-{0}', github.run_id) || '' }}
   cancel-in-progress: true
 
 permissions:
@@ -41,7 +48,7 @@ jobs:
   detect:
     name: Detect changed tests
     runs-on: ubuntu-latest
-    if: github.event.pull_request.changed_files > 0
+    if: github.event.pull_request.changed_files > 0 && (github.event.action != 'labeled' || github.event.label.name == 'safe-to-test')
     outputs:
       has_ios: ${{ steps.detect.outputs.has_ios }}
       has_skipped_ios: ${{ steps.detect.outputs.has_skipped_ios }}
@@ -86,16 +93,31 @@ jobs:
       VITE_BROWSER_CONSOLE_CAPTURE: 1
 
     steps:
-      # Without the credentials there is nothing to run the tests on. pull_request_target receives the repository's
-      # secrets for fork pull requests too, so this is for the events that legitimately get none, such as a
-      # Dependabot pull request: skip with a notice rather than crash and have the crash read as a result.
-      - name: Check BrowserStack credentials
+      # The trust gate (see the top of this file): an untrusted pull request skips with a notice, and nothing of it is
+      # checked out. Otherwise, without the credentials there is nothing to run the tests on. pull_request_target
+      # receives the repository's secrets for fork pull requests too, so this is for the events that legitimately get
+      # none, such as a Dependabot pull request: skip with a notice rather than crash and have the crash read as a
+      # result.
+      - name: Check the pull request is trusted and BrowserStack credentials are available
         id: credentials
         env:
+          AUTHOR_ASSOCIATION: ${{ github.event.pull_request.author_association }}
+          ACTION: ${{ github.event.action }}
+          LABEL: ${{ github.event.label.name }}
           BROWSERSTACK_USERNAME: ${{ secrets.BROWSERSTACK_USERNAME }}
           BROWSERSTACK_ACCESS_KEY: ${{ secrets.BROWSERSTACK_ACCESS_KEY }}
         run: |
-          if [ -n "$BROWSERSTACK_USERNAME" ] && [ -n "$BROWSERSTACK_ACCESS_KEY" ]; then
+          case "$AUTHOR_ASSOCIATION" in
+            OWNER|MEMBER|COLLABORATOR) TRUSTED=true ;;
+            *) [ "$ACTION" = labeled ] && [ "$LABEL" = safe-to-test ] && TRUSTED=true || TRUSTED=false ;;
+          esac
+
+          if [ "$TRUSTED" != true ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            MESSAGE="iOS TDD validation skipped: the pull request's tests run with the BrowserStack credentials, so they run only for an owner, member, or collaborator, or once a maintainer has reviewed the pull request and added the safe-to-test label. The label applies to the commit it was added on; re-add it after a new push."
+            echo "::warning::$MESSAGE"
+            echo "⏭️  $MESSAGE" >> "$GITHUB_STEP_SUMMARY"
+          elif [ -n "$BROWSERSTACK_USERNAME" ] && [ -n "$BROWSERSTACK_ACCESS_KEY" ]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
