@@ -1,29 +1,45 @@
 import { motion } from 'motion/react'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import CommandId from '../@types/CommandId'
+import IconType from '../@types/IconType'
 import Thunk from '../@types/Thunk'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { toggleFormattingBarActionCreator as toggleFormattingBar } from '../actions/toggleFormattingBar'
 import { isTouch } from '../browser'
 import usePositionFixed from '../hooks/usePositionFixed'
 import usePrefetchImages from '../hooks/usePrefetchImages'
+import getHeadingLevel from '../selectors/getHeadingLevel'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import haptics from '../util/haptics'
+import head from '../util/head'
 import FormattingBarButton from './FormattingBarButton'
+import FormattingBarHeadingPicker from './FormattingBarHeadingPicker'
 import ProgressiveBlur from './ProgressiveBlur'
+import Heading1Icon from './icons/Heading1Icon'
+import Heading2Icon from './icons/Heading2Icon'
+import Heading3Icon from './icons/Heading3Icon'
+import Heading4Icon from './icons/Heading4Icon'
+import Heading5Icon from './icons/Heading5Icon'
 
 const glowImages = ['/img/formatting-bar/glow.png', '/img/formatting-bar/popover-overlay.avif']
 
 /** Commands exposed by this layer of the mobile bar. */
-const commandIds: CommandId[] = ['bold', 'italic', 'underline', 'strikethrough']
+const commandIds: CommandId[] = ['bold', 'italic', 'underline', 'strikethrough', 'toggleHeadingPicker']
 
 /** Closes the current formatting-bar picker without affecting another surface. */
 const closeFormattingBarPicker = (): Thunk => (dispatch, getState) => {
   const active = getState().activeDropdown
   if (active?.surface === 'formattingBar')
     dispatch(toggleDropdown({ dropDownType: active.picker, surface: active.surface, value: false }))
+}
+
+/** Renders the cursor thought's heading as the button artwork. */
+const FormattingBarHeadingIcon = (props: IconType) => {
+  const level = useSelector(state => (state.cursor ? getHeadingLevel(state, head(state.cursor)) : 0))
+  const Icon = [Heading1Icon, Heading1Icon, Heading2Icon, Heading3Icon, Heading4Icon, Heading5Icon][level]
+  return <Icon {...props} />
 }
 
 /** Fade the painted layers directly, leaving the panel free of opacity for backdrop filtering. */
@@ -173,10 +189,12 @@ const FormattingBarControls = ({
   isOpen,
   iconSize,
   onIconSize,
+  headingButtonRef,
 }: {
   isOpen: boolean
   iconSize: number
   onIconSize: (size: number) => void
+  headingButtonRef: RefObject<HTMLButtonElement | null>
 }) => {
   const dispatch = useDispatch()
   const iconProbeRef = useRef<HTMLSpanElement>(null)
@@ -235,7 +253,13 @@ const FormattingBarControls = ({
           })}
         />
         {commandIds.map(id => (
-          <FormattingBarButton key={id} commandId={id} iconSize={iconSize} />
+          <FormattingBarButton
+            key={id}
+            commandId={id}
+            iconSize={iconSize}
+            icon={id === 'toggleHeadingPicker' ? FormattingBarHeadingIcon : undefined}
+            buttonRef={id === 'toggleHeadingPicker' ? headingButtonRef : undefined}
+          />
         ))}
         <button
           aria-label='Close formatting bar'
@@ -286,11 +310,13 @@ const FormattingBarControls = ({
 
 /** Positions the whole keyboard accessory; CSS lays out its controls and transitions its painted layers. */
 const FormattingBar = () => {
+  const activeDropdown = useSelector(state => state.activeDropdown)
   const isOpen = useSelector(state => state.showFormattingBar)
   const keyboardOpen = virtualKeyboardStore.useSelector(state => state.open)
   const position = usePositionFixed({ fromBottom: true, height: 0 })
   const dispatch = useDispatch()
   const [iconSize, setIconSize] = useState(20)
+  const headingButtonRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     if (!keyboardOpen) dispatch(closeFormattingBarPicker())
   }, [dispatch, keyboardOpen])
@@ -331,7 +357,23 @@ const FormattingBar = () => {
         </div>
         <div className={css({ position: 'relative', width: '92.5%', maxWidth: '36rem', marginInline: 'auto' })}>
           <FormattingBarShell />
-          <FormattingBarControls isOpen={isOpen} iconSize={iconSize} onIconSize={setIconSize} />
+          <FormattingBarControls
+            isOpen={isOpen}
+            iconSize={iconSize}
+            onIconSize={setIconSize}
+            headingButtonRef={headingButtonRef}
+          />
+        </div>
+        {/* No stacking context here: picker backdrops sit below the bar glow, and content above it. */}
+        <div className={css({ position: 'absolute', bottom: '100%', width: '100%', height: 0 })}>
+          <FormattingBarHeadingPicker
+            anchorRef={headingButtonRef}
+            iconSize={iconSize}
+            show={activeDropdown?.surface === 'formattingBar' && activeDropdown.picker === 'headingPicker'}
+            onClose={() =>
+              dispatch(toggleDropdown({ dropDownType: 'headingPicker', surface: 'formattingBar', value: false }))
+            }
+          />
         </div>
       </div>
     </motion.div>

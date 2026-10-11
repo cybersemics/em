@@ -58,6 +58,37 @@ const tap = async (selector: string): Promise<Event> => {
   return touchEnd
 }
 
+it('set a heading level from the Formatting Bar heading picker', async () => {
+  await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
+  renderWithStore(createElement(FormattingBar))
+
+  const buttonTouchEnd = await tap('[aria-label="Heading"]')
+  const optionTouchEnd = await tap('[aria-label="Heading Picker"] [aria-label="Heading 2"]')
+  await act(vi.runAllTimersAsync)
+
+  expect(exportContext(store.getState(), [HOME_TOKEN], 'text/plain')).toEqual(`- ${HOME_TOKEN}
+  - hello
+    - =heading2`)
+  // Both taps are consumed, so neither moves the focus out of the editable and closes the virtual keyboard.
+  expect(buttonTouchEnd.defaultPrevented).toBe(true)
+  expect(optionTouchEnd.defaultPrevented).toBe(true)
+})
+
+it('close a picker opened from the Formatting Bar when the bar is closed', async () => {
+  // The picker stays mounted until its closing animation ends, so make the animation instant.
+  durations.setInTest(true)
+  await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
+  renderWithStore(createElement(FormattingBar))
+
+  await tap('[aria-label="Heading"]')
+  expect(document.querySelector('[aria-label="Heading Picker"]')).not.toBeNull()
+
+  await tap('[aria-label="Close formatting bar"]')
+  await act(vi.runAllTimersAsync)
+
+  expect(document.querySelector('[aria-label="Heading Picker"]')).toBeNull()
+})
+
 it('keep the keyboard open when a tap in the Formatting Bar misses its buttons', async () => {
   await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
   renderWithStore(createElement(FormattingBar))
@@ -66,6 +97,24 @@ it('keep the keyboard open when a tap in the Formatting Bar misses its buttons',
   const touchEnd = await tap('[role="toolbar"][aria-label="Formatting Bar"]')
 
   expect(touchEnd.defaultPrevented).toBe(true)
+})
+
+it('show the description of a Formatting Bar picker when its info button is tapped', async () => {
+  await dispatch([importText({ text: '- hello' }), setCursor(['hello']), toggleFormattingBar({ value: true })])
+  renderWithStore(createElement(FormattingBar))
+
+  await tap('[aria-label="Heading"]')
+  const picker = '[aria-label="Heading Picker"]'
+  /** Returns the picker's description element, which stays mounted while hidden so that it can animate in. */
+  const description = () => document.querySelector(`${picker} [aria-hidden]`)
+  expect(description()?.textContent).toContain('headings of different sizes')
+  expect(description()?.getAttribute('aria-hidden')).toBe('true')
+
+  const infoTouchEnd = await tap(`${picker} [aria-label="Info"]`)
+
+  expect(description()?.getAttribute('aria-hidden')).toBe('false')
+  // The picker stays open, and the tap is consumed so the keyboard stays open too.
+  expect(infoTouchEnd.defaultPrevented).toBe(true)
 })
 
 it('starts closed and persists opening and closing without releasing editor focus', async () => {
