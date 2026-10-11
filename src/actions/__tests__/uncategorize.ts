@@ -6,7 +6,9 @@ import newThought from '../../actions/newThought'
 import toggleContextView from '../../actions/toggleContextView'
 import uncategorize from '../../actions/uncategorize'
 import { HOME_TOKEN } from '../../constants'
+import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
+import isContextViewActive from '../../selectors/isContextViewActive'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
@@ -408,6 +410,40 @@ describe('context view', () => {
   - b
     - m
       - z`)
+  })
+
+  // https://github.com/cybersemics/em/issues/5847
+  it('uncategorize top-level context', () => {
+    const text = `
+      - a
+        - m
+          - x
+      - b
+        - m
+          - y
+    `
+    const steps = [
+      importText({ text }),
+      setCursor(['b', 'm']),
+      toggleContextView,
+      setCursor(['b', 'm', 'a']),
+      uncategorize({}),
+    ]
+
+    const stateNew = reducerFlow(steps)(initialState())
+    const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+    expect(exported).toBe(`- ${HOME_TOKEN}
+  - m
+    - x
+  - b
+    - m
+      - y`)
+
+    // the Context View on b/m stays open with the cursor on the home context, which is now a context of m
+    const contextViewPath = contextToPath(stateNew, ['b', 'm'])
+    expect(isContextViewActive(stateNew, contextViewPath)).toBe(true)
+    expect(stateNew.cursor).toEqual([...contextViewPath!, HOME_TOKEN])
   })
 })
 
