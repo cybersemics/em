@@ -18,6 +18,7 @@
 		BC5B645B297F0CEB00A40350 /* EnableBounce.m in Sources */ = {isa = PBXBuildFile; fileRef = BC5B645A297F0CEB00A40350 /* EnableBounce.m */; };
 		D41D8CD98F00B204E9800998 /* DevServerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D41D8CD98F00B204E9800999 /* DevServerViewController.swift */; };
 		92D35D18E1E24B3C8DE478B5 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1AD6D0FF51A41B0A19360A8 /* SceneDelegate.swift */; };
+		F361A72E5B07453D83D468A1 /* IOSKeyboardPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F361A72E5B07453D83D468A2 /* IOSKeyboardPlugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +38,7 @@
 		D41D8CD98F00B204E9800999 /* DevServerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerViewController.swift; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 		D1AD6D0FF51A41B0A19360A8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		F361A72E5B07453D83D468A2 /* IOSKeyboardPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSKeyboardPlugin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -82,6 +84,7 @@
 			children = (
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
+				F361A72E5B07453D83D468A2 /* IOSKeyboardPlugin.swift */,
 				D41D8CD98F00B204E9800999 /* DevServerViewController.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
@@ -220,6 +223,7 @@
 			files = (
 				BC5B645B297F0CEB00A40350 /* EnableBounce.m in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				F361A72E5B07453D83D468A1 /* IOSKeyboardPlugin.swift in Sources */,
 				D41D8CD98F00B204E9800998 /* DevServerViewController.swift in Sources */,
 				92D35D18E1E24B3C8DE478B5 /* SceneDelegate.swift in Sources */,
 			);
