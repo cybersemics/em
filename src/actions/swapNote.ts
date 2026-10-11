@@ -24,7 +24,7 @@ import newThought from './newThought'
 import setCursor from './setCursor'
 import uncategorize from './uncategorize'
 
-/** Increases the indentation level of the thought, i.e. Moves it to the end of its previous sibling. */
+/** Swaps a thought with a literal note, preserving path-based note definitions. */
 const swapNote = (state: State): State => {
   const { cursor } = state
 
@@ -34,13 +34,14 @@ const swapNote = (state: State): State => {
   const parentNoteId = findDescendant(state, head(parentOf(cursor)), '=note')
   const parentNoteChildId = anyChild(state, parentNoteId)?.id
   const noteId = findDescendant(state, thoughtId, '=note')
+  const notePathId = findDescendant(state, noteId, '=path')
 
   // cancel if cursor is the em or home contexts
   if (isEM(cursor) || isRoot(cursor)) {
     return alert(state, { value: `The "${isEM(cursor) ? 'em' : 'home'}" context cannot be converted to a note.` })
   }
   // cancel if cursor is in the home context
-  if (!noteId && cursor.length < 2) {
+  if ((!noteId || notePathId) && cursor.length < 2) {
     return alert(state, { value: `Thoughts in the home context cannot be converted to a note.` })
   }
   // cancel if parent is readonly or unextendable
@@ -62,6 +63,11 @@ const swapNote = (state: State): State => {
     return alert(state, {
       value: `A context in the context view cannot be converted to a note.`,
     })
+  }
+
+  // A path note references existing thoughts; its =path child is metadata, not note content to move.
+  if (notePathId || (!noteId && findDescendant(state, parentNoteId, '=path'))) {
+    return alert(state, { value: 'Path-based notes cannot be swapped.' })
   }
 
   // Capture the cursor thought's value before uncategorize may delete it (when it has children)

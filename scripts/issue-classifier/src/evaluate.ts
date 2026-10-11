@@ -433,8 +433,8 @@ export const grade = async (
 
 /** Evaluates the classifier over every labeled sample and prints the accuracy report. */
 const main = async () => {
-  const openaiApiKey = process.env.OPENAI_API_KEY
-  if (!openaiApiKey) throw new Error('OPENAI_API_KEY is required')
+  const openaiApiKey = process.env.OPENAI_API_KEY_ISSUE_CLASSIFIER || process.env.OPENAI_API_KEY
+  if (!openaiApiKey) throw new Error('OPENAI_API_KEY_ISSUE_CLASSIFIER or OPENAI_API_KEY is required')
 
   const minAccuracy = resolveMinAccuracy()
   const repo = process.env.GITHUB_REPOSITORY ?? process.env.ISSUE_CLASSIFIER_REPO ?? DEFAULT_REPO

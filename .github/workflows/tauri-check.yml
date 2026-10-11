@@ -1,0 +1,87 @@
+name: Tauri Check
+
+# Compiles the desktop app's Rust code (desktop/) on pull requests that could break it. Otherwise
+# only the Tauri Release workflows build it, and only on main, so a crate bump that no longer
+# compiles — Dependabot's cargo entry moves the Tauri crates on their own pull request — would pass
+# every check and break Tauri Release (main) on the push after the merge.
+#
+# `cargo check` rather than `tauri build`: it type-checks and runs the build scripts (tauri-build,
+# tauri-codegen's generate_context!), which is where a crate bump breaks, without the frontend
+# build, the release optimizer, or bundling. It needs no frontend dist dir: the dev profile points
+# the webview at `devUrl` and embeds no assets, so `frontendDist` is never read. The npm/crate
+# version agreement that `tauri build` also enforces is checked separately, by
+# `yarn lint:tauri-versions` in Lint.
+#
+# package.json and yarn.lock are inputs because tauri.conf.json reads the app version from
+# package.json, and because a Tauri npm bump is the other half of a crate bump.
+#
+# `paths` means a non-matching PR reports no check at all — not a skipped one — so this workflow
+# must never be made a required status check on main (see § Path filtering in docs/testing.md).
+on:
+  # Pushes to main exist to warm the Rust cache: pull requests can restore caches saved on the
+  # default branch, but not each other's.
+  push:
+    branches:
+      - main
+    paths:
+      - desktop/**
+      - package.json
+      - yarn.lock
+      - .github/workflows/tauri-check.yml
+  pull_request:
+    branches:
+      - '**'
+    # GitHub Actions does not support YAML anchors, so this list is duplicated from `push` above.
+    paths:
+      - desktop/**
+      - package.json
+      - yarn.lock
+      - .github/workflows/tauri-check.yml
+  workflow_dispatch:
+
+# Supersede the in-progress run when a pull request is pushed again; its result is about to be
+# replaced anyway. Only pull_request runs are grouped: `github.ref` is `refs/pull/<n>/merge` there,
+# so it is already per-PR. Every other event falls back to github.run_id, which is unique per run
+# and therefore never collides. (See the identical block in lint.yml for the full rationale.)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CI: true
+
+jobs:
+  check:
+    name: Tauri Check
+    # The same runner Tauri Release builds the Linux app on.
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v6
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: ./desktop -> target
+          # Save only from main, which every pull request can restore from. A pull request's own
+          # cache would be readable by that pull request alone.
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      # The webkit2gtk and GTK -sys crates locate their system libraries through pkg-config in
+      # their build scripts, so even `cargo check` needs the -dev packages. Same list as Tauri
+      # Release, minus patchelf, which only bundling uses.
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev
+
+      # --locked fails if Cargo.lock no longer satisfies Cargo.toml, rather than silently
+      # resolving a different set of crates than the one committed.
+      - name: Check desktop crate
+        working-directory: desktop
+        run: cargo check --locked

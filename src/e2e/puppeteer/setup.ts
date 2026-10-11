@@ -7,8 +7,8 @@ import createId from '../../util/createId'
 import deviceEmulation from './helpers/deviceEmulation'
 import { page, setPage } from './session'
 
-// eslint-disable-next-line @typescript-eslint/no-namespace, @typescript-eslint/prefer-namespace-keyword
-declare module global {
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace global {
   const browser: Browser
 }
 

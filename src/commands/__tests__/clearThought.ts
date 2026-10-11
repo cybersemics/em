@@ -1,13 +1,17 @@
+import userEvent from '@testing-library/user-event'
 import { act } from 'react'
+import { formatSelectionActionCreator as formatSelection } from '../../actions/formatSelection'
 import { importTextActionCreator as importText } from '../../actions/importText'
 import { setCursorActionCreator as setCursor } from '../../actions/setCursor'
 import { executeCommand, executeCommandWithMulticursor } from '../../commands'
+import getThoughtById from '../../selectors/getThoughtById'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import createTestApp, { cleanupTestApp } from '../../test-helpers/createTestApp'
 import initStore from '../../test-helpers/initStore'
 import findThoughtByText from '../../test-helpers/queries/findThoughtByText'
 import { setCursorFirstMatchActionCreator } from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import headValue from '../../util/headValue'
 import clearThoughtCommand from '../clearThought'
 import cursorBackCommand from '../cursorBack'
@@ -123,5 +127,82 @@ describe('clearThought', () => {
     await act(vi.runOnlyPendingTimersAsync)
 
     expect(document.activeElement).toBe(editable)
+  })
+
+  // Typing into a cleared thought re-applies the formatting of the original value. Every mark must be transferred, not
+  // just the outermost one.
+  // https://github.com/cybersemics/em/issues/4629
+  it('re-applies every formatting mark of the cleared thought to the newly typed text', async () => {
+    await act(async () => {
+      store.dispatch([importText({ text: '- aaa' }), setCursorFirstMatchActionCreator(['aaa'])])
+    })
+
+    await act(async () => {
+      store.dispatch([
+        formatSelection('bold'),
+        formatSelection('underline'),
+        formatSelection('strikethrough'),
+        formatSelection('foreColor', 'red'),
+      ])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe(
+      '<font color="#ff573d"><strike><u><b>aaa</b></u></strike></font>',
+    )
+
+    await act(async () => {
+      executeCommand(clearThoughtCommand)
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    // type into the cleared thought, which renders as empty
+    const editable = (await findThoughtByText(''))!
+    const user = userEvent.setup({ delay: null })
+    await user.type(editable, 'b')
+
+    await act(vi.runAllTimersAsync)
+
+    const stateAfter = store.getState()
+    expect(getThoughtById(stateAfter, head(stateAfter.cursor!))!.value).toBe(
+      '<font color="#ff573d"><strike><u><b>b</b></u></strike></font>',
+    )
+  })
+
+  // #3910: Clear Thought on a thought that is already empty must not discard the color it is holding. The cleared
+  // branch re-applies the cleared thought's own tags, and an empty thought has none, so it contributes nothing here
+  // and the held color has to be applied instead. Reachable because clearThought only requires a cursor, and a
+  // multiselect clear sets the flag for every selected thought.
+  // https://github.com/cybersemics/em/issues/3910
+  it('applies the color of an empty thought to the text typed after Clear Thought (#3910)', async () => {
+    await act(async () => {
+      store.dispatch([importText({ text: '- ' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      store.dispatch(formatSelection('foreColor', 'green'))
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    await act(async () => {
+      executeCommand(clearThoughtCommand)
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const editable = (await findThoughtByText(''))!
+    const user = userEvent.setup({ delay: null })
+    await user.type(editable, 'H')
+
+    await act(vi.runAllTimersAsync)
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('<font color="#00d688">H</font>')
   })
 })

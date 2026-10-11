@@ -3,9 +3,11 @@ import { shallowEqual, useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
 import Path from '../@types/Path'
 import { isTouch } from '../browser'
-import { BASE_FONT_SIZE } from '../constants'
+import { commandById } from '../commands'
+import { BASE_FONT_SIZE, PINNED_COMMAND_RESERVED_WIDTH } from '../constants'
 import isTutorial from '../selectors/isTutorial'
-import distractionFreeTypingStore from '../stores/distractionFreeTyping'
+import backgroundGlowStore from '../stores/backgroundGlowStore'
+import distractionFreeTypingStore from '../stores/distractionFreeTypingStore'
 import isDocumentEditable from '../util/isDocumentEditable'
 import publishMode from '../util/publishMode'
 import ContextBreadcrumbs from './ContextBreadcrumbs'
@@ -50,6 +52,12 @@ const NavBar = ({ position }: { position: string }) => {
 
   const showHomeLink = useSelector(state => isDocumentEditable() || (!!state.cursor && state.cursor.length > 2))
   const isCursor = useSelector(state => !!state.cursor && state.cursor.length > 0)
+  // While a background glow image is selected, the blackout is disabled entirely; the glow falloff in BackgroundGlow fades the content out above the nav bar instead.
+  const glowImage = backgroundGlowStore.useSelector(state => state.image)
+  // While a command is pinned, the row ends short of the right edge so the breadcrumbs and buttons do not run under the pinned command ring. The blackout on the nav element itself stays full width.
+  const isCommandPinned = useSelector(state =>
+    Boolean(state.learning.pinnedCommandId && commandById(state.learning.pinnedCommandId)),
+  )
 
   const cursorBreadcrumbsWrapperRef = useRef<HTMLDivElement>(null)
 
@@ -63,6 +71,20 @@ const NavBar = ({ position }: { position: string }) => {
               /* spacing.safeAreaBottom applies for rounded screens */
               bottom: 'calc(max(11px, token(spacing.safeAreaBottom)))',
               marginBottom: '10px',
+              // The blackout's box shadow fades out before it reaches the bottom of the screen, which lets thoughts show through below the nav bar on devices with a large bottom safe area. Fill the gap between the nav bar and the bottom of the screen with a solid background.
+              _after:
+                isCursor && !glowImage
+                  ? {
+                      content: '""',
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      // 1px extra covers subpixel rounding at the screen edge.
+                      height: 'calc(max(11px, token(spacing.safeAreaBottom)) + 1px)',
+                      backgroundColor: 'bg',
+                    }
+                  : undefined,
             }
           : undefined),
       })}
@@ -74,28 +96,31 @@ const NavBar = ({ position }: { position: string }) => {
           className={css({
             position: 'sticky',
             zIndex: 'stack',
-            padding: '0 15px 0 10px',
+            // Ternaries instead of conditional spreads, because PandaCSS does not extract a value that a later spread in the same css call overrides.
+            padding: position === 'bottom' ? '0 15px' : '0 15px 0 10px',
             bottom: '0',
-            backgroundColor: isCursor ? 'bg' : undefined,
-            boxShadow: isCursor ? `0 20px 15px 25px {colors.bg}` : undefined,
-            ...(position === 'top' ? { top: 0 } : position === 'bottom' ? { padding: '0 15px' } : {}),
+            top: position === 'top' ? 0 : undefined,
+            backgroundColor: isCursor && !glowImage ? 'bg' : undefined,
+            boxShadow: isCursor && !glowImage ? `0 20px 15px 25px {colors.bg}` : undefined,
           })}
         >
           <div>
             <div
               className={css({
-                position: 'absolute',
+                position: position === 'bottom' ? 'relative' : 'absolute',
                 /* offset .nav padding */
-                width: 'calc(100% - 30px)',
+                width: position === 'bottom' ? '100%' : 'calc(100% - 30px)',
                 transition: 'background-color {durations.fast} ease-out',
                 justifyContent: 'flex-end',
-                ...(position === 'bottom' && {
-                  position: 'relative',
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'flex-end',
-                }),
+                display: position === 'bottom' ? 'flex' : undefined,
+                alignItems: position === 'bottom' ? 'flex-end' : undefined,
               })}
+              // Panda cannot extract a runtime width, so the reservation stays inline.
+              style={
+                position === 'bottom' && isCommandPinned
+                  ? { width: `calc(100% - ${PINNED_COMMAND_RESERVED_WIDTH}px)` }
+                  : undefined
+              }
             >
               {!isTutorialOn && (
                 <>

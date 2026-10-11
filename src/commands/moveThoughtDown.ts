@@ -1,4 +1,3 @@
-import { Key } from 'ts-key-enum'
 import Command from '../@types/Command'
 import { moveThoughtDownActionCreator as moveThoughtDown } from '../actions/moveThoughtDown'
 import MoveThoughtDownIcon from '../components/icons/MoveThoughtDownIcon'
@@ -12,7 +11,7 @@ const moveThoughtDownCommand = {
   label: 'Move Thought Down' as const,
   description: 'Move the current thought down.',
   gesture: 'dud',
-  keyboard: { key: Key.ArrowDown, meta: true, shift: true },
+  keyboard: { key: 'ArrowDown', meta: true, shift: true },
   multicursor: {
     reverse: true,
   },

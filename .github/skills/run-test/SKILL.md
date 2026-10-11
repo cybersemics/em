@@ -4,7 +4,7 @@ description: >-
   ALWAYS USE THIS SKILL to run a single e2e test in the real test harness for a
   given target platform — web/android (Vitest + puppeteer) or iOS (WDIO + Appium +
   simulator) — and report pass/fail with the failing assertion. Invoked by
-  tdd-write-failing-test and by issue-repro's validation step.
+  tdd-write-failing-test and by the reproduce skill's validation step.
 allowed-tools:
   - bash
 ---
@@ -64,6 +64,8 @@ Run a single spec:
 ```bash
 yarn test:ios:browserstack --spec src/e2e/iOS/__tests__/<file>.ts
 ```
+
+The Android WebdriverIO smoke suite runs on BrowserStack the same way, with `yarn test:android:browserstack --spec src/e2e/android/__tests__/<file>.ts`. It has no agent-session integration.
 
 ### Local simulator (local development only — NOT the agent environment)
 

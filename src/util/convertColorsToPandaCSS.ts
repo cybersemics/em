@@ -1,4 +1,4 @@
-import { SemanticTokens, Tokens } from '@pandacss/dev'
+import { SemanticTokens, Tokens } from '@pandacss/types'
 import colors from '../colors.config'
 
 /** Converts theme colors to PandaCSS tokens. */

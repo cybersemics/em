@@ -1,20 +1,19 @@
-import { startCase } from 'lodash'
 import Command from '../@types/Command'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { undoActionCreator as undo } from '../actions/undo'
 import UndoIcon from '../components/UndoIcon'
 import isUndoEnabled from '../selectors/isUndoEnabled'
-import getLatestActionType from '../util/getLastActionType'
+import getLatestActionLabel from '../util/getLatestActionLabel'
 
 const undoCommand = {
   id: 'undo',
   label: 'Undo' as const,
   multicursor: false,
   description: state => {
-    const lastActionType = getLatestActionType(state.undoPatches)
+    const lastActionLabel = getLatestActionLabel(state.undoPatches)
 
-    if (lastActionType) {
-      return `Undo ${startCase(lastActionType)}`
+    if (lastActionLabel) {
+      return `Undo ${lastActionLabel}`
     }
 
     return 'Undo.'

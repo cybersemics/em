@@ -17,38 +17,44 @@ In general, if you want to add an additional capability to the agent, you should
 flowchart TD
     START(["Agent working an issue"])
 
-    START --> IR["<b>issue-repro</b><br/>reproduce the bug first"]
+    START --> REP["<b>reproduce</b><br/>see the bug happen first"]
     START --> PL["<b>plan</b><br/>plan before writing code"]
     START --> CM["<b>ci-monitor</b><br/>watch CI to completion"]
 
-    IR --> BC["<b>browser-control</b><br/>picks the platform"]
+    REP --> BC["<b>browser-control</b><br/>picks the platform"]
     BC --> BCC["<b>browser-control-chrome</b><br/>web · Android"]
     BC --> BCI["<b>browser-control-ios</b><br/>real iPhone"]
-    IR --> TDD["<b>tdd-write-failing-test</b><br/>turn the repro into a test"]
+    REP --> CDL["<b>compare-debug-log</b><br/>their log vs. yours"]
+    REP --> TDD["<b>tdd-write-failing-test</b><br/>turn the repro into a test"]
     TDD --> RT["<b>run-test</b><br/>run one test for real"]
-    IR --> RT
+    REP --> RT
 
     CM --> TD["<b>test-diagnosis</b><br/>what kind of failure is this?"]
     TD --> PUS["<b>puppeteer-update-snapshots</b><br/>regenerate screenshots"]
 
     CM --> ES["<b>end-session</b><br/>checklist before stopping"]
+
+    ASK(["Asked to bisect"]) --> BIS["<b>bisect</b><br/>regression or always broken?"]
+    BIS --> BC
     ES --> DS["<b>docs-sync</b><br/>make docs true again"]
 
-    style IR fill:#2d4a2d,color:#fff
+    style REP fill:#2d4a2d,color:#fff
     style PL fill:#2d4a2d,color:#fff
     style ES fill:#4a2d2d,color:#fff
 
-    click IR "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#issue-repro" "issue-repro — reproduce before investigating"
+    click REP "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#reproduce" "reproduce — see the failure before investigating"
     click PL "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#plan" "plan — plan and critique before implementing"
     click ES "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#end-session" "end-session — the exit checklist"
     click DS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#docs-sync" "docs-sync — keep documentation true"
     click BC "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control" "browser-control — routes by platform"
     click BCC "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control-chrome" "browser-control-chrome — web and Android"
     click BCI "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#browser-control-ios" "browser-control-ios — real iPhone"
+    click CDL "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#compare-debug-log" "compare-debug-log — where their run and yours parted"
     click TDD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#tdd-write-failing-test" "tdd-write-failing-test — capture the bug"
     click RT "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#run-test" "run-test — run one test for real"
     click CM "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#ci-monitor" "ci-monitor — wait for every check"
     click TD "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#test-diagnosis" "test-diagnosis — classify the failure"
+    click BIS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#bisect" "bisect — find the commit that broke it"
     click PUS "https://github.com/cybersemics/em/blob/HEAD/docs/agents/skills.md#puppeteer-update-snapshots" "puppeteer-update-snapshots — regenerate screenshots"
 ```
 
@@ -56,11 +62,12 @@ The two green boxes are the gates — the agent must run them before it is allow
 
 | Skill | What it does | Source |
 | --- | --- | --- |
-| [`issue-repro`](#issue-repro) | Reproduce a reported bug for real, then capture it in a test, before touching the cause | [SKILL.md](../../.github/skills/issue-repro/SKILL.md) |
+| [`reproduce`](#reproduce) | Reproduce a reported bug for real, then capture it in a test, before touching the cause | [SKILL.md](../../.github/skills/reproduce/SKILL.md) |
 | [`plan`](#plan) | Write an architectural plan grounded in existing code, then attack it | [SKILL.md](../../.github/skills/plan/SKILL.md) |
 | [`browser-control`](#browser-control) | Bring up a browser or device for a given platform | [SKILL.md](../../.github/skills/browser-control/SKILL.md) |
 | [`browser-control-chrome`](#browser-control-chrome) | The web and Android half of that | [SKILL.md](../../.github/skills/browser-control-chrome/SKILL.md) |
 | [`browser-control-ios`](#browser-control-ios) | The iOS half — a real iPhone on BrowserStack | [SKILL.md](../../.github/skills/browser-control-ios/SKILL.md) |
+| [`compare-debug-log`](#compare-debug-log) | Compare a reporter's attached Debug Log against one captured while reproducing | [SKILL.md](../../.github/skills/compare-debug-log/SKILL.md) |
 | [`tdd-write-failing-test`](#tdd-write-failing-test) | Turn a reproduction into a permanent test that fails for the right reason | [SKILL.md](../../.github/skills/tdd-write-failing-test/SKILL.md) |
 | [`run-test`](#run-test) | Run one test in the real harness and report what happened | [SKILL.md](../../.github/skills/run-test/SKILL.md) |
 | [`ci-monitor`](#ci-monitor) | Wait for every CI check and report which passed | [SKILL.md](../../.github/skills/ci-monitor/SKILL.md) |
@@ -68,13 +75,16 @@ The two green boxes are the gates — the agent must run them before it is allow
 | [`puppeteer-update-snapshots`](#puppeteer-update-snapshots) | Regenerate screenshot comparisons after an intended visual change | [SKILL.md](../../.github/skills/puppeteer-update-snapshots/SKILL.md) |
 | [`end-session`](#end-session) | Work through the exit checklist before stopping for any reason | [SKILL.md](../../.github/skills/end-session/SKILL.md) |
 | [`docs-sync`](#docs-sync) | Repair the documentation your change made untrue, in the same commit | [SKILL.md](../../.github/skills/docs-sync/SKILL.md) |
-| `write-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/write-issue/SKILL.md) |
+| [`bisect`](#bisect) | Find whether a bug is a recent regression, and the commit and pull request that introduced it | [SKILL.md](../../.github/skills/bisect/SKILL.md) |
+| `create-issue` | Write a GitHub issue in the format this repo uses | [SKILL.md](../../.github/skills/create-issue/SKILL.md) |
+| [`liminal`](#liminal) | Style a static artifact, such as a report page, like em's Liminal UI | [SKILL.md](../../.github/skills/liminal/SKILL.md) |
+| [`report-review-gaps`](#report-review-gaps) | Report the feedback a final reviewer gave after the first review, as review principles | [SKILL.md](../../.github/skills/report-review-gaps/SKILL.md) |
 
 ## The gates
 
-### issue-repro
+### reproduce
 
-**Source: [`.github/skills/issue-repro/SKILL.md`](../../.github/skills/issue-repro/SKILL.md)**
+**Source: [`.github/skills/reproduce/SKILL.md`](../../.github/skills/reproduce/SKILL.md)**
 
 Runs when an issue contains a "Steps to Reproduce" section, or something close to it like "How to reproduce".
 
@@ -91,7 +101,7 @@ Until the failure has actually been observed, the agent may not read source code
 | `[Mobile]`, or general touch words like "tap", "swipe", "on-screen keyboard" | `android`, falling back to `ios` |
 | No platform signal, or desktop words like "click", "hover" | `web` |
 
-`[Mobile]` means Android first because mobile Chrome is far cheaper than a real device and catches nearly all mobile-only behaviour. But if the bug will not reproduce there, it is probably genuinely iOS-specific, so the skill retries on a real iPhone before giving up. An explicit `[Android]` tag gets no such fallback.
+`[Mobile]` means Android first because mobile Chrome is far cheaper than a real device and catches nearly all mobile-only behaviour; a real Android device exists only in the CI smoke suite (`src/e2e/android`), not in the agent tooling. But if the bug will not reproduce there, it is probably genuinely iOS-specific, so the skill retries on a real iPhone before giving up. An explicit `[Android]` tag gets no such fallback.
 
 The skill is blunt about one thing in particular: **iOS is always reproducible here.** "This needs a physical device" and "I cannot automate iOS" are not acceptable reasons to skip reproduction, because real iPhones are available through BrowserStack. That paragraph exists because agents kept talking themselves out of iOS work.
 
@@ -154,6 +164,41 @@ The default is to work in the web layer, because it is the same page as every ot
 The session is created by a shell script rather than by the tooling, and the reason is worth knowing: BrowserStack takes 20 to 40 seconds to allocate a physical iPhone, and that wait can exceed a fixed timeout in the tooling that cannot be configured. So the session is created by a detached background process that writes its ID to a file, a heartbeat keeps it alive, and a small local proxy lets the tooling adopt the already-running session instantly. Full detail in [Environment](environment.md).
 
 One real limitation: **autocorrect cannot be tested.** Shared BrowserStack devices have iOS auto-correction switched off and it cannot be enabled. Bugs that depend on the live autocorrect engine cannot be reproduced and should be escalated.
+
+### compare-debug-log
+
+**Source: [`.github/skills/compare-debug-log/SKILL.md`](../../.github/skills/compare-debug-log/SKILL.md)**
+
+Runs from [`reproduce`](#reproduce) Step 3 when the issue carries a **`## Debug Log`** — the on-device forensic trace a reporter can export from Settings. The agent captures the same trace while driving the steps, and the two are compared. The entry where they stop agreeing is the strongest lead a hard-to-identify bug offers.
+
+Two facts shape the whole skill, and both were measured rather than assumed.
+
+**`diff` does not work on debug logs.** Every entry carries a fresh sequence number, timestamp and millisecond delta, and every thought carries a random 128-bit id, so two runs of the *same* steps share almost no bytes — `diff` reported 79 of 84 lines changed on two captures of one four-step interaction. So each entry is reduced to a signature with the volatile parts neutralized, thought ids are numbered by first appearance within their own log, and the two signature streams are aligned. The same two captures then compare as identical. How the normalization works, and what it deliberately leaves alone, is in [Debug Log](../debug-log.md#comparing-two-logs).
+
+**A log must never be read into context.** Four steps of editing produce about 6 KB; a full buffer approaches a megabyte. So the reporter's log is downloaded to a file, the local one is captured to a file by a script that attaches through the existing e2e bridges, and only a bounded report is printed.
+
+The skill also tells the agent to run it *before* escalating a failed reproduction. "Their log has four `composition` entries mine never produced" is a question the user can answer; "could not reproduce" is not.
+
+## Finding regressions
+
+### bisect
+
+**Source: [`.github/skills/bisect/SKILL.md`](../../.github/skills/bisect/SKILL.md)**
+
+Runs on demand — when someone asks to bisect an issue, or whether a bug used to work. It takes an issue number or URL, and the issue must carry exact Steps to Reproduce; without them it stops rather than inventing steps, because a bisect is only as trustworthy as the reproduction it repeats at every commit.
+
+It drives `git bisect` by hand instead of with `git bisect run`. A bug here may be a failing test, but it is as often a caret position on iOS or a gesture that misfires one time in three, and the only oracle that covers all of those is the agent reproducing the steps. So at each commit it reinstalls, restarts the dev server, reproduces, and tells `git bisect` what it saw.
+
+The search window is deliberately short. It looks for a good commit 30 days back, then a year back, and if the bug is present a year ago it reports the bug as having always existed and stops. It bisects along `main`'s first-parent history, where each squash-merged commit is one pull request.
+
+Two rules carry most of the weight:
+
+- **Nondeterministic bugs get a measured number of trials.** The agent first reproduces 5 times at the tip of `main`, and that rate sets how many clean trials a commit needs before it counts as good. One sighting of the failure is enough to call a commit bad; one clean run is not enough to call it good.
+- **The answer is checked before it is reported.** The named commit must reproduce again, and its parent must come up clean at twice the usual trial count. If the parent is bad too, the result is reported as inconclusive and no pull request is named.
+
+iOS needs the most care, because not every environment has every behaviour. BrowserStack's devices have autocorrect switched off, a local Simulator has it but is not real hardware, and Safari and the Capacitor app handle the keyboard differently. So the skill says which environment covers what, and when the bug does not reproduce at the tip of `main`, it checks the commit from when the issue was filed to tell "already fixed" apart from "needs an environment we lack".
+
+It reports a verdict and the commit and pull request behind it, and nothing about the cause — explaining the bug is left to a separate agent, so the bisect's evidence is not mixed with a guess.
 
 ## Testing
 
@@ -223,7 +268,7 @@ For suspected flakiness it checks the project's open issues labelled "test" for 
 
 **Source: [`.github/skills/end-session/SKILL.md`](../../.github/skills/end-session/SKILL.md)**
 
-The exit gate. [`issue-repro`](#issue-repro) and [`plan`](#plan) control the way into implementation; this one controls the way out, and it runs before every ending — work finished, escalation, or a turn the agent believes changed nothing.
+The exit gate. The [`reproduce`](#reproduce) and [`plan`](#plan) skills control the way into implementation; this one controls the way out, and it runs before every ending — work finished, escalation, or a turn the agent believes changed nothing.
 
 It exists because the last action of a run is the one nobody supervises, and its two worst failures are silent ones. A session that ends with the fix still sitting in the working tree has destroyed the work rather than delivered it: the runner is disposable, so the branch looks untouched and the effort is gone. A session that ends while CI is still running has reported a result it never watched. Both read as success from inside the transcript, which is why this is a checklist rather than a principle.
 
@@ -270,6 +315,20 @@ It reports one line back into the ending — the documents it updated, or `docs:
 
 The escalation rule is the interesting one. If a change contradicts **design intent** recorded in a doc — not a detail, but the stated reason a subsystem is built the way it is — the agent stops and raises it instead of editing the intent to match the new code. Quietly rewriting the "why" erases the only record that a deliberate decision was ever made.
 
+## Presenting work
+
+### liminal
+
+**Source: [`.github/skills/liminal/SKILL.md`](../../.github/skills/liminal/SKILL.md)**
+
+Runs on demand — when someone asks for a static artifact, such as a report page built outside the app, in em's look. It is never used to change the app's own UI. It gives the colour tokens, base CSS and conventions for em's Liminal UI: white on pure black, translucent surfaces, and the background glow from `public/img/glow/`, published next to the page. It has a single dark theme, and it keeps long links and code blocks wrapped so nothing scrolls sideways on a phone.
+
+### report-review-gaps
+
+**Source: [`.github/skills/report-review-gaps/SKILL.md`](../../.github/skills/report-review-gaps/SKILL.md)**
+
+Runs on demand, ahead of a review check-in. Its script collects every comment the final reviewer posted after the first reviewer's first review, on PRs by the given authors. The agent then keeps only the substantive feedback, groups it into review principles with the comments quoted verbatim, and publishes the result as a [`liminal`](#liminal) artifact. The report is shared with the first reviewer, so it never quotes them, and it is written as principles to adopt rather than a scorecard.
+
 ## Writing a new skill
 
 Create `.github/skills/<name>/SKILL.md` starting with frontmatter:
@@ -295,5 +354,7 @@ Beyond the frontmatter, patterns worth copying from the existing ones:
 **Name the ways it goes wrong.** `plan` lists three failure modes by name; [`tdd-write-failing-test`](#tdd-write-failing-test) describes exactly what a wrongly-failing test looks like. Naming a trap is how you stop an agent walking into it.
 
 **Say what to do when stuck.** Every skill ends with escalation rules, and most end with the same line: default to acting on your own, escalate only when the right path is genuinely unclear. Without that, agents either stop constantly or never stop at all.
+
+**Run a procedure skill once on a real case before opening its pull request.** Checking its commands one by one is not enough: the `bisect` skill's first version passed that check, and its first real bisect still turned up a stale build step, a missing iOS environment, and a report step that needed the user's say. Where a step could not be run, say so in the pull request.
 
 **Split large skills by what the caller needs.** `browser-control` routes to a Chrome half and an iOS half so that a web task never loads several hundred lines about BrowserStack.

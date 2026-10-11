@@ -10,7 +10,9 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Metaprogramming](metaprogramming.md) — Hidden `=` attributes that change app behaviour.
 - [Cursor and Caret](cursor-and-caret.md) — The cursor (active thought) vs. the browser selection (caret).
 - [Drag and Drop](drag-and-drop.md) — react-dnd integration and drop targets.
-- [Layout Rendering](layout-rendering.md) — How thoughts are positioned in the absolute-flat-list layout, including the autocrop / vertical-autocrop mechanism.
+- [Layout Rendering](layout-rendering.md) — How thoughts are positioned in the absolute-flat-list layout, including the autocrop / vertical-autocrop mechanism and how the cursor is scrolled into view.
+- [Debug Log](debug-log.md) — The on-device rolling log that survives a freeze, how to get it off a device, and how to compare two of them.
+- [iOS Safari Viewport](ios-safari-viewport.md) — How mobile Safari places fixed elements while the keyboard is open, what it reports to the page, overscroll and stale-rendering bugs, and the approaches that failed.
 
 ## Agents
 
@@ -21,3 +23,5 @@ The in-repo documentation for **em**. The GitHub wiki is being deprecated in fav
 - [Glossary](glossary.md) — Project-specific terms (cliff, autofocus, lexeme, tangential context, tsid, …) with cross-links to the deeper docs. Start here if you encounter unfamiliar vocabulary.
 - [Commands](commands.md) — All user-facing commands and keyboard shortcuts, plus the architecture of the command system.
 - [Testing](testing.md) — Testing approach, platforms, and frameworks.
+
+- [Learning Journey](learning.md) — Pinned-command state and local persistence.

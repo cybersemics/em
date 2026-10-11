@@ -1,22 +1,28 @@
 #!/usr/bin/env node
 /**
  * Starts a GitHub Copilot cloud agent task for each tracking issue the `File tracking issues` step
- * just filed, so a new flake already has an agent working on it by the time anyone reads the alert.
- * Used by the `Start Copilot tasks` step of .github/workflows/puppeteer-flaky.yml.
+ * just filed or reopened, or found open with nobody working on it, so every flake the run found has
+ * an agent on it. Used by the `Start Copilot tasks` step of .github/workflows/puppeteer-flaky.yml.
  *
  * ```sh
  * node scripts/ci/start-copilot-tasks.mjs <flaky-issues.json>
  * ```
  *
- * Only entries this run created are dispatched, because starting a fresh session against the same
- * flake every night would pile up duplicate branches on it. Nothing here picks up an issue filed by
- * hand, or one filed before this existed — those are assigned by hand.
+ * Entries this run opened — filed, or reopened after the flake came back — are dispatched, and so
+ * are `stalled` ones: open issues whose test failed again with no assignee and no open pull request
+ * referencing them. An issue somebody is already working on is skipped, because a fresh task against
+ * it would pile up duplicate branches. That covers an issue filed by hand, one whose last dispatch
+ * failed or overflowed the cap, and one whose last pull request was closed without fixing it.
+ *
+ * The task's pull request is written by the agent, and the agent tasks API takes no title or body
+ * for it, so the prompt below is the only thing that decides what it says. That is where the issue
+ * number at the top of the pull request, and the closing keyword that links the two, come from.
  *
  * Requires COPILOT_TASKS_TOKEN, a user-to-server token — a fine-grained personal access token with
  * the "Agent tasks" repository permission set to read and write, belonging to someone with a
  * Copilot plan that includes the cloud agent. The endpoint rejects the workflow's own GITHUB_TOKEN,
  * which is an app installation token. Without the secret this reports the omission and does
- * nothing, matching how the Discord step treats its webhook.
+ * nothing.
  *
  * Writes a markdown summary of what was dispatched to stdout; diagnostics go to stderr. Exits
  * non-zero when a dispatch fails, which marks the step red without failing the job.
@@ -25,9 +31,11 @@ import { existsSync, readFileSync } from 'node:fs'
 
 /**
  * Diagnosing a race that surfaces once in fifteen runs is the hardest work in this repository, so
- * these tasks pin the strongest model rather than leaving Copilot to auto-select one.
+ * these tasks pin the strongest model rather than leaving Copilot to auto-select one: the
+ * COPILOT_MODEL repository variable, or COPILOT_MODEL_FLAKY to give these tasks their own. Either
+ * holds the ID the agent tasks API expects, e.g. `claude-opus-5.5`.
  */
-const MODEL = 'claude-opus-5'
+const MODEL = process.env.COPILOT_MODEL_FLAKY || process.env.COPILOT_MODEL
 
 /** The repository's general-purpose coding agent, `.github/agents/worker-bee.agent.md`. */
 const CUSTOM_AGENT = 'worker-bee'
@@ -35,9 +43,8 @@ const CUSTOM_AGENT = 'worker-bee'
 /**
  * Cap on tasks started per run. A nightly run normally turns up one or two new flakes; a run that
  * files more than this is usually reporting something systemic, which someone should read before
- * three more agents open pull requests against it. Overflow is named in the summary and left to be
- * assigned by hand — dedupe stops a later run from re-filing those issues, so nothing else will
- * pick them up.
+ * three more agents open pull requests against it. Overflow is named in the summary; a later run
+ * that sees the test fail again finds its issue stalled and dispatches it then.
  */
 const MAX_TASKS = 3
 
@@ -56,12 +63,18 @@ if (!token) {
   process.exit(0)
 }
 
+if (!MODEL) {
+  console.error('Neither COPILOT_MODEL_FLAKY nor COPILOT_MODEL is set; set the COPILOT_MODEL repository variable.')
+  process.exit(1)
+}
+
 // Written only when the issue-filing step got far enough to resolve a tracking issue; absent when
 // it failed outright, which its own step already reports.
 const issues = existsSync(issuesFile) ? JSON.parse(readFileSync(issuesFile, 'utf8')) : []
-const filed = issues.filter(issue => issue.created)
-if (filed.length === 0) {
-  console.error('No newly filed issues; skipping Copilot task dispatch.')
+const DISPATCHED_STATUSES = new Set(['created', 'reopened', 'stalled'])
+const opened = issues.filter(issue => DISPATCHED_STATUSES.has(issue.status))
+if (opened.length === 0) {
+  console.error('No newly filed, reopened, or stalled issues; skipping Copilot task dispatch.')
   process.exit(0)
 }
 
@@ -73,9 +86,23 @@ const prompt = issue =>
     `- **File**: \`${issue.file}\``,
     `- **Test**: ${issue.fullName}`,
     '',
+    ...(issue.status === 'reopened'
+      ? [
+          'That issue was filed, fixed, and closed once already — this run found the test failing again, which is why it is open again. Read the whole issue, including the pull request that closed it, before you start: the condition that fix removed was either not the one that matters or has since come back, so repeating it will not work.',
+          '',
+        ]
+      : []),
+    ...(issue.status === 'stalled'
+      ? [
+          'That issue has been open for a while with nobody working on it, and this run found the test failing again. Read the whole issue, including any closed pull requests that reference it, before you start: whatever they tried did not land, and repeating it will not work.',
+          '',
+        ]
+      : []),
     'The test passes most of the time, so treat it as deterministic behaviour whose controlling condition is not known yet. Reproduce before theorising: run this one test repeatedly with the `run-test` skill until you have seen it fail, and read `docs/testing.md` for how this project synchronises Puppeteer tests.',
     '',
     'Do not make it pass with a sleep, a retry, or a longer timeout — that hides the condition instead of removing it. Wait on the state the test actually needs, adding a waiter helper if none exists, and fix the application rather than the test where the race is in the application.',
+    '',
+    `The pull request description must begin with the line "Fixes #${issue.number}" — nothing above it — and must still begin with it every time you rewrite the description. That line is what puts the issue number at the top of the pull request, links the two in GitHub's Development sidebar, and closes the issue when the pull request merges.`,
   ].join('\n')
 
 /** Starts one Copilot cloud agent task against the branch this run tested, and returns it. */
@@ -105,8 +132,8 @@ const startTask = async issue => {
   return response.json()
 }
 
-const dispatched = filed.slice(0, MAX_TASKS)
-const overflow = filed.slice(MAX_TASKS)
+const dispatched = opened.slice(0, MAX_TASKS)
+const overflow = opened.slice(MAX_TASKS)
 // allSettled rather than all: one rejected dispatch must not cancel the report of the others.
 const results = await Promise.allSettled(dispatched.map(startTask))
 
@@ -117,13 +144,14 @@ const lines = results.map((result, i) => {
     return `- [#${issue.number}](${issue.url}) — **dispatch failed**: ${result.reason.message}`
   }
   console.error(`Started ${MODEL} task for #${issue.number}: ${result.value.html_url}`)
-  return `- [#${issue.number}](${issue.url}) \`${issue.file}\` — [Copilot task](${result.value.html_url})`
+  const note = issue.status === 'created' ? '' : ` (${issue.status})`
+  return `- [#${issue.number}](${issue.url})${note} \`${issue.file}\` — [Copilot task](${result.value.html_url})`
 })
 
 if (overflow.length > 0) {
   const numbers = overflow.map(issue => `#${issue.number}`).join(', ')
   console.error(`Task cap (${MAX_TASKS}) reached; no task started for: ${numbers}`)
-  lines.push(`- Not dispatched (cap ${MAX_TASKS}): ${numbers} — assign Copilot by hand if they need it.`)
+  lines.push(`- Not dispatched (cap ${MAX_TASKS}): ${numbers} — the next run that sees them fail dispatches them.`)
 }
 
 process.stdout.write(['## Copilot tasks', '', ...lines, ''].join('\n'))

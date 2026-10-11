@@ -1,5 +1,6 @@
-import { isTouch } from '../browser'
-import viewportStore from '../stores/viewport'
+import { isCapacitor, isIOS, isTouch } from '../browser'
+import { registerReset } from '../stores/ministore'
+import viewportStore from '../stores/viewportStore'
 
 /** Duration after preventAutoscroll is called before the temporary styles are reset. */
 export const PREVENT_AUTOSCROLL_TIMEOUT = 10
@@ -18,6 +19,14 @@ let autoscrollPadding = 0
 
 /** Clean up styles from preventAutoscroll. This is called automatically 10 ms after preventAutoscroll, but it can and should be called as soon as focus has fired and the autoscroll window has safely passed. */
 export const preventAutoscrollEnd = (el: HTMLElement | null | undefined) => {
+  // Ignore an element that preventAutoscroll is not currently active on. Each editable's focus handler queues a
+  // cleanup for itself, so a cleanup queued by the previously focused thought can run after preventAutoscroll has
+  // already padded the next one. Creating a thought that is placed away from the cursor does exactly that: focus
+  // lands on the moved thought, then on the new thought, which was mounted in the same render and has no focus
+  // listener yet to clean itself up. Without this guard the stale call cancels the new thought's 10 ms cleanup and
+  // restores the previous thought's styles, leaving a viewport-tall padding stuck on the focused editable (#4101).
+  if (el !== activeEl) return
+
   clearTimeout(timeoutId)
   timeoutId = undefined
   activeEl = undefined
@@ -68,8 +77,17 @@ const preventAutoscroll = (
   activeEl = el
   el.setAttribute('data-prevent-autoscroll', 'true')
 
+  // On iOS Capacitor the WebView is configured with Keyboard resize: 'none', so the WebView stays full-screen and
+  // WKWebView's native keyboard-avoidance scroll is unreliable: it fires even for thoughts well above the keyboard
+  // (e.g. when a new thought lands just past the vertical center), dropping the viewport unexpectedly, and it fights
+  // em's own scrollCursorIntoView, causing the view to jitter. Since scrollCursorIntoView already keeps the cursor in
+  // the visible area above the keyboard, we fully disable native autoscroll in ALL cases on iOS Capacitor by padding
+  // the element's bottom past the true WebView bottom (innerHeight). The below-center transform branch below is only
+  // needed on iOS Safari (to work around a selection-visibility bug), so it is skipped on Capacitor. (#4326)
+  const isIOSCapacitor = isIOS && isCapacitor()
+
   // below center
-  if (yCenter < 0) {
+  if (yCenter < 0 && !isIOSCapacitor) {
     // paddingTop keeps the actual text in the same place, despite the element being translated up to prevent autoscroll.
     // Otherwise we are stuck with two bad options:
     // - Only use transform (previous implementation): The browser selection becomes invisible on iOS 17. getSelection still returns the correct node and offset, so it is programmatically undetectable.
@@ -78,12 +96,18 @@ const preventAutoscroll = (
     el.style.paddingTop = `${-yCenter * 2 + paddingTopComputed}px`
     autoscrollPadding = -yCenter * 2
   }
-  // above center
+  // above center, or any position on iOS Capacitor
   else {
     // When the bottom edge of element is below the bottom edge of the screen, autoscroll is disabled completely.
+    // On iOS Capacitor the WebView is configured with Keyboard resize: 'none', so the WebView stays full-screen
+    // (innerHeight) and the keyboard overlays it. Padding only to viewportHeight would leave the element's bottom
+    // inside the keyboard-overlay zone, which triggers WKWebView's native keyboard-avoidance scroll-up (#4326).
+    // Padding to the full innerHeight pushes the element's bottom below the true WebView bottom, disabling native
+    // autoscroll completely — matching the behavior that already works on iOS Safari and Android Capacitor.
     // TODO: Allow autoscroll if thought is above the top edge of the screen (can that happen?)
-    el.style.paddingBottom = `${viewportHeight}px`
-    autoscrollPadding = viewportHeight
+    const paddingBottom = isIOSCapacitor ? innerHeight : viewportHeight
+    el.style.paddingBottom = `${paddingBottom}px`
+    autoscrollPadding = paddingBottom
   }
 
   // 10ms should be plenty of time for Editable.onFocus to fire after preventAutoscroll is first called, and thus call preventAutoscrollEnd, but if for some reason that does not happen we should go ahead and call it to clean up. This will result in a noticeable blink, but it is better than the thought getting stuck.
@@ -92,6 +116,15 @@ const preventAutoscroll = (
   // return cleanup function
   return () => preventAutoscrollEnd(el)
 }
+
+// Restore the element preventAutoscroll is holding, if any, and cancel its timer at every test boundary, so that neither
+// its temporary styles nor the saved ones outlive the test. Only reachable where a test reports a touch device.
+registerReset(() => {
+  if (activeEl) preventAutoscrollEnd(activeEl)
+  transformOld = ''
+  paddingBottomOld = ''
+  paddingTopOld = ''
+})
 
 /** Returns true if preventAutoscroll is currently in progress. */
 export const isPreventAutoscrollInProgress = () => !!timeoutId

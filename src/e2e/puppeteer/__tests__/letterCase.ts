@@ -1,9 +1,14 @@
+import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
 import clickToolbar from '../helpers/clickToolbar'
+import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
+import keyboard from '../helpers/keyboard'
+import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
 import setSelection from '../helpers/setSelection'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForEditingTextChange from '../helpers/waitForEditingTextChange'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
 
@@ -66,10 +71,63 @@ it('the selected text remains selected after a letter case change that lengthens
 
   await clickToolbar('Letter Case', 'UpperCase')
 
-  await waitForEditable('STRASSE X')
+  await waitForEditable('STRASSE x')
 
   // see the comment on the re-selection wait above
   await waitUntil(() => window.getSelection()?.toString() === 'STRASSE')
 
   expect(await getSelection().toString()).toBe('STRASSE')
+})
+
+// https://github.com/cybersemics/em/issues/4774
+// These commands are covered in component tests as well, but it feels valuable to have some level
+// of belt-and-suspenders coverage for timing issues related to edits. Copilot has dutifully warned
+// that this test is a flake candidate, and additionally violates the principle of covering each
+// behaviour at exactly one level.
+it('flushes pending edits before applying letter case from the picker', async () => {
+  await paste('a')
+
+  await clickThought('a')
+  await clickToolbar('Letter Case')
+  await keyboard.type('b')
+
+  // dropdown is already open, so directly click the UpperCase swatch rather than using the two-click clickToolbar
+  await click('[aria-label="letter case swatches"] [aria-label="UpperCase"]')
+
+  await waitForEditable('AB')
+
+  expect(await getEditingText()).toBe('AB')
+})
+
+// https://github.com/cybersemics/em/issues/4281
+it('applies letter case to the selected text only', async () => {
+  await paste('Welcome to the world of beautiful people')
+
+  await clickThought('Welcome to the world of beautiful people')
+  await setSelection(24, 33)
+
+  await clickToolbar('Letter Case', 'UpperCase')
+
+  await waitForEditingTextChange('Welcome to the world of beautiful people')
+
+  expect(await getEditingText()).toBe('Welcome to the world of BEAUTIFUL people')
+})
+
+it('the selected text remains selected when the thought has trailing whitespace', async () => {
+  // Typed rather than pasted: Editable trims the value on its way into Redux while the live editable keeps the
+  // trailing space, so the text the editable re-renders to is not the text the DOM had before the edit.
+  await newThought('hello beautiful world')
+  await keyboard.type(' ')
+
+  // Typing hides the toolbar in distraction-free mode. Clicking the thought is a pointer event, which reveals it.
+  await clickThought('hello beautiful world ')
+  await setSelection(6, 15)
+
+  await clickToolbar('Letter Case', 'UpperCase')
+
+  // waitForEditable polls on an animation frame, and the re-selection runs in the mutation observer callback for the
+  // same re-render, so the selection is already restored by the time the new value is visible.
+  await waitForEditable('hello BEAUTIFUL world')
+
+  expect(await getSelection().toString()).toBe('BEAUTIFUL')
 })

@@ -4,8 +4,9 @@ import { AnimationPlaybackControls, animate } from 'framer-motion'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
 import { LongPressState } from '../../../constants'
 import store from '../../../stores/app'
-import viewportStore from '../../../stores/viewport'
+import viewportStore from '../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
+import debugLog from '../../../util/debugLog'
 import getSafeAreaBottom from '../getSafeAreaBottom'
 
 /** A virtual keyboard handler for iOS Capacitor that uses native events and spring physics.
@@ -23,10 +24,15 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
       // drag (#4683). We dismiss the keyboard immediately when a drag begins, but reacting to this show would
       // animate the virtual keyboard height up and then straight back down, making the drag-and-drop alert
       // jump. Skip the layout update while a drag gesture is active; the keyboard should never be open then.
-      if (store.getState().longPress !== LongPressState.Inactive) return
+      const ignored = store.getState().longPress !== LongPressState.Inactive
 
       // Get the raw height of the keyboard from the event...
       const rawHeight = info.keyboardHeight || 0
+
+      // Record the keyboard as iOS reports it, beside the keyboardOpen actions that set Redux's isKeyboardOpen, so an
+      // edit mode that disagrees with the keyboard on screen shows which side moved. Includes the ignored shows.
+      debugLog.log('keyboard', { event: 'willShow', rawHeight, ignored })
+      if (ignored) return
 
       // ...then subtract the safe-area-bottom inset to get the height above the safe-area baseline.
       // Because we always add a safe-area-bottom inset whenever we position elements, this normalized height
@@ -52,6 +58,8 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
     })
 
     Keyboard.addListener('keyboardWillHide', () => {
+      debugLog.log('keyboard', { event: 'willHide' })
+
       // note: leave open: true until the keyboard has fully hidden
       virtualKeyboardStore.update({ open: true })
 

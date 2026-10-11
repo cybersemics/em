@@ -35,9 +35,12 @@ import isContextViewActive from '../selectors/isContextViewActive'
 import isMulticursorPath from '../selectors/isMulticursorPath'
 import pathToThought from '../selectors/pathToThought'
 import prevSibling from '../selectors/prevSibling'
+import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import store from '../stores/app'
+import multitouchStore from '../stores/multitouchStore'
 import selectionRangeStore from '../stores/selectionRangeStore'
+import touchStore from '../stores/touchStore'
 import appendToPath from '../util/appendToPath'
 import debugLog from '../util/debugLog'
 import equalPath from '../util/equalPath'
@@ -63,7 +66,24 @@ const canDrag = (props: ThoughtContainerProps) => {
   const hasSelectionRange = selectionRangeStore.getState()
   if (isTouch && hasSelectionRange) return false
 
+  // Reject multi-touch input so that two-finger tracing is not interpreted as a drag-and-drop.
+  // react-dnd's TouchBackend initiates a drag from the primary touch and has no multi-touch rejection
+  // of its own, so a two-finger trace over a thought would otherwise begin a drag. The multitouch store
+  // latches while more than one finger is down and stays set until every finger lifts, so a finger lifting
+  // mid-gesture cannot re-open the drag. See #4233.
+  if (isTouch && multitouchStore.getState()) return false
+
   const state = store.getState()
+
+  // A press that landed on the caret belongs to native caret repositioning, so it must not become a drag when it moves
+  // past the touch slop (#3763). This reads the flag latched by the capture-phase touchstart listener in initEvents
+  // rather than state.longPress, because react-dnd's timer can begin a drag before DragHold is dispatched (see the
+  // longPress reducer).
+  if (touchStore.getState().pressOnCaret) return false
+
+  // On iOS 27 a withheld tap on an empty thought gives no sign that it lifted (#5660).
+  if (touchStore.getState().pressInEmptyThought) return false
+
   const thoughtId = head(props.simplePath)
   const pathParentId = head(parentOf(props.simplePath))
   const isDraggable = props.isVisible || props.isCursorParent
@@ -287,7 +307,13 @@ const drop = (props: ThoughtContainerProps, monitor: DropTargetMonitor) => {
 
         dispatch(
           alert(() => (
-            <MoveThoughtAlert from={firstFromThought.value} numThoughts={draggedItems.length} toPath={parent} />
+            <MoveThoughtAlert
+              from={firstFromThought.value}
+              numThoughts={draggedItems.length}
+              // parent is the empty path when the drop target is a root child, which is not a valid Path. Root it so
+              // the alert renders the destination as home instead of quoting an empty value.
+              toPath={rootedParentOf(state, props.simplePath)}
+            />
           )),
         )
       }, 100)
@@ -301,6 +327,11 @@ const endDrag = () => {
   // long-press start that blocks all scrolling; it is only removed on touchend, which does not fire after a drag (e.g. a
   // multiselect drop onto a subthought), leaving scrolling frozen until it is explicitly re-enabled here.
   allowTouchToScroll(true)
+
+  // A browser may dispatch the release's compatibility click or focus after drag cleanup. Keep only cursor events
+  // suppressed until the next real touchstart; do not hold longPress open and block unrelated gesture state.
+  if (isTouch) touchStore.update({ suppressCursorAfterTouch: true })
+
   store.dispatch([
     longPress({ value: LongPressState.Inactive }),
     (dispatch, getState) => {

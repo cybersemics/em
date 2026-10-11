@@ -15,6 +15,10 @@ OPENAI_API_KEY=
 
 `GITHUB_TOKEN` is only needed to write. Reading milestones and issues from a public repository works without one, so `--dry` runs and `yarn evaluate` need nothing but an OpenAI key.
 
+Every script here reads `OPENAI_API_KEY_ISSUE_CLASSIFIER` first and falls back to `OPENAI_API_KEY`. The
+separate name is what lets this classifier's spend be read on its own in the OpenAI dashboard, which
+reports by API key; one shared key in `.env` is all a local run needs.
+
 ## Usage
 
 ```bash
@@ -176,7 +180,7 @@ Full results are [a comment on #5098](https://github.com/cybersemics/em/pull/509
 | ---------------------------------------------------------------- | -------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Issue Classifier](../../.github/workflows/issue-classifier.yml) | `src/issue.ts` | Issue opened, or manual `workflow_dispatch` | Assigns the best-matching open milestone and labels what kind of work the issue is, or comments asking for a category when no milestone fits. |
 
-It needs the `OPENAI_API_KEY` repository secret; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing unclassified issue gets a milestone, plus an optional `dry` toggle that runs the inference and prints the decision without assigning anything.
+It needs the `OPENAI_API_KEY_ISSUE_CLASSIFIER` repository secret, or `OPENAI_API_KEY` as the fallback; the `GITHUB_TOKEN` is supplied by Actions. The manual dispatch takes an `issue` number, which is also how an existing unclassified issue gets a milestone, plus an optional `dry` toggle that runs the inference and prints the decision without assigning anything.
 
 ```sh
 gh workflow run issue-classifier.yml -f issue=5092 -f dry=true

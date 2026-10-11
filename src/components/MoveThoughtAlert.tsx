@@ -1,4 +1,3 @@
-import { escape as escapeHtml } from 'html-escaper'
 import { FC } from 'react'
 import { useSelector } from 'react-redux'
 import Path from '../@types/Path'
@@ -8,7 +7,6 @@ import ellipsize from '../util/ellipsize'
 import head from '../util/head'
 import headValue from '../util/headValue'
 import isRoot from '../util/isRoot'
-import toVisibleText from '../util/toVisibleText'
 import Link from './Link'
 
 interface MoveThoughtAlertProps {
@@ -17,7 +15,7 @@ interface MoveThoughtAlertProps {
   /** Total number of moved thoughts. Defaults to one. */
   numThoughts?: number
   /** Destination context path. Root destinations render as home; other destinations render as a clickable thought link. */
-  toPath: SimplePath | []
+  toPath: SimplePath
   /** True when the thought was moved to the top of the destination context. */
   top?: boolean
   /** Context whose occurrence received the thought when dropping in context view. */
@@ -26,33 +24,26 @@ interface MoveThoughtAlertProps {
 
 /** Alert shown after drag-and-drop moves a thought to another context. */
 const MoveThoughtAlert: FC<MoveThoughtAlertProps> = ({ contextPath, from, numThoughts = 1, toPath, top }) => {
-  const isRootPath = toPath.length === 0 || isRoot(toPath)
-  const to = useSelector(state => {
-    if (isRootPath) return 'home'
-    return toVisibleText(getThoughtById(state, head(toPath as SimplePath))?.value || '')
-  })
+  const isRootPath = isRoot(toPath)
+  const to = useSelector(state => (isRootPath ? 'home' : getThoughtById(state, head(toPath))?.value || ''))
   const context = useSelector(state => (contextPath ? headValue(state, contextPath) : null))
-  const alertFrom = numThoughts === 1 ? `"${ellipsize(escapeHtml(toVisibleText(from)))}"` : `${numThoughts} thoughts`
-  const contextText = toVisibleText(context || 'MISSING_CONTEXT')
+  const alertFrom = numThoughts === 1 ? (from ? `"${ellipsize(from)}"` : 'Empty thought') : `${numThoughts} thoughts`
 
   return (
     <span>
       {alertFrom} moved to{top ? ' top of' : ''}{' '}
       {isRootPath ? (
         to
-      ) : (
+      ) : to ? (
         <>
           &quot;
-          <Link
-            simplePath={toPath as SimplePath}
-            label={to}
-            charLimit={16}
-            style={{ cursor: 'pointer', textDecoration: 'underline' }}
-          />
+          <Link simplePath={toPath} label={ellipsize(to)} style={{ cursor: 'pointer', textDecoration: 'underline' }} />
           &quot;
         </>
+      ) : (
+        <Link simplePath={toPath} label='empty thought' style={{ cursor: 'pointer', textDecoration: 'underline' }} />
       )}
-      {contextPath ? ` in the context of ${ellipsize(escapeHtml(contextText))}` : ''}.
+      {contextPath ? ` in the context of ${ellipsize(context || 'MISSING_CONTEXT')}` : ''}.
     </span>
   )
 }

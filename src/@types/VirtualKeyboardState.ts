@@ -4,4 +4,6 @@ export default interface VirtualKeyboardState {
   open: boolean
   /** The height of the virtual keyboard in pixels. */
   height: number
+  /** Native lifecycle phase, when the platform provides it. Editor behavior observes this separately from geometry. */
+  phase?: 'opening' | 'open' | 'closing' | 'closed'
 }

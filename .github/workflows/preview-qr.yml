@@ -1,0 +1,110 @@
+name: Preview QR
+
+# Keeps a "Preview Deployment" comment on every pull request, holding a QR code of the latest
+# successful Vercel preview so the preview can be opened on a phone straight off the screen.
+# scripts/ci/preview-qr.mjs does the work; this file decides when it runs and with what.
+#
+# Trigger. Vercel's Git integration is off (vercel.json), so previews come from vercel-preview.yml,
+# which creates a GitHub deployment in the `Preview` environment with its own GITHUB_TOKEN and
+# reports `in_progress`, then `success` (with the URL), `failure`, or `inactive` for a superseded
+# run. Events raised with GITHUB_TOKEN never start workflows, so `deployment` and
+# `deployment_status` cannot be the trigger here; the Vercel Preview *run* is the observable
+# lifecycle instead. `in_progress` is the moment the preview starts building, `completed` with
+# `conclusion: success` the moment it is live, and any other conclusion — `failure`, `cancelled`
+# from a newer push, a startup failure — the moment it is not coming. Queued runs (awaiting
+# approval for a first-time contributor) are not yet building and leave the comment alone.
+#
+# Ordering. Events can arrive late or out of order, so the script does not act on the event that
+# woke it. It resolves the pull request from the commit (the one whose head *is* the commit, since a
+# pull request stacked on this one's branch contains it too), exits if the head has moved on, and
+# reconciles the comment to the *newest* Vercel Preview run for that head as the API reports it
+# now — so commit A's late success cannot overwrite commit B, and an `in_progress` delivered after
+# its own `completed` finds the run finished and renders the finished state. Immediately before
+# writing it re-reads the pull request, so a push during the run aborts the write.
+#
+# Why a comment. The description has other writers: the Copilot coding agent rewrites all of it
+# whenever it reports progress, without pushing, so a QR kept there would vanish until the next
+# preview. Nothing but this workflow edits its own comment.
+#
+# SECURITY: this is the privileged half of a two-workflow pair. Vercel Preview runs fork code
+# under pull_request_target with the deployment secrets; this workflow runs in the base
+# repository with a write token and must therefore never touch that code. It checks out only the
+# default branch — `workflow_run` resolves `github.ref` there — installs nothing from the pull
+# request, and works from GitHub API metadata alone. The one pull-request-derived value it handles
+# is the preview URL the trusted Vercel Preview run recorded on the deployment, which it encodes
+# into a PNG and places in a link. Fork pull requests get exactly the same treatment as
+# same-repository ones: the pull request is found by commit, never by branch name.
+#
+# Images. The QR PNG is committed to the `preview-qr` branch, which holds one image per pull
+# request and nothing else, and the comment shows it from a URL pinned to that commit. Everything
+# runs on the workflow's own GITHUB_TOKEN; no personal access token is involved.
+#
+# Runs:
+#   - Automatically, when a Vercel Preview run starts or finishes
+#   - Manually: `gh workflow run preview-qr.yml -f pr=5296`, which reconciles that pull request
+#
+# `workflow_run` reads this file from the default branch, so edits here have no effect until they
+# are merged to main.
+
+on:
+  workflow_run:
+    workflows: ['Vercel Preview']
+    types: [in_progress, completed]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Pull request number whose preview comment to reconcile'
+        required: true
+        type: string
+
+# Serialize per pull request where the event names it (same-repository branches) and per commit
+# otherwise (forks, whose pull requests the event does not list). Never cancel: the newest queued
+# run is the one that sees the run's final state. GitHub drops an older *pending* run when a newer
+# one queues behind it, which is safe here because every run reconciles to the newest state
+# regardless of which event woke it.
+concurrency:
+  group: preview-qr-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha || inputs.pr }}
+  cancel-in-progress: false
+
+permissions:
+  actions: read # list the Vercel Preview runs for the pull request head
+  contents: write # check out scripts/ci from the default branch, and commit QR images to preview-qr
+  deployments: read # read the preview URL and creation time off the deployment
+  pull-requests: write # write the preview comment, and remove the old block from the description
+
+jobs:
+  update:
+    name: Update preview comment
+    runs-on: ubuntu-latest
+    # Only pull-request previews; the production deploy is a different workflow and never matches.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.event == 'pull_request_target'
+
+    steps:
+      # `workflow_run` resolves `github.ref` to the default branch, so this checks out the base
+      # repo's own code — never the pull request's — solely to make scripts/ci/ available below.
+      - name: Clone repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # The QR is generated locally, so no third-party service ever sees the preview URL.
+      - name: Install qrencode
+        run: |
+          sudo apt-get install -y --no-install-recommends qrencode ||
+            (sudo apt-get update && sudo apt-get install -y --no-install-recommends qrencode)
+
+      - name: Update the preview comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Empty on workflow_dispatch, where PR_NUMBER identifies the pull request instead.
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PR_NUMBER: ${{ inputs.pr }}
+        run: |
+          set -euo pipefail
+          if [ -n "$PR_NUMBER" ]; then
+            node scripts/ci/preview-qr.mjs --pr "$PR_NUMBER"
+          else
+            node scripts/ci/preview-qr.mjs "$HEAD_SHA"
+          fi

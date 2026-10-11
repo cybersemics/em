@@ -54,7 +54,7 @@ ${shortThoughts}
   `)
   await clickThought('parent')
   await waitForEditable('thought 1')
-  await scrollTo(0, 0)
+  await scrollTo(0)
   await page.waitForFunction(
     (value: string) =>
       !Array.from(document.querySelectorAll('[data-editable]')).some(element => element.textContent === value),

@@ -1,5 +1,9 @@
 import _ from 'lodash'
-import ministore, { resetStores } from '../../stores/ministore'
+import ministore, { registerReset, resetStores } from '../../stores/ministore'
+import reactMinistore from '../../stores/react-ministore'
+
+/** A module-level store, as every store under src/stores is. Vitest isolates modules per file, not per test, so it outlives each test in this file. */
+const moduleStore = ministore(0)
 
 it('getState', () => {
   const store = ministore(1)
@@ -16,6 +20,16 @@ it('update partial', () => {
   const store = ministore({ a: 1, b: 2 })
   store.update({ a: 3 })
   expect(store.getState()).toEqual({ a: 3, b: 2 })
+})
+
+it('update an object from null', () => {
+  const store = ministore<{ a: number; b: number } | null>(null)
+  store.update({ a: 1, b: 2 })
+  expect(store.getState()).toEqual({ a: 1, b: 2 })
+  store.update({ b: 3 })
+  expect(store.getState()).toEqual({ a: 1, b: 3 })
+  store.update(null)
+  expect(store.getState()).toBeNull()
 })
 
 describe('reset', () => {
@@ -45,6 +59,21 @@ describe('reset', () => {
   })
 })
 
+// These two tests depend on their order: the first leaves state behind, the second checks that no hand-written teardown
+// was needed to clear it. Together they pin the afterEach in setupTests.ts, which is the only reset for a suite that
+// uses neither initStore nor createTestApp.
+// https://github.com/cybersemics/em/issues/5245
+describe('isolation between tests', () => {
+  it('leave a module-level store changed', () => {
+    moduleStore.update(1)
+    expect(moduleStore.getState()).toBe(1)
+  })
+
+  it('see the initial state without resetting it', () => {
+    expect(moduleStore.getState()).toBe(0)
+  })
+})
+
 describe('resetStores', () => {
   it('reset every store', () => {
     const storeA = ministore(1)
@@ -68,6 +97,20 @@ describe('resetStores', () => {
     resetStores()
 
     expect(composite.getState()).toBe(12)
+  })
+})
+
+describe('registerReset', () => {
+  it('runs a registered reset before the stores are reset, so that it still sees the state it has to tear down', () => {
+    const store = ministore(1)
+    store.update(2)
+    const seen: number[] = []
+    registerReset(() => seen.push(store.getState()))
+
+    resetStores()
+
+    expect(seen).toEqual([2])
+    expect(store.getState()).toBe(1)
   })
 })
 
@@ -298,5 +341,59 @@ describe('compose', () => {
 
     storeA.update(5)
     expect(counter).toBe(1)
+  })
+})
+
+describe('dispose', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // https://github.com/cybersemics/em/issues/5246
+  it('release a timer held in state when the store is reset through the registry', () => {
+    vi.useFakeTimers()
+    const fired = vi.fn()
+    const store = ministore<{ timeoutId: number | null }>(
+      { timeoutId: null },
+      { dispose: state => window.clearTimeout(state.timeoutId ?? undefined) },
+    )
+    store.update({ timeoutId: window.setTimeout(fired, 100) })
+
+    resetStores()
+
+    expect(store.getState().timeoutId).toBe(null)
+    vi.advanceTimersByTime(100)
+    expect(fired).toHaveBeenCalledTimes(0)
+  })
+
+  it('see the live state before it is restored', () => {
+    const disposed: number[] = []
+    const store = ministore(1, { dispose: state => disposed.push(state) })
+    store.update(2)
+
+    store.reset()
+
+    expect(disposed).toEqual([2])
+    expect(store.getState()).toBe(1)
+  })
+
+  it('run even when the state already equals the initial state', () => {
+    const dispose = vi.fn()
+    const store = ministore({ timeoutId: null }, { dispose })
+
+    store.reset()
+
+    expect(dispose).toHaveBeenCalledExactlyOnceWith({ timeoutId: null })
+  })
+
+  it('run through reactMinistore', () => {
+    const dispose = vi.fn()
+    const store = reactMinistore<number>(1, { dispose })
+    store.update(2)
+
+    resetStores()
+
+    expect(dispose).toHaveBeenCalledExactlyOnceWith(2)
+    expect(store.getState()).toBe(1)
   })
 })

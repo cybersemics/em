@@ -122,6 +122,18 @@ it('text and background color on font tag', () => {
   })
 })
 
+it('color tag wrapping other formatting tags', () => {
+  expect(getCommandState('<font color="#ff573d"><strike><u><b>text</b></u></strike></font>')).toStrictEqual({
+    bold: true,
+    italic: false,
+    underline: true,
+    strikethrough: true,
+    code: false,
+    foreColor: '#ff573d',
+    backColor: undefined,
+  })
+})
+
 // NOT IMPLEMENTED
 it.skip('text and background color on span tag', () => {
   expect(getCommandState('<span style="color: #000000; background-color: rgb(0, 0, 255);">a</span>')).toStrictEqual({

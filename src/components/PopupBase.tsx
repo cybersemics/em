@@ -47,6 +47,9 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       textAlign,
       onMouseOver,
       onMouseLeave,
+      onTouchStart,
+      onTouchEnd,
+      onTouchCancel,
     },
     ref,
   ) => {
@@ -76,12 +79,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
       swipeDown: true,
     })
 
-    const borderStyles = border
-      ? {
-          border: '1px solid {colors.panelBorder}',
-          borderRadius: '8px',
-        }
-      : {}
+    // disable swipe-to-dismiss when multicursor is active
+    const swipeProps: typeof useSwipeToDismissProps = multicursor ? {} : useSwipeToDismissProps
 
     const fullScreenStyles = fullScreen
       ? {
@@ -112,7 +111,9 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           left: 0,
           right: 0,
           width: 'max-content',
-          ...borderStyles,
+          // Ternaries instead of a spread from a variable, because PandaCSS does not extract styles spread from a variable.
+          border: border ? '1px solid {colors.panelBorder}' : undefined,
+          borderRadius: border ? '8px' : undefined,
           '&:hover': {
             '& [data-close-button]': {
               opacity: showXOnHover ? 1 : undefined,
@@ -121,8 +122,8 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           /** It should be possible to drag elements through a popup without interference. */
           pointerEvents: { _dragHold: 'none' },
         })}
-        // disable swipe-to-dismiss when multicursor is active
-        {...(!multicursor && useSwipeToDismissProps)}
+        {...swipeProps}
+        // the hook measures the element whether or not swipe-to-dismiss is enabled, so its ref is always attached
         ref={useCombinedRefs([ref, innerRef, useSwipeToDismissProps.ref])}
         // merge style with useSwipeToDismissProps.style (transform, transition, and touchAction for sticking to user's touch)
         style={{
@@ -131,11 +132,23 @@ const PopupBase = React.forwardRef<HTMLDivElement, PopupBaseProps>(
           background,
           fontSize,
           padding,
-          // disable swipe-to-dismiss when multicursor is active
-          ...(!multicursor && useSwipeToDismissProps.style),
+          ...swipeProps.style,
         }}
         onMouseOver={onMouseOver}
         onMouseLeave={onMouseLeave}
+        // chained rather than spread, since swipeProps binds the same three events
+        onTouchStart={e => {
+          swipeProps.onTouchStart?.(e)
+          onTouchStart?.(e)
+        }}
+        onTouchEnd={e => {
+          swipeProps.onTouchEnd?.(e)
+          onTouchEnd?.(e)
+        }}
+        onTouchCancel={e => {
+          swipeProps.onTouchCancel?.(e)
+          onTouchCancel?.(e)
+        }}
       >
         {children}
         {onClose ? (

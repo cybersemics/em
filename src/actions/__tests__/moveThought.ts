@@ -1,7 +1,9 @@
 import State from '../../@types/State'
 import importText from '../../actions/importText'
+import moveThought from '../../actions/moveThought'
 import newSubthought from '../../actions/newSubthought'
 import newThought from '../../actions/newThought'
+import toggleContextView from '../../actions/toggleContextView'
 import { HOME_TOKEN } from '../../constants'
 import contextToPath from '../../selectors/contextToPath'
 import exportContext from '../../selectors/exportContext'
@@ -9,6 +11,8 @@ import getContexts from '../../selectors/getContexts'
 import getLexeme from '../../selectors/getLexeme'
 import getRankAfter from '../../selectors/getRankAfter'
 import pathToThought from '../../selectors/pathToThought'
+import addMulticursorAtFirstMatch from '../../test-helpers/addMulticursorAtFirstMatch'
+import contextToPathOrThrow from '../../test-helpers/contextToPathOrThrow'
 import contextToThought from '../../test-helpers/contextToThought'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import getAllChildrenByContext from '../../test-helpers/getAllChildrenByContext'
@@ -16,6 +20,8 @@ import getChildrenRankedByContext from '../../test-helpers/getChildrenRankedByCo
 import moveThoughtAtFirstMatch from '../../test-helpers/moveThoughtAtFirstMatch'
 import newThoughtAtFirstMatch from '../../test-helpers/newThoughtAtFirstMatch'
 import setCursor from '../../test-helpers/setCursorFirstMatch'
+import appendToPath from '../../util/appendToPath'
+import head from '../../util/head'
 import initialState from '../../util/initialState'
 import reducerFlow from '../../util/reducerFlow'
 
@@ -279,6 +285,95 @@ it('moving unrelated thought should not update cursor', () => {
   const stateNew = reducerFlow(steps)(initialState())
 
   expectPathToEqual(stateNew, stateNew.cursor, ['a'])
+})
+
+it('moving a thought up a level should keep the cursor on its descendant', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - x
+            - x1
+      `,
+    }),
+    setCursor(['a', 'x', 'x1']),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'x'],
+      to: ['x'],
+      newRank: 1,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.cursor).toEqual(contextToPath(stateNew, ['x', 'x1']))
+})
+
+it('moving a selected thought should move it in the multiselect', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - x
+          - y
+        - b
+      `,
+    }),
+    addMulticursorAtFirstMatch(['a', 'x']),
+    addMulticursorAtFirstMatch(['a', 'y']),
+    moveThoughtAtFirstMatch({
+      from: ['a', 'x'],
+      to: ['b', 'x'],
+      newRank: 0,
+    }),
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(Object.values(stateNew.multicursors)).toEqual([
+    contextToPath(stateNew, ['b', 'x']),
+    contextToPath(stateNew, ['a', 'y']),
+  ])
+})
+
+it('moving a context in the context view should update the cursor to the moved thought', () => {
+  const steps = [
+    importText({
+      text: `
+        - a
+          - m
+        - b
+          - m
+      `,
+    }),
+    setCursor(['a', 'm']),
+    toggleContextView,
+    // drag the context a/m~/a onto the subthoughts drop zone of the context a/m~/b, i.e. move a/m into b/m
+    (state: State) => {
+      const contextA = contextToPathOrThrow(state, ['a', 'm', 'a'], 'moveThought')
+      const contextB = contextToPathOrThrow(state, ['a', 'm', 'b'], 'moveThought')
+      return moveThought(state, {
+        oldPath: contextA,
+        newPath: appendToPath(contextB, head(contextA)),
+        newRank: 0,
+      })
+    },
+  ]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  const exported = exportContext(stateNew, [HOME_TOKEN], 'text/plain')
+
+  expect(exported).toBe(`- ${HOME_TOKEN}
+  - a
+  - b
+    - m
+      - m`)
+
+  // The cursor is on the nominal context m (a/m~), which is the thought that was moved, so it must follow the
+  // thought to b/m/m. Otherwise it is left on a/m, which no longer exists: expandThoughts can no longer reach it,
+  // freeThoughts deallocates the thought as no longer visible, and the next expandThoughts throws "Invalid path".
+  expectPathToEqual(stateNew, stateNew.cursor, ['b', 'm', 'm'])
 })
 
 it('move root thought into another root thought', () => {
@@ -858,6 +953,32 @@ it('move thought to the end of a sorted context', () => {
 
   // newRank should be ignored when moving into a sorted context
   expect(contextToThought(stateNew, ['d'])?.rank).not.toEqual(999)
+})
+
+it('placement follows the sorted rank rather than the caller afterId', () => {
+  const text = `
+    - =sort
+      - Alphabetical
+    - a
+    - c
+      - b
+  `
+
+  const steps = [importText({ text }), setCursor(['c', 'b'])]
+  const state = reducerFlow(steps)(initialState())
+  const thoughtA = contextToThought(state, ['a'])!
+  const thoughtC = contextToThought(state, ['c'])!
+
+  // afterId places b after its old parent c, as outdent does, which contradicts the sorted rank
+  const stateNew = moveThoughtAtFirstMatch({
+    from: ['c', 'b'],
+    to: ['b'],
+    newRank: 999,
+    afterId: thoughtC.id,
+  })(state)
+  const thoughtB = contextToThought(stateNew, ['b'])!
+
+  expect(stateNew.pushQueue.at(-1)?.movePlacements?.[thoughtB.id]).toBe(thoughtA.id)
 })
 
 it('do not re-rank siblings in sorted context', () => {

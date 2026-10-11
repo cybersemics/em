@@ -34,12 +34,12 @@ ruleTester.run('no-store-subscribe-in-components', plugin.rules['no-store-subscr
       errors: [{ messageId: 'noStoreSubscribe' }],
     },
     {
-      code: "import editingValueStore from '../stores/editingValue'\neditingValueStore.subscribe(() => {})",
+      code: "import editingValueStore from '../stores/editingValueStore'\neditingValueStore.subscribe(() => {})",
       filename: '/repo/src/components/Component.tsx',
       errors: [{ messageId: 'noStoreSubscribe' }],
     },
     {
-      code: "import viewportStore from '/repo/src/stores/viewport'\nviewportStore.subscribe(() => {})",
+      code: "import viewportStore from '/repo/src/stores/viewportStore'\nviewportStore.subscribe(() => {})",
       filename: '/repo/src/components/Component.tsx',
       errors: [{ messageId: 'noStoreSubscribe' }],
     },

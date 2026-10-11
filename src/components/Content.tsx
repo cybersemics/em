@@ -4,8 +4,8 @@ import { css } from '../../styled-system/css'
 import Dispatch from '../@types/Dispatch'
 import SimplePath from '../@types/SimplePath'
 import { Thunk } from '../@types/Thunk'
+import { closeDropdownsActionCreator as closeDropdowns } from '../actions/closeDropdowns'
 import { closeModalActionCreator as closeModal } from '../actions/closeModal'
-import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import { isTouch } from '../browser'
 import {
   ABSOLUTE_PATH,
@@ -44,6 +44,8 @@ const Content: FC = () => {
   const dispatch = useDispatch()
   const tutorial = useSelector(isTutorial)
   const tutorialStep = useSelector(state => +(getSetting(state, 'Tutorial Step') || 1))
+  /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
+  const reduceBottomSpace = isTouch && tutorial && tutorialStep !== TUTORIAL2_STEP_SUCCESS
   const search = useSelector(state => state.search)
   const rootThoughtsLength = useSelector(state => {
     const rankedRoot = isAbsolute(state.rootContext) ? ABSOLUTE_PATH : HOME_PATH
@@ -60,7 +62,7 @@ const Content: FC = () => {
     if (state.longPress !== LongPressState.Inactive) return
 
     // if disableOnFocus is true, the click came from an Editable onFocus event and we should not reset the cursor
-    dispatch([state.showModal ? closeModal() : null, toggleDropdown()])
+    dispatch([state.showModal ? closeModal() : null, closeDropdowns()])
   }
 
   return (
@@ -72,7 +74,17 @@ const Content: FC = () => {
           // otherwise it will incorrectly be called on mobile due to touch vs click ordering (#1029)
           if (!selection.isThought(e.target)) dispatch(clickOnEmptySpace)
         },
-        { enableHaptics: false },
+        {
+          enableHaptics: false,
+          // A tap outside a thought dismisses the keyboard by blurring the editable, but the browser keeps a native
+          // touch selection alive across the blur, leaving the selection handles and the text context menu on screen
+          // after the keyboard is gone (#4833). Collapsing the range on tap down dismisses them before the tap's own
+          // blur starts the keyboard animation, so the two teardowns do not overlap and the menu does not flash back.
+          // Only a range is collapsed: a caret is dismissed by the blur anyway.
+          tapDown: e => {
+            if (!selection.isThought(e.target)) selection.collapse()
+          },
+        },
       )}
     >
       <div
@@ -84,7 +96,10 @@ const Content: FC = () => {
           // limit line width for easier reading
           maxWidth: '60em',
           margin: '0 auto',
-          minHeight: '100vh',
+          // Each property takes its own ternary rather than being overridden by a conditional spread, because PandaCSS
+          // does not extract a value that a later spread in the same css call overrides.
+          minHeight: reduceBottomSpace ? 'auto' : '100vh',
+          paddingBottom: reduceBottomSpace ? '20px' : undefined,
           // Disallow text selection on the entire tree to prevent selection of scroll zone and other background elements when dragging.
           // This is overriden by the editable recipe to enable text selection on editable thoughts.
           // https://github.com/cybersemics/em/pull/2962
@@ -97,13 +112,6 @@ const Content: FC = () => {
             maxWidth: '50em',
             paddingLeft: '40px',
           },
-          ...(isTouch &&
-            tutorial &&
-            tutorialStep !== TUTORIAL2_STEP_SUCCESS && {
-              /* reduce bottom space during tutorial to try to keep the tutorial in view as much as possible */
-              minHeight: 'auto',
-              paddingBottom: '20px',
-            }),
         })}
         style={{
           // Moved from css({...}) because PandaCSS requires statically analyzable values at build time.

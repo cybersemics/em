@@ -1,4 +1,3 @@
-import { DebouncedFunc } from 'lodash'
 import type { ThoughtspaceStorage } from '../data-providers/thoughtspace'
 
 type TestFlags = {
@@ -20,8 +19,6 @@ type TestFlags = {
   simulateDrag: boolean
   /** Render drop targets as blocks of color. */
   simulateDrop: boolean
-  /** The throttled scrollCursorIntoView function. Exposed so that tests can cancel its pending trailing call before asserting on the scroll position. */
-  throttledScrollCursorIntoView: DebouncedFunc<(y: number, height: number) => void> | null
 }
 
 const preloadedTestFlags = typeof window === 'undefined' ? null : (window.em?.testFlags ?? null)
@@ -38,7 +35,6 @@ const testFlags: TestFlags = {
   pinDropHovers: false,
   simulateDrag: false,
   simulateDrop: false,
-  throttledScrollCursorIntoView: null,
 }
 
 export default testFlags

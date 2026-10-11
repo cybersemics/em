@@ -3,12 +3,13 @@ import { undoActionCreator as undo } from '../../actions/undo'
 import { executeCommandWithMulticursor } from '../../commands'
 import { HOME_TOKEN } from '../../constants'
 import exportContext from '../../selectors/exportContext'
-import hasMulticursor from '../../selectors/hasMulticursor'
+import { getChildrenRanked } from '../../selectors/getChildren'
 import store from '../../stores/app'
 import { addMulticursorAtFirstMatchActionCreator as addMulticursor } from '../../test-helpers/addMulticursorAtFirstMatch'
 import expectPathToEqual from '../../test-helpers/expectPathToEqual'
 import initStore from '../../test-helpers/initStore'
 import { setCursorFirstMatchActionCreator as setCursor } from '../../test-helpers/setCursorFirstMatch'
+import head from '../../util/head'
 import newThoughtAboveCommand from '../newThoughtAbove'
 
 beforeEach(initStore)
@@ -105,25 +106,6 @@ describe('multicursor', () => {
     expectPathToEqual(state, state.cursor, ['b', ''])
   })
 
-  it('clears the multicursor after execution', () => {
-    store.dispatch([
-      importText({
-        text: `
-          - a
-          - b
-          - c
-        `,
-      }),
-      setCursor(['a']),
-      addMulticursor(['a']),
-      addMulticursor(['b']),
-    ])
-
-    executeCommandWithMulticursor(newThoughtAboveCommand, { store })
-
-    expect(hasMulticursor(store.getState())).toBeFalse()
-  })
-
   it('reverts every created thought on a single undo', () => {
     store.dispatch([
       importText({
@@ -158,5 +140,27 @@ describe('multicursor', () => {
   - a
   - b
   - c`)
+  })
+
+  // https://github.com/cybersemics/em/issues/3564
+  it('selects the new thoughts after execution', () => {
+    store.dispatch([
+      importText({
+        text: `
+          - a
+          - b
+        `,
+      }),
+      setCursor(['a']),
+      addMulticursor(['a']),
+      addMulticursor(['b']),
+    ])
+
+    executeCommandWithMulticursor(newThoughtAboveCommand, { store })
+
+    const state = store.getState()
+    const newThoughts = getChildrenRanked(state, HOME_TOKEN).filter(child => child.value === '')
+
+    expect(Object.values(state.multicursors).map(head)).toEqual(newThoughts.map(child => child.id))
   })
 })
