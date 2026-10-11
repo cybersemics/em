@@ -1,7 +1,9 @@
 import { KnownDevices } from 'puppeteer'
+import indentCommand from '../../../commands/indent'
 import newThoughtCommand from '../../../commands/newThought'
 import selectAllCommand from '../../../commands/selectAll'
 import click from '../helpers/click'
+import clickThought from '../helpers/clickThought'
 import command from '../helpers/command'
 import deviceEmulation from '../helpers/deviceEmulation'
 import exportThoughts from '../helpers/exportThoughts'
@@ -119,5 +121,37 @@ it('executes nothing for a chained gesture that ends in the pinned gesture over 
 - b
 `)
   expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(0)
+  expect(await page.$('button[aria-label="Unpin Command"]')).not.toBeNull()
+})
+
+it('rejects the gesture of another command over the Command Universe', async () => {
+  await paste(`
+    - a
+    - b
+  `)
+  await clickThought('b')
+  await command('openMobileCommandUniverse')
+  await click('button[aria-label="New Thought"]')
+  await page.waitForFunction(() => {
+    const pin = document.querySelector('button[aria-label="Pin Command"]')
+    return pin && !pin.closest('[inert]')
+  })
+  await click('button[aria-label="Pin Command"]')
+  await click('[data-testid="pinned-command"]')
+  await page.waitForSelector('[role="dialog"][aria-label="Gesture for New Thought"]:not([aria-hidden="true"])', {
+    visible: true,
+  })
+
+  const trace = await startGesture({ target: '[data-testid="pinned-command-gesture"]' })
+  await trace.move(indentCommand)
+  await trace.end()
+
+  expect(await exportThoughts()).toBe(`
+- a
+- b
+`)
+  expect(
+    await page.$eval('[role="dialog"][aria-label="Gesture for New Thought"]', el => el.getAttribute('aria-hidden')),
+  ).toBe('false')
   expect(await page.$('button[aria-label="Unpin Command"]')).not.toBeNull()
 })
