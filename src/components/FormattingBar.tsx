@@ -15,6 +15,7 @@ import virtualKeyboardStore from '../stores/virtualKeyboardStore'
 import haptics from '../util/haptics'
 import head from '../util/head'
 import FormattingBarButton from './FormattingBarButton'
+import FormattingBarColorPicker from './FormattingBarColorPicker'
 import FormattingBarHeadingPicker from './FormattingBarHeadingPicker'
 import FormattingBarLetterCasePicker from './FormattingBarLetterCasePicker'
 import ProgressiveBlur from './ProgressiveBlur'
@@ -24,11 +25,20 @@ import Heading3Icon from './icons/Heading3Icon'
 import Heading4Icon from './icons/Heading4Icon'
 import Heading5Icon from './icons/Heading5Icon'
 import LetterCaseIcon from './icons/LetterCaseIcon'
+import TextColorIcon from './icons/TextColor'
 
 const glowImages = ['/img/formatting-bar/glow.png', '/img/formatting-bar/popover-overlay.avif']
 
 /** Commands exposed by this layer of the mobile bar. */
-const commandIds: CommandId[] = ['bold', 'italic', 'underline', 'strikethrough', 'letterCase', 'toggleHeadingPicker']
+const commandIds: CommandId[] = [
+  'bold',
+  'italic',
+  'underline',
+  'strikethrough',
+  'textColor',
+  'letterCase',
+  'toggleHeadingPicker',
+]
 
 /** Closes the current formatting-bar picker without affecting another surface. */
 const closeFormattingBarPicker = (): Thunk => (dispatch, getState) => {
@@ -191,12 +201,14 @@ const FormattingBarControls = ({
   isOpen,
   iconSize,
   onIconSize,
+  colorButtonRef,
   letterCaseButtonRef,
   headingButtonRef,
 }: {
   isOpen: boolean
   iconSize: number
   onIconSize: (size: number) => void
+  colorButtonRef: RefObject<HTMLButtonElement | null>
   letterCaseButtonRef: RefObject<HTMLButtonElement | null>
   headingButtonRef: RefObject<HTMLButtonElement | null>
 }) => {
@@ -262,10 +274,22 @@ const FormattingBarControls = ({
             commandId={id}
             iconSize={iconSize}
             icon={
-              id === 'letterCase' ? LetterCaseIcon : id === 'toggleHeadingPicker' ? FormattingBarHeadingIcon : undefined
+              id === 'textColor'
+                ? TextColorIcon
+                : id === 'letterCase'
+                  ? LetterCaseIcon
+                  : id === 'toggleHeadingPicker'
+                    ? FormattingBarHeadingIcon
+                    : undefined
             }
             buttonRef={
-              id === 'letterCase' ? letterCaseButtonRef : id === 'toggleHeadingPicker' ? headingButtonRef : undefined
+              id === 'textColor'
+                ? colorButtonRef
+                : id === 'letterCase'
+                  ? letterCaseButtonRef
+                  : id === 'toggleHeadingPicker'
+                    ? headingButtonRef
+                    : undefined
             }
           />
         ))}
@@ -324,6 +348,7 @@ const FormattingBar = () => {
   const position = usePositionFixed({ fromBottom: true, height: 0 })
   const dispatch = useDispatch()
   const [iconSize, setIconSize] = useState(20)
+  const colorButtonRef = useRef<HTMLButtonElement>(null)
   const letterCaseButtonRef = useRef<HTMLButtonElement>(null)
   const headingButtonRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
@@ -370,12 +395,21 @@ const FormattingBar = () => {
             isOpen={isOpen}
             iconSize={iconSize}
             onIconSize={setIconSize}
+            colorButtonRef={colorButtonRef}
             letterCaseButtonRef={letterCaseButtonRef}
             headingButtonRef={headingButtonRef}
           />
         </div>
         {/* No stacking context here: picker backdrops sit below the bar glow, and content above it. */}
         <div className={css({ position: 'absolute', bottom: '100%', width: '100%', height: 0 })}>
+          <FormattingBarColorPicker
+            anchorRef={colorButtonRef}
+            iconSize={iconSize}
+            show={activeDropdown?.surface === 'formattingBar' && activeDropdown.picker === 'colorPicker'}
+            onClose={() =>
+              dispatch(toggleDropdown({ dropDownType: 'colorPicker', surface: 'formattingBar', value: false }))
+            }
+          />
           <FormattingBarLetterCasePicker
             anchorRef={letterCaseButtonRef}
             iconSize={iconSize}
