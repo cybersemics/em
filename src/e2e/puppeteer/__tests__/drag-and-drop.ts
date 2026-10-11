@@ -10,6 +10,7 @@ import deviceEmulation from '../helpers/deviceEmulation'
 import dragAndDropThought from '../helpers/dragAndDropThought'
 import exportThoughts from '../helpers/exportThoughts'
 import gesture from '../helpers/gesture'
+import getEditable from '../helpers/getEditable'
 import getEditingText from '../helpers/getEditingText'
 import hideHUD from '../helpers/hideHUD'
 import longPressThought from '../helpers/longPressThought'
@@ -20,6 +21,7 @@ import setSelection from '../helpers/setSelection'
 import simulateDragAndDrop from '../helpers/simulateDragAndDrop'
 import waitForAlert from '../helpers/waitForAlert'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForSelector from '../helpers/waitForSelector'
 import waitUntil from '../helpers/waitUntil'
 import withDebugLog from '../helpers/withDebugLog'
 import { page } from '../session'
@@ -597,11 +599,26 @@ describe('pinned drop hovers', () => {
 
     await simulateDragAndDrop({ pinDropHovers: true })
 
+    const cliffHoverSelector = await (
+      await getEditable('b')
+    ).evaluate(
+      element => `[data-testid="drop-end-hover-${element.getAttribute('aria-label')!.replace(/^editable-/, '')}"]`,
+    )
+    const rootHoverSelector = await (
+      await getEditable('d')
+    ).evaluate(
+      element => `[data-testid="thought-drop-hover-${element.getAttribute('aria-label')!.replace(/^editable-/, '')}"]`,
+    )
+
     // hover the cliff DropEnd below the deepest thought c
     await dragAndDropThought('x', 'c', { hold: true, position: 'after' })
+    // The drag alert may already be mounted. Wait for the bar itself before changing targets.
+    await waitForSelector(cliffHoverSelector)
 
     // then hover the ThoughtDrop before the root thought d
     await dragAndDropThought('x', 'd', { hold: true, position: 'before', skipMouseDown: true })
+    await waitForSelector(rootHoverSelector)
+    await waitForSelector(cliffHoverSelector)
 
     const image = await screenshot()
     expect(image).toMatchImageSnapshot()
