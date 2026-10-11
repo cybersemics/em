@@ -423,7 +423,6 @@ const initEvents = (store: Store<State, any>) => {
     // skip the layout reads below when nothing will be logged
     if (!debugLog.isEnabled()) return
     const visualViewport = window.visualViewport
-    const glow = document.querySelector('[data-testid="background-glow"]')
     const geometry = {
       innerWidth: window.innerWidth,
       innerHeight: window.innerHeight,
@@ -432,8 +431,6 @@ const initEvents = (store: Store<State, any>) => {
       visualViewportHeight: visualViewport ? Math.round(visualViewport.height) : null,
       visualViewportOffsetTop: visualViewport ? Math.round(visualViewport.offsetTop) : null,
       scrollY: Math.round(window.scrollY),
-      // Bottom edge of the background glow. iOS Safari measures it from the top of the visual viewport, so a correctly fixed glow has glowBottom + visualViewportOffsetTop === clientHeight, and it is flush with the bottom of the screen when glowBottom === visualViewportHeight. Null when no glow is selected.
-      glowBottom: glow ? Math.round(glow.getBoundingClientRect().bottom) : null,
       isKeyboardOpen: store.getState().isKeyboardOpen,
     }
     const serialized = JSON.stringify(geometry)

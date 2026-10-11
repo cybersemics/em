@@ -149,7 +149,7 @@ it('logs a viewport resize only when the geometry changes', () => {
   expect(viewportEntries.map(entry => entry.reason)).toEqual(['resize'])
 })
 
-// The background glow was reported detached from the bottom of the screen while scrolling, and the debug log only recorded the viewport on resize, so nothing showed where the glow sat around a scroll. Logging every scroll event would flood the bounded log, so only the start and end are written.
+// Fixed elements were reported out of place after scrolling, and the debug log only recorded the viewport on resize, so nothing showed the geometry around a scroll. Logging every scroll event would flood the bounded log, so only the start and end are written.
 it('logs the viewport once at the start and once at the end of a scroll', async () => {
   initEvents(store)
   debugLog.setEnabled(true)
@@ -164,7 +164,6 @@ it('logs the viewport once at the start and once at the end of a scroll', async 
 
   const viewportEntries = debugLog.read().filter(entry => entry.type === 'viewport')
   expect(viewportEntries.map(entry => entry.reason)).toEqual(['scrollStart', 'scrollEnd'])
-  expect(viewportEntries[1]).toMatchObject({ glowBottom: null })
 })
 
 // https://github.com/cybersemics/em/issues/5255
