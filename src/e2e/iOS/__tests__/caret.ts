@@ -4,6 +4,7 @@
  */
 import gestures from '../../../test-helpers/gestures'
 import clickThought from '../helpers/clickThought'
+import disableTransitions from '../helpers/disableTransitions'
 import editThought from '../helpers/editThought'
 import gesture from '../helpers/gesture'
 import getEditable from '../helpers/getEditable'
@@ -168,6 +169,8 @@ describe('Caret', () => {
   // The same hit test escapes a note without any drag: a note is short enough that the point lands outside it
   // as soon as the space bar is held, and it leaves from the end, where the note abuts the parent thought.
   it('a caret scrubbed in a note stays in the note (#3276)', async () => {
+    // The note slides into place after the paste, and a tap aimed at it mid-slide lands on the parent thought.
+    await disableTransitions()
     await newThought()
     await paste(
       [''],

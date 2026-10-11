@@ -1,8 +1,10 @@
 import { KnownDevices } from 'puppeteer'
 import clearThoughtCommand from '../../../commands/clearThought'
+import noteCommand from '../../../commands/note'
 import openCommandCenterCommand from '../../../commands/openCommandCenter'
 import click from '../helpers/click'
 import clickThought from '../helpers/clickThought'
+import clickToolbar from '../helpers/clickToolbar'
 import closeKeyboard from '../helpers/closeKeyboard'
 import deviceEmulation from '../helpers/deviceEmulation'
 import gesture from '../helpers/gesture'
@@ -10,9 +12,11 @@ import keyboard from '../helpers/keyboard'
 import longPressThought from '../helpers/longPressThought'
 import paste from '../helpers/paste'
 import waitForAlert from '../helpers/waitForAlert'
+import waitForBrowserSettled from '../helpers/waitForBrowserSettled'
 import waitForCommandCenterClosed from '../helpers/waitForCommandCenterClosed'
 import waitForCommandCenterOpen from '../helpers/waitForCommandCenterOpen'
 import waitForEditable from '../helpers/waitForEditable'
+import waitForNoteFocus from '../helpers/waitForNoteFocus'
 import waitForSelector from '../helpers/waitForSelector'
 import waitUntil from '../helpers/waitUntil'
 import { page } from '../session'
@@ -189,5 +193,73 @@ describe('command center', () => {
     // Focusing an editable is what raises the keyboard on Android, so the focus has to be dismissed without the
     // Command Center ever leaving the screen.
     expect(onscreen).toEqual({ focusedEditable: null, sheetStates: [] })
+  })
+
+  // https://github.com/cybersemics/em/issues/5755
+  it('closes when the Note command enters edit mode', async () => {
+    await paste('- a')
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    await clickToolbar('Note')
+    await waitForNoteFocus()
+    await waitForBrowserSettled()
+
+    // the note has the keyboard, so the thought is no longer selected and the sheet is dismissed
+    expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(0)
+    await waitForCommandCenterClosed()
+  })
+
+  // https://github.com/cybersemics/em/pull/5756#issuecomment-5964399980
+  it('does not make room for the keyboard while it closes for the Note command', async () => {
+    await paste('- a')
+    await clickThought('a')
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+
+    // The keyboard that the note raises arrives while the sheet is sliding out. Headless Chrome has no virtual keyboard
+    // whose inset could be measured, so capture whether the sheet pads its content by the keyboard inset at the moment
+    // it starts closing, which grows the sheet back up the screen as soon as the keyboard appears.
+    const closingPaddingBottom = page.evaluate(
+      () =>
+        new Promise<string>(resolve => {
+          const sheet = document.querySelector('[data-testid="command-center-panel"]')!
+          const observer = new MutationObserver(() => {
+            if (sheet.getAttribute('data-sheet-state') !== 'closing') return
+            observer.disconnect()
+            resolve((sheet.querySelector('.react-modal-sheet-content-scroller') as HTMLElement).style.paddingBottom)
+          })
+          observer.observe(sheet, { attributeFilter: ['data-sheet-state'] })
+        }),
+    )
+
+    await clickToolbar('Note')
+
+    expect(await closingPaddingBottom).toBe('')
+  })
+
+  // https://github.com/cybersemics/em/pull/5756#issuecomment-5964322349
+  it('dismisses the keyboard when it is opened from a note', async () => {
+    await paste('- One')
+    await clickThought('One')
+
+    await gesture(noteCommand)
+    await waitForNoteFocus()
+
+    await gesture(openCommandCenterCommand)
+    await waitForCommandCenterOpen()
+    await waitForBrowserSettled()
+
+    // the caret leaves the note so that the keyboard closes, and the thought that the note belongs to is selected
+    const caret = await page.evaluate(() =>
+      document.activeElement instanceof HTMLElement && document.activeElement.isContentEditable
+        ? document.activeElement.getAttribute('aria-label')
+        : null,
+    )
+    expect(caret).toBeNull()
+    expect(await page.$$('[aria-label="bullet"][data-highlighted="true"]')).toHaveLength(1)
   })
 })
