@@ -320,7 +320,7 @@ const Editable = ({
   /** Set or reset invalid state. */
   const invalidStateError = (invalidValue: string | null) => {
     const isInvalid = invalidValue != null
-    dispatch(error({ value: isInvalid ? `Invalid Value: "${invalidValue}"` : null }))
+    dispatch(error({ value: isInvalid ? `Invalid Value: "${ellipsize(invalidValue)}"` : null }))
     setInvalidState(isInvalid)
 
     // the Editable cannot connect to state.invalidState, as it would re-render during editing

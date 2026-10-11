@@ -252,7 +252,7 @@ const ExportThoughtsPhrase = ({
         ? '1 thought'
         : 'thoughts'
 
-  return <span dangerouslySetInnerHTML={{ __html: phrase }} />
+  return <span>{phrase}</span>
 }
 
 /** A dropdown menu to select an export type. */

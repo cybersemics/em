@@ -91,3 +91,20 @@ it('Export buffered thoughts', async () => {
 
   expect(exportPhraseElement.textContent).toEqual('Download all 6 thoughts as Plain Text')
 })
+
+it('renders the thought in the export phrase as visible text', async () => {
+  await dispatch([
+    importText({
+      text: `
+        - &lt;b&gt;a&lt;/b&gt; <b>b</b>
+      `,
+    }),
+  ])
+
+  await dispatch(showModal({ id: 'export' }))
+
+  await act(vi.runOnlyPendingTimersAsync)
+
+  const exportPhraseElement = (await screen.findAllByText('Download'))[0]
+  expect(exportPhraseElement.textContent).toEqual('Download "<b>a</b> b" as Plain Text')
+})
