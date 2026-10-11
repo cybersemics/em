@@ -37,7 +37,7 @@ const useDragHold = ({
 
   /** Cancel highlighting of bullet and dismiss alert when long press finished. */
   const onLongPressEnd = useCallback(
-    (e?: React.MouseEvent | React.TouchEvent) => {
+    (e?: React.MouseEvent | React.TouchEvent | MouseEvent) => {
       if (disabled) return
 
       setIsPressed(false)

@@ -6,9 +6,11 @@ interface CommandUniverseNavigation {
     entryId: string
     page: CommandUniversePage
     arrival: {
+      /** Page transition to play. Omitted means zoom; none settles without animation. */
+      type?: 'zoom' | 'none'
       zoom: 'in' | 'out'
-      /** Source rectangle in viewport coordinates. Null uses the page center. */
-      origin: Pick<DOMRectReadOnly, 'x' | 'y' | 'width' | 'height'> | null
+      /** Source point as fractions of the page width and height. Null uses the page center. */
+      origin: { x: number; y: number } | null
     } | null
   }[]
   index: number
