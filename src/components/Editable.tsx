@@ -579,15 +579,21 @@ const Editable = ({
     const onEditableCompositionEnd = (e: CompositionEvent) =>
       debugLog.log('composition', { phase: 'end', data: e.data })
 
-    /** Describes the currently focused element (tag + data-testid) so focus retargeting during autocomplete can be traced. */
-    const describeActiveElement = () => {
-      const el = document.activeElement
-      return { tag: el?.tagName ?? null, testid: el?.getAttribute?.('data-testid') ?? null }
-    }
+    /** Describes an element so focus retargeting during autocomplete can be traced. An editable's aria-label carries its thought id. Reads attributes only: isContentEditable would force a style recalculation. */
+    const describeElement = (el: Element | null) => ({
+      tag: el?.tagName ?? null,
+      testid: el?.getAttribute?.('data-testid') ?? null,
+      label: el?.getAttribute?.('aria-label') ?? null,
+      contenteditable: el?.getAttribute?.('contenteditable') ?? null,
+    })
     /** Logs when the editable gains focus, recording which element is now active. */
-    const onEditableFocus = () => debugLog.log('focus', describeActiveElement())
-    /** Logs when the editable loses focus, recording which element is now active (reveals the asyncFocus retarget target). */
-    const onEditableBlur = () => debugLog.log('blur', describeActiveElement())
+    const onEditableFocus = () => debugLog.log('focus', describeElement(document.activeElement))
+    /** Logs when the editable loses focus, recording which element is now active and which element focus is moving to (reveals the asyncFocus retarget target). */
+    const onEditableBlur = (e: FocusEvent) =>
+      debugLog.log('blur', {
+        ...describeElement(document.activeElement),
+        relatedTarget: describeElement(e.relatedTarget instanceof Element ? e.relatedTarget : null),
+      })
 
     /** Logs caret movement ONLY during the ~250ms autocomplete window (pendingAutocompleteAt != null) to trace the caret
      * entering the touch dead zone without flooding the log with every ordinary selection change. */
@@ -1104,6 +1110,12 @@ const Editable = ({
           isVisible,
           longPress: state.longPress,
           touchMoved: tapTouchMovedRef.current,
+          // Edit mode and caret as Redux has them, beside the element the browser has focused, so a false edit mode
+          // or caret can be traced to the tap where Redux and the DOM first disagree.
+          isKeyboardOpen: state.isKeyboardOpen,
+          noteFocus: state.noteFocus,
+          cursorOffset: state.cursorOffset,
+          activeElement: document.activeElement?.getAttribute('aria-label') ?? document.activeElement?.tagName ?? null,
         })
 
         // If long press is in progress, don't allow the editable to receive focus or iOS Safari will scroll it.

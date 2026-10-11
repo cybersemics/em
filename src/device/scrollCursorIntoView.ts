@@ -3,6 +3,7 @@ import { PREVENT_AUTOSCROLL_TIMEOUT, isPreventAutoscrollInProgress } from '../de
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import viewportStore from '../stores/viewportStore'
 import virtualKeyboardStore from '../stores/virtualKeyboardStore'
+import debugLog from '../util/debugLog'
 
 // A scroll that is waiting for preventAutoscroll to finish. Held so that it can be cancelled, since it is a scroll that has been decided on but not yet performed.
 let preventAutoscrollTimer: ReturnType<typeof setTimeout> | undefined
@@ -89,6 +90,28 @@ const scrollIntoViewIfNeeded = (y: number, height: number) => {
 
   const scrollDistance = Math.abs(scrollYNew - window.scrollY)
   const behavior: ScrollBehavior = scrollDistance < visualViewportHeight ? 'smooth' : 'auto'
+
+  // Record the inputs to the scroll decision, so a cursor scrolled to the wrong place can be checked against where the
+  // cursor was and what bounded it. Every value is one this function already computed, except scrollHeight, which
+  // is free here: the toolbar and navbar rects above have just brought layout up to date, and nothing has written to
+  // the DOM since. It shows whether the browser will clamp the target at the bottom of the document. The scroll
+  // itself is recorded by the viewport scrollStart and scrollEnd entries that follow.
+  if (debugLog.isEnabled()) {
+    debugLog.log('scroll', {
+      source: 'cursor',
+      y,
+      height,
+      layoutTreeTop: viewport.layoutTreeTop,
+      scrollY: Math.round(window.scrollY),
+      yViewport: Math.round(yViewport),
+      toolbarBottom: Math.round(toolbarBottom),
+      bottomBoundary: Math.round(bottomBoundary),
+      scrollHeight: document.documentElement.scrollHeight,
+      direction: isAboveViewport ? 'up' : 'down',
+      top: Math.round(top),
+      behavior,
+    })
+  }
 
   window.scrollTo({
     top,
