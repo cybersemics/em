@@ -21,11 +21,14 @@ The learning journey helps early users learn commands gradually through normal u
 
 ## Actions
 
-- [`pinCommand`](../src/actions/pinCommand.ts) — selects the command and starts a fresh progress record, erasing any other command's record. Pinning the already pinned command keeps its record.
-- [`unpinCommand`](../src/actions/unpinCommand.ts) — clears the selection and erases its reps.
+- [`pinCommand`](../src/actions/pinCommand.ts) — selects the command and starts a fresh progress record, erasing any other command's record. Pinning the already pinned command keeps its record. Pinning a different command closes the tooltip.
+- [`unpinCommand`](../src/actions/unpinCommand.ts) — clears the selection and erases its reps, and closes the tooltip.
+- [`showPinnedCommandTooltip`](../src/actions/showPinnedCommandTooltip.ts) — opens or closes the pinned command's tooltip. It does nothing when asked to open while no command is pinned.
 - [`awardPracticeRep`](../src/actions/awardPracticeRep.ts) — awards one rep to the pinned command. [`awardPracticeRepMiddleware`](../src/redux-middleware/awardPracticeRep.ts) listens for a successful keyboard shortcut or gesture through `commandEmitter` and dispatches this action only when the command is pinned. Reps keep counting past the target, and each rep at or past it plays the ring's flourish.
 
 These actions are registered `undoable: false`, and `learning` is listed in `statePropertiesToOmit` in [`undoRedoEnhancer`](../src/redux-enhancers/undoRedoEnhancer.ts), so pinning and practice never add an undo step or get reverted by undoing an edit.
+
+Whether the tooltip is open is UI state, not learning state, so it lives outside `state.learning`: the top-level `showPinnedCommandTooltip` flag sits beside `showSidebar` and the other `show*` flags. It starts false, is never persisted, and like them changes only through a non-undoable action. The pin reducers close it in the same update that changes the pin, the way `setCursor` closes the toolbar pickers, so the flag can never be true for a command that is no longer pinned.
 
 The command runner emits a success event once per top-level invocation, including a multicursor invocation. It does so as soon as `exec` returns, provided the command was executable, did not throw, and did not set a new app error. Asynchronous work the command starts is not awaited: performing the command where it can execute is the rep, whatever a server, the AI disclosure, or the clipboard later returns. Toolbar, Command Center, Command Universe, and internal calls do not earn practice credit or dispatch a practice action.
 

@@ -119,4 +119,5 @@ export { default as toggleMobileCommandUniverse } from './toggleMobileCommandUni
 export { default as updateThoughts } from './updateThoughts'
 export { default as pinCommand } from './pinCommand'
 export { default as unpinCommand } from './unpinCommand'
+export { default as showPinnedCommandTooltip } from './showPinnedCommandTooltip'
 export { default as awardPracticeRep } from './awardPracticeRep'
