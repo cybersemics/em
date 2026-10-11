@@ -68,6 +68,15 @@ const resumeSettleTimeoutStore = ministore<{ timer: Timer | null }>(
   { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
 )
 
+/** How long scrolling must pause before the scroll is considered finished and its end is logged. Covers the gaps between scroll events during momentum scrolling on iOS. */
+const SCROLL_END_DELAY = 150
+
+/** Timer for the viewport snapshot logged when a scroll ends. A pending timer also marks a scroll in progress, so that only its first scroll event logs a start. A ministore whose dispose clears the timer, like passiveTimeoutStore. */
+const scrollEndTimeoutStore = ministore<{ timer: Timer | null }>(
+  { timer: null },
+  { dispose: ({ timer }) => clearTimeout(timer ?? undefined) },
+)
+
 /** An scroll-at-edge function that will continue scrolling smoothly in a given direction until scroll-at-edge.stop is called. Takes a number of pixels to scroll each iteration. */
 const scrollAtEdge = (() => {
   /** Cubic easing function. */
@@ -409,11 +418,12 @@ const initEvents = (store: Store<State, any>) => {
   /** The geometry of the last viewport entry written to the debug log, so that resize events that change nothing it records do not flood the log. */
   let lastViewportLogged = ''
 
-  /** Logs the viewport geometry to the debug log. A resize entry is skipped when the geometry matches the last entry. Resume and settled entries are always written, so the geometry at every resume is on record even when nothing changed. This makes a layout that was left at the wrong size visible in the log, such as the nav bar drawn mid-screen after returning to the app because iOS kept the keyboard-open viewport height. */
-  const logViewport = (reason: 'resize' | 'resume' | 'settled') => {
+  /** Logs the viewport geometry to the debug log. A resize entry is skipped when the geometry matches the last entry. Resume, settled, scrollStart and scrollEnd entries are always written, so the geometry at every resume and around every scroll is on record even when nothing changed. This makes a layout that was left at the wrong size visible in the log, such as the nav bar drawn mid-screen after returning to the app because iOS kept the keyboard-open viewport height. */
+  const logViewport = (reason: 'resize' | 'resume' | 'settled' | 'scrollStart' | 'scrollEnd') => {
     // skip the layout reads below when nothing will be logged
     if (!debugLog.isEnabled()) return
     const visualViewport = window.visualViewport
+    const glow = document.querySelector('[data-testid="background-glow"]')
     const geometry = {
       innerWidth: window.innerWidth,
       innerHeight: window.innerHeight,
@@ -422,6 +432,8 @@ const initEvents = (store: Store<State, any>) => {
       visualViewportHeight: visualViewport ? Math.round(visualViewport.height) : null,
       visualViewportOffsetTop: visualViewport ? Math.round(visualViewport.offsetTop) : null,
       scrollY: Math.round(window.scrollY),
+      // Bottom edge of the background glow, in the same layout-viewport coordinates as visualViewportOffsetTop, so it can be compared against the bottom of the visible area (visualViewportOffsetTop + visualViewportHeight). Null when no glow is selected.
+      glowBottom: glow ? Math.round(glow.getBoundingClientRect().bottom) : null,
       isKeyboardOpen: store.getState().isKeyboardOpen,
     }
     const serialized = JSON.stringify(geometry)
@@ -432,6 +444,21 @@ const initEvents = (store: Store<State, any>) => {
 
   /** Logs the viewport geometry on resize. */
   const onResizeLog = () => logViewport('resize')
+
+  /** Logs the viewport geometry at the start and end of each scroll, rather than on every scroll event, which fires about once per frame and would flood the bounded log. */
+  const onScrollLog = () => {
+    if (!debugLog.isEnabled()) return
+    if (!scrollEndTimeoutStore.getState().timer) {
+      logViewport('scrollStart')
+    }
+    scrollEndTimeoutStore.reset()
+    scrollEndTimeoutStore.update({
+      timer: setTimeout(() => {
+        scrollEndTimeoutStore.update({ timer: null })
+        logViewport('scrollEnd')
+      }, SCROLL_END_DELAY),
+    })
+  }
 
   /** Handle a page lifecycle state change, i.e. switching apps. */
   const onStateChange = ({ oldState, newState }: { oldState: LifecycleState; newState: LifecycleState }) => {
@@ -558,6 +585,7 @@ const initEvents = (store: Store<State, any>) => {
   }
   window.addEventListener('beforeunload', onBeforeUnload)
   window.addEventListener('scroll', updateScrollTop)
+  window.addEventListener('scroll', onScrollLog)
   window.addEventListener('dragenter', dragEnter)
   window.addEventListener('dragleave', dragLeave)
   window.addEventListener('drop', drop)
@@ -565,6 +593,8 @@ const initEvents = (store: Store<State, any>) => {
   const resizeHost = window.visualViewport || window
   resizeHost.addEventListener('resize', updateSize)
   resizeHost.addEventListener('resize', onResizeLog)
+  // While the keyboard is open, iOS pans the visual viewport within the layout viewport, which fires scroll on the visual viewport rather than on the window. When there is no visualViewport, resizeHost is the window, and adding the same listener again is a no-op.
+  resizeHost.addEventListener('scroll', onScrollLog)
 
   // Initialize virtual keyboard handlers
   const unsubscribeKeyboardSelection = initKeyboardSelection()
@@ -600,13 +630,16 @@ const initEvents = (store: Store<State, any>) => {
     document.removeEventListener('gestureend', onSafariGesture)
     window.removeEventListener('beforeunload', onBeforeUnload)
     window.removeEventListener('scroll', updateScrollTop)
+    window.removeEventListener('scroll', onScrollLog)
     window.removeEventListener('dragenter', dragEnter)
     window.removeEventListener('dragleave', dragLeave)
     window.removeEventListener('drop', drop)
     lifecycle.removeEventListener('statechange', onStateChange)
     resizeHost.removeEventListener('resize', updateSize)
     resizeHost.removeEventListener('resize', onResizeLog)
+    resizeHost.removeEventListener('scroll', onScrollLog)
     resumeSettleTimeoutStore.reset()
+    scrollEndTimeoutStore.reset()
     unsubscribeKeyboardSelection()
     virtualKeyboardHandler.destroy()
     nativeHistory.destroy()

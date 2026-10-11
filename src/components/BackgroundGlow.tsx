@@ -18,7 +18,11 @@ const BackgroundGlow = () => {
 
   return image ? (
     <>
-      <div className={css(glowLayerStyles)} style={{ backgroundImage: `url(/img/glow/${image})`, opacity }} />
+      <div
+        data-testid='background-glow'
+        className={css(glowLayerStyles)}
+        style={{ backgroundImage: `url(/img/glow/${image})`, opacity }}
+      />
       {/* Falloff that fades the content out into the glow above the nav bar. Repaints the page background (bg + the glow at the same opacity, pixel-aligned with the layer above since both are fixed and anchored to the full viewport) masked in by a vertical gradient, so the content appears to dissolve into the glow rather than being blacked out. Rendered above the content but below the nav bar and footer. */}
       {!showModal && (
         <div
