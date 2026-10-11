@@ -289,6 +289,7 @@ const testEnvironmentPrefersTheFormatHeader = async () => {
     '--- version: 349.1.0',
     '--- commit: abc1234',
     '--- display: standalone, portrait-primary, dpr 3, scale 1, safe-area-bottom 34',
+    '--- url: https://em.org/~/home',
     '--- evicted: 3 earlier entries',
   ]
 
@@ -298,6 +299,7 @@ const testEnvironmentPrefersTheFormatHeader = async () => {
   assert.equal(evicted.session?.version, '349.1.0')
   assert.equal(evicted.session?.device, 'iPhone (ios), 390x844, touch')
   assert.equal(evicted.session?.display, 'standalone, portrait-primary, dpr 3, scale 1, safe-area-bottom 34')
+  assert.equal(evicted.session?.url, 'https://em.org/~/home')
   assert.equal(evicted.skipped, 0, 'the header was counted as unrecognized')
 
   // the session fields the header restates are dropped, so each fact is reported once rather than twice

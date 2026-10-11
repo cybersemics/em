@@ -45,7 +45,7 @@ interface Log {
   entries: Entry[]
   /** Lines that matched no known shape, excluding the `---` markers and the state dump that format() appends. A clean log reports zero, so any count here means the file is partly or wholly not a debug log. */
   skipped: number
-  /** The environment the log was captured in: format()'s `--- device` / `--- userAgent` / `--- version` / `--- commit` / `--- display` header, falling back to the fields of the last `session` entry. */
+  /** The environment the log was captured in: format()'s `--- device` / `--- userAgent` / `--- version` / `--- commit` / `--- display` / `--- url` header, falling back to the fields of the last `session` entry. */
   session: Record<string, unknown> | null
   /** The `--- state.thoughts: N thoughts, M lexemes` summary that format() appends, if present. */
   stateDump: string | null
@@ -146,7 +146,7 @@ const parse = (text: string, name: string): Log => {
   // must cost the environment header rather than the whole comparison.
   const headerFields = Object.fromEntries(
     lines.flatMap(line => {
-      const match = line.match(/^--- (device|userAgent|version|commit|display): (.*)$/)
+      const match = line.match(/^--- (device|userAgent|version|commit|display|url): (.*)$/)
       return match ? [[match[1], match[2]]] : []
     }),
   )
