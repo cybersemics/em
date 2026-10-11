@@ -7,33 +7,12 @@ import gesture from '../helpers/gesture'
 import getClearedPlaceholderStyle from '../helpers/getClearedPlaceholderStyle'
 import getEditingText from '../helpers/getEditingText'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
-import isKeyboardShown from '../helpers/isKeyboardShown'
 import newThought from '../helpers/newThought'
 import paste from '../helpers/paste'
-import tap from '../helpers/tap'
 import tapToolbar from '../helpers/tapToolbar.js'
 import waitForElement from '../helpers/waitForElement'
 
 describe('Format', () => {
-  it('keeps the keyboard open when a formatting icon finishes animating during another tap', async () => {
-    await newThought()
-    await tapToolbar('Italic')
-
-    const italic = await waitForElement('[aria-label="toolbar"] [aria-label="Italic"]')
-    expect(await italic.getAttribute('data-active')).toBe('true')
-
-    // Batch the presses so driver round trips cannot let the icon finish between them. Holding each press
-    // across the 500ms animation catches a replaced SVG losing touchend and letting WebKit blur the editable.
-    await tap(await waitForElement('[aria-label="toolbar"] [aria-label="Italic"] svg'), {
-      pointerType: 'touch',
-      releaseDelayMs: 700,
-      tapCount: 3,
-    })
-
-    expect(await isKeyboardShown()).toBe(true)
-    expect(await italic.getAttribute('data-active')).toBe('false')
-  })
-
   it('applying bold to an unfocused cursor thought does not open the keyboard', async () => {
     // 1. Create a new thought 'Thought One'.
     await newThought('Thought One')

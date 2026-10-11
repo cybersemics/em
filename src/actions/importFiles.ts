@@ -274,8 +274,14 @@ export const importFilesActionCreator =
           // the relative context is appended to the base context to get the destination context
           const relativeAncestorContext = ancestors.map(block => block.scope)
 
-          // must replicate descendants before calculating baseContext and parentContext
-          await dispatch(pullDuplicateDescendants(head(path), [...relativeAncestorContext, block.scope]))
+          // Normal duplicates are not merged on import, so there is no need to pull the descendants of the destination
+          // for most blocks (#2712). They must still be pulled before calculating baseContext and parentContext when:
+          // - The parent was imported by a previous session, since a resumed import finds it by walking loaded children by value.
+          // - The block is or descends from a metaprogramming attribute, since attributes are still merged into an existing duplicate.
+          const isMeta = isAttribute(block.scope) || relativeAncestorContext.some(isAttribute)
+          if ((ancestors.length > 0 && !ancestorPath) || isMeta) {
+            await dispatch(pullDuplicateDescendants(head(path), [...relativeAncestorContext, block.scope]))
+          }
 
           const stateAfterPull = getState()
 

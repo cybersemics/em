@@ -21,6 +21,9 @@ const date = new Date().toISOString().slice(0, 10)
 /** The colors spec asserts a WebKit layout bug (#4263) that only a recent WebKit exhibits, so it is the one spec that runs on a newer OS than the rest of the suite. */
 const modernWebKitSpec = path.resolve(process.cwd(), 'src/e2e/iOS/__tests__/color.ts')
 
+/** Matches the specs that name an iOS version in their filename, e.g. `doubleTap.ios27.ts`, which runs only on the device with that version instead of the suite's default device. */
+const specsForOs = (osVersion: string) => path.resolve(process.cwd(), `src/e2e/iOS/__tests__/**/*.ios${osVersion}.ts`)
+
 /** Builds a BrowserStack device capability, optionally restricting which specs run on it. */
 const deviceCapability = ({
   deviceName,
@@ -58,20 +61,23 @@ const deviceCapability = ({
   },
 })
 
-// Most specs run on iOS 17, which the suite's screen coordinates are calibrated for, and the one spec
-// that needs a newer WebKit runs on iOS 26. Both devices are 430x932, so only the OS varies.
+// Most specs run on iOS 17, which the suite's screen coordinates are calibrated for, and the specs that
+// need a newer WebKit run on iOS 26 and 27.
 const capabilities = [
   // The suite's default device. Its coordinates are the reason the OS is not simply moved forward:
   // taps and gestures are performed in screen coordinates derived from page coordinates by a fixed
   // Safari chrome offset (toolbarTapOptions), and on iOS 26 four caret tests fail because taps and
   // gestures aimed at the lower half of the page no longer land where that arithmetic says. Moving
   // the whole suite forward means deriving those coordinates from the webview rect first.
-  deviceCapability({ deviceName: 'iPhone 15 Plus', osVersion: '17', exclude: [modernWebKitSpec] }),
+  deviceCapability({ deviceName: 'iPhone 15 Plus', osVersion: '17', exclude: [modernWebKitSpec, specsForOs('*')] }),
   // A WebKit recent enough to exhibit the bug the spec assigned here covers. A device suite pinned to
   // an OS that predates the bug under test reports green while users hit it: the Popover margin
   // relayout in #4263 grows the toolbar by 11.6px on iOS 26 and does not reproduce at all on 17, so
   // its regression test passed on the base branch and TDD correctly flagged it as covering nothing.
   deviceCapability({ deviceName: 'iPhone 15 Pro Max', osVersion: '26', specs: [modernWebKitSpec] }),
+  // Not a Pro Max, since an iPhone 15 Pro Max on iOS 27 delivered only one touch of doubleTap.ios27.ts's double tap,
+  // so it never reproduced the bug (#5660).
+  deviceCapability({ deviceName: 'iPhone 15', osVersion: '27', specs: [specsForOs('27')] }),
 ]
 
 /**

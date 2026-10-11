@@ -1,6 +1,7 @@
 import Command from '../@types/Command'
 import { addMulticursorActionCreator as addMulticursor } from '../actions/addMulticursor'
 import { alertActionCreator as alert } from '../actions/alert'
+import { dismissKeyboardActionCreator as dismissKeyboard } from '../actions/dismissKeyboard'
 import { toggleDropdownActionCreator as toggleDropdown } from '../actions/toggleDropdown'
 import HelpIcon from '../components/icons/HelpIcon'
 import { AlertType } from '../constants'
@@ -54,7 +55,10 @@ const openCommandCenterCommand = {
     // The middleware ignores multiselection changes while a multicursor command is executing and declines to re-open
     // over an edit; neither should silence an explicit swipe, which is the user asking for the Command Center they can
     // see is closed.
+    // A note keeps the caret when a selection starts, unlike a thought, whose editable blurs itself. Release it
+    // first, so that the keyboard closes rather than staying up beneath the sheet.
     dispatch([
+      state.noteFocus ? dismissKeyboard() : null,
       state.cursor && !hasMulticursor(state) ? addMulticursor({ path: state.cursor }) : null,
       toggleDropdown({ dropDownType: 'commandCenter', value: true }),
     ])
