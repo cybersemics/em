@@ -487,9 +487,9 @@ https://github.com/user-attachments/assets/4255766e-8c9d-4cdf-a140-573ab82399ae
 
 ### Uncategorize
 
-Deletes the current thought and moves all its subthoughts up a level. If the thought is a favorite, its `=favorite` attribute is deleted with it rather than moved up, so the parent does not become a favorite. A thought with no subthoughts other than meta attributes is left unchanged, and the alert "Unable to uncategorize thought with no children" is shown instead. In the context view, the selected context is uncategorized, with the same rules applied to its own children; the home context is left unchanged.
+Deletes the current thought and moves all its subthoughts up a level. If the thought is a favorite, its `=favorite` attribute is deleted with it rather than moved up, so the parent does not become a favorite. A thought with no subthoughts other than meta attributes is left unchanged, and the alert "Unable to uncategorize thought with no children" is shown instead.
 
-In the Context View, Uncategorize applies to the selected context: the thought moves up into the context's parent, which replaces the context in the Context View. The Context View stays open with the cursor on that parent, which is the home context when the uncategorized context was top-level.
+In the Context View, Uncategorize applies to the selected context, with the same rules applied to its own children: the thought moves up into the context's parent, which replaces the context in the Context View. The Context View stays open with the cursor on that parent, which is the home context when the uncategorized context was top-level. The home context itself is left unchanged.
 
 <kbd>Command + Option + c</kbd>
 
