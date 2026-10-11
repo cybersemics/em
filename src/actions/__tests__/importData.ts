@@ -1790,4 +1790,92 @@ describe('paste over a selection', () => {
     const state = store.getState()
     expect(getThoughtById(state, head(state.cursor!))!.value).toBe('one three three')
   })
+
+  // https://github.com/cybersemics/em/issues/5232
+  it('trims the trailing space of single-line HTML pasted over the selection', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- One two' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 'One '.length, 'One two'.length)
+
+    // Copied within em, whose HTML is inserted as is, unlike external HTML or plain text, which importData trims itself.
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['One two'])!,
+            html: "<meta charset='utf-8'>One ",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('One One')
+    expect(state.cursorOffset).toBe('One One'.length)
+  })
+
+  // The emoji space must survive the trim of the whitespace before the emoji (#5232).
+  it('separates an emoji from the thought after trimming the leading space of single-line HTML pasted before it', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- Hello' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 0, 0)
+
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['Hello'])!,
+            html: "<meta charset='utf-8'> 🧠",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('🧠 Hello')
+    expect(state.cursorOffset).toBe('🧠 '.length)
+  })
+
+  // A leading no-break space is not trimmed, as when typing, so it must not shift the caret either.
+  it('places the caret after single-line HTML pasted with a leading no-break space', async () => {
+    act(() => {
+      store.dispatch([importText({ text: '- Baz' })])
+    })
+
+    await act(vi.runOnlyPendingTimersAsync)
+
+    const thought = await findCursor()
+    expect(thought).toBeTruthy()
+    selectRange(thought!, 0, 0)
+
+    await act(async () => {
+      store.dispatch((dispatch, getState) =>
+        dispatch(
+          importDataActionCreator({
+            path: contextToPath(getState(), ['Baz'])!,
+            html: "<meta charset='utf-8'>&nbsp;Bar",
+            isEmText: true,
+          }),
+        ),
+      )
+    })
+
+    const state = store.getState()
+    expect(getThoughtById(state, head(state.cursor!))!.value).toBe('&nbsp;BarBaz')
+    expect(state.cursorOffset).toBe('\u00a0Bar'.length)
+  })
 })
