@@ -6,7 +6,7 @@ Making that work takes more than a prompt. It takes a described environment, a b
 
 We targeted Copilot specifically because the project already runs on GitHub — issues, pull requests, and CI are all here, so the agent lives where the work already is.
 
-> Agents running on a developer's own machine — Codex, Claude Code — share a subset of these skills through symlinks. See [External agents](external-agents.md).
+> Agents running on a developer's own machine — Codex, Claude Code — share a subset of these skills through symlinks. Their commits are attributed by one Git hook, which Cursor and OpenCode feed through small project hooks. See [External agents](external-agents.md).
 
 | Document                              | What it covers                                                                     |
 | ------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -174,6 +174,10 @@ CLAUDE.md            → AGENTS.md
 .agents/skills/                      The shared subset, one symlink each
 └── <name>           → .github/skills/<name>
 .claude/skills       → .agents/skills
+.hooks/commit-msg                    Exits unless a coding agent's session marker is set
+.hooks/commit-msg.mjs                Codex, Claude Code, Pi, OpenCode, and Cursor commit attribution
+.opencode/plugins/session-env.js     Exports OpenCode's session ID for commit-msg.mjs
+.cursor/hooks.json                   Saves each Cursor prompt's model for commit-msg.mjs
 ```
 
 Five workflows are part of this system rather than ordinary CI:

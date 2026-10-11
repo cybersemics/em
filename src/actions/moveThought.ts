@@ -20,6 +20,7 @@ import rootedParentOf from '../selectors/rootedParentOf'
 import simplifyPath from '../selectors/simplifyPath'
 import { registerActionMetadata } from '../util/actionMetadata.registry'
 import appendToPath from '../util/appendToPath'
+import hashPath from '../util/hashPath'
 import head from '../util/head'
 import isAttribute from '../util/isAttribute'
 import isDescendantPath from '../util/isDescendantPath'
@@ -274,34 +275,44 @@ const moveThought = (state: State, payload: MoveThoughtPayload) => {
     !sameContext ? (state: State) => rerankUpdated(state, sourceParentThought.id) : null,
     !sameContext ? (state: State) => rerankUpdated(state, destinationThought.id) : null,
 
-    // update cursor if moved path is on the cursor
+    // Rebase every stored Path that runs through the moved thought onto the thought's new location: the cursor, the
+    // multiselect, and the Select Between range and anchor. This is the only point that knows both where the thought
+    // was and where it is now. A Path left behind names a parent that no longer contains the thought, so nothing below
+    // it renders, and a multiselect that is dropped somewhere else would otherwise land the cursor on such a Path when
+    // the selection ends (see multiselectCursorMiddleware).
     state => {
-      if (!state.cursor) return state
-
-      const isPathInCursor = isDescendantPath(state.cursor, oldPath)
-      const isCursorAtOldPath = state.cursor.length === oldPath.length
-
-      // In the context view the cursor is on the nominal context (the m of a/m~), while the dragged context row is
-      // the deeper Path a/m~/a that resolves to the same thought. oldPath is then not an ancestor of the cursor even
-      // though the moved thought is, so the cursor has to be rebased onto the thought's new location. Otherwise it
-      // keeps naming a parent that no longer contains the thought: expandThoughts can no longer reach the cursor,
-      // freeThoughts deallocates it as no longer visible, and the next expandThoughts throws "Invalid path".
       // Skipped when the thought no longer exists, i.e. it was merged into a duplicate in the destination.
-      const isMovedThoughtInCursor =
-        !isPathInCursor && isDescendantPath(state.cursor, oldPathSimple) && !!getThoughtById(state, sourceThought.id)
+      const isMovedThoughtLive = !!getThoughtById(state, sourceThought.id)
 
-      const newCursorPath = isPathInCursor
-        ? isCursorAtOldPath
-          ? newPath
-          : ([...newPath, ...state.cursor.slice(newPath.length)] as Path)
-        : isMovedThoughtInCursor
-          ? ([...destinationThoughtPath, sourceThought.id, ...state.cursor.slice(oldPathSimple.length)] as Path)
-          : state.cursor
+      /** Returns the given Path rebased onto the moved thought's new location, or the Path itself if it does not run through the moved thought. */
+      const rebase = (path: Path): Path =>
+        isDescendantPath(path, oldPath)
+          ? ([...newPath, ...path.slice(oldPath.length)] as Path)
+          : // In the context view the cursor is on the nominal context (the m of a/m~), while the dragged context row is
+            // the deeper Path a/m~/a that resolves to the same thought. oldPath is then not an ancestor of the Path even
+            // though the moved thought is, so the Path has to be rebased onto the thought's new location. Otherwise it
+            // keeps naming a parent that no longer contains the thought: expandThoughts can no longer reach the cursor,
+            // freeThoughts deallocates it as no longer visible, and the next expandThoughts throws "Invalid path".
+            isMovedThoughtLive && isDescendantPath(path, oldPathSimple)
+            ? ([...destinationThoughtPath, sourceThought.id, ...path.slice(oldPathSimple.length)] as Path)
+            : path
+
+      /** Rebases each Path in an index keyed by hashPath, re-keying the ones that moved. Returns the same index if none of them did. */
+      const rebaseIndex = (paths: Index<Path>): Index<Path> =>
+        Object.values(paths).some(path => rebase(path) !== path)
+          ? keyValueBy(Object.values(paths), path => {
+              const rebased = rebase(path)
+              return { [hashPath(rebased)]: rebased }
+            })
+          : paths
 
       return {
         ...state,
-        cursor: newCursorPath,
-        ...(offset != null ? { cursorOffset: offset } : null),
+        cursor: state.cursor && rebase(state.cursor),
+        multicursors: rebaseIndex(state.multicursors),
+        multicursorRange: rebaseIndex(state.multicursorRange),
+        multicursorAnchor: state.multicursorAnchor && rebase(state.multicursorAnchor),
+        ...(state.cursor && offset != null ? { cursorOffset: offset } : null),
       }
     },
     // expand thoughts after cursor has been updated
