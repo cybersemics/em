@@ -43,8 +43,8 @@ const deviceCapability = ({
   ...baseConfig.baseCapabilities,
   'appium:deviceName': deviceName,
   'appium:platformVersion': osVersion,
-  ...(specs ? { specs } : null),
-  ...(exclude ? { exclude } : null),
+  ...(specs ? { 'wdio:specs': specs } : null),
+  ...(exclude ? { 'wdio:exclude': exclude } : null),
   'bstack:options': {
     deviceName,
     osVersion,

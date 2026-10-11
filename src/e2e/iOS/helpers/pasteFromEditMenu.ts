@@ -16,20 +16,23 @@ const pasteFromEditMenu = async (): Promise<void> => {
   const context = ((await browser.getContext()) as string) || 'NATIVE_APP'
   await browser.switchContext('NATIVE_APP')
   try {
-    const paste = await browser.$('//*[@name="Paste"]')
+    // The native edit menu exposes more than one element named Paste, so count matches with $$ rather than WebdriverIO's
+    // strict $, which throws on more than one.
+    const paste = '//*[@name="Paste"]'
     try {
-      await paste.waitForExist({ timeout: 8000 })
+      await browser.waitUntil(async () => (await browser.$$(paste).length) > 0, { timeout: 8000 })
     } catch {
       const shown = (
         await Promise.all(
-          MENU_ITEMS.map(async name => ((await browser.$(`//*[@name="${name}"]`).isExisting()) ? name : null)),
+          MENU_ITEMS.map(async name => ((await browser.$$(`//*[@name="${name}"]`).length) > 0 ? name : null)),
         )
       ).filter(Boolean)
       throw new Error(
         shown.length ? `the native edit menu offered ${shown.join(', ')} but no Paste` : 'no native edit menu appeared',
       )
     }
-    await paste.click()
+    // The first in document order is the one that takes the tap.
+    await browser.$$(paste)[0].click()
   } finally {
     await browser.switchContext(context)
   }
