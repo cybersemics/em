@@ -214,7 +214,7 @@ describe('clear', () => {
 })
 
 describe('format', () => {
-  it('renders the device, user agent, em version, build commit, and URL as the first five lines', () => {
+  it('renders the device, user agent, em version, build commit, display, and URL as the first six lines', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     debugLog.log('input')
@@ -224,8 +224,10 @@ describe('format', () => {
     expect(lines[1]).toBe(`--- userAgent: ${navigator.userAgent}`)
     expect(lines[2]).toBe(`--- version: ${pkg.version}`)
     expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
-    expect(lines[4]).toBe(`--- url: ${window.location.href}`)
-    expect(lines[5]).toContain('#0 input')
+    // jsdom reports no standalone display mode, no orientation and no visual viewport
+    expect(lines[4]).toMatch(/^--- display: browser, .+, dpr \d+(\.\d+)?, scale [\d.]+, safe-area-bottom \d+$/)
+    expect(lines[5]).toBe(`--- url: ${window.location.href}`)
+    expect(lines[6]).toContain('#0 input')
   })
 
   it('names the tauri shell, which Capacitor reports as web', () => {
@@ -240,9 +242,9 @@ describe('format', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     const lines = debugLog.format().split('\n')
-    expect(lines.length).toBe(5)
+    expect(lines.length).toBe(6)
     expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
-    expect(lines[4]).toBe(`--- url: ${window.location.href}`)
+    expect(lines[5]).toBe(`--- url: ${window.location.href}`)
   })
 
   it('renders the header after the buffer overflows and the session marker is evicted', () => {
@@ -256,8 +258,25 @@ describe('format', () => {
     const lines = debugLog.format().split('\n')
     expect(lines[0]).toMatch(/^--- device: /)
     expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
-    expect(lines[4]).toBe(`--- url: ${window.location.href}`)
-    expect(lines[5]).toContain('#')
+    expect(lines[5]).toBe(`--- url: ${window.location.href}`)
+    expect(lines[6]).toBe('--- evicted: 101 earlier entries')
+    expect(lines[7]).toContain('#101 n')
+  })
+
+  it('reports how many entries the rolling buffer has evicted', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    Array.from({ length: 5003 }, (_, i) => debugLog.log('x', { i }))
+    const lines = debugLog.format().split('\n')
+    expect(lines[6]).toBe('--- evicted: 3 earlier entries')
+    expect(lines[7]).toContain('#3 x')
+  })
+
+  it('omits the eviction line while the buffer holds the whole session', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('x')
+    expect(debugLog.format()).not.toContain('--- evicted')
   })
 
   it('renders a one-line-per-entry text block', () => {

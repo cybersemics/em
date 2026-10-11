@@ -3,6 +3,7 @@ import { isTauri } from '@tauri-apps/api/core'
 import pkg from '../../package.json'
 import State from '../@types/State'
 import { isTouch } from '../browser'
+import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import { registerReset } from '../stores/ministore'
 import storage from './storage'
 
@@ -249,7 +250,7 @@ const formatThought = (thought: {
   return `${thought.id} ${JSON.stringify(value)} rank:${thought.rank} parent:${thought.parentId}${thought.pending ? ' pending' : ''}`
 }
 
-/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, build commit, and the URL the log was formatted on. Appends the last-frame marker and, when state is provided, the view the log ended on (cursor, caret offset, keyboard, note focus, and the sizes of the expanded set, multicursor set and undo/redo stacks) and a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
+/** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, build commit, display and the URL the log was formatted on, and how many earlier entries the rolling buffer has evicted. Appends the last-frame marker and, when state is provided, the view the log ended on (cursor, caret offset, keyboard, note focus, and the sizes of the expanded set, multicursor set and undo/redo stacks) and a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
 const format = (state?: State): string => {
   // The device: the navigator platform, the shell em is served through (web, ios, android, or tauri), the screen
   // dimensions, and the pointer type. The shell is worth naming separately because it is not recoverable from the user
@@ -263,6 +264,20 @@ const format = (state?: State): string => {
     isTouch ? 'touch' : 'mouse',
   ].join(', ')
 
+  // The display: whether em runs as an installed PWA or in a browser tab, the screen orientation, the device pixel ratio,
+  // the pinch-zoom scale of the visual viewport, and the bottom safe-area inset. Several iOS scroll and layout bugs
+  // depend on these. Read at format time, when a forced style recalculation costs nothing that matters.
+  const display =
+    typeof window !== 'undefined'
+      ? [
+          navigator.standalone || window.matchMedia?.('(display-mode: standalone)').matches ? 'standalone' : 'browser',
+          window.screen?.orientation?.type ?? 'unknown orientation',
+          `dpr ${window.devicePixelRatio}`,
+          `scale ${window.visualViewport?.scale ?? 1}`,
+          `safe-area-bottom ${getSafeAreaBottom()}`,
+        ].join(', ')
+      : 'unknown'
+
   // The header is rendered here rather than read back from the session marker, which the rolling buffer evicts once
   // capacity is exceeded — i.e. in exactly the long sessions whose logs are most worth reading. It describes the device
   // and build the log was formatted on, so a hydrated log spanning an app update may still carry a session marker from
@@ -272,7 +287,11 @@ const format = (state?: State): string => {
     `--- userAgent: ${typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown'}`,
     `--- version: ${pkg.version}`,
     `--- commit: ${__COMMIT_HASH__}`,
+    `--- display: ${display}`,
     `--- url: ${typeof window !== 'undefined' ? window.location.href : 'unknown'}`,
+    // seq counts every entry since the last clear(), so the first retained seq is the number the rolling buffer has
+    // evicted. Spelled out so a reader can tell a log that wrapped from one that holds the whole session.
+    ...((entries[0]?.seq ?? 0) > 0 ? [`--- evicted: ${entries[0].seq} earlier entries`] : []),
   ].join('\n')
 
   const entryLines = entries.map(formatEntry).join('\n')
