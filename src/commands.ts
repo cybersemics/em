@@ -47,7 +47,6 @@ import editingValueStore from './stores/editingValueStore'
 import gestureStore from './stores/gestureStore'
 import heldKeysStore from './stores/heldKeysStore'
 import ministore from './stores/ministore'
-import pinnedCommandStore from './stores/pinnedCommandStore'
 import commandTransaction from './util/commandTransaction'
 import createId from './util/createId'
 import debugLog from './util/debugLog'
@@ -729,7 +728,7 @@ export const handleGestureSegment = ({ sequence }: { gesture: Direction | null; 
 
   // While the pinned command tooltip is open the user is practicing the gesture it shows, so the gesture menu would
   // only cover it. Haptics still confirm each segment.
-  if (pinnedCommandStore.getState().tooltipOpen) return
+  if (state.showPinnedCommandTooltip) return
 
   // gesture menu
   // alert after a delay of COMMAND_PALETTE_TIMEOUT

@@ -10,7 +10,6 @@ import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse
 import { commandById } from '../../commands'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
 import useBreakpoint from '../../hooks/useBreakpoint'
-import pinnedCommandStore from '../../stores/pinnedCommandStore'
 import durations from '../../util/durations'
 import haptics from '../../util/haptics'
 import SettingsIcon from '../icons/SettingsIcon'
@@ -65,9 +64,9 @@ const PinnedCommand = () => {
     setIconAnimationKey(key => key + 1)
     // A rep earned while the tooltip is open means the user traced the gesture it was showing; the tooltip has done
     // its job, so close it. The rep itself is already counted.
-    setOpenedCommandId(null)
+    dispatch(showPinnedCommandTooltip({ value: false }))
     if (reps >= targetReps) setFlourish(count => count + 1)
-  }, [pinnedCommandId, reps, targetReps, isCommandActive])
+  }, [dispatch, pinnedCommandId, reps, targetReps, isCommandActive])
 
   // Changing the pinned command also closes the tooltip for any previous pinned command that might be open.
   const isOpen = useSelector(state => state.showPinnedCommandTooltip && !!state.learning.pinnedCommandId)
@@ -80,12 +79,6 @@ const PinnedCommand = () => {
       dispatch(showPinnedCommandTooltip({ value: false }))
     }
   }, [dispatch])
-
-  // Publish the open state for the gesture handlers, which keep the gesture menu closed over an open tooltip.
-  useEffect(() => {
-    pinnedCommandStore.update({ tooltipOpen: isOpen })
-    return () => pinnedCommandStore.update({ tooltipOpen: false })
-  }, [isOpen])
 
   useEffect(() => {
     if (isOpen) {
