@@ -7,6 +7,10 @@ const colors = {
     bgOverlay57: 'rgba(0, 0, 0, 0.57)',
     bgOverlay30: 'rgba(0, 0, 0, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
+    // Fixed dark artwork for the mobile keyboard accessory in both themes.
+    formattingBarSurface: 'rgb(24, 24, 24)',
+    formattingBarFillStart: 'rgba(130, 108, 203, 0)',
+    formattingBarFillEnd: 'rgba(127, 172, 255, 0.08)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
     caret: 'rgba(0, 199, 230, 0.75)', // #00c7e6
     darkgray: 'rgba(17, 17, 17, 1)', // #111111
@@ -124,6 +128,10 @@ const colors = {
     bgOverlay57: 'rgba(255, 255, 255, 0.57)',
     bgOverlay30: 'rgba(255, 255, 255, 0.3)',
     black: 'rgba(0, 0, 0, 1)',
+    // Fixed dark artwork for the mobile keyboard accessory in both themes.
+    formattingBarSurface: 'rgb(24, 24, 24)',
+    formattingBarFillStart: 'rgba(130, 108, 203, 0)',
+    formattingBarFillEnd: 'rgba(127, 172, 255, 0.08)',
     blue: 'rgba(0, 199, 230, 1)', // #00c7e6
     caret: 'rgba(0, 199, 230, 0.75)', // #00c7e6
     darkgray: 'rgba(237, 237, 237, 1)', // #ededed

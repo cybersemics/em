@@ -163,6 +163,8 @@ interface State {
   showColorPicker: boolean
   showLetterCase: boolean
   showDesktopCommandUniverse: boolean
+  /** Whether the mobile Formatting Bar is open (showing the bar) or closed (showing only the overflow button). Persisted to local storage. */
+  showFormattingBar: boolean
   showGestureMenu: boolean
   showHiddenThoughts: boolean
   showSortPicker: boolean

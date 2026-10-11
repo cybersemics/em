@@ -148,6 +148,8 @@ The Toolbar renders a configurable subset of commands as buttons. The user's cus
 
 [`ToolbarButton`](../src/components/ToolbarButton.tsx) owns the pointer target; its decorative icon has `pointer-events: none`. Animated icons replace their SVG when the animation ends, so letting an SVG own a touch could remove its target while the finger is down. WebKit then misses the button's `touchend` handler and synthesizes a mouse event that blurs the editable and closes the keyboard. The persistent button receives the complete touch sequence while its icon animates. Pickers keep their own pointer targets.
 
+On touch devices, the [Formatting Bar](../src/components/FormattingBar.tsx) sits above the virtual keyboard. The exported component owns one `usePositionFixed` binding and positions the opener and all visual layers together. Its controls establish the panel height through normal layout; the centered frame uses 92.5% width with a 36rem maximum. The shell, glow, and falloff are local components positioned around that frame using percentages and rem offsets. One masked element paints its rounded border with two layered gradient backgrounds. CSS transitions respond directly to the open/closed state, without a progress variable. Each `ProgressiveBlur` layer receives its opacity class directly, preserving backdrop filtering on WebKit. Taps on the opener, close button, and gaps between controls preserve editor focus. `formattingBarOpen` persists locally and defaults to closed; `usePrefetchImages` loads and decodes the glow on mount.
+
 The **Command Universe** is the searchable command palette. Two flavors:
 
 - **`DesktopCommandUniverse`** (`Cmd/Ctrl + P`) — desktop palette opened by `openCommandCenter` / `openDesktopCommandUniverse`.
