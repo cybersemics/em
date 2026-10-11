@@ -7,6 +7,7 @@ import store from '../../../stores/app'
 import { registerReset } from '../../../stores/ministore'
 import viewportStore, { updateSize } from '../../../stores/viewportStore'
 import virtualKeyboardStore from '../../../stores/virtualKeyboardStore'
+import * as selection from '../../selection'
 import getSafeAreaBottom from '../getSafeAreaBottom'
 
 /** Provides control over the spring animation. */
@@ -58,10 +59,14 @@ const updateIOSSafariKeyboardState = () => {
     } else if (virtualKeyboardStore.getState().open) {
       if (currentTargetHeight === 0) return
 
-      // Since iOS 27, Safari keeps a selected range alive across the blur that closes the keyboard, as Android does,
-      // so the edit menu (Cut | Copy | Paste) stays on screen after the keyboard is gone. Take the range with the
-      // keyboard. Earlier versions of iOS dropped the range on blur themselves, which makes this a no-op there.
+      // Since iOS 27, Safari keeps the selection alive across the blur that closes the keyboard, as Android does, so
+      // the edit menu stays on screen after the keyboard is gone. Take the selection with the keyboard. Earlier
+      // versions of iOS dropped the selection on blur themselves, which makes this a no-op there.
       store.dispatch(dismissKeyboard())
+      // Unlike Android, iOS also shows the edit menu (Paste | Select | Select All) for a caret that was tapped, which
+      // dismissKeyboard leaves alone. Remove the caret too, but only once no thought or note has focus, so that one
+      // that has already taken the caret back keeps it.
+      if (!selection.isThought()) selection.removeRanges()
 
       controls?.stop()
 

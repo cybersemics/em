@@ -51,3 +51,65 @@ it('clears a selected range when the keyboard closes', async () => {
 
   document.body.removeChild(editable)
 })
+
+// iOS also shows the edit menu (Paste | Select | Select All) for a tapped caret, which stayed on screen after the
+// keyboard was gone.
+it('clears a collapsed caret when the keyboard closes', async () => {
+  store.dispatch([importText({ text: '- Cybersemics' }), setCursor(['Cybersemics']), keyboardOpen({ value: true })])
+
+  const editable = document.createElement('div')
+  editable.setAttribute('contenteditable', 'true')
+  editable.setAttribute('data-editable', 'true')
+  editable.textContent = 'Cybersemics'
+  document.body.appendChild(editable)
+  editable.focus()
+
+  iOSSafariHandler.init()
+
+  selectRange(editable, 'Cyber'.length, 'Cyber'.length)
+  document.dispatchEvent(new Event('selectionchange'))
+  await vi.runAllTimersAsync()
+  expect(virtualKeyboardStore.getState().open).toBe(true)
+
+  // the keyboard is dismissed natively, which blurs the editable and exits edit mode but leaves the caret behind
+  editable.blur()
+  store.dispatch(keyboardOpen({ value: false }))
+  expect(selection.isActive()).toBe(true)
+
+  window.dispatchEvent(new Event('resize'))
+  await vi.runAllTimersAsync()
+
+  // the caret is gone, so the edit menu has nothing left to display
+  expect(selection.isActive()).toBe(false)
+
+  document.body.removeChild(editable)
+})
+
+it('keeps the caret of a thought that has focus when the keyboard closes', async () => {
+  store.dispatch([importText({ text: '- Cybersemics' }), setCursor(['Cybersemics']), keyboardOpen({ value: true })])
+
+  const editable = document.createElement('div')
+  editable.setAttribute('contenteditable', 'true')
+  editable.setAttribute('data-editable', 'true')
+  editable.textContent = 'Cybersemics'
+  document.body.appendChild(editable)
+  editable.focus()
+
+  iOSSafariHandler.init()
+
+  selectRange(editable, 'Cyber'.length, 'Cyber'.length)
+  document.dispatchEvent(new Event('selectionchange'))
+  await vi.runAllTimersAsync()
+  expect(virtualKeyboardStore.getState().open).toBe(true)
+
+  // edit mode ends while the thought still has focus
+  store.dispatch(keyboardOpen({ value: false }))
+
+  window.dispatchEvent(new Event('resize'))
+  await vi.runAllTimersAsync()
+
+  expect(selection.isActive()).toBe(true)
+  expect(document.activeElement).toBe(editable)
+
+  document.body.removeChild(editable)
+})
