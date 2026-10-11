@@ -42,12 +42,12 @@ describe('delete', () => {
   })
 
   // https://github.com/cybersemics/em/issues/5856
-  it('quotes an empty thought in the alert', () => {
+  it('names an empty thought as empty thought in the alert', () => {
     store.dispatch(newThought({ value: '' }))
 
     executeCommand(deleteCommand, { store })
 
-    expect(store.getState().alert?.value).toBe('Permanently deleted "empty thought"')
+    expect(store.getState().alert?.value).toBe('Permanently deleted empty thought')
   })
 
   describe('multicursor', () => {
