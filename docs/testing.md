@@ -484,6 +484,14 @@ BROWSERSTACK_ACCESS_KEY=your_access_key
 CLOUDFLARE_TUNNEL_POOL='[{"name":"…","hostname":"…","token":"…"}, …]'
 ```
 
+`CLOUDFLARE_TUNNEL_POOL` must be single-quoted JSON on one line. dotenv reads an unquoted value that spans several lines as just its first line, `[`, and the run fails at setup with "BrowserStack test setup failed: Unexpected end of JSON input".
+
+Local runs use the dev pool (`em-browserstack-dev-*`), not the CI pool (`em-browserstack-*`). A local run given the CI pool saw every tunnel answer 502 and waited indefinitely. To check what the file actually yields without printing any token:
+
+```sh
+node -e 'require("dotenv").config({path:".env.test.local",quiet:true});console.log(JSON.parse(process.env.CLOUDFLARE_TUNNEL_POOL).map(t=>t.name))'
+```
+
 Local Appium requires macOS with Xcode and an iOS Simulator, Appium, and the XCUITest driver:
 
 ```sh
@@ -502,9 +510,9 @@ The configuration files live in [src/e2e/iOS/config](../src/e2e/iOS/config). [wd
 
 #### Device pin
 
-`wdio.browserstack.conf.ts` pins the devices the suite runs on. Most specs run on **iPhone 15 Plus / iOS 17**, and [`color.ts`](../src/e2e/iOS/__tests__/color.ts) runs on **iPhone 15 Pro Max / iOS 26**, the same 430×932 screen on a newer WebKit. The two pins pull in opposite directions, so both are deliberate.
+`wdio.browserstack.conf.ts` pins the devices the suite runs on. Most specs run on **iPhone 15 Plus / iOS 17**, [`color.ts`](../src/e2e/iOS/__tests__/color.ts) runs on **iPhone 15 Pro Max / iOS 26**, the same 430×932 screen on a newer WebKit, and [`doubleTap.ios27.ts`](../src/e2e/iOS/__tests__/doubleTap.ios27.ts) runs on **iPhone 15 / iOS 27**, the first WebKit to withhold `touchend` after a double tap ([#5660](https://github.com/cybersemics/em/issues/5660)). It is not on the Pro Max because an iPhone 15 Pro Max on iOS 27 delivered only one touch of its double tap. The old and new pins pull in opposite directions, so both are deliberate.
 
-A device suite pinned to an OS that predates the bug under test reports green while users hit it. The [#4263](https://github.com/cybersemics/em/issues/4263) `Popover` relayout grows the toolbar by 11.6px on iOS 26 and does not reproduce at all on iOS 17, so its regression test passed on the base branch and TDD correctly flagged it as covering nothing — the spec was being graded on an engine where the bug does not exist. That is what the second capability is for, and a spec guarding recent WebKit behavior belongs on it.
+A device suite pinned to an OS that predates the bug under test reports green while users hit it. The [#4263](https://github.com/cybersemics/em/issues/4263) `Popover` relayout grows the toolbar by 11.6px on iOS 26 and does not reproduce at all on iOS 17, so its regression test passed on the base branch and TDD correctly flagged it as covering nothing — the spec was being graded on an engine where the bug does not exist. That is what the newer capabilities are for, and a spec guarding recent WebKit behavior belongs on one of them. A spec names the iOS version it needs in its filename, `<name>.ios<NN>.ts`, which runs it only on the device pinned to that version and keeps it off the default device, so adding one needs no change to the config unless the version has no device yet. `color.ts` predates the convention and is still listed by path.
 
 **`osVersion` matches the major only, and the pool mixes minors.** A capability asking for `'26'` is answered with whatever 26.x device is free — 26.2, 26.3 and 26.6 have all been allocated — and requesting `'26.6'` explicitly is accepted but still answered with 26.2, so a minor cannot be pinned. Engine behavior varies within a major: the #4263 relayout is present on 26.6 and absent on 26.3. Combined with `specFileRetries`, which lets one passing attempt out of six decide the run, a spec whose only assertion depends on a specific minor is a coin flip — green on base often enough that TDD cannot grade it. Do not reach for the DOM structure behind the symptom to make it deterministic: that is an implementation detail, and an integration test asserts observable behavior. `color.ts` asserts only the toolbar height, so it catches a #4263 regression only when the pool allocates a device that relayouts.
 
@@ -711,6 +719,8 @@ The iOS suite has a separate driver vocabulary in [`../src/e2e/iOS/helpers/`](..
 Do not call `window.scrollTo(0, 0)` while the keyboard is up. Safari keeps the document scroll in step with the visual viewport while the keyboard is open, and forcing the scroll back to the top breaks that: the conversion is then wrong by `visualViewport.offsetTop`, and the touch lands that far below its target. This was measured on a device but nothing asserts it, so treat it as a measurement rather than a guarantee. The symptom is a touch that quietly lands a row away from where it was aimed.
 
 Get this wrong and nothing tells you. **A tap that misses is silent** — it lands somewhere else, and any assertion that something did *not* happen still passes. A test whose assertion is an absence therefore has no evidence its touch ever reached the target; give it a positive control, or assert something the touch must have caused.
+
+**A tap aimed at something still moving lands on whatever moved under it.** Thought layout moves by CSS transition (`layoutNodeAnimation`), which zeroing `durations` does not reach, so on a BrowserStack iOS device an element that has just rendered may still be sliding into place, and `tap` reads the element's rect once, before the touch. The note in `caret.ts`'s note-scrub test comes to rest at y=93 after the paste. Tapped mid-slide, anywhere from y=73 to y=90, the touch landed on the parent thought instead, and the test failed with the caret in `a`. A test that is not about the transitions turns them off with [`disableTransitions`](../src/e2e/iOS/helpers/disableTransitions.ts) before it arranges anything.
 
 Tap toolbar buttons with [`tapToolbar`](../src/e2e/iOS/helpers/tapToolbar.ts), the iOS counterpart to Puppeteer's [`clickToolbar`](../src/e2e/puppeteer/helpers/clickToolbar.ts), rather than tapping the button element directly. Most of the toolbar's buttons sit outside a phone-width viewport until the horizontally scrolling toolbar is scrolled, and a tap aimed at an off-screen button hits nothing — silently, since the command simply never runs. `tapToolbar` centers the button first (the toolbar's edges are overlapped by opaque scroll arrows that swallow a tap on a button scrolled only just into view) and taps with a touch pointer, which [`ToolbarButton`](../src/components/ToolbarButton.tsx) requires on a touch device because it binds `onTouchStart`/`onTouchEnd` rather than `onMouseDown`/`onClick`. It aims at the button's icon rather than the center of its rect, since a picker is rendered inside the button that opens it and an open picker expands that rect down over the swatches. The touch pointer also preserves the caret: `ToolbarButton` preventDefaults `touchend` to suppress the blur, whereas a mouse tap blurs the editable — which for a note clears `noteFocus`, so the command applies to the thought instead.
 
@@ -1372,3 +1382,5 @@ Your only job at each step is:
 4. Run `git bisect bad` if the regression is still present and `git bisect good` if it is gone.
 
 Record the commit hash it gives you at the very end and you’ve found the source of the regression! Often I take one more step of testing the bad commit again and the commit right before it (should be good) just to be extra sure. If any good/bad determination was mistaken along the way then it will throw off the whole process and the final result will not be accurate. But if you are precise and methodical, you can search through hundreds of commits in a matter of minutes to find the offending commit.
+
+The screenshot helper disables filters by default. Visual tests that cover blur or shadows opt in with `screenshot({ preserveFilters: true })`.
