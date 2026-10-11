@@ -33,8 +33,9 @@ const tapToolbar = async (label: CommandLabel, ...values: string[]) => {
 
   // A picker is rendered inside the button that opens it, so an open picker expands the button's rect down over the
   // swatches and a tap aimed at the button's center lands on a swatch instead. Aim at the button's icon, which is its
-  // first svg in document order for both a plain icon and an icon wrapped alongside a picker.
-  const icon = await waitForElement(`${toolbarSelector} svg`)
+  // first svg in document order for both a plain icon and an icon wrapped alongside a picker. An open picker's swatches
+  // are svgs too, so take the first match explicitly rather than with WebdriverIO's strict `$`.
+  const icon = await browser.$$(`${toolbarSelector} svg`)[0].getElement()
 
   await tap(icon, toolbarTapOptions)
 
