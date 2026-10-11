@@ -7,10 +7,10 @@
  * *same* interaction share almost no bytes.
  *
  * ```
- * #16 action {"actionType":"newThought","payload":"{\"at\":null,\"value\":\"\"}"}
- * #20 action {"actionType":"editThought","payload":"{...\"path\":[\"97e810f0…\"]…}"}
- * #56 action {"actionType":"newThought","payload":"{\"at\":null,\"value\":\"\"}"}
- * #60 action {"actionType":"editThought","payload":"{...\"path\":[\"94701f3d…\"]…}"}
+ * #16 action newThought {"at":null,"value":""}
+ * #20 action editThought {..."path":["97e810f0c6"]...}
+ * #56 action newThought {"at":null,"value":""}
+ * #60 action editThought {..."path":["94701f3dbf"]...}
  * ```
  *
  * Those two blocks are the same four keystrokes. So each entry is reduced to a **signature** — its type plus
@@ -31,6 +31,8 @@ interface Entry {
   dt: number
   /** Short event tag, e.g. `action`, `move`, `edit`. */
   type: string
+  /** The actionType of an `action` entry, which format() writes after the type, or null for any other entry. */
+  label: string | null
   /** The event-specific fields, as the raw JSON text that followed the type, or an empty string. */
   fields: string
   /** The line exactly as it appeared, for display. */
@@ -90,17 +92,22 @@ interface CompareOptions {
 }
 
 /**
- * Matches one rendered entry: `[<ISO timestamp>] +<dt>ms #<seq> <type> <fields JSON>`.
+ * Matches one rendered entry: `<HH:MM:SS.mmm> +<dt>ms #<seq> <type> [<actionType>] <fields JSON>`, the date coming
+ * from the `--- date` line format() writes before it.
  *
  * A leading `.*?` tolerates whatever precedes the line — the `debugLog` prefix the console mirror adds, or a
  * console listing's own timestamp and level column — so a log pasted out of a browser console parses the same
- * as one dumped from the buffer. Requiring an ISO date inside the brackets keeps that leniency from matching
- * unrelated text.
+ * as one dumped from the buffer. Requiring the `+<dt>ms #<seq>` that follows the time keeps that leniency from
+ * matching unrelated text.
  */
-const ENTRY_REGEX = /^.*?\[(\d{4}-\d{2}-\d{2}T[^\]]*)\]\s+\+(-?\d+)ms\s+#(\d+)\s+(\S+)(?:\s+(\{.*\}))?\s*$/
+const ENTRY_REGEX =
+  /^.*?(\d{2}:\d{2}:\d{2}\.\d{3})\s+\+(-?\d+)ms\s+#(\d+)\s+(\S+)(?:\s+([^\s{]\S*))?(?:\s+(\{.*\}))?\s*$/
 
-/** Matches a thought id: 32 lowercase hex characters (see src/util/createId.ts). */
-const ID_REGEX = /\b[0-9a-f]{32}\b/g
+/** Matches the `--- date: YYYY-MM-DD` line format() writes before the first entry and wherever the date changes, with the same leniency as ENTRY_REGEX. */
+const DATE_REGEX = /^.*?--- date: (\d{4}-\d{2}-\d{2})\s*$/
+
+/** Matches a thought id as format() writes it: cut to its first 10 hex characters (SHORT_ID_LENGTH in src/util/debugLog.ts), or whole, 32 characters, for a reserved id. */
+const ID_REGEX = /\b(?:[0-9a-f]{32}|[0-9a-f]{10})\b/g
 
 /**
  * Matches a reserved thought id — GLOBAL_ROOT_TOKEN, HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN, SETTINGS_TOKEN,
@@ -126,12 +133,29 @@ const LINE_MAX_LENGTH = 240
 const parse = (text: string, name: string): Log => {
   const lines = text.split('\n')
 
-  const entries = lines.flatMap(line => {
-    const match = line.match(ENTRY_REGEX)
-    if (!match) return []
-    const [, iso, dt, seq, type, fields] = match
-    return [{ seq: Number(seq), t: Date.parse(iso), dt: Number(dt), type, fields: fields ?? '', line }]
-  })
+  // Each entry carries only its time of day, so the date is carried forward from the last `--- date` line. A log
+  // with none — a console excerpt that began mid-session — gets the epoch, which is harmless: timestamps are
+  // volatile and never compared.
+  const { entries } = lines.reduce<{ date: string; entries: Entry[] }>(
+    (acc, line) => {
+      const dateMatch = line.match(DATE_REGEX)
+      if (dateMatch) return { ...acc, date: dateMatch[1] }
+      const match = line.match(ENTRY_REGEX)
+      if (!match) return acc
+      const [, time, dt, seq, type, label, fields] = match
+      acc.entries.push({
+        seq: Number(seq),
+        t: Date.parse(`${acc.date}T${time}Z`),
+        dt: Number(dt),
+        type,
+        label: label ?? null,
+        fields: fields ?? '',
+        line,
+      })
+      return acc
+    },
+    { date: '1970-01-01', entries: [] },
+  )
 
   // The environment the log was captured in. It is the single most useful thing to put in front of whoever is
   // comparing: a log from iOS Safari two app versions back explains a divergence that no amount of
@@ -139,8 +163,8 @@ const parse = (text: string, name: string): Log => {
   //
   // format() renders it as a `--- key: value` header, which is preferred because it is written at format time.
   // The session entry says the same thing but is an ordinary entry, so the rolling buffer evicts it once
-  // capacity is exceeded — in exactly the long sessions whose logs are most worth comparing. Older logs
-  // predate the header and carry only the entry, so both are read.
+  // capacity is exceeded — in exactly the long sessions whose logs are most worth comparing. An excerpt
+  // read off the console mirror carries no header, only the entry, so both are read.
   //
   // The entry is parsed defensively. The input is a file downloaded from an issue attachment, so a damaged one
   // must cost the environment header rather than the whole comparison.
@@ -180,7 +204,9 @@ const parse = (text: string, name: string): Log => {
   return {
     name,
     entries,
-    skipped: beforeDump.filter(line => line.trim() && !line.startsWith('--- ') && !ENTRY_REGEX.test(line)).length,
+    skipped: beforeDump.filter(
+      line => line.trim() && !line.startsWith('--- ') && !DATE_REGEX.test(line) && !ENTRY_REGEX.test(line),
+    ).length,
     session,
     stateDump: lines[dumpIndex]?.replace('--- ', '') ?? null,
     lastFrameAt: lines.find(line => line.startsWith('--- lastFrameAt:'))?.replace('--- ', '') ?? null,
@@ -201,9 +227,9 @@ const signature = (entry: Entry, ids: Map<string, string>, mask: string[]): stri
   // comparison; they are reported side by side in the header instead.
   if (entry.type === 'session') return 'session'
 
-  // Two patterns per field, because an action's payload is stringified before it is logged, so the same field
-  // appears both plainly (`"clientId":"…"`) and escaped one level deep (`\"clientId\":\"…\"`). Masking only
-  // the plain form leaves every initThoughts entry reading as a divergence on a nonce.
+  // Two patterns per field. format() parses an action's payload into the fields, so a field normally appears
+  // plainly (`"clientId":"…"`); but a payload the field cap cut no longer parses and stays a string, where the
+  // same field appears escaped one level deep (`\"clientId\":\"…\"`).
   const masked = [...VOLATILE_FIELDS, ...mask].reduce(
     (text, field) =>
       text
@@ -221,7 +247,7 @@ const signature = (entry: Entry, ids: Map<string, string>, mask: string[]): stri
     return placeholder
   })
 
-  return `${entry.type} ${canonical}`
+  return `${entry.type}${entry.label ? ` ${entry.label}` : ''} ${canonical}`
 }
 
 /** Narrows a log to the window worth comparing: everything from the last occurrence of the anchor type onwards, minus the ignored types, minus everything before the last `tail` entries. */
