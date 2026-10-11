@@ -1,6 +1,7 @@
 import { AnimationPlaybackControls, animate } from 'framer-motion'
 import _ from 'lodash'
 import VirtualKeyboardHandler from '../../../@types/VirtualKeyboardHandler'
+import { dismissKeyboardActionCreator as dismissKeyboard } from '../../../actions/dismissKeyboard'
 import { isSafari, isTouch } from '../../../browser'
 import store from '../../../stores/app'
 import { registerReset } from '../../../stores/ministore'
@@ -56,6 +57,11 @@ const updateIOSSafariKeyboardState = () => {
       })
     } else if (virtualKeyboardStore.getState().open) {
       if (currentTargetHeight === 0) return
+
+      // Since iOS 27, Safari keeps a selected range alive across the blur that closes the keyboard, as Android does,
+      // so the edit menu (Cut | Copy | Paste) stays on screen after the keyboard is gone. Take the range with the
+      // keyboard. Earlier versions of iOS dropped the range on blur themselves, which makes this a no-op there.
+      store.dispatch(dismissKeyboard())
 
       controls?.stop()
 
