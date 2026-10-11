@@ -7,11 +7,10 @@ import Thunk from '../@types/Thunk'
 import alert from '../actions/alert'
 import deleteThought from '../actions/deleteThought'
 import moveThought from '../actions/moveThought'
-import newThought from '../actions/newThought'
 import setCursor from '../actions/setCursor'
+import setDescendant from '../actions/setDescendant'
 import { HOME_PATH } from '../constants'
 import deleteThoughtAlertText from '../selectors/deleteThoughtAlertText'
-import findDescendant from '../selectors/findDescendant'
 import { findAnyChild, getAllChildren } from '../selectors/getChildren'
 import getPrevRank from '../selectors/getPrevRank'
 import getThoughtById from '../selectors/getThoughtById'
@@ -126,23 +125,15 @@ const archiveThought = (state: State, options: { path?: Path }): State => {
         ]
       : [
           // create =archive if it does not exist
-          (state: State) =>
-            !findDescendant(state, head(pathParent), '=archive')
-              ? newThought(state, {
-                  at: pathParent,
-                  insertNewSubthought: true,
-                  insertBefore: true,
-                  value: '=archive',
-                  preventSetCursor: true,
-                })
-              : null,
+          // pathParent is a SimplePath, so =archive must be created as a child even if a context view is active on pathParent (#5858)
+          setDescendant({ path: pathParent, values: ['=archive'] }),
 
           // alert
           alert({
             value: deleteThoughtAlertText(state, path, { archive: true }),
           }),
 
-          // execute moveThought after newThought has updated the state
+          // execute moveThought after setDescendant has updated the state
           (state: State) => {
             const { path: newPath, rank } = pathAndRankToArchive(state, path!, pathParent)!
             return moveThought(state, {
