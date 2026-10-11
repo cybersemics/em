@@ -1,6 +1,13 @@
 import { useSelector } from 'react-redux'
 import { css } from '../../styled-system/css'
+import { BASE_FONT_SIZE } from '../constants'
 import backgroundGlowStore from '../stores/backgroundGlowStore'
+
+/** Distance (px, at the base font size) from the bottom edge of the nav bar to where the falloff becomes fully opaque, just above the breadcrumbs. Scales with font size, since the nav bar does. */
+const FALLOFF_END_ABOVE_NAV = 34
+
+/** Height (px) of the falloff's fade from transparent to opaque. */
+const FALLOFF_HEIGHT = 63
 
 const glowLayerStyles = css.raw({
   position: 'fixed',
@@ -15,6 +22,11 @@ const glowLayerStyles = css.raw({
 const BackgroundGlow = () => {
   const { image, opacity } = backgroundGlowStore.useState()
   const showModal = useSelector(state => !!state.showModal)
+  const fontSize = useSelector(state => state.fontSize)
+
+  // Anchor the falloff to the nav bar rather than the viewport edge: the nav bar sits max(11px, safe area) above the bottom (see NavBar) and is scaled by font size, so a fixed offset leaves the fade too high on devices with a safe area inset or at small font sizes.
+  const falloffEnd = `calc(100% - max(11px, env(safe-area-inset-bottom)) - ${(FALLOFF_END_ABOVE_NAV * fontSize) / BASE_FONT_SIZE}px)`
+  const falloffMask = `linear-gradient(to bottom, transparent calc(${falloffEnd} - ${FALLOFF_HEIGHT}px), black ${falloffEnd})`
 
   return image ? (
     <>
@@ -46,8 +58,9 @@ const BackgroundGlow = () => {
             pointerEvents: 'none',
             zIndex: 'backgroundGlowFalloff',
             backgroundColor: 'bg',
-            mask: 'linear-gradient(to bottom, transparent calc(100% - 108px - token(spacing.safeAreaBottom)), black calc(100% - 45px - token(spacing.safeAreaBottom)))',
           })}
+          // Panda cannot extract a runtime font size, so the mask stays inline.
+          style={{ mask: falloffMask, WebkitMask: falloffMask }}
         >
           <div
             className={css(glowLayerStyles, { position: 'absolute' })}
