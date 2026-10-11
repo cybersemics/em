@@ -173,6 +173,8 @@ interface State {
    * See: /src/actions/closeModal.ts.
    */
   showModal?: Modal | null
+  /** Whether the pinned command's tooltip is expanded. Only ever true while a command is pinned: changing the pin closes it. */
+  showPinnedCommandTooltip: boolean
   showSidebar: boolean
   showMobileCommandUniverse?: boolean
   showUndoSlider: boolean

@@ -2,9 +2,9 @@ import { motion, useMotionTemplate, useMotionValue, useTransform } from 'framer-
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
-import CommandId from '../../@types/CommandId'
 import { commandUniverseNavigateActionCreator as commandUniverseNavigate } from '../../actions/commandUniverseNavigate'
 import { saveSelectionOffsetsActionCreator as saveSelectionOffsets } from '../../actions/saveSelectionOffsets'
+import { showPinnedCommandTooltipActionCreator as showPinnedCommandTooltip } from '../../actions/showPinnedCommandTooltip'
 import { toggleMobileCommandUniverseActionCreator as toggleMobileCommandUniverse } from '../../actions/toggleMobileCommandUniverse'
 import { commandById } from '../../commands'
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
@@ -22,7 +22,6 @@ import PinnedCommandTooltip from './PinnedCommandTooltip'
 const PinnedCommand = () => {
   const dispatch = useDispatch()
   const tooltipId = useId()
-  const [openedCommandId, setOpenedCommandId] = useState<CommandId | null>(null)
   const [keepRaisedDuringExit, setKeepRaisedDuringExit] = useState(false)
   // Tap and hold on the ring opens the command's detail page instead of the tooltip. The timer runs from pointerdown;
   // held records that it fired so the click that follows the release does not also open the tooltip.
@@ -62,7 +61,8 @@ const PinnedCommand = () => {
     if (reps >= targetReps) setFlourishes(count => count + 1)
   }, [pinnedCommandId, reps, targetReps])
 
-  const isOpen = !!pinnedCommandId && openedCommandId === pinnedCommandId
+  // Changing the pinned command also closes the tooltip for any previous pinned command that might be open.
+  const isOpen = useSelector(state => state.showPinnedCommandTooltip && !!state.learning.pinnedCommandId)
   const isRingRaised = isOpen || keepRaisedDuringExit
 
   useEffect(() => {
@@ -81,12 +81,12 @@ const PinnedCommand = () => {
 
     /** Dismiss the expanded gesture through the keyboard without changing the pin. */
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpenedCommandId(null)
+      if (event.key === 'Escape') dispatch(showPinnedCommandTooltip({ value: false }))
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen])
+  }, [dispatch, isOpen])
 
   if (!pinnedCommandId) return null
 
@@ -96,7 +96,7 @@ const PinnedCommand = () => {
 
   /** Open the registered Command Universe detail page for this command. */
   const revealCommand = () => {
-    setOpenedCommandId(null)
+    dispatch(showPinnedCommandTooltip({ value: false }))
     dispatch(toggleMobileCommandUniverse({ value: true, preserveSelectionOffsets: true }))
     dispatch(commandUniverseNavigate('detail', { command }, { transition: 'none' }))
   }
@@ -149,7 +149,7 @@ const PinnedCommand = () => {
             }
             // Keyboard activation has no pointerdown; clear any stale snapshot before opening.
             if (event.detail === 0) dispatch(saveSelectionOffsets())
-            setOpenedCommandId(pinnedCommandId)
+            dispatch(showPinnedCommandTooltip({ value: true }))
           }}
           className={css({
             display: 'block',
@@ -195,7 +195,7 @@ const PinnedCommand = () => {
         id={tooltipId}
         command={command}
         isOpen={isOpen}
-        onClose={() => setOpenedCommandId(null)}
+        onClose={() => dispatch(showPinnedCommandTooltip({ value: false }))}
         onOpacityChange={handleTooltipOpacityChange}
         onReveal={revealCommand}
       />
