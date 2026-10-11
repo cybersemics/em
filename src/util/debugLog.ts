@@ -5,6 +5,7 @@ import State from '../@types/State'
 import { isTouch } from '../browser'
 import getSafeAreaBottom from '../device/virtual-keyboard/getSafeAreaBottom'
 import { registerReset } from '../stores/ministore'
+import debugLogCompact from './debugLogCompact'
 import storage from './storage'
 
 /** The localStorage key prefix under which the rolling debug log is persisted. Entries are sharded across numbered chunk keys (`debugLog-0` … `debugLog-9`) so that appending an entry only rewrites the active chunk instead of the whole buffer. */
@@ -112,6 +113,8 @@ let chunk: DebugLogEntry[] = entries.filter(
 )
 // performance.now() of the previous entry, used to compute dt
 let lastTime = 0
+// UTC date of the last entry mirrored to the console, so the mirror writes a `--- date` line only when it changes
+let lastMirroredDate = ''
 // requestAnimationFrame handle for the frame heartbeat
 let frameId: number | null = null
 // performance.now() of the previous rAF callback, used to measure the inter-frame gap
@@ -165,10 +168,20 @@ const persist = (): void => {
   }
 }
 
-/** Renders one entry as a single line: the `seq`, `t`, `dt`, and `type` envelope followed by the event-specific fields as JSON. Shared by format() and the console mirror so that a log read off the console parses identically to one dumped from the buffer. */
+/** Returns the UTC date of a timestamp as YYYY-MM-DD, which format() and the console mirror write as a `--- date` line whenever it changes, so that each entry carries only the time of day. */
+const utcDate = (t: number): string => new Date(t).toISOString().slice(0, 10)
+
+/**
+ * Renders one entry as a single line: the UTC time of day, `dt`, `seq` and `type` envelope — followed, for an `action`,
+ * by its actionType — and then the event-specific fields as JSON, compacted and with thought ids shortened (see
+ * debugLogCompact). Shared by format() and the console mirror so that a log read off the console parses identically to
+ * one dumped from the buffer. The log is read only by agents, so the line is shaped for tokens rather than for a person.
+ */
 const formatEntry = ({ seq, t, dt, type, ...fields }: DebugLogEntry): string => {
-  const fieldStr = Object.keys(fields).length > 0 ? ` ${JSON.stringify(fields)}` : ''
-  return `[${new Date(t).toISOString()}] +${dt}ms #${seq} ${type}${fieldStr}`
+  const compacted = debugLogCompact.compactFields(type, fields)
+  const fieldStr = Object.keys(compacted.fields).length > 0 ? ` ${JSON.stringify(compacted.fields)}` : ''
+  const line = `${new Date(t).toISOString().slice(11, 23)} +${dt}ms #${seq} ${type}${compacted.label ? ` ${compacted.label}` : ''}${fieldStr}`
+  return debugLogCompact.shortenIds(line)
 }
 
 /** Appends an entry to the rolling buffer and persists its chunk synchronously. No-op when logging is disabled. Never throws, so instrumentation can never worsen a freeze or break editing. */
@@ -192,6 +205,11 @@ const log = (type: string, fields?: Record<string, unknown>): void => {
     // Mirror to the console last, so a console that throws or is monkey-patched cannot cost the entry its
     // place in the persisted buffer — which is the copy that survives a freeze or a device restart.
     if (consoleEnabled) {
+      const date = utcDate(entry.t)
+      if (date !== lastMirroredDate) {
+        lastMirroredDate = date
+        console.info(`${CONSOLE_PREFIX} --- date: ${date}`)
+      }
       console.info(`${CONSOLE_PREFIX} ${formatEntry(entry)}`)
     }
   } catch {
@@ -247,7 +265,9 @@ const formatThought = (thought: {
 }): string => {
   const value =
     thought.value.length > DUMP_VALUE_MAX_LENGTH ? `${thought.value.slice(0, DUMP_VALUE_MAX_LENGTH)}…` : thought.value
-  return `${thought.id} ${JSON.stringify(value)} rank:${thought.rank} parent:${thought.parentId}${thought.pending ? ' pending' : ''}`
+  return debugLogCompact.shortenIds(
+    `${thought.id} ${JSON.stringify(value)} rank:${thought.rank} parent:${thought.parentId}${thought.pending ? ' pending' : ''}`,
+  )
 }
 
 /** Renders the buffer to a copy-friendly, one-line-per-entry text block for pasting into an issue. Prepends a header identifying the device, user agent, em version, build commit, display and the URL the log was formatted on, and how many earlier entries the rolling buffer has evicted. Appends the last-frame marker and, when state is provided, the view the log ended on (cursor, caret offset, keyboard, note focus, and the sizes of the expanded set, multicursor set and undo/redo stacks) and a compact dump of state.thoughts.thoughtIndex (one line per thought, grouped by parent and ordered by rank) so entry ids can be resolved to values and current sibling order is visible. */
@@ -294,7 +314,14 @@ const format = (state?: State): string => {
     ...((entries[0]?.seq ?? 0) > 0 ? [`--- evicted: ${entries[0].seq} earlier entries`] : []),
   ].join('\n')
 
-  const entryLines = entries.map(formatEntry).join('\n')
+  // a `--- date` line before the first entry and wherever the date changes, since each entry carries only the time
+  const entryLines = entries
+    .flatMap((entry, i) =>
+      i === 0 || utcDate(entry.t) !== utcDate(entries[i - 1].t)
+        ? [`--- date: ${utcDate(entry.t)}`, formatEntry(entry)]
+        : [formatEntry(entry)],
+    )
+    .join('\n')
 
   let markerLine = ''
   try {
@@ -307,16 +334,18 @@ const format = (state?: State): string => {
   // The view the log ended on, which the entries can only reconstruct from setCursor and similar actions — the first
   // to be evicted in a long session. Thought ids resolve against the state.thoughts dump that follows.
   const view = state
-    ? `\n--- state: ${JSON.stringify({
-        cursor: state.cursor,
-        cursorOffset: state.cursorOffset,
-        isKeyboardOpen: state.isKeyboardOpen,
-        noteFocus: state.noteFocus,
-        expanded: Object.keys(state.expanded).length,
-        multicursors: Object.keys(state.multicursors).length,
-        undo: state.undoPatches.length,
-        redo: state.redoPatches.length,
-      })}`
+    ? `\n--- state: ${debugLogCompact.shortenIds(
+        JSON.stringify({
+          cursor: state.cursor,
+          cursorOffset: state.cursorOffset,
+          isKeyboardOpen: state.isKeyboardOpen,
+          noteFocus: state.noteFocus,
+          expanded: Object.keys(state.expanded).length,
+          multicursors: Object.keys(state.multicursors).length,
+          undo: state.undoPatches.length,
+          redo: state.redoPatches.length,
+        }),
+      )}`
     : ''
 
   const dump = state
@@ -372,6 +401,7 @@ const reset = (): void => {
   chunk = []
   seq = 0
   lastTime = 0
+  lastMirroredDate = ''
   lastFrameTime = 0
   lastMarkerWritten = 0
 }
@@ -418,6 +448,8 @@ const isConsole = (): boolean => consoleEnabled
  */
 const setConsole = (value: boolean): void => {
   consoleEnabled = value
+  // a mirror turned back on starts a new excerpt, which needs its own date line
+  lastMirroredDate = ''
   try {
     if (value) {
       storage.setItem(CONSOLE_KEY, 'true')

@@ -20,6 +20,7 @@
  * See docs/debug-log.md.
  */
 import { readFileSync } from 'node:fs'
+import debugLogCompact from '../src/util/debugLogCompact'
 
 /** One parsed entry of a debug log. */
 interface Entry {
@@ -31,7 +32,9 @@ interface Entry {
   dt: number
   /** Short event tag, e.g. `action`, `move`, `edit`. */
   type: string
-  /** The event-specific fields, as the raw JSON text that followed the type, or an empty string. */
+  /** The actionType of an `action` entry, which format() writes after the type, or null for any other entry. */
+  label: string | null
+  /** The event-specific fields as compact JSON text — in the form format() writes, whichever format the log was exported in (see normalize) — or an empty string. */
   fields: string
   /** The line exactly as it appeared, for display. */
   line: string
@@ -90,17 +93,25 @@ interface CompareOptions {
 }
 
 /**
- * Matches one rendered entry: `[<ISO timestamp>] +<dt>ms #<seq> <type> <fields JSON>`.
+ * Matches one rendered entry: `<HH:MM:SS.mmm> +<dt>ms #<seq> <type> [<actionType>] <fields JSON>`, the date coming
+ * from the `--- date` line format() writes before it.
  *
  * A leading `.*?` tolerates whatever precedes the line — the `debugLog` prefix the console mirror adds, or a
  * console listing's own timestamp and level column — so a log pasted out of a browser console parses the same
- * as one dumped from the buffer. Requiring an ISO date inside the brackets keeps that leniency from matching
- * unrelated text.
+ * as one dumped from the buffer. Requiring the `+<dt>ms #<seq>` that follows the time keeps that leniency from
+ * matching unrelated text.
  */
-const ENTRY_REGEX = /^.*?\[(\d{4}-\d{2}-\d{2}T[^\]]*)\]\s+\+(-?\d+)ms\s+#(\d+)\s+(\S+)(?:\s+(\{.*\}))?\s*$/
+const ENTRY_REGEX =
+  /^.*?(\d{2}:\d{2}:\d{2}\.\d{3})\s+\+(-?\d+)ms\s+#(\d+)\s+(\S+)(?:\s+([^\s{]\S*))?(?:\s+(\{.*\}))?\s*$/
 
-/** Matches a thought id: 32 lowercase hex characters (see src/util/createId.ts). */
-const ID_REGEX = /\b[0-9a-f]{32}\b/g
+/** Matches one entry of a log exported before the format was compacted: `[<ISO timestamp>] +<dt>ms #<seq> <type> <fields JSON>`, with an action's actionType and stringified payload inside the fields. Reporters' logs already attached to issues are in this form. */
+const LEGACY_ENTRY_REGEX = /^.*?\[(\d{4}-\d{2}-\d{2}T[^\]]*)\]\s+\+(-?\d+)ms\s+#(\d+)\s+(\S+)(?:\s+(\{.*\}))?\s*$/
+
+/** Matches the `--- date: YYYY-MM-DD` line format() writes before the first entry and wherever the date changes, with the same leniency as ENTRY_REGEX. */
+const DATE_REGEX = /^.*?--- date: (\d{4}-\d{2}-\d{2})\s*$/
+
+/** Matches a thought id: a full one, 32 lowercase hex characters (see src/util/createId.ts), which only reserved ids still are once normalized; or one shortened on export to its first debugLogCompact.SHORT_ID_LENGTH. */
+const ID_REGEX = new RegExp(`\\b(?:[0-9a-f]{32}|[0-9a-f]{${debugLogCompact.SHORT_ID_LENGTH}})\\b`, 'g')
 
 /**
  * Matches a reserved thought id — GLOBAL_ROOT_TOKEN, HOME_TOKEN, EM_TOKEN, ABSOLUTE_TOKEN, SETTINGS_TOKEN,
@@ -122,16 +133,52 @@ const MAX_ALIGN_CELLS = 4_000_000
 /** Longest entry line rendered in a report, so that one enormous updateThoughts payload cannot crowd out the rest. */
 const LINE_MAX_LENGTH = 240
 
-/** Parses the text of a debug log — as written by debugLog.format(), or read off the console mirror — into entries, ignoring any line that is not one. */
+/**
+ * Brings an entry's fields into the form format() writes now, so that a reporter's log exported before the format was
+ * compacted compares equal to a fresh capture of the same steps: the same compaction is applied (debugLogCompact,
+ * which leaves already compacted fields as they are) and thought ids are shortened. Fields that are not valid JSON
+ * are kept as they are.
+ */
+const normalize = (type: string, label: string | null, fields: string): { label: string | null; fields: string } => {
+  if (!fields) return { label, fields }
+  try {
+    const compacted = debugLogCompact.compactFields(type, JSON.parse(fields) as Record<string, unknown>)
+    const json = Object.keys(compacted.fields).length > 0 ? JSON.stringify(compacted.fields) : ''
+    return { label: label ?? compacted.label, fields: debugLogCompact.shortenIds(json) }
+  } catch {
+    return { label, fields: debugLogCompact.shortenIds(fields) }
+  }
+}
+
+/** Parses the text of a debug log — as written by debugLog.format(), or read off the console mirror, in the current format or the one before it was compacted — into entries, ignoring any line that is not one. */
 const parse = (text: string, name: string): Log => {
   const lines = text.split('\n')
 
-  const entries = lines.flatMap(line => {
-    const match = line.match(ENTRY_REGEX)
-    if (!match) return []
-    const [, iso, dt, seq, type, fields] = match
-    return [{ seq: Number(seq), t: Date.parse(iso), dt: Number(dt), type, fields: fields ?? '', line }]
-  })
+  // Each entry carries only its time of day, so the date is carried forward from the last `--- date` line. A log
+  // with none — a console excerpt that began mid-session — gets the epoch, which is harmless: timestamps are
+  // volatile and never compared.
+  const { entries } = lines.reduce<{ date: string; entries: Entry[] }>(
+    (acc, line) => {
+      const dateMatch = line.match(DATE_REGEX)
+      if (dateMatch) return { ...acc, date: dateMatch[1] }
+      const match = line.match(ENTRY_REGEX)
+      const legacy = match ? null : line.match(LEGACY_ENTRY_REGEX)
+      if (!match && !legacy) return acc
+      const [, time, dt, seq, type, label, fields] = match ?? [...legacy!.slice(0, 5), undefined, legacy![5]]
+      const normalized = normalize(type, label ?? null, fields ?? '')
+      acc.entries.push({
+        seq: Number(seq),
+        t: match ? Date.parse(`${acc.date}T${time}Z`) : Date.parse(time),
+        dt: Number(dt),
+        type,
+        label: normalized.label,
+        fields: normalized.fields,
+        line,
+      })
+      return acc
+    },
+    { date: '1970-01-01', entries: [] },
+  )
 
   // The environment the log was captured in. It is the single most useful thing to put in front of whoever is
   // comparing: a log from iOS Safari two app versions back explains a divergence that no amount of
@@ -180,7 +227,14 @@ const parse = (text: string, name: string): Log => {
   return {
     name,
     entries,
-    skipped: beforeDump.filter(line => line.trim() && !line.startsWith('--- ') && !ENTRY_REGEX.test(line)).length,
+    skipped: beforeDump.filter(
+      line =>
+        line.trim() &&
+        !line.startsWith('--- ') &&
+        !DATE_REGEX.test(line) &&
+        !ENTRY_REGEX.test(line) &&
+        !LEGACY_ENTRY_REGEX.test(line),
+    ).length,
     session,
     stateDump: lines[dumpIndex]?.replace('--- ', '') ?? null,
     lastFrameAt: lines.find(line => line.startsWith('--- lastFrameAt:'))?.replace('--- ', '') ?? null,
@@ -221,7 +275,7 @@ const signature = (entry: Entry, ids: Map<string, string>, mask: string[]): stri
     return placeholder
   })
 
-  return `${entry.type} ${canonical}`
+  return `${entry.type}${entry.label ? ` ${entry.label}` : ''} ${canonical}`
 }
 
 /** Narrows a log to the window worth comparing: everything from the last occurrence of the anchor type onwards, minus the ignored types, minus everything before the last `tail` entries. */

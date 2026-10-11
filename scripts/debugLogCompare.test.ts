@@ -69,6 +69,24 @@ const mine = run({
   ua: 'Mozilla/5.0 (X11; Linux x86_64) HeadlessChrome/152.0.0.0 Safari/537.36',
 })
 
+/**
+ * The local reproduction as format() writes it now: time of day under a `--- date` line, the actionType after the
+ * type, the payload parsed into the fields, and thought ids cut to ten characters. Same steps as `mine`.
+ */
+const mineCompact = [
+  '--- date: 2026-09-12',
+  '12:53:22.074 +1ms #8 session {"ua":"Mozilla/5.0 (X11; Linux x86_64) HeadlessChrome/152.0.0.0 Safari/537.36","screen":"800x600","appVersion":"351.2.0"}',
+  '12:53:23.044 +1ms #9 command {"id":"newThought","commandType":"keyboard"}',
+  '12:53:23.048 +1ms #10 action newThought {"at":null}',
+  '12:53:23.197 +1ms #11 edit {"oldValue":"","newValue":"a","rank":0}',
+  '12:53:23.201 +1ms #12 action editThought {"path":["94701f3dbf"]}',
+  '12:53:23.201 +1ms #13 command {"id":"newThought","commandType":"keyboard"}',
+  '12:53:23.204 +1ms #14 action newThought {"at":["94701f3dbf"]}',
+  '12:53:23.246 +1ms #15 edit {"oldValue":"","newValue":"b","rank":1}',
+  '12:53:23.249 +1ms #16 action editThought {"path":["57772fa97c"]}',
+  '12:53:23.251 +1ms #17 move {"id":"57772fa97c","oldRank":1,"newRank":0,"parentId":"00000000000000000000000000000001"}',
+].join('\n')
+
 /** Compares two log texts with the CLI's defaults, overridden per case. */
 const compare = (theirText: string, myText: string, options: Partial<typeof defaults> = {}) =>
   debugLogCompare.compare(debugLogCompare.parse(theirText, 'theirs'), debugLogCompare.parse(myText, 'mine'), {
@@ -325,6 +343,46 @@ const testNonLogInput = async () => {
   assert.equal(log.skipped, 2)
 }
 
+/** Verifies the compact envelope is read off the line: the date carried forward from the `--- date` line, and an action's actionType read as its label. */
+const testCompactParse = async () => {
+  const log = debugLogCompare.parse(mineCompact, 'mine')
+  assert.equal(log.entries.length, 10)
+  assert.equal(log.skipped, 0, 'the date line was counted as unrecognized')
+  assert.equal(log.entries[2].type, 'action')
+  assert.equal(log.entries[2].label, 'newThought')
+  assert.equal(log.entries[2].seq, 10)
+  assert.equal(log.entries[2].t, Date.parse('2026-09-12T12:53:23.048Z'))
+  assert.equal(log.entries[2].fields, '{"at":null}')
+}
+
+/**
+ * A reporter's log attached to an issue before the format was compacted must still compare equal to a fresh
+ * capture of the same steps, so a legacy entry is brought into the compact form — payload parsed, actionType
+ * lifted, ids shortened — before its signature is taken.
+ */
+const testLegacyComparesEqualToCompact = async () => {
+  const result = compare(theirs, mineCompact)
+  assert.equal(result.divergence, -1, 'a legacy log and a compact one of the same steps diverged')
+  assert.equal(result.matchedPrefix, 10)
+
+  const diverged = mineCompact.replace('#14 action newThought', '#14 action newSubthought')
+  assert.notEqual(diverged, mineCompact, 'fixture substitution did not apply')
+  assert.equal(compare(theirs, diverged).matchedPrefix, 6, 'a real difference across formats was not found')
+}
+
+/** Verifies the console mirror's date line is read through the same prefixes as its entries, so a compact log pasted out of a browser console parses the same as one dumped from the buffer. */
+const testCompactConsoleMirror = async () => {
+  const consoleText = mineCompact
+    .split('\n')
+    .map(line => `[info] 2026-09-12 12:53:23 debugLog ${line}`)
+    .join('\n')
+  const log = debugLogCompare.parse(consoleText, 'mine')
+  assert.equal(log.entries.length, 10)
+  assert.equal(log.skipped, 0)
+  assert.equal(log.entries[0].t, Date.parse('2026-09-12T12:53:22.074Z'))
+  assert.equal(compare(theirs, consoleText).divergence, -1)
+}
+
 await testParse()
 await testSameBehaviourDespiteDifferentText()
 await testDivergence()
@@ -340,5 +398,8 @@ await testDamagedSessionEntry()
 await testStateDumpIsNotCountedAsSkipped()
 await testEnvironmentPrefersTheFormatHeader()
 await testNonLogInput()
+await testCompactParse()
+await testLegacyComparesEqualToCompact()
+await testCompactConsoleMirror()
 
 console.info('PASS: debugLogCompare')

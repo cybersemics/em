@@ -307,7 +307,7 @@ Thought text turns up in more of a log than the `value` fields. Check all of the
 
 - `value`, `oldValue` and `newValue`, including inside `thoughts`, `sample` and `integrity` entries.
 - `data` on `input`, `beforeinput` and `composition` entries, and `key` on `keydown` entries when it is a printable character. These spell out what was typed one keystroke at a time.
-- `payload` on `action` entries, a stringified JSON object where the text appears escaped (`\"value\":\"...\"`) and in fields like `text` on `importData`.
+- The fields of `action` entries, which carry the action's payload, in fields like `text` on `importData`. In a log exported before the format was compacted, and in a payload the field cap cut, they sit inside a `payload` string where the text appears escaped (`\"value\":\"...\"`).
 - Each line of `--- state.thoughts`.
 
 Leave thought ids, ranks, sequence numbers, timestamps, action types, and the `---` device header as they are. None of them is the reporter's writing, and they are what lets the excerpt be matched to the log.

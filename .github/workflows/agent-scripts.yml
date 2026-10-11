@@ -36,6 +36,7 @@ on:
       - scripts/bridge-attach.test.ts
       - scripts/debugLogCompare.ts
       - scripts/debugLogCompare.test.ts
+      - src/util/debugLogCompact.ts
       - scripts/debug-log-capture.ts
       - scripts/debug-log-diff.ts
       - scripts/ci/task-comment.cjs
@@ -70,6 +71,7 @@ on:
       - scripts/bridge-attach.test.ts
       - scripts/debugLogCompare.ts
       - scripts/debugLogCompare.test.ts
+      - src/util/debugLogCompact.ts
       - scripts/debug-log-capture.ts
       - scripts/debug-log-diff.ts
       - scripts/ci/task-comment.cjs

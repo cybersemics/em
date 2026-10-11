@@ -227,7 +227,8 @@ describe('format', () => {
     // jsdom reports no standalone display mode, no orientation and no visual viewport
     expect(lines[4]).toMatch(/^--- display: browser, .+, dpr \d+(\.\d+)?, scale [\d.]+, safe-area-bottom \d+$/)
     expect(lines[5]).toBe(`--- url: ${window.location.href}`)
-    expect(lines[6]).toContain('#0 input')
+    expect(lines[6]).toMatch(/^--- date: \d{4}-\d{2}-\d{2}$/)
+    expect(lines[7]).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3} \+\d+ms #0 input$/)
   })
 
   it('names the tauri shell, which Capacitor reports as web', () => {
@@ -260,7 +261,7 @@ describe('format', () => {
     expect(lines[3]).toBe(`--- commit: ${__COMMIT_HASH__}`)
     expect(lines[5]).toBe(`--- url: ${window.location.href}`)
     expect(lines[6]).toBe('--- evicted: 101 earlier entries')
-    expect(lines[7]).toContain('#101 n')
+    expect(lines[8]).toContain('#101 n')
   })
 
   it('reports how many entries the rolling buffer has evicted', () => {
@@ -269,7 +270,7 @@ describe('format', () => {
     Array.from({ length: 5003 }, (_, i) => debugLog.log('x', { i }))
     const lines = debugLog.format().split('\n')
     expect(lines[6]).toBe('--- evicted: 3 earlier entries')
-    expect(lines[7]).toContain('#3 x')
+    expect(lines[8]).toContain('#3 x')
   })
 
   it('omits the eviction line while the buffer holds the whole session', () => {
@@ -277,6 +278,63 @@ describe('format', () => {
     debugLog.clear()
     debugLog.log('x')
     expect(debugLog.format()).not.toContain('--- evicted')
+  })
+
+  it('puts the actionType in the envelope and spreads the parsed payload into the fields', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('action', { actionType: 'indent', payload: JSON.stringify({ at: null, value: 'a' }) })
+    expect(debugLog.format()).toMatch(/ #0 action indent \{"at":null,"value":"a"\}$/m)
+  })
+
+  it('keeps a payload that does not parse, such as one cut by the field cap, as a string', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('action', { actionType: 'importText', payload: JSON.stringify({ text: 'x'.repeat(3000) }) })
+    expect(debugLog.format()).toMatch(/ #0 action importText \{"payload":"\{\\"text\\":\\"x+…\(\+\d+\)"\}$/m)
+  })
+
+  it('drops isComposing:false, a value repeating a reserved id, and the commandMetadata label and source', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const home = '00000000000000000000000000000001'
+    debugLog.log('keydown', { key: 'a', isComposing: false })
+    debugLog.log('move', { id: home, value: home, oldRank: 0, newRank: 1 })
+    debugLog.log('action', {
+      actionType: 'newThought',
+      payload: JSON.stringify({
+        commandMetadata: { source: 'command', commandId: 'newThought', label: 'New Thought' },
+      }),
+    })
+    const text = debugLog.format()
+    expect(text).toMatch(/ #0 keydown \{"key":"a"\}$/m)
+    expect(text).toMatch(new RegExp(` #1 move \\{"id":"${home}","oldRank":0,"newRank":1\\}$`, 'm'))
+    expect(text).toMatch(/ #2 action newThought \{"commandMetadata":\{"commandId":"newThought"\}\}$/m)
+  })
+
+  it('shortens thought ids to ten characters and keeps reserved ids whole', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    debugLog.log('setCursor', { path: ['00000000000000000000000000000001', '97e810f0c6ba2f31736f6dac650e0cfd'] })
+    expect(debugLog.format()).toMatch(/ #0 setCursor \{"path":\["00000000000000000000000000000001","97e810f0c6"\]\}$/m)
+  })
+
+  it('writes a date line before the first entry and wherever the date changes', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    const now = vi.spyOn(Date, 'now')
+    now.mockReturnValue(Date.parse('2026-10-10T23:59:59.000Z'))
+    debugLog.log('a')
+    debugLog.log('b')
+    now.mockReturnValue(Date.parse('2026-10-11T00:00:01.000Z'))
+    debugLog.log('c')
+    now.mockRestore()
+    const lines = debugLog.format().split('\n').slice(6)
+    expect(lines[0]).toBe('--- date: 2026-10-10')
+    expect(lines[1]).toMatch(/^23:59:59\.000 \+\d+ms #0 a$/)
+    expect(lines[2]).toMatch(/^23:59:59\.000 \+\d+ms #1 b$/)
+    expect(lines[3]).toBe('--- date: 2026-10-11')
+    expect(lines[4]).toMatch(/^00:00:01\.000 \+\d+ms #2 c$/)
   })
 
   it('renders a one-line-per-entry text block', () => {
@@ -504,8 +562,29 @@ describe('console mirror', () => {
     debugLog.setEnabled(true)
     debugLog.setConsole(true)
     debugLog.log('test', { a: 1 })
-    expect(info).toHaveBeenCalledTimes(1)
-    expect(info.mock.calls[0][0]).toMatch(/^debugLog \[.*\] \+\d+ms #\d+ test \{"a":1\}$/)
+    expect(info).toHaveBeenCalledTimes(2)
+    expect(info.mock.calls[0][0]).toMatch(/^debugLog --- date: \d{4}-\d{2}-\d{2}$/)
+    expect(info.mock.calls[1][0]).toMatch(/^debugLog \d{2}:\d{2}:\d{2}\.\d{3} \+\d+ms #\d+ test \{"a":1\}$/)
+  })
+
+  it('writes the date line again only when the date changes', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('a')
+    debugLog.log('b')
+    expect(info.mock.calls.filter(([line]) => (line as string).includes('--- date:'))).toHaveLength(1)
+  })
+
+  it('writes the date line again when the mirror is turned back on', () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    debugLog.setEnabled(true)
+    debugLog.setConsole(true)
+    debugLog.log('a')
+    debugLog.setConsole(false)
+    debugLog.setConsole(true)
+    debugLog.log('b')
+    expect(info.mock.calls.filter(([line]) => (line as string).includes('--- date:'))).toHaveLength(2)
   })
 
   it('mirrors the same line that format() writes, so either source parses the same', () => {

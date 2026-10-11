@@ -8,16 +8,18 @@ Implementation: [`src/util/debugLog.ts`](../src/util/debugLog.ts). The bulk of i
 
 A bounded buffer of 5000 entries, sharded across ten rotating `localStorage` keys so appending one entry rewrites 500 entries rather than all of them. Writes are **synchronous**, which is the whole point: an entry survives the freeze that happens on the next line. Nothing is ever transmitted — the log leaves the device only when a person exports it.
 
-Every entry shares an envelope and adds its own fields:
+Every entry shares an envelope and adds its own fields. As `format()` exports it:
 
 ```
-[2026-09-12T13:03:39.239Z] +2ms #24 action {"actionType":"indent","payload":"{}"}
- └ wall clock          └ ms since  └ seq  └ type  └ event-specific fields
-                         the last
-                         entry
+--- date: 2026-10-11
+09:12:10.849 +6ms #34 action editThought {"oldValue":"","newValue":"S","path":["53484e1cb3"],"cursorOffset":1}
 ```
+
+Left to right: the UTC time of day, `dt` (milliseconds since the previous entry), `seq`, the type, the actionType (on `action` entries only), and the event-specific fields.
 
 `seq` is monotonic, so a gap means entries were dropped and a counter climbing while `dt` collapses toward zero means a runaway loop.
+
+The export is read only by agents, so it is shaped for tokens rather than for a person. Each entry carries the UTC time of day, under a `--- date` line written before the first entry and wherever the date changes. Thought ids are cut to their first 10 characters everywhere in the export, the `--- state` line and `--- state.thoughts` dump included — at that length two of the roughly 2000 ids a full buffer holds share a prefix about once in a million logs — while reserved ids such as `HOME_TOKEN` stay whole. An action's payload is parsed back out of the string it was logged as and spread into the fields. Fields that carry nothing are dropped: `isComposing: false`, a `value` that only repeats a reserved id, and the `label` and `source` of `commandMetadata`, which repeat its `commandId`. On a full buffer this is about 30% smaller than the uncompacted form. All of it happens on export, in [`debugLogCompact`](../src/util/debugLogCompact.ts): the stored buffer keeps payloads stringified so the 2000-character field cap bounds them in `localStorage`, and a payload that cap has cut stays a `payload` string.
 
 A `format()` dump wraps the entries in three things. Above them, a `--- device` / `--- userAgent` / `--- version` / `--- commit` / `--- display` / `--- url` header, rendered at format time so it survives however much the rolling buffer has evicted. `--- display` names whether em is an installed PWA or a browser tab, the orientation, device pixel ratio, pinch-zoom scale and bottom safe-area inset. `--- url` is the page the log was copied from, which tells production, a preview deployment and localhost apart. When entries before the first retained one are gone — the buffer wrapped, or a storage quota error dropped older chunks — a `--- evicted: N earlier entries` line follows, since `seq` counts from the last `clear()`. Below them, `--- lastFrameAt`, the last animation frame the page painted; `--- state`, the view the log ended on — the cursor path, caret offset, whether the keyboard was open and the note focused, and how many paths were expanded, how many multicursors were set and how deep the undo and redo stacks were; and `--- state.thoughts`, every thought by id, value, rank and parent. The view is there because the entries can only reconstruct it from `setCursor` and its kin, which a long session evicts first. The frame marker is what separates a freeze *in* the app from one below it — if the marker keeps advancing past the last entry, the page was still painting and the hang is at the native layer.
 
@@ -37,7 +39,7 @@ The log carries thought text verbatim, in value fields, typed keystrokes, action
 
 ### Streaming to the console
 
-`debugLog.setConsole(true)` mirrors every entry to `console.info` as it is appended, behind a `debugLog` prefix, in the same line format `format()` writes. The choice is recorded in `localStorage`, so it survives the page reloads a reproduction performs — though not `localStorage.clear()`, which takes it along with everything else.
+`debugLog.setConsole(true)` mirrors every entry to `console.info` as it is appended, behind a `debugLog` prefix, in the same line format `format()` writes, `--- date` lines included. The choice is recorded in `localStorage`, so it survives the page reloads a reproduction performs — though not `localStorage.clear()`, which takes it along with everything else.
 
 It is **off by default on every host**, including the ones where logging itself auto-enables. The log captures every `selectionchange` and every input event, so mirroring it buries the console for anyone not specifically reading it.
 
@@ -61,21 +63,22 @@ The reason to capture a log while reproducing a bug is to hold it against the re
 `diff` cannot do this. Two runs of the *same* steps share almost no bytes, because every entry carries a fresh sequence number, timestamp and delta, and every thought carries a random 128-bit id:
 
 ```
-#16 action {"actionType":"newThought","payload":"{\"at\":null,\"value\":\"\"}"}
-#20 action {"actionType":"editThought","payload":"{…\"path\":[\"97e810f0…\"]…}"}
+#16 action newThought {"at":null,"value":""}
+#20 action editThought {…"path":["97e810f0c6"]…}
 
-#56 action {"actionType":"newThought","payload":"{\"at\":null,\"value\":\"\"}"}
-#60 action {"actionType":"editThought","payload":"{…\"path\":[\"94701f3d…\"]…}"}
+#56 action newThought {"at":null,"value":""}
+#60 action editThought {…"path":["94701f3dbf"]…}
 ```
 
 Those are the same two keystrokes. Measured on two live captures of one four-step interaction: `diff` reports **79 of 84 lines changed**.
 
 [`scripts/debug-log-diff.ts`](../scripts/debug-log-diff.ts) compares behaviour instead. Each entry is reduced to a **signature** — its type plus its fields with the volatile parts neutralized — and the two signature streams are aligned by longest common subsequence:
 
+- Logs exported before the format was compacted — the ones already attached to issues — are read too, and each of their entries is put through the same compaction first, so a reporter's old log compares equal to a fresh capture of the same steps.
 - `seq`, `t` and `dt` are dropped.
 - Thought ids are numbered by **first appearance within their own log**, so the nth distinct thought either log creates gets the same placeholder in both. That is what makes two runs of the same steps compare equal.
 - Reserved ids ([`HOME_TOKEN`](../src/constants.ts) and the rest, all carrying 24+ leading zeros) are left alone. They mean the same thing on every device, so canonicalizing them would discard the only ids that are directly comparable.
-- Per-device nonces and wall-clock stamps — `clientId`, `updatedBy`, `lastUpdated` — are masked, in the plain form and in the escaped form they take inside a stringified payload.
+- Per-device nonces and wall-clock stamps — `clientId`, `updatedBy`, `lastUpdated` — are masked, in the plain form and in the escaped form they take inside a payload that stayed a string.
 - The environment is reported side by side rather than compared, since it differs between any two devices by construction. It is read from the `---` header, falling back to the `session` entry for logs written before that header existed — the header is preferred because the session entry is an ordinary entry, which the rolling buffer evicts in exactly the long sessions whose logs are most worth comparing.
 - `frameGap` entries are dropped by default: they measure how loaded the device was, so a reporter's phone produces many and a headless browser almost none. `--include frameGap` keeps them, which is what a freeze or jank report wants.
 
