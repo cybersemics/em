@@ -12,8 +12,10 @@ const letterCase = {
   svg: Icon,
   canExecute: state => isDocumentEditable() && (!!state.cursor || hasMulticursor(state)),
   multicursor: false,
-  exec: (dispatch, _) => {
-    dispatch(toggleDropdown({ dropDownType: 'letterCase' }))
+  exec: (dispatch, _, __, { type }) => {
+    dispatch(
+      toggleDropdown({ dropDownType: 'letterCase', surface: type === 'formattingBar' ? 'formattingBar' : 'toolbar' }),
+    )
   },
   isActive: state => !!state.cursor || hasMulticursor(state),
   isDropdownOpen: state => !!(state.activeDropdown?.picker === 'letterCase'),

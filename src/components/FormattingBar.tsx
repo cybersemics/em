@@ -16,17 +16,19 @@ import haptics from '../util/haptics'
 import head from '../util/head'
 import FormattingBarButton from './FormattingBarButton'
 import FormattingBarHeadingPicker from './FormattingBarHeadingPicker'
+import FormattingBarLetterCasePicker from './FormattingBarLetterCasePicker'
 import ProgressiveBlur from './ProgressiveBlur'
 import Heading1Icon from './icons/Heading1Icon'
 import Heading2Icon from './icons/Heading2Icon'
 import Heading3Icon from './icons/Heading3Icon'
 import Heading4Icon from './icons/Heading4Icon'
 import Heading5Icon from './icons/Heading5Icon'
+import LetterCaseIcon from './icons/LetterCaseIcon'
 
 const glowImages = ['/img/formatting-bar/glow.png', '/img/formatting-bar/popover-overlay.avif']
 
 /** Commands exposed by this layer of the mobile bar. */
-const commandIds: CommandId[] = ['bold', 'italic', 'underline', 'strikethrough', 'toggleHeadingPicker']
+const commandIds: CommandId[] = ['bold', 'italic', 'underline', 'strikethrough', 'letterCase', 'toggleHeadingPicker']
 
 /** Closes the current formatting-bar picker without affecting another surface. */
 const closeFormattingBarPicker = (): Thunk => (dispatch, getState) => {
@@ -189,11 +191,13 @@ const FormattingBarControls = ({
   isOpen,
   iconSize,
   onIconSize,
+  letterCaseButtonRef,
   headingButtonRef,
 }: {
   isOpen: boolean
   iconSize: number
   onIconSize: (size: number) => void
+  letterCaseButtonRef: RefObject<HTMLButtonElement | null>
   headingButtonRef: RefObject<HTMLButtonElement | null>
 }) => {
   const dispatch = useDispatch()
@@ -257,8 +261,12 @@ const FormattingBarControls = ({
             key={id}
             commandId={id}
             iconSize={iconSize}
-            icon={id === 'toggleHeadingPicker' ? FormattingBarHeadingIcon : undefined}
-            buttonRef={id === 'toggleHeadingPicker' ? headingButtonRef : undefined}
+            icon={
+              id === 'letterCase' ? LetterCaseIcon : id === 'toggleHeadingPicker' ? FormattingBarHeadingIcon : undefined
+            }
+            buttonRef={
+              id === 'letterCase' ? letterCaseButtonRef : id === 'toggleHeadingPicker' ? headingButtonRef : undefined
+            }
           />
         ))}
         <button
@@ -316,6 +324,7 @@ const FormattingBar = () => {
   const position = usePositionFixed({ fromBottom: true, height: 0 })
   const dispatch = useDispatch()
   const [iconSize, setIconSize] = useState(20)
+  const letterCaseButtonRef = useRef<HTMLButtonElement>(null)
   const headingButtonRef = useRef<HTMLButtonElement>(null)
   useEffect(() => {
     if (!keyboardOpen) dispatch(closeFormattingBarPicker())
@@ -361,11 +370,20 @@ const FormattingBar = () => {
             isOpen={isOpen}
             iconSize={iconSize}
             onIconSize={setIconSize}
+            letterCaseButtonRef={letterCaseButtonRef}
             headingButtonRef={headingButtonRef}
           />
         </div>
         {/* No stacking context here: picker backdrops sit below the bar glow, and content above it. */}
         <div className={css({ position: 'absolute', bottom: '100%', width: '100%', height: 0 })}>
+          <FormattingBarLetterCasePicker
+            anchorRef={letterCaseButtonRef}
+            iconSize={iconSize}
+            show={activeDropdown?.surface === 'formattingBar' && activeDropdown.picker === 'letterCase'}
+            onClose={() =>
+              dispatch(toggleDropdown({ dropDownType: 'letterCase', surface: 'formattingBar', value: false }))
+            }
+          />
           <FormattingBarHeadingPicker
             anchorRef={headingButtonRef}
             iconSize={iconSize}
