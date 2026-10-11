@@ -183,7 +183,7 @@ const editThought = (
     noteParentThought && getSortPreference(state, noteParentThought.parentId).type === 'Note'
       ? {
           ...noteParentThought,
-          rank: getSortedRank(state, noteParentThought.parentId, newValue),
+          rank: getSortedRank(state, noteParentThought.parentId, newValue, { staleId: noteParentThought.id }),
           lastUpdated: timestamp(),
           updatedBy: clientId,
         }
