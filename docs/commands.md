@@ -113,6 +113,8 @@ A gesture can only *start* inside the gesture zone ([`isInGestureZone`](../src/u
 
 A gesture is also always a **single finger**. `MultiGesture` latches as soon as a second touch is down and ignores movement until every finger is up again, because iOS reports its own multi-finger system gestures to the page as ordinary touch events: tracking the first finger of a three-finger undo swipe would commit it as `cursorForward`, and the redo swipe as `cursorBack`. Both are undoable, so each would clear the redo stack and leave the redo half of the gesture with nothing to restore ([issue #5575](https://github.com/cybersemics/em/issues/5575)).
 
+`MultiGesture`'s `reset()` runs when a gesture is released, which can come before the `window` `touchend` listener runs. State that `touchend` reads, such as the Debug Log's `moves` count, is therefore reset on the first finger's `touchstart` rather than in `reset()`.
+
 `handleGestureSegment` is called incrementally as the user swipes; it triggers a haptic for each new segment and, after `COMMAND_PALETTE_TIMEOUT`, opens the gesture menu so the user can see all commands reachable from the current sequence.
 
 `handleGestureEnd` runs when the gesture finishes. It looks up the final sequence in `commandGestureIndex`, with two special cases:

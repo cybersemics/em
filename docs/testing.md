@@ -294,6 +294,8 @@ The project has multiple levels of automated testing, from single function unit 
 
 **Use the lowest level that is sufficient for your test case.** If your test case does not require a DOM, use a unit test. If it requires a DOM but is not browser or device-specific, use a React Testing Library (RTL) test. Higher-level tests may provide a more realistic testing environment, but they are slower and, in the case of WebdriverIO on BrowserStack, cost per minute of usage.
 
+**Do not suggest manual testing as an alternative to an automated test.** Tests run against every pull request, so when the question is how to automate something — which level, which device cloud, which capability — answer with automated options only, even when none of them is good yet.
+
 **Cover each behavior at exactly one level.** Once a unit, store, or JSDOM test proves a behavior, do not add a Puppeteer or iOS test that proves the same thing again. A higher-level test is justified only by a distinct risk that the lower-level test cannot cover, such as real browser or device behavior, input mapping, or a visual regression. Redundant integration tests add no coverage and lengthen every future test run.
 
 Mock an external boundary only when that boundary is not the subject of the test. Do not mock the function or effect being proved, reimplement a rendered component inside its test, or assert only that a mock behaved as configured. When JSDOM cannot exercise the relevant browser behavior—layout, scrolling, selection, native input, and similar APIs—move the test to Puppeteer instead of replacing the behavior with a mock.
@@ -501,6 +503,8 @@ appium
 Run Appium in addition to `yarn start`, then run `yarn test:ios:local`. The local configuration installs Vite's generated development certificate in the booted simulator, so run `yarn start` at least once before starting the suite.
 
 WebdriverIO tests provide automated test coverage of actual iOS and Android devices in the cloud with BrowserStack. This allows us to cover some of the trickiest platform-specific behaviors, such as browser selection and autoscroll. The same blackbox rules apply as for puppeteer tests.
+
+Shared BrowserStack devices have Auto-Correction turned off, so no WebdriverIO test sees iOS autocorrect or its suggestions. [`undo.ts`](../src/e2e/iOS/__tests__/undo.ts) stands in for a correction by typing the replacement over a selection, which WebKit records as the same single native undo step. Behavior that depends on the suggestion itself, such as the gesture dead zone near the caret ([#4222](https://github.com/cybersemics/em/issues/4222)), needs a physical device.
 
 `wdio` executes test suites with native `WebDriver` support via `@wdio/mocha-framework` and `@wdio/browserstack-service`, which is responsible for session and credential management. `wdio` also provides lifecycle hooks that are helpful for initiating a session efficiently.
 
@@ -1277,6 +1281,8 @@ await vi.runAllTimersAsync()
 https://github.com/cybersemics/em/pull/2741
 
 In a rendered JSDOM test, wrap timer advancement that causes React updates in `act`.
+
+Work deferred to the next animation frame needs only `requestAnimationFrame` faked: `vi.useFakeTimers({ toFake: ['requestAnimationFrame'] })`, then `vi.advanceTimersToNextFrame()` between asserting that the work has not happened yet and asserting that it has, as the `touchCaret` tests in [`MultiGesture.ts`](../src/components/__tests__/MultiGesture.ts) do.
 
 The same flush settles an asynchronous command. `generateThought`, `generateEmoji`, `defineTerm`, and `organizeThought` each await a network request and, under multicursor, hold an undo bracket open across the selection. With `fetch` mocked, that whole run is timer- and microtask-bound, so one `vi.runAllTimersAsync()` after `executeCommandWithMulticursor` brings the store to its settled state, undo bracket closed included:
 
