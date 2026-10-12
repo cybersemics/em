@@ -4,13 +4,13 @@ import { ICON_SCALING_FACTOR } from '../../constants'
 import iconClassName from '../../util/iconClassName'
 
 /** Letter-case icon. */
-const LetterCaseIcon = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+const LetterCaseIcon = ({ fill, size = 20, style = {}, className }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR // Ensure sizing follows scaling factor
   const strokeColor = style.fill || fill || token('colors.fg') // Calculate stroke color
 
   return (
     <svg
-      className={iconClassName(cssRaw)} // Combine class names
+      className={iconClassName(className)} // Combine class names
       xmlns='http://www.w3.org/2000/svg'
       viewBox='0 0 24 24' // Keep the original viewBox
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }} // Inline styles

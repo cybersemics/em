@@ -1,6 +1,5 @@
 import { FC } from 'react'
 import { token } from '../../../styled-system/tokens'
-import { SystemStyleObject } from '../../../styled-system/types'
 import Index from '../../@types/IndexType'
 import iconClassName from '../../util/iconClassName'
 
@@ -19,15 +18,14 @@ const GestureHintIcon: FC<{
   size: number
   style?: Index<string>
   className?: string
-  cssRaw?: SystemStyleObject
-}> = ({ fill, size = 20, style, cssRaw }) => {
+}> = ({ fill, size = 20, style, className }) => {
   return (
     <svg
       version='1.1'
       x='0px'
       y='0px'
       viewBox='50 -50 575 575'
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

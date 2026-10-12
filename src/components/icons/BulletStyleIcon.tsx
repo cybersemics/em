@@ -4,7 +4,7 @@ import IconType from '../../@types/IconType'
 import iconClassName from '../../util/iconClassName'
 
 /** A bulleted-list icon — shown by the Bullet Picker toolbar button. Three rows, each with a filled bullet and a line of text. */
-const BulletStyleIcon: FC<IconType> = ({ size = 18, fill, style = {}, cssRaw }) => {
+const BulletStyleIcon: FC<IconType> = ({ size = 18, fill, style = {}, className }) => {
   const color = style.fill || fill || token('colors.fg')
 
   return (
@@ -15,7 +15,7 @@ const BulletStyleIcon: FC<IconType> = ({ size = 18, fill, style = {}, cssRaw }) 
       viewBox='0 0 24 24'
       fill='none'
       style={style}
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
     >
       <rect width='24' height='24' fill='none' />
       <circle cx='4.5' cy='6' r='1.5' fill={color} />

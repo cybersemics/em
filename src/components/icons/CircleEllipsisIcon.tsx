@@ -4,7 +4,7 @@ import IconType from '../../@types/IconType'
 import iconClassName from '../../util/iconClassName'
 
 /** Circle ellipsis icon: three horizontal dots inside a rounded square background. */
-const CircleEllipsisIcon: FC<IconType> = ({ size = 20, fill, cssRaw }) => {
+const CircleEllipsisIcon: FC<IconType> = ({ size = 20, fill, className }) => {
   const fillColor = fill || token('colors.fg')
 
   return (
@@ -14,7 +14,7 @@ const CircleEllipsisIcon: FC<IconType> = ({ size = 20, fill, cssRaw }) => {
       height={size}
       viewBox='0 0 20 20'
       fill='none'
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
     >
       <rect width='20' height='20' rx='10' fill={fillColor} fillOpacity='0.08' />
       <g opacity='0.5'>

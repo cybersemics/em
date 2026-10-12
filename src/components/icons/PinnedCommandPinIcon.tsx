@@ -4,7 +4,7 @@ import IconType from '../../@types/IconType'
 import iconClassName from '../../util/iconClassName'
 
 /** Document icon for the Pin Command row. */
-const PinnedCommandPinIcon = ({ cssRaw, fill, size = 24, style }: IconType) => {
+const PinnedCommandPinIcon = ({ className, fill, size = 24, style }: IconType) => {
   const maskId = useId()
   const strokeColor = fill || token('colors.fg')
 
@@ -15,7 +15,7 @@ const PinnedCommandPinIcon = ({ cssRaw, fill, size = 24, style }: IconType) => {
       height={size}
       viewBox='0 0 24 24'
       fill='none'
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
       style={style}
       aria-hidden='true'
     >

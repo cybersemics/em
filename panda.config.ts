@@ -446,8 +446,7 @@ export default defineConfig({
   include: ['./src/**/*.{js,jsx,ts,tsx}'],
 
   // Files to exclude
-  // iconClassName merges runtime style overrides, which PandaCSS cannot extract. Excluding it keeps that one call from warning on every dev server start. See src/util/iconClassName.ts.
-  exclude: ['./src/util/iconClassName.ts'],
+  exclude: [],
 
   // Disable style props on JSX components
   jsxStyleProps: 'none',

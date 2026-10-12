@@ -19,7 +19,7 @@ const AnimatedIcon = ({
   fill,
   size = 18,
   style = {},
-  cssRaw,
+  className,
   animated,
   animationData,
   children,
@@ -32,7 +32,7 @@ const AnimatedIcon = ({
 
   return (
     <div
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
       style={{
         ...style,
         width: `${newSize}px`,

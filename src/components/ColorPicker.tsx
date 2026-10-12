@@ -95,7 +95,7 @@ const ColorSwatch: FC<{
         </span>
       ) : (
         <TextColorIcon
-          cssRaw={css.raw({
+          className={css({
             // TODO: Why does border crash the browser?
             // Even hardcoding 'solid 1px white' crashes the browser.
             // See: https://github.com/cybersemics/em/issues/2508

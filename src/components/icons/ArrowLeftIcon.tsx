@@ -3,7 +3,7 @@ import IconType from '../../@types/IconType'
 import iconClassName from '../../util/iconClassName'
 
 /** Arrow-left icon used by the Command Universe Back button and the Navigate Back command. */
-const ArrowLeftIcon = ({ size = 24, fill, cssRaw }: IconType) => {
+const ArrowLeftIcon = ({ size = 24, fill, className }: IconType) => {
   const strokeColor = fill || token('colors.fg')
 
   return (
@@ -13,7 +13,7 @@ const ArrowLeftIcon = ({ size = 24, fill, cssRaw }: IconType) => {
       height={size}
       viewBox='0 0 24 24'
       fill='none'
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
     >
       <path d='M12 19L5 12M5 12L12 5M5 12H19' stroke={strokeColor} strokeLinecap='round' strokeLinejoin='round' />
     </svg>

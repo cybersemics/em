@@ -9,7 +9,7 @@ interface AToZIconProps extends IconType {
 }
 
 /** A-to-Z icon — shown by the Command Universe group/sort button when alphabetical sort is selected. */
-const AToZIcon: FC<AToZIconProps> = ({ size = 24, fill, cssRaw, strokeWidth = 0.25 }) => {
+const AToZIcon: FC<AToZIconProps> = ({ size = 24, fill, className, strokeWidth = 0.25 }) => {
   const color = fill || token('colors.fg')
 
   return (
@@ -19,7 +19,7 @@ const AToZIcon: FC<AToZIconProps> = ({ size = 24, fill, cssRaw, strokeWidth = 0.
       height={size}
       viewBox='0 0 24 24'
       fill='none'
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
     >
       <g clipPath='url(#a-to-z-clip)'>
         <path

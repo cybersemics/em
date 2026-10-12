@@ -4,13 +4,13 @@ import Icon from '../../@types/IconType'
 import iconClassName from '../../util/iconClassName'
 
 /** Tutorials icon that shows a teacher at a board. */
-const TutorialsIcon: FC<Icon> = ({ cssRaw, fill, style, size = 20 }) => {
+const TutorialsIcon: FC<Icon> = ({ className, fill, style, size = 20 }) => {
   return (
     <svg
       x='0'
       y='0'
       viewBox='90 100 600 600'
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

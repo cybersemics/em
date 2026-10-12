@@ -2,10 +2,10 @@ import IconType from '../../@types/IconType'
 import iconClassName from '../../util/iconClassName'
 
 /** Light bulb icon. */
-const LightBulbIcon = ({ cssRaw, size = 16, ...props }: Omit<IconType, 'animationComplete' | 'animated'>) => {
+const LightBulbIcon = ({ className, size = 16, ...props }: Omit<IconType, 'animationComplete' | 'animated'>) => {
   return (
     <svg
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
       width={size}
       height={size}
       viewBox='0 0 16 16'

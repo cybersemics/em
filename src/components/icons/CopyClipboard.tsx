@@ -4,13 +4,13 @@ import { ICON_SCALING_FACTOR } from '../../constants'
 import iconClassName from '../../util/iconClassName'
 
 /** Copy Clipboard icon. */
-const CopyClipboard = ({ fill, size = 20, style = {}, cssRaw }: IconType) => {
+const CopyClipboard = ({ fill, size = 20, style = {}, className }: IconType) => {
   const newSize = size * ICON_SCALING_FACTOR
   const fillColor = style.fill || fill || token('colors.fg')
 
   return (
     <svg
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
       xmlns='http://www.w3.org/2000/svg'
       viewBox='0 0 15 18'
       style={{ ...style, width: `${newSize}px`, height: `${newSize}px` }}

@@ -3,10 +3,10 @@ import IconType from '../../@types/IconType'
 import iconClassName from '../../util/iconClassName'
 
 /** Icon for the deleteEmptyThoughtOrOutdent command. */
-const DeleteEmptyThoughtIcon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType) => (
+const DeleteEmptyThoughtIcon = ({ fill = token('colors.bg'), size = 20, style, className }: IconType) => (
   <svg
     version='1.1'
-    className={iconClassName(cssRaw)}
+    className={iconClassName(className)}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}

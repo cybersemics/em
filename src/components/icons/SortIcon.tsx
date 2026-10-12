@@ -4,7 +4,7 @@ import IconType from '../../@types/IconType'
 import iconClassName from '../../util/iconClassName'
 
 /** Sort icon, used in the search input. */
-const SortIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
+const SortIcon: FC<IconType> = ({ size = 48, fill, className }) => {
   const fillColor = fill || token('colors.fg')
 
   return (
@@ -14,7 +14,7 @@ const SortIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
       width={size}
       height={size}
       fill={fillColor}
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
     >
       <path
         xmlns='http://www.w3.org/2000/svg'

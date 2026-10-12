@@ -9,13 +9,13 @@ import iconClassName from '../../util/iconClassName'
 // https://thenounproject.com/icon/inspect-element-1018637/
 // https://thenounproject.com/icon/search-486819/
 // https://thenounproject.com/icon/search-document-486836/
-const MetaIcon: FC<Icon> = ({ cssRaw, fill, style, size = 20 }) => {
+const MetaIcon: FC<Icon> = ({ className, fill, style, size = 20 }) => {
   return (
     <svg
       x='0'
       y='0'
       viewBox='100 60 550 550'
-      className={iconClassName(cssRaw)}
+      className={iconClassName(className)}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}
