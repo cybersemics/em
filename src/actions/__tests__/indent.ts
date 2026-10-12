@@ -85,3 +85,17 @@ it('indent context should do nothing', () => {
     - m
       - y`)
 })
+
+it('names formatted thoughts as visible text in the read-only alert', () => {
+  const text = `
+  - <b>parent</b>
+    - =readonly
+    - a
+    - <i>&lt;b&gt;</i>`
+
+  const steps = [importText({ text }), setCursor(['<b>parent</b>', '<i>&lt;b&gt;</i>']), indent]
+
+  const stateNew = reducerFlow(steps)(initialState())
+
+  expect(stateNew.alert?.value).toBe('"parent" is read-only so "<b>" may not be indented.')
+})

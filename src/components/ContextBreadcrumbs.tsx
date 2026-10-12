@@ -1,4 +1,4 @@
-import { unescape as decodeCharacterEntities, isEqual } from 'lodash'
+import { isEqual } from 'lodash'
 import React, { createRef, useMemo } from 'react'
 import { shallowEqual, useSelector } from 'react-redux'
 import { TransitionGroup } from 'react-transition-group'
@@ -19,7 +19,7 @@ import fastClick from '../util/fastClick'
 import head from '../util/head'
 import isRoot from '../util/isRoot'
 import parentOf from '../util/parentOf'
-import stripTags from '../util/stripTags'
+import toVisibleText from '../util/toVisibleText'
 import usePlaceholder from './Editable/usePlaceholder'
 import FadeTransition from './FadeTransition'
 import HomeLink from './HomeLink'
@@ -63,7 +63,7 @@ const useEllipsizedThoughts = (
 
   // if charLimit is exceeded then replace the remaining characters with an ellipsis
   const charLimitedThoughts: OverflowPath = path.map((id, i) => {
-    const value = thoughtValuesLive[i] ? stripTags(thoughtValuesLive[i]) : null
+    const value = thoughtValuesLive[i] ? toVisibleText(thoughtValuesLive[i]) : null
 
     return {
       // It is possible that the thought is no longer in state, in which case value will be null.
@@ -74,8 +74,7 @@ const useEllipsizedThoughts = (
       // add ellipsized label
       ...(!disabled && value != null
         ? {
-            // subtract 2 so that additional '...' is still within the char limit
-            label: value.length > charLimit! - 2 ? value.slice(0, charLimit! - 2) + '...' : value,
+            label: ellipsize(thoughtValuesLive[i]!, charLimit),
           }
         : {}),
     }
@@ -129,7 +128,7 @@ const BreadCrumb = React.memo(
           {showDivider ? <span style={delimiterStyle}> {showContexts ? '⇢' : '•'} </span> : null}
           {!isDeleting &&
             (staticText ? (
-              ellipsize(decodeCharacterEntities(value))
+              ellipsize(value)
             ) : label === HOME_TOKEN ? (
               <HomeLink color={token('colors.gray50')} size={16} className={css({ position: 'static' })} />
             ) : (
