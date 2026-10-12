@@ -63,10 +63,12 @@ const EndDragOnRelease: FC = () => {
       timer = window.setTimeout(endOrphanedDrag, RELEASE_GRACE)
     }
 
-    /** A single finger landing means every earlier finger has lifted, including one whose release never arrived. */
+    /** A single finger landing means every earlier finger has lifted, including one whose release never arrived. Nothing the new touch starts can be active yet, so anything still active is ended at once rather than after the grace. That matters when WebKit withholds a touch's events and flushes its touchend just before the next touchstart (#5660): the deferred end of that press is still pending, and would otherwise read a release whose time is unknown as a deliberate long press and release, selecting the thought and opening the Command Center. */
     const onTouchStart = (e: TouchEvent) => {
       fingersDown = e.touches.length
-      if (e.touches.length === 1) scheduleCheck()
+      if (e.touches.length !== 1) return
+      clearTimeout(timer)
+      endOrphanedDrag()
     }
 
     /** Checks once the last finger lifts. */

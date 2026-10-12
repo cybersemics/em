@@ -124,3 +124,31 @@ it('a long press is not ended while another finger is still down', async () => {
   expect(screen.queryByText(AlertText.DragAndDrop)).not.toBeNull()
   expect(isHighlighted(['One'])).toBe(true)
 })
+
+// On iOS 27 WebKit can withhold a touch's events after touchstart and flush its touchend just before the next touch
+// begins (#5660). A gesture drawn over a thought that way reaches the long press delay with nothing to say the finger
+// moved or lifted, and its release arrives seconds later, when the next touch lands anywhere.
+it('a long press whose release arrives only as the next touch begins does not select the thought', async () => {
+  await dispatch(importText({ text: '- One' }))
+  await act(vi.runOnlyPendingTimersAsync)
+  const bullet = getBulletByContext(['One'])
+
+  await touchStart(bullet)
+  await act(() => vi.advanceTimersByTimeAsync(TIMEOUT_LONG_PRESS_THOUGHT + 100))
+  expect(screen.queryByText(AlertText.DragAndDrop)).not.toBeNull()
+
+  // the withheld touchend and the next touchstart are dispatched back to back
+  await act(async () => {
+    fireEvent.touchEnd(bullet, { touches: [], changedTouches: [{ clientX: 0, clientY: 0 }] })
+    fireEvent.touchStart(document.body, {
+      touches: [{ clientX: 50, clientY: 50 }],
+      changedTouches: [{ clientX: 50, clientY: 50 }],
+    })
+  })
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+
+  expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
+  expect(isHighlighted(['One'])).toBe(false)
+  // selecting the thought would also open the Command Center
+  expect(hasMulticursor(store.getState())).toBe(false)
+})
