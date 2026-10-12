@@ -100,13 +100,13 @@ const useAutocrop = (spaceAbove: number): number => {
     () => {
       // scrollY is the position read during render, before this effect, so a scroll that happens in between is
       // overwritten. Logging it beside the target makes that visible.
-      debugLog.log('scroll', {
+      debugLog.log('scroll', () => ({
         source: 'autocrop',
         scrollY: Math.round(scrollY),
         autocrop,
         autocropLast: autocropLast.current,
         top: Math.round(scrollY + autocrop - autocropLast.current),
-      })
+      }))
       window.scrollTo({ top: scrollY + autocrop - autocropLast.current })
       autocropLast.current = autocrop
     },

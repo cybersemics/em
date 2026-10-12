@@ -31,7 +31,7 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
 
       // Record the keyboard as iOS reports it, beside the keyboardOpen actions that set Redux's isKeyboardOpen, so an
       // edit mode that disagrees with the keyboard on screen shows which side moved. Includes the ignored shows.
-      debugLog.log('keyboard', { event: 'willShow', rawHeight, ignored })
+      debugLog.log('keyboard', () => ({ event: 'willShow', rawHeight, ignored }))
       if (ignored) return
 
       // ...then subtract the safe-area-bottom inset to get the height above the safe-area baseline.
@@ -58,7 +58,7 @@ const iOSCapacitorHandler: VirtualKeyboardHandler = {
     })
 
     Keyboard.addListener('keyboardWillHide', () => {
-      debugLog.log('keyboard', { event: 'willHide' })
+      debugLog.log('keyboard', () => ({ event: 'willHide' }))
 
       // note: leave open: true until the keyboard has fully hidden
       virtualKeyboardStore.update({ open: true })

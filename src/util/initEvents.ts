@@ -436,7 +436,7 @@ const initEvents = (store: Store<State, any>) => {
     const serialized = JSON.stringify(geometry)
     if (reason === 'resize' && serialized === lastViewportLogged) return
     lastViewportLogged = serialized
-    debugLog.log('viewport', { reason, ...geometry })
+    debugLog.log('viewport', () => ({ reason, ...geometry }))
   }
 
   /** Logs the viewport geometry on resize. */
@@ -462,7 +462,7 @@ const initEvents = (store: Store<State, any>) => {
     passiveTimeoutStore.reset()
 
     // Log lifecycle transitions so that events can be correlated with the app being backgrounded or foregrounded, e.g. a false Command Center open right before an app switch. More direct than inferring suspension from gaps in the log timeline.
-    debugLog.log('lifecycle', { oldState, newState })
+    debugLog.log('lifecycle', () => ({ oldState, newState }))
 
     // Log the viewport geometry when the app resumes and again once it has had time to settle, so that a viewport left at the wrong size by the app switch shows up in the log.
     resumeSettleTimeoutStore.reset()

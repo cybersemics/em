@@ -25,6 +25,16 @@ A `format()` dump wraps the entries in three things. Above them, a `--- device` 
 
 Logging is **off** in production unless the user turns on **Debug Logging** in Settings. It auto-enables on localhost and `*.vercel.app`, excluding test environments (Vitest via `MODE`, Puppeteer via `navigator.webdriver`) and the native Capacitor and Tauri shells, which serve production builds from localhost-like origins. On an auto-enabled host the Settings checkbox switches a device-local opt-out instead of the synced setting, so a preview build can be aligned with production for performance testing without disabling logging on the user's other devices.
 
+## Adding an entry
+
+An entry's fields are passed as a function, `debugLog.log('touchstart', () => ({ x, y }))`, never as an object. Logging is off for almost every production user, and an object would be built on every call only to be thrown away; the function is called only while logging is on. TypeScript enforces the form. `log` calls the function synchronously, so it reads the same values an object would have, and inside its own `try`, so a field that throws (reading a node that has since been removed, say) drops that one entry rather than escaping into the code that logged it. An entry with no fields, `debugLog.log('x')`, needs no function.
+
+The function only defers what is written inside it. Three kinds of work still need an explicit `debugLog.isEnabled()` check around them:
+
+- **Work scheduled for later.** A field read on the next animation frame must check before calling `requestAnimationFrame`, or every user pays for the scheduled callback.
+- **Work that feeds an entry without being one of its fields.** `loggerMiddleware` captures the state before an action to diff it afterwards, and `logViewport` in [`initEvents`](../src/util/initEvents.ts) compares the geometry with the last entry to skip duplicates.
+- **A value computed before the call.** `const rect = range.getBoundingClientRect()` above `debugLog.log('x', () => ({ rect }))` runs whether or not logging is on. Compute it inside the function instead.
+
 ## Getting the log off a device
 
 | Who | How |

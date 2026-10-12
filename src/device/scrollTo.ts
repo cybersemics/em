@@ -17,7 +17,7 @@ const scrollTo = (target: 'top' | 'bottom' | number, behavior?: ScrollBehavior) 
 
   // Record the explicit scroll without reading any geometry; the viewport scrollStart and scrollEnd entries that
   // follow carry the scroll position before and after, and the command or action entry before it names the caller.
-  debugLog.log('scroll', { source: 'scrollTo', target, top, behavior })
+  debugLog.log('scroll', () => ({ source: 'scrollTo', target, top, behavior }))
 
   window.scrollTo({
     top,

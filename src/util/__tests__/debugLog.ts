@@ -83,13 +83,31 @@ describe('reset', () => {
 
 describe('enabled gate', () => {
   it('log is a no-op when disabled', () => {
-    debugLog.log('test', { a: 1 })
+    debugLog.log('test', () => ({ a: 1 }))
     expect(debugLog.read()).toEqual([])
+  })
+
+  it('does not compute the fields when disabled', () => {
+    const fields = vi.fn(() => ({ a: 1 }))
+    debugLog.log('test', fields)
+    expect(fields).not.toHaveBeenCalled()
+  })
+
+  it('drops only the entry whose fields throw', () => {
+    debugLog.setEnabled(true)
+    debugLog.clear()
+    expect(() =>
+      debugLog.log('broken', () => {
+        throw new Error('detached node')
+      }),
+    ).not.toThrow()
+    debugLog.log('next')
+    expect(debugLog.read().map(entry => [entry.type, entry.seq])).toEqual([['next', 0]])
   })
 
   it('records entries when enabled', () => {
     debugLog.setEnabled(true)
-    debugLog.log('test', { a: 1 })
+    debugLog.log('test', () => ({ a: 1 }))
     const entries = debugLog.read()
     const last = entries[entries.length - 1]
     expect(last.type).toBe('test')
@@ -133,7 +151,7 @@ describe('capacity', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     for (let i = 0; i < 5100; i++) {
-      debugLog.log('n', { i })
+      debugLog.log('n', () => ({ i }))
     }
     const entries = debugLog.read()
     expect(entries.length).toBe(5000)
@@ -148,7 +166,7 @@ describe('field cap', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     const long = 'x'.repeat(5000)
-    debugLog.log('big', { value: long })
+    debugLog.log('big', () => ({ value: long }))
     const last = debugLog.read().slice(-1)[0]
     expect((last.value as string).length).toBeLessThan(long.length)
     expect(last.value as string).toContain('…')
@@ -169,7 +187,7 @@ describe('persistence', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     for (let i = 0; i < 501; i++) {
-      debugLog.log('n', { i })
+      debugLog.log('n', () => ({ i }))
     }
     expect((JSON.parse(storage.getItem('debugLog-0')!) as unknown[]).length).toBe(500)
     expect((JSON.parse(storage.getItem('debugLog-1')!) as unknown[]).length).toBe(1)
@@ -196,7 +214,7 @@ describe('persistence', () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('QuotaExceededError')
     })
-    expect(() => debugLog.log('overflow', { value: 'y'.repeat(1000) })).not.toThrow()
+    expect(() => debugLog.log('overflow', () => ({ value: 'y'.repeat(1000) }))).not.toThrow()
   })
 })
 
@@ -253,7 +271,7 @@ describe('format', () => {
     debugLog.clear()
     debugLog.setEnabled(true)
     for (let i = 0; i < 5100; i++) {
-      debugLog.log('n', { i })
+      debugLog.log('n', () => ({ i }))
     }
     expect(debugLog.read().some(entry => entry.type === 'session')).toBe(false)
     const lines = debugLog.format().split('\n')
@@ -267,7 +285,7 @@ describe('format', () => {
   it('reports how many entries the rolling buffer has evicted', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
-    Array.from({ length: 5003 }, (_, i) => debugLog.log('x', { i }))
+    Array.from({ length: 5003 }, (_, i) => debugLog.log('x', () => ({ i })))
     const lines = debugLog.format().split('\n')
     expect(lines[6]).toBe('--- evicted: 3 earlier entries')
     expect(lines[8]).toContain('#3 x')
@@ -283,14 +301,14 @@ describe('format', () => {
   it('puts the actionType in the envelope and spreads the parsed payload into the fields', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
-    debugLog.log('action', { actionType: 'indent', payload: JSON.stringify({ at: null, value: 'a' }) })
+    debugLog.log('action', () => ({ actionType: 'indent', payload: JSON.stringify({ at: null, value: 'a' }) }))
     expect(debugLog.format()).toMatch(/ #0 action indent \{"at":null,"value":"a"\}$/m)
   })
 
   it('keeps a payload that does not parse, such as one cut by the field cap, as a string', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
-    debugLog.log('action', { actionType: 'importText', payload: JSON.stringify({ text: 'x'.repeat(3000) }) })
+    debugLog.log('action', () => ({ actionType: 'importText', payload: JSON.stringify({ text: 'x'.repeat(3000) }) }))
     expect(debugLog.format()).toMatch(/ #0 action importText \{"payload":"\{\\"text\\":\\"x+…\(\+\d+\)"\}$/m)
   })
 
@@ -298,14 +316,14 @@ describe('format', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
     const home = '00000000000000000000000000000001'
-    debugLog.log('keydown', { key: 'a', isComposing: false })
-    debugLog.log('move', { id: home, value: home, oldRank: 0, newRank: 1 })
-    debugLog.log('action', {
+    debugLog.log('keydown', () => ({ key: 'a', isComposing: false }))
+    debugLog.log('move', () => ({ id: home, value: home, oldRank: 0, newRank: 1 }))
+    debugLog.log('action', () => ({
       actionType: 'newThought',
       payload: JSON.stringify({
         commandMetadata: { source: 'command', commandId: 'newThought', label: 'New Thought' },
       }),
-    })
+    }))
     const text = debugLog.format()
     expect(text).toMatch(/ #0 keydown \{"key":"a"\}$/m)
     expect(text).toMatch(new RegExp(` #1 move \\{"id":"${home}","oldRank":0,"newRank":1\\}$`, 'm'))
@@ -315,7 +333,9 @@ describe('format', () => {
   it('shortens thought ids to ten characters and keeps reserved ids whole', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
-    debugLog.log('setCursor', { path: ['00000000000000000000000000000001', '97e810f0c6ba2f31736f6dac650e0cfd'] })
+    debugLog.log('setCursor', () => ({
+      path: ['00000000000000000000000000000001', '97e810f0c6ba2f31736f6dac650e0cfd'],
+    }))
     expect(debugLog.format()).toMatch(/ #0 setCursor \{"path":\["00000000000000000000000000000001","97e810f0c6"\]\}$/m)
   })
 
@@ -340,7 +360,7 @@ describe('format', () => {
   it('renders a one-line-per-entry text block', () => {
     debugLog.setEnabled(true)
     debugLog.clear()
-    debugLog.log('input', { data: ' ' })
+    debugLog.log('input', () => ({ data: ' ' }))
     const text = debugLog.format()
     expect(text).toContain('input')
     expect(text).toContain('#0')
@@ -553,7 +573,7 @@ describe('console mirror', () => {
   it('does not mirror to the console by default', () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => {})
     debugLog.setEnabled(true)
-    debugLog.log('test', { a: 1 })
+    debugLog.log('test', () => ({ a: 1 }))
     expect(info).not.toHaveBeenCalled()
   })
 
@@ -561,7 +581,7 @@ describe('console mirror', () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => {})
     debugLog.setEnabled(true)
     debugLog.setConsole(true)
-    debugLog.log('test', { a: 1 })
+    debugLog.log('test', () => ({ a: 1 }))
     expect(info).toHaveBeenCalledTimes(2)
     expect(info.mock.calls[0][0]).toMatch(/^debugLog --- date: \d{4}-\d{2}-\d{2}$/)
     expect(info.mock.calls[1][0]).toMatch(/^debugLog \d{2}:\d{2}:\d{2}\.\d{3} \+\d+ms #\d+ test \{"a":1\}$/)
@@ -591,7 +611,7 @@ describe('console mirror', () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => {})
     debugLog.setEnabled(true)
     debugLog.setConsole(true)
-    debugLog.log('test', { a: 1 })
+    debugLog.log('test', () => ({ a: 1 }))
     const mirrored = (info.mock.calls.at(-1)![0] as string).replace(/^debugLog /, '')
     expect(debugLog.format().split('\n')).toContain(mirrored)
   })
@@ -601,7 +621,7 @@ describe('console mirror', () => {
     debugLog.setEnabled(true)
     debugLog.setConsole(true)
     debugLog.setConsole(false)
-    debugLog.log('test', { a: 1 })
+    debugLog.log('test', () => ({ a: 1 }))
     expect(info).not.toHaveBeenCalled()
   })
 
@@ -627,7 +647,7 @@ describe('console mirror', () => {
   it('does not mirror while logging is disabled', () => {
     const info = vi.spyOn(console, 'info').mockImplementation(() => {})
     debugLog.setConsole(true)
-    debugLog.log('test', { a: 1 })
+    debugLog.log('test', () => ({ a: 1 }))
     expect(info).not.toHaveBeenCalled()
   })
 
@@ -637,7 +657,7 @@ describe('console mirror', () => {
     })
     debugLog.setEnabled(true)
     debugLog.setConsole(true)
-    expect(() => debugLog.log('test', { a: 1 })).not.toThrow()
+    expect(() => debugLog.log('test', () => ({ a: 1 }))).not.toThrow()
     expect(debugLog.read().some(entry => entry.type === 'test')).toBe(true)
   })
 })
