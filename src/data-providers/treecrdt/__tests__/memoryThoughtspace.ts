@@ -16,12 +16,16 @@ it('publishes local edits from an incoming listener once even when several nativ
   const runtime = createMemoryThoughtspace(async () => persistent)
   const id = '1'.repeat(32) as ThoughtId
   const publications: string[] = []
+  const persisted: string[] = []
   const unsubscribe = runtime.subscribe(() => {
     const thought = runtime.project().getThought(id)!
     publications.push(thought.value)
     if (thought.value !== 'incoming') return
     ;['local first', 'local second'].forEach(value => {
-      runtime.transact(transaction => transaction.update({ thoughtIndexUpdates: { [id]: { ...thought, value } } }))
+      runtime.transact(transaction => {
+        transaction.update({ thoughtIndexUpdates: { [id]: { ...thought, value } } })
+        transaction.afterPersist(() => persisted.push(value))
+      })
     })
   })
   try {
@@ -35,6 +39,7 @@ it('publishes local edits from an incoming listener once even when several nativ
     )
     await runtime.waitForIdle()
     expect(publications).toEqual(['incoming', 'local first', 'local second'])
+    expect(persisted).toEqual(['local first', 'local second'])
   } finally {
     unsubscribe()
     await runtime.drop()

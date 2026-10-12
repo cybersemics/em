@@ -62,7 +62,7 @@ Undo records text-change policy as writes happen, without retaining previous doc
 
 `db.transact` authors operations synchronously in Rust for one complete dispatched command. Ordinary commands explicitly insert, change payload fields, move, or delete; each subsequent read sees those writes. Payload comparisons avoid redundant operations. Imports/restores supply ordered batches to `transaction.update`. If a command throws, the adapter restores its tree, decoded caches and operation bookkeeping; no partial command is queued for persistence or published.
 
-A serialized `persistent.ops.appendMany(ops)` stores those exact operations without minting new identities. Its promise provides the persistence acknowledgement; the protocol's transport-send promise alone would not. The returned view already reads canonical memory payloads, parents, and child order. Persistence acknowledgements do not replace it with a captured SQLite readback.
+TreeCRDT's `createOutboundSync` serializes the exact operations through a local `persistent.ops.appendMany(ops)` target, without minting new identities. Each `push` promise acknowledges that command and all earlier writes, not later commands. The target awaits the actual SQLite write; local persistence does not encode operations through the loopback transport. The returned view already reads canonical memory payloads, parents, and child order. Persistence acknowledgements do not replace it with a captured SQLite readback.
 
 An asynchronous append or loopback failure is reported through `onError` and gates subsequent document commits. The app displays an error asking the user to keep the tab open. Already accepted memory edits are not rolled back on persistence failure, and there is no durable retry queue.
 
@@ -74,7 +74,7 @@ The bulk update preserves property order for edits, so callers must supply paren
 
 ### Persistence and incoming changes
 
-Promise tails serialize durable appends and loopback notifications. `persistent.onMaterialized` notifies the storage peer's full-document subscription, except when every change is tagged as this memory provider's own write. Foreign, mixed, or unidentified changes still synchronize. The memory adapter deduplicates operations by their replica/counter identity, applies new operations in a batch, and invalidates current reads only when state changes. Storage confirmations do not overwrite newer memory edits.
+The outbound controller serializes durable appends; a promise tail serializes loopback notifications. `persistent.onMaterialized` notifies the storage peer's full-document subscription, except when every change is tagged as this memory provider's own write. Foreign, mixed, or unidentified changes still synchronize. The memory adapter deduplicates operations by their replica/counter identity, applies new operations in a batch, and invalidates current reads only when state changes. Storage confirmations do not overwrite newer memory edits.
 
 Initialization explicitly publishes the initial view. `db.subscribe` invalidates the view on subsequent local and incoming commits; subscribers read the latest `project()` rather than replaying event payloads. Changes outside a dispatched command use non-undoable `replaceThoughts` to repair cursor topology. Ordinary commands publish their completed document and UI state together rather than exposing the provider notification mid-command.
 
@@ -82,7 +82,7 @@ Initialization explicitly publishes the initial view. `db.subscribe` invalidates
 
 - `init` opens both engines, seeds canonical system nodes, and waits for full initial synchronization. Repeated calls share initialization.
 - `index.tsx` displays startup UI until initialization succeeds. Failure closes resources without deleting the database and does not expose an editable app.
-- `waitForIdle` drains accepted writes and local loopback work, including work they schedule. It is not proof that an external peer is caught up.
+- `waitForIdle` drains local loopback work and the outbound controller's `whenIdle` barrier, including work they schedule, and rejects on a latched failure. The barrier waits for execution to stop without retrying failed writes; it does not itself confirm successful persistence.
 - `drop` rejects new edits, settles accepted work, then closes resources and deletes this thoughtspace's prototype database. Concurrent initialization waits for teardown.
 
 ## Remote sync and limits

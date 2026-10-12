@@ -7202,25 +7202,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/sync-protocol@npm:0.1.2":
+"@treecrdt/sync-protocol@https://github.com/cybersemics/treecrdt/releases/download/sync-preview-d2857dc945af14c39015d12d2e5f4f7d19e25d18/treecrdt-sync-protocol-0.1.2.tgz":
   version: 0.1.2
-  resolution: "@treecrdt/sync-protocol@npm:0.1.2"
+  resolution: "@treecrdt/sync-protocol@https://github.com/cybersemics/treecrdt/releases/download/sync-preview-d2857dc945af14c39015d12d2e5f4f7d19e25d18/treecrdt-sync-protocol-0.1.2.tgz"
   dependencies:
     "@bufbuild/protobuf": "npm:^2.10.2"
     "@noble/hashes": "npm:^1.8.0"
     "@treecrdt/interface": "npm:0.2.0"
     "@treecrdt/riblt-wasm": "npm:0.1.0"
-  checksum: 10c0/4e6b9527890f849193f353a333103ea4004833baf084b2f55ed7160ca6542cd0765b1fb668f68aa947c8e65c6a3b367aed6ac83ae4519c6f9f68cee646057c0f
+  checksum: 10c0/355c0e7b9211a38a4cf898cc49cb3bfd586cff5740c56b6861fd13901a8b8b8ff060cdd55b2fc435403e768abe41072ef118e932d6cd011724bc6016efa7b9a3
   languageName: node
   linkType: hard
 
-"@treecrdt/sync-server-core@npm:0.1.2":
+"@treecrdt/sync-server-core@https://github.com/cybersemics/treecrdt/releases/download/sync-preview-d2857dc945af14c39015d12d2e5f4f7d19e25d18/treecrdt-sync-server-core-0.1.2.tgz":
   version: 0.1.2
-  resolution: "@treecrdt/sync-server-core@npm:0.1.2"
+  resolution: "@treecrdt/sync-server-core@https://github.com/cybersemics/treecrdt/releases/download/sync-preview-d2857dc945af14c39015d12d2e5f4f7d19e25d18/treecrdt-sync-server-core-0.1.2.tgz"
   dependencies:
     "@treecrdt/sync-protocol": "npm:0.1.2"
     ws: "npm:^8.18.3"
-  checksum: 10c0/4abd0ac72a5c5741312e8aabcf4a22a379c370e85de02416548529f4efc728b62c726b89b35c6f4a1b2c55888541899584de7ea0fa301f08cf27a65dd4a343b0
+  checksum: 10c0/f2de69a0782524095f722c46ed671b5a0fada9decabb39ec60ce08707709f84f6a8fdae23f3b685a6c0a2939f1b7fb3f33ed72482505ec9ca009012047dedcb9
   languageName: node
   linkType: hard
 
@@ -7235,15 +7235,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@treecrdt/sync@npm:0.1.2":
+"@treecrdt/sync@https://github.com/cybersemics/treecrdt/releases/download/sync-preview-d2857dc945af14c39015d12d2e5f4f7d19e25d18/treecrdt-sync-0.1.2.tgz":
   version: 0.1.2
-  resolution: "@treecrdt/sync@npm:0.1.2"
+  resolution: "@treecrdt/sync@https://github.com/cybersemics/treecrdt/releases/download/sync-preview-d2857dc945af14c39015d12d2e5f4f7d19e25d18/treecrdt-sync-0.1.2.tgz"
   dependencies:
     "@treecrdt/discovery": "npm:0.1.0"
     "@treecrdt/interface": "npm:0.2.0"
     "@treecrdt/sync-protocol": "npm:0.1.2"
     "@treecrdt/sync-sqlite": "npm:0.1.2"
-  checksum: 10c0/bf43f9e52dfd59055b811cd677be7603c1718a0e1bfbd4ef2b04178a5b06f468e81edc044038ddb05d4d1d8252f8e55fb70872107efe3363b43ca74973d7577f
+  checksum: 10c0/db5c6bfc8a4c1cb96fa6f53a38a0abfb0aaec0c4832acea0f7c207766838a384887fbbdff2755eafc38b465391a7cf2232e394887a55763a63c16152c5655eac
   languageName: node
   linkType: hard
 

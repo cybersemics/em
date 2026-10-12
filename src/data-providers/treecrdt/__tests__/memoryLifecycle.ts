@@ -6,7 +6,16 @@ import type Timestamp from '../../../@types/Timestamp'
 import { HOME_TOKEN } from '../../../constants'
 import { tsid } from '../../thoughtspaceSession'
 import createMemoryThoughtspace from '../createMemoryThoughtspace'
-import { encodeThoughtPayload } from '../payload'
+import { decodeThoughtPayload, encodeThoughtPayload } from '../payload'
+
+const thought: Thought = {
+  id: '1'.repeat(32) as ThoughtId,
+  parentId: HOME_TOKEN,
+  value: 'accepted before failure',
+  created: 1 as Timestamp,
+  lastUpdated: 1 as Timestamp,
+  updatedBy: 'test',
+}
 
 it('retries initialization after opening fails', async () => {
   const failure = new Error('Opening failed')
@@ -105,27 +114,36 @@ it('reopens only after a concurrent drop finishes and blocks editing during tear
   }
 })
 
-it('reports a failed durable append, blocks later commands, and clears the failure on drop', async () => {
+it('preserves earlier acknowledgements, latches a failed append without retrying, and clears failure on drop', async () => {
   const persistent = await createTreecrdtClient({ docId: tsid })
   const runtime = createMemoryThoughtspace(vi.fn(createTreecrdtClient).mockResolvedValueOnce(persistent))
   const failure = new Error('Durable append failed')
   const onError = vi.fn()
-  const thought: Thought = {
-    id: '1'.repeat(32) as ThoughtId,
-    parentId: HOME_TOKEN,
-    value: 'accepted before failure',
-    created: 1 as Timestamp,
-    lastUpdated: 1 as Timestamp,
-    updatedBy: 'test',
-  }
+  const acknowledged = vi.fn()
+  const rejectedAcknowledgement = vi.fn()
   try {
     await runtime.init({ storage: 'memory', onError })
-    runtime.project()
-    vi.spyOn(persistent.ops, 'appendMany').mockRejectedValueOnce(failure)
-    const first = runtime.transact(transaction =>
-      transaction.update({ thoughtIndexUpdates: { [thought.id]: thought }, movePlacements: { [thought.id]: null } }),
-    )
-    await expect(first.persisted).rejects.toBe(failure)
+    const appendMany = persistent.ops.appendMany.bind(persistent.ops)
+    const append = vi
+      .spyOn(persistent.ops, 'appendMany')
+      .mockImplementationOnce(appendMany)
+      .mockRejectedValueOnce(failure)
+    const first = runtime.transact(transaction => {
+      transaction.insert(thought, null)
+      transaction.afterPersist(acknowledged)
+    })
+    const second = runtime.transact(transaction => {
+      transaction.payload(thought.id, { value: 'unsaved edit' })
+      transaction.afterPersist(rejectedAcknowledgement)
+    })
+    const empty = runtime.transact(transaction => transaction.afterPersist(rejectedAcknowledgement))
+    await Promise.all([
+      expect(first.persisted).resolves.toBeUndefined(),
+      expect(second.persisted).rejects.toBe(failure),
+      expect(empty.persisted).rejects.toBe(failure),
+    ])
+    expect(acknowledged).toHaveBeenCalledTimes(1)
+    expect(rejectedAcknowledgement).not.toHaveBeenCalled()
     expect(onError).toHaveBeenCalledExactlyOnceWith(failure)
     expect(() =>
       runtime.transact(transaction =>
@@ -135,7 +153,9 @@ it('reports a failed durable append, blocks later commands, and clears the failu
       ),
     ).toThrow(failure)
     await expect(runtime.waitForIdle()).rejects.toBe(failure)
-    expect(await persistent.tree.get(thought.id)).toBeUndefined()
+    expect(append).toHaveBeenCalledTimes(2)
+    expect(decodeThoughtPayload((await (await persistent.tree.get(thought.id))!.payload())!).value).toBe(thought.value)
+    expect(runtime.project().getThought(thought.id)?.value).toBe('unsaved edit')
 
     await runtime.drop()
     await runtime.init({ storage: 'memory', onError })
@@ -147,6 +167,88 @@ it('reports a failed durable append, blocks later commands, and clears the failu
     expect(runtime.project().getThought(thought.id)?.value).toBe(thought.value)
     expect(onError).toHaveBeenCalledTimes(1)
   } finally {
+    await runtime.drop()
+  }
+})
+
+it('drains an active append and a queued command before dropping storage', async () => {
+  const persistent = await createTreecrdtClient({ docId: tsid })
+  const runtime = createMemoryThoughtspace(async () => persistent)
+  let release!: () => void
+  const gate = new Promise<void>(resolve => {
+    release = resolve
+  })
+  let started!: () => void
+  const appendStarted = new Promise<void>(resolve => {
+    started = resolve
+  })
+  const valuesAtDrop: string[] = []
+  try {
+    await runtime.init({ storage: 'memory' })
+    const append = persistent.ops.appendMany.bind(persistent.ops)
+    vi.spyOn(persistent.ops, 'appendMany').mockImplementationOnce(async (operations, options) => {
+      started()
+      await gate
+      return append(operations, options)
+    })
+    const dropClient = persistent.drop.bind(persistent)
+    vi.spyOn(persistent, 'drop').mockImplementationOnce(async () => {
+      valuesAtDrop.push(decodeThoughtPayload((await (await persistent.tree.get(thought.id))!.payload())!).value)
+      await dropClient()
+    })
+    const first = runtime.transact(transaction => transaction.insert(thought, null))
+    const second = runtime.transact(transaction => transaction.payload(thought.id, { value: 'queued edit' }))
+    await appendStarted
+    const dropping = runtime.drop()
+    release()
+    await Promise.all([first.persisted, second.persisted, dropping])
+    expect(valuesAtDrop).toEqual(['queued edit'])
+  } finally {
+    release()
+    await runtime.drop()
+  }
+})
+
+it('waits for a command authored by an afterPersist callback before reporting idle', async () => {
+  const persistent = await createTreecrdtClient({ docId: tsid })
+  const runtime = createMemoryThoughtspace(async () => persistent)
+  let release!: () => void
+  const gate = new Promise<void>(resolve => {
+    release = resolve
+  })
+  let started!: () => void
+  const appendStarted = new Promise<void>(resolve => {
+    started = resolve
+  })
+  const phases: string[] = []
+  let nextPersisted!: Promise<void>
+  try {
+    await runtime.init({ storage: 'memory' })
+    const append = persistent.ops.appendMany.bind(persistent.ops)
+    vi.spyOn(persistent.ops, 'appendMany')
+      .mockImplementationOnce(append)
+      .mockImplementationOnce(async (operations, options) => {
+        started()
+        await gate
+        await append(operations, options)
+        phases.push('stored')
+      })
+    const first = runtime.transact(transaction => {
+      transaction.insert(thought, null)
+      transaction.afterPersist(() => {
+        nextPersisted = runtime.transact(next => next.payload(thought.id, { value: 'after persistence' })).persisted
+      })
+    })
+    const waiting = runtime.waitForIdle().then(() => phases.push('idle'))
+    await appendStarted
+    release()
+    await Promise.all([first.persisted, nextPersisted, waiting])
+    expect(phases).toEqual(['stored', 'idle'])
+    expect(decodeThoughtPayload((await (await persistent.tree.get(thought.id))!.payload())!).value).toBe(
+      'after persistence',
+    )
+  } finally {
+    release()
     await runtime.drop()
   }
 })

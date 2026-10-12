@@ -1,4 +1,5 @@
 import type { Operation, OperationId } from '@treecrdt/interface'
+import { createOutboundSync } from '@treecrdt/sync'
 import type { SyncSubscription } from '@treecrdt/sync-protocol'
 import { createInMemoryConnectedPeers } from '@treecrdt/sync-protocol/in-memory'
 import { treecrdtSyncV0ProtobufCodec } from '@treecrdt/sync-protocol/protobuf'
@@ -176,7 +177,7 @@ const createMemoryThoughtspace = (
   let initPromise: Promise<{ clientId: string; storage: string }> | undefined
   let dropping: Promise<void> | undefined
   let ready = false
-  let commitTail = Promise.resolve()
+  let outbound = createOutboundSync<Operation>()
   let syncTail = Promise.resolve()
   let subscription: SyncSubscription | undefined
   let unsubscribe: (() => void) | undefined
@@ -218,23 +219,17 @@ const createMemoryThoughtspace = (
     }
   }
 
-  /** Settles accepted writes and their loopback notifications before releasing resources. */
-  const drainWork = async () => {
-    let tails: Promise<void>[]
-    do {
-      tails = [commitTail, syncTail]
-      const results = await Promise.allSettled(tails)
-      results.forEach(result => {
-        if (result.status === 'rejected') reportFailure(result.reason)
-      })
-    } while (tails[0] !== commitTail || tails[1] !== syncTail)
-    if (failure) throw failure
-  }
-
-  /** Drains persistence and local loopback work, not external network synchronization. */
+  /** Drains persistence and local loopback work without retrying failed writes. */
   const waitForIdle = async () => {
     await initPromise
-    await drainWork()
+    let syncing: Promise<void>
+    do {
+      syncing = syncTail
+      // Incoming publication may author writes; those writes can schedule more loopback work.
+      await syncing.catch(reportFailure)
+      await outbound.whenIdle()
+    } while (syncing !== syncTail)
+    if (failure) throw failure
   }
 
   /** Publishes a new view identity when TreeCRDT's transaction-consistent projection changes. */
@@ -514,14 +509,9 @@ const createMemoryThoughtspace = (
       active = false
       currentTransaction = undefined
     }
-    const target = persistent
-    commitTail = commitTail.then(async () => {
-      if (!result.operations.length) return
-      // Transport.send does not acknowledge durable storage. Append these exact operations explicitly.
-      await target.ops.appendMany(result.operations, { writeId: localWriteId })
-    })
-    void commitTail.catch(reportFailure)
-    const persisted = callbacks.length ? commitTail.then(() => callbacks.forEach(callback => callback())) : commitTail
+    const written = outbound.push(result.operations)
+    void written.catch(reportFailure)
+    const persisted = callbacks.length ? written.then(() => callbacks.forEach(callback => callback())) : written
     const changed = result.changes.reset || result.changes.changes.length > 0
     // Queue persistence first: a subscriber may author another command, whose operations must follow this one.
     try {
@@ -535,6 +525,7 @@ const createMemoryThoughtspace = (
   /** Stops the replica and closes its client, deleting storage only for an explicit drop. */
   const releaseResources = async ({ deleteStorage }: { deleteStorage: boolean }) => {
     ready = false
+    await outbound.close()
     subscription?.stop()
     await Promise.allSettled([subscription?.done])
     subscription = undefined
@@ -561,7 +552,8 @@ const createMemoryThoughtspace = (
       currentView = view()
       publishedRevision = undefined
       initPromise = undefined
-      commitTail = syncTail = Promise.resolve()
+      outbound = createOutboundSync<Operation>()
+      syncTail = Promise.resolve()
     }
   }
 
@@ -571,8 +563,7 @@ const createMemoryThoughtspace = (
     ready = false
     dropping = (async () => {
       // A previous write failure must not prevent explicit cleanup from closing the database.
-      await Promise.allSettled([initPromise])
-      await Promise.allSettled([drainWork()])
+      await Promise.allSettled([waitForIdle()])
       await releaseResources({ deleteStorage: true })
       failure = undefined
       onError = undefined
@@ -645,6 +636,8 @@ const createMemoryThoughtspace = (
           persistent: options.storage === 'persistent',
           filename: `/treecrdt-em-memory-prototype-${tsid}.db`,
         })
+        const target = persistent
+        outbound.setTarget(operations => target.ops.appendMany([...operations], { writeId: localWriteId }))
         await initializeMemoryStorage(persistent, crypto.getRandomValues(new Uint8Array(32)))
         memory = await openMemory()
         unsubscribeMemory = memory.subscribe(publish)
