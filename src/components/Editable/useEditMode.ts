@@ -126,13 +126,13 @@ const useEditMode = ({
 
         // Record each programmatic caret placement, which happens without a tap on Enter, gestures and undo, and is
         // what makes iOS scroll the focused editable into view.
-        debugLog.log('caret', {
+        debugLog.log('caret', () => ({
           thoughtId: head(path),
           offset: cursorOffset,
           asyncFocus: shouldAsyncFocus,
           transient: !!transient,
           hidden: style?.visibility === 'hidden',
-        })
+        }))
 
         preventAutoscroll(contentRef.current)
 

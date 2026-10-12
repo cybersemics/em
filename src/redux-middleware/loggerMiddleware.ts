@@ -90,7 +90,7 @@ const logThoughtMoves = (stateBefore: State, stateAfter: State, actionType: stri
   if (moves.length <= MAX_MOVES) {
     moves.forEach(move => debugLog.log('move', move))
   } else {
-    debugLog.log('moveBatch', { actionType, count: moves.length, sample: moves.slice(0, MAX_MOVES) })
+    debugLog.log('moveBatch', () => ({ actionType, count: moves.length, sample: moves.slice(0, MAX_MOVES) }))
   }
 
   const changedParentIds = new Set(
@@ -132,7 +132,7 @@ const loggerMiddleware: Middleware<any, State, Dispatch> = store => {
     // debugLog's field cap) so large actions cannot blow the buffer; updateThoughts gets a structured summary instead.
     if (debugLog.isEnabled() && action && typeof action === 'object') {
       if (type === 'updateThoughts') {
-        debugLog.log('action', summarizeUpdateThoughts(action as UnknownAction))
+        debugLog.log('action', () => summarizeUpdateThoughts(action as UnknownAction))
       } else {
         const { type: _type, ...payload } = action as UnknownAction
         let payloadStr: string

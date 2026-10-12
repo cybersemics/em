@@ -535,12 +535,12 @@ const undoRedoReducerEnhancer: StoreEnhancer<any> =
             console.error(e.message, { state, lastUndoPatch })
             // The throw unwinds the dispatch before loggerMiddleware records the action, so the Debug Log would
             // otherwise show the error with no trace of what triggered it.
-            debugLog.log('undoPatchError', {
+            debugLog.log('undoPatchError', () => ({
               actionType,
               message: e.message,
               patchActionTypes: lastUndoPatch.metadata.actionTypes,
               opPaths: lastUndoPatch.ops.map(op => `${op.op} ${op.path}`),
-            })
+            }))
             throw new Error('Error applying patch')
           }
         }

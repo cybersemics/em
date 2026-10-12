@@ -193,7 +193,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       if (e?.touches.length > 0) {
         const x = e.touches[0].clientX
         const y = e.touches[0].clientY
-        debugLog.log('touchstart', { x: Math.round(x), y: Math.round(y) })
+        debugLog.log('touchstart', () => ({ x: Math.round(x), y: Math.round(y) }))
         this.clientStart = { x, y }
         // Remember the element the browser pinned this touch to, so a release can still be detected
         // if that element unmounts mid-gesture. See the pointerup listener below.
@@ -215,7 +215,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
         console.info('touchend')
       }
       const touch = e.changedTouches[0]
-      debugLog.log('touchend', touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {})
+      debugLog.log('touchend', () => (touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {}))
       // Only clear the multitouch latch once every finger is up. Fingers leave one at a time, so clearing it on the
       // first touchend would let the last finger still down be tracked as a new single-finger gesture.
       if (e.touches.length === 0) {
@@ -229,13 +229,13 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       if (testFlags.logMultigesture) {
         console.info('touchcancel')
       }
-      debugLog.log('gestureCancel', {
+      debugLog.log('gestureCancel', () => ({
         sequence: this.sequence,
         x: this.clientStart && Math.round(this.clientStart.x),
         y: this.clientStart && Math.round(this.clientStart.y),
         innerHeight: viewportStore.getState().innerHeight,
         safeAreaBottom: getSafeAreaBottom(),
-      })
+      }))
       this.props.onCancel?.({ clientStart: this.clientStart, e })
       if (e.touches.length === 0) {
         this.multitouch = false
@@ -399,7 +399,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           y: gestureState.moveY - window.scrollY,
         }
         // Log the start and end coordinates so that a false gesture, such as an OS app switcher swipe misread as a command gesture, can be diagnosed from the debug log. innerHeight and safeAreaBottom determine the bottom system-gesture exclusion that was in effect (see isInGestureZone), so the log also reveals if the exclusion was inert because the safe area inset read as zero.
-        debugLog.log('gesture', {
+        debugLog.log('gesture', () => ({
           sequence: this.sequence,
           x: this.clientStart && Math.round(this.clientStart.x),
           y: this.clientStart && Math.round(this.clientStart.y),
@@ -408,7 +408,7 @@ class MultiGesture extends React.Component<MultiGestureProps> {
           abandon: this.abandon,
           innerHeight: viewportStore.getState().innerHeight,
           safeAreaBottom: getSafeAreaBottom(),
-        })
+        }))
         if (!this.abandon) {
           this.props.onEnd?.({ sequence: this.sequence, clientStart: this.clientStart!, clientEnd, e })
         }
