@@ -3,6 +3,7 @@
  * Uses WDIO test runner with Mocha framework.
  */
 import { TIMEOUT_LONG_PRESS_THOUGHT } from '../../../constants'
+import getCaretOffset from '../helpers/getCaretOffset'
 import getEditingText from '../helpers/getEditingText'
 import getSelection from '../helpers/getSelection'
 import hideKeyboardByTappingDone from '../helpers/hideKeyboardByTappingDone'
@@ -79,6 +80,6 @@ describe('Double tap', () => {
     await tap(hello, { offset: 'hello'.length, pointerType: 'touch' })
     await waitUntil(async () => (await getEditingText()) === 'hello')
 
-    expect(await getSelection().focusOffset).toBe('hello'.length)
+    expect(await getCaretOffset()).toBe('hello'.length)
   })
 })
