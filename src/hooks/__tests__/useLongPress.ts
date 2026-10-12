@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react'
 import { act } from 'react'
 import { importTextActionCreator as importText } from '../../actions/importText'
-import { AlertText, TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
+import { AlertText, LongPressState, TIMEOUT_LONG_PRESS_THOUGHT } from '../../constants'
 import hasMulticursor from '../../selectors/hasMulticursor'
 import store from '../../stores/app'
 import osVersionStore from '../../stores/osVersionStore'
@@ -101,7 +101,7 @@ it('a selection change after a long press begins does not end it', async () => {
 })
 
 // https://github.com/cybersemics/em/issues/5895
-it.skip('a long press ends when iOS takes over a touch whose touchend it withholds', async () => {
+it('a long press ends when iOS takes over a touch whose touchend it withholds', async () => {
   await dispatch(importText({ text: '- One' }))
   await act(vi.runOnlyPendingTimersAsync)
   const bullet = getBulletByContext(['One'])
@@ -112,10 +112,12 @@ it.skip('a long press ends when iOS takes over a touch whose touchend it withhol
 
   // iOS scrolls the page natively, which cancels the pointer, and sends neither touchcancel nor touchend
   await act(async () => {
-    bullet.dispatchEvent(Object.assign(new Event('pointercancel', { bubbles: true }), { pointerType: 'touch' }))
+    document.body.dispatchEvent(Object.assign(new Event('pointercancel', { bubbles: true }), { pointerType: 'touch' }))
   })
-  await act(() => vi.advanceTimersByTimeAsync(100))
+  // let the alert finish fading out
+  await act(() => vi.advanceTimersByTimeAsync(1000))
 
+  expect(store.getState().longPress).toBe(LongPressState.Inactive)
   expect(screen.queryByText(AlertText.DragAndDrop)).toBeNull()
   // a press that the system took over is not a deliberate release, so it does not select the thought
   expect(hasMulticursor(store.getState())).toBe(false)
