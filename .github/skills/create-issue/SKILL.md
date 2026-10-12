@@ -205,6 +205,8 @@ Lead with the area where the issue belongs to one — `Note:`, `Context View:`, 
 
 Leave priority and triage labels — `hold`, `low-priority`, `unable-to-reproduce`, `human` — to the maintainers.
 
+The exception is a label the user asks for in the request: "put it on hold until that lands" is `hold`, beside the `Blocked by` relationship.
+
 ## Sub-issues
 
 Work that only makes sense as part of a larger piece belongs to that piece as a sub-issue, not beside it as a sibling with a reference in the body. GitHub tracks the hierarchy: the parent shows its children and a completion count, closing a child advances it, and the children stay findable from the parent long after the thread that created them has scrolled away.
@@ -276,6 +278,8 @@ Keep a `## Notes` bullet beside the relationship where the reason is not obvious
 ## Evidence
 
 Screenshots and videos are usually already in the conversation that prompted the issue. Copy the attachment markup across verbatim, `<img src="https://github.com/user-attachments/...">` and all; those URLs stay valid in another issue. Do not re-upload or re-host, and do not describe an image you could link.
+
+A video the user sent to you as a file, rather than as a GitHub URL, cannot be attached from here. GitHub has no API for the upload that plays a video inline: only a file attached through the web UI gets a `https://github.com/user-attachments/assets/...` URL, and only those render as a player. A video committed to the repo, attached to a release, or hosted on S3 or an artifact renders as a plain link. Post the issue without it, and tell the user to drag the file into Current Behavior, or hand it to a session on their computer through their user-level `github-video` skill where they have one.
 
 ## Anonymizing user data
 
