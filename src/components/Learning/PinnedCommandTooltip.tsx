@@ -1,3 +1,4 @@
+import { animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { css } from '../../../styled-system/css'
@@ -9,7 +10,9 @@ import { formatKeyboardShortcut, gestureString } from '../../commands'
 import { Settings } from '../../constants'
 import usePrefetchImages from '../../hooks/usePrefetchImages'
 import getUserSetting from '../../selectors/getUserSetting'
+import commandEmitter from '../../stores/commandEmitter'
 import gestureStore from '../../stores/gestureStore'
+import durations from '../../util/durations'
 import fastClick from '../../util/fastClick'
 import isInGestureZone from '../../util/isInGestureZone'
 import GestureDiagram from '../GestureDiagram'
@@ -68,6 +71,36 @@ const PinnedCommandTooltip = ({
   const genieUnavailable = useSelector(state => state.helpGenie.unavailable)
 
   const leftHanded = useSelector(getUserSetting(Settings.leftHanded))
+
+  // When the gesture of another command is rejected while the tooltip is open, the diagram blinks twice to point at
+  // the gesture it is waiting for. The diagram dips to 30% opacity and its glow, more gently, to 75%. Opacity is not
+  // motion, so the blink plays under reduced motion too.
+  //
+  // One value drives both, from 0 (at rest) to 1 (dimmest), and each element maps it to its own opacity.
+  const blink = useMotionValue(0)
+  const diagramOpacity = useTransform(blink, value => 1 - 0.7 * value)
+  const glowOpacity = useTransform(blink, value => 1 - 0.25 * value)
+
+  // Play the blink each time a gesture is rejected. handleGestureEnd runs outside React, so it announces each rejection
+  // on commandEmitter, and this effect subscribes to it once, on mount. It does not re-run as the blink plays: blink is
+  // a motion value that stays the same object, listed only because the hooks lint rule requires it.
+  useEffect(() => {
+    // The blink in progress, if any, so that another rejection can restart it and unmounting can stop it.
+    let animation: { stop: () => void } | undefined
+    /** Blinks the diagram for a rejected gesture, restarting if one is already playing. */
+    const playBlink = () => {
+      animation?.stop()
+      animation = animate(blink, [0, 1, 0, 1, 0], {
+        duration: (durations.get('mediumPulse') * 2) / 1000,
+        ease: 'easeInOut',
+      })
+    }
+    commandEmitter.on('pinnedGestureRejected', playBlink)
+    return () => {
+      commandEmitter.off('pinnedGestureRejected', playBlink)
+      animation?.stop()
+    }
+  }, [blink])
 
   // A tap anywhere, on the tooltip or off it, dismisses. So does a scroll. A gesture trace does not: the surface passes
   // pointer events through, so a drag that starts in the gesture zone is a trace for the thoughtspace beneath, while
@@ -196,7 +229,7 @@ const PinnedCommandTooltip = ({
               translate: '0 0.8889rem',
             })}
           >
-            <div
+            <motion.div
               className={css({
                 position: 'absolute',
                 zIndex: -1,
@@ -208,28 +241,31 @@ const PinnedCommandTooltip = ({
                 backgroundImage: 'url(/img/pinned-command/pinned-command-gesture-glow.avif)',
                 backgroundSize: '100% 100%',
                 filter: 'blur(0px)',
-                opacity: '1',
               })}
+              style={{ opacity: glowOpacity }}
             />
-            <GestureDiagram
-              path={gesture}
-              cssRaw={css.raw({ width: '100%', height: '100%' })}
-              // Each gesture has its own bounds, so anchor the drawing to the box's bottom-left rather than centering
-              // it; the left edge and the gap to the text then hold for every command.
-              preserveAspectRatio='xMinYMax meet'
-              size={150}
-              arrowSize={1}
-              // Thinner than the Command Universe detail page's 12, which was tuned for a 130px box; at this size the
-              // design's stroke is about 7% of the diagram's width.
-              strokeWidth={7}
-              arrowhead='outlined-wide'
-              chevronApexAngle={80}
-              chevronSize={2.2}
-              cornerRadius={12}
-              color='#ffffff'
-              gradient={{ from: 'rgba(88, 181, 212, 0.45)', to: 'rgba(255, 255, 255, 1)' }}
-              glow={false}
-            />
+            {/* The diagram blinks on its own layer so that its glow can blink more gently. */}
+            <motion.div className={css({ width: '100%', height: '100%' })} style={{ opacity: diagramOpacity }}>
+              <GestureDiagram
+                path={gesture}
+                cssRaw={css.raw({ width: '100%', height: '100%' })}
+                // Each gesture has its own bounds, so anchor the drawing to the box's bottom-left rather than centering
+                // it; the left edge and the gap to the text then hold for every command.
+                preserveAspectRatio='xMinYMax meet'
+                size={150}
+                arrowSize={1}
+                // Thinner than the Command Universe detail page's 12, which was tuned for a 130px box; at this size the
+                // design's stroke is about 7% of the diagram's width.
+                strokeWidth={7}
+                arrowhead='outlined-wide'
+                chevronApexAngle={80}
+                chevronSize={2.2}
+                cornerRadius={12}
+                color='#ffffff'
+                gradient={{ from: 'rgba(88, 181, 212, 0.45)', to: 'rgba(255, 255, 255, 1)' }}
+                glow={false}
+              />
+            </motion.div>
           </div>
         ) : null}
 

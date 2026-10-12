@@ -807,6 +807,20 @@ export const handleGestureEnd = ({ sequence, e }: { sequence: Gesture | null; e:
   // Whether the user drew one of the pinned command's own gestures, exactly.
   const isPinnedGesture = !!sequence && commandGestureIndex[sequence]?.id === state.learning.pinnedCommandId
 
+  // While the pinned command tooltip is open, only the pinned command's own gesture is accepted, along with the one
+  // that opens the Command Universe. A gesture that would run anything else is rejected rather than executed, and the
+  // tooltip blinks its diagram to point at the gesture it wants. A sequence that runs nothing is a cancel, and like an
+  // abandoned gesture it does nothing at all.
+  if (
+    state.showPinnedCommandTooltip &&
+    command &&
+    !isPinnedGesture &&
+    command.id !== openMobileCommandUniverseCommand.id
+  ) {
+    commandEmitter.trigger('pinnedGestureRejected')
+    return
+  }
+
   // Over the Mobile Command Universe a trace over the pinned command's tooltip is a dry run: nothing executes and no
   // rep is earned, but tracing the pinned command's own gesture plays the ring's burst.
   if (state.showMobileCommandUniverse && state.showPinnedCommandTooltip) {
