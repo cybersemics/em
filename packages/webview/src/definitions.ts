@@ -11,6 +11,12 @@ export interface WebviewBackgroundPlugin {
   changeBackgroundColor(options: { color: string }): Promise<void>
 
   /**
+   * Stops native iOS scroll momentum when a web animation takes over. Leaves an active touch or zoom alone.
+   * No-op on the web.
+   */
+  stopScrollMomentum(): Promise<void>
+
+  /**
    * Reports whether the app has an action to undo or redo, which iOS reads to decide whether to offer the
    * native history gesture. Gestures it does offer are confirmed with an overlay, so an app that does not
    * report its availability has iOS confirming an undo or redo that does nothing.

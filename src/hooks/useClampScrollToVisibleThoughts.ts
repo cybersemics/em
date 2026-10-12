@@ -1,5 +1,6 @@
 import { AnimationPlaybackControls, animate } from 'motion/react'
 import { RefObject, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { WebviewBackground } from 'webview-background'
 import TreeThoughtPositioned from '../@types/TreeThoughtPositioned'
 import { isIOS, isMac } from '../browser'
 
@@ -51,7 +52,6 @@ const useClampScrollToVisibleThoughts = ({
   const touchMoved = useRef(false)
   const touchStartScrollY = useRef(window.scrollY)
   const animationControls = useRef<AnimationPlaybackControls | null>(null)
-  const restoreNativeScroll = useRef<(() => void) | null>(null)
   const animationScrollY = useRef(window.scrollY)
   const elasticOffset = useRef(0)
   const dragCarry = useRef(0)
@@ -84,26 +84,11 @@ const useClampScrollToVisibleThoughts = ({
       ref.current?.style.setProperty(LAYOUT_TREE_ELASTIC_OFFSET, `${value}px`)
     }
 
-    /** Locks native scrolling while a custom animation owns the viewport, preserving existing root styles. */
-    const lockNativeScroll = () => {
-      if (restoreNativeScroll.current) return
-      const { style } = document.documentElement
-      const overflowY = style.getPropertyValue('overflow-y')
-      const priority = style.getPropertyPriority('overflow-y')
-      // iOS 27 preserves native momentum across scrollTo, which can otherwise compete with our animation.
-      style.setProperty('overflow-y', 'hidden')
-      restoreNativeScroll.current = () => {
-        style.setProperty('overflow-y', overflowY, priority)
-        restoreNativeScroll.current = null
-      }
-    }
-
     /** Stops the animation at its current visible position. */
     const stopAnimation = () => {
       const controls = animationControls.current
       animationControls.current = null
       controls?.stop()
-      restoreNativeScroll.current?.()
     }
 
     /** Converts unresisted finger travel into progressively resisted displacement. */
@@ -154,7 +139,8 @@ const useClampScrollToVisibleThoughts = ({
     /** Transfers position and velocity to a spring while cancelling native out-of-range scrolling. */
     const springBack = ({ offset, velocity, boundary }: { offset: number; velocity: number; boundary: number }) => {
       stopAnimation()
-      lockNativeScroll()
+      // Request native cancellation at the handoff; iOS 27 preserves momentum across scrollTo.
+      if (isIOS) WebviewBackground.stopScrollMomentum().catch(console.error)
       momentumInProgress.current = false
       setElasticOffset(offset)
       animationScrollY.current = boundary
@@ -169,7 +155,6 @@ const useClampScrollToVisibleThoughts = ({
         onComplete: () => {
           animationControls.current = null
           setElasticOffset(0)
-          restoreNativeScroll.current?.()
         },
       })
       window.scrollTo({ left: window.scrollX, top: boundary, behavior: 'instant' })
@@ -312,7 +297,8 @@ const useClampScrollToVisibleThoughts = ({
           (1 + (Math.abs(rawOffset) * RUBBER_BAND_COEFFICIENT) / geometry.current.viewportHeight) ** 2
         springBack({ offset, velocity: -velocity * resistance, boundary: clampedScrollY })
       } else if (carried) {
-        lockNativeScroll()
+        // Take over native inertia explicitly; scrollTo alone no longer cancels it on iOS 27.
+        if (isIOS) WebviewBackground.stopScrollMomentum().catch(console.error)
         // Continue the interrupted drag with the normal UIScrollView decay.
         setElasticOffset(0)
         window.scrollTo({ left: window.scrollX, top: clampedScrollY, behavior: 'instant' })
@@ -349,7 +335,6 @@ const useClampScrollToVisibleThoughts = ({
             animationControls.current = null
             momentumInProgress.current = false
             setElasticOffset(0)
-            restoreNativeScroll.current?.()
           },
         })
         animationControls.current = controls
