@@ -108,8 +108,10 @@ const logUndoRedo = (stateBefore: State, stateAfter: State, actionType: string):
   const stackAfter = actionType === 'undo' ? stateAfter.undoPatches : stateAfter.redoPatches
   const popped = stackBefore.slice(stackAfter.length)
   if (popped.length === 0) return
-  const actions = [...new Set(popped.flatMap(patch => patch.metadata.actionTypes))]
-  debugLog.log(actionType, () => ({ steps: popped.length, actions }))
+  debugLog.log(actionType, () => ({
+    steps: popped.length,
+    actions: [...new Set(popped.flatMap(patch => patch.metadata.actionTypes))],
+  }))
 }
 
 /** Redux Middleware for logging all actions. Logs to the console when testFlags.logActions is set (useful for e2e/remote debugging when Redux Developer Tools are not available), and captures every action into the persistent debugLog when it is enabled (via the Debug Logging setting, or automatically on development and preview hosts) — along with derived forensics: structured updateThoughts summaries, a `move` entry for every rank or parent change, duplicate-sibling-rank integrity warnings, and undo/redo attribution. */

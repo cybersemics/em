@@ -33,7 +33,7 @@ The function only defers what is written inside it. Three kinds of work still ne
 
 - **Work scheduled for later.** A field read on the next animation frame must check before calling `requestAnimationFrame`, or every user pays for the scheduled callback.
 - **Work that feeds an entry without being one of its fields.** `loggerMiddleware` captures the state before an action to diff it afterwards, and `logViewport` in [`initEvents`](../src/util/initEvents.ts) compares the geometry with the last entry to skip duplicates.
-- **A value computed before the call.** `const rect = range.getBoundingClientRect()` above `debugLog.log('x', () => ({ rect }))` runs whether or not logging is on. Compute it inside the function instead.
+- **A value computed before the call.** `const rect = range.getBoundingClientRect()` above `debugLog.log('x', () => ({ rect }))` runs whether or not logging is on. Compute it inside the function instead. The `em/no-precomputed-debug-log-fields` lint rule reports a variable that is read only by `debugLog.log` calls, unless its declaration sits behind one of the guards above (inside `if (debugLog.isEnabled())`, after `if (!debugLog.isEnabled()) return`, or in an initializer conditional on it, such as `enabled ? compute() : []`). A guard around the function the variable is declared in does not count, since the rule cannot tell where that function is called; when a function is only ever called under a guard, compute the value inside the fields function anyway, or disable the rule for that line.
 
 ## Getting the log off a device
 

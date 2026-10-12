@@ -214,8 +214,10 @@ class MultiGesture extends React.Component<MultiGestureProps> {
       if (testFlags.logMultigesture) {
         console.info('touchend')
       }
-      const touch = e.changedTouches[0]
-      debugLog.log('touchend', () => (touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {}))
+      debugLog.log('touchend', () => {
+        const touch = e.changedTouches[0]
+        return touch ? { x: Math.round(touch.clientX), y: Math.round(touch.clientY) } : {}
+      })
       // Only clear the multitouch latch once every finger is up. Fingers leave one at a time, so clearing it on the
       // first touchend would let the last finger still down be tracked as a new single-finger gesture.
       if (e.touches.length === 0) {

@@ -107,6 +107,170 @@ const plugin = {
         }
       },
     },
+    'no-precomputed-debug-log-fields': {
+      meta: {
+        type: 'suggestion',
+        docs: {
+          description:
+            'Disallow a variable that is computed only to be logged by debugLog.log, outside the fields function and unguarded by debugLog.isEnabled().',
+        },
+        schema: [],
+        messages: {
+          precomputed:
+            "'{{names}}' is computed only for debugLog.log, so it is computed even while logging is off. Compute it inside the fields function, or guard it with debugLog.isEnabled().",
+        },
+      },
+      /**
+       * Reports a variable declaration whose variables are read only inside debugLog.log calls, unless it is guarded by debugLog.isEnabled(). The fields function passed to debugLog.log defers only what is written inside it, so a value computed above the call is computed for every user, with logging on or off. See docs/debug-log.md.
+       *
+       * @param context
+       */
+      create(context) {
+        const filename = context.filename.replaceAll('\\', '/')
+        if (filename.includes('/__tests__/')) return {}
+
+        const { sourceCode } = context
+
+        /**
+         * Whether a node is a call to debugLog.<method>.
+         *
+         * @param node
+         * @param method
+         */
+        const isDebugLogCall = (node, method) =>
+          node?.type === 'CallExpression' &&
+          node.callee.type === 'MemberExpression' &&
+          node.callee.object.type === 'Identifier' &&
+          node.callee.object.name === 'debugLog' &&
+          node.callee.property.type === 'Identifier' &&
+          node.callee.property.name === method
+
+        /**
+         * Resolves an identifier to its variable by walking up from the scope it appears in.
+         *
+         * @param identifier
+         */
+        const resolve = identifier => {
+          let scope = sourceCode.getScope(identifier)
+          while (scope) {
+            const variable = scope.set.get(identifier.name)
+            if (variable) return variable
+            scope = scope.upper
+          }
+          return null
+        }
+
+        /**
+         * Whether an expression is true only while logging is enabled: debugLog.isEnabled(), a const bound to it, or a conjunction that includes either.
+         *
+         * @param node
+         */
+        const isGuard = node => {
+          if (!node) return false
+          if (isDebugLogCall(node, 'isEnabled')) return true
+          if (node.type === 'LogicalExpression' && node.operator === '&&') return isGuard(node.left) || isGuard(node.right)
+          if (node.type === 'Identifier') {
+            const def = resolve(node)?.defs[0]
+            return def?.node.type === 'VariableDeclarator' && def.parent.kind === 'const' && isGuard(def.node.init)
+          }
+          return false
+        }
+
+        /**
+         * Whether a statement exits early when logging is disabled, e.g. `if (!debugLog.isEnabled()) return`.
+         *
+         * @param statement
+         */
+        const isEarlyExit = statement => {
+          if (statement.type !== 'IfStatement' || statement.alternate) return false
+          const { test, consequent } = statement
+          if (test.type !== 'UnaryExpression' || test.operator !== '!' || !isGuard(test.argument)) return false
+          const exit = consequent.type === 'BlockStatement' && consequent.body.length === 1 ? consequent.body[0] : consequent
+          return exit.type === 'ReturnStatement' || exit.type === 'ThrowStatement'
+        }
+
+        /**
+         * Whether a node only runs while logging is enabled: it sits in the consequent of a guard, or after an early exit.
+         *
+         * @param node
+         */
+        const isGuarded = node => {
+          let child = node
+          let parent = node.parent
+          while (parent) {
+            if (parent.type === 'IfStatement' && child === parent.consequent && isGuard(parent.test)) return true
+            if (parent.type === 'ConditionalExpression' && child === parent.consequent && isGuard(parent.test)) return true
+            if (parent.type === 'LogicalExpression' && parent.operator === '&&' && child === parent.right && isGuard(parent.left)) return true
+            if (parent.type === 'BlockStatement' || parent.type === 'Program') {
+              const index = parent.body.indexOf(child)
+              if (parent.body.slice(0, index).some(isEarlyExit)) return true
+            }
+            // a guard outside the function the node is in does not mean the function only runs while it holds
+            if (
+              parent.type === 'FunctionDeclaration' ||
+              parent.type === 'FunctionExpression' ||
+              parent.type === 'ArrowFunctionExpression'
+            ) {
+              return false
+            }
+            child = parent
+            parent = parent.parent
+          }
+          return false
+        }
+
+        /**
+         * Whether a node sits inside the arguments of a debugLog.log call.
+         *
+         * @param node
+         */
+        const isInDebugLogCall = node => {
+          let child = node
+          let parent = node.parent
+          while (parent) {
+            if (isDebugLogCall(parent, 'log') && parent.arguments.includes(child)) return true
+            child = parent
+            parent = parent.parent
+          }
+          return false
+        }
+
+        return {
+          VariableDeclarator(node) {
+            if (!node.init) return
+            // defining a function computes nothing until it is called
+            if (node.init.type === 'ArrowFunctionExpression' || node.init.type === 'FunctionExpression') return
+            // declared inside the fields function, where it is computed only while logging is on
+            if (isInDebugLogCall(node)) return
+            // a loop variable is not computed for the log
+            if (node.parent.parent.type === 'ForOfStatement' || node.parent.parent.type === 'ForInStatement') return
+
+            const variables = sourceCode.getDeclaredVariables(node)
+            const onlyLogged = variables.every(variable => {
+              const others = variable.references.filter(reference => !reference.init)
+              // a variable that is reassigned or never read is outside this rule
+              if (others.length === 0 || others.some(reference => reference.isWrite())) return false
+              return others.every(reference => isInDebugLogCall(reference.identifier))
+            })
+            if (!onlyLogged || variables.length === 0) return
+            // an initializer that is itself conditional on the guard, e.g. `debugEnabled ? compute() : []`
+            const guardedPart =
+              node.init.type === 'ConditionalExpression'
+                ? node.init.consequent
+                : node.init.type === 'LogicalExpression' && node.init.operator === '&&'
+                  ? node.init.right
+                  : node
+            if (isGuarded(guardedPart)) return
+
+            context.report({
+              node,
+              messageId: 'precomputed',
+              data: { names: variables.map(variable => variable.name).join("', '") },
+            })
+          },
+        }
+      },
+    },
     'no-store-subscribe-in-components': {
       meta: {
         type: 'problem',
