@@ -78,11 +78,11 @@ const useClampScrollToVisibleThoughts = ({
   }, [viewportHeight, visibleTop, visibleBottom])
 
   useEffect(() => {
-    /** Applies a vertical offset without rerendering the thought list. */
+    /** Shares the elastic offset with the thought tree, footer, and navigation without rerendering them. */
     const setElasticOffset = (value: number) => {
       if (elasticOffset.current === value) return
       elasticOffset.current = value
-      ref.current?.style.setProperty(LAYOUT_TREE_ELASTIC_OFFSET, `${value}px`)
+      document.documentElement.style.setProperty(LAYOUT_TREE_ELASTIC_OFFSET, `${value}px`)
     }
 
     /** Stops the animation at its current visible position. */
@@ -124,7 +124,8 @@ const useClampScrollToVisibleThoughts = ({
       )
       const visibleContentBottom = Math.max(
         layoutTreeTop + visibleBottom,
-        footerRect ? footerRect.bottom + window.scrollY : 0,
+        // The footer follows negative elastic displacement; bounds must use its untransformed position.
+        footerRect ? footerRect.bottom + window.scrollY - Math.min(0, elasticOffset.current) : 0,
       )
       const maxScrollY = Math.min(
         nativeMax,

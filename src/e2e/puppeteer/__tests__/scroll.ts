@@ -306,7 +306,7 @@ describe('scroll clamp', () => {
 
 describe('iOS overscroll', () => {
   // https://github.com/cybersemics/em/pull/5400
-  it.skip('bounces the footer and navigation together at the bottom with a deep selection', async () => {
+  it('bounces the footer and navigation together at the bottom with a deep selection', async () => {
     await paste(`
       - A
       - B

@@ -60,12 +60,14 @@ it('cancels native panning on the first move of a bounded content swipe', async 
     vi.advanceTimersByTime(16)
     expect(fireEvent.touchMove(tree, { touches: [{ clientY: 140 }] })).toBe(false)
     expect(window.scrollY).toBe(960)
-    expect(parseFloat(tree.style.getPropertyValue('--layout-tree-elastic-offset'))).toBeGreaterThan(10)
+    expect(parseFloat(document.documentElement.style.getPropertyValue('--layout-tree-elastic-offset'))).toBeGreaterThan(
+      10,
+    )
 
     fireEvent.touchEnd(tree, { touches: [] })
     await act(() => vi.advanceTimersByTimeAsync(2000))
     expect(window.scrollY).toBe(960)
-    expect(tree.style.getPropertyValue('--layout-tree-elastic-offset')).toBe('0px')
+    expect(document.documentElement.style.getPropertyValue('--layout-tree-elastic-offset')).toBe('0px')
   } finally {
     unmount()
     content.remove()
@@ -89,9 +91,7 @@ it('keeps native momentum through a measurement update before reaching the oppos
     indentCursorAncestorTables: 0,
     hoverArrowVisibility: null,
   })
-  const { container, rerender, unmount } = render(
-    createElement(Provider, { store, children: createElement(LayoutTree) }),
-  )
+  const { rerender, unmount } = render(createElement(Provider, { store, children: createElement(LayoutTree) }))
 
   try {
     fireEvent.touchStart(window, { touches: [{ clientY: 100 }] })
@@ -113,9 +113,7 @@ it('keeps native momentum through a measurement update before reaching the oppos
 
     // The unchanged upper boundary is 1600 - 0.8 * 800 = 960. The incoming 20px overshoot must enter a spring.
     expect(window.scrollY).toBe(960)
-    expect((container.firstElementChild as HTMLElement).style.getPropertyValue('--layout-tree-elastic-offset')).toBe(
-      '20px',
-    )
+    expect(document.documentElement.style.getPropertyValue('--layout-tree-elastic-offset')).toBe('20px')
   } finally {
     unmount()
     Object.assign(window, { innerHeight: originalHeight, scrollY: originalScrollY })
@@ -138,9 +136,7 @@ it('keeps synthesized momentum through a measurement update after reversing an i
     indentCursorAncestorTables: 0,
     hoverArrowVisibility: null,
   })
-  const { container, rerender, unmount } = render(
-    createElement(Provider, { store, children: createElement(LayoutTree) }),
-  )
+  const { rerender, unmount } = render(createElement(Provider, { store, children: createElement(LayoutTree) }))
 
   try {
     // Drag past the upper boundary, release, then interrupt its spring without advancing it.
@@ -151,9 +147,9 @@ it('keeps synthesized momentum through a measurement update after reversing an i
     fireEvent.scroll(window)
     fireEvent.touchEnd(window, { touches: [] })
     expect(window.scrollY).toBe(960)
-    expect(
-      parseFloat((container.firstElementChild as HTMLElement).style.getPropertyValue('--layout-tree-elastic-offset')),
-    ).toBeGreaterThan(20)
+    expect(parseFloat(document.documentElement.style.getPropertyValue('--layout-tree-elastic-offset'))).toBeGreaterThan(
+      20,
+    )
 
     fireEvent.touchStart(window, { touches: [{ clientY: 140 }] })
     vi.advanceTimersByTime(16)
@@ -183,13 +179,9 @@ it('keeps synthesized momentum through a measurement update after reversing an i
     rerender(createElement(Provider, { store, children: createElement(LayoutTree) }))
     await act(() => vi.advanceTimersByTimeAsync(100))
     expect(window.scrollY).toBe(1640)
-    expect(
-      parseFloat((container.firstElementChild as HTMLElement).style.getPropertyValue('--layout-tree-elastic-offset')),
-    ).toBeLessThan(0)
+    expect(parseFloat(document.documentElement.style.getPropertyValue('--layout-tree-elastic-offset'))).toBeLessThan(0)
     await act(() => vi.advanceTimersByTimeAsync(2000))
-    expect((container.firstElementChild as HTMLElement).style.getPropertyValue('--layout-tree-elastic-offset')).toBe(
-      '0px',
-    )
+    expect(document.documentElement.style.getPropertyValue('--layout-tree-elastic-offset')).toBe('0px')
   } finally {
     unmount()
     Object.assign(window, { innerHeight: originalHeight, scrollY: originalScrollY })
