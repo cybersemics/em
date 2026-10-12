@@ -209,11 +209,12 @@ const TraceGesture = ({ eventNodeRef }: TraceGestureProps) => {
     </div>
   )
 }
-/** Renders the TraceGesture component unless a modal or the mobile command universe is shown. */
+/** Renders the TraceGesture component unless a modal or the mobile command universe is shown. Over the mobile command universe it still draws a dry run traced over the pinned command's tooltip. */
 const TraceGestureWrapper = (props: TraceGestureProps) => {
   const showModal = useSelector(state => state.showModal)
   const showMobileCommandUniverse = useSelector(state => state.showMobileCommandUniverse)
-  return <>{!showModal && !showMobileCommandUniverse && <TraceGesture {...props} />}</>
+  const pinnedCommandTooltipOpen = useSelector(state => state.showPinnedCommandTooltip)
+  return <>{!showModal && (!showMobileCommandUniverse || pinnedCommandTooltipOpen) && <TraceGesture {...props} />}</>
 }
 
 export default TraceGestureWrapper
