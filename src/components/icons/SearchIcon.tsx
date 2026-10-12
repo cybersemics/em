@@ -1,8 +1,7 @@
 import { FC } from 'react'
-import { css, cx } from '../../../styled-system/css'
-import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
+import iconClassName from '../../util/iconClassName'
 
 /** Search icon, used in the search input. */
 const SearchIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
@@ -15,7 +14,7 @@ const SearchIcon: FC<IconType> = ({ size = 48, fill, cssRaw }) => {
       width={size}
       height={size}
       fill={fillColor}
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={iconClassName(cssRaw)}
     >
       <svg xmlns='http://www.w3.org/2000/svg' width='54' height='56' viewBox='0 0 54 56'>
         <path

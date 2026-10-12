@@ -1,8 +1,7 @@
 import { useId } from 'react'
-import { css, cx } from '../../../styled-system/css'
-import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
+import iconClassName from '../../util/iconClassName'
 
 /** Document icon for the Pin Command row. */
 const PinnedCommandPinIcon = ({ cssRaw, fill, size = 24, style }: IconType) => {
@@ -16,7 +15,7 @@ const PinnedCommandPinIcon = ({ cssRaw, fill, size = 24, style }: IconType) => {
       height={size}
       viewBox='0 0 24 24'
       fill='none'
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={iconClassName(cssRaw)}
       style={style}
       aria-hidden='true'
     >

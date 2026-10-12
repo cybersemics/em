@@ -1,13 +1,12 @@
-import { css, cx } from '../../../styled-system/css'
-import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
+import iconClassName from '../../util/iconClassName'
 
 /** Icon for the deleteEmptyThoughtOrOutdent command. */
 const DeleteEmptyThoughtIcon = ({ fill = token('colors.bg'), size = 20, style, cssRaw }: IconType) => (
   <svg
     version='1.1'
-    className={cx(iconRecipe(), css(cssRaw))}
+    className={iconClassName(cssRaw)}
     xmlns='http://www.w3.org/2000/svg'
     width={size}
     height={size}

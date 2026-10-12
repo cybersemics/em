@@ -1,12 +1,11 @@
-import { css, cx } from '../../../styled-system/css'
-import { iconRecipe } from '../../../styled-system/recipes'
 import IconType from '../../@types/IconType'
+import iconClassName from '../../util/iconClassName'
 
 /** Light bulb icon. */
 const LightBulbIcon = ({ cssRaw, size = 16, ...props }: Omit<IconType, 'animationComplete' | 'animated'>) => {
   return (
     <svg
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={iconClassName(cssRaw)}
       width={size}
       height={size}
       viewBox='0 0 16 16'

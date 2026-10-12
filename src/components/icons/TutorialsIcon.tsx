@@ -1,8 +1,7 @@
 import { FC } from 'react'
-import { css, cx } from '../../../styled-system/css'
-import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import Icon from '../../@types/IconType'
+import iconClassName from '../../util/iconClassName'
 
 /** Tutorials icon that shows a teacher at a board. */
 const TutorialsIcon: FC<Icon> = ({ cssRaw, fill, style, size = 20 }) => {
@@ -11,7 +10,7 @@ const TutorialsIcon: FC<Icon> = ({ cssRaw, fill, style, size = 20 }) => {
       x='0'
       y='0'
       viewBox='90 100 600 600'
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={iconClassName(cssRaw)}
       width={size}
       height={size}
       fill={fill || token('colors.fg')}

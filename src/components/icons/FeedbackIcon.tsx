@@ -1,9 +1,8 @@
 import { FC } from 'react'
-import { css, cx } from '../../../styled-system/css'
-import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import { SystemStyleObject } from '../../../styled-system/types'
 import Index from '../../@types/IndexType'
+import iconClassName from '../../util/iconClassName'
 
 interface IconProps {
   fill?: string
@@ -17,7 +16,7 @@ interface IconProps {
 const FeedbackIcon: FC<IconProps> = ({ fill, size = 20, style, cssRaw }) => {
   return (
     <svg
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={iconClassName(cssRaw)}
       x='0px'
       y='0px'
       viewBox='0 0 46 50'

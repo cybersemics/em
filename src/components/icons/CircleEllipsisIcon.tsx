@@ -1,8 +1,7 @@
 import { FC } from 'react'
-import { css, cx } from '../../../styled-system/css'
-import { iconRecipe } from '../../../styled-system/recipes'
 import { token } from '../../../styled-system/tokens'
 import IconType from '../../@types/IconType'
+import iconClassName from '../../util/iconClassName'
 
 /** Circle ellipsis icon: three horizontal dots inside a rounded square background. */
 const CircleEllipsisIcon: FC<IconType> = ({ size = 20, fill, cssRaw }) => {
@@ -15,7 +14,7 @@ const CircleEllipsisIcon: FC<IconType> = ({ size = 20, fill, cssRaw }) => {
       height={size}
       viewBox='0 0 20 20'
       fill='none'
-      className={cx(iconRecipe(), css(cssRaw))}
+      className={iconClassName(cssRaw)}
     >
       <rect width='20' height='20' rx='10' fill={fillColor} fillOpacity='0.08' />
       <g opacity='0.5'>
