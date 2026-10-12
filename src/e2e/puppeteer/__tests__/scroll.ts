@@ -305,6 +305,76 @@ describe('scroll clamp', () => {
 })
 
 describe('iOS overscroll', () => {
+  // https://github.com/cybersemics/em/pull/5400
+  it.skip('bounces the footer and navigation together at the bottom with a deep selection', async () => {
+    await paste(`
+      - A
+      - B
+      - C
+      - D
+      - E
+      - F
+      - G
+      - H
+      - I
+      - J
+      - K
+      - L
+      - M
+      - N
+      - O
+      - Q
+      - R
+      - S
+      - T
+        - U
+          - V
+            - W
+              - X
+    `)
+    await clickThought('T')
+    await clickThought('U')
+    await clickThought('V')
+    await clickThought('W')
+    await clickThought('X')
+    await waitForBrowserSettled()
+    const { minScrollY, maxScrollY } = await getVisibleThoughtBounds()
+    expect(minScrollY).toBeGreaterThan(50)
+    await scrollTo(maxScrollY)
+    await waitForBrowserSettled()
+    const footerTop = await page.$eval('[aria-label="footer"]', element => element.getBoundingClientRect().top)
+    const navTop = await page.$eval('[aria-label="nav"]', element => element.getBoundingClientRect().top)
+    const thoughtTop = await getThoughtTop('X')
+
+    const gesture = await startGesture({ xStart: 350, yStart: 400 })
+    await gesture.move('u', { segmentLength: 180 })
+    await waitForBrowserSettled()
+    const footerTopWhileHeld = await page.$eval('[aria-label="footer"]', element => element.getBoundingClientRect().top)
+    const navTopWhileHeld = await page.$eval('[aria-label="nav"]', element => element.getBoundingClientRect().top)
+    const displacement = footerTopWhileHeld - footerTop
+    expect(displacement).toBeLessThan(-10)
+    expect(Math.abs(navTopWhileHeld - navTop - displacement)).toBeLessThan(1)
+    expect(Math.abs((await getThoughtTop('X')) - thoughtTop - displacement)).toBeLessThan(1)
+    expect(Math.abs((await page.evaluate(() => window.scrollY)) - maxScrollY)).toBeLessThan(1)
+
+    await gesture.move('u', { segmentLength: 90 })
+    await waitForBrowserSettled()
+    expect(await page.$eval('[aria-label="footer"]', element => element.getBoundingClientRect().top)).toBeLessThan(
+      footerTopWhileHeld - 10,
+    )
+    expect(Math.abs((await page.evaluate(() => window.scrollY)) - maxScrollY)).toBeLessThan(1)
+    await gesture.end()
+    await page.waitForFunction(
+      top => Math.abs(document.querySelector('[aria-label="footer"]')!.getBoundingClientRect().top - top) < 1,
+      {},
+      footerTop,
+    )
+    expect(
+      Math.abs((await page.$eval('[aria-label="nav"]', element => element.getBoundingClientRect().top)) - navTop),
+    ).toBeLessThan(1)
+    expect(Math.abs((await page.evaluate(() => window.scrollY)) - maxScrollY)).toBeLessThan(1)
+  })
+
   // https://github.com/cybersemics/em/pull/5400#issuecomment-5935316452
   it('keeps native scrolling at the visible boundary while a deep thought elastically overscrolls', async () => {
     await paste(`
